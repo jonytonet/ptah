@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ rootNamespace }}Http\Controllers\Controller;
+use {{ rootNamespace }}Http\Requests\Store{{ entity }}Request;
+use {{ rootNamespace }}Http\Requests\Update{{ entity }}Request;
+use {{ rootNamespace }}Http\Resources\{{ entity }}Resource;
+use {{ rootNamespace }}Services\{{ entity }}Service;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+
+class {{ entity }}Controller extends Controller
+{
+    public function __construct(protected {{ entity }}Service $service) {}
+
+    /**
+     * Exibe a lista de {{ entities }}.
+     */
+    public function index(): View
+    {
+        ${{ entities }} = $this->service->paginate();
+
+        return view('{{ entity_lower }}.index', compact('{{ entities }}'));
+    }
+
+    /**
+     * Exibe o formulário de criação.
+     */
+    public function create(): View
+    {
+        return view('{{ entity_lower }}.create');
+    }
+
+    /**
+     * Armazena um novo {{ entity }}.
+     */
+    public function store(Store{{ entity }}Request $request): RedirectResponse
+    {
+        $this->service->create($request->validated());
+
+        return redirect()->route('{{ entity_lower }}.index')
+            ->with('success', '{{ entity }} criado com sucesso.');
+    }
+
+    /**
+     * Exibe os detalhes de um {{ entity }}.
+     */
+    public function show(int|string $id): View
+    {
+        ${{ entity_lower }} = $this->service->findOrFail($id);
+
+        return view('{{ entity_lower }}.show', compact('{{ entity_lower }}'));
+    }
+
+    /**
+     * Exibe o formulário de edição.
+     */
+    public function edit(int|string $id): View
+    {
+        ${{ entity_lower }} = $this->service->findOrFail($id);
+
+        return view('{{ entity_lower }}.edit', compact('{{ entity_lower }}'));
+    }
+
+    /**
+     * Atualiza um {{ entity }} existente.
+     */
+    public function update(Update{{ entity }}Request $request, int|string $id): RedirectResponse
+    {
+        $this->service->update($id, $request->validated());
+
+        return redirect()->route('{{ entity_lower }}.index')
+            ->with('success', '{{ entity }} atualizado com sucesso.');
+    }
+
+    /**
+     * Remove um {{ entity }}.
+     */
+    public function destroy(int|string $id): RedirectResponse
+    {
+        $this->service->delete($id);
+
+        return redirect()->route('{{ entity_lower }}.index')
+            ->with('success', '{{ entity }} removido com sucesso.');
+    }
+}
