@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ rootNamespace }}Http\Controllers\Controller;
+use {{ rootNamespace }}Http\Requests\Store{{ entity }}Request;
+use {{ rootNamespace }}Http\Requests\Update{{ entity }}Request;
+use {{ rootNamespace }}Http\Resources\{{ entity }}Resource;
+use {{ rootNamespace }}Services\{{ entity }}Service;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class {{ entity }}Controller extends Controller
+{
+    public function __construct(protected {{ entity }}Service $service) {}
+
+    /**
+     * Retorna a lista paginada de {{ entities }}.
+     */
+    public function index(): AnonymousResourceCollection
+    {
+        ${{ entities }} = $this->service->paginate();
+
+        return {{ entity }}Resource::collection(${{ entities }});
+    }
+
+    /**
+     * Armazena um novo {{ entity }}.
+     */
+    public function store(Store{{ entity }}Request $request): JsonResponse
+    {
+        ${{ entity_lower }} = $this->service->create($request->validated());
+
+        return (new {{ entity }}Resource(${{ entity_lower }}))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    /**
+     * Retorna os detalhes de um {{ entity }}.
+     */
+    public function show(int|string $id): {{ entity }}Resource
+    {
+        ${{ entity_lower }} = $this->service->findOrFail($id);
+
+        return new {{ entity }}Resource(${{ entity_lower }});
+    }
+
+    /**
+     * Atualiza um {{ entity }} existente.
+     */
+    public function update(Update{{ entity }}Request $request, int|string $id): {{ entity }}Resource
+    {
+        ${{ entity_lower }} = $this->service->update($id, $request->validated());
+
+        return new {{ entity }}Resource(${{ entity_lower }});
+    }
+
+    /**
+     * Remove um {{ entity }}.
+     */
+    public function destroy(int|string $id): JsonResponse
+    {
+        $this->service->delete($id);
+
+        return response()->json(null, 204);
+    }
+}

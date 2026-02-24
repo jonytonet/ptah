@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Ptah\Base\BaseRepository;
+use {{ rootNamespace }}Models\{{ entity }};
+use {{ rootNamespace }}Repositories\Contracts\{{ entity }}RepositoryInterface;
+
+class {{ entity }}Repository extends BaseRepository implements {{ entity }}RepositoryInterface
+{
+    public function __construct({{ entity }} $model)
+    {
+        parent::__construct($model);
+    }
+}

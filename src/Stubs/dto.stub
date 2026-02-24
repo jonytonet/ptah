@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Ptah\Base\BaseDTO;
+use Illuminate\Http\Request;
+
+class {{ entity }}DTO extends BaseDTO
+{
+    public function __construct(
+        // Adicione as propriedades aqui
+        // public readonly string $name,
+    ) {}
+
+    /**
+     * Cria um {{ entity }}DTO a partir de um array.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function fromArray(array $data): static
+    {
+        return new static(
+            // Mapeie os campos do array aqui
+            // name: $data['name'],
+        );
+    }
+
+    /**
+     * Cria um {{ entity }}DTO a partir de um Request do Laravel.
+     */
+    public static function fromRequest(Request $request): static
+    {
+        return static::fromArray($request->validated());
+    }
+
+    /**
+     * Converte o DTO para array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            // Mapeie as propriedades para array aqui
+            // 'name' => $this->name,
+        ];
+    }
+}

@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Ptah\Base\BaseService;
+use {{ rootNamespace }}Repositories\Contracts\{{ entity }}RepositoryInterface;
+
+class {{ entity }}Service extends BaseService
+{
+    public function __construct(protected {{ entity }}RepositoryInterface $repository)
+    {
+        parent::__construct($repository);
+    }
+}

@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class Store{{ entity }}Request extends FormRequest
+{
+    /**
+     * Determina se o usuário está autorizado a fazer esta requisição.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Retorna as regras de validação para criação.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            //
+        ];
+    }
+}
