@@ -16,6 +16,8 @@ return [
         'services'     => app_path('Services'),
         'repositories' => app_path('Repositories'),
         'dtos'         => app_path('DTOs'),
+        'actions'      => app_path('Actions'),
+        'livewire'     => app_path('Livewire'),
         'requests'     => app_path('Http/Requests'),
         'resources'    => app_path('Http/Resources'),
         'controllers'  => app_path('Http/Controllers'),
@@ -28,11 +30,73 @@ return [
     |--------------------------------------------------------------------------
     |
     | Define o driver para armazenamento de preferências de usuário.
-    | Drivers disponíveis: database, cache
+    | Drivers disponíveis: database
     |
     */
     'preferences' => [
         'driver' => 'database',
+        'cache'  => true,
+        'ttl'    => 3600,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API
+    |--------------------------------------------------------------------------
+    */
+    'api' => [
+        'prefix'     => 'api',
+        'middleware' => ['api', 'auth:sanctum'],
+        'docs'       => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ptah Forge — Sistema de Componentes
+    |--------------------------------------------------------------------------
+    |
+    | Configurações do design system Ptah Forge.
+    |
+    | prefix    : prefixo dos componentes Blade (<x-forge-button>, etc.)
+    | tailwind  : versão do TailwindCSS usada nos componentes
+    | sidebar_items: itens da sidebar gerada pelo scaffold
+    |
+    */
+    'forge' => [
+        'prefix'        => 'forge',
+        'tailwind'      => 'v4',
+        'sidebar_items' => [
+            // Exemplo:
+            // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'home', 'match' => 'dashboard'],
+            // ['label' => 'Usuários', 'url' => '/users', 'icon' => 'users', 'match' => 'users*'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scaffold
+    |--------------------------------------------------------------------------
+    */
+    'scaffold' => [
+        'layout'    => 'forge-dashboard',
+        'auth_layout' => 'forge-auth',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | BaseCrud
+    |--------------------------------------------------------------------------
+    |
+    | Configurações do sistema BaseCrud gerado pelo ptah:forge.
+    |
+    */
+    'crud' => [
+        'cache_enabled'  => true,
+        'cache_ttl'      => 3600,   // segundos
+        'per_page'       => 25,
+        'soft_deletes'   => true,
+        'confirm_delete' => true,
+        'export_driver'  => 'excel', // excel | csv | pdf
     ],
 
 ];

@@ -18,3 +18,15 @@
 // Route::prefix('api')->group(function () {
 //     Route::apiResource('products', \App\Http\Controllers\Api\ProductController::class);
 // });
+
+/*
+|--------------------------------------------------------------------------
+| Ptah Forge — Demo de componentes
+|--------------------------------------------------------------------------
+| Adicione esta rota no seu routes/web.php durante o desenvolvimento:
+|
+|   Route::get('/ptah-forge-demo', fn() => view('ptah::forge-demo'))
+|        ->name('ptah.forge.demo');
+|
+| Remova em produção ou proteja com middleware de auth/admin.
+*/

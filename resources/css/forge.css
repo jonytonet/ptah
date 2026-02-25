@@ -1,0 +1,72 @@
+/* ============================================================
+   Ptah Forge — Design System CSS
+   Tailwind v4 CSS-first configuration
+   ============================================================ */
+
+@import "tailwindcss";
+
+/* ── Design Tokens ── */
+@theme {
+    /* Primary — Violet */
+    --color-primary:          #5b21b6;
+    --color-primary-light:    #ede9fe;
+    --color-primary-dark:     #4c1d95;
+    --color-primary-50:       #f5f3ff;
+    --color-primary-100:      #ede9fe;
+    --color-primary-200:      #ddd6fe;
+    --color-primary-300:      #c4b5fd;
+    --color-primary-400:      #a78bfa;
+    --color-primary-500:      #8b5cf6;
+    --color-primary-600:      #7c3aed;
+    --color-primary-700:      #6d28d9;
+    --color-primary-800:      #5b21b6;
+    --color-primary-900:      #4c1d95;
+
+    /* Success — Emerald */
+    --color-success:          #10b981;
+    --color-success-light:    #d1fae5;
+    --color-success-dark:     #059669;
+
+    /* Danger — Red */
+    --color-danger:           #ef4444;
+    --color-danger-light:     #fee2e2;
+    --color-danger-dark:      #dc2626;
+
+    /* Warn — Amber */
+    --color-warn:             #f59e0b;
+    --color-warn-light:       #fef3c7;
+    --color-warn-dark:        #d97706;
+
+    /* Dark — Slate */
+    --color-dark:             #1e293b;
+    --color-dark-light:       #f1f5f9;
+    --color-dark-dark:        #0f172a;
+
+    /* Font */
+    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── Keyframes personalizados ── */
+@keyframes wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50%       { transform: scaleY(1.0); }
+}
+
+/* ── Utilitários extras ── */
+@layer utilities {
+    .scrollbar-none {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
+    .animate-wave {
+        animation: wave 1s ease-in-out infinite;
+    }
+}
+
+/* x-cloak — oculta elementos Alpine até hidratação */
+[x-cloak] { display: none !important; }

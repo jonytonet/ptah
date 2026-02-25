@@ -12,7 +12,7 @@ use {{ rootNamespace }}Services\{{ entity }}Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class {{ entity }}Controller extends Controller
+class {{ entity }}ApiController extends Controller
 {
     public function __construct(protected {{ entity }}Service $service) {}
 

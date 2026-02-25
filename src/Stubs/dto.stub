@@ -10,8 +10,7 @@ use Illuminate\Http\Request;
 class {{ entity }}DTO extends BaseDTO
 {
     public function __construct(
-        // Adicione as propriedades aqui
-        // public readonly string $name,
+{{ dto_properties }}
     ) {}
 
     /**
@@ -22,8 +21,7 @@ class {{ entity }}DTO extends BaseDTO
     public static function fromArray(array $data): static
     {
         return new static(
-            // Mapeie os campos do array aqui
-            // name: $data['name'],
+{{ dto_from_array }}
         );
     }
 

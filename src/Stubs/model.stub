@@ -6,15 +6,24 @@ namespace {{ namespace }};
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+{{ soft_deletes_use }}
 class {{ entity }} extends Model
 {
     use HasFactory;
+{{ soft_deletes_trait }}
+    protected $table = '{{ table }}';
 
     /**
      * @var array<int, string>
      */
     protected $fillable = [
-        //
+        {{ fillable }}
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        {{ casts }}
     ];
 }

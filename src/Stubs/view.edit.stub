@@ -1,35 +1,45 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-            Editar {{ entity }} #{{ ${{ entity_lower }}->id }}
-        </h2>
-    </x-slot>
+<x-forge-dashboard-layout>
+    <x-slot:title>Editar {{ entity }}</x-slot:title>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
-                <div class="p-6">
-
-                    <form method="POST" action="{{ route('{{ entity_lower }}.update', ${{ entity_lower }}) }}">
-                        @csrf
-                        @method('PUT')
-
-                        {{-- Adicione os campos do formulário aqui --}}
-
-                        <div class="mt-6 flex items-center gap-4">
-                            <button type="submit"
-                                    class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
-                                Atualizar
-                            </button>
-                            <a href="{{ route('{{ entity_lower }}.index') }}"
-                               class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-dark">Editar {{ entity }} #{{ ${{ entity_lower }}->id }}</h1>
+            <x-forge-breadcrumb :items="[
+                ['label' => 'Dashboard',  'url' => '/dashboard'],
+                ['label' => '{{ entity }}', 'url' => route('{{ entity_lower }}.index')],
+                ['label' => 'Editar #' . ${{ entity_lower }}->id],
+            ]" />
         </div>
     </div>
-</x-app-layout>
+
+    <x-forge-card class="max-w-2xl">
+        <form method="POST" action="{{ route('{{ entity_lower }}.update', ${{ entity_lower }}) }}" class="space-y-5">
+            @csrf
+            @method('PUT')
+
+            {{-- Adicione os campos do formulário aqui --}}
+            {{-- Exemplo:
+            <x-forge-input
+                name="name"
+                label="Nome"
+                :value="old('name', ${{ entity_lower }}->name)"
+                :error="$errors->first('name')"
+                required
+            />
+            --}}
+
+            <div class="flex items-center gap-3 pt-2">
+                <x-forge-button type="submit" color="primary">Atualizar</x-forge-button>
+                <x-forge-button
+                    tag="a"
+                    href="{{ route('{{ entity_lower }}.index') }}"
+                    color="dark"
+                    flat
+                >
+                    Cancelar
+                </x-forge-button>
+            </div>
+        </form>
+    </x-forge-card>
+
+</x-forge-dashboard-layout>
