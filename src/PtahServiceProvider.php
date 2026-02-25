@@ -130,8 +130,9 @@ class PtahServiceProvider extends ServiceProvider
     protected function registerLivewire(): void
     {
         if (class_exists(Livewire::class)) {
-            Livewire::component('ptah::base-crud', BaseCrud::class);
+            Livewire::component('ptah::base-crud',       BaseCrud::class);
             Livewire::component('ptah::search-dropdown', SearchDropdown::class);
+            Livewire::component('ptah::crud-config',     CrudConfig::class);
         }
     }
 
