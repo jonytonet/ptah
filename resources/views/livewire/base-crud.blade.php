@@ -62,7 +62,7 @@
                     </svg>
                     <span class="hidden sm:inline">Filtros</span>
                     @if ($activeFilterCount > 0)
-                        <span class="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-danger text-white leading-none">
+                        <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-danger">
                             {{ $activeFilterCount }}
                         </span>
                     @endif
@@ -148,7 +148,7 @@
                         </svg>
                         <span class="hidden sm:inline">Colunas</span>
                         @if ($hiddenColumnsCount > 0)
-                            <span class="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-amber-500 text-white leading-none">
+                            <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-amber-500">
                                 {{ $hiddenColumnsCount }}
                             </span>
                         @endif
@@ -159,13 +159,13 @@
                     <div x-show="open" x-cloak @click.outside="open = false"
                          class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto">
                         {{-- Ações rápidas --}}
-                        <div class="flex gap-2 px-3 pb-2 border-b border-gray-100 mb-1">
+                        <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                             <button wire:click="showAllColumns" @click="open = false"
-                                class="flex-1 text-xs text-center py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                                class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
                                 Mostrar todas
                             </button>
                             <button wire:click="hideAllColumns" @click="open = false"
-                                class="flex-1 text-xs text-center py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                                class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
                                 Ocultar todas
                             </button>
                         </div>
@@ -177,7 +177,7 @@
                                     <input type="checkbox"
                                         wire:model.live="formDataColumns.{{ $colField }}"
                                         wire:change="updateColumns"
-                                        class="rounded text-primary focus:ring-primary/30 cursor-pointer">
+                                        class="rounded cursor-pointer text-primary focus:ring-primary/30">
                                     <span class="text-sm text-gray-700 select-none">{{ $col['colsNomeLogico'] ?? $colField }}</span>
                                 </label>
                             @endif
@@ -256,7 +256,7 @@
 
     {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
     @if ($showFilters)
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-4 overflow-hidden">
+        <div class="mb-4 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
 
             {{-- Header --}}
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
@@ -273,7 +273,7 @@
                     @endif
                 </div>
                 <button wire:click="clearFilters"
-                    class="text-xs text-gray-400 hover:text-danger transition-colors flex items-center gap-1">
+                    class="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-danger">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -303,7 +303,7 @@
                 @endphp
                 @if ($hasDateFilterCols)
                     <div>
-                        <p class="text-xs font-medium text-gray-500 mb-2">Atalhos de data</p>
+                        <p class="mb-2 text-xs font-medium text-gray-500">Atalhos de data</p>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($quickLabels as $period => $qlabel)
                                 <button wire:click="applyQuickDateFilter('{{ $period }}')"
@@ -341,7 +341,7 @@
                                     <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p class="text-xs text-gray-400 mb-1">De</p>
+                                            <p class="mb-1 text-xs text-gray-400">De</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
                                                     class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
@@ -355,7 +355,7 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="text-xs text-gray-400 mb-1">Até</p>
+                                            <p class="mb-1 text-xs text-gray-400">Até</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
                                                     class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
@@ -397,12 +397,12 @@
                                             placeholder="Buscar {{ $cfLabel }}..."
                                             class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
                                         @if (!empty($sdResults[$cfField]))
-                                            <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                                            <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
                                                 @foreach ($sdResults[$cfField] as $opt)
                                                     <button type="button"
                                                         wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                         @click="open = false"
-                                                        class="block w-full text-left px-3 py-2 text-sm hover:bg-violet-50 hover:text-violet-700">
+                                                        class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
                                                         {{ $opt['label'] }}
                                                     </button>
                                                 @endforeach
@@ -464,11 +464,11 @@
                                                 placeholder="Buscar {{ $cfLabel }}..."
                                                 class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
                                             @if (!empty($sdResults['cf_' . $cfField]))
-                                                <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                                                <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
                                                     @foreach ($sdResults['cf_' . $cfField] as $opt)
                                                         <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                             @click="open = false"
-                                                            class="block w-full text-left px-3 py-2 text-sm hover:bg-violet-50">
+                                                            class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50">
                                                             {{ $opt['label'] }}
                                                         </button>
                                                     @endforeach
@@ -490,8 +490,8 @@
 
                 {{-- Filtros salvos --}}
                 @if (!empty($savedFilters))
-                    <div class="flex items-center gap-2 flex-wrap pt-1">
-                        <span class="text-xs text-gray-400 font-medium">Salvos:</span>
+                    <div class="flex flex-wrap items-center gap-2 pt-1">
+                        <span class="text-xs font-medium text-gray-400">Salvos:</span>
                         @foreach (array_keys($savedFilters) as $sfName)
                             <div class="flex items-center">
                                 <button wire:click="loadNamedFilter('{{ $sfName }}')"
@@ -514,7 +514,7 @@
                  x-data="{ saving: false, name: '' }">
                 <template x-if="!saving">
                     <button @click="saving = true"
-                        class="text-xs text-gray-500 hover:text-primary flex items-center gap-1 transition-colors">
+                        class="flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-primary">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
@@ -523,7 +523,7 @@
                     </button>
                 </template>
                 <template x-if="saving">
-                    <div class="flex items-center gap-2 w-full">
+                    <div class="flex items-center w-full gap-2">
                         <input type="text" x-model="name"
                             @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             @keydown.escape="saving = false; name = '';"
@@ -535,7 +535,7 @@
                             Salvar
                         </button>
                         <button @click="saving = false; name = '';"
-                            class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                            class="text-xs text-gray-400 transition-colors hover:text-gray-600">
                             Cancelar
                         </button>
                     </div>
@@ -546,7 +546,7 @@
     @endif
 
     {{-- ── Tabela ──────────────────────────────────────────────────────── --}}
-    <div class="overflow-x-auto rounded-lg border border-gray-200">
+    <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="{{ $crudConfig['tableClass'] ?? 'table' }} w-full text-sm
             @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
@@ -577,7 +577,7 @@
                     {{-- Colunas action --}}
                     @foreach ($crudConfig['cols'] ?? [] as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <th class="px-3 py-2 text-center font-semibold text-gray-700 whitespace-nowrap">
+                            <th class="px-3 py-2 font-semibold text-center text-gray-700 whitespace-nowrap">
                                 {{ $col['colsNomeLogico'] ?? 'Ação' }}
                             </th>
                         @endif
@@ -585,7 +585,7 @@
 
                     {{-- Coluna de ações padrão --}}
                     @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
-                        <th class="px-3 py-2 text-center font-semibold text-gray-700">Ações</th>
+                        <th class="px-3 py-2 font-semibold text-center text-gray-700">Ações</th>
                     @endif
                 </tr>
             </thead>
@@ -636,7 +636,7 @@
                                     @if ($actionJs)
                                         <button onclick="{{ $actionJs }}"
                                             @click.stop
-                                            class="text-primary hover:text-primary/80 transition-colors"
+                                            class="transition-colors text-primary hover:text-primary/80"
                                             title="{{ $col['colsNomeLogico'] ?? '' }}">
                                             @if ($actionIcon)
                                                 <i class="{{ $actionIcon }}"></i>
@@ -659,7 +659,7 @@
                                         @if (!($permissions['edit'] ?? null) || (auth()->check() && auth()->user()->can($permissions['edit'])))
                                             <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
                                                 @click.stop
-                                                class="text-primary hover:text-primary/80 transition-colors" title="Editar">
+                                                class="transition-colors text-primary hover:text-primary/80" title="Editar">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                 </svg>
@@ -671,7 +671,7 @@
                                     @if ($showTrashed && method_exists($row, 'trashed') && $row->trashed())
                                         <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
                                             @click.stop
-                                            class="text-success hover:text-success/80 transition-colors" title="Restaurar">
+                                            class="transition-colors text-success hover:text-success/80" title="Restaurar">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                             </svg>
@@ -680,7 +680,7 @@
                                         @if (!($permissions['delete'] ?? null) || (auth()->check() && auth()->user()->can($permissions['delete'])))
                                             <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
                                                 @click.stop
-                                                class="text-danger hover:text-danger/80 transition-colors" title="Excluir">
+                                                class="transition-colors text-danger hover:text-danger/80" title="Excluir">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
@@ -707,7 +707,7 @@
 
             {{-- Totalizadores --}}
             @if (!empty($totData))
-                <tfoot class="bg-gray-50 border-t-2 border-gray-300 font-semibold">
+                <tfoot class="font-semibold border-t-2 border-gray-300 bg-gray-50">
                     <tr>
                         @foreach ($crudConfig['cols'] ?? [] as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
@@ -732,7 +732,7 @@
     </div>
 
     {{-- ── Paginação ────────────────────────────────────────────────────── --}}
-    <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+    <div class="flex items-center justify-between mt-4 text-sm text-gray-500">
         <span>
             Exibindo {{ $rows->firstItem() ?? 0 }}&ndash;{{ $rows->lastItem() ?? 0 }}
             de {{ $rows->total() }} registros
@@ -769,7 +769,7 @@
                     <h2 class="text-lg font-semibold text-gray-800">
                         {{ $editingId ? 'Editar' : 'Novo' }} {{ $crudTitle }}
                     </h2>
-                    <button wire:click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button wire:click="closeModal" class="text-gray-400 transition-colors hover:text-gray-600">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -784,7 +784,7 @@
                 @endif
 
                 {{-- Body --}}
-                <div class="flex-1 overflow-y-auto px-6 py-4">
+                <div class="flex-1 px-6 py-4 overflow-y-auto">
                     <div class="flex flex-col gap-4">
 
                         @foreach ($formCols as $col)
@@ -818,7 +818,7 @@
                                         $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-violet-100';
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                        <label class="block mb-1 text-xs font-medium text-gray-600">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -853,11 +853,11 @@
                                             >
                                                 <span
                                                     :class="(selected !== null && selected !== '') ? 'text-gray-800' : 'text-gray-400'"
-                                                    class="text-sm truncate pr-4"
+                                                    class="pr-4 text-sm truncate"
                                                     x-text="displayLabel"
                                                 ></span>
-                                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <span class="absolute text-gray-400 transition-transform duration-200 -translate-y-1/2 right-3 top-1/2" :class="open ? 'rotate-180' : ''">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                                     </svg>
                                                 </span>
@@ -868,17 +868,17 @@
                                                 x-transition:enter="transition ease-out duration-150"
                                                 x-transition:enter-start="opacity-0 -translate-y-1"
                                                 x-transition:enter-end="opacity-100 translate-y-0"
-                                                class="absolute z-20 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-auto max-h-48"
+                                                class="absolute z-20 w-full mt-1 overflow-auto bg-white border border-gray-100 shadow-lg rounded-xl max-h-48"
                                             >
                                                 <ul class="py-1">
                                                     <template x-for="option in options" :key="option.value">
                                                         <li
                                                             @click="toggle(option.value)"
                                                             :class="isSelected(option.value) ? 'bg-violet-50 text-violet-700' : 'text-gray-700 hover:bg-gray-50'"
-                                                            class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between"
+                                                            class="flex items-center justify-between px-4 py-2 text-sm cursor-pointer"
                                                         >
                                                             <span x-text="option.label"></span>
-                                                            <svg x-show="isSelected(option.value)" class="h-4 w-4 text-violet-600 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                            <svg x-show="isSelected(option.value)" class="w-4 h-4 ml-2 text-violet-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                                             </svg>
                                                         </li>
@@ -894,7 +894,7 @@
                                 @elseif ($fTipo === 'searchdropdown')
                                     {{-- ── SearchDropdown inline ── --}}
                                     <div class="w-full">
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                        <label class="block mb-1 text-xs font-medium text-gray-600">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div x-data="{ open: false }" class="relative">
@@ -909,12 +909,12 @@
                                             <input type="hidden" wire:model="formData.{{ $fField }}" />
                                             @if (!empty($sdResults[$fField]))
                                                 <div x-show="open"
-                                                    class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto mt-1">
+                                                    class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl max-h-48">
                                                     @foreach ($sdResults[$fField] as $opt)
                                                         <button type="button"
                                                             wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                             @click="open = false"
-                                                            class="block w-full text-left px-4 py-2 text-sm hover:bg-violet-50 hover:text-violet-700">
+                                                            class="block w-full px-4 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
                                                             {{ $opt['label'] }}
                                                         </button>
                                                     @endforeach
@@ -936,7 +936,7 @@
                                         };
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                        <label class="block mb-1 text-xs font-medium text-gray-600">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -983,9 +983,9 @@
         @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" wire:click="cancelDelete"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-xl">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center">
+                    <div class="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-danger/10">
                         <svg class="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
@@ -995,7 +995,7 @@
                         <p class="text-sm text-gray-500">Esta ação não pode ser desfeita.</p>
                     </div>
                 </div>
-                <div class="flex gap-3 justify-end">
+                <div class="flex justify-end gap-3">
                     <x-forge-button wire:click="cancelDelete" color="dark" flat>Cancelar</x-forge-button>
                     <x-forge-button wire:click="deleteRecord" color="danger">Excluir</x-forge-button>
                 </div>

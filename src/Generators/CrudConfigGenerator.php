@@ -109,7 +109,7 @@ class CrudConfigGenerator extends AbstractGenerator
             'colsGravar'      => 'N',
             'colsRequired'    => 'N',
             'colsAlign'       => 'text-center',
-            'colsIsFilterable'=> 'N',
+            'colsIsFilterable'=> 'S',
         ];
 
         // Campos da entidade

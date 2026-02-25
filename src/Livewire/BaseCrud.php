@@ -435,28 +435,33 @@ class BaseCrud extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+        $this->savePreferences();
     }
 
     public function updatedFilters(): void
     {
         $this->resetPage();
         $this->buildTextFilter();
+        $this->savePreferences();
     }
 
     public function updatedFilterOperators(): void
     {
         $this->resetPage();
+        $this->savePreferences();
     }
 
     public function updatedDateRanges(): void
     {
         $this->resetPage();
         $this->buildTextFilter();
+        $this->savePreferences();
     }
 
     public function updatedDateRangeOperators(): void
     {
         $this->resetPage();
+        $this->savePreferences();
     }
 
     public function updatedPerPage(): void
@@ -482,7 +487,9 @@ class BaseCrud extends Component
         $this->quickDateFilter      = '';
         $this->textFilter           = [];
         $this->advancedSearchActive = false;
+        $this->search               = '';
         $this->resetPage();
+        $this->savePreferences();
     }
 
     public function toggleTrashed(): void
@@ -764,6 +771,8 @@ class BaseCrud extends Component
                 'customFilter'        => [],
                 'quickDate'           => $this->quickDateFilter,
                 'quickDateColumn'     => $this->quickDateColumn,
+                'search'              => $this->search,
+                'sdLabels'            => $this->sdLabels,
             ],
             'columns'       => $this->formDataColumns,
             'columnWidths'  => $this->columnWidths,
@@ -826,12 +835,15 @@ class BaseCrud extends Component
 
         // Filtros
         $filterPrefs                  = $prefs['filters']     ?? [];
-        $this->savedFilters           = $filterPrefs['saved']               ?? [];
+        $this->filters                = $filterPrefs['lastUsed']             ?? [];
         $this->filterOperators        = $filterPrefs['operators']            ?? [];
         $this->dateRanges             = $filterPrefs['dateRanges']           ?? [];
         $this->dateRangeOperators     = $filterPrefs['dateRangeOperators']   ?? [];
+        $this->savedFilters           = $filterPrefs['saved']               ?? [];
         $this->quickDateFilter        = $filterPrefs['quickDate']            ?? '';
         $this->quickDateColumn        = $filterPrefs['quickDateColumn']      ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
+        $this->search                 = $filterPrefs['search']               ?? '';
+        $this->sdLabels               = $filterPrefs['sdLabels']             ?? [];
 
         // Busca avançada
         $advPrefs                  = $prefs['advancedSearch'] ?? [];
@@ -840,6 +852,9 @@ class BaseCrud extends Component
 
         // Histórico
         $this->searchHistory = $prefs['searchHistory'] ?? [];
+
+        // Reconstrói texto de resumo dos filtros ativos
+        $this->buildTextFilter();
 
         // Recalcula hidden columns
         $this->updateHiddenColumnsCount();
