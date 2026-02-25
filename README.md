@@ -43,6 +43,7 @@ O pacote é dividido em três subsistemas complementares:
 - [Sistema de UserPreferences](#-sistema-de-userpreferences)
 - [BaseCrud — Tela Dinâmica Completa](#-basecrud--tela-dinâmica-completa)
   - [Como funciona](#como-funciona)
+  - [Como usar o BaseCrud](#como-usar-o-basecrud)
   - [Schema de configuração](#schema-de-configuração-cols)
   - [Tipos de colunas](#tipos-de-colunas-colstipo)
   - [Helpers de formatação](#helpers-de-formatação)
@@ -920,6 +921,189 @@ ptah:forge Product --fields="..."
 | whereHasFilter | Abrir tela pré-filtrada por entidade pai |
 | Multi-tenant | Filtro dinâmico por empresa via `companyFilter` |
 | Error recovery | try/catch em `getRowsProperty` com limpeza de preferências corrompidas |
+
+---
+
+### Como usar o BaseCrud
+
+#### Opção 1 — Via `ptah:forge` (recomendado)
+
+O jeito mais rápido. O comando gera tudo, incluindo a `CrudConfig` no banco:
+
+```bash
+php artisan ptah:forge Product \
+  --fields="name:string,price:decimal(10,2),status:enum(active|inactive)"
+```
+
+A view gerada em `resources/views/product/index.blade.php` já contém:
+
+```blade
+@livewire('ptah::base-crud', ['model' => 'Product'])
+```
+
+Pronto — tabela, filtros, modal, paginação e preferências funcionando sem mais nenhum código.
+
+---
+
+#### Opção 2 — Manual (sem `ptah:forge`)
+
+**Passo 1 — Pré-requisitos**
+
+Seu Model deve ter `SoftDeletes` (recomendado) e `$fillable` configurado:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Product extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = ['name', 'price', 'status', 'category_id'];
+
+    protected $casts = ['price' => 'float'];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+}
+```
+
+**Passo 2 — Criar a CrudConfig no banco**
+
+Via Tinker ou em um Seeder:
+
+```php
+use Ptah\Models\CrudConfig;
+
+CrudConfig::create([
+    'model'  => 'Product',
+    'config' => json_encode([
+        'crud'        => 'Product',
+        'totalizador' => false,
+        'cols'        => [
+            [
+                'colsNomeFisico'   => 'id',
+                'colsNomeLogico'   => 'ID',
+                'colsTipo'         => 'number',
+                'colsGravar'       => 'N',
+                'colsRequired'     => 'N',
+                'colsAlign'        => 'text-center',
+                'colsIsFilterable' => 'N',
+            ],
+            [
+                'colsNomeFisico'   => 'name',
+                'colsNomeLogico'   => 'Nome',
+                'colsTipo'         => 'text',
+                'colsGravar'       => 'S',
+                'colsRequired'     => 'S',
+                'colsAlign'        => 'text-start',
+                'colsIsFilterable' => 'S',
+            ],
+            [
+                'colsNomeFisico'   => 'price',
+                'colsNomeLogico'   => 'Preço',
+                'colsTipo'         => 'number',
+                'colsGravar'       => 'S',
+                'colsRequired'     => 'S',
+                'colsHelper'       => 'currencyFormat',
+                'colsAlign'        => 'text-end',
+                'colsIsFilterable' => 'S',
+            ],
+            [
+                'colsNomeFisico'   => 'status',
+                'colsNomeLogico'   => 'Status',
+                'colsTipo'         => 'select',
+                'colsGravar'       => 'S',
+                'colsRequired'     => 'S',
+                'colsAlign'        => 'text-center',
+                'colsIsFilterable' => 'S',
+                'colsSelect'       => ['Ativo' => 'active', 'Inativo' => 'inactive'],
+            ],
+        ],
+    ]),
+]);
+```
+
+**Passo 3 — Renderizar na view**
+
+```blade
+{{-- resources/views/products/index.blade.php --}}
+@extends('ptah::layouts.forge-dashboard')
+
+@section('title', 'Produtos')
+
+@section('content')
+    @livewire('ptah::base-crud', ['model' => 'Product'])
+@endsection
+```
+
+**Passo 4 — Rota**
+
+```php
+// routes/web.php
+Route::get('/products', fn() => view('products.index'))->name('products.index');
+```
+
+---
+
+#### Todos os parâmetros do componente
+
+| Parâmetro | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `model` | string | — | **Obrigatório.** Nome do Model (ex: `'Product'`) |
+| `title` | string | `null` | Título exibido no topo da tela |
+| `perPage` | int | `15` | Itens por página inicial |
+| `companyFilter` | array | `[]` | Multi-tenant: `['column' => 'company_id', 'value' => $id]` |
+| `whereHasFilter` | string | `null` | Relação para pré-filtrar (ex: `'supplier'`) |
+| `whereHasCondition` | array | `[]` | Condição do `whereHasFilter`: `['id', '=', 5]` |
+| `readOnly` | bool | `false` | Desativa create/edit/delete |
+| `canCreate` | bool | `true` | Exibe botão Novo |
+| `canEdit` | bool | `true` | Exibe ação de edição |
+| `canDelete` | bool | `true` | Exibe ação de exclusão |
+| `canExport` | bool | `true` | Exibe botão de exportação |
+
+---
+
+#### Exemplo completo com todas as opções
+
+```blade
+@livewire('ptah::base-crud', [
+    'model'             => 'Product',
+    'title'             => 'Produtos do Fornecedor',
+    'perPage'           => 25,
+    'companyFilter'     => ['column' => 'company_id', 'value' => auth()->user()->company_id],
+    'whereHasFilter'    => 'supplier',
+    'whereHasCondition' => ['id', '=', $supplier->id],
+    'canCreate'         => true,
+    'canEdit'           => true,
+    'canDelete'         => auth()->user()->can('delete products'),
+    'canExport'         => true,
+])
+```
+
+---
+
+#### Ajustando a configuração depois
+
+Para alterar colunas, helpers ou comportamentos sem re-gerar, use o Tinker:
+
+```bash
+php artisan tinker
+```
+
+```php
+$config = Ptah\Models\CrudConfig::where('model', 'Product')->first();
+$data   = json_decode($config->config, true);
+
+// Ajuste o que precisar
+$data['cols'][2]['colsHelper'] = 'currencyFormat';
+
+$config->update(['config' => json_encode($data)]);
+// Cache invalidado automaticamente ao salvar
+```
 
 ---
 
