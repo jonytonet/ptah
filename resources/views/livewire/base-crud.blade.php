@@ -221,6 +221,9 @@
                 </div>
             </div>
 
+            {{-- Configuração do CRUD (somente admins) --}}
+            @livewire('ptah::crud-config', ['model' => $model], key('crud-cfg-'.$model))
+
             {{-- Atualizar --}}
             <button wire:click="$refresh"
                 class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none"

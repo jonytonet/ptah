@@ -13,6 +13,7 @@ use Ptah\Commands\MakeDocsCommand;
 use Ptah\Commands\MakeEntityCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Livewire\BaseCrud;
+use Ptah\Livewire\CrudConfig;
 use Ptah\Livewire\SearchDropdown;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;

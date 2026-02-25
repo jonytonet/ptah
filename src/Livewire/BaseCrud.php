@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Carbon\Carbon;
@@ -865,6 +866,26 @@ class BaseCrud extends Component
         $ui = $this->crudConfig['uiPreferences'] ?? [];
         $this->viewDensity = ! empty($ui['compactMode']) ? 'compact' : 'comfortable';
         $this->perPage     = (int) ($ui['perPage'] ?? config('ptah.crud.per_page', 25));
+    }
+
+    /**
+     * Recarrega a configuração do CRUD após salvar no modal de configuração.
+     */
+    #[On('ptah:crud-config-updated')]
+    public function reloadCrudConfig(): void
+    {
+        // Invalida o cache para forçar re-leitura do banco
+        $this->configService->forget($this->model);
+
+        // Recarrega a config atualizada
+        $config = $this->configService->find($this->model);
+
+        if ($config) {
+            $this->crudConfig = $config->config;
+        }
+
+        // Atualiza visibilidade de colunas para refletir mudanças
+        $this->initFormDataColumns();
     }
 
 
