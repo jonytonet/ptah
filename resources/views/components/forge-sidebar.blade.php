@@ -113,7 +113,7 @@
 
     {{-- Logout --}}
     <div class="p-2 border-t border-gray-100 flex-shrink-0">
-        <form method="POST" action="{{ route('logout', [], false) ?? '#' }}">
+        <form method="POST" action="{{ \Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#' }}">
             @csrf
             <button
                 type="submit"

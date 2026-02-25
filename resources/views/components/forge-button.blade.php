@@ -112,7 +112,7 @@
     @endif
 
     @if (isset($icon) && !$loading)
-        <span class="shrink-0">{{ $icon }}</span>
+        <span class="shrink-0">{!! $icon !!}</span>
     @endif
 
     <span>{{ $slot }}</span>

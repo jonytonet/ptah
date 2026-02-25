@@ -76,14 +76,10 @@ class PtahServiceProvider extends ServiceProvider
         // Carrega as views com namespace 'ptah'
         $this->loadViewsFrom($viewsPath, 'ptah');
 
-        // Registra automaticamente todos os componentes Blade forge-*
-        // Permite uso como <x-forge-button> ou <x-ptah::forge-button>
-        $prefix = config('ptah.forge.prefix', 'forge');
-
-        Blade::anonymousComponentNamespace(
-            $viewsPath . '/components',
-            $prefix
-        );
+        // Registra os componentes Blade forge-* sem prefixo adicional:
+        // forge-button.blade.php  → <x-forge-button>
+        // forge-breadcrumb.blade.php → <x-forge-breadcrumb>
+        Blade::anonymousComponentPath($viewsPath . '/components');
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Ptah\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
+use Ptah\Generators\BindingGenerator;
 use Ptah\Generators\ControllerApiGenerator;
 use Ptah\Generators\ControllerGenerator;
 use Ptah\Generators\Contracts\GeneratorInterface;
@@ -163,6 +164,7 @@ class ScaffoldCommand extends Command
         return [
             new ModelGenerator($this->files),
             new MigrationGenerator($this->files),
+            new BindingGenerator($this->files),
             new DtoGenerator($this->files),
             new RepositoryInterfaceGenerator($this->files),
             new RepositoryGenerator($this->files),
@@ -253,18 +255,15 @@ class ScaffoldCommand extends Command
         $this->line('  <fg=blue;options=bold>Próximos passos:</> ');
         $this->newLine();
 
-        $this->line("  <fg=yellow>1. Registre o binding do repositório no AppServiceProvider:</>");
-        $this->line("     <fg=gray>use {$ns}\\Repositories\\Contracts\\{$context->entity}RepositoryInterface;</>");
-        $this->line("     <fg=gray>use {$ns}\\Repositories\\{$context->entity}Repository;</>");
-        $this->line("     <fg=gray>\$this->app->bind({$context->entity}RepositoryInterface::class, {$context->entity}Repository::class);</>");
+        $this->line("  <fg=green>✔ Binding registrado automaticamente no AppServiceProvider.</>");
         $this->newLine();
 
-        $this->line("  <fg=yellow>2. Execute a migration:</>");
+        $this->line("  <fg=yellow>1. Execute a migration:</>");
         $this->line("     <fg=gray>php artisan migrate</>");
         $this->newLine();
 
         if (! empty($context->fields)) {
-            $this->line("  <fg=yellow>3. Revise as regras de validação nos Requests gerados.</>");
+            $this->line("  <fg=yellow>2. Revise as regras de validação nos Requests gerados.</>");
             $this->newLine();
         }
 

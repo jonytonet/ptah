@@ -129,7 +129,7 @@ class FilterService
      * @param array $formData  Dados do formulário de filtros (dateRanges)
      * @return FilterDTO[]
      */
-    public function processDateRangeFilters(array $formData): array
+    public function processDateRangeFilters(array $formData, array $operators = []): array
     {
         $filters   = [];
         $processed = [];
@@ -143,20 +143,47 @@ class FilterService
             if (str_ends_with($key, '_start')) {
                 $field = substr($key, 0, -6);
                 if (in_array($field, $processed, true)) continue;
-                $to = $formData[$field . '_end'] ?? null;
+                $to          = $formData[$field . '_end'] ?? null;
                 $processed[] = $field;
-                $dto = $this->buildDateRangeFilter($field, $value, $to ?: null);
-                if ($dto) $filters[] = $dto;
+
+                $opFrom = $operators[$field . '_start'] ?? null;
+                $opTo   = $operators[$field . '_end']   ?? null;
+
+                if ($opFrom || $opTo) {
+                    // Operadores explícitos: aplica individualmente
+                    if ($value !== null && $value !== '') {
+                        $filters[] = new FilterDTO(field: $field, value: $value, operator: $opFrom ?? '>=', type: 'date');
+                    }
+                    if ($to !== null && $to !== '') {
+                        $filters[] = new FilterDTO(field: $field, value: $to, operator: $opTo ?? '<=', type: 'date');
+                    }
+                } else {
+                    $dto = $this->buildDateRangeFilter($field, $value, $to ?: null);
+                    if ($dto) $filters[] = $dto;
+                }
                 continue;
             }
 
             if (str_ends_with($key, '_end')) {
                 $field = substr($key, 0, -4);
                 if (in_array($field, $processed, true)) continue;
-                $from = $formData[$field . '_start'] ?? null;
+                $from        = $formData[$field . '_start'] ?? null;
                 $processed[] = $field;
-                $dto = $this->buildDateRangeFilter($field, $from ?: null, $value);
-                if ($dto) $filters[] = $dto;
+
+                $opFrom = $operators[$field . '_start'] ?? null;
+                $opTo   = $operators[$field . '_end']   ?? null;
+
+                if ($opFrom || $opTo) {
+                    if ($from !== null && $from !== '') {
+                        $filters[] = new FilterDTO(field: $field, value: $from, operator: $opFrom ?? '>=', type: 'date');
+                    }
+                    if ($value !== null && $value !== '') {
+                        $filters[] = new FilterDTO(field: $field, value: $value, operator: $opTo ?? '<=', type: 'date');
+                    }
+                } else {
+                    $dto = $this->buildDateRangeFilter($field, $from ?: null, $value);
+                    if ($dto) $filters[] = $dto;
+                }
                 continue;
             }
 

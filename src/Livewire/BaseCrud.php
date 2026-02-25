@@ -106,8 +106,14 @@ class BaseCrud extends Component
     /** Filtros do formulário de filtros (campo => valor) */
     public array $filters = [];
 
-    /** Date range filters (campo_from/campo_to) */
+    /** Operadores por campo: (campo => '='|'LIKE'|'>'|'>='|'<'|'<=') */
+    public array $filterOperators = [];
+
+    /** Date range filters (campo_start/campo_end) */
     public array $dateRanges = [];
+
+    /** Operadores para date ranges (campo_start/campo_end => '='|'>='|'<='|'>'|'<') */
+    public array $dateRangeOperators = [];
 
     /** Filtros salvos com nome */
     public array $savedFilters = [];
@@ -290,7 +296,7 @@ class BaseCrud extends Component
             }
 
             // Date ranges (padrão ERP: _start/_end e legado: _from/_to)
-            $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges);
+            $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
             if (! empty($drFilters)) {
                 $this->filterService->applyFilters($query, $drFilters);
             }
@@ -379,7 +385,7 @@ class BaseCrud extends Component
             $this->filterService->applyFilters($baseQuery, $activeFilters);
         }
 
-        $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges);
+        $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
         if (! empty($drFilters)) {
             $this->filterService->applyFilters($baseQuery, $drFilters);
         }
@@ -437,10 +443,20 @@ class BaseCrud extends Component
         $this->buildTextFilter();
     }
 
+    public function updatedFilterOperators(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedDateRanges(): void
     {
         $this->resetPage();
         $this->buildTextFilter();
+    }
+
+    public function updatedDateRangeOperators(): void
+    {
+        $this->resetPage();
     }
 
     public function updatedPerPage(): void
@@ -456,13 +472,15 @@ class BaseCrud extends Component
 
     public function clearFilters(): void
     {
-        $this->filters          = [];
-        $this->dateRanges       = [];
-        $this->sdSearches       = [];
-        $this->sdResults        = [];
-        $this->sdLabels         = [];
-        $this->quickDateFilter  = '';
-        $this->textFilter       = [];
+        $this->filters              = [];
+        $this->filterOperators      = [];
+        $this->dateRanges           = [];
+        $this->dateRangeOperators   = [];
+        $this->sdSearches           = [];
+        $this->sdResults            = [];
+        $this->sdLabels             = [];
+        $this->quickDateFilter      = '';
+        $this->textFilter           = [];
         $this->advancedSearchActive = false;
         $this->resetPage();
     }
@@ -726,12 +744,6 @@ class BaseCrud extends Component
 
     public function savePreferences(): void
     {
-        $userId = Auth::id();
-
-        if (! $userId) {
-            return;
-        }
-
         $prefs = [
             '_version'      => '2.1.0',
             '_lastModified' => now()->toIso8601String(),
@@ -744,11 +756,14 @@ class BaseCrud extends Component
                 'currentPage' => 1,
             ],
             'filters'       => [
-                'lastUsed'       => array_filter($this->filters),
-                'saved'          => $this->savedFilters,
-                'customFilter'   => [],
-                'quickDate'      => $this->quickDateFilter,
-                'quickDateColumn'=> $this->quickDateColumn,
+                'lastUsed'            => array_filter($this->filters),
+                'operators'           => $this->filterOperators,
+                'dateRanges'          => array_filter($this->dateRanges),
+                'dateRangeOperators'  => $this->dateRangeOperators,
+                'saved'               => $this->savedFilters,
+                'customFilter'        => [],
+                'quickDate'           => $this->quickDateFilter,
+                'quickDateColumn'     => $this->quickDateColumn,
             ],
             'columns'       => $this->formDataColumns,
             'columnWidths'  => $this->columnWidths,
@@ -764,27 +779,32 @@ class BaseCrud extends Component
             'export'        => null,
         ];
 
-        UserPreference::set(
-            userId: $userId,
-            key:    'crud.' . $this->model,
-            value:  $prefs,
-            group:  'crud',
-        );
+        $userId = Auth::id();
 
-        // Invalida cache de preferências
-        $this->cacheService->forgetPreferences($userId, $this->model);
+        if ($userId) {
+            UserPreference::set(
+                userId: $userId,
+                key:    'crud.' . $this->model,
+                value:  $prefs,
+                group:  'crud',
+            );
+            $this->cacheService->forgetPreferences($userId, $this->model);
+        } else {
+            // Fallback: persiste na session quando não há usuário autenticado
+            session(['ptah.crud.' . $this->model => $prefs]);
+        }
     }
 
     protected function loadPreferences(): void
     {
         $userId = Auth::id();
 
-        if (! $userId) {
-            $this->applyDefaultUiPreferences();
-            return;
+        if ($userId) {
+            $prefs = UserPreference::get($userId, 'crud.' . $this->model, null);
+        } else {
+            // Fallback: carrega da session quando não há usuário autenticado
+            $prefs = session('ptah.crud.' . $this->model, null);
         }
-
-        $prefs = UserPreference::get($userId, 'crud.' . $this->model, null);
 
         if (! $prefs || ! is_array($prefs)) {
             $this->applyDefaultUiPreferences();
@@ -805,10 +825,13 @@ class BaseCrud extends Component
         $this->viewDensity        = $prefs['viewDensity'] ?? 'comfortable';
 
         // Filtros
-        $filterPrefs               = $prefs['filters']     ?? [];
-        $this->savedFilters        = $filterPrefs['saved'] ?? [];
-        $this->quickDateFilter     = $filterPrefs['quickDate']       ?? '';
-        $this->quickDateColumn     = $filterPrefs['quickDateColumn'] ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
+        $filterPrefs                  = $prefs['filters']     ?? [];
+        $this->savedFilters           = $filterPrefs['saved']               ?? [];
+        $this->filterOperators        = $filterPrefs['operators']            ?? [];
+        $this->dateRanges             = $filterPrefs['dateRanges']           ?? [];
+        $this->dateRangeOperators     = $filterPrefs['dateRangeOperators']   ?? [];
+        $this->quickDateFilter        = $filterPrefs['quickDate']            ?? '';
+        $this->quickDateColumn        = $filterPrefs['quickDateColumn']      ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
 
         // Busca avançada
         $advPrefs                  = $prefs['advancedSearch'] ?? [];
@@ -971,11 +994,15 @@ class BaseCrud extends Component
 
         if ($this->quickDateFilter !== '') {
             $labels = [
-                'today'   => 'Hoje',
-                'week'    => 'Esta semana',
-                'month'   => 'Este mês',
-                'quarter' => 'Este trimestre',
-                'year'    => 'Este ano',
+                'today'     => 'Hoje',
+                'yesterday' => 'Ontem',
+                'last7'     => 'Últimos 7 dias',
+                'last30'    => 'Últimos 30 dias',
+                'week'      => 'Esta semana',
+                'month'     => 'Este mês',
+                'lastMonth' => 'Mês passado',
+                'quarter'   => 'Este trimestre',
+                'year'      => 'Este ano',
             ];
             $badges[] = ['label' => 'Período', 'field' => 'quickDate', 'value' => $labels[$this->quickDateFilter] ?? $this->quickDateFilter];
         }
@@ -1133,15 +1160,20 @@ class BaseCrud extends Component
      */
     protected function getQuickDateRange(string $period): array
     {
-        $now = Carbon::now();
+        $now  = Carbon::now();
+        $copy = $now->copy();
 
         return match ($period) {
-            'today'   => [$now->startOfDay()->toDateTimeString(), $now->copy()->endOfDay()->toDateTimeString()],
-            'week'    => [$now->startOfWeek()->toDateTimeString(), $now->copy()->endOfWeek()->toDateTimeString()],
-            'month'   => [$now->startOfMonth()->toDateTimeString(), $now->copy()->endOfMonth()->toDateTimeString()],
-            'quarter' => [$now->startOfQuarter()->toDateTimeString(), $now->copy()->endOfQuarter()->toDateTimeString()],
-            'year'    => [$now->startOfYear()->toDateTimeString(), $now->copy()->endOfYear()->toDateTimeString()],
-            default   => ['', ''],
+            'today'     => [$now->startOfDay()->toDateTimeString(),                  $copy->endOfDay()->toDateTimeString()],
+            'yesterday' => [$now->subDay()->startOfDay()->toDateTimeString(),         $now->copy()->endOfDay()->toDateTimeString()],
+            'last7'     => [$now->subDays(7)->startOfDay()->toDateTimeString(),       $copy->endOfDay()->toDateTimeString()],
+            'last30'    => [$now->subDays(30)->startOfDay()->toDateTimeString(),      $copy->endOfDay()->toDateTimeString()],
+            'week'      => [$now->startOfWeek()->toDateTimeString(),                  $copy->endOfWeek()->toDateTimeString()],
+            'month'     => [$now->startOfMonth()->toDateTimeString(),                 $copy->endOfMonth()->toDateTimeString()],
+            'lastMonth' => [$now->subMonth()->startOfMonth()->toDateTimeString(),     $now->copy()->endOfMonth()->toDateTimeString()],
+            'quarter'   => [$now->startOfQuarter()->toDateTimeString(),               $copy->endOfQuarter()->toDateTimeString()],
+            'year'      => [$now->startOfYear()->toDateTimeString(),                  $copy->endOfYear()->toDateTimeString()],
+            default     => ['', ''],
         };
     }
 
@@ -1449,6 +1481,9 @@ class BaseCrud extends Component
                 continue;
             }
 
+            // Operador definido pelo usuário, ou auto-detectado
+            $explicitOp = $this->filterOperators[$field] ?? null;
+
             // Verifica se filtra via relação
             $col = $this->findColByField($field);
 
@@ -1456,14 +1491,17 @@ class BaseCrud extends Component
                 $domainFilters[] = new FilterDTO(
                     field:    $col['colsNomeFisico'],
                     value:    $value,
-                    operator: '=',
+                    operator: $explicitOp ?? '=',
                     type:     'text',
                 );
             } else {
+                $autoOp = (is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
+                    ? 'LIKE'
+                    : '=';
                 $domainFilters[] = new FilterDTO(
                     field:    $field,
                     value:    $value,
-                    operator: (is_string($value) && strlen($value) > 1) ? 'LIKE' : '=',
+                    operator: $explicitOp ?? $autoOp,
                     type:     FilterDTO::inferType($field, $value),
                 );
             }

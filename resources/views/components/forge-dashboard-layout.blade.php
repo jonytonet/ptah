@@ -25,23 +25,31 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $appName }}{{ isset($title) ? ' — ' . $title : '' }}</title>
 
-    {{-- Tailwind v4 via CDN (produção: o projeto do usuário deve compilar forge.css com Vite) --}}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: { DEFAULT: '#5b21b6', light: '#ede9fe', dark: '#4c1d95' },
-                        success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
-                        danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
-                        warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
-                        dark:    { DEFAULT: '#1e293b', light: '#f1f5f9', dark: '#0f172a' },
+    {{--
+        Tailwind CSS:
+        - Se o projeto usa Vite com @tailwindcss/vite, os estilos já vêm via @vite abaixo.
+        - Fallback para CDN apenas quando não há assets compilados (desenvolvimento sem build).
+    --}}
+    @if(file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: { DEFAULT: '#5b21b6', light: '#ede9fe', dark: '#4c1d95' },
+                            success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
+                            danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
+                            warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
+                            dark:    { DEFAULT: '#1e293b', light: '#f1f5f9', dark: '#0f172a' },
+                        }
                     }
                 }
             }
-        }
-    </script>
+        </script>
+    @endif
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
@@ -49,9 +57,6 @@
         @keyframes wave { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1.0); } }
         .animate-wave { animation: wave 1s ease-in-out infinite; }
     </style>
-
-    {{-- Alpine.js --}}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {{-- Livewire (se disponível) --}}
     @if(class_exists(\Livewire\Livewire::class))

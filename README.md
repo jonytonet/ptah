@@ -5,7 +5,7 @@
 **Ptah** é um pacote Laravel que combina **scaffolding de código** com um **sistema de componentes visuais** prontos para uso. Com um único comando você gera toda a estrutura de uma entidade; com uma tag você renderiza interfaces consistentes.
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
-[![Laravel Version](https://img.shields.io/badge/Laravel-11%2B-red)](https://laravel.com)
+[![Laravel Version](https://img.shields.io/badge/Laravel-11%2B%20%7C%2012%2B-red)](https://laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -72,7 +72,7 @@ O pacote é dividido em três subsistemas complementares:
 | Requisito | Versão |
 |---|---|
 | PHP | ^8.2 |
-| Laravel | ^11.0 |
+| Laravel | ^11.0 \| ^12.0 |
 | Alpine.js | ^3.x (via CDN ou npm) |
 | Livewire | ^3.0 (obrigatório — BaseCrud e `forge-pagination`) |
 
@@ -601,19 +601,12 @@ routes/api.php  ← Route::apiResource('products', ProductApiController::class)
 O comando exibe automaticamente ao final:
 
 ```
-Próximos passos:
+Proximos passos:
 
-1. Registre o binding do repositório no AppServiceProvider:
-
-   use App\Repositories\Contracts\ProductRepositoryInterface;
-   use App\Repositories\ProductRepository;
-
-   $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
-
-2. Execute as migrations (incluí a tabela crud_configs do ptah):
+1. Execute as migrations (incluí a tabela crud_configs do ptah):
    php artisan migrate
 
-3. Revise as regras de validação nos Requests gerados.
+2. Revise as regras de validação nos Requests gerados.
 
 4. A tela de listagem já está funcional via BaseCrud:
    Acesse /product — tabela dinâmica, filtros, modal create/edit e soft delete prontos.

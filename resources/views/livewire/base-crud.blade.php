@@ -10,88 +10,242 @@
     @if (!empty($crudConfig))
 
     {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex flex-wrap items-center gap-2 mb-4">
 
         {{-- Botão Novo --}}
         @if ($permissions['showCreateButton'] ?? true)
             @if (!($permissions['create'] ?? null) || (auth()->check() && auth()->user()->can($permissions['create'])))
-                <x-forge-button wire:click="openCreate" color="primary" size="sm"
-                    icon='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
+                <button wire:click="openCreate"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-[0_8px_20px_rgba(91,33,182,0.45)] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
                     Novo
-                </x-forge-button>
+                </button>
             @endif
         @endif
 
         {{-- Busca Global --}}
         <div class="flex-1 min-w-[200px] max-w-xs">
-            <input
-                wire:model.live.debounce.400ms="search"
-                type="text"
-                placeholder="Buscar..."
-                class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
+            <div class="relative">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
+                </svg>
+                <input
+                    wire:model.live.debounce.400ms="search"
+                    type="text"
+                    placeholder="Buscar..."
+                    class="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+            </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        {{-- Grupo de ações à direita --}}
+        <div class="flex items-center gap-1.5 ml-auto flex-wrap">
 
             {{-- Botão Filtros --}}
-            @if (!empty($crudConfig['customFilters']) || !empty($crudConfig['dateRangeFilters']))
-                <x-forge-button wire:click="toggleFilters" color="{{ $showFilters ? 'primary' : 'dark' }}" flat size="sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            @php
+                $filterableCols = collect($crudConfig['cols'] ?? [])->where('colsIsFilterable', 'S')->count();
+                $hasFilterable  = $filterableCols > 0 || !empty($crudConfig['customFilters']);
+                $activeFilterCount = count(array_filter($filters)) + count(array_filter($dateRanges)) + ($quickDateFilter !== '' ? 1 : 0);
+            @endphp
+            @if ($hasFilterable)
+                <button wire:click="toggleFilters"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
+                           {{ $showFilters ? 'bg-primary text-white' : 'bg-transparent text-gray-600 hover:bg-gray-100' }}"
+                    title="Filtros">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    Filtros
-                    @php
-                        $activeFilterCount = count(array_filter($filters));
-                    @endphp
-                    @if($activeFilterCount > 0)
-                        <x-forge-badge class="ml-1" color="danger">{{ $activeFilterCount }}</x-forge-badge>
+                    <span class="hidden sm:inline">Filtros</span>
+                    @if ($activeFilterCount > 0)
+                        <span class="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-danger text-white leading-none">
+                            {{ $activeFilterCount }}
+                        </span>
                     @endif
-                </x-forge-button>
+                </button>
             @endif
 
             {{-- Lixeira --}}
             @if ($permissions['showTrashButton'] ?? true)
-                <x-forge-button wire:click="toggleTrashed" color="{{ $showTrashed ? 'danger' : 'dark' }}" flat size="sm" title="{{ $showTrashed ? 'Ver ativos' : 'Ver excluídos' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                </x-forge-button>
+                <button wire:click="toggleTrashed"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
+                           {{ $showTrashed ? 'bg-danger/10 text-danger' : 'bg-transparent text-gray-600 hover:bg-gray-100' }}"
+                    title="{{ $showTrashed ? 'Ver ativos' : 'Ver excluídos' }}">
+                    @if ($showTrashed)
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+                        </svg>
+                        <span class="hidden sm:inline">Voltar</span>
+                    @else
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        <span class="hidden sm:inline">Lixeira</span>
+                    @endif
+                </button>
             @endif
 
             {{-- Exportação --}}
             @if (!empty($exportCfg['enabled']))
-                <div class="relative" x-data="{ open: @entangle('showExportMenu') }">
-                    <x-forge-button @click="open = !open" color="dark" flat size="sm">
-                        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 rounded-xl bg-transparent hover:bg-gray-100 transition-all duration-200 focus:outline-none"
+                        title="Exportar">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        Exportar
-                    </x-forge-button>
+                        <span class="hidden sm:inline">Exportar</span>
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[130px]">
+                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[150px] py-1">
                         @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
-                            <button wire:click="export('{{ $fmt }}')"
-                                class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 capitalize">
-                                {{ strtoupper($fmt) }}
+                            <button wire:click="export('{{ $fmt }}')" @click="open = false"
+                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                @if ($fmt === 'excel')
+                                    <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    Excel
+                                @elseif ($fmt === 'pdf')
+                                    <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    PDF
+                                @else
+                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    {{ strtoupper($fmt) }}
+                                @endif
                             </button>
                         @endforeach
                     </div>
                 </div>
             @endif
 
-            {{-- View density --}}
-            <div class="flex items-center gap-1">
-                @foreach (['compact' => '≡', 'comfortable' => '☰', 'spacious' => '⊟'] as $density => $icon)
-                    <button wire:click="$set('viewDensity', '{{ $density }}')"
-                        class="px-2 py-1 text-xs rounded {{ $viewDensity === $density ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                        {{ $icon }}
+            {{-- Colunas (visibilidade) --}}
+            @if (!empty($formDataColumns))
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
+                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-600 bg-transparent hover:bg-gray-100' }}"
+                        title="Colunas">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 10h18M3 14h18M10 6v12M14 6v12"/>
+                        </svg>
+                        <span class="hidden sm:inline">Colunas</span>
+                        @if ($hiddenColumnsCount > 0)
+                            <span class="inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-amber-500 text-white leading-none">
+                                {{ $hiddenColumnsCount }}
+                            </span>
+                        @endif
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
                     </button>
-                @endforeach
+                    <div x-show="open" x-cloak @click.outside="open = false"
+                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto">
+                        {{-- Ações rápidas --}}
+                        <div class="flex gap-2 px-3 pb-2 border-b border-gray-100 mb-1">
+                            <button wire:click="showAllColumns" @click="open = false"
+                                class="flex-1 text-xs text-center py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                                Mostrar todas
+                            </button>
+                            <button wire:click="hideAllColumns" @click="open = false"
+                                class="flex-1 text-xs text-center py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                                Ocultar todas
+                            </button>
+                        </div>
+                        {{-- Lista de colunas --}}
+                        @foreach ($crudConfig['cols'] ?? [] as $col)
+                            @if (($col['colsTipo'] ?? '') !== 'action' && ($col['colsNomeFisico'] ?? '') !== 'id')
+                                @php $colField = $col['colsNomeFisico']; @endphp
+                                <label class="flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox"
+                                        wire:model.live="formDataColumns.{{ $colField }}"
+                                        wire:change="updateColumns"
+                                        class="rounded text-primary focus:ring-primary/30 cursor-pointer">
+                                    <span class="text-sm text-gray-700 select-none">{{ $col['colsNomeLogico'] ?? $colField }}</span>
+                                </label>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            {{-- Densidade da visualização --}}
+            @php
+                $densityMap = [
+                    'compact'     => ['icon' => '≡', 'label' => 'Compacto'],
+                    'comfortable' => ['icon' => '☰', 'label' => 'Confortável'],
+                    'spacious'    => ['icon' => '⊟', 'label' => 'Espaçoso'],
+                ];
+            @endphp
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 rounded-xl bg-transparent hover:bg-gray-100 transition-all duration-200 focus:outline-none"
+                    title="Densidade">
+                    <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
+                    <span class="hidden sm:inline">Densidade</span>
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-cloak @click.outside="open = false"
+                     class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+                    @foreach ($densityMap as $d => $info)
+                        <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
+                            class="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-50 transition-colors
+                                   {{ $viewDensity === $d ? 'text-primary font-semibold' : 'text-gray-700' }}">
+                            <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
+                            @if ($viewDensity === $d)
+                                <svg class="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            @endif
+                        </button>
+                    @endforeach
+                </div>
             </div>
 
+            {{-- Atualizar --}}
+            <button wire:click="$refresh"
+                class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none"
+                title="Atualizar">
+                <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+
+            {{-- Limpar filtros (visível quando houver algo ativo) --}}
+            @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
+                <button wire:click="clearFilters"
+                    class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors focus:outline-none"
+                    title="Limpar filtros">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            @endif
+
             {{-- Per page --}}
-            <select wire:model.live="perPage" class="text-sm border border-gray-300 rounded px-2 py-1">
+            <select wire:model.live="perPage"
+                class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40">
                 @foreach ([10, 15, 25, 50, 100] as $n)
                     <option value="{{ $n }}">{{ $n }} / pág.</option>
                 @endforeach
@@ -102,158 +256,292 @@
 
     {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
     @if ($showFilters)
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-4 overflow-hidden">
 
-                {{-- Filtros das colunas filtráveis --}}
-                @foreach ($crudConfig['cols'] ?? [] as $col)
-                    @if (($col['colsIsFilterable'] ?? 'N') === 'S' && ($col['colsTipo'] ?? '') !== 'action')
-                        @php
-                            $cfField = $col['colsNomeFisico'];
-                            $cfLabel = $col['colsNomeLogico'] ?? $cfField;
-                            $cfTipo  = $col['colsTipo'] ?? 'text';
-                        @endphp
+            {{-- Header --}}
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span class="text-sm font-semibold text-gray-700">Filtros</span>
+                    @if ($activeFilterCount > 0)
+                        <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                            {{ $activeFilterCount }} ativo{{ $activeFilterCount > 1 ? 's' : '' }}
+                        </span>
+                    @endif
+                </div>
+                <button wire:click="clearFilters"
+                    class="text-xs text-gray-400 hover:text-danger transition-colors flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Limpar tudo
+                </button>
+            </div>
 
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">{{ $cfLabel }}</label>
+            <div class="p-4 space-y-4">
 
-                            @if ($cfTipo === 'select' && !empty($col['colsSelect']))
-                                <select wire:model.live="filters.{{ $cfField }}"
-                                    class="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-primary/40 focus:outline-none">
-                                    <option value="">-- Todos --</option>
-                                    @foreach ($col['colsSelect'] as $label => $val)
-                                        <option value="{{ $val }}">{{ $label }}</option>
-                                    @endforeach
-                                </select>
+                {{-- Atalhos rápidos de data --}}
+                @php
+                    $hasDateFilterCols = collect($crudConfig['cols'] ?? [])
+                        ->where('colsIsFilterable', 'S')
+                        ->where('colsTipo', 'date')
+                        ->isNotEmpty();
+                    $quickLabels = [
+                        'today'     => 'Hoje',
+                        'yesterday' => 'Ontem',
+                        'last7'     => '7 dias',
+                        'last30'    => '30 dias',
+                        'week'      => 'Esta semana',
+                        'month'     => 'Este mês',
+                        'lastMonth' => 'Mês passado',
+                        'quarter'   => 'Trimestre',
+                        'year'      => 'Este ano',
+                    ];
+                @endphp
+                @if ($hasDateFilterCols)
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 mb-2">Atalhos de data</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            @foreach ($quickLabels as $period => $qlabel)
+                                <button wire:click="applyQuickDateFilter('{{ $period }}')"
+                                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors duration-150
+                                        {{ $quickDateFilter === $period
+                                            ? 'bg-primary text-white border-primary shadow-sm'
+                                            : 'bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary' }}">
+                                    {{ $qlabel }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
-                            @elseif ($cfTipo === 'date' && isset($crudConfig['dateRangeFilters'][$cfField]))
-                                <div class="flex gap-1">
-                                    <input type="date" wire:model.live="dateRanges.{{ $cfField }}_from"
-                                        class="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5" />
-                                    <input type="date" wire:model.live="dateRanges.{{ $cfField }}_to"
-                                        class="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5" />
+                {{-- Campos filtráveis --}}
+                @php
+                    $filterableCfCols = array_values(array_filter(
+                        $crudConfig['cols'] ?? [],
+                        fn($c) => ($c['colsIsFilterable'] ?? 'N') === 'S' && ($c['colsTipo'] ?? '') !== 'action'
+                    ));
+                @endphp
+                @if (!empty($filterableCfCols))
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+
+                        @foreach ($filterableCfCols as $col)
+                            @php
+                                $cfField = $col['colsNomeFisico'];
+                                $cfLabel = $col['colsNomeLogico'] ?? $cfField;
+                                $cfTipo  = $col['colsTipo'] ?? 'text';
+                            @endphp
+
+                            {{-- Date: mostra De / Até com operador --}}
+                            @if ($cfTipo === 'date')
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p class="text-xs text-gray-400 mb-1">De</p>
+                                            <div class="flex gap-1">
+                                                <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
+                                                    class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
+                                                    <option value=">=">&ge;</option>
+                                                    <option value=">">&gt;</option>
+                                                    <option value="=">=</option>
+                                                </select>
+                                                <input type="date"
+                                                    wire:model.live="dateRanges.{{ $cfField }}_start"
+                                                    class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-400 mb-1">Até</p>
+                                            <div class="flex gap-1">
+                                                <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
+                                                    class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
+                                                    <option value="<=">&le;</option>
+                                                    <option value="<">&lt;</option>
+                                                    <option value="=">=</option>
+                                                </select>
+                                                <input type="date"
+                                                    wire:model.live="dateRanges.{{ $cfField }}_end"
+                                                    class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
+                            {{-- Select / Enum --}}
+                            @elseif ($cfTipo === 'select' && !empty($col['colsSelect']))
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <select wire:model.live="filters.{{ $cfField }}"
+                                        class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none">
+                                        <option value="">-- Todos --</option>
+                                        @foreach ($col['colsSelect'] as $optLabel => $optVal)
+                                            <option value="{{ $optVal }}">{{ $optLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                            {{-- SearchDropdown --}}
                             @elseif ($cfTipo === 'searchdropdown')
-                                <div class="relative" x-data="{ open: false }">
-                                    <input type="text"
-                                        wire:model.live.debounce.300ms="sdSearches.{{ $cfField }}"
-                                        wire:keyup="searchDropdown('{{ $cfField }}', $event.target.value)"
-                                        @focus="open = true"
-                                        @click.outside="open = false"
-                                        placeholder="Buscar {{ $cfLabel }}..."
-                                        class="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
-                                    @if (!empty($sdResults[$cfField]))
-                                        <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
-                                            @foreach ($sdResults[$cfField] as $opt)
-                                                <button type="button"
-                                                    wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
-                                                    @click="open = false"
-                                                    class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50">
-                                                    {{ $opt['label'] }}
-                                                </button>
-                                            @endforeach
-                                        </div>
-                                    @endif
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <div class="relative" x-data="{ open: false }">
+                                        <input type="text"
+                                            wire:model.live.debounce.300ms="sdSearches.{{ $cfField }}"
+                                            wire:keyup="searchDropdown('{{ $cfField }}', $event.target.value)"
+                                            @focus="open = true"
+                                            @click.outside="open = false"
+                                            placeholder="Buscar {{ $cfLabel }}..."
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                        @if (!empty($sdResults[$cfField]))
+                                            <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                                                @foreach ($sdResults[$cfField] as $opt)
+                                                    <button type="button"
+                                                        wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                        @click="open = false"
+                                                        class="block w-full text-left px-3 py-2 text-sm hover:bg-violet-50 hover:text-violet-700">
+                                                        {{ $opt['label'] }}
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
 
+                            {{-- Text / Number com operador --}}
                             @else
-                                <input type="{{ $cfTipo === 'number' ? 'number' : 'text' }}"
-                                    wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                    placeholder="{{ $cfLabel }}..."
-                                    class="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-primary/40 focus:outline-none" />
+                                @php $isNum = $cfTipo === 'number'; @endphp
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <div class="flex gap-1">
+                                        <select wire:model.live="filterOperators.{{ $cfField }}"
+                                            class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[90px] shrink-0">
+                                            @if ($isNum)
+                                                <option value="=">=</option>
+                                                <option value="!=">&ne;</option>
+                                                <option value=">">&gt;</option>
+                                                <option value=">=">&ge;</option>
+                                                <option value="<">&lt;</option>
+                                                <option value="<=">&le;</option>
+                                            @else
+                                                <option value="LIKE">contém</option>
+                                                <option value="=">igual a</option>
+                                                <option value="!=">diferente</option>
+                                                <option value="LIKE_START">inicia com</option>
+                                                <option value="LIKE_END">termina com</option>
+                                            @endif
+                                        </select>
+                                        <input type="{{ $isNum ? 'number' : 'text' }}"
+                                            wire:model.live.debounce.400ms="filters.{{ $cfField }}"
+                                            placeholder="{{ $cfLabel }}..."
+                                            @if($isNum) step="any" @endif
+                                            class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                    </div>
+                                </div>
                             @endif
-                        </div>
-                    @endif
-                @endforeach
 
-                {{-- CustomFilters --}}
-                @foreach ($crudConfig['customFilters'] ?? [] as $cf)
-                    @php
-                        $cfField = $cf['field'] ?? '';
-                        $cfLabel = $cf['field'] ?? '';
-                        $cfTipo  = ($cf['useSearchDropDown'] ?? 'N') === 'S' ? 'searchdropdown' : 'text';
-                    @endphp
-                    @if ($cfField)
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">{{ $cfLabel }}</label>
-                            @if ($cfTipo === 'searchdropdown')
-                                <div class="relative" x-data="{ open: false }">
-                                    <input type="text"
-                                        wire:keyup="searchDropdown('cf_{{ $cfField }}', $event.target.value)"
-                                        @focus="open = true"
-                                        @click.outside="open = false"
-                                        placeholder="Buscar {{ $cfLabel }}..."
-                                        class="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
-                                    @if (!empty($sdResults['cf_' . $cfField]))
-                                        <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
-                                            @foreach ($sdResults['cf_' . $cfField] as $opt)
-                                                <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
-                                                    @click="open = false"
-                                                    class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50">
-                                                    {{ $opt['label'] }}
-                                                </button>
-                                            @endforeach
+                        @endforeach
+
+                        {{-- CustomFilters --}}
+                        @foreach ($crudConfig['customFilters'] ?? [] as $cf)
+                            @php
+                                $cfField = $cf['field'] ?? '';
+                                $cfLabel = $cf['label'] ?? $cf['field'] ?? '';
+                                $cfType  = ($cf['useSearchDropDown'] ?? 'N') === 'S' ? 'searchdropdown' : 'text';
+                            @endphp
+                            @if ($cfField)
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    @if ($cfType === 'searchdropdown')
+                                        <div class="relative" x-data="{ open: false }">
+                                            <input type="text"
+                                                wire:keyup="searchDropdown('cf_{{ $cfField }}', $event.target.value)"
+                                                @focus="open = true"
+                                                @click.outside="open = false"
+                                                placeholder="Buscar {{ $cfLabel }}..."
+                                                class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            @if (!empty($sdResults['cf_' . $cfField]))
+                                                <div x-show="open" class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                                                    @foreach ($sdResults['cf_' . $cfField] as $opt)
+                                                        <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                            @click="open = false"
+                                                            class="block w-full text-left px-3 py-2 text-sm hover:bg-violet-50">
+                                                            {{ $opt['label'] }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
+                                    @else
+                                        <input type="text"
+                                            wire:model.live.debounce.400ms="filters.{{ $cfField }}"
+                                            placeholder="{{ $cfLabel }}..."
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
                                     @endif
                                 </div>
-                            @else
-                                <input type="text"
-                                    wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                    placeholder="{{ $cfLabel }}..."
-                                    class="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
                             @endif
-                        </div>
-                    @endif
-                @endforeach
+                        @endforeach
 
+                    </div>
+                @endif
+
+                {{-- Filtros salvos --}}
+                @if (!empty($savedFilters))
+                    <div class="flex items-center gap-2 flex-wrap pt-1">
+                        <span class="text-xs text-gray-400 font-medium">Salvos:</span>
+                        @foreach (array_keys($savedFilters) as $sfName)
+                            <div class="flex items-center">
+                                <button wire:click="loadNamedFilter('{{ $sfName }}')"
+                                    class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-l-lg hover:bg-primary/20 transition-colors border border-primary/20 border-r-0">
+                                    {{ $sfName }}
+                                </button>
+                                <button wire:click="deleteNamedFilter('{{ $sfName }}')"
+                                    class="text-xs bg-danger/10 text-danger px-1.5 py-1 rounded-r-lg hover:bg-danger/20 transition-colors border border-danger/20">
+                                    &times;
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+            </div>{{-- /p-4 --}}
+
+            {{-- Footer: salvar filtro --}}
+            <div class="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50/80"
+                 x-data="{ saving: false, name: '' }">
+                <template x-if="!saving">
+                    <button @click="saving = true"
+                        class="text-xs text-gray-500 hover:text-primary flex items-center gap-1 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                        </svg>
+                        Salvar filtro atual com nome
+                    </button>
+                </template>
+                <template x-if="saving">
+                    <div class="flex items-center gap-2 w-full">
+                        <input type="text" x-model="name"
+                            @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
+                            @keydown.escape="saving = false; name = '';"
+                            placeholder="Ex: Clientes ativos SP"
+                            class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-primary/40 focus:outline-none"
+                            x-init="$nextTick(() => $el.focus())" />
+                        <button @click="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
+                            class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dark transition-colors">
+                            Salvar
+                        </button>
+                        <button @click="saving = false; name = '';"
+                            class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </template>
             </div>
 
-            {{-- Ações de filtro --}}
-            <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                <x-forge-button wire:click="clearFilters" color="dark" flat size="sm">
-                    Limpar Filtros
-                </x-forge-button>
-
-                {{-- Salvar filtro com nome --}}
-                <div class="flex items-center gap-2" x-data="{ saving: false }">
-                    <template x-if="saving">
-                        <div class="flex gap-2">
-                            <input type="text" wire:model="savingFilterName"
-                                placeholder="Nome do filtro"
-                                class="text-sm border border-gray-300 rounded px-2 py-1" />
-                            <x-forge-button wire:click="saveNamedFilter(savingFilterName)" color="primary" size="sm">
-                                Salvar
-                            </x-forge-button>
-                            <x-forge-button @click="saving = false" color="dark" flat size="sm">
-                                Cancelar
-                            </x-forge-button>
-                        </div>
-                    </template>
-                    <template x-if="!saving">
-                        <x-forge-button @click="saving = true" color="primary" flat size="sm">
-                            Salvar Filtro
-                        </x-forge-button>
-                    </template>
-                </div>
-            </div>
-
-            {{-- Filtros salvos --}}
-            @if (!empty($savedFilters))
-                <div class="mt-2 flex flex-wrap gap-2">
-                    <span class="text-xs text-gray-500">Filtros salvos:</span>
-                    @foreach (array_keys($savedFilters) as $filterName)
-                        <div class="flex items-center gap-1">
-                            <button wire:click="loadNamedFilter('{{ $filterName }}')"
-                                class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded hover:bg-primary/20">
-                                {{ $filterName }}
-                            </button>
-                            <button wire:click="deleteNamedFilter('{{ $filterName }}')"
-                                class="text-xs text-danger hover:text-danger/80">✕</button>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
         </div>
     @endif
 
@@ -273,6 +561,7 @@
                                 $colAlign   = $col['colsAlign'] ?? 'text-start';
                                 $isSortable = !str_contains($colField, '.') && empty($col['colsMetodoCustom']);
                             @endphp
+                            @if ($formDataColumns[$colField] ?? true)
                             <th class="px-3 py-2 font-semibold text-gray-700 whitespace-nowrap {{ $colAlign }}
                                 {{ $isSortable ? 'cursor-pointer select-none hover:bg-gray-100' : '' }}"
                                 @if($isSortable) wire:click="sortBy('{{ $colSortBy }}')" @endif>
@@ -281,6 +570,7 @@
                                     <span class="ml-1 text-primary">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
                                 @endif
                             </th>
+                            @endif
                         @endif
                     @endforeach
 
@@ -322,12 +612,15 @@
                         @foreach ($crudConfig['cols'] ?? [] as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php
+                                    $cellField = $col['colsNomeFisico'];
                                     $cellAlign = $col['colsAlign'] ?? 'text-start';
                                     $reverse   = ($col['colsReverse'] ?? 'N') === 'S';
                                 @endphp
+                                @if ($formDataColumns[$cellField] ?? true)
                                 <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}">
                                     {!! $this->formatCell($col, $row) !!}
                                 </td>
+                                @endif
                             @endif
                         @endforeach
 
@@ -342,6 +635,7 @@
                                     @endphp
                                     @if ($actionJs)
                                         <button onclick="{{ $actionJs }}"
+                                            @click.stop
                                             class="text-primary hover:text-primary/80 transition-colors"
                                             title="{{ $col['colsNomeLogico'] ?? '' }}">
                                             @if ($actionIcon)
@@ -364,6 +658,7 @@
                                     @if ($permissions['showEditButton'] ?? true)
                                         @if (!($permissions['edit'] ?? null) || (auth()->check() && auth()->user()->can($permissions['edit'])))
                                             <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
+                                                @click.stop
                                                 class="text-primary hover:text-primary/80 transition-colors" title="Editar">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -375,6 +670,7 @@
                                     {{-- Excluir / Restaurar --}}
                                     @if ($showTrashed && method_exists($row, 'trashed') && $row->trashed())
                                         <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
+                                            @click.stop
                                             class="text-success hover:text-success/80 transition-colors" title="Restaurar">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -383,6 +679,7 @@
                                     @elseif ($permissions['showDeleteButton'] ?? true)
                                         @if (!($permissions['delete'] ?? null) || (auth()->check() && auth()->user()->can($permissions['delete'])))
                                             <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
+                                                @click.stop
                                                 class="text-danger hover:text-danger/80 transition-colors" title="Excluir">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -457,6 +754,7 @@
     {{-- ── Modal Criar / Editar ─────────────────────────────────────────── --}}
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
     @if ($showModal)
+        @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center"
              x-data x-on:keydown.escape.window="$wire.closeModal()">
 
@@ -487,7 +785,7 @@
 
                 {{-- Body --}}
                 <div class="flex-1 overflow-y-auto px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-4">
 
                         @foreach ($formCols as $col)
                             @php
@@ -497,91 +795,164 @@
                                 $fRequired = ($col['colsRequired'] ?? 'N') === 'S';
                                 $fError    = $formErrors[$fField] ?? null;
                                 $fMask     = $col['colsMask'] ?? null;
-                                $colSpan   = in_array($fTipo, ['text']) && ($col['colsAlign'] ?? '') === 'text-start' ? '' : '';
+                                $fValue    = $formData[$fField] ?? '';
+
+                                // Classes de bordas reutilizáveis
+                                $fBorderClass  = $fError
+                                    ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                                    : 'border-gray-300 focus:border-violet-500 focus:ring-violet-100';
                             @endphp
 
                             <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
 
                                 @if ($fTipo === 'select' && !empty($col['colsSelect']))
-                                    {{-- Select --}}
-                                    <x-forge-select
-                                        name="{{ $fField }}"
-                                        label="{{ $fLabel }}"
-                                        :required="$fRequired"
-                                        :error="$fError"
-                                        :selected="$formData[$fField] ?? null"
-                                        :options="collect($col['colsSelect'])->map(fn($v, $k) => ['value' => $v, 'label' => $k])->values()->toArray()"
-                                        wire:model="formData.{{ $fField }}"
-                                    />
-
-                                @elseif ($fTipo === 'searchdropdown')
-                                    {{-- SearchDropdown --}}
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        {{ $fLabel }}{{ $fRequired ? ' *' : '' }}
-                                    </label>
-                                    <div x-data="{ open: false }">
-                                        <input type="text"
-                                            value="{{ $sdLabels[$fField] ?? ($formData[$fField] ?? '') }}"
-                                            wire:keyup="searchDropdown('{{ $fField }}', $event.target.value)"
-                                            @input="open = true"
+                                    {{-- ── Select inline (sem Blade component dentro do teleport) ── --}}
+                                    @php
+                                        $fOptions = collect($col['colsSelect'])
+                                            ->map(fn($v, $k) => ['value' => (string)$v, 'label' => $k])
+                                            ->values()
+                                            ->toArray();
+                                        $fInitSel  = $fValue !== '' ? json_encode((string)$fValue) : 'null';
+                                        $fBorderNormal = $fError ? 'border-red-400' : 'border-gray-300';
+                                        $fBorderOpen   = $fError ? 'border-red-500' : 'border-violet-500';
+                                        $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-violet-100';
+                                    @endphp
+                                    <div class="w-full">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <div
+                                            x-data="{
+                                                open: false,
+                                                selected: {{ $fInitSel }},
+                                                options: {{ json_encode($fOptions) }},
+                                                placeholder: 'Selecione...',
+                                                get displayLabel() {
+                                                    if (this.selected === null || this.selected === '') return this.placeholder;
+                                                    const opt = this.options.find(o => String(o.value) === String(this.selected));
+                                                    return opt ? opt.label : this.placeholder;
+                                                },
+                                                isSelected(value) { return String(this.selected) === String(value); },
+                                                toggle(value) { this.selected = String(value); this.open = false; }
+                                            }"
                                             @click.outside="open = false"
-                                            placeholder="Buscar {{ $fLabel }}..."
-                                            class="w-full px-3 py-2 border {{ $fError ? 'border-danger' : 'border-gray-300' }} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                        />
-                                        <input type="hidden" wire:model="formData.{{ $fField }}" />
-                                        @if (!empty($sdResults[$fField]))
-                                            <div x-show="open"
-                                                class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto mt-1">
-                                                @foreach ($sdResults[$fField] as $opt)
-                                                    <button type="button"
-                                                        wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
-                                                        @click="open = false"
-                                                        class="block w-full text-left px-4 py-2 text-sm hover:bg-primary/5 hover:text-primary">
-                                                        {{ $opt['label'] }}
-                                                    </button>
-                                                @endforeach
+                                            class="relative"
+                                        >
+                                            <input type="hidden"
+                                                :value="selected ?? ''"
+                                                x-init="$watch('selected', val => {
+                                                    $el.value = val ?? '';
+                                                    $el.dispatchEvent(new Event('input', { bubbles: true }));
+                                                })"
+                                                wire:model.live="formData.{{ $fField }}"
+                                            >
+                                            <div
+                                                @click="open = !open"
+                                                :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
+                                                class="relative flex items-center justify-between rounded-lg border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
+                                            >
+                                                <span
+                                                    :class="(selected !== null && selected !== '') ? 'text-gray-800' : 'text-gray-400'"
+                                                    class="text-sm truncate pr-4"
+                                                    x-text="displayLabel"
+                                                ></span>
+                                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                    </svg>
+                                                </span>
                                             </div>
+                                            <div
+                                                x-show="open"
+                                                x-cloak
+                                                x-transition:enter="transition ease-out duration-150"
+                                                x-transition:enter-start="opacity-0 -translate-y-1"
+                                                x-transition:enter-end="opacity-100 translate-y-0"
+                                                class="absolute z-20 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-auto max-h-48"
+                                            >
+                                                <ul class="py-1">
+                                                    <template x-for="option in options" :key="option.value">
+                                                        <li
+                                                            @click="toggle(option.value)"
+                                                            :class="isSelected(option.value) ? 'bg-violet-50 text-violet-700' : 'text-gray-700 hover:bg-gray-50'"
+                                                            class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between"
+                                                        >
+                                                            <span x-text="option.label"></span>
+                                                            <svg x-show="isSelected(option.value)" class="h-4 w-4 text-violet-600 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                                            </svg>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
                                         @endif
                                     </div>
-                                    @if ($fError)
-                                        <p class="mt-1 text-xs text-danger">{{ $fError }}</p>
-                                    @endif
 
-                                @elseif ($fTipo === 'date')
-                                    <x-forge-input
-                                        name="{{ $fField }}"
-                                        type="date"
-                                        label="{{ $fLabel }}"
-                                        :required="$fRequired"
-                                        :error="$fError"
-                                        :value="$formData[$fField] ?? null"
-                                        wire:model="formData.{{ $fField }}"
-                                    />
-
-                                @elseif ($fTipo === 'number')
-                                    <x-forge-input
-                                        name="{{ $fField }}"
-                                        type="number"
-                                        label="{{ $fLabel }}"
-                                        :required="$fRequired"
-                                        :error="$fError"
-                                        :value="$formData[$fField] ?? null"
-                                        wire:model="formData.{{ $fField }}"
-                                        step="any"
-                                    />
+                                @elseif ($fTipo === 'searchdropdown')
+                                    {{-- ── SearchDropdown inline ── --}}
+                                    <div class="w-full">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <div x-data="{ open: false }" class="relative">
+                                            <input type="text"
+                                                value="{{ $sdLabels[$fField] ?? $fValue }}"
+                                                wire:keyup="searchDropdown('{{ $fField }}', $event.target.value)"
+                                                @input="open = true"
+                                                @click.outside="open = false"
+                                                placeholder="Buscar {{ $fLabel }}..."
+                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm text-gray-800 bg-white transition-colors duration-150 focus:ring-2"
+                                            />
+                                            <input type="hidden" wire:model="formData.{{ $fField }}" />
+                                            @if (!empty($sdResults[$fField]))
+                                                <div x-show="open"
+                                                    class="absolute z-30 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto mt-1">
+                                                    @foreach ($sdResults[$fField] as $opt)
+                                                        <button type="button"
+                                                            wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                            @click="open = false"
+                                                            class="block w-full text-left px-4 py-2 text-sm hover:bg-violet-50 hover:text-violet-700">
+                                                            {{ $opt['label'] }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        @endif
+                                    </div>
 
                                 @else
-                                    {{-- text (default) --}}
-                                    <x-forge-input
-                                        name="{{ $fField }}"
-                                        type="text"
-                                        label="{{ $fLabel }}"
-                                        :required="$fRequired"
-                                        :error="$fError"
-                                        :value="$formData[$fField] ?? null"
-                                        wire:model="formData.{{ $fField }}"
-                                        {{ $fMask ? "data-mask=\"{$fMask}\"" : '' }}
-                                    />
+                                    {{-- ── Input inline (text / number / date) ── --}}
+                                    @php
+                                        $fInputType = match($fTipo) {
+                                            'date'   => 'date',
+                                            'number' => 'number',
+                                            default  => 'text',
+                                        };
+                                    @endphp
+                                    <div class="w-full">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <input
+                                            type="{{ $fInputType }}"
+                                            name="{{ $fField }}"
+                                            wire:model="formData.{{ $fField }}"
+                                            @if($fRequired) required @endif
+                                            @if($fTipo === 'number') step="any" @endif
+                                            @if($fMask) data-mask="{{ $fMask }}" @endif
+                                            placeholder=""
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm text-gray-800 bg-white transition-colors duration-150 focus:ring-2"
+                                        />
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        @endif
+                                    </div>
                                 @endif
 
                             </div>
@@ -602,12 +973,14 @@
 
             </div>
         </div>
+        @endteleport
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Confirmar Exclusão ─────────────────────────────────────── --}}
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
     @if ($showDeleteConfirm)
+        @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" wire:click="cancelDelete"></div>
             <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
@@ -628,6 +1001,7 @@
                 </div>
             </div>
         </div>
+        @endteleport
     @endif
 
     {{-- Loading overlay global --}}

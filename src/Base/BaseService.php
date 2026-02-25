@@ -16,10 +16,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
  */
 abstract class BaseService
 {
-    /**
-     * @param BaseRepositoryInterface $repository Repositório associado ao serviço.
-     */
-    public function __construct(protected BaseRepositoryInterface $repository) {}
+    protected BaseRepositoryInterface $repository;
+
+    public function __construct(BaseRepositoryInterface $repository)
+    {
+        $this->repository = $repository;
+    }
 
     /**
      * Retorna todos os registros.

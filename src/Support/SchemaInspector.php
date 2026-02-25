@@ -63,7 +63,11 @@ class SchemaInspector
     {
         $fields = [];
 
-        foreach (explode(',', $input) as $part) {
+        // Divide por vírgulas que NÃO estejam dentro de parênteses
+        // Ex: "price:decimal(10,2),name:string" → ["price:decimal(10,2)", "name:string"]
+        $parts = preg_split('/,(?![^(]*\))/', $input);
+
+        foreach ($parts as $part) {
             $part = trim($part);
             if ($part === '') {
                 continue;
