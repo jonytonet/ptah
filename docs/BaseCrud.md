@@ -306,8 +306,9 @@ Todas as propriedades públicas são acessíveis na view via `$this->` ou direta
 
 | Método | Parâmetros | Descrição |
 |---|---|---|
-| `searchDropdown()` | `string $field, string $query` | Busca sugestões para um campo |
-| `selectDropdownOption()` | `string $field, mixed $value, string $label` | Confirma seleção |
+| `openDropdown()` | `string $field` | Carrega os primeiros itens (sem query) ao focar/clicar |
+| `searchDropdown()` | `string $field, string $query` | Filtra sugestões pelo texto digitado (min 1 char, debounce 300ms) |
+| `selectDropdownOption()` | `string $field, mixed $value, string $label` | Confirma seleção e atualiza `formData` e `sdLabels` |
 | `filterSearchDropdown()` | `string $field, string $query` | Busca no painel de filtros |
 
 ### Exportação
@@ -381,11 +382,12 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsOrderBy` | `string\|null` | Coluna real para ORDER BY |
 | `colsMetodoCustom` | `string\|null` | Padrão `Namespace\Classe\método(%campo%)` |
 | `colsSelect` | `array\|null` | Opções de select: `[valor => label]` |
-| `colsSDModel` | `string\|null` | Model do SearchDropdown |
-| `colsSDLabel` | `string\|null` | Campo de label do SearchDropdown |
-| `colsSDValor` | `string\|null` | Campo de valor do SearchDropdown |
-| `colsSDOrder` | `string\|null` | Ordenação do SearchDropdown |
-| `colsSDTipo` | `'model'\|'service'` | Origem dos dados do SD |
+| `colsSDModel` | `string\|null` | Model do SearchDropdown (ex: `BusinessPartner` ou FQCN) |
+| `colsSDLabel` | `string\|null` | Campo da tabela usado como label (ex: `name`) |
+| `colsSDValor` | `string\|null` | Campo da tabela usado como value (ex: `id`) |
+| `colsSDOrder` | `string\|null` | Ordenação: `"name ASC"` (padrão: `{sdLabel} ASC`) |
+| `colsSDTipo` | `'model'\|'service'` | Origem dos dados (`model` = Eloquent direto, `service` = método de serviço) |
+| `colsSDLimit` | `int` | Limite de itens retornados (padrão: `15`) |
 | `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SD aparece |
 | `colsValidations` | `array\|null` | Regras do FormValidatorService: `["required","email","min:3"]` |
 
@@ -708,44 +710,44 @@ O método `bulkAprovar` receberá `(array $ids, string $model)`.
 
 ## SearchDropdown em Formulários
 
-Campos do tipo `searchdropdown` no CrudConfig ativam busca dinâmica dentro do modal.
+Campos do tipo `searchdropdown` oferecem UX similar ao Select2 dentro do modal de criação/edição:
+
+- **Foco no campo** → carrega os primeiros registros automaticamente (sem precisar digitar)
+- **Digitação** → filtra em tempo real com debounce de 300ms, case-insensitive
+- **Seleção** → o label selecionado persiste no input; o `id` vai para `formData`
+- **Seta** → botão chevron abre/fecha o dropdown
+- **Vazio** → exibe "Nenhum resultado encontrado" se a busca não retornar itens
 
 ### Configuração da coluna
 
 ```json
 {
-  "colsNomeFisico": "category_id",
-  "colsNomeLogico": "Categoria",
+  "colsNomeFisico": "business_partner_id",
+  "colsNomeLogico": "Parceiro",
   "colsTipo": "searchdropdown",
-  "colsGravar": "S",
-  "colsSDModel": "Category",
+  "colsGravar": true,
+  "colsSDModel": "BusinessPartner",
   "colsSDLabel": "name",
   "colsSDValor": "id",
   "colsSDOrder": "name ASC",
   "colsSDTipo": "model",
-  "colsRelacao": "category",
+  "colsSDLimit": 15,
+  "colsRelacao": "businessPartner",
   "colsRelacaoExibe": "name"
 }
 ```
 
-### Template no modal
+> **`colsRelacao` + `colsRelacaoExibe`** são usados para pré-preencher o label no modo **edição**: o ptah busca `$record->businessPartner->name` e exibe no input.
 
-```blade
-<input
-    type="text"
-    wire:model.live.debounce.300ms="sdSearches.category_id"
-    wire:keyup="searchDropdown('category_id', $event.target.value)"
-    value="{{ $sdLabels['category_id'] ?? '' }}"
-    placeholder="Buscar categoria...">
+### Filtro case-insensitive
 
-@if (!empty($sdResults['category_id']))
-    @foreach ($sdResults['category_id'] as $opt)
-        <div wire:click="selectDropdownOption('category_id', '{{ $opt['value'] }}', '{{ $opt['label'] }}')">
-            {{ $opt['label'] }}
-        </div>
-    @endforeach
-@endif
+A busca usa `LOWER(campo) LIKE ?` compatível com MySQL e SQLite:
+
+```php
+$q->whereRaw('LOWER(' . $sdLabel . ') LIKE ?', ['%' . mb_strtolower($query) . '%']);
 ```
+
+Assim digitar `"CHOC"`, `"choc"` ou `"Choc"` retorna os mesmos resultados.
 
 ### Via Service (`colsSDTipo = 'service'`)
 
@@ -756,7 +758,17 @@ Campos do tipo `searchdropdown` no CrudConfig ativam busca dinâmica dentro do m
 }
 ```
 
-O método receberá `string $query` e deve retornar `array [{value, label}]`.
+O método receberá `string $query` e deve retornar `array<array{value: mixed, label: string}>`.
+
+### Fluxo interno
+
+```
+Foco no input  →  openDropdown($field)      →  sdResults[$field] = primeiros N itens
+Digitação      →  searchDropdown($field, q) →  sdResults[$field] = itens filtrados
+Seleção        →  selectDropdownOption()    →  formData[$field] = value
+                                              sdLabels[$field] = label
+                                              sdResults[$field] = [] (fecha)
+```
 
 ---
 
