@@ -35,6 +35,7 @@ O pacote é dividido em três subsistemas complementares:
 - [ptah:forge — Scaffolding](#-ptahforge--scaffolding)
   - [Uso básico](#uso-básico)
   - [Definindo campos](#definindo-campos)
+  - [Detecção automática de FK](#tipos-suportados)
   - [Modo API](#modo-api)
   - [Arquivos gerados](#arquivos-gerados)
   - [Próximos passos pós-geração](#próximos-passos-pós-geração)
@@ -47,6 +48,7 @@ O pacote é dividido em três subsistemas complementares:
   - [Schema de configuração](#schema-de-configuração-cols)
   - [Tipos de colunas](#tipos-de-colunas-colstipo)
   - [Helpers de formatação](#helpers-de-formatação)
+  - [Renderer DSL](#helpers-de-formatação)
   - [Estilos condicionais](#estilos-condicionais-de-linha)
   - [Filtros e FilterService](#filtros-e-filterservice)
   - [SearchDropdown](#searchdropdown)
@@ -59,6 +61,8 @@ O pacote é dividido em três subsistemas complementares:
   - [Badges de filtros ativos](#badges-de-filtros-ativos-textfilter)
   - [Busca avançada](#busca-avançada)
   - [colsMetodoCustom](#colsmetodocustom)
+  - [CrudConfig Modal](#crudconfig-modal)
+  - [FormValidatorService](#formvalidatorservice)
   - [CrudConfigService](#crudconfigservice)
   - [CacheService](#cacheservice)
 - [Configuração](#-configuração)
@@ -471,7 +475,7 @@ php artisan ptah:forge Product \
 | `longText` | — | `$table->longText('campo')` |
 | `integer` | `int` | `$table->integer('campo')` |
 | `bigInteger` | `bigint` | `$table->bigInteger('campo')` |
-| `unsignedBigInteger` | `ubigint` | `$table->unsignedBigInteger('campo')` |
+| `unsignedBigInteger` | `ubigint` | veja nota FK abaixo |
 | `decimal(p,s)` | — | `$table->decimal('campo', p, s)` |
 | `float` | — | `$table->float('campo')` |
 | `boolean` | `bool` | `$table->boolean('campo')` |
@@ -480,10 +484,24 @@ php artisan ptah:forge Product \
 | `json` | — | `$table->json('campo')` |
 | `enum(a\|b\|c)` | — | `$table->enum('campo', ['a','b','c'])` |
 
+> **Detecção automática de FK** — Qualquer campo cujo nome termine em `_id` e cujo tipo seja `unsignedBigInteger` (ou `bigInteger`/`foreignId`) é reconhecido como chave estrangeira. O `ptah:forge` gera automaticamente:
+>
+> - **Migration:** `$table->foreignId('x_id')->constrained('xs')->cascadeOnDelete()`  
+>   (com `:nullable` → `->nullable()->constrained('xs')->nullOnDelete()`)
+> - **Model:** `use App\Models\X;` + método `belongsTo(X::class, 'x_id')`
+>
+> Exemplo:
+> ```bash
+> php artisan ptah:forge Product \
+>   --fields="business_partner_id:unsignedBigInteger"
+> # Migration: $table->foreignId('business_partner_id')->constrained('business_partners')->cascadeOnDelete();
+> # Model:     public function businessPartner(): BelongsTo { ... }
+> ```
+
 **Modificadores:**
 
 ```bash
-# :nullable   ->nullable()
+# :nullable   ->nullable()  (FK nullable usa nullOnDelete() em vez de cascadeOnDelete())
 # :unique     ->unique()
 email:string:unique
 price:decimal(10,2):nullable
@@ -1170,14 +1188,25 @@ Cada entrada em `cols` representa uma coluna da tabela e/ou campo do formulário
 | `colsGravar` | `'S'`/`'N'` | `S` = aparece no modal de form; `N` = somente na listagem |
 | `colsRequired` | `'S'`/`'N'` | Campo obrigatório no formulário |
 | `colsAlign` | string | Classe CSS de alinhamento do td |
-| `colsHelper` | string | Helper de formatação da célula (ver tabela de helpers) |
-| `colsIsFilterable` | `'S'`/`'N'` | Exibe no painel de filtros |
+| `colsHelper` | string | Helper legado de formatação da célula |
+| `colsRenderer` | string | Renderer DSL: `badge`, `pill`, `boolean`, `money`, `link`, `image`, `truncate` |
+| `colsRendererBadges` | array | Mapa `["valor" => "cor"]` para renderers `badge`/`pill` |
+| `colsCellStyle` | string | CSS inline aplicado ao `<span>` da célula |
+| `colsCellClass` | string | Classes Tailwind adicionais da célula |
+| `colsCellIcon` | string | Ícone `heroicon-*` prefixado ao conteúdo |
+| `colsMinWidth` | string | Largura mínima do th (ex: `"120px"`) |
+| `colsMask` | string | Máscara de exibição: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
+| `colsMaskTransform` | string | Transformação após a máscara: `upper`, `lower`, `ucfirst` |
 | `colsRelacao` | string | Nome do relacionamento Eloquent (`$product->category`) |
 | `colsRelacaoExibe` | string | Atributo do objeto relacionado a exibir |
+| `colsRelacaoNested` | string | Notação dot para relações aninhadas: `category.parent.name` |
+| `colsIsFilterable` | `'S'`/`'N'` | Exibe no painel de filtros |
 | `colsSelect` | object | Mapa `{"Label": "valor"}` para tipo select |
 | `colsOrderBy` | string | Coluna alternativa para ORDER BY |
 | `colsReverse` | `'S'`/`'N'` | Inverte sort (DESC quando `'S'`) |
 | `colsMetodoCustom` | string | Método custom para formatar a célula |
+| `colsValidations` | array | Regras do FormValidatorService: `["required","email","min:3"]` |
+| `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SearchDropdown aparece |
 
 ---
 
@@ -1195,7 +1224,9 @@ Cada entrada em `cols` representa uma coluna da tabela e/ou campo do formulário
 
 ### Helpers de formatação
 
-Definidos em `colsHelper`. Aplicados em `formatCell()` antes de exibir na tabela.
+Definidos em `colsHelper` (legacy) ou `colsRenderer` (DSL). Aplicados em `formatCell()` antes de exibir na tabela.
+
+**Helpers legacy (`colsHelper`):**
 
 | Helper | Entrada | Saída exemplo |
 |---|---|---|
@@ -1204,6 +1235,70 @@ Definidos em `colsHelper`. Aplicados em `formatCell()` antes de exibir na tabela
 | `currencyFormat` | `1234.50` | `R$ 1.234,50` |
 | `yesOrNot` | `1` / `0` | `Sim` / `Não` |
 | `flagChannel` | `'G'` / `'Y'` / `'R'` | Badge verde/amarelo/vermelho |
+
+**Renderer DSL (`colsRenderer`) — recomendado:**
+
+| Renderer | Resultado | Configuração extra |
+|---|---|---|
+| `badge` | `<span>` com fundo colorido + texto em branco/escuro | `colsRendererBadges: {"ativo":"green","inativo":"red"}` |
+| `pill` | Igual ao `badge` mas com bordas arredondadas (full) | `colsRendererBadges: { ... }` |
+| `boolean` | ✅ / ❌ (ícone SVG) | — |
+| `money` | `R$ 1.234,56` | — |
+| `link` | `<a href="[valor]">` | — |
+| `image` | `<img src="[valor]">` com thumbnail | — |
+| `truncate` | Texto truncado com `title` completo | — |
+
+**Cores do badge/pill:**
+
+Use nomes semânticos (`green`, `red`, `yellow`, `blue`, `indigo`, `purple`, `pink`, `gray`) **ou** qualquer cor hexadecimal (`#FF5733`). Cores hex geram `background-color` inline com 13% de opacidade e `color` correspondente.
+
+```json
+{
+  "colsNomeFisico": "status",
+  "colsRenderer": "badge",
+  "colsRendererBadges": {
+    "active":   "green",
+    "inactive": "red",
+    "pending":  "#F59E0B"
+  }
+}
+```
+
+**Estilo e ícone por célula:**
+
+```json
+{
+  "colsCellStyle": "font-weight:600;",
+  "colsCellClass": "text-indigo-600",
+  "colsCellIcon":  "heroicon-o-star",
+  "colsMinWidth":  "140px"
+}
+```
+
+**Máscara de exibição (`colsMask`):**
+
+| Máscara | Entrada | Saída |
+|---|---|---|
+| `cpf` | `12345678901` | `123.456.789-01` |
+| `cnpj` | `12345678000190` | `12.345.678/0001-90` |
+| `phone` | `11987654321` | `(11) 98765-4321` |
+| `cep` | `01310100` | `01310-100` |
+| `currency` | `1234.5` | `R$ 1.234,50` |
+| `percent` | `0.75` | `75%` |
+
+Combinar com `colsMaskTransform: "upper"` transforma o resultado final em maiúsculas.
+
+**Relações aninhadas (`colsRelacaoNested`):**
+
+Use notação dot para exibir atributos de relações em cadeia, sem precisar de `colsMetodoCustom`:
+
+```json
+{
+  "colsRelacaoNested": "category.parent.name"
+}
+```
+
+O `BaseCrud` resolve automaticamente via `resolveNestedValue()`, suportando qualquer profundidade.
 
 ---
 

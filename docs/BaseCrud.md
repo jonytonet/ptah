@@ -17,22 +17,25 @@
 6. [CrudConfig — Estrutura de Colunas](#crudconfig--estrutura-de-colunas)
 7. [Tipos de Coluna](#tipos-de-coluna)
 8. [Helpers de Formatação de Célula](#helpers-de-formatação-de-célula)
-9. [Estilos Condicionais de Linha](#estilos-condicionais-de-linha)
-10. [Filtros](#filtros)
-11. [Filtros Rápidos de Data](#filtros-rápidos-de-data)
-12. [Busca Avançada](#busca-avançada)
-13. [Visibilidade de Colunas](#visibilidade-de-colunas)
-14. [Bulk Actions](#bulk-actions)
-15. [SearchDropdown em Formulários](#searchdropdown-em-formulários)
-16. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
-17. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
-18. [Totalizadores](#totalizadores)
-19. [Exportação](#exportação)
-20. [Preferências de Usuário (V2.1)](#preferências-de-usuário-v21)
-21. [Eventos Livewire](#eventos-livewire)
-22. [Permissões](#permissões)
-23. [Error Recovery](#error-recovery)
-24. [Fluxo Internal Simplificado](#fluxo-interno-simplificado)
+9. [Renderer DSL](#renderer-dsl)
+10. [Estilos Condicionais de Linha](#estilos-condicionais-de-linha)
+11. [Filtros](#filtros)
+12. [Filtros Rápidos de Data](#filtros-rápidos-de-data)
+13. [Busca Avançada](#busca-avançada)
+14. [Visibilidade de Colunas](#visibilidade-de-colunas)
+15. [Bulk Actions](#bulk-actions)
+16. [SearchDropdown em Formulários](#searchdropdown-em-formulários)
+17. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
+18. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
+19. [Totalizadores](#totalizadores)
+20. [Exportação](#exportação)
+21. [Preferências de Usuário (V2.1)](#preferências-de-usuário-v21)
+22. [Eventos Livewire](#eventos-livewire)
+23. [Permissões](#permissões)
+24. [Error Recovery](#error-recovery)
+25. [CrudConfig Modal](#crudconfig-modal)
+26. [FormValidatorService](#formvalidatorservice)
+27. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
 
 ---
 
@@ -363,9 +366,18 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsTipo` | `string` | Tipo da coluna — veja [Tipos de Coluna](#tipos-de-coluna) |
 | `colsGravar` | `'S'\|'N'` | Campo incluído ao salvar |
 | `colsRequired` | `'S'\|'N'` | Obrigatório no formulário |
-| `colsHelper` | `string\|null` | Helper de formatação — veja [Helpers](#helpers-de-formatação-de-célula) |
+| `colsHelper` | `string\|null` | Helper legacy de formatação — veja [Helpers](#helpers-de-formatação-de-célula) |
+| `colsRenderer` | `string\|null` | Renderer DSL — `badge`, `pill`, `boolean`, `money`, `link`, `image`, `truncate` |
+| `colsRendererBadges` | `array\|null` | Mapa `["valor" => "cor"]` para `badge`/`pill` |
+| `colsCellStyle` | `string\|null` | CSS inline no `<span>` da célula |
+| `colsCellClass` | `string\|null` | Classes Tailwind adicionais da célula |
+| `colsCellIcon` | `string\|null` | Ícone `heroicon-*` prefixado ao conteúdo |
+| `colsMinWidth` | `string\|null` | Largura mínima do th (ex: `"120px"`) |
+| `colsMask` | `string\|null` | Máscara: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
+| `colsMaskTransform` | `string\|null` | Transformação pós-máscara: `upper`, `lower`, `ucfirst` |
 | `colsRelacao` | `string\|null` | Nome da relação Eloquent |
 | `colsRelacaoExibe` | `string\|null` | Campo da relação a exibir |
+| `colsRelacaoNested` | `string\|null` | Notação dot para relações aninhadas: `category.parent.name` |
 | `colsOrderBy` | `string\|null` | Coluna real para ORDER BY |
 | `colsMetodoCustom` | `string\|null` | Padrão `Namespace\Classe\método(%campo%)` |
 | `colsSelect` | `array\|null` | Opções de select: `[valor => label]` |
@@ -374,6 +386,8 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsSDValor` | `string\|null` | Campo de valor do SearchDropdown |
 | `colsSDOrder` | `string\|null` | Ordenação do SearchDropdown |
 | `colsSDTipo` | `'model'\|'service'` | Origem dos dados do SD |
+| `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SD aparece |
+| `colsValidations` | `array\|null` | Regras do FormValidatorService: `["required","email","min:3"]` |
 
 ---
 
@@ -397,7 +411,7 @@ Valor de `colsTipo`:
 
 ## Helpers de Formatação de Célula
 
-Configurado em `colsHelper` da coluna.
+Configurado em `colsHelper` da coluna (helpers legacy).
 
 | Helper | Resultado |
 |---|---|
@@ -416,6 +430,73 @@ Configurado em `colsHelper` da coluna.
 - O padrão é `Namespace\Classe\metodo(%campo%)`.
 - `%campo%` é substituído pelo valor do campo no registro.
 - O método é chamado via `app()->make(Classe)->metodo($param)`.
+
+---
+
+## Renderer DSL
+
+O `colsRenderer` é a forma moderna e recomendada de formatar células.
+
+| Renderer | Descrição |
+|---|---|
+| `badge` | `<span>` com fundo colorido (padded, bordas leves) |
+| `pill` | Igual ao `badge` mas com bordas completamente arredondadas |
+| `boolean` | `✅` (verde) / `❌` (vermelho) baseado em truthy |
+| `money` | Formata como `R$ X.XXX,XX` |
+| `link` | `<a href="[valor]" target="_blank">` |
+| `image` | `<img src="[valor]">` thumbnail 40×40 |
+| `truncate` | Texto cortado em ~40 chars com `title` completo no hover |
+
+### Badge / Pill
+
+Cores nomeadas: `green`, `red`, `yellow`, `blue`, `indigo`, `purple`, `pink`, `gray`.  
+Cores hex (`#RRGGBB`): geram `background-color` inline com 13% de opacidade e `color` correspondente.
+
+```json
+{
+  "colsNomeFisico": "status",
+  "colsRenderer": "badge",
+  "colsRendererBadges": {
+    "active":   "green",
+    "inactive": "red",
+    "pending":  "#F59E0B"
+  }
+}
+```
+
+### Estilo, classe e ícone por célula
+
+```json
+{
+  "colsCellStyle": "font-weight:600;",
+  "colsCellClass": "text-indigo-700 italic",
+  "colsCellIcon":  "heroicon-o-star",
+  "colsMinWidth":  "140px"
+}
+```
+
+### Máscaras (`colsMask`)
+
+| Máscara | Entrada | Saída |
+|---|---|---|
+| `cpf` | `12345678901` | `123.456.789-01` |
+| `cnpj` | `12345678000190` | `12.345.678/0001-90` |
+| `phone` | `11987654321` | `(11) 98765-4321` |
+| `cep` | `01310100` | `01310-100` |
+| `currency` | `1234.5` | `R$ 1.234,50` |
+| `percent` | `0.75` | `75%` |
+
+Combinar com `colsMaskTransform: "upper"` transforma o resultado final.
+
+### Relações aninhadas (`colsRelacaoNested`)
+
+Notação dot para relações em cadeia, sem `colsMetodoCustom`:
+
+```json
+{ "colsRelacaoNested": "category.parent.name" }
+```
+
+Resolvido via `resolveNestedValue()` em qualquer profundidade.
 
 ---
 
@@ -893,6 +974,93 @@ Se `getRowsProperty()` lançar qualquer exceção:
     <div class="alert alert-danger">{{ session('error') }}</div>
 @endif
 ```
+
+---
+
+## CrudConfig Modal
+
+O modal de configuração do CrudConfig é um componente Livewire (`ptah::crud-config`) que permite editar a configuração de colunas diretamente pela interface, sem tocar no banco manualmente.
+
+### Como acessar
+
+O botão de configuração é exibido automaticamente no BaseCrud (geralmente restrito a administradores via `@can('admin')`).
+
+### Abas disponíveis
+
+| Aba | Conteúdo |
+|---|---|
+| **Colunas** | Lista drag-and-drop das colunas. Selecione uma para editar nas sub-abas |
+| **Ações** | Configuração de permissões (create, edit, delete, export) |
+| **Filtros** | Configuração dos filtros customizados e coluna de data rápida |
+| **Estilos** | `contitionStyles`: regras de estílo condicional de linha |
+| **Geral** | Parâmetros gerais: `companyField`, `quickDateColumn`, `configLinkLinha` |
+| **Permissões** | Mapeamento de gates/abilities por ação |
+
+### Sub-abas por coluna (aba Colunas)
+
+Ao selecionar uma coluna na sidebar, seis sub-abas são exibidas:
+
+| Sub-aba | Campos editados |
+|---|---|
+| **Básico** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, estilo de célula (`colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`) |
+| **Exibição** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` |
+| **Badges** | `colsRendererBadges` — mapa valor→cor com seletor hex nativo + 8 swatches rápidos por linha |
+| **Relação** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` |
+| **Validação** | `colsValidations` (array de regras), `colsRequired` |
+| **Avançado** | `colsOrderBy`, `colsReverse`, `colsMetodoCustom`, `colsAlign` |
+
+### Reordenar colunas
+
+As colunas podem ser reordenadas via drag-and-drop (SortableJS). A nova ordem é persistida automaticamente via `$wire.reorderFields(newOrder)` ao soltar.
+
+### Eventos
+
+| Evento | Quando |
+|---|---|
+| `ptah:crud-config-updated` | Disparado após salvar o CrudConfig Modal. O BaseCrud ouve e invalida o cache + recarrega a config ao vivo |
+
+---
+
+## FormValidatorService
+
+O `FormValidatorService` (é injetado no `BaseCrud`) valida os campos do formulário usando as regras definidas em `colsValidations` de cada coluna.
+
+### Regras suportadas
+
+| Regra | Exemplo | Descrição |
+|---|---|---|
+| `required` | `"required"` | Campo obrigatório |
+| `email` | `"email"` | Formato de e-mail |
+| `url` | `"url"` | Formato de URL |
+| `integer` | `"integer"` | Número inteiro |
+| `numeric` | `"numeric"` | Número (decimal incluso) |
+| `min:X` | `"min:0"` | Valor mínimo |
+| `max:X` | `"max:9999"` | Valor máximo |
+| `minLength:X` | `"minLength:3"` | Mínimo de caracteres |
+| `maxLength:X` | `"maxLength:255"` | Máximo de caracteres |
+| `between:X,Y` | `"between:1,100"` | Valor entre X e Y |
+| `regex:pattern` | `"regex:^[A-Z]+$"` | Expressão regular |
+| `cpf` | `"cpf"` | Valida CPF brasileiro |
+| `cnpj` | `"cnpj"` | Valida CNPJ brasileiro |
+| `phone` | `"phone"` | Valida telefone (8–11 dígitos) |
+
+### Configuração na coluna
+
+```json
+{
+  "colsNomeFisico": "email",
+  "colsValidations": ["required", "email", "maxLength:255"]
+}
+```
+
+```json
+{
+  "colsNomeFisico": "price",
+  "colsValidations": ["required", "numeric", "min:0", "max:999999"]
+}
+```
+
+Erros são populados em `$formErrors[campo]` e exibidos no modal de formulário.
 
 ---
 
