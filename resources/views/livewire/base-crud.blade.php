@@ -387,30 +387,72 @@
                                     </select>
                                 </div>
 
-                            {{-- SearchDropdown --}}
+                            {{-- SearchDropdown no filtro (select2-like) --}}
                             @elseif ($cfTipo === 'searchdropdown')
+                                @php
+                                    $cfFilterKey      = 'filter_' . $cfField;
+                                    $cfFilterSelected = $sdFilterLabels[$cfField] ?? null;
+                                    $cfFilterHasRes   = !empty($sdResults[$cfFilterKey]);
+                                @endphp
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
-                                    <div class="relative" x-data="{ open: false }">
-                                        <input type="text"
-                                            wire:model.live.debounce.300ms="sdSearches.{{ $cfField }}"
-                                            wire:keyup="searchDropdown('{{ $cfField }}', $event.target.value)"
-                                            @focus="open = true"
-                                            @click.outside="open = false"
-                                            placeholder="Buscar {{ $cfLabel }}..."
-                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
-                                        @if (!empty($sdResults[$cfField]))
-                                            <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
-                                                @foreach ($sdResults[$cfField] as $opt)
-                                                    <button type="button"
-                                                        wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
-                                                        @click="open = false"
-                                                        class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
-                                                        {{ $opt['label'] }}
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        @endif
+
+                                    {{-- Badge de seleção ativa --}}
+                                    @if ($cfFilterSelected)
+                                        <div class="flex items-center gap-1 mb-1.5">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+                                                {{ $cfFilterSelected }}
+                                                <button type="button"
+                                                    wire:click="clearFilterDropdownSelection('{{ $cfField }}')"
+                                                    class="ml-0.5 hover:text-violet-900 leading-none">&times;</button>
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                    <div
+                                        x-data="{
+                                            open: {{ $cfFilterHasRes ? 'true' : 'false' }},
+                                            init() {
+                                                this.$wire.$watch('sdResults', (val) => {
+                                                    const res = val['{{ $cfFilterKey }}'];
+                                                    this.open = Array.isArray(res) && res.length > 0;
+                                                });
+                                            }
+                                        }"
+                                        @click.outside="open = false"
+                                        class="relative"
+                                    >
+                                        <div class="relative flex items-center">
+                                            <input type="text"
+                                                wire:keyup.debounce.300ms="filterSearchDropdown('{{ $cfField }}', $event.target.value)"
+                                                @focus="$wire.openFilterDropdown('{{ $cfField }}')"
+                                                placeholder="{{ $cfFilterSelected ? 'Alterar...' : 'Buscar ' . $cfLabel . '...' }}"
+                                                autocomplete="off"
+                                                class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 pr-8 focus:ring-1 focus:ring-primary/30 focus:outline-none bg-white"
+                                            />
+                                            <button type="button"
+                                                tabindex="-1"
+                                                @mousedown.prevent="open = !open; if (open) $wire.openFilterDropdown('{{ $cfField }}')"
+                                                class="absolute right-2 text-gray-400 hover:text-gray-600 transition-transform duration-200"
+                                                :class="open ? 'rotate-180' : ''">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div x-show="open" x-cloak
+                                            class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
+                                            @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
+                                                <button type="button"
+                                                    wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                    @click="open = false"
+                                                    class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
+                                                    {{ $opt['label'] }}
+                                                </button>
+                                            @empty
+                                                <p class="px-3 py-2 text-xs text-gray-400 italic">Nenhum resultado encontrado.</p>
+                                            @endforelse
+                                        </div>
                                     </div>
                                 </div>
 

@@ -148,8 +148,11 @@ class BaseCrud extends Component
     /** Resultados para cada campo: [fieldName => [{value, label}]] */
     public array $sdResults  = [];
 
-    /** Labels exibidos para cada campo: [fieldName => label] */
+    /** Labels exibidos para cada campo (modal): [fieldName => label] */
     public array $sdLabels   = [];
+
+    /** Labels exibidos para cada campo SD de filtro: [fieldName => label] */
+    public array $sdFilterLabels = [];
 
     // ── Preferências ────────────────────────────────────────────────────────
 
@@ -488,6 +491,7 @@ class BaseCrud extends Component
         $this->sdSearches           = [];
         $this->sdResults            = [];
         $this->sdLabels             = [];
+        $this->sdFilterLabels       = [];
         $this->quickDateFilter      = '';
         $this->textFilter           = [];
         $this->advancedSearchActive = false;
@@ -734,8 +738,87 @@ class BaseCrud extends Component
 
     public function filterSearchDropdown(string $field, string $query): void
     {
-        $this->filters[$field] = $query;
-        $this->searchDropdown('filter_' . $field, $query);
+        $col = $this->findColByField($field);
+
+        if (! $col) {
+            return;
+        }
+
+        $sdModel = $col['colsSDModel'] ?? null;
+        $sdLabel = $col['colsSDLabel'] ?? 'name';
+        $sdValue = $col['colsSDValor'] ?? 'id';
+        $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
+        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
+
+        if (! $sdModel) {
+            return;
+        }
+
+        // Se o usuário apagou o texto, limpa o filtro ativo
+        if ($query === '') {
+            unset($this->filters[$field], $this->sdFilterLabels[$field]);
+            $this->sdResults['filter_' . $field] = [];
+            return;
+        }
+
+        $this->sdResults['filter_' . $field] = $this->resolveSearchDropdownResults(
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit
+        );
+    }
+
+    /**
+     * Carrega os primeiros itens do SD de filtro ao focar no campo.
+     */
+    public function openFilterDropdown(string $field): void
+    {
+        if (! empty($this->sdResults['filter_' . $field])) {
+            return;
+        }
+
+        $col = $this->findColByField($field);
+
+        if (! $col) {
+            return;
+        }
+
+        $sdModel = $col['colsSDModel'] ?? null;
+        $sdLabel = $col['colsSDLabel'] ?? 'name';
+        $sdValue = $col['colsSDValor'] ?? 'id';
+        $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
+        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
+
+        if (! $sdModel) {
+            return;
+        }
+
+        $this->sdResults['filter_' . $field] = $this->resolveSearchDropdownResults(
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, '', $sdLimit, true
+        );
+    }
+
+    /**
+     * Confirma a seleção de um item no SD de filtro.
+     * Grava o ID em $filters[$field] e fecha o dropdown.
+     */
+    public function selectFilterDropdownOption(string $field, mixed $value, string $label): void
+    {
+        $this->filters[$field]               = $value;
+        $this->filterOperators[$field]        = '=';
+        $this->sdFilterLabels[$field]         = $label;
+        $this->sdResults['filter_' . $field]  = [];
+        $this->resetPage();
+    }
+
+    /**
+     * Limpa a seleção ativa de um SD de filtro.
+     */
+    public function clearFilterDropdownSelection(string $field): void
+    {
+        unset($this->filters[$field], $this->filterOperators[$field], $this->sdFilterLabels[$field]);
+        $this->sdResults['filter_' . $field] = [];
+        $this->resetPage();
     }
 
     // ── Exportação ────────────────────────────────────────────────────────
@@ -806,6 +889,7 @@ class BaseCrud extends Component
                 'quickDateColumn'     => $this->quickDateColumn,
                 'search'              => $this->search,
                 'sdLabels'            => $this->sdLabels,
+                'sdFilterLabels'      => $this->sdFilterLabels,
             ],
             'columns'       => $this->formDataColumns,
             'columnWidths'  => $this->columnWidths,
@@ -877,6 +961,7 @@ class BaseCrud extends Component
         $this->quickDateColumn        = $filterPrefs['quickDateColumn']      ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
         $this->search                 = $filterPrefs['search']               ?? '';
         $this->sdLabels               = $filterPrefs['sdLabels']             ?? [];
+        $this->sdFilterLabels         = $filterPrefs['sdFilterLabels']      ?? [];
 
         // Busca avançada
         $advPrefs                  = $prefs['advancedSearch'] ?? [];
