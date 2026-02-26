@@ -195,12 +195,33 @@ class CrudConfig extends Component
         }
 
         $defaults = [
-            'colsTipo'         => 'text',
-            'colsGravar'       => 'S',
-            'colsRequired'     => 'N',
-            'colsAlign'        => 'text-start',
-            'colsIsFilterable' => 'S',
-            'colsNomeLogico'   => ucfirst($this->formDataField['colsNomeFisico']),
+            'colsTipo'              => 'text',
+            'colsGravar'            => 'S',
+            'colsRequired'          => 'N',
+            'colsAlign'             => 'text-start',
+            'colsIsFilterable'      => 'S',
+            'colsNomeLogico'        => ucfirst($this->formDataField['colsNomeFisico']),
+            // Renderer DSL
+            'colsRenderer'          => '',
+            'colsRendererBadges'    => [],
+            'colsRendererCurrency'  => 'BRL',
+            'colsRendererDecimals'  => 2,
+            'colsRendererMaxChars'  => 50,
+            'colsRendererLinkTemplate' => '',
+            'colsRendererLinkLabel' => '',
+            'colsRendererLinkNewTab'=> false,
+            'colsRendererBoolTrue'  => 'Sim',
+            'colsRendererBoolFalse' => 'Não',
+            'colsRendererImageWidth'=> 40,
+            // Máscara e limpeza
+            'colsMask'              => '',
+            'colsMaskTransform'     => '',
+            // Relação aninhada (dot notation)
+            'colsRelacaoNested'     => '',
+            // Validações
+            'colsValidations'       => [],
+            // SearchDropdown
+            'colsSDMode'            => 'model',
         ];
 
         $this->formEditFields[] = array_merge($defaults, $this->formDataField);
@@ -264,6 +285,29 @@ class CrudConfig extends Component
             [$this->formEditFields[$index + 1], $this->formEditFields[$index]];
 
         $this->formEditFields = array_values($this->formEditFields);
+    }
+
+    /**
+     * Reordena as colunas a partir de um array de índices recebido pelo SortableJS.
+     * Chamado via wire:sortable ou via JS: $wire.reorderFields(newOrderArray)
+     *
+     * @param array $order  Array de índices na nova ordem — ex: [2, 0, 1, 3]
+     */
+    public function reorderFields(array $order): void
+    {
+        $reordered = [];
+
+        foreach ($order as $index) {
+            $idx = (int) $index;
+            if (isset($this->formEditFields[$idx])) {
+                $reordered[] = $this->formEditFields[$idx];
+            }
+        }
+
+        // Garante que itens não presentes no novo array (por segurança) sejam mantidos
+        if (count($reordered) === count($this->formEditFields)) {
+            $this->formEditFields = $reordered;
+        }
     }
 
     // ── Ações — CRUD ─────────────────────────────────────────────────────────

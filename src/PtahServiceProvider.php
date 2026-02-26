@@ -18,6 +18,7 @@ use Ptah\Livewire\SearchDropdown;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Support\SchemaInspector;
 
 class PtahServiceProvider extends ServiceProvider
@@ -36,6 +37,7 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(CacheService::class);
         $this->app->singleton(CrudConfigService::class);
         $this->app->singleton(FilterService::class);
+        $this->app->singleton(FormValidatorService::class);
     }
 
     /**

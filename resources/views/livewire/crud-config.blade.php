@@ -1,8 +1,8 @@
 <div>
-    {{-- ── Botão de abertura (somente admins) ────────────────────────────── --}}
-    @can('admin')
+    {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
+    {{-- @can('admin') --}}
         <button wire:click="openModal"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 rounded-xl bg-transparent hover:bg-amber-50 hover:text-amber-600 transition-all duration-200 focus:outline-none"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 rounded-lg bg-transparent hover:bg-slate-100 hover:text-slate-700 transition-all duration-150 focus:outline-none"
             title="Configurar CRUD">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -11,141 +11,191 @@
             </svg>
             <span class="hidden md:inline">Config</span>
         </button>
-    @endcan
+    {{-- @endcan --}}
 
-    {{-- ── Modal Principal ─────────────────────────────────────────────────── --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @if ($showModal)
-        <div class="fixed inset-0 z-50 flex items-start justify-center pt-6 pb-4 px-4 overflow-y-auto"
-            x-data="{
-                tab: 'cols',
-                tabs: [
-                    { id: 'cols',        label: 'Colunas',           icon: '▤' },
-                    { id: 'actions',     label: 'Ações',             icon: '⚡' },
-                    { id: 'filters',     label: 'Filtros Custom.',   icon: '⧩' },
-                    { id: 'styles',      label: 'Estilos',           icon: '🎨' },
-                    { id: 'general',     label: 'Geral',             icon: '⚙' },
-                    { id: 'permissions', label: 'Permissões',        icon: '🔒' },
-                ]
-            }">
-
+        @teleport('body')
+        <div
+            x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))"
+            x-init="init()"
+            class="fixed inset-0 z-[9999] flex items-center justify-center"
+            @keydown.escape.window="$wire.closeModal()"
+        >
             {{-- Backdrop --}}
-            <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" wire:click="closeModal"></div>
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeModal"></div>
 
-            {{-- Painel --}}
-            <div class="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col"
-                 style="max-height: calc(100vh - 3rem)">
+            {{-- Shell --}}
+            <div class="relative flex w-full max-w-7xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+                 style="height: 90vh; max-height: 900px;">
 
-                {{-- Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white shrink-0 rounded-t-2xl">
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center justify-center w-9 h-9 bg-amber-100 rounded-xl">
-                            <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                {{-- ── Sidebar ──────────────────────────────────────────────── --}}
+                <aside class="flex flex-col w-60 shrink-0 bg-slate-900 text-white">
+                    {{-- Header --}}
+                    <div class="px-5 pt-6 pb-5 border-b border-slate-700/60">
+                        <div class="flex items-center gap-2 mb-1">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
+                            <span class="text-xs font-semibold text-slate-300 uppercase tracking-widest">CRUD Config</span>
                         </div>
-                        <div>
-                            <h2 class="text-base font-bold text-gray-900">Configuração do CRUD</h2>
-                            <p class="text-xs text-gray-500">{{ $model }}</p>
-                        </div>
+                        <p class="text-[11px] text-slate-500 font-mono truncate">{{ $model }}</p>
                     </div>
-                    <button @click="$wire.closeModal()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
 
-                {{-- Tabs --}}
-                <div class="flex items-center gap-1 px-6 pt-3 border-b border-gray-200 overflow-x-auto shrink-0">
-                    <template x-for="t in tabs" :key="t.id">
-                        <button @click="tab = t.id"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-colors whitespace-nowrap"
-                            :class="tab === t.id
-                                ? 'border border-b-white border-gray-200 bg-white text-amber-600 -mb-px relative z-10'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg'">
-                            <span x-text="t.icon"></span>
-                            <span x-text="t.label"></span>
+                    {{-- Nav items --}}
+                    <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+                        @php
+                            $navItems = [
+                                ['id' => 'cols',        'icon' => 'M3 10h18M3 6h18M3 14h18M3 18h18',       'label' => 'Colunas',           'count' => count(array_filter($formEditFields, fn($c) => ($c['colsTipo'] ?? '') !== 'action'))],
+                                ['id' => 'actions',     'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',              'label' => 'Ações',             'count' => count(array_filter($formEditFields, fn($c) => ($c['colsTipo'] ?? '') === 'action'))],
+                                ['id' => 'filters',     'icon' => 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z', 'label' => 'Filtros Custom',    'count' => count($customFilters)],
+                                ['id' => 'styles',      'icon' => 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01', 'label' => 'Estilos', 'count' => count($conditionStyles)],
+                                ['id' => 'general',     'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4', 'label' => 'Geral',  'count' => null],
+                                ['id' => 'permissions', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', 'label' => 'Permissões', 'count' => null],
+                            ];
+                        @endphp
+
+                        @foreach ($navItems as $nav)
+                            <button
+                                @click="tab = '{{ $nav['id'] }}'"
+                                :class="tab === '{{ $nav['id'] }}' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'"
+                                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150"
+                            >
+                                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon'] }}"/>
+                                </svg>
+                                <span class="flex-1 text-left text-[13px]">{{ $nav['label'] }}</span>
+                                @if ($nav['count'] !== null)
+                                    <span :class="tab === '{{ $nav['id'] }}' ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-300'"
+                                          class="text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums">{{ $nav['count'] }}</span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </nav>
+
+                    {{-- Footer sidebar --}}
+                    <div class="px-4 py-3 border-t border-slate-700/60">
+                        <p class="text-[10px] text-slate-600">ptah &bull; crud engine</p>
+                    </div>
+                </aside>
+
+                {{-- ── Conteúdo Principal ────────────────────────────────────── --}}
+                <div class="flex flex-col flex-1 min-w-0">
+                    {{-- Top bar --}}
+                    <div class="flex items-center justify-between px-7 py-4 border-b border-slate-100 bg-white">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800" x-text="{
+                                cols: 'Configuração de Colunas',
+                                actions: 'Ações por Linha',
+                                filters: 'Filtros Personalizados',
+                                styles: 'Estilos Condicionais',
+                                general: 'Configurações Gerais',
+                                permissions: 'Permissões e Acesso'
+                            }[tab]"></h2>
+                            <p class="text-xs text-slate-400 mt-0.5" x-text="{
+                                cols: 'Defina, ordene e configure cada coluna da tabela',
+                                actions: 'Botões e links exibidos em cada linha',
+                                filters: 'Filtros avançados com relações e agregações',
+                                styles: 'Estilize linhas com base em condições dos dados',
+                                general: 'Cache, exportação, aparência e comportamento',
+                                permissions: 'Gates do Laravel e visibilidade de botões'
+                            }[tab]"></p>
+                        </div>
+                        <button wire:click="closeModal" class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
                         </button>
-                    </template>
-                </div>
+                    </div>
 
-                {{-- Conteúdo das tabs ─────────────────────────────────────── --}}
-                <div class="flex-1 overflow-y-auto p-6">
+                    {{-- Scroll area --}}
+                    <div class="flex-1 overflow-y-auto bg-slate-50">
 
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: COLUNAS                                        --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'cols'" x-cloak>
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: COLUNAS ────────────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'cols'" class="p-6 space-y-5">
 
-                        {{-- Tabela de colunas existentes --}}
-                        @if (!empty($formEditFields))
-                            <div class="mb-5 overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+                            {{-- Tabela de colunas --}}
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-slate-700">Colunas da Tabela</h3>
+                                        <p class="text-xs text-slate-400 mt-0.5">Arraste para reordenar. Clique em ✏ para editar.</p>
+                                    </div>
+                                </div>
+
                                 <table class="w-full text-xs">
-                                    <thead class="bg-gray-50 text-gray-500 uppercase tracking-wide">
-                                        <tr>
-                                            <th class="px-3 py-2 text-center w-16">Ordem</th>
-                                            <th class="px-3 py-2 text-left">Campo Físico</th>
-                                            <th class="px-3 py-2 text-left">Nome Lógico</th>
-                                            <th class="px-3 py-2 text-center">Tipo</th>
-                                            <th class="px-3 py-2 text-center">Gravar</th>
-                                            <th class="px-3 py-2 text-center">Filtrar</th>
-                                            <th class="px-3 py-2 text-center">Total.</th>
-                                            <th class="px-3 py-2 text-center w-28">Ações</th>
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr class="text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                            <th class="w-8 px-3 py-2.5"></th>
+                                            <th class="px-3 py-2.5">Campo Físico</th>
+                                            <th class="px-3 py-2.5">Label</th>
+                                            <th class="px-3 py-2.5">Tipo</th>
+                                            <th class="px-3 py-2.5">Renderer</th>
+                                            <th class="px-3 py-2.5">Máscara</th>
+                                            <th class="px-3 py-2.5 text-center">Gravar</th>
+                                            <th class="px-3 py-2.5 text-center">Filtrável</th>
+                                            <th class="px-3 py-2.5 w-20 text-center">Ações</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        @foreach ($formEditFields as $i => $field)
-                                            @if (($field['colsTipo'] ?? '') !== 'action')
-                                                <tr class="hover:bg-gray-50 transition-colors {{ $editingFieldIndex === $i ? 'bg-amber-50' : '' }}">
-                                                    <td class="px-3 py-2 text-center">
-                                                        <div class="flex items-center justify-center gap-1">
-                                                            <button wire:click="moveFieldUp({{ $i }})"
-                                                                class="p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                                                @disabled($i === 0)>↑</button>
-                                                            <span class="text-gray-400 text-xs">{{ $i + 1 }}</span>
-                                                            <button wire:click="moveFieldDown({{ $i }})"
-                                                                class="p-0.5 text-gray-400 hover:text-gray-600">↓</button>
-                                                        </div>
+                                    <tbody
+                                        id="cols-sortable"
+                                        class="divide-y divide-slate-100"
+                                    >
+                                        @foreach ($formEditFields as $i => $col)
+                                            @if (($col['colsTipo'] ?? '') !== 'action')
+                                                <tr class="hover:bg-slate-50 transition-colors" data-index="{{ $i }}">
+                                                    <td class="px-3 py-2 cursor-move text-slate-300 hover:text-slate-500 select-none">
+                                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8zm6 0h2v2h-2zM8 11h2v2H8zm6 0h2v2h-2zM8 16h2v2H8zm6 0h2v2h-2z"/></svg>
                                                     </td>
-                                                    <td class="px-3 py-2 font-mono font-semibold text-gray-700">{{ $field['colsNomeFisico'] ?? '' }}</td>
-                                                    <td class="px-3 py-2 text-gray-600">{{ $field['colsNomeLogico'] ?? '' }}</td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <span class="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">{{ $field['colsTipo'] ?? 'text' }}</span>
+                                                    <td class="px-3 py-2">
+                                                        <code class="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">{{ $col['colsNomeFisico'] ?? '' }}</code>
+                                                        @if (!empty($col['colsRelacaoNested']))
+                                                            <span class="text-[10px] text-slate-400 ml-1">→ {{ $col['colsRelacaoNested'] }}</span>
+                                                        @endif
                                                     </td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <span class="inline-block w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center
-                                                            {{ ($field['colsGravar'] ?? 'N') === 'S' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400' }}">
-                                                            {{ ($field['colsGravar'] ?? 'N') === 'S' ? 'S' : 'N' }}
-                                                        </span>
+                                                    <td class="px-3 py-2 text-slate-700">{{ $col['colsNomeLogico'] ?? '' }}</td>
+                                                    <td class="px-3 py-2">
+                                                        <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[11px] font-medium">{{ $col['colsTipo'] ?? 'text' }}</span>
                                                     </td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <span class="inline-block w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center
-                                                            {{ ($field['colsIsFilterable'] ?? 'N') === 'S' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400' }}">
-                                                            {{ ($field['colsIsFilterable'] ?? 'N') === 'S' ? 'S' : 'N' }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        @if (!empty($field['totalizadorEnabled']))
-                                                            <span class="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-medium">{{ $field['totalizadorType'] ?? 'sum' }}</span>
+                                                    <td class="px-3 py-2">
+                                                        @if (!empty($col['colsRenderer']))
+                                                            <span class="bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded text-[11px] font-medium">{{ $col['colsRenderer'] }}</span>
+                                                        @elseif (!empty($col['colsHelper']))
+                                                            <span class="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[11px]">{{ $col['colsHelper'] }}</span>
                                                         @else
-                                                            <span class="text-gray-300">—</span>
+                                                            <span class="text-slate-300">—</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-3 py-2">
+                                                        @if (!empty($col['colsMask']))
+                                                            <span class="bg-green-50 text-green-700 px-1.5 py-0.5 rounded text-[11px]">{{ $col['colsMask'] }}</span>
+                                                        @else
+                                                            <span class="text-slate-300">—</span>
                                                         @endif
                                                     </td>
                                                     <td class="px-3 py-2 text-center">
-                                                        <div class="flex items-center justify-center gap-1.5">
-                                                            <button wire:click="editField({{ $i }})"
-                                                                class="p-1 rounded text-blue-500 hover:bg-blue-50 transition-colors" title="Editar">
-                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-1.414.93l-3 1 1-3a4 4 0 01.93-1.414z"/>
+                                                        <span class="inline-block w-4 h-4 rounded-full {{ ($col['colsGravar'] ?? 'N') === 'S' ? 'bg-green-400' : 'bg-slate-200' }}"></span>
+                                                    </td>
+                                                    <td class="px-3 py-2 text-center">
+                                                        <span class="inline-block w-4 h-4 rounded-full {{ ($col['colsIsFilterable'] ?? 'N') === 'S' ? 'bg-blue-400' : 'bg-slate-200' }}"></span>
+                                                    </td>
+                                                    <td class="px-3 py-2 text-center">
+                                                        <div class="flex items-center justify-center gap-1">
+                                                            <button wire:click="editField({{ $i }})" @click="editTab = 'basic'" title="Editar"
+                                                                class="p-1 rounded text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                                                 </svg>
                                                             </button>
-                                                            <button wire:click="removeField({{ $i }})"
-                                                                wire:confirm="Remover esta coluna?"
-                                                                class="p-1 rounded text-red-400 hover:bg-red-50 transition-colors" title="Remover">
-                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                            <button wire:click="removeField({{ $i }})" wire:confirm="Remover coluna '{{ $col['colsNomeLogico'] ?? $col['colsNomeFisico'] }}'?"
+                                                                class="p-1 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                                                 </svg>
                                                             </button>
                                                         </div>
@@ -153,272 +203,630 @@
                                                 </tr>
                                             @endif
                                         @endforeach
+                                        @if (count(array_filter($formEditFields, fn($c) => ($c['colsTipo'] ?? '') !== 'action')) === 0)
+                                            <tr>
+                                                <td colspan="9" class="px-5 py-8 text-center text-sm text-slate-400">
+                                                    Nenhuma coluna configurada. Adicione abaixo.
+                                                </td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
-                        @else
-                            <div class="mb-5 text-center py-8 text-gray-400 text-sm">Nenhuma coluna configurada.</div>
-                        @endif
 
-                        {{-- Formulário de coluna --}}
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">
-                                {{ $editingFieldIndex >= 0 ? 'Editar Coluna' : '+ Adicionar Coluna' }}
-                            </h4>
-
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {{-- Campo Físico --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Campo Físico *</label>
-                                    <input wire:model="formDataField.colsNomeFisico" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: name">
+                            {{-- Formulário de edição/adição --}}
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+                                 x-data="{ editTab: 'basic' }">
+                                <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        {{ $editingFieldIndex >= 0 ? '✏ Editando coluna' : '+ Nova Coluna' }}
+                                    </h3>
+                                    @if ($editingFieldIndex >= 0)
+                                        <button wire:click="cancelEditField" class="text-xs text-slate-400 hover:text-slate-600">Cancelar edição</button>
+                                    @endif
                                 </div>
 
-                                {{-- Nome Lógico --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome Lógico *</label>
-                                    <input wire:model="formDataField.colsNomeLogico" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                        placeholder="ex: Nome">
+                                {{-- Sub-tabs do formulário --}}
+                                <div class="flex gap-0 border-b border-slate-100 bg-slate-50 px-5">
+                                    @php
+                                        $fTabs = [
+                                            ['id' => 'basic',      'label' => 'Básico'],
+                                            ['id' => 'renderer',   'label' => 'Exibição'],
+                                            ['id' => 'mask',       'label' => 'Máscara'],
+                                            ['id' => 'validation', 'label' => 'Validação'],
+                                            ['id' => 'relation',   'label' => 'Relação'],
+                                            ['id' => 'sd',         'label' => 'SearchDropdown'],
+                                            ['id' => 'total',      'label' => 'Totalizador'],
+                                        ];
+                                    @endphp
+                                    @foreach ($fTabs as $ft)
+                                        <button @click="editTab = '{{ $ft['id'] }}'"
+                                            :class="editTab === '{{ $ft['id'] }}' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'"
+                                            class="px-3 py-2.5 text-[11px] transition-colors whitespace-nowrap">
+                                            {{ $ft['label'] }}
+                                        </button>
+                                    @endforeach
                                 </div>
 
-                                {{-- Tipo --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-                                    <select wire:model="formDataField.colsTipo"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="text">text</option>
-                                        <option value="number">number</option>
-                                        <option value="date">date</option>
-                                        <option value="datetime">datetime</option>
-                                        <option value="select">select</option>
-                                        <option value="searchdropdown">searchdropdown</option>
-                                        <option value="boolean">boolean</option>
-                                    </select>
+                                <div class="p-5">
+                                    {{-- ── Básico ───────────────────────────────────── --}}
+                                    <div x-show="editTab === 'basic'" class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="cfg-label">Campo Físico (DB) *</label>
+                                            <input type="text" wire:model="formDataField.colsNomeFisico" placeholder="ex: supplier_id"
+                                                class="cfg-input font-mono" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Label (exibição)</label>
+                                            <input type="text" wire:model="formDataField.colsNomeLogico" placeholder="ex: Fornecedor"
+                                                class="cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Tipo</label>
+                                            <select wire:model.live="formDataField.colsTipo" class="cfg-input">
+                                                <option value="text">text — Texto</option>
+                                                <option value="number">number — Número</option>
+                                                <option value="date">date — Data</option>
+                                                <option value="datetime">datetime — Data e Hora</option>
+                                                <option value="select">select — Seleção</option>
+                                                <option value="searchdropdown">searchdropdown — Busca Relacional</option>
+                                                <option value="boolean">boolean — Sim/Não</option>
+                                                <option value="textarea">textarea — Texto Longo</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Alinhamento</label>
+                                            <select wire:model="formDataField.colsAlign" class="cfg-input">
+                                                <option value="text-start">Esquerda</option>
+                                                <option value="text-center">Centro</option>
+                                                <option value="text-end">Direita</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex gap-6 col-span-2">
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" wire:model="formDataField.colsGravar" true-value="S" false-value="N"
+                                                    class="rounded border-slate-300 text-indigo-600" />
+                                                <span class="text-xs text-slate-600 font-medium">Incluir no Formulário (Gravar)</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" wire:model="formDataField.colsRequired" true-value="S" false-value="N"
+                                                    class="rounded border-slate-300 text-indigo-600" />
+                                                <span class="text-xs text-slate-600 font-medium">Obrigatório</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" wire:model="formDataField.colsIsFilterable" true-value="S" false-value="N"
+                                                    class="rounded border-slate-300 text-indigo-600" />
+                                                <span class="text-xs text-slate-600 font-medium">Filtrável</span>
+                                            </label>
+                                        </div>
+                                        {{-- Select options (condicional) --}}
+                                        @if (($formDataField['colsTipo'] ?? '') === 'select')
+                                            <div class="col-span-2">
+                                                <label class="cfg-label">Opções do Select</label>
+                                                <input type="text" wire:model="formDataField.colsSelect"
+                                                    placeholder="chave;Rótulo;;chave2;Rótulo2"
+                                                    class="cfg-input font-mono" />
+                                                <p class="text-[11px] text-slate-400 mt-1">Formato: <code class="bg-slate-100 px-1 rounded">chave;Rótulo</code> separados por <code class="bg-slate-100 px-1 rounded">;;</code></p>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <label class="cfg-label">Método Customizado (PHP)</label>
+                                            <input type="text" wire:model="formDataField.colsMetodoCustom"
+                                                placeholder="App\Services\MyService\formatValue(%campo%)"
+                                                class="cfg-input font-mono text-[11px]" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Ordenação alternativa (colsOrderBy)</label>
+                                            <input type="text" wire:model="formDataField.colsOrderBy"
+                                                placeholder="campo_db ou relation.campo"
+                                                class="cfg-input" />
+                                        </div>
+                                    </div>
+
+                                    {{-- ── Exibição / Renderer DSL ──────────────────── --}}
+                                    <div x-show="editTab === 'renderer'" class="space-y-4">
+                                        <div>
+                                            <label class="cfg-label">Renderer</label>
+                                            <select wire:model.live="formDataField.colsRenderer" class="cfg-input max-w-xs">
+                                                <option value="">— Nenhum (valor bruto) —</option>
+                                                <option value="badge">badge — Badge colorido por valor</option>
+                                                <option value="pill">pill — Pill arredondado</option>
+                                                <option value="boolean">boolean — Sim / Não</option>
+                                                <option value="money">money — Valor monetário</option>
+                                                <option value="date">date — Data (d/m/Y)</option>
+                                                <option value="datetime">datetime — Data e Hora</option>
+                                                <option value="link">link — Link clicável</option>
+                                                <option value="image">image — Imagem miniatura</option>
+                                                <option value="truncate">truncate — Texto truncado</option>
+                                            </select>
+                                            <p class="text-[11px] text-slate-400 mt-1">⚠ <code class="bg-slate-100 px-1 rounded">colsHelper</code> legado continua funcionando se nenhum renderer for selecionado.</p>
+                                        </div>
+
+                                        {{-- badge / pill --}}
+                                        @if (in_array($formDataField['colsRenderer'] ?? '', ['badge', 'pill']))
+                                            <div>
+                                                <label class="cfg-label">Mapeamento de Badges</label>
+                                                <p class="text-[11px] text-slate-400 mb-2">Cada entrada mapeia um valor do banco para um rótulo e cor.</p>
+                                                @foreach ($formDataField['colsRendererBadges'] ?? [] as $bi => $badge)
+                                                    <div class="flex gap-2 mb-2 items-center">
+                                                        <input type="text" wire:model="formDataField.colsRendererBadges.{{ $bi }}.value"
+                                                            placeholder="valor" class="cfg-input-sm flex-1 font-mono" />
+                                                        <input type="text" wire:model="formDataField.colsRendererBadges.{{ $bi }}.label"
+                                                            placeholder="rótulo" class="cfg-input-sm flex-1" />
+                                                        <select wire:model="formDataField.colsRendererBadges.{{ $bi }}.color" class="cfg-input-sm flex-1">
+                                                            <option value="green">Verde</option>
+                                                            <option value="yellow">Amarelo</option>
+                                                            <option value="red">Vermelho</option>
+                                                            <option value="blue">Azul</option>
+                                                            <option value="indigo">Índigo</option>
+                                                            <option value="purple">Roxo</option>
+                                                            <option value="pink">Rosa</option>
+                                                            <option value="gray">Cinza</option>
+                                                        </select>
+                                                        <input type="text" wire:model="formDataField.colsRendererBadges.{{ $bi }}.icon"
+                                                            placeholder="bx bx-check (opcional)" class="cfg-input-sm flex-1" />
+                                                        <button wire:click="$set('formDataField.colsRendererBadges', array_values(array_filter($formDataField['colsRendererBadges'] ?? [], fn($k) => $k != {{ $bi }}, ARRAY_FILTER_USE_KEY)))"
+                                                            class="text-red-400 hover:text-red-600 p-1 shrink-0">✕</button>
+                                                    </div>
+                                                @endforeach
+                                                <button
+                                                    wire:click="$set('formDataField.colsRendererBadges', array_merge($formDataField['colsRendererBadges'] ?? [], [['value' => '', 'label' => '', 'color' => 'gray', 'icon' => '']]))"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-1">+ Adicionar badge</button>
+                                            </div>
+                                        @endif
+
+                                        {{-- boolean --}}
+                                        @if (($formDataField['colsRenderer'] ?? '') === 'boolean')
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">Texto Verdadeiro</label>
+                                                    <input type="text" wire:model="formDataField.colsRendererBoolTrue" placeholder="Sim" class="cfg-input" />
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">Texto Falso</label>
+                                                    <input type="text" wire:model="formDataField.colsRendererBoolFalse" placeholder="Não" class="cfg-input" />
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- money --}}
+                                        @if (($formDataField['colsRenderer'] ?? '') === 'money')
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">Moeda</label>
+                                                    <select wire:model="formDataField.colsRendererCurrency" class="cfg-input">
+                                                        <option value="BRL">BRL — Real Brasileiro</option>
+                                                        <option value="USD">USD — Dólar</option>
+                                                        <option value="EUR">EUR — Euro</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">Casas Decimais</label>
+                                                    <input type="number" wire:model="formDataField.colsRendererDecimals" min="0" max="4" class="cfg-input" />
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- link --}}
+                                        @if (($formDataField['colsRenderer'] ?? '') === 'link')
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <label class="cfg-label">Template da URL</label>
+                                                    <input type="text" wire:model="formDataField.colsRendererLinkTemplate"
+                                                        placeholder="/pedidos/%id%/detalhe"
+                                                        class="cfg-input font-mono" />
+                                                    <p class="text-[11px] text-slate-400 mt-1">Use <code class="bg-slate-100 px-1 rounded">%campo%</code> para substituir por qualquer campo do registro. Ex: <code class="bg-slate-100 px-1 rounded">%id%</code></p>
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="cfg-label">Label do link (opcional)</label>
+                                                        <input type="text" wire:model="formDataField.colsRendererLinkLabel"
+                                                            placeholder="Ver detalhes" class="cfg-input" />
+                                                    </div>
+                                                    <div class="flex items-end pb-1">
+                                                        <label class="flex items-center gap-2 cursor-pointer">
+                                                            <input type="checkbox" wire:model="formDataField.colsRendererLinkNewTab" class="rounded border-slate-300 text-indigo-600" />
+                                                            <span class="text-xs text-slate-600">Abrir em nova aba</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- image --}}
+                                        @if (($formDataField['colsRenderer'] ?? '') === 'image')
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">Largura (px)</label>
+                                                    <input type="number" wire:model="formDataField.colsRendererImageWidth" placeholder="40" class="cfg-input" />
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">Altura (px, opcional)</label>
+                                                    <input type="number" wire:model="formDataField.colsRendererImageHeight" placeholder="40" class="cfg-input" />
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- truncate --}}
+                                        @if (($formDataField['colsRenderer'] ?? '') === 'truncate')
+                                            <div class="max-w-xs">
+                                                <label class="cfg-label">Máximo de Caracteres</label>
+                                                <input type="number" wire:model="formDataField.colsRendererMaxChars" placeholder="50" class="cfg-input" />
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- ── Máscara de Input ────────────────────────── --}}
+                                    <div x-show="editTab === 'mask'" class="space-y-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="cfg-label">Máscara de Entrada</label>
+                                                <select wire:model.live="formDataField.colsMask" class="cfg-input">
+                                                    <option value="">— Sem máscara —</option>
+                                                    <optgroup label="Monetário">
+                                                        <option value="money_brl">money_brl — R$ 1.253,08</option>
+                                                        <option value="money_usd">money_usd — $ 1,253.08</option>
+                                                        <option value="percent">percent — 99,99%</option>
+                                                    </optgroup>
+                                                    <optgroup label="Documentos">
+                                                        <option value="cpf">cpf — 000.000.000-00</option>
+                                                        <option value="cnpj">cnpj — 00.000.000/0000-00</option>
+                                                    </optgroup>
+                                                    <optgroup label="Contato">
+                                                        <option value="phone">phone — (00) 0 0000-0000</option>
+                                                        <option value="cep">cep — 00000-000</option>
+                                                    </optgroup>
+                                                    <optgroup label="Data/Hora">
+                                                        <option value="date">date — 00/00/0000</option>
+                                                        <option value="datetime">datetime — 00/00/0000 00:00</option>
+                                                    </optgroup>
+                                                    <optgroup label="Texto">
+                                                        <option value="integer">integer — Somente inteiros</option>
+                                                        <option value="uppercase">uppercase — MAIÚSCULAS automático</option>
+                                                        <option value="custom_regex">custom_regex — Expressão personalizada</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Transformação antes de Salvar</label>
+                                                <select wire:model="formDataField.colsMaskTransform" class="cfg-input">
+                                                    <option value="">— Nenhuma —</option>
+                                                    <option value="money_to_float">money_to_float — "R$ 1.253,08" → 1253.08</option>
+                                                    <option value="digits_only">digits_only — "055.465.309-52" → "05546530952"</option>
+                                                    <option value="uppercase">uppercase — "texto" → "TEXTO"</option>
+                                                    <option value="lowercase">lowercase — "TEXTO" → "texto"</option>
+                                                    <option value="trim">trim — Remove espaços das bordas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        @if (($formDataField['colsMask'] ?? '') === 'custom_regex')
+                                            <div>
+                                                <label class="cfg-label">Padrão Regex (IMask)</label>
+                                                <input type="text" wire:model="formDataField.colsMaskRegex"
+                                                    placeholder="Ex: 000-000-A ou /^[A-Z]{3}$/"
+                                                    class="cfg-input font-mono" />
+                                            </div>
+                                        @endif
+
+                                        {{-- Preview da transformação --}}
+                                        @if (!empty($formDataField['colsMaskTransform']))
+                                            <div class="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                                                <p class="text-xs font-semibold text-amber-700 mb-1">⚡ Transformação aplicada ao salvar:</p>
+                                                <p class="text-xs text-amber-600">
+                                                    @switch($formDataField['colsMaskTransform'])
+                                                        @case('money_to_float') R$ 1.253,08 → <strong>1253.08</strong> @break
+                                                        @case('digits_only') 055.465.309-52 → <strong>05546530952</strong> (remove non-digits) @break
+                                                        @case('uppercase') "texto" → <strong>"TEXTO"</strong> @break
+                                                        @case('lowercase') "TEXTO" → <strong>"texto"</strong> @break
+                                                        @case('trim') " texto " → <strong>"texto"</strong> @break
+                                                    @endswitch
+                                                </p>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- ── Validações ──────────────────────────────── --}}
+                                    <div x-show="editTab === 'validation'" class="space-y-4">
+                                        <p class="text-xs text-slate-500">Regras adicionais além do <strong>Obrigatório</strong> (configurado na aba Básico).</p>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            @php
+                                                $currentValidations = $formDataField['colsValidations'] ?? [];
+                                                $hasRule = fn($r) => in_array($r, $currentValidations);
+                                                $toggleRule = fn($r) => $hasRule($r)
+                                                    ? array_values(array_filter($currentValidations, fn($v) => $v !== $r))
+                                                    : [...$currentValidations, $r];
+                                            @endphp
+                                            @foreach (['email' => 'E-mail válido', 'url' => 'URL válida', 'integer' => 'Inteiro', 'numeric' => 'Numérico', 'cpf' => 'CPF válido', 'cnpj' => 'CNPJ válido', 'phone' => 'Telefone válido'] as $rule => $ruleLabel)
+                                                <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border {{ $hasRule($rule) ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50' }} transition-colors select-none">
+                                                    <input type="checkbox"
+                                                        {{ $hasRule($rule) ? 'checked' : '' }}
+                                                        wire:change="$set('formDataField.colsValidations', {{ json_encode($toggleRule($rule)) }})"
+                                                        class="rounded border-slate-300 text-indigo-600" />
+                                                    <span class="text-xs text-slate-700 font-medium">{{ $ruleLabel }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="cfg-label">Valor Mínimo (min:X)</label>
+                                                <input type="number" step="any"
+                                                    value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'min:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'min:')), 4) : '' }}"
+                                                    @change="
+                                                        let rules = @js($currentValidations).filter(r => !r.startsWith('min:'));
+                                                        if ($event.target.value !== '') rules.push('min:' + $event.target.value);
+                                                        $wire.set('formDataField.colsValidations', rules);
+                                                    "
+                                                    placeholder="ex: 0" class="cfg-input" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Valor Máximo (max:X)</label>
+                                                <input type="number" step="any"
+                                                    value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'max:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'max:')), 4) : '' }}"
+                                                    @change="
+                                                        let rules = @js($currentValidations).filter(r => !r.startsWith('max:'));
+                                                        if ($event.target.value !== '') rules.push('max:' + $event.target.value);
+                                                        $wire.set('formDataField.colsValidations', rules);
+                                                    "
+                                                    placeholder="ex: 9999" class="cfg-input" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Comprimento Mínimo (minLength:X)</label>
+                                                <input type="number" min="0"
+                                                    value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'minLength:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'minLength:')), 10) : '' }}"
+                                                    @change="
+                                                        let rules = @js($currentValidations).filter(r => !r.startsWith('minLength:'));
+                                                        if ($event.target.value !== '') rules.push('minLength:' + $event.target.value);
+                                                        $wire.set('formDataField.colsValidations', rules);
+                                                    "
+                                                    placeholder="ex: 3" class="cfg-input" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Comprimento Máximo (maxLength:X)</label>
+                                                <input type="number" min="0"
+                                                    value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'maxLength:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'maxLength:')), 10) : '' }}"
+                                                    @change="
+                                                        let rules = @js($currentValidations).filter(r => !r.startsWith('maxLength:'));
+                                                        if ($event.target.value !== '') rules.push('maxLength:' + $event.target.value);
+                                                        $wire.set('formDataField.colsValidations', rules);
+                                                    "
+                                                    placeholder="ex: 255" class="cfg-input" />
+                                            </div>
+                                            <div class="col-span-2">
+                                                <label class="cfg-label">Regex Personalizado</label>
+                                                <input type="text"
+                                                    value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'regex:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'regex:')), 6) : '' }}"
+                                                    @change="
+                                                        let rules = @js($currentValidations).filter(r => !r.startsWith('regex:'));
+                                                        if ($event.target.value !== '') rules.push('regex:' + $event.target.value);
+                                                        $wire.set('formDataField.colsValidations', rules);
+                                                    "
+                                                    placeholder="Ex: ^[A-Z]{2,5}$ ou /^\d{5}$/"
+                                                    class="cfg-input font-mono" />
+                                            </div>
+                                        </div>
+                                        @if (!empty($currentValidations))
+                                            <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                                                <p class="text-[11px] font-semibold text-slate-600 mb-1.5">Regras ativas:</p>
+                                                <div class="flex flex-wrap gap-1.5">
+                                                    @foreach ($currentValidations as $rv)
+                                                        <span class="bg-indigo-100 text-indigo-700 text-[11px] font-mono px-2 py-0.5 rounded-full">{{ $rv }}</span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- ── Relação ─────────────────────────────────── --}}
+                                    <div x-show="editTab === 'relation'" class="space-y-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="cfg-label">Relação Eloquent</label>
+                                                <input type="text" wire:model="formDataField.colsRelacao"
+                                                    placeholder="ex: supplier" class="cfg-input font-mono" />
+                                                <p class="text-[11px] text-slate-400 mt-1">Nome do método de relação no Model</p>
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Campo a Exibir</label>
+                                                <input type="text" wire:model="formDataField.colsRelacaoExibe"
+                                                    placeholder="ex: name" class="cfg-input font-mono" />
+                                            </div>
+                                        </div>
+                                        <div class="rounded-lg border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 space-y-3">
+                                            <div>
+                                                <p class="text-xs font-semibold text-indigo-700 mb-1">
+                                                    🔗 Relação Aninhada (Dot Notation)
+                                                </p>
+                                                <p class="text-[11px] text-indigo-600 mb-3">Use quando o dado está em múltiplos níveis: <code class="bg-white px-1 rounded font-mono">address.city.name</code></p>
+                                                <label class="cfg-label">Caminho Dot Notation</label>
+                                                <input type="text" wire:model="formDataField.colsRelacaoNested"
+                                                    placeholder="ex: address.city.name ou supplier.contact.email"
+                                                    class="cfg-input font-mono" />
+                                                <p class="text-[11px] text-slate-400 mt-1">O eager loading é automático. O último segmento é o campo; os anteriores são as relações.</p>
+                                            </div>
+                                            @if (!empty($formDataField['colsRelacaoNested']))
+                                                @php $nestedParts = explode('.', $formDataField['colsRelacaoNested']); @endphp
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    @foreach ($nestedParts as $pi => $part)
+                                                        <span class="{{ $pi === count($nestedParts) - 1 ? 'bg-green-100 text-green-700 font-semibold' : 'bg-white text-indigo-700 border border-indigo-200' }} text-xs px-2 py-0.5 rounded font-mono">{{ $part }}</span>
+                                                        @if ($pi < count($nestedParts) - 1)
+                                                            <span class="text-slate-300 text-sm">→</span>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                                <p class="text-[11px] text-slate-500">Eager loads: <code class="font-mono bg-slate-100 px-1 rounded">{{ implode('.', array_slice($nestedParts, 0, count($nestedParts) - 1)) }}</code></p>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- ── SearchDropdown Config ───────────────────── --}}
+                                    <div x-show="editTab === 'sd'" class="space-y-4">
+                                        <div class="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+                                            <p class="text-xs text-blue-700">Configuração para tipo <strong>searchdropdown</strong>. Disponível apenas quando o tipo da coluna for SearchDropdown.</p>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="col-span-2">
+                                                <label class="cfg-label">Modo de Busca</label>
+                                                <div class="flex gap-3">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" wire:model.live="formDataField.colsSDMode" value="model" class="text-indigo-600" />
+                                                        <span class="text-xs text-slate-700 font-medium">Model Eloquent</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" wire:model.live="formDataField.colsSDMode" value="service" class="text-indigo-600" />
+                                                        <span class="text-xs text-slate-700 font-medium">Service customizado</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            @if (($formDataField['colsSDMode'] ?? 'model') === 'model')
+                                                <div class="col-span-2">
+                                                    <label class="cfg-label">Model (caminho relativo a App\Models)</label>
+                                                    <input type="text" wire:model="formDataField.colsSDModel"
+                                                        placeholder="ex: Entrie/ShippingCompanies"
+                                                        class="cfg-input font-mono" />
+                                                </div>
+                                            @else
+                                                <div>
+                                                    <label class="cfg-label">Service (caminho relativo a App\Services)</label>
+                                                    <input type="text" wire:model="formDataField.colsSDService"
+                                                        placeholder="ex: Entrie/ShippingCompaniesService"
+                                                        class="cfg-input font-mono" />
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">Método do Service</label>
+                                                    <input type="text" wire:model="formDataField.colsSDServiceMethod"
+                                                        placeholder="ex: searchDropDownOfShippingCompanies"
+                                                        class="cfg-input font-mono" />
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <label class="cfg-label">Campo Valor (value)</label>
+                                                <input type="text" wire:model="formDataField.colsSDValueField"
+                                                    placeholder="id" class="cfg-input font-mono" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Campo Label (label)</label>
+                                                <input type="text" wire:model="formDataField.colsSDLabelField"
+                                                    placeholder="name" class="cfg-input font-mono" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Label Secundário (opcional)</label>
+                                                <input type="text" wire:model="formDataField.colsSDLabelSecondary"
+                                                    placeholder="cnpj" class="cfg-input font-mono" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Ordenação (orderByRaw)</label>
+                                                <input type="text" wire:model="formDataField.colsSDOrderBy"
+                                                    placeholder="id asc" class="cfg-input font-mono" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Limite de Resultados</label>
+                                                <input type="number" wire:model="formDataField.colsSDLimit"
+                                                    placeholder="10" min="1" max="100" class="cfg-input" />
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">Placeholder</label>
+                                                <input type="text" wire:model="formDataField.colsSDPlaceholder"
+                                                    placeholder="Buscar..." class="cfg-input" />
+                                            </div>
+                                            <div class="col-span-2">
+                                                <label class="cfg-label">Filtros Estáticos (JSON)</label>
+                                                <input type="text" wire:model="formDataField.colsSDFilters"
+                                                    placeholder='[{"field":"active","value":"S"}]'
+                                                    class="cfg-input font-mono text-[11px]" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- ── Totalizador ─────────────────────────────── --}}
+                                    <div x-show="editTab === 'total'" class="space-y-4">
+                                        <label class="flex items-center gap-2 cursor-pointer select-none p-3 rounded-lg border border-slate-200 hover:bg-slate-50">
+                                            <input type="checkbox" wire:model.live="formDataField.totalizadorEnabled"
+                                                class="rounded border-slate-300 text-indigo-600" />
+                                            <span class="text-sm text-slate-700 font-medium">Habilitar Totalizador nesta Coluna</span>
+                                        </label>
+                                        @if (!empty($formDataField['totalizadorEnabled']))
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">Função</label>
+                                                    <select wire:model="formDataField.totalizadorType" class="cfg-input">
+                                                        <option value="sum">SUM — Soma</option>
+                                                        <option value="avg">AVG — Média</option>
+                                                        <option value="count">COUNT — Contagem</option>
+                                                        <option value="min">MIN — Mínimo</option>
+                                                        <option value="max">MAX — Máximo</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">Formato</label>
+                                                    <select wire:model="formDataField.totalizadorFormat" class="cfg-input">
+                                                        <option value="currency">currency — R$ 1.253,08</option>
+                                                        <option value="number">number — 1.253,08</option>
+                                                        <option value="integer">integer — 1.253</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <label class="cfg-label">Label</label>
+                                                    <input type="text" wire:model="formDataField.totalizadorLabel"
+                                                        placeholder="Total" class="cfg-input" />
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Botão salvar campo --}}
+                                    <div class="flex justify-end pt-4 border-t border-slate-100 mt-4">
+                                        @if ($editingFieldIndex >= 0)
+                                            <button wire:click="updateField"
+                                                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                Salvar Alterações da Coluna
+                                            </button>
+                                        @else
+                                            <button wire:click="addField"
+                                                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                                Adicionar Coluna
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
-
-                                {{-- Helper --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Helper</label>
-                                    <select wire:model="formDataField.colsHelper"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="">— Nenhum —</option>
-                                        <option value="dateFormat">dateFormat</option>
-                                        <option value="dateTimeFormat">dateTimeFormat</option>
-                                        <option value="currencyFormat">currencyFormat</option>
-                                        <option value="yesOrNot">yesOrNot (S/N)</option>
-                                        <option value="badge">badge</option>
-                                    </select>
-                                </div>
-
-                                {{-- Alinhamento --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Alinhamento</label>
-                                    <select wire:model="formDataField.colsAlign"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="text-start">Esquerda</option>
-                                        <option value="text-center">Centro</option>
-                                        <option value="text-end">Direita</option>
-                                    </select>
-                                </div>
-
-                                {{-- Gravar --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Gravar no form</label>
-                                    <select wire:model="formDataField.colsGravar"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="S">Sim</option>
-                                        <option value="N">Não</option>
-                                    </select>
-                                </div>
-
-                                {{-- Required --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Obrigatório</label>
-                                    <select wire:model="formDataField.colsRequired"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="N">Não</option>
-                                        <option value="S">Sim</option>
-                                    </select>
-                                </div>
-
-                                {{-- Filtrável --}}
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Filtrável</label>
-                                    <select wire:model="formDataField.colsIsFilterable"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="S">Sim</option>
-                                        <option value="N">Não</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {{-- Campos condicionais --}}
-                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {{-- colsSelect (tipo select) --}}
-                                @if (($formDataField['colsTipo'] ?? '') === 'select')
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Opções do Select</label>
-                                        <input wire:model="formDataField.colsSelect" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                            placeholder="chave;Rótulo;;chave2;Rótulo 2">
-                                        <p class="text-xs text-gray-400 mt-0.5">Formato: <code>chave;Rótulo;;chave2;Rótulo 2</code></p>
-                                    </div>
-                                @endif
-
-                                {{-- SearchDropdown --}}
-                                @if (($formDataField['colsTipo'] ?? '') === 'searchdropdown')
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Modelo (SD)</label>
-                                        <input wire:model="formDataField.colsSDModel" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                            placeholder="ex: App\Models\Supplier">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Relação (SD)</label>
-                                        <input wire:model="formDataField.colsRelacao" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            placeholder="ex: supplier">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Campo exibido (SD)</label>
-                                        <input wire:model="formDataField.colsRelacaoExibe" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            placeholder="ex: name">
-                                    </div>
-                                @endif
-
-                                {{-- Relação (outros tipos) --}}
-                                @if (!in_array($formDataField['colsTipo'] ?? '', ['select', 'searchdropdown', 'action']))
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Relação (opcional)</label>
-                                        <input wire:model="formDataField.colsRelacao" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            placeholder="ex: category">
-                                        <p class="text-xs text-gray-400 mt-0.5">Se o campo vem de relacionamento.</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">Campo exibido da relação</label>
-                                        <input wire:model="formDataField.colsRelacaoExibe" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            placeholder="ex: name">
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Totalizador --}}
-                            <div class="mt-3 border-t border-gray-200 pt-3"
-                                x-data="{ totEnabled: {{ !empty($formDataField['totalizadorEnabled']) ? 'true' : 'false' }} }">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox"
-                                        wire:model="formDataField.totalizadorEnabled"
-                                        @change="totEnabled = $event.target.checked"
-                                        class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-400">
-                                    <span class="text-xs font-medium text-gray-700">Habilitar Totalizador nesta coluna</span>
-                                </label>
-
-                                <div x-show="totEnabled" x-cloak class="mt-2 grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Agregação</label>
-                                        <select wire:model="formDataField.totalizadorType"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                            <option value="sum">Soma (SUM)</option>
-                                            <option value="avg">Média (AVG)</option>
-                                            <option value="count">Contagem (COUNT)</option>
-                                            <option value="min">Mínimo (MIN)</option>
-                                            <option value="max">Máximo (MAX)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Formato</label>
-                                        <select wire:model="formDataField.totalizadorFormat"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                            <option value="number">Número</option>
-                                            <option value="currency">Moeda (R$)</option>
-                                            <option value="integer">Inteiro</option>
-                                            <option value="decimal">Decimal</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Rótulo</label>
-                                        <input wire:model="formDataField.totalizadorLabel" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            placeholder="ex: Total">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Botões do formulário --}}
-                            <div class="mt-3 flex items-center gap-2">
-                                @if ($editingFieldIndex >= 0)
-                                    <button wire:click="updateField"
-                                        class="px-4 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">
-                                        Atualizar Coluna
-                                    </button>
-                                    <button wire:click="cancelEditField"
-                                        class="px-4 py-1.5 text-xs font-semibold text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
-                                        Cancelar
-                                    </button>
-                                @else
-                                    <button wire:click="addField"
-                                        class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-                                        + Adicionar Coluna
-                                    </button>
-                                @endif
                             </div>
                         </div>
-                    </div>
 
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: AÇÕES                                          --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'actions'" x-cloak>
-
-                        {{-- Lista de ações existentes --}}
-                        @php
-                            $actions = collect($formEditFields)->filter(fn($f) => ($f['colsTipo'] ?? '') === 'action');
-                        @endphp
-
-                        @if ($actions->isNotEmpty())
-                            <div class="mb-5 overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: AÇÕES ──────────────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'actions'" class="p-6 space-y-5">
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-5 py-3.5 border-b border-slate-100">
+                                    <h3 class="text-sm font-semibold text-slate-700">Ações por Linha</h3>
+                                </div>
                                 <table class="w-full text-xs">
-                                    <thead class="bg-gray-50 text-gray-500 uppercase tracking-wide">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left">Nome</th>
-                                            <th class="px-3 py-2 text-center">Tipo</th>
-                                            <th class="px-3 py-2 text-left">Valor / Método</th>
-                                            <th class="px-3 py-2 text-center">Ícone</th>
-                                            <th class="px-3 py-2 text-center">Cor</th>
-                                            <th class="px-3 py-2 text-left">Permissão</th>
-                                            <th class="px-3 py-2 text-center w-16">—</th>
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr class="text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                            <th class="px-4 py-2.5">Nome</th>
+                                            <th class="px-4 py-2.5">Tipo</th>
+                                            <th class="px-4 py-2.5">Valor / URL</th>
+                                            <th class="px-4 py-2.5">Ícone</th>
+                                            <th class="px-4 py-2.5">Cor</th>
+                                            <th class="px-4 py-2.5">Permissão</th>
+                                            <th class="px-4 py-2.5 w-12"></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        @foreach ($formEditFields as $i => $field)
-                                            @if (($field['colsTipo'] ?? '') === 'action')
-                                                <tr class="hover:bg-gray-50">
-                                                    <td class="px-3 py-2 font-semibold text-gray-700">{{ $field['colsNomeLogico'] ?? '' }}</td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                                                            {{ ($field['actionType'] ?? '') === 'livewire' ? 'bg-purple-100 text-purple-700' : (($field['actionType'] ?? '') === 'javascript' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700') }}">
-                                                            {{ $field['actionType'] ?? 'link' }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="px-3 py-2 font-mono text-gray-600 max-w-xs truncate">{{ $field['actionValue'] ?? '' }}</td>
-                                                    <td class="px-3 py-2 text-center font-mono text-gray-500">{{ $field['actionIcon'] ?? '' }}</td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{{ $field['actionColor'] ?? 'primary' }}</span>
-                                                    </td>
-                                                    <td class="px-3 py-2 text-gray-500 max-w-xs truncate">{{ $field['actionPermission'] ?? '—' }}</td>
-                                                    <td class="px-3 py-2 text-center">
-                                                        <button wire:click="removeAction({{ $i }})"
-                                                            wire:confirm="Remover esta ação?"
-                                                            class="p-1 rounded text-red-400 hover:bg-red-50 transition-colors">
-                                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                            </svg>
-                                                        </button>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @foreach ($formEditFields as $i => $col)
+                                            @if (($col['colsTipo'] ?? '') === 'action')
+                                                <tr class="hover:bg-slate-50">
+                                                    <td class="px-4 py-2 font-medium text-slate-700">{{ $col['colsNomeLogico'] ?? '' }}</td>
+                                                    <td class="px-4 py-2"><span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[11px]">{{ $col['actionType'] ?? 'link' }}</span></td>
+                                                    <td class="px-4 py-2 font-mono text-[11px] text-slate-500 max-w-[200px] truncate">{{ $col['actionValue'] ?? '' }}</td>
+                                                    <td class="px-4 py-2"><em class="{{ $col['actionIcon'] ?? 'bx bx-link' }}"></em></td>
+                                                    <td class="px-4 py-2"><span class="bg-{{ $col['actionColor'] ?? 'slate' }}-100 text-{{ $col['actionColor'] ?? 'slate' }}-700 px-1.5 py-0.5 rounded text-[11px]">{{ $col['actionColor'] ?? 'primary' }}</span></td>
+                                                    <td class="px-4 py-2 font-mono text-[11px] text-slate-400">{{ $col['actionPermission'] ?? '—' }}</td>
+                                                    <td class="px-4 py-2">
+                                                        <button wire:click="removeAction({{ $i }})" wire:confirm="Remover ação?"
+                                                            class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors">✕</button>
                                                     </td>
                                                 </tr>
                                             @endif
@@ -426,506 +834,380 @@
                                     </tbody>
                                 </table>
                             </div>
-                        @else
-                            <div class="mb-5 text-center py-8 text-gray-400 text-sm">Nenhuma ação configurada.</div>
-                        @endif
 
-                        {{-- Formulário nova ação --}}
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">+ Adicionar Ação</h4>
-
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome (Rótulo) *</label>
-                                    <input wire:model="formDataAction.colsNomeLogico" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                        placeholder="ex: Aprovar">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Tipo *</label>
-                                    <select wire:model="formDataAction.actionType"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="link">Link (URL)</option>
-                                        <option value="livewire">Livewire (método)</option>
-                                        <option value="javascript">JavaScript</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Valor / Método *</label>
-                                    <input wire:model="formDataAction.actionValue" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: /orders/%id%/approve">
-                                    <p class="mt-0.5 text-xs text-gray-400">Use <code>%id%</code> como placeholder do ID</p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Ícone (classe CSS)</label>
-                                    <input wire:model="formDataAction.actionIcon" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: bx bx-check">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Cor</label>
-                                    <select wire:model="formDataAction.actionColor"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="primary">primary</option>
-                                        <option value="success">success</option>
-                                        <option value="danger">danger</option>
-                                        <option value="warning">warning</option>
-                                        <option value="info">info</option>
-                                        <option value="secondary">secondary</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Permissão (Gate)</label>
-                                    <input wire:model="formDataAction.actionPermission" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: approve-orders">
-                                    <p class="mt-0.5 text-xs text-gray-400">Deixe vazio para mostrar a todos.</p>
-                                </div>
-                            </div>
-
-                            <div class="mt-3">
-                                <button wire:click="addAction"
-                                    class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-                                    + Adicionar Ação
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: FILTROS PERSONALIZADOS                         --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'filters'" x-cloak>
-
-                        @if (!empty($customFilters))
-                            <div class="mb-5 space-y-2">
-                                @foreach ($customFilters as $i => $filter)
-                                    <div class="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                                            <div><span class="text-gray-400">Campo:</span> <span class="font-medium font-mono">{{ $filter['field'] ?? '' }}</span></div>
-                                            <div><span class="text-gray-400">Label:</span> <span class="font-medium">{{ $filter['label'] ?? '' }}</span></div>
-                                            <div><span class="text-gray-400">Tipo:</span> <span class="font-medium">{{ $filter['colsFilterType'] ?? 'text' }}</span></div>
-                                            @if (!empty($filter['whereHas']))
-                                                <div><span class="text-gray-400">whereHas:</span> <span class="font-mono font-medium">{{ $filter['whereHas'] }}</span></div>
-                                            @endif
-                                            @if (!empty($filter['aggregate']))
-                                                <div><span class="text-gray-400">Aggregate:</span> <span class="font-medium uppercase">{{ $filter['aggregate'] }}</span></div>
-                                            @endif
-                                            @if (!empty($filter['defaultOperator']))
-                                                <div><span class="text-gray-400">Operador:</span> <span class="font-mono font-medium">{{ $filter['defaultOperator'] }}</span></div>
-                                            @endif
-                                        </div>
-                                        <button wire:click="removeCustomFilter({{ $i }})"
-                                            wire:confirm="Remover este filtro?"
-                                            class="p-1 rounded text-red-400 hover:bg-red-50 transition-colors shrink-0">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="mb-5 text-center py-8 text-gray-400 text-sm">Nenhum filtro personalizado.</div>
-                        @endif
-
-                        {{-- Formulário novo filtro --}}
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">+ Adicionar Filtro Personalizado</h4>
-
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Campo Físico *</label>
-                                    <input wire:model="formDataFilter.field" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: supplier_id">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Label</label>
-                                    <input wire:model="formDataFilter.label" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                        placeholder="ex: Fornecedor">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Tipo do Filtro</label>
-                                    <select wire:model="formDataFilter.colsFilterType"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="text">text</option>
-                                        <option value="number">number</option>
-                                        <option value="select">select</option>
-                                        <option value="searchdropdown">searchdropdown</option>
-                                        <option value="date">date</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">whereHas (relação)</label>
-                                    <input wire:model="formDataFilter.whereHas" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: supplier">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Campo da Relação</label>
-                                    <input wire:model="formDataFilter.field_relation" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: name">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Aggregate</label>
-                                    <select wire:model="formDataFilter.aggregate"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="">— Nenhum —</option>
-                                        <option value="SUM">SUM</option>
-                                        <option value="COUNT">COUNT</option>
-                                        <option value="AVG">AVG</option>
-                                        <option value="MAX">MAX</option>
-                                        <option value="MIN">MIN</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Operador padrão</label>
-                                    <select wire:model="formDataFilter.defaultOperator"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="=">= (igual)</option>
-                                        <option value=">=">≥ (maior ou igual)</option>
-                                        <option value=">"> > (maior)</option>
-                                        <option value="<=">≤ (menor ou igual)</option>
-                                        <option value="<"> &lt; (menor)</option>
-                                        <option value="LIKE">LIKE (contém)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mt-3">
-                                <button wire:click="addCustomFilter"
-                                    class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-                                    + Adicionar Filtro
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: ESTILOS CONDICIONAIS                           --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'styles'" x-cloak>
-
-                        <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
-                            <strong>Como funciona:</strong> Define estilos CSS aplicados em linhas onde a condição for verdadeira.
-                            A <strong>primeira regra que corresponder</strong> será usada (a ordem importa).
-                        </div>
-
-                        @if (!empty($conditionStyles))
-                            <div class="mb-5 overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-                                <table class="w-full text-xs">
-                                    <thead class="bg-gray-50 text-gray-500 uppercase tracking-wide">
-                                        <tr>
-                                            <th class="px-3 py-2 text-center w-8">#</th>
-                                            <th class="px-3 py-2 text-left">Campo</th>
-                                            <th class="px-3 py-2 text-center">Operador</th>
-                                            <th class="px-3 py-2 text-left">Valor</th>
-                                            <th class="px-3 py-2 text-left">Estilo CSS</th>
-                                            <th class="px-3 py-2 text-center">Preview</th>
-                                            <th class="px-3 py-2 text-center w-12">—</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        @foreach ($conditionStyles as $i => $style)
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-3 py-2 text-center text-gray-400">{{ $i + 1 }}</td>
-                                                <td class="px-3 py-2 font-mono font-semibold text-gray-700">{{ $style['field'] ?? '' }}</td>
-                                                <td class="px-3 py-2 text-center"><code class="bg-gray-100 px-1.5 py-0.5 rounded">{{ $style['operator'] ?? '=' }}</code></td>
-                                                <td class="px-3 py-2 font-mono text-gray-600">{{ $style['value'] ?? '' }}</td>
-                                                <td class="px-3 py-2 font-mono text-xs text-gray-500 max-w-xs truncate">{{ $style['style'] ?? '' }}</td>
-                                                <td class="px-3 py-2 text-center">
-                                                    <span class="inline-block px-3 py-1 rounded text-xs font-medium" style="{{ $style['style'] ?? '' }}">
-                                                        Prévia
-                                                    </span>
-                                                </td>
-                                                <td class="px-3 py-2 text-center">
-                                                    <button wire:click="removeConditionStyle({{ $i }})"
-                                                        wire:confirm="Remover este estilo?"
-                                                        class="p-1 rounded text-red-400 hover:bg-red-50 transition-colors">
-                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="mb-5 text-center py-8 text-gray-400 text-sm">Nenhum estilo condicional configurado.</div>
-                        @endif
-
-                        {{-- Formulário novo estilo --}}
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">+ Adicionar Estilo Condicional</h4>
-
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Campo *</label>
-                                    <input wire:model="formDataStyle.field" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: status">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Operador</label>
-                                    <select wire:model="formDataStyle.operator"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                                        <option value="=">=</option>
-                                        <option value="!=">!=</option>
-                                        <option value=">">></option>
-                                        <option value=">=">&gt;=</option>
-                                        <option value="<">&lt;</option>
-                                        <option value="<=">&lt;=</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Valor *</label>
-                                    <input wire:model="formDataStyle.value" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                        placeholder="ex: canceled">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Estilo CSS *</label>
-                                    <input wire:model="formDataStyle.style" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-mono"
-                                        placeholder="ex: color:#999; text-decoration:line-through;">
-                                </div>
-                            </div>
-
-                            {{-- Exemplos rápidos --}}
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                <span class="text-xs text-gray-400">Exemplos:</span>
-                                <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'color:#999; text-decoration:line-through;')"
-                                    class="text-xs px-2 py-0.5 bg-gray-100 rounded hover:bg-gray-200 transition-colors">Riscado</button>
-                                <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'background-color:#FFF3CD; font-weight:bold;')"
-                                    class="text-xs px-2 py-0.5 bg-yellow-50 rounded hover:bg-yellow-100 transition-colors">Amarelo</button>
-                                <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'background-color:#D4EDDA; color:#155724;')"
-                                    class="text-xs px-2 py-0.5 bg-green-50 rounded hover:bg-green-100 transition-colors">Verde</button>
-                                <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'background-color:#F8D7DA; color:#721C24; font-weight:bold;')"
-                                    class="text-xs px-2 py-0.5 bg-red-50 rounded hover:bg-red-100 transition-colors">Vermelho</button>
-                            </div>
-
-                            <div class="mt-3">
-                                <button wire:click="addConditionStyle"
-                                    class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-                                    + Adicionar Estilo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: GERAL                                          --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'general'" x-cloak class="space-y-5">
-
-                        {{-- Links e Classes --}}
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <span class="w-5 h-5 flex items-center justify-center bg-blue-100 rounded text-blue-600 text-xs">🔗</span>
-                                Links e Aparência
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Link da Linha (configLinkLinha)</label>
-                                    <input wire:model="configLinkLinha" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-                                        placeholder="ex: /products/%id%">
-                                    <p class="mt-0.5 text-xs text-gray-400">Deixe vazio para desabilitar clique na linha.</p>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Classe da Tabela</label>
-                                    <input wire:model="tableClass" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-                                        placeholder="ex: table table-hover table-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Classe do Cabeçalho (thead)</label>
-                                    <input wire:model="theadClass" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-                                        placeholder="ex: bg-dark text-white">
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Cache --}}
-                        <div class="border-t border-gray-100 pt-5">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <span class="w-5 h-5 flex items-center justify-center bg-purple-100 rounded text-purple-600 text-xs">⚡</span>
-                                Cache
-                            </h4>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 items-start">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" wire:model="cacheEnabled" id="cacheEnabled"
-                                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40">
-                                    <label for="cacheEnabled" class="text-xs font-medium text-gray-700 cursor-pointer">Habilitar cache</label>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">TTL (segundos)</label>
-                                    <input wire:model="cacheTtl" type="number" min="0"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                        placeholder="300">
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Exportação --}}
-                        <div class="border-t border-gray-100 pt-5">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <span class="w-5 h-5 flex items-center justify-center bg-green-100 rounded text-green-600 text-xs">📥</span>
-                                Exportação
-                            </h4>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Limite para exportação assíncrona</label>
-                                    <input wire:model="exportAsyncThreshold" type="number" min="0"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                        placeholder="1000">
-                                    <p class="mt-0.5 text-xs text-gray-400">Acima deste nº de registros, exporta em background.</p>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Máximo de linhas</label>
-                                    <input wire:model="exportMaxRows" type="number" min="0"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                        placeholder="10000">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Orientação do PDF</label>
-                                    <select wire:model="exportOrientation"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                                        <option value="landscape">Paisagem</option>
-                                        <option value="portrait">Retrato</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- UI Preferences --}}
-                        <div class="border-t border-gray-100 pt-5">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <span class="w-5 h-5 flex items-center justify-center bg-amber-100 rounded text-amber-600 text-xs">🎨</span>
-                                Preferências de Interface
-                            </h4>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" wire:model="uiCompactMode" id="uiCompact"
-                                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40">
-                                    <label for="uiCompact" class="text-xs font-medium text-gray-700 cursor-pointer">Modo Compacto padrão</label>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" wire:model="uiStickyHeader" id="uiSticky"
-                                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40">
-                                    <label for="uiSticky" class="text-xs font-medium text-gray-700 cursor-pointer">Header fixo (sticky)</label>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" wire:model="showTotalizador" id="showTot"
-                                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40">
-                                    <label for="showTot" class="text-xs font-medium text-gray-700 cursor-pointer">Exibir totalizadores</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    {{-- TAB: PERMISSÕES                                     --}}
-                    {{-- ════════════════════════════════════════════════════ --}}
-                    <div x-show="tab === 'permissions'" x-cloak class="space-y-5">
-
-                        {{-- Gates individuais --}}
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">Gates de Permissão</h4>
-                            <p class="text-xs text-gray-500 mb-3">
-                                Informe o nome do Gate/Ability do Laravel para cada ação.
-                                Deixe vazio para permitir a todos os usuários autenticados.
-                            </p>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                @foreach (['Create' => 'Criar', 'Edit' => 'Editar', 'Delete' => 'Excluir', 'Export' => 'Exportar', 'Restore' => 'Restaurar'] as $action => $label)
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700">+ Nova Ação</h3>
+                                <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">{{ $label }} ({{ strtolower($action) }})</label>
-                                        <input wire:model="permission{{ $action }}" type="text"
-                                            class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-                                            placeholder="ex: create-products">
+                                        <label class="cfg-label">Nome da Ação</label>
+                                        <input type="text" wire:model="formDataAction.colsNomeLogico" placeholder="ex: Ver Detalhes" class="cfg-input" />
                                     </div>
-                                @endforeach
-
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">Identificador da Página</label>
-                                    <input wire:model="permissionIdentifier" type="text"
-                                        class="w-full text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-                                        placeholder="ex: pageProducts">
+                                    <div>
+                                        <label class="cfg-label">Tipo</label>
+                                        <select wire:model="formDataAction.actionType" class="cfg-input">
+                                            <option value="link">link — Redirecionar URL</option>
+                                            <option value="livewire">livewire — Chamar método</option>
+                                            <option value="javascript">javascript — Executar JS</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="cfg-label">Valor</label>
+                                        <input type="text" wire:model="formDataAction.actionValue"
+                                            placeholder="link: /pedidos/%id%  |  livewire: approve(%id%)  |  js: confirm(%id%)"
+                                            class="cfg-input font-mono" />
+                                        <p class="text-[11px] text-slate-400 mt-1">Use <code class="bg-slate-100 px-1 rounded">%id%</code> ou <code class="bg-slate-100 px-1 rounded">%campo%</code> como placeholder do registro.</p>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Ícone (classe CSS)</label>
+                                        <input type="text" wire:model="formDataAction.actionIcon" placeholder="bx bx-show" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Cor</label>
+                                        <select wire:model="formDataAction.actionColor" class="cfg-input">
+                                            <option value="primary">primary</option>
+                                            <option value="success">success</option>
+                                            <option value="danger">danger</option>
+                                            <option value="warning">warning</option>
+                                            <option value="info">info</option>
+                                            <option value="secondary">secondary</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Permissão Gate (opcional)</label>
+                                        <input type="text" wire:model="formDataAction.actionPermission" placeholder="ex: admin" class="cfg-input font-mono" />
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-2 border-t border-slate-100">
+                                    <button wire:click="addAction" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        + Adicionar Ação
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- Visibilidade de botões --}}
-                        <div class="border-t border-gray-100 pt-5">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">Visibilidade de Botões</h4>
-                            <p class="text-xs text-gray-500 mb-3">Controla quais botões aparecem na interface (independente de gates).</p>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                @foreach (['showCreateButton' => 'Botão Novo', 'showEditButton' => 'Botão Editar', 'showDeleteButton' => 'Botão Excluir', 'showTrashButton' => 'Botão Lixeira'] as $prop => $label)
-                                    <div class="flex items-center gap-2">
-                                        <input type="checkbox" wire:model="{{ $prop }}" id="{{ $prop }}"
-                                            class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40">
-                                        <label for="{{ $prop }}" class="text-xs font-medium text-gray-700 cursor-pointer">{{ $label }}</label>
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: FILTROS CUSTOM ─────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'filters'" class="p-6 space-y-5">
+                            @foreach ($customFilters as $fi => $cf)
+                                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <span class="text-sm font-semibold text-slate-700">{{ $cf['label'] ?? $cf['field'] ?? "Filtro #$fi" }}</span>
+                                            <p class="text-[11px] text-slate-400 font-mono mt-0.5">{{ $cf['field'] ?? '' }}</p>
+                                        </div>
+                                        <button wire:click="removeCustomFilter({{ $fi }})" wire:confirm="Remover filtro?" class="text-slate-400 hover:text-red-500 text-lg leading-none">✕</button>
                                     </div>
-                                @endforeach
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        @if (!empty($cf['whereHas'])) <span class="tag">whereHas: {{ $cf['whereHas'] }}</span> @endif
+                                        @if (!empty($cf['field_relation'])) <span class="tag">relation field: {{ $cf['field_relation'] }}</span> @endif
+                                        @if (!empty($cf['aggregate'])) <span class="tag bg-violet-50 text-violet-700">{{ $cf['aggregate'] }}</span> @endif
+                                        @if (!empty($cf['colsFilterType'])) <span class="tag">tipo: {{ $cf['colsFilterType'] }}</span> @endif
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700">+ Novo Filtro Personalizado</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="cfg-label">Campo (field)</label>
+                                        <input type="text" wire:model="formDataFilter.field" placeholder="ex: supplier_id" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Label</label>
+                                        <input type="text" wire:model="formDataFilter.label" placeholder="ex: Fornecedor" class="cfg-input" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Tipo de Input</label>
+                                        <select wire:model="formDataFilter.colsFilterType" class="cfg-input">
+                                            <option value="text">text</option>
+                                            <option value="number">number</option>
+                                            <option value="date">date</option>
+                                            <option value="select">select</option>
+                                            <option value="searchdropdown">searchdropdown</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Operador Padrão</label>
+                                        <select wire:model="formDataFilter.defaultOperator" class="cfg-input">
+                                            <option value="=">=</option>
+                                            <option value="LIKE">LIKE</option>
+                                            <option value=">">></option>
+                                            <option value="<"><</option>
+                                            <option value=">=">>=</option>
+                                            <option value="<="><=</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">whereHas (relação)</label>
+                                        <input type="text" wire:model="formDataFilter.whereHas" placeholder="ex: purchaseOrderItems" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Campo na Relação</label>
+                                        <input type="text" wire:model="formDataFilter.field_relation" placeholder="ex: quantity" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Agregação</label>
+                                        <select wire:model="formDataFilter.aggregate" class="cfg-input">
+                                            <option value="">— Nenhuma —</option>
+                                            <option value="SUM">SUM</option>
+                                            <option value="COUNT">COUNT</option>
+                                            <option value="AVG">AVG</option>
+                                            <option value="MAX">MAX</option>
+                                            <option value="MIN">MIN</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-2 border-t border-slate-100">
+                                    <button wire:click="addCustomFilter" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        + Adicionar Filtro
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: ESTILOS ────────────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'styles'" class="p-6 space-y-5">
+                            @foreach ($conditionStyles as $si => $style)
+                                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-slate-700">{{ $style['field'] ?? '' }}</code>
+                                            <span class="text-slate-400 font-bold">{{ $style['condition'] ?? '==' }}</span>
+                                            <code class="text-xs font-mono text-slate-700">{{ $style['value'] ?? '' }}</code>
+                                        </div>
+                                        <button wire:click="removeConditionStyle({{ $si }})" wire:confirm="Remover estilo?" class="text-slate-400 hover:text-red-500">✕</button>
+                                    </div>
+                                    <p class="text-[11px] font-mono text-violet-600 bg-violet-50 px-2 py-1 rounded mt-2">{{ $style['style'] ?? '' }}</p>
+                                </div>
+                            @endforeach
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700">+ Novo Estilo Condicional</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="cfg-label">Campo</label>
+                                        <input type="text" wire:model="formDataStyle.field" placeholder="ex: flag_canceled" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Operador</label>
+                                        <select wire:model="formDataStyle.condition" class="cfg-input">
+                                            <option value="==">== (igual)</option>
+                                            <option value="!=">!= (diferente)</option>
+                                            <option value=">">> (maior)</option>
+                                            <option value="<">< (menor)</option>
+                                            <option value=">=">>= (maior ou igual)</option>
+                                            <option value="<="><= (menor ou igual)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Valor</label>
+                                        <input type="text" wire:model="formDataStyle.value" placeholder="ex: Y" class="cfg-input font-mono" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">CSS Inline</label>
+                                    <input type="text" wire:model="formDataStyle.style"
+                                        placeholder="color:#999; text-decoration:line-through; background:#F5F5F5;"
+                                        class="cfg-input font-mono" />
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <p class="text-[11px] text-slate-400 font-semibold w-full">Presets rápidos:</p>
+                                    <button type="button" wire:click="$set('formDataStyle.style', 'color:#999;text-decoration:line-through;background:#F5F5F5;')"
+                                        class="tag cursor-pointer hover:bg-slate-200">Cancelado</button>
+                                    <button type="button" wire:click="$set('formDataStyle.style', 'background:#FFF3CD;font-weight:bold;border-left:4px solid #FFC107;')"
+                                        class="tag cursor-pointer hover:bg-amber-200">Urgente</button>
+                                    <button type="button" wire:click="$set('formDataStyle.style', 'background:#D4EDDA;color:#155724;')"
+                                        class="tag cursor-pointer hover:bg-green-200">Sucesso</button>
+                                    <button type="button" wire:click="$set('formDataStyle.style', 'background:#F8D7DA;color:#721C24;font-weight:bold;')"
+                                        class="tag cursor-pointer hover:bg-red-200">Alerta</button>
+                                </div>
+                                <div class="flex justify-end pt-2 border-t border-slate-100">
+                                    <button wire:click="addConditionStyle" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        + Adicionar Estilo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: GERAL ──────────────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'general'" class="p-6 space-y-5">
+                            {{-- Aparência --}}
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700 pb-2 border-b border-slate-100">Aparência</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="cfg-label">Link da Linha (colsLinkLinha)</label>
+                                        <input type="text" wire:model="configLinkLinha" placeholder="/rota/%id%" class="cfg-input font-mono" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Classe da Tabela</label>
+                                        <input type="text" wire:model="tableClass" placeholder="table table-hover" class="cfg-input font-mono text-[11px]" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Classe do Thead</label>
+                                        <input type="text" wire:model="theadClass" placeholder="" class="cfg-input font-mono" />
+                                    </div>
+                                </div>
+                                <div class="flex gap-6">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model="uiCompactMode" class="rounded border-slate-300 text-indigo-600" />
+                                        <span class="text-xs text-slate-700 font-medium">Modo Compacto</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model="uiStickyHeader" class="rounded border-slate-300 text-indigo-600" />
+                                        <span class="text-xs text-slate-700 font-medium">Cabeçalho Fixo</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model="showTotalizador" class="rounded border-slate-300 text-indigo-600" />
+                                        <span class="text-xs text-slate-700 font-medium">Exibir Totalizador</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {{-- Cache --}}
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                    <h3 class="text-sm font-semibold text-slate-700">Cache</h3>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model.live="cacheEnabled" class="rounded border-slate-300 text-indigo-600" />
+                                        <span class="text-xs text-slate-700 font-medium">Habilitado</span>
+                                    </label>
+                                </div>
+                                @if ($cacheEnabled)
+                                    <div class="max-w-xs">
+                                        <label class="cfg-label">TTL (segundos)</label>
+                                        <input type="number" wire:model="cacheTtl" min="0" class="cfg-input" />
+                                        <p class="text-[11px] text-slate-400 mt-1">300 = 5 minutos · 3600 = 1 hora</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Export --}}
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700 pb-2 border-b border-slate-100">Exportação</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="cfg-label">Threshold Assíncrono (linhas)</label>
+                                        <input type="number" wire:model="exportAsyncThreshold" min="1" class="cfg-input" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Máximo de Linhas</label>
+                                        <input type="number" wire:model="exportMaxRows" min="1" class="cfg-input" />
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">Orientação PDF</label>
+                                        <select wire:model="exportOrientation" class="cfg-input">
+                                            <option value="landscape">Paisagem</option>
+                                            <option value="portrait">Retrato</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        {{-- TAB: PERMISSÕES ─────────────────────────────────── --}}
+                        {{-- ═══════════════════════════════════════════════════ --}}
+                        <div x-show="tab === 'permissions'" class="p-6 space-y-5">
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700 pb-2 border-b border-slate-100">Gates de Acesso</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    @foreach (['permissionCreate' => 'Criar', 'permissionEdit' => 'Editar', 'permissionDelete' => 'Excluir', 'permissionExport' => 'Exportar', 'permissionRestore' => 'Restaurar'] as $prop => $permLabel)
+                                        <div>
+                                            <label class="cfg-label">Gate: {{ $permLabel }}</label>
+                                            <input type="text" wire:model="{{ $prop }}" placeholder="ex: admin ou manage-{{ strtolower($permLabel) }}" class="cfg-input font-mono" />
+                                        </div>
+                                    @endforeach
+                                    <div>
+                                        <label class="cfg-label">Identificador de Permissão</label>
+                                        <input type="text" wire:model="permissionIdentifier" placeholder="pageMinhaRotina" class="cfg-input font-mono" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                <h3 class="text-sm font-semibold text-slate-700 pb-2 border-b border-slate-100">Visibilidade de Botões</h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    @foreach (['showCreateButton' => 'Botão Criar', 'showEditButton' => 'Botão Editar', 'showDeleteButton' => 'Botão Excluir', 'showTrashButton' => 'Botão Lixeira'] as $prop => $btnLabel)
+                                        <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border {{ $$prop ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white' }} hover:bg-slate-50 transition-colors select-none">
+                                            <input type="checkbox" wire:model="{{ $prop }}" class="rounded border-slate-300 text-indigo-600" />
+                                            <span class="text-xs text-slate-700 font-medium">{{ $btnLabel }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>{{-- /scroll area --}}
+
+                    {{-- ── Footer ────────────────────────────────────────────── --}}
+                    <div class="flex items-center justify-between gap-3 px-7 py-4 border-t border-slate-100 bg-white shrink-0">
+                        <p class="text-xs text-slate-400">
+                            {{ count($formEditFields) }} colunas · {{ count($customFilters) }} filtros · {{ count($conditionStyles) }} estilos
+                        </p>
+                        <div class="flex gap-3">
+                            <button wire:click="closeModal"
+                                class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                                Cancelar
+                            </button>
+                            <button wire:click="save" wire:loading.attr="disabled"
+                                class="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm">
+                                <span wire:loading wire:target="save" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                                <svg wire:loading.remove wire:target="save" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                Salvar Configuração
+                            </button>
+                        </div>
                     </div>
-
-                </div>
-                {{-- /Conteúdo das tabs --}}
-
-                {{-- Footer --}}
-                <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50/80 rounded-b-2xl shrink-0">
-                    <p class="text-xs text-gray-400">
-                        As alterações são salvas na tabela <code>crud_configs</code> e o cache é invalidado automaticamente.
-                    </p>
-                    <div class="flex items-center gap-2">
-                        <button wire:click="closeModal"
-                            class="px-4 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                            Cancelar
-                        </button>
-                        <button wire:click="save"
-                            wire:loading.attr="disabled"
-                            wire:loading.class="opacity-60 cursor-not-allowed"
-                            class="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors shadow-sm">
-                            <svg wire:loading wire:target="save" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                            </svg>
-                            <svg wire:loading.remove wire:target="save" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Salvar Configuração
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+                </div>{{-- /content --}}
+            </div>{{-- /shell --}}
+        </div>{{-- /fixed --}}
+        @endteleport
     @endif
 </div>
+
+@once
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" defer></script>
+<style>
+    .cfg-label { display:block; margin-bottom:.25rem; font-size:.6875rem; font-weight:600; color:#6B7280; text-transform:uppercase; letter-spacing:.05em; }
+    .cfg-input { display:block; width:100%; border-radius:.5rem; border:1px solid #D1D5DB; background:#fff; padding:.5rem .75rem; font-size:.75rem; color:#1E293B; outline:none; transition:border-color .15s,box-shadow .15s; }
+    .cfg-input:focus { border-color:#818CF8; box-shadow:0 0 0 3px rgba(129,140,248,.2); }
+    .cfg-input-sm { display:block; width:100%; border-radius:.375rem; border:1px solid #D1D5DB; background:#fff; padding:.25rem .5rem; font-size:.6875rem; color:#1E293B; outline:none; transition:border-color .15s; }
+    .cfg-input-sm:focus { border-color:#818CF8; }
+    .tag { display:inline-flex; align-items:center; border-radius:9999px; background:#F1F5F9; color:#475569; font-size:.6875rem; font-weight:500; padding:.125rem .5rem; }
+</style>
+
+<script>
+function crudConfigApp(fields, filters, styles) {
+    return {
+        tab: 'cols',
+        fields: fields,
+
+        init() {
+            this.initSortable();
+        },
+
+        initSortable() {
+            const el = document.getElementById('cols-sortable');
+            if (!el || typeof Sortable === 'undefined') return;
+
+            Sortable.create(el, {
+                animation: 150,
+                handle: 'td:first-child',
+                ghostClass: 'bg-indigo-50',
+                onEnd: (evt) => {
+                    // Monta a nova ordem de índices com base nos data-index
+                    const rows = Array.from(el.querySelectorAll('tr[data-index]'));
+                    const newOrder = rows.map(r => parseInt(r.getAttribute('data-index')));
+                    this.$wire.reorderFields(newOrder);
+                }
+            });
+        }
+    }
+}
+</script>
+@endonce

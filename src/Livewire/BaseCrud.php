@@ -21,6 +21,7 @@ use Ptah\Models\UserPreference;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Services\Crud\FormValidatorService;
 
 /**
  * Componente Livewire BaseCrud.
@@ -164,20 +165,22 @@ class BaseCrud extends Component
 
     // ── Serviços ─────────────────────────────────────────────────────────────
 
-    protected CrudConfigService $configService;
-    protected FilterService     $filterService;
-    protected CacheService      $cacheService;
+    protected CrudConfigService  $configService;
+    protected FilterService      $filterService;
+    protected CacheService       $cacheService;
+    protected FormValidatorService $formValidator;
 
     /** Eloquent model resolvido */
     protected ?Model $eloquentModel = null;
 
     // ── Ciclo de vida ───────────────────────────────────────────────────────
 
-    public function boot(CrudConfigService $configService, FilterService $filterService, CacheService $cacheService): void
+    public function boot(CrudConfigService $configService, FilterService $filterService, CacheService $cacheService, FormValidatorService $formValidator): void
     {
-        $this->configService = $configService;
-        $this->filterService = $filterService;
-        $this->cacheService  = $cacheService;
+        $this->configService  = $configService;
+        $this->filterService  = $filterService;
+        $this->cacheService   = $cacheService;
+        $this->formValidator  = $formValidator;
     }
 
     public function mount(
@@ -565,19 +568,9 @@ class BaseCrud extends Component
         $this->creating   = true;
         $this->formErrors = [];
 
-        // Validação dos campos obrigatórios
+        // Validação rica via FormValidatorService (required + email, min, max, regex, CPF, etc.)
         $formCols = $this->getFormCols();
-
-        foreach ($formCols as $col) {
-            if (($col['colsRequired'] ?? 'N') === 'S') {
-                $field = $col['colsNomeFisico'];
-                $value = $this->formData[$field] ?? null;
-
-                if ($value === null || $value === '') {
-                    $this->formErrors[$field] = ($col['colsNomeLogico'] ?? $field) . ' é obrigatório.';
-                }
-            }
-        }
+        $this->formErrors = $this->formValidator->validate($this->formData, $formCols);
 
         if (! empty($this->formErrors)) {
             $this->creating = false;
@@ -587,6 +580,9 @@ class BaseCrud extends Component
         // Monta dados apenas das colunas com colsGravar == 'S'
         $savableFields = array_column($formCols, 'colsNomeFisico');
         $data          = array_intersect_key($this->formData, array_flip($savableFields));
+
+        // Aplica transformações de máscara antes de persistir (money→float, CPF→dígitos, etc.)
+        $data = $this->applyMaskTransforms($data, $formCols);
 
         try {
             $modelInstance = $this->resolveEloquentModel();
@@ -1363,39 +1359,34 @@ class BaseCrud extends Component
 
     /**
      * Formata o valor de uma célula de acordo com a config da coluna.
-     * Aplica colsHelper, colsRelacao/colsRelacaoExibe, colsMetodoCustom.
+     * Aplica colsRenderer DSL, colsRelacaoNested (dot notation), colsRelacao/colsRelacaoExibe,
+     * colsHelper (legado), colsMetodoCustom e select map.
      */
     public function formatCell(array $col, mixed $row): string
     {
-        $field = $col['colsNomeFisico'] ?? '';
         $value = $this->getCellValue($col, $row);
 
-        // colsMetodoCustom tem prioridade
+        // colsMetodoCustom tem prioridade máxima
         if (! empty($col['colsMetodoCustom'])) {
             return $this->resolveCustomMethod($col['colsMetodoCustom'], $row, $value);
         }
 
-        // Relação: busca o valor relacionado
-        if (! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
+        // Nested dot notation: "address.city.name" → data_get($row, 'address.city.name')
+        if (! empty($col['colsRelacaoNested'])) {
+            $value = $this->resolveNestedValue($row, $col['colsRelacaoNested']);
+        } elseif (! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
             $rel   = $col['colsRelacao'];
             $exibe = $col['colsRelacaoExibe'];
             $value = $row->{$rel}?->{$exibe} ?? $value;
         }
 
-        // Helper de formatação
-        $helper = $col['colsHelper'] ?? null;
-
-        if ($helper) {
-            $value = $this->applyHelper($helper, $value);
-        }
-
-        // Select: converte valor para label
+        // Select: converte valor para label mapeado
         if (($col['colsTipo'] ?? '') === 'select' && ! empty($col['colsSelect'])) {
             $flip  = array_flip($col['colsSelect']);
             $value = $flip[(string) $value] ?? $value;
         }
 
-        return e((string) ($value ?? ''));
+        return $this->applyCellRenderer($col, $value, $row);
     }
 
     /**
@@ -1474,6 +1465,17 @@ class BaseCrud extends Component
             $rel = $col['colsRelacao'] ?? null;
             if ($rel && $rel !== '') {
                 $relations[] = $rel;
+            }
+
+            // Nested dot notation — eager load todos os segmentos exceto o último (que é o campo)
+            // Ex: "address.city.name" → eager load "address.city"
+            // Ex: "supplier.name"     → eager load "supplier"
+            $nested = $col['colsRelacaoNested'] ?? null;
+            if ($nested && $nested !== '') {
+                $parts = explode('.', $nested);
+                if (count($parts) > 1) {
+                    $relations[] = implode('.', array_slice($parts, 0, count($parts) - 1));
+                }
             }
         }
 
@@ -1663,6 +1665,249 @@ class BaseCrud extends Component
             'R' => '<span class="badge" style="background:#dc3545">Vermelho</span>',
             default => (string) $value,
         };
+    }
+
+    // ── Renderer DSL ─────────────────────────────────────────────────────
+
+    /**
+     * Aplica o renderer configurado na coluna (DSL).
+     * Rota para os métodos específicos conforme colsRenderer.
+     * Mantém compatibilidade com colsHelper legado.
+     */
+    protected function applyCellRenderer(array $col, mixed $value, mixed $row): string
+    {
+        $renderer = $col['colsRenderer'] ?? null;
+
+        // Compat legado: mapeia colsHelper para renderer
+        if (! $renderer && ! empty($col['colsHelper'])) {
+            $renderer = match ($col['colsHelper']) {
+                'dateFormat'     => 'date',
+                'dateTimeFormat' => 'datetime',
+                'currencyFormat' => 'money',
+                'yesOrNot'       => 'boolean',
+                'flagChannel'    => 'badge',
+                default          => null,
+            };
+
+            // Para badge via compat, usa a lógica de flagChannel
+            if ($renderer === 'badge' && $col['colsHelper'] === 'flagChannel') {
+                return $this->helperFlagChannel($value);
+            }
+        }
+
+        if (! $renderer) {
+            return e((string) ($value ?? ''));
+        }
+
+        return match ($renderer) {
+            'badge'    => $this->renderBadge($col, $value),
+            'pill'     => $this->renderPill($col, $value),
+            'boolean'  => $this->renderBoolean($col, $value),
+            'money'    => $this->renderMoney($col, $value),
+            'date'     => $this->helperDateFormat($value),
+            'datetime' => $this->helperDateTimeFormat($value),
+            'link'     => $this->renderLink($col, $value, $row),
+            'image'    => $this->renderImage($col, $value),
+            'truncate' => $this->renderTruncate($col, $value),
+            default    => e((string) ($value ?? '')),
+        };
+    }
+
+    /**
+     * Renderiza um badge colorido baseado em mapeamento de valores.
+     * Config: colsRendererBadges => [{value, label, color, icon?}]
+     */
+    protected function renderBadge(array $col, mixed $value): string
+    {
+        $badges   = $col['colsRendererBadges'] ?? [];
+        $valueStr = strtolower((string) ($value ?? ''));
+
+        foreach ($badges as $badge) {
+            if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
+                $label = e($badge['label'] ?? $value);
+                $color = match (strtolower($badge['color'] ?? 'gray')) {
+                    'green', 'success'   => 'bg-green-100 text-green-800',
+                    'yellow', 'warning'  => 'bg-yellow-100 text-yellow-800',
+                    'red', 'danger'      => 'bg-red-100 text-red-800',
+                    'blue', 'info'       => 'bg-blue-100 text-blue-800',
+                    'indigo', 'primary'  => 'bg-indigo-100 text-indigo-800',
+                    'purple'             => 'bg-purple-100 text-purple-800',
+                    'pink'               => 'bg-pink-100 text-pink-800',
+                    default              => 'bg-gray-100 text-gray-700',
+                };
+                $icon = ! empty($badge['icon'])
+                    ? '<span class="' . e($badge['icon']) . ' mr-1 text-[10px]"></span>'
+                    : '';
+                return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$icon}{$label}</span>";
+            }
+        }
+
+        // Fallback quando nenhum badge faz match
+        return '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">' . e((string) ($value ?? '')) . '</span>';
+    }
+
+    /**
+     * Renderiza um pill (badge arredondado) baseado em mapeamento de valores.
+     */
+    protected function renderPill(array $col, mixed $value): string
+    {
+        $badges   = $col['colsRendererBadges'] ?? [];
+        $valueStr = strtolower((string) ($value ?? ''));
+
+        foreach ($badges as $badge) {
+            if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
+                $label = e($badge['label'] ?? $value);
+                $color = match (strtolower($badge['color'] ?? 'gray')) {
+                    'green', 'success'   => 'bg-green-100 text-green-800',
+                    'yellow', 'warning'  => 'bg-yellow-100 text-yellow-800',
+                    'red', 'danger'      => 'bg-red-100 text-red-800',
+                    'blue', 'info'       => 'bg-blue-100 text-blue-800',
+                    'indigo', 'primary'  => 'bg-indigo-100 text-indigo-800',
+                    'purple'             => 'bg-purple-100 text-purple-800',
+                    default              => 'bg-gray-100 text-gray-700',
+                };
+                return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {$color}\">{$label}</span>";
+            }
+        }
+
+        return '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700">' . e((string) ($value ?? '')) . '</span>';
+    }
+
+    /**
+     * Renderiza booleano como badge Sim/Não.
+     * Config: colsRendererBoolTrue, colsRendererBoolFalse
+     */
+    protected function renderBoolean(array $col, mixed $value): string
+    {
+        $isTrue = in_array($value, [1, '1', 'S', 's', 'true', true, 'Y', 'y'], true);
+
+        if ($isTrue) {
+            $label = e($col['colsRendererBoolTrue'] ?? 'Sim');
+            return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800\">{$label}</span>";
+        }
+
+        $label = e($col['colsRendererBoolFalse'] ?? 'Não');
+        return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500\">{$label}</span>";
+    }
+
+    /**
+     * Renderiza valor monetário formatado.
+     * Config: colsRendererCurrency (BRL/USD/EUR), colsRendererDecimals
+     */
+    protected function renderMoney(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+
+        $currency = $col['colsRendererCurrency'] ?? 'BRL';
+        $decimals = (int) ($col['colsRendererDecimals'] ?? 2);
+
+        return match ($currency) {
+            'USD'   => '$ '  . number_format((float) $value, $decimals, '.', ','),
+            'EUR'   => '€ '  . number_format((float) $value, $decimals, ',', '.'),
+            default => 'R$ ' . number_format((float) $value, $decimals, ',', '.'),
+        };
+    }
+
+    /**
+     * Renderiza um link clicável.
+     * Config: colsRendererLinkTemplate (/path/%id%), colsRendererLinkLabel, colsRendererLinkNewTab
+     * Suporta %fieldName% como placeholder para qualquer campo do registro.
+     */
+    protected function renderLink(array $col, mixed $value, mixed $row): string
+    {
+        $template = $col['colsRendererLinkTemplate'] ?? '#';
+        $label    = $col['colsRendererLinkLabel']    ?? $value;
+        $newTab   = ($col['colsRendererLinkNewTab']  ?? false)
+            ? ' target="_blank" rel="noopener noreferrer"'
+            : '';
+
+        // Substitui placeholders %campo% por valores do registro
+        $url = str_replace('%value%', e((string) $value), $template);
+
+        if ($row instanceof \Illuminate\Database\Eloquent\Model) {
+            foreach ($row->getAttributes() as $k => $v) {
+                $url = str_replace('%' . $k . '%', e((string) ($v ?? '')), $url);
+            }
+        }
+
+        return "<a href=\"{$url}\"{$newTab} class=\"text-indigo-600 hover:text-indigo-800 hover:underline font-medium\">" . e((string) $label) . '</a>';
+    }
+
+    /**
+     * Renderiza imagem miniatura.
+     * Config: colsRendererImageWidth, colsRendererImageHeight
+     */
+    protected function renderImage(array $col, mixed $value): string
+    {
+        if (! $value) return '';
+
+        $width  = (int) ($col['colsRendererImageWidth']  ?? 40);
+        $height = (int) ($col['colsRendererImageHeight'] ?? $width);
+
+        return "<img src=\"" . e((string) $value) . "\" width=\"{$width}\" height=\"{$height}\" class=\"rounded object-cover inline-block\" loading=\"lazy\" />";
+    }
+
+    /**
+     * Renderiza texto truncado com tooltip no hover.
+     * Config: colsRendererMaxChars (default 50)
+     */
+    protected function renderTruncate(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+
+        $max = (int) ($col['colsRendererMaxChars'] ?? 50);
+        $str = (string) $value;
+
+        if (mb_strlen($str) <= $max) {
+            return e($str);
+        }
+
+        $truncated = mb_substr($str, 0, $max) . '\u2026';
+        return '<span title="' . e($str) . '" class="cursor-help">' . e($truncated) . '</span>';
+    }
+
+    /**
+     * Resolve valor via dot notation usando o helper nativo data_get() do Laravel.
+     * Suporta: "address.city.name", "items.0.price", objetos, arrays, null-safe.
+     */
+    protected function resolveNestedValue(mixed $row, string $path): mixed
+    {
+        return data_get($row, $path);
+    }
+
+    /**
+     * Aplica transformações de máscara nos dados do formulário antes de persistir no banco.
+     * Ex: money_brl → float, CPF/CNPJ → apenas dígitos, uppercase, etc.
+     */
+    protected function applyMaskTransforms(array $data, array $formCols): array
+    {
+        foreach ($formCols as $col) {
+            $field     = $col['colsNomeFisico'] ?? null;
+            $transform = $col['colsMaskTransform'] ?? null;
+
+            if (! $field || ! $transform || ! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $val = $data[$field];
+
+            $data[$field] = match ($transform) {
+                // "R$ 1.253,08" → 1253.08
+                'money_to_float' => (float) str_replace(
+                    ['.', ','],
+                    ['',  '.'],
+                    preg_replace('/[^0-9,]/', '', (string) $val)
+                ),
+                // "055.465.309-52" → "05546530952"
+                'digits_only' => preg_replace('/\D/', '', (string) $val),
+                'uppercase'   => mb_strtoupper((string) $val),
+                'lowercase'   => mb_strtolower((string) $val),
+                'trim'        => trim((string) $val),
+                default       => $val,
+            };
+        }
+
+        return $data;
     }
 
     /**
