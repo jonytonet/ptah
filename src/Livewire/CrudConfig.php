@@ -196,10 +196,10 @@ class CrudConfig extends Component
 
         $defaults = [
             'colsTipo'              => 'text',
-            'colsGravar'            => 'S',
-            'colsRequired'          => 'N',
+            'colsGravar'            => true,
+            'colsRequired'          => false,
             'colsAlign'             => 'text-start',
-            'colsIsFilterable'      => 'S',
+            'colsIsFilterable'      => true,
             'colsNomeLogico'        => ucfirst($this->formDataField['colsNomeFisico']),
             // Renderer DSL
             'colsRenderer'          => '',
@@ -332,9 +332,9 @@ class CrudConfig extends Component
         ], $this->formDataAction, [
             'colsNomeFisico'   => 'id',
             'colsTipo'         => 'action',
-            'colsGravar'       => 'N',
-            'colsRequired'     => 'N',
-            'colsIsFilterable' => 'N',
+            'colsGravar'       => false,
+            'colsRequired'     => false,
+            'colsIsFilterable' => false,
         ]);
 
         $this->formDataAction = [];
@@ -400,7 +400,7 @@ class CrudConfig extends Component
         return array_merge($existing, [
             'crud'            => $existing['crud']            ?? $this->model,
             'configLinkLinha' => $this->configLinkLinha,
-            'configEsconderId'=> $existing['configEsconderId'] ?? 'N',
+            'configEsconderId'=> $existing['configEsconderId'] ?? false,
             'tableClass'      => $this->tableClass,
             'theadClass'      => $this->theadClass,
             'cols'            => $this->formatFieldsForDb(),

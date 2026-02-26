@@ -18,7 +18,7 @@ class FormValidatorService
      * Valida os dados do formulário de acordo com as regras de cada coluna.
      *
      * @param  array $formData  Dados submetidos (campo => valor)
-     * @param  array $formCols  Colunas com colsGravar === 'S' e suas regras
+     * @param  array $formCols  Colunas com colsGravar === true e suas regras
      * @return array            Erros por campo ['campo' => 'Mensagem de erro']
      */
     public function validate(array $formData, array $formCols): array
@@ -28,7 +28,7 @@ class FormValidatorService
         foreach ($formCols as $col) {
             $field    = $col['colsNomeFisico'] ?? null;
             $label    = $col['colsNomeLogico'] ?? $field;
-            $required = ($col['colsRequired'] ?? 'N') === 'S';
+            $required = $this->ptahBool($col['colsRequired'] ?? false);
             $rules    = $col['colsValidations'] ?? [];
 
             if (! $field) {
@@ -193,5 +193,14 @@ class FormValidatorService
 
         return (int) $cnpj[12] === $calc($cnpj, 12)
             && (int) $cnpj[13] === $calc($cnpj, 13);
+    }
+
+    /**
+     * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').
+     * Retorna true para: true, 'S', 1, '1'.
+     */
+    protected function ptahBool(mixed $value): bool
+    {
+        return $value === true || $value === 'S' || $value === 1 || $value === '1';
     }
 }

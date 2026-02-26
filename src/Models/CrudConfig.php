@@ -133,18 +133,27 @@ class CrudConfig extends Model
     }
 
     /**
-     * Colunas filtráveis (colsIsFilterable == 'S').
+     * Colunas filteráveis (colsIsFilterable == true|'S').
      */
     public function filterableCols(): array
     {
-        return array_values(array_filter($this->cols(), fn($c) => ($c['colsIsFilterable'] ?? 'N') === 'S'));
+        return array_values(array_filter($this->cols(), fn($c) => $this->ptahBool($c['colsIsFilterable'] ?? false)));
     }
 
     /**
-     * Colunas de formulário (colsGravar == 'S').
+     * Colunas de formulário (colsGravar == true|'S').
      */
     public function formCols(): array
     {
-        return array_values(array_filter($this->cols(), fn($c) => ($c['colsGravar'] ?? 'N') === 'S'));
+        return array_values(array_filter($this->cols(), fn($c) => $this->ptahBool($c['colsGravar'] ?? false)));
+    }
+
+    /**
+     * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').
+     * Retorna true para: true, 'S', 1, '1'.
+     */
+    protected function ptahBool(mixed $value): bool
+    {
+        return $value === true || $value === 'S' || $value === 1 || $value === '1';
     }
 }

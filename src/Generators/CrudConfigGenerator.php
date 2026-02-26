@@ -70,7 +70,7 @@ class CrudConfigGenerator extends AbstractGenerator
         return [
             'crud'              => $context->entity,
             'totalizador'       => false,
-            'configEsconderId'  => 'N',
+            'configEsconderId'  => false,
             'configLinkLinha'   => '/' . $context->entityPlural . '/%id%',
             'tableClass'        => 'table table-hover table-condensed table-sm table-bordered table-nowrap align-middle',
             'theadClass'        => '',
@@ -106,10 +106,10 @@ class CrudConfigGenerator extends AbstractGenerator
             'colsNomeFisico'  => 'id',
             'colsNomeLogico'  => 'ID',
             'colsTipo'        => 'number',
-            'colsGravar'      => 'N',
-            'colsRequired'    => 'N',
+            'colsGravar'      => false,
+            'colsRequired'    => false,
             'colsAlign'       => 'text-center',
-            'colsIsFilterable'=> 'S',
+            'colsIsFilterable'=> true,
         ];
 
         // Campos da entidade
@@ -122,11 +122,11 @@ class CrudConfigGenerator extends AbstractGenerator
             'colsNomeFisico'  => 'created_at',
             'colsNomeLogico'  => 'Criado em',
             'colsTipo'        => 'date',
-            'colsGravar'      => 'N',
-            'colsRequired'    => 'N',
+            'colsGravar'      => false,
+            'colsRequired'    => false,
             'colsAlign'       => 'text-center',
             'colsHelper'      => 'dateFormat',
-            'colsIsFilterable'=> 'S',
+            'colsIsFilterable'=> true,
         ];
 
         return $cols;
@@ -138,16 +138,16 @@ class CrudConfigGenerator extends AbstractGenerator
     private function buildColFromField(FieldDefinition $field): array
     {
         $tipo    = $this->mapTipo($field);
-        $gravar  = 'S';
+        $gravar  = true;
         $align   = $this->mapAlign($field);
         $col = [
             'colsNomeFisico'  => $field->name,
             'colsNomeLogico'  => $this->humanLabel($field->name),
             'colsTipo'        => $tipo,
             'colsGravar'      => $gravar,
-            'colsRequired'    => 'N',
+            'colsRequired'    => false,
             'colsAlign'       => $align,
-            'colsIsFilterable'=> 'S',
+            'colsIsFilterable'=> true,
         ];
 
         // Campos FK → relação
@@ -172,7 +172,7 @@ class CrudConfigGenerator extends AbstractGenerator
             if ($this->isCurrencyField($field->name)) {
                 $col['colsHelper'] = 'currencyFormat';
                 $col['colsAlign']  = 'text-end';
-                $col['colsReverse'] = 'S';
+                $col['colsReverse'] = true;
             }
         }
 

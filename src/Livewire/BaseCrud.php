@@ -1598,7 +1598,7 @@ class BaseCrud extends Component
         return array_values(
             array_filter(
                 $this->crudConfig['cols'] ?? [],
-                fn($c) => ($c['colsGravar'] ?? 'N') === 'S'
+                fn($c) => $this->ptahBool($c['colsGravar'] ?? false)
             )
         );
     }
@@ -2085,5 +2085,14 @@ class BaseCrud extends Component
             'bulkActions'      => $this->crudConfig['bulkActions']  ?? [],
             'hasActiveFilters' => ! empty($this->textFilter) || $this->search !== '' || $this->quickDateFilter !== '',
         ]);
+    }
+
+    /**
+     * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').
+     * Retorna true para: true, 'S', 1, '1'.
+     */
+    protected function ptahBool(mixed $value): bool
+    {
+        return $value === true || $value === 'S' || $value === 1 || $value === '1';
     }
 }

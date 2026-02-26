@@ -179,10 +179,10 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-3 py-2 text-center">
-                                                        <span class="inline-block w-4 h-4 rounded-full {{ ($col['colsGravar'] ?? 'N') === 'S' ? 'bg-green-400' : 'bg-slate-200' }}"></span>
+                                                        <span class="inline-block w-4 h-4 rounded-full {{ in_array($col['colsGravar'] ?? false, [true, 'S', 1, '1'], true) ? 'bg-green-400' : 'bg-slate-200' }}"></span>
                                                     </td>
                                                     <td class="px-3 py-2 text-center">
-                                                        <span class="inline-block w-4 h-4 rounded-full {{ ($col['colsIsFilterable'] ?? 'N') === 'S' ? 'bg-blue-400' : 'bg-slate-200' }}"></span>
+                                                        <span class="inline-block w-4 h-4 rounded-full {{ in_array($col['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true) ? 'bg-blue-400' : 'bg-slate-200' }}"></span>
                                                     </td>
                                                     <td class="px-3 py-2 text-center">
                                                         <div class="flex items-center justify-center gap-1">
@@ -284,17 +284,17 @@
                                         </div>
                                         <div class="flex col-span-2 gap-6">
                                             <label class="flex items-center gap-2 cursor-pointer select-none">
-                                                <input type="checkbox" wire:model="formDataField.colsGravar" true-value="S" false-value="N"
+                                                <input type="checkbox" wire:model="formDataField.colsGravar"
                                                     class="text-indigo-600 rounded border-slate-300" />
                                                 <span class="text-xs font-medium text-slate-600">Incluir no Formulário (Gravar)</span>
                                             </label>
                                             <label class="flex items-center gap-2 cursor-pointer select-none">
-                                                <input type="checkbox" wire:model="formDataField.colsRequired" true-value="S" false-value="N"
+                                                <input type="checkbox" wire:model="formDataField.colsRequired"
                                                     class="text-indigo-600 rounded border-slate-300" />
                                                 <span class="text-xs font-medium text-slate-600">Obrigatório</span>
                                             </label>
                                             <label class="flex items-center gap-2 cursor-pointer select-none">
-                                                <input type="checkbox" wire:model="formDataField.colsIsFilterable" true-value="S" false-value="N"
+                                                <input type="checkbox" wire:model="formDataField.colsIsFilterable"
                                                     class="text-indigo-600 rounded border-slate-300" />
                                                 <span class="text-xs font-medium text-slate-600">Filtrável</span>
                                             </label>
