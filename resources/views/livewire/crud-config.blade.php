@@ -346,19 +346,19 @@
                                                     <label class="cfg-label">Ícone Prefixo (colsCellIcon)</label>
                                                     <input type="text" wire:model="formDataField.colsCellIcon"
                                                         placeholder="bx bx-user-circle mr-1"
-                                                        class="cfg-input font-mono" />
+                                                        class="font-mono cfg-input" />
                                                     <p class="text-[11px] text-slate-400 mt-1">Classe CSS do ícone (Boxicons, FontAwesome...)</p>
                                                 </div>
                                                 <div>
                                                     <label class="cfg-label">Classe Tailwind / CSS Extra</label>
                                                     <input type="text" wire:model="formDataField.colsCellClass"
                                                         placeholder="font-bold text-blue-600 uppercase"
-                                                        class="cfg-input font-mono" />
+                                                        class="font-mono cfg-input" />
                                                 </div>
                                             </div>
                                             {{-- Preview ao vivo --}}
                                             @if (!empty($formDataField['colsCellStyle']) || !empty($formDataField['colsCellClass']) || !empty($formDataField['colsCellIcon']))
-                                                <div class="flex items-center gap-3 px-4 py-3 mt-3 rounded-lg bg-slate-50 border border-slate-200">
+                                                <div class="flex items-center gap-3 px-4 py-3 mt-3 border rounded-lg bg-slate-50 border-slate-200">
                                                     <span class="text-[11px] text-slate-400 shrink-0">Preview:</span>
                                                     <span
                                                         style="{{ $formDataField['colsCellStyle'] ?? '' }}"
@@ -434,7 +434,7 @@
                                                                 value="{{ $swHex ? $swCur : '#6366f1' }}"
                                                                 @change="$wire.set('formDataField.colsRendererBadges.{{ $bi }}.color', $event.target.value)"
                                                                 title="Cor personalizada (hex)"
-                                                                class="w-6 h-5 cursor-pointer rounded border border-slate-300 p-0 overflow-hidden" />
+                                                                class="w-6 h-5 p-0 overflow-hidden border rounded cursor-pointer border-slate-300" />
                                                             @if ($swHex)
                                                                 <span class="text-[9px] font-mono" style="color:{{ $swCur }}">{{ $swCur }}</span>
                                                             @endif

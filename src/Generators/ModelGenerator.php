@@ -38,6 +38,8 @@ class ModelGenerator extends AbstractGenerator
                 'casts'              => $context->castsList(),
                 'soft_deletes_use'   => $softDeletesUse,
                 'soft_deletes_trait' => $softDeletesTrait,
+                'relationships_use'  => $context->relationshipsUse(),
+                'relationships'      => $context->relationships(),
             ],
             force: $context->force,
             labelOverride: "Model [{$context->entity}]",

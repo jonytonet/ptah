@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Support;
 
+use Illuminate\Support\Str;
+
 /**
  * Value object que representa a definição de um único campo.
  *
@@ -56,10 +58,52 @@ readonly class FieldDefinition
     }
 
     /**
+     * Se o campo termina em _id e o tipo é inteiro grande, é tratado como FK.
+     */
+    public function isForeignKey(): bool
+    {
+        return str_ends_with($this->name, '_id')
+            && in_array($this->type, ['unsignedBigInteger', 'foreignId', 'bigInteger']);
+    }
+
+    /**
+     * Nome sem o sufixo _id (ex: business_partner_id → business_partner).
+     */
+    public function relatedName(): string
+    {
+        return substr($this->name, 0, -3);
+    }
+
+    /**
+     * Model relacionado em StudlyCase (ex: business_partner → BusinessPartner).
+     */
+    public function relatedModel(): string
+    {
+        return Str::studly($this->relatedName());
+    }
+
+    /**
+     * Tabela relacionada em snake_case plural (ex: business_partner → business_partners).
+     */
+    public function relatedTable(): string
+    {
+        return Str::plural($this->relatedName());
+    }
+
+    /**
      * Linha de definição Blueprint para migration.
      */
     public function migrationLine(string $indent = '            '): string
     {
+        // FK: gera foreignId()->constrained()->cascadeOnDelete() automaticamente
+        if ($this->isForeignKey()) {
+            $line = "\$table->foreignId('{$this->name}')->constrained('{$this->relatedTable()}')->cascadeOnDelete()";
+            if ($this->nullable) {
+                $line = "\$table->foreignId('{$this->name}')->nullable()->constrained('{$this->relatedTable()}')->nullOnDelete()";
+            }
+            return $indent . $line . ';';
+        }
+
         $line = match ($this->type) {
             'string'             => "\$table->string('{$this->name}')",
             'text'               => "\$table->text('{$this->name}')",
@@ -131,7 +175,7 @@ readonly class FieldDefinition
         return $this->nullable ? "?{$base}" : $base;
     }
 
-    // ── Private helpers ────────────────────────────────────────────────────
+    // ── Private helpers ──────────────────────────────────────────────────────
 
     private function enumMigrationCall(): string
     {

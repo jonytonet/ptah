@@ -6,7 +6,7 @@ namespace {{ namespace }};
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-{{ soft_deletes_use }}
+{{ soft_deletes_use }}{{ relationships_use }}
 class {{ entity }} extends Model
 {
     use HasFactory;
@@ -26,4 +26,4 @@ class {{ entity }} extends Model
     protected $casts = [
         {{ casts }}
     ];
-}
+    {{ relationships }}}

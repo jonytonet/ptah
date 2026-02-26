@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Support;
 
+use Illuminate\Support\Str;
+
 /**
  * Value object (DTO imutável) que carrega todos os dados
  * calculados de uma entidade durante a execução do scaffold.
@@ -136,6 +138,58 @@ readonly class EntityContext
                 ($f->nullable ? " ?? null," : ","),
             $this->fields
         ));
+    }
+
+    /**
+     * Gera os métodos belongsTo para campos FK (_id com tipo inteiro grande).
+     * Retorna string vazia se não houver FKs.
+     */
+    public function relationships(): string
+    {
+        $fkFields = array_values(array_filter(
+            $this->fields,
+            fn(FieldDefinition $f) => $f->isForeignKey()
+        ));
+
+        if (empty($fkFields)) {
+            return '';
+        }
+
+        $methods = array_map(function (FieldDefinition $f) {
+            $methodName   = Str::camel($f->relatedName());
+            $relatedModel = $f->relatedModel();
+
+            return
+                "    public function {$methodName}(): \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\n" .
+                "    {\n" .
+                "        return \$this->belongsTo({$relatedModel}::class, '{$f->name}');\n" .
+                "    }";
+        }, $fkFields);
+
+        return "\n" . implode("\n\n", $methods) . "\n";
+    }
+
+    /**
+     * Gera declarações `use` para os models relacionados via FK.
+     * Retorna string vazia se não houver FKs.
+     */
+    public function relationshipsUse(): string
+    {
+        $fkFields = array_values(array_filter(
+            $this->fields,
+            fn(FieldDefinition $f) => $f->isForeignKey()
+        ));
+
+        if (empty($fkFields)) {
+            return '';
+        }
+
+        $lines = array_unique(array_map(
+            fn(FieldDefinition $f) => "use {$this->rootNamespace}Models\\{$f->relatedModel()};",
+            $fkFields
+        ));
+
+        return implode("\n", $lines) . "\n";
     }
 
     /**
