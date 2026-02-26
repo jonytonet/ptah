@@ -50,6 +50,9 @@
             }
         </script>
     @endif
+    {{-- Boxicons --}}
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
