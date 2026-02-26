@@ -615,12 +615,14 @@
                         @foreach ($crudConfig['cols'] ?? [] as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php
-                                    $cellField = $col['colsNomeFisico'];
-                                    $cellAlign = $col['colsAlign'] ?? 'text-start';
-                                    $reverse   = ($col['colsReverse'] ?? 'N') === 'S';
+                                    $cellField    = $col['colsNomeFisico'];
+                                    $cellAlign    = $col['colsAlign'] ?? 'text-start';
+                                    $reverse      = ($col['colsReverse'] ?? 'N') === 'S';
+                                    $cellMinWidth = ! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '';
                                 @endphp
                                 @if ($formDataColumns[$cellField] ?? true)
-                                <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}">
+                                <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
+                                    @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif>
                                     {!! $this->formatCell($col, $row) !!}
                                 </td>
                                 @endif

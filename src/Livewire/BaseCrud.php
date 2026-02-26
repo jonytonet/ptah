@@ -1386,7 +1386,18 @@ class BaseCrud extends Component
             $value = $flip[(string) $value] ?? $value;
         }
 
-        return $this->applyCellRenderer($col, $value, $row);
+        $rendered = $this->applyCellRenderer($col, $value, $row);
+
+        // Wrapper de ícone e estilo configurável por coluna
+        $cellIcon  = ! empty($col['colsCellIcon'])  ? '<span class="' . e($col['colsCellIcon']) . ' mr-1"></span>' : '';
+        $cellStyle = ! empty($col['colsCellStyle']) ? ' style="' . e($col['colsCellStyle']) . '"' : '';
+        $cellClass = ! empty($col['colsCellClass']) ? ' ' . e($col['colsCellClass']) : '';
+
+        if ($cellIcon || $cellStyle || $cellClass) {
+            return "<span{$cellStyle} class=\"inline-flex items-center{$cellClass}\">{$cellIcon}{$rendered}</span>";
+        }
+
+        return $rendered;
     }
 
     /**
@@ -1724,8 +1735,18 @@ class BaseCrud extends Component
 
         foreach ($badges as $badge) {
             if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
-                $label = e($badge['label'] ?? $value);
-                $color = match (strtolower($badge['color'] ?? 'gray')) {
+                $label    = e($badge['label'] ?? $value);
+                $colorVal = $badge['color'] ?? 'gray';
+                $icon     = ! empty($badge['icon'])
+                    ? '<span class="' . e($badge['icon']) . ' mr-1 text-[10px]"></span>'
+                    : '';
+
+                if (str_starts_with($colorVal, '#')) {
+                    $hex = e($colorVal);
+                    return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium\" style=\"background-color:{$hex}22;color:{$hex};border:1px solid {$hex}55\">{$icon}{$label}</span>";
+                }
+
+                $color = match (strtolower($colorVal)) {
                     'green', 'success'   => 'bg-green-100 text-green-800',
                     'yellow', 'warning'  => 'bg-yellow-100 text-yellow-800',
                     'red', 'danger'      => 'bg-red-100 text-red-800',
@@ -1735,9 +1756,6 @@ class BaseCrud extends Component
                     'pink'               => 'bg-pink-100 text-pink-800',
                     default              => 'bg-gray-100 text-gray-700',
                 };
-                $icon = ! empty($badge['icon'])
-                    ? '<span class="' . e($badge['icon']) . ' mr-1 text-[10px]"></span>'
-                    : '';
                 return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$icon}{$label}</span>";
             }
         }
@@ -1756,8 +1774,18 @@ class BaseCrud extends Component
 
         foreach ($badges as $badge) {
             if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
-                $label = e($badge['label'] ?? $value);
-                $color = match (strtolower($badge['color'] ?? 'gray')) {
+                $label    = e($badge['label'] ?? $value);
+                $colorVal = $badge['color'] ?? 'gray';
+                $icon     = ! empty($badge['icon'])
+                    ? '<span class="' . e($badge['icon']) . ' mr-1 text-[10px]"></span>'
+                    : '';
+
+                if (str_starts_with($colorVal, '#')) {
+                    $hex = e($colorVal);
+                    return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold\" style=\"background-color:{$hex}22;color:{$hex};border:1px solid {$hex}55\">{$icon}{$label}</span>";
+                }
+
+                $color = match (strtolower($colorVal)) {
                     'green', 'success'   => 'bg-green-100 text-green-800',
                     'yellow', 'warning'  => 'bg-yellow-100 text-yellow-800',
                     'red', 'danger'      => 'bg-red-100 text-red-800',
@@ -1766,7 +1794,7 @@ class BaseCrud extends Component
                     'purple'             => 'bg-purple-100 text-purple-800',
                     default              => 'bg-gray-100 text-gray-700',
                 };
-                return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {$color}\">{$label}</span>";
+                return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {$color}\">{$icon}{$label}</span>";
             }
         }
 

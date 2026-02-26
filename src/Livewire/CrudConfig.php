@@ -222,6 +222,11 @@ class CrudConfig extends Component
             'colsValidations'       => [],
             // SearchDropdown
             'colsSDMode'            => 'model',
+            // Estilo da célula
+            'colsCellStyle'         => '',
+            'colsCellClass'         => '',
+            'colsCellIcon'          => '',
+            'colsMinWidth'          => '',
         ];
 
         $this->formEditFields[] = array_merge($defaults, $this->formDataField);
