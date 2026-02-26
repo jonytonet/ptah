@@ -325,7 +325,7 @@
                 @php
                     $filterableCfCols = array_values(array_filter(
                         $crudConfig['cols'] ?? [],
-                        fn($c) => ($c['colsIsFilterable'] ?? 'N') === 'S' && ($c['colsTipo'] ?? '') !== 'action'
+                        fn($c) => in_array($c['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true) && ($c['colsTipo'] ?? '') !== 'action'
                     ));
                 @endphp
                 @if (!empty($filterableCfCols))
@@ -797,7 +797,7 @@
                                 $fField    = $col['colsNomeFisico'];
                                 $fLabel    = $col['colsNomeLogico'] ?? $fField;
                                 $fTipo     = $col['colsTipo'] ?? 'text';
-                                $fRequired = ($col['colsRequired'] ?? 'N') === 'S';
+                                $fRequired = in_array($col['colsRequired'] ?? false, [true, 'S', 1, '1'], true);
                                 $fError    = $formErrors[$fField] ?? null;
                                 $fMask     = $col['colsMask'] ?? null;
                                 $fValue    = $formData[$fField] ?? '';
@@ -902,7 +902,10 @@
                                         <label class="block mb-1 text-xs font-medium text-gray-600">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
-                                        <div x-data="{ open: false }" class="relative">
+                                        @php $sdHasResults = !empty($sdResults[$fField]); @endphp
+                                        <div x-data="{ open: {{ $sdHasResults ? 'true' : 'false' }} }"
+                                             x-init="open = {{ $sdHasResults ? 'true' : 'false' }}"
+                                             class="relative">
                                             <input type="text"
                                                 value="{{ $sdLabels[$fField] ?? $fValue }}"
                                                 wire:keyup="searchDropdown('{{ $fField }}', $event.target.value)"
@@ -912,7 +915,7 @@
                                                 class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm text-gray-800 bg-white transition-colors duration-150 focus:ring-2"
                                             />
                                             <input type="hidden" wire:model="formData.{{ $fField }}" />
-                                            @if (!empty($sdResults[$fField]))
+                                            @if ($sdHasResults)
                                                 <div x-show="open"
                                                     class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl max-h-48">
                                                     @foreach ($sdResults[$fField] as $opt)
