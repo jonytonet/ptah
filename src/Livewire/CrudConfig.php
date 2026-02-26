@@ -41,7 +41,8 @@ class CrudConfig extends Component
 
     // ── Ações por linha ──────────────────────────────────────────────────────
 
-    public array $formDataAction = [];
+    public array $formDataAction    = [];
+    public int   $editingActionIndex = -1;
 
     // ── Filtros personalizados ────────────────────────────────────────────────
 
@@ -111,7 +112,8 @@ class CrudConfig extends Component
         $this->formDataAction = [];
         $this->formDataFilter = [];
         $this->formDataStyle  = [];
-        $this->editingFieldIndex = -1;
+        $this->editingFieldIndex  = -1;
+        $this->editingActionIndex = -1;
         $this->showModal = true;
     }
 
@@ -122,7 +124,8 @@ class CrudConfig extends Component
         $this->formDataAction    = [];
         $this->formDataFilter    = [];
         $this->formDataStyle     = [];
-        $this->editingFieldIndex = -1;
+        $this->editingFieldIndex  = -1;
+        $this->editingActionIndex = -1;
     }
 
     // ── Carregar config ──────────────────────────────────────────────────────
@@ -323,13 +326,16 @@ class CrudConfig extends Component
             return;
         }
 
-        $this->formEditFields[] = array_merge([
+        // Remove campos vazios para que os defaults não sejam sobrescritos
+        $data = array_filter($this->formDataAction, fn($v) => $v !== '' && $v !== null);
+
+        $merged = array_merge([
             'actionType'       => 'link',
             'actionValue'      => '',
             'actionIcon'       => 'bx bx-link',
             'actionColor'      => 'primary',
             'actionPermission' => '',
-        ], $this->formDataAction, [
+        ], $data, [
             'colsNomeFisico'   => 'id',
             'colsTipo'         => 'action',
             'colsGravar'       => false,
@@ -337,13 +343,41 @@ class CrudConfig extends Component
             'colsIsFilterable' => false,
         ]);
 
-        $this->formDataAction = [];
+        if ($this->editingActionIndex >= 0 && isset($this->formEditFields[$this->editingActionIndex])) {
+            $this->formEditFields[$this->editingActionIndex] = $merged;
+        } else {
+            $this->formEditFields[] = $merged;
+        }
+
+        $this->formDataAction    = [];
+        $this->editingActionIndex = -1;
+    }
+
+    public function editAction(int $index): void
+    {
+        if (! isset($this->formEditFields[$index]) || ($this->formEditFields[$index]['colsTipo'] ?? '') !== 'action') {
+            return;
+        }
+
+        $this->formDataAction    = $this->formEditFields[$index];
+        $this->editingActionIndex = $index;
+    }
+
+    public function cancelEditAction(): void
+    {
+        $this->formDataAction    = [];
+        $this->editingActionIndex = -1;
     }
 
     public function removeAction(int $index): void
     {
         array_splice($this->formEditFields, $index, 1);
         $this->formEditFields = array_values($this->formEditFields);
+
+        if ($this->editingActionIndex === $index) {
+            $this->formDataAction    = [];
+            $this->editingActionIndex = -1;
+        }
     }
 
     // ── Filtros personalizados — CRUD ─────────────────────────────────────────

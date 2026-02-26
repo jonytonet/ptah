@@ -887,22 +887,36 @@
                                             <th class="px-4 py-2.5">Ícone</th>
                                             <th class="px-4 py-2.5">Cor</th>
                                             <th class="px-4 py-2.5">Permissão</th>
-                                            <th class="px-4 py-2.5 w-12"></th>
+                                            <th class="px-4 py-2.5 w-20"></th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
                                         @foreach ($formEditFields as $i => $col)
                                             @if (($col['colsTipo'] ?? '') === 'action')
-                                                <tr class="hover:bg-slate-50">
+                                                <tr class="{{ $editingActionIndex === $i ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : 'hover:bg-slate-50' }}">
                                                     <td class="px-4 py-2 font-medium text-slate-700">{{ $col['colsNomeLogico'] ?? '' }}</td>
                                                     <td class="px-4 py-2"><span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[11px]">{{ $col['actionType'] ?? 'link' }}</span></td>
                                                     <td class="px-4 py-2 font-mono text-[11px] text-slate-500 max-w-[200px] truncate">{{ $col['actionValue'] ?? '' }}</td>
-                                                    <td class="px-4 py-2"><em class="{{ $col['actionIcon'] ?? 'bx bx-link' }}"></em></td>
-                                                    <td class="px-4 py-2"><span class="bg-{{ $col['actionColor'] ?? 'slate' }}-100 text-{{ $col['actionColor'] ?? 'slate' }}-700 px-1.5 py-0.5 rounded text-[11px]">{{ $col['actionColor'] ?? 'primary' }}</span></td>
-                                                    <td class="px-4 py-2 font-mono text-[11px] text-slate-400">{{ $col['actionPermission'] ?? '—' }}</td>
                                                     <td class="px-4 py-2">
-                                                        <button wire:click="removeAction({{ $i }})" wire:confirm="Remover ação?"
-                                                            class="p-1 transition-colors rounded text-slate-400 hover:text-red-500">✕</button>
+                                                        @php $icon = $col['actionIcon'] ?: 'bx bx-link'; @endphp
+                                                        <div class="flex items-center gap-1.5">
+                                                            <i class="{{ $icon }} text-base text-slate-500"></i>
+                                                            <span class="font-mono text-[10px] text-slate-400">{{ $icon }}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2"><span class="bg-{{ $col['actionColor'] ?? 'slate' }}-100 text-{{ $col['actionColor'] ?? 'slate' }}-700 px-1.5 py-0.5 rounded text-[11px]">{{ $col['actionColor'] ?? 'primary' }}</span></td>
+                                                    <td class="px-4 py-2 font-mono text-[11px] text-slate-400">{{ $col['actionPermission'] ?: '—' }}</td>
+                                                    <td class="px-4 py-2">
+                                                        <div class="flex items-center gap-1">
+                                                            <button wire:click="editAction({{ $i }})" title="Editar"
+                                                                class="p-1 transition-colors rounded text-slate-400 hover:text-indigo-600">
+                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                                </svg>
+                                                            </button>
+                                                            <button wire:click="removeAction({{ $i }})" wire:confirm="Remover ação?"
+                                                                class="p-1 transition-colors rounded text-slate-400 hover:text-red-500">✕</button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             @endif
@@ -911,8 +925,19 @@
                                 </table>
                             </div>
 
-                            <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
-                                <h3 class="text-sm font-semibold text-slate-700">+ Nova Ação</h3>
+                            <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200
+                                {{ $editingActionIndex >= 0 ? 'ring-2 ring-indigo-400' : '' }}">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        {{ $editingActionIndex >= 0 ? '✏️ Editar Ação' : '+ Nova Ação' }}
+                                    </h3>
+                                    @if ($editingActionIndex >= 0)
+                                        <button wire:click="cancelEditAction"
+                                            class="text-xs text-slate-400 hover:text-slate-600 underline">
+                                            Cancelar edição
+                                        </button>
+                                    @endif
+                                </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="cfg-label">Nome da Ação</label>
@@ -934,8 +959,16 @@
                                         <p class="text-[11px] text-slate-400 mt-1">Use <code class="px-1 rounded bg-slate-100">%id%</code> ou <code class="px-1 rounded bg-slate-100">%campo%</code> como placeholder do registro.</p>
                                     </div>
                                     <div>
-                                        <label class="cfg-label">Ícone (classe CSS)</label>
-                                        <input type="text" wire:model="formDataAction.actionIcon" placeholder="bx bx-show" class="font-mono cfg-input" />
+                                        <label class="cfg-label">Ícone (classe CSS Boxicons)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" wire:model.live="formDataAction.actionIcon" placeholder="bx bx-show" class="flex-1 font-mono cfg-input" />
+                                            @if (!empty($formDataAction['actionIcon']))
+                                                <div class="flex items-center justify-center w-10 h-9 border border-slate-200 rounded-lg bg-slate-50 shrink-0">
+                                                    <i class="{{ $formDataAction['actionIcon'] }} text-xl text-slate-600"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <p class="text-[11px] text-slate-400 mt-1">Ex: <code class="bg-slate-100 px-1 rounded">bx bx-edit</code> · <code class="bg-slate-100 px-1 rounded">bx bx-trash</code> · <code class="bg-slate-100 px-1 rounded">bx bx-show</code></p>
                                     </div>
                                     <div>
                                         <label class="cfg-label">Cor</label>
@@ -954,8 +987,8 @@
                                     </div>
                                 </div>
                                 <div class="flex justify-end pt-2 border-t border-slate-100">
-                                    <button wire:click="addAction" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                        + Adicionar Ação
+                                    <button wire:click="addAction" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors {{ $editingActionIndex >= 0 ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700' }} rounded-lg">
+                                        {{ $editingActionIndex >= 0 ? '💾 Salvar Alterações' : '+ Adicionar Ação' }}
                                     </button>
                                 </div>
                             </div>
