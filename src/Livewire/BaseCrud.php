@@ -661,7 +661,7 @@ class BaseCrud extends Component
     {
         $this->sdSearches[$field] = $query;
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 1) {
             $this->sdResults[$field] = [];
             return;
         }
@@ -678,13 +678,49 @@ class BaseCrud extends Component
         $sdValue = $col['colsSDValor'] ?? 'id';
         $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
         $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
 
         if (! $sdModel) {
             return;
         }
 
         $this->sdResults[$field] = $this->resolveSearchDropdownResults(
-            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit
+        );
+    }
+
+    /**
+     * Chamado no foco/clique do campo: carrega os primeiros itens sem filtro.
+     */
+    public function openDropdown(string $field): void
+    {
+        // Se já há resultados visíveis, não recarrega
+        if (! empty($this->sdResults[$field])) {
+            return;
+        }
+
+        $col = $this->findColByField($field);
+
+        if (! $col) {
+            return;
+        }
+
+        $sdModel = $col['colsSDModel'] ?? null;
+        $sdLabel = $col['colsSDLabel'] ?? 'name';
+        $sdValue = $col['colsSDValor'] ?? 'id';
+        $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
+        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
+
+        if (! $sdModel) {
+            return;
+        }
+
+        // Usa o texto que o usuário já digitou (se houver) ou carrega tudo
+        $currentQuery = $this->sdSearches[$field] ?? '';
+
+        $this->sdResults[$field] = $this->resolveSearchDropdownResults(
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $currentQuery, $sdLimit, true
         );
     }
 
@@ -1982,8 +2018,14 @@ class BaseCrud extends Component
         string $sdLabel,
         string $sdValue,
         string $sdOrder,
-        string $query
+        string $query,
+        int    $limit      = 15,
+        bool   $allowEmpty = false
     ): array {
+        if (! $allowEmpty && strlen($query) < 1) {
+            return [];
+        }
+
         // Normaliza o model (/ → \)
         $modelClass = str_replace('/', '\\', $sdModel);
 
@@ -2000,12 +2042,17 @@ class BaseCrud extends Component
 
                 [$orderCol, $orderDir] = array_pad(explode(' ', $sdOrder, 2), 2, 'ASC');
 
-                return app($fullClass)
+                $q = app($fullClass)
                     ->newQuery()
-                    ->where($sdLabel, 'LIKE', "%{$query}%")
                     ->orderBy($orderCol, $orderDir)
-                    ->limit(15)
-                    ->get()
+                    ->limit($limit);
+
+                // Filtro case-insensitive via LOWER() para compatibilidade MySQL/SQLite
+                if ($query !== '') {
+                    $q->whereRaw('LOWER(' . $sdLabel . ') LIKE ?', ['%' . mb_strtolower($query) . '%']);
+                }
+
+                return $q->get()
                     ->map(fn($item) => [
                         'value' => $item->{$sdValue},
                         'label' => $item->{$sdLabel},
