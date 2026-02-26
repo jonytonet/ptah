@@ -676,21 +676,50 @@
                             @if (($col['colsTipo'] ?? '') === 'action')
                                 <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center">
                                     @php
-                                        $actionCall  = $col['actionCall'] ?? '';
-                                        $actionIcon  = $col['actionIcone'] ?? '';
-                                        $actionJs    = str_replace('%id%', $row->id ?? 0, $actionCall);
+                                        $actionType  = $col['actionType']  ?? 'javascript';
+                                        $actionValue = $col['actionValue'] ?? ($col['actionCall'] ?? '');
+                                        $actionIcon  = $col['actionIcon']  ?: ($col['actionIcone'] ?? '');
+                                        $actionColor = $col['actionColor'] ?? 'primary';
+                                        $rowId       = $row->id ?? 0;
+                                        $actionStr   = str_replace(['%id%', '"id%'], [$rowId, $rowId], $actionValue);
                                     @endphp
-                                    @if ($actionJs)
-                                        <button onclick="{{ $actionJs }}"
-                                            @click.stop
-                                            class="transition-colors text-primary hover:text-primary/80"
-                                            title="{{ $col['colsNomeLogico'] ?? '' }}">
-                                            @if ($actionIcon)
-                                                <i class="{{ $actionIcon }}"></i>
-                                            @else
-                                                ▶
-                                            @endif
-                                        </button>
+
+                                    @if ($actionStr)
+                                        @if ($actionType === 'link')
+                                            <a href="{{ $actionStr }}"
+                                                @click.stop
+                                                class="transition-colors text-{{ $actionColor }} hover:opacity-75"
+                                                title="{{ $col['colsNomeLogico'] ?? '' }}">
+                                                @if ($actionIcon)
+                                                    <i class="{{ $actionIcon }} text-base"></i>
+                                                @else
+                                                    {{ $col['colsNomeLogico'] ?? '→' }}
+                                                @endif
+                                            </a>
+                                        @elseif ($actionType === 'livewire')
+                                            <button wire:click="{{ $actionStr }}"
+                                                @click.stop
+                                                class="transition-colors text-{{ $actionColor }} hover:opacity-75"
+                                                title="{{ $col['colsNomeLogico'] ?? '' }}">
+                                                @if ($actionIcon)
+                                                    <i class="{{ $actionIcon }} text-base"></i>
+                                                @else
+                                                    {{ $col['colsNomeLogico'] ?? '▶' }}
+                                                @endif
+                                            </button>
+                                        @else
+                                            {{-- javascript (default) --}}
+                                            <button onclick="{{ $actionStr }}"
+                                                @click.stop
+                                                class="transition-colors text-{{ $actionColor }} hover:opacity-75"
+                                                title="{{ $col['colsNomeLogico'] ?? '' }}">
+                                                @if ($actionIcon)
+                                                    <i class="{{ $actionIcon }} text-base"></i>
+                                                @else
+                                                    {{ $col['colsNomeLogico'] ?? '▶' }}
+                                                @endif
+                                            </button>
+                                        @endif
                                     @endif
                                 </td>
                             @endif
