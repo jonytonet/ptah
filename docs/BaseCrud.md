@@ -35,7 +35,10 @@
 24. [Error Recovery](#error-recovery)
 25. [CrudConfig Modal](#crudconfig-modal)
 26. [FormValidatorService](#formvalidatorservice)
-27. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
+27. [Display Name](#display-name)
+28. [Broadcast / Tempo Real](#broadcast--tempo-real)
+29. [Tema Visual (Light / Dark)](#tema-visual-light--dark)
+30. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
 
 ---
 
@@ -1136,7 +1139,7 @@ O botão de configuração é exibido automaticamente no BaseCrud (geralmente re
 | **Ações** | Configuração de permissões (create, edit, delete, export) |
 | **Filtros** | Configuração dos filtros customizados e coluna de data rápida |
 | **Estilos** | `contitionStyles`: regras de estílo condicional de linha |
-| **Geral** | Parâmetros gerais: `companyField`, `quickDateColumn`, `configLinkLinha` |
+| **Geral** | Nome de Exibição (`displayName`), Aparência (`companyField`, `tableClass`…), Cache, Exportação, Broadcast (Echo listener), Tema Visual (light/dark) |
 | **Permissões** | Mapeamento de gates/abilities por ação |
 
 ### Sub-abas por coluna (aba Colunas)
@@ -1219,7 +1222,146 @@ Erros são populados em `$formErrors[campo]` e exibidos no modal de formulário.
 
 ---
 
-## Fluxo Interno Simplificado
+## Display Name
+
+Por padrão, o BaseCrud exibe o **nome da classe do model** no cabeçalho do modal e na toolbar. A propriedade `displayName` permite sobrescrever esse nome com um rótulo fácil de ler.
+
+### Onde configurar
+
+Tab **Geral** do CrudConfig modal, campo **"Nome de Exibição"**.
+
+### Chave no JSON salvo
+
+```json
+{
+  "displayName": "Parceiros de Negócio"
+}
+```
+
+### Comportamento
+
+A variável `$crudTitle` na view usa a seguinte cadeia de fallback:
+
+```php
+$this->crudConfig['displayName']
+    ?? $this->crudConfig['crud']            // chave legada
+    ?? class_basename(str_replace('/', '\\', $this->model)) // nome da classe
+```
+
+Deixando `displayName` vazio, o nome da classe é usado (comportamento anterior inalterado).
+
+---
+
+## Broadcast / Tempo Real
+
+O BaseCrud pode atualizar a tabela silenciosamente via **Laravel Echo** ao receber um evento de broadcast, sem nenhum código extra no componente pai.
+
+### Ativar
+
+Tab **Geral** do CrudConfig modal, card **"Tempo Real (Broadcast)"**, toggle **Habilitado**.
+
+### Configuração
+
+| Campo | Padrão auto-gerado | Exemplo para `Product` |
+|---|---|---|
+| Canal | `page-{kebab-model}-observer` | `page-product-observer` |
+| Evento | `.page{Model}Observer` | `.pageProductObserver` |
+
+Ambos os campos podem ser deixados vazios para usar o padrão, ou preenchidos quando o Observer do backend usa nomes diferentes.
+
+### Chave no JSON salvo
+
+```json
+{
+  "broadcast": {
+    "enabled": true,
+    "channel": null,
+    "event": null
+  }
+}
+```
+
+`channel` e `event` `null` = usar o nome auto-gerado baseado no model.
+
+### Métodos gerados automaticamente
+
+```php
+// Registrado via getListeners() quando broadcast.enabled = true:
+"echo:{channel},{event}" => 'handleBaseCrudUpdate'
+
+// Sempre registrado (Livewire 3 built-in):
+"refreshData" => '$refresh'
+```
+
+`handleBaseCrudUpdate()` é um stub vazio — o Livewire re-renderiza o componente automaticamente após o listener disparar.
+
+### Observer no backend
+
+```php
+// app/Observers/ProductObserver.php
+public function created(Product $product): void
+{
+    broadcast(new PageProductObserver($product))->toOthers();
+}
+```
+
+```php
+// app/Events/PageProductObserver.php
+class PageProductObserver implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(public Product $product) {}
+
+    public function broadcastOn(): Channel
+    {
+        return new Channel('page-product-observer');
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'pageProductObserver'; // sem o ponto; Echo adiciona
+    }
+}
+```
+
+---
+
+## Tema Visual (Light / Dark)
+
+O BaseCrud suporta dois temas: **light** (padrão) e **dark**.
+
+### Ativar
+
+Tab **Geral** do CrudConfig modal, card **"Tema Visual"**, selecione `Light` ou `Dark`.
+
+### Chave no JSON salvo
+
+```json
+{ "theme": "dark" }
+```
+
+### Comportamento técnico
+
+- Quando `theme = 'dark'`, o div raiz do componente recebe a classe `ptah-dark`.
+- Dentro do blade, um array `$T` (theme tokens) define duas paletas de cores: para cada elemento estrutural existe uma chave como `$T['toolbar']`, `$T['thead']`, `$T['modal_card']` etc.
+- Um bloco `<style>` embutido no componente define overrides CSS para `.ptah-base-crud.ptah-dark` nos elementos do painel de filtros (inputs, selects, labels) via especificidade de seletor.
+- Toda a lógica de tema vive no blade — **não** depende de Tailwind `dark:` ou classes dinâmicas compiladas.
+
+### Paletas
+
+| Token | Light | Dark |
+|---|---|---|
+| `toolbar` | `bg-white border-slate-200` | `bg-slate-900 border-slate-700` |
+| `thead` | `bg-slate-50 border-slate-200` | `bg-slate-800/80 border-slate-700` |
+| `tr` (hover) | `hover:bg-slate-50/70` | `hover:bg-slate-800/60` |
+| `modal_card` | `bg-white` | `bg-slate-900` |
+| `modal_body` | `bg-slate-50/40` | `bg-slate-800/20` |
+| `form_in` | `bg-white text-gray-800` | `bg-slate-800 text-slate-200` |
+| `empty_box` | `bg-slate-100` | `bg-slate-700/60` |
+
+---
+
 
 ```
 @livewire('ptah::base-crud', ['model' => 'Product'])

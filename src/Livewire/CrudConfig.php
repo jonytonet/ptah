@@ -75,6 +75,9 @@ class CrudConfig extends Component
     public string $broadcastChannel = ''; // vazio = auto-gerado
     public string $broadcastEvent   = ''; // vazio = auto-gerado
 
+    // ── Tema Visual ──────────────────────────────────────────────────────
+    public string $theme = 'light'; // 'light' | 'dark'
+
     // ── Permissões ───────────────────────────────────────────────────────────
 
     public string $permissionCreate     = '';
@@ -188,6 +191,9 @@ class CrudConfig extends Component
         $this->broadcastEnabled = (bool) ($bc['enabled'] ?? false);
         $this->broadcastChannel = $bc['channel'] ?? '';
         $this->broadcastEvent   = $bc['event']   ?? '';
+
+        // Tema
+        $this->theme = $cfg['theme'] ?? 'light';
 
         // Permições
         $perms = $cfg['permissions'] ?? [];
@@ -482,7 +488,7 @@ class CrudConfig extends Component
                 'notificationChannel' => 'database',
             ]),
             'uiPreferences'   => array_merge($existing['uiPreferences'] ?? [], [
-                'theme'             => $existing['uiPreferences']['theme'] ?? 'light',
+                'theme'             => $this->theme,
                 'compactMode'       => $this->uiCompactMode,
                 'stickyHeader'      => $this->uiStickyHeader,
                 'showTotalizador'   => $this->showTotalizador,
@@ -493,6 +499,7 @@ class CrudConfig extends Component
                 'channel' => $this->broadcastChannel ?: null,
                 'event'   => $this->broadcastEvent   ?: null,
             ],
+            'theme'           => $this->theme,
         ]);
     }
 

@@ -1831,6 +1831,44 @@
                             <p class="text-xs text-slate-400">Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.</p>
                             @endif
                         </div>
+
+                        {{-- Tema Visual --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
+                            <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">Tema Visual</h3>
+                            <p class="text-xs text-slate-400">Define a aparência do componente BaseCrud: paleta clara (padrão) ou escura.</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                {{-- Light --}}
+                                <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors
+                                    {{ $theme === 'light' ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-slate-300' }}">
+                                    <input type="radio" wire:model.live="theme" value="light" class="text-indigo-600 border-slate-300" />
+                                    <div>
+                                        <p class="text-xs font-semibold {{ $theme === 'light' ? 'text-indigo-700' : 'text-slate-700' }}">☀️ Light</p>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">Fundo branco, bordas cinza-claro</p>
+                                    </div>
+                                    {{-- Preview micro --}}
+                                    <div class="ml-auto flex flex-col gap-0.5">
+                                        <div class="w-16 h-1.5 rounded bg-slate-200"></div>
+                                        <div class="w-12 h-1.5 rounded bg-slate-100"></div>
+                                        <div class="w-14 h-1.5 rounded bg-indigo-200"></div>
+                                    </div>
+                                </label>
+                                {{-- Dark --}}
+                                <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors
+                                    {{ $theme === 'dark' ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-slate-300' }}">
+                                    <input type="radio" wire:model.live="theme" value="dark" class="text-indigo-600 border-slate-300" />
+                                    <div>
+                                        <p class="text-xs font-semibold {{ $theme === 'dark' ? 'text-indigo-700' : 'text-slate-700' }}">🌙 Dark</p>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">Fundo escuro, bordas slate-700</p>
+                                    </div>
+                                    {{-- Preview micro --}}
+                                    <div class="ml-auto flex flex-col gap-0.5">
+                                        <div class="w-16 h-1.5 rounded bg-slate-600"></div>
+                                        <div class="w-12 h-1.5 rounded bg-slate-700"></div>
+                                        <div class="w-14 h-1.5 rounded bg-indigo-700"></div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- ═══════════════════════════════════════════════════ --}}

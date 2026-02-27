@@ -1,4 +1,49 @@
-<div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}">
+<div class="ptah-base-crud {{ ($theme ?? 'light') === 'dark' ? 'ptah-dark' : '' }}" wire:key="base-crud-{{ $crudTitle }}">
+@php
+    $_dk = ($theme ?? 'light') === 'dark';
+    $T = [
+        'toolbar'    => $_dk ? 'bg-slate-900 border-slate-700'         : 'bg-white border-slate-200',
+        'search'     => $_dk ? 'bg-slate-800/60 border-slate-600 text-slate-200 placeholder-slate-500 focus:bg-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500' : 'border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-indigo-500/20 focus:border-indigo-400',
+        'btn'        => $_dk ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+        'btn_on'     => 'bg-indigo-600 text-white border-indigo-600 shadow-sm',
+        'perpage'    => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500' : 'border-slate-200 bg-white text-slate-600 focus:border-indigo-400',
+        'fp_card'    => $_dk ? 'bg-slate-900 border-slate-700'         : 'bg-white border-slate-200',
+        'fp_hd'      => $_dk ? 'bg-slate-800/60 border-slate-700'      : 'bg-slate-50 border-slate-100',
+        'fp_ft'      => $_dk ? 'bg-slate-800/40 border-slate-700'      : 'bg-slate-50/60 border-slate-100',
+        'fp_text'    => $_dk ? 'text-slate-300'                        : 'text-slate-700',
+        'fp_muted'   => $_dk ? 'text-slate-500'                        : 'text-gray-400',
+        'fp_input'   => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:ring-1 focus:ring-indigo-500/30 focus:border-indigo-500 focus:outline-none' : 'border-gray-300 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none',
+        'fp_label'   => $_dk ? 'text-slate-400'                        : 'text-gray-600',
+        'fp_save_in' => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500 focus:outline-none' : 'border-slate-200 focus:ring-1 focus:ring-indigo-400/40 focus:border-indigo-400 focus:outline-none',
+        'tbl_wrap'   => $_dk ? 'border-slate-700'                      : 'border-slate-200',
+        'thead'      => $_dk ? 'bg-slate-800/80 border-b-2 border-slate-700' : 'bg-slate-50 border-b-2 border-slate-200',
+        'th_text'    => $_dk ? 'text-slate-400'                        : 'text-slate-500',
+        'tbody_div'  => $_dk ? 'divide-y divide-slate-700/50'          : 'divide-y divide-slate-100',
+        'tr'         => $_dk ? 'hover:bg-slate-800/60'                 : 'hover:bg-slate-50/70',
+        'empty_box'  => $_dk ? 'bg-slate-700/60'                       : 'bg-slate-100',
+        'empty_ttl'  => $_dk ? 'text-slate-300'                        : 'text-slate-700',
+        'empty_sub'  => $_dk ? 'text-slate-500'                        : 'text-slate-400',
+        'tfoot'      => $_dk ? 'font-semibold border-t-2 border-slate-700 bg-slate-800/60' : 'font-semibold border-t-2 border-slate-200 bg-slate-50',
+        'tfoot_td'   => $_dk ? 'text-slate-300'                        : 'text-slate-700',
+        'pag'        => $_dk ? 'text-slate-400'                        : 'text-gray-500',
+        'dd'         => $_dk ? 'bg-slate-800 border-slate-700'         : 'bg-white border-slate-100',
+        'dd_item'    => $_dk ? 'text-slate-300 hover:bg-slate-700/60'  : 'text-gray-700 hover:bg-gray-50',
+        'modal_card' => $_dk ? 'bg-slate-900'                          : 'bg-white',
+        'modal_hd'   => $_dk ? 'bg-slate-800/50 border-slate-700'      : 'bg-white border-slate-100',
+        'modal_icon' => $_dk ? 'bg-indigo-900/50'                      : 'bg-indigo-50',
+        'modal_ttl'  => $_dk ? 'text-slate-100'                        : 'text-slate-800',
+        'modal_sub'  => $_dk ? 'text-slate-500'                        : 'text-slate-400',
+        'modal_body' => $_dk ? 'bg-slate-800/20'                       : 'bg-slate-50/40',
+        'modal_ft'   => $_dk ? 'bg-slate-800/50 border-slate-700'      : 'bg-white border-slate-100',
+        'form_lbl'   => $_dk ? 'text-slate-400'                        : 'text-slate-600',
+        'form_in'    => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-white border-slate-200 text-gray-800 focus:border-indigo-500 focus:ring-indigo-100/50',
+        'form_sel'   => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 px-3 py-2.5 cursor-pointer' : 'bg-white border-slate-200 text-gray-800 px-3 py-2.5 cursor-pointer',
+        'del_card'   => $_dk ? 'bg-slate-900'                          : 'bg-white',
+        'del_ft'     => $_dk ? 'bg-slate-800/50'                       : 'bg-slate-50',
+        'ql_btn'     => $_dk ? 'bg-slate-800 text-slate-300 border-slate-600 hover:border-indigo-500 hover:text-indigo-400' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600',
+        'ql_on'      => 'bg-indigo-600 text-white border-indigo-600 shadow-sm',
+    ];
+@endphp
 
     {{-- ── Mensagens de sessão ──────────────────────────────────────────── --}}
     @if (session('crud-success') || $exportStatus)
@@ -10,7 +55,7 @@
     @if (!empty($crudConfig))
 
     {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+    <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl {{ $T['toolbar'] }}">
 
         {{-- Botão Novo --}}
         @if ($permissions['showCreateButton'] ?? true)
@@ -37,7 +82,7 @@
                     wire:model.live.debounce.400ms="search"
                     type="text"
                     placeholder="Buscar..."
-                    class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
+                    class="w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg transition-colors {{ $T['search'] }}"
                 />
             </div>
         </div>
@@ -54,7 +99,7 @@
             @if ($hasFilterable)
                 <button wire:click="toggleFilters"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                           {{ $showFilters ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                           {{ $showFilters ? $T['btn_on'] : $T['btn'] }}"
                     title="Filtros">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -73,7 +118,7 @@
             @if ($permissions['showTrashButton'] ?? true)
                 <button wire:click="toggleTrashed"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                           {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                           {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : $T['btn'] }}"
                     title="{{ $showTrashed ? 'Ver ativos' : 'Ver excluídos' }}">
                     @if ($showTrashed)
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,7 +139,7 @@
             @if (!empty($exportCfg['enabled']))
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-150 focus:outline-none"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
                         title="Exportar">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,10 +151,10 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[160px] py-1.5">
+                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[160px] py-1.5 {{ $T['dd'] }}">
                         @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                             <button wire:click="export('{{ $fmt }}')" @click="open = false"
-                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm {{ $T['dd_item'] }}">
                                 @if ($fmt === 'excel')
                                     <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -140,7 +185,7 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50' }}"
+                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : $T['btn'] }}"
                         title="Colunas">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -157,7 +202,7 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto">
+                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto {{ $T['dd'] }}">
                         {{-- Ações rápidas --}}
                         <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                             <button wire:click="showAllColumns" @click="open = false"
@@ -196,7 +241,7 @@
             @endphp
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-150 focus:outline-none"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
                     title="Densidade">
                     <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                     <span class="hidden sm:inline">Densidade</span>
@@ -205,11 +250,11 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[180px] py-1">
+                     class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[180px] py-1 {{ $T['dd'] }}">
                     @foreach ($densityMap as $d => $info)
                         <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
-                            class="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-slate-50 transition-colors
-                                   {{ $viewDensity === $d ? 'text-indigo-600 font-semibold' : 'text-slate-700' }}">
+                            class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors {{ $T['dd_item'] }}
+                                   {{ $viewDensity === $d ? 'font-semibold text-indigo-600' : '' }}">
                             <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
                             @if ($viewDensity === $d)
                                 <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -248,7 +293,7 @@
 
             {{-- Per page --}}
             <select wire:model.live="perPage"
-                class="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400">
+                class="text-sm border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 {{ $T['perpage'] }}">
                 @foreach ([10, 15, 25, 50, 100] as $n)
                     <option value="{{ $n }}">{{ $n }} / pág.</option>
                 @endforeach
@@ -261,13 +306,13 @@
     @if ($showFilters)
         <div class="mb-4 overflow-hidden bg-white border shadow-sm border-slate-200 rounded-xl">
 
-            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b {{ $T['fp_hd'] }}">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="text-sm font-semibold text-slate-700">Filtros</span>
+                    <span class="text-sm font-semibold {{ $T['fp_text'] }}">Filtros</span>
                     @if ($activeFilterCount > 0)
                         <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium border border-indigo-100">
                             {{ $activeFilterCount }} ativo{{ $activeFilterCount > 1 ? 's' : '' }}
@@ -571,7 +616,7 @@
             </div>{{-- /p-4 --}}
 
             {{-- Footer: salvar filtro --}}
-            <div class="flex items-center gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/60"
+            <div class="flex items-center gap-2 px-5 py-3 border-t {{ $T['fp_ft'] }}"
                  x-data="{ saving: false, name: '' }">
                 <template x-if="!saving">
                     <button @click="saving = true"
@@ -589,7 +634,7 @@
                             @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             @keydown.escape="saving = false; name = '';"
                             placeholder="Ex: Clientes ativos SP"
-                            class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-indigo-400/40 focus:border-indigo-400 focus:outline-none"
+                            class="flex-1 text-sm border rounded-lg px-3 py-1.5 {{ $T['fp_save_in'] }}"
                             x-init="$nextTick(() => $el.focus())" />
                         <button @click="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
@@ -611,7 +656,7 @@
         <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
             @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
-            <thead class="{{ $crudConfig['theadClass'] ?? 'bg-slate-50 border-b-2 border-slate-200' }}">
+            <thead class="{{ $crudConfig['theadClass'] ?? $T['thead'] }}">
                 <tr id="ptah-thead-row-{{ $crudTitle }}">
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
@@ -624,7 +669,7 @@
                                 $savedWidth  = $columnWidths[$colField] ?? null;
                                 $thStyle     = $savedWidth ? "width:{$savedWidth}px;min-width:60px;" : 'min-width:60px;';
                             @endphp
-                            <th class="relative px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap {{ $colAlign }} ptah-sortable-col"
+                            <th class="relative px-3 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap {{ $T['th_text'] }} {{ $colAlign }} ptah-sortable-col"
                                 data-column="{{ $colField }}"
                                 style="{{ $thStyle }}"
                                 draggable="true"
@@ -666,7 +711,7 @@
                     {{-- Colunas action --}}
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase text-slate-500 whitespace-nowrap">
+                            <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap {{ $T['th_text'] }}">
                                 {{ $col['colsNomeLogico'] ?? 'Ação' }}
                             </th>
                         @endif
@@ -674,12 +719,12 @@
 
                     {{-- Coluna de ações padrão --}}
                     @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
-                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase text-slate-500">Ações</th>
+                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase {{ $T['th_text'] }}">Ações</th>
                     @endif
                 </tr>
             </thead>
 
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="{{ $T['tbody_div'] }}">
                 @forelse ($rows as $row)
                     @php
                         $rowStyle = $this->getRowStyle($row);
@@ -691,7 +736,7 @@
                     @endphp
 
                     <tr style="{{ $rowStyle }}"
-                        class="hover:bg-slate-50/70 transition-colors
+                        class="transition-colors {{ $T['tr'] }}
                             @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
                             {{ $rowLink ? 'cursor-pointer' : '' }}"
                         @if($rowLink) @click="window.location='{{ $rowLink }}'" @endif
@@ -818,14 +863,14 @@
                     <tr>
                         <td colspan="99" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl {{ $T['empty_box'] }}">
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-700">Nenhum registro encontrado</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">Ajuste os filtros ou adicione um novo item</p>
+                                    <p class="text-sm font-semibold {{ $T['empty_ttl'] }}">Nenhum registro encontrado</p>
+                                    <p class="text-xs mt-0.5 {{ $T['empty_sub'] }}">Ajuste os filtros ou adicione um novo item</p>
                                 </div>
                             </div>
                         </td>
@@ -835,12 +880,12 @@
 
             {{-- Totalizadores --}}
             @if (!empty($totData))
-                <tfoot class="font-semibold border-t-2 border-slate-200 bg-slate-50">
+                <tfoot class="{{ $T['tfoot'] }}">
                     <tr>
                         @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
-                                <td class="px-3 py-2.5 text-slate-700 {{ $col['colsAlign'] ?? 'text-start' }}">
+                                <td class="px-3 py-2.5 {{ $T['tfoot_td'] }} {{ $col['colsAlign'] ?? 'text-start' }}">
                                     @if ($totVal !== null)
                                         @if (($col['colsHelper'] ?? '') === 'currencyFormat')
                                             R$ {{ number_format((float)$totVal, 2, ',', '.') }}
@@ -890,12 +935,12 @@
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeModal"></div>
 
             {{-- Painel do modal --}}
-            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4">
+            <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 {{ $T['modal_card'] }}">
 
                 {{-- Header --}}
-                <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
+                <div class="flex items-center justify-between px-6 py-4 border-b {{ $T['modal_hd'] }}">
                     <div class="flex items-center gap-3">
-                        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg {{ $T['modal_icon'] }}">
                             <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($editingId)
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -905,10 +950,10 @@
                             </svg>
                         </div>
                         <div>
-                            <h2 class="text-[13px] font-semibold text-slate-800 leading-tight">
+                            <h2 class="text-[13px] font-semibold leading-tight {{ $T['modal_ttl'] }}">
                                 {{ $editingId ? 'Editar' : 'Novo' }} {{ $crudTitle }}
                             </h2>
-                            <p class="text-[11px] text-slate-400 leading-tight">{{ $editingId ? 'Altere os campos e salve' : 'Preencha os campos abaixo' }}</p>
+                            <p class="text-[11px] leading-tight {{ $T['modal_sub'] }}">{{ $editingId ? 'Altere os campos e salve' : 'Preencha os campos abaixo' }}</p>
                         </div>
                     </div>
                     <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -926,7 +971,7 @@
                 @endif
 
                 {{-- Body --}}
-                <div class="flex-1 px-6 py-5 overflow-y-auto bg-slate-50/40">
+                <div class="flex-1 px-6 py-5 overflow-y-auto {{ $T['modal_body'] }}">
                     <div class="flex flex-col gap-4">
 
                         @foreach ($formCols as $col)
@@ -941,7 +986,7 @@
 
                 $fBorderClass  = $fError
                                     ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100/50';
+                                    : ($_dk ? 'border-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100/50');
                             @endphp
 
                             <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -959,7 +1004,7 @@
                                         $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -990,7 +1035,7 @@
                                             <div
                                                 @click="open = !open"
                                                 :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
-                                                class="relative flex items-center justify-between rounded-lg border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
+                                                class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 {{ $T['form_sel'] }}"
                                             >
                                                 <span
                                                     :class="(selected !== null && selected !== '') ? 'text-gray-800' : 'text-gray-400'"
@@ -1009,7 +1054,7 @@
                                                 x-transition:enter="transition ease-out duration-150"
                                                 x-transition:enter-start="opacity-0 -translate-y-1"
                                                 x-transition:enter-end="opacity-100 translate-y-0"
-                                                class="absolute z-20 w-full mt-1 overflow-auto bg-white border border-gray-100 shadow-lg rounded-xl max-h-48"
+                                                class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 {{ $T['dd'] }}">
                                             >
                                                 <ul class="py-1">
                                                     <template x-for="option in options" :key="option.value">
@@ -1039,7 +1084,7 @@
                                         $sdHasResults = !empty($sdResults[$fField]);
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1068,7 +1113,7 @@
                                                     @focus="$wire.openDropdown('{{ $fField }}')"
                                                     placeholder="Buscar {{ $fLabel }}..."
                                                     autocomplete="off"
-                                                    class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm text-gray-800 bg-white transition-colors duration-150 focus:ring-2"
+                                                    class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 {{ $T['form_in'] }}"
                                                 />
                                                 <button type="button"
                                                     tabindex="-1"
@@ -1110,7 +1155,7 @@
                                         };
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -1136,7 +1181,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-end gap-3 px-6 py-4 bg-white border-t border-slate-100">
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t {{ $T['modal_ft'] }}">
                     <x-forge-button wire:click="closeModal" color="dark" flat :disabled="$creating">
                         Cancelar
                     </x-forge-button>
@@ -1157,19 +1202,19 @@
         @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cancelDelete"></div>
-            <div class="relative w-full max-w-sm mx-4 overflow-hidden bg-white shadow-2xl rounded-2xl">
-                <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-100">
+            <div class="relative w-full max-w-sm mx-4 overflow-hidden shadow-2xl rounded-2xl {{ $T['del_card'] }}">
+                <div class="flex items-center gap-4 px-6 py-5 border-b {{ $T['modal_hd'] }}">
                     <div class="flex items-center justify-center flex-shrink-0 w-11 h-11 rounded-xl bg-red-50 ring-4 ring-red-50">
                         <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-slate-900">Confirmar exclusão</h3>
+                        <h3 class="text-sm font-semibold {{ $T['modal_ttl'] }}">Confirmar exclusão</h3>
                         <p class="text-xs text-slate-500 mt-0.5">Esta ação não pode ser desfeita.</p>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 px-6 py-4 bg-slate-50">
+                <div class="flex justify-end gap-3 px-6 py-4 {{ $T['del_ft'] }}">
                     <x-forge-button wire:click="cancelDelete" color="dark" flat>Cancelar</x-forge-button>
                     <x-forge-button wire:click="deleteRecord" color="danger">Excluir</x-forge-button>
                 </div>
@@ -1224,6 +1269,23 @@
             border-color: #818CF8;
             box-shadow: 0 0 0 3px rgba(129, 140, 248, .15);
             outline: none;
+        }
+
+        /* ── Dark Mode (ptah-dark) ────────────────────────────────────── */
+        .ptah-base-crud.ptah-dark .p-4 label,
+        .ptah-base-crud.ptah-dark .space-y-4 label:not(.flex) {
+            color: #94a3b8; /* slate-400 */
+        }
+        .ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]),
+        .ptah-base-crud.ptah-dark .p-4 select {
+            border-color: #475569;
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]):focus,
+        .ptah-base-crud.ptah-dark .p-4 select:focus {
+            border-color: #818CF8;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, .15);
         }
 
         /* Table header sticky shadow line */

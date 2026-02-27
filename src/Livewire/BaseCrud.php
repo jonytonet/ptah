@@ -2489,6 +2489,7 @@ class BaseCrud extends Component
             'crudTitle'        => $this->crudConfig['displayName'] ?? $this->crudConfig['crud'] ?? class_basename(str_replace('/', '\\', $this->model)),
             'bulkActions'      => $this->crudConfig['bulkActions']  ?? [],
             'hasActiveFilters' => ! empty($this->textFilter) || $this->search !== '' || $this->quickDateFilter !== '',
+            'theme'            => $this->crudConfig['theme'] ?? 'light',
         ]);
     }
 
