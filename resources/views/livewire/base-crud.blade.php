@@ -608,41 +608,64 @@
     @endif
 
     {{-- ── Tabela ──────────────────────────────────────────────────────── --}}
-    <div class="overflow-x-auto border border-gray-200 rounded-lg">
-        <table class="{{ $crudConfig['tableClass'] ?? 'table' }} w-full text-sm
+    <div class="overflow-x-auto border border-gray-200 rounded-lg" id="ptah-table-wrap-{{ $crudTitle }}">
+        <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
             @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
             <thead class="{{ $crudConfig['theadClass'] ?? 'bg-gray-50 border-b border-gray-200' }}">
-                <tr>
-                    @foreach ($crudConfig['cols'] ?? [] as $col)
+                <tr id="ptah-thead-row-{{ $crudTitle }}">
+                    @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
                             @php
-                                $colField   = $col['colsNomeFisico'];
-                                $colSortBy  = $col['colsOrderBy'] ?? $colField;
-                                $colLabel   = $col['colsNomeLogico'] ?? $colField;
-                                $colAlign   = $col['colsAlign'] ?? 'text-start';
-                                $isSortable = !str_contains($colField, '.') && empty($col['colsMetodoCustom']);
+                                $colField    = $col['colsNomeFisico'];
+                                $colSortBy   = $col['colsOrderBy'] ?? $colField;
+                                $colLabel    = $col['colsNomeLogico'] ?? $colField;
+                                $colAlign    = $col['colsAlign'] ?? 'text-start';
+                                $isSortable  = !str_contains($colField, '.') && empty($col['colsMetodoCustom']);
+                                $savedWidth  = $columnWidths[$colField] ?? null;
+                                $thStyle     = $savedWidth ? "width:{$savedWidth}px;min-width:60px;" : 'min-width:60px;';
                             @endphp
-                            @if ($formDataColumns[$colField] ?? true)
-                            <th class="px-3 py-2 font-semibold text-gray-700 whitespace-nowrap {{ $colAlign }}
-                                {{ $isSortable ? 'cursor-pointer select-none hover:bg-gray-100' : '' }}"
-                                @if($isSortable) wire:click="sortBy('{{ $colSortBy }}')" @endif>
-                                <span class="inline-flex items-center gap-1">
-                                    @if (!empty($col['colsCellIcon']))
-                                        <i class="{{ $col['colsCellIcon'] }}"></i>
-                                    @endif
-                                    {{ $colLabel }}
-                                </span>
-                                @if ($sort === $colSortBy)
-                                    <span class="ml-1 text-primary">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
-                                @endif
+                            <th class="relative px-3 py-2 font-semibold text-gray-700 whitespace-nowrap {{ $colAlign }} ptah-sortable-col"
+                                data-column="{{ $colField }}"
+                                style="{{ $thStyle }}"
+                                draggable="true"
+                                ondragstart="ptahColDragStart(event, '{{ $crudTitle }}')"
+                                ondragover="ptahColDragOver(event)"
+                                ondrop="ptahColDragDrop(event, '{{ $crudTitle }}')"
+                                ondragend="ptahColDragEnd(event)">
+                                <div class="flex items-center gap-1.5">
+                                    {{-- Grip (initia o drag) --}}
+                                    <span class="ptah-drag-grip shrink-0 cursor-grab text-gray-300 hover:text-gray-500 transition-colors select-none"
+                                          title="Arrastar para reordenar">
+                                        <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <circle cx="7" cy="5"  r="1.5"/><circle cx="13" cy="5"  r="1.5"/>
+                                            <circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/>
+                                            <circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/>
+                                        </svg>
+                                    </span>
+                                    {{-- Label (sort) --}}
+                                    <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-primary' : '' }}"
+                                          @if($isSortable) wire:click.stop="sortBy('{{ $colSortBy }}')" @endif>
+                                        @if (!empty($col['colsCellIcon']))
+                                            <i class="{{ $col['colsCellIcon'] }}"></i>
+                                        @endif
+                                        {{ $colLabel }}
+                                        @if ($sort === $colSortBy)
+                                            <span class="text-primary">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
+                                        @endif
+                                    </span>
+                                </div>
+                                {{-- Resize handle --}}
+                                <div class="ptah-resize-handle absolute top-0 right-0 h-full w-1.5 cursor-col-resize z-10 hover:bg-primary/30 transition-colors"
+                                     onclick="event.stopPropagation()"
+                                     onmousedown="ptahResizeStart(event, '{{ $colField }}', '{{ $crudTitle }}')">
+                                </div>
                             </th>
-                            @endif
                         @endif
                     @endforeach
 
                     {{-- Colunas action --}}
-                    @foreach ($crudConfig['cols'] ?? [] as $col)
+                    @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
                             <th class="px-3 py-2 font-semibold text-center text-gray-700 whitespace-nowrap">
                                 {{ $col['colsNomeLogico'] ?? 'Ação' }}
@@ -676,25 +699,26 @@
                         wire:key="row-{{ $row->id ?? $loop->index }}">
 
                         {{-- Células de dados --}}
-                        @foreach ($crudConfig['cols'] ?? [] as $col)
+                        @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php
                                     $cellField    = $col['colsNomeFisico'];
                                     $cellAlign    = $col['colsAlign'] ?? 'text-start';
                                     $reverse      = ($col['colsReverse'] ?? 'N') === 'S';
-                                    $cellMinWidth = ! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '';
+                                    $cellSavedW   = $columnWidths[$cellField] ?? null;
+                                    $cellMinWidth = $cellSavedW
+                                        ? "width:{$cellSavedW}px;min-width:60px;"
+                                        : (! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '');
                                 @endphp
-                                @if ($formDataColumns[$cellField] ?? true)
                                 <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
                                     @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif>
                                     {!! $this->formatCell($col, $row) !!}
                                 </td>
-                                @endif
                             @endif
                         @endforeach
 
                         {{-- Colunas action --}}
-                        @foreach ($crudConfig['cols'] ?? [] as $col)
+                        @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') === 'action')
                                 <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center">
                                     @php
@@ -807,7 +831,7 @@
             @if (!empty($totData))
                 <tfoot class="font-semibold border-t-2 border-gray-300 bg-gray-50">
                     <tr>
-                        @foreach ($crudConfig['cols'] ?? [] as $col)
+                        @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
                                 <td class="px-3 py-2 {{ $col['colsAlign'] ?? 'text-start' }}">
@@ -1140,5 +1164,152 @@
         class="fixed inset-0 z-40 flex items-center justify-center bg-black/20">
         <x-forge-spinner color="primary" size="lg" />
     </div>
+
+    {{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
+    @once
+    <style>
+        /* Drag feedback */
+        .ptah-sortable-col.ptah-dragging   { opacity: .45; }
+        .ptah-sortable-col.ptah-drag-over  { outline: 2px solid #6366f1; outline-offset: -2px; }
+        .ptah-drag-grip                    { touch-action: none; }
+
+        /* Resize indicator */
+        #ptah-resize-indicator {
+            position: fixed; top: 0; bottom: 0; width: 2px;
+            background: #6366f1; z-index: 9999; pointer-events: none; display: none;
+        }
+        #ptah-resize-indicator.active { display: block; }
+    </style>
+
+    <div id="ptah-resize-indicator"></div>
+
+    <script>
+    (function () {
+        if (window.__ptahColDragInit) return;
+        window.__ptahColDragInit = true;
+
+        /* ─── estado global ─────────────────────────────────────── */
+        let _draggedTh = null, _draggedIdx = null, _dragCrudId = null;
+        let _resizeTh = null, _resizeStart = 0, _resizeStartW = 0, _resizeField = null, _resizeCrud = null;
+        const _indicator = () => document.getElementById('ptah-resize-indicator');
+
+        /* ─── helper: encontra o componente Livewire da tabela ───── */
+        function findWire(crudId) {
+            const wrap   = document.getElementById('ptah-table-wrap-' + crudId);
+            const wireEl = wrap?.closest('[wire\\:id]');
+            return wireEl ? Livewire.find(wireEl.getAttribute('wire:id')) : null;
+        }
+
+        /* ─── helper: colunas sortable de uma thead row ─────────── */
+        function sortableThs(crudId) {
+            const row = document.getElementById('ptah-thead-row-' + crudId);
+            return row ? Array.from(row.querySelectorAll('th.ptah-sortable-col')) : [];
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           DRAG-AND-DROP DE COLUNAS
+        ══════════════════════════════════════════════════════════ */
+        window.ptahColDragStart = function (e, crudId) {
+            // Não iniciar drag se vier do resize handle
+            if (e.target.closest('.ptah-resize-handle')) {
+                e.preventDefault(); return;
+            }
+            _draggedTh  = e.currentTarget.closest('th');
+            _dragCrudId = crudId;
+            const ths   = sortableThs(crudId);
+            _draggedIdx = ths.indexOf(_draggedTh);
+
+            _draggedTh.classList.add('ptah-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(_draggedIdx));
+        };
+
+        window.ptahColDragOver = function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetTh = e.target.closest('th.ptah-sortable-col');
+            if (!targetTh || targetTh === _draggedTh || !_dragCrudId) return;
+
+            sortableThs(_dragCrudId).forEach(th => th.classList.remove('ptah-drag-over'));
+            targetTh.classList.add('ptah-drag-over');
+        };
+
+        window.ptahColDragDrop = function (e, crudId) {
+            e.stopPropagation();
+            const targetTh = e.target.closest('th.ptah-sortable-col');
+            if (!targetTh || targetTh === _draggedTh) return;
+
+            const ths      = sortableThs(crudId);
+            const currOrder = ths.map(th => th.dataset.column);
+            const toIdx     = ths.indexOf(targetTh);
+
+            // Reordenar o array
+            const fromField = currOrder.splice(_draggedIdx, 1)[0];
+            currOrder.splice(toIdx, 0, fromField);
+
+            // Mover DOM imediatamente para feedback instantâneo (Livewire re-render depois)
+            const parent = targetTh.parentNode;
+            if (toIdx < _draggedIdx) {
+                parent.insertBefore(_draggedTh, targetTh);
+            } else {
+                parent.insertBefore(_draggedTh, targetTh.nextSibling);
+            }
+
+            // Persistir via Livewire
+            const wire = findWire(crudId);
+            if (wire) wire.call('reorderColumns', currOrder);
+        };
+
+        window.ptahColDragEnd = function (e) {
+            if (_draggedTh) _draggedTh.classList.remove('ptah-dragging');
+            if (_dragCrudId) sortableThs(_dragCrudId).forEach(th => th.classList.remove('ptah-drag-over'));
+            _draggedTh = null; _draggedIdx = null; _dragCrudId = null;
+        };
+
+        /* ═══════════════════════════════════════════════════════
+           RESIZE DE COLUNAS
+        ══════════════════════════════════════════════════════════ */
+        window.ptahResizeStart = function (e, field, crudId) {
+            e.preventDefault(); e.stopPropagation();
+            _resizeTh      = e.target.closest('th');
+            _resizeField   = field;
+            _resizeCrud    = crudId;
+            _resizeStart   = e.pageX;
+            _resizeStartW  = _resizeTh.offsetWidth;
+
+            const ind = _indicator();
+            if (ind) { ind.style.left = e.pageX + 'px'; ind.classList.add('active'); }
+            document.body.style.cursor     = 'col-resize';
+            document.body.style.userSelect = 'none';
+        };
+
+        document.addEventListener('mousemove', function (e) {
+            if (!_resizeTh) return;
+            const newW = Math.max(60, _resizeStartW + (e.pageX - _resizeStart));
+            _resizeTh.style.width    = newW + 'px';
+            _resizeTh.style.minWidth = newW + 'px';
+            const ind = _indicator();
+            if (ind) ind.style.left = e.pageX + 'px';
+        });
+
+        document.addEventListener('mouseup', function (e) {
+            if (!_resizeTh) return;
+            const finalW = _resizeTh.offsetWidth;
+
+            const ind = _indicator();
+            if (ind) ind.classList.remove('active');
+            document.body.style.cursor     = '';
+            document.body.style.userSelect = '';
+
+            const wire = findWire(_resizeCrud);
+            if (wire && _resizeField) wire.call('saveColumnWidth', _resizeField, finalW);
+
+            _resizeTh = null; _resizeField = null; _resizeCrud = null;
+        });
+
+    })();
+    </script>
+    @endonce
 
 </div>

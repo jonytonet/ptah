@@ -445,6 +445,26 @@ class BaseCrud extends Component
         $this->savePreferences();
     }
 
+    /**
+     * Salva a nova ordem de colunas arrastadas pelo usuário.
+     * Chamado via $wire.call('reorderColumns', ['campo1','campo2',...]) no JS.
+     */
+    public function reorderColumns(array $newOrder): void
+    {
+        $this->columnOrder = $newOrder;
+        $this->savePreferences();
+    }
+
+    /**
+     * Salva a largura de uma coluna redimensionada pelo usuário.
+     * Chamado via $wire.call('saveColumnWidth', 'campo', 150) no JS.
+     */
+    public function saveColumnWidth(string $column, int $width): void
+    {
+        $this->columnWidths[$column] = max(60, $width);
+        $this->savePreferences();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -1107,15 +1127,38 @@ class BaseCrud extends Component
     {
         $cols = $this->crudConfig['cols'] ?? [];
 
-        if (empty($this->formDataColumns)) {
-            return $cols;
+        // ── 1. Filtrar por visibilidade ──────────────────────────────────────
+        if (! empty($this->formDataColumns)) {
+            $cols = array_values(array_filter($cols, function ($col) {
+                $field = $col['colsNomeFisico'] ?? '';
+                return $this->formDataColumns[$field] ?? true;
+            }));
         }
 
-        return array_values(array_filter($cols, function ($col) {
-            $field = $col['colsNomeFisico'] ?? '';
-            // Se não estiver mapeado, considera visível
-            return $this->formDataColumns[$field] ?? true;
-        }));
+        // ── 2. Aplicar ordem salva pelo usuário (só colunas não-action) ──────
+        if (! empty($this->columnOrder)) {
+            $actionCols = array_values(array_filter($cols, fn($c) => ($c['colsTipo'] ?? '') === 'action'));
+            $dataCols   = array_values(array_filter($cols, fn($c) => ($c['colsTipo'] ?? '') !== 'action'));
+
+            // Mapa campo => definição
+            $colMap = [];
+            foreach ($dataCols as $col) {
+                $colMap[$col['colsNomeFisico'] ?? ''] = $col;
+            }
+
+            // Ordena conforme o array salvo; cols sem referência vão ao final
+            $ordered = [];
+            foreach ($this->columnOrder as $field) {
+                if (isset($colMap[$field])) {
+                    $ordered[] = $colMap[$field];
+                    unset($colMap[$field]);
+                }
+            }
+            $ordered = array_merge($ordered, array_values($colMap));
+            $cols    = array_merge($ordered, $actionCols);
+        }
+
+        return $cols;
     }
 
     // ── Resumo visual de filtros ─────────────────────────────────────────────
