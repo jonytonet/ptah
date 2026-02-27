@@ -6,6 +6,7 @@
       - sticky : boolean  (padrão: true)
     Slots: brand, actions
     Requer Alpine.js — emite evento 'toggle-sidebar'
+    Dark mode: reage à classe .ptah-dark no ancestral (forge-dashboard-layout)
 --}}
 @props([
     'appName' => config('app.name', 'Ptah'),
@@ -14,19 +15,38 @@
 ])
 
 <nav {{ $attributes->merge([
-    'class' => 'bg-white shadow-sm ' . ($sticky ? 'fixed top-0 left-0 right-0 z-50 h-16' : 'relative h-16')
+    'class' => 'ptah-navbar bg-white border-b border-gray-100 shadow-sm ' . ($sticky ? 'fixed top-0 left-0 right-0 z-50 h-16' : 'relative h-16')
 ]) }}>
     <div class="h-full px-4 flex items-center justify-between">
 
         {{-- Brand --}}
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+            {{-- Mobile: abre/fecha sidebar via overlay --}}
             <button
                 @click="$dispatch('toggle-sidebar')"
-                class="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                class="ptah-mobile-toggle ptah-navbar-icon-btn lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
                 aria-label="Toggle sidebar"
             >
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            {{-- Desktop: expande/recolhe sidebar --}}
+            <button
+                @click="toggleSidebarCollapse()"
+                :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+                class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+            >
+                {{-- Ícone "painel recolher" (seta + linhas) quando expandido --}}
+                <svg x-show="!sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5h5M15 12h5M15 19h5"/>
+                </svg>
+                {{-- Ícone "painel expandir" (linhas + seta) quando colapsado --}}
+                <svg x-show="sidebarCollapsed" x-cloak fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h5M4 12h5M4 19h5"/>
                 </svg>
             </button>
 
@@ -43,13 +63,13 @@
                             </span>
                         </div>
                     @endif
-                    <span class="font-bold text-dark text-lg hidden sm:block">{{ $appName }}</span>
+                    <span class="ptah-navbar-app-name font-bold text-dark text-lg hidden sm:block">{{ $appName }}</span>
                 </a>
             @endisset
         </div>
 
         {{-- Search Desktop --}}
-        <div class="hidden lg:flex flex-1 max-w-md mx-8">
+        <div class="ptah-navbar-search hidden lg:flex flex-1 max-w-md mx-8">
             <div class="relative w-full">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,8 +90,26 @@
             @isset($actions)
                 {{ $actions }}
             @else
+                {{-- Botão toggle Dark Mode --}}
+                <button
+                    @click="toggleDark()"
+                    class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                    :title="darkMode ? 'Mudar para modo claro' : 'Mudar para modo escuro'"
+                >
+                    {{-- Ícone Sol (light mode ativo) --}}
+                    <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                    </svg>
+                    {{-- Ícone Lua (dark mode ativo) --}}
+                    <svg x-show="darkMode" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+
                 {{-- Notifications --}}
-                <button class="relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors">
+                <button class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
@@ -81,12 +119,12 @@
                 {{-- User Dropdown --}}
                 <div x-data="{ open: false }" class="relative">
                     <button @click="open = !open" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
-                            <span class="text-primary font-semibold text-sm">
+                        <div class="ptah-user-avatar-bg w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
+                            <span class="ptah-user-avatar-text text-primary font-semibold text-sm">
                                 {{ mb_strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 1)) }}
                             </span>
                         </div>
-                        <span class="hidden lg:block text-sm font-medium text-dark">
+                        <span class="ptah-navbar-username hidden lg:block text-sm font-medium text-dark">
                             {{ auth()->user()->name ?? 'Usuário' }}
                         </span>
                         <svg class="hidden lg:block h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,10 +139,10 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                        class="ptah-user-dropdown absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
                     >
                         <a href="{{ \Illuminate\Support\Facades\Route::has('profile.edit') ? route('profile.edit') : '#' }}"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>

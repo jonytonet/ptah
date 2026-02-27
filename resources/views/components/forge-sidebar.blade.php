@@ -68,27 +68,6 @@
            md:translate-x-0 md:w-16 md:hover:w-64 lg:translate-x-0"
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
 >
-    {{-- Botão flutuante de collapse — fica na borda direita da sidebar, só desktop --}}
-    <button
-        @click="toggleSidebarCollapse()"
-        :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
-        class="ptah-sidebar-toggle
-               absolute -right-3 top-[72px] z-50
-               w-6 h-6 rounded-full
-               bg-white border border-gray-200 shadow-sm
-               text-gray-500 hover:text-primary hover:border-primary hover:shadow-md
-               items-center justify-center
-               transition-all duration-200
-               hidden lg:flex"
-    >
-        <svg x-show="!sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-        </svg>
-        <svg x-show="sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-        </svg>
-    </button>
-
     {{-- Logo --}}
     <div class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b border-gray-100 flex-shrink-0">
         <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
