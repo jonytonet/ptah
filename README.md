@@ -29,6 +29,8 @@ O pacote é dividido em três subsistemas complementares:
 - [Instalação](#-instalação)
 - [Ptah Forge — Componentes](#-ptah-forge--componentes)
   - [Layout Dashboard](#layout-dashboard)
+  - [Dark Mode automático](#dark-mode-automático)
+  - [Sidebar — collapse / expand](#sidebar--collapse--expand)
   - [Layout Auth](#layout-auth)
   - [Componentes disponíveis](#componentes-disponíveis)
   - [Demo](#demo)
@@ -171,6 +173,45 @@ O layout principal para páginas autenticadas. Inclui sidebar, navbar e área de
 | `appName` | string | `config('app.name')` | Nome do sistema |
 | `logoUrl` | string | `null` | URL do logo |
 | `title` | string | `null` | Título da aba |
+
+---
+
+### Dark Mode automático
+
+O `forge-dashboard-layout` detecta automaticamente a preferência de cor do sistema operacional do usuário via `prefers-color-scheme` e aplica o tema escuro sem nenhuma configuração.
+
+**Como funciona:**
+- Na inicialização, lê `localStorage.getItem('ptah_dark_mode')` — se houver override manual, usa ele
+- Caso contrário, usa `window.matchMedia('(prefers-color-scheme: dark)').matches`
+- Um listener em tempo real reage a mudanças de tema do SO enquanto a página está aberta
+- O botão sol/lua na navbar permite ao usuário sobrescrever manualmente; a escolha persiste em `localStorage`
+
+**Comportamentos:**
+
+| Chave localStorage | Valor | Efeito |
+|---|---|---|
+| `ptah_dark_mode` | `'true'` | Força dark independente do SO |
+| `ptah_dark_mode` | `'false'` | Força light independente do SO |
+| `ptah_dark_mode` | ausente | Segue o SO automaticamente |
+
+Quando ativo, a classe `ptah-dark` é aplicada no elemento raiz. O CSS define overrides completos para sidebar, navbar e área de conteúdo sob `.ptah-dark`.
+
+> **Independência do BaseCrud:** o tema do layout e o tema do BaseCrud são independentes. O BaseCrud tem seu próprio toggle light/dark no modal de `CrudConfig`, que persiste por componente no banco de dados. Ver [§29 Tema Visual](#tema-visual-light--dark).
+
+---
+
+### Sidebar — collapse / expand
+
+A sidebar possui um botão de colapso/expansão na navbar (ao lado da logo, visível no desktop).
+
+**Comportamento:**
+- **Expandida** (`lg:w-64`): ícones + labels visíveis
+- **Colapsada** (`lg:w-16`): somente ícones, labels ocultos com transição suave
+- O estado é persistido em `localStorage` (`ptah_sidebar_collapsed`) e restaurado automaticamente ao recarregar a página
+
+**Mobile:** comportamento inalterado — a sidebar desliza lateralmente via overlay, ativada pelo botão hamburger (também na navbar)
+
+**Ícone do botão:** retângulo com painel lateral — indica "recolher" quando a sidebar está aberta e "expandir" quando está fechada.
 
 ---
 
@@ -428,8 +469,9 @@ Notificações flutuantes com auto-close.
 | `forge-list` | Lista de itens com avatar, descrição e badge |
 | `forge-stepper` | Passos de um processo (wizard) |
 | `forge-chart-card` | Card wrapper para gráficos |
-| `forge-navbar` | Barra de navegação superior com dropdown de usuário |
-| `forge-sidebar` | Sidebar responsiva (icon bar no `md`, expandida no `lg`) |
+| `forge-navbar` | Navbar superior com dropdown de usuário, botão dark mode (sol/lua) e botão de collapse da sidebar (desktop) |
+| `forge-sidebar` | Sidebar responsiva com collapse/expand persistido — icon-only no modo colapsado, ícones + labels no expandido |
+| `forge-dashboard-layout` | Layout completo com dark mode automático via OS (`prefers-color-scheme`) e override manual via localStorage |
 
 ---
 

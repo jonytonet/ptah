@@ -1348,6 +1348,8 @@ Tab **Geral** do CrudConfig modal, card **"Tema Visual"**, selecione `Light` ou 
 - Um bloco `<style>` embutido no componente define overrides CSS para `.ptah-base-crud.ptah-dark` nos elementos do painel de filtros (inputs, selects, labels) via especificidade de seletor.
 - Toda a lógica de tema vive no blade — **não** depende de Tailwind `dark:` ou classes dinâmicas compiladas.
 
+> **⚠️ Independência do tema do layout:** o tema do BaseCrud é **separado e independente** do dark mode automático do `forge-dashboard-layout`. O layout detecta o SO do usuário e aplica `.ptah-dark` globalmente na sidebar e navbar. O BaseCrud ignora essa classe global — ele tem sua própria configuração por componente salva no banco via `CrudConfig`. Isso permite, por exemplo, ter o layout em dark mode enquanto um BaseCrud específico permanece em light mode (ou vice-versa).
+
 ### Paletas
 
 | Token | Light | Dark |
