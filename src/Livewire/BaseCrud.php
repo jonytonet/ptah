@@ -1533,13 +1533,19 @@ class BaseCrud extends Component
             $condition = $style['condition']        ?? '==';
             $target    = $style['value']            ?? null;
             $css       = $style['style']            ?? '';
-            $valueType = $style['valueType']        ?? 'string';
 
             if (! $field) {
                 continue;
             }
 
-            $rowValue = $row instanceof Model ? $row->getAttribute($field) : ($row[$field] ?? null);
+            $rowValue = $row instanceof Model
+                ? $row->getAttribute($field)
+                : ($row[$field] ?? null);
+
+            // Campo não existe no model — ignora silenciosamente
+            if ($rowValue === null && $row instanceof Model && ! array_key_exists($field, $row->getAttributes())) {
+                continue;
+            }
 
             $match = match ($condition) {
                 '==' => (string) $rowValue == (string) $target,
