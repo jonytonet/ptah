@@ -495,7 +495,9 @@ http://seu-app.test/ptah-forge-demo
 php artisan ptah:forge Product
 ```
 
-Gera 16+ artefatos em segundos: Model, Migration, DTO, RepositoryInterface, Repository, Service, Controller, StoreRequest, UpdateRequest, Resource, 4 Views, a rota **e a configuração completa do BaseCrud** salva no banco.
+Gera 13+ artefatos em segundos: Model, Migration, DTO, RepositoryInterface, Repository, Service, Controller, StoreRequest, UpdateRequest, Resource, a view `index`, a rota **e a configuração completa do BaseCrud** salva no banco.
+
+> Create, edit e show são gerenciados pelo **BaseCrud via modal Livewire** — nenhuma view adicional é necessária.
 
 ---
 
@@ -604,9 +606,6 @@ php artisan ptah:forge Product --api
   Resource [ProductResource]                  ✅ DONE
   CrudConfig [Product]                        ✅ DONE
   View [product/index]                        ✅ DONE
-  View [product/create]                       ✅ DONE
-  View [product/edit]                         ✅ DONE
-  View [product/show]                         ✅ DONE
   Routes [web.php]                            ✅ DONE
 
  Próximos passos: (...)
@@ -645,12 +644,10 @@ database/crud_configs (tabela via migration do ptah)
     └── model=Product  ← JSON completo gerado pelo CrudConfigGenerator
 
 resources/views/product/
-    ├── index.blade.php    ← @livewire('ptah::base-crud', ['model' => 'Product'])
-    ├── create.blade.php   ← forge-input + forge-button
-    ├── edit.blade.php
-    └── show.blade.php     ← forge-card
+    └── index.blade.php    ← @livewire('ptah::base-crud', ['model' => 'Product'])
+                              (create/edit/show gerenciados pelo BaseCrud via modal)
 
-routes/web.php  ← Route::resource('product', ProductController::class)
+routes/web.php  ← Route::get('product', [ProductController::class, 'index'])->name('product.index')
 routes/api.php  ← Route::apiResource('products', ProductApiController::class)
 ```
 
@@ -682,23 +679,20 @@ Proximos passos:
 
 ### Controller Web
 
-Fino, responsável apenas por HTTP. Delega toda lógica ao Service.
+Fino, responsável apenas por renderizar a view index. Create, edit e delete são gerenciados pelo **BaseCrud via modal Livewire**.
 
 ```php
 class ProductController extends Controller
 {
     public function __construct(protected ProductService $service) {}
 
+    /**
+     * Exibe a listagem de products.
+     * Criação, edição e exclusão são gerenciadas pelo BaseCrud via modal Livewire.
+     */
     public function index(): View
     {
-        $products = $this->service->paginate();
-        return view('product.index', compact('products'));
-    }
-
-    public function store(StoreProductRequest $request): RedirectResponse
-    {
-        $this->service->create($request->validated());
-        return redirect()->route('product.index')->with('success', 'Produto criado com sucesso.');
+        return view('product.index');
     }
 }
 ```
@@ -827,7 +821,7 @@ ScaffoldCommand (ptah:forge)
          ├── RequestGenerator           (gera Store + Update)
          ├── ResourceGenerator
          ├── CrudConfigGenerator        (shouldRun: sem --api — salva JSON no banco)
-         ├── ViewGenerator              (shouldRun: sem --api, gera 4 views)
+         ├── ViewGenerator              (shouldRun: sem --api, gera view index)
          └── RouteGenerator
 
 BaseCrud (Livewire Component)
