@@ -10,13 +10,13 @@
     @if (!empty($crudConfig))
 
     {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center gap-2 mb-4">
+    <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 bg-white border shadow-sm border-slate-200 rounded-xl">
 
         {{-- Botão Novo --}}
         @if ($permissions['showCreateButton'] ?? true)
             @if (!($permissions['create'] ?? null) || (auth()->check() && auth()->user()->can($permissions['create'])))
                 <button wire:click="openCreate"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-[0_8px_20px_rgba(91,33,182,0.45)] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -37,7 +37,7 @@
                     wire:model.live.debounce.400ms="search"
                     type="text"
                     placeholder="Buscar..."
-                    class="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
                 />
             </div>
         </div>
@@ -53,8 +53,8 @@
             @endphp
             @if ($hasFilterable)
                 <button wire:click="toggleFilters"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
-                           {{ $showFilters ? 'bg-primary text-white' : 'bg-transparent text-gray-600 hover:bg-gray-100' }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                           {{ $showFilters ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                     title="Filtros">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -72,8 +72,8 @@
             {{-- Lixeira --}}
             @if ($permissions['showTrashButton'] ?? true)
                 <button wire:click="toggleTrashed"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
-                           {{ $showTrashed ? 'bg-danger/10 text-danger' : 'bg-transparent text-gray-600 hover:bg-gray-100' }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                           {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                     title="{{ $showTrashed ? 'Ver ativos' : 'Ver excluídos' }}">
                     @if ($showTrashed)
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,7 +94,7 @@
             @if (!empty($exportCfg['enabled']))
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 rounded-xl bg-transparent hover:bg-gray-100 transition-all duration-200 focus:outline-none"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-150 focus:outline-none"
                         title="Exportar">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,7 +106,7 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[150px] py-1">
+                         class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[160px] py-1.5">
                         @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                             <button wire:click="export('{{ $fmt }}')" @click="open = false"
                                 class="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
@@ -139,8 +139,8 @@
             @if (!empty($formDataColumns))
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 focus:outline-none
-                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-600 bg-transparent hover:bg-gray-100' }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50' }}"
                         title="Colunas">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -157,7 +157,7 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto">
+                         class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto">
                         {{-- Ações rápidas --}}
                         <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                             <button wire:click="showAllColumns" @click="open = false"
@@ -196,7 +196,7 @@
             @endphp
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 rounded-xl bg-transparent hover:bg-gray-100 transition-all duration-200 focus:outline-none"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-150 focus:outline-none"
                     title="Densidade">
                     <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                     <span class="hidden sm:inline">Densidade</span>
@@ -205,14 +205,14 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+                     class="absolute right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg z-20 min-w-[180px] py-1">
                     @foreach ($densityMap as $d => $info)
                         <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
-                            class="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-50 transition-colors
-                                   {{ $viewDensity === $d ? 'text-primary font-semibold' : 'text-gray-700' }}">
+                            class="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-slate-50 transition-colors
+                                   {{ $viewDensity === $d ? 'text-indigo-600 font-semibold' : 'text-slate-700' }}">
                             <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
                             @if ($viewDensity === $d)
-                                <svg class="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                             @endif
@@ -226,7 +226,7 @@
 
             {{-- Atualizar --}}
             <button wire:click="$refresh"
-                class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none"
+                class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 focus:outline-none"
                 title="Atualizar">
                 <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +238,7 @@
             {{-- Limpar filtros (visível quando houver algo ativo) --}}
             @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
                 <button wire:click="clearFilters"
-                    class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors focus:outline-none"
+                    class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-400 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 focus:outline-none"
                     title="Limpar filtros">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -248,7 +248,7 @@
 
             {{-- Per page --}}
             <select wire:model.live="perPage"
-                class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40">
+                class="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400">
                 @foreach ([10, 15, 25, 50, 100] as $n)
                     <option value="{{ $n }}">{{ $n }} / pág.</option>
                 @endforeach
@@ -259,24 +259,23 @@
 
     {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
     @if ($showFilters)
-        <div class="mb-4 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
+        <div class="mb-4 overflow-hidden bg-white border shadow-sm border-slate-200 rounded-xl">
 
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50">
                 <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="text-sm font-semibold text-gray-700">Filtros</span>
+                    <span class="text-sm font-semibold text-slate-700">Filtros</span>
                     @if ($activeFilterCount > 0)
-                        <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                        <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium border border-indigo-100">
                             {{ $activeFilterCount }} ativo{{ $activeFilterCount > 1 ? 's' : '' }}
                         </span>
                     @endif
                 </div>
                 <button wire:click="clearFilters"
-                    class="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-danger">
+                    class="flex items-center gap-1 text-xs transition-colors text-slate-400 hover:text-red-500">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -306,14 +305,14 @@
                 @endphp
                 @if ($hasDateFilterCols)
                     <div>
-                        <p class="mb-2 text-xs font-medium text-gray-500">Atalhos de data</p>
+                        <p class="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">Atalhos de data</p>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($quickLabels as $period => $qlabel)
                                 <button wire:click="applyQuickDateFilter('{{ $period }}')"
                                     class="px-2.5 py-1 text-xs rounded-lg border transition-colors duration-150
                                         {{ $quickDateFilter === $period
-                                            ? 'bg-primary text-white border-primary shadow-sm'
-                                            : 'bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary' }}">
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600' }}">
                                     {{ $qlabel }}
                                 </button>
                             @endforeach
@@ -433,7 +432,7 @@
                                             <button type="button"
                                                 tabindex="-1"
                                                 @mousedown.prevent="open = !open; if (open) $wire.openFilterDropdown('{{ $cfField }}')"
-                                                class="absolute right-2 text-gray-400 hover:text-gray-600 transition-transform duration-200"
+                                                class="absolute text-gray-400 transition-transform duration-200 right-2 hover:text-gray-600"
                                                 :class="open ? 'rotate-180' : ''">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -450,7 +449,7 @@
                                                     {{ $opt['label'] }}
                                                 </button>
                                             @empty
-                                                <p class="px-3 py-2 text-xs text-gray-400 italic">Nenhum resultado encontrado.</p>
+                                                <p class="px-3 py-2 text-xs italic text-gray-400">Nenhum resultado encontrado.</p>
                                             @endforelse
                                         </div>
                                     </div>
@@ -557,11 +556,11 @@
                         @foreach (array_keys($savedFilters) as $sfName)
                             <div class="flex items-center">
                                 <button wire:click="loadNamedFilter('{{ $sfName }}')"
-                                    class="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-l-lg hover:bg-primary/20 transition-colors border border-primary/20 border-r-0">
+                                    class="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-l-lg hover:bg-indigo-100 transition-colors border border-indigo-100 border-r-0">
                                     {{ $sfName }}
                                 </button>
                                 <button wire:click="deleteNamedFilter('{{ $sfName }}')"
-                                    class="text-xs bg-danger/10 text-danger px-1.5 py-1 rounded-r-lg hover:bg-danger/20 transition-colors border border-danger/20">
+                                    class="text-xs bg-red-50 text-red-500 px-1.5 py-1 rounded-r-lg hover:bg-red-100 transition-colors border border-red-100">
                                     &times;
                                 </button>
                             </div>
@@ -572,11 +571,11 @@
             </div>{{-- /p-4 --}}
 
             {{-- Footer: salvar filtro --}}
-            <div class="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50/80"
+            <div class="flex items-center gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/60"
                  x-data="{ saving: false, name: '' }">
                 <template x-if="!saving">
                     <button @click="saving = true"
-                        class="flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-primary">
+                        class="flex items-center gap-1 text-xs transition-colors text-slate-500 hover:text-indigo-600">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
@@ -590,10 +589,10 @@
                             @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             @keydown.escape="saving = false; name = '';"
                             placeholder="Ex: Clientes ativos SP"
-                            class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-primary/40 focus:outline-none"
+                            class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-indigo-400/40 focus:border-indigo-400 focus:outline-none"
                             x-init="$nextTick(() => $el.focus())" />
                         <button @click="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
-                            class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dark transition-colors">
+                            class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
                             Salvar
                         </button>
                         <button @click="saving = false; name = '';"
@@ -608,11 +607,11 @@
     @endif
 
     {{-- ── Tabela ──────────────────────────────────────────────────────── --}}
-    <div class="overflow-x-auto border border-gray-200 rounded-lg" id="ptah-table-wrap-{{ $crudTitle }}">
+    <div class="overflow-x-auto border shadow-sm border-slate-200 rounded-xl" id="ptah-table-wrap-{{ $crudTitle }}">
         <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
             @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
-            <thead class="{{ $crudConfig['theadClass'] ?? 'bg-gray-50 border-b border-gray-200' }}">
+            <thead class="{{ $crudConfig['theadClass'] ?? 'bg-slate-50 border-b-2 border-slate-200' }}">
                 <tr id="ptah-thead-row-{{ $crudTitle }}">
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
@@ -625,7 +624,7 @@
                                 $savedWidth  = $columnWidths[$colField] ?? null;
                                 $thStyle     = $savedWidth ? "width:{$savedWidth}px;min-width:60px;" : 'min-width:60px;';
                             @endphp
-                            <th class="relative px-3 py-2 font-semibold text-gray-700 whitespace-nowrap {{ $colAlign }} ptah-sortable-col"
+                            <th class="relative px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap {{ $colAlign }} ptah-sortable-col"
                                 data-column="{{ $colField }}"
                                 style="{{ $thStyle }}"
                                 draggable="true"
@@ -635,7 +634,7 @@
                                 ondragend="ptahColDragEnd(event)">
                                 <div class="flex items-center gap-1.5">
                                     {{-- Grip (initia o drag) --}}
-                                    <span class="ptah-drag-grip shrink-0 cursor-grab text-gray-300 hover:text-gray-500 transition-colors select-none"
+                                    <span class="text-gray-300 transition-colors select-none ptah-drag-grip shrink-0 cursor-grab hover:text-gray-500"
                                           title="Arrastar para reordenar">
                                         <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                                             <circle cx="7" cy="5"  r="1.5"/><circle cx="13" cy="5"  r="1.5"/>
@@ -644,14 +643,14 @@
                                         </svg>
                                     </span>
                                     {{-- Label (sort) --}}
-                                    <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-primary' : '' }}"
+                                    <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-indigo-600' : '' }}"
                                           @if($isSortable) wire:click.stop="sortBy('{{ $colSortBy }}')" @endif>
                                         @if (!empty($col['colsCellIcon']))
                                             <i class="{{ $col['colsCellIcon'] }}"></i>
                                         @endif
                                         {{ $colLabel }}
                                         @if ($sort === $colSortBy)
-                                            <span class="text-primary">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
+                                            <span class="text-indigo-500">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
                                         @endif
                                     </span>
                                 </div>
@@ -667,7 +666,7 @@
                     {{-- Colunas action --}}
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <th class="px-3 py-2 font-semibold text-center text-gray-700 whitespace-nowrap">
+                            <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase text-slate-500 whitespace-nowrap">
                                 {{ $col['colsNomeLogico'] ?? 'Ação' }}
                             </th>
                         @endif
@@ -675,12 +674,12 @@
 
                     {{-- Coluna de ações padrão --}}
                     @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
-                        <th class="px-3 py-2 font-semibold text-center text-gray-700">Ações</th>
+                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase text-slate-500">Ações</th>
                     @endif
                 </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
                     @php
                         $rowStyle = $this->getRowStyle($row);
@@ -692,7 +691,7 @@
                     @endphp
 
                     <tr style="{{ $rowStyle }}"
-                        class="hover:bg-gray-50 transition-colors
+                        class="hover:bg-slate-50/70 transition-colors
                             @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
                             {{ $rowLink ? 'cursor-pointer' : '' }}"
                         @if($rowLink) @click="window.location='{{ $rowLink }}'" @endif
@@ -817,11 +816,18 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="99" class="px-6 py-12 text-center text-gray-400">
-                            <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Nenhum registro encontrado.
+                        <td colspan="99" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
+                                    <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-700">Nenhum registro encontrado</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Ajuste os filtros ou adicione um novo item</p>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @endforelse
@@ -829,12 +835,12 @@
 
             {{-- Totalizadores --}}
             @if (!empty($totData))
-                <tfoot class="font-semibold border-t-2 border-gray-300 bg-gray-50">
+                <tfoot class="font-semibold border-t-2 border-slate-200 bg-slate-50">
                     <tr>
                         @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
-                                <td class="px-3 py-2 {{ $col['colsAlign'] ?? 'text-start' }}">
+                                <td class="px-3 py-2.5 text-slate-700 {{ $col['colsAlign'] ?? 'text-start' }}">
                                     @if ($totVal !== null)
                                         @if (($col['colsHelper'] ?? '') === 'currencyFormat')
                                             R$ {{ number_format((float)$totVal, 2, ',', '.') }}
@@ -881,18 +887,32 @@
              x-data x-on:keydown.escape.window="$wire.closeModal()">
 
             {{-- Overlay --}}
-            <div class="absolute inset-0 bg-black/50" wire:click="closeModal"></div>
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeModal"></div>
 
             {{-- Painel do modal --}}
-            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4">
 
                 {{-- Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        {{ $editingId ? 'Editar' : 'Novo' }} {{ $crudTitle }}
-                    </h2>
-                    <button wire:click="closeModal" class="text-gray-400 transition-colors hover:text-gray-600">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if($editingId)
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                @endif
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-[13px] font-semibold text-slate-800 leading-tight">
+                                {{ $editingId ? 'Editar' : 'Novo' }} {{ $crudTitle }}
+                            </h2>
+                            <p class="text-[11px] text-slate-400 leading-tight">{{ $editingId ? 'Altere os campos e salve' : 'Preencha os campos abaixo' }}</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
@@ -906,7 +926,7 @@
                 @endif
 
                 {{-- Body --}}
-                <div class="flex-1 px-6 py-4 overflow-y-auto">
+                <div class="flex-1 px-6 py-5 overflow-y-auto bg-slate-50/40">
                     <div class="flex flex-col gap-4">
 
                         @foreach ($formCols as $col)
@@ -919,10 +939,9 @@
                                 $fMask     = $col['colsMask'] ?? null;
                                 $fValue    = $formData[$fField] ?? '';
 
-                                // Classes de bordas reutilizáveis
-                                $fBorderClass  = $fError
+                $fBorderClass  = $fError
                                     ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                                    : 'border-gray-300 focus:border-violet-500 focus:ring-violet-100';
+                                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100/50';
                             @endphp
 
                             <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -935,12 +954,12 @@
                                             ->values()
                                             ->toArray();
                                         $fInitSel  = $fValue !== '' ? json_encode((string)$fValue) : 'null';
-                                        $fBorderNormal = $fError ? 'border-red-400' : 'border-gray-300';
-                                        $fBorderOpen   = $fError ? 'border-red-500' : 'border-violet-500';
-                                        $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-violet-100';
+                                        $fBorderNormal = $fError ? 'border-red-400' : 'border-slate-200';
+                                        $fBorderOpen   = $fError ? 'border-red-500' : 'border-indigo-500';
+                                        $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1 text-xs font-medium text-gray-600">
+                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1020,7 +1039,7 @@
                                         $sdHasResults = !empty($sdResults[$fField]);
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1 text-xs font-medium text-gray-600">
+                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1072,7 +1091,7 @@
                                                         {{ $opt['label'] }}
                                                     </button>
                                                 @empty
-                                                    <p class="px-4 py-3 text-xs text-gray-400 italic">Nenhum resultado encontrado.</p>
+                                                    <p class="px-4 py-3 text-xs italic text-gray-400">Nenhum resultado encontrado.</p>
                                                 @endforelse
                                             </div>
                                         </div>
@@ -1091,7 +1110,7 @@
                                         };
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1 text-xs font-medium text-gray-600">
+                                        <label class="block mb-1.5 text-xs font-semibold text-slate-600 uppercase tracking-wide">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -1117,7 +1136,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-end gap-3 px-6 py-4 bg-white border-t border-slate-100">
                     <x-forge-button wire:click="closeModal" color="dark" flat :disabled="$creating">
                         Cancelar
                     </x-forge-button>
@@ -1137,20 +1156,20 @@
     @if ($showDeleteConfirm)
         @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/50" wire:click="cancelDelete"></div>
-            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-xl">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-danger/10">
-                        <svg class="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cancelDelete"></div>
+            <div class="relative w-full max-w-sm mx-4 overflow-hidden bg-white shadow-2xl rounded-2xl">
+                <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-100">
+                    <div class="flex items-center justify-center flex-shrink-0 w-11 h-11 rounded-xl bg-red-50 ring-4 ring-red-50">
+                        <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base font-semibold text-gray-900">Confirmar exclusão</h3>
-                        <p class="text-sm text-gray-500">Esta ação não pode ser desfeita.</p>
+                        <h3 class="text-sm font-semibold text-slate-900">Confirmar exclusão</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Esta ação não pode ser desfeita.</p>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3">
+                <div class="flex justify-end gap-3 px-6 py-4 bg-slate-50">
                     <x-forge-button wire:click="cancelDelete" color="dark" flat>Cancelar</x-forge-button>
                     <x-forge-button wire:click="deleteRecord" color="danger">Excluir</x-forge-button>
                 </div>
@@ -1179,6 +1198,54 @@
             background: #6366f1; z-index: 9999; pointer-events: none; display: none;
         }
         #ptah-resize-indicator.active { display: block; }
+
+        /* ── Base CRUD global polish ───────────────────────────────────── */
+        /* Filter panel field labels and inputs */
+        .ptah-base-crud .p-4 label,
+        .ptah-base-crud .space-y-4 label:not(.flex) {
+            display: block;
+            margin-bottom: .375rem;
+            font-size: .6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #64748B;
+        }
+
+        /* All filter inputs/selects: slate borders + indigo focus */
+        .ptah-base-crud .p-4 input:not([type="checkbox"]),
+        .ptah-base-crud .p-4 select {
+            border-color: #E2E8F0;
+            background-color: #FFFFFF;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
+        .ptah-base-crud .p-4 select:focus {
+            border-color: #818CF8;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, .15);
+            outline: none;
+        }
+
+        /* Table header sticky shadow line */
+        .ptah-cols-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        /* Row action buttons */
+        .ptah-base-crud .ptah-row-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            transition: background-color .12s, color .12s;
+        }
+        .ptah-base-crud .ptah-row-action:hover {
+            background-color: #F1F5F9;
+        }
     </style>
 
     <div id="ptah-resize-indicator"></div>
