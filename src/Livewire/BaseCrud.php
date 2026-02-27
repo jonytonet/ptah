@@ -184,6 +184,12 @@ class BaseCrud extends Component
         $this->filterService  = $filterService;
         $this->cacheService   = $cacheService;
         $this->formValidator  = $formValidator;
+
+        // Recarrega crudConfig em todo request para garantir dados atualizados do banco
+        if ($this->model) {
+            $config = $this->configService->find($this->model);
+            $this->crudConfig = $config?->config ?? [];
+        }
     }
 
     public function mount(
