@@ -38,15 +38,17 @@
                 :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
                 class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
             >
-                {{-- Ícone "painel recolher" (seta + linhas) quando expandido --}}
-                <svg x-show="!sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-5 w-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5h5M15 12h5M15 19h5"/>
+                {{-- Sidebar aberta → painel esquerdo preenchido (clica para recolher) --}}
+                <svg x-show="!sidebarCollapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.75"/>
+                    <path d="M9 3v18" stroke-width="1.75"/>
+                    <path d="M4 7h3M4 12h3M4 17h3" stroke-width="1.75" stroke-linecap="round"/>
                 </svg>
-                {{-- Ícone "painel expandir" (linhas + seta) quando colapsado --}}
-                <svg x-show="sidebarCollapsed" x-cloak fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-5 w-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h5M4 12h5M4 19h5"/>
+                {{-- Sidebar fechada → painel esquerdo vazio (clica para expandir) --}}
+                <svg x-show="sidebarCollapsed" x-cloak viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.75"/>
+                    <path d="M9 3v18" stroke-width="1.75" stroke-dasharray="2 2"/>
+                    <path d="M13 9l3 3-3 3" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
 
