@@ -1,13 +1,9 @@
-<x-forge-dashboard-layout>
-    <x-slot:title>Novo {{ entity }}</x-slot:title>
+{{--
+    Este stub foi removido.
+    O BaseCrud gerencia criação, edição e exclusão via modal Livewire.
+    Toda a lógica de CRUD está em resources/views/<entity>/index.blade.php.
+--}}
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-dark">Novo {{ entity }}</h1>
-            <x-forge-breadcrumb :items="[
-                ['label' => 'Dashboard',  'url' => '/dashboard'],
-                ['label' => '{{ entity }}', 'url' => route('{{ entity_lower }}.index')],
-                ['label' => 'Novo'],
             ]" />
         </div>
     </div>

@@ -41,7 +41,7 @@ class RouteGenerator extends AbstractGenerator
         }
 
         $controllerFQN = $context->rootNamespace . "Http\\Controllers\\{$context->entity}Controller";
-        $routeEntry    = "\nRoute::resource('{$context->entityLower}', \\{$controllerFQN}::class);";
+        $routeEntry    = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])->name('{$context->entityLower}.index');";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityLower, $label);
     }

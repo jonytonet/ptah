@@ -7,31 +7,21 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera as quatro views Blade: index, create, edit, show.
+ * Gera apenas a view index (BaseCrud gerencia create/edit/show via modal Livewire).
  *
- * Stubs: view.index.stub, view.create.stub, view.edit.stub, view.show.stub
+ * Stubs: view.index.stub
  * Placeholders: entity, entity_lower, entities
  *
  * Só é executado quando --api NÃO está ativo.
  */
 class ViewGenerator extends AbstractGenerator
 {
-    /** @var string[] */
-    private array $views = ['index', 'create', 'edit', 'show'];
-
     /**
-     * Gera todas as views e retorna o resultado da última.
-     * O ScaffoldCommand chama generateView() individualmente para exibir cada resultado.
+     * Gera a view index e retorna o resultado.
      */
     public function generate(EntityContext $context): GeneratorResult
     {
-        $last = GeneratorResult::skipped('View', '');
-
-        foreach ($this->views as $view) {
-            $last = $this->generateView($context, $view);
-        }
-
-        return $last;
+        return $this->generateView($context, 'index');
     }
 
     public function generateView(EntityContext $context, string $view): GeneratorResult

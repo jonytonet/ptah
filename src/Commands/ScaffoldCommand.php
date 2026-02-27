@@ -141,9 +141,7 @@ class ScaffoldCommand extends Command
             }
 
             if ($generator instanceof ViewGenerator) {
-                foreach (['index', 'create', 'edit', 'show'] as $view) {
-                    $results[] = $generator->generateView($context, $view);
-                }
+                $results[] = $generator->generateView($context, 'index');
                 continue;
             }
 
