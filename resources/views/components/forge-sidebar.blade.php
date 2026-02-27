@@ -57,6 +57,9 @@
 
 {{-- Sidebar --}}
 <aside
+    x-data="{ hovered: false }"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
     :class="{
         'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
@@ -80,10 +83,8 @@
             @endif
         </div>
         <span
-            :style="sidebarCollapsed ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
-            class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap
-                   md:opacity-0 lg:opacity-100
-                   transition-all duration-300">
+            :style="(sidebarCollapsed && !hovered) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
+            class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap transition-all duration-300">
             {{ $appName }}
         </span>
     </div>
@@ -110,7 +111,7 @@
                         </span>
                         {{-- Label — oculto quando collapsed no desktop --}}
                         <span
-                            :style="sidebarCollapsed ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                            :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                             class="whitespace-nowrap text-sm transition-all duration-300">
                             {{ $item['label'] }}
                         </span>
@@ -140,7 +141,7 @@
             >
                 <span class="flex-shrink-0 w-5 h-5">{!! $svgIcons['logout'] !!}</span>
                 <span
-                    :style="sidebarCollapsed ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                    :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                     class="whitespace-nowrap text-sm font-medium transition-all duration-300">
                     Sair
                 </span>
