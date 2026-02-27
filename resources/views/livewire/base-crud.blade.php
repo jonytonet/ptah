@@ -1004,7 +1004,7 @@
                                         $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1084,7 +1084,7 @@
                                         $sdHasResults = !empty($sdResults[$fField]);
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1155,7 +1155,7 @@
                                         };
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ \['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
