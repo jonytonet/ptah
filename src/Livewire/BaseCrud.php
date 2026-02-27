@@ -1529,7 +1529,7 @@ class BaseCrud extends Component
         $styles = $this->crudConfig['contitionStyles'] ?? [];
 
         foreach ($styles as $style) {
-            $field     = $style['colsNomeFisico']  ?? null;
+            $field     = $style['field']           ?? $style['colsNomeFisico'] ?? null;
             $condition = $style['condition']        ?? '==';
             $target    = $style['value']            ?? null;
             $css       = $style['style']            ?? '';

@@ -1305,6 +1305,74 @@
                     {{-- TAB: ESTILOS ────────────────────────────────────── --}}
                     {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'styles'" class="p-6 space-y-5">
+
+                        {{-- ── Guia de uso ─────────────────────────────────── --}}
+                        <div x-data="{ open: false }" class="border border-indigo-200 rounded-xl bg-indigo-50/50 overflow-hidden">
+                            <button @click="open = !open"
+                                class="flex items-center justify-between w-full px-4 py-3 text-left">
+                                <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                                    <i class="bx bx-info-circle text-base"></i>
+                                    Como usar os Estilos Condicionais
+                                </span>
+                                <i class="bx text-indigo-400 text-lg transition-transform" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                            </button>
+                            <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
+                                <p class="text-slate-500">O estilo CSS é aplicado na <strong>linha inteira</strong> da tabela quando a condição é verdadeira. O <strong>Campo</strong> deve ser um atributo real do model (coluna do banco ou relação).</p>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {{-- Exemplo 1 --}}
+                                    <div class="p-3 bg-white border border-slate-200 rounded-lg">
+                                        <p class="font-semibold text-slate-700 mb-2">① Highlight por status texto</p>
+                                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
+                                            <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">status</span>
+                                            <span class="text-slate-400">Operador</span> <span class="text-indigo-700">==</span>
+                                            <span class="text-slate-400">Valor</span> <span class="text-indigo-700">Active</span>
+                                            <span class="text-slate-400">CSS</span>   <span class="text-indigo-700">background:#D4EDDA;color:#155724;</span>
+                                        </div>
+                                        <div class="mt-2 px-3 py-1.5 rounded text-xs font-medium" style="background:#D4EDDA;color:#155724;">
+                                            Exemplo — linha com status Active
+                                        </div>
+                                    </div>
+
+                                    {{-- Exemplo 2 --}}
+                                    <div class="p-3 bg-white border border-slate-200 rounded-lg">
+                                        <p class="font-semibold text-slate-700 mb-2">② Destaque por valor numérico</p>
+                                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
+                                            <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">stock</span>
+                                            <span class="text-slate-400">Operador</span> <span class="text-indigo-700">&lt;=</span>
+                                            <span class="text-slate-400">Valor</span> <span class="text-indigo-700">5</span>
+                                            <span class="text-slate-400">CSS</span>   <span class="text-indigo-700">background:#F8D7DA;color:#721C24;font-weight:bold;</span>
+                                        </div>
+                                        <div class="mt-2 px-3 py-1.5 rounded text-xs font-medium" style="background:#F8D7DA;color:#721C24;font-weight:bold;">
+                                            Exemplo — estoque crítico ≤ 5
+                                        </div>
+                                    </div>
+
+                                    {{-- Exemplo 3 --}}
+                                    <div class="p-3 bg-white border border-slate-200 rounded-lg sm:col-span-2">
+                                        <p class="font-semibold text-slate-700 mb-2">③ Linhas canceladas / inativas</p>
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
+                                            <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">type</span>
+                                            <span class="text-slate-400">Operador</span> <span class="text-indigo-700">==</span>
+                                            <span class="text-slate-400">Valor</span> <span class="text-indigo-700">Supplier</span>
+                                            <span class="text-slate-400">CSS</span>   <span class="text-indigo-700">color:#999;text-decoration:line-through;background:#F5F5F5;</span>
+                                        </div>
+                                        <div class="mt-2 px-3 py-1.5 rounded text-xs" style="color:#999;text-decoration:line-through;background:#F5F5F5;">
+                                            Exemplo — tipo Supplier aparece riscado
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="text-[11px] text-slate-400 pt-1">
+                                    <strong>Dica:</strong> O <em>Campo</em> deve ser um atributo do Model (coluna do banco).
+                                    Exemplo: para o model <code class="bg-slate-100 px-1 rounded">BusinessPartner</code> use
+                                    <code class="bg-slate-100 px-1 rounded">status</code>, <code class="bg-slate-100 px-1 rounded">type</code>, <code class="bg-slate-100 px-1 rounded">name</code> etc.
+                                    O CSS é aplicado como <code class="bg-slate-100 px-1 rounded">style=""</code> direto na tag <code class="bg-slate-100 px-1 rounded">&lt;tr&gt;</code>.
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- ── Estilos cadastrados ──────────────────────────── --}}
                         @foreach ($conditionStyles as $si => $style)
                         <div class="p-4 bg-white border shadow-sm rounded-xl border-slate-200">
                             <div class="flex items-start justify-between">
@@ -1318,16 +1386,23 @@
                             </div>
                             <p class="text-[11px] font-mono text-violet-600 bg-violet-50 px-2 py-1 rounded mt-2">{{
                                 $style['style'] ?? '' }}</p>
+                            @if (!empty($style['style']))
+                            <div class="mt-2 px-3 py-1.5 text-xs rounded" style="{{ $style['style'] }}">
+                                Preview desta linha
+                            </div>
+                            @endif
                         </div>
                         @endforeach
 
+                        {{-- ── Formulário: novo estilo ──────────────────────── --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
                             <h3 class="text-sm font-semibold text-slate-700">+ Novo Estilo Condicional</h3>
                             <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="cfg-label">Campo</label>
-                                    <input type="text" wire:model="formDataStyle.field" placeholder="ex: flag_canceled"
+                                    <input type="text" wire:model="formDataStyle.field" placeholder="ex: status"
                                         class="font-mono cfg-input" />
+                                    <p class="text-[11px] text-slate-400 mt-1">Coluna real do model (ex: <code class="bg-slate-100 px-1 rounded">status</code>, <code class="bg-slate-100 px-1 rounded">type</code>).</p>
                                 </div>
                                 <div>
                                     <label class="cfg-label">Operador</label>
@@ -1335,39 +1410,51 @@
                                         <option value="==">== (igual)</option>
                                         <option value="!=">!= (diferente)</option>
                                         <option value=">">> (maior)</option>
-                                        <option value="<">
-                                            < (menor)</option>
+                                        <option value="<">&lt; (menor)</option>
                                         <option value=">=">>= (maior ou igual)</option>
-                                        <option value="<=">
-                                            <= (menor ou igual)</option>
+                                        <option value="<=">&lt;= (menor ou igual)</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="cfg-label">Valor</label>
-                                    <input type="text" wire:model="formDataStyle.value" placeholder="ex: Y"
+                                    <input type="text" wire:model="formDataStyle.value" placeholder="ex: Active"
                                         class="font-mono cfg-input" />
+                                    <p class="text-[11px] text-slate-400 mt-1">Exato como está no banco (case-sensitive).</p>
                                 </div>
                             </div>
                             <div>
                                 <label class="cfg-label">CSS Inline</label>
-                                <input type="text" wire:model="formDataStyle.style"
-                                    placeholder="color:#999; text-decoration:line-through; background:#F5F5F5;"
+                                <input type="text" wire:model.live="formDataStyle.style"
+                                    placeholder="background:#D4EDDA;color:#155724;"
                                     class="font-mono cfg-input" />
+                                <p class="text-[11px] text-slate-400 mt-1">Propriedades CSS separadas por <code class="bg-slate-100 px-1 rounded">;</code> — aplicadas no <code class="bg-slate-100 px-1 rounded">&lt;tr&gt;</code> da linha.</p>
                             </div>
+                            {{-- Preview ao vivo --}}
+                            @if (!empty($formDataStyle['style']))
+                            <div class="flex items-center gap-3 px-4 py-3 border rounded-lg bg-slate-50 border-slate-200">
+                                <span class="text-[11px] text-slate-400 shrink-0">Preview:</span>
+                                <div class="flex-1 px-3 py-1.5 text-xs rounded" style="{{ $formDataStyle['style'] }}">
+                                    ID &nbsp;·&nbsp; Nome do Registro &nbsp;·&nbsp; Valor &nbsp;·&nbsp; Status
+                                </div>
+                            </div>
+                            @endif
                             <div class="flex flex-wrap gap-2">
                                 <p class="text-[11px] text-slate-400 font-semibold w-full">Presets rápidos:</p>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'color:#999;text-decoration:line-through;background:#F5F5F5;')"
-                                    class="cursor-pointer tag hover:bg-slate-200">Cancelado</button>
+                                    class="cursor-pointer tag hover:bg-slate-200" style="color:#999;text-decoration:line-through;background:#F5F5F5;">Cancelado</button>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'background:#FFF3CD;font-weight:bold;border-left:4px solid #FFC107;')"
-                                    class="cursor-pointer tag hover:bg-amber-200">Urgente</button>
+                                    class="cursor-pointer tag hover:bg-amber-200" style="background:#FFF3CD;font-weight:bold;">Urgente</button>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'background:#D4EDDA;color:#155724;')"
-                                    class="cursor-pointer tag hover:bg-green-200">Sucesso</button>
+                                    class="cursor-pointer tag hover:bg-green-200" style="background:#D4EDDA;color:#155724;">Sucesso</button>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'background:#F8D7DA;color:#721C24;font-weight:bold;')"
-                                    class="cursor-pointer tag hover:bg-red-200">Alerta</button>
+                                    class="cursor-pointer tag hover:bg-red-200" style="background:#F8D7DA;color:#721C24;font-weight:bold;">Alerta</button>
+                                <button type="button"
+                                    wire:click="$set('formDataStyle.style', 'background:#CCE5FF;color:#004085;')"
+                                    class="cursor-pointer tag hover:bg-blue-200" style="background:#CCE5FF;color:#004085;">Info</button>
                             </div>
                             <div class="flex justify-end pt-2 border-t border-slate-100">
                                 <button wire:click="addConditionStyle"
