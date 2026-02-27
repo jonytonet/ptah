@@ -58,7 +58,7 @@
 {{-- Sidebar --}}
 <aside
     :class="{
-        'translate-x-0':    sidebarOpen,
+        'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
         'lg:w-16':  sidebarCollapsed,
         'lg:w-64':  !sidebarCollapsed,
@@ -68,45 +68,45 @@
            md:translate-x-0 md:w-16 md:hover:w-64 lg:translate-x-0"
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
 >
-    {{-- Logo + botão collapse (desktop) --}}
-    <div class="ptah-sidebar-logo-wrapper h-16 flex items-center justify-between px-3 border-b border-gray-100 flex-shrink-0">
+    {{-- Botão flutuante de collapse — fica na borda direita da sidebar, só desktop --}}
+    <button
+        @click="toggleSidebarCollapse()"
+        :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+        class="ptah-sidebar-toggle
+               absolute -right-3 top-[72px] z-50
+               w-6 h-6 rounded-full
+               bg-white border border-gray-200 shadow-sm
+               text-gray-500 hover:text-primary hover:border-primary hover:shadow-md
+               items-center justify-center
+               transition-all duration-200
+               hidden lg:flex"
+    >
+        <svg x-show="!sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <svg x-show="sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+        </svg>
+    </button>
 
-        {{-- Logo + nome --}}
-        <div class="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-            <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-                @if($logoUrl)
-                    <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-6 w-6 object-contain" />
-                @else
-                    <span class="text-white font-bold text-sm">
-                        {{ mb_strtoupper(mb_substr($appName, 0, 1)) }}
-                    </span>
-                @endif
-            </div>
-            {{-- Nome: max-width 0 → esconde sem quebrar layout --}}
-            <span
-                :style="sidebarCollapsed ? 'max-width:0;opacity:0;' : 'max-width:200px;opacity:1;'"
-                class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap overflow-hidden
-                       md:opacity-0 md:max-w-0 lg:opacity-100 lg:max-w-none
-                       transition-all duration-300">
-                {{ $appName }}
-            </span>
+    {{-- Logo --}}
+    <div class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b border-gray-100 flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            @if($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-6 w-6 object-contain" />
+            @else
+                <span class="text-white font-bold text-sm">
+                    {{ mb_strtoupper(mb_substr($appName, 0, 1)) }}
+                </span>
+            @endif
         </div>
-
-        {{-- Botão toggle collapse — visível somente no desktop --}}
-        <button
-            @click="toggleSidebarCollapse()"
-            :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
-            class="ptah-sidebar-toggle hidden lg:flex items-center justify-center w-7 h-7 rounded-lg
-                   text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0 ml-1"
-        >
-            {{-- Chevron direita quando colapsado, esquerda quando expandido --}}
-            <svg x-show="sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <svg x-show="!sidebarCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-        </button>
+        <span
+            :style="sidebarCollapsed ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
+            class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap
+                   md:opacity-0 lg:opacity-100
+                   transition-all duration-300">
+            {{ $appName }}
+        </span>
     </div>
 
     {{-- Nav --}}
