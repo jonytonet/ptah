@@ -349,6 +349,41 @@
                                         <input type="text" wire:model="formDataField.colsMetodoCustom"
                                             placeholder="App\Services\MyService\formatValue(%campo%)"
                                             class="cfg-input font-mono text-[11px]" />
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <input type="checkbox" id="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
+                                                wire:model="formDataField.colsMetodoRaw"
+                                                class="rounded border-slate-300 text-indigo-600" />
+                                            <label for="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
+                                                class="text-[11px] text-slate-600 cursor-pointer select-none">
+                                                <strong>colsMetodoRaw</strong> — Renderizar retorno como HTML bruto (sem escape)
+                                            </label>
+                                        </div>
+                                        {{-- Guia de sintaxe (colapsável) --}}
+                                        <div x-data="{ open: false }" class="mt-2">
+                                            <button type="button" @click="open = !open"
+                                                class="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                                                <svg class="w-3 h-3 transition-transform" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                                Ver sintaxe e exemplos
+                                            </button>
+                                            <div x-show="open" x-cloak x-transition
+                                                class="mt-2 p-3 rounded-lg border border-indigo-100 bg-indigo-50/60 text-[11px] space-y-2">
+                                                <p class="font-semibold text-indigo-700">Sintaxe: <code class="bg-white px-1 rounded font-mono">Namespace\Classe\metodo(%campo1%, %campo2%, 'literal')</code></p>
+                                                <ul class="list-disc list-inside space-y-1 text-slate-600">
+                                                    <li><code class="bg-white px-1 rounded font-mono">%campo%</code> → substituído pelo valor do campo no registro</li>
+                                                    <li><code class="bg-white px-1 rounded font-mono">'literal'</code> ou <code class="bg-white px-1 rounded font-mono">"literal"</code> → string passada diretamente</li>
+                                                    <li>Múltiplos parâmetros separados por vírgula — cada um vira um argumento PHP separado</li>
+                                                    <li>O prefixo <code class="bg-white px-1 rounded font-mono">App\Services\</code> é adicionado automaticamente</li>
+                                                </ul>
+                                                <div class="space-y-1 text-slate-500">
+                                                    <p class="font-medium text-slate-600">Exemplos:</p>
+                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\getLabel(%id%)</code></p>
+                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\format(%id%, %status%, 'active')</code></p>
+                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\badge(%type%)</code> + ativar colsMetodoRaw para HTML</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="cfg-label">Ordenação alternativa (colsOrderBy)</label>
@@ -432,6 +467,18 @@
                                             <option value="link">link — Link clicável</option>
                                             <option value="image">image — Imagem miniatura</option>
                                             <option value="truncate">truncate — Texto truncado</option>
+                                            <optgroup label="Dados">
+                                                <option value="number">number — Número formatado (1.234,56)</option>
+                                                <option value="filesize">filesize — Tamanho de arquivo (KB/MB)</option>
+                                                <option value="duration">duration — Duração (1h 35min)</option>
+                                                <option value="code">code — Código monospace</option>
+                                                <option value="color">color — Swatch de cor hex</option>
+                                            </optgroup>
+                                            <optgroup label="Visuais">
+                                                <option value="progress">progress — Barra de progresso</option>
+                                                <option value="rating">rating — Estrelas de avaliação</option>
+                                                <option value="qrcode">qrcode — QR Code (via JS)</option>
+                                            </optgroup>
                                         </select>
                                     </div>
 
@@ -585,6 +632,75 @@
                                             placeholder="50" class="cfg-input" />
                                     </div>
                                     @endif
+
+                                    {{-- number --}}
+                                    @if (($formDataField['colsRenderer'] ?? '') === 'number')
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="cfg-label">Casas Decimais (colsRendererDecimals)</label>
+                                            <input type="number" wire:model="formDataField.colsRendererDecimals" min="0" max="6"
+                                                placeholder="2" class="cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Locale (colsRendererLocale)</label>
+                                            <input type="text" wire:model="formDataField.colsRendererLocale"
+                                                placeholder="pt-BR" class="cfg-input font-mono" />
+                                            <p class="text-[11px] text-slate-400 mt-1">Ex: pt-BR, en-US, de-DE</p>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    {{-- progress --}}
+                                    @if (($formDataField['colsRenderer'] ?? '') === 'progress')
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="cfg-label">Valor Máximo (colsRendererMax)</label>
+                                            <input type="number" wire:model="formDataField.colsRendererMax"
+                                                placeholder="100" class="cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Cor (colsRendererColor)</label>
+                                            <select wire:model="formDataField.colsRendererColor" class="cfg-input">
+                                                <option value="indigo">indigo</option>
+                                                <option value="green">green</option>
+                                                <option value="blue">blue</option>
+                                                <option value="yellow">yellow</option>
+                                                <option value="red">red</option>
+                                                <option value="purple">purple</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    {{-- rating --}}
+                                    @if (($formDataField['colsRenderer'] ?? '') === 'rating')
+                                    <div class="max-w-xs">
+                                        <label class="cfg-label">Máximo de Estrelas (colsRendererMax)</label>
+                                        <input type="number" wire:model="formDataField.colsRendererMax"
+                                            placeholder="5" min="1" max="10" class="cfg-input" />
+                                    </div>
+                                    @endif
+
+                                    {{-- duration --}}
+                                    @if (($formDataField['colsRenderer'] ?? '') === 'duration')
+                                    <div class="max-w-xs">
+                                        <label class="cfg-label">Unidade de Entrada (colsRendererDurationUnit)</label>
+                                        <select wire:model="formDataField.colsRendererDurationUnit" class="cfg-input">
+                                            <option value="minutes">minutes — entrada em minutos</option>
+                                            <option value="seconds">seconds — entrada em segundos</option>
+                                        </select>
+                                    </div>
+                                    @endif
+
+                                    {{-- qrcode --}}
+                                    @if (($formDataField['colsRenderer'] ?? '') === 'qrcode')
+                                    <div class="max-w-xs">
+                                        <label class="cfg-label">Tamanho (colsRendererQrSize)</label>
+                                        <input type="number" wire:model="formDataField.colsRendererQrSize"
+                                            placeholder="64" min="32" max="256" class="cfg-input" />
+                                        <p class="text-[11px] text-slate-400 mt-1">Tamanho em pixels (quadrado). Requer qrcode.js via CDN.</p>
+                                    </div>
+                                    @endif
                                 </div>
 
                                 {{-- ── Máscara de Input ────────────────────────── --}}
@@ -602,14 +718,25 @@
                                                 <optgroup label="Documentos">
                                                     <option value="cpf">cpf — 000.000.000-00</option>
                                                     <option value="cnpj">cnpj — 00.000.000/0000-00</option>
+                                                    <option value="rg">rg — 00.000.000-0</option>
+                                                    <option value="pis">pis — 000.00000.00-0</option>
+                                                    <option value="ncm">ncm — 0000.00.00</option>
+                                                    <option value="ean13">ean13 — 0000000000000 (13 dígitos)</option>
                                                 </optgroup>
                                                 <optgroup label="Contato">
                                                     <option value="phone">phone — (00) 0 0000-0000</option>
                                                     <option value="cep">cep — 00000-000</option>
                                                 </optgroup>
+                                                <optgroup label="Veículos">
+                                                    <option value="plate">plate — ABC-1234 / Mercosul ABC1A23</option>
+                                                </optgroup>
+                                                <optgroup label="Pagamento">
+                                                    <option value="credit_card">credit_card — 0000 0000 0000 0000</option>
+                                                </optgroup>
                                                 <optgroup label="Data/Hora">
                                                     <option value="date">date — 00/00/0000</option>
                                                     <option value="datetime">datetime — 00/00/0000 00:00</option>
+                                                    <option value="time">time — 00:00</option>
                                                 </optgroup>
                                                 <optgroup label="Texto">
                                                     <option value="integer">integer — Somente inteiros</option>
@@ -627,6 +754,9 @@
                                                 </option>
                                                 <option value="digits_only">digits_only — "055.465.309-52" →
                                                     "05546530952"</option>
+                                                <option value="plate_clean">plate_clean — "ABC-1234" → "ABC1234" (maiúsc. + alfanum.)</option>
+                                                <option value="date_br_to_iso">date_br_to_iso — "01/12/2024" → "2024-12-01"</option>
+                                                <option value="date_iso_to_br">date_iso_to_br — "2024-12-01" → "01/12/2024"</option>
                                                 <option value="uppercase">uppercase — "texto" → "TEXTO"</option>
                                                 <option value="lowercase">lowercase — "TEXTO" → "texto"</option>
                                                 <option value="trim">trim — Remove espaços das bordas</option>
@@ -652,6 +782,9 @@
                                             @case('money_to_float') R$ 1.253,08 → <strong>1253.08</strong> @break
                                             @case('digits_only') 055.465.309-52 → <strong>05546530952</strong> (remove
                                             non-digits) @break
+                                            @case('plate_clean') "ABC-1234" → <strong>ABC1234</strong> (maiúsculas + alfanumérico) @break
+                                            @case('date_br_to_iso') "01/12/2024" → <strong>2024-12-01</strong> @break
+                                            @case('date_iso_to_br') "2024-12-01" → <strong>01/12/2024</strong> @break
                                             @case('uppercase') "texto" → <strong>"TEXTO"</strong> @break
                                             @case('lowercase') "TEXTO" → <strong>"texto"</strong> @break
                                             @case('trim') " texto " → <strong>"texto"</strong> @break
@@ -675,7 +808,7 @@
                                         @endphp
                                         @foreach (['email' => 'E-mail válido', 'url' => 'URL válida', 'integer' =>
                                         'Inteiro', 'numeric' => 'Numérico', 'cpf' => 'CPF válido', 'cnpj' => 'CNPJ
-                                        válido', 'phone' => 'Telefone válido'] as $rule => $ruleLabel)
+                                        válido', 'phone' => 'Telefone válido', 'alpha' => 'Somente letras', 'alphanum' => 'Letras + números', 'ncm' => 'NCM válido (8 dígitos)'] as $rule => $ruleLabel)
                                         <label
                                             class="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border {{ $hasRule($rule) ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50' }} transition-colors select-none">
                                             <input type="checkbox" {{ $hasRule($rule) ? 'checked' : '' }}
@@ -736,6 +869,99 @@
                                                         $wire.set('formDataField.colsValidations', rules);
                                                     " placeholder="Ex: ^[A-Z]{2,5}$ ou /^\d{5}$/"
                                                 class="font-mono cfg-input" />
+                                        </div>
+                                        {{-- ── Novas regras paramétricas ── --}}
+                                        <div>
+                                            <label class="cfg-label">Exatamente N Dígitos (digits:N)</label>
+                                            <input type="number" min="1"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'digits:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'digits:')), 7) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('digits:'));
+                                                    if ($event.target.value !== '') rules.push('digits:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="ex: 8" class="cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Dígitos Entre N e M (digitsBetween:N,M)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'digitsBetween:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'digitsBetween:')), 14) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('digitsBetween:'));
+                                                    if ($event.target.value !== '') rules.push('digitsBetween:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="ex: 8,11" class="font-mono cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Data Após (after:data)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'after:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'after:')), 6) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('after:'));
+                                                    if ($event.target.value !== '') rules.push('after:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="today ou 2020-01-01" class="font-mono cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Data Antes (before:data)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'before:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'before:')), 7) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('before:'));
+                                                    if ($event.target.value !== '') rules.push('before:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="today ou 2030-12-31" class="font-mono cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Formato de Data (dateFormat:formato)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'dateFormat:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'dateFormat:')), 11) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('dateFormat:'));
+                                                    if ($event.target.value !== '') rules.push('dateFormat:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="d/m/Y ou Y-m-d" class="font-mono cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Confirmação (confirmed:campo)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'confirmed:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'confirmed:')), 10) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('confirmed:'));
+                                                    if ($event.target.value !== '') rules.push('confirmed:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="password_confirmation" class="font-mono cfg-input" />
+                                            <p class="text-[11px] text-slate-400 mt-1">Nome do campo de confirmação no form</p>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Único (unique:Model,campo)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'unique:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'unique:')), 7) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('unique:'));
+                                                    if ($event.target.value !== '') rules.push('unique:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="Product,email" class="font-mono cfg-input" />
+                                            <p class="text-[11px] text-slate-400 mt-1">Ignora o registro em edição automaticamente</p>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Valores Permitidos (in:a,b,c)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'in:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'in:')), 3) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('in:'));
+                                                    if ($event.target.value !== '') rules.push('in:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="ativo,inativo,pendente" class="font-mono cfg-input" />
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">Valores Proibidos (notIn:a,b,c)</label>
+                                            <input type="text"
+                                                value="{{ collect($currentValidations)->first(fn($v) => str_starts_with($v, 'notIn:')) ? substr(collect($currentValidations)->first(fn($v) => str_starts_with($v, 'notIn:')), 6) : '' }}"
+                                                @change="
+                                                    let rules = @js($currentValidations).filter(r => !r.startsWith('notIn:'));
+                                                    if ($event.target.value !== '') rules.push('notIn:' + $event.target.value);
+                                                    $wire.set('formDataField.colsValidations', rules);
+                                                " placeholder="deletado,arquivado" class="font-mono cfg-input" />
                                         </div>
                                     </div>
                                     @if (!empty($currentValidations))

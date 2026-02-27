@@ -8,9 +8,14 @@ namespace Ptah\Services\Crud;
  * Serviço de validação rica para campos do formulário do BaseCrud.
  *
  * Suporta regras configuradas por coluna em `colsValidations`:
- *   required, email, url, integer, numeric, min:X, max:X,
- *   between:X,Y, minLength:X, maxLength:X, regex:pattern,
- *   cpf, cnpj, phone
+ *   required, email, url, integer, numeric, alpha, alphaNum,
+ *   min:X, max:X, between:X,Y, minLength:X, maxLength:X,
+ *   digits:N, digitsBetween:N,M, regex:pattern,
+ *   in:a,b,c, notIn:a,b,c,
+ *   after:YYYY-MM-DD|today, before:YYYY-MM-DD|today,
+ *   confirmed:fieldName, unique:Model,field,
+ *   dateFormat:d/m/Y,
+ *   cpf, cnpj, phone, ncm
  */
 class FormValidatorService
 {
@@ -50,7 +55,7 @@ class FormValidatorService
 
             // ── regras adicionais ──────────────────────────────────────────
             foreach ((array) $rules as $rule) {
-                $error = $this->applyRule($rule, $value, $label);
+                $error = $this->applyRule($rule, $value, $label, $field, $formData);
 
                 if ($error !== null) {
                     $errors[$field] = $error;
@@ -64,56 +69,98 @@ class FormValidatorService
 
     /**
      * Aplica uma única regra ao valor e retorna a mensagem de erro, ou null se válido.
+     *
+     * @param string $rule     Regra ex: "email", "min:3", "in:a,b,c"
+     * @param mixed  $value    Valor do campo
+     * @param string $label    Label do campo para mensagens de erro
+     * @param string $field    Nome físico do campo (para `confirmed`)
+     * @param array  $formData Todos os dados do formulário (para `confirmed` e `unique`)
      */
-    protected function applyRule(string $rule, mixed $value, string $label): ?string
+    protected function applyRule(string $rule, mixed $value, string $label, string $field = '', array $formData = []): ?string
     {
-        // Regras com parâmetro: min:X, max:X, minLength:X, maxLength:X, between:X,Y, regex:expr
+        // ── Regras com parâmetro: min:X, max:X, minLength:X, maxLength:X, etc. ────
         if (str_contains($rule, ':')) {
             [$ruleName, $param] = explode(':', $rule, 2);
 
             return match (strtolower($ruleName)) {
-                'min'       => is_numeric($value) && (float) $value < (float) $param
+                'min'           => is_numeric($value) && (float) $value < (float) $param
                     ? "{$label} deve ser no mínimo {$param}."
                     : null,
-                'max'       => is_numeric($value) && (float) $value > (float) $param
+                'max'           => is_numeric($value) && (float) $value > (float) $param
                     ? "{$label} deve ser no máximo {$param}."
                     : null,
-                'minlength' => mb_strlen((string) $value) < (int) $param
+                'minlength'     => mb_strlen((string) $value) < (int) $param
                     ? "{$label} deve ter pelo menos {$param} caracteres."
                     : null,
-                'maxlength' => mb_strlen((string) $value) > (int) $param
+                'maxlength'     => mb_strlen((string) $value) > (int) $param
                     ? "{$label} deve ter no máximo {$param} caracteres."
                     : null,
-                'between'   => $this->validateBetween($value, $param, $label),
-                'regex'     => $this->validateRegex($value, $param, $label),
-                default     => null,
+                'between'       => $this->validateBetween($value, $param, $label),
+                'regex'         => $this->validateRegex($value, $param, $label),
+                // digits:N — exatamente N dígitos
+                'digits'        => (! preg_match('/^\d+$/', (string) $value) || strlen((string) $value) !== (int) $param)
+                    ? "{$label} deve ter exatamente {$param} dígito(s)."
+                    : null,
+                // digitsBetween:N,M — entre N e M dígitos
+                'digitsbetween' => $this->validateDigitsBetween($value, $param, $label),
+                // in:a,b,c — valor deve estar entre as opções
+                'in'            => ! in_array((string) $value, array_map('trim', explode(',', $param)), true)
+                    ? "{$label} deve ser um dos valores: {$param}."
+                    : null,
+                // notIn:a,b,c — valor NÃO deve estar entre as opções
+                'notin'         => in_array((string) $value, array_map('trim', explode(',', $param)), true)
+                    ? "{$label} não pode ser: {$param}."
+                    : null,
+                // after:YYYY-MM-DD ou after:today
+                'after'         => $this->validateDateComparison($value, $param, 'after', $label),
+                // before:YYYY-MM-DD ou before:today
+                'before'        => $this->validateDateComparison($value, $param, 'before', $label),
+                // confirmed:fieldName — campos devem ser iguais
+                'confirmed'     => $this->validateConfirmed($value, $param, $formData, $label),
+                // unique:Model,field — verifica unicidade via Eloquent
+                'unique'        => $this->validateUnique($value, $param, $formData, $label),
+                // dateFormat:d/m/Y — formato de data específico
+                'dateformat'    => $this->validateDateFormat($value, $param, $label),
+                default         => null,
             };
         }
 
-        // Regras simples
+        // ── Regras simples ───────────────────────────────────────────────────────
         return match (strtolower($rule)) {
-            'email'   => ! filter_var($value, FILTER_VALIDATE_EMAIL)
+            'email'    => ! filter_var($value, FILTER_VALIDATE_EMAIL)
                 ? "{$label} deve ser um e-mail válido."
                 : null,
-            'url'     => ! filter_var($value, FILTER_VALIDATE_URL)
+            'url'      => ! filter_var($value, FILTER_VALIDATE_URL)
                 ? "{$label} deve ser uma URL válida."
                 : null,
-            'integer' => ! ctype_digit(ltrim((string) $value, '-'))
+            'integer'  => ! ctype_digit(ltrim((string) $value, '-'))
                 ? "{$label} deve ser um número inteiro."
                 : null,
-            'numeric' => ! is_numeric($value)
+            'numeric'  => ! is_numeric($value)
                 ? "{$label} deve ser um valor numérico."
                 : null,
-            'cpf'     => ! $this->validateCpf((string) $value)
+            // alpha — apenas letras (Unicode)
+            'alpha'    => ! preg_match('/^\p{L}+$/u', (string) $value)
+                ? "{$label} deve conter apenas letras."
+                : null,
+            // alphaNum — letras e números
+            'alphanum' => ! preg_match('/^[\p{L}\d]+$/u', (string) $value)
+                ? "{$label} deve conter apenas letras e números."
+                : null,
+            // ncm — 8 dígitos (pode vir formatado como 0000.00.00 ou 00000000)
+            'ncm'      => ! preg_match('/^\d{4}\.\d{2}\.\d{2}$|^\d{8}$/', (string) $value)
+                ? "{$label} deve ser um NCM válido (ex: 8471.30.19 ou 84713019)."
+                : null,
+            'cpf'      => ! $this->validateCpf((string) $value)
                 ? "{$label} inválido."
                 : null,
-            'cnpj'    => ! $this->validateCnpj((string) $value)
+            'cnpj'     => ! $this->validateCnpj((string) $value)
                 ? "{$label} inválido."
                 : null,
-            'phone'   => ! preg_match('/^\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4}$/', preg_replace('/\D/', '', (string) $value))
+            'phone'    => ! preg_match('/^\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4}$/', preg_replace('/\D/', '', (string) $value))
                 ? "{$label} deve ser um telefone válido."
                 : null,
-            default   => null,
+            default    => null,
         };
     }
 
@@ -194,6 +241,111 @@ class FormValidatorService
         return (int) $cnpj[12] === $calc($cnpj, 12)
             && (int) $cnpj[13] === $calc($cnpj, 13);
     }
+
+    // ── Helpers para novas regras ────────────────────────────────────────────────
+
+    /**
+     * digitsBetween:N,M — verifica se o valor tem entre N e M dígitos.
+     */
+    protected function validateDigitsBetween(mixed $value, string $param, string $label): ?string
+    {
+        $parts = explode(',', $param, 2);
+        if (count($parts) !== 2) {
+            return null;
+        }
+        [$min, $max] = [(int) trim($parts[0]), (int) trim($parts[1])];
+        $digits = preg_replace('/\D/', '', (string) $value);
+        $len    = strlen($digits);
+
+        return ($len < $min || $len > $max)
+            ? "{$label} deve ter entre {$min} e {$max} dígitos."
+            : null;
+    }
+
+    /**
+     * after:ref / before:ref — compara data do campo com uma referência.
+     * Referência pode ser "today" ou uma data legível por strtotime().
+     */
+    protected function validateDateComparison(mixed $value, string $ref, string $direction, string $label): ?string
+    {
+        $fieldDate = strtotime((string) $value);
+        $refDate   = strtolower($ref) === 'today' ? strtotime('today') : strtotime($ref);
+
+        if ($fieldDate === false || $refDate === false) {
+            return "{$label} possui uma data inválida.";
+        }
+
+        if ($direction === 'after' && $fieldDate <= $refDate) {
+            return "{$label} deve ser uma data posterior a {$ref}.";
+        }
+        if ($direction === 'before' && $fieldDate >= $refDate) {
+            return "{$label} deve ser uma data anterior a {$ref}.";
+        }
+
+        return null;
+    }
+
+    /**
+     * confirmed:fieldName — verifica se o campo é igual ao campo de confirmação.
+     */
+    protected function validateConfirmed(mixed $value, string $confirmField, array $formData, string $label): ?string
+    {
+        $confirmValue = $formData[$confirmField] ?? null;
+
+        return $value !== $confirmValue
+            ? "{$label} não confere com a confirmação."
+            : null;
+    }
+
+    /**
+     * unique:Model,column[,ignoreId] — verifica unicidade via Eloquent.
+     * Exemplo: "unique:App\Models\Product,email"
+     *          "unique:Product,email"   (auto-prefixo App\Models\)
+     *
+     * Ignora automaticamente o registro em edição quando $formData['id'] existir.
+     */
+    protected function validateUnique(mixed $value, string $param, array $formData, string $label): ?string
+    {
+        $parts  = array_map('trim', explode(',', $param));
+        $model  = $parts[0] ?? '';
+        $column = $parts[1] ?? 'id';
+
+        // Auto-prefixo se não houver namespace completo
+        if (! str_contains($model, '\\')) {
+            $model = "App\\Models\\{$model}";
+        }
+
+        if (! class_exists($model)) {
+            return null; // modelo não encontrado → ignora silenciosamente
+        }
+
+        $ignoreId = $parts[2] ?? ($formData['id'] ?? null);
+
+        $query = $model::where($column, $value);
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        return $query->exists()
+            ? "{$label} já está em uso."
+            : null;
+    }
+
+    /**
+     * dateFormat:FORMAT — valida se o valor segue o formato de data especificado.
+     * Exemplo: "dateFormat:d/m/Y"
+     */
+    protected function validateDateFormat(mixed $value, string $format, string $label): ?string
+    {
+        $date = \DateTime::createFromFormat($format, (string) $value);
+        $valid = $date && $date->format($format) === (string) $value;
+
+        return ! $valid
+            ? "{$label} deve estar no formato {$format}."
+            : null;
+    }
+
+    // ── Utilitários ─────────────────────────────────────────────────────────────
 
     /**
      * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').

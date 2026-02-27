@@ -1495,7 +1495,9 @@ class BaseCrud extends Component
 
         // colsMetodoCustom tem prioridade máxima
         if (! empty($col['colsMetodoCustom'])) {
-            return $this->resolveCustomMethod($col['colsMetodoCustom'], $row, $value);
+            $result = $this->resolveCustomMethod($col['colsMetodoCustom'], $row, $value);
+            // colsMetodoRaw: true → retorna HTML bruto (opt-in explícito, confia no desenvolvedor)
+            return ($col['colsMetodoRaw'] ?? false) ? $result : e($result);
         }
 
         // Nested dot notation: "address.city.name" → data_get($row, 'address.city.name')
@@ -1844,16 +1846,24 @@ class BaseCrud extends Component
         }
 
         return match ($renderer) {
-            'badge'    => $this->renderBadge($col, $value),
-            'pill'     => $this->renderPill($col, $value),
-            'boolean'  => $this->renderBoolean($col, $value),
-            'money'    => $this->renderMoney($col, $value),
-            'date'     => $this->helperDateFormat($value),
-            'datetime' => $this->helperDateTimeFormat($value),
-            'link'     => $this->renderLink($col, $value, $row),
-            'image'    => $this->renderImage($col, $value),
-            'truncate' => $this->renderTruncate($col, $value),
-            default    => e((string) ($value ?? '')),
+            'badge'                  => $this->renderBadge($col, $value),
+            'pill'                   => $this->renderPill($col, $value),
+            'boolean'                => $this->renderBoolean($col, $value),
+            'money'                  => $this->renderMoney($col, $value),
+            'date'                   => $this->helperDateFormat($value),
+            'datetime'               => $this->helperDateTimeFormat($value),
+            'link'                   => $this->renderLink($col, $value, $row),
+            'image'                  => $this->renderImage($col, $value),
+            'truncate'               => $this->renderTruncate($col, $value),
+            'number'                 => $this->renderNumber($col, $value),
+            'progress'               => $this->renderProgress($col, $value),
+            'rating'                 => $this->renderRating($col, $value),
+            'color'     => $this->renderColor($value),
+            'code'                   => $this->renderCode($value),
+            'filesize'               => $this->renderFilesize($value),
+            'duration'               => $this->renderDuration($col, $value),
+            'qrcode'                 => $this->renderQrcode($col, $value),
+            default                  => e((string) ($value ?? '')),
         };
     }
 
@@ -2023,8 +2033,144 @@ class BaseCrud extends Component
             return e($str);
         }
 
-        $truncated = mb_substr($str, 0, $max) . '\u2026';
+        $truncated = mb_substr($str, 0, $max) . '…';
         return '<span title="' . e($str) . '" class="cursor-help">' . e($truncated) . '</span>';
+    }
+
+    /**
+     * Número formatado com separadores de milhar e decimais.
+     * Config: colsRendererDecimals (padrão 2), colsRendererThousands (padrão 'pt-BR')
+     */
+    protected function renderNumber(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        $decimals   = (int) ($col['colsRendererDecimals'] ?? 2);
+        $locale     = $col['colsRendererLocale'] ?? 'pt-BR';
+        if ($locale === 'pt-BR') {
+            return number_format((float) $value, $decimals, ',', '.');
+        }
+        return number_format((float) $value, $decimals, '.', ',');
+    }
+
+    /**
+     * Barra de progresso visual (0–100 por padrão).
+     * Config: colsRendererMax (padrão 100), colsRendererColor (green|blue|red|yellow|purple|indigo)
+     */
+    protected function renderProgress(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        $max      = (float) ($col['colsRendererMax'] ?? 100);
+        $pct      = $max > 0 ? min(100, round((float) $value * 100 / $max)) : 0;
+        $colorKey = $col['colsRendererColor'] ?? 'indigo';
+        $bgBar    = match ($colorKey) {
+            'green'  => 'bg-green-500',
+            'red'    => 'bg-red-500',
+            'yellow' => 'bg-yellow-500',
+            'purple' => 'bg-purple-500',
+            'blue'   => 'bg-blue-500',
+            default  => 'bg-indigo-500',
+        };
+        return "<div class=\"flex items-center gap-2\">"
+            . "<div class=\"flex-1 h-2 bg-gray-200 rounded-full overflow-hidden\">"
+            . "<div class=\"{$bgBar} h-full rounded-full\" style=\"width:{$pct}%\"></div>"
+            . "</div>"
+            . "<span class=\"text-xs text-gray-600 tabular-nums w-9 text-right\">{$pct}%</span>"
+            . "</div>";
+    }
+
+    /**
+     * Avaliação em estrelas (1–5 por padrão).
+     * Config: colsRendererMax (padrão 5)
+     */
+    protected function renderRating(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        $max   = (int) ($col['colsRendererMax'] ?? 5);
+        $score = (float) $value;
+        $html  = '<span class="inline-flex items-center gap-0.5" aria-label="' . e($score) . ' de ' . $max . '">';
+        for ($i = 1; $i <= $max; $i++) {
+            if ($score >= $i) {
+                $html .= '<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            } elseif ($score >= $i - 0.5) {
+                $html .= '<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0L6.6 15.207c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clip-path="inset(0 50% 0 0)"/></svg>';
+            } else {
+                $html .= '<svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            }
+        }
+        return $html . '</span>';
+    }
+
+    /**
+     * Amostra de cor hexadecimal com o código ao lado.
+     * Ex: valor "#FF5733" → ■ #FF5733
+     * Config: colsRendererColorSize (padrão 16, em px)
+     */
+    protected function renderColor(mixed $value): string
+    {
+        if (! $value) return '';
+        $hex = e((string) $value);
+        return "<span class=\"inline-flex items-center gap-1.5\">"
+            . "<span class=\"inline-block rounded border border-gray-300\" style=\"width:16px;height:16px;background:{$hex};flex-shrink:0\"></span>"
+            . "<code class=\"text-xs font-mono text-gray-700\">{$hex}</code>"
+            . "</span>";
+    }
+
+    /**
+     * Texto em formato de código monospace.
+     */
+    protected function renderCode(mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        return '<code class="text-xs font-mono bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded border border-gray-200">'
+            . e((string) $value) . '</code>';
+    }
+
+    /**
+     * Tamanho de arquivo humanizado (campo em bytes).
+     * Ex: 1536000 → "1,5 MB"
+     */
+    protected function renderFilesize(mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        $bytes = (float) $value;
+        if ($bytes < 1024)        return number_format($bytes, 0, ',', '.') . ' B';
+        if ($bytes < 1_048_576)   return number_format($bytes / 1_024, 1, ',', '.') . ' KB';
+        if ($bytes < 1_073_741_824) return number_format($bytes / 1_048_576, 1, ',', '.') . ' MB';
+        return number_format($bytes / 1_073_741_824, 2, ',', '.') . ' GB';
+    }
+
+    /**
+     * Duração humanizada.
+     * Config: colsRendererDurationUnit (minutes|seconds, padrão minutes)
+     * Ex: 95 minutos → "1h 35min"
+     */
+    protected function renderDuration(array $col, mixed $value): string
+    {
+        if ($value === null || $value === '') return '';
+        $unit    = $col['colsRendererDurationUnit'] ?? 'minutes';
+        $seconds = $unit === 'seconds' ? (int) $value : (int) $value * 60;
+        $h       = intdiv($seconds, 3600);
+        $m       = intdiv($seconds % 3600, 60);
+        $s       = $seconds % 60;
+        if ($h > 0 && $unit !== 'seconds') return "{$h}h {$m}min";
+        if ($h > 0)  return "{$h}h {$m}min {$s}s";
+        if ($m > 0)  return "{$m}min" . ($s > 0 ? " {$s}s" : '');
+        return "{$s}s";
+    }
+
+    /**
+     * QR Code renderizado client-side via qrcode.js (CDN).
+     * O QR é gerado inline com <canvas> por Alpine.js ao montar o componente.
+     * Config: colsRendererQrSize (padrão 64, em px)
+     */
+    protected function renderQrcode(array $col, mixed $value): string
+    {
+        if (! $value) return '';
+        $size    = (int) ($col['colsRendererQrSize'] ?? 64);
+        $escaped = e((string) $value);
+        return "<span x-data x-init=\"\$nextTick(() => { if(window.QRCode) new QRCode(\$el.querySelector('div'), {text:'{$escaped}',width:{$size},height:{$size},colorDark:'#1a1a1a',colorLight:'#fff'}); })\">"
+            . "<div title=\"{$escaped}\"></div>"
+            . "</span>";
     }
 
     /**
@@ -2061,6 +2207,18 @@ class BaseCrud extends Component
                 ),
                 // "055.465.309-52" → "05546530952"
                 'digits_only' => preg_replace('/\D/', '', (string) $val),
+                // "ABC-1234" | "ABC1A23" → "ABC1234" / "ABC1A23" (uppercase + somente alfanumérico)
+                'plate_clean' => preg_replace('/[^A-Z0-9]/', '', mb_strtoupper((string) $val)),
+                // "01/12/2024" → "2024-12-01"
+                'date_br_to_iso' => (function () use ($val): string {
+                    $d = \DateTime::createFromFormat('d/m/Y', (string) $val);
+                    return $d ? $d->format('Y-m-d') : (string) $val;
+                })(),
+                // "2024-12-01" → "01/12/2024"
+                'date_iso_to_br' => (function () use ($val): string {
+                    $d = \DateTime::createFromFormat('Y-m-d', (string) $val);
+                    return $d ? $d->format('d/m/Y') : (string) $val;
+                })(),
                 'uppercase'   => mb_strtoupper((string) $val),
                 'lowercase'   => mb_strtolower((string) $val),
                 'trim'        => trim((string) $val),
@@ -2072,31 +2230,62 @@ class BaseCrud extends Component
     }
 
     /**
-     * Resolve o padrão "Namespace\Class\Method(%field%)" de colsMetodoCustom.
-     * Por segurança, não executa código arbitrário — apenas chama via app()->call().
+     * Resolve o padrão "Namespace\Class\Method(%field1%, %field2%, 'literal')" de colsMetodoCustom.
+     *
+     * Sintaxe:
+     *   "Caminho\Servico\metodo(%campo%)"                        → 1 argumento
+     *   "Caminho\Servico\metodo(%campo1%, %campo2%, 'literal')"  → N argumentos, cada um como arg separado
+     *
+     * O prefixo "App\Services\" é adicionado automaticamente.
+     * O retorno é sempre (string) — use colsMetodoRaw: true na ColDef para saída HTML sem escape.
      */
     protected function resolveCustomMethod(string $pattern, mixed $row, mixed $value): string
     {
-        // Ex: "Purchase\Import\PurchaseImportsService\getSelectImportStatus(%product_stocks_id%)"
-        if (! preg_match('/^(.+)\\\\(\w+)\((.*)?\)$/', $pattern, $m)) {
-            return e((string) $value);
+        if (! preg_match('/^(.+)\\\\(\w+)\((.*)\)$/', $pattern, $m)) {
+            return (string) $value;
         }
 
-        $classPath  = $m[1];
-        $method     = $m[2];
-        $paramStr   = $m[3];
+        $classPath = $m[1];
+        $method    = $m[2];
+        $paramStr  = trim($m[3]);
 
-        // Substitui %fieldName% pelo valor do campo
-        $param = preg_replace_callback('/%(\w+)%/', function ($match) use ($row) {
-            $f = $match[1];
-            return $row instanceof Model ? ($row->getAttribute($f) ?? '') : ($row[$f] ?? '');
-        }, $paramStr);
+        // Resolve cada argumento separado por vírgula (via str_getcsv para respeitar aspas)
+        $args = $paramStr !== ''
+            ? array_map(function (string $token) use ($row): mixed {
+                $token = trim($token);
+
+                // %fieldName% → valor do campo no registro
+                if (preg_match('/^%([\w\.]+)%$/', $token, $pm)) {
+                    $f = $pm[1];
+                    return $row instanceof Model
+                        ? ($row->getAttribute($f) ?? data_get($row, $f) ?? '')
+                        : ($row[$f] ?? '');
+                }
+
+                // String literal entre aspas simples: 'valor' → valor
+                if (preg_match("/^'(.*)'$/s", $token, $pm)) {
+                    return $pm[1];
+                }
+
+                // String literal entre aspas duplas: "valor" → valor
+                if (preg_match('/^"(.*)"$/s', $token, $pm)) {
+                    return $pm[1];
+                }
+
+                // Numérico
+                if (is_numeric($token)) {
+                    return $token + 0;
+                }
+
+                return $token;
+            }, str_getcsv($paramStr))
+            : [];
 
         $class = 'App\\Services\\' . str_replace('/', '\\', $classPath);
 
         try {
             if (class_exists($class) && method_exists($class, $method)) {
-                $result = app($class)->{$method}($param);
+                $result = app($class)->{$method}(...$args);
                 return (string) $result;
             }
         } catch (\Throwable) {

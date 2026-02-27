@@ -430,11 +430,31 @@ Configurado em `colsHelper` da coluna (helpers legacy).
 
 ```
 "App\\Services\\ProductService\\getStatus(%id%)"
+"Branch\\CompaniesService\\getLabel(%id%, %status%, 'active')"
 ```
 
-- O padrão é `Namespace\Classe\metodo(%campo%)`.
-- `%campo%` é substituído pelo valor do campo no registro.
-- O método é chamado via `app()->make(Classe)->metodo($param)`.
+- O padrão é `Namespace\Classe\metodo(arg1, arg2, ...)`.
+- O prefixo `App\Services\` é adicionado automaticamente se o caminho não contiver `\\`.
+- Cada token separado por vírgula torna-se um argumento PHP separado:
+  - `%campo%` → substituído pelo valor do campo no registro
+  - `'literal'` ou `"literal"` → string passada diretamente
+  - Valor numérico → passado como número
+- O retorno é sempre escapado via `e()`. Para HTML bruto, use `colsMetodoRaw: true`.
+
+#### `colsMetodoRaw`
+
+| Chave | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `colsMetodoRaw` | `bool` | `false` | Se `true`, o HTML retornado pelo método é inserido sem `e()` |
+
+```json
+{
+  "colsMetodoCustom": "Branch\\StatusService\\badge(%type%)",
+  "colsMetodoRaw": true
+}
+```
+
+> **Atenção:** use `colsMetodoRaw: true` apenas quando confiar 100% no retorno. Valores de usuário jamais devem ser inseridos sem sanitização.
 
 ---
 
@@ -442,15 +462,23 @@ Configurado em `colsHelper` da coluna (helpers legacy).
 
 O `colsRenderer` é a forma moderna e recomendada de formatar células.
 
-| Renderer | Descrição |
-|---|---|
-| `badge` | `<span>` com fundo colorido (padded, bordas leves) |
-| `pill` | Igual ao `badge` mas com bordas completamente arredondadas |
-| `boolean` | `✅` (verde) / `❌` (vermelho) baseado em truthy |
-| `money` | Formata como `R$ X.XXX,XX` |
-| `link` | `<a href="[valor]" target="_blank">` |
-| `image` | `<img src="[valor]">` thumbnail 40×40 |
-| `truncate` | Texto cortado em ~40 chars com `title` completo no hover |
+| Renderer | Descrição | Config Keys |
+|---|---|---|
+| `badge` | `<span>` com fundo colorido (padded, bordas leves) | `colsRendererBadges` |
+| `pill` | Igual ao `badge` mas com bordas completamente arredondadas | `colsRendererBadges` |
+| `boolean` | `✅` (verde) / `❌` (vermelho) baseado em truthy | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
+| `money` | Formata como `R$ X.XXX,XX` | `colsRendererCurrency`, `colsRendererDecimals` |
+| `link` | `<a href="[valor]" target="_blank">` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
+| `image` | `<img src="[valor]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
+| `truncate` | Texto cortado com `title` completo no hover | `colsRendererMaxChars` |
+| `number` | Número formatado com separadores locais (`1.234,56`) | `colsRendererDecimals` (padrão: 2), `colsRendererLocale` (padrão: pt-BR) |
+| `progress` | Barra de progresso visual com percentual | `colsRendererMax` (padrão: 100), `colsRendererColor` (padrão: indigo) |
+| `rating` | Estrelas SVG; suporta meias estrelas | `colsRendererMax` (padrão: 5) |
+| `color` | Swatch colorido + código hex | — |
+| `code` | `<code>` monospace com fundo cinza | — |
+| `filesize` | Bytes → B / KB / MB / GB humanizado | — |
+| `duration` | Minutos ou segundos → "1h 35min" | `colsRendererDurationUnit` (`minutes` \| `seconds`) |
+| `qrcode` | QR Code via qrcode.js CDN (Alpine `x-init`) | `colsRendererQrSize` (padrão: 64px) |
 
 ### Badge / Pill
 
@@ -505,16 +533,40 @@ Exemplo completo de coluna com estilo:
 
 ### Máscaras (`colsMask`)
 
-| Máscara | Entrada | Saída |
+| Máscara | Formato visual | Grupo |
 |---|---|---|
-| `cpf` | `12345678901` | `123.456.789-01` |
-| `cnpj` | `12345678000190` | `12.345.678/0001-90` |
-| `phone` | `11987654321` | `(11) 98765-4321` |
-| `cep` | `01310100` | `01310-100` |
-| `currency` | `1234.5` | `R$ 1.234,50` |
-| `percent` | `0.75` | `75%` |
+| `cpf` | `000.000.000-00` | Documentos |
+| `cnpj` | `00.000.000/0000-00` | Documentos |
+| `rg` | `00.000.000-0` | Documentos |
+| `pis` | `000.00000.00-0` | Documentos |
+| `ncm` | `0000.00.00` | Documentos |
+| `ean13` | `0000000000000` (13 dígitos) | Documentos |
+| `phone` | `(00) 0 0000-0000` | Contato |
+| `cep` | `00000-000` | Contato |
+| `plate` | `ABC-1234` / Mercosul `ABC1A23` | Veículos |
+| `credit_card` | `0000 0000 0000 0000` | Pagamento |
+| `date` | `00/00/0000` | Data/Hora |
+| `datetime` | `00/00/0000 00:00` | Data/Hora |
+| `time` | `00:00` | Data/Hora |
+| `money_brl` | `R$ 1.253,08` | Monetário |
+| `money_usd` | `$ 1,253.08` | Monetário |
+| `percent` | `99,99%` | Monetário |
+| `integer` | Somente inteiros | Texto |
+| `uppercase` | MAIÚSCULAS automático | Texto |
+| `custom_regex` | Padrão IMask custom (`colsMaskRegex`) | Texto |
 
-Combinar com `colsMaskTransform: "upper"` transforma o resultado final.
+### Transformações antes de Salvar (`colsMaskTransform`)
+
+| Transform | Descrição |
+|---|---|
+| `money_to_float` | `"R$ 1.253,08"` → `1253.08` |
+| `digits_only` | `"055.465.309-52"` → `"05546530952"` |
+| `plate_clean` | `"ABC-1234"` → `"ABC1234"` (maiúsculas + alfanumérico) |
+| `date_br_to_iso` | `"01/12/2024"` → `"2024-12-01"` |
+| `date_iso_to_br` | `"2024-12-01"` → `"01/12/2024"` |
+| `uppercase` | `"texto"` → `"TEXTO"` |
+| `lowercase` | `"TEXTO"` → `"texto"` |
+| `trim` | Remove espaços das bordas |
 
 ### Relações aninhadas (`colsRelacaoNested`)
 
@@ -1125,15 +1177,27 @@ O `FormValidatorService` (é injetado no `BaseCrud`) valida os campos do formul�
 | `url` | `"url"` | Formato de URL |
 | `integer` | `"integer"` | Número inteiro |
 | `numeric` | `"numeric"` | Número (decimal incluso) |
+| `alpha` | `"alpha"` | Apenas letras Unicode |
+| `alphanum` | `"alphanum"` | Letras e dígitos |
+| `ncm` | `"ncm"` | NCM válido (8 dígitos; aceita `0000.00.00` ou `00000000`) |
+| `cpf` | `"cpf"` | Valida CPF brasileiro |
+| `cnpj` | `"cnpj"` | Valida CNPJ brasileiro |
+| `phone` | `"phone"` | Valida telefone (8–11 dígitos) |
 | `min:X` | `"min:0"` | Valor mínimo |
 | `max:X` | `"max:9999"` | Valor máximo |
 | `minLength:X` | `"minLength:3"` | Mínimo de caracteres |
 | `maxLength:X` | `"maxLength:255"` | Máximo de caracteres |
 | `between:X,Y` | `"between:1,100"` | Valor entre X e Y |
 | `regex:pattern` | `"regex:^[A-Z]+$"` | Expressão regular |
-| `cpf` | `"cpf"` | Valida CPF brasileiro |
-| `cnpj` | `"cnpj"` | Valida CNPJ brasileiro |
-| `phone` | `"phone"` | Valida telefone (8–11 dígitos) |
+| `digits:N` | `"digits:8"` | Exatamente N dígitos |
+| `digitsBetween:N,M` | `"digitsBetween:8,11"` | Entre N e M dígitos |
+| `in:a,b,c` | `"in:ativo,inativo"` | Valor deve ser uma das opções |
+| `notIn:a,b,c` | `"notIn:deletado"` | Valor não pode ser nenhuma das opções |
+| `after:ref` | `"after:today"` | Data posterior a referência (`today` ou `YYYY-MM-DD`) |
+| `before:ref` | `"before:2030-01-01"` | Data anterior a referência |
+| `dateFormat:fmt` | `"dateFormat:d/m/Y"` | Formato de data específico (PHP `DateTime::createFromFormat`) |
+| `confirmed:campo` | `"confirmed:password_confirmation"` | Campo igual a outro campo do formulário |
+| `unique:Model,col` | `"unique:Product,email"` | Unicidade via Eloquent; ignora registro em edição via `id` |
 
 ### Configuração na coluna
 
