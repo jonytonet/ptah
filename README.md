@@ -67,6 +67,10 @@ O pacote é dividido em três subsistemas complementares:
   - [FormValidatorService](#formvalidatorservice)
   - [CrudConfigService](#crudconfigservice)
   - [CacheService](#cacheservice)
+- [Módulos Opcionais — Auth & Menu](#-módulos-opcionais--auth--menu)
+  - [Ativando os módulos](#ativando-os-módulos)
+  - [Módulo Auth — visão rápida](#módulo-auth--visão-rápida)
+  - [Módulo Menu — visão rápida](#módulo-menu--visão-rápida)
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
 - [Comandos disponíveis](#-comandos-disponíveis)
@@ -1741,6 +1745,79 @@ if ($cache->supportsTagging()) {
 
 ---
 
+## 🔐 Módulos Opcionais — Auth & Menu
+
+O Ptah possui dois módulos opcionais que podem ser ativados de forma independente, sem afetar projetos que usam apenas o scaffolding e o `BaseCrud`.
+
+| Módulo | Funcionalidades |
+|---|---|
+| **auth** | Login com rate limit, recuperação de senha, 2FA (TOTP + e-mail + recovery codes), sessões ativas, perfil com foto |
+| **menu** | Menu lateral dinâmico via banco de dados com cache, estrutura em árvore e driver pattern (retrocompatível) |
+
+> **Documentação completa → [docs/Modules.md](docs/Modules.md)**
+
+### Ativando os módulos
+
+```bash
+# Ativar autenticação
+php artisan ptah:module auth
+
+# Ativar menu dinâmico
+php artisan ptah:module menu
+
+# Ver estado de todos os módulos
+php artisan ptah:module --list
+```
+
+O comando publica as migrations, executa `migrate` e define automaticamente a variável de ambiente no `.env`.
+
+Ou ative manualmente via `.env`:
+
+```dotenv
+PTAH_MODULE_AUTH=true
+PTAH_MODULE_MENU=true
+PTAH_MENU_DRIVER=database   # 'config' (padrão) ou 'database'
+```
+
+### Módulo Auth — visão rápida
+
+Quando `PTAH_MODULE_AUTH=true`, as seguintes rotas são registradas automaticamente:
+
+| URI | Descrição |
+|---|---|
+| `/login` | Login com rate limit (5 tentativas) |
+| `/forgot-password` | Recuperação de senha |
+| `/reset-password/{token}` | Redefinição de senha |
+| `/two-factor-challenge` | Verificação 2FA pós-login |
+| `/dashboard` | Dashboard inicial |
+| `/profile` | Perfil com 5 abas (dados, senha, 2FA, sessões, foto) |
+
+**2FA suportado:**
+- **TOTP** (Google Authenticator, Authy…) via `pragmarx/google2fa-laravel`
+- **E-mail OTP** (sem dependências extras — usa `Cache` do Laravel)
+- **Códigos de recuperação** (8 códigos, uso único)
+
+Para 2FA TOTP:
+
+```bash
+composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
+```
+
+### Módulo Menu — visão rápida
+
+O menu da sidebar suporta dois drivers:
+
+| Driver | Fonte dos dados | Migração necessária |
+|---|---|---|
+| `config` (padrão) | `config('ptah.forge.sidebar_items')` | Não |
+| `database` | Tabela `menus` com cache automático | Sim (`ptah:module menu`) |
+
+A troca de driver **não quebra projetos existentes** — o driver `config` é o padrão e nenhum código precisa ser alterado.
+
+Quando `driver = database`, o `forge-sidebar` usa `MenuService::getTree()` automaticamente (com cache configurável). O `forge-navbar` exibe um ícone ⚙️ (link para `/ptah-menu`) quando o módulo está ativo.
+
+---
+
 ## ⚙️ Configuração
 
 Arquivo `config/ptah.php` após `ptah:install`:
@@ -1867,6 +1944,8 @@ Após publicar com `ptah:install` ou `vendor:publish --tag=ptah-stubs`, os stubs
 |---|---|
 | `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations) |
 | `php artisan ptah:forge {Entity}` | **Gera estrutura completa de uma entidade** ⭐ |
+| `php artisan ptah:module {auth\|menu}` | Ativa módulo opcional (publica migrations + atualiza .env) |
+| `php artisan ptah:module --list` | Lista módulos disponíveis e seus estados |
 | `php artisan ptah:make {Entity}` | Gerador legado (sem `--fields` e `--db`) |
 | `php artisan ptah:make-api {Entity}` | Gerador legado somente API |
 | `php artisan ptah:docs {Entity}` | Gera anotações Swagger/OpenAPI |
