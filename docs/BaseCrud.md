@@ -58,6 +58,9 @@
 - Preferências persistidas por usuário (V2.1)
 - Error recovery automático (limpa preferências corrompidas)
 - Cache com invalidação por model
+- **Estilos condicionais de linha** com guard contra campos inválidos
+- **Ícones em colunas** (cabeçalho + célula) via Boxicons, FontAwesome ou Heroicons
+- **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
 
 ---
 
@@ -372,7 +375,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsRendererBadges` | `array\|null` | Mapa `["valor" => "cor"]` para `badge`/`pill` |
 | `colsCellStyle` | `string\|null` | CSS inline no `<span>` da célula |
 | `colsCellClass` | `string\|null` | Classes Tailwind adicionais da célula |
-| `colsCellIcon` | `string\|null` | Ícone `heroicon-*` prefixado ao conteúdo |
+| `colsCellIcon` | `string\|null` | Classe de ícone prefixada ao conteúdo da célula **e ao cabeçalho** `<th>`. Suporta Boxicons (`bx bx-*`), FontAwesome (`fas fa-*`) e Heroicons (`heroicon-*`) |
 | `colsMinWidth` | `string\|null` | Largura mínima do th (ex: `"120px"`) |
 | `colsMask` | `string\|null` | Máscara: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
 | `colsMaskTransform` | `string\|null` | Transformação pós-máscara: `upper`, `lower`, `ucfirst` |
@@ -468,11 +471,34 @@ Cores hex (`#RRGGBB`): geram `background-color` inline com 13% de opacidade e `c
 
 ### Estilo, classe e ícone por célula
 
+O `colsCellIcon` aceita qualquer classe de ícone e é renderizado **tanto no cabeçalho `<th>` quanto na célula `<td>`**:
+
+```json
+{ "colsCellIcon": "bx bxs-user" }
+```
+
+```json
+{ "colsCellIcon": "fas fa-tag" }
+```
+
+```json
+{ "colsCellIcon": "heroicon-o-star" }
+```
+
+O layout padrão (`forge-dashboard-layout`) já inclui os CDNs necessários:
+
+```html
+<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+```
+
+Exemplo completo de coluna com estilo:
+
 ```json
 {
   "colsCellStyle": "font-weight:600;",
   "colsCellClass": "text-indigo-700 italic",
-  "colsCellIcon":  "heroicon-o-star",
+  "colsCellIcon":  "fas fa-tag",
   "colsMinWidth":  "140px"
 }
 ```
@@ -504,27 +530,39 @@ Resolvido via `resolveNestedValue()` em qualquer profundidade.
 
 ## Estilos Condicionais de Linha
 
-Configurado em `contitionStyles` do CrudConfig.
+Configurado em `contitionStyles` do CrudConfig. Aplica CSS inline na `<tr>` quando a condição for satisfeita.
 
 ```json
 "contitionStyles": [
   {
-    "colsNomeFisico": "status",
+    "field": "status",
     "condition": "==",
     "value": "inactive",
     "style": "opacity: 0.5; color: #999;"
+  },
+  {
+    "field": "business_partner_id",
+    "condition": "==",
+    "value": "2",
+    "style": "background:#D4EDDA;color:#155724;"
   }
 ]
 ```
 
+> **Nota:** a chave do campo é `field`. O alias legado `colsNomeFisico` ainda é aceito como fallback para retrocompatibilidade, mas use `field` em configs novas.
+
 | Operador | Descrição |
 |---|---|
-| `==` | Igual (string) |
-| `!=` | Diferente (string) |
-| `>` | Maior (float) |
-| `<` | Menor (float) |
-| `>=` | Maior ou igual (float) |
-| `<=` | Menor ou igual (float) |
+| `==` | Igual (comparação por string) |
+| `!=` | Diferente (comparação por string) |
+| `>` | Maior (cast para float) |
+| `<` | Menor (cast para float) |
+| `>=` | Maior ou igual (cast para float) |
+| `<=` | Menor ou igual (cast para float) |
+
+### Comportamento de segurança
+
+Se o campo informado em `field` **não existir** nos atributos do model (`getAttributes()`), a regra é **ignorada silenciosamente** — sem erro, sem match falso. Isso evita que um typo no nome do campo cause estilos indevidos em toda a tabela.
 
 Retornado por `getRowStyle($row)`, aplicado via `style="{{ $this->getRowStyle($row) }}"`.
 
@@ -563,6 +601,8 @@ $this->dateRanges['created_at_to']   = '2025-12-31';
 
 Definidos no CrudConfig, processados separadamente via `FilterService::processCustomFilters()`.
 
+#### Filtro direto em campo da tabela
+
 ```json
 "customFilters": [
   {
@@ -573,7 +613,46 @@ Definidos no CrudConfig, processados separadamente via `FilterService::processCu
 ]
 ```
 
-Para ativar no template, use `wire:model="filters.status"`.
+#### Filtro via `whereHas` (relação)
+
+```json
+"customFilters": [
+  {
+    "field": "category_id",
+    "type": "relation",
+    "operator": "=",
+    "colRelation": "category"
+  }
+]
+```
+
+#### Filtro via `whereHas` com aggregate
+
+```json
+"customFilters": [
+  {
+    "field": "total_items",
+    "type": "relation",
+    "operator": ">=",
+    "colRelation": "items",
+    "aggregate": "count"
+  }
+]
+```
+
+#### Chaves aceitas por campo
+
+| Chave | Alias legado aceito | Descrição |
+|---|---|---|
+| `field` | — | Nome do campo na tabela ou chave do filtro |
+| `operator` | `defaultOperator` | Operador: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
+| `type` | `colsFilterType` | Tipo: `text`, `select`, `date`, `number`, `relation` |
+| `colRelation` | `field_relation` | Nome da relação Eloquent (obrigatório para `type: relation`) |
+| `aggregate` | — | Função de agregação para o whereHas: `count`, `sum`, `avg`, `min`, `max` |
+
+> Os aliases legados (`defaultOperator`, `colsFilterType`, `field_relation`) são aceitos para retrocompatibilidade, mas use as chaves novas em configs novas.
+
+Para ativar no template, use `wire:model="filters.{field}"`.
 
 ---
 
@@ -1082,10 +1161,11 @@ Erros são populados em `$formErrors[campo]` e exibidos no modal de formulário.
 @livewire('ptah::base-crud', ['model' => 'Product'])
         │
         ▼
-    boot()          ← Injeta CrudConfigService, FilterService, CacheService
-        │
+    boot()          ← Injeta serviços; se $model já definido, recarrega crudConfig
+        │             do banco (garante config atualizada após salvar CrudConfig Modal)
         ▼
-    mount()         ← Carrega CrudConfig, inicia colunas, preferências, trashedCount
+    mount()         ← Define $model, whereHas, companyFilter; carrega CrudConfig
+                      (se não carregada no boot), inicia colunas, preferências, trashedCount
         │
         ▼
     render()        ─────────────────────────────────────────────────────┐
