@@ -11,14 +11,23 @@ use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeApiCommand;
 use Ptah\Commands\MakeDocsCommand;
 use Ptah\Commands\MakeEntityCommand;
+use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Livewire\BaseCrud;
 use Ptah\Livewire\CrudConfig;
 use Ptah\Livewire\SearchDropdown;
+use Ptah\Livewire\Auth\ForgotPasswordPage;
+use Ptah\Livewire\Auth\LoginPage;
+use Ptah\Livewire\Auth\ProfilePage;
+use Ptah\Livewire\Auth\ResetPasswordPage;
+use Ptah\Livewire\Auth\TwoFactorChallengePage;
+use Ptah\Services\Auth\SessionService;
+use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
+use Ptah\Services\Menu\MenuService;
 use Ptah\Support\SchemaInspector;
 
 class PtahServiceProvider extends ServiceProvider
@@ -38,6 +47,9 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(CrudConfigService::class);
         $this->app->singleton(FilterService::class);
         $this->app->singleton(FormValidatorService::class);
+        $this->app->singleton(MenuService::class);
+        $this->app->singleton(TwoFactorService::class);
+        $this->app->singleton(SessionService::class);
     }
 
     /**
@@ -65,6 +77,7 @@ class PtahServiceProvider extends ServiceProvider
                 MakeEntityCommand::class,    // ptah:make (legado)
                 MakeApiCommand::class,
                 MakeDocsCommand::class,
+                ModuleCommand::class,        // ptah:module
             ]);
         }
     }
@@ -115,6 +128,18 @@ class PtahServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../resources/css' => resource_path('css/vendor/ptah'),
             ], 'ptah-assets');
+
+            // Publicar módulo auth (migrations + views)
+            $this->publishes([
+                __DIR__ . '/Migrations/2024_01_03_000001_add_two_factor_columns_to_users_table.php'
+                    => database_path('migrations/2024_01_03_000001_add_two_factor_columns_to_users_table.php'),
+            ], 'ptah-auth');
+
+            // Publicar módulo menu (migration)
+            $this->publishes([
+                __DIR__ . '/Migrations/2024_01_03_000000_create_menus_table.php'
+                    => database_path('migrations/2024_01_03_000000_create_menus_table.php'),
+            ], 'ptah-menu');
         }
     }
 
@@ -135,12 +160,19 @@ class PtahServiceProvider extends ServiceProvider
             Livewire::component('ptah::base-crud',       BaseCrud::class);
             Livewire::component('ptah::search-dropdown', SearchDropdown::class);
             Livewire::component('ptah::crud-config',     CrudConfig::class);
+
+            if (config('ptah.modules.auth')) {
+                Livewire::component('ptah::auth.login',              LoginPage::class);
+                Livewire::component('ptah::auth.forgot-password',    ForgotPasswordPage::class);
+                Livewire::component('ptah::auth.reset-password',     ResetPasswordPage::class);
+                Livewire::component('ptah::auth.two-factor',         TwoFactorChallengePage::class);
+                Livewire::component('ptah::auth.profile',            ProfilePage::class);
+            }
         }
     }
 
     /**
-     * Registra rotas internas do pacote (demo Forge).
-     * A rota /ptah-forge-demo só é registrada fora de produção.
+     * Registra rotas internas do pacote.
      */
     protected function registerRoutes(): void
     {
@@ -148,8 +180,12 @@ class PtahServiceProvider extends ServiceProvider
             /** @var \Illuminate\Routing\Router $router */
             $router = $this->app->make('router');
 
-            $router->get('/ptah-forge-demo', fn() => view('ptah::forge-demo'))
+            $router->get('/ptah-forge-demo', fn () => view('ptah::forge-demo'))
                    ->name('ptah.forge.demo');
+        }
+
+        if (config('ptah.modules.auth')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-auth.php');
         }
     }
 }

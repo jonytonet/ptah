@@ -17,7 +17,14 @@
 ])
 
 @php
-    $menuItems = $items ?? config('ptah.forge.sidebar_items', []);
+    // Prioridade: prop > MenuService (driver=database) > config
+    if ($items !== null) {
+        $menuItems = $items;
+    } elseif (config('ptah.modules.menu') && config('ptah.menu.driver') === 'database') {
+        $menuItems = app(\Ptah\Services\Menu\MenuService::class)->getTree();
+    } else {
+        $menuItems = config('ptah.forge.sidebar_items', []);
+    }
 
     if (empty($menuItems)) {
         $menuItems = [

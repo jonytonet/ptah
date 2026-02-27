@@ -19,20 +19,20 @@
     <x-forge-card class="max-w-2xl">
         {{-- Exiba os detalhes do {{ entity }} aqui --}}
         <dl class="divide-y divide-gray-100">
-            <div class="py-3 grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-4 py-3">
                 <dt class="text-sm font-medium text-gray-500">ID</dt>
-                <dd class="text-sm text-dark col-span-2">{{ ${{ entity_lower }}->id }}</dd>
+                <dd class="col-span-2 text-sm text-dark">{{ ${{ entity_lower }}->id }}</dd>
             </div>
             {{-- Adicione mais campos aqui --}}
-            <div class="py-3 grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-4 py-3">
                 <dt class="text-sm font-medium text-gray-500">Criado em</dt>
-                <dd class="text-sm text-dark col-span-2">
+                <dd class="col-span-2 text-sm text-dark">
                     {{ ${{ entity_lower }}->created_at?->format('d/m/Y H:i') }}
                 </dd>
             </div>
-            <div class="py-3 grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-4 py-3">
                 <dt class="text-sm font-medium text-gray-500">Atualizado em</dt>
-                <dd class="text-sm text-dark col-span-2">
+                <dd class="col-span-2 text-sm text-dark">
                     {{ ${{ entity_lower }}->updated_at?->format('d/m/Y H:i') }}
                 </dd>
             </div>

@@ -92,11 +92,50 @@ return [
     */
     'crud' => [
         'cache_enabled'  => true,
-        'cache_ttl'      => 3600,   // segundos
+        'cache_ttl'      => 3600,
         'per_page'       => 25,
         'soft_deletes'   => true,
         'confirm_delete' => true,
-        'export_driver'  => 'excel', // excel | csv | pdf
+        'export_driver'  => 'excel',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulos opcionais
+    |--------------------------------------------------------------------------
+    | Use `php artisan ptah:module {auth|menu}` para instalar cada módulo.
+    */
+    'modules' => [
+        'auth' => env('PTAH_MODULE_AUTH', false),
+        'menu' => env('PTAH_MODULE_MENU', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo Auth
+    |--------------------------------------------------------------------------
+    */
+    'auth' => [
+        'guard'               => 'web',
+        'home'                => '/dashboard',
+        'register_enabled'    => false,
+        'two_factor'          => true,
+        'remember_me'         => true,
+        'session_protection'  => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo Menu
+    |--------------------------------------------------------------------------
+    | driver 'config' usa sidebar_items (padrão, não quebra nada).
+    | driver 'database' lê da tabela menus.
+    */
+    'menu' => [
+        'driver'    => env('PTAH_MENU_DRIVER', 'config'),
+        'cache'     => true,
+        'cache_ttl' => 300,
+        'max_depth' => 4,
     ],
 
 ];

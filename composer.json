@@ -19,6 +19,10 @@
         "orchestra/testbench": "^9.0|^10.0",
         "phpunit/phpunit": "^11.0"
     },
+    "suggest": {
+        "pragmarx/google2fa-laravel": "Requerido para 2FA via app autenticador (TOTP) — módulo auth",
+        "bacon/bacon-qr-code": "Requerido para gerar QR code no setup TOTP — módulo auth"
+    },
     "autoload": {
         "psr-4": {
             "Ptah\\": "src/"
