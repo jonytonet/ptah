@@ -110,10 +110,8 @@
                         </span>
                         {{-- Label — oculto quando collapsed no desktop --}}
                         <span
-                            :class="sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'lg:opacity-100'"
-                            class="whitespace-nowrap text-sm
-                                   md:opacity-0 md:group-hover/sidebar:opacity-100 lg:opacity-100
-                                   transition-all duration-200">
+                            :style="sidebarCollapsed ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                            class="whitespace-nowrap text-sm transition-all duration-300">
                             {{ $item['label'] }}
                         </span>
 
@@ -142,10 +140,8 @@
             >
                 <span class="flex-shrink-0 w-5 h-5">{!! $svgIcons['logout'] !!}</span>
                 <span
-                    :class="sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'lg:opacity-100'"
-                    class="whitespace-nowrap text-sm font-medium
-                           md:opacity-0 md:group-hover/sidebar:opacity-100 lg:opacity-100
-                           transition-all duration-200">
+                    :style="sidebarCollapsed ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                    class="whitespace-nowrap text-sm font-medium transition-all duration-300">
                     Sair
                 </span>
             </button>
