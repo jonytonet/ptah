@@ -1700,6 +1700,13 @@
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">Aparência
                             </h3>
                             <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="cfg-label">Nome de Exibição</label>
+                                    <input type="text" wire:model="displayName"
+                                        placeholder="Ex: Parceiros de Negócio"
+                                        class="cfg-input" />
+                                    <p class="text-[11px] text-slate-400 mt-1">Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.</p>
+                                </div>
                                 <div>
                                     <label class="cfg-label">Link da Linha (colsLinkLinha)</label>
                                     <input type="text" wire:model="configLinkLinha" placeholder="/rota/%id%"
@@ -1775,6 +1782,54 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- Tempo Real (Broadcast) --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-slate-700">Tempo Real (Broadcast)</h3>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Atualiza a tabela silenciosamente quando um evento Echo é recebido.</p>
+                                </div>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="broadcastEnabled"
+                                        class="text-indigo-600 rounded border-slate-300" />
+                                    <span class="text-xs font-medium text-slate-700">Habilitado</span>
+                                </label>
+                            </div>
+
+                            @if ($broadcastEnabled)
+                            @php
+                                $bcBase    = class_basename(str_replace('/', '\\', $model));
+                                $bcChannel = $broadcastChannel ?: ('page-' . \Illuminate\Support\Str::kebab($bcBase) . '-observer');
+                                $bcEvent   = $broadcastEvent   ?: ('.page' . $bcBase . 'Observer');
+                            @endphp
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="cfg-label">Canal (channel)</label>
+                                    <input type="text" wire:model.live="broadcastChannel"
+                                        placeholder="{{ $bcChannel }}"
+                                        class="font-mono cfg-input" />
+                                    <p class="text-[11px] text-slate-400 mt-1">Vazio = <span class="font-mono">{{ $bcChannel }}</span></p>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">Evento (.event)</label>
+                                    <input type="text" wire:model.live="broadcastEvent"
+                                        placeholder="{{ $bcEvent }}"
+                                        class="font-mono cfg-input" />
+                                    <p class="text-[11px] text-slate-400 mt-1">Vazio = <span class="font-mono">{{ $bcEvent }}</span></p>
+                                </div>
+                            </div>
+
+                            {{-- Preview do listener gerado --}}
+                            <div class="mt-1 p-3 rounded-lg bg-slate-900 text-[11px] font-mono leading-relaxed">
+                                <p class="text-slate-500 mb-1.5">// Listener auto-registrado no BaseCrud:</p>
+                                <p class="text-indigo-300">&quot;echo:{{ $bcChannel }},{{ $bcEvent }}&quot; <span class="text-slate-500">=&gt;</span> <span class="text-green-400">'handleBaseCrudUpdate'</span></p>
+                                <p class="text-slate-500 mt-1.5 text-[10px]">No Observer do Laravel, emita: <span class="text-yellow-300">broadcast(new \App\Events\{{ $bcBase }}Updated())-&gt;toOthers();</span></p>
+                            </div>
+                            @else
+                            <p class="text-xs text-slate-400">Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.</p>
+                            @endif
                         </div>
                     </div>
 

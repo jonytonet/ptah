@@ -56,6 +56,7 @@ class CrudConfig extends Component
 
     // ── Geral ────────────────────────────────────────────────────────────────
 
+    public string $displayName          = '';  // nome exibido no modal e toolbar
     public string $configLinkLinha       = '';
     public string $tableClass            = '';
     public string $theadClass            = '';
@@ -67,6 +68,12 @@ class CrudConfig extends Component
     public bool   $uiCompactMode         = false;
     public bool   $uiStickyHeader        = true;
     public bool   $showTotalizador       = false;
+
+    // ── Broadcast (Echo listener) ────────────────────────────────────
+
+    public bool   $broadcastEnabled = false;
+    public string $broadcastChannel = ''; // vazio = auto-gerado
+    public string $broadcastEvent   = ''; // vazio = auto-gerado
 
     // ── Permissões ───────────────────────────────────────────────────────────
 
@@ -157,6 +164,7 @@ class CrudConfig extends Component
         $this->conditionStyles = $cfg['contitionStyles'] ?? [];
 
         // Geral
+        $this->displayName     = $cfg['displayName']     ?? '';
         $this->configLinkLinha = $cfg['configLinkLinha'] ?? '';
         $this->tableClass      = $cfg['tableClass']      ?? '';
         $this->theadClass      = $cfg['theadClass']      ?? '';
@@ -175,7 +183,13 @@ class CrudConfig extends Component
         $this->uiStickyHeader  = (bool) ($ui['stickyHeader']   ?? true);
         $this->showTotalizador = (bool) ($ui['showTotalizador'] ?? false);
 
-        // Permissões
+        // Broadcast
+        $bc = $cfg['broadcast'] ?? [];
+        $this->broadcastEnabled = (bool) ($bc['enabled'] ?? false);
+        $this->broadcastChannel = $bc['channel'] ?? '';
+        $this->broadcastEvent   = $bc['event']   ?? '';
+
+        // Permições
         $perms = $cfg['permissions'] ?? [];
         $this->permissionCreate     = $perms['create']  ?? '';
         $this->permissionEdit       = $perms['edit']    ?? '';
@@ -432,6 +446,7 @@ class CrudConfig extends Component
     protected function buildConfigArray(array $existing = []): array
     {
         return array_merge($existing, [
+            'displayName'     => $this->displayName,
             'crud'            => $existing['crud']            ?? $this->model,
             'configLinkLinha' => $this->configLinkLinha,
             'configEsconderId'=> $existing['configEsconderId'] ?? false,
@@ -473,6 +488,11 @@ class CrudConfig extends Component
                 'showTotalizador'   => $this->showTotalizador,
                 'highlightOnHover'  => $existing['uiPreferences']['highlightOnHover'] ?? true,
             ]),
+            'broadcast'       => [
+                'enabled' => $this->broadcastEnabled,
+                'channel' => $this->broadcastChannel ?: null,
+                'event'   => $this->broadcastEvent   ?: null,
+            ],
         ]);
     }
 

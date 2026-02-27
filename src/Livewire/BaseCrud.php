@@ -2446,6 +2446,35 @@ class BaseCrud extends Component
         }
     }
 
+    // ── Listeners (Echo / Broadcast) ─────────────────────────────────
+
+    public function getListeners(): array
+    {
+        $base = ['refreshData' => '$refresh'];
+
+        $bc = $this->crudConfig['broadcast'] ?? [];
+        if (! empty($bc['enabled'])) {
+            $baseName = class_basename(str_replace('/', '\\', $this->model));
+            // canal: page-product-observer  (kebab)
+            $channel  = $bc['channel'] ?? 'page-' . Str::kebab($baseName) . '-observer';
+            // evento: .pageProductObserver  (deve iniciar com "." para eventos privados Echo)
+            $event    = $bc['event']   ?? '.page' . $baseName . 'Observer';
+
+            $base["echo:{$channel},{$event}"] = 'handleBaseCrudUpdate';
+        }
+
+        return $base;
+    }
+
+    /**
+     * Chamado via Echo/broadcast quando o Observer emite o evento.
+     * O Livewire já re-executa getRowsProperty() automaticamente no re-render.
+     */
+    public function handleBaseCrudUpdate(): void
+    {
+        // silent refresh — sem feedback visual extra
+    }
+
     // ── Render ────────────────────────────────────────────────────────────
 
     public function render()
@@ -2457,7 +2486,7 @@ class BaseCrud extends Component
             'permissions'      => $this->crudConfig['permissions']  ?? [],
             'exportCfg'        => $this->crudConfig['exportConfig'] ?? [],
             'totData'          => $this->totalizadoresData,
-            'crudTitle'        => $this->crudConfig['crud']         ?? $this->model,
+            'crudTitle'        => $this->crudConfig['displayName'] ?? $this->crudConfig['crud'] ?? class_basename(str_replace('/', '\\', $this->model)),
             'bulkActions'      => $this->crudConfig['bulkActions']  ?? [],
             'hasActiveFilters' => ! empty($this->textFilter) || $this->search !== '' || $this->quickDateFilter !== '',
         ]);
