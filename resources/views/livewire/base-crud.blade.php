@@ -610,7 +610,12 @@
                             <th class="px-3 py-2 font-semibold text-gray-700 whitespace-nowrap {{ $colAlign }}
                                 {{ $isSortable ? 'cursor-pointer select-none hover:bg-gray-100' : '' }}"
                                 @if($isSortable) wire:click="sortBy('{{ $colSortBy }}')" @endif>
-                                {{ $colLabel }}
+                                <span class="inline-flex items-center gap-1">
+                                    @if (!empty($col['colsCellIcon']))
+                                        <i class="{{ $col['colsCellIcon'] }}"></i>
+                                    @endif
+                                    {{ $colLabel }}
+                                </span>
                                 @if ($sort === $colSortBy)
                                     <span class="ml-1 text-primary">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
                                 @endif
