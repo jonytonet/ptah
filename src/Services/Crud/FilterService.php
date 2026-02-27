@@ -240,10 +240,11 @@ class FilterService
             }
 
             $whereHas    = $cfgFilter['whereHas']    ?? null;
-            $colRelation = $cfgFilter['colRelation'] ?? '';
-            $operator    = $cfgFilter['operator']    ?? '=';
-            $type        = $cfgFilter['type']        ?? ($whereHas ? 'relation' : 'text');
+            $colRelation = $cfgFilter['colRelation'] ?? $cfgFilter['field_relation'] ?? '';
+            $operator    = $cfgFilter['operator']    ?? $cfgFilter['defaultOperator'] ?? '=';
+            $type        = $cfgFilter['type']        ?? $cfgFilter['colsFilterType']  ?? ($whereHas ? 'relation' : 'text');
             $logic       = $cfgFilter['logic']       ?? 'AND';
+            $aggregate   = $cfgFilter['aggregate']   ?? null;
 
             $options = ['logic' => $logic];
 
@@ -251,6 +252,10 @@ class FilterService
                 $options['whereHas']    = $whereHas;
                 $options['column']      = $colRelation;
                 $options['colRelation'] = $colRelation;
+                if ($aggregate) {
+                    $options['aggregate']      = $aggregate;
+                    $options['aggregateColumn'] = $colRelation;
+                }
             }
 
             // Se operador for IN e valor for string CSV

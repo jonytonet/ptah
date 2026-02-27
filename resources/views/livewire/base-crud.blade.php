@@ -495,7 +495,7 @@
                             @php
                                 $cfField = $cf['field'] ?? '';
                                 $cfLabel = $cf['label'] ?? $cf['field'] ?? '';
-                                $cfType  = ($cf['useSearchDropDown'] ?? 'N') === 'S' ? 'searchdropdown' : 'text';
+                                $cfType  = $cf['colsFilterType'] ?? (($cf['useSearchDropDown'] ?? 'N') === 'S' ? 'searchdropdown' : 'text');
                             @endphp
                             @if ($cfField)
                                 <div>
@@ -520,6 +520,23 @@
                                                 </div>
                                             @endif
                                         </div>
+                                    @elseif ($cfType === 'date')
+                                        <input type="date"
+                                            wire:model.live="filters.{{ $cfField }}"
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                    @elseif ($cfType === 'number')
+                                        <input type="number"
+                                            wire:model.live.debounce.400ms="filters.{{ $cfField }}"
+                                            placeholder="{{ $cfLabel }}..."
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                    @elseif ($cfType === 'select' && !empty($cf['colsSelect']))
+                                        <select wire:model.live="filters.{{ $cfField }}"
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none">
+                                            <option value="">-- Todos --</option>
+                                            @foreach ($cf['colsSelect'] as $optLabel => $optVal)
+                                                <option value="{{ $optVal }}">{{ $optLabel }}</option>
+                                            @endforeach
+                                        </select>
                                     @else
                                         <input type="text"
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
