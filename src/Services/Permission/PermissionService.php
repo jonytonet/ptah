@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Permission;
 
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
@@ -13,6 +11,7 @@ use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Models\PageObject;
 use Ptah\Models\PermissionAudit;
 use Ptah\Models\UserRole;
+use Ptah\Traits\ResolvesUser;
 
 /**
  * Serviço central de verificação de permissões do Ptah.
@@ -27,44 +26,11 @@ use Ptah\Models\UserRole;
  */
 class PermissionService implements PermissionServiceContract
 {
+    use ResolvesUser;
+
     // ─────────────────────────────────────────
-    // Resolução de usuário / empresa
+    // Resolução de empresa
     // ─────────────────────────────────────────
-
-    /**
-     * Resolve o ID numérico do usuário a partir de diferentes inputs.
-     *
-     * @param  mixed $user  Null, int/string, Authenticatable, ou Model
-     * @return int|null
-     */
-    protected function resolveUserId(mixed $user): ?int
-    {
-        if ($user === null) {
-            // Tenta auth() padrão do Laravel
-            if (auth()->check()) {
-                return (int) auth()->id();
-            }
-
-            // Fallback: chave de session personalizada (apps legados)
-            $sessionKey = config('ptah.permissions.user_session_key');
-            if ($sessionKey && Session::has($sessionKey)) {
-                return (int) Session::get($sessionKey);
-            }
-
-            return null;
-        }
-
-        if (is_int($user) || (is_string($user) && ctype_digit($user))) {
-            return (int) $user;
-        }
-
-        if ($user instanceof Authenticatable || $user instanceof Model) {
-            $field = config('ptah.permissions.user_id_field', 'id');
-            return (int) $user->{$field};
-        }
-
-        return null;
-    }
 
     /**
      * Resolve o ID da empresa ativa.
@@ -112,6 +78,9 @@ class PermissionService implements PermissionServiceContract
 
     /**
      * {@inheritdoc}
+     *
+     * Implementação unificada: delega ao mapa completo cacheado por getPermissions().
+     * Elimina o cache duplo (individual + mapa) que causava dados stale após revogação.
      */
     public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
     {
@@ -124,35 +93,22 @@ class PermissionService implements PermissionServiceContract
 
         // 1. Short-circuit: roles MASTER passam em tudo
         if ($this->isMasterById($userId)) {
-            // Auditoria de MASTER apenas se habilitada
             if (config('ptah.permissions.audit') && config('ptah.permissions.audit_master')) {
-                $this->writeAudit($userId, $companyId, $objectKey, $action, 'granted');
+                $this->writeAudit($userId, $companyId, $objectKey, strtolower($action), 'granted');
             }
             return true;
         }
 
         $resolvedCompanyId = $this->resolveCompanyId($companyId);
-        $action = strtolower($action);
+        $action            = strtolower($action);
 
-        // 2. Verifica cache
-        if ($this->cacheEnabled()) {
-            $key = $this->cacheKey('perm', $userId, $resolvedCompanyId, "{$objectKey}:{$action}");
-            if (Cache::has($key)) {
-                return (bool) Cache::get($key);
-            }
-        }
+        // 2. Busca no mapa completo (única fonte de verdade, já cacheada)
+        //    Garante consistência: clearCache() invalida o mapa e esta leitura reflete
+        //    imediatamente qualquer mudança de role/permissão.
+        $map    = $this->getPermissions($user, $resolvedCompanyId);
+        $result = (bool) ($map[$objectKey][$action] ?? false);
 
-        // 3. Consulta DB
-        $actionColumn = "can_{$action}";
-        $result       = $this->queryPermission($userId, $resolvedCompanyId, $objectKey, $actionColumn);
-
-        // 4. Armazena em cache
-        if ($this->cacheEnabled()) {
-            $key = $this->cacheKey('perm', $userId, $resolvedCompanyId, "{$objectKey}:{$action}");
-            Cache::put($key, $result, $this->ttl());
-        }
-
-        // 5. Auditoria
+        // 3. Auditoria
         if (config('ptah.permissions.audit')) {
             if (!$result || config('ptah.permissions.audit_denied')) {
                 $this->writeAudit($userId, $resolvedCompanyId, $objectKey, $action, $result ? 'granted' : 'denied');
@@ -335,6 +291,12 @@ class PermissionService implements PermissionServiceContract
     // DB queries internas
     // ─────────────────────────────────────────
 
+    /**
+     * Consulta direta ao DB se um usuário tem permissão para uma ação em um objeto.
+     *
+     * @internal Mantido para uso em subclasses que precisem de consulta pontual sem o mapa.
+     *           O método check() usa getPermissions() (mapa cacheado) como fonte de verdade.
+     */
     protected function queryPermission(int $userId, ?int $companyId, string $objectKey, string $actionColumn): bool
     {
         return UserRole::query()

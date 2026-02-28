@@ -103,7 +103,7 @@ return [
     |--------------------------------------------------------------------------
     | Módulos opcionais
     |--------------------------------------------------------------------------
-    | Use `php artisan ptah:module {auth|menu}` para instalar cada módulo.
+    | Use `php artisan ptah:module {auth|menu|company|permissions}` para instalar cada módulo.
     */
     'modules' => [
         'auth'        => env('PTAH_MODULE_AUTH', false),

@@ -27,6 +27,10 @@ return new class extends Migration
             $table->softDeletes();
 
             // Evita duplicação user+role+empresa
+            // ⚠ LIMITAÇÃO MYSQL: índices UNIQUE com NULL permitem múltiplas linhas
+            //   com company_id IS NULL (NULL ≠ NULL em SQL). Em PostgreSQL 15+
+            //   e MySQL 8.0.13+ é possível usar partial/functional indexes.
+            //   A aplicação garante unicidade via updateOrCreate com WHERE IS NULL.
             $table->unique(['user_id', 'role_id', 'company_id'], 'ptah_user_roles_unique');
             $table->index(['user_id', 'is_active']);
         });

@@ -85,7 +85,18 @@ class DefaultAdminSeeder extends Seeder
             return;
         }
 
-        $admin = $userModel::withTrashed()->where('email', $adminEmail)->first()
+        // Verifica se o model usa SoftDeletes antes de chamar withTrashed()
+        $usesSoftDeletes = in_array(
+            \Illuminate\Database\Eloquent\SoftDeletes::class,
+            class_uses_recursive($userModel),
+            true
+        );
+
+        $adminQuery = $usesSoftDeletes
+            ? $userModel::withTrashed()->where('email', $adminEmail)
+            : $userModel::where('email', $adminEmail);
+
+        $admin = $adminQuery->first()
             ?? $userModel::create([
                 'name'     => $adminName,
                 'email'    => $adminEmail,

@@ -38,7 +38,7 @@ class CompanyList extends Component
     public array  $settings   = [];
 
     // ── Confirmação de exclusão ────────────────────────────────────────
-    public ?int  $deleteId        = false;
+    public ?int  $deleteId        = null;
     public bool  $showDeleteModal = false;
 
     // ── Feedback ──────────────────────────────────────────────────────

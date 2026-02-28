@@ -8,12 +8,15 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
 /**
- * Ativa módulos opcionais do Ptah (auth, menu).
+ * Ativa módulos opcionais do Ptah: auth, menu, company, permissions.
  *
  * Uso:
  *   php artisan ptah:module auth
  *   php artisan ptah:module menu
+ *   php artisan ptah:module company
+ *   php artisan ptah:module permissions
  *   php artisan ptah:module --list
+ *   php artisan ptah:module --force
  */
 class ModuleCommand extends Command
 {

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Company;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Models\Company;
 use Ptah\Models\UserRole;
+use Ptah\Traits\ResolvesUser;
 
 /**
  * Gerencia empresas e contexto de empresa ativa.
@@ -21,6 +20,8 @@ use Ptah\Models\UserRole;
  */
 class CompanyService implements CompanyServiceContract
 {
+    use ResolvesUser;
+
     protected string $sessionKey;
 
     public function __construct()
@@ -126,23 +127,6 @@ class CompanyService implements CompanyServiceContract
     // Helpers internos
     // ─────────────────────────────────────────
 
-    protected function resolveUserId(mixed $user): ?int
-    {
-        if ($user === null) {
-            return auth()->check() ? (int) auth()->id() : null;
-        }
-
-        if (is_int($user) || (is_string($user) && ctype_digit($user))) {
-            return (int) $user;
-        }
-
-        if ($user instanceof Authenticatable || $user instanceof Model) {
-            $field = config('ptah.permissions.user_id_field', 'id');
-            return (int) $user->{$field};
-        }
-
-        return null;
-    }
 
     /**
      * Cria a empresa padrão inicial usando config da aplicação.
