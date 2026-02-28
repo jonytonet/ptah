@@ -11,10 +11,10 @@
           ...
       </x-forge-auth-layout>
 --}}
-@props([
-    'appName' => config('app.name', 'Ptah'),
-    'title'   => null,
-])
+@php
+    $appName = $appName ?? config('app.name', 'Ptah');
+    $title   = $title ?? null;
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -70,9 +70,10 @@
 
         @hasSection('content')
             @yield('content')
-        @else
+        @endif
+        @sectionMissing('content')
             {{ $slot ?? '' }}
-        @endhasSection
+        @endif
     </div>
 
     {{-- Footer --}}
