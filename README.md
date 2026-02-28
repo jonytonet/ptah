@@ -67,10 +67,12 @@ O pacote é dividido em três subsistemas complementares:
   - [FormValidatorService](#formvalidatorservice)
   - [CrudConfigService](#crudconfigservice)
   - [CacheService](#cacheservice)
-- [Módulos Opcionais — Auth & Menu](#-módulos-opcionais--auth--menu)
+- [Módulos Opcionais — Auth, Menu, Company & Permissions](#-módulos-opcionais--auth-menu-company--permissions)
   - [Ativando os módulos](#ativando-os-módulos)
   - [Módulo Auth — visão rápida](#módulo-auth--visão-rápida)
   - [Módulo Menu — visão rápida](#módulo-menu--visão-rápida)
+  - [Módulo Company — visão rápida](#módulo-company--visão-rápida)
+  - [Módulo Permissions — visão rápida](#módulo-permissions--visão-rápida)
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
 - [Comandos disponíveis](#-comandos-disponíveis)
@@ -1745,16 +1747,20 @@ if ($cache->supportsTagging()) {
 
 ---
 
-## 🔐 Módulos Opcionais — Auth & Menu
+## 🔐 Módulos Opcionais — Auth, Menu, Company & Permissions
 
-O Ptah possui dois módulos opcionais que podem ser ativados de forma independente, sem afetar projetos que usam apenas o scaffolding e o `BaseCrud`.
+O Ptah possui quatro módulos opcionais que podem ser ativados de forma independente, sem afetar projetos que usam apenas o scaffolding e o `BaseCrud`.
 
 | Módulo | Funcionalidades |
 |---|---|
 | **auth** | Login com rate limit, recuperação de senha, 2FA (TOTP + e-mail + recovery codes), sessões ativas, perfil com foto |
 | **menu** | Menu lateral dinâmico via banco de dados com cache, estrutura em árvore e driver pattern (retrocompatível) |
+| **company** | Gestão de empresas e departamentos, slug automático, seeder idempotente, suporte multi-empresa ou tenant único |
+| **permissions** | RBAC completo — roles, páginas, objetos, middleware, helpers, Blade directives, auditoria e cache de permissões |
 
-> **Documentação completa → [docs/Modules.md](docs/Modules.md)**
+> **Documentação completa → [docs/Modules.md](docs/Modules.md)**  
+> **Referência Company → [docs/Company.md](docs/Company.md)**  
+> **Referência Permissions → [docs/Permissions.md](docs/Permissions.md)**
 
 ### Ativando os módulos
 
@@ -1764,6 +1770,12 @@ php artisan ptah:module auth
 
 # Ativar menu dinâmico
 php artisan ptah:module menu
+
+# Ativar gestão de empresas e departamentos
+php artisan ptah:module company
+
+# Ativar RBAC completo (ativa company automaticamente se necessário)
+php artisan ptah:module permissions
 
 # Ver estado de todos os módulos
 php artisan ptah:module --list
@@ -1777,6 +1789,8 @@ Ou ative manualmente via `.env`:
 PTAH_MODULE_AUTH=true
 PTAH_MODULE_MENU=true
 PTAH_MENU_DRIVER=database   # 'config' (padrão) ou 'database'
+PTAH_MODULE_COMPANY=true
+PTAH_MODULE_PERMISSIONS=true
 ```
 
 ### Módulo Auth — visão rápida
@@ -1815,6 +1829,55 @@ O menu da sidebar suporta dois drivers:
 A troca de driver **não quebra projetos existentes** — o driver `config` é o padrão e nenhum código precisa ser alterado.
 
 Quando `driver = database`, o `forge-sidebar` usa `MenuService::getTree()` automaticamente (com cache configurável). O `forge-navbar` exibe um ícone ⚙️ (link para `/ptah-menu`) quando o módulo está ativo.
+
+### Módulo Company — visão rápida
+
+Quando `PTAH_MODULE_COMPANY=true`, o sistema de empresas e departamentos é ativado:
+
+```php
+// Via service
+$company = app(CompanyService::class)->getDefault();
+$departments = app(CompanyService::class)->getDepartments($company->id);
+```
+
+| Recurso | Detalhes |
+|---|---|
+| Tela admin | `/ptah-companies` — listagem e gestão |
+| Slug automático | Gerado no `boot()` do model |
+| Seeder idempotente | `DefaultCompanySeeder` — nunca duplica |
+| Multi-empresa | Controlado por `PTAH_COMPANY_MULTIPLE` |
+
+> Consulte **[docs/Company.md](docs/Company.md)** para referência completa.
+
+### Módulo Permissions — visão rápida
+
+Quando `PTAH_MODULE_PERMISSIONS=true`, o RBAC completo é ativado:
+
+```php
+// Helper global
+if (ptah_can('produtos', 'editar')) { ... }
+
+// Middleware em rotas
+Route::middleware('ptah.can:produtos,criar')->group(...);
+
+// Blade directive
+@ptahCan('produtos', 'deletar')
+    <button>Deletar</button>
+@endPtahCan
+
+// Verificar MASTER role
+if (ptah_is_master()) { ... }
+```
+
+| Recurso | Detalhes |
+|---|---|
+| Roles | MASTER (todos os acessos) + roles customizadas |
+| Hierarquia | Página → Objeto → Ação (criar/editar/deletar/listar/exportar) |
+| Cache | Automático com invalidação por role (`PTAH_PERM_CACHE=true`) |
+| Auditoria | Log de verificações (`PTAH_PERM_AUDIT=true`) |
+| Admin | 5 telas: roles, páginas, objetos, permissões por usuário, auditoria |
+
+> Consulte **[docs/Permissions.md](docs/Permissions.md)** para referência completa.
 
 ---
 
@@ -1944,7 +2007,7 @@ Após publicar com `ptah:install` ou `vendor:publish --tag=ptah-stubs`, os stubs
 |---|---|
 | `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations) |
 | `php artisan ptah:forge {Entity}` | **Gera estrutura completa de uma entidade** ⭐ |
-| `php artisan ptah:module {auth\|menu}` | Ativa módulo opcional (publica migrations + atualiza .env) |
+| `php artisan ptah:module {auth\|menu\|company\|permissions}` | Ativa módulo opcional (publica migrations + atualiza .env) |
 | `php artisan ptah:module --list` | Lista módulos disponíveis e seus estados |
 | `php artisan ptah:make {Entity}` | Gerador legado (sem `--fields` e `--db`) |
 | `php artisan ptah:make-api {Entity}` | Gerador legado somente API |

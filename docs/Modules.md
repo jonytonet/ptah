@@ -1,4 +1,4 @@
-# Módulos Opcionais — Auth & Menu
+# Módulos Opcionais — Auth, Menu, Company & Permissions
 
 **Pacote:** `jonytonet/ptah`  
 **Versão mínima:** ver tags no repositório  
@@ -33,10 +33,12 @@
    - [Driver `database`](#driver-database)
    - [Model Menu](#model-menu)
    - [MenuService](#menuservice)
-7. [Comando ptah:module](#comando-ptahmodule)
-8. [Dependências Opcionais](#dependências-opcionais)
-9. [Referência de Configuração](#referência-de-configuração)
-10. [Customizando Views](#customizando-views)
+7. [Módulo Company](#módulo-company)
+8. [Módulo Permissions](#módulo-permissions)
+9. [Comando ptah:module](#comando-ptahmodule)
+10. [Dependências Opcionais](#dependências-opcionais)
+11. [Referência de Configuração](#referência-de-configuração)
+12. [Customizando Views](#customizando-views)
 
 ---
 
@@ -48,8 +50,19 @@ Os módulos **Auth** e **Menu** são subsistemas opcionais do Ptah que podem ser
 |---|---|
 | **auth** | Login com rate limit, recuperação de senha, 2FA (TOTP + e-mail), sessões ativas, perfil com foto |
 | **menu** | Menu lateral dinâmico carregado do banco, com cache e estrutura em árvore |
+| **company** | Gestão de empresas e departamentos, contexto multi-tenant por sessão |
+| **permissions** | ACL hierárquica: roles, objetos de página, permissões CRUD, middleware, Blade directives, auditoria |
 
-**Princípio de não-ruptura:** ambos os módulos são `false` por padrão. Um projeto que usa apenas o scaffolding `ptah:forge` e o `BaseCrud` continua 100% funcional sem nenhuma mudança.
+**Princípio de não-ruptura:** todos os módulos são `false` por padrão. Um projeto que usa apenas o scaffolding `ptah:forge` e o `BaseCrud` continua 100% funcional sem nenhuma mudança.
+
+**Dependências entre módulos:**
+
+```
+permissions → requer company
+company     → independente
+auth        → independente
+menu        → independente (opcional: requer auth para a tela de gestão)
+```
 
 ---
 
@@ -63,6 +76,12 @@ php artisan ptah:module auth
 
 # Ativar menu dinâmico
 php artisan ptah:module menu
+
+# Ativar gestão de empresas
+php artisan ptah:module company
+
+# Ativar ACL / permissões (ativa company automaticamente se necessário)
+php artisan ptah:module permissions
 
 # Ver estado de todos os módulos
 php artisan ptah:module --list
@@ -79,14 +98,18 @@ O comando:
 PTAH_MODULE_AUTH=true
 PTAH_MODULE_MENU=true
 PTAH_MENU_DRIVER=database   # 'config' (padrão) ou 'database'
+PTAH_MODULE_COMPANY=true
+PTAH_MODULE_PERMISSIONS=true
 ```
 
 ### Via `config/ptah.php` (manual)
 
 ```php
 'modules' => [
-    'auth' => env('PTAH_MODULE_AUTH', false),
-    'menu' => env('PTAH_MODULE_MENU', false),
+    'auth'        => env('PTAH_MODULE_AUTH', false),
+    'menu'        => env('PTAH_MODULE_MENU', false),
+    'company'     => env('PTAH_MODULE_COMPANY', false),
+    'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
 ],
 ```
 
@@ -506,6 +529,56 @@ $menu->children // HasMany(Menu)
 
 ---
 
+## Módulo Company
+
+O módulo **company** adiciona gestão completa de empresas e departamentos ao Ptah.
+
+**Recursos:**
+- CRUD de empresas com logo, dados fiscais (CNPJ/CPF/EIN/VAT), endereço em JSON e configurações arbitrárias
+- CRUD de departamentos (agrupadores de roles)
+- `CompanyService` com contexto por sessão, cache e suporte multi-empresa
+- Tela `/ptah-companies` com Livewire 3
+- `DefaultCompanySeeder` idempotente
+
+**Ativação rápida:**
+
+```bash
+php artisan ptah:module company
+```
+
+> Consulte a **documentação completa** em [Company.md](Company.md).
+
+---
+
+## Módulo Permissions
+
+O módulo **permissions** implementa ACL hierárquica granular baseada em roles.
+
+**Recursos:**
+- Roles/Perfis com departamento e cor identificadora
+- Role MASTER — bypass total de verificações
+- Páginas e Objetos de Página (button, field, section, api, report, tab, link, page)
+- Permissões por objeto: `can_create`, `can_read`, `can_update`, `can_delete` + JSON `extra`
+- `PermissionService` com cache (suporte a tags Redis), auditoria e resolução automática de usuário
+- `RoleService` com proteção de MASTER e sincronização de permissões em lote
+- Helpers globais: `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`
+- Facade `Permission::check()`
+- Diretivas Blade: `@ptahCan` / `@ptahMaster`
+- Middleware: `ptah.can:objeto,acao`
+- 5 telas admin Livewire: Departamentos, Roles, Páginas/Objetos, Usuários ACL, Auditoria
+- `DefaultAdminSeeder` idempotente que cria toda a cadeia admin
+
+**Ativação rápida:**
+
+```bash
+php artisan ptah:module permissions
+# Ativa company automaticamente se necessário
+```
+
+> Consulte a **documentação completa** em [Permissions.md](Permissions.md).
+
+---
+
 ## Comando ptah:module
 
 ```
@@ -514,7 +587,7 @@ php artisan ptah:module {module?} {--list} {--force}
 
 | Argumento/Opção | Descrição |
 |---|---|
-| `module` | `auth` ou `menu`. Se omitido, exibe seletor interativo |
+| `module` | `auth`, `menu`, `company` ou `permissions`. Se omitido, exibe seletor interativo |
 | `--list` | Exibe tabela com o estado de cada módulo |
 | `--force` | Sobrescreve arquivos publicados existentes |
 
@@ -523,12 +596,14 @@ php artisan ptah:module {module?} {--list} {--force}
 ```
   Módulos disponíveis no Ptah:
 
-  ┌────────┬───────────────────┬───────────┐
-  │ Módulo │ Variável .env     │ Estado    │
-  ├────────┼───────────────────┼───────────┤
-  │ auth   │ PTAH_MODULE_AUTH  │ ✔ ativo   │
-  │ menu   │ PTAH_MODULE_MENU  │ ✘ inativo │
-  └────────┴───────────────────┴───────────┘
+  ┌─────────────┬────────────────────────────┬───────────┐
+  │ Módulo      │ Variável .env              │ Estado    │
+  ├─────────────┼────────────────────────────┼───────────┤
+  │ auth        │ PTAH_MODULE_AUTH           │ ✔ ativo   │
+  │ menu        │ PTAH_MODULE_MENU           │ ✘ inativo │
+  │ company     │ PTAH_MODULE_COMPANY        │ ✔ ativo   │
+  │ permissions │ PTAH_MODULE_PERMISSIONS    │ ✔ ativo   │
+  └─────────────┴────────────────────────────┴───────────┘
 
   Para ativar: php artisan ptah:module {módulo}
 ```
@@ -546,6 +621,23 @@ php artisan ptah:module {module?} {--list} {--force}
 2. Executa `php artisan migrate`
 3. Adiciona `PTAH_MODULE_MENU=true` ao `.env`
 4. Exibe próximos passos
+
+**O que `ptah:module company` faz:**
+
+1. Publica as migrations `ptah_companies` e `ptah_departments`
+2. Executa `php artisan migrate`
+3. Executa `DefaultCompanySeeder` (empresa padrão idempotente)
+4. Adiciona `PTAH_MODULE_COMPANY=true` ao `.env`
+5. Exibe próximos passos
+
+**O que `ptah:module permissions` faz:**
+
+1. Ativa `company` se ainda não estiver ativo
+2. Publica as 6 migrations de permissões
+3. Executa `php artisan migrate`
+4. Executa `DefaultAdminSeeder` (empresa → departamento → MASTER role → admin → vínculo)
+5. Adiciona `PTAH_MODULE_PERMISSIONS=true` ao `.env`
+6. Exibe caixa com credenciais do admin criado
 
 ---
 
@@ -596,8 +688,10 @@ Seção completa adicionada ao `config/ptah.php`:
 |--------------------------------------------------------------------------
 */
 'modules' => [
-    'auth' => env('PTAH_MODULE_AUTH', false),
-    'menu' => env('PTAH_MODULE_MENU', false),
+    'auth'        => env('PTAH_MODULE_AUTH', false),
+    'menu'        => env('PTAH_MODULE_MENU', false),
+    'company'     => env('PTAH_MODULE_COMPANY', false),
+    'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
 ],
 
 /*
@@ -626,6 +720,38 @@ Seção completa adicionada ao `config/ptah.php`:
     'cache'     => true,
     'cache_ttl' => 300,
     'max_depth' => 4,
+],
+
+/*
+|--------------------------------------------------------------------------
+| Configurações de Company
+|--------------------------------------------------------------------------
+*/
+'company' => [
+    'table_prefix'       => 'ptah_',
+    'default_name'       => env('PTAH_COMPANY_NAME', 'Minha Empresa'),
+    'default_slug'       => env('PTAH_COMPANY_SLUG', 'minha-empresa'),
+    'allow_multiple'     => env('PTAH_COMPANY_MULTIPLE', false),
+    'require_department' => env('PTAH_COMPANY_REQUIRE_DEPT', false),
+    'route_prefix'       => 'ptah-companies',
+    'middleware'         => ['web', 'auth'],
+],
+
+/*
+|--------------------------------------------------------------------------
+| Configurações de Permissions
+|--------------------------------------------------------------------------
+*/
+'permissions' => [
+    'cache_enabled'  => env('PTAH_PERM_CACHE', true),
+    'cache_ttl'      => env('PTAH_PERM_CACHE_TTL', 300),
+    'audit_enabled'  => env('PTAH_PERM_AUDIT', false),
+    'master_role'    => 'MASTER',
+    'route_prefix'   => 'ptah-admin',
+    'middleware'      => ['web', 'auth'],
+    'admin_name'     => env('PTAH_ADMIN_NAME', 'Admin'),
+    'admin_email'    => env('PTAH_ADMIN_EMAIL', 'admin@ptah.test'),
+    'admin_password' => env('PTAH_ADMIN_PASSWORD', 'ptah@admin'),
 ],
 ```
 
