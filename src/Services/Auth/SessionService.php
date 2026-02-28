@@ -28,14 +28,14 @@ class SessionService
                 $agent   = $this->parseAgent($session->user_agent ?? '');
                 $current = ($session->id === Request::session()->getId());
 
-                return (object) [
-                    'id'            => $session->id,
-                    'ip_address'    => $session->ip_address ?? 'desconhecido',
-                    'user_agent'    => $session->user_agent ?? '',
-                    'browser'       => $agent['browser'],
-                    'platform'      => $agent['platform'],
-                    'last_activity' => \Carbon\Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
-                    'is_current'    => $current,
+                return [
+                    'id'                 => $session->id,
+                    'ip_address'         => $session->ip_address ?? 'desconhecido',
+                    'user_agent'         => $session->user_agent ?? '',
+                    'browser'            => $agent['browser'],
+                    'platform'           => $agent['platform'],
+                    'last_activity_human'=> \Carbon\Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
+                    'is_current'         => $current,
                 ];
             });
     }

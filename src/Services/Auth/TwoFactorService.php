@@ -145,6 +145,32 @@ class TwoFactorService
     }
 
     /**
+     * Retorna os recovery codes descriptografados do usuário.
+     */
+    public function getRecoveryCodes(Authenticatable $user): array
+    {
+        if (! $user->two_factor_recovery_codes) {
+            return [];
+        }
+
+        return json_decode(decrypt($user->two_factor_recovery_codes), true) ?? [];
+    }
+
+    /**
+     * Gera novos recovery codes, salva encrypted e retorna o array plain.
+     */
+    public function regenerateRecoveryCodes(Authenticatable $user): array
+    {
+        $codes = $this->generateRecoveryCodes();
+
+        $user->forceFill([
+            'two_factor_recovery_codes' => encrypt(json_encode($codes)),
+        ])->save();
+
+        return $codes;
+    }
+
+    /**
      * Desativa o 2FA completamente.
      */
     public function disable(Authenticatable $user): void

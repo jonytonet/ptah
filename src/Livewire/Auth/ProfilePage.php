@@ -7,8 +7,8 @@ namespace Ptah\Livewire\Auth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Ptah\Services\Auth\SessionService;
@@ -26,22 +26,17 @@ class ProfilePage extends Component
     public string $email = '';
 
     // ── Aba: Senha ─────────────────────────────────────────────────────
-    #[Rule('required|string|min:8')]
-    public string $current_password = '';
-
-    #[Rule('required|string|min:8|confirmed')]
-    public string $new_password = '';
-
-    #[Rule('required|string')]
-    public string $new_password_confirmation = '';
+    public string $current_password      = '';
+    public string $password              = '';
+    public string $password_confirmation = '';
 
     // ── Aba: 2FA ───────────────────────────────────────────────────────
-    public string $twoFactorType   = '';  // totp | email
-    public string $totpSecret      = '';
-    public string $totpQrUri       = '';
-    public array  $recoveryCodes   = [];
-    public string $twoFactorCode   = '';
-    public bool   $showSetup2fa    = false;
+    public string $totpType      = '';   // totp | email
+    public string $totpSecret    = '';
+    public string $qrCodeSvg     = '';
+    public array  $recoveryCodes = [];
+    public string $totp_code     = '';
+    public bool   $showSetup2fa  = false;
 
     // ── Aba: Sessões ───────────────────────────────────────────────────
     public array $sessions = [];
@@ -55,30 +50,36 @@ class ProfilePage extends Component
 
     public function mount(): void
     {
-        $user        = Auth::user();
-        $this->name  = $user->name ?? '';
-        $this->email = $user->email ?? '';
-        $this->twoFactorType = $user->two_factor_type ?? '';
+        $user           = Auth::user();
+        $this->name     = $user->name  ?? '';
+        $this->email    = $user->email ?? '';
+        $this->totpType = $user->two_factor_type ?? '';
     }
 
-    // ── Profile ────────────────────────────────────────────────────────────
+    // ── Perfil ─────────────────────────────────────────────────────────────
 
-    public function updateProfile(): void
+    public function saveProfile(): void
     {
-        $this->validate(['name' => 'required|string|max:255', 'email' => 'required|email|max:255']);
-        $user = Auth::user();
+        $this->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+        ]);
 
-        $user->forceFill(['name' => $this->name, 'email' => $this->email])->save();
+        Auth::user()->forceFill([
+            'name'  => $this->name,
+            'email' => $this->email,
+        ])->save();
+
         $this->flash('Perfil atualizado com sucesso!');
     }
 
-    // ── Password ───────────────────────────────────────────────────────────
+    // ── Senha ──────────────────────────────────────────────────────────────
 
-    public function updatePassword(): void
+    public function savePassword(): void
     {
         $this->validate([
-            'current_password'          => 'required',
-            'new_password'              => 'required|min:8|confirmed',
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:8|confirmed',
         ]);
 
         $user = Auth::user();
@@ -88,8 +89,8 @@ class ProfilePage extends Component
             return;
         }
 
-        $user->forceFill(['password' => Hash::make($this->new_password)])->save();
-        $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
+        $user->forceFill(['password' => Hash::make($this->password)])->save();
+        $this->reset(['current_password', 'password', 'password_confirmation']);
         $this->flash('Senha alterada com sucesso!');
     }
 
@@ -98,18 +99,19 @@ class ProfilePage extends Component
     public function initTotp(TwoFactorService $twoFactor): void
     {
         $data = $twoFactor->enableTotp(Auth::user());
+
         $this->totpSecret    = $data['secret'];
-        $this->totpQrUri     = $data['qr_image_uri'];
+        $this->qrCodeSvg     = $data['qr_image_uri'];
         $this->recoveryCodes = $data['recovery_codes'];
-        $this->twoFactorType = 'totp';
+        $this->totpType      = 'totp';
         $this->showSetup2fa  = true;
     }
 
     public function confirmTotp(TwoFactorService $twoFactor): void
     {
-        $this->validate(['twoFactorCode' => 'required|string|size:6']);
+        $this->validate(['totp_code' => 'required|string|size:6']);
 
-        if ($twoFactor->confirmTotp(Auth::user(), $this->twoFactorCode, $this->recoveryCodes)) {
+        if ($twoFactor->confirmTotp(Auth::user(), $this->totp_code, $this->recoveryCodes)) {
             $this->showSetup2fa  = false;
             $this->recoveryCodes = [];
             $this->flash('Autenticação TOTP ativada!');
@@ -117,29 +119,40 @@ class ProfilePage extends Component
             $this->errorMsg = 'Código inválido. Tente novamente.';
         }
 
-        $this->reset('twoFactorCode');
+        $this->reset('totp_code');
     }
 
     public function enableEmailTwoFactor(TwoFactorService $twoFactor): void
     {
         $twoFactor->sendEmailCode(Auth::user());
-        $this->twoFactorType = 'email';
+        $this->totpType = 'email';
         $this->flash('Código enviado! Verifique seu e-mail para confirmar.');
+    }
+
+    public function loadRecoveryCodes(TwoFactorService $twoFactor): void
+    {
+        $this->recoveryCodes = $twoFactor->getRecoveryCodes(Auth::user());
+    }
+
+    public function regenerateRecoveryCodes(TwoFactorService $twoFactor): void
+    {
+        $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(Auth::user());
+        $this->flash('Códigos regenerados. Guarde-os em local seguro!');
     }
 
     public function disableTwoFactor(TwoFactorService $twoFactor): void
     {
         $twoFactor->disable(Auth::user());
-        $this->twoFactorType = '';
+        $this->totpType     = '';
+        $this->showSetup2fa = false;
         $this->flash('Autenticação em duas etapas desativada.');
     }
 
-    // ── Sessions ───────────────────────────────────────────────────────────
+    // ── Sessões ────────────────────────────────────────────────────────────
 
     public function loadSessions(SessionService $sessionService): void
     {
-        $sessions = $sessionService->getActiveSessions(Auth::user());
-        $this->sessions = $sessions->toArray();
+        $this->sessions = $sessionService->getActiveSessions(Auth::user())->toArray();
     }
 
     public function revokeSession(string $sessionId, SessionService $sessionService): void
@@ -159,15 +172,35 @@ class ProfilePage extends Component
         $this->flash("{$count} sessão(ões) encerrada(s).");
     }
 
-    // ── Photo ──────────────────────────────────────────────────────────────
+    // ── Foto ───────────────────────────────────────────────────────────────
 
-    public function updatePhoto(): void
+    public function savePhoto(): void
     {
         $this->validate(['photo' => 'required|image|max:2048']);
+
+        $old  = Auth::user()->profile_photo_path;
         $path = $this->photo->store('profile-photos', 'public');
+
         Auth::user()->forceFill(['profile_photo_path' => $path])->save();
+
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
+
         $this->reset('photo');
         $this->flash('Foto atualizada!');
+    }
+
+    public function removePhoto(): void
+    {
+        $user = Auth::user();
+
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+            $user->forceFill(['profile_photo_path' => null])->save();
+        }
+
+        $this->flash('Foto removida.');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

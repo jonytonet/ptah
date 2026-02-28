@@ -15,8 +15,8 @@
         {{-- ── ABA: PERFIL ── --}}
         @if ($activeTab === 'profile')
         <x-forge-card>
-            @if (session('profile_updated'))
-                <x-forge-alert type="success" class="mb-4">Perfil atualizado com sucesso.</x-forge-alert>
+            @if ($successMsg)
+                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
             @endif
 
             <form wire:submit="saveProfile" class="space-y-5 max-w-lg">
@@ -31,8 +31,11 @@
         {{-- ── ABA: SENHA ── --}}
         @if ($activeTab === 'password')
         <x-forge-card>
-            @if (session('password_updated'))
-                <x-forge-alert type="success" class="mb-4">Senha alterada com sucesso.</x-forge-alert>
+            @if ($successMsg)
+                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
+            @endif
+            @if ($errorMsg)
+                <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
             @endif
 
             <form wire:submit="savePassword" class="space-y-5 max-w-lg">
@@ -51,11 +54,11 @@
         {{-- ── ABA: 2FA ── --}}
         @if ($activeTab === 'two_factor')
         <x-forge-card>
-            @if (session('2fa_updated'))
-                <x-forge-alert type="success" class="mb-4">{{ session('2fa_updated') }}</x-forge-alert>
+            @if ($successMsg)
+                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
             @endif
-            @if ($errors->has('totp_code'))
-                <x-forge-alert type="danger" class="mb-4">{{ $errors->first('totp_code') }}</x-forge-alert>
+            @if ($errorMsg)
+                <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
             @endif
 
             {{-- Habilitar −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−--}}
@@ -86,7 +89,7 @@
                             <div class="space-y-4">
                                 <p class="text-sm text-gray-600">Escaneie o QR code com o seu aplicativo autenticador:</p>
                                 <div class="flex justify-center p-3 bg-white rounded-lg border border-gray-200 w-fit mx-auto">
-                                    {!! $qrCodeSvg !!}
+                                    <img src="{{ $qrCodeSvg }}" alt="QR Code 2FA" class="w-[200px] h-[200px]">
                                 </div>
                                 <p class="text-xs text-gray-500 text-center">
                                     Ou insira a chave manualmente: <code class="font-mono bg-gray-100 dark:bg-dark-3 px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
@@ -144,7 +147,7 @@
                         </x-forge-button>
                     </div>
                     @else
-                    <x-forge-button wire:click="$set('recoveryCodes', auth()->user()->twoFactorRecoveryCodes())" color="secondary" size="sm">
+                    <x-forge-button wire:click="loadRecoveryCodes" color="secondary" size="sm">
                         Ver códigos de recuperação
                     </x-forge-button>
                     @endif
@@ -160,8 +163,8 @@
         {{-- ── ABA: SESSÕES ── --}}
         @if ($activeTab === 'sessions')
         <x-forge-card>
-            @if (session('sessions_revoked'))
-                <x-forge-alert type="success" class="mb-4">{{ session('sessions_revoked') }}</x-forge-alert>
+            @if ($successMsg)
+                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
             @endif
 
             <div class="flex items-center justify-between mb-4">
@@ -220,8 +223,8 @@
         {{-- ── ABA: FOTO ── --}}
         @if ($activeTab === 'photo')
         <x-forge-card>
-            @if (session('photo_updated'))
-                <x-forge-alert type="success" class="mb-4">{{ session('photo_updated') }}</x-forge-alert>
+            @if ($successMsg)
+                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
             @endif
 
             <div class="flex flex-col items-center gap-5 max-w-xs mx-auto">
