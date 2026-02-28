@@ -106,8 +106,10 @@ return [
     | Use `php artisan ptah:module {auth|menu}` para instalar cada módulo.
     */
     'modules' => [
-        'auth' => env('PTAH_MODULE_AUTH', false),
-        'menu' => env('PTAH_MODULE_MENU', false),
+        'auth'        => env('PTAH_MODULE_AUTH', false),
+        'menu'        => env('PTAH_MODULE_MENU', false),
+        'company'     => env('PTAH_MODULE_COMPANY', false),
+        'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
     ],
 
     /*
@@ -136,6 +138,64 @@ return [
         'cache'     => true,
         'cache_ttl' => 300,
         'max_depth' => 4,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo Company
+    |--------------------------------------------------------------------------
+    | Gerenciamento de empresas/filiais.
+    | logo_disk / logo_path: onde os logos são armazenados.
+    | address_fields: campos disponíveis no JSON de endereço.
+    */
+    'company' => [
+        'model'          => \Ptah\Models\Company::class,
+        'table'          => 'ptah_companies',
+        'logo_disk'      => env('PTAH_LOGO_DISK', 'public'),
+        'logo_path'      => env('PTAH_LOGO_PATH', 'company-logos'),
+        'address_fields' => [
+            'street', 'number', 'complement', 'district',
+            'city', 'state', 'zip_code', 'country',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo Permissions
+    |--------------------------------------------------------------------------
+    | Sistema de controle de acesso hierárquico:
+    | Empresa → Perfil/Role (is_master = bypass total) → Página → Objeto → CRUD
+    |
+    | cache          : habilita cache de permissões (altamente recomendado)
+    | cache_ttl      : TTL em segundos
+    | user_model     : model User da aplicação host (sem FK hard-coded)
+    | user_id_field  : campo PK do model User
+    | company_session_key : chave da session para empresa/filial ativa
+    | user_session_key    : chave de session para user id (apps sem auth padrão)
+    | audit          : gravar log de acessos na tabela ptah_permission_audits
+    | audit_denied   : gravar também acessos negados
+    | audit_master   : gravar acessos de usuários com role MASTER
+    | multi_company  : usuário pode ter roles em múltiplas empresas
+    | allow_guest    : se false, guests sempre retornam false
+    | admin_name     : nome do usuário admin criado no seeder
+    | admin_email    : e-mail do usuário admin
+    | admin_password : senha inicial do admin (alterar após primeiro login!)
+    */
+    'permissions' => [
+        'cache'               => env('PTAH_PERMISSION_CACHE', true),
+        'cache_ttl'           => (int) env('PTAH_PERMISSION_CACHE_TTL', 3600),
+        'user_model'          => env('PTAH_USER_MODEL', 'App\Models\User'),
+        'user_id_field'       => env('PTAH_USER_ID_FIELD', 'id'),
+        'company_session_key' => env('PTAH_COMPANY_SESSION_KEY', 'ptah_company_id'),
+        'user_session_key'    => env('PTAH_USER_SESSION_KEY', null),
+        'audit'               => env('PTAH_PERMISSION_AUDIT', false),
+        'audit_denied'        => env('PTAH_PERMISSION_AUDIT_DENIED', true),
+        'audit_master'        => env('PTAH_PERMISSION_AUDIT_MASTER', false),
+        'multi_company'       => env('PTAH_MULTI_COMPANY', true),
+        'allow_guest'         => env('PTAH_PERMISSION_ALLOW_GUEST', false),
+        'admin_name'          => env('PTAH_ADMIN_NAME', 'Administrador'),
+        'admin_email'         => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
+        'admin_password'      => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
     ],
 
 ];

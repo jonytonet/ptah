@@ -13,6 +13,9 @@ use Ptah\Commands\MakeDocsCommand;
 use Ptah\Commands\MakeEntityCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
+use Ptah\Contracts\CompanyServiceContract;
+use Ptah\Contracts\PermissionServiceContract;
+use Ptah\Http\Middleware\PtahPermission;
 use Ptah\Livewire\BaseCrud;
 use Ptah\Livewire\CrudConfig;
 use Ptah\Livewire\SearchDropdown;
@@ -21,13 +24,22 @@ use Ptah\Livewire\Auth\LoginPage;
 use Ptah\Livewire\Auth\ProfilePage;
 use Ptah\Livewire\Auth\ResetPasswordPage;
 use Ptah\Livewire\Auth\TwoFactorChallengePage;
+use Ptah\Livewire\Company\CompanyList;
+use Ptah\Livewire\Permission\AuditList;
+use Ptah\Livewire\Permission\DepartmentList;
+use Ptah\Livewire\Permission\PageList;
+use Ptah\Livewire\Permission\RoleList;
+use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Services\Auth\SessionService;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Services\Cache\CacheService;
+use Ptah\Services\Company\CompanyService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Menu\MenuService;
+use Ptah\Services\Permission\PermissionService;
+use Ptah\Services\Permission\RoleService;
 use Ptah\Support\SchemaInspector;
 
 class PtahServiceProvider extends ServiceProvider
@@ -50,6 +62,15 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(MenuService::class);
         $this->app->singleton(TwoFactorService::class);
         $this->app->singleton(SessionService::class);
+
+        // Módulo company
+        $this->app->singleton(CompanyService::class);
+        $this->app->bind(CompanyServiceContract::class, CompanyService::class);
+
+        // Módulo permissions
+        $this->app->singleton(PermissionService::class);
+        $this->app->singleton(RoleService::class);
+        $this->app->bind(PermissionServiceContract::class, PermissionService::class);
     }
 
     /**
@@ -60,6 +81,8 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerCommands();
         $this->registerPublishing();
         $this->registerViews();
+        $this->registerBladeDirectives();
+        $this->registerMiddleware();
         $this->registerRoutes();
         $this->loadMigrations();
         $this->registerLivewire();
@@ -80,6 +103,30 @@ class PtahServiceProvider extends ServiceProvider
                 ModuleCommand::class,        // ptah:module
             ]);
         }
+    }
+
+    /**
+     * Registra diretivas Blade do Ptah.
+     */
+    protected function registerBladeDirectives(): void
+    {
+        Blade::if('ptahCan', function (string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool {
+            return ptah_can($objectKey, $action, $user, $companyId);
+        });
+
+        Blade::if('ptahMaster', function (mixed $user = null): bool {
+            return ptah_is_master($user);
+        });
+    }
+
+    /**
+     * Registra alias de middleware do pacote.
+     */
+    protected function registerMiddleware(): void
+    {
+        /** @var \Illuminate\Routing\Router $router */
+        $router = $this->app->make('router');
+        $router->aliasMiddleware('ptah.can', PtahPermission::class);
     }
 
     /**
@@ -140,6 +187,30 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__ . '/Migrations/2024_01_03_000000_create_menus_table.php'
                     => database_path('migrations/2024_01_03_000000_create_menus_table.php'),
             ], 'ptah-menu');
+
+            // Publicar módulo company (migrations)
+            $this->publishes([
+                __DIR__ . '/Migrations/2024_01_04_000000_create_ptah_companies_table.php'
+                    => database_path('migrations/2024_01_04_000000_create_ptah_companies_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000001_create_ptah_departments_table.php'
+                    => database_path('migrations/2024_01_04_000001_create_ptah_departments_table.php'),
+            ], 'ptah-company');
+
+            // Publicar módulo permissions (migrations)
+            $this->publishes([
+                __DIR__ . '/Migrations/2024_01_04_000002_create_ptah_roles_table.php'
+                    => database_path('migrations/2024_01_04_000002_create_ptah_roles_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000003_create_ptah_pages_table.php'
+                    => database_path('migrations/2024_01_04_000003_create_ptah_pages_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000004_create_ptah_page_objects_table.php'
+                    => database_path('migrations/2024_01_04_000004_create_ptah_page_objects_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000005_create_ptah_role_permissions_table.php'
+                    => database_path('migrations/2024_01_04_000005_create_ptah_role_permissions_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000006_create_ptah_user_roles_table.php'
+                    => database_path('migrations/2024_01_04_000006_create_ptah_user_roles_table.php'),
+                __DIR__ . '/Migrations/2024_01_04_000007_create_ptah_permission_audits_table.php'
+                    => database_path('migrations/2024_01_04_000007_create_ptah_permission_audits_table.php'),
+            ], 'ptah-permissions');
         }
     }
 
@@ -168,6 +239,18 @@ class PtahServiceProvider extends ServiceProvider
                 Livewire::component('ptah::auth.two-factor',         TwoFactorChallengePage::class);
                 Livewire::component('ptah::auth.profile',            ProfilePage::class);
             }
+
+            if (config('ptah.modules.company')) {
+                Livewire::component('ptah::company.list', CompanyList::class);
+            }
+
+            if (config('ptah.modules.permissions')) {
+                Livewire::component('ptah::permission.department-list', DepartmentList::class);
+                Livewire::component('ptah::permission.role-list',       RoleList::class);
+                Livewire::component('ptah::permission.page-list',       PageList::class);
+                Livewire::component('ptah::permission.user-list',       UserPermissionList::class);
+                Livewire::component('ptah::permission.audit-list',      AuditList::class);
+            }
         }
     }
 
@@ -186,6 +269,14 @@ class PtahServiceProvider extends ServiceProvider
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-auth.php');
+        }
+
+        if (config('ptah.modules.company')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-company.php');
+        }
+
+        if (config('ptah.modules.permissions')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-permissions.php');
         }
     }
 }

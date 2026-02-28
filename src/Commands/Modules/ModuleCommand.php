@@ -18,16 +18,18 @@ use Illuminate\Support\Str;
 class ModuleCommand extends Command
 {
     protected $signature = 'ptah:module
-                            {module? : Nome do módulo a ativar (auth, menu)}
+                            {module? : Nome do módulo a ativar (auth, menu, company, permissions)}
                             {--list  : Lista os módulos disponíveis e seus estados}
                             {--force : Sobrescrever arquivos existentes}';
 
-    protected $description = 'Ativa módulos opcionais do Ptah (auth, menu).';
+    protected $description = 'Ativa módulos opcionais do Ptah (auth, menu, company, permissions).';
 
     /** Módulos disponíveis: nome => env key */
     protected array $modules = [
-        'auth' => 'PTAH_MODULE_AUTH',
-        'menu' => 'PTAH_MODULE_MENU',
+        'auth'        => 'PTAH_MODULE_AUTH',
+        'menu'        => 'PTAH_MODULE_MENU',
+        'company'     => 'PTAH_MODULE_COMPANY',
+        'permissions' => 'PTAH_MODULE_PERMISSIONS',
     ];
 
     public function handle(): int
@@ -47,8 +49,10 @@ class ModuleCommand extends Command
         $this->components->info("Ativando módulo: {$module}");
 
         match ($module) {
-            'auth' => $this->activateAuth(),
-            'menu' => $this->activateMenu(),
+            'auth'        => $this->activateAuth(),
+            'menu'        => $this->activateMenu(),
+            'company'     => $this->activateCompany(),
+            'permissions' => $this->activatePermissions(),
         };
 
         $this->setEnvValue($this->modules[$module], 'true');
@@ -86,6 +90,61 @@ class ModuleCommand extends Command
         $this->components->task('Executando migrations', function () {
             $this->call('migrate');
         });
+    }
+
+    protected function activateCompany(): void
+    {
+        $this->components->task('Publicando migrations de empresas', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-company',
+                '--force' => $this->option('force'),
+            ]);
+        });
+
+        $this->components->task('Executando migrations', function () {
+            $this->call('migrate');
+        });
+
+        $this->components->task('Semeando empresa padrão', function () {
+            $this->call('db:seed', ['--class' => 'Ptah\\Seeders\\DefaultCompanySeeder']);
+        });
+    }
+
+    protected function activatePermissions(): void
+    {
+        // Garantir que company também está ativo
+        if (!config('ptah.modules.company')) {
+            $this->components->warn('Ativando dependência: módulo company');
+            $this->activateCompany();
+            $this->setEnvValue('PTAH_MODULE_COMPANY', 'true');
+        }
+
+        $this->components->task('Publicando migrations de permissões', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-permissions',
+                '--force' => $this->option('force'),
+            ]);
+        });
+
+        $this->components->task('Executando migrations', function () {
+            $this->call('migrate');
+        });
+
+        $this->components->task('Semeando admin padrão', function () {
+            $this->call('db:seed', ['--class' => 'Ptah\\Seeders\\DefaultAdminSeeder']);
+        });
+
+        $email    = config('ptah.permissions.admin_email', 'admin@admin.com');
+        $password = config('ptah.permissions.admin_password', 'admin@123');
+
+        $this->newLine();
+        $this->line('  ╔══════════════════════════════════════════╗');
+        $this->line('  ║  <fg=green>Admin criado com sucesso!</>                ║');
+        $this->line("  ║  <fg=yellow>E-mail  :</>  {$email}        ");
+        $this->line("  ║  <fg=yellow>Senha   :</>  {$password}");
+        $this->line('  ║  <fg=red>⚠ Troque a senha no primeiro acesso!</>   ║');
+        $this->line('  ╚══════════════════════════════════════════╝');
+        $this->newLine();
     }
 
     protected function listModules(): int
@@ -142,6 +201,21 @@ class ModuleCommand extends Command
         if ($module === 'menu') {
             $this->line('  1. Defina <fg=yellow>PTAH_MENU_DRIVER=database</> no .env (padrão: config)');
             $this->line('  2. Gerencie os itens em <fg=green>/ptah-menu</> (requer módulo auth ativo)');
+        }
+
+        if ($module === 'company') {
+            $this->line('  1. Acesse <fg=green>/ptah-companies</> para gerenciar empresas');
+            $this->line('  2. Configure <fg=yellow>ptah.company</> no config/ptah.php para personalizar');
+            $this->line('  3. Use <fg=yellow>CompanyService::getCurrentCompanyId()</> nas suas queries');
+        }
+
+        if ($module === 'permissions') {
+            $this->line('  1. Acesse <fg=green>/ptah-pages</> e cadastre as páginas e objetos do sistema');
+            $this->line('  2. Em <fg=green>/ptah-roles</> crie roles e configure permissões por objeto');
+            $this->line('  3. Em <fg=green>/ptah-users-acl</> atribua roles aos usuários');
+            $this->line('  4. Use <fg=yellow>@ptahCan(\'chave\', \'action\')</> nas views Blade');
+            $this->line('  5. Use <fg=yellow>Route::middleware(\'ptah.can:recurso,action\')</> nas rotas');
+            $this->line('  6. Para auditoria: defina <fg=yellow>PTAH_PERMISSION_AUDIT=true</> no .env');
         }
 
         $this->newLine();
