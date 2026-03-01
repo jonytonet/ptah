@@ -303,16 +303,27 @@
                                         <label class="cfg-label">
                                             Fonte SQL
                                             <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-700">JOIN</span>
-                                            <span class="text-slate-400 font-normal">(opcional — preencher apenas para colunas vindas de JOIN)</span>
+                                            <span class="text-slate-400 font-normal">(opcional — somente para colunas de JOIN)</span>
                                         </label>
                                         <input type="text" wire:model="formDataField.colsSource"
                                             placeholder="ex: suppliers.name"
                                             class="font-mono cfg-input" />
-                                        <p class="text-[11px] text-slate-400 mt-1">
-                                            Qualified name usado em <code class="bg-slate-100 px-1 rounded">WHERE</code> e <code class="bg-slate-100 px-1 rounded">ORDER BY</code>.
-                                            O <strong>Nome Físico</strong> acima deve ser o alias definido no JOIN (ex: <code class="bg-slate-100 px-1 rounded">supplier_name</code>),
-                                            e este campo deve ser <code class="bg-slate-100 px-1 rounded">suppliers.name</code>.
-                                        </p>
+                                        <div class="mt-2 p-3 rounded-lg border border-sky-100 bg-sky-50/60 text-[11px] space-y-1.5">
+                                            <p class="font-semibold text-sky-700">Relação entre Nome Físico e Fonte SQL:</p>
+                                            <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-slate-600">
+                                                <span class="font-mono font-semibold text-indigo-700">Nome Físico</span>
+                                                <span>= alias declarado no JOIN (ex: <code class="bg-white px-1 rounded">supplier_name</code>). É como o Blade acessa o valor.</span>
+                                                <span class="font-mono font-semibold text-sky-700">Fonte SQL</span>
+                                                <span>= nome qualificado SQL (ex: <code class="bg-white px-1 rounded">suppliers.name</code>). Usado em <code class="bg-white px-1 rounded">WHERE</code> e <code class="bg-white px-1 rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong></span>
+                                            </div>
+                                            <p class="text-slate-500 pt-1 border-t border-sky-100">Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:</p>
+                                            <ul class="space-y-0.5 text-slate-500">
+                                                <li><code class="bg-white px-1 rounded font-mono">suppliers.name</code> <span class="text-slate-400">— qualificado SQL (correto)</span></li>
+                                                <li><code class="bg-white px-1 rounded font-mono">supplier.name</code> <span class="text-slate-400">— singular Eloquent → convertido para <code class="bg-white px-1 rounded">suppliers.name</code></span></li>
+                                                <li><code class="bg-white px-1 rounded font-mono">product_supplier.product.name</code> <span class="text-slate-400">— encadeado → extraído como <code class="bg-white px-1 rounded">products.name</code></span></li>
+                                            </ul>
+                                            <p class="text-amber-700 font-medium">⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.</p>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="cfg-label">Tipo</label>
@@ -1737,8 +1748,10 @@
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
                                 <p class="pt-1 text-slate-500">JOINs configuráveis permitem trazer colunas de outras tabelas <strong>sem relacionamento Eloquent</strong>, com suporte a filtro, sort e export.</p>
 
+                                {{-- Exemplo simples --}}
                                 <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
-                                    <p class="font-semibold text-slate-700">① Configure o JOIN aqui</p>
+                                    <p class="font-semibold text-slate-700">Exemplo simples — 1 nível</p>
+                                    <p class="text-[11px] text-slate-400 mb-2">Mostrar o nome do fornecedor diretamente em <code class="bg-slate-100 px-1 rounded">products</code>:</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Tipo</span>         <span class="text-indigo-700">left</span>
                                         <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">suppliers</span>
@@ -1746,22 +1759,57 @@
                                         <span class="text-slate-400">ON direita</span>  <span class="text-indigo-700">suppliers.id</span>
                                         <span class="text-slate-400">Colunas</span>     <span class="text-indigo-700">suppliers.name:supplier_name</span>
                                     </div>
-                                </div>
-
-                                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
-                                    <p class="font-semibold text-slate-700">② Adicione a coluna na aba <span class="text-indigo-600">Colunas</span></p>
-                                    <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
-                                        <span class="text-slate-400">Nome Físico</span>    <span class="text-indigo-700">supplier_name</span>
-                                        <span class="text-slate-400">Fonte SQL</span>      <span class="text-indigo-700">suppliers.name</span>
-                                        <span class="text-slate-400">Gravar</span>         <span class="text-slate-400">— desativado —</span>
+                                    <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
+                                        <span class="text-slate-500 font-sans">Na aba Colunas:</span><span></span>
+                                        <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">supplier_name</span>
+                                        <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">suppliers.name</span>
+                                        <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 mt-1">O <em>Nome Físico</em> é o alias (acessível no Blade). A <em>Fonte SQL</em> (<code class="bg-slate-100 px-1 rounded">colsSource</code>) é o qualified name usado em WHERE e ORDER BY — sem ela, filtros e sort não funcionarão nessa coluna.</p>
                                 </div>
 
-                                <p class="text-[11px] text-slate-400">
-                                    <strong>LEFT JOIN</strong> mantém todos os registros principais mesmo sem correspondência. Use para dados opcionais (ex: fornecedor pode ser nulo).<br>
-                                    <strong>INNER JOIN</strong> filtra apenas registros com correspondência. Use quando a relação é obrigatória.
-                                </p>
+                                {{-- Exemplo encadeado --}}
+                                <div class="p-3 bg-white border border-indigo-100 rounded-lg space-y-1.5">
+                                    <p class="font-semibold text-slate-700">Exemplo encadeado — 2 JOINs (3 níveis)</p>
+                                    <p class="text-[11px] text-slate-400 mb-2">
+                                        Mostrar o nome do produto em <code class="bg-slate-100 px-1 rounded">product_stocks</code>, onde
+                                        <code class="bg-slate-100 px-1 rounded">product_stocks → product_suppliers → products</code>.
+                                        Configure <strong>dois JOINs</strong> na ordem correta:
+                                    </p>
+
+                                    <p class="text-[11px] font-semibold text-slate-600">JOIN 1 — intermediário (sem colunas extras)</p>
+                                    <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px] mb-2">
+                                        <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">product_suppliers</span>
+                                        <span class="text-slate-400">ON esquerda</span> <span class="text-indigo-700">product_stocks.product_supplier_id</span>
+                                        <span class="text-slate-400">ON direita</span>  <span class="text-indigo-700">product_suppliers.id</span>
+                                        <span class="text-slate-400">Colunas</span>     <span class="text-slate-400">— deixar vazio —</span>
+                                    </div>
+
+                                    <p class="text-[11px] font-semibold text-slate-600">JOIN 2 — tabela de destino (com coluna)</p>
+                                    <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px] mb-2">
+                                        <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">products</span>
+                                        <span class="text-slate-400">ON esquerda</span> <span class="text-indigo-700">product_suppliers.product_id</span>
+                                        <span class="text-slate-400">ON direita</span>  <span class="text-indigo-700">products.id</span>
+                                        <span class="text-slate-400">Colunas</span>     <span class="text-indigo-700">products.name:product_name</span>
+                                    </div>
+
+                                    <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
+                                        <span class="text-slate-500 font-sans">Na aba Colunas:</span><span></span>
+                                        <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">product_name</span>
+                                        <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">products.name</span>
+                                        <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mt-1.5">O 2° JOIN pode usar colunas do 1° JOIN na condição ON — o SQL é gerado em sequência.</p>
+                                </div>
+
+                                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1">
+                                    <p class="font-semibold text-slate-700 mb-1">Regras importantes</p>
+                                    <ul class="space-y-1 text-[11px] text-slate-500 list-disc list-inside">
+                                        <li><strong>Nome Físico</strong> = alias declarado no campo Colunas acima (ex: <code class="bg-slate-100 px-1 rounded">product_name</code>)</li>
+                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL usado em WHERE/ORDER BY (ex: <code class="bg-slate-100 px-1 rounded">products.name</code>)</li>
+                                        <li><strong>Gravar</strong> deve estar <em>desativado</em> — nunca grave em colunas de outra tabela</li>
+                                        <li><strong>LEFT JOIN</strong> mantém registros sem correspondência (dados opcionais). <strong>INNER JOIN</strong> filtra apenas com correspondência.</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
 
@@ -1926,9 +1974,15 @@
                             {{-- Notice pós-JOIN --}}
                             <div class="flex gap-3 p-3.5 text-[11px] rounded-lg border border-amber-200 bg-amber-50 text-amber-800">
                                 <i class="bx bx-bulb text-base shrink-0 mt-0.5 text-amber-500"></i>
-                                <div>
-                                    <p class="font-semibold mb-1">Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span></p>
-                                    <p>Para cada alias acima, crie uma coluna com <strong>Nome Físico = alias</strong> (ex: <code class="bg-amber-100 px-1 rounded">supplier_name</code>) e preencha o campo <strong>Fonte SQL</strong> com o qualified name (ex: <code class="bg-amber-100 px-1 rounded">suppliers.name</code>). Isso habilita filtros e ordenação nessa coluna.</p>
+                                <div class="space-y-1.5">
+                                    <p class="font-semibold">Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span></p>
+                                    <p>Para cada alias definido acima, crie uma coluna com:</p>
+                                    <ul class="list-disc list-inside space-y-0.5 ml-1">
+                                        <li><strong>Nome Físico</strong> = o alias (ex: <code class="bg-amber-100 px-1 rounded">supplier_name</code>)</li>
+                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="bg-amber-100 px-1 rounded">suppliers.name</code>) — habilita filtros e ordenação</li>
+                                        <li><strong>Gravar</strong> = desativado — nunca grave em colunas de outras tabelas</li>
+                                    </ul>
+                                    <p class="text-amber-700 mt-1">Para JOINs encadeados (3+ níveis), configure um JOIN intermediário <em>sem colunas</em> e um segundo JOIN com as colunas desejadas. Veja o guia acima para o exemplo completo.</p>
                                 </div>
                             </div>
 
