@@ -16,13 +16,14 @@ class ResourceGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.resources') . "/{$context->entity}Resource.php";
+        $path = $context->subPath(config('ptah.paths.resources')) . "/{$context->entity}Resource.php";
+        $ns   = $context->subNs($context->rootNamespace . 'Http\\Resources');
 
         return $this->writeFile(
             path: $path,
             stub: 'resource',
             replacements: [
-                'namespace'       => $context->rootNamespace . 'Http\\Resources',
+                'namespace'       => $ns,
                 'entity'          => $context->entity,
                 'resource_fields' => $context->resourceFields(),
             ],

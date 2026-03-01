@@ -6,7 +6,7 @@ namespace {{ namespace }};
 
 use Ptah\Base\BaseRepository;
 use {{ model_fqn }};
-use {{ rootNamespace }}Repositories\Contracts\{{ entity }}RepositoryInterface;
+use {{ interface_fqn }};
 
 class {{ entity }}Repository extends BaseRepository implements {{ entity }}RepositoryInterface
 {

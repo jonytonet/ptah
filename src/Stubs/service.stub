@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use Ptah\Base\BaseService;
-use {{ rootNamespace }}Repositories\Contracts\{{ entity }}RepositoryInterface;
+use {{ interface_fqn }};
 
 class {{ entity }}Service extends BaseService
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use {{ rootNamespace }}Http\Controllers\Controller;
-use {{ rootNamespace }}Services\{{ entity }}Service;
+use {{ service_fqn }};
 use Illuminate\View\View;
 
 class {{ entity }}Controller extends Controller

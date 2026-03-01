@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use {{ rootNamespace }}Http\Controllers\Controller;
-use {{ rootNamespace }}Http\Requests\Store{{ entity }}Request;
-use {{ rootNamespace }}Http\Requests\Update{{ entity }}Request;
-use {{ rootNamespace }}Http\Resources\{{ entity }}Resource;
-use {{ rootNamespace }}Services\{{ entity }}Service;
+use {{ request_store_fqn }};
+use {{ request_update_fqn }};
+use {{ resource_fqn }};
+use {{ service_fqn }};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 

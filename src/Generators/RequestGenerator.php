@@ -28,13 +28,14 @@ class RequestGenerator extends AbstractGenerator
 
     public function generateStore(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.requests') . "/Store{$context->entity}Request.php";
+        $path = $context->subPath(config('ptah.paths.requests')) . "/Store{$context->entity}Request.php";
+        $ns   = $context->subNs($context->rootNamespace . 'Http\\Requests');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.store',
             replacements: [
-                'namespace' => $context->rootNamespace . 'Http\\Requests',
+                'namespace' => $ns,
                 'entity'    => $context->entity,
                 'rules'     => $context->validationRulesStore(),
             ],
@@ -45,13 +46,14 @@ class RequestGenerator extends AbstractGenerator
 
     public function generateUpdate(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.requests') . "/Update{$context->entity}Request.php";
+        $path = $context->subPath(config('ptah.paths.requests')) . "/Update{$context->entity}Request.php";
+        $ns   = $context->subNs($context->rootNamespace . 'Http\\Requests');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.update',
             replacements: [
-                'namespace' => $context->rootNamespace . 'Http\\Requests',
+                'namespace' => $ns,
                 'entity'    => $context->entity,
                 'rules'     => $context->validationRulesUpdate(),
             ],

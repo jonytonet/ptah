@@ -58,6 +58,32 @@ readonly class EntityContext
     }
 
     /**
+     * Retorna o namespace com subfolder aplicado.
+     * Ex: subNs('App\\Services') com subFolder='Product' → 'App\\Services\\Product'
+     */
+    public function subNs(string $baseNamespace): string
+    {
+        if ($this->subFolder === '') {
+            return rtrim($baseNamespace, '\\');
+        }
+
+        return rtrim($baseNamespace, '\\') . '\\' . str_replace('/', '\\', $this->subFolder);
+    }
+
+    /**
+     * Retorna o caminho de arquivo com subfolder aplicado.
+     * Ex: subPath('app/Services') com subFolder='Product' → 'app/Services/Product'
+     */
+    public function subPath(string $basePath): string
+    {
+        if ($this->subFolder === '') {
+            return rtrim($basePath, '/');
+        }
+
+        return rtrim($basePath, '/') . '/' . $this->subFolder;
+    }
+
+    /**
      * Gera a lista $fillable como string para o stub do Model.
      * Resultado: 'name', 'price', 'status'
      */

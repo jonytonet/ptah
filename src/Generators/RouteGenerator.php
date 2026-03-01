@@ -40,7 +40,7 @@ class RouteGenerator extends AbstractGenerator
             return GeneratorResult::error($label, $routesPath, 'routes/web.php não encontrado.');
         }
 
-        $controllerFQN = $context->rootNamespace . "Http\\Controllers\\{$context->entity}Controller";
+        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers") . "\\{$context->entity}Controller";
         $routeEntry    = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])->name('{$context->entityLower}.index');";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityLower, $label);
@@ -59,7 +59,7 @@ class RouteGenerator extends AbstractGenerator
             }
         }
 
-        $controllerFQN = $context->rootNamespace . "Http\\Controllers\\Api\\{$context->entity}ApiController";
+        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers\\Api") . "\\{$context->entity}ApiController";
         $routeEntry    = "\nRoute::apiResource('{$context->entityPlural}', \\{$controllerFQN}::class);";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityPlural, $label);

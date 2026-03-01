@@ -18,13 +18,16 @@ class ControllerGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.controllers') . "/{$context->entity}Controller.php";
+        $path = $context->subPath(config('ptah.paths.controllers')) . "/{$context->entity}Controller.php";
+        $ns         = $context->subNs($context->rootNamespace . 'Http\\Controllers');
+        $serviceFqn = $context->subNs($context->rootNamespace . 'Services') . '\\' . $context->entity . 'Service';
 
         return $this->writeFile(
             path: $path,
             stub: 'controller',
             replacements: [
-                'namespace'     => $context->rootNamespace . 'Http\\Controllers',
+                'namespace'     => $ns,
+                'service_fqn'   => $serviceFqn,
                 'entity'        => $context->entity,
                 'entity_lower'  => $context->entityLower,
                 'entities'      => $context->entityPlural,

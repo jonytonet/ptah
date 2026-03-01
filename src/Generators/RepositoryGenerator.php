@@ -16,16 +16,19 @@ class RepositoryGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.repositories') . "/{$context->entity}Repository.php";
+        $path         = $context->subPath(config('ptah.paths.repositories')) . "/{$context->entity}Repository.php";
+        $ns           = $context->subNs($context->rootNamespace . 'Repositories');
+        $interfaceFqn = $context->subNs($context->rootNamespace . 'Repositories\\Contracts') . '\\' . $context->entity . 'RepositoryInterface';
 
         return $this->writeFile(
             path: $path,
             stub: 'repository',
             replacements: [
-                'namespace'     => $context->rootNamespace . 'Repositories',
+                'namespace'     => $ns,
                 'entity'        => $context->entity,
                 'rootNamespace' => $context->rootNamespace,
                 'model_fqn'     => $context->modelFqn,
+                'interface_fqn' => $interfaceFqn,
             ],
             force: $context->force,
             labelOverride: "Repository [{$context->entity}Repository]",

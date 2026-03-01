@@ -16,14 +16,15 @@ class RepositoryInterfaceGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $dir  = config('ptah.paths.repositories') . '/Contracts';
+        $dir  = $context->subPath(config('ptah.paths.repositories') . '/Contracts');
         $path = "{$dir}/{$context->entity}RepositoryInterface.php";
+        $ns   = $context->subNs($context->rootNamespace . 'Repositories\\Contracts');
 
         return $this->writeFile(
             path: $path,
             stub: 'repository.interface',
             replacements: [
-                'namespace' => $context->rootNamespace . 'Repositories\\Contracts',
+                'namespace' => $ns,
                 'entity'    => $context->entity,
             ],
             force: $context->force,

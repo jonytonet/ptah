@@ -29,8 +29,8 @@ class BindingGenerator extends AbstractGenerator
         $content    = $this->files->get($providerPath);
         $entity     = $context->entity;
         $ns         = rtrim($context->rootNamespace, '\\');
-        $interface  = "{$ns}\\Repositories\\Contracts\\{$entity}RepositoryInterface";
-        $repository = "{$ns}\\Repositories\\{$entity}Repository";
+        $interface  = $context->subNs("{$ns}\\Repositories\\Contracts") . "\\{$entity}RepositoryInterface";
+        $repository = $context->subNs("{$ns}\\Repositories") . "\\{$entity}Repository";
 
         // Idempotente — já vinculado?
         if (str_contains($content, "{$entity}RepositoryInterface::class")) {
