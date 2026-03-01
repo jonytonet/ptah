@@ -39,6 +39,7 @@
 28. [Broadcast / Tempo Real](#broadcast--tempo-real)
 29. [Tema Visual (Light / Dark)](#tema-visual-light--dark)
 30. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
+31. [JOINs Configuráveis](#joins-configuráveis)
 
 ---
 
@@ -64,6 +65,7 @@
 - **Estilos condicionais de linha** com guard contra campos inválidos
 - **Ícones em colunas** (cabeçalho + célula) via Boxicons, FontAwesome ou Heroicons
 - **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
+- **JOINs configuráveis** (LEFT / INNER) declarados no CrudConfig — sem Eloquent, com suporte completo a filtro, sort e export
 
 ---
 
@@ -356,6 +358,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
     "perPage": 25
   },
   "cols": [ ...ColDef[] ],
+  "joins": [ ...Join[] ],
   "totalizadores": { ... },
   "exportConfig": { ... },
   "bulkActions": [ ...BulkAction[] ],
@@ -396,6 +399,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsSDLimit` | `int` | Limite de itens retornados (padrão: `15`) |
 | `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SD aparece |
 | `colsValidations` | `array\|null` | Regras do FormValidatorService: `["required","email","min:3"]` |
+| `colsSource` | `string\|null` | **JOIN** — qualified name SQL usado em `WHERE` e `ORDER BY` (ex: `suppliers.name`). Obrigatório para filtros e sort funcionarem em colunas vindas de JOIN. O `colsNomeFisico` deve ser o alias (ex: `supplier_name`) |
 
 ---
 
@@ -1139,6 +1143,7 @@ O botão de configuração é exibido automaticamente no BaseCrud (geralmente re
 | **Ações** | Configuração de permissões (create, edit, delete, export) |
 | **Filtros** | Configuração dos filtros customizados e coluna de data rápida |
 | **Estilos** | `contitionStyles`: regras de estílo condicional de linha |
+| **JOINs** | Gerencia `joins[]` — cards visuais dos JOINs ativos com detecção automática de duplicata de tabela, formulário de criação/edição e `DISTINCT` opcional |
 | **Geral** | Nome de Exibição (`displayName`), Aparência (`companyField`, `tableClass`…), Cache, Exportação, Broadcast (Echo listener), Tema Visual (light/dark) |
 | **Permissões** | Mapeamento de gates/abilities por ação |
 
@@ -1148,7 +1153,7 @@ Ao selecionar uma coluna na sidebar, seis sub-abas são exibidas:
 
 | Sub-aba | Campos editados |
 |---|---|
-| **Básico** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, estilo de célula (`colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`) |
+| **Básico** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, estilo de célula (`colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`), **`colsSource`** (Fonte SQL — badge JOIN) |
 | **Exibição** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` |
 | **Badges** | `colsRendererBadges` — mapa valor→cor com seletor hex nativo + 8 swatches rápidos por linha |
 | **Relação** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` |
@@ -1392,6 +1397,124 @@ getRowsProperty()                                             view(ptah::livewir
         ├─ processDateRangeFilters(dateRanges)
         ├─ quickDateFilter → getQuickDateRange()
         ├─ processCustomFilters()
-        ├─ getOrderByRelationInfo() → LEFT JOIN ou orderBy simples
+        ├─ applyJoins() → aplica JOIN[] do crudConfig, retorna tabelas joined
+        ├─ getOrderByRelationInfo() → LEFT JOIN (pulado se tabela já joined) ou orderBy simples
         └─ paginate($perPage)
+```
+---
+
+## JOINs Configuráveis
+
+O BaseCrud suporta JOINs declarativos no `CrudConfig` sem nenhum relacionamento Eloquent. Útil para trazer colunas de tabelas externas, legadas ou sem `Model` definido.
+
+### Como funciona
+
+1. O `applyJoins()` é chamado logo após `newQuery()` em **todas as queries** (listagem, totalizadores, export)
+2. Ele itera `crudConfig['joins']`, aplica cada JOIN e constrói o `SELECT` como `mainTable.* + aliases`
+3. Colunas vindas do JOIN ficam acessíveis via o **alias** em `$row->supplier_name`
+4. O filtro e o `ORDER BY` usam `colsSource` (qualified name) — não o alias, pois alias não funciona em `WHERE` no MySQL
+
+### Schema de um JOIN
+
+```json
+"joins": [
+  {
+    "type":     "left",
+    "table":    "suppliers",
+    "first":    "products.supplier_id",
+    "second":   "suppliers.id",
+    "distinct": false,
+    "select": [
+      { "column": "suppliers.name",  "alias": "supplier_name"  },
+      { "column": "suppliers.phone", "alias": "supplier_phone" }
+    ]
+  }
+]
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `type` | `"left"\|"inner"` | Não (padrão `"left"`) | `LEFT JOIN` ou `INNER JOIN` |
+| `table` | `string` | Sim | Nome exato da tabela no banco |
+| `first` | `string` | Sim | Coluna esquerda da cláusula `ON` (ex: `products.supplier_id`) |
+| `second` | `string` | Sim | Coluna direita da cláusula `ON` (ex: `suppliers.id`) |
+| `distinct` | `bool` | Não (padrão `false`) | Aplica `SELECT DISTINCT` — recomendado em JOINs 1-para-muitos |
+| `select` | `{column, alias}[]` | Não | Colunas extras no `SELECT`. Se vazio o JOIN é aplicado mas não adiciona colunas |
+
+> **LEFT vs INNER:** use `left` quando o dado pode não existir (ex: `supplier_id` nullable). Use `inner` quando a correspondência é obrigatória e você quer filtrar registros sem par.
+
+### Configurando a coluna correspondente
+
+Para cada alias do JOIN, crie uma `ColDef` na aba **Colunas** do CrudConfig Modal:
+
+```json
+{
+  "colsNomeFisico": "supplier_name",
+  "colsSource":     "suppliers.name",
+  "colsNomeLogico": "Fornecedor",
+  "colsTipo":       "text",
+  "colsGravar":     "N",
+  "colsIsFilterable": "S"
+}
+```
+
+- **`colsNomeFisico`** = alias (como o campo chega no Blade via `$row->supplier_name`)
+- **`colsSource`** = qualified name SQL (`suppliers.name`) — usado em `WHERE` e `ORDER BY`
+- **`colsGravar: "N"`** = coluna apenas na listagem, não no formulário de criação/edição
+
+> O campo `colsSource` pode ser preenchido na sub-aba **Básico** do editor de colunas — identificado pelo badge azul "JOIN".
+
+### Proteção contra duplicata
+
+O CrudConfig Modal exibe um **warning inline em tempo real** ao digitar o nome da tabela: se já existir um JOIN com aquela tabela, o input muda para borda vermelha, o botão fica desabilitado e uma mensagem explica o conflito.
+
+O método `addJoin()` também valida no servidor antes de adicionar.
+
+### Suporte em queries secundárias
+
+`applyJoins()` é chamado automaticamente em:
+
+| Query | Onde |
+|---|---|
+| Listagem principal | `getRowsProperty()` |
+| Totalizadores | `getTotalizadoresDataProperty()` |
+| Export | `export()` |
+
+### Exemplo completo: Produtos + Fornecedor
+
+**1. Definir o JOIN no CrudConfig:**
+
+```json
+"joins": [
+  {
+    "type":   "left",
+    "table":  "suppliers",
+    "first":  "products.supplier_id",
+    "second": "suppliers.id",
+    "select": [
+      { "column": "suppliers.name",  "alias": "supplier_name"  },
+      { "column": "suppliers.cnpj",  "alias": "supplier_cnpj"  }
+    ]
+  }
+]
+```
+
+**2. Adicionar as colunas:**
+
+```json
+{ "colsNomeFisico": "supplier_name", "colsSource": "suppliers.name",
+  "colsNomeLogico": "Fornecedor", "colsTipo": "text", "colsGravar": "N" },
+{ "colsNomeFisico": "supplier_cnpj", "colsSource": "suppliers.cnpj",
+  "colsNomeLogico": "CNPJ Forn.", "colsTipo": "text", "colsGravar": "N",
+  "colsMask": "cnpj" }
+```
+
+**3. Resultado na query:**
+
+```sql
+SELECT products.*, suppliers.name AS supplier_name, suppliers.cnpj AS supplier_cnpj
+FROM products
+LEFT JOIN suppliers ON products.supplier_id = suppliers.id
+WHERE suppliers.name LIKE '%acme%'
+ORDER BY suppliers.name ASC
 ```

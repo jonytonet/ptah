@@ -1016,6 +1016,7 @@ ptah:forge Product --fields="..."
 | Soft delete | Botão lixeira com contador de excluídos, exibição/restauração |
 | Bulk actions | Seleção múltipla, excluir/exportar/ações customizadas em lote |
 | Estilos condicionais | Cor de linha baseada em regra campo/operador/valor |
+| JOINs configuráveis | LEFT / INNER JOINs declarados no CrudConfig — sem Eloquent, com filtro, sort e export |
 | Totalizadores | Soma/média/contagem no tfoot com clone de query por agregado |
 | Exportação | Excel/PDF síncrona ou assíncrona (via Job) |
 | Preferências | Colunas, largura, densidade, filtros rápidos, histórico, salvas por usuário |
@@ -1291,6 +1292,7 @@ Cada entrada em `cols` representa uma coluna da tabela e/ou campo do formulário
 | `colsRelacao` | string | Nome do relacionamento Eloquent (`$product->category`) |
 | `colsRelacaoExibe` | string | Atributo do objeto relacionado a exibir |
 | `colsRelacaoNested` | string | Notação dot para relações aninhadas: `category.parent.name` |
+| `colsSource` | string | **JOIN** — qualified name SQL para `WHERE`/`ORDER BY` (ex: `suppliers.name`). O `colsNomeFisico` deve ser o alias |
 | `colsIsFilterable` | `'S'`/`'N'` | Exibe no painel de filtros |
 | `colsSelect` | object | Mapa `{"Label": "valor"}` para tipo select |
 | `colsOrderBy` | string | Coluna alternativa para ORDER BY |
