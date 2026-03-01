@@ -263,7 +263,10 @@ class CrudConfig extends Component
             'colsMinWidth'          => '',
         ];
 
-        $this->formEditFields[] = array_merge($defaults, $this->formDataField);
+        $merged = array_merge($defaults, $this->formDataField);
+        $merged = $this->resolveJoinDefaults($merged);
+
+        $this->formEditFields[] = $merged;
         $this->formDataField    = [];
     }
 
@@ -283,9 +286,75 @@ class CrudConfig extends Component
             return;
         }
 
-        $this->formEditFields[$this->editingFieldIndex] = $this->formDataField;
+        $this->formEditFields[$this->editingFieldIndex] = $this->resolveJoinDefaults($this->formDataField);
         $this->formDataField     = [];
         $this->editingFieldIndex = -1;
+    }
+
+    /**
+     * Resolve defaults automáticos para colunas provenientes de JOINs.
+     *
+     * Regras aplicadas:
+     *  1. Se colsNomeFisico bate com o alias de algum JOIN select
+     *     → colsGravar = false (nunca grava coluna de tabela externa)
+     *     → colsSource  = "table.column" (qualificado para uso no WHERE)
+     *
+     *  2. Se colsSource usa notação Eloquent ("relacao.coluna") e existe um
+     *     JOIN para essa tabela, converte para SQL qualificado ("tabela.coluna")
+     *     usando o mapeamento dos aliases definidos.
+     */
+    protected function resolveJoinDefaults(array $fieldData): array
+    {
+        if (empty($this->joins)) {
+            return $fieldData;
+        }
+
+        $nomeFisico = $fieldData['colsNomeFisico'] ?? '';
+        $source     = $fieldData['colsSource']     ?? '';
+
+        // Monta mapa: alias → ['table' => ..., 'column' => ...]
+        $aliasMap = [];
+        foreach ($this->joins as $join) {
+            foreach ($join['select'] ?? [] as $sel) {
+                $alias = trim($sel['alias']  ?? '');
+                $col   = trim($sel['column'] ?? '');
+                if ($alias && $col) {
+                    $aliasMap[$alias] = [
+                        'table'  => $join['table'] ?? '',
+                        'column' => $col,
+                    ];
+                }
+            }
+        }
+
+        // Regra 1 — colsNomeFisico bate com alias de JOIN
+        if (isset($aliasMap[$nomeFisico])) {
+            $fieldData['colsGravar'] = false;
+            // Preenche colsSource apenas se não foi informado ou está errado
+            if (empty($source) || ! str_contains($source, '.')) {
+                $fieldData['colsSource'] = $aliasMap[$nomeFisico]['column'];
+            }
+        }
+
+        // Regra 2 — corrige notação Eloquent "relacao.coluna" → "tabela.coluna"
+        if (! empty($source) && str_contains($source, '.') && ! str_contains($source, ' ')) {
+            [$relation, $col] = explode('.', $source, 2);
+            foreach ($this->joins as $join) {
+                $table = $join['table'] ?? '';
+                // Verifica se o "relation" bate com a tabela (singular ou exato)
+                if ($table === $relation) {
+                    break; // já está correto — é tabela.coluna
+                }
+                // Notação Eloquent: "product.name" → tabela "products"
+                if ($table === $relation . 's' || rtrim($table, 's') === $relation) {
+                    $fieldData['colsSource'] = "{$table}.{$col}";
+                    $fieldData['colsGravar'] = false;
+                    break;
+                }
+            }
+        }
+
+        return $fieldData;
     }
 
     public function cancelEditField(): void
