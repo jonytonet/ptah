@@ -512,7 +512,7 @@
 
 <span class="text-slate-500">{{-- Verificar com escopo de empresa --}}</span>
 <span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.ver-desconto'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">, </span><span class="text-yellow-300">companyId</span><span class="text-slate-300">: </span><span class="text-blue-400">$empresa</span><span class="text-slate-300">-></span><span class="text-slate-300">id))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Desconto: {{ $pedido->desconto }}%</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span>
+    <span class="text-slate-300">&lt;</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Desconto: @{{ $pedido->desconto }}%</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span>
 <span class="text-pink-400">@</span><span class="text-green-400">endif</span>
 
 <span class="text-slate-500">{{-- Assinaturas completas do helper --}}</span>
