@@ -20,8 +20,6 @@ class {{ entity }}Controller extends Controller
     {
         return view('{{ entity_lower }}.index');
     }
-}
-
 
     /**
      * Exibe o formulário de criação.
