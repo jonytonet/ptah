@@ -182,7 +182,7 @@
                 <x-forge-textarea label="Descrição" wire:model="page_description" rows="2" />
                 <div class="grid grid-cols-2 gap-4">
                     <x-forge-input label="Rota Laravel" wire:model="page_route" placeholder="admin.users.index" />
-                    <x-forge-input label="Ícone" wire:model="page_icon" placeholder="🏠 ou heroicon-o-home" />
+                    <x-forge-input label="Ícone" wire:model="page_icon" placeholder="bx bx-home ou fas fa-home" />
                 </div>
                 <div class="flex items-center gap-6">
                     <x-forge-switch wire:model="page_is_active" label="Página ativa" />
