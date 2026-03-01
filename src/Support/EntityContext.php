@@ -11,25 +11,51 @@ use Illuminate\Support\Str;
  * calculados de uma entidade durante a execução do scaffold.
  *
  * Criado uma vez pelo ScaffoldCommand e passado a todos os Generators.
+ *
+ * Suporte a subpastas:
+ *   - subFolder   : subfolder relativo ao diretório de models, ex: 'Product'
+ *                   Pode ser multi-nível: 'Catalog/Product'
+ *                   Vazio quando a entidade está na raiz.
+ *   - modelNamespace : namespace PHP completo do Model, ex: App\Models\Product
+ *   - modelFqn       : FQN completo do Model,  ex: App\Models\Product\ProductStock
  */
 readonly class EntityContext
 {
     /**
+     * Namespace PHP do Model (ex: App\Models\Product ou App\Models).
+     * Calculado automaticamente a partir de rootNamespace + subFolder.
+     */
+    public string $modelNamespace;
+
+    /**
+     * FQN completo do Model (ex: App\Models\Product\ProductStock).
+     */
+    public string $modelFqn;
+
+    /**
      * @param FieldDefinition[] $fields
+     * @param string $subFolder  Subfolder relativo a Models/, ex: 'Product'. Vazio se raiz.
      */
     public function __construct(
-        public string $entity,             // Product
-        public string $entityLower,        // product
-        public string $entityPlural,       // products
-        public string $entityPluralStudly, // Products
-        public string $table,              // products (ou valor de --table)
+        public string $entity,             // ProductStock
+        public string $entityLower,        // product_stock
+        public string $entityPlural,       // product_stocks
+        public string $entityPluralStudly, // ProductStocks
+        public string $table,              // product_stocks (ou valor de --table)
         public string $rootNamespace,      // App\
         public string $timestamp,          // 2026_02_25_120000
         public bool   $withViews,          // false se --api
         public bool   $withSoftDeletes,    // true por padrão
         public bool   $force,              // --force
         public array  $fields,
-    ) {}
+        public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
+    ) {
+        $nsBase = rtrim($rootNamespace, '\\') . '\\Models';
+        $this->modelNamespace = $subFolder
+            ? $nsBase . '\\' . str_replace('/', '\\', $subFolder)
+            : $nsBase;
+        $this->modelFqn = $this->modelNamespace . '\\' . $entity;
+    }
 
     /**
      * Gera a lista $fillable como string para o stub do Model.

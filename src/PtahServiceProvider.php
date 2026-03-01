@@ -11,7 +11,6 @@ use Livewire\Livewire;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeApiCommand;
 use Ptah\Commands\MakeDocsCommand;
-use Ptah\Commands\MakeEntityCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\CompanyServiceContract;
@@ -110,7 +109,6 @@ class PtahServiceProvider extends ServiceProvider
             $this->commands([
                 InstallCommand::class,
                 ScaffoldCommand::class,      // ptah:forge
-                MakeEntityCommand::class,    // ptah:make (legado)
                 MakeApiCommand::class,
                 MakeDocsCommand::class,
                 ModuleCommand::class,        // ptah:module

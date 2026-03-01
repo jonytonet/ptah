@@ -43,19 +43,24 @@ class CrudConfigGenerator extends AbstractGenerator
      */
     public function generate(EntityContext $context): GeneratorResult
     {
-        $label = "CrudConfig [{$context->entity}]";
+        // Inclui subfolder no identificador: Product/ProductStock
+        $crudIdentifier = $context->subFolder
+            ? $context->subFolder . '/' . $context->entity
+            : $context->entity;
+
+        $label = "CrudConfig [{$crudIdentifier}]";
 
         try {
             $service = app(CrudConfigService::class);
 
             // Se já existe e não é --force, pula
-            $existing = $service->find($context->entity);
+            $existing = $service->find($crudIdentifier);
             if ($existing && ! $context->force) {
                 return GeneratorResult::skipped($label, 'crud_configs');
             }
 
             $config = $this->buildConfig($context);
-            $service->save($context->entity, $config);
+            $service->save($crudIdentifier, $config);
 
             return GeneratorResult::done($label, 'crud_configs');
         } catch (\Throwable $e) {
@@ -67,8 +72,13 @@ class CrudConfigGenerator extends AbstractGenerator
 
     private function buildConfig(EntityContext $context): array
     {
+        // Inclui subfolder no identificador para BaseCrud resolver corretamente (ex: Product/ProductStock)
+        $crudIdentifier = $context->subFolder
+            ? $context->subFolder . '/' . $context->entity
+            : $context->entity;
+
         return [
-            'crud'              => $context->entity,
+            'crud'              => $crudIdentifier,
             'totalizador'       => false,
             'configEsconderId'  => false,
             'configLinkLinha'   => '/' . $context->entityPlural . '/%id%',

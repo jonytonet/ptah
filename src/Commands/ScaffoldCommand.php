@@ -31,8 +31,10 @@ use Ptah\Support\SchemaInspector;
  *
  * Uso:
  *   php artisan ptah:forge Product
- *   php artisan ptah:forge Product --table=products
+ *   php artisan ptah:forge Product/ProductStock
+ *   php artisan ptah:forge Product/ProductStock --table=product_stocks
  *   php artisan ptah:forge Product --fields="name:string,price:decimal(10,2):nullable,status:enum(active|inactive)"
+ *   php artisan ptah:forge Product/ProductStock --fields="product_id:unsignedBigInteger,quantity:decimal(12,3)"
  *   php artisan ptah:forge Product --api
  *   php artisan ptah:forge Product --no-soft-deletes
  *   php artisan ptah:forge Product --force
@@ -47,7 +49,7 @@ use Ptah\Support\SchemaInspector;
 class ScaffoldCommand extends Command
 {
     protected $signature = 'ptah:forge
-        {entity                  : Nome da entidade em PascalCase (ex: ProductCategory)}
+        {entity                  : Nome da entidade em PascalCase, com subfolder opcional (ex: Product, Product/ProductStock)}
         {--table=                : Nome da tabela no banco (padrão: plural snake_case da entidade)}
         {--fields=               : Definição dos campos: "name:string,price:decimal(10,2):nullable" }
         {--db                    : Lê os campos diretamente da tabela no banco de dados}
@@ -66,7 +68,14 @@ class ScaffoldCommand extends Command
 
     public function handle(): int
     {
-        $entity             = Str::studly($this->argument('entity'));
+        // ── Subfolder support: aceita Product/ProductStock ou Product\ProductStock ──
+        $rawEntity = $this->argument('entity');
+        $parts     = array_values(array_filter(
+            array_map('trim', preg_split('/[\\\\\\/]/', $rawEntity))
+        ));
+        $entity    = Str::studly((string) array_pop($parts));
+        $subFolder = implode('/', array_map(fn(string $p) => Str::studly($p), $parts)); // ex: 'Product'
+
         $entityLower        = Str::snake($entity);
         $entityPlural       = Str::plural($entityLower);
         $entityPluralStudly = Str::studly($entityPlural);
@@ -91,11 +100,13 @@ class ScaffoldCommand extends Command
             withSoftDeletes:    $withSoftDeletes,
             force:              $force,
             fields:             $fields,
+            subFolder:          $subFolder,
         );
 
         // ── Header ──────────────────────────────────────────────────────
         $this->newLine();
-        $this->components->info("Ptah Forge — Gerando: <fg=yellow>{$entity}</>");
+        $displayName = $subFolder ? "{$subFolder}/{$entity}" : $entity;
+        $this->components->info("Ptah Forge — Gerando: <fg=yellow>{$displayName}</>");
         $this->line("  <fg=gray>Tabela: {$table} | Campos: " . count($fields) .
             " | Modo: " . ($withViews ? 'Web' : 'API') . "</>");
         $this->newLine();

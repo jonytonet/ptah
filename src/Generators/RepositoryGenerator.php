@@ -25,6 +25,7 @@ class RepositoryGenerator extends AbstractGenerator
                 'namespace'     => $context->rootNamespace . 'Repositories',
                 'entity'        => $context->entity,
                 'rootNamespace' => $context->rootNamespace,
+                'model_fqn'     => $context->modelFqn,
             ],
             force: $context->force,
             labelOverride: "Repository [{$context->entity}Repository]",

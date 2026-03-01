@@ -17,7 +17,9 @@ class ModelGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path = config('ptah.paths.models') . "/{$context->entity}.php";
+        // Subpasta: app/Models/Product/ProductStock.php
+        $subDir = $context->subFolder ? '/' . str_replace('\\', '/', $context->subFolder) : '';
+        $path   = config('ptah.paths.models') . "{$subDir}/{$context->entity}.php";
 
         $softDeletesUse   = '';
         $softDeletesTrait = '';
@@ -31,7 +33,7 @@ class ModelGenerator extends AbstractGenerator
             path: $path,
             stub: 'model',
             replacements: [
-                'namespace'          => $context->rootNamespace . 'Models',
+                'namespace'          => $context->modelNamespace,
                 'entity'             => $context->entity,
                 'table'              => $context->table,
                 'fillable'           => $context->fillableList(),
