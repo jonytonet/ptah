@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah;
 
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -86,6 +87,16 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->loadMigrations();
         $this->registerLivewire();
+
+        // Informa o middleware Authenticate do Laravel onde redirecionar
+        // usuários não autenticados quando o módulo auth do Ptah está ativo.
+        if (config('ptah.modules.auth')) {
+            Authenticate::redirectUsing(function ($request) {
+                if (! $request->expectsJson()) {
+                    return route('ptah.auth.login');
+                }
+            });
+        }
     }
 
     /**
