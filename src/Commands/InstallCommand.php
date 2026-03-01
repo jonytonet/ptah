@@ -41,6 +41,7 @@ class InstallCommand extends Command
         $this->publishStubs();
         $this->publishMigrations();
         $this->runMigrations();
+        $this->createStorageLink();
 
         $this->newLine();
         $this->components->info('Ptah instalado com sucesso!');
@@ -105,5 +106,20 @@ class InstallCommand extends Command
                 $this->call('migrate');
             });
         }
+    }
+
+    /**
+     * Cria o symlink public/storage → storage/app/public.
+     * Necessário para uploads (fotos de perfil, logos etc.)
+     */
+    protected function createStorageLink(): void
+    {
+        $this->components->task('Criando link public/storage', function () {
+            if (file_exists(public_path('storage'))) {
+                $this->components->warn('Link public/storage já existe, pulando.');
+                return;
+            }
+            $this->call('storage:link');
+        });
     }
 }

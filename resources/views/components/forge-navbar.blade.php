@@ -136,11 +136,21 @@
                 {{-- User Dropdown --}}
                 <div x-data="{ open: false }" class="relative">
                     <button @click="open = !open" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
-                        <div class="ptah-user-avatar-bg w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
-                            <span class="ptah-user-avatar-text text-primary font-semibold text-sm">
-                                {{ mb_strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                            </span>
-                        </div>
+                        @php
+                            $__photoPath = auth()->user()->profile_photo_path ?? null;
+                            $__photoUrl  = $__photoPath ? \Illuminate\Support\Facades\Storage::url($__photoPath) : null;
+                        @endphp
+                        @if($__photoUrl)
+                            <img src="{{ $__photoUrl }}"
+                                 alt="{{ auth()->user()->name ?? 'Avatar' }}"
+                                 class="ptah-user-avatar-bg w-8 h-8 rounded-full object-cover ring-2 ring-primary/20">
+                        @else
+                            <div class="ptah-user-avatar-bg w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
+                                <span class="ptah-user-avatar-text text-primary font-semibold text-sm">
+                                    {{ mb_strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                </span>
+                            </div>
+                        @endif
                         <span class="ptah-navbar-username hidden lg:block text-sm font-medium text-dark">
                             {{ auth()->user()->name ?? 'Usuário' }}
                         </span>
