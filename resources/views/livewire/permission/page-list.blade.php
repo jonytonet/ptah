@@ -25,7 +25,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
                 <input wire:model.live.debounce.300ms="search" type="search" placeholder="Buscar página..."
-                    class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
+                    class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-500 outline-none transition-all"/>
             </div>
 
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -97,7 +97,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                     </svg>
                     <input wire:model.live.debounce.300ms="objSearch" type="search" placeholder="Buscar objeto..."
-                        class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
+                        class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-500 outline-none transition-all"/>
                 </div>
 
                 <div class="ptah-module-table overflow-x-auto border shadow-sm border-slate-200 rounded-xl">
