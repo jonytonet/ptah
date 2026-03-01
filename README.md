@@ -432,21 +432,55 @@ Notificações flutuantes com auto-close.
 
 ---
 
-#### `forge-tabs`
+#### `forge-tabs` + `forge-tab`
+
+`forge-tabs` suporta dois modos de uso:
+
+**Modo 1 — Slot/Livewire** (estado gerenciado externamente pelo componente Livewire):
+
+```blade
+{{-- No componente Livewire: public string $activeTab = 'info'; --}}
+<x-forge-tabs>
+    <x-slot name="tabs">
+        <x-forge-tab key="info"    :active="$activeTab === 'info'"    wire:click="$set('activeTab','info')">Dados</x-forge-tab>
+        <x-forge-tab key="history" :active="$activeTab === 'history'" wire:click="$set('activeTab','history')">Histórico</x-forge-tab>
+    </x-slot>
+
+    @if($activeTab === 'info')
+        <p>Conteúdo da aba de dados.</p>
+    @endif
+    @if($activeTab === 'history')
+        <p>Conteúdo do histórico.</p>
+    @endif
+</x-forge-tabs>
+```
+
+**Modo 2 — Array/Alpine** (estado interno, sem Livewire):
 
 ```blade
 <x-forge-tabs :tabs="[
-    ['key' => 'info',    'label' => 'Dados'],
-    ['key' => 'history', 'label' => 'Histórico'],
-]">
-    <x-slot:info>
-        <p>Conteúdo da aba de dados.</p>
-    </x-slot:info>
-    <x-slot:history>
-        <p>Conteúdo do histórico.</p>
-    </x-slot:history>
-</x-forge-tabs>
+    ['id' => 'info',    'label' => 'Dados',     'slot' => '<p>Conteúdo dados.</p>'],
+    ['id' => 'history', 'label' => 'Histórico', 'slot' => '<p>Conteúdo histórico.</p>'],
+]" defaultTab="info" />
 ```
+
+**Props de `forge-tabs`:**
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `tabs` | array | `[]` | Abas para o Modo Array: `[['id','label','slot']]` |
+| `color` | string | `primary` | Cor da aba ativa: `primary` `success` `danger` `warn` |
+| `defaultTab` | string | `null` | ID da aba inicial (Modo Array) |
+
+**Props de `forge-tab` (Modo Slot):**
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `key` | string | `''` | Identificador da aba (informativo) |
+| `active` | bool | `false` | Se é a aba selecionada |
+| `color` | string | `primary` | Cor quando ativa |
+
+> `forge-tab` aceita qualquer atributo extra (`wire:click`, `@click`, etc.), que é repassado ao `<button>` gerado.
 
 ---
 
@@ -467,6 +501,7 @@ Notificações flutuantes com auto-close.
 
 | Componente | Descrição |
 |---|---|
+| `forge-tab` | Sub-componente aba para uso junto com `forge-tabs` (Modo Slot/Livewire) |
 | `forge-badge` | Badges coloridos com suporte a ponto animado |
 | `forge-avatar` | Avatar com iniciais, foto ou badge de status |
 | `forge-breadcrumb` | Navegação em migalhas de pão |
@@ -1875,7 +1910,7 @@ if (ptah_is_master()) { ... }
 | Hierarquia | Página → Objeto → Ação (criar/editar/deletar/listar/exportar) |
 | Cache | Automático com invalidação por role (`PTAH_PERM_CACHE=true`) |
 | Auditoria | Log de verificações (`PTAH_PERM_AUDIT=true`) |
-| Admin | 5 telas: roles, páginas, objetos, permissões por usuário, auditoria |
+| Admin | 6 telas: roles, páginas, objetos, permissões por usuário, auditoria, guia interativo |
 
 > Consulte **[docs/Permissions.md](docs/Permissions.md)** para referência completa.
 

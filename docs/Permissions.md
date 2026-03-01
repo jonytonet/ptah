@@ -32,6 +32,7 @@
     - [PageList](#pagelist)
     - [UserPermissionList](#userpermissionlist)
     - [AuditList](#auditlist)
+    - [PermissionGuide](#permissionguide)
 14. [Rotas](#rotas)
 15. [Seeders](#seeders)
 16. [Fluxo de Verificação](#fluxo-de-verificação)
@@ -772,6 +773,36 @@ Read-only. Filtros disponíveis:
 
 ---
 
+### PermissionGuide
+
+**URL:** `/ptah-permission-guide`  
+**Componente:** `Ptah\Livewire\Permission\PermissionGuide`  
+**Rota:** `ptah.acl.guide`
+
+Tela de documentação interativa do sistema de permissões. Exibida no navbar (link "Guia de permissões") quando `config('ptah.modules.permissions')` está ativo e a rota existe.
+
+**Abas disponíveis:**
+
+| Aba | `$activeTab` | Conteúdo |
+|---|---|---|
+| Visão Geral | `overview` | Diagrama de arquitetura, conceitos fundamentais (Role, Página, Objeto, MASTER, Empresa, Auditoria) e fluxo de decisão visual |
+| Passo a Passo | `setup` | 5 passos guiados com links diretos para cada tela do módulo ACL |
+| Exemplos de Código | `code` | Snippets destacados: `ptah_can()` no Blade, middleware `ptah.can`, `PermissionService`, `HasPermission` no Livewire e variáveis `.env` |
+| FAQ | `faq` | 8 acordeons Alpine com perguntas frequentes |
+
+**Propriedade Livewire:**
+
+| Propriedade | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `$activeTab` | string | `'overview'` | Aba atualmente selecionada |
+
+**Arquivo:** `src/Livewire/Permission/PermissionGuide.php`  
+**View:** `resources/views/livewire/permission/permission-guide.blade.php`
+
+> **Blade escaping em exemplos de código:** quando incluir diretivas Blade ou expressões `{{ }}` como texto literal dentro de spans/exemplos de código, use `&#64;if(...)` para escapar `@` e `@{{ $var }}` para escapar `{{ }}` — caso contrário o Blade avalia as expressões normalmente, gerando ParseError ou ErrorException.
+
+---
+
 ## Rotas
 
 Registradas automaticamente quando `ptah.modules.permissions = true`:
@@ -783,6 +814,7 @@ Registradas automaticamente quando `ptah.modules.permissions = true`:
 | `GET` | `/ptah-pages` | `ptah.acl.pages` | `web`, `auth` |
 | `GET` | `/ptah-users-acl` | `ptah.acl.users` | `web`, `auth` |
 | `GET` | `/ptah-audit` | `ptah.acl.audit` | `web`, `auth` |
+| `GET` | `/ptah-permission-guide` | `ptah.acl.guide` | `web`, `auth` |
 
 ---
 
