@@ -72,9 +72,18 @@
             'relief'    => 'bg-gray-300',
             'flatHover' => 'hover:bg-gray-50',
         ],
+        'secondary' => [
+            'bg'        => 'bg-gray-100',
+            'hover'     => 'hover:bg-gray-200',
+            'text'      => 'text-gray-700',
+            'shadow'    => 'shadow-[0_8px_20px_rgba(0,0,0,0.12)]',
+            'relief'    => 'bg-gray-300',
+            'flatHover' => 'hover:bg-gray-50',
+        ],
     ];
 
     $c = $colorMap[$color] ?? $colorMap['primary'];
+    $ptahColorClass = 'ptah-btn-' . $color;
 
     $sizeMap = [
         'sm' => 'px-3 py-1.5 text-xs gap-1.5',
@@ -99,7 +108,7 @@
 <button
     {{ $attributes->merge([
         'type'     => 'button',
-        'class'    => "inline-flex items-center justify-center font-semibold select-none focus:outline-none
+        'class'    => "ptah-btn {$ptahColorClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
                        {$sizeClass} {$radiusClass} {$variantClass} {$baseTransition} {$disabledClass}",
         'disabled' => $disabled || $loading ? true : false,
     ]) }}

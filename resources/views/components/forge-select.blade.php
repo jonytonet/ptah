@@ -33,7 +33,7 @@
     $initialSelected = $multiple ? '[]' : ($selected !== null ? json_encode($selected) : 'null');
 @endphp
 
-<div class="w-full">
+<div class="ptah-select-wrapper w-full">
     @if ($label)
         <label class="block text-xs font-medium text-gray-600 mb-1">
             {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif
@@ -93,7 +93,7 @@
         <div
             @click="open = !open"
             :class="open ? '{{ $borderOpen }} {{ $ringOpen }}' : '{{ $borderNormal }}'"
-            class="relative flex items-center justify-between rounded-lg border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
+            class="ptah-select-trigger relative flex items-center justify-between rounded-lg border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
         >
             <span
                 :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'text-gray-800' : 'text-gray-400'"
@@ -118,7 +118,7 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="absolute z-20 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-auto max-h-48"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-auto max-h-48"
         >
             <ul class="py-1">
                 <template x-for="option in options" :key="option.value">

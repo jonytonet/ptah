@@ -54,7 +54,7 @@
 
     {{-- Painel --}}
     <div
-        class="relative z-10 w-full {{ $sizeClass }} bg-white rounded-2xl shadow-2xl overflow-hidden"
+        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} bg-white rounded-2xl shadow-2xl overflow-hidden"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 scale-95"

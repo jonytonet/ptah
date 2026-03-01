@@ -27,7 +27,7 @@
     }
 @endphp
 
-<div {{ $attributes->merge(['class' => 'flex items-center justify-between gap-4']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-pagination flex items-center justify-between gap-4']) }}>
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
         <button

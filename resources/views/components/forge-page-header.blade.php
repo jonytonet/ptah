@@ -12,7 +12,7 @@
     'back'     => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'mb-6']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-page-header mb-6']) }}>
     <div class="flex items-start justify-between gap-4">
         <div class="flex items-center gap-3">
             @if($back)

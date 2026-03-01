@@ -48,7 +48,7 @@
             }
         }
     }"
-    {{ $attributes }}
+    {{ $attributes->merge(['class' => 'ptah-table-wrapper']) }}
 >
     {{-- Busca --}}
     @if($searchable)

@@ -53,7 +53,7 @@
     $inputId       = $attributes->get('id', 'forge-input-' . uniqid());
 @endphp
 
-<div class="w-full">
+<div class="ptah-input-wrapper w-full">
     @if ($label)
         <label for="{{ $inputId }}" class="block text-xs font-medium text-gray-600 mb-1">
             {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif

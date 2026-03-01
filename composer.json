@@ -1,6 +1,7 @@
 {
     "name": "jonytonet/ptah",
     "description": "Ptah — Laravel scaffolding generator. CRUD, DTOs, Repositories, Services, Livewire 3, Tailwind v4.",
+    "version": "1.0.0",
     "type": "library",
     "keywords": ["laravel", "scaffolding", "crud", "generator", "livewire", "tailwind"],
     "license": "MIT",

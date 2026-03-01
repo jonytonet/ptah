@@ -31,7 +31,7 @@
     $trendNegative = $trend && str_starts_with(ltrim($trend), '-');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-stat-card bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200']) }}>
     <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-500 font-medium">{{ $title }}</p>

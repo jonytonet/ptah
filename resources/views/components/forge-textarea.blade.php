@@ -39,7 +39,7 @@
     };
 @endphp
 
-<div x-data="{ chars: 0 }" class="w-full">
+<div x-data="{ chars: 0 }" class="ptah-textarea-wrapper w-full">
     @if($label)
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $label }}</label>
     @endif

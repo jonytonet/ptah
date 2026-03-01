@@ -41,6 +41,7 @@ class InstallCommand extends Command
         $this->publishConfig();
         $this->publishStubs();
         $this->publishMigrations();
+        $this->updateAppCss();
         $this->runMigrations();
         $this->createStorageLink();
         $this->installNodeDependencies();
@@ -95,6 +96,72 @@ class InstallCommand extends Command
                 '--tag'   => 'ptah-migrations',
                 '--force' => $this->option('force'),
             ]);
+        });
+    }
+
+    /**
+     * Injeta os design tokens e source paths do Ptah no app.css do projeto.
+     * Necessário para que o Tailwind CSS v4 compile as classes do Forge corretamente.
+     */
+    protected function updateAppCss(): void
+    {
+        $this->components->task('Configurando Tailwind CSS (app.css)', function () {
+            $appCss = resource_path('css/app.css');
+
+            if (! file_exists($appCss)) {
+                $this->components->warn('resources/css/app.css não encontrado — configure manualmente os tokens Tailwind.');
+                return;
+            }
+
+            $content = file_get_contents($appCss);
+
+            // Adiciona @source para as views do pacote Ptah (se ainda não existe)
+            $ptahSource = "@source '../../vendor/jonytonet/ptah/resources/views/**/*.blade.php';";
+            if (! str_contains($content, 'vendor/jonytonet/ptah')) {
+                // Insere após a última diretiva @source existente
+                if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
+                    $insertPos = $m[0][1] + strlen($m[0][0]);
+                    $content   = substr_replace($content, $ptahSource . "\n", $insertPos, 0);
+                } else {
+                    // Insere após @import 'tailwindcss'
+                    $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$ptahSource}", $content);
+                }
+                file_put_contents($appCss, $content);
+            }
+
+            // Adiciona tokens de design Forge no @theme (se ainda não existe)
+            if (str_contains($content, '--color-primary')) {
+                return; // já configurado
+            }
+
+            $themeTokens = <<<'CSS'
+
+    /* ── Ptah Forge design tokens ── */
+    --color-primary:       #5b21b6;
+    --color-primary-light: #ede9fe;
+    --color-primary-dark:  #4c1d95;
+    --color-success:       #10b981;
+    --color-success-light: #d1fae5;
+    --color-success-dark:  #059669;
+    --color-danger:        #ef4444;
+    --color-danger-light:  #fee2e2;
+    --color-danger-dark:   #dc2626;
+    --color-warn:          #f59e0b;
+    --color-warn-light:    #fef3c7;
+    --color-warn-dark:     #d97706;
+    --color-dark:          #1e293b;
+    --color-dark-light:    #f1f5f9;
+    --color-dark-dark:     #0f172a;
+CSS;
+
+            // Insere os tokens dentro do @theme existente ou cria um novo
+            if (str_contains($content, '@theme {')) {
+                $content = str_replace('@theme {', '@theme {' . $themeTokens, $content);
+            } else {
+                $content .= "\n@theme {{$themeTokens}\n}\n";
+            }
+
+            file_put_contents($appCss, $content);
         });
     }
 

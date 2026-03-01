@@ -170,6 +170,127 @@
         .ptah-dark main {
             background-color: #0f172a;
         }
+
+        /* ─── Page Header ──────────────────────────────────── */
+        .ptah-dark .ptah-page-header h1 { color: #e2e8f0; }
+        .ptah-dark .ptah-page-header p  { color: #94a3b8; }
+        .ptah-dark .ptah-page-header a  { background-color: #334155; color: #cbd5e1; }
+        .ptah-dark .ptah-page-header a:hover { background-color: #475569; }
+
+        /* ─── Cards ────────────────────────────────────────── */
+        .ptah-dark .ptah-card-default {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-card-default .border-b,
+        .ptah-dark .ptah-card-default .border-t { border-color: #334155; }
+
+        /* ─── Buttons ───────────────────────────────────────── */
+        .ptah-dark .ptah-btn-light,
+        .ptah-dark .ptah-btn-secondary {
+            background-color: #334155 !important;
+            color: #e2e8f0 !important;
+            box-shadow: none !important;
+        }
+        .ptah-dark .ptah-btn-light:hover,
+        .ptah-dark .ptah-btn-secondary:hover { background-color: #475569 !important; }
+
+        /* ─── Inputs ─────────────────────────────────────────── */
+        .ptah-dark .ptah-input-wrapper label   { color: #94a3b8; }
+        .ptah-dark .ptah-input-wrapper input {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-input-wrapper input::placeholder { color: #64748b; }
+        .ptah-dark .ptah-input-wrapper input:disabled     { background-color: #0f172a; }
+        .ptah-dark .ptah-input-wrapper .text-gray-400     { color: #64748b; }
+
+        /* ─── Textarea ───────────────────────────────────────── */
+        .ptah-dark .ptah-textarea-wrapper label    { color: #94a3b8; }
+        .ptah-dark .ptah-textarea-wrapper textarea {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-textarea-wrapper textarea::placeholder { color: #64748b; }
+        .ptah-dark .ptah-textarea-wrapper .text-gray-500 { color: #94a3b8; }
+
+        /* ─── Select ─────────────────────────────────────────── */
+        .ptah-dark .ptah-select-wrapper > label { color: #94a3b8; }
+        .ptah-dark .ptah-select-trigger {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-select-dropdown {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        .ptah-dark .ptah-select-dropdown li { color: #cbd5e1; }
+        .ptah-dark .ptah-select-dropdown li:hover { background-color: #334155; color: #e2e8f0; }
+
+        /* ─── Stat Cards ────────────────────────────────────── */
+        .ptah-dark .ptah-stat-card                { background-color: #1e293b; }
+        .ptah-dark .ptah-stat-card .text-gray-500 { color: #94a3b8; }
+        .ptah-dark .ptah-stat-card .text-dark     { color: #e2e8f0; }
+        .ptah-dark .ptah-stat-card .text-gray-400 { color: #64748b; }
+
+        /* ─── Modal ──────────────────────────────────────────── */
+        .ptah-dark .ptah-modal-panel {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-modal-panel .border-b,
+        .ptah-dark .ptah-modal-panel .border-t { border-color: #334155; }
+        .ptah-dark .ptah-modal-panel h3              { color: #e2e8f0; }
+        .ptah-dark .ptah-modal-panel .text-gray-700  { color: #cbd5e1; }
+        .ptah-dark .ptah-modal-panel .text-gray-400  { color: #64748b; }
+        .ptah-dark .ptah-modal-panel .text-gray-600  { color: #94a3b8; }
+        .ptah-dark .ptah-modal-panel button.text-gray-400:hover { color: #e2e8f0; }
+
+        /* ─── Table ──────────────────────────────────────────── */
+        .ptah-dark .ptah-table-wrapper input[type="search"] {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-table-wrapper input[type="search"]::placeholder { color: #64748b; }
+        /* Mobile cards */
+        .ptah-dark .ptah-table-wrapper .bg-white.rounded-xl {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        .ptah-dark .ptah-table-wrapper .text-gray-500 { color: #94a3b8; }
+        .ptah-dark .ptah-table-wrapper .text-dark     { color: #cbd5e1; }
+        .ptah-dark .ptah-table-wrapper .text-gray-400 { color: #64748b; }
+        /* Desktop table */
+        .ptah-dark .ptah-table-wrapper .overflow-x-auto.rounded-xl { border-color: #334155; }
+        .ptah-dark .ptah-table-wrapper thead tr {
+            background-color: #0f172a;
+            border-color: #334155;
+        }
+        .ptah-dark .ptah-table-wrapper thead th { color: #94a3b8; }
+        .ptah-dark .ptah-table-wrapper tbody    { background-color: #1e293b; }
+        .ptah-dark .ptah-table-wrapper tbody tr { border-color: #334155; }
+        .ptah-dark .ptah-table-wrapper tbody td { color: #cbd5e1; }
+        .ptah-dark .ptah-table-wrapper tbody tr:hover { background-color: rgba(91,33,182,.08); }
+
+        /* ─── Pagination ──────────────────────────────────────── */
+        .ptah-dark .ptah-pagination button:not(.bg-primary)      { color: #94a3b8; border-color: #475569; }
+        .ptah-dark .ptah-pagination button:not(.bg-primary):hover { background-color: #334155; color: #e2e8f0; }
+        .ptah-dark .ptah-pagination .text-gray-500 { color: #94a3b8; }
+        .ptah-dark .ptah-pagination .text-gray-400 { color: #64748b; }
+
+        /* ─── Badge light ────────────────────────────────────── */
+        .ptah-dark .ptah-badge-light { background-color: #475569; color: #e2e8f0; }
+
+        /* ─── Alert ──────────────────────────────────────────── */
+        .ptah-dark .ptah-alert-primary { background-color: rgba(91,33,182,.18); }
+        .ptah-dark .ptah-alert-success { background-color: rgba(16,185,129,.15); }
+        .ptah-dark .ptah-alert-danger  { background-color: rgba(239,68,68,.15); }
+        .ptah-dark .ptah-alert-warn    { background-color: rgba(245,158,11,.15); }
     </style>
 
     {{-- Livewire (se disponível) --}}
