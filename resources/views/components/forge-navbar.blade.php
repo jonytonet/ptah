@@ -110,19 +110,119 @@
                     </svg>
                 </button>
 
-                {{-- Menu Management (módulo menu) --}}
-                @if(config('ptah.modules.menu') && auth()->check())
-                <a
-                    href="{{ \Illuminate\Support\Facades\Route::has('ptah.menu.manage') ? route('ptah.menu.manage') : '#' }}"
-                    class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
-                    title="Gerenciar menu"
-                >
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                </a>
+                {{-- Admin Dropdown (company + permissions + menu) --}}
+                @if(auth()->check() && (config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu')))
+                <div x-data="{ openAdmin: false }" class="relative">
+                    <button
+                        @click="openAdmin = !openAdmin"
+                        :class="openAdmin ? 'bg-gray-100 text-primary' : 'text-gray-500 hover:bg-gray-100 hover:text-primary'"
+                        class="ptah-navbar-icon-btn relative p-2 rounded-xl transition-colors"
+                        title="Administração"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
+
+                    <div
+                        x-show="openAdmin"
+                        x-cloak
+                        @click.away="openAdmin = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                        @click="openAdmin = false"
+                    >
+                        {{-- Empresa --}}
+                        @if(config('ptah.modules.company') && \Illuminate\Support\Facades\Route::has('ptah.company.index'))
+                        <a href="{{ route('ptah.company.index') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            Empresa
+                        </a>
+                        @endif
+
+                        {{-- Departamentos --}}
+                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.departments'))
+                        <a href="{{ route('ptah.acl.departments') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            Departamentos
+                        </a>
+                        @endif
+
+                        {{-- Perfis de acesso --}}
+                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.roles'))
+                        <a href="{{ route('ptah.acl.roles') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Perfis de acesso
+                        </a>
+                        @endif
+
+                        {{-- Páginas / objetos --}}
+                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
+                        <a href="{{ route('ptah.acl.pages') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            Páginas e objetos
+                        </a>
+                        @endif
+
+                        {{-- Usuários e permissões --}}
+                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
+                        <a href="{{ route('ptah.acl.users') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            Usuários e permissões
+                        </a>
+                        @endif
+
+                        {{-- Auditoria --}}
+                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.audit'))
+                        <a href="{{ route('ptah.acl.audit') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Auditoria
+                        </a>
+                        @endif
+
+                        {{-- Menu --}}
+                        @if(config('ptah.modules.menu') && \Illuminate\Support\Facades\Route::has('ptah.menu.manage'))
+                        @if(config('ptah.modules.company') || config('ptah.modules.permissions'))
+                        <hr class="my-1 border-gray-100">
+                        @endif
+                        <a href="{{ route('ptah.menu.manage') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                            </svg>
+                            Gerenciar menu
+                        </a>
+                        @endif
+                    </div>
+                </div>
                 @endif
 
                 {{-- Notifications --}}
