@@ -111,7 +111,8 @@ class Menu extends Model
             $item['children'] = static::nestItems($all, $item['id'], $maxDepth, $depth + 1);
             // Compatibilidade com o padrão do erp-system (label/icon string)
             $item['label'] = $item['text'];
-            $item['match'] = $item['url'] ? ltrim($item['url'], '/') . '*' : null;
+            // Usa o path exato sem wildcard — a sidebar testa exato + subrotas (url/*)
+            $item['match'] = $item['url'] ? ltrim(rtrim($item['url'], '/'), '/') : null;
             return $item;
         }, array_values($items));
     }

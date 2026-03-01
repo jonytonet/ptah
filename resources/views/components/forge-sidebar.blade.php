@@ -142,9 +142,12 @@
                     $itemMatch  = $item['match'] ?? ltrim($itemUrl, '/');
                     $children   = $item['children'] ?? [];
                     $hasKids    = !empty($children);
-                    $isActive   = $itemMatch ? request()->is($itemMatch) : false;
+                    $isActive   = $itemMatch ? (request()->is($itemMatch) || request()->is($itemMatch . '/*')) : false;
                     // Um grupo está ativo se algum filho estiver ativo
-                    $groupActive = $hasKids && collect($children)->contains(fn($c) => request()->is($c['match'] ?? ltrim($c['url'] ?? '#', '/')));
+                    $groupActive = $hasKids && collect($children)->contains(function($c) {
+                        $cm = $c['match'] ?? ltrim(rtrim($c['url'] ?? '#', '/'), '/');
+                        return $cm && (request()->is($cm) || request()->is($cm . '/*'));
+                    });
                 @endphp
 
                 {{-- ── menuGroup com filhos → acordeon Alpine ── --}}
