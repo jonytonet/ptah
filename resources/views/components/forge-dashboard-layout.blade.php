@@ -291,6 +291,39 @@
         .ptah-dark .ptah-alert-success { background-color: rgba(16,185,129,.15); }
         .ptah-dark .ptah-alert-danger  { background-color: rgba(239,68,68,.15); }
         .ptah-dark .ptah-alert-warn    { background-color: rgba(245,158,11,.15); }
+
+        /* ─── Page Title ─────────────────────────────────────── */
+        .ptah-dark .ptah-page-title { color: #e2e8f0; }
+
+        /* ─── Module Toolbar (company/permission views) ──────── */
+        .ptah-dark .ptah-module-toolbar {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        .ptah-dark .ptah-module-toolbar input[type="search"],
+        .ptah-dark .ptah-module-toolbar select {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        .ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: #64748b; }
+
+        /* ─── Module Table ────────────────────────────────────── */
+        .ptah-dark .ptah-module-table { border-color: #334155; }
+        .ptah-dark .ptah-module-table thead tr {
+            background-color: #1e293b;
+            border-color: #475569;
+        }
+        .ptah-dark .ptah-module-table thead th { color: #94a3b8; }
+        .ptah-dark .ptah-module-table tbody { background-color: #0f172a; }
+        .ptah-dark .ptah-module-table tbody tr { border-color: #334155; }
+        .ptah-dark .ptah-module-table tbody td { color: #cbd5e1; }
+        .ptah-dark .ptah-module-table tbody tr:hover { background-color: #1e293b; }
+        .ptah-dark .ptah-module-table .text-slate-800 { color: #e2e8f0; }
+        .ptah-dark .ptah-module-table .text-slate-500 { color: #94a3b8; }
+        .ptah-dark .ptah-module-table .text-slate-400 { color: #64748b; }
+        .ptah-dark .ptah-module-table .bg-slate-100   { background-color: #334155; }
+        .ptah-dark .ptah-module-table .bg-slate-50    { background-color: #1e293b; }
     </style>
 
     {{-- Livewire (se disponível) --}}
