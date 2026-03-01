@@ -33,6 +33,8 @@
    - [Driver `database`](#driver-database)
    - [Model Menu](#model-menu)
    - [MenuService](#menuservice)
+   - [Tela de Gestão de Menus](#tela-de-gestão-de-menus)
+   - [Sidebar — Ícones e Grupos Accordion](#sidebar--ícones-e-grupos-accordion)
 7. [Módulo Company](#módulo-company)
 8. [Módulo Permissions](#módulo-permissions)
 9. [Comando ptah:module](#comando-ptahmodule)
@@ -469,9 +471,10 @@ itens de demo hardcoded
 |---|---|---|
 | `id` | bigint PK | — |
 | `parent_id` | bigint FK nullable | Auto-referência (grupos) |
-| `text` | string | Texto exibido no menu |
+| `text` | string | Texto interno/legado |
+| `label` | virtual (alias de `text`) | Rótulo exibido — a sidebar lê `label` com fallback para `text` |
 | `url` | string(2048) | URL do link |
-| `icon` | string nullable | Nome do ícone (ex: `'home'`, `'users'`) |
+| `icon` | string nullable | Classe CSS (`bx bx-home`, `fas fa-user`) ou nome SVG legado (`home`) |
 | `type` | enum | `menuLink` ou `menuGroup` |
 | `target` | enum | `_self` ou `_blank` |
 | `link_order` | integer | Ordem de exibição |
@@ -497,12 +500,28 @@ $menu->children // HasMany(Menu)
 
 ```php
 [
-    ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'home', 'match' => '/dashboard*'],
+    [
+        'label'    => 'Dashboard',
+        'url'      => '/dashboard',
+        'icon'     => 'bx bx-home-alt',   // classe CSS Boxicons
+        'type'     => 'menuLink',
+        'target'   => '_self',
+        'match'    => 'dashboard',
+        'children' => [],
+    ],
     [
         'label'    => 'Cadastros',
-        'icon'     => 'folder',
+        'icon'     => 'bx bx-folder',
+        'type'     => 'menuGroup',         // grupo → accordion na sidebar
         'children' => [
-            ['label' => 'Produtos', 'url' => '/products', 'icon' => 'cube', 'match' => '/products*'],
+            [
+                'label'  => 'Produtos',
+                'url'    => '/products',
+                'icon'   => 'bx bx-cube',
+                'type'   => 'menuLink',
+                'target' => '_self',
+                'match'  => 'products*',
+            ],
         ],
     ],
 ]
@@ -526,6 +545,72 @@ $menu->children // HasMany(Menu)
 - Chave: `ptah_menu_tree`  
 - TTL: `config('ptah.menu.cache_ttl', 300)` segundos  
 - Invalidação automática: o Observer do model `Menu` chama `Menu::clearCache()` nos eventos `saved`, `deleted` e `restored`
+
+---
+
+### Tela de Gestão de Menus
+
+Quando o módulo menu está ativo, o Ptah registra automaticamente a tela Livewire de CRUD de itens:
+
+| Rota | Componente | Acesso |
+|---|---|---|
+| `/ptah-menu` | `Ptah\Livewire\Menu\MenuList` | `ptah.menu.manage` |
+
+A tela aparece automaticamente no **dropdown de Administração** da navbar (`forge-navbar`) assim que a rota existir.
+
+**Funcionalidades:**
+- Criação e edição de **links** (`menuLink`) e **grupos** (`menuGroup`)
+- Campo **pai** — permite aninhar links dentro de um grupo
+- Preview em tempo real do ícone no formulário
+- **Ordem** de exibição (`link_order`)
+- Toggle de status (ativo/inativo) diretamente na tabela
+- Exclusão de grupo desvincula automaticamente os filhos (evita órfãos)
+- **Busca** e filtro por tipo na toolbar
+- Invalida o cache `ptah_menu_tree` após cada operação
+
+**Ícones suportados:**
+
+| Formato | Exemplo | Resultado |
+|---|---|---|
+| Classe CSS com espaço | `bx bx-home-alt` | `<i class="bx bx-home-alt">` (Boxicons) |
+| Classe CSS com espaço | `fas fa-user` | `<i class="fas fa-user">` (Font Awesome) |
+| Nome simples (legado) | `home` | SVG inline do mapa legado |
+
+> As bibliotecas Boxicons 2.1.4 e Font Awesome 6.7.2 já são carregadas via CDN pelo `forge-dashboard-layout`.
+
+---
+
+### Sidebar — Ícones e Grupos Accordion
+
+O `forge-sidebar` foi atualizado para suportar três comportamentos dependendo do `type` de cada item:
+
+| `type` | Comportamento |
+|---|---|
+| `menuLink` | Link direto — `<a href>` com highlight de rota ativa |
+| `menuGroup` + filhos | Cabeçalho de grupo com **accordion Alpine.js** (`x-collapse`) — seta animada indica aberto/fechado |
+| `menuGroup` sem filhos | Label desabilitado (div, sem clique) |
+
+**Driver `database` — Dashboard fixo:**
+
+Quando `PTAH_MENU_DRIVER=database`, o item **Dashboard** é injetado automaticamente no topo do menu (antes dos itens do banco) com ícone `bx bx-home-alt`. Os demais itens vêm do banco.
+
+**Renderização de ícones:**
+
+```php
+// Lógica em forge-sidebar.blade.php
+if (str_contains($icon, ' ')) {
+    // Boxicons / Font Awesome → <i class>
+    return '<i class="' . $icon . '">';
+}
+// Nome sem espaço → SVG inline (legado)
+return $svgIcons[$icon] ?? $svgIcons['cube'];
+```
+
+**Logout:**  
+O botão de saída usa `<i class="bx bx-log-out">` em vez de SVG inline.
+
+**Estado accordion:**  
+Grupos que contêm a rota ativa iniciam **abertos** automaticamente (`x-data="{ open: true }"`). O estado não é persistido entre sessões.
 
 ---
 

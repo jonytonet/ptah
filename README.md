@@ -219,6 +219,20 @@ A sidebar possui um botão de colapso/expansão na navbar (ao lado da logo, vis�
 
 **Ícone do botão:** retângulo com painel lateral — indica "recolher" quando a sidebar está aberta e "expandir" quando está fechada.
 
+**Grupos accordion (driver `database`):**
+
+Itens do tipo `menuGroup` com filhos renderizam como **accordion Alpine.js** — clique no título do grupo para expandir/recolher os sub-itens. Grupos com a rota ativa iniciam automaticamente abertos.
+
+**Ícones:**
+
+| Formato | Exemplo | Renderizado como |
+|---|---|---|
+| Classe CSS (Boxicons) | `bx bx-home-alt` | `<i class="bx bx-home-alt">` |
+| Classe CSS (Font Awesome) | `fas fa-user` | `<i class="fas fa-user">` |
+| Nome simples (legado) | `home` | SVG inline do mapa legado |
+
+> Boxicons 2.1.4 e Font Awesome 6.7.2 são carregados automaticamente pelo `forge-dashboard-layout` via CDN.
+
 ---
 
 ### Layout Auth
@@ -511,7 +525,7 @@ Notificações flutuantes com auto-close.
 | `forge-stepper` | Passos de um processo (wizard) |
 | `forge-chart-card` | Card wrapper para gráficos |
 | `forge-navbar` | Navbar superior com dropdown de usuário, botão dark mode (sol/lua) e botão de collapse da sidebar (desktop) |
-| `forge-sidebar` | Sidebar responsiva com collapse/expand persistido — icon-only no modo colapsado, ícones + labels no expandido |
+| `forge-sidebar` | Sidebar responsiva com collapse/expand persistido — icon-only no modo colapsado; suporta **grupos accordion** (Alpine `x-collapse`) e ícones Boxicons/FontAwesome via classe CSS |
 | `forge-dashboard-layout` | Layout completo com dark mode automático via OS (`prefers-color-scheme`) e override manual via localStorage |
 
 ---
@@ -1863,7 +1877,26 @@ O menu da sidebar suporta dois drivers:
 
 A troca de driver **não quebra projetos existentes** — o driver `config` é o padrão e nenhum código precisa ser alterado.
 
-Quando `driver = database`, o `forge-sidebar` usa `MenuService::getTree()` automaticamente (com cache configurável). O `forge-navbar` exibe um ícone ⚙️ (link para `/ptah-menu`) quando o módulo está ativo.
+Quando `driver = database`:
+- O `forge-sidebar` usa `MenuService::getTree()` automaticamente (com cache configurável)
+- Um item **Dashboard** fixo é injetado no topo da sidebar automaticamente
+- O `forge-navbar` exibe o link **Gerenciar menu** no dropdown de Administração
+
+**Tela de gestão:** `/ptah-menu` — CRUD completo de itens com suporte a grupos, sub-itens, ordem, ícones e status. Qualquer alteração invalida o cache automaticamente.
+
+**Ícones suportados na tela e na sidebar:**
+```
+bx bx-home-alt   → Boxicons
+fas fa-user       → Font Awesome
+home              → SVG legado (projetos existentes com driver config)
+```
+
+**Comportamento de grupos na sidebar:**
+- `menuGroup` com filhos: accordion Alpine.js (`x-collapse`)
+- `menuGroup` sem filhos: label desabilitado
+- `menuLink`: link direto com highlight de rota ativa
+
+> Consulte **[docs/Modules.md#módulo-menu](docs/Modules.md#m%C3%B3dulo-menu)** para referência completa.
 
 ### Módulo Company — visão rápida
 
