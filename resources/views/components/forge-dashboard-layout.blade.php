@@ -158,6 +158,23 @@
         .ptah-dark .ptah-navbar .ptah-user-dropdown hr {
             border-color: #334155;
         }
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown a,
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown button {
+            color: #cbd5e1;
+        }
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
+            background-color: #334155;
+        }
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
+            color: #64748b;
+        }
+        .ptah-dark .ptah-navbar .ptah-admin-dropdown hr {
+            border-color: #334155;
+        }
         .ptah-dark .ptah-navbar .ptah-mobile-toggle {
             color: #94a3b8;
         }

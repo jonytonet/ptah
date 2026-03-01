@@ -103,8 +103,8 @@
     :class="{
         'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
-        'lg:w-16':  sidebarCollapsed,
-        'lg:w-64':  !sidebarCollapsed,
+        'lg:w-16':  sidebarCollapsed && !hovered,
+        'lg:w-64':  !sidebarCollapsed || hovered,
     }"
     class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col
            transition-all duration-300 ease-in-out
