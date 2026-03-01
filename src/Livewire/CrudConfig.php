@@ -299,9 +299,15 @@ class CrudConfig extends Component
      *     → colsGravar = false (nunca grava coluna de tabela externa)
      *     → colsSource  = "table.column" (qualificado para uso no WHERE)
      *
-     *  2. Se colsSource usa notação Eloquent ("relacao.coluna") e existe um
-     *     JOIN para essa tabela, converte para SQL qualificado ("tabela.coluna")
-     *     usando o mapeamento dos aliases definidos.
+     *  2. Se colsSource usa notação Eloquent de 2 partes ("relacao.coluna") e
+     *     existe um JOIN para essa tabela, converte para SQL qualificado.
+     *     Ex: "product.name"  →  "products.name"
+     *
+     *  3. Se colsSource usa notação Eloquent encadeada de 3+ partes
+     *     ("a.b.coluna"), extrai os dois últimos segmentos e resolve via JOIN.
+     *     Ex: "product_supplier.product.name" → "products.name",
+     *         colsNomeFisico corrigido para o alias (ex: "product_name"),
+     *         colsGravar = false.
      */
     protected function resolveJoinDefaults(array $fieldData): array
     {
@@ -313,17 +319,48 @@ class CrudConfig extends Component
         $source     = $fieldData['colsSource']     ?? '';
 
         // Monta mapa: alias → ['table' => ..., 'column' => ...]
-        $aliasMap = [];
+        // Monta mapa reverso: "table.column" → alias
+        $aliasMap    = [];  // alias → ['table', 'column']
+        $qualifiedMap = []; // "table.col" → alias
         foreach ($this->joins as $join) {
             foreach ($join['select'] ?? [] as $sel) {
                 $alias = trim($sel['alias']  ?? '');
                 $col   = trim($sel['column'] ?? '');
                 if ($alias && $col) {
-                    $aliasMap[$alias] = [
-                        'table'  => $join['table'] ?? '',
-                        'column' => $col,
-                    ];
+                    $aliasMap[$alias]  = ['table' => $join['table'] ?? '', 'column' => $col];
+                    $qualifiedMap[$col] = $alias;
                 }
+            }
+        }
+
+        // Regra 3 — notação encadeada de 3+ partes: "a.b.coluna"
+        // Executa antes das outras para normalizar $source e $nomeFisico
+        if (! empty($source) && substr_count($source, '.') >= 2) {
+            $segments  = explode('.', $source);
+            $lastCol   = array_pop($segments);                 // "name"
+            $lastRel   = array_pop($segments);                 // "product"
+
+            // Resolve a tabela do último relacionamento (singular → plural e vice-versa)
+            $resolved = null;
+            foreach ($this->joins as $join) {
+                $table = $join['table'] ?? '';
+                if ($table === $lastRel || $table === $lastRel . 's' || rtrim($table, 's') === $lastRel) {
+                    $resolved = $table;
+                    break;
+                }
+            }
+
+            if ($resolved) {
+                $qualifiedCol            = "{$resolved}.{$lastCol}";
+                $fieldData['colsSource'] = $qualifiedCol;
+                $fieldData['colsGravar'] = false;
+                // Corrige colsNomeFisico para o alias se existir no mapa
+                if (isset($qualifiedMap[$qualifiedCol])) {
+                    $fieldData['colsNomeFisico'] = $qualifiedMap[$qualifiedCol];
+                }
+                // Atualiza source para a versão normalizada
+                $source     = $qualifiedCol;
+                $nomeFisico = $fieldData['colsNomeFisico'];
             }
         }
 
@@ -336,16 +373,14 @@ class CrudConfig extends Component
             }
         }
 
-        // Regra 2 — corrige notação Eloquent "relacao.coluna" → "tabela.coluna"
-        if (! empty($source) && str_contains($source, '.') && ! str_contains($source, ' ')) {
+        // Regra 2 — corrige notação Eloquent de 2 partes "relacao.coluna" → "tabela.coluna"
+        if (! empty($source) && substr_count($source, '.') === 1) {
             [$relation, $col] = explode('.', $source, 2);
             foreach ($this->joins as $join) {
                 $table = $join['table'] ?? '';
-                // Verifica se o "relation" bate com a tabela (singular ou exato)
                 if ($table === $relation) {
                     break; // já está correto — é tabela.coluna
                 }
-                // Notação Eloquent: "product.name" → tabela "products"
                 if ($table === $relation . 's' || rtrim($table, 's') === $relation) {
                     $fieldData['colsSource'] = "{$table}.{$col}";
                     $fieldData['colsGravar'] = false;
