@@ -4,11 +4,13 @@
       - appName: string
       - logoUrl: string
       - items  : array de menu items (sobreescreve config ptah.forge.sidebar_items)
-                 ['label', 'url', 'icon', 'match']
+                 ['label', 'url', 'icon', 'match', 'children'?]
     Comportamentos:
       - Collapse/expand no desktop (icon-only) — estado persistido em localStorage (ptah_sidebar_collapsed)
       - Dark mode via classe .ptah-dark no ancestral (forge-dashboard-layout)
       - Mobile: overlay + deslize lateral via evento 'toggle-sidebar'
+      - Ícones: aceita classes CSS (bx bx-home, fas fa-user) ou nomes SVG legados (home, users…)
+      - driver=database: inicia com Dashboard fixo; grupos rendem como acordeon Alpine
 --}}
 @props([
     'appName' => config('app.name', 'Ptah'),
@@ -17,35 +19,66 @@
 ])
 
 @php
+    $usingDatabase = (config('ptah.modules.menu') && config('ptah.menu.driver') === 'database');
+
     // Prioridade: prop > MenuService (driver=database) > config
     if ($items !== null) {
         $menuItems = $items;
-    } elseif (config('ptah.modules.menu') && config('ptah.menu.driver') === 'database') {
+    } elseif ($usingDatabase) {
         $menuItems = app(\Ptah\Services\Menu\MenuService::class)->getTree();
     } else {
-        $menuItems = config('ptah.forge.sidebar_items', []);
+        $rawConfig = config('ptah.forge.sidebar_items', []);
+        $menuItems = array_map(fn($i) => array_merge(['children' => [], 'type' => 'menuLink'], $i), $rawConfig);
     }
 
+    // Quando usa banco de dados: injeta Dashboard fixo no topo
+    if ($usingDatabase) {
+        $dashUrl   = \Illuminate\Support\Facades\Route::has('ptah.dashboard') ? route('ptah.dashboard') : '/dashboard';
+        $dashFixed = [
+            'id'        => null,
+            'label'     => 'Dashboard',
+            'text'      => 'Dashboard',
+            'url'       => $dashUrl,
+            'icon'      => 'bx bx-home-alt',
+            'type'      => 'menuLink',
+            'target'    => '_self',
+            'is_active' => true,
+            'match'     => 'dashboard',
+            'children'  => [],
+        ];
+        array_unshift($menuItems, $dashFixed);
+    }
+
+    // Fallback quando vazio
     if (empty($menuItems)) {
         $menuItems = [
-            ['icon' => 'home',      'label' => 'Dashboard',    'url' => '/dashboard', 'match' => 'dashboard'],
-            ['icon' => 'users',     'label' => 'Usuários',     'url' => '/users',     'match' => 'users*'],
-            ['icon' => 'cube',      'label' => 'Produtos',     'url' => '/products',  'match' => 'products*'],
-            ['icon' => 'chart-bar', 'label' => 'Relatórios',   'url' => '/reports',   'match' => 'reports*'],
-            ['icon' => 'cog',       'label' => 'Configurações', 'url' => '/settings', 'match' => 'settings*'],
+            ['label' => 'Dashboard',     'url' => '/dashboard', 'icon' => 'bx bx-home-alt',   'type' => 'menuLink', 'match' => 'dashboard', 'children' => []],
+            ['label' => 'Usuários',      'url' => '/users',     'icon' => 'bx bx-user',        'type' => 'menuLink', 'match' => 'users*',    'children' => []],
+            ['label' => 'Produtos',      'url' => '/products',  'icon' => 'bx bx-cube',        'type' => 'menuLink', 'match' => 'products*', 'children' => []],
+            ['label' => 'Relatórios',    'url' => '/reports',   'icon' => 'bx bx-bar-chart',   'type' => 'menuLink', 'match' => 'reports*',  'children' => []],
+            ['label' => 'Configurações', 'url' => '/settings',  'icon' => 'bx bx-cog',         'type' => 'menuLink', 'match' => 'settings*', 'children' => []],
         ];
     }
 
+    // Mapa de SVGs para ícones legados (config sem espaço no nome)
     $svgIcons = [
-        'home'      => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
-        'users'     => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
-        'cube'      => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>',
-        'chart-bar' => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
-        'cog'       => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
-        'logout'    => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>',
-        'chevron-left'  => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>',
-        'chevron-right' => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>',
+        'home'         => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
+        'users'        => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
+        'cube'         => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>',
+        'chart-bar'    => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
+        'cog'          => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
+        'chevron-down' => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>',
     ];
+
+    /**
+     * Renderiza ícone: se icon contém espaço (CSS class) usa <i class>; senão usa SVG map.
+     */
+    $renderIcon = function(string $icon) use ($svgIcons): string {
+        if (str_contains($icon, ' ')) {
+            return '<i class="' . e($icon) . ' text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
+        }
+        return $svgIcons[$icon] ?? $svgIcons['cube'];
+    };
 @endphp
 
 {{-- Overlay mobile --}}
@@ -101,38 +134,122 @@
         <ul class="space-y-1">
             @foreach($menuItems as $item)
                 @php
-                    $isActive = request()->is($item['match'] ?? ltrim($item['url'], '/'));
+                    $itemType   = $item['type'] ?? 'menuLink';
+                    $itemLabel  = $item['label'] ?? ($item['text'] ?? '');
+                    $itemIcon   = $item['icon'] ?? 'bx bx-circle';
+                    $itemUrl    = $item['url'] ?? '#';
+                    $itemTarget = $item['target'] ?? '_self';
+                    $itemMatch  = $item['match'] ?? ltrim($itemUrl, '/');
+                    $children   = $item['children'] ?? [];
+                    $hasKids    = !empty($children);
+                    $isActive   = $itemMatch ? request()->is($itemMatch) : false;
+                    // Um grupo está ativo se algum filho estiver ativo
+                    $groupActive = $hasKids && collect($children)->contains(fn($c) => request()->is($c['match'] ?? ltrim($c['url'] ?? '#', '/')));
                 @endphp
-                <li>
-                    <a
-                        href="{{ $item['url'] }}"
-                        title="{{ $item['label'] }}"
-                        class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative
-                            {{ $isActive
-                                ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
-                            }}"
-                    >
-                        <span class="flex-shrink-0 w-5 h-5">
-                            {!! $svgIcons[$item['icon']] ?? $svgIcons['cube'] !!}
-                        </span>
-                        {{-- Label — oculto quando collapsed no desktop --}}
-                        <span
-                            :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
-                            class="whitespace-nowrap text-sm transition-all duration-300">
-                            {{ $item['label'] }}
-                        </span>
 
-                        {{-- Tooltip quando collapsed --}}
-                        <span
-                            x-show="sidebarCollapsed"
-                            class="pointer-events-none absolute left-full ml-2 px-2 py-1 text-xs rounded-md
-                                   bg-gray-900 text-white whitespace-nowrap opacity-0 group-hover:opacity-100
-                                   transition-opacity duration-150 z-50 hidden lg:block">
-                            {{ $item['label'] }}
-                        </span>
-                    </a>
-                </li>
+                {{-- ── menuGroup com filhos → acordeon Alpine ── --}}
+                @if($itemType === 'menuGroup' && $hasKids)
+                    <li x-data="{ open: {{ $groupActive ? 'true' : 'false' }} }">
+                        {{-- Botão do grupo --}}
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            title="{{ $itemLabel }}"
+                            class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                                {{ $groupActive ? 'text-primary font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-primary' }}"
+                        >
+                            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                                {!! $renderIcon($itemIcon) !!}
+                            </span>
+                            <span
+                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                class="flex-1 text-left whitespace-nowrap text-sm transition-all duration-300">
+                                {{ $itemLabel }}
+                            </span>
+                            {{-- Seta --}}
+                            <svg
+                                :class="open ? 'rotate-180' : ''"
+                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                class="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {{-- Sub-itens --}}
+                        <ul x-show="open" x-collapse class="mt-1 ml-3 pl-3 border-l border-gray-200 space-y-0.5">
+                            @foreach($children as $child)
+                                @php
+                                    $childLabel  = $child['label'] ?? ($child['text'] ?? '');
+                                    $childIcon   = $child['icon'] ?? 'bx bx-circle';
+                                    $childUrl    = $child['url'] ?? '#';
+                                    $childTarget = $child['target'] ?? '_self';
+                                    $childMatch  = $child['match'] ?? ltrim($childUrl, '/');
+                                    $childActive = $childMatch ? request()->is($childMatch) : false;
+                                @endphp
+                                <li>
+                                    <a
+                                        href="{{ $childUrl }}"
+                                        target="{{ $childTarget }}"
+                                        title="{{ $childLabel }}"
+                                        class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
+                                            {{ $childActive
+                                                ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
+                                                : 'text-gray-500 hover:bg-gray-100 hover:text-primary'
+                                            }}"
+                                    >
+                                        <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-sm">
+                                            {!! $renderIcon($childIcon) !!}
+                                        </span>
+                                        <span class="whitespace-nowrap text-sm">{{ $childLabel }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </li>
+
+                {{-- ── menuGroup sem filhos → label desabilitado ── --}}
+                @elseif($itemType === 'menuGroup')
+                    <li>
+                        <div
+                            title="{{ $itemLabel }}"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 cursor-default"
+                        >
+                            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                                {!! $renderIcon($itemIcon) !!}
+                            </span>
+                            <span
+                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                class="whitespace-nowrap text-sm italic transition-all duration-300">
+                                {{ $itemLabel }}
+                            </span>
+                        </div>
+                    </li>
+
+                {{-- ── menuLink → link normal ── --}}
+                @else
+                    <li>
+                        <a
+                            href="{{ $itemUrl }}"
+                            target="{{ $itemTarget }}"
+                            title="{{ $itemLabel }}"
+                            class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative
+                                {{ $isActive
+                                    ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                                }}"
+                        >
+                            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                                {!! $renderIcon($itemIcon) !!}
+                            </span>
+                            <span
+                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                class="whitespace-nowrap text-sm transition-all duration-300">
+                                {{ $itemLabel }}
+                            </span>
+                        </a>
+                    </li>
+                @endif
             @endforeach
         </ul>
     </nav>
@@ -146,7 +263,9 @@
                 title="Sair"
                 class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-danger hover:bg-danger-light transition-all duration-200"
             >
-                <span class="flex-shrink-0 w-5 h-5">{!! $svgIcons['logout'] !!}</span>
+                <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                    <i class="bx bx-log-out text-xl leading-none"></i>
+                </span>
                 <span
                     :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                     class="whitespace-nowrap text-sm font-medium transition-all duration-300">

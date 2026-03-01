@@ -26,9 +26,11 @@ use Ptah\Livewire\Auth\ProfilePage;
 use Ptah\Livewire\Auth\ResetPasswordPage;
 use Ptah\Livewire\Auth\TwoFactorChallengePage;
 use Ptah\Livewire\Company\CompanyList;
+use Ptah\Livewire\Menu\MenuList;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
 use Ptah\Livewire\Permission\PageList;
+use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Services\Auth\SessionService;
@@ -251,6 +253,10 @@ class PtahServiceProvider extends ServiceProvider
                 Livewire::component('ptah::auth.profile',            ProfilePage::class);
             }
 
+            if (config('ptah.modules.menu')) {
+                Livewire::component('ptah::menu.list', MenuList::class);
+            }
+
             if (config('ptah.modules.company')) {
                 Livewire::component('ptah::company.list', CompanyList::class);
             }
@@ -261,6 +267,7 @@ class PtahServiceProvider extends ServiceProvider
                 Livewire::component('ptah::permission.page-list',       PageList::class);
                 Livewire::component('ptah::permission.user-list',       UserPermissionList::class);
                 Livewire::component('ptah::permission.audit-list',      AuditList::class);
+                Livewire::component('ptah::permission.guide',             PermissionGuide::class);
             }
         }
     }
@@ -280,6 +287,10 @@ class PtahServiceProvider extends ServiceProvider
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-auth.php');
+        }
+
+        if (config('ptah.modules.menu')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-menu.php');
         }
 
         if (config('ptah.modules.company')) {
