@@ -18,7 +18,8 @@ class InstallCommand extends Command
      * @var string
      */
     protected $signature = 'ptah:install
-                            {--force : Sobrescrever arquivos existentes}';
+                            {--force    : Sobrescrever arquivos existentes}
+                            {--skip-npm : Pular npm install e npm run build}';
 
     /**
      * @var string
@@ -42,6 +43,7 @@ class InstallCommand extends Command
         $this->publishMigrations();
         $this->runMigrations();
         $this->createStorageLink();
+        $this->installNodeDependencies();
 
         $this->newLine();
         $this->components->info('Ptah instalado com sucesso!');
@@ -121,5 +123,69 @@ class InstallCommand extends Command
             }
             $this->call('storage:link');
         });
+    }
+
+    /**
+     * Executa npm install e npm run build se package.json existir.
+     * Pode ser ignorado com --skip-npm.
+     */
+    protected function installNodeDependencies(): void
+    {
+        if ($this->option('skip-npm')) {
+            return;
+        }
+
+        if (! file_exists(base_path('package.json'))) {
+            return;
+        }
+
+        // Detecta npm ou yarn
+        $npm = $this->findNodePackageManager();
+
+        if (! $npm) {
+            $this->components->warn('npm/yarn não encontrado — instale as dependências manualmente: npm install && npm run build');
+            return;
+        }
+
+        $this->components->task('Instalando dependências Node (npm install)', function () use ($npm) {
+            $exitCode = $this->runProcess([$npm, 'install'], base_path());
+            return $exitCode === 0;
+        });
+
+        $this->components->task('Compilando assets (npm run build)', function () use ($npm) {
+            $exitCode = $this->runProcess([$npm, 'run', 'build'], base_path());
+            return $exitCode === 0;
+        });
+    }
+
+    /**
+     * Executa um processo externo e exibe a saída em tempo real.
+     */
+    protected function runProcess(array $command, string $cwd): int
+    {
+        $process = new \Symfony\Component\Process\Process($command, $cwd);
+        $process->setTimeout(300);
+        $process->run(function ($type, $buffer) {
+            $this->getOutput()->write($buffer);
+        });
+
+        return $process->getExitCode() ?? 1;
+    }
+
+    /**
+     * Detecta o gerenciador de pacotes Node disponível.
+     */
+    protected function findNodePackageManager(): ?string
+    {
+        foreach (['npm', 'yarn'] as $manager) {
+            $check = new \Symfony\Component\Process\Process(
+                PHP_OS_FAMILY === 'Windows' ? ['cmd', '/c', 'where', $manager] : ['which', $manager]
+            );
+            $check->run();
+            if ($check->isSuccessful()) {
+                return $manager;
+            }
+        }
+        return null;
     }
 }
