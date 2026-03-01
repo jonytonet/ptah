@@ -303,7 +303,7 @@
                                         <label class="cfg-label">
                                             Fonte SQL
                                             <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-700">JOIN</span>
-                                            <span class="text-slate-400 font-normal">(opcional — somente para colunas de JOIN)</span>
+                                            <span class="font-normal text-slate-400">(opcional — somente para colunas de JOIN)</span>
                                         </label>
                                         <input type="text" wire:model="formDataField.colsSource"
                                             placeholder="ex: suppliers.name"
@@ -312,17 +312,17 @@
                                             <p class="font-semibold text-sky-700">Relação entre Nome Físico e Fonte SQL:</p>
                                             <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-slate-600">
                                                 <span class="font-mono font-semibold text-indigo-700">Nome Físico</span>
-                                                <span>= alias declarado no JOIN (ex: <code class="bg-white px-1 rounded">supplier_name</code>). É como o Blade acessa o valor.</span>
+                                                <span>= alias declarado no JOIN (ex: <code class="px-1 bg-white rounded">supplier_name</code>). É como o Blade acessa o valor.</span>
                                                 <span class="font-mono font-semibold text-sky-700">Fonte SQL</span>
-                                                <span>= nome qualificado SQL (ex: <code class="bg-white px-1 rounded">suppliers.name</code>). Usado em <code class="bg-white px-1 rounded">WHERE</code> e <code class="bg-white px-1 rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong></span>
+                                                <span>= nome qualificado SQL (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Usado em <code class="px-1 bg-white rounded">WHERE</code> e <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong></span>
                                             </div>
-                                            <p class="text-slate-500 pt-1 border-t border-sky-100">Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:</p>
+                                            <p class="pt-1 border-t text-slate-500 border-sky-100">Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:</p>
                                             <ul class="space-y-0.5 text-slate-500">
-                                                <li><code class="bg-white px-1 rounded font-mono">suppliers.name</code> <span class="text-slate-400">— qualificado SQL (correto)</span></li>
-                                                <li><code class="bg-white px-1 rounded font-mono">supplier.name</code> <span class="text-slate-400">— singular Eloquent → convertido para <code class="bg-white px-1 rounded">suppliers.name</code></span></li>
-                                                <li><code class="bg-white px-1 rounded font-mono">product_supplier.product.name</code> <span class="text-slate-400">— encadeado → extraído como <code class="bg-white px-1 rounded">products.name</code></span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">suppliers.name</code> <span class="text-slate-400">— qualificado SQL (correto)</span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">supplier.name</code> <span class="text-slate-400">— singular Eloquent → convertido para <code class="px-1 bg-white rounded">suppliers.name</code></span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">product_supplier.product.name</code> <span class="text-slate-400">— encadeado → extraído como <code class="px-1 bg-white rounded">products.name</code></span></li>
                                             </ul>
-                                            <p class="text-amber-700 font-medium">⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.</p>
+                                            <p class="font-medium text-amber-700">⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.</p>
                                         </div>
                                     </div>
                                     <div>
@@ -383,7 +383,7 @@
                                         <div class="flex items-center gap-2 mt-2">
                                             <input type="checkbox" id="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 wire:model="formDataField.colsMetodoRaw"
-                                                class="rounded border-slate-300 text-indigo-600" />
+                                                class="text-indigo-600 rounded border-slate-300" />
                                             <label for="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 class="text-[11px] text-slate-600 cursor-pointer select-none">
                                                 <strong>colsMetodoRaw</strong> — Renderizar retorno como HTML bruto (sem escape)
@@ -400,18 +400,18 @@
                                             </button>
                                             <div x-show="open" x-cloak x-transition
                                                 class="mt-2 p-3 rounded-lg border border-indigo-100 bg-indigo-50/60 text-[11px] space-y-2">
-                                                <p class="font-semibold text-indigo-700">Sintaxe: <code class="bg-white px-1 rounded font-mono">Namespace\Classe\metodo(%campo1%, %campo2%, 'literal')</code></p>
-                                                <ul class="list-disc list-inside space-y-1 text-slate-600">
-                                                    <li><code class="bg-white px-1 rounded font-mono">%campo%</code> → substituído pelo valor do campo no registro</li>
-                                                    <li><code class="bg-white px-1 rounded font-mono">'literal'</code> ou <code class="bg-white px-1 rounded font-mono">"literal"</code> → string passada diretamente</li>
+                                                <p class="font-semibold text-indigo-700">Sintaxe: <code class="px-1 font-mono bg-white rounded">Namespace\Classe\metodo(%campo1%, %campo2%, 'literal')</code></p>
+                                                <ul class="space-y-1 list-disc list-inside text-slate-600">
+                                                    <li><code class="px-1 font-mono bg-white rounded">%campo%</code> → substituído pelo valor do campo no registro</li>
+                                                    <li><code class="px-1 font-mono bg-white rounded">'literal'</code> ou <code class="px-1 font-mono bg-white rounded">"literal"</code> → string passada diretamente</li>
                                                     <li>Múltiplos parâmetros separados por vírgula — cada um vira um argumento PHP separado</li>
-                                                    <li>O prefixo <code class="bg-white px-1 rounded font-mono">App\Services\</code> é adicionado automaticamente</li>
+                                                    <li>O prefixo <code class="px-1 font-mono bg-white rounded">App\Services\</code> é adicionado automaticamente</li>
                                                 </ul>
                                                 <div class="space-y-1 text-slate-500">
                                                     <p class="font-medium text-slate-600">Exemplos:</p>
-                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\getLabel(%id%)</code></p>
-                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\format(%id%, %status%, 'active')</code></p>
-                                                    <p><code class="bg-white px-1 rounded font-mono">Branch\MyService\badge(%type%)</code> + ativar colsMetodoRaw para HTML</p>
+                                                    <p><code class="px-1 font-mono bg-white rounded">Branch\MyService\getLabel(%id%)</code></p>
+                                                    <p><code class="px-1 font-mono bg-white rounded">Branch\MyService\format(%id%, %status%, 'active')</code></p>
+                                                    <p><code class="px-1 font-mono bg-white rounded">Branch\MyService\badge(%type%)</code> + ativar colsMetodoRaw para HTML</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -675,7 +675,7 @@
                                         <div>
                                             <label class="cfg-label">Locale (colsRendererLocale)</label>
                                             <input type="text" wire:model="formDataField.colsRendererLocale"
-                                                placeholder="pt-BR" class="cfg-input font-mono" />
+                                                placeholder="pt-BR" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">Ex: pt-BR, en-US, de-DE</p>
                                         </div>
                                     </div>
@@ -1186,18 +1186,20 @@
                                 {{-- Botão salvar campo --}}
                                 <div class="flex justify-end pt-4 mt-4 border-t border-slate-100">
                                     @if ($editingFieldIndex >= 0)
-                                    <button wire:click="updateField"
-                                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    <button wire:click="updateField" wire:loading.attr="disabled" wire:target="updateField"
+                                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-60">
+                                        <span wire:loading wire:target="updateField" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                                        <svg wire:loading.remove wire:target="updateField" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                             stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
                                         Salvar Alterações da Coluna
                                     </button>
                                     @else
-                                    <button wire:click="addField"
-                                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    <button wire:click="addField" wire:loading.attr="disabled" wire:target="addField"
+                                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-60">
+                                        <span wire:loading wire:target="addField" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                                        <svg wire:loading.remove wire:target="addField" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                             stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                         </svg>
@@ -1362,21 +1364,21 @@
                     <div x-show="tab === 'filters'" class="p-6 space-y-5">
 
                         {{-- ── Guia de uso ─────────────────────────────────── --}}
-                        <div x-data="{ open: false }" class="border border-indigo-200 rounded-xl bg-indigo-50/50 overflow-hidden">
+                        <div x-data="{ open: false }" class="overflow-hidden border border-indigo-200 rounded-xl bg-indigo-50/50">
                             <button @click="open = !open"
                                 class="flex items-center justify-between w-full px-4 py-3 text-left">
                                 <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                                    <i class="bx bx-info-circle text-base"></i>
+                                    <i class="text-base bx bx-info-circle"></i>
                                     Como usar os Filtros Personalizados
                                 </span>
-                                <i class="bx text-indigo-400 text-lg transition-transform" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                                <i class="text-lg text-indigo-400 transition-transform bx" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
 
                                 {{-- Cenário 1 --}}
-                                <div class="p-3 bg-white border border-slate-200 rounded-lg">
+                                <div class="p-3 bg-white border rounded-lg border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">① Filtro simples — campo direto na tabela</p>
-                                    <p class="text-slate-500 mb-2">Use quando o campo que você quer filtrar está na própria tabela do model.</p>
+                                    <p class="mb-2 text-slate-500">Use quando o campo que você quer filtrar está na própria tabela do model.</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">status</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Status</span>
@@ -1385,13 +1387,13 @@
                                         <span class="text-slate-400">whereHas</span>            <span class="text-slate-300">— vazio —</span>
                                         <span class="text-slate-400">Campo na Relação</span>    <span class="text-slate-300">— vazio —</span>
                                     </div>
-                                    <p class="mt-2 text-slate-400 italic">→ Gera: <code class="bg-slate-100 px-1 rounded">WHERE status = 'ativo'</code></p>
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">WHERE status = 'ativo'</code></p>
                                 </div>
 
                                 {{-- Cenário 2 --}}
-                                <div class="p-3 bg-white border border-slate-200 rounded-lg">
+                                <div class="p-3 bg-white border rounded-lg border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">② Filtro via relação — whereHas</p>
-                                    <p class="text-slate-500 mb-2">Use quando o campo está em uma relação Eloquent (ex: filtrar Produtos pelo nome do Fornecedor).</p>
+                                    <p class="mb-2 text-slate-500">Use quando o campo está em uma relação Eloquent (ex: filtrar Produtos pelo nome do Fornecedor).</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">supplier_name</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Fornecedor</span>
@@ -1400,13 +1402,13 @@
                                         <span class="text-slate-400">whereHas</span>            <span class="text-indigo-700">supplier</span>
                                         <span class="text-slate-400">Campo na Relação</span>    <span class="text-indigo-700">name</span>
                                     </div>
-                                    <p class="mt-2 text-slate-400 italic">→ Gera: <code class="bg-slate-100 px-1 rounded">WHERE EXISTS (SELECT * FROM suppliers WHERE name LIKE '%...%')</code></p>
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">WHERE EXISTS (SELECT * FROM suppliers WHERE name LIKE '%...%')</code></p>
                                 </div>
 
                                 {{-- Cenário 3 --}}
-                                <div class="p-3 bg-white border border-slate-200 rounded-lg">
+                                <div class="p-3 bg-white border rounded-lg border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">③ Filtro com agregação — whereHas + Aggregate</p>
-                                    <p class="text-slate-500 mb-2">Use para filtrar por valores calculados dentro de uma relação (ex: produtos com estoque total &gt; X).</p>
+                                    <p class="mb-2 text-slate-500">Use para filtrar por valores calculados dentro de uma relação (ex: produtos com estoque total &gt; X).</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">stock_qty</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Qtd. Estoque</span>
@@ -1416,7 +1418,7 @@
                                         <span class="text-slate-400">Campo na Relação</span>    <span class="text-indigo-700">quantity</span>
                                         <span class="text-slate-400">Agregação</span>           <span class="text-indigo-700">SUM</span>
                                     </div>
-                                    <p class="mt-2 text-slate-400 italic">→ Gera: <code class="bg-slate-100 px-1 rounded">HAVING SUM(quantity) &gt;= 100</code></p>
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">HAVING SUM(quantity) &gt;= 100</code></p>
                                 </div>
 
                                 <p class="text-[11px] text-slate-400 pt-1">
@@ -1460,7 +1462,7 @@
                                 {{-- Campo --}}
                                 <div>
                                     <label class="cfg-label">
-                                        Campo <span class="text-slate-400 font-normal">(identificador)</span>
+                                        Campo <span class="font-normal text-slate-400">(identificador)</span>
                                     </label>
                                     <input type="text" wire:model="formDataFilter.field"
                                         placeholder="ex: supplier_name"
@@ -1470,7 +1472,7 @@
 
                                 {{-- Label --}}
                                 <div>
-                                    <label class="cfg-label">Label <span class="text-slate-400 font-normal">(exibido no painel)</span></label>
+                                    <label class="cfg-label">Label <span class="font-normal text-slate-400">(exibido no painel)</span></label>
                                     <input type="text" wire:model="formDataFilter.label"
                                         placeholder="ex: Fornecedor"
                                         class="cfg-input" />
@@ -1513,12 +1515,12 @@
                                 {{-- whereHas --}}
                                 <div>
                                     <label class="cfg-label">
-                                        whereHas <span class="text-slate-400 font-normal">(nome da relação)</span>
+                                        whereHas <span class="font-normal text-slate-400">(nome da relação)</span>
                                     </label>
                                     <input type="text" wire:model="formDataFilter.whereHas"
                                         placeholder="ex: supplier"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Nome do método de relação no Model (ex: <code class="bg-slate-100 px-1 rounded">supplier</code>, <code class="bg-slate-100 px-1 rounded">stockMovements</code>).</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">Nome do método de relação no Model (ex: <code class="px-1 rounded bg-slate-100">supplier</code>, <code class="px-1 rounded bg-slate-100">stockMovements</code>).</p>
                                 </div>
 
                                 {{-- Campo na relação --}}
@@ -1535,7 +1537,7 @@
                                 {{-- Agregação --}}
                                 <div>
                                     <label class="cfg-label">
-                                        Agregação <span class="text-slate-400 font-normal">(para whereHas + HAVING)</span>
+                                        Agregação <span class="font-normal text-slate-400">(para whereHas + HAVING)</span>
                                     </label>
                                     <select wire:model="formDataFilter.aggregate" class="cfg-input">
                                         <option value="">— Nenhuma (filtro direto) —</option>
@@ -1564,22 +1566,22 @@
                     <div x-show="tab === 'styles'" class="p-6 space-y-5">
 
                         {{-- ── Guia de uso ─────────────────────────────────── --}}
-                        <div x-data="{ open: false }" class="border border-indigo-200 rounded-xl bg-indigo-50/50 overflow-hidden">
+                        <div x-data="{ open: false }" class="overflow-hidden border border-indigo-200 rounded-xl bg-indigo-50/50">
                             <button @click="open = !open"
                                 class="flex items-center justify-between w-full px-4 py-3 text-left">
                                 <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                                    <i class="bx bx-info-circle text-base"></i>
+                                    <i class="text-base bx bx-info-circle"></i>
                                     Como usar os Estilos Condicionais
                                 </span>
-                                <i class="bx text-indigo-400 text-lg transition-transform" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                                <i class="text-lg text-indigo-400 transition-transform bx" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
                                 <p class="text-slate-500">O estilo CSS é aplicado na <strong>linha inteira</strong> da tabela quando a condição é verdadeira. O <strong>Campo</strong> deve ser um atributo real do model (coluna do banco ou relação).</p>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {{-- Exemplo 1 --}}
-                                    <div class="p-3 bg-white border border-slate-200 rounded-lg">
-                                        <p class="font-semibold text-slate-700 mb-2">① Highlight por status texto</p>
+                                    <div class="p-3 bg-white border rounded-lg border-slate-200">
+                                        <p class="mb-2 font-semibold text-slate-700">① Highlight por status texto</p>
                                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">status</span>
                                             <span class="text-slate-400">Operador</span> <span class="text-indigo-700">==</span>
@@ -1592,8 +1594,8 @@
                                     </div>
 
                                     {{-- Exemplo 2 --}}
-                                    <div class="p-3 bg-white border border-slate-200 rounded-lg">
-                                        <p class="font-semibold text-slate-700 mb-2">② Destaque por valor numérico</p>
+                                    <div class="p-3 bg-white border rounded-lg border-slate-200">
+                                        <p class="mb-2 font-semibold text-slate-700">② Destaque por valor numérico</p>
                                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">stock</span>
                                             <span class="text-slate-400">Operador</span> <span class="text-indigo-700">&lt;=</span>
@@ -1606,8 +1608,8 @@
                                     </div>
 
                                     {{-- Exemplo 3 --}}
-                                    <div class="p-3 bg-white border border-slate-200 rounded-lg sm:col-span-2">
-                                        <p class="font-semibold text-slate-700 mb-2">③ Linhas canceladas / inativas</p>
+                                    <div class="p-3 bg-white border rounded-lg border-slate-200 sm:col-span-2">
+                                        <p class="mb-2 font-semibold text-slate-700">③ Linhas canceladas / inativas</p>
                                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">type</span>
                                             <span class="text-slate-400">Operador</span> <span class="text-indigo-700">==</span>
@@ -1622,9 +1624,9 @@
 
                                 <p class="text-[11px] text-slate-400 pt-1">
                                     <strong>Dica:</strong> O <em>Campo</em> deve ser um atributo do Model (coluna do banco).
-                                    Exemplo: para o model <code class="bg-slate-100 px-1 rounded">BusinessPartner</code> use
-                                    <code class="bg-slate-100 px-1 rounded">status</code>, <code class="bg-slate-100 px-1 rounded">type</code>, <code class="bg-slate-100 px-1 rounded">name</code> etc.
-                                    O CSS é aplicado como <code class="bg-slate-100 px-1 rounded">style=""</code> direto na tag <code class="bg-slate-100 px-1 rounded">&lt;tr&gt;</code>.
+                                    Exemplo: para o model <code class="px-1 rounded bg-slate-100">BusinessPartner</code> use
+                                    <code class="px-1 rounded bg-slate-100">status</code>, <code class="px-1 rounded bg-slate-100">type</code>, <code class="px-1 rounded bg-slate-100">name</code> etc.
+                                    O CSS é aplicado como <code class="px-1 rounded bg-slate-100">style=""</code> direto na tag <code class="px-1 rounded bg-slate-100">&lt;tr&gt;</code>.
                                 </p>
                             </div>
                         </div>
@@ -1659,7 +1661,7 @@
                                     <label class="cfg-label">Campo</label>
                                     <input type="text" wire:model="formDataStyle.field" placeholder="ex: status"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Coluna real do model (ex: <code class="bg-slate-100 px-1 rounded">status</code>, <code class="bg-slate-100 px-1 rounded">type</code>).</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">Coluna real do model (ex: <code class="px-1 rounded bg-slate-100">status</code>, <code class="px-1 rounded bg-slate-100">type</code>).</p>
                                 </div>
                                 <div>
                                     <label class="cfg-label">Operador</label>
@@ -1684,7 +1686,7 @@
                                 <input type="text" wire:model.live="formDataStyle.style"
                                     placeholder="background:#D4EDDA;color:#155724;"
                                     class="font-mono cfg-input" />
-                                <p class="text-[11px] text-slate-400 mt-1">Propriedades CSS separadas por <code class="bg-slate-100 px-1 rounded">;</code> — aplicadas no <code class="bg-slate-100 px-1 rounded">&lt;tr&gt;</code> da linha.</p>
+                                <p class="text-[11px] text-slate-400 mt-1">Propriedades CSS separadas por <code class="px-1 rounded bg-slate-100">;</code> — aplicadas no <code class="px-1 rounded bg-slate-100">&lt;tr&gt;</code> da linha.</p>
                             </div>
                             {{-- Preview ao vivo --}}
                             @if (!empty($formDataStyle['style']))
@@ -1736,14 +1738,14 @@
                         @endif
 
                         {{-- ── Guia de uso ─────────────────────────────── --}}
-                        <div x-data="{ open: false }" class="overflow-hidden border border-indigo-200 rounded-xl bg-indigo-50/50">
+                        <div x-data="{ open: true }" class="overflow-hidden border border-indigo-200 rounded-xl bg-indigo-50/50">
                             <button @click="open = !open"
                                 class="flex items-center justify-between w-full px-4 py-3 text-left">
                                 <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
                                     <i class="text-base bx bx-info-circle"></i>
                                     Como usar JOINs configuráveis
                                 </span>
-                                <i class="text-lg transition-transform bx text-indigo-400" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                                <i class="text-lg text-indigo-400 transition-transform bx" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
                                 <p class="pt-1 text-slate-500">JOINs configuráveis permitem trazer colunas de outras tabelas <strong>sem relacionamento Eloquent</strong>, com suporte a filtro, sort e export.</p>
@@ -1751,7 +1753,7 @@
                                 {{-- Exemplo simples --}}
                                 <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
                                     <p class="font-semibold text-slate-700">Exemplo simples — 1 nível</p>
-                                    <p class="text-[11px] text-slate-400 mb-2">Mostrar o nome do fornecedor diretamente em <code class="bg-slate-100 px-1 rounded">products</code>:</p>
+                                    <p class="text-[11px] text-slate-400 mb-2">Mostrar o nome do fornecedor diretamente em <code class="px-1 rounded bg-slate-100">products</code>:</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Tipo</span>         <span class="text-indigo-700">left</span>
                                         <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">suppliers</span>
@@ -1760,7 +1762,7 @@
                                         <span class="text-slate-400">Colunas</span>     <span class="text-indigo-700">suppliers.name:supplier_name</span>
                                     </div>
                                     <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
-                                        <span class="text-slate-500 font-sans">Na aba Colunas:</span><span></span>
+                                        <span class="font-sans text-slate-500">Na aba Colunas:</span><span></span>
                                         <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">supplier_name</span>
                                         <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">suppliers.name</span>
                                         <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
@@ -1771,8 +1773,8 @@
                                 <div class="p-3 bg-white border border-indigo-100 rounded-lg space-y-1.5">
                                     <p class="font-semibold text-slate-700">Exemplo encadeado — 2 JOINs (3 níveis)</p>
                                     <p class="text-[11px] text-slate-400 mb-2">
-                                        Mostrar o nome do produto em <code class="bg-slate-100 px-1 rounded">product_stocks</code>, onde
-                                        <code class="bg-slate-100 px-1 rounded">product_stocks → product_suppliers → products</code>.
+                                        Mostrar o nome do produto em <code class="px-1 rounded bg-slate-100">product_stocks</code>, onde
+                                        <code class="px-1 rounded bg-slate-100">product_stocks → product_suppliers → products</code>.
                                         Configure <strong>dois JOINs</strong> na ordem correta:
                                     </p>
 
@@ -1793,7 +1795,7 @@
                                     </div>
 
                                     <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
-                                        <span class="text-slate-500 font-sans">Na aba Colunas:</span><span></span>
+                                        <span class="font-sans text-slate-500">Na aba Colunas:</span><span></span>
                                         <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">product_name</span>
                                         <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">products.name</span>
                                         <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
@@ -1801,11 +1803,11 @@
                                     <p class="text-[11px] text-slate-400 mt-1.5">O 2° JOIN pode usar colunas do 1° JOIN na condição ON — o SQL é gerado em sequência.</p>
                                 </div>
 
-                                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1">
-                                    <p class="font-semibold text-slate-700 mb-1">Regras importantes</p>
+                                <div class="p-3 space-y-1 bg-white border rounded-lg border-slate-200">
+                                    <p class="mb-1 font-semibold text-slate-700">Regras importantes</p>
                                     <ul class="space-y-1 text-[11px] text-slate-500 list-disc list-inside">
-                                        <li><strong>Nome Físico</strong> = alias declarado no campo Colunas acima (ex: <code class="bg-slate-100 px-1 rounded">product_name</code>)</li>
-                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL usado em WHERE/ORDER BY (ex: <code class="bg-slate-100 px-1 rounded">products.name</code>)</li>
+                                        <li><strong>Nome Físico</strong> = alias declarado no campo Colunas acima (ex: <code class="px-1 rounded bg-slate-100">product_name</code>)</li>
+                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL usado em WHERE/ORDER BY (ex: <code class="px-1 rounded bg-slate-100">products.name</code>)</li>
                                         <li><strong>Gravar</strong> deve estar <em>desativado</em> — nunca grave em colunas de outra tabela</li>
                                         <li><strong>LEFT JOIN</strong> mantém registros sem correspondência (dados opcionais). <strong>INNER JOIN</strong> filtra apenas com correspondência.</li>
                                     </ul>
@@ -1822,19 +1824,19 @@
                         <div class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200
                             {{ $isLeft ? 'border-l-4 border-l-sky-400' : 'border-l-4 border-l-amber-400' }}">
                             <div class="flex items-start justify-between px-5 py-4">
-                                <div class="flex items-center gap-3 min-w-0">
+                                <div class="flex items-center min-w-0 gap-3">
                                     {{-- Badge tipo --}}
                                     <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider
                                         {{ $isLeft ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700' }}">
                                         {{ strtoupper($join['type'] ?? 'LEFT') }} JOIN
                                     </span>
                                     {{-- Nome da tabela --}}
-                                    <span class="font-mono text-base font-bold text-slate-800 truncate">{{ $join['table'] ?? '—' }}</span>
+                                    <span class="font-mono text-base font-bold truncate text-slate-800">{{ $join['table'] ?? '—' }}</span>
                                     @if(!empty($join['distinct']))
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">DISTINCT</span>
                                     @endif
                                 </div>
-                                <div class="flex items-center gap-2 shrink-0 ml-4">
+                                <div class="flex items-center gap-2 ml-4 shrink-0">
                                     <button wire:click="editJoin({{ $ji }})"
                                         class="inline-flex items-center gap-1. px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors border border-indigo-200 rounded-lg hover:bg-indigo-50">
                                         <i class="bx bx-edit-alt"></i> Editar
@@ -1881,7 +1883,7 @@
                                     d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                             </svg>
                             <p class="text-sm font-medium text-slate-400">Nenhum JOIN configurado</p>
-                            <p class="text-xs text-slate-300 mt-1">Use o formulário abaixo para adicionar o primeiro JOIN</p>
+                            <p class="mt-1 text-xs text-slate-300">Use o formulário abaixo para adicionar o primeiro JOIN</p>
                         </div>
                         @endforelse
 
@@ -1913,7 +1915,7 @@
                                 {{-- Tabela --}}
                                 <div>
                                     <label class="cfg-label">
-                                        Tabela <span class="text-slate-400 font-normal">(nome no banco)</span>
+                                        Tabela <span class="font-normal text-slate-400">(nome no banco)</span>
                                     </label>
                                     <input type="text" wire:model.live="formDataJoin.table"
                                         placeholder="ex: suppliers"
@@ -1921,7 +1923,7 @@
                                     @if(($formDataJoin['table'] ?? '') !== '' && in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && $editingJoinIndex < 0)
                                     <p class="mt-1 text-[11px] font-medium text-red-600 flex items-center gap-1">
                                         <i class="bx bx-error-circle"></i>
-                                        Já existe um JOIN para a tabela <code class="bg-red-100 px-1 rounded">{{ $formDataJoin['table'] }}</code>. Edite o existente ou use outro nome.
+                                        Já existe um JOIN para a tabela <code class="px-1 bg-red-100 rounded">{{ $formDataJoin['table'] }}</code>. Edite o existente ou use outro nome.
                                     </p>
                                     @else
                                     <p class="mt-1 text-[11px] text-slate-400">Nome exato da tabela no banco de dados.</p>
@@ -1930,25 +1932,25 @@
 
                                 {{-- ON esquerda --}}
                                 <div>
-                                    <label class="cfg-label">Coluna Esquerda <span class="text-slate-400 font-normal">(ON ...)</span></label>
+                                    <label class="cfg-label">Coluna Esquerda <span class="font-normal text-slate-400">(ON ...)</span></label>
                                     <input type="text" wire:model="formDataJoin.first"
                                         placeholder="ex: products.supplier_id"
                                         class="font-mono cfg-input" />
-                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="bg-slate-100 px-1 rounded">tabela_principal.fk</code></p>
+                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="px-1 rounded bg-slate-100">tabela_principal.fk</code></p>
                                 </div>
 
                                 {{-- ON direita --}}
                                 <div>
-                                    <label class="cfg-label">Coluna Direita <span class="text-slate-400 font-normal">(ON ... = ...)</span></label>
+                                    <label class="cfg-label">Coluna Direita <span class="font-normal text-slate-400">(ON ... = ...)</span></label>
                                     <input type="text" wire:model="formDataJoin.second"
                                         placeholder="ex: suppliers.id"
                                         class="font-mono cfg-input" />
-                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="bg-slate-100 px-1 rounded">tabela_joined.pk</code></p>
+                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="px-1 rounded bg-slate-100">tabela_joined.pk</code></p>
                                 </div>
                             </div>
 
                             {{-- Distinct --}}
-                            <label class="flex items-center gap-3 p-3 cursor-pointer rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                            <label class="flex items-center gap-3 p-3 transition-colors border rounded-lg cursor-pointer border-slate-200 hover:bg-slate-50">
                                 <input type="checkbox" wire:model="formDataJoin.distinct" class="w-4 h-4 text-indigo-600 rounded border-slate-300" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">Aplicar DISTINCT</span>
@@ -1960,14 +1962,14 @@
                             <div>
                                 <label class="cfg-label">
                                     Colunas a selecionar
-                                    <span class="text-slate-400 font-normal">(uma por linha — formato <code class="bg-slate-100 px-1 rounded">tabela.coluna:alias</code>)</span>
+                                    <span class="font-normal text-slate-400">(uma por linha — formato <code class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>)</span>
                                 </label>
                                 <textarea wire:model="formDataJoin.selectRaw" rows="4"
                                     placeholder="suppliers.name:supplier_name&#10;suppliers.phone:supplier_phone&#10;suppliers.cnpj:supplier_cnpj"
-                                    class="w-full px-3 py-2 font-mono text-xs border rounded-lg border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
+                                    class="w-full px-3 py-2 font-mono text-xs bg-white border rounded-lg resize-y border-slate-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
                                 <p class="mt-1 text-[11px] text-slate-400">
-                                    Cada linha define uma coluna: <code class="bg-slate-100 px-1 rounded">tabela.coluna:alias</code>. O alias é como o campo aparece no Blade e nos filtros.
-                                    Se omitir o alias, será gerado automaticamente (ex: <code class="bg-slate-100 px-1 rounded">suppliers.name</code> → <code class="bg-slate-100 px-1 rounded">suppliers_name</code>).
+                                    Cada linha define uma coluna: <code class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>. O alias é como o campo aparece no Blade e nos filtros.
+                                    Se omitir o alias, será gerado automaticamente (ex: <code class="px-1 rounded bg-slate-100">suppliers.name</code> → <code class="px-1 rounded bg-slate-100">suppliers_name</code>).
                                 </p>
                             </div>
 
@@ -1978,18 +1980,18 @@
                                     <p class="font-semibold">Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span></p>
                                     <p>Para cada alias definido acima, crie uma coluna com:</p>
                                     <ul class="list-disc list-inside space-y-0.5 ml-1">
-                                        <li><strong>Nome Físico</strong> = o alias (ex: <code class="bg-amber-100 px-1 rounded">supplier_name</code>)</li>
-                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="bg-amber-100 px-1 rounded">suppliers.name</code>) — habilita filtros e ordenação</li>
+                                        <li><strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)</li>
+                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — habilita filtros e ordenação</li>
                                         <li><strong>Gravar</strong> = desativado — nunca grave em colunas de outras tabelas</li>
                                     </ul>
-                                    <p class="text-amber-700 mt-1">Para JOINs encadeados (3+ níveis), configure um JOIN intermediário <em>sem colunas</em> e um segundo JOIN com as colunas desejadas. Veja o guia acima para o exemplo completo.</p>
+                                    <p class="mt-1 text-amber-700">Para JOINs encadeados (3+ níveis), configure um JOIN intermediário <em>sem colunas</em> e um segundo JOIN com as colunas desejadas. Veja o guia acima para o exemplo completo.</p>
                                 </div>
                             </div>
 
                             <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
                                 @if($editingJoinIndex >= 0)
                                 <button wire:click="cancelEditJoin"
-                                    class="px-4 py-2 text-xs font-medium text-slate-600 border rounded-lg border-slate-300 hover:bg-slate-50 transition-colors">
+                                    class="px-4 py-2 text-xs font-medium transition-colors border rounded-lg text-slate-600 border-slate-300 hover:bg-slate-50">
                                     Cancelar Edição
                                 </button>
                                 <button wire:click="addJoin"
