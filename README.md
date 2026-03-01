@@ -36,6 +36,7 @@ O pacote é dividido em três subsistemas complementares:
   - [Demo](#demo)
 - [ptah:forge — Scaffolding](#-ptahforge--scaffolding)
   - [Uso básico](#uso-básico)
+  - [Subpastas — organização para projetos grandes](#subpastas--organização-para-projetos-grandes)
   - [Definindo campos](#definindo-campos)
   - [Detecção automática de FK](#tipos-suportados)
   - [Modo API](#modo-api)
@@ -556,6 +557,34 @@ Gera 13+ artefatos em segundos: Model, Migration, DTO, RepositoryInterface, Repo
 
 ---
 
+### Subpastas — organização para projetos grandes
+
+Para projetos com muitas entidades, use o formato `Modulo/Entidade` para organizar todos os artefatos em subpastas:
+
+```bash
+php artisan ptah:forge Product/ProductStock \
+  --fields="product_supplier_id:unsignedBigInteger,company_id:unsignedBigInteger,quantity:decimal(12,3)"
+```
+
+Todos os artefatos gerados respeitam a subpasta:
+
+| Artefato | Caminho gerado |
+|---|---|
+| Model | `app/Models/Product/ProductStock.php` |
+| Controller | `app/Http/Controllers/Product/ProductStockController.php` |
+| Service | `app/Services/Product/ProductStockService.php` |
+| Repository | `app/Repositories/Product/ProductStockRepository.php` |
+| Interface | `app/Repositories/Contracts/Product/ProductStockRepositoryInterface.php` |
+| DTO | `app/DTOs/Product/ProductStockDTO.php` |
+| Requests | `app/Http/Requests/Product/Store|UpdateProductStockRequest.php` |
+| Resource | `app/Http/Resources/Product/ProductStockResource.php` |
+| Binding | `App\Repositories\Contracts\Product\ProductStockRepositoryInterface` |
+| BaseCrud | `['model' => 'Product/ProductStock']` |
+
+Subpastas multi-nível também são suportadas: `Catalog/Product/Variant`.
+
+---
+
 ### Definindo campos
 
 #### Via `--fields` (sem banco de dados)
@@ -645,23 +674,24 @@ php artisan ptah:forge Product --api
 ### Output no terminal
 
 ```
- ptah:forge ......................................... Product
+ ptah:forge ......................................... Product/ProductStock
 
-  Artefato                                    Status
-  ──────────────────────────────────────────────────────
-  Model [Product]                             ✅ DONE
-  Migration [create_products_table]           ✅ DONE
-  DTO [ProductDTO]                            ✅ DONE
-  Interface [ProductRepositoryInterface]      ✅ DONE
-  Repository [ProductRepository]              ✅ DONE
-  Service [ProductService]                    ✅ DONE
-  Controller [ProductController]              ✅ DONE
-  Request [StoreProductRequest]               ✅ DONE
-  Request [UpdateProductRequest]              ✅ DONE
-  Resource [ProductResource]                  ✅ DONE
-  CrudConfig [Product]                        ✅ DONE
-  View [product/index]                        ✅ DONE
-  Routes [web.php]                            ✅ DONE
+  Artefato                                         Status
+  ───────────────────────────────────────────────────────────────
+  Model [ProductStock]                             ✅ DONE
+  Migration [create_product_stocks_table]          ✅ DONE
+  Binding [AppServiceProvider]                     ✅ DONE
+  DTO [ProductStockDTO]                            ✅ DONE
+  Interface [ProductStockRepositoryInterface]      ✅ DONE
+  Repository [ProductStockRepository]              ✅ DONE
+  Service [ProductStockService]                    ✅ DONE
+  Controller [ProductStockController]              ✅ DONE
+  Request [StoreProductStock]                      ✅ DONE
+  Request [UpdateProductStock]                     ✅ DONE
+  Resource [ProductStockResource]                  ✅ DONE
+  CrudConfig [Product/ProductStock]                ✅ DONE
+  View [product_stock/index]                       ✅ DONE
+  Routes [web.php]                                 ✅ DONE
 
  Próximos passos: (...)
 ```
@@ -670,41 +700,52 @@ php artisan ptah:forge Product --api
 
 ### Arquivos gerados
 
+**Sem subpasta** (`ptah:forge Product`):
+
 ```
 app/
-├── Models/
-│   └── Product.php
-├── DTOs/
-│   └── ProductDTO.php
+├── Models/Product.php
+├── DTOs/ProductDTO.php
 ├── Repositories/
-│   ├── Contracts/
-│   │   └── ProductRepositoryInterface.php
+│   ├── Contracts/ProductRepositoryInterface.php
 │   └── ProductRepository.php
-├── Services/
-│   └── ProductService.php
+├── Services/ProductService.php
 └── Http/
-    ├── Controllers/
-    │   ├── ProductController.php          ← web
-    │   └── Api/ProductApiController.php   ← --api
-    ├── Requests/
-    │   ├── StoreProductRequest.php
-    │   └── UpdateProductRequest.php
-    └── Resources/
-        └── ProductResource.php
+    ├── Controllers/ProductController.php
+    ├── Requests/Store|UpdateProductRequest.php
+    └── Resources/ProductResource.php
 
-database/migrations/
-    └── xxxx_create_products_table.php
-
-database/crud_configs (tabela via migration do ptah)
-    └── model=Product  ← JSON completo gerado pelo CrudConfigGenerator
-
-resources/views/product/
-    └── index.blade.php    ← @livewire('ptah::base-crud', ['model' => 'Product'])
-                              (create/edit/show gerenciados pelo BaseCrud via modal)
-
-routes/web.php  ← Route::get('product', [ProductController::class, 'index'])->name('product.index')
-routes/api.php  ← Route::apiResource('products', ProductApiController::class)
+resources/views/product/index.blade.php
+    @livewire('ptah::base-crud', ['model' => 'Product'])
 ```
+
+**Com subpasta** (`ptah:forge Product/ProductStock`):
+
+```
+app/
+├── Models/Product/ProductStock.php
+├── DTOs/Product/ProductStockDTO.php
+├── Repositories/
+│   ├── Contracts/Product/ProductStockRepositoryInterface.php
+│   └── Product/ProductStockRepository.php
+├── Services/Product/ProductStockService.php
+└── Http/
+    ├── Controllers/Product/ProductStockController.php
+    ├── Requests/Product/Store|UpdateProductStockRequest.php
+    └── Resources/Product/ProductStockResource.php
+
+database/migrations/xxxx_create_product_stocks_table.php
+
+database/crud_configs (tabela do ptah)
+    └── model=Product/ProductStock  ← JSON do CrudConfigGenerator
+
+resources/views/product_stock/index.blade.php
+    @livewire('ptah::base-crud', ['model' => 'Product/ProductStock'])
+
+routes/web.php  ← Route::get('product_stock', [ProductStockController::class, 'index'])
+```
+
+> **Modo API** com subpasta: `ptah:forge Product/ProductStock --api` gera o controller em `app/Http/Controllers/Product/Api/ProductStockApiController.php`.
 
 ---
 

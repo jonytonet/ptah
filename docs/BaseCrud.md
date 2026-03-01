@@ -75,6 +75,9 @@
 {{-- Mínimo obrigatório --}}
 @livewire('ptah::base-crud', ['model' => 'Product'])
 
+{{-- Com subpasta (gerado por ptah:forge Product/ProductStock) --}}
+@livewire('ptah::base-crud', ['model' => 'Product/ProductStock'])
+
 {{-- Com parâmetros avançados --}}
 @livewire('ptah::base-crud', [
     'model'            => 'Product',
@@ -85,13 +88,17 @@
 ])
 ```
 
-O `model` pode incluir subdiretórios separados por `/`:
+O `model` é o identificador que o BaseCrud usa para:
+1. Buscar a configuração na tabela `crud_configs` (campo `model`)
+2. Resolver o Eloquent Model via `resolveEloquentModel()` — `/` vira `\` no namespace
 
-```blade
-@livewire('ptah::base-crud', ['model' => 'Purchase/Order/PurchaseOrders'])
+```
+'model' => 'Product/ProductStock'
+   ├─ crud_configs.model = 'Product/ProductStock'
+   └─ App\Models\Product\ProductStock (namespace)
 ```
 
-Isso resolve para `App\Models\Purchase\Order\PurchaseOrders`.
+> O `ptah:forge Product/ProductStock` salva automaticamente `Product/ProductStock` na coluna `model` da `crud_configs` e gera a view com o identifier correto.
 
 ---
 
@@ -101,7 +108,7 @@ Passados ao `@livewire(...)` ou `<livewire ...>`.
 
 | Parâmetro | Tipo | Padrão | Descrição |
 |---|---|---|---|
-| `model` | `string` | — | **Obrigatório.** Identificador do model |
+| `model` | `string` | — | **Obrigatório.** Identificador do model. Sem subpasta: `'Product'`. Com subpasta: `'Product/ProductStock'` (gerado automaticamente pelo `ptah:forge Product/ProductStock`). O `/` é convertido para `\` ao resolver o namespace, ex: `App\Models\Product\ProductStock` |
 | `initialFilter` | `array` | `[]` | Filtros iniciais: `[['campo', 'op', 'valor'], ...]` |
 | `whereHasFilter` | `string` | `''` | Nome da relação para pré-filtrar |
 | `whereHasCondition` | `array` | `[]` | Condição da relação: `['campo', 'op', 'valor']` |
