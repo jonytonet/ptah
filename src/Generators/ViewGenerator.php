@@ -42,9 +42,12 @@ class ViewGenerator extends AbstractGenerator
         try {
             $content = $this->resolveStub("view.{$view}");
             $content = $this->replaceVars($content, [
-                'entity'       => $context->entity,
-                'entity_lower' => $context->entityLower,
-                'entities'     => $context->entityPlural,
+                'entity'          => $context->entity,
+                'entity_lower'    => $context->entityLower,
+                'entities'        => $context->entityPlural,
+                'crud_identifier' => $context->subFolder
+                    ? $context->subFolder . '/' . $context->entity
+                    : $context->entity,
             ]);
 
             $this->files->put($path, $content);
