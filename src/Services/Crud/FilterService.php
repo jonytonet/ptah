@@ -292,7 +292,8 @@ class FilterService
 
         foreach ($cols as $col) {
             $tipo  = $col['colsTipo']        ?? 'text';
-            $field = $col['colsNomeFisico']  ?? '';
+            // colsSource tem prioridade para colunas de JOIN (alias não funciona em WHERE)
+            $field = $col['colsSource'] ?? $col['colsNomeFisico'] ?? '';
             $rel   = $col['colsRelacao']     ?? null;
             $exibe = $col['colsRelacaoExibe']?? null;
 

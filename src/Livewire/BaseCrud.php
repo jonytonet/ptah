@@ -258,6 +258,9 @@ class BaseCrud extends Component
             /** @var Builder $query */
             $query = $modelInstance->newQuery();
 
+            // JOINs configurados via crudConfig['joins']
+            $joinedTables = $this->applyJoins($query, $modelInstance);
+
             // Soft delete
             $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($modelInstance));
             if ($usesSoftDeletes && $this->showTrashed) {
@@ -335,13 +338,23 @@ class BaseCrud extends Component
             if ($relationInfo) {
                 [$rel, $displayCol, $fk, $relTable] = $relationInfo;
                 $mainTable = $modelInstance->getTable();
-                $query->leftJoin(
-                    $relTable,
-                    "{$mainTable}.{$fk}",
-                    '=',
-                    "{$relTable}.id"
-                )->orderBy("{$relTable}.{$displayCol}", $this->direction)
-                ->select("{$mainTable}.*");
+
+                // Só adiciona o leftJoin se a tabela ainda não foi joined via applyJoins()
+                if (! in_array($relTable, $joinedTables)) {
+                    $query->leftJoin(
+                        $relTable,
+                        "{$mainTable}.{$fk}",
+                        '=',
+                        "{$relTable}.id"
+                    );
+
+                    // Se applyJoins não definiu select, definir agora para evitar colunas ambíguas
+                    if (empty($joinedTables)) {
+                        $query->select("{$mainTable}.*");
+                    }
+                }
+
+                $query->orderBy("{$relTable}.{$displayCol}", $this->direction);
             } else {
                 $sortCol = $this->resolveSortColumn();
                 $query->orderBy($sortCol, $this->direction);
@@ -392,6 +405,7 @@ class BaseCrud extends Component
 
         // Monta a query base com os filtros
         $baseQuery     = $modelInstance->newQuery();
+        $this->applyJoins($baseQuery, $modelInstance);
         $activeFilters = $this->buildActiveFilters();
 
         if (! empty($activeFilters)) {
@@ -864,6 +878,7 @@ class BaseCrud extends Component
         }
 
         $query         = $modelInstance->newQuery();
+        $this->applyJoins($query, $modelInstance);
         $activeFilters = $this->buildActiveFilters();
 
         if (! empty($activeFilters)) {
@@ -1466,6 +1481,84 @@ class BaseCrud extends Component
      * @return array{0: string, 1: string, 2: string, 3: string}|null
      *         [relationName, displayColumn, foreignKey, tableName]
      */
+    /**
+     * Aplica os JOINs declarados em crudConfig['joins'] ao Query Builder.
+     *
+     * Cada entrada suporta:
+     *   type    — 'left' (padrão) | 'inner'
+     *   table   — tabela a ser joined
+     *   first   — coluna esquerda (ex: "products.supplier_id")
+     *   second  — coluna direita  (ex: "suppliers.id")
+     *   distinct— bool, aplica SELECT DISTINCT
+     *   select  — array de { column, alias } para colunas adicionais no SELECT
+     *
+     * Retorna a lista de tabelas que foram efetivamente joined, para que o
+     * bloco de ordenação por relação não duplique o mesmo JOIN.
+     *
+     * @param Builder $query
+     * @param Model   $modelInstance
+     * @return string[]  Nomes das tabelas joined
+     */
+    protected function applyJoins(Builder $query, Model $modelInstance): array
+    {
+        $joins = $this->crudConfig['joins'] ?? [];
+
+        if (empty($joins)) {
+            return [];
+        }
+
+        $mainTable    = $modelInstance->getTable();
+        $joinedTables = [];
+        $selectCols   = ["{$mainTable}.*"];
+        $useDistinct  = false;
+
+        foreach ($joins as $join) {
+            $table    = trim($join['table']  ?? '');
+            $first    = trim($join['first']  ?? '');
+            $second   = trim($join['second'] ?? '');
+            $type     = strtolower($join['type'] ?? 'left');
+
+            if (! $table || ! $first || ! $second) {
+                continue;
+            }
+
+            // Evita duplicata de JOIN na mesma query
+            if (in_array($table, $joinedTables)) {
+                continue;
+            }
+
+            if ($type === 'inner') {
+                $query->join($table, $first, '=', $second);
+            } else {
+                $query->leftJoin($table, $first, '=', $second);
+            }
+
+            $joinedTables[] = $table;
+
+            foreach ($join['select'] ?? [] as $sel) {
+                $col   = trim($sel['column'] ?? '');
+                $alias = trim($sel['alias']  ?? '');
+                if ($col && $alias) {
+                    $selectCols[] = \Illuminate\Support\Facades\DB::raw("{$col} AS {$alias}");
+                }
+            }
+
+            if (! empty($join['distinct'])) {
+                $useDistinct = true;
+            }
+        }
+
+        if (! empty($joinedTables)) {
+            $query->select($selectCols);
+
+            if ($useDistinct) {
+                $query->distinct();
+            }
+        }
+
+        return $joinedTables;
+    }
+
     protected function getOrderByRelationInfo(string $column): ?array
     {
         $col = $this->findColByField($column);
@@ -1722,11 +1815,13 @@ class BaseCrud extends Component
                     type:     'text',
                 );
             } else {
+                // Se a coluna tem colsSource (JOIN configurado), usa o qualified name para WHERE
+                $filterField = ($col && ! empty($col['colsSource'])) ? $col['colsSource'] : $field;
                 $autoOp = (is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
                     ? 'LIKE'
                     : '=';
                 $domainFilters[] = new FilterDTO(
-                    field:    $field,
+                    field:    $filterField,
                     value:    $value,
                     operator: $explicitOp ?? $autoOp,
                     type:     FilterDTO::inferType($field, $value),
@@ -1763,6 +1858,11 @@ class BaseCrud extends Component
     protected function resolveSortColumn(): string
     {
         $col = $this->findColByField($this->sort);
+
+        // colsSource tem prioridade (coluna de JOIN — usar qualified name para ORDER BY)
+        if ($col && ! empty($col['colsSource'])) {
+            return $col['colsSource'];
+        }
 
         if ($col && ! empty($col['colsOrderBy'])) {
             return $col['colsOrderBy'];

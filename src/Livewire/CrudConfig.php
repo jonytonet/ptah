@@ -48,7 +48,11 @@ class CrudConfig extends Component
 
     public array $customFilters  = [];
     public array $formDataFilter = [];
+    // ── JOINs configurados ────────────────────────────────────────────────
 
+    public array $joins          = []; // joins salvos
+    public array $formDataJoin   = []; // form de novo join sendo preenchido
+    public int   $editingJoinIndex = -1; // índice editando (-1 = novo)
     // ── Estilos condicionais ──────────────────────────────────────────────────
 
     public array $conditionStyles = [];
@@ -122,8 +126,10 @@ class CrudConfig extends Component
         $this->formDataAction = [];
         $this->formDataFilter = [];
         $this->formDataStyle  = [];
+        $this->formDataJoin   = [];
         $this->editingFieldIndex  = -1;
         $this->editingActionIndex = -1;
+        $this->editingJoinIndex   = -1;
         $this->showModal = true;
     }
 
@@ -134,8 +140,10 @@ class CrudConfig extends Component
         $this->formDataAction    = [];
         $this->formDataFilter    = [];
         $this->formDataStyle     = [];
+        $this->formDataJoin      = [];
         $this->editingFieldIndex  = -1;
         $this->editingActionIndex = -1;
+        $this->editingJoinIndex   = -1;
     }
 
     // ── Carregar config ──────────────────────────────────────────────────────
@@ -165,6 +173,9 @@ class CrudConfig extends Component
         // Filtros e estilos
         $this->customFilters   = $cfg['customFilters']   ?? [];
         $this->conditionStyles = $cfg['contitionStyles'] ?? [];
+
+        // JOINs
+        $this->joins = $cfg['joins'] ?? [];
 
         // Geral
         $this->displayName     = $cfg['displayName']     ?? '';
@@ -399,7 +410,105 @@ class CrudConfig extends Component
             $this->editingActionIndex = -1;
         }
     }
+    // ── JOINs ───────────────────────────────────────────────────────────────
 
+    public function addJoin(): void
+    {
+        $table = trim($this->formDataJoin['table'] ?? '');
+
+        if (! $table) {
+            return;
+        }
+
+        // Guard: detecta duplicata de tabela
+        if ($this->editingJoinIndex < 0) {
+            $existingTables = array_column($this->joins, 'table');
+            if (in_array($table, $existingTables)) {
+                session()->flash('joinError', "Já existe um JOIN para a tabela '{$table}'.");
+                return;
+            }
+        }
+
+        // Normaliza o array de colunas select (remove entradas vazias)
+        $selectRaw = $this->formDataJoin['selectRaw'] ?? '';
+        $selectCols = [];
+        foreach (explode("\n", $selectRaw) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            // formato: "table.column:alias" ou "table.column" (alias = ultimo segmento)
+            if (str_contains($line, ':')) {
+                [$col, $alias] = array_map('trim', explode(':', $line, 2));
+            } else {
+                $col   = $line;
+                $alias = str_replace('.', '_', $line);
+            }
+            if ($col) {
+                $selectCols[] = ['column' => $col, 'alias' => $alias];
+            }
+        }
+
+        $entry = [
+            'type'     => $this->formDataJoin['type']     ?? 'left',
+            'table'    => $table,
+            'first'    => trim($this->formDataJoin['first']  ?? ''),
+            'second'   => trim($this->formDataJoin['second'] ?? ''),
+            'distinct' => (bool) ($this->formDataJoin['distinct'] ?? false),
+            'select'   => $selectCols,
+        ];
+
+        if ($this->editingJoinIndex >= 0 && isset($this->joins[$this->editingJoinIndex])) {
+            $this->joins[$this->editingJoinIndex] = $entry;
+        } else {
+            $this->joins[] = $entry;
+        }
+
+        $this->formDataJoin     = [];
+        $this->editingJoinIndex = -1;
+    }
+
+    public function editJoin(int $index): void
+    {
+        if (! isset($this->joins[$index])) {
+            return;
+        }
+
+        $join = $this->joins[$index];
+
+        // Reconstrói selectRaw a partir do array de colunas
+        $lines = [];
+        foreach ($join['select'] ?? [] as $sel) {
+            $lines[] = ($sel['column'] ?? '') . ':' . ($sel['alias'] ?? '');
+        }
+
+        $this->editingJoinIndex = $index;
+        $this->formDataJoin = [
+            'type'      => $join['type']     ?? 'left',
+            'table'     => $join['table']    ?? '',
+            'first'     => $join['first']    ?? '',
+            'second'    => $join['second']   ?? '',
+            'distinct'  => $join['distinct'] ?? false,
+            'selectRaw' => implode("\n", $lines),
+        ];
+    }
+
+    public function cancelEditJoin(): void
+    {
+        $this->formDataJoin     = [];
+        $this->editingJoinIndex = -1;
+    }
+
+    public function removeJoin(int $index): void
+    {
+        array_splice($this->joins, $index, 1);
+        $this->joins = array_values($this->joins);
+
+        if ($this->editingJoinIndex === $index) {
+            $this->formDataJoin     = [];
+            $this->editingJoinIndex = -1;
+        }
+    }
     // ── Filtros personalizados — CRUD ─────────────────────────────────────────
 
     public function addCustomFilter(): void
@@ -461,6 +570,7 @@ class CrudConfig extends Component
             'cols'            => $this->formatFieldsForDb(),
             'customFilters'   => array_values($this->customFilters),
             'contitionStyles' => array_values($this->conditionStyles),
+            'joins'           => array_values($this->joins),
             'permissions'     => [
                 'create'            => $this->permissionCreate  ?: null,
                 'edit'              => $this->permissionEdit    ?: null,

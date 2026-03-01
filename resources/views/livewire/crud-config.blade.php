@@ -58,6 +58,8 @@
                     ['id' => 'styles', 'icon' => 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0
                     0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010
                     2.828l-8.486 8.485M7 17h.01', 'label' => 'Estilos', 'count' => count($conditionStyles)],
+                    ['id' => 'joins', 'icon' => 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z',
+                    'label' => 'JOINs', 'count' => count($joins)],
                     ['id' => 'general', 'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0
                     110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4', 'label' => 'Geral', 'count'
                     => null],
@@ -101,6 +103,7 @@
                                 actions: 'Ações por Linha',
                                 filters: 'Filtros Personalizados',
                                 styles: 'Estilos Condicionais',
+                                joins: 'JOINs Configurados',
                                 general: 'Configurações Gerais',
                                 permissions: 'Permissões e Acesso'
                             }[tab]"></h2>
@@ -109,6 +112,7 @@
                                 actions: 'Botões e links exibidos em cada linha',
                                 filters: 'Filtros avançados com relações e agregações',
                                 styles: 'Estilize linhas com base em condições dos dados',
+                                joins: 'JOINs SQL entre tabelas — sem depender de relacionamentos Eloquent',
                                 general: 'Cache, exportação, aparência e comportamento',
                                 permissions: 'Gates do Laravel e visibilidade de botões'
                             }[tab]"></p>
@@ -293,6 +297,22 @@
                                         <label class="cfg-label">Label (exibição)</label>
                                         <input type="text" wire:model="formDataField.colsNomeLogico"
                                             placeholder="ex: Fornecedor" class="cfg-input" />
+                                    </div>
+                                    {{-- Fonte SQL (colsSource) — para colunas de JOIN --}}
+                                    <div class="col-span-2">
+                                        <label class="cfg-label">
+                                            Fonte SQL
+                                            <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-700">JOIN</span>
+                                            <span class="text-slate-400 font-normal">(opcional — preencher apenas para colunas vindas de JOIN)</span>
+                                        </label>
+                                        <input type="text" wire:model="formDataField.colsSource"
+                                            placeholder="ex: suppliers.name"
+                                            class="font-mono cfg-input" />
+                                        <p class="text-[11px] text-slate-400 mt-1">
+                                            Qualified name usado em <code class="bg-slate-100 px-1 rounded">WHERE</code> e <code class="bg-slate-100 px-1 rounded">ORDER BY</code>.
+                                            O <strong>Nome Físico</strong> acima deve ser o alias definido no JOIN (ex: <code class="bg-slate-100 px-1 rounded">supplier_name</code>),
+                                            e este campo deve ser <code class="bg-slate-100 px-1 rounded">suppliers.name</code>.
+                                        </p>
                                     </div>
                                     <div>
                                         <label class="cfg-label">Tipo</label>
@@ -1687,6 +1707,248 @@
                                     class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700">
                                     + Adicionar Estilo
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: JOINS ──────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    <div x-show="tab === 'joins'" class="p-6 space-y-5">
+
+                        {{-- ── Alerta: duplicata de tabela ─────────────── --}}
+                        @if(session('joinError'))
+                        <div class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-700 border border-red-200 rounded-xl bg-red-50">
+                            <i class="text-lg bx bx-error-circle shrink-0"></i>
+                            <span>{{ session('joinError') }}</span>
+                        </div>
+                        @endif
+
+                        {{-- ── Guia de uso ─────────────────────────────── --}}
+                        <div x-data="{ open: false }" class="overflow-hidden border border-indigo-200 rounded-xl bg-indigo-50/50">
+                            <button @click="open = !open"
+                                class="flex items-center justify-between w-full px-4 py-3 text-left">
+                                <span class="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                                    <i class="text-base bx bx-info-circle"></i>
+                                    Como usar JOINs configuráveis
+                                </span>
+                                <i class="text-lg transition-transform bx text-indigo-400" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                            </button>
+                            <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
+                                <p class="pt-1 text-slate-500">JOINs configuráveis permitem trazer colunas de outras tabelas <strong>sem relacionamento Eloquent</strong>, com suporte a filtro, sort e export.</p>
+
+                                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
+                                    <p class="font-semibold text-slate-700">① Configure o JOIN aqui</p>
+                                    <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
+                                        <span class="text-slate-400">Tipo</span>         <span class="text-indigo-700">left</span>
+                                        <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">suppliers</span>
+                                        <span class="text-slate-400">ON esquerda</span> <span class="text-indigo-700">products.supplier_id</span>
+                                        <span class="text-slate-400">ON direita</span>  <span class="text-indigo-700">suppliers.id</span>
+                                        <span class="text-slate-400">Colunas</span>     <span class="text-indigo-700">suppliers.name:supplier_name</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
+                                    <p class="font-semibold text-slate-700">② Adicione a coluna na aba <span class="text-indigo-600">Colunas</span></p>
+                                    <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
+                                        <span class="text-slate-400">Nome Físico</span>    <span class="text-indigo-700">supplier_name</span>
+                                        <span class="text-slate-400">Fonte SQL</span>      <span class="text-indigo-700">suppliers.name</span>
+                                        <span class="text-slate-400">Gravar</span>         <span class="text-slate-400">— desativado —</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mt-1">O <em>Nome Físico</em> é o alias (acessível no Blade). A <em>Fonte SQL</em> (<code class="bg-slate-100 px-1 rounded">colsSource</code>) é o qualified name usado em WHERE e ORDER BY — sem ela, filtros e sort não funcionarão nessa coluna.</p>
+                                </div>
+
+                                <p class="text-[11px] text-slate-400">
+                                    <strong>LEFT JOIN</strong> mantém todos os registros principais mesmo sem correspondência. Use para dados opcionais (ex: fornecedor pode ser nulo).<br>
+                                    <strong>INNER JOIN</strong> filtra apenas registros com correspondência. Use quando a relação é obrigatória.
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- ── JOINs já configurados ───────────────────── --}}
+                        @forelse ($joins as $ji => $join)
+                        @php
+                            $isLeft  = strtolower($join['type'] ?? 'left') === 'left';
+                            $isInner = ! $isLeft;
+                        @endphp
+                        <div class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200
+                            {{ $isLeft ? 'border-l-4 border-l-sky-400' : 'border-l-4 border-l-amber-400' }}">
+                            <div class="flex items-start justify-between px-5 py-4">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    {{-- Badge tipo --}}
+                                    <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider
+                                        {{ $isLeft ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700' }}">
+                                        {{ strtoupper($join['type'] ?? 'LEFT') }} JOIN
+                                    </span>
+                                    {{-- Nome da tabela --}}
+                                    <span class="font-mono text-base font-bold text-slate-800 truncate">{{ $join['table'] ?? '—' }}</span>
+                                    @if(!empty($join['distinct']))
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">DISTINCT</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0 ml-4">
+                                    <button wire:click="editJoin({{ $ji }})"
+                                        class="inline-flex items-center gap-1. px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors border border-indigo-200 rounded-lg hover:bg-indigo-50">
+                                        <i class="bx bx-edit-alt"></i> Editar
+                                    </button>
+                                    <button wire:click="removeJoin({{ $ji }})" wire:confirm="Remover o JOIN com '{{ $join['table'] ?? '' }}'?"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors border border-red-200 rounded-lg hover:bg-red-50">
+                                        <i class="bx bx-trash"></i> Remover
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- ON condition --}}
+                            <div class="px-5 pb-3 flex items-center gap-2 text-[12px] font-mono">
+                                <span class="text-slate-400 text-[11px] uppercase tracking-wider font-sans">ON</span>
+                                <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-700">{{ $join['first'] ?? '' }}</span>
+                                <span class="text-slate-400">=</span>
+                                <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-700">{{ $join['second'] ?? '' }}</span>
+                            </div>
+
+                            {{-- Colunas selecionadas --}}
+                            @if(!empty($join['select']))
+                            <div class="px-5 pb-4">
+                                <p class="text-[11px] text-slate-400 uppercase tracking-wider mb-1.5">Colunas</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($join['select'] as $sel)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono rounded-full bg-slate-100 text-slate-700">
+                                        <span class="text-slate-500">{{ $sel['column'] ?? '' }}</span>
+                                        <span class="text-slate-300 mx-0.5">→</span>
+                                        <span class="font-semibold text-indigo-700">{{ $sel['alias'] ?? '' }}</span>
+                                    </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @else
+                            <div class="px-5 pb-4">
+                                <p class="text-[11px] text-amber-600">⚠ Nenhuma coluna configurada — o JOIN será aplicado mas não adicionará colunas ao SELECT.</p>
+                            </div>
+                            @endif
+                        </div>
+                        @empty
+                        <div class="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl border-slate-200">
+                            <svg class="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                            </svg>
+                            <p class="text-sm font-medium text-slate-400">Nenhum JOIN configurado</p>
+                            <p class="text-xs text-slate-300 mt-1">Use o formulário abaixo para adicionar o primeiro JOIN</p>
+                        </div>
+                        @endforelse
+
+                        {{-- ── Formulário: novo / editar JOIN ──────────── --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
+
+                            {{-- Header do form --}}
+                            @if($editingJoinIndex >= 0)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-700 uppercase tracking-wider">Editando</span>
+                                    <span class="text-sm font-semibold text-slate-700">JOIN com <span class="font-mono text-indigo-600">{{ $joins[$editingJoinIndex]['table'] ?? '' }}</span></span>
+                                </div>
+                            </div>
+                            @else
+                            <h3 class="text-sm font-semibold text-slate-700">+ Novo JOIN</h3>
+                            @endif
+
+                            <div class="grid grid-cols-2 gap-4">
+                                {{-- Tipo --}}
+                                <div>
+                                    <label class="cfg-label">Tipo</label>
+                                    <select wire:model.live="formDataJoin.type" class="cfg-input">
+                                        <option value="left">LEFT JOIN — inclui todos os registros principais</option>
+                                        <option value="inner">INNER JOIN — somente correspondências</option>
+                                    </select>
+                                </div>
+
+                                {{-- Tabela --}}
+                                <div>
+                                    <label class="cfg-label">
+                                        Tabela <span class="text-slate-400 font-normal">(nome no banco)</span>
+                                    </label>
+                                    <input type="text" wire:model.live="formDataJoin.table"
+                                        placeholder="ex: suppliers"
+                                        class="font-mono cfg-input {{ in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && ($formDataJoin['table'] ?? '') !== '' && $editingJoinIndex < 0 ? 'border-red-400 bg-red-50' : '' }}" />
+                                    @if(($formDataJoin['table'] ?? '') !== '' && in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && $editingJoinIndex < 0)
+                                    <p class="mt-1 text-[11px] font-medium text-red-600 flex items-center gap-1">
+                                        <i class="bx bx-error-circle"></i>
+                                        Já existe um JOIN para a tabela <code class="bg-red-100 px-1 rounded">{{ $formDataJoin['table'] }}</code>. Edite o existente ou use outro nome.
+                                    </p>
+                                    @else
+                                    <p class="mt-1 text-[11px] text-slate-400">Nome exato da tabela no banco de dados.</p>
+                                    @endif
+                                </div>
+
+                                {{-- ON esquerda --}}
+                                <div>
+                                    <label class="cfg-label">Coluna Esquerda <span class="text-slate-400 font-normal">(ON ...)</span></label>
+                                    <input type="text" wire:model="formDataJoin.first"
+                                        placeholder="ex: products.supplier_id"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="bg-slate-100 px-1 rounded">tabela_principal.fk</code></p>
+                                </div>
+
+                                {{-- ON direita --}}
+                                <div>
+                                    <label class="cfg-label">Coluna Direita <span class="text-slate-400 font-normal">(ON ... = ...)</span></label>
+                                    <input type="text" wire:model="formDataJoin.second"
+                                        placeholder="ex: suppliers.id"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[11px] text-slate-400">Formato <code class="bg-slate-100 px-1 rounded">tabela_joined.pk</code></p>
+                                </div>
+                            </div>
+
+                            {{-- Distinct --}}
+                            <label class="flex items-center gap-3 p-3 cursor-pointer rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                                <input type="checkbox" wire:model="formDataJoin.distinct" class="w-4 h-4 text-indigo-600 rounded border-slate-300" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Aplicar DISTINCT</span>
+                                    <p class="text-[11px] text-slate-400">Evita linhas duplicadas quando o JOIN pode gerar múltiplas correspondências (1-para-muitos).</p>
+                                </div>
+                            </label>
+
+                            {{-- Colunas --}}
+                            <div>
+                                <label class="cfg-label">
+                                    Colunas a selecionar
+                                    <span class="text-slate-400 font-normal">(uma por linha — formato <code class="bg-slate-100 px-1 rounded">tabela.coluna:alias</code>)</span>
+                                </label>
+                                <textarea wire:model="formDataJoin.selectRaw" rows="4"
+                                    placeholder="suppliers.name:supplier_name&#10;suppliers.phone:supplier_phone&#10;suppliers.cnpj:supplier_cnpj"
+                                    class="w-full px-3 py-2 font-mono text-xs border rounded-lg border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"></textarea>
+                                <p class="mt-1 text-[11px] text-slate-400">
+                                    Cada linha define uma coluna: <code class="bg-slate-100 px-1 rounded">tabela.coluna:alias</code>. O alias é como o campo aparece no Blade e nos filtros.
+                                    Se omitir o alias, será gerado automaticamente (ex: <code class="bg-slate-100 px-1 rounded">suppliers.name</code> → <code class="bg-slate-100 px-1 rounded">suppliers_name</code>).
+                                </p>
+                            </div>
+
+                            {{-- Notice pós-JOIN --}}
+                            <div class="flex gap-3 p-3.5 text-[11px] rounded-lg border border-amber-200 bg-amber-50 text-amber-800">
+                                <i class="bx bx-bulb text-base shrink-0 mt-0.5 text-amber-500"></i>
+                                <div>
+                                    <p class="font-semibold mb-1">Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span></p>
+                                    <p>Para cada alias acima, crie uma coluna com <strong>Nome Físico = alias</strong> (ex: <code class="bg-amber-100 px-1 rounded">supplier_name</code>) e preencha o campo <strong>Fonte SQL</strong> com o qualified name (ex: <code class="bg-amber-100 px-1 rounded">suppliers.name</code>). Isso habilita filtros e ordenação nessa coluna.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                                @if($editingJoinIndex >= 0)
+                                <button wire:click="cancelEditJoin"
+                                    class="px-4 py-2 text-xs font-medium text-slate-600 border rounded-lg border-slate-300 hover:bg-slate-50 transition-colors">
+                                    Cancelar Edição
+                                </button>
+                                <button wire:click="addJoin"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                                    <i class="bx bx-check"></i> Atualizar JOIN
+                                </button>
+                                @else
+                                <button wire:click="addJoin"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                                    @if(in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && ($formDataJoin['table'] ?? '') !== '') disabled @endif>
+                                    + Adicionar JOIN
+                                </button>
+                                @endif
                             </div>
                         </div>
                     </div>
