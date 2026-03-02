@@ -161,7 +161,10 @@
                                 <tbody id="cols-sortable" class="divide-y divide-slate-100">
                                     @foreach ($formEditFields as $i => $col)
                                     @if (($col['colsTipo'] ?? '') !== 'action')
-                                    <tr class="transition-colors hover:bg-slate-50" data-index="{{ $i }}">
+                                    <tr class="transition-colors hover:bg-violet-50/60 ptah-cfg-tr" data-index="{{ $i }}"
+                                        style="position:relative"
+                                        onmouseenter="this.style.boxShadow='inset 3px 0 0 #5b21b6'"
+                                        onmouseleave="this.style.boxShadow='none'">
                                         <td
                                             class="px-3 py-2 cursor-move select-none text-slate-300 hover:text-slate-500">
                                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">

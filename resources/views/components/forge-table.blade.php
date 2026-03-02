@@ -119,7 +119,10 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-50">
                 <template x-for="(row, rowIndex) in filteredRows" :key="rowIndex">
-                    <tr class="hover:bg-primary/5 transition-colors">
+                    <tr class="ptah-tbl-tr hover:bg-violet-50/60 transition-colors"
+                        style="position:relative"
+                        @mouseenter="$el.style.boxShadow='inset 3px 0 0 #5b21b6'"
+                        @mouseleave="$el.style.boxShadow='none'">
                         @foreach($headers as $header)
                             <td class="px-4 py-3 text-sm text-dark" x-text="row['{{ $header['key'] }}'] ?? '-'"></td>
                         @endforeach
