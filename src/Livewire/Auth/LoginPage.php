@@ -12,6 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Ptah\Services\Auth\TwoFactorService;
+use Ptah\Services\Company\CompanyService;
 
 #[Layout('ptah::layouts.forge-auth')]
 class LoginPage extends Component
@@ -59,6 +60,10 @@ class LoginPage extends Component
         }
 
         Session::regenerate();
+
+        // Define a empresa ativa na sessão (is_default → primeira ativa → primeira de todas)
+        app(CompanyService::class)->initSession();
+
         $this->redirect(config('ptah.auth.home', '/dashboard'), navigate: true);
     }
 

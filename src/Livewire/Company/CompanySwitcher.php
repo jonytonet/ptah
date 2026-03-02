@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Company;
 
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
 
@@ -48,6 +49,7 @@ class CompanySwitcher extends Component
         $this->redirect(request()->fullUrl());
     }
 
+    #[Computed]
     public function getActiveCompanyProperty(): ?Company
     {
         return $this->companies->firstWhere('id', $this->activeId);
