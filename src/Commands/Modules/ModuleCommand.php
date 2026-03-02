@@ -33,6 +33,7 @@ class ModuleCommand extends Command
         'menu'        => 'PTAH_MODULE_MENU',
         'company'     => 'PTAH_MODULE_COMPANY',
         'permissions' => 'PTAH_MODULE_PERMISSIONS',
+        'api'         => 'PTAH_MODULE_API',
     ];
 
     public function handle(): int
@@ -56,6 +57,7 @@ class ModuleCommand extends Command
             'menu'        => $this->activateMenu(),
             'company'     => $this->activateCompany(),
             'permissions' => $this->activatePermissions(),
+            'api'         => $this->activateApi(),
         };
 
         $this->setEnvValue($this->modules[$module], 'true');
@@ -150,6 +152,47 @@ class ModuleCommand extends Command
         $this->newLine();
     }
 
+    protected function activateApi(): void
+    {
+        $this->components->task('Instalando darkaonline/l5-swagger', function () {
+            $process = new \Symfony\Component\Process\Process(
+                ['composer', 'require', 'darkaonline/l5-swagger'],
+                base_path()
+            );
+            $process->setTimeout(300);
+            $process->run();
+
+            return $process->isSuccessful();
+        });
+
+        $this->components->task('Publicando classes base de API', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-api',
+                '--force' => $this->option('force'),
+            ]);
+        });
+
+        $this->components->task('Publicando config L5-Swagger', function () {
+            if (class_exists(\L5Swagger\L5SwaggerServiceProvider::class)) {
+                $this->call('vendor:publish', [
+                    '--provider' => 'L5Swagger\\L5SwaggerServiceProvider',
+                    '--force'    => false,
+                ]);
+            }
+        });
+
+        // Substitui placeholders no SwaggerInfo.php publicado
+        $swaggerInfoPath = app_path('Http/Controllers/API/SwaggerInfo.php');
+
+        if (file_exists($swaggerInfoPath)) {
+            $content = file_get_contents($swaggerInfoPath);
+            $content = str_replace('{{ APP_NAME }}',           config('app.name', 'App'),                     $content);
+            $content = str_replace('{{ APP_URL }}',            rtrim(config('app.url', 'http://localhost'), '/'), $content);
+            $content = str_replace('{{ APP_CONTACT_EMAIL }}',  env('MAIL_FROM_ADDRESS', 'contact@example.com'), $content);
+            file_put_contents($swaggerInfoPath, $content);
+        }
+    }
+
     protected function listModules(): int
     {
         $this->newLine();
@@ -210,6 +253,14 @@ class ModuleCommand extends Command
             $this->line('  1. Acesse <fg=green>/ptah-companies</> para gerenciar empresas');
             $this->line('  2. Configure <fg=yellow>ptah.company</> no config/ptah.php para personalizar');
             $this->line('  3. Use <fg=yellow>CompanyService::getCurrentCompanyId()</> nas suas queries');
+        }
+
+        if ($module === 'api') {
+            $this->line('  1. Acesse <fg=green>/api/documentation</> para ver o Swagger UI');
+            $this->line('  2. Para gerar/atualizar docs: <fg=green>php artisan l5-swagger:generate</>  ');
+            $this->line('  3. Gere entidades com: <fg=green>php artisan ptah:forge Catalog/Product --api</>');
+            $this->line('  4. ⚠  NUNCA use response()->json() — use <fg=yellow>BaseResponse::</>  ');
+            $this->line('  5. Configure o scan path em <fg=yellow>config/l5-swagger.php</> se necessário');
         }
 
         if ($module === 'permissions') {

@@ -56,6 +56,12 @@ interface BaseRepositoryInterface
 
     /**
      * Busca registros por coluna e valor.
+     * Aceita multi-assinatura: string, array, Closure ou Builder.
      */
-    public function findBy(string $column, mixed $value): Collection;
+    public function findBy(mixed $reference, mixed $value = null, string $operator = '=', string $boolean = 'and'): mixed;
+
+    /**
+     * Retorna o nome da chave primária do model.
+     */
+    public function getKeyName(): string;
 }

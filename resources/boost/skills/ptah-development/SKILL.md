@@ -375,6 +375,149 @@ class ProductFactory
 
 ---
 
+## API Module (`ptah:module api`)
+
+### Activação
+
+```bash
+php artisan ptah:module api
+```
+
+Instala automaticamente `darkaonline/l5-swagger` e publica:
+- `app/Responses/BaseResponse.php` — envelope padrão de resposta
+- `app/Http/Controllers/API/BaseApiController.php` — controller base
+- `app/Http/Controllers/API/SwaggerInfo.php` — metadados Swagger (`@OA\Info`, `@OA\SecurityScheme`)
+
+### Gerando entidades com API
+
+```bash
+php artisan ptah:forge Catalog/Product --api \
+  "name:string" "price:decimal" "category_id:foreign" "is_active:boolean"
+```
+
+Gera automaticamente:
+- `app/Http/Controllers/API/Catalog/ProductController.php` — Swagger `@OA\*` completo
+- `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
+- `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
+- `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
+- `routes/api/catalog/product.php` — `Route::prefix('v1')`
+
+### Workflow completo
+
+```bash
+# 1. Instalar módulo (uma vez por projeto)
+php artisan ptah:module api
+
+# 2. Gerar entidade
+php artisan ptah:forge Catalog/Product --api "name:string" "price:decimal"
+
+# 3. Corrigir TODOs de imports nos arquivos gerados
+# 4. Rodar pint
+./vendor/bin/pint
+
+# 5. Migrar
+php artisan migrate
+
+# 6. Gerar documentação Swagger
+php artisan l5-swagger:generate
+
+# 7. Acessar docs
+# http://localhost/api/documentation
+```
+
+### BaseResponse — regras de uso
+
+**SEMPRE** use `BaseResponse::` — **NUNCA** use `response()->json()` diretamente.
+
+```php
+use App\Responses\BaseResponse;
+
+// index — paginado
+return BaseResponse::paginated($this->service->getDados($request));
+
+// show — individual
+$item = $this->service->show($id);
+return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Produto não encontrado');
+
+// store
+return BaseResponse::created($this->service->create($request->validated()));
+
+// update
+return BaseResponse::ok($this->service->update($request->validated(), $id));
+
+// destroy
+return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();
+
+// erro customizado
+return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
+```
+
+**Envelope de resposta:**
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": { ... },
+  "meta": { "current_page": 1, "total": 50, ... }
+}
+```
+
+### getDados($request) — busca inteligente
+
+O método `getDados(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros da request:
+
+| Parâmetro | Comportamento |
+|---|---|
+| `search` | OR entre todos os `$fillable` |
+| `searchLike` | Filtro incremental com operadores `>`, `>=`, `<=`, `<`, `whereIn` |
+| nenhum deles | AND exato (`findAllFieldsAnd`) |
+| `limit`, `page` | Paginação automática |
+| `order`, `direction` | Ordenação |
+| `fields` | Selecionar apenas colunas específicas |
+| `relations` | Eager load (separados por vírgula) |
+
+```php
+// No controller, só isso:
+public function index(Request $request): JsonResponse
+{
+    return BaseResponse::paginated($this->service->getDados($request));
+}
+```
+
+### Namespaces e naming conventions
+
+| Artefato | Caminho | Classe |
+|---|---|---|
+| Controller | `Http/Controllers/API/{Folder}/` | `{Entity}Controller` |
+| Request criar | `Http/Requests/API/{Folder}/` | `Create{Entity}ApiRequest` |
+| Request atualizar | `Http/Requests/API/{Folder}/` | `Update{Entity}ApiRequest` |
+| Rotas | `routes/api/{folder}/` | prefixo `v1` |
+
+### Anti-patterns proibidos
+
+```php
+// ❌ NUNCA — query no controller
+public function index() {
+    return Product::where('active', true)->get();
+}
+
+// ❌ NUNCA — response()->json() avulso
+return response()->json(['data' => $data]);
+
+// ❌ NUNCA — lógica de negócio no controller
+public function store(Request $request) {
+    if (Product::where('sku', $request->sku)->exists()) { ... }
+}
+
+// ✅ CERTO
+public function index(Request $request): JsonResponse
+{
+    return BaseResponse::paginated($this->service->getDados($request));
+}
+```
+
+---
+
 ## Commit Convention
 
 > ⚠️ **ALWAYS run Pint before any commit.** Never commit unformatted PHP code.

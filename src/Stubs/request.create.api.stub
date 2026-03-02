@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+/**
+ * @OA\Schema(
+ *     schema="Create{{ entity }}Request",
+ *     title="Create{{ entity }}Request",
+ *     description="Parâmetros para criação de {{ entity }}",
+ *     required={},
+ * )
+ */
+class Create{{ entity }}ApiRequest extends FormRequest
+{
+    /**
+     * Determina se o usuário tem autorização para realizar esta requisição.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Regras de validação.
+     *
+     * @return array<string, array<int, mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            {{ rules }}
+        ];
+    }
+}

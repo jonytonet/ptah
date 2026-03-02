@@ -59,8 +59,8 @@ class RouteGenerator extends AbstractGenerator
             }
         }
 
-        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers\\Api") . "\\{$context->entity}ApiController";
-        $routeEntry    = "\nRoute::apiResource('{$context->entityPlural}', \\{$controllerFQN}::class);";
+        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers\\API") . "\\{$context->entity}ApiController";
+        $routeEntry    = "\nRoute::prefix('v1')->group(function () {\n    Route::apiResource('{$context->entityPlural}', \\{$controllerFQN}::class);\n});";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityPlural, $label);
     }

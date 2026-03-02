@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Ptah\Generators;
 
 use Ptah\Support\EntityContext;
+use Ptah\Support\FieldDefinition;
 
 /**
  * Gera o Model Eloquent da entidade.
  *
  * Stub: model.stub
  * Placeholders: namespace, entity, table, fillable, casts,
- *               soft_deletes_use, soft_deletes_trait
+ *               soft_deletes_use, soft_deletes_trait, swagger_schema
  */
 class ModelGenerator extends AbstractGenerator
 {
@@ -29,6 +30,9 @@ class ModelGenerator extends AbstractGenerator
             $softDeletesTrait = "    use SoftDeletes;\n";
         }
 
+        // Gera @OA\Schema apenas no modo --api
+        $swaggerSchema = $context->withViews ? '' : $this->buildSwaggerSchema($context);
+
         return $this->writeFile(
             path: $path,
             stub: 'model',
@@ -42,6 +46,7 @@ class ModelGenerator extends AbstractGenerator
                 'soft_deletes_trait' => $softDeletesTrait,
                 'relationships_use'  => $context->relationshipsUse(),
                 'relationships'      => $context->relationships(),
+                'swagger_schema'     => $swaggerSchema,
             ],
             force: $context->force,
             labelOverride: "Model [{$context->entity}]",
@@ -51,5 +56,61 @@ class ModelGenerator extends AbstractGenerator
     protected function label(): string
     {
         return 'Model';
+    }
+
+    /**
+     * Gera o bloco de anotação @OA\Schema para o modelo.
+     * Mapeia os tipos dos campos para tipos OpenAPI.
+     */
+    private function buildSwaggerSchema(EntityContext $context): string
+    {
+        $props = [];
+
+        foreach ($context->fields as $field) {
+            /** @var FieldDefinition $field */
+            if ($field->isForeignKey()) {
+                $propType   = 'integer';
+                $propFormat = '';
+            } else {
+                [$propType, $propFormat] = $this->mapToOpenApiType($field->type);
+            }
+
+            $formatStr = $propFormat ? ", format=\"{$propFormat}\"" : '';
+            $props[]   = " *     @OA\\Property(property=\"{$field->name}\", type=\"{$propType}\"{$formatStr}),";
+        }
+
+        $propsStr = implode("\n", $props);
+
+        return <<<SCHEMA
+
+/**
+ * @OA\\Schema(
+ *     schema="{$context->entity}",
+ *     title="{$context->entity}",
+ *     description="Model {$context->entity}",
+ *     @OA\\Xml(name="{$context->entity}"),
+{$propsStr}
+ * )
+ */
+SCHEMA;
+    }
+
+    /**
+     * Mapeia tipo de campo para [tipo OpenAPI, formato].
+     *
+     * @return array{string, string}
+     */
+    private function mapToOpenApiType(string $type): array
+    {
+        return match (strtolower($type)) {
+            'integer', 'int', 'biginteger', 'smallinteger', 'tinyinteger' => ['integer', ''],
+            'decimal', 'float', 'double'                                   => ['number', 'float'],
+            'boolean', 'bool'                                              => ['boolean', ''],
+            'date'                                                         => ['string', 'date'],
+            'datetime', 'timestamp'                                        => ['string', 'date-time'],
+            'json', 'array', 'object'                                      => ['object', ''],
+            'text', 'longtext', 'mediumtext'                               => ['string', ''],
+            default                                                        => ['string', ''],
+        };
     }
 }

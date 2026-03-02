@@ -200,6 +200,7 @@ class SchemaInspector
             'datetime'           => 'datetime',
             'timestamp'          => 'timestamp',
             'longtext'           => 'longText',
+            'foreign'            => 'foreignId',
             default              => $type,
         };
     }

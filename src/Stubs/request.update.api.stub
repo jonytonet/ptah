@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+/**
+ * @OA\Schema(
+ *     schema="Update{{ entity }}Request",
+ *     title="Update{{ entity }}Request",
+ *     description="Parâmetros para atualização de {{ entity }}",
+ * )
+ */
+class Update{{ entity }}ApiRequest extends FormRequest
+{
+    /**
+     * Determina se o usuário tem autorização para realizar esta requisição.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Regras de validação.
+     *
+     * @return array<string, array<int, mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            {{ rules }}
+        ];
+    }
+}

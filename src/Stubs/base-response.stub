@@ -1,0 +1,138 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Responses;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+/**
+ * Envelope padrão de resposta para APIs do projeto.
+ *
+ * Formato:
+ * {
+ *   "success": true|false,
+ *   "message": "...",
+ *   "data":    {...} | [...] | null,
+ *   "meta":    { "current_page", "last_page", "per_page", "total", "from", "to" } | null,
+ *   "errors":  [] | { ... }
+ * }
+ *
+ * Uso:
+ *   return BaseResponse::ok($data, 'Retornado com sucesso');
+ *   return BaseResponse::created($data);
+ *   return BaseResponse::noContent();
+ *   return BaseResponse::error('Erro de validação', 422, $validator->errors());
+ *   return BaseResponse::paginated($paginator, 'Listagem retornada');
+ *   return BaseResponse::response('msg', $data, 200); // retrocompatível com ERP
+ */
+class BaseResponse
+{
+    /**
+     * Resposta 200 — OK.
+     */
+    public static function ok(mixed $data = null, string $message = 'OK'): JsonResponse
+    {
+        return self::build(true, $message, $data, null, [], 200);
+    }
+
+    /**
+     * Resposta 201 — Created.
+     */
+    public static function created(mixed $data = null, string $message = 'Recurso criado com sucesso'): JsonResponse
+    {
+        return self::build(true, $message, $data, null, [], 201);
+    }
+
+    /**
+     * Resposta 204 — No Content.
+     */
+    public static function noContent(string $message = 'Operação realizada com sucesso'): JsonResponse
+    {
+        return self::build(true, $message, null, null, [], 204);
+    }
+
+    /**
+     * Resposta de erro — status configurável (padrão 400).
+     *
+     * @param array<string, mixed>|array<int, string> $errors
+     */
+    public static function error(string $message, int $status = 400, array $errors = []): JsonResponse
+    {
+        return self::build(false, $message, null, null, $errors, $status);
+    }
+
+    /**
+     * Resposta 404 — Not Found.
+     */
+    public static function notFound(string $message = 'Recurso não encontrado'): JsonResponse
+    {
+        return self::build(false, $message, null, null, [], 404);
+    }
+
+    /**
+     * Resposta 401 — Unauthorized.
+     */
+    public static function unauthorized(string $message = 'Não autorizado'): JsonResponse
+    {
+        return self::build(false, $message, null, null, [], 401);
+    }
+
+    /**
+     * Resposta paginada — inclui meta de paginação.
+     */
+    public static function paginated(LengthAwarePaginator $paginator, string $message = 'OK'): JsonResponse
+    {
+        $meta = [
+            'current_page' => $paginator->currentPage(),
+            'last_page'    => $paginator->lastPage(),
+            'per_page'     => $paginator->perPage(),
+            'total'        => $paginator->total(),
+            'from'         => $paginator->firstItem(),
+            'to'           => $paginator->lastItem(),
+        ];
+
+        return self::build(true, $message, $paginator->items(), $meta, [], 200);
+    }
+
+    /**
+     * Compatibilidade retroativa com o padrão legado do ERP.
+     * Prefer os métodos semânticos acima em código novo.
+     */
+    public static function response(string $message, mixed $data, int $status = 200): JsonResponse
+    {
+        return self::build($status < 400, $message, $data, null, [], $status);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @param array<string, mixed>|null            $meta
+     * @param array<string, mixed>|array<int, mixed> $errors
+     */
+    private static function build(
+        bool $success,
+        string $message,
+        mixed $data,
+        ?array $meta,
+        array $errors,
+        int $status
+    ): JsonResponse {
+        $payload = [
+            'success' => $success,
+            'message' => $message,
+            'data'    => $data,
+        ];
+
+        if ($meta !== null) {
+            $payload['meta'] = $meta;
+        }
+
+        if (! empty($errors)) {
+            $payload['errors'] = $errors;
+        }
+
+        return response()->json($payload, $status);
+    }
+}

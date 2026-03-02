@@ -223,6 +223,13 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__ . '/Migrations/2024_01_04_000007_create_ptah_permission_audits_table.php'
                     => database_path('migrations/2024_01_04_000007_create_ptah_permission_audits_table.php'),
             ], 'ptah-permissions');
+
+            // Publicar módulo API (BaseResponse, BaseApiController, SwaggerInfo)
+            $this->publishes([
+                __DIR__ . '/Stubs/base-response.stub'       => app_path('Responses/BaseResponse.php'),
+                __DIR__ . '/Stubs/base-api-controller.stub' => app_path('Http/Controllers/API/BaseApiController.php'),
+                __DIR__ . '/Stubs/swagger-info.stub'        => app_path('Http/Controllers/API/SwaggerInfo.php'),
+            ], 'ptah-api');
         }
     }
 

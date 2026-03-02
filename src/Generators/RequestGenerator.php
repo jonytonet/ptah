@@ -7,24 +7,29 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera os FormRequests de Store e Update da entidade.
+ * Gera os FormRequests da entidade.
  *
- * Stubs: request.store.stub, request.update.stub
- * Placeholders: namespace, entity, rules
+ * Modo Web:  StoreRequest e UpdateRequest  em Http/Requests/{Folder}/
+ * Modo API:  CreateApiRequest e UpdateApiRequest em Http/Requests/API/{Folder}/
  */
 class RequestGenerator extends AbstractGenerator
 {
-    /**
-     * Gera StoreRequest e UpdateRequest em sequência.
-     * O GeneratorResult retornado representa apenas o último (Update).
-     * O ScaffoldCommand deve chamar generateStore() e generateUpdate() separadamente.
-     */
     public function generate(EntityContext $context): GeneratorResult
     {
-        // Gera os dois; neste método, retorna o do Update como representativo.
+        if (! $context->withViews) {
+            // Modo API — gera Create e Update com nomenclatura nova
+            $this->generateCreateApi($context);
+
+            return $this->generateUpdateApi($context);
+        }
+
+        // Modo Web — gera Store e Update
         $this->generateStore($context);
+
         return $this->generateUpdate($context);
     }
+
+    // ── Modo Web ──────────────────────────────────────────────────────────
 
     public function generateStore(EntityContext $context): GeneratorResult
     {
@@ -59,6 +64,46 @@ class RequestGenerator extends AbstractGenerator
             ],
             force: $context->force,
             labelOverride: "Request [Update{$context->entity}]",
+        );
+    }
+
+    // ── Modo API ──────────────────────────────────────────────────────────
+
+    public function generateCreateApi(EntityContext $context): GeneratorResult
+    {
+        $basePath = config('ptah.paths.requests');
+        $path     = $context->subPath("{$basePath}/API") . "/Create{$context->entity}ApiRequest.php";
+        $ns       = $context->subNs($context->rootNamespace . 'Http\\Requests\\API');
+
+        return $this->writeFile(
+            path: $path,
+            stub: 'request.create.api',
+            replacements: [
+                'namespace' => $ns,
+                'entity'    => $context->entity,
+                'rules'     => $context->validationRulesStore(),
+            ],
+            force: $context->force,
+            labelOverride: "Request API [Create{$context->entity}ApiRequest]",
+        );
+    }
+
+    public function generateUpdateApi(EntityContext $context): GeneratorResult
+    {
+        $basePath = config('ptah.paths.requests');
+        $path     = $context->subPath("{$basePath}/API") . "/Update{$context->entity}ApiRequest.php";
+        $ns       = $context->subNs($context->rootNamespace . 'Http\\Requests\\API');
+
+        return $this->writeFile(
+            path: $path,
+            stub: 'request.update.api',
+            replacements: [
+                'namespace' => $ns,
+                'entity'    => $context->entity,
+                'rules'     => $context->validationRulesUpdate(),
+            ],
+            force: $context->force,
+            labelOverride: "Request API [Update{$context->entity}ApiRequest]",
         );
     }
 

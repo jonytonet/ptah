@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\API;
+
+use App\Responses\BaseResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Routing\Controller;
+
+/**
+ * Controller base para todos os controllers de API do projeto.
+ *
+ * Centraliza o uso de BaseResponse e fornece helpers de resposta.
+ * Todos os controllers gerados com ptah:forge --api estendem esta classe.
+ */
+class BaseApiController extends Controller
+{
+    /**
+     * Resposta de sucesso genérica.
+     */
+    protected function successResponse(mixed $data, string $message = 'OK', int $status = 200): JsonResponse
+    {
+        return BaseResponse::response($message, $data, $status);
+    }
+
+    /**
+     * Resposta paginada com meta de paginação.
+     */
+    protected function paginatedResponse(LengthAwarePaginator $paginator, string $message = 'OK'): JsonResponse
+    {
+        return BaseResponse::paginated($paginator, $message);
+    }
+
+    /**
+     * Resposta de erro.
+     *
+     * @param array<string, mixed>|array<int, mixed> $errors
+     */
+    protected function errorResponse(string $message, int $status = 400, array $errors = []): JsonResponse
+    {
+        return BaseResponse::error($message, $status, $errors);
+    }
+}

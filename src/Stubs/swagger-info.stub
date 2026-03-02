@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\API;
+
+/**
+ * Anotações globais do Swagger/OpenAPI para este projeto.
+ *
+ * Este arquivo não contém código executável — serve apenas de âncora
+ * para as anotações @OA\Info, @OA\SecurityScheme e @OA\Server
+ * que o L5-Swagger usa para gerar a documentação.
+ *
+ * Para regenerar a documentação após alterações:
+ *   php artisan l5-swagger:generate
+ *
+ * @OA\Info(
+ *     title="{{ APP_NAME }} API",
+ *     version="1.0.0",
+ *     description="Documentação da API do {{ APP_NAME }}. Utilize o botão Authorize para autenticar com Bearer token.",
+ *     @OA\Contact(email="{{ APP_CONTACT_EMAIL }}"),
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ * )
+ *
+ * @OA\Server(
+ *     url="{{ APP_URL }}/api/v1",
+ *     description="Servidor principal",
+ * )
+ */
+class SwaggerInfo {}
