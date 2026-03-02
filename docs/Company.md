@@ -22,6 +22,8 @@
 8. [Componente Livewire — CompanySwitcher](#componente-livewire--companyswitcher)
 9. [Rota](#rota)
 10. [Seeder](#seeder)
+    - [DefaultCompanySeeder](#defaultcompanyseeder)
+    - [PtahDemoSeeder](#ptahdemoaseeder)
 11. [Multi-empresa vs Tenant único](#multi-empresa-vs-tenant-único)
 12. [Integração com Permissions](#integração-com-permissions)
 13. [Customizando Views](#customizando-views)
@@ -351,10 +353,18 @@ $this->rows // Ptah\Models\Company paginado (15 por página), filtrado e ordenad
 
 ```php
 'name'     => ['required', 'string', 'max:255'],
+'label'    => [
+    'nullable',
+    'string',
+    'max:4',
+    Rule::unique('ptah_companies', 'label')->ignore($this->editingId),
+],
 'email'    => ['nullable', 'email', 'max:255'],
 'tax_id'   => ['nullable', 'string', 'max:50'],
 'tax_type' => ['nullable', 'string', 'in:cnpj,cpf,ein,vat,other'],
 ```
+
+> **Unicidade do label:** a regra `Rule::unique(...)->ignore($editingId)` garante que não existam duas empresas com a mesma sigla (ex: dois `BETA`), mas permite salvar a edição de uma empresa sem alterar seu próprio label.
 
 ---
 
@@ -464,6 +474,31 @@ if (!$company) {
     ]);
 }
 ```
+
+---
+
+### PtahDemoSeeder
+
+**Namespace:** `Ptah\Seeders\PtahDemoSeeder`
+
+Cria dados de demonstração prontos para exploração. Todas as operações são **idempotentes** — seguro executar múltiplas vezes.
+
+```bash
+# Executar manualmente
+php artisan db:seed --class="Ptah\Seeders\PtahDemoSeeder"
+
+# Ou ativar durante a instalação do pacote
+php artisan ptah:install --demo
+```
+
+**O que é criado:**
+
+| Tipo | Itens |
+|---|---|
+| Empresas | `BETA` (Beta Tecnologia Ltda) e `CORP` (Corp Solutions S/A) |
+| Departamentos | TI, Comercial, Financeiro |
+| Roles | Editor, Viewer |
+| Itens de menu | Usuários, Produtos, Relatórios (somente se `menu.driver = database`) |
 
 ---
 

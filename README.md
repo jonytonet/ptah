@@ -76,6 +76,7 @@ O pacote é dividido em três subsistemas complementares:
   - [Módulo Permissions — visão rápida](#módulo-permissions--visão-rápida)
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
+- [Testes](#-testes)
 - [Comandos disponíveis](#-comandos-disponíveis)
 
 ---
@@ -109,6 +110,14 @@ O comando:
 - Publica `config/ptah.php`
 - Publica os stubs em `stubs/ptah/`
 - Publica e executa as migrations
+
+**Opcional — dados de demonstração:**
+
+```bash
+php artisan ptah:install --demo
+```
+
+A flag `--demo` ativa o `PtahDemoSeeder` ao final da instalação, criando dados de exemplo prontos para exploração: 2 empresas (`BETA`, `CORP`), departamentos (TI, Comercial, Financeiro), roles (Editor, Viewer) e itens de menu. Ideal para onboarding de novos desenvolvedores.
 
 ### 3. Publicação manual (opcional)
 
@@ -2118,11 +2127,53 @@ Após publicar com `ptah:install` ou `vendor:publish --tag=ptah-stubs`, os stubs
 
 ---
 
+## 🧪 Testes
+
+O pacote inclui uma suíte de testes com [Orchestra Testbench](https://github.com/orchestral/testbench) e banco SQLite em memória.
+
+### Executar
+
+```bash
+cd ptah/
+vendor/bin/phpunit
+```
+
+### Estrutura
+
+```
+tests/
+├── TestCase.php                        ← Base com Testbench + RefreshDatabase
+├── Factories/
+│   └── CompanyFactory.php              ← Factory sem Eloquent Factory nativo
+├── Unit/
+│   └── Models/
+│       └── CompanyModelTest.php        ← Testes unitários do model Company
+└── Feature/
+    └── Livewire/
+        └── CompanyListTest.php         ← Testes de feature do CRUD de empresas
+```
+
+### Cobertura principal
+
+| Arquivo de teste | O que cobre |
+|---|---|
+| `CompanyModelTest` | `getLabelDisplay()`, scopes `active`/`default`, auto-slug, soft-delete |
+| `CompanyListTest` | Renderização, criação, edição, unicidade de label, exclusão, busca |
+
+### Ambiente
+
+O `phpunit.xml` configura automaticamente:
+- `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`
+- `APP_ENV=testing`
+- Migrations do pacote carregadas via `loadMigrationsFrom()`
+
+---
+
 ## 📟 Comandos disponíveis
 
 | Comando | Descrição |
 |---|---|
-| `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations) |
+| `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations). Use `--demo` para popular dados de exemplo. |
 | `php artisan ptah:forge {Entity}` | **Gera estrutura completa de uma entidade** ⭐ |
 | `php artisan ptah:module {auth\|menu\|company\|permissions}` | Ativa módulo opcional (publica migrations + atualiza .env) |
 | `php artisan ptah:module --list` | Lista módulos disponíveis e seus estados |
