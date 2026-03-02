@@ -259,16 +259,16 @@ CSS;
         $this->newLine();
         $this->components->info('Instalando Laravel Boost para integração com agentes de IA...');
 
-        $composerOk = $this->components->task(
+        $this->components->task(
             'Instalando laravel/boost via Composer',
             function () {
                 $composer = $this->findComposer();
-                $exit = $this->runProcess([$composer, 'require', 'laravel/boost', '--dev'], base_path());
-                return $exit === 0;
+                $this->runProcess([$composer, 'require', 'laravel/boost', '--dev'], base_path());
             }
         );
 
-        if (! $composerOk) {
+        // Verifica se o pacote foi de fato instalado (independente do exit code no Windows)
+        if (! file_exists(base_path('vendor/laravel/boost'))) {
             $this->components->warn(
                 'Não foi possível instalar laravel/boost automaticamente. '.PHP_EOL.
                 'Execute manualmente: <fg=green>composer require laravel/boost --dev</>'
