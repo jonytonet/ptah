@@ -6,6 +6,7 @@ namespace Ptah\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Comando de instalação do pacote Ptah.
@@ -207,10 +208,15 @@ CSS;
 
     /**
      * Cria a empresa padrão e o usuário admin a partir das configs/.env.
-     * Sempre executa na instalação base (idempotente).
+     * Só executa se as migrations do ptah já foram rodadas.
      */
     protected function seedDefaultAdmin(): void
     {
+        if (! Schema::hasTable('ptah_companies')) {
+            $this->components->warn('Tabelas do ptah não encontradas — rode `php artisan migrate` e depois `php artisan db:seed --class=\\Ptah\\Seeders\\DefaultAdminSeeder`.');
+            return;
+        }
+
         $this->components->task('Criando empresa padrão e usuário admin', function () {
             $this->call('db:seed', ['--class' => \Ptah\Seeders\DefaultAdminSeeder::class]);
         });
@@ -222,6 +228,11 @@ CSS;
     protected function seedDemoData(): void
     {
         if (! $this->option('demo')) {
+            return;
+        }
+
+        if (! Schema::hasTable('ptah_companies')) {
+            $this->components->warn('Tabelas do ptah não encontradas — execute `php artisan migrate` antes de rodar o seeder de demo.');
             return;
         }
 
