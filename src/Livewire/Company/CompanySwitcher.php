@@ -50,13 +50,15 @@ class CompanySwitcher extends Component
     }
 
     #[Computed]
-    public function getActiveCompanyProperty(): ?Company
+    public function activeCompany(): ?Company
     {
         return $this->companies->firstWhere('id', $this->activeId);
     }
 
     public function render()
     {
-        return view('ptah::livewire.company.company-switcher');
+        return view('ptah::livewire.company.company-switcher', [
+            'activeCompany' => $this->companies->firstWhere('id', $this->activeId),
+        ]);
     }
 }
