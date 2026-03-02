@@ -6,6 +6,7 @@
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-11%2B%20%7C%2012%2B-red)](https://laravel.com)
+[![Livewire Version](https://img.shields.io/badge/Livewire-3%20%7C%204-purple)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -90,7 +91,7 @@ O pacote é dividido em três subsistemas complementares:
 | PHP | ^8.2 |
 | Laravel | ^11.0 \| ^12.0 |
 | Alpine.js | ^3.x (via CDN ou npm) |
-| Livewire | ^3.0 (obrigatório — BaseCrud e `forge-pagination`) |
+| Livewire | ^3.0 \| ^4.0 (obrigatório — BaseCrud e `forge-pagination`) |
 
 ---
 

@@ -1,6 +1,6 @@
 {
     "name": "jonytonet/ptah",
-    "description": "Ptah — Laravel scaffolding generator. CRUD, DTOs, Repositories, Services, Livewire 3, Tailwind v4.",
+    "description": "Ptah — Laravel scaffolding generator. CRUD, DTOs, Repositories, Services, Livewire 3/4, Tailwind v4.",
     "version": "1.0.0",
     "type": "library",
     "keywords": ["laravel", "scaffolding", "crud", "generator", "livewire", "tailwind"],
@@ -14,7 +14,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.0|^12.0",
-        "livewire/livewire": "^3.0"
+        "livewire/livewire": "^3.0|^4.0"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0",
