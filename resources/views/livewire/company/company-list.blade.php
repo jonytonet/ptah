@@ -166,4 +166,72 @@
             </x-slot>
         </x-forge-modal>
     </div>
+
+<style>
+/* ── Dark mode: company-list ────────────────────────────────── */
+
+/* Toolbar / card com botões e busca */
+.ptah-dark .ptah-module-toolbar {
+    background-color: #0f172a; /* slate-900 */
+    border-color: #334155;     /* slate-700 */
+}
+.ptah-dark .ptah-module-toolbar input {
+    background-color: rgba(30,41,59,.6); /* slate-800/60 */
+    border-color: #475569;               /* slate-600 */
+    color: #e2e8f0;                      /* slate-200 */
+}
+.ptah-dark .ptah-module-toolbar input::placeholder {
+    color: #64748b; /* slate-500 */
+}
+.ptah-dark .ptah-module-toolbar input:hover {
+    border-color: #64748b;
+}
+.ptah-dark .ptah-module-toolbar svg { color: #64748b; }
+
+/* Wrapper da tabela */
+.ptah-dark .ptah-module-table {
+    border-color: #334155; /* slate-700 */
+}
+
+/* Cabeçalho */
+.ptah-dark .ptah-module-table thead {
+    background-color: rgba(30,41,59,.8); /* slate-800/80 */
+    border-color: #334155;
+}
+.ptah-dark .ptah-module-table th {
+    color: #94a3b8; /* slate-400 */
+}
+
+/* Linhas */
+.ptah-dark .ptah-module-table tbody {
+    --tw-divide-opacity: 1;
+    border-color: rgba(51,65,85,.5); /* slate-700/50 */
+}
+.ptah-dark .ptah-module-table tbody tr {
+    border-color: rgba(51,65,85,.5);
+}
+.ptah-dark .ptah-module-table tr:hover {
+    background-color: rgba(30,41,59,.6);
+}
+
+/* Células */
+.ptah-dark .ptah-module-table td {
+    border-color: rgba(51,65,85,.5);
+}
+.ptah-dark .ptah-module-table .text-slate-800 { color: #e2e8f0 !important; }
+.ptah-dark .ptah-module-table .text-slate-700 { color: #cbd5e1 !important; }
+.ptah-dark .ptah-module-table .text-slate-500 { color: #94a3b8 !important; }
+.ptah-dark .ptah-module-table .text-slate-300 { color: #475569 !important; }
+
+/* Texto vazio */
+.ptah-dark .ptah-module-table .text-slate-400 { color: #64748b !important; }
+
+/* Fundo da caixa vazia */
+.ptah-dark .ptah-module-table .bg-slate-100 {
+    background-color: rgba(51,65,85,.6) !important;
+}
+
+/* Modal exclusão */
+.ptah-dark .text-slate-600 { color: #94a3b8; }
+</style>
 </div>
