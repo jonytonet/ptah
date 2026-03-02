@@ -9,7 +9,7 @@
       - Collapse/expand no desktop (icon-only) — estado persistido em localStorage (ptah_sidebar_collapsed)
       - Dark mode via classe .ptah-dark no ancestral (forge-dashboard-layout)
       - Mobile: overlay + deslize lateral via evento 'toggle-sidebar'
-      - Ícones: aceita classes CSS (bx bx-home, fas fa-user) ou nomes SVG legados (home, users…)
+      - Ícones: classes CSS Boxicons (bx bx-home, bx bxs-gear…) ou FontAwesome (fas fa-user, fab fa-…)
       - driver=database: inicia com Dashboard fixo; grupos rendem como acordeon Alpine
 --}}
 @props([
@@ -60,30 +60,13 @@
         ];
     }
 
-    // Mapa de SVGs para ícones legados (config sem espaço no nome)
-    $svgIcons = [
-        'home'         => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
-        'users'        => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
-        'cube'         => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>',
-        'chart-bar'    => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
-        'cog'          => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
-        'chevron-down' => '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-3.5 h-3.5 transition-transform duration-200"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>',
-    ];
-
     /**
-     * Renderiza ícone.
-     * Padrão: classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").
-     * Legado:  nomes simples sem espaço ("home", "users") resolvidos via $svgIcons — mantidos
-     *          apenas para compatibilidade com projetos antigos; novos projetos devem usar classes CSS.
+     * Renderiza ícone: aceita classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").
+     * Ícones desconhecidos ou vazios fazem fallback para bx bx-circle.
      */
-    $renderIcon = function(string $icon) use ($svgIcons): string {
-        if (str_contains($icon, ' ')) {
-            // Classe CSS — Boxicons ou FontAwesome (padrão recomendado)
-            return '<i class="' . e($icon) . ' text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
-        }
-        // Nome legado → SVG inline; desconhecido → ícone genérico bx
-        return $svgIcons[$icon]
-            ?? '<i class="bx bx-circle text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
+    $renderIcon = function(string $icon): string {
+        $cls = (trim($icon) !== '') ? e($icon) : 'bx bx-circle';
+        return '<i class="' . $cls . ' text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
     };
 @endphp
 

@@ -1933,9 +1933,8 @@ Quando `driver = database`:
 
 **Ícones suportados na tela e na sidebar:**
 ```
-bx bx-home-alt   → Boxicons  (padrão recomendado)
-fas fa-user       → Font Awesome Free (também recomendado)
-home              → SVG legado — compatibilidade, não usar em novos projetos
+bx bx-home-alt   → Boxicons
+fas fa-user       → Font Awesome Free
 ```
 > Boxicons 2.1.4 e FontAwesome 6.7.2 são as bibliotecas padrão do Ptah e são carregadas automaticamente.
 
