@@ -155,6 +155,52 @@ php artisan ptah:forge Inventory/ProductStock \
 
 ---
 
+## Post-scaffold Checklist (MANDATORY after every ptah:forge)
+
+After running `ptah:forge` and `php artisan migrate`, **always** perform these steps:
+
+### 1. Fix FK `use` imports in every generated Model
+
+The generator intentionally leaves `// TODO:` comments for FK relationships
+because it cannot know which sub-folder the related model lives in:
+
+```php
+// Generated (NEEDS to be fixed):
+// TODO: use App\Models\Category; // verifique o namespace real — ajuste se Category estiver em sub-pasta
+
+// ✅ If Category is in App\Models\Catalog\ :
+use App\Models\Catalog\Category;
+
+// ✅ If Category is in the root App\Models\ :
+use App\Models\Category;
+```
+
+**Rule:** For every `// TODO: use` line in a generated model:
+- Find where the related model file actually lives (`find app/Models -name 'Category.php'`)
+- Replace the TODO comment with the correct `use` statement
+- Never leave `// TODO:` lines in committed code
+
+### 2. Run Pint to format all generated files
+
+```bash
+./vendor/bin/pint
+```
+
+### 3. Run migrations
+
+```bash
+php artisan migrate
+```
+
+### 4. Clear views and config cache
+
+```bash
+php artisan view:clear
+php artisan config:clear
+```
+
+---
+
 ## CSS Architecture Rules
 
 1. **Never** add `<style>` blocks inside view files
@@ -330,6 +376,17 @@ class ProductFactory
 ---
 
 ## Commit Convention
+
+> ⚠️ **ALWAYS run Pint before any commit.** Never commit unformatted PHP code.
+
+```bash
+# REQUIRED before every git commit:
+./vendor/bin/pint
+
+# Then commit:
+git add .
+git commit -m "feat: ..."
+```
 
 ```
 feat:     nova funcionalidade
