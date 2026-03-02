@@ -223,6 +223,12 @@ readonly class EntityContext
 
     /**
      * Gera declarações `use` para os models relacionados via FK.
+     *
+     * Gera comentários TODO em vez de imports automáticos para evitar
+     * namespace incorreto quando os models relacionados estão em sub-pastas
+     * diferentes da entidade atual.
+     *
+     * O desenvolvedor deve ajustar o namespace conforme a localização real do model.
      * Retorna string vazia se não houver FKs.
      */
     public function relationshipsUse(): string
@@ -236,8 +242,12 @@ readonly class EntityContext
             return '';
         }
 
+        $rootNs = rtrim($this->rootNamespace, '\\') . '\\Models';
+
         $lines = array_unique(array_map(
-            fn(FieldDefinition $f) => "use {$this->rootNamespace}Models\\{$f->relatedModel()};",
+            fn(FieldDefinition $f) =>
+                "// TODO: use {$rootNs}\\{$f->relatedModel()};" .
+                " // verifique o namespace real — ajuste se {$f->relatedModel()} estiver em sub-pasta",
             $fkFields
         ));
 
