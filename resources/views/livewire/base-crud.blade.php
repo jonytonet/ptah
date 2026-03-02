@@ -267,7 +267,7 @@
             </div>
 
             {{-- Configuração do CRUD (somente admins) --}}
-            @livewire('ptah::crud-config', ['model' => $model], key('crud-cfg-'.$model))
+            @livewire('ptah-crud-config', ['model' => $model], key('crud-cfg-'.$model))
 
             {{-- Atualizar --}}
             <button wire:click="$refresh"

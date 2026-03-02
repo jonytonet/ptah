@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ptah\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use Ptah\Models\Company;
 use Ptah\Models\Department;
 use Ptah\Models\Menu;
@@ -84,12 +83,12 @@ class PtahDemoSeeder extends Seeder
         }
 
         $roles = [
-            ['name' => 'Editor', 'slug' => 'editor', 'description' => 'Pode criar e editar registros', 'is_active' => true],
-            ['name' => 'Viewer', 'slug' => 'viewer', 'description' => 'Apenas visualização',           'is_active' => true],
+            ['name' => 'Editor', 'description' => 'Pode criar e editar registros', 'is_active' => true],
+            ['name' => 'Viewer', 'description' => 'Apenas visualização',           'is_active' => true],
         ];
 
         foreach ($roles as $data) {
-            Role::firstOrCreate(['slug' => $data['slug']], $data);
+            Role::firstOrCreate(['name' => $data['name']], $data);
         }
 
         $this->line('  <info>✔</info> Roles demo criados.');

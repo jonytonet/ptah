@@ -59,7 +59,7 @@ Three subsystems — always use the right one:
 |---|---|---|
 | **Ptah Forge** | `<x-forge-*>` | Blade UI components (Tailwind v4 + Alpine.js) |
 | **ptah:forge** | `php artisan ptah:forge {Entity}` | SOLID scaffolding — generates all layers at once |
-| **BaseCrud** | `@livewire('ptah::base-crud', ['model'=>'...'])` | Dynamic Livewire table+modal, configured via `crud_configs` table |
+| **BaseCrud** | `@livewire('ptah-base-crud', ['model'=>'...'])` | Dynamic Livewire table+modal, configured via `crud_configs` table |
 
 ---
 

@@ -19,7 +19,7 @@ use Ptah\Services\Crud\CrudConfigService;
  *  - Configurações gerais (link, cache, exportação, UI)
  *  - Permissões e visibilidade de botões
  *
- * Uso: @livewire('ptah::crud-config', ['model' => $model])
+ * Uso: @livewire('ptah-crud-config', ['model' => $model])
  */
 class CrudConfig extends Component
 {

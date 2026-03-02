@@ -22,14 +22,14 @@ use Ptah\DTO\SearchDropdownDTO;
  * Livewire 3 — usa dispatch() e #[On(...)].
  *
  * Uso básico:
- *   @livewire('ptah::search-dropdown', [
+ *   @livewire('ptah-search-dropdown', [
  *       'model'  => 'Product',
  *       'label'  => 'name',
  *       'listens' => 'onProductSelected',
  *   ])
  *
  * Uso com serviço:
- *   @livewire('ptah::search-dropdown', [
+ *   @livewire('ptah-search-dropdown', [
  *       'model'      => 'Product',
  *       'label'      => 'name',
  *       'useService' => 'search',

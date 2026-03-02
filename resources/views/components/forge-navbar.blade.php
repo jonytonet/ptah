@@ -72,7 +72,7 @@
 
         {{-- Company Switcher (centralizado) --}}
         <div class="flex items-center justify-center px-4">
-            @livewire('ptah::company.switcher')
+            @livewire('ptah-company-switcher')
         </div>
 
         {{-- Actions --}}

@@ -38,7 +38,7 @@ use Ptah\Services\Crud\FormValidatorService;
  *  - CustomFilters com whereHas
  *
  * Uso:
- *   @livewire('ptah::base-crud', ['model' => 'Product'])
+ *   @livewire('ptah-base-crud', ['model' => 'Product'])
  */
 class BaseCrud extends Component
 {

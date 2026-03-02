@@ -12,6 +12,6 @@
         </div>
     </div>
 
-    @livewire('ptah::base-crud', ['model' => '{{ crud_identifier }}'])
+    @livewire('ptah-base-crud', ['model' => '{{ crud_identifier }}'])
 
 </x-forge-dashboard-layout>

@@ -240,34 +240,35 @@ class PtahServiceProvider extends ServiceProvider
     protected function registerLivewire(): void
     {
         if (class_exists(Livewire::class)) {
-            Livewire::component('ptah::base-crud',       BaseCrud::class);
-            Livewire::component('ptah::search-dropdown', SearchDropdown::class);
-            Livewire::component('ptah::crud-config',     CrudConfig::class);
+            // NOTA: não usar '::' nos aliases (reservado para Blade vendors no Livewire 4)
+            Livewire::component('ptah-base-crud',       BaseCrud::class);
+            Livewire::component('ptah-search-dropdown', SearchDropdown::class);
+            Livewire::component('ptah-crud-config',     CrudConfig::class);
 
             if (config('ptah.modules.auth')) {
-                Livewire::component('ptah::auth.login',              LoginPage::class);
-                Livewire::component('ptah::auth.forgot-password',    ForgotPasswordPage::class);
-                Livewire::component('ptah::auth.reset-password',     ResetPasswordPage::class);
-                Livewire::component('ptah::auth.two-factor',         TwoFactorChallengePage::class);
-                Livewire::component('ptah::auth.profile',            ProfilePage::class);
+                Livewire::component('ptah-auth-login',              LoginPage::class);
+                Livewire::component('ptah-auth-forgot-password',    ForgotPasswordPage::class);
+                Livewire::component('ptah-auth-reset-password',     ResetPasswordPage::class);
+                Livewire::component('ptah-auth-two-factor',         TwoFactorChallengePage::class);
+                Livewire::component('ptah-auth-profile',            ProfilePage::class);
             }
 
             if (config('ptah.modules.menu')) {
-                Livewire::component('ptah::menu.list', MenuList::class);
+                Livewire::component('ptah-menu-list', MenuList::class);
             }
 
             if (config('ptah.modules.company')) {
-                Livewire::component('ptah::company.list',     CompanyList::class);
-                Livewire::component('ptah::company.switcher', CompanySwitcher::class);
+                Livewire::component('ptah-company-list',     CompanyList::class);
+                Livewire::component('ptah-company-switcher', CompanySwitcher::class);
             }
 
             if (config('ptah.modules.permissions')) {
-                Livewire::component('ptah::permission.department-list', DepartmentList::class);
-                Livewire::component('ptah::permission.role-list',       RoleList::class);
-                Livewire::component('ptah::permission.page-list',       PageList::class);
-                Livewire::component('ptah::permission.user-list',       UserPermissionList::class);
-                Livewire::component('ptah::permission.audit-list',      AuditList::class);
-                Livewire::component('ptah::permission.guide',             PermissionGuide::class);
+                Livewire::component('ptah-permission-department-list', DepartmentList::class);
+                Livewire::component('ptah-permission-role-list',       RoleList::class);
+                Livewire::component('ptah-permission-page-list',       PageList::class);
+                Livewire::component('ptah-permission-user-list',       UserPermissionList::class);
+                Livewire::component('ptah-permission-audit-list',      AuditList::class);
+                Livewire::component('ptah-permission-guide',           PermissionGuide::class);
             }
         }
     }
