@@ -124,6 +124,97 @@ class CompanyService implements CompanyServiceContract
     }
 
     // ─────────────────────────────────────────
+    // Company Switcher — novos helpers
+    // ─────────────────────────────────────────
+
+    /**
+     * Retorna todas as empresas ativas ordenadas (padrão primeiro, depois por nome).
+     * Resultado é cacheado por 5 minutos.
+     */
+    public function getAll(): \Illuminate\Support\Collection
+    {
+        return Cache::remember('ptah_companies_all', 300, function () {
+            return Company::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    /**
+     * Retorna o model Company ativo da sessão atual, ou null.
+     */
+    public function getActive(): ?Company
+    {
+        $id = $this->activeId();
+        if (! $id) {
+            return null;
+        }
+        return $this->getAll()->firstWhere('id', $id);
+    }
+
+    /**
+     * Retorna o ID da empresa ativa da sessão (0 se não definida).
+     */
+    public function activeId(): int
+    {
+        return (int) Session::get($this->sessionKey, 0);
+    }
+
+    /**
+     * Define a empresa ativa na sessão, validando que existe e está ativa.
+     * Invalida cache de permissões do usuário atual.
+     *
+     * @param int $id  ID da empresa
+     */
+    public function setActive(int $id): void
+    {
+        if (! $this->getAll()->contains('id', $id)) {
+            return;
+        }
+
+        Session::put($this->sessionKey, $id);
+
+        // Invalida cache de permissões do usuário logado
+        $userId = auth()->id();
+        if ($userId) {
+            Cache::forget("ptah_permissions:{$userId}:{$id}:");
+            Cache::forget("ptah_is_master:{$userId}");
+        }
+    }
+
+    /**
+     * Inicializa a sessão da empresa se ainda não estiver definida.
+     * Prioridade: is_default = true → primeira empresa ativa.
+     * Chamado pelo CompanySwitcher no mount() para garantir contexto válido.
+     */
+    public function initSession(): void
+    {
+        if ($this->activeId() > 0) {
+            return;
+        }
+
+        $all = $this->getAll();
+        if ($all->isEmpty()) {
+            return;
+        }
+
+        $default = $all->firstWhere('is_default', true) ?? $all->first();
+        Session::put($this->sessionKey, $default->id);
+    }
+
+    /**
+     * Invalida o cache da lista de empresas.
+     * Chamar após criar/editar/excluir uma empresa.
+     */
+    public function forgetListCache(): void
+    {
+        Cache::forget('ptah_companies_all');
+        Cache::forget('ptah_company_default');
+    }
+
+    // ─────────────────────────────────────────
     // Helpers internos
     // ─────────────────────────────────────────
 

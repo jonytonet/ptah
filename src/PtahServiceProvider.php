@@ -25,6 +25,7 @@ use Ptah\Livewire\Auth\ProfilePage;
 use Ptah\Livewire\Auth\ResetPasswordPage;
 use Ptah\Livewire\Auth\TwoFactorChallengePage;
 use Ptah\Livewire\Company\CompanyList;
+use Ptah\Livewire\Company\CompanySwitcher;
 use Ptah\Livewire\Menu\MenuList;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
@@ -256,7 +257,8 @@ class PtahServiceProvider extends ServiceProvider
             }
 
             if (config('ptah.modules.company')) {
-                Livewire::component('ptah::company.list', CompanyList::class);
+                Livewire::component('ptah::company.list',     CompanyList::class);
+                Livewire::component('ptah::company.switcher', CompanySwitcher::class);
             }
 
             if (config('ptah.modules.permissions')) {

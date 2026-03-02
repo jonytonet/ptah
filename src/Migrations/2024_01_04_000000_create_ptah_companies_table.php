@@ -14,6 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            // Sigla/abreviação exibida no company switcher — máx. 4 caracteres (ex: "ACME", "SP01")
+            $table->string('label', 4)->nullable();
             $table->string('logo_path')->nullable();
             $table->string('email')->nullable();
             $table->string('phone', 30)->nullable();

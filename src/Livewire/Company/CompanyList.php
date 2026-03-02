@@ -28,6 +28,7 @@ class CompanyList extends Component
 
     // ── Campos do formulário ───────────────────────────────────────────
     public string $name       = '';
+    public string $label      = '';
     public string $email      = '';
     public string $phone      = '';
     public string $tax_id     = '';
@@ -48,11 +49,12 @@ class CompanyList extends Component
     protected function rules(): array
     {
         return [
-            'name'     => 'required|string|max:255',
-            'email'    => 'nullable|email|max:255',
-            'phone'    => 'nullable|string|max:30',
-            'tax_id'   => 'nullable|string|max:50',
-            'tax_type' => 'nullable|in:cnpj,cpf,ein,vat,other',
+            'name'      => 'required|string|max:255',
+            'label'     => 'nullable|string|max:4',
+            'email'     => 'nullable|email|max:255',
+            'phone'     => 'nullable|string|max:30',
+            'tax_id'    => 'nullable|string|max:50',
+            'tax_type'  => 'nullable|in:cnpj,cpf,ein,vat,other',
             'is_active' => 'boolean',
         ];
     }
@@ -89,6 +91,7 @@ class CompanyList extends Component
 
         $this->editingId  = $id;
         $this->name       = $company->name;
+        $this->label      = $company->label ?? '';
         $this->email      = $company->email ?? '';
         $this->phone      = $company->phone ?? '';
         $this->tax_id     = $company->tax_id ?? '';
@@ -109,6 +112,7 @@ class CompanyList extends Component
         try {
             $data = [
                 'name'       => $this->name,
+                'label'      => strtoupper(trim($this->label)) ?: null,
                 'email'      => $this->email ?: null,
                 'phone'      => $this->phone ?: null,
                 'tax_id'     => $this->tax_id ?: null,
@@ -124,6 +128,9 @@ class CompanyList extends Component
                 Company::create($data);
                 $this->flash('Empresa criada com sucesso!');
             }
+
+            // Invalida cache de companies
+            app(\Ptah\Services\Company\CompanyService::class)->forgetListCache();
 
             $this->showModal = false;
             $this->resetForm();
@@ -165,6 +172,7 @@ class CompanyList extends Component
     {
         $this->editingId  = null;
         $this->name       = '';
+        $this->label      = '';
         $this->email      = '';
         $this->phone      = '';
         $this->tax_id     = '';

@@ -48,6 +48,49 @@ if (!function_exists('ptah_is_master')) {
     }
 }
 
+if (!function_exists('ptah_company_id')) {
+    /**
+     * Retorna o ID da empresa ativa na sessão.
+     * Usa a chave configurada em ptah.permissions.company_session_key.
+     *
+     * @return int  0 se nenhuma empresa selecionada
+     */
+    function ptah_company_id(): int
+    {
+        $key = config('ptah.permissions.company_session_key', 'ptah_company_id');
+        return (int) session($key, 0);
+    }
+}
+
+if (!function_exists('ptah_active_company')) {
+    /**
+     * Retorna o model Company da empresa ativa na sessão, ou null.
+     *
+     * @return \Ptah\Models\Company|null
+     */
+    function ptah_active_company(): ?\Ptah\Models\Company
+    {
+        /** @var \Ptah\Services\Company\CompanyService $service */
+        $service = app(\Ptah\Services\Company\CompanyService::class);
+        return $service->getActive();
+    }
+}
+
+if (!function_exists('ptah_companies')) {
+    /**
+     * Retorna a Collection de todas as empresas ativas.
+     * Resultado é cacheado por 5 minutos.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    function ptah_companies(): \Illuminate\Support\Collection
+    {
+        /** @var \Ptah\Services\Company\CompanyService $service */
+        $service = app(\Ptah\Services\Company\CompanyService::class);
+        return $service->getAll();
+    }
+}
+
 if (!function_exists('ptah_permissions')) {
     /**
      * Retorna o mapa completo de permissões do usuário.

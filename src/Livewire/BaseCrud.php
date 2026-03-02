@@ -202,7 +202,7 @@ class BaseCrud extends Component
         $this->model             = $model;
         $this->whereHasFilter    = $whereHasFilter;
         $this->whereHasCondition = $whereHasCondition;
-        $this->companyFilter     = $companyFilter ?: (int) session('company_id', 0);
+        $this->companyFilter     = $companyFilter ?: ptah_company_id();
 
         // Carrega a configuração
         $config = $this->configService->find($model);
@@ -911,7 +911,7 @@ class BaseCrud extends Component
         $prefs = [
             '_version'      => '2.1.0',
             '_lastModified' => now()->toIso8601String(),
-            'company'       => $this->companyFilter ?: session('company_id', 1),
+            'company'       => $this->companyFilter ?: ptah_company_id(),
             'table'         => [
                 'orderBy'     => $this->sort,
                 'direction'   => $this->direction,

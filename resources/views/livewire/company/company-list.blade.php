@@ -39,6 +39,7 @@
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-12">Sigla</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('name')">
                         <span class="flex items-center gap-1">Nome @if($sort === 'name')<span class="text-indigo-500">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
                     </th>
@@ -51,22 +52,28 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
+                    @php
+                        $badgeColors = ['bg-indigo-600','bg-amber-500','bg-emerald-600','bg-rose-600','bg-violet-600','bg-sky-600'];
+                        $badgeColor  = $badgeColors[$row->id % count($badgeColors)];
+                    @endphp
                     <tr class="transition-colors hover:bg-slate-50/70">
-                        <td class="px-3 py-2.5">
-                            <div class="flex items-center gap-2">
-                                <img src="{{ $row->getLogoUrl() }}" alt="" class="w-8 h-8 rounded-full object-cover shrink-0">
-                                <span class="font-medium text-slate-800">{{ $row->name }}</span>
+                        <td class="px-3 py-2.5 text-center">
+                            <div class="w-8 h-8 rounded-lg {{ $badgeColor }} flex items-center justify-center mx-auto shadow-sm">
+                                <span class="text-white font-bold text-[10px] tracking-wide leading-none">
+                                    {{ $row->getLabelDisplay() }}
+                                </span>
                             </div>
                         </td>
+                        <td class="px-3 py-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-slate-800">{{ $row->name }}</span>
+                                @if($row->is_default)
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">PADRÃO</span>
+                                @endif
+                            </div>
                         <td class="px-3 py-2.5 text-slate-500">{{ $row->email ?? '—' }}</td>
                         <td class="px-3 py-2.5 text-slate-500 font-mono text-xs">{{ $row->tax_id ? strtoupper($row->tax_type ?? '') . ' ' . $row->tax_id : '—' }}</td>
-                        <td class="px-3 py-2.5 text-center">
-                            @if ($row->is_default)
-                                <span class="inline-flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">⭐ Padrão</span>
-                            @else
-                                <span class="text-slate-300">—</span>
-                            @endif
-                        </td>
+
                         <td class="px-3 py-2.5 text-center">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $row->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
                                 {{ $row->is_active ? 'Ativo' : 'Inativo' }}
@@ -87,7 +94,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-16 text-center">
+                        <td colspan="7" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
                                 <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h6"/></svg>
@@ -116,7 +123,15 @@
     <div x-data="{ open: @entangle('showModal').live }">
         <x-forge-modal :title="$isEditing ? 'Editar Empresa' : 'Nova Empresa'" size="lg">
             <form wire:submit="save" class="space-y-4">
-                <x-forge-input label="Nome *" wire:model="name" :error="$errors->first('name')" placeholder="Razão Social" required />
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <x-forge-input label="Nome *" wire:model.live="name" :error="$errors->first('name')" placeholder="Razão Social" required />
+                    </div>
+                    <div>
+                        <x-forge-input label="Sigla (4 chars)" wire:model.live="label" :error="$errors->first('label')" placeholder="ACME" maxlength="4"
+                            hint="Preview: {{ strtoupper(trim($label)) ?: strtoupper(mb_substr($name, 0, 4)) ?: '??' }}" />
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <x-forge-input label="E-mail" type="email" wire:model="email" :error="$errors->first('email')" placeholder="contato@empresa.com" />
                     <x-forge-input label="Telefone" wire:model="phone" placeholder="(00) 00000-0000" />

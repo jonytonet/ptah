@@ -24,9 +24,13 @@ class DefaultCompanySeeder extends Seeder
             ->first();
 
         if (!$company) {
+            // Gera label automático: primeiras 4 letras do nome em maiúsculo
+            $autoLabel = strtoupper(Str::substr(Str::ascii($name), 0, 4));
+
             Company::create([
                 'name'       => $name,
                 'slug'       => Str::slug($name),
+                'label'      => $autoLabel,
                 'is_default' => true,
                 'is_active'  => true,
             ]);

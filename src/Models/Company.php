@@ -33,6 +33,7 @@ class Company extends Model
 
     protected $fillable = [
         'name',
+        'label',
         'slug',
         'logo_path',
         'email',
@@ -81,6 +82,27 @@ class Company extends Model
     // ─────────────────────────────────────────
     // Acessores / Helpers
     // ─────────────────────────────────────────
+
+    /**
+     * Retorna o label para exibição no company switcher.
+     * Prioridade: label configurado → 4 primeiras letras maiúsculas do nome.
+     */
+    public function getLabelDisplay(): string
+    {
+        if (! empty($this->label)) {
+            return strtoupper($this->label);
+        }
+
+        // Gera iniciais de até 4 chars: "Acme Corp" → "AC"
+        $words = preg_split('/\s+/', trim($this->name));
+        $initials = '';
+        foreach ($words as $word) {
+            if (strlen($initials) >= 4) break;
+            $initials .= strtoupper(mb_substr($word, 0, 1));
+        }
+
+        return $initials ?: strtoupper(mb_substr($this->name, 0, 4));
+    }
 
     /**
      * Retorna a URL pública do logo ou um placeholder.
