@@ -324,8 +324,13 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * Aceita multi-assinatura: string simples, array de wheres,
      * Closure de query ou Builder pré-criado (para encadeamento com useIndex).
      *
-     * @example $this->findBy('status', 'active')
-     * @example $this->findBy($this->useIndex('idx_status'), 'status', 'active')
+     * Quando $reference é Builder (retorno de useIndex()), os próximos parâmetros
+     * mapeiam para: $value=coluna, $operator=operador, $boolean=valor.
+     * Exemplo correto com Builder:  findBy($this->useIndex('idx_name'), 'name', '=', 'Jony')
+     *
+     * @example $this->findBy('status', 'active')->get()
+     * @example $this->findBy(['status' => 'active', 'is_active' => true])->get()
+     * @example $this->findBy($this->useIndex('idx_status'), 'status', '=', 'active')->get()
      */
     public function findBy(
         string|array|Closure|Builder $reference,

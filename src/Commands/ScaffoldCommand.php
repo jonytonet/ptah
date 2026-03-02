@@ -146,8 +146,15 @@ class ScaffoldCommand extends Command
 
             // Generators especiais que produzem múltiplos artefatos
             if ($generator instanceof RequestGenerator) {
-                $results[] = $generator->generateStore($context);
-                $results[] = $generator->generateUpdate($context);
+                if ($context->withViews) {
+                    // Modo Web: Store + Update
+                    $results[] = $generator->generateStore($context);
+                    $results[] = $generator->generateUpdate($context);
+                } else {
+                    // Modo API: CreateApiRequest + UpdateApiRequest
+                    $results[] = $generator->generateCreateApi($context);
+                    $results[] = $generator->generateUpdateApi($context);
+                }
                 continue;
             }
 

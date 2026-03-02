@@ -13,7 +13,7 @@ use Ptah\Support\EntityContext;
  * Adiciona rotas ao arquivo routes/web.php ou routes/api.php.
  *
  * Web: Route::resource(...)
- * API: Route::apiResource(...) dentro de prefix('api')
+ * API: Route::apiResource(...) dentro de Route::prefix('v1')
  */
 class RouteGenerator extends AbstractGenerator
 {
