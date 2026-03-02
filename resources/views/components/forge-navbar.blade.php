@@ -71,7 +71,7 @@
         </div>
 
         {{-- Company Switcher --}}
-        <div class="flex-1 flex items-center">
+        <div class="flex-1 flex items-center px-2 overflow-x-auto">
             @livewire('ptah::company.switcher')
         </div>
 
