@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
  * Value object que representa a definição de um único campo.
  *
  * Formato da string de entrada (opção --fields):
- *   nome:tipo[(params)][:nullable][:unique]
+ *   nome:tipo[(params)][:nullable][:unique][:surname=Label]
  *
  * Exemplos:
  *   name:string
@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
  *   is_active:boolean
  *   email:string:unique
  *   user_id:unsignedBigInteger
+ *   city:string:surname=Cidade
+ *   price:decimal(10,2):nullable:surname=Preço
  */
 readonly class FieldDefinition
 {
@@ -30,6 +32,7 @@ readonly class FieldDefinition
         public int    $precision,   // decimal: total digits
         public int    $scale,       // decimal: casas decimais
         public array  $enumValues,  // enum: ['active', 'inactive']
+        public string $label = '',  // rótulo de exibição no BaseCrud (surname)
     ) {}
 
     /**

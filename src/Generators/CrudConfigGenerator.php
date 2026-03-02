@@ -152,7 +152,7 @@ class CrudConfigGenerator extends AbstractGenerator
         $align   = $this->mapAlign($field);
         $col = [
             'colsNomeFisico'  => $field->name,
-            'colsNomeLogico'  => $this->humanLabel($field->name),
+            'colsNomeLogico'  => $field->label !== '' ? $field->label : $this->humanLabel($field->name),
             'colsTipo'        => $tipo,
             'colsGravar'      => $gravar,
             'colsRequired'    => false,

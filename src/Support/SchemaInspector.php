@@ -107,6 +107,19 @@ class SchemaInspector
         $nullable = in_array('nullable', $segments, true);
         $unique   = in_array('unique',   $segments, true);
 
+        // Detecta surname=X ou label=X como rótulo de exibição no BaseCrud
+        $label = '';
+        foreach ($segments as $segment) {
+            if (str_starts_with($segment, 'surname=')) {
+                $label = substr($segment, 8);
+                break;
+            }
+            if (str_starts_with($segment, 'label=')) {
+                $label = substr($segment, 6);
+                break;
+            }
+        }
+
         if ($params !== null) {
             if ($type === 'enum') {
                 $enumValues = array_filter(array_map('trim', explode('|', $params)));
@@ -127,6 +140,7 @@ class SchemaInspector
             precision:  $precision,
             scale:      $scale,
             enumValues: array_values($enumValues),
+            label:      $label,
         );
     }
 
@@ -174,6 +188,9 @@ class SchemaInspector
             $enumValues = $m[1];
         }
 
+        // Usa o Comment da coluna MySQL como rótulo de exibição (se disponível)
+        $label = isset($col->Comment) ? (string) $col->Comment : '';
+
         return new FieldDefinition(
             name:       $col->Field,
             type:       $type,
@@ -182,6 +199,7 @@ class SchemaInspector
             precision:  $precision,
             scale:      $scale,
             enumValues: $enumValues,
+            label:      $label,
         );
     }
 
