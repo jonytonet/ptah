@@ -19,7 +19,7 @@
         'thead'      => $_dk ? 'bg-slate-800/80 border-b-2 border-slate-700' : 'bg-slate-50 border-b-2 border-slate-200',
         'th_text'    => $_dk ? 'text-slate-400'                        : 'text-slate-500',
         'tbody_div'  => $_dk ? 'divide-y divide-slate-700/50'          : 'divide-y divide-slate-100',
-        'tr'         => $_dk ? 'hover:bg-slate-800/60'                 : 'hover:bg-slate-50/70',
+        'tr'         => $_dk ? 'ptah-tr hover:bg-slate-700/60'         : 'ptah-tr hover:bg-violet-50/70',
         'empty_box'  => $_dk ? 'bg-slate-700/60'                       : 'bg-slate-100',
         'empty_ttl'  => $_dk ? 'text-slate-300'                        : 'text-slate-700',
         'empty_sub'  => $_dk ? 'text-slate-500'                        : 'text-slate-400',
@@ -818,7 +818,7 @@
                         {{-- Botões de ação padrão --}}
                         @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
                             <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap">
-                                <div class="flex items-center justify-center gap-2">
+                                <div class="ptah-row-btns flex items-center justify-center gap-2">
 
                                     {{-- Editar --}}
                                     @if ($permissions['showEditButton'] ?? true)
@@ -1293,6 +1293,27 @@
             position: sticky;
             top: 0;
             z-index: 1;
+        }
+
+        /* Row hover highlight */
+        .ptah-base-crud tbody tr.ptah-tr {
+            position: relative;
+            transition: background-color .12s ease, box-shadow .12s ease;
+        }
+        .ptah-base-crud tbody tr.ptah-tr:hover {
+            box-shadow: inset 3px 0 0 #5b21b6;
+        }
+        /* Em dark mode: accent mais suave */
+        .ptah-base-crud.ptah-dark tbody tr.ptah-tr:hover {
+            box-shadow: inset 3px 0 0 #7c3aed;
+        }
+        /* Botões de ação ficam opacos no hover da linha */
+        .ptah-base-crud tbody tr.ptah-tr .ptah-row-btns {
+            opacity: 0.35;
+            transition: opacity .12s ease;
+        }
+        .ptah-base-crud tbody tr.ptah-tr:hover .ptah-row-btns {
+            opacity: 1;
         }
 
         /* Row action buttons */
