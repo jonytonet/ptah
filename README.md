@@ -2177,6 +2177,16 @@ O Ptah inclui suporte nativo ao [Laravel Boost](https://laravel.com/docs/12.x/bo
 
 ### Instalação do Boost no seu projeto
 
+**Via flag do ptah:install (recomendado):**
+
+```bash
+php artisan ptah:install --boost
+```
+
+A flag instala o pacote `laravel/boost` via Composer e executa `boost:install` automaticamente.
+
+**Manualmente:**
+
 ```bash
 composer require laravel/boost --dev
 php artisan boost:install
@@ -2231,7 +2241,7 @@ O arquivo [`docs/AI_Guide.md`](docs/AI_Guide.md) documenta como usar agentes de 
 
 | Comando | Descrição |
 |---|---|
-| `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations). Use `--demo` para popular dados de exemplo. |
+| `php artisan ptah:install` | Instala o pacote (publica config, stubs, migrations). Use `--demo` para popular dados de exemplo. Use `--boost` para configurar Laravel Boost. |
 | `php artisan ptah:forge {Entity}` | **Gera estrutura completa de uma entidade** ⭐ |
 | `php artisan ptah:module {auth\|menu\|company\|permissions}` | Ativa módulo opcional (publica migrations + atualiza .env) |
 | `php artisan ptah:module --list` | Lista módulos disponíveis e seus estados |

@@ -32,6 +32,10 @@ Dark mode: classe `.ptah-dark` no elemento raiz — CSS centralizado no forge-da
 Testes:    Orchestra Testbench + PHPUnit 11 + SQLite :memory:
 ```
 
+> **Dica:** execute `php artisan ptah:install --boost` para instalar o [Laravel Boost](https://laravel.com/docs/12.x/boost)
+> automaticamente. Com o Boost ativo, os agentes (Copilot, Claude Code, Cursor) recebem os guidelines e
+> skills do Ptah a cada sessão — sem necessidade de colar contexto manualmente nos prompts.
+
 **Camadas geradas pelo `ptah:forge`:**
 
 ```

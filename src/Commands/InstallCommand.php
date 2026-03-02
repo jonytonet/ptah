@@ -20,7 +20,8 @@ class InstallCommand extends Command
     protected $signature = 'ptah:install
                             {--force    : Sobrescrever arquivos existentes}
                             {--skip-npm : Pular npm install e npm run build}
-                            {--demo     : Instalar dados de demonstração (empresas, departamentos, roles e menu)}';
+                            {--demo     : Instalar dados de demonstração (empresas, departamentos, roles e menu)}
+                            {--boost    : Instalar Laravel Boost para integração com agentes de IA (Copilot, Claude, Cursor)}';
 
     /**
      * @var string
@@ -46,6 +47,7 @@ class InstallCommand extends Command
         $this->runMigrations();
         $this->createStorageLink();
         $this->seedDemoData();
+        $this->installBoost();
         $this->installNodeDependencies();
 
         $this->newLine();
@@ -59,6 +61,8 @@ class InstallCommand extends Command
         $this->line('     <fg=green>php artisan ptah:make {Entity}</>');
         $this->line('  4. Para iniciar com dados de exemplo:');
         $this->line('     <fg=green>php artisan ptah:install --demo</>');
+        $this->line('  5. Para configurar integração com agentes de IA (Boost):');
+        $this->line('     <fg=green>php artisan ptah:install --boost</>');
         $this->newLine();
 
         return self::SUCCESS;
@@ -210,6 +214,64 @@ CSS;
         });
 
         $this->components->info('Dados demo instalados — acesse o sistema para visualizá-los.');
+    }
+
+    /**
+     * Instala o Laravel Boost quando --boost é passado.
+     *
+     * Executa:
+     *   1. composer require laravel/boost --dev
+     *   2. php artisan boost:install
+     */
+    protected function installBoost(): void
+    {
+        if (! $this->option('boost')) {
+            return;
+        }
+
+        $this->newLine();
+        $this->components->info('Instalando Laravel Boost para integração com agentes de IA...');
+
+        $composerOk = $this->components->task(
+            'Instalando laravel/boost via Composer',
+            function () {
+                $composer = $this->findComposer();
+                $exit = $this->runProcess([$composer, 'require', 'laravel/boost', '--dev'], base_path());
+                return $exit === 0;
+            }
+        );
+
+        if (! $composerOk) {
+            $this->components->warn(
+                'Não foi possível instalar laravel/boost automaticamente. '.PHP_EOL.
+                'Execute manualmente: <fg=green>composer require laravel/boost --dev</>'
+            );
+            return;
+        }
+
+        $this->components->task('Configurando Boost (boost:install)', function () {
+            // Recarrega os providers para que o BoostServiceProvider esteja disponível
+            $this->call('package:discover', ['--ansi' => true]);
+            $this->call('boost:install');
+        });
+
+        $this->components->info(
+            'Laravel Boost instalado! Os guidelines do Ptah serão carregados automaticamente pelos agentes de IA.'
+        );
+    }
+
+    /**
+     * Detecta o executável do Composer disponível no sistema.
+     */
+    protected function findComposer(): string
+    {
+        $composerPath = base_path('composer.phar');
+
+        if (file_exists($composerPath)) {
+            return implode(' ', [PHP_BINARY, $composerPath]);
+        }
+
+        return 'composer';
     }
 
     /**
