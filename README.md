@@ -69,12 +69,13 @@ O pacote é dividido em três subsistemas complementares:
   - [FormValidatorService](#formvalidatorservice)
   - [CrudConfigService](#crudconfigservice)
   - [CacheService](#cacheservice)
-- [Módulos Opcionais — Auth, Menu, Company & Permissions](#-módulos-opcionais--auth-menu-company--permissions)
+- [Módulos Opcionais — Auth, Menu, Company, Permissions & API](#-módulos-opcionais--auth-menu-company-permissions--api)
   - [Ativando os módulos](#ativando-os-módulos)
   - [Módulo Auth — visão rápida](#módulo-auth--visão-rápida)
   - [Módulo Menu — visão rápida](#módulo-menu--visão-rápida)
   - [Módulo Company — visão rápida](#módulo-company--visão-rápida)
   - [Módulo Permissions — visão rápida](#módulo-permissions--visão-rápida)
+  - [Módulo API — visão rápida](#módulo-api--visão-rápida)
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
 - [Testes](#-testes)
@@ -676,14 +677,35 @@ Lê as colunas diretamente via `SHOW FULL COLUMNS FROM` e pré-preenche `$fillab
 
 ### Modo API
 
+> ⚠️ **Requer o módulo API ativado (`ptah:module api`)** antes de gerar entidades com `--api`.
+> O módulo instala o `darkaonline/l5-swagger` e publica as classes base (`BaseResponse`, `BaseApiController`, `SwaggerInfo`).
+
 ```bash
-php artisan ptah:forge Product --api
+# 1. Ativar o módulo uma vez por projeto
+php artisan ptah:module api
+
+# 2. Gerar a entidade
+php artisan ptah:forge Catalog/Product --api
 ```
 
-- Gera `ProductApiController` em `app/Http/Controllers/Api/`
-- Retorna `JsonResponse`
-- Adiciona `Route::apiResource()` em `routes/api.php`
-- Views não são geradas
+**O que é gerado:**
+
+| Artefato | Local |
+|---|---|
+| Controller com Swagger `@OA\*` completo | `app/Http/Controllers/API/Catalog/ProductController.php` |
+| Request de criação | `app/Http/Requests/API/Catalog/CreateProductApiRequest.php` |
+| Request de atualização | `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php` |
+| Model com `@OA\Schema` | `app/Models/Catalog/Product.php` |
+| Rotas prefixadas com `v1` | `routes/api/catalog/product.php` |
+
+**Diferenciais do modo `--api`:**
+- Controller extende `BaseApiController` (publicado pelo módulo); nunca `Controller` diretamente
+- Todos os métodos retornam via `BaseResponse::` — nunca `response()->json()` avulso
+- `index()` usa `$this->service->getDados($request)` — busca inteligente OR / AND / searchLike / paginação automática
+- Anotações Swagger geradas automaticamente: `@OA\Get`, `@OA\Post`, `@OA\Put`, `@OA\Delete`
+- Namespace `App\Http\Controllers\API\` (maiúsculo)
+- Prefixo de rota `Route::prefix('v1')`
+- Views **não são geradas**
 
 ---
 
@@ -1855,9 +1877,9 @@ if ($cache->supportsTagging()) {
 
 ---
 
-## 🔐 Módulos Opcionais — Auth, Menu, Company & Permissions
+## 🔐 Módulos Opcionais — Auth, Menu, Company, Permissions & API
 
-O Ptah possui quatro módulos opcionais que podem ser ativados de forma independente, sem afetar projetos que usam apenas o scaffolding e o `BaseCrud`.
+O Ptah possui cinco módulos opcionais que podem ser ativados de forma independente, sem afetar projetos que usam apenas o scaffolding e o `BaseCrud`.
 
 | Módulo | Funcionalidades |
 |---|---|
@@ -1865,6 +1887,7 @@ O Ptah possui quatro módulos opcionais que podem ser ativados de forma independ
 | **menu** | Menu lateral dinâmico via banco de dados com cache, estrutura em árvore e driver pattern (retrocompatível) |
 | **company** | Gestão de empresas e departamentos, slug automático, seeder idempotente, suporte multi-empresa ou tenant único |
 | **permissions** | RBAC completo — roles, páginas, objetos, middleware, helpers, Blade directives, auditoria e cache de permissões |
+| **api** | Instala `darkaonline/l5-swagger`, publica `BaseResponse`, `BaseApiController` e `SwaggerInfo`; habilita `ptah:forge --api` com documentação OpenAPI automática |
 
 > **Documentação completa → [docs/Modules.md](docs/Modules.md)**  
 > **Referência Company → [docs/Company.md](docs/Company.md)**  
@@ -1885,6 +1908,9 @@ php artisan ptah:module company
 # Ativar RBAC completo (ativa company automaticamente se necessário)
 php artisan ptah:module permissions
 
+# Ativar APIs REST com Swagger (instala l5-swagger + publica classes base)
+php artisan ptah:module api
+
 # Ver estado de todos os módulos
 php artisan ptah:module --list
 ```
@@ -1899,6 +1925,7 @@ PTAH_MODULE_MENU=true
 PTAH_MENU_DRIVER=database   # 'config' (padrão) ou 'database'
 PTAH_MODULE_COMPANY=true
 PTAH_MODULE_PERMISSIONS=true
+PTAH_MODULE_API=true
 ```
 
 ### Módulo Auth — visão rápida
@@ -2007,6 +2034,90 @@ if (ptah_is_master()) { ... }
 | Admin | 6 telas: roles, páginas, objetos, permissões por usuário, auditoria, guia interativo |
 
 > Consulte **[docs/Permissions.md](docs/Permissions.md)** para referência completa.
+
+### Módulo API — visão rápida
+
+Quando ativado, o módulo instala e configura tudo o que é necessário para criar APIs REST documentadas com Swagger / OpenAPI.
+
+**O que o comando `ptah:module api` faz:**
+1. Instala `darkaonline/l5-swagger` via Composer
+2. Publica os arquivos base na aplicação:
+   - `app/Responses/BaseResponse.php` — envelope padrão de resposta (editável pelo dev)
+   - `app/Http/Controllers/API/BaseApiController.php` — controller base (editável)
+   - `app/Http/Controllers/API/SwaggerInfo.php` — metadados globais da doc (preenchido automaticamente com `APP_NAME`, `APP_URL`, `MAIL_FROM_ADDRESS`)
+3. Publica o `config/l5-swagger.php`
+
+**Gerando entidades (após ativar o módulo):**
+
+```bash
+php artisan ptah:forge Catalog/Product --api \
+  "name:string" "price:decimal" "category_id:foreign" "is_active:boolean"
+```
+
+**BaseResponse — envelope padrão:**
+
+```php
+use App\Responses\BaseResponse;
+
+// index
+return BaseResponse::paginated($this->service->getDados($request));
+
+// show
+$item = $this->service->show($id);
+return $item ? BaseResponse::ok($item) : BaseResponse::notFound();
+
+// store
+return BaseResponse::created($this->service->create($request->validated()));
+
+// destroy
+return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();
+
+// erro customizado
+return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
+```
+
+**Envelope de resposta JSON:**
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": { ... },
+  "meta": { "current_page": 1, "per_page": 15, "total": 200, "last_page": 14 }
+}
+```
+
+**getDados — busca inteligente via Request:**
+
+O método `getDados(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros recebidos:
+
+| Parâmetro | Comportamento |
+|---|---|
+| `search=termo` | OR entre todos os `$fillable` |
+| `searchLike[campo]=valor` | Filtro incremental (suporta `>`, `>=`, `<=`, `<`) |
+| (sem search) | AND exato por campos enviados |
+| `limit`, `page` | Paginação automática |
+| `order`, `direction` | Ordenação |
+| `fields` | Selecionar apenas colunas específicas |
+| `relations` | Eager load por nome (separados por vírgula) |
+
+**Regras obrigatórias:**
+
+| ❌ Anti-pattern | ✅ Correto |
+|---|---|
+| `response()->json(['data' => $data])` | `BaseResponse::ok($data)` |
+| Query Eloquent no Controller | Delegar para `$this->service->getDados($request)` |
+| `new ProductService()` | Injetar via construtor |
+
+**Gerador de documentação:**
+
+```bash
+# Gerar/atualizar o Swagger UI
+php artisan l5-swagger:generate
+
+# Acessar a documentação
+# http://localhost/api/documentation
+```
 
 ---
 
