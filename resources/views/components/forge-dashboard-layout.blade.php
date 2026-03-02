@@ -341,6 +341,53 @@
         .ptah-dark .ptah-module-table .text-slate-400 { color: #64748b; }
         .ptah-dark .ptah-module-table .bg-slate-100   { background-color: #334155; }
         .ptah-dark .ptah-module-table .bg-slate-50    { background-color: #1e293b; }
+        .ptah-dark .ptah-module-table .text-slate-700  { color: #cbd5e1; }
+        .ptah-dark .ptah-module-table .text-slate-300  { color: #475569; }
+
+        /* ─── Modal genérico (slate classes) ─────────────── */
+        .ptah-dark .ptah-modal-panel .text-slate-600 { color: #94a3b8; }
+        .ptah-dark .ptah-modal-panel .text-slate-700 { color: #cbd5e1; }
+
+        /* ─── Company Switcher ───────────────────────────── */
+        .ptah-switcher-name {
+            color: #1e293b;
+        }
+        .ptah-switcher-sep {
+            display: inline-block;
+            width: 1px;
+            height: 1.1em;
+            background-color: #cbd5e1;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+        .ptah-switcher-bar {
+            background-color: #f1f5f9;
+        }
+        .ptah-switcher-tab {
+            color: #64748b;
+            background: transparent;
+        }
+        .ptah-switcher-tab:hover {
+            background-color: #ddd6fe;
+            color: #4c1d95;
+        }
+        .ptah-switcher-tab--active {
+            background-color: #5b21b6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 5px rgba(91,33,182,.35);
+        }
+        .ptah-dark .ptah-switcher-name  { color: #e2e8f0; }
+        .ptah-dark .ptah-switcher-sep   { background-color: #475569; }
+        .ptah-dark .ptah-switcher-bar   { background-color: #1e293b; }
+        .ptah-dark .ptah-switcher-tab   { color: #94a3b8; }
+        .ptah-dark .ptah-switcher-tab:hover {
+            background-color: rgba(167,139,250,.15);
+            color: #c4b5fd;
+        }
+        .ptah-dark .ptah-switcher-tab--active {
+            background-color: #5b21b6 !important;
+            color: #ffffff !important;
+        }
     </style>
 
     {{-- Livewire (se disponível) --}}

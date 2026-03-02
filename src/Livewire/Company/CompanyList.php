@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Company;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -50,7 +51,12 @@ class CompanyList extends Component
     {
         return [
             'name'      => 'required|string|max:255',
-            'label'     => 'nullable|string|max:4',
+            'label'     => [
+                'nullable',
+                'string',
+                'max:4',
+                Rule::unique('ptah_companies', 'label')->ignore($this->editingId),
+            ],
             'email'     => 'nullable|email|max:255',
             'phone'     => 'nullable|string|max:30',
             'tax_id'    => 'nullable|string|max:50',

@@ -19,7 +19,8 @@ class InstallCommand extends Command
      */
     protected $signature = 'ptah:install
                             {--force    : Sobrescrever arquivos existentes}
-                            {--skip-npm : Pular npm install e npm run build}';
+                            {--skip-npm : Pular npm install e npm run build}
+                            {--demo     : Instalar dados de demonstração (empresas, departamentos, roles e menu)}';
 
     /**
      * @var string
@@ -44,6 +45,7 @@ class InstallCommand extends Command
         $this->updateAppCss();
         $this->runMigrations();
         $this->createStorageLink();
+        $this->seedDemoData();
         $this->installNodeDependencies();
 
         $this->newLine();
@@ -55,6 +57,8 @@ class InstallCommand extends Command
         $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</>');
         $this->line('  3. Comece a gerar entidades com:');
         $this->line('     <fg=green>php artisan ptah:make {Entity}</>');
+        $this->line('  4. Para iniciar com dados de exemplo:');
+        $this->line('     <fg=green>php artisan ptah:install --demo</>');
         $this->newLine();
 
         return self::SUCCESS;
@@ -190,6 +194,22 @@ CSS;
             }
             $this->call('storage:link');
         });
+    }
+
+    /**
+     * Instala dados de demonstração quando --demo é passado.
+     */
+    protected function seedDemoData(): void
+    {
+        if (! $this->option('demo')) {
+            return;
+        }
+
+        $this->components->task('Instalando dados de demonstração', function () {
+            $this->call('db:seed', ['--class' => \Ptah\Seeders\PtahDemoSeeder::class]);
+        });
+
+        $this->components->info('Dados demo instalados — acesse o sistema para visualizá-los.');
     }
 
     /**
