@@ -33,6 +33,7 @@ class DefaultAdminSeeder extends Seeder
             $company = Company::create([
                 'name'       => $companyName,
                 'slug'       => Str::slug($companyName),
+                'label'      => strtoupper(Str::substr(Str::ascii($companyName), 0, 4)),
                 'is_default' => true,
                 'is_active'  => true,
             ]);

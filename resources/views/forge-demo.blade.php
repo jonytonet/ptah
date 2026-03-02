@@ -34,11 +34,11 @@
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 font-sans text-dark antialiased" x-data="{ notif: false, notifMsg: 'Notificação de teste!' }">
+<body class="font-sans antialiased bg-gray-50 text-dark" x-data="{ notif: false, notifMsg: 'Notificação de teste!' }">
 
-<header class="sticky top-0 z-50 bg-primary text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
-        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center font-bold text-white">P</div>
+<header class="sticky top-0 z-50 text-white shadow-lg bg-primary">
+    <div class="flex items-center gap-3 px-4 py-4 mx-auto max-w-7xl">
+        <div class="flex items-center justify-center w-8 h-8 font-bold text-white rounded-lg bg-white/20">P</div>
         <div>
             <h1 class="text-xl font-bold leading-none">Ptah Forge</h1>
             <p class="text-xs text-white/70">Component Showcase</p>
@@ -46,7 +46,7 @@
     </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 py-10 space-y-16">
+<main class="px-4 py-10 mx-auto space-y-16 max-w-7xl">
 
     {{-- ===== BUTTONS ===== --}}
     <section id="buttons">
@@ -58,7 +58,7 @@
             <x-forge-button color="warn">Warn</x-forge-button>
             <x-forge-button color="dark">Dark</x-forge-button>
         </div>
-        <div class="demo-grid mt-3">
+        <div class="mt-3 demo-grid">
             <x-forge-button color="primary" flat>Flat</x-forge-button>
             <x-forge-button color="primary" relief>Relief</x-forge-button>
             <x-forge-button color="primary" rounded>Rounded</x-forge-button>
@@ -83,7 +83,7 @@
     {{-- ===== CARDS ===== --}}
     <section id="cards">
         <h2 class="demo-title">forge-card</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <x-forge-card title="Card Padrão">
                 Conteúdo do card. Ideal para agrupar informações relacionadas.
             </x-forge-card>
@@ -99,14 +99,14 @@
     {{-- ===== BADGES ===== --}}
     <section id="badges">
         <h2 class="demo-title">forge-badge</h2>
-        <div class="demo-grid items-start">
+        <div class="items-start demo-grid">
             <x-forge-badge color="primary">Primary</x-forge-badge>
             <x-forge-badge color="success">Success</x-forge-badge>
             <x-forge-badge color="danger">Danger</x-forge-badge>
             <x-forge-badge color="warn">Warn</x-forge-badge>
             <x-forge-badge color="dark">Dark</x-forge-badge>
         </div>
-        <div class="demo-grid items-start mt-3">
+        <div class="items-start mt-3 demo-grid">
             <x-forge-badge color="success" :dot="true" :animate="true">Online</x-forge-badge>
             <x-forge-badge color="danger" :dot="true">Offline</x-forge-badge>
         </div>
@@ -115,7 +115,7 @@
     {{-- ===== AVATAR ===== --}}
     <section id="avatar">
         <h2 class="demo-title">forge-avatar</h2>
-        <div class="demo-grid items-end">
+        <div class="items-end demo-grid">
             <x-forge-avatar text="João" size="xs" />
             <x-forge-avatar text="Maria" size="sm" color="success" />
             <x-forge-avatar text="Pedro" size="md" color="warn" />
@@ -137,7 +137,7 @@
     {{-- ===== FORMS: INPUT ===== --}}
     <section id="input">
         <h2 class="demo-title">forge-input</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <div class="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
             <x-forge-input name="name" label="Nome completo" />
             <x-forge-input name="email" type="email" label="E-mail" />
             <x-forge-input name="phone" label="Telefone" placeholder="(11) 90000-0000" />
@@ -172,7 +172,7 @@
     {{-- ===== FORMS: CHECKBOX / RADIO / SWITCH ===== --}}
     <section id="controls">
         <h2 class="demo-title">forge-checkbox / forge-radio / forge-switch</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div class="space-y-3">
                 <x-forge-checkbox name="option_a" label="Opção A" :checked="true" />
                 <x-forge-checkbox name="option_b" label="Opção B" color="success" />
@@ -194,7 +194,7 @@
     {{-- ===== SPINNER ===== --}}
     <section id="spinner">
         <h2 class="demo-title">forge-spinner</h2>
-        <div class="demo-grid items-center">
+        <div class="items-center demo-grid">
             <x-forge-spinner type="circle" color="primary" />
             <x-forge-spinner type="circle" color="success" size="lg" />
             <x-forge-spinner type="dots"   color="danger" />
@@ -240,7 +240,7 @@
         <div x-data="{ open: false }">
             <x-forge-button @click="open = true" color="primary">Abrir Modal</x-forge-button>
             <x-forge-modal x-model="open" title="Título do Modal" size="md">
-                <p class="text-gray-600 mb-4">
+                <p class="mb-4 text-gray-600">
                     Este é o conteúdo do modal. Você pode colocar qualquer elemento aqui.
                 </p>
                 <x-slot:footer>
@@ -270,7 +270,7 @@
     {{-- ===== STAT CARDS ===== --}}
     <section id="stat-cards">
         <h2 class="demo-title">forge-stat-card</h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <x-forge-stat-card label="Faturamento"   value="R$ 42.890"  trend="+12.5%" color="primary" />
             <x-forge-stat-card label="Pedidos"        value="1.340"       trend="+8.2%"  color="success" />
             <x-forge-stat-card label="Devoluções"     value="38"          trend="-3.1%"  color="danger" />
@@ -330,12 +330,12 @@
     {{-- ===== PAGINATION ===== --}}
     <section id="pagination">
         <h2 class="demo-title">forge-pagination</h2>
-        <p class="text-sm text-gray-500 mb-3">
-            Em produção, passe o objeto <code class="bg-gray-100 px-1 rounded">$paginator</code> do Laravel.
+        <p class="mb-3 text-sm text-gray-500">
+            Em produção, passe o objeto <code class="px-1 bg-gray-100 rounded">$paginator</code> do Laravel.
             Abaixo um exemplo estático:
         </p>
         <div class="flex justify-center">
-            <nav class="inline-flex rounded-xl overflow-hidden shadow-sm border border-gray-200">
+            <nav class="inline-flex overflow-hidden border border-gray-200 shadow-sm rounded-xl">
                 @foreach(range(1, 7) as $p)
                     <a href="#" class="px-4 py-2 text-sm border-r border-gray-200 last:border-0
                         {{ $p === 3 ? 'bg-primary text-white font-semibold' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
@@ -353,12 +353,12 @@
             <x-forge-chart-card title="Vendas mensais">
                 <x-slot:legend>
                     <span class="inline-flex items-center gap-1 text-xs text-gray-500">
-                        <span class="w-3 h-3 rounded-full bg-primary inline-block"></span> 2024
+                        <span class="inline-block w-3 h-3 rounded-full bg-primary"></span> 2024
                     </span>
                 </x-slot:legend>
-                <div class="h-48 bg-gradient-to-t from-primary/10 to-transparent rounded-xl flex items-end justify-around px-4 pb-4">
+                <div class="flex items-end justify-around h-48 px-4 pb-4 bg-gradient-to-t from-primary/10 to-transparent rounded-xl">
                     @foreach([40, 65, 55, 80, 70, 90, 75, 95, 60, 85, 100, 88] as $h)
-                        <div class="bg-primary rounded-t w-4 transition-all duration-500"
+                        <div class="w-4 transition-all duration-500 rounded-t bg-primary"
                              style="height: {{ $h }}%"></div>
                     @endforeach
                 </div>
@@ -368,7 +368,7 @@
 
 </main>
 
-<footer class="mt-20 py-8 text-center text-sm text-gray-400 border-t border-gray-200">
+<footer class="py-8 mt-20 text-sm text-center text-gray-400 border-t border-gray-200">
     Ptah Forge &mdash; Component showcase &mdash; {{ now()->year }}
 </footer>
 
