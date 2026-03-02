@@ -46,6 +46,7 @@ class InstallCommand extends Command
         $this->updateAppCss();
         $this->runMigrations();
         $this->createStorageLink();
+        $this->seedDefaultAdmin();
         $this->seedDemoData();
         $this->installBoost();
         $this->installNodeDependencies();
@@ -53,15 +54,19 @@ class InstallCommand extends Command
         $this->newLine();
         $this->components->info('Ptah instalado com sucesso!');
         $this->newLine();
+        $adminEmail = config('ptah.permissions.admin_email', 'admin@admin.com');
         $this->line('  <fg=blue>Próximos passos:</>');
         $this->line('  1. Revise o arquivo <fg=yellow>config/ptah.php</>');
         $this->line('  2. Adicione <fg=yellow>HasUserPreferences</> ao seu model User:');
         $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</>');
-        $this->line('  3. Comece a gerar entidades com:');
-        $this->line('     <fg=green>php artisan ptah:make {Entity}</>');
-        $this->line('  4. Para iniciar com dados de exemplo:');
-        $this->line('     <fg=green>php artisan ptah:install --demo</>');
-        $this->line('  5. Para configurar integração com agentes de IA (Boost):');
+        $this->line('  3. Ative os módulos necessários:');
+        $this->line('     <fg=green>php artisan ptah:module auth</>  <fg=gray>(login, 2FA, perfil)</>');
+        $this->line('     <fg=green>php artisan ptah:module menu</>  <fg=gray>(sidebar dinâmica)</>');
+        $this->line('     <fg=green>php artisan ptah:module company</>  <fg=gray>(multi-empresa)</>');
+        $this->line('     <fg=green>php artisan ptah:module permissions</>  <fg=gray>(RBAC)</>');
+        $this->line('  4. Acesse o sistema com: <fg=yellow>' . $adminEmail . '</>');
+        $this->line('  5. Gere entidades com: <fg=green>php artisan ptah:forge {Entity}</>');
+        $this->line('  6. Para integração com agentes de IA:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
         $this->newLine();
 
@@ -197,6 +202,17 @@ CSS;
                 return;
             }
             $this->call('storage:link');
+        });
+    }
+
+    /**
+     * Cria a empresa padrão e o usuário admin a partir das configs/.env.
+     * Sempre executa na instalação base (idempotente).
+     */
+    protected function seedDefaultAdmin(): void
+    {
+        $this->components->task('Criando empresa padrão e usuário admin', function () {
+            $this->call('db:seed', ['--class' => \Ptah\Seeders\DefaultAdminSeeder::class]);
         });
     }
 
