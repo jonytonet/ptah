@@ -24,6 +24,9 @@ class CompanySwitcher extends Component
     /** ID da empresa ativa */
     public int $activeId = 0;
 
+    /** URL da página atual — capturada no mount antes de qualquer request Livewire */
+    public string $pageUrl = '';
+
     protected CompanyService $companyService;
 
     public function boot(CompanyService $companyService): void
@@ -33,7 +36,10 @@ class CompanySwitcher extends Component
 
     public function mount(): void
     {
-        // Garante que sempre há uma empresa ativa na sessão
+        // Captura a URL da página ANTES de qualquer request Livewire (AJAX)
+        // request()->fullUrl() em callbacks posteriores aponta para livewire/update
+        $this->pageUrl = url()->current();
+
         $this->companyService->initSession();
 
         $this->companies = $this->companyService->getAll();
@@ -46,7 +52,7 @@ class CompanySwitcher extends Component
     public function switchTo(int $id): void
     {
         $this->companyService->setActive($id);
-        $this->redirect(request()->fullUrl());
+        $this->redirect($this->pageUrl);
     }
 
     #[Computed]
