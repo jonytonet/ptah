@@ -125,11 +125,11 @@
             <form wire:submit="save" class="space-y-4">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-2">
-                        <x-forge-input label="Nome *" wire:model.live="name" :error="$errors->first('name')" placeholder="Razão Social" required />
+                        <x-forge-input label="Nome *" wire:model.blur="name" :error="$errors->first('name')" placeholder="Razão Social" required />
                     </div>
                     <div>
-                        <x-forge-input label="Sigla (4 chars)" wire:model.live="label" :error="$errors->first('label')" placeholder="ACME" maxlength="4"
-                            hint="Preview: {{ strtoupper(trim($label)) ?: strtoupper(mb_substr($name, 0, 4)) ?: '??' }}" />
+                        <x-forge-input label="Sigla (4 chars)" wire:model.blur="label" :error="$errors->first('label')" placeholder="ACME" maxlength="4" />
+                        <p class="mt-1 text-[10px] text-slate-400">Exibida no badge do menu</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
