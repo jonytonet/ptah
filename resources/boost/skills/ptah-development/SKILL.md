@@ -1,138 +1,244 @@
 ---
 name: ptah-development
-description: Build and work with jonytonet/ptah features, including scaffolding new entities, configuring BaseCrud, activating modules, writing Livewire components, and running tests — all following Ptah's SOLID architecture.
+description: Build and work with jonytonet/ptah — covering SOLID layered architecture, design tokens, scaffolding, BaseCrud configuration, Livewire conventions, optional modules, and tests. Use this skill whenever creating or modifying any entity, component or module in a Ptah-based project.
 ---
 
-# Ptah Development
+# Ptah Development Skill
 
 ## When to use this skill
 
 Use this skill when:
-- Generating new entities with `ptah:forge`
-- Configuring BaseCrud columns, filters, or modal via `crud_configs`
-- Activating optional modules (auth, menu, company, permissions)
-- Writing or extending Livewire components that follow Ptah conventions
-- Writing tests for Ptah components or models
+- Creating or modifying entities (Model, Service, Repository, DTO, Livewire)
+- Configuring BaseCrud columns, filters, modal or row styles
+- Activating or building optional modules (auth, menu, company, permissions)
+- Writing Livewire components, view files or CSS
+- Writing tests (unit or feature)
+- Deciding where business logic, queries or validation belong
 
-## Package Context
+---
+
+## SOLID Architecture — Layer Rules (NEVER violate)
+
+### Layer map
 
 ```
-Package:   jonytonet/ptah
-Laravel:   12.x | PHP 8.3 | Livewire 3 | Tailwind v4 | Alpine.js 3
-Icons:     Boxicons 2.1.4 + FontAwesome 6.7.2 (CDN, no inline SVG)
-Dark mode: .ptah-dark class on root element — CSS in forge-dashboard-layout only
-Tests:     Orchestra Testbench + PHPUnit 11 + SQLite :memory:
+HTTP Request
+     │
+     ▼
+FormRequest          → validates HTTP input only
+     │
+     ▼
+Controller / Livewire → calls Service via Contract; NO queries, NO business logic
+     │
+     ▼
+ServiceContract      → interface in app/Contracts/Services/
+     │
+     ▼
+Service              → ALL business logic; calls RepositoryContract; throws domain exceptions
+     │
+     ▼
+RepositoryContract   → interface in app/Contracts/Repositories/
+     │
+     ▼
+Repository           → ALL database access; Eloquent queries, filters, pagination
+     │
+     ▼
+Model                → schema, casts, scopes, relationships, boot hooks; NO logic
+     │
+     ▼
+DTO                  → immutable value object; fromArray(); passed between layers
+```
+
+### Single Responsibility — what each layer owns
+
+| Layer | Owns | Must NOT contain |
+|---|---|---|
+| Model | `$fillable`, `$casts`, scopes, relationships, `boot()` hooks | Business rules, DB queries in methods |
+| DTO | `readonly` properties, `fromArray()`, `toArray()` | Persistence, validation |
+| Repository | Eloquent queries, raw SQL, pagination, eager loads | Business rules, HTTP/session awareness |
+| Service | Business rules, orchestration, events, domain exceptions | Eloquent queries, HTTP redirects |
+| FormRequest | `rules()`, `authorize()`, `messages()` | Business logic |
+| Livewire/Controller | Call Service, return view/response | Queries, business rules |
+
+### Dependency Inversion — always inject Contracts
+
+```php
+// ✅ Correct
+public function __construct(
+    private readonly ProductServiceContract $products,
+    private readonly CategoryRepositoryContract $categories,
+) {}
+
+// ❌ Wrong — never inject concrete classes
+public function __construct(private readonly ProductService $products) {}
+```
+
+### Concrete example of correct layer separation
+
+```php
+// ❌ Anti-pattern: business logic leaking into Livewire
+public function save(): void
+{
+    $exists = Product::where('sku', $this->sku)->exists(); // query in Livewire ❌
+    if ($exists) { $this->addError('sku', 'Duplicado'); return; }
+    Product::create([...]); // direct create in Livewire ❌
+}
+
+// ✅ Correct: Livewire → Service (via Contract) → Repository
+// Livewire:
+public function save(): void
+{
+    $this->validate();
+    try {
+        $this->products->create(ProductDTO::fromArray($this->only(['name','sku','price'])));
+        $this->showModal = false;
+    } catch (DuplicateSkuException $e) {
+        $this->addError('sku', $e->getMessage());
+    }
+}
+
+// Service:
+public function create(ProductDTO $dto): Product
+{
+    if ($this->repo->existsBySku($dto->sku)) {
+        throw new DuplicateSkuException("SKU {$dto->sku} já cadastrado.");
+    }
+    return $this->repo->create($dto->toArray());
+}
+
+// Repository:
+public function existsBySku(string $sku): bool
+{
+    return Product::where('sku', $sku)->exists();
+}
 ```
 
 ---
 
-## Scaffolding a New Entity
+## Design Tokens — always use, never hardcode
 
-Always use `ptah:forge` — never create files manually:
+| Token | Hex | Tailwind / component prop |
+|---|---|---|
+| `primary` | `#5b21b6` | `bg-primary` `text-primary` `color="primary"` |
+| `success` | `#10b981` | `bg-success` `text-success` `color="success"` |
+| `danger` | `#ef4444` | `bg-danger` `text-danger` `color="danger"` |
+| `warn` | `#f59e0b` | `bg-warn` `text-warn` `color="warn"` |
+| `dark` | `#1e293b` | `bg-dark` `text-dark` |
+| `light` | `#f8fafc` | `bg-light` `color="light"` |
+
+```blade
+{{-- ✅ Always use color props --}}
+<x-forge-button color="primary">Salvar</x-forge-button>
+<x-forge-button color="danger" flat>Excluir</x-forge-button>
+<x-forge-alert type="success">Salvo!</x-forge-alert>
+
+{{-- ❌ Never hardcode --}}
+<button style="background:#5b21b6">Salvar</button>
+```
+
+---
+
+## Scaffolding New Entities
 
 ```bash
+# Single entity
 php artisan ptah:forge Product \
   --fields="name:string,sku:string,price:decimal,stock:integer,category_id:foreign,is_active:boolean" \
   --soft-delete
+
+# Sub-folder (large projects)
+php artisan ptah:forge Inventory/ProductStock \
+  --fields="product_id:foreign,location:string,qty:integer"
+# model key = 'Inventory/ProductStock'
+# namespace = App\Models\Inventory\ProductStock
 ```
 
-For sub-folder organization (large projects):
+---
 
-```bash
-php artisan ptah:forge Inventory/ProductStock --fields="..."
-# Registers as 'Inventory/ProductStock' in crud_configs.model
-# Resolves to App\Models\Inventory\ProductStock namespace
+## CSS Architecture Rules
+
+1. **Never** add `<style>` blocks inside view files
+2. All CSS (including dark overrides) lives in `forge-dashboard-layout.blade.php`
+3. Dark mode always via `.ptah-dark` ancestor:
+
+```css
+/* ✅ Inside forge-dashboard-layout.blade.php <style> tag */
+.my-component { background: #ffffff; color: #1e293b; }
+.ptah-dark .my-component { background: #1e293b; color: #f8fafc; }
 ```
-
-Generated files:
-- `app/Models/Product.php` — with `$fillable`, `$casts`, auto-slug on `creating`
-- `app/DTO/Product/ProductDTO.php` — readonly properties, `fromArray()`
-- `app/Contracts/Repositories/ProductRepositoryContract.php`
-- `app/Repositories/ProductRepository.php`
-- `app/Contracts/Services/ProductServiceContract.php`
-- `app/Services/ProductService.php`
-- `app/Http/Requests/Product/{Store,Update}ProductRequest.php`
-- `app/Http/Resources/Product/ProductResource.php`
-- `database/migrations/..._create_products_table.php`
-- `resources/views/product/index.blade.php`
 
 ---
 
 ## Configuring BaseCrud
 
-BaseCrud reads from `crud_configs` table. Minimum required record:
-
 ```json
 {
   "model": "Product",
   "cols": [
-    { "field": "name",  "label": "Nome",   "type": "text",    "sort": true, "search": true },
-    { "field": "price", "label": "Preço",  "type": "money",   "sort": true },
-    { "field": "is_active", "label": "Ativo", "type": "boolean" }
-  ]
+    { "field": "name",      "label": "Nome",   "type": "text",    "sort": true, "search": true },
+    { "field": "sku",       "label": "SKU",    "type": "badge",   "badgeColor": "primary" },
+    { "field": "price",     "label": "Preço",  "type": "money",   "sort": true },
+    { "field": "is_active", "label": "Ativo",  "type": "boolean" }
+  ],
+  "rowStyles": [
+    { "field": "stock", "op": "<", "value": 5, "class": "bg-red-50 dark:bg-red-900/20" }
+  ],
+  "modal": {
+    "width": "md",
+    "fields": [
+      { "field": "name",        "type": "text",           "label": "Nome",      "required": true },
+      { "field": "sku",         "type": "text",           "label": "SKU" },
+      { "field": "price",       "type": "number",         "label": "Preço" },
+      { "field": "category_id", "type": "searchDropdown", "label": "Categoria", "relation": "category", "display": "name" },
+      { "field": "is_active",   "type": "switch",         "label": "Ativo" }
+    ]
+  },
+  "quickFilters": {
+    "date_field": "created_at",
+    "options": ["today", "week", "month", "year"]
+  }
 }
 ```
 
-Column types: `text`, `badge`, `boolean`, `money`, `date`, `datetime`, `image`, `method`
-
-Badge with conditional colors:
+Badge enum mapping:
 ```json
 {
   "field": "status",
   "type": "badge",
   "badgeMap": {
     "active":   { "label": "Ativo",    "color": "success" },
-    "inactive": { "label": "Inativo",  "color": "danger"  }
+    "inactive": { "label": "Inativo",  "color": "danger"  },
+    "pending":  { "label": "Pendente", "color": "warn"    }
   }
-}
-```
-
-Row styles based on field values:
-```json
-{
-  "rowStyles": [
-    { "field": "stock", "op": "<", "value": 5, "class": "bg-red-50 dark:bg-red-900/20" }
-  ]
 }
 ```
 
 ---
 
-## Livewire Component Conventions
+## Livewire Input Rules
 
-**Input binding:** Always use `wire:model.blur` for text/email/phone in modals:
 ```blade
+{{-- Text, email, phone, tax → .blur (no re-renders while typing) --}}
+<x-forge-input wire:model.blur="name"  name="name"  label="Nome" />
 <x-forge-input wire:model.blur="email" name="email" label="E-mail" />
+
+{{-- Switch / checkbox / select → .live (immediate UI feedback needed) --}}
+<x-forge-switch wire:model.live="is_active" name="is_active" label="Ativo" />
 ```
 
-**Uniqueness validation** (required pattern for label-like fields):
+Unique validation with self-exclusion:
 ```php
 use Illuminate\Validation\Rule;
 
 protected function rules(): array
 {
     return [
-        'label' => [
-            'nullable', 'string', 'max:4',
-            Rule::unique('ptah_companies', 'label')->ignore($this->editingId),
+        'sku' => [
+            'required', 'string', 'max:50',
+            Rule::unique('products', 'sku')->ignore($this->editingId),
         ],
     ];
 }
-```
-
-**CSS rules:**
-- Never add `<style>` blocks inside view files
-- All CSS overrides go in `forge-dashboard-layout.blade.php` under the existing `<style>` block
-- Use `.ptah-dark .your-class { }` pattern for dark mode variants
-
-**Icons — always CSS classes:**
-```blade
-{{-- Correct ✅ --}}
-<i class="bx bx-trash text-danger"></i>
-<i class="fas fa-edit"></i>
-
-{{-- Wrong ❌ --}}
-<svg>...</svg>
 ```
 
 ---
@@ -140,24 +246,12 @@ protected function rules(): array
 ## Optional Modules
 
 ```bash
-php artisan ptah:module auth         # Login, 2FA, sessions, profile
-php artisan ptah:module menu         # Dynamic sidebar (config or database driver)
-php artisan ptah:module company      # Multi-company management
-php artisan ptah:module permissions  # RBAC: roles, objects, CRUD permissions, audit
-```
-
-Check module status:
-```bash
-php artisan ptah:module --list
-```
-
-`permissions` depends on `company`. All other modules are independent.
-
-With demo data:
-```bash
-php artisan ptah:install --demo
-# Creates: 2 companies (BETA, CORP), departments (TI, Comercial, Financeiro),
-# roles (Editor, Viewer), menu items
+php artisan ptah:module auth         # Login, 2FA TOTP+email, sessions, profile
+php artisan ptah:module menu         # Dynamic sidebar (driver: config or database)
+php artisan ptah:module company      # Multi-company + departments
+php artisan ptah:module permissions  # RBAC: roles, page objects, CRUD + audit
+php artisan ptah:module --list       # Status of all modules
+php artisan ptah:install --demo      # Seed demo companies/roles/menu
 ```
 
 ---
@@ -165,57 +259,83 @@ php artisan ptah:install --demo
 ## Writing Tests
 
 ```php
-namespace Ptah\Tests\Feature\Livewire;
-
 use Livewire\Livewire;
-use Ptah\Livewire\Company\CompanyList;
-use Ptah\Tests\Factories\CompanyFactory;  // Use this, not Company::factory()
-use Ptah\Tests\TestCase;
+use Ptah\Tests\TestCase;  // Testbench + RefreshDatabase + SQLite :memory:
+use Tests\Factories\ProductFactory;  // Custom factory — NO Eloquent Factory
 
-class CompanyListTest extends TestCase
+class ProductListTest extends TestCase
 {
-    /** @test */
-    public function can_create_company(): void
+    public function test_can_create(): void
     {
-        Livewire::test(CompanyList::class)
+        Livewire::test(ProductList::class)
             ->call('create')
-            ->set('name', 'Acme Ltda')
-            ->set('label', 'ACME')
+            ->set('name', 'Widget')->set('sku', 'WGT-001')
             ->call('save')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertSet('showModal', false);
 
-        $this->assertDatabaseHas('ptah_companies', ['name' => 'Acme Ltda']);
+        $this->assertDatabaseHas('products', ['sku' => 'WGT-001']);
     }
 
-    /** @test */
-    public function label_must_be_unique(): void
+    public function test_sku_unique(): void
     {
-        CompanyFactory::new()->create(['label' => 'DUPL']);
+        ProductFactory::new()->create(['sku' => 'DUP']);
 
-        Livewire::test(CompanyList::class)
-            ->call('create')
-            ->set('name', 'Another')
-            ->set('label', 'DUPL')
-            ->call('save')
-            ->assertHasErrors(['label']);
+        Livewire::test(ProductList::class)
+            ->call('create')->set('sku', 'DUP')->call('save')
+            ->assertHasErrors(['sku']);
+    }
+
+    public function test_can_edit_own_sku(): void
+    {
+        $p = ProductFactory::new()->create(['sku' => 'MINE']);
+
+        Livewire::test(ProductList::class)
+            ->call('edit', $p->id)->set('name', 'New Name')->call('save')
+            ->assertHasNoErrors();
+    }
+
+    public function test_soft_delete(): void
+    {
+        $p = ProductFactory::new()->create();
+
+        Livewire::test(ProductList::class)
+            ->call('confirmDelete', $p->id)
+            ->call('delete');
+
+        $this->assertSoftDeleted('products', ['id' => $p->id]);
     }
 }
 ```
 
-Key points:
-- Always extend `Ptah\Tests\TestCase` (Testbench + RefreshDatabase + SQLite :memory:)
-- Use `CompanyFactory::new()->make/create()` — there is **no** Eloquent Factory
-- `PtahServiceProvider` is loaded automatically — all binds (CompanyService, etc.) are available
-- No manual `$this->app->bind(...)` needed
+Factory pattern:
+```php
+class ProductFactory
+{
+    public static function new(): static { return new static(); }
+
+    public function create(array $attrs = []): Product
+    {
+        $m = new Product(array_merge([
+            'name' => 'Product ' . \Str::random(4),
+            'sku'  => strtoupper(\Str::random(6)),
+            'price' => 49.90, 'is_active' => true,
+        ], $attrs));
+        $m->save();
+        return $m->fresh();
+    }
+}
+```
 
 ---
 
-## Commit Message Convention
+## Commit Convention
 
 ```
-feat:     new feature
-fix:      bug fix
-docs:     documentation only
-refactor: code change, no feature/fix
-test:     adding or fixing tests
+feat:     nova funcionalidade
+fix:      correção de bug
+docs:     apenas documentação
+refactor: sem feat/fix
+test:     testes
+chore:    manutenção (deps, config)
 ```

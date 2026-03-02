@@ -1,18 +1,85 @@
-## Ptah — Laravel Scaffolding & Component Package
+## Ptah — Laravel Scaffolding, SOLID Architecture & Component Library
 
-`jonytonet/ptah` is a Laravel package that combines **code scaffolding** with a **visual component library** and **optional feature modules**.
+`jonytonet/ptah` is a Laravel package (Laravel 12, PHP 8.3, Livewire 3, Tailwind v4, Alpine.js 3) that enforces a **strict SOLID layered architecture** through scaffolding automation and runtime components.
 
-### Architecture
+---
 
-The package has three subsystems:
+## SOLID — Layer Responsibilities (CRITICAL)
 
-- **Ptah Forge** — Blade component library with Tailwind v4 + Alpine.js (`<x-forge-*>` tags)
-- **ptah:forge** — SOLID scaffolding generator that creates a full entity structure in one command
-- **BaseCrud** — Dynamic Livewire 3 CRUD component configured via JSON in the database
+Every entity in a Ptah project is split into exactly these layers. **Never put logic in the wrong layer.**
 
-### Core Conventions
+| Layer | File | Single Responsibility |
+|---|---|---|
+| **Model** | `app/Models/{Entity}.php` | Schema, casts, scopes, relationships, boot hooks. **No business logic.** |
+| **DTO** | `app/DTO/{Entity}/{Entity}DTO.php` | Immutable data transfer object. `readonly` properties. `fromArray()` factory. **No persistence.** |
+| **Repository** | `app/Repositories/{Entity}Repository.php` | **All database access.** Eloquent queries, filters, pagination. **No business rules.** |
+| **Service** | `app/Services/{Entity}Service.php` | **All business logic.** Orchestrates repository calls. Throws domain exceptions. **No HTTP/Livewire awareness.** |
+| **FormRequest** | `app/Http/Requests/{Entity}/` | HTTP validation only. Rules depend on route context (store vs update). |
+| **Controller / Livewire** | `app/Http/` or `app/Livewire/` | HTTP / UI layer only. Calls Service, returns response/view. **No queries, no business logic.** |
 
-**Scaffolding:** Always generate new entities using `ptah:forge`, never create files manually:
+### Dependency Inversion (D in SOLID) — always inject Contracts
+
+```php
+// ✅ Correct — inject by Contract (interface)
+public function __construct(
+    private readonly ProductServiceContract $products,
+) {}
+
+// ❌ Wrong — inject by concrete class
+public function __construct(
+    private readonly ProductService $products,
+) {}
+```
+
+Contracts are always in `app/Contracts/{Repositories,Services}/`. The service provider binds concrete → contract automatically.
+
+### Open/Closed — extend, never modify generated bases
+
+```php
+// ✅ Correct: extend to add behaviour
+class ProductService extends \App\Services\BaseService implements ProductServiceContract
+{
+    public function deactivate(int $id): void
+    {
+        $product = $this->products->findOrFail($id);
+        $product->update(['is_active' => false]);
+    }
+}
+
+// ❌ Wrong: add unrelated responsibilities to existing service
+```
+
+---
+
+## Architecture Overview
+
+Three subsystems — always use the right one:
+
+| Subsystem | Tag / Command | Purpose |
+|---|---|---|
+| **Ptah Forge** | `<x-forge-*>` | Blade UI components (Tailwind v4 + Alpine.js) |
+| **ptah:forge** | `php artisan ptah:forge {Entity}` | SOLID scaffolding — generates all layers at once |
+| **BaseCrud** | `@livewire('ptah::base-crud', ['model'=>'...'])` | Dynamic Livewire table+modal, configured via `crud_configs` table |
+
+---
+
+## Design Tokens (use these values — never hardcode colors)
+
+| Token | Value | Usage |
+|---|---|---|
+| `primary` | `#5b21b6` | Main actions, focus rings, active states |
+| `success` | `#10b981` | Confirmations, active badges, positive status |
+| `danger` | `#ef4444` | Errors, destructive actions, alert states |
+| `warn` | `#f59e0b` | Warnings, pending states |
+| `dark` | `#1e293b` | Text, dark backgrounds |
+| `light` | `#f8fafc` | Backgrounds, cards in light mode |
+
+In Tailwind classes, reference these as `text-primary`, `bg-success`, `border-danger`, etc.  
+In `forge-*` components, use `color="primary"`, `color="danger"`, `type="success"` props.
+
+---
+
+## Scaffolding — Always use ptah:forge
 
 <code-snippet name="Generate entity scaffolding" lang="bash">
 php artisan ptah:forge Product \
@@ -20,77 +87,112 @@ php artisan ptah:forge Product \
   --soft-delete
 </code-snippet>
 
-This generates: Model, DTO, Repository + Contract, Service + Contract, FormRequests, API Resource, Migration, and Livewire view with BaseCrud.
+Generates ALL layers at once. Never create these files manually:
 
-**Generated layer structure:**
 ```
 app/
-├── DTO/{Entity}/{Entity}DTO.php
-├── Contracts/Repositories/{Entity}RepositoryContract.php
-├── Contracts/Services/{Entity}ServiceContract.php
-├── Repositories/{Entity}Repository.php
-├── Services/{Entity}Service.php
-└── Models/{Entity}.php
-database/migrations/...create_{entities}_table.php
-resources/views/{entity}/index.blade.php
+├── DTO/Product/ProductDTO.php                          ← immutable, readonly
+├── Contracts/Repositories/ProductRepositoryContract.php
+├── Contracts/Services/ProductServiceContract.php
+├── Repositories/ProductRepository.php                  ← only DB access
+├── Services/ProductService.php                         ← only business logic
+└── Models/Product.php                                  ← only schema/scopes
+database/migrations/..._create_products_table.php
+resources/views/product/index.blade.php
 ```
 
-**Icons:** Use CSS classes only — never SVG inline:
-- Boxicons: `bx bx-home-alt`, `bx bx-user`, `bx bx-cog`
-- FontAwesome: `fas fa-chart-bar`, `fas fa-trash`
-- Both libraries are loaded via CDN by `forge-dashboard-layout`
+---
 
-**Dark mode:** Controlled by class `.ptah-dark` on the root element. All CSS overrides must live in `forge-dashboard-layout.blade.php` — never in local `<style>` blocks inside views.
+## Visual Conventions (non-negotiable)
 
-**Livewire inputs:** Use `wire:model.blur` for text, email, phone fields in modals. Never use `wire:model.live` for text inputs.
+**Icons — CSS classes only, never SVG inline:**
+```blade
+{{-- ✅ Correct --}}
+<i class="bx bx-home-alt"></i>
+<i class="fas fa-chart-bar"></i>
 
-**Validation uniqueness:** Use `Rule::unique('table', 'column')->ignore($this->editingId)` to prevent duplicate entries while allowing edits.
+{{-- ❌ Wrong --}}
+<svg>...</svg>
+```
+Libraries auto-loaded by `forge-dashboard-layout`: Boxicons 2.1.4 + FontAwesome 6.7.2 (CDN).
 
-### Optional Modules
+**Dark mode — class `.ptah-dark` on root, CSS centralized:**
+- All CSS (including dark overrides) lives in `forge-dashboard-layout.blade.php`
+- Never add `<style>` blocks inside view components
+- Dark variant pattern: `.ptah-dark .my-component { background: #1e293b; }`
 
-Activate modules via Artisan — never enable manually:
+**Forge component color convention:**
+```blade
+<x-forge-button color="primary">Save</x-forge-button>
+<x-forge-button color="danger" flat>Delete</x-forge-button>
+<x-forge-alert type="success">Saved!</x-forge-alert>
+<x-forge-badge color="warn">Pending</x-forge-badge>
+```
+
+---
+
+## Livewire Rules
+
+- `wire:model.blur` → text, email, phone, tax fields (validate on blur, not on each keystroke)
+- `wire:model.live` → only for checkboxes, selects, switches that trigger immediate UI feedback
+- Uniqueness: always `Rule::unique('table', 'col')->ignore($this->editingId)`
+- Service calls from Livewire: inject by Contract, never instantiate directly
+
+---
+
+## Optional Modules
 
 <code-snippet name="Activate optional modules" lang="bash">
-php artisan ptah:module auth         # Authentication with 2FA
-php artisan ptah:module menu         # Dynamic sidebar menu
-php artisan ptah:module company      # Multi-company management
-php artisan ptah:module permissions  # RBAC access control
+php artisan ptah:module auth         # Login, 2FA TOTP/email, sessions, profile
+php artisan ptah:module menu         # Dynamic sidebar (driver: config or database)
+php artisan ptah:module company      # Multi-company + department management
+php artisan ptah:module permissions  # RBAC: roles, page objects, CRUD + audit
 </code-snippet>
 
-Module flags are stored in `.env` (`PTAH_MODULE_AUTH`, `PTAH_MODULE_MENU`, etc.) and read via `config('ptah.modules.*')`.
+Module flags: `.env` → `PTAH_MODULE_*=true`, read via `config('ptah.modules.*')`.  
+`permissions` requires `company`. All others are independent.  
+Never enable modules by editing PHP — always use `ptah:module`.
 
-**Module dependency:** `permissions` requires `company`. All other modules are independent.
+---
 
-### BaseCrud Configuration
+## Anti-Patterns — What AI Must Never Generate
 
-BaseCrud reads its config from the `crud_configs` database table (field `model`). Configure columns, filters and modal via JSON — not PHP code.
+| ❌ Anti-pattern | ✅ Correct alternative |
+|---|---|
+| Eloquent query inside a Service | Move to Repository method |
+| Business logic inside Livewire/Controller | Move to Service layer |
+| `new ProductService()` or `new ProductRepository()` | Inject `ProductServiceContract` via constructor |
+| `<style>` block inside a view | CSS in `forge-dashboard-layout.blade.php` |
+| Inline SVG as icon | `<i class="bx bx-...">` or `<i class="fas fa-...">` |
+| `wire:model.live` on text input | `wire:model.blur` |
+| Hardcoded colors like `#5b21b6` in Blade/CSS | Design token classes (`text-primary`, `bg-success`) |
+| `php artisan ptah:module company` skipped, manually set in config | Always run the Artisan command |
+| Creating Model/Service/Repository files manually | Always run `ptah:forge` |
 
-<code-snippet name="Minimal BaseCrud view" lang="blade">
-@extends('ptah::layouts.forge-dashboard')
-@section('title', 'Products')
-@section('content')
-    @livewire('ptah::base-crud', ['model' => 'Product'])
-@endsection
-</code-snippet>
+---
 
-Column types: `text`, `badge`, `boolean`, `money`, `date`, `datetime`, `image`, `method`.
+## Testing
 
-### Testing
+Extends `Ptah\Tests\TestCase` (Testbench + RefreshDatabase + SQLite `:memory:`).  
+**No Eloquent Factory** — use `{Entity}Factory::new()->create([...])` from `tests/Factories/`.  
+`PtahServiceProvider` auto-registers all binds. No manual `$this->app->bind()` needed in tests.
 
-The package uses Orchestra Testbench with SQLite `:memory:`. Tests extend `Ptah\Tests\TestCase`.
-
-**Important:** The package does not use Eloquent Factory. Use `CompanyFactory::new()->create([...])` from `tests/Factories/`. The `PtahServiceProvider` automatically registers all service binds — no manual binding needed in tests.
-
-<code-snippet name="Base test class usage" lang="php">
-use Ptah\Tests\TestCase;
+<code-snippet name="Feature test example" lang="php">
+use Livewire\Livewire;
 use Ptah\Tests\Factories\CompanyFactory;
+use Ptah\Tests\TestCase;
 
-class MyTest extends TestCase
+class CompanyListTest extends TestCase
 {
-    public function test_something(): void
+    public function test_label_must_be_unique(): void
     {
-        $company = CompanyFactory::new()->create(['name' => 'Acme']);
-        // ...
+        CompanyFactory::new()->create(['label' => 'DUPL']);
+
+        Livewire::test(\Ptah\Livewire\Company\CompanyList::class)
+            ->call('create')
+            ->set('name', 'Another')->set('label', 'DUPL')
+            ->call('save')
+            ->assertHasErrors(['label']);
     }
 }
 </code-snippet>
