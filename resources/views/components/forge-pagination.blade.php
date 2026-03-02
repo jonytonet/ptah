@@ -1,90 +1,92 @@
 {{--
-    forge-pagination — Ptah Forge (Livewire 3)
-    Props:
-      - currentPage: int  (padrão: 1)
-      - totalPages : int  (padrão: 1)
-      - perPage    : int  (padrão: 15)
-    Requer Livewire 3
+    forge-pagination — Ptah Forge
+    View de paginação compatível com $paginator->links('ptah::components.forge-pagination').
+    Variáveis injetadas pelo Laravel LengthAwarePaginator:
+      - $paginator : LengthAwarePaginator
+      - $elements  : array (números de página ou "...")
 --}}
-@props([
-    'currentPage' => 1,
-    'totalPages'  => 1,
-    'perPage'     => 15,
-])
+@if ($paginator->hasPages())
+<div class="ptah-pagination flex items-center justify-between gap-4">
 
-@php
-    $currentPage = (int) $currentPage;
-    $totalPages  = (int) $totalPages;
-    $prev        = max(1, $currentPage - 1);
-    $next        = min($totalPages, $currentPage + 1);
-
-    $range = [];
-    $delta = 2;
-    for ($i = 1; $i <= $totalPages; $i++) {
-        if ($i === 1 || $i === $totalPages || ($i >= $currentPage - $delta && $i <= $currentPage + $delta)) {
-            $range[] = $i;
-        }
-    }
-@endphp
-
-<div {{ $attributes->merge(['class' => 'ptah-pagination flex items-center justify-between gap-4']) }}>
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
-        <button
-            @if($currentPage <= 1) disabled @endif
-            wire:click="$set('page', {{ $prev }})"
-            class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600
-                   hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >← Anterior</button>
-        <span class="text-sm text-gray-500">{{ $currentPage }} / {{ $totalPages }}</span>
-        <button
-            @if($currentPage >= $totalPages) disabled @endif
-            wire:click="$set('page', {{ $next }})"
-            class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600
-                   hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >Próximo →</button>
+        @if ($paginator->onFirstPage())
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">← Anterior</span>
+        @else
+            <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">← Anterior</button>
+        @endif
+
+        <span class="text-sm text-gray-500">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
+
+        @if ($paginator->hasMorePages())
+            <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">Próximo →</button>
+        @else
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">Próximo →</span>
+        @endif
     </div>
 
     {{-- Desktop --}}
     <div class="hidden md:flex items-center gap-1">
-        <button
-            @if($currentPage <= 1) disabled @endif
-            wire:click="$set('page', {{ $prev }})"
-            class="p-2 rounded-xl text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-        </button>
 
-        @php $lastPage = null; @endphp
-        @foreach($range as $page)
-            @if($lastPage !== null && $page - $lastPage > 1)
-                <span class="px-2 text-gray-400">…</span>
+        {{-- Botão < --}}
+        @if ($paginator->onFirstPage())
+            <span class="p-2 rounded-xl text-gray-300 cursor-not-allowed">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </span>
+        @else
+            <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
+                    class="p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+        @endif
+
+        {{-- Números das páginas via $elements (padrão Laravel) --}}
+        @foreach ($elements as $element)
+            @if (is_string($element))
+                <span class="px-2 text-gray-400">{{ $element }}</span>
+            @elseif (is_array($element))
+                @foreach ($element as $page => $url)
+                    @if ($page == $paginator->currentPage())
+                        <button wire:click="$set('page', {{ $page }})"
+                                class="w-9 h-9 rounded-xl text-sm font-medium bg-primary text-white shadow-md shadow-primary/30 transition-all duration-200">
+                            {{ $page }}
+                        </button>
+                    @else
+                        <button wire:click="$set('page', {{ $page }})"
+                                class="w-9 h-9 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200">
+                            {{ $page }}
+                        </button>
+                    @endif
+                @endforeach
             @endif
-            <button
-                wire:click="$set('page', {{ $page }})"
-                class="w-9 h-9 rounded-xl text-sm font-medium transition-all duration-200
-                    {{ $page === $currentPage
-                        ? 'bg-primary text-white shadow-md shadow-primary/30'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }}"
-            >{{ $page }}</button>
-            @php $lastPage = $page; @endphp
         @endforeach
 
-        <button
-            @if($currentPage >= $totalPages) disabled @endif
-            wire:click="$set('page', {{ $next }})"
-            class="p-2 rounded-xl text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-        </button>
+        {{-- Botão > --}}
+        @if ($paginator->hasMorePages())
+            <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
+                    class="p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        @else
+            <span class="p-2 rounded-xl text-gray-300 cursor-not-allowed">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </span>
+        @endif
+
     </div>
 
     <p class="text-xs text-gray-400 hidden sm:block">
-        Página {{ $currentPage }} de {{ $totalPages }}
+        Página {{ $paginator->currentPage() }} de {{ $paginator->lastPage() }}
     </p>
 </div>
+@endif
