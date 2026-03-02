@@ -28,6 +28,7 @@
             'bg'        => 'bg-primary',
             'hover'     => 'hover:bg-primary-dark',
             'text'      => 'text-primary',
+            'textSolid' => 'text-white',
             'shadow'    => 'shadow-[0_8px_20px_rgba(91,33,182,0.45)]',
             'relief'    => 'bg-primary-dark',
             'flatHover' => 'hover:bg-primary-light',
@@ -36,6 +37,7 @@
             'bg'        => 'bg-success',
             'hover'     => 'hover:bg-success-dark',
             'text'      => 'text-success',
+            'textSolid' => 'text-white',
             'shadow'    => 'shadow-[0_8px_20px_rgba(16,185,129,0.45)]',
             'relief'    => 'bg-success-dark',
             'flatHover' => 'hover:bg-success-light',
@@ -44,6 +46,7 @@
             'bg'        => 'bg-danger',
             'hover'     => 'hover:bg-danger-dark',
             'text'      => 'text-danger',
+            'textSolid' => 'text-white',
             'shadow'    => 'shadow-[0_8px_20px_rgba(239,68,68,0.45)]',
             'relief'    => 'bg-danger-dark',
             'flatHover' => 'hover:bg-danger-light',
@@ -52,6 +55,7 @@
             'bg'        => 'bg-warn',
             'hover'     => 'hover:bg-warn-dark',
             'text'      => 'text-warn',
+            'textSolid' => 'text-white',
             'shadow'    => 'shadow-[0_8px_20px_rgba(245,158,11,0.45)]',
             'relief'    => 'bg-warn-dark',
             'flatHover' => 'hover:bg-warn-light',
@@ -60,6 +64,7 @@
             'bg'        => 'bg-dark',
             'hover'     => 'hover:bg-dark-dark',
             'text'      => 'text-dark',
+            'textSolid' => 'text-white',
             'shadow'    => 'shadow-[0_8px_20px_rgba(30,41,59,0.45)]',
             'relief'    => 'bg-dark-dark',
             'flatHover' => 'hover:bg-dark-light',
@@ -68,6 +73,7 @@
             'bg'        => 'bg-gray-100',
             'hover'     => 'hover:bg-gray-200',
             'text'      => 'text-gray-700',
+            'textSolid' => 'text-gray-700',
             'shadow'    => 'shadow-[0_8px_20px_rgba(0,0,0,0.12)]',
             'relief'    => 'bg-gray-300',
             'flatHover' => 'hover:bg-gray-50',
@@ -76,6 +82,7 @@
             'bg'        => 'bg-gray-100',
             'hover'     => 'hover:bg-gray-200',
             'text'      => 'text-gray-700',
+            'textSolid' => 'text-gray-700',
             'shadow'    => 'shadow-[0_8px_20px_rgba(0,0,0,0.12)]',
             'relief'    => 'bg-gray-300',
             'flatHover' => 'hover:bg-gray-50',
@@ -97,7 +104,7 @@
     } elseif ($relief) {
         $variantClass = "{$c['relief']} text-white";
     } else {
-        $variantClass = "{$c['bg']} {$c['hover']} text-white {$c['shadow']}";
+        $variantClass = "{$c['bg']} {$c['hover']} {$c['textSolid']} {$c['shadow']}";
     }
 
     $radiusClass    = $rounded ? 'rounded-full' : 'rounded-xl';
