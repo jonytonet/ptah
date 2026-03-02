@@ -646,11 +646,30 @@ php artisan ptah:forge Product \
 **Modificadores:**
 
 ```bash
-# :nullable   ->nullable()  (FK nullable usa nullOnDelete() em vez de cascadeOnDelete())
-# :unique     ->unique()
+# :nullable        ->nullable()  (FK nullable usa nullOnDelete() em vez de cascadeOnDelete())
+# :unique          ->unique()
+# :surname=Label   rótulo de exibição no BaseCrud  (alias: :label=Label)
 email:string:unique
 price:decimal(10,2):nullable
+city:string:surname=Cidade
+price:decimal(10,2):nullable:surname=Preço
+status:enum(active|inactive):unique:surname=Status
 ```
+
+> **`surname` / `label`** — define o texto que aparece no cabeçalho da coluna no **BaseCrud** (`colsNomeLogico`).  
+> Sem esse modificador o ptah usa `humanLabel()` que converte `snake_case → Title Case` automaticamente.  
+> Use quando o nome técnico do campo difere do rótulo desejado na interface.
+>
+> ```bash
+> # Fonte: --fields string
+> php artisan ptah:forge Catalog/Product \
+>   --fields="name:string:surname=Nome do Produto,price:decimal(10,2):surname=Preço,is_active:boolean:surname=Ativo"
+>
+> # Fonte: banco de dados (--db)
+> # O ptah lê o campo Comment da coluna MySQL como rótulo automático.
+> # ALTER TABLE products MODIFY price decimal(10,2) COMMENT 'Preço Venda';
+> php artisan ptah:forge Catalog/Product --db
+> ```
 
 #### Via `--db` (tabela existente no banco)
 
