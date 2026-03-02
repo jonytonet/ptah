@@ -17,7 +17,7 @@
 <nav {{ $attributes->merge([
     'class' => 'ptah-navbar bg-white border-b border-gray-100 shadow-sm ' . ($sticky ? 'fixed top-0 left-0 right-0 z-50 h-16' : 'relative h-16')
 ]) }}>
-    <div class="h-full px-4 flex items-center justify-between">
+    <div class="h-full px-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
 
         {{-- Brand --}}
         <div class="flex items-center gap-2">
@@ -70,13 +70,13 @@
             @endisset
         </div>
 
-        {{-- Company Switcher --}}
-        <div class="flex-1 flex items-center px-2 overflow-x-auto">
+        {{-- Company Switcher (centralizado) --}}
+        <div class="flex items-center justify-center px-4">
             @livewire('ptah::company.switcher')
         </div>
 
         {{-- Actions --}}
-        <div class="flex items-center gap-1 md:gap-2">
+        <div class="flex items-center justify-end gap-1 md:gap-2">
             @isset($actions)
                 {{ $actions }}
             @else
