@@ -19,11 +19,12 @@
    - [Department](#department)
 6. [CompanyService](#companyservice)
 7. [Componente Livewire — CompanyList](#componente-livewire--companylist)
-8. [Rota](#rota)
-9. [Seeder](#seeder)
-10. [Multi-empresa vs Tenant único](#multi-empresa-vs-tenant-único)
-11. [Integração com Permissions](#integração-com-permissions)
-12. [Customizando Views](#customizando-views)
+8. [Componente Livewire — CompanySwitcher](#componente-livewire--companyswitcher)
+9. [Rota](#rota)
+10. [Seeder](#seeder)
+11. [Multi-empresa vs Tenant único](#multi-empresa-vs-tenant-único)
+12. [Integração com Permissions](#integração-com-permissions)
+13. [Customizando Views](#customizando-views)
 
 ---
 
@@ -111,6 +112,7 @@ Em `config/ptah.php`, seção `company`:
 | `id` | bigint PK | — | — |
 | `name` | string | — | Razão social / Nome fantasia |
 | `slug` | string unique | — | Gerado automaticamente a partir do nome |
+| `label` | string(4) | ✓ | Sigla de até 4 caracteres — exibida no badge do company switcher |
 | `logo_path` | string(2048) | ✓ | Caminho relativo no disco configurado |
 | `email` | string | ✓ | E-mail de contato |
 | `phone` | string | ✓ | Telefone |
@@ -320,6 +322,7 @@ $companies = app(CompanyServiceContract::class);
 | `isEditing` | bool | Modo edição vs criação |
 | `editingId` | int\|null | ID em edição |
 | `name` | string | Campo formulário |
+| `label` | string | Campo formulário — sigla de até 4 chars, exibida no badge do switcher |
 | `email` | string | Campo formulário |
 | `phone` | string | Campo formulário |
 | `tax_id` | string | Campo formulário |
@@ -352,6 +355,61 @@ $this->rows // Ptah\Models\Company paginado (15 por página), filtrado e ordenad
 'tax_id'   => ['nullable', 'string', 'max:50'],
 'tax_type' => ['nullable', 'string', 'in:cnpj,cpf,ein,vat,other'],
 ```
+
+---
+
+## Componente Livewire — CompanySwitcher
+
+**Namespace:** `Ptah\Livewire\Company\CompanySwitcher`  
+**View:** `ptah::livewire.company.company-switcher`  
+**Uso:** embutido automaticamente no `forge-navbar`
+
+Exibe uma barra horizontal na navbar com a empresa ativa e as outras empresas disponíveis.
+
+### Comportamento
+
+| Situação | O que aparece |
+|---|---|
+| 1 empresa cadastrada | Componente não renderiza nada |
+| 2 ou mais empresas | Nome completo da ativa + labels de todas (como tabs) |
+
+### Layout visual
+
+```
+[ Laravel ]  |  [ LAR ]  [ SLP ]
+  ↑                  ↑       ↑
+Nome da ativa   Label de cada empresa (botão clicável)
+```
+
+- O tab da empresa ativa fica com fundo na cor primária (`#5b21b6`)
+- Clicar em outro label troca a empresa ativa e recarrega a página atual
+- Em dark mode as cores adaptam via `.ptah-dark` no ancestral
+
+### `getLabelDisplay()`
+
+Método do model `Company`. Retorna em ordem de prioridade:
+
+1. `$company->label` (se preenchido)
+2. Primeiras 2 letras do nome (ex: `Laravel` → `LA`)
+
+Usado pelo CompanySwitcher e pelo badge da tabela de empresas.
+
+### Propriedades Livewire
+
+| Propriedade | Tipo | Descrição |
+|---|---|---|
+| `activeId` | int\|null | ID da empresa ativa na sessão |
+| `pageUrl` | string | URL capturada no `mount()` para redirect após troca |
+
+### Troca de empresa
+
+```php
+// Internamente chama:
+$this->companyService->initSession($companyId);
+$this->redirect($this->pageUrl);
+```
+
+> **Por que capturar a URL no `mount()`?** Dentro de um request Livewire AJAX (`/livewire/update`), `request()->fullUrl()` retorna a URL do endpoint interno — não a URL da página. Por isso a URL é capturada em `mount()` via `url()->current()`, quando o componente ainda está no contexto do request web normal.
 
 ---
 

@@ -272,7 +272,7 @@ Layout centralizado para páginas de autenticação (login, registro, etc).
 
 | Prop | Tipo | Valores | Padrão |
 |---|---|---|---|
-| `color` | string | `primary` `success` `danger` `warn` `dark` | `primary` |
+| `color` | string | `primary` `success` `danger` `warn` `dark` `light` `secondary` | `primary` |
 | `size` | string | `sm` `md` `lg` | `md` |
 | `tag` | string | `button` `a` | `button` |
 | `flat` | bool | — | `false` |
@@ -280,6 +280,8 @@ Layout centralizado para páginas de autenticação (login, registro, etc).
 | `rounded` | bool | — | `false` |
 | `loading` | bool | — | `false` |
 | `disabled` | bool | — | `false` |
+
+> **`color="light"` e `color="secondary"`:** fundo `bg-gray-100`, hover `hover:bg-gray-200`, texto `text-gray-700`. Ideal para botões secundários (ex: Cancelar) que devem ter contraste visível tanto no light quanto no dark mode.
 
 ---
 
@@ -301,6 +303,8 @@ Layout centralizado para páginas de autenticação (login, registro, etc).
 | `error` | string | `null` |
 | `disabled` | bool | `false` |
 | `required` | bool | `false` |
+
+> **`type="password"`:** quando o tipo é `password`, o `forge-input` renderiza automaticamente um botão de olho (👁) ao lado direito para alternar visibilidade da senha. Nenhuma prop extra é necessária.
 
 ---
 
@@ -1956,6 +1960,8 @@ $departments = app(CompanyService::class)->getDepartments($company->id);
 | Tela admin | `/ptah-companies` — listagem e gestão |
 | Slug automático | Gerado no `boot()` do model |
 | Seeder idempotente | `DefaultCompanySeeder` — nunca duplica |
+| Campo `label` (sigla) | Até 4 caracteres, exibida no badge do company switcher na navbar |
+| Company Switcher | Barra horizontal na navbar: nome da empresa ativa + labels de todas disponíveis |
 | Multi-empresa | Controlado por `PTAH_COMPANY_MULTIPLE` |
 
 > Consulte **[docs/Company.md](docs/Company.md)** para referência completa.
