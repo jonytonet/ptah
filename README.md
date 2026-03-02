@@ -228,11 +228,11 @@ Itens do tipo `menuGroup` com filhos renderizam como **accordion Alpine.js** —
 
 | Formato | Exemplo | Renderizado como |
 |---|---|---|
-| Classe CSS (Boxicons) | `bx bx-home-alt` | `<i class="bx bx-home-alt">` |
-| Classe CSS (Font Awesome) | `fas fa-user` | `<i class="fas fa-user">` |
-| Nome simples (legado) | `home` | SVG inline do mapa legado |
+| Classe CSS (Boxicons) — **padrão** | `bx bx-home-alt` | `<i class="bx bx-home-alt">` |
+| Classe CSS (Font Awesome) — **padrão** | `fas fa-user` | `<i class="fas fa-user">` |
 
-> Boxicons 2.1.4 e Font Awesome 6.7.2 são carregados automaticamente pelo `forge-dashboard-layout` via CDN.
+
+> Boxicons 2.1.4 e Font Awesome 6.7.2 são as bibliotecas de ícones padrão do Ptah e são carregadas automaticamente pelo `forge-dashboard-layout` via CDN.
 
 ---
 
@@ -1933,10 +1933,11 @@ Quando `driver = database`:
 
 **Ícones suportados na tela e na sidebar:**
 ```
-bx bx-home-alt   → Boxicons
-fas fa-user       → Font Awesome
-home              → SVG legado (projetos existentes com driver config)
+bx bx-home-alt   → Boxicons  (padrão recomendado)
+fas fa-user       → Font Awesome Free (também recomendado)
+home              → SVG legado — compatibilidade, não usar em novos projetos
 ```
+> Boxicons 2.1.4 e FontAwesome 6.7.2 são as bibliotecas padrão do Ptah e são carregadas automaticamente.
 
 **Comportamento de grupos na sidebar:**
 - `menuGroup` com filhos: accordion Alpine.js (`x-collapse`)
@@ -2035,7 +2036,7 @@ return [
         'prefix'        => 'forge',     // <x-forge-button>
         'tailwind'      => 'v4',
         'sidebar_items' => [
-            // ['icon' => 'home', 'label' => 'Dashboard', 'url' => '/dashboard', 'match' => 'dashboard'],
+            // ['icon' => 'bx bx-home-alt', 'label' => 'Dashboard', 'url' => '/dashboard', 'match' => 'dashboard'],
         ],
     ],
 
@@ -2062,16 +2063,16 @@ return [
 ```php
 'forge' => [
     'sidebar_items' => [
-        ['icon' => 'home',      'label' => 'Dashboard',    'url' => '/dashboard',  'match' => 'dashboard'],
-        ['icon' => 'users',     'label' => 'Usuários',     'url' => '/users',      'match' => 'users*'],
-        ['icon' => 'cube',      'label' => 'Produtos',     'url' => '/products',   'match' => 'products*'],
-        ['icon' => 'chart-bar', 'label' => 'Relatórios',   'url' => '/reports',    'match' => 'reports*'],
-        ['icon' => 'cog',       'label' => 'Configurações','url' => '/settings',   'match' => 'settings*'],
+        ['icon' => 'bx bx-home-alt',  'label' => 'Dashboard',    'url' => '/dashboard',  'match' => 'dashboard'],
+        ['icon' => 'bx bx-user',      'label' => 'Usuários',     'url' => '/users',      'match' => 'users*'],
+        ['icon' => 'bx bx-cube',      'label' => 'Produtos',     'url' => '/products',   'match' => 'products*'],
+        ['icon' => 'bx bx-bar-chart', 'label' => 'Relatórios',   'url' => '/reports',    'match' => 'reports*'],
+        ['icon' => 'bx bx-cog',       'label' => 'Configurações','url' => '/settings',   'match' => 'settings*'],
     ],
 ],
 ```
 
-Ícones disponíveis: `home` `users` `cube` `chart-bar` `cog`
+> Use classes **Boxicons** (`bx bx-*`) ou **FontAwesome** (`fas fa-*` / `fab fa-*`). Ambas as libs são carregadas automaticamente pelo `forge-dashboard-layout`.
 
 ---
 

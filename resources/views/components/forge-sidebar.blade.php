@@ -71,13 +71,19 @@
     ];
 
     /**
-     * Renderiza ícone: se icon contém espaço (CSS class) usa <i class>; senão usa SVG map.
+     * Renderiza ícone.
+     * Padrão: classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").
+     * Legado:  nomes simples sem espaço ("home", "users") resolvidos via $svgIcons — mantidos
+     *          apenas para compatibilidade com projetos antigos; novos projetos devem usar classes CSS.
      */
     $renderIcon = function(string $icon) use ($svgIcons): string {
         if (str_contains($icon, ' ')) {
+            // Classe CSS — Boxicons ou FontAwesome (padrão recomendado)
             return '<i class="' . e($icon) . ' text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
         }
-        return $svgIcons[$icon] ?? $svgIcons['cube'];
+        // Nome legado → SVG inline; desconhecido → ícone genérico bx
+        return $svgIcons[$icon]
+            ?? '<i class="bx bx-circle text-xl leading-none w-5 h-5 flex-shrink-0 flex items-center justify-center"></i>';
     };
 @endphp
 

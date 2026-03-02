@@ -66,9 +66,11 @@ return [
         'prefix'        => 'forge',
         'tailwind'      => 'v4',
         'sidebar_items' => [
-            // Exemplo:
-            // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'home', 'match' => 'dashboard'],
-            // ['label' => 'Usuários', 'url' => '/users', 'icon' => 'users', 'match' => 'users*'],
+            // Use classes CSS Boxicons (bx) ou FontAwesome (fas/far/fab):
+            // ['label' => 'Dashboard',    'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],
+            // ['label' => 'Usuários',     'url' => '/users',     'icon' => 'bx bx-user',      'match' => 'users*'],
+            // ['label' => 'Produtos',     'url' => '/products',  'icon' => 'bx bx-cube',      'match' => 'products*'],
+            // ['label' => 'Configurações','url' => '/settings',  'icon' => 'bx bx-cog',       'match' => 'settings*'],
         ],
     ],
 
