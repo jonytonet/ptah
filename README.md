@@ -77,6 +77,8 @@ O pacote é dividido em três subsistemas complementares:
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
 - [Testes](#-testes)
+- [Laravel Boost — Integração com IA](#-laravel-boost--integração-com-ia)
+- [Desenvolvimento com IA](#-desenvolvimento-com-ia)
 - [Comandos disponíveis](#-comandos-disponíveis)
 
 ---
@@ -2166,6 +2168,62 @@ O `phpunit.xml` configura automaticamente:
 - `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`
 - `APP_ENV=testing`
 - Migrations do pacote carregadas via `loadMigrationsFrom()`
+
+---
+
+## 🤖 Laravel Boost — Integração com IA
+
+O Ptah inclui suporte nativo ao [Laravel Boost](https://laravel.com/docs/12.x/boost), permitindo que agentes de IA (GitHub Copilot, Claude Code, Cursor…) conheçam automaticamente as convenções do pacote ao trabalhar nos seus projetos.
+
+### Instalação do Boost no seu projeto
+
+```bash
+composer require laravel/boost --dev
+php artisan boost:install
+```
+
+Ao rodar `boost:install`, o Ptah contribui automaticamente com:
+
+| Arquivo | Tipo | Contéudo |
+|---|---|---|
+| `resources/boost/guidelines/core.blade.php` | **Guideline** | Convenções do pacote carregadas no início de cada sessão |
+| `resources/boost/skills/ptah-development/SKILL.md` | **Skill** | Padrões detalhados ativados sob demanda |
+
+**Guidelines** são carregadas sempre — informam o agente sobre scaffolding, ícones, dark mode e testes.  
+**Skills** são ativadas quando necessário — detalham BaseCrud, modules, validações e fluxo SOLID.
+
+### Manter atualizado
+
+```bash
+php artisan boost:update
+```
+
+Para automatizar, adicione ao `composer.json`:
+
+```json
+"scripts": {
+    "post-update-cmd": ["@php artisan boost:update --ansi"]
+}
+```
+
+---
+
+## 💡 Desenvolvimento com IA
+
+O arquivo [`docs/AI_Guide.md`](docs/AI_Guide.md) documenta como usar agentes de IA de forma eficaz com o Ptah.
+
+**O que o guia cobre:**
+
+| Seção | Conteúdo |
+|---|---|
+| Anatomia de um prompt | Estrutura: contexto, campos, regras, integração, padrão |
+| Criar nova entidade | Template de prompt para `ptah:forge` completo |
+| Configurar BaseCrud | JSON de colunas, badges, filtros e modal |
+| Criar módulo opcional | Padrão para novos módulos seguindo a arquitetura do pacote |
+| Adicionar validação | `Rule::unique`, `wire:model.blur`, eventos Livewire |
+| Escrever testes | `CompanyFactory::new()`, Testbench, feature Livewire |
+| Workflow recomendado | Scaffold → BaseCrud → regras → testes → docs → commit |
+| Armadilhas comuns | O que o agente tende a errar e como evitar |
 
 ---
 
