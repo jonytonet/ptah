@@ -10,6 +10,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Unit tests — `BaseRepository`** (`tests/Unit/Base/BaseRepositoryTest.php`)
+  - 28 test cases: full CRUD contracts (`find` → null, `findOrFail` → exception, `update` →
+    fresh record, `delete` → exception), all four `findBy` signatures (string, array, Closure,
+    Builder), `findByIn`, `allQuery` skip/limit, `searchLike` operators `}` (≥) and `{` (≤),
+    `whereIn` and `additionalQueries` params, `advancedSearch` sentinel guard, `updateBatch`,
+    `createQuietly`/`updateQuietly` event-suppression, `replicate`
+- **Unit tests — `BaseService`** (`tests/Unit/Base/BaseServiceTest.php`)
+  - 9 test cases: `destroy` returns `false` for missing ID (vs `delete` which throws),
+    `destroy` removes existing record, `show` returns model or null, `getDados` routing
+    (search → advancedSearch, searchLike → searchLike, default → findAllFieldsAnd),
+    `limit`/`direction` respected, `relations` sentinel `'Relacao'` produces empty array
+- **Unit tests — `HasCrud`** (`tests/Unit/Traits/HasCrudTest.php`)
+  - 7 test cases: end-to-end delegation chain for every method (`all`, `paginate`, `find`,
+    `findOrFail`, `create`, `update`, `delete`), confirming no method-name typos or
+    signature drift against `BaseRepositoryInterface`
 - **Unit tests — `HasAuditFields`** (`tests/Unit/Traits/HasAuditFieldsTest.php`)
   - 13 test cases covering all boot events, the `=== null` guard, guest behaviour,
     `NoFillable` tolerance, hard-delete safety, updating-event semantics and all three
@@ -19,6 +34,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `AuditableHardDeleteStub`) defined inline in the test file
   - Uses `#[Test]` attribute (PHPUnit 11 style) instead of deprecated `@test` docblock
 - **`CHANGELOG.md`** — full version history using Keep a Changelog format
+- **`tests/migrations/2024_01_10_000002_create_base_crud_stubs_table.php`** — `items` stub
+  table (id, name, status, amount, timestamps) shared by BaseRepository, BaseService and
+  HasCrud test suites
 
 ### Fixed
 - **`TestCase.php`** — replaced non-functional `loadLaravelMigrations()` (Testbench 10 ships
