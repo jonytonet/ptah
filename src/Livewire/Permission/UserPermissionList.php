@@ -35,7 +35,7 @@ class UserPermissionList extends Component
     public ?int  $bindingUserId = null;
     public string $bindingUserName = '';
 
-    /** @var array[] Roles já atribuídos ao usuário */
+    /** @var array[] Roles already assigned to the user */
     public array $assignedRoles = [];
 
     /** Novo bind a adicionar */
@@ -47,7 +47,7 @@ class UserPermissionList extends Component
 
     public function updatingSearch(): void { $this->resetPage(); }
 
-    // ── Modal de gestão de roles do usuário ────────────────────────────
+    // ── User role management modal ──────────────────────────────────────
 
     public function openUserModal(int $userId, string $userName): void
     {
@@ -101,7 +101,7 @@ class UserPermissionList extends Component
             $ur = UserRole::findOrFail($userRoleId);
 
             if ($ur->role?->is_master) {
-                $this->errorMsg = 'Não é possível remover o role MASTER de um usuário diretamente.';
+                $this->errorMsg = 'Cannot remove the MASTER role from a user directly.';
                 return;
             }
 

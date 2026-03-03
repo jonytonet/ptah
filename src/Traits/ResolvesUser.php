@@ -8,19 +8,19 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Resolve o ID numérico do usuário a partir de diferentes tipos de input.
+ * Resolves the numeric user ID from different input types.
  *
- * Utilizado por CompanyService e PermissionService para evitar duplicação.
+ * Used by CompanyService and PermissionService to avoid duplication.
  */
 trait ResolvesUser
 {
     /**
-     * Resolve o ID numérico do usuário a partir de diferentes inputs.
+     * Resolves the numeric user ID from different inputs.
      *
-     * Aceita:
-     *  - null          → usa auth()->id() ou chave de session personalizada
-     *  - int|string    → converte para int
-     *  - Authenticatable ou Model → lê o campo definido em ptah.permissions.user_id_field
+     * Accepts:
+     *  - null          → uses auth()->id() or custom session key
+     *  - int|string    → converts to int
+     *  - Authenticatable or Model → reads the field defined in ptah.permissions.user_id_field
      *
      * @param  mixed $user
      * @return int|null
@@ -28,12 +28,12 @@ trait ResolvesUser
     protected function resolveUserId(mixed $user): ?int
     {
         if ($user === null) {
-            // Tenta auth() padrão do Laravel
+            // Try Laravel's default auth()
             if (auth()->check()) {
                 return (int) auth()->id();
             }
 
-            // Fallback: chave de session personalizada (apps legados)
+            // Fallback: custom session key (legacy apps)
             $sessionKey = config('ptah.permissions.user_session_key');
             if ($sessionKey && \Illuminate\Support\Facades\Session::has($sessionKey)) {
                 return (int) \Illuminate\Support\Facades\Session::get($sessionKey);

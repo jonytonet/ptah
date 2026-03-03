@@ -15,12 +15,12 @@ return new class extends Migration
             $table->foreignId('page_id')
                   ->constrained('ptah_pages')
                   ->cascadeOnDelete();
-            // Seção agrupa objetos dentro de uma página (ex: 'toolbar', 'table', 'form')
+            // Section groups objects within a page (e.g. 'toolbar', 'table', 'form')
             $table->string('section')->default('main');
-            // obj_key: chave única de negócio (ex: 'users.store', 'reports.export.excel')
+            // obj_key: unique business key (e.g. 'users.store', 'reports.export.excel')
             $table->string('obj_key');
             $table->string('obj_label');
-            // Tipo do objeto: determina o comportamento de verificação e a UI de bind
+            // Object type: determines the validation behaviour and the binding UI
             $table->enum('obj_type', ['page', 'button', 'field', 'link', 'section', 'api', 'report', 'tab'])
                   ->default('button');
             $table->integer('obj_order')->default(0);
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
 
-            // Garante que obj_key seja único por página (pode repetir entre páginas diferentes)
+            // Ensures obj_key is unique per page (may repeat across different pages)
             $table->unique(['page_id', 'section', 'obj_key']);
             $table->index(['page_id', 'is_active']);
         });

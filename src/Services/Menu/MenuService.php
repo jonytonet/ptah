@@ -10,8 +10,8 @@ use Ptah\Models\Menu;
 class MenuService
 {
     /**
-     * Retorna a estrutura hierárquica de menus para a sidebar.
-     * Usa driver 'database' ou 'config' conforme ptah.menu.driver.
+     * Returns the hierarchical menu structure for the sidebar.
+     * Uses driver 'database' or 'config' as per ptah.menu.driver.
      */
     public function getTree(): array
     {
@@ -25,7 +25,7 @@ class MenuService
     }
 
     /**
-     * Converte sidebar_items do config no mesmo formato da tree do banco.
+     * Converts sidebar_items from the config to the same format as the DB tree.
      */
     private function getFromConfig(): array
     {
@@ -50,7 +50,7 @@ class MenuService
     }
 
     /**
-     * Invalida o cache do menu (chamar após criar/editar/deletar itens).
+     * Invalidates the menu cache (call after creating/editing/deleting items).
      */
     public function clearCache(): void
     {
@@ -58,7 +58,7 @@ class MenuService
     }
 
     /**
-     * Retorna todos os menus raiz com filhos para o CRUD de gestão.
+     * Returns all root menus with children for the admin CRUD.
      */
     public function allForAdmin(): Collection
     {
@@ -66,7 +66,7 @@ class MenuService
     }
 
     /**
-     * Lista plana de menus para o select de parent_id no BaseCrud.
+     * Flat list of menus for the parent_id select in BaseCrud.
      */
     public function listForSelect(): array
     {

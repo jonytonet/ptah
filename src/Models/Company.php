@@ -75,7 +75,7 @@ class Company extends Model
     }
 
     // ─────────────────────────────────────────
-    // Relacionamentos
+    // Relationships
     // ─────────────────────────────────────────
 
     public function userRoles(): HasMany
@@ -84,12 +84,12 @@ class Company extends Model
     }
 
     // ─────────────────────────────────────────
-    // Acessores / Helpers
+    // Accessors / Helpers
     // ─────────────────────────────────────────
 
     /**
-     * Retorna o label para exibição no company switcher.
-     * Prioridade: label configurado → 4 primeiras letras maiúsculas do nome.
+     * Returns the label for display in the company switcher.
+     * Priority: configured label → first 4 uppercase letters of the name.
      */
     public function getLabelDisplay(): string
     {
@@ -97,7 +97,7 @@ class Company extends Model
             return strtoupper($this->label);
         }
 
-        // Gera iniciais de até 4 chars: "Acme Corp" → "AC"
+        // Generates initials up to 4 chars: "Acme Corp" → "AC"
         $words = preg_split('/\s+/', trim($this->name));
         $initials = '';
         foreach ($words as $word) {
@@ -109,7 +109,7 @@ class Company extends Model
     }
 
     /**
-     * Retorna a URL pública do logo ou um placeholder.
+     * Returns the public URL of the logo or a placeholder.
      */
     public function getLogoUrl(): string
     {
@@ -122,7 +122,7 @@ class Company extends Model
     }
 
     /**
-     * Retorna um campo do JSON de endereço.
+     * Returns a field from the address JSON.
      */
     public function getAddressField(string $key, mixed $default = null): mixed
     {
@@ -130,7 +130,7 @@ class Company extends Model
     }
 
     /**
-     * Retorna / define uma configuração customizada da empresa.
+     * Returns / sets a custom company setting.
      */
     public function getSetting(string $key, mixed $default = null): mixed
     {
@@ -145,7 +145,7 @@ class Company extends Model
     {
         parent::boot();
 
-        // Auto-gera slug a partir do nome, se não fornecido
+        // Auto-generates slug from the name, if not provided
         static::creating(function (self $model) {
             if (empty($model->slug)) {
                 $model->slug = Str::slug($model->name);

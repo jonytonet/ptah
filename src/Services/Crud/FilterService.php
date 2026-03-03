@@ -14,13 +14,13 @@ use Ptah\Services\Crud\Filters\RelationFilterStrategy;
 use Ptah\Services\Crud\Filters\TextFilterStrategy;
 
 /**
- * Serviço de filtros para o BaseCrud.
+ * Filter service for BaseCrud.
  *
- * Usa o padrão Strategy para aplicar filtros ao Query Builder do Eloquent
- * de forma type-safe, sem eval(). Suporta lógica AND/OR por filtro.
+ * Uses the Strategy pattern to apply filters to Eloquent's Query Builder
+ * in a type-safe manner, without eval(). Supports AND/OR logic per filter.
  *
- * Cada FilterDTO pode ter `options['logic'] = 'OR'` para ser agrupado
- * em um bloco OR separado dos filtros AND normais.
+ * Each FilterDTO may have `options['logic'] = 'OR'` to be grouped
+ * in a separate OR block from the normal AND filters.
  */
 class FilterService
 {
@@ -43,7 +43,7 @@ class FilterService
     }
 
     /**
-     * Registra uma estratégia customizada (extensão via ServiceProvider).
+     * Registers a custom strategy (extension via ServiceProvider).
      */
     public function registerStrategy(string $type, FilterStrategyInterface $strategy): void
     {
@@ -52,10 +52,10 @@ class FilterService
 
 
     /**
-     * Aplica uma coleção de FilterDTOs ao Builder.
+     * Applies a collection of FilterDTOs to the Builder.
      *
-     * Filtros com `options['logic'] = 'OR'` são agrupados em um bloco OR.
-     * Os demais são aplicados com AND (padrão).
+     * Filters with `options['logic'] = 'OR'` are grouped in an OR block.
+     * Others are applied with AND (default).
      *
      * @param Builder     $query
      * @param FilterDTO[] $filters
@@ -83,12 +83,12 @@ class FilterService
             }
         }
 
-        // Aplica AND filters normalmente
+        // Apply AND filters normally
         foreach ($andFilters as $filter) {
             $query = $this->applyFilter($query, $filter);
         }
 
-        // Agrupa OR filters em um único bloco WHERE (... OR ... OR ...)
+        // Group OR filters into a single WHERE block (... OR ... OR ...)
         if (! empty($orFilters)) {
             $query->where(function (Builder $subQuery) use ($orFilters) {
                 foreach ($orFilters as $filter) {
@@ -103,11 +103,11 @@ class FilterService
     }
 
     /**
-     * Aplica um único filtro ao Builder usando a estratégia correta.
+     * Applies a single filter to the Builder using the correct strategy.
      */
     protected function applyFilter(Builder $query, FilterDTO $filter): Builder
     {
-        // Filtro de relação explícito via whereHas
+        // Explicit relation filter via whereHas
         if (! empty($filter->options['whereHas'])) {
             return $this->strategies['relation']->apply($query, $filter);
         }
@@ -118,15 +118,15 @@ class FilterService
         return $strategy->apply($query, $filter);
     }
 
-    // ── Utilitários ────────────────────────────────────────────────────────
+    // ── Utilities ─────────────────────────────────────────────────────────────────
 
     /**
-     * Processa filtros de date range do formulário do BaseCrud.
+     * Processes date range filters from the BaseCrud filter form.
      *
-     * Aceita o padrão ERP: chave `{field}_start` / `{field}_end` nos formData.
-     * Também aceita o padrão legado: `{field}_from` / `{field}_to`.
+     * Accepts ERP pattern: key `{field}_start` / `{field}_end` in formData.
+     * Also accepts the legacy pattern: `{field}_from` / `{field}_to`.
      *
-     * @param array $formData  Dados do formulário de filtros (dateRanges)
+     * @param array $formData  Filter form data (dateRanges)
      * @return FilterDTO[]
      */
     public function processDateRangeFilters(array $formData, array $operators = []): array
@@ -139,7 +139,7 @@ class FilterService
                 continue;
             }
 
-            // Padrão ERP: {field}_start / {field}_end
+            // ERP pattern: {field}_start / {field}_end
             if (str_ends_with($key, '_start')) {
                 $field = substr($key, 0, -6);
                 if (in_array($field, $processed, true)) continue;
@@ -150,7 +150,7 @@ class FilterService
                 $opTo   = $operators[$field . '_end']   ?? null;
 
                 if ($opFrom || $opTo) {
-                    // Operadores explícitos: aplica individualmente
+                    // Explicit operators: apply individually
                     if ($value !== null && $value !== '') {
                         $filters[] = new FilterDTO(field: $field, value: $value, operator: $opFrom ?? '>=', type: 'date');
                     }
@@ -187,7 +187,7 @@ class FilterService
                 continue;
             }
 
-            // Padrão legado: {field}_from / {field}_to
+            // Legacy pattern: {field}_from / {field}_to
             if (str_ends_with($key, '_from')) {
                 $field = substr($key, 0, -5);
                 if (in_array($field, $processed, true)) continue;
@@ -212,11 +212,11 @@ class FilterService
     }
 
     /**
-     * Processa filtros customizados do CrudConfig.
-     * Suporta whereHas e padrão `formData['custom'][$field]`.
+     * Processes custom filters from CrudConfig.
+     * Supports whereHas and `formData['custom'][$field]` pattern.
      *
-     * @param array $customFilterConfig  Seção `customFilters` do CrudConfig
-     * @param array $formData            Dados do formulário de filtros
+     * @param array $customFilterConfig  `customFilters` section of CrudConfig
+     * @param array $formData            Filter form data
      * @return FilterDTO[]
      */
     public function processCustomFilters(array $customFilterConfig, array $formData): array
@@ -230,7 +230,7 @@ class FilterService
                 continue;
             }
 
-            // Suporta $formData[$field] e $formData['custom'][$field]
+            // Supports $formData[$field] and $formData['custom'][$field]
             $value = $formData[$fieldKey]
                 ?? $formData['custom'][$cfgFilter['colRelation'] ?? $fieldKey]
                 ?? null;
@@ -258,7 +258,7 @@ class FilterService
                 }
             }
 
-            // Se operador for IN e valor for string CSV
+            // If operator is IN and value is a CSV string
             if (strtoupper($operator) === 'IN' && is_string($value)) {
                 $value = array_map('trim', explode(',', $value));
                 $type  = 'array';
@@ -277,13 +277,13 @@ class FilterService
     }
 
     /**
-     * Constrói filtros de busca global com OR em todos os campos visíveis,
-     * incluindo relacionamentos (whereHas com LIKE).
+     * Builds global search filters with OR across all visible fields,
+     * including relationships (whereHas with LIKE).
      *
-     * Retorna FilterDTOs com logic='OR' prontos para `applyFilters()`.
+     * Returns FilterDTOs with logic='OR' ready for `applyFilters()`.
      *
-     * @param array  $cols  Colunas do CrudConfig
-     * @param string $term  Termo buscado
+     * @param array  $cols  CrudConfig columns
+     * @param string $term  Search term
      * @return FilterDTO[]
      */
     public function buildGlobalSearchFilters(array $cols, string $term): array
@@ -292,7 +292,7 @@ class FilterService
 
         foreach ($cols as $col) {
             $tipo  = $col['colsTipo']        ?? 'text';
-            // colsSource tem prioridade para colunas de JOIN (alias não funciona em WHERE)
+            // colsSource takes priority for JOIN columns (aliases don't work in WHERE)
             $field = $col['colsSource'] ?? $col['colsNomeFisico'] ?? '';
             $rel   = $col['colsRelacao']     ?? null;
             $exibe = $col['colsRelacaoExibe']?? null;
@@ -302,7 +302,7 @@ class FilterService
             }
 
             if ($rel && $exibe) {
-                // Busca dentro da relação via whereHas com OR
+                // Search inside the relation via whereHas with OR
                 $filters[] = new FilterDTO(
                     field:    $field,
                     value:    $term,
@@ -317,7 +317,7 @@ class FilterService
                 continue;
             }
 
-            // Busca em campos texto e select diretos
+            // Search in direct text and select fields
             if (in_array($tipo, ['text', 'select'], true)) {
                 $filters[] = new FilterDTO(
                     field:    $field,
@@ -333,7 +333,7 @@ class FilterService
     }
 
     /**
-     * Cria um FilterDTO de date range a partir de from/to opcionais.
+     * Creates a date range FilterDTO from optional from/to values.
      */
     protected function buildDateRangeFilter(string $field, ?string $from, ?string $to): ?FilterDTO
     {

@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ptah\Models\UserPreference;
 
 /**
- * Trait para adicionar suporte a preferências de usuário no model User.
+ * Trait to add user preference support to the User model.
  *
- * Uso: adicione `use HasUserPreferences;` no model App\Models\User
+ * Usage: add `use HasUserPreferences;` to the App\Models\User model
  */
 trait HasUserPreferences
 {
     /**
-     * Relacionamento com as preferências do usuário.
+     * Relationship with user preferences.
      */
     public function preferences(): HasMany
     {
@@ -23,11 +23,11 @@ trait HasUserPreferences
     }
 
     /**
-     * Define uma preferência para este usuário.
+     * Sets a preference for this user.
      *
-     * @param string $key   Chave da preferência
-     * @param mixed  $value Valor da preferência
-     * @param string $group Grupo da preferência (padrão: 'general')
+     * @param string $key   Preference key
+     * @param mixed  $value Preference value
+     * @param string $group Preference group (default: 'general')
      */
     public function setPreference(
         string $key,
@@ -38,10 +38,10 @@ trait HasUserPreferences
     }
 
     /**
-     * Obtém uma preferência deste usuário.
+     * Gets a preference for this user.
      *
-     * @param string $key     Chave da preferência
-     * @param mixed  $default Valor padrão se não encontrado
+     * @param string $key     Preference key
+     * @param mixed  $default Default value if not found
      */
     public function getPreference(string $key, mixed $default = null): mixed
     {
@@ -49,9 +49,9 @@ trait HasUserPreferences
     }
 
     /**
-     * Obtém todas as preferências de um grupo para este usuário.
+     * Gets all preferences of a group for this user.
      *
-     * @param string $group Grupo das preferências
+     * @param string $group Preference group
      * @return array<string, mixed>
      */
     public function getPreferenceGroup(string $group): array
@@ -60,9 +60,9 @@ trait HasUserPreferences
     }
 
     /**
-     * Remove uma preferência deste usuário.
+     * Removes a preference for this user.
      *
-     * @param string $key Chave da preferência
+     * @param string $key Preference key
      */
     public function removePreference(string $key): bool
     {

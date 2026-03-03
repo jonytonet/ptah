@@ -10,14 +10,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Ptah\Base\BaseRepositoryInterface;
 
 /**
- * Trait que adiciona operações CRUD a um controller ou service.
+ * Trait that adds CRUD operations to a controller or service.
  *
- * Requer que a classe possua uma propriedade $repository do tipo BaseRepositoryInterface.
+ * Requires the class to have a $repository property of type BaseRepositoryInterface.
  */
 trait HasCrud
 {
     /**
-     * Retorna todos os registros.
+     * Returns all records.
      */
     public function all(): Collection
     {
@@ -25,9 +25,9 @@ trait HasCrud
     }
 
     /**
-     * Retorna registros paginados.
+     * Returns paginated records.
      *
-     * @param int $perPage Número de registros por página (padrão: 15)
+     * @param int $perPage Number of records per page (default: 15)
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -35,7 +35,7 @@ trait HasCrud
     }
 
     /**
-     * Busca um registro pelo ID.
+     * Finds a record by ID.
      */
     public function find(int|string $id): ?Model
     {
@@ -43,7 +43,7 @@ trait HasCrud
     }
 
     /**
-     * Busca um registro pelo ID ou lança exceção.
+     * Finds a record by ID or throws an exception.
      */
     public function findOrFail(int|string $id): Model
     {
@@ -51,7 +51,7 @@ trait HasCrud
     }
 
     /**
-     * Cria um novo registro.
+     * Creates a new record.
      *
      * @param array<string, mixed> $data
      */
@@ -61,7 +61,7 @@ trait HasCrud
     }
 
     /**
-     * Atualiza um registro existente.
+     * Updates an existing record.
      *
      * @param array<string, mixed> $data
      */
@@ -71,7 +71,7 @@ trait HasCrud
     }
 
     /**
-     * Remove um registro pelo ID.
+     * Removes a record by ID.
      */
     public function delete(int|string $id): bool
     {

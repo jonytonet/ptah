@@ -11,17 +11,17 @@ use Ptah\Models\Menu;
 use Ptah\Models\Role;
 
 /**
- * Dados de demonstração do Ptah.
+ * Ptah demo data.
  *
- * Chamado via:  php artisan ptah:install --demo
+ * Called via:  php artisan ptah:install --demo
  *
- * Cria:
- *   - 2 empresas extras (beta e corp) além da padrão
- *   - 3 departamentos (TI, Comercial, Financeiro)
- *   - 2 roles exemplo (Editor, Viewer)
- *   - 5 itens de menu de demonstração (quando driver=database)
+ * Creates:
+ *   - 2 extra companies (beta and corp) beyond the default
+ *   - 3 departments (IT, Commercial, Financial)
+ *   - 2 example roles (Editor, Viewer)
+ *   - 5 demo menu items (when driver=database)
  *
- * Idempotente: skip em dados que já existem.
+ * Idempotent: skips data that already exists.
  */
 class PtahDemoSeeder extends Seeder
 {
@@ -48,12 +48,12 @@ class PtahDemoSeeder extends Seeder
                     'is_default' => false,
                     'is_active'  => true,
                 ]));
-                $this->line("  <info>✔</info> Empresa demo: <comment>{$data['name']}</comment>");
+                $this->line("  <info>✔</info> Demo company: <comment>{$data['name']}</comment>");
             }
         }
     }
 
-    // ── Departamentos ─────────────────────────────────────────────────
+    // ── Departments ───────────────────────────────────────────────────────────
 
     private function seedDepartments(): void
     {
@@ -62,16 +62,16 @@ class PtahDemoSeeder extends Seeder
         }
 
         $departments = [
-            ['name' => 'TI',         'description' => 'Tecnologia da Informação', 'is_active' => true],
-            ['name' => 'Comercial',  'description' => 'Equipe comercial e vendas', 'is_active' => true],
-            ['name' => 'Financeiro', 'description' => 'Gestão financeira',         'is_active' => true],
+            ['name' => 'IT',         'description' => 'Information Technology',    'is_active' => true],
+            ['name' => 'Commercial', 'description' => 'Sales and commercial team', 'is_active' => true],
+            ['name' => 'Financial',  'description' => 'Financial management',      'is_active' => true],
         ];
 
         foreach ($departments as $data) {
             Department::firstOrCreate(['name' => $data['name']], $data);
         }
 
-        $this->line('  <info>✔</info> Departamentos demo criados.');
+        $this->line('  <info>✔</info> Demo departments created.');
     }
 
     // ── Roles ─────────────────────────────────────────────────────────
@@ -83,15 +83,15 @@ class PtahDemoSeeder extends Seeder
         }
 
         $roles = [
-            ['name' => 'Editor', 'description' => 'Pode criar e editar registros', 'is_active' => true],
-            ['name' => 'Viewer', 'description' => 'Apenas visualização',           'is_active' => true],
+            ['name' => 'Editor', 'description' => 'Can create and edit records', 'is_active' => true],
+            ['name' => 'Viewer', 'description' => 'Read-only access',            'is_active' => true],
         ];
 
         foreach ($roles as $data) {
             Role::firstOrCreate(['name' => $data['name']], $data);
         }
 
-        $this->line('  <info>✔</info> Roles demo criados.');
+        $this->line('  <info>✔</info> Demo roles created.');
     }
 
     // ── Itens de Menu ─────────────────────────────────────────────────
@@ -107,9 +107,9 @@ class PtahDemoSeeder extends Seeder
         }
 
         $items = [
-            ['text' => 'Usuários',    'url' => '/users',    'icon' => 'bx bx-user',      'type' => 'menuLink', 'link_order' => 1],
-            ['text' => 'Produtos',    'url' => '/products', 'icon' => 'bx bx-cube',      'type' => 'menuLink', 'link_order' => 2],
-            ['text' => 'Relatórios',  'url' => '/reports',  'icon' => 'bx bx-bar-chart', 'type' => 'menuLink', 'link_order' => 3],
+            ['text' => 'Users',    'url' => '/users',    'icon' => 'bx bx-user',      'type' => 'menuLink', 'link_order' => 1],
+            ['text' => 'Products', 'url' => '/products', 'icon' => 'bx bx-cube',      'type' => 'menuLink', 'link_order' => 2],
+            ['text' => 'Reports',  'url' => '/reports',  'icon' => 'bx bx-bar-chart', 'type' => 'menuLink', 'link_order' => 3],
         ];
 
         foreach ($items as $data) {
@@ -119,7 +119,7 @@ class PtahDemoSeeder extends Seeder
             );
         }
 
-        $this->line('  <info>✔</info> Itens de menu demo criados.');
+        $this->line('  <info>✔</info> Demo menu items created.');
     }
 
     private function line(string $msg): void

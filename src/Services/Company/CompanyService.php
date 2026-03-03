@@ -14,9 +14,9 @@ use Ptah\Models\UserRole;
 use Ptah\Traits\ResolvesUser;
 
 /**
- * Gerencia empresas e contexto de empresa ativa.
+ * Manages companies and active company context.
  *
- * Adaptável a cenários single-tenant e multi-tenant.
+ * Adaptable to single-tenant and multi-tenant scenarios.
  */
 class CompanyService implements CompanyServiceContract
 {
@@ -30,7 +30,7 @@ class CompanyService implements CompanyServiceContract
     }
 
     // ─────────────────────────────────────────
-    // Consultas
+    // Queries
     // ─────────────────────────────────────────
 
     /**
@@ -95,7 +95,7 @@ class CompanyService implements CompanyServiceContract
             return (int) Session::get($this->sessionKey);
         }
 
-        // Fallback: empresa padrão
+        // Fallback: default company
         $default = $this->getDefault();
         return $default?->id;
     }
@@ -124,12 +124,12 @@ class CompanyService implements CompanyServiceContract
     }
 
     // ─────────────────────────────────────────
-    // Company Switcher — novos helpers
+    // Company Switcher — helpers
     // ─────────────────────────────────────────
 
     /**
-     * Retorna todas as empresas ativas ordenadas (padrão primeiro, depois por nome).
-     * Resultado é cacheado por 5 minutos.
+     * Returns all active companies sorted (default first, then by name).
+     * Result is cached for 5 minutes.
      */
     public function getAll(): \Illuminate\Support\Collection
     {
@@ -143,7 +143,7 @@ class CompanyService implements CompanyServiceContract
     }
 
     /**
-     * Retorna o model Company ativo da sessão atual, ou null.
+     * Returns the active Company model from the current session, or null.
      */
     public function getActive(): ?Company
     {
@@ -155,7 +155,7 @@ class CompanyService implements CompanyServiceContract
     }
 
     /**
-     * Retorna o ID da empresa ativa da sessão (0 se não definida).
+     * Returns the active company ID from the session (0 if not set).
      */
     public function activeId(): int
     {
@@ -163,10 +163,10 @@ class CompanyService implements CompanyServiceContract
     }
 
     /**
-     * Define a empresa ativa na sessão, validando que existe e está ativa.
-     * Invalida cache de permissões do usuário atual.
+     * Sets the active company in the session, validating that it exists and is active.
+     * Invalidates the current user's permission cache.
      *
-     * @param int $id  ID da empresa
+     * @param int $id  Company ID
      */
     public function setActive(int $id): void
     {
@@ -176,7 +176,7 @@ class CompanyService implements CompanyServiceContract
 
         Session::put($this->sessionKey, $id);
 
-        // Invalida cache de permissões do usuário logado
+        // Invalidate permissions cache for the logged-in user
         $userId = auth()->id();
         if ($userId) {
             Cache::forget("ptah_permissions:{$userId}:{$id}:");
@@ -185,9 +185,9 @@ class CompanyService implements CompanyServiceContract
     }
 
     /**
-     * Inicializa a sessão da empresa se ainda não estiver definida.
-     * Prioridade: is_default = true → primeira empresa ativa.
-     * Chamado pelo CompanySwitcher no mount() para garantir contexto válido.
+     * Initialises the company session if not yet set.
+     * Priority: is_default = true → first active company.
+     * Called by CompanySwitcher on mount() to ensure a valid context.
      */
     public function initSession(): void
     {
@@ -205,8 +205,8 @@ class CompanyService implements CompanyServiceContract
     }
 
     /**
-     * Invalida o cache da lista de empresas.
-     * Chamar após criar/editar/excluir uma empresa.
+     * Invalidates the company list cache.
+     * Call after creating/editing/deleting a company.
      */
     public function forgetListCache(): void
     {
@@ -215,12 +215,12 @@ class CompanyService implements CompanyServiceContract
     }
 
     // ─────────────────────────────────────────
-    // Helpers internos
+    // Internal helpers
     // ─────────────────────────────────────────
 
 
     /**
-     * Cria a empresa padrão inicial usando config da aplicação.
+     * Creates the initial default company using the application config.
      */
     protected function createDefaultCompany(): Company
     {

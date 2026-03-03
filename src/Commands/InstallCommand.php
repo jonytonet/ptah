@@ -146,12 +146,12 @@ class InstallCommand extends Command
             // Add @source for Ptah package views (if not already present)
             $ptahSource = "@source '../../vendor/jonytonet/ptah/resources/views/**/*.blade.php';";
             if (! str_contains($content, 'vendor/jonytonet/ptah')) {
-                // Insere após a última diretiva @source existente
+                // Insert after the last existing @source directive
                 if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
                     $insertPos = $m[0][1] + strlen($m[0][0]);
                     $content   = substr_replace($content, $ptahSource . "\n", $insertPos, 0);
                 } else {
-                    // Insere após @import 'tailwindcss'
+                    // Insert after @import 'tailwindcss'
                     $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$ptahSource}", $content);
                 }
                 file_put_contents($appCss, $content);

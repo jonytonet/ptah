@@ -14,26 +14,26 @@ use Ptah\Models\UserRole;
 use Ptah\Traits\ResolvesUser;
 
 /**
- * Serviço central de verificação de permissões do Ptah.
+ * Central permission verification service for Ptah.
  *
- * Hierarquia: Empresa → Role (is_master=bypass) → Página → Objeto → CRUD
+ * Hierarchy: Company → Role (is_master=bypass) → Page → Object → CRUD
  *
- * Adaptável a diferentes cenários:
- *  - app com Sanctum/Passport   → $user = Auth::user()
- *  - app legacy com session ID  → $user = null (lê PTAH_USER_SESSION_KEY)
- *  - single-tenant              → $companyId = null, multi_company = false
- *  - multi-company              → $companyId = id da empresa ativa
+ * Adaptable to different scenarios:
+ *  - app with Sanctum/Passport   → $user = Auth::user()
+ *  - legacy app with session ID  → $user = null (reads PTAH_USER_SESSION_KEY)
+ *  - single-tenant               → $companyId = null, multi_company = false
+ *  - multi-company               → $companyId = active company id
  */
 class PermissionService implements PermissionServiceContract
 {
     use ResolvesUser;
 
     // ─────────────────────────────────────────
-    // Resolução de empresa
+    // Company resolution
     // ─────────────────────────────────────────
 
     /**
-     * Resolve o ID da empresa ativa.
+     * Resolves the active company ID.
      */
     protected function resolveCompanyId(?int $companyId): ?int
     {
@@ -73,25 +73,25 @@ class PermissionService implements PermissionServiceContract
     }
 
     // ─────────────────────────────────────────
-    // Implementação do contrato
+    // Contract implementation
     // ─────────────────────────────────────────
 
     /**
      * {@inheritdoc}
      *
-     * Implementação unificada: delega ao mapa completo cacheado por getPermissions().
-     * Elimina o cache duplo (individual + mapa) que causava dados stale após revogação.
+     * Unified implementation: delegates to the full map cached by getPermissions().
+     * Eliminates double cache (individual + map) that caused stale data after revocation.
      */
     public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
     {
         $userId = $this->resolveUserId($user);
 
-        // Guests sem permissão (a menos que allow_guest = true)
+        // Guests without permission (unless allow_guest = true)
         if ($userId === null) {
             return (bool) config('ptah.permissions.allow_guest', false);
         }
 
-        // 1. Short-circuit: roles MASTER passam em tudo
+        // 1. Short-circuit: MASTER roles pass everything
         if ($this->isMasterById($userId)) {
             if (config('ptah.permissions.audit') && config('ptah.permissions.audit_master')) {
                 $this->writeAudit($userId, $companyId, $objectKey, strtolower($action), 'granted');
@@ -102,9 +102,9 @@ class PermissionService implements PermissionServiceContract
         $resolvedCompanyId = $this->resolveCompanyId($companyId);
         $action            = strtolower($action);
 
-        // 2. Busca no mapa completo (única fonte de verdade, já cacheada)
-        //    Garante consistência: clearCache() invalida o mapa e esta leitura reflete
-        //    imediatamente qualquer mudança de role/permissão.
+        // 2. Look up in the full map (single source of truth, already cached)
+        //    Ensures consistency: clearCache() invalidates the map and this read
+        //    immediately reflects any role/permission changes.
         $map    = $this->getPermissions($user, $resolvedCompanyId);
         $result = (bool) ($map[$objectKey][$action] ?? false);
 
@@ -132,7 +132,7 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
-     * Verificação interna de MASTER por ID (cacheada).
+     * Internal MASTER check by ID (cached).
      */
     protected function isMasterById(int $userId): bool
     {
@@ -265,12 +265,12 @@ class PermissionService implements PermissionServiceContract
     public function clearCache(mixed $user = null, ?int $companyId = null): void
     {
         if ($user === null) {
-            // Caso extremo: limpa todo o cache ptah (use com cautela)
-            // Compatível com tags se o driver suportar
+            // Extreme case: flush all ptah cache (use with care)
+            // Compatible with tags if the driver supports it
             try {
                 Cache::tags(['ptah_permissions'])->flush();
             } catch (\Throwable) {
-                // Driver sem suporte a tags — não faz nada aqui
+                // Driver without tag support — nothing to do here
             }
             return;
         }
@@ -283,19 +283,19 @@ class PermissionService implements PermissionServiceContract
         Cache::forget("ptah_is_master:{$userId}");
         Cache::forget($this->cacheKey('perms_map', $userId, $companyId));
 
-        // Limpa cache de checks individuais (não há pattern delete básico no file driver)
-        // Em Redis, o ideal é usar Cache::tags. Aqui fazemos o possível.
+        // Clears individual check cache (no pattern-delete in the file driver)
+        // In Redis, the ideal is to use Cache::tags. We do the best we can here.
     }
 
     // ─────────────────────────────────────────
-    // DB queries internas
+    // Internal DB queries
     // ─────────────────────────────────────────
 
     /**
-     * Consulta direta ao DB se um usuário tem permissão para uma ação em um objeto.
+     * Direct DB query to check whether a user has permission for an action on an object.
      *
-     * @internal Mantido para uso em subclasses que precisem de consulta pontual sem o mapa.
-     *           O método check() usa getPermissions() (mapa cacheado) como fonte de verdade.
+     * @internal Kept for use in subclasses that need a point query without the map.
+     *           The check() method uses getPermissions() (cached map) as the source of truth.
      */
     protected function queryPermission(int $userId, ?int $companyId, string $objectKey, string $actionColumn): bool
     {
@@ -318,7 +318,7 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
-     * Monta o mapa completo de permissões: [ 'obj_key' => ['create'=>bool, ...] ]
+     * Builds the full permissions map: [ 'obj_key' => ['create'=>bool, ...] ]
      */
     protected function buildPermissionMap(int $userId, ?int $companyId): array
     {
@@ -345,7 +345,7 @@ class PermissionService implements PermissionServiceContract
                 $map[$key] = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
             }
 
-            // OR lógico: se qualquer role concede, considera concedido
+            // OR logic: if any role grants, consider it granted
             $map[$key]['create'] = $map[$key]['create'] || $perm->can_create;
             $map[$key]['read']   = $map[$key]['read']   || $perm->can_read;
             $map[$key]['update'] = $map[$key]['update'] || $perm->can_update;
@@ -356,7 +356,7 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
-     * Mapa de MASTER: todos os objetos cadastrados com todos os flags true.
+     * MASTER map: all registered objects with all flags set to true.
      */
     protected function buildMasterPermissionMap(): array
     {
@@ -371,7 +371,7 @@ class PermissionService implements PermissionServiceContract
     }
 
     // ─────────────────────────────────────────
-    // Auditoria
+    // Audit
     // ─────────────────────────────────────────
 
     protected function writeAudit(int $userId, ?int $companyId, string $resourceKey, string $action, string $result): void
@@ -391,7 +391,7 @@ class PermissionService implements PermissionServiceContract
                 ],
             ]);
         } catch (\Throwable) {
-            // Nunca derruba a aplicação por falha no log de auditoria
+            // Never bring the application down due to an audit log failure
         }
     }
 }

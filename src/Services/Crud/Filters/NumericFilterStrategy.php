@@ -9,9 +9,9 @@ use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Estratégia de filtro para campos numéricos.
+ * Filter strategy for numeric fields.
  *
- * Operadores suportados: =, !=, >, <, >=, <=, BETWEEN, IN, NOT IN
+ * Supported operators: =, !=, >, <, >=, <=, BETWEEN, IN, NOT IN
  */
 class NumericFilterStrategy implements FilterStrategyInterface
 {
@@ -23,7 +23,7 @@ class NumericFilterStrategy implements FilterStrategyInterface
             return null;
         }
 
-        // Array com 2 itens vira BETWEEN automaticamente
+        // Array with 2 items automatically becomes BETWEEN
         if (is_array($value) && count($value) === 2) {
             [$from, $to] = $value;
             if ($from === '' && $to === '') {
@@ -46,7 +46,7 @@ class NumericFilterStrategy implements FilterStrategyInterface
         $field    = $normalized->field;
         $value    = $normalized->value;
 
-        // BETWEEN automático se valor for array [from, to]
+        // Automatic BETWEEN if value is an array [from, to]
         if (is_array($value) && count($value) === 2) {
             [$from, $to] = $value;
 

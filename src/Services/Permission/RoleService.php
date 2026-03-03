@@ -10,21 +10,21 @@ use Ptah\Models\Role;
 use Ptah\Models\RolePermission;
 
 /**
- * Gerencia criação, atualização e binding de permissões em Roles.
+ * Manages creation, update and permission binding for Roles.
  *
- * Regras de negócio:
- *  - Só pode existir 1 role com is_master = true
- *  - Role MASTER não pode ser excluído nem desativado
- *  - Binding de objetos usa upsert (cria ou atualiza)
+ * Business rules:
+ *  - Only 1 role with is_master = true may exist
+ *  - MASTER role cannot be deleted or deactivated
+ *  - Object binding uses upsert (create or update)
  */
 class RoleService
 {
     // ─────────────────────────────────────────
-    // CRUD de Roles
+    // Role CRUD
     // ─────────────────────────────────────────
 
     /**
-     * Cria um novo role, validando a regra de unicidade do MASTER.
+     * Creates a new role, validating the MASTER uniqueness rule.
      *
      * @throws ValidationException
      */
@@ -34,7 +34,7 @@ class RoleService
             $this->assertNoMasterExists();
         }
 
-        // Garante cor padrão para MASTER
+        // Ensures default colour for MASTER
         if (!empty($data['is_master']) && empty($data['color'])) {
             $data['color'] = '#fbbf24';
         }
@@ -43,21 +43,21 @@ class RoleService
     }
 
     /**
-     * Atualiza um role existente.
+     * Updates an existing role.
      *
      * @throws ValidationException
      */
     public function update(Role $role, array $data): Role
     {
-        // Se está tentando tornar MASTER e não é o atual
+        // Trying to make it MASTER when it currently is not
         if (!empty($data['is_master']) && !$role->is_master) {
             $this->assertNoMasterExists();
         }
 
-        // Impede desativar role MASTER
+        // Prevent deactivating the MASTER role
         if ($role->is_master && isset($data['is_active']) && !$data['is_active']) {
             throw ValidationException::withMessages([
-                'is_active' => 'O role MASTER não pode ser desativado.',
+                'is_active' => trans('ptah::ui.role_master_cannot_deactivate'),
             ]);
         }
 
@@ -66,7 +66,7 @@ class RoleService
     }
 
     /**
-     * Exclui um role (soft delete). Bloqueia exclusão de MASTER.
+     * Deletes a role (soft delete). Blocks deletion of MASTER.
      *
      * @throws ValidationException
      */
@@ -74,7 +74,7 @@ class RoleService
     {
         if ($role->is_master) {
             throw ValidationException::withMessages([
-                'role' => 'O role MASTER não pode ser excluído.',
+                'role' => trans('ptah::ui.role_master_cannot_delete'),
             ]);
         }
 
@@ -82,17 +82,17 @@ class RoleService
     }
 
     // ─────────────────────────────────────────
-    // Binding de permissões
+    // Permission binding
     // ─────────────────────────────────────────
 
     /**
-     * Associa ou atualiza permissão de um objeto em um role.
+     * Associates or updates the permission of an object in a role.
      *
      * @param  array{can_create?: bool, can_read?: bool, can_update?: bool, can_delete?: bool, extra?: array} $permissions
      */
     public function bindPageObject(Role $role, int $pageObjectId, array $permissions = []): RolePermission
     {
-        // Valida que o objeto existe
+        // Validates that the object exists
         $pageObject = PageObject::findOrFail($pageObjectId);
 
         $defaults = [
@@ -112,7 +112,7 @@ class RoleService
     }
 
     /**
-     * Remove a permissão de um objeto do role (soft delete).
+     * Removes the permission of an object from the role (soft delete).
      */
     public function unbindPageObject(Role $role, int $pageObjectId): void
     {
@@ -122,8 +122,8 @@ class RoleService
     }
 
     /**
-     * Sincroniza TODOS os objetos de uma página para o role.
-     * Objetos não incluídos em $bindings são removidos.
+     * Synchronises ALL objects of a page for the role.
+     * Objects not included in $bindings are removed.
      *
      * @param  array<int, array> $bindings  [pageObjectId => [can_create, can_read, ...]]
      */
@@ -131,19 +131,19 @@ class RoleService
     {
         $incoming = array_keys($bindings);
 
-        // Remove os que não vieram mais
+        // Remove objects that are no longer included
         RolePermission::where('role_id', $role->id)
             ->whereNotIn('page_object_id', $incoming)
             ->delete();
 
-        // Upsert dos que vieram
+        // Upsert the ones that came in
         foreach ($bindings as $pageObjectId => $perms) {
             $this->bindPageObject($role, (int) $pageObjectId, $perms);
         }
     }
 
     /**
-     * Retorna o role com todas as permissões carregadas (eager).
+     * Returns the role with all permissions loaded (eager).
      */
     public function getWithPermissions(int $roleId): Role
     {
@@ -154,7 +154,7 @@ class RoleService
     }
 
     // ─────────────────────────────────────────
-    // Validação interna
+    // Internal validation
     // ─────────────────────────────────────────
 
     /**
@@ -164,7 +164,7 @@ class RoleService
     {
         if (Role::where('is_master', true)->whereNull('deleted_at')->exists()) {
             throw ValidationException::withMessages([
-                'is_master' => 'Já existe um role MASTER. Só é permitido um role MASTER no sistema.',
+                'is_master' => trans('ptah::ui.role_master_already_exists'),
             ]);
         }
     }

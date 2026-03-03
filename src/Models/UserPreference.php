@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
- * Model para armazenamento de preferências de usuário em banco de dados.
+ * Model for storing user preferences in database.
  *
  * @property int    $id
  * @property int    $user_id
@@ -44,7 +44,7 @@ class UserPreference extends Model
     ];
 
     /**
-     * Relacionamento com o model User.
+     * Relationship with the User model.
      */
     public function user(): BelongsTo
     {
@@ -52,12 +52,12 @@ class UserPreference extends Model
     }
 
     /**
-     * Define uma preferência para o usuário.
+     * Sets a preference for the user.
      *
-     * @param int|string $userId  ID do usuário
-     * @param string     $key     Chave da preferência
-     * @param mixed      $value   Valor da preferência
-     * @param string     $group   Grupo da preferência (padrão: 'general')
+     * @param int|string $userId  User ID
+     * @param string     $key     Preference key
+     * @param mixed      $value   Preference value
+     * @param string     $group   Preference group (default: 'general')
      */
     public static function set(
         int|string $userId,
@@ -75,11 +75,11 @@ class UserPreference extends Model
     }
 
     /**
-     * Obtém uma preferência do usuário.
+     * Gets a preference for the user.
      *
-     * @param int|string $userId  ID do usuário
-     * @param string     $key     Chave da preferência
-     * @param mixed      $default Valor padrão se não encontrado
+     * @param int|string $userId  User ID
+     * @param string     $key     Preference key
+     * @param mixed      $default Default value if not found
      */
     public static function get(
         int|string $userId,
@@ -94,10 +94,10 @@ class UserPreference extends Model
     }
 
     /**
-     * Obtém todas as preferências de um grupo para o usuário.
+     * Gets all preferences of a group for the user.
      *
-     * @param int|string $userId ID do usuário
-     * @param string     $group  Grupo das preferências
+     * @param int|string $userId User ID
+     * @param string     $group  Preference group
      * @return array<string, mixed>
      */
     public static function getGroup(int|string $userId, string $group): array
@@ -109,10 +109,10 @@ class UserPreference extends Model
     }
 
     /**
-     * Remove uma preferência do usuário.
+     * Removes a preference for the user.
      *
-     * @param int|string $userId ID do usuário
-     * @param string     $key    Chave da preferência
+     * @param int|string $userId User ID
+     * @param string     $key    Preference key
      */
     public static function remove(int|string $userId, string $key): bool
     {

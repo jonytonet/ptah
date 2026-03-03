@@ -8,13 +8,13 @@ use Ptah\Models\CrudConfig;
 use Ptah\Services\Cache\CacheService;
 
 /**
- * Serviço de acesso às configurações do BaseCrud.
+ * BaseCrud configuration access service.
  *
- * Responsável por ler, gravar e invalidar a configuração JSON
- * das entidades armazenadas na tabela `crud_configs`.
+ * Responsible for reading, saving, and invalidating the JSON configuration
+ * of entities stored in the `crud_configs` table.
  *
- * Cache: por padrão usa `ptah.crud.{model}` como chave.
- * O TTL é lido de `config['cacheStrategy']['ttl']` ou do fallback `config('ptah.crud.cache_ttl')`.
+ * Cache: by default uses `ptah.crud.{model}` as the key.
+ * TTL is read from `config['cacheStrategy']['ttl']` or from the fallback `config('ptah.crud.cache_ttl')`.
  */
 class CrudConfigService
 {
@@ -23,9 +23,9 @@ class CrudConfigService
     public function __construct(protected CacheService $cache) {}
 
     /**
-     * Busca a configuração de um model (com cache automático).
+     * Fetches the configuration of a model (with automatic cache).
      *
-     * @param string $model  Identificador do model, ex: "Product" ou "Purchase/Order/PurchaseOrders"
+     * @param string $model  Model identifier, e.g. "Product" or "Purchase/Order/PurchaseOrders"
      */
     public function find(string $model): ?CrudConfig
     {
@@ -45,7 +45,7 @@ class CrudConfigService
     }
 
     /**
-     * Busca ou lança exceção.
+     * Fetches or throws an exception.
      *
      * @throws \RuntimeException
      */
@@ -54,17 +54,17 @@ class CrudConfigService
         $config = $this->find($model);
 
         if (! $config) {
-            throw new \RuntimeException("CrudConfig para o model [{$model}] não encontrado.");
+            throw new \RuntimeException("CrudConfig for model [{$model}] not found.");
         }
 
         return $config;
     }
 
     /**
-     * Cria ou atualiza a configuração de um model.
+     * Creates or updates the configuration of a model.
      *
-     * @param string $model  Identificador do model
-     * @param array  $config JSON completo da configuração
+     * @param string $model  Model identifier
+     * @param array  $config Full JSON configuration
      */
     public function save(string $model, array $config): CrudConfig
     {
@@ -79,11 +79,11 @@ class CrudConfigService
     }
 
     /**
-     * Atualiza apenas uma seção do config (merge profundo).
+     * Updates only one config section (deep merge).
      *
-     * @param string $model   Identificador
-     * @param string $section Chave de primeiro nível, ex: "permissions", "exportConfig"
-     * @param array  $data    Dados a mesclar
+     * @param string $model   Identifier
+     * @param string $section First-level key, e.g. "permissions", "exportConfig"
+     * @param array  $data    Data to merge
      */
     public function updateSection(string $model, string $section, array $data): CrudConfig
     {
@@ -100,7 +100,7 @@ class CrudConfigService
     }
 
     /**
-     * Remove do cache.
+     * Removes from cache.
      */
     public function forget(string $model): void
     {
@@ -108,7 +108,7 @@ class CrudConfigService
     }
 
     /**
-     * Remove do banco e do cache.
+     * Removes from the database and from cache.
      */
     public function delete(string $model): bool
     {
@@ -119,7 +119,7 @@ class CrudConfigService
     }
 
     /**
-     * Lista todos os models configurados.
+     * Lists all configured models.
      *
      * @return string[]
      */

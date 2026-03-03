@@ -68,7 +68,7 @@ class RolePermission extends Model
     // ─────────────────────────────────────────
 
     /**
-     * Verifica se a ação está permitida neste registro.
+     * Checks whether the action is allowed in this record.
      *
      * @param  string $action  create|read|update|delete
      */
@@ -84,7 +84,7 @@ class RolePermission extends Model
     }
 
     /**
-     * Retorna o array de flags CRUD como array associativo.
+     * Returns the CRUD flags as an associative array.
      *
      * @return array{create: bool, read: bool, update: bool, delete: bool}
      */

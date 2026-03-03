@@ -14,13 +14,13 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->string('color', 20)->nullable()->comment('Cor para exibição na UI (ex: #ff6b35)');
-            // FK nullable: roles podem existir sem departamento em sistemas simples
+            $table->string('color', 20)->nullable()->comment('Display color in the UI (e.g. #ff6b35)');
+            // Nullable FK: roles can exist without a department in simple systems
             $table->foreignId('department_id')
                   ->nullable()
                   ->constrained('ptah_departments')
                   ->nullOnDelete();
-            // Role MASTER: bypass total de todas as verificações de permissão
+            // MASTER role: bypasses all permission checks entirely
             $table->boolean('is_master')->default(false)->index();
             $table->boolean('is_active')->default(true)->index();
             $table->unsignedBigInteger('created_by')->nullable();

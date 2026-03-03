@@ -9,58 +9,58 @@ use Livewire\Component;
 use Ptah\Services\Crud\CrudConfigService;
 
 /**
- * Componente de configuração do BaseCrud.
+ * BaseCrud configuration component.
  *
- * Permite gerenciar visualmente:
- *  - Colunas (ordem, tipo, helpers, totalizadores)
- *  - Ações por linha (link / livewire / javascript)
- *  - Filtros personalizados (whereHas, aggregates)
- *  - Estilos condicionais de linha
- *  - Configurações gerais (link, cache, exportação, UI)
- *  - Permissões e visibilidade de botões
+ * Allows visually managing:
+ *  - Columns (order, type, helpers, totalisers)
+ *  - Row actions (link / livewire / javascript)
+ *  - Custom filters (whereHas, aggregates)
+ *  - Conditional row styles
+ *  - General settings (link, cache, export, UI)
+ *  - Permissions and button visibility
  *
- * Uso: @livewire('ptah-crud-config', ['model' => $model])
+ * Usage: @livewire('ptah-crud-config', ['model' => $model])
  */
 class CrudConfig extends Component
 {
-    // ── Identificação ────────────────────────────────────────────────────────
+    // ── Identification ────────────────────────────────────────────────────────────
 
     public string $model = '';
     public bool   $showModal = false;
 
-    // ── Colunas ──────────────────────────────────────────────────────────────
+    // ── Columns ──────────────────────────────────────────────────────────────
 
-    /** Todas as colunas (incluindo actions) */
+    /** All columns (including actions) */
     public array $formEditFields = [];
 
-    /** Campo sendo adicionado/editado */
+    /** Field being added/edited */
     public array $formDataField = [];
 
-    /** Índice sendo editado (-1 = novo) */
+    /** Index being edited (-1 = new) */
     public int $editingFieldIndex = -1;
 
-    // ── Ações por linha ──────────────────────────────────────────────────────
+    // ── Row actions ────────────────────────────────────────────────────────────
 
     public array $formDataAction    = [];
     public int   $editingActionIndex = -1;
 
-    // ── Filtros personalizados ────────────────────────────────────────────────
+    // ── Custom filters ────────────────────────────────────────────────────────────
 
     public array $customFilters  = [];
     public array $formDataFilter = [];
-    // ── JOINs configurados ────────────────────────────────────────────────
+    // ── Configured JOINs ─────────────────────────────────────────────
 
-    public array $joins          = []; // joins salvos
-    public array $formDataJoin   = []; // form de novo join sendo preenchido
-    public int   $editingJoinIndex = -1; // índice editando (-1 = novo)
-    // ── Estilos condicionais ──────────────────────────────────────────────────
+    public array $joins          = []; // saved joins
+    public array $formDataJoin   = []; // form for new join being filled
+    public int   $editingJoinIndex = -1; // index being edited (-1 = new)
+    // ── Conditional styles ──────────────────────────────────────────────────
 
     public array $conditionStyles = [];
     public array $formDataStyle   = [];
 
-    // ── Geral ────────────────────────────────────────────────────────────────
+    // ── General ────────────────────────────────────────────────────────────
 
-    public string $displayName          = '';  // nome exibido no modal e toolbar
+    public string $displayName          = '';  // name displayed in modal and toolbar
     public string $configLinkLinha       = '';
     public string $tableClass            = '';
     public string $theadClass            = '';
@@ -76,13 +76,13 @@ class CrudConfig extends Component
     // ── Broadcast (Echo listener) ────────────────────────────────────
 
     public bool   $broadcastEnabled = false;
-    public string $broadcastChannel = ''; // vazio = auto-gerado
-    public string $broadcastEvent   = ''; // vazio = auto-gerado
+    public string $broadcastChannel = ''; // empty = auto-generated
+    public string $broadcastEvent   = ''; // empty = auto-generated
 
-    // ── Tema Visual ──────────────────────────────────────────────────────
+    // ── Visual Theme ────────────────────────────────────────────────────
     public string $theme = 'light'; // 'light' | 'dark'
 
-    // ── Permissões ───────────────────────────────────────────────────────────
+    // ── Permissions ─────────────────────────────────────────────────────────────
 
     public string $permissionCreate     = '';
     public string $permissionEdit       = '';
@@ -95,7 +95,7 @@ class CrudConfig extends Component
     public bool   $showTrashButton      = true;
     public string $permissionIdentifier = '';
 
-    // ── Serviço ───────────────────────────────────────────────────────────────
+    // ── Service ───────────────────────────────────────────────────────────────────
 
     protected CrudConfigService $configService;
 
@@ -104,7 +104,7 @@ class CrudConfig extends Component
         $this->configService = $configService;
     }
 
-    // ── Ciclo de vida ────────────────────────────────────────────────────────
+    // ── Lifecycle ────────────────────────────────────────────────────────────
 
     public function mount(string $model): void
     {
@@ -146,7 +146,7 @@ class CrudConfig extends Component
         $this->editingJoinIndex   = -1;
     }
 
-    // ── Carregar config ──────────────────────────────────────────────────────
+    // ── Load config ──────────────────────────────────────────────────────
 
     protected function loadFromDb(): void
     {
@@ -157,7 +157,7 @@ class CrudConfig extends Component
 
         $cfg = $record->config;
 
-        // Cols — converte colsSelect array → string para edição
+        // Cols — converts colsSelect array → string for editing
         $cols = $cfg['cols'] ?? [];
         foreach ($cols as &$col) {
             if (isset($col['colsSelect']) && is_array($col['colsSelect'])) {
@@ -170,14 +170,14 @@ class CrudConfig extends Component
         }
         $this->formEditFields = array_values($cols);
 
-        // Filtros e estilos
+        // Filters and styles
         $this->customFilters   = $cfg['customFilters']   ?? [];
         $this->conditionStyles = $cfg['contitionStyles'] ?? [];
 
         // JOINs
         $this->joins = $cfg['joins'] ?? [];
 
-        // Geral
+        // General
         $this->displayName     = $cfg['displayName']     ?? '';
         $this->configLinkLinha = $cfg['configLinkLinha'] ?? '';
         $this->tableClass      = $cfg['tableClass']      ?? '';
@@ -203,10 +203,10 @@ class CrudConfig extends Component
         $this->broadcastChannel = $bc['channel'] ?? '';
         $this->broadcastEvent   = $bc['event']   ?? '';
 
-        // Tema
+        // Theme
         $this->theme = $cfg['theme'] ?? 'light';
 
-        // Permições
+        // Permissions
         $perms = $cfg['permissions'] ?? [];
         $this->permissionCreate     = $perms['create']  ?? '';
         $this->permissionEdit       = $perms['edit']    ?? '';
@@ -244,19 +244,19 @@ class CrudConfig extends Component
             'colsRendererLinkTemplate' => '',
             'colsRendererLinkLabel' => '',
             'colsRendererLinkNewTab'=> false,
-            'colsRendererBoolTrue'  => 'Sim',
-            'colsRendererBoolFalse' => 'Não',
+            'colsRendererBoolTrue'  => 'Yes',
+            'colsRendererBoolFalse' => 'No',
             'colsRendererImageWidth'=> 40,
-            // Máscara e limpeza
+            // Mask and cleanup
             'colsMask'              => '',
             'colsMaskTransform'     => '',
-            // Relação aninhada (dot notation)
+            // Nested relation (dot notation)
             'colsRelacaoNested'     => '',
-            // Validações
+            // Validations
             'colsValidations'       => [],
             // SearchDropdown
             'colsSDMode'            => 'model',
-            // Estilo da célula
+            // Cell style
             'colsCellStyle'         => '',
             'colsCellClass'         => '',
             'colsCellIcon'          => '',
@@ -292,21 +292,21 @@ class CrudConfig extends Component
     }
 
     /**
-     * Resolve defaults automáticos para colunas provenientes de JOINs.
+     * Resolves automatic defaults for columns sourced from JOINs.
      *
-     * Regras aplicadas:
-     *  1. Se colsNomeFisico bate com o alias de algum JOIN select
-     *     → colsGravar = false (nunca grava coluna de tabela externa)
-     *     → colsSource  = "table.column" (qualificado para uso no WHERE)
+     * Rules applied:
+     *  1. If colsNomeFisico matches the alias of a JOIN select
+     *     → colsGravar = false (never writes external table column)
+     *     → colsSource  = "table.column" (qualified for use in WHERE)
      *
-     *  2. Se colsSource usa notação Eloquent de 2 partes ("relacao.coluna") e
-     *     existe um JOIN para essa tabela, converte para SQL qualificado.
-     *     Ex: "product.name"  →  "products.name"
+     *  2. If colsSource uses Eloquent 2-part notation ("relation.column") and
+     *     there is a JOIN for that table, converts to qualified SQL.
+     *     e.g.: "product.name"  →  "products.name"
      *
-     *  3. Se colsSource usa notação Eloquent encadeada de 3+ partes
-     *     ("a.b.coluna"), extrai os dois últimos segmentos e resolve via JOIN.
-     *     Ex: "product_supplier.product.name" → "products.name",
-     *         colsNomeFisico corrigido para o alias (ex: "product_name"),
+     *  3. If colsSource uses chained Eloquent notation of 3+ parts
+     *     ("a.b.column"), extracts the last two segments and resolves via JOIN.
+     *     e.g.: "product_supplier.product.name" → "products.name",
+     *         colsNomeFisico corrected to alias (e.g. "product_name"),
      *         colsGravar = false.
      */
     protected function resolveJoinDefaults(array $fieldData): array
@@ -318,8 +318,8 @@ class CrudConfig extends Component
         $nomeFisico = $fieldData['colsNomeFisico'] ?? '';
         $source     = $fieldData['colsSource']     ?? '';
 
-        // Monta mapa: alias → ['table' => ..., 'column' => ...]
-        // Monta mapa reverso: "table.column" → alias
+        // Build map: alias → ['table' => ..., 'column' => ...]
+        // Build reverse map: "table.column" → alias
         $aliasMap    = [];  // alias → ['table', 'column']
         $qualifiedMap = []; // "table.col" → alias
         foreach ($this->joins as $join) {
@@ -333,14 +333,14 @@ class CrudConfig extends Component
             }
         }
 
-        // Regra 3 — notação encadeada de 3+ partes: "a.b.coluna"
-        // Executa antes das outras para normalizar $source e $nomeFisico
+        // Rule 3 — chained notation of 3+ parts: "a.b.column"
+        // Runs before the others to normalise $source and $nomeFisico
         if (! empty($source) && substr_count($source, '.') >= 2) {
             $segments  = explode('.', $source);
             $lastCol   = array_pop($segments);                 // "name"
             $lastRel   = array_pop($segments);                 // "product"
 
-            // Resolve a tabela do último relacionamento (singular → plural e vice-versa)
+            // Resolves the table of the last relation (singular → plural and vice-versa)
             $resolved = null;
             foreach ($this->joins as $join) {
                 $table = $join['table'] ?? '';
@@ -354,32 +354,32 @@ class CrudConfig extends Component
                 $qualifiedCol            = "{$resolved}.{$lastCol}";
                 $fieldData['colsSource'] = $qualifiedCol;
                 $fieldData['colsGravar'] = false;
-                // Corrige colsNomeFisico para o alias se existir no mapa
+                // Correct colsNomeFisico to alias if it exists in the map
                 if (isset($qualifiedMap[$qualifiedCol])) {
                     $fieldData['colsNomeFisico'] = $qualifiedMap[$qualifiedCol];
                 }
-                // Atualiza source para a versão normalizada
+                // Update source to the normalised version
                 $source     = $qualifiedCol;
                 $nomeFisico = $fieldData['colsNomeFisico'];
             }
         }
 
-        // Regra 1 — colsNomeFisico bate com alias de JOIN
+        // Rule 1 — colsNomeFisico matches JOIN alias
         if (isset($aliasMap[$nomeFisico])) {
             $fieldData['colsGravar'] = false;
-            // Preenche colsSource apenas se não foi informado ou está errado
+            // Fill colsSource only if not set or incorrect
             if (empty($source) || ! str_contains($source, '.')) {
                 $fieldData['colsSource'] = $aliasMap[$nomeFisico]['column'];
             }
         }
 
-        // Regra 2 — corrige notação Eloquent de 2 partes "relacao.coluna" → "tabela.coluna"
+        // Rule 2 — correct Eloquent 2-part notation "relation.column" → "table.column"
         if (! empty($source) && substr_count($source, '.') === 1) {
             [$relation, $col] = explode('.', $source, 2);
             foreach ($this->joins as $join) {
                 $table = $join['table'] ?? '';
                 if ($table === $relation) {
-                    break; // já está correto — é tabela.coluna
+                    break; // already correct — it is table.column
                 }
                 if ($table === $relation . 's' || rtrim($table, 's') === $relation) {
                     $fieldData['colsSource'] = "{$table}.{$col}";
@@ -431,10 +431,10 @@ class CrudConfig extends Component
     }
 
     /**
-     * Reordena as colunas a partir de um array de índices recebido pelo SortableJS.
-     * Chamado via wire:sortable ou via JS: $wire.reorderFields(newOrderArray)
+     * Reorders columns from an index array received from SortableJS.
+     * Called via wire:sortable or via JS: $wire.reorderFields(newOrderArray)
      *
-     * @param array $order  Array de índices na nova ordem — ex: [2, 0, 1, 3]
+     * @param array $order  Array of indices in the new order — e.g.: [2, 0, 1, 3]
      */
     public function reorderFields(array $order): void
     {
@@ -447,13 +447,13 @@ class CrudConfig extends Component
             }
         }
 
-        // Garante que itens não presentes no novo array (por segurança) sejam mantidos
+        // Ensures items not present in the new array (for safety) are kept
         if (count($reordered) === count($this->formEditFields)) {
             $this->formEditFields = $reordered;
         }
     }
 
-    // ── Ações — CRUD ─────────────────────────────────────────────────────────
+    // ── Actions — CRUD ─────────────────────────────────────────────────────────
 
     public function addAction(): void
     {
@@ -461,7 +461,7 @@ class CrudConfig extends Component
             return;
         }
 
-        // Remove campos vazios para que os defaults não sejam sobrescritos
+        // Remove empty fields so that defaults are not overwritten
         $data = array_filter($this->formDataAction, fn($v) => $v !== '' && $v !== null);
 
         $merged = array_merge([
@@ -524,11 +524,11 @@ class CrudConfig extends Component
             return;
         }
 
-        // Guard: detecta duplicata de tabela
+        // Guard: detect duplicate table
         if ($this->editingJoinIndex < 0) {
             $existingTables = array_column($this->joins, 'table');
             if (in_array($table, $existingTables)) {
-                session()->flash('joinError', "Já existe um JOIN para a tabela '{$table}'.");
+                session()->flash('joinError', "A JOIN for table '{$table}' already exists.");
                 return;
             }
         }
@@ -541,7 +541,7 @@ class CrudConfig extends Component
             if ($line === '') {
                 continue;
             }
-            // formato: "table.column:alias" ou "table.column" (alias = ultimo segmento)
+            // format: "table.column:alias" or "table.column" (alias = last segment)
             if (str_contains($line, ':')) {
                 [$col, $alias] = array_map('trim', explode(':', $line, 2));
             } else {
@@ -580,7 +580,7 @@ class CrudConfig extends Component
 
         $join = $this->joins[$index];
 
-        // Reconstrói selectRaw a partir do array de colunas
+        // Rebuild selectRaw from columns array
         $lines = [];
         foreach ($join['select'] ?? [] as $sel) {
             $lines[] = ($sel['column'] ?? '') . ':' . ($sel['alias'] ?? '');
@@ -659,7 +659,7 @@ class CrudConfig extends Component
         $this->showModal = false;
         $this->dispatch('ptah:crud-config-updated');
 
-        session()->flash('crud-success', 'Configuração salva com sucesso!');
+        session()->flash('crud-success', 'Configuration saved successfully!');
     }
 
     protected function buildConfigArray(array $existing = []): array
@@ -722,7 +722,7 @@ class CrudConfig extends Component
         $fields = $this->formEditFields;
 
         foreach ($fields as &$field) {
-            // Converte colsSelect string "k;v;;k2;v2" → associative array
+            // Converts colsSelect string "k;v;;k2;v2" → associative array
             if (
                 isset($field['colsSelect'])
                 && is_string($field['colsSelect'])
@@ -745,7 +745,7 @@ class CrudConfig extends Component
 
     protected function getDefaultPermissionIdentifier(): string
     {
-        // Ex: 'Purchase/Order/SalesOrders' → 'pageSalesOrders'
+        // e.g.: 'Purchase/Order/SalesOrders' → 'pageSalesOrders'
         return 'page' . class_basename(str_replace('/', '\\', $this->model));
     }
 }

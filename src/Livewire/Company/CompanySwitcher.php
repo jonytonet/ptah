@@ -10,11 +10,11 @@ use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
 
 /**
- * CompanySwitcher — Exibido na Navbar.
+ * CompanySwitcher — Displayed in the Navbar.
  *
- * - Inicializa a sessão de empresa ao montar (se ainda não definida).
- * - Exibe badge com sigla se apenas 1 empresa, ou dropdown se múltiplas.
- * - Ao trocar de empresa, recarrega a página para atualizar todos os CRUDs.
+ * - Initialises the company session on mount (if not yet set).
+ * - Shows a badge with abbreviation if only 1 company, or a dropdown if multiple.
+ * - When switching company, reloads the page to refresh all CRUDs.
  */
 class CompanySwitcher extends Component
 {
@@ -24,7 +24,7 @@ class CompanySwitcher extends Component
     /** ID da empresa ativa */
     public int $activeId = 0;
 
-    /** URL da página atual — capturada no mount antes de qualquer request Livewire */
+    /** Current page URL — captured in mount before any Livewire request */
     public string $pageUrl = '';
 
     protected CompanyService $companyService;
@@ -36,8 +36,8 @@ class CompanySwitcher extends Component
 
     public function mount(): void
     {
-        // Captura a URL da página ANTES de qualquer request Livewire (AJAX)
-        // request()->fullUrl() em callbacks posteriores aponta para livewire/update
+        // Capture the page URL BEFORE any Livewire (AJAX) request
+        // request()->fullUrl() in later callbacks points to livewire/update
         $this->pageUrl = url()->current();
 
         $this->companyService->initSession();
@@ -47,7 +47,7 @@ class CompanySwitcher extends Component
     }
 
     /**
-     * Troca para a empresa selecionada e recarrega a página.
+     * Switches to the selected company and reloads the page.
      */
     public function switchTo(int $id): void
     {

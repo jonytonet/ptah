@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class Store{{ entity }}Request extends FormRequest
 {
     /**
-     * Determina se o usuário está autorizado a fazer esta requisição.
+     * Determines whether the user is authorised to make this request.
      */
     public function authorize(): bool
     {
@@ -17,7 +17,7 @@ class Store{{ entity }}Request extends FormRequest
     }
 
     /**
-     * Retorna as regras de validação para criação.
+     * Returns the validation rules for creation.
      *
      * @return array<string, mixed>
      */

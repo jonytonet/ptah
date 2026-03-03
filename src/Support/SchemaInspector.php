@@ -7,22 +7,22 @@ namespace Ptah\Support;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Responsável por inspecionar campos de uma entidade.
+ * Responsible for inspecting entity fields.
  *
- * Duas estratégias:
- *  1. Banco de dados existente: Schema::getColumns() — portável (MySQL/PostgreSQL/SQLite)
- *  2. String de --fields: "name:string,price:decimal(10,2):nullable"
+ * Two strategies:
+ *  1. Existing database: Schema::getColumns() — portable (MySQL/PostgreSQL/SQLite)
+ *  2. --fields string: "name:string,price:decimal(10,2):nullable"
  */
 class SchemaInspector
 {
-    /** Campos ignorados automaticamente na inspeção do BD */
+    /** Fields automatically ignored when inspecting the DB */
     private const IGNORED_COLUMNS = ['id', 'created_at', 'updated_at', 'deleted_at'];
 
     /**
-     * Lê as colunas de uma tabela existente no banco de dados.
+     * Reads columns from an existing database table.
      *
-     * Usa Schema::getColumns() — disponível no Laravel 10.23+ e portável
-     * entre MySQL, PostgreSQL e SQLite. Não usa SQL específico de driver.
+     * Uses Schema::getColumns() — available in Laravel 10.23+ and portable
+     * across MySQL, PostgreSQL and SQLite. Does not use driver-specific SQL.
      *
      * @return FieldDefinition[]
      */
@@ -65,8 +65,8 @@ class SchemaInspector
     {
         $fields = [];
 
-        // Divide por vírgulas que NÃO estejam dentro de parênteses
-        // Ex: "price:decimal(10,2),name:string" → ["price:decimal(10,2)", "name:string"]
+        // Splits by commas that are NOT inside parentheses
+        // E.g. "price:decimal(10,2),name:string" → ["price:decimal(10,2)", "name:string"]
         $parts = preg_split('/,(?![^(]*\))/', $input);
 
         foreach ($parts as $part) {
@@ -92,7 +92,7 @@ class SchemaInspector
         $scale      = 2;
         $enumValues = [];
 
-        // Extrai parâmetros entre parênteses antes de explodir por ':'
+        // Extracts parameters within parentheses before exploding by ':'
         $params = null;
         $fieldStr = preg_replace_callback(
             '/\(([^)]+)\)/',
@@ -109,7 +109,7 @@ class SchemaInspector
         $nullable = in_array('nullable', $segments, true);
         $unique   = in_array('unique',   $segments, true);
 
-        // Detecta surname=X ou label=X como rótulo de exibição no BaseCrud
+        // Detects surname=X or label=X as the display label in BaseCrud
         $label = '';
         foreach ($segments as $segment) {
             if (str_starts_with($segment, 'surname=')) {
@@ -152,7 +152,7 @@ class SchemaInspector
      * Formato do array (Laravel 10.23+):
      *   'name'      => string  — nome da coluna
      *   'type_name' => string  — tipo base sem modificadores (ex: 'int', 'varchar')
-     *   'type'      => string  — tipo completo com precisão/escala (ex: 'decimal(10,2)')
+     *   'type'      => string  — full type with precision/scale (e.g. 'decimal(10,2)')
      *   'nullable'  => bool
      *   'comment'   => string|null
      *
@@ -160,7 +160,7 @@ class SchemaInspector
      */
     private function parseDbColumn(array $col): FieldDefinition
     {
-        // Usa 'type' (completo) para detecção; fallback para 'type_name'
+        // Uses 'type' (full) for detection; fallback to 'type_name'
         $raw      = strtolower((string) ($col['type'] ?? $col['type_name'] ?? ''));
         $typeName = strtolower((string) ($col['type_name'] ?? ''));
         $nullable   = (bool) ($col['nullable'] ?? false);

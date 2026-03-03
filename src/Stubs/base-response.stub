@@ -8,9 +8,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Envelope padrão de resposta para APIs do projeto.
+ * Standard response envelope for project APIs.
  *
- * Formato:
+ * Format:
  * {
  *   "success": true|false,
  *   "message": "...",
@@ -19,13 +19,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
  *   "errors":  [] | { ... }
  * }
  *
- * Uso:
- *   return BaseResponse::ok($data, 'Retornado com sucesso');
+ * Usage:
+ *   return BaseResponse::ok($data, 'Returned successfully');
  *   return BaseResponse::created($data);
  *   return BaseResponse::noContent();
- *   return BaseResponse::error('Erro de validação', 422, $validator->errors());
- *   return BaseResponse::paginated($paginator, 'Listagem retornada');
- *   return BaseResponse::response('msg', $data, 200); // retrocompatível com ERP
+ *   return BaseResponse::error('Validation error', 422, $validator->errors());
+ *   return BaseResponse::paginated($paginator, 'Listing returned');
+ *   return BaseResponse::response('msg', $data, 200); // backwards-compatible with ERP
  */
 class BaseResponse
 {
@@ -40,7 +40,7 @@ class BaseResponse
     /**
      * Resposta 201 — Created.
      */
-    public static function created(mixed $data = null, string $message = 'Recurso criado com sucesso'): JsonResponse
+    public static function created(mixed $data = null, string $message = 'Resource created successfully'): JsonResponse
     {
         return self::build(true, $message, $data, null, [], 201);
     }
@@ -48,13 +48,13 @@ class BaseResponse
     /**
      * Resposta 204 — No Content.
      */
-    public static function noContent(string $message = 'Operação realizada com sucesso'): JsonResponse
+    public static function noContent(string $message = 'Operation completed successfully'): JsonResponse
     {
         return self::build(true, $message, null, null, [], 204);
     }
 
     /**
-     * Resposta de erro — status configurável (padrão 400).
+     * Error response — configurable status (default 400).
      *
      * @param array<string, mixed>|array<int, string> $errors
      */
@@ -66,7 +66,7 @@ class BaseResponse
     /**
      * Resposta 404 — Not Found.
      */
-    public static function notFound(string $message = 'Recurso não encontrado'): JsonResponse
+    public static function notFound(string $message = 'Resource not found'): JsonResponse
     {
         return self::build(false, $message, null, null, [], 404);
     }
@@ -74,13 +74,13 @@ class BaseResponse
     /**
      * Resposta 401 — Unauthorized.
      */
-    public static function unauthorized(string $message = 'Não autorizado'): JsonResponse
+    public static function unauthorized(string $message = 'Unauthorized'): JsonResponse
     {
         return self::build(false, $message, null, null, [], 401);
     }
 
     /**
-     * Resposta paginada — inclui meta de paginação.
+     * Paginated response — includes pagination meta.
      */
     public static function paginated(LengthAwarePaginator $paginator, string $message = 'OK'): JsonResponse
     {
@@ -97,8 +97,8 @@ class BaseResponse
     }
 
     /**
-     * Compatibilidade retroativa com o padrão legado do ERP.
-     * Prefer os métodos semânticos acima em código novo.
+     * Backwards compatibility with the legacy ERP pattern.
+     * Prefer the semantic methods above in new code.
      */
     public static function response(string $message, mixed $data, int $status = 200): JsonResponse
     {

@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * Model para configurações do BaseCrud.
+ * Model for BaseCrud configurations.
  *
- * Cada linha representa a configuração completa de uma entidade.
- * A coluna `config` armazena o JSON completo (cols, customFilters, permissions, etc.).
+ * Each row represents the complete configuration of an entity.
+ * The `config` column stores the full JSON (cols, customFilters, permissions, etc.).
  *
  * @property int    $id
  * @property string $model
@@ -31,10 +31,10 @@ class CrudConfig extends Model
         'updated_by' => 'integer',
     ];
 
-    // ── Accessors para sub-seções do config ────────────────────────────────
+    // ── Accessors for config sub-sections ────────────────────────────────
 
     /**
-     * Colunas da tabela/formulário.
+     * Table/form columns.
      */
     public function cols(): array
     {
@@ -42,7 +42,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Filtros customizados (barra de filtros).
+     * Custom filters (filter bar).
      */
     public function customFilters(): array
     {
@@ -50,7 +50,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Permissões do CRUD.
+     * CRUD permissions.
      */
     public function permissions(): array
     {
@@ -69,7 +69,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Configuração de exportação.
+     * Export configuration.
      */
     public function exportConfig(): array
     {
@@ -85,7 +85,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Estratégia de cache.
+     * Cache strategy.
      */
     public function cacheStrategy(): array
     {
@@ -97,7 +97,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Estilos condicionais de linha.
+     * Conditional row styles.
      */
     public function conditionStyles(): array
     {
@@ -105,7 +105,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Filtros por intervalo de datas.
+     * Date range filters.
      */
     public function dateRangeFilters(): array
     {
@@ -113,7 +113,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Preferências de UI padrão para este CRUD.
+     * Default UI preferences for this CRUD.
      */
     public function uiPreferences(): array
     {
@@ -127,7 +127,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Totalizadores.
+     * Totalizers.
      */
     public function totalizadores(): array
     {
@@ -138,7 +138,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Colunas filteráveis (colsIsFilterable == true|'S').
+     * Filterable columns (colsIsFilterable == true|'S').
      */
     public function filterableCols(): array
     {
@@ -146,7 +146,7 @@ class CrudConfig extends Model
     }
 
     /**
-     * Colunas de formulário (colsGravar == true|'S').
+     * Form columns (colsGravar == true|'S').
      */
     public function formCols(): array
     {
@@ -154,8 +154,8 @@ class CrudConfig extends Model
     }
 
     /**
-     * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').
-     * Retorna true para: true, 'S', 1, '1'.
+     * Accepts both boolean (true/false) and legacy string ('S'/'N').
+     * Returns true for: true, 'S', 1, '1'.
      */
     protected function ptahBool(mixed $value): bool
     {

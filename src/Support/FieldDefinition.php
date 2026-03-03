@@ -7,20 +7,20 @@ namespace Ptah\Support;
 use Illuminate\Support\Str;
 
 /**
- * Value object que representa a definição de um único campo.
+ * Value object representing the definition of a single field.
  *
- * Formato da string de entrada (opção --fields):
- *   nome:tipo[(params)][:nullable][:unique][:surname=Label]
+ * Input string format (--fields option):
+ *   name:type[(params)][:nullable][:unique][:surname=Label]
  *
- * Exemplos:
+ * Examples:
  *   name:string
  *   price:decimal(10,2):nullable
  *   status:enum(active|inactive|pending)
  *   is_active:boolean
  *   email:string:unique
  *   user_id:unsignedBigInteger
- *   city:string:surname=Cidade
- *   price:decimal(10,2):nullable:surname=Preço
+ *   city:string:surname=City
+ *   price:decimal(10,2):nullable:surname=Price
  */
 readonly class FieldDefinition
 {
@@ -30,13 +30,13 @@ readonly class FieldDefinition
         public bool   $nullable,
         public bool   $unique,
         public int    $precision,   // decimal: total digits
-        public int    $scale,       // decimal: casas decimais
+        public int    $scale,       // decimal: decimal places
         public array  $enumValues,  // enum: ['active', 'inactive']
-        public string $label = '',  // rótulo de exibição no BaseCrud (surname)
+        public string $label = '',  // display label in BaseCrud (surname)
     ) {}
 
     /**
-     * Tipo para o $casts do Eloquent.
+     * Type for Eloquent's $casts.
      */
     public function castType(): string
     {
@@ -61,7 +61,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Se o campo termina em _id e o tipo é inteiro grande, é tratado como FK.
+     * If the field ends in _id and the type is a large integer, it is treated as an FK.
      */
     public function isForeignKey(): bool
     {
@@ -70,7 +70,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Nome sem o sufixo _id (ex: business_partner_id → business_partner).
+     * Name without the _id suffix (e.g. business_partner_id → business_partner).
      */
     public function relatedName(): string
     {
@@ -78,7 +78,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Model relacionado em StudlyCase (ex: business_partner → BusinessPartner).
+     * Related model in StudlyCase (e.g. business_partner → BusinessPartner).
      */
     public function relatedModel(): string
     {
@@ -86,7 +86,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Tabela relacionada em snake_case plural (ex: business_partner → business_partners).
+     * Related table in snake_case plural (e.g. business_partner → business_partners).
      */
     public function relatedTable(): string
     {
@@ -94,11 +94,11 @@ readonly class FieldDefinition
     }
 
     /**
-     * Linha de definição Blueprint para migration.
+     * Blueprint definition line for migration.
      */
     public function migrationLine(string $indent = '            '): string
     {
-        // FK: gera foreignId()->constrained()->cascadeOnDelete() automaticamente
+        // FK: auto-generates foreignId()->constrained()->cascadeOnDelete()
         if ($this->isForeignKey()) {
             $line = "\$table->foreignId('{$this->name}')->constrained('{$this->relatedTable()}')->cascadeOnDelete()";
             if ($this->nullable) {
@@ -140,7 +140,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Regra de validação Laravel para criação (store).
+     * Laravel validation rule for creation (store).
      */
     public function validationRuleStore(): string
     {
@@ -148,7 +148,7 @@ readonly class FieldDefinition
     }
 
     /**
-     * Regra de validação Laravel para atualização (update).
+     * Laravel validation rule for update.
      */
     public function validationRuleUpdate(): string
     {

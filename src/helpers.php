@@ -6,21 +6,21 @@ use Ptah\Services\Permission\PermissionService;
 
 if (!function_exists('ptah_can')) {
     /**
-     * Verifica se o usuário possui permissão para executar uma ação em um recurso.
+     * Checks whether the user has permission to perform an action on a resource.
      *
-     * O parâmetro $user aceita:
-     *  - null          → utiliza auth()->user() ou session (config ptah.permissions.user_session_key)
-     *  - int|string    → user ID, resolvido via config ptah.permissions.user_model
-     *  - Authenticatable → model de usuário diretamente
+     * The $user parameter accepts:
+     *  - null          → uses auth()->user() or session (config ptah.permissions.user_session_key)
+     *  - int|string    → user ID, resolved via config ptah.permissions.user_model
+     *  - Authenticatable → user model directly
      *
-     * O parâmetro $companyId aceita:
-     *  - null          → utiliza session (config ptah.permissions.company_session_key)
-     *  - int           → ID da empresa
+     * The $companyId parameter accepts:
+     *  - null          → uses session (config ptah.permissions.company_session_key)
+     *  - int           → company ID
      *
-     * @param  string          $objectKey  Chave do object (ex: 'users.store', 'reports.export')
-     * @param  string          $action     Ação desejada: 'create', 'read', 'update', 'delete'
-     * @param  mixed           $user       Usuário (null = auth atual)
-     * @param  int|null        $companyId  ID da empresa (null = session atual)
+     * @param  string          $objectKey  Object key (e.g. 'users.store', 'reports.export')
+     * @param  string          $action     Desired action: 'create', 'read', 'update', 'delete'
+     * @param  mixed           $user       User (null = current auth)
+     * @param  int|null        $companyId  Company ID (null = current session)
      * @return bool
      */
     function ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool
@@ -34,9 +34,9 @@ if (!function_exists('ptah_can')) {
 
 if (!function_exists('ptah_is_master')) {
     /**
-     * Verifica se o usuário possui role MASTER (bypass total de permissões).
+     * Checks whether the user has the MASTER role (full permission bypass).
      *
-     * @param  mixed $user  Usuário (null = auth atual)
+     * @param  mixed $user  User (null = current auth)
      * @return bool
      */
     function ptah_is_master(mixed $user = null): bool
@@ -50,10 +50,10 @@ if (!function_exists('ptah_is_master')) {
 
 if (!function_exists('ptah_company_id')) {
     /**
-     * Retorna o ID da empresa ativa na sessão.
-     * Usa a chave configurada em ptah.permissions.company_session_key.
+     * Returns the active company ID from the session.
+     * Uses the key configured in ptah.permissions.company_session_key.
      *
-     * @return int  0 se nenhuma empresa selecionada
+     * @return int  0 if no company is selected
      */
     function ptah_company_id(): int
     {
@@ -64,7 +64,7 @@ if (!function_exists('ptah_company_id')) {
 
 if (!function_exists('ptah_active_company')) {
     /**
-     * Retorna o model Company da empresa ativa na sessão, ou null.
+     * Returns the Company model for the active session company, or null.
      *
      * @return \Ptah\Models\Company|null
      */
@@ -78,8 +78,8 @@ if (!function_exists('ptah_active_company')) {
 
 if (!function_exists('ptah_companies')) {
     /**
-     * Retorna a Collection de todas as empresas ativas.
-     * Resultado é cacheado por 5 minutos.
+     * Returns the Collection of all active companies.
+     * Result is cached for 5 minutes.
      *
      * @return \Illuminate\Support\Collection
      */
@@ -93,10 +93,10 @@ if (!function_exists('ptah_companies')) {
 
 if (!function_exists('ptah_permissions')) {
     /**
-     * Retorna o mapa completo de permissões do usuário.
+     * Returns the complete permissions map for the user.
      *
-     * @param  mixed    $user       Usuário (null = auth atual)
-     * @param  int|null $companyId  ID da empresa (null = session atual)
+     * @param  mixed    $user       User (null = current auth)
+     * @param  int|null $companyId  Company ID (null = current session)
      * @return array<string, array{create: bool, read: bool, update: bool, delete: bool}>
      */
     function ptah_permissions(mixed $user = null, ?int $companyId = null): array

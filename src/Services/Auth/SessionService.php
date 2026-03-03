@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Request;
 class SessionService
 {
     /**
-     * Retorna todas as sessões ativas do usuário, ordenadas da mais recente.
+     * Returns all active sessions for the user, ordered from most recent.
      */
     public function getActiveSessions(Authenticatable $user): Collection
     {
@@ -30,7 +30,7 @@ class SessionService
 
                 return [
                     'id'                 => $session->id,
-                    'ip_address'         => $session->ip_address ?? 'desconhecido',
+                    'ip_address'         => $session->ip_address ?? trans('ptah::ui.unknown'),
                     'user_agent'         => $session->user_agent ?? '',
                     'browser'            => $agent['browser'],
                     'platform'           => $agent['platform'],
@@ -41,7 +41,7 @@ class SessionService
     }
 
     /**
-     * Revoga uma sessão específica.
+     * Revokes a specific session.
      */
     public function revokeSession(string $sessionId): void
     {
@@ -51,7 +51,7 @@ class SessionService
     }
 
     /**
-     * Revoga todas as sessões exceto a atual.
+     * Revokes all sessions except the current one.
      */
     public function revokeOtherSessions(Authenticatable $user, string $currentSessionId): int
     {
@@ -78,8 +78,8 @@ class SessionService
 
     private function parseAgent(string $userAgent): array
     {
-        $browser  = 'Desconhecido';
-        $platform = 'Desconhecido';
+        $browser  = trans('ptah::ui.unknown');
+        $platform = trans('ptah::ui.unknown');
 
         $browsers = [
             'Edg'     => 'Edge',

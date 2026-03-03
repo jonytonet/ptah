@@ -84,7 +84,7 @@ class Role extends Model
     // ─────────────────────────────────────────
 
     /**
-     * Retorna a cor para exibição, com fallback padrão.
+     * Returns the display colour with a default fallback.
      */
     public function getDisplayColor(): string
     {
@@ -92,7 +92,7 @@ class Role extends Model
     }
 
     /**
-     * Retorna a badge label para exibir na UI.
+     * Returns the badge label for display in the UI.
      */
     public function getBadgeLabel(): string
     {

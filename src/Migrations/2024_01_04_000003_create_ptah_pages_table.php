@@ -12,20 +12,20 @@ return new class extends Migration
     {
         Schema::create('ptah_pages', function (Blueprint $table) {
             $table->id();
-            // Slug único: identifica a página no sistema (ex: 'admin.users', 'reports.financial')
+            // Unique slug: identifies the page in the system (e.g. 'admin.users', 'reports.financial')
             $table->string('slug')->unique();
             $table->string('name');
             $table->string('description')->nullable();
-            // Rota Laravel: usado para gerar links automáticos
+            // Laravel route: used to generate automatic links
             $table->string('route')->nullable();
-            // Ícone heroicon / tabler / fontawesome — livre para o sistema definir
+            // Icon heroicon / tabler / fontawesome — free for the system to define
             $table->string('icon')->nullable();
             $table->boolean('is_active')->default(true)->index();
             $table->integer('sort_order')->default(0);
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
-            // Sem softDeletes: páginas são registros de sistema, nunca "deletadas"
+            // No softDeletes: pages are system records, never "deleted"
         });
     }
 

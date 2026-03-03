@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Log de auditoria de permissões. Imutável — sem updated_at, sem SoftDeletes.
+ * Permission audit log. Immutable — no updated_at, no SoftDeletes.
  *
  * @property int         $id
  * @property int|null    $user_id
@@ -25,7 +25,7 @@ class PermissionAudit extends Model
 {
     protected $table = 'ptah_permission_audits';
 
-    // Log imutável: sem updated_at
+    // Immutable log: no updated_at
     public const UPDATED_AT = null;
 
     protected $fillable = [

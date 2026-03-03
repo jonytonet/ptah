@@ -7,16 +7,16 @@ namespace Ptah\Services\Cache;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Serviço de cache dedicado para o Ptah BaseCrud.
+ * Dedicated cache service for the Ptah BaseCrud.
  *
- * Suporta tag-based invalidation (Redis/Memcached/DynamoDB) com fallback
- * gracioso para drivers sem tags (file, database, array).
+ * Supports tag-based invalidation (Redis/Memcached/DynamoDB) with graceful
+ * fallback for drivers without tags (file, database, array).
  *
- * TTLs separados por tipo:
- *   - CONFIG: 86400s (1 dia)  — configuração do CrudConfig raramente muda
- *   - PREFERENCES: 7200s (2h) — preferências de usuário
- *   - QUERY: 60s              — resultados de query (hot path)
- *   - DEFAULT: 3600s (1h)     — fallback genérico
+ * Separate TTLs per type:
+ *   - CONFIG: 86400s (1 day)  — CrudConfig configuration rarely changes
+ *   - PREFERENCES: 7200s (2h) — user preferences
+ *   - QUERY: 60s              — query results (hot path)
+ *   - DEFAULT: 3600s (1h)     — generic fallback
  */
 class CacheService
 {
@@ -29,13 +29,13 @@ class CacheService
     protected const TAG_PREFS   = 'ptah_preferences';
     protected const TAG_QUERIES = 'ptah_queries';
 
-    // ── Configuração ──────────────────────────────────────────────────────
+    // ── Configuration ───────────────────────────────────────────────────────
 
     /**
-     * Cached-remember para configurações de entidade (CrudConfig).
+     * Cached-remember for entity configurations (CrudConfig).
      *
-     * @param string   $model   Ex: "Product"
-     * @param callable $callback  Retorna o valor a ser cacheado
+     * @param string   $model    e.g. "Product"
+     * @param callable $callback Returns the value to cache
      * @param int      $ttl
      */
     public function rememberConfig(string $model, callable $callback, int $ttl = self::CONFIG_TTL): mixed
@@ -62,13 +62,13 @@ class CacheService
         Cache::forget($key);
     }
 
-    // ── Preferências ──────────────────────────────────────────────────────
+    // ── Preferences ──────────────────────────────────────────────────────────
 
     /**
-     * Cached-remember para preferências de usuário.
+     * Cached-remember for user preferences.
      *
      * @param int      $userId
-     * @param string   $route   Identificador da tela (ex: "Product")
+     * @param string   $route    Screen identifier (e.g. "Product")
      * @param callable $callback
      * @param int      $ttl
      */
@@ -85,8 +85,8 @@ class CacheService
     }
 
     /**
-     * Invalida preferências de um usuário.
-     * Se $route for null, invalida todas as preferências do usuário (somente com tags).
+     * Invalidates a user's preferences.
+     * If $route is null, invalidates all user preferences (only with tags).
      */
     public function forgetPreferences(int $userId, ?string $route = null): void
     {
@@ -102,7 +102,7 @@ class CacheService
             return;
         }
 
-        // Sem route: invalida tudo do usuário (apenas com tagging)
+        // Without route: invalidate everything for the user (only with tagging)
         if ($this->supportsTagging()) {
             Cache::tags(["ptah_user_{$userId}"])->flush();
         }
@@ -111,10 +111,10 @@ class CacheService
     // ── Queries ───────────────────────────────────────────────────────────
 
     /**
-     * Cached-remember para resultados de query (TTL curto).
+     * Cached-remember for query results (short TTL).
      *
      * @param string   $model
-     * @param string   $queryHash  Hash único identificando a query (filtros, página, sort)
+     * @param string   $queryHash  Unique hash identifying the query (filters, page, sort)
      * @param callable $callback
      * @param int      $ttl
      */
@@ -131,22 +131,22 @@ class CacheService
     }
 
     /**
-     * Invalida todas as queries cacheadas de um model.
-     * (Efetivo apenas com tagging — em outros drivers usa chave direta.)
+     * Invalidates all cached queries for a model.
+     * (Effective only with tagging — on other drivers uses direct key.)
      */
     public function forgetQueries(string $model): void
     {
         if ($this->supportsTagging()) {
             Cache::tags(["ptah_model_{$model}", self::TAG_QUERIES])->flush();
         }
-        // Sem tagging: queries individuais expiram naturalmente pelo TTL curto
+        // Without tagging: individual queries expire naturally via the short TTL
     }
 
-    // ── Atalhos ───────────────────────────────────────────────────────────
+    // ── Shortcuts ────────────────────────────────────────────────────────────
 
     /**
-     * Invalida config + queries de um model de uma só vez.
-     * Chamado após operações de create/update/delete.
+     * Invalidates config + queries for a model in one go.
+     * Called after create/update/delete operations.
      */
     public function invalidateModel(string $model): void
     {
@@ -155,8 +155,8 @@ class CacheService
     }
 
     /**
-     * Invalida todo o cache do Ptah (config + preferências + queries).
-     * Útil para `ptah:install` e testes.
+     * Invalidates all Ptah cache (config + preferences + queries).
+     * Useful for `ptah:install` and tests.
      */
     public function flush(): void
     {
@@ -167,10 +167,10 @@ class CacheService
         }
     }
 
-    // ── Genérico ─────────────────────────────────────────────────────────
+    // ── Generic ────────────────────────────────────────────────────────────
 
     /**
-     * Remember genérico (usa TTL padrão).
+     * Generic remember (uses default TTL).
      */
     public function remember(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {
@@ -190,8 +190,8 @@ class CacheService
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /**
-     * Detecta se o driver de cache atual suporta tags.
-     * Drivers com suporte: redis, memcached, dynamodb.
+     * Detects whether the current cache driver supports tags.
+     * Supported drivers: redis, memcached, dynamodb.
      */
     public function supportsTagging(): bool
     {

@@ -7,34 +7,34 @@ namespace Ptah\Support;
 use Illuminate\Support\Str;
 
 /**
- * Value object (DTO imutável) que carrega todos os dados
- * calculados de uma entidade durante a execução do scaffold.
+ * Value object (immutable DTO) that carries all pre-computed data
+ * of an entity during the scaffold execution.
  *
- * Criado uma vez pelo ScaffoldCommand e passado a todos os Generators.
+ * Created once by ScaffoldCommand and passed to all Generators.
  *
- * Suporte a subpastas:
- *   - subFolder   : subfolder relativo ao diretório de models, ex: 'Product'
- *                   Pode ser multi-nível: 'Catalog/Product'
- *                   Vazio quando a entidade está na raiz.
- *   - modelNamespace : namespace PHP completo do Model, ex: App\Models\Product
- *   - modelFqn       : FQN completo do Model,  ex: App\Models\Product\ProductStock
+ * Sub-folder support:
+ *   - subFolder   : subfolder relative to the models directory, e.g. 'Product'
+ *                   Can be multi-level: 'Catalog/Product'
+ *                   Empty when the entity is at the root.
+ *   - modelNamespace : full PHP namespace of the Model, e.g. App\Models\Product
+ *   - modelFqn       : full Model FQN,  e.g. App\Models\Product\ProductStock
  */
 readonly class EntityContext
 {
     /**
-     * Namespace PHP do Model (ex: App\Models\Product ou App\Models).
-     * Calculado automaticamente a partir de rootNamespace + subFolder.
+     * PHP namespace of the Model (e.g. App\Models\Product or App\Models).
+     * Automatically computed from rootNamespace + subFolder.
      */
     public string $modelNamespace;
 
     /**
-     * FQN completo do Model (ex: App\Models\Product\ProductStock).
+     * Full Model FQN (e.g. App\Models\Product\ProductStock).
      */
     public string $modelFqn;
 
     /**
      * @param FieldDefinition[] $fields
-     * @param string $subFolder  Subfolder relativo a Models/, ex: 'Product'. Vazio se raiz.
+     * @param string $subFolder  Subfolder relative to Models/, e.g. 'Product'. Empty if root.
      */
     public function __construct(
         public string $entity,             // ProductStock
@@ -45,7 +45,7 @@ readonly class EntityContext
         public string $rootNamespace,      // App\
         public string $timestamp,          // 2026_02_25_120000
         public bool   $withViews,          // false quando --api-only
-        public bool   $withSoftDeletes,    // true por padrão
+        public bool   $withSoftDeletes,    // true by default
         public bool   $force,              // --force
         public array  $fields,
         public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
@@ -59,8 +59,8 @@ readonly class EntityContext
     }
 
     /**
-     * Retorna o namespace com subfolder aplicado.
-     * Ex: subNs('App\\Services') com subFolder='Product' → 'App\\Services\\Product'
+     * Returns the namespace with the subfolder applied.
+     * E.g. subNs('App\\Services') with subFolder='Product' → 'App\\Services\\Product'
      */
     public function subNs(string $baseNamespace): string
     {
@@ -72,8 +72,8 @@ readonly class EntityContext
     }
 
     /**
-     * Retorna o caminho de arquivo com subfolder aplicado.
-     * Ex: subPath('app/Services') com subFolder='Product' → 'app/Services/Product'
+     * Returns the file path with the subfolder applied.
+     * E.g. subPath('app/Services') with subFolder='Product' → 'app/Services/Product'
      */
     public function subPath(string $basePath): string
     {
@@ -85,16 +85,16 @@ readonly class EntityContext
     }
 
     /**
-     * Gera a lista $fillable como string para o stub do Model.
-     * Resultado: 'name', 'price', 'status'
+     * Generates the $fillable list as a string for the Model stub.
+     * Result: 'name', 'price', 'status'
      */
     public function fillableList(): string
     {
         $base = empty($this->fields)
-            ? ['// Adicione os campos aqui']
+            ? ['// Add fields here']
             : array_map(fn(FieldDefinition $f) => "'{$f->name}'", $this->fields);
 
-        // Campos de auditoria — preenchidos automaticamente pelo HasAuditFields trait
+        // Audit fields — automatically populated by the HasAuditFields trait
         $base[] = "'created_by'";
         $base[] = "'updated_by'";
 
@@ -106,16 +106,16 @@ readonly class EntityContext
     }
 
     /**
-     * Gera o bloco $casts como string para o stub do Model.
-     * Resultado: 'price' => 'decimal:2', 'is_active' => 'boolean',
+     * Generates the $casts block as a string for the Model stub.
+     * Result: 'price' => 'decimal:2', 'is_active' => 'boolean',
      */
     public function castsList(): string
     {
         $base = empty($this->fields)
-            ? ['// \'campo\' => \'tipo\',']
+            ? ['// \'field\' => \'type\',']
             : array_map(fn(FieldDefinition $f) => "'{$f->name}' => '{$f->castType()}',", $this->fields);
 
-        // Casts dos campos de auditoria
+        // Casts for the audit fields
         $base[] = "'created_by' => 'integer',";
         $base[] = "'updated_by' => 'integer',";
 
@@ -127,12 +127,12 @@ readonly class EntityContext
     }
 
     /**
-     * Gera as linhas Blueprint para a migration.
+     * Generates the Blueprint lines for the migration.
      */
     public function migrationColumns(): string
     {
         if (empty($this->fields)) {
-            return "            // Adicione as colunas aqui";
+            return "            // Add columns here";
         }
 
         return implode("\n", array_map(
@@ -142,12 +142,12 @@ readonly class EntityContext
     }
 
     /**
-     * Gera as regras de validação para Store.
+     * Generates validation rules for Store.
      */
     public function validationRulesStore(): string
     {
         if (empty($this->fields)) {
-            return "            // 'campo' => 'required|string',";
+            return "            // 'field' => 'required|string',";
         }
 
         return implode("\n            ", array_map(
@@ -157,12 +157,12 @@ readonly class EntityContext
     }
 
     /**
-     * Gera as regras de validação para Update.
+     * Generates validation rules for Update.
      */
     public function validationRulesUpdate(): string
     {
         if (empty($this->fields)) {
-            return "            // 'campo' => 'sometimes|required|string',";
+            return "            // 'field' => 'sometimes|required|string',";
         }
 
         return implode("\n            ", array_map(
@@ -172,7 +172,7 @@ readonly class EntityContext
     }
 
     /**
-     * Gera as propriedades do DTO com tipos PHP.
+     * Generates DTO properties with PHP types.
      */
     public function dtoProperties(): string
     {
@@ -188,7 +188,7 @@ readonly class EntityContext
     }
 
     /**
-     * Gera o mapeamento fromArray do DTO.
+     * Generates the DTO fromArray mapping.
      */
     public function dtoFromArray(): string
     {
@@ -204,8 +204,8 @@ readonly class EntityContext
     }
 
     /**
-     * Gera os métodos belongsTo para campos FK (_id com tipo inteiro grande).
-     * Retorna string vazia se não houver FKs.
+     * Generates belongsTo methods for FK fields (_id with large integer type).
+     * Returns an empty string if there are no FKs.
      */
     public function relationships(): string
     {
@@ -233,14 +233,14 @@ readonly class EntityContext
     }
 
     /**
-     * Gera declarações `use` para os models relacionados via FK.
+     * Generates `use` declarations for models related via FK.
      *
-     * Gera comentários TODO em vez de imports automáticos para evitar
-     * namespace incorreto quando os models relacionados estão em sub-pastas
-     * diferentes da entidade atual.
+     * Generates TODO comments instead of automatic imports to avoid
+     * incorrect namespaces when related models are in different sub-folders
+     * from the current entity.
      *
-     * O desenvolvedor deve ajustar o namespace conforme a localização real do model.
-     * Retorna string vazia se não houver FKs.
+     * The developer must adjust the namespace according to the real model location.
+     * Returns an empty string if there are no FKs.
      */
     public function relationshipsUse(): string
     {
@@ -258,7 +258,7 @@ readonly class EntityContext
         $lines = array_unique(array_map(
             fn(FieldDefinition $f) =>
                 "// TODO: use {$rootNs}\\{$f->relatedModel()};" .
-                " // verifique o namespace real — ajuste se {$f->relatedModel()} estiver em sub-pasta",
+                " // check the real namespace — adjust if {$f->relatedModel()} is in a sub-folder",
             $fkFields
         ));
 
@@ -266,7 +266,7 @@ readonly class EntityContext
     }
 
     /**
-     * Gera os campos do toArray() do Resource.
+     * Generates the toArray() fields for the Resource.
      */
     public function resourceFields(): string
     {

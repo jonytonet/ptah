@@ -13,8 +13,8 @@ class {{ entity }}Controller extends Controller
     public function __construct(protected {{ entity }}Service $service) {}
 
     /**
-     * Exibe a listagem de {{ entities }}.
-     * Criação, edição e exclusão são gerenciadas pelo BaseCrud via modal Livewire.
+     * Display the listing of {{ entities }}.
+     * Creation, editing and deletion are managed by BaseCrud via Livewire modal.
      */
     public function index(): View
     {
@@ -22,7 +22,7 @@ class {{ entity }}Controller extends Controller
     }
 
     /**
-     * Exibe o formulário de criação.
+     * Display the creation form.
      */
     public function create(): View
     {
@@ -30,18 +30,18 @@ class {{ entity }}Controller extends Controller
     }
 
     /**
-     * Armazena um novo {{ entity }}.
+     * Store a new {{ entity }}.
      */
     public function store(Store{{ entity }}Request $request): RedirectResponse
     {
         $this->service->create($request->validated());
 
         return redirect()->route('{{ entity_lower }}.index')
-            ->with('success', '{{ entity }} criado com sucesso.');
+            ->with('success', '{{ entity }} created successfully.');
     }
 
     /**
-     * Exibe os detalhes de um {{ entity }}.
+     * Display the details of a {{ entity }}.
      */
     public function show(int|string $id): View
     {
@@ -51,7 +51,7 @@ class {{ entity }}Controller extends Controller
     }
 
     /**
-     * Exibe o formulário de edição.
+     * Display the edit form.
      */
     public function edit(int|string $id): View
     {
@@ -61,24 +61,24 @@ class {{ entity }}Controller extends Controller
     }
 
     /**
-     * Atualiza um {{ entity }} existente.
+     * Update an existing {{ entity }}.
      */
     public function update(Update{{ entity }}Request $request, int|string $id): RedirectResponse
     {
         $this->service->update($id, $request->validated());
 
         return redirect()->route('{{ entity_lower }}.index')
-            ->with('success', '{{ entity }} atualizado com sucesso.');
+            ->with('success', '{{ entity }} updated successfully.');
     }
 
     /**
-     * Remove um {{ entity }}.
+     * Remove a {{ entity }}.
      */
     public function destroy(int|string $id): RedirectResponse
     {
         $this->service->delete($id);
 
         return redirect()->route('{{ entity_lower }}.index')
-            ->with('success', '{{ entity }} removido com sucesso.');
+            ->with('success', '{{ entity }} removed successfully.');
     }
 }

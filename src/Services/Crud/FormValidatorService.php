@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Ptah\Services\Crud;
 
 /**
- * Serviço de validação rica para campos do formulário do BaseCrud.
+ * Rich validation service for BaseCrud form fields.
  *
- * Suporta regras configuradas por coluna em `colsValidations`:
+ * Supports rules configured per column in `colsValidations`:
  *   required, email, url, integer, numeric, alpha, alphaNum,
  *   min:X, max:X, between:X,Y, minLength:X, maxLength:X,
  *   digits:N, digitsBetween:N,M, regex:pattern,
@@ -20,11 +20,11 @@ namespace Ptah\Services\Crud;
 class FormValidatorService
 {
     /**
-     * Valida os dados do formulário de acordo com as regras de cada coluna.
+     * Validates form data according to each column's rules.
      *
-     * @param  array $formData  Dados submetidos (campo => valor)
-     * @param  array $formCols  Colunas com colsGravar === true e suas regras
-     * @return array            Erros por campo ['campo' => 'Mensagem de erro']
+     * @param  array $formData  Submitted data (field => value)
+     * @param  array $formCols  Columns with colsGravar === true and their rules
+     * @return array            Errors per field ['field' => 'Error message']
      */
     public function validate(array $formData, array $formCols): array
     {
@@ -45,15 +45,15 @@ class FormValidatorService
 
             // ── required (via colsRequired) ────────────────────────────────
             if ($required && $empty) {
-                $errors[$field] = "{$label} é obrigatório.";
-                continue; // Não valida regras adicionais em campo vazio obrigatório
+                $errors[$field] = trans('ptah::ui.validation_required', ['label' => $label]);
+                continue; // Skip additional rules for an empty required field
             }
 
             if ($empty) {
-                continue; // Campo opcional vazio: pula as demais validações
+                continue; // Optional empty field: skip remaining validations
             }
 
-            // ── regras adicionais ──────────────────────────────────────────
+            // ── additional rules ──────────────────────────────────────────────────
             foreach ((array) $rules as $rule) {
                 $error = $this->applyRule($rule, $value, $label, $field, $formData);
 
@@ -68,58 +68,58 @@ class FormValidatorService
     }
 
     /**
-     * Aplica uma única regra ao valor e retorna a mensagem de erro, ou null se válido.
+     * Applies a single rule to the value and returns the error message, or null if valid.
      *
-     * @param string $rule     Regra ex: "email", "min:3", "in:a,b,c"
-     * @param mixed  $value    Valor do campo
-     * @param string $label    Label do campo para mensagens de erro
-     * @param string $field    Nome físico do campo (para `confirmed`)
-     * @param array  $formData Todos os dados do formulário (para `confirmed` e `unique`)
+     * @param string $rule     Rule e.g. "email", "min:3", "in:a,b,c"
+     * @param mixed  $value    Field value
+     * @param string $label    Field label for error messages
+     * @param string $field    Physical field name (for `confirmed`)
+     * @param array  $formData All form data (for `confirmed` and `unique`)
      */
     protected function applyRule(string $rule, mixed $value, string $label, string $field = '', array $formData = []): ?string
     {
-        // ── Regras com parâmetro: min:X, max:X, minLength:X, maxLength:X, etc. ────
+        // ── Rules with parameter: min:X, max:X, minLength:X, maxLength:X, etc. ──────
         if (str_contains($rule, ':')) {
             [$ruleName, $param] = explode(':', $rule, 2);
 
             return match (strtolower($ruleName)) {
                 'min'           => is_numeric($value) && (float) $value < (float) $param
-                    ? "{$label} deve ser no mínimo {$param}."
+                    ? trans('ptah::ui.validation_min', ['label' => $label, 'param' => $param])
                     : null,
                 'max'           => is_numeric($value) && (float) $value > (float) $param
-                    ? "{$label} deve ser no máximo {$param}."
+                    ? trans('ptah::ui.validation_max', ['label' => $label, 'param' => $param])
                     : null,
                 'minlength'     => mb_strlen((string) $value) < (int) $param
-                    ? "{$label} deve ter pelo menos {$param} caracteres."
+                    ? trans('ptah::ui.validation_minlength', ['label' => $label, 'param' => $param])
                     : null,
                 'maxlength'     => mb_strlen((string) $value) > (int) $param
-                    ? "{$label} deve ter no máximo {$param} caracteres."
+                    ? trans('ptah::ui.validation_maxlength', ['label' => $label, 'param' => $param])
                     : null,
                 'between'       => $this->validateBetween($value, $param, $label),
                 'regex'         => $this->validateRegex($value, $param, $label),
-                // digits:N — exatamente N dígitos
+                // digits:N — exactly N digits
                 'digits'        => (! preg_match('/^\d+$/', (string) $value) || strlen((string) $value) !== (int) $param)
-                    ? "{$label} deve ter exatamente {$param} dígito(s)."
+                    ? trans('ptah::ui.validation_digits', ['label' => $label, 'param' => $param])
                     : null,
-                // digitsBetween:N,M — entre N e M dígitos
+                // digitsBetween:N,M — between N and M digits
                 'digitsbetween' => $this->validateDigitsBetween($value, $param, $label),
-                // in:a,b,c — valor deve estar entre as opções
+                // in:a,b,c — value must be among the options
                 'in'            => ! in_array((string) $value, array_map('trim', explode(',', $param)), true)
-                    ? "{$label} deve ser um dos valores: {$param}."
+                    ? trans('ptah::ui.validation_in', ['label' => $label, 'param' => $param])
                     : null,
-                // notIn:a,b,c — valor NÃO deve estar entre as opções
+                // notIn:a,b,c — value must NOT be among the options
                 'notin'         => in_array((string) $value, array_map('trim', explode(',', $param)), true)
-                    ? "{$label} não pode ser: {$param}."
+                    ? trans('ptah::ui.validation_not_in', ['label' => $label, 'param' => $param])
                     : null,
-                // after:YYYY-MM-DD ou after:today
+                // after:YYYY-MM-DD or after:today
                 'after'         => $this->validateDateComparison($value, $param, 'after', $label),
-                // before:YYYY-MM-DD ou before:today
+                // before:YYYY-MM-DD or before:today
                 'before'        => $this->validateDateComparison($value, $param, 'before', $label),
-                // confirmed:fieldName — campos devem ser iguais
+                // confirmed:fieldName — fields must match
                 'confirmed'     => $this->validateConfirmed($value, $param, $formData, $label),
-                // unique:Model,field — verifica unicidade via Eloquent
+                // unique:Model,field — checks uniqueness via Eloquent
                 'unique'        => $this->validateUnique($value, $param, $formData, $label),
-                // dateFormat:d/m/Y — formato de data específico
+                // dateFormat:d/m/Y — specific date format
                 'dateformat'    => $this->validateDateFormat($value, $param, $label),
                 default         => null,
             };
@@ -128,37 +128,37 @@ class FormValidatorService
         // ── Regras simples ───────────────────────────────────────────────────────
         return match (strtolower($rule)) {
             'email'    => ! filter_var($value, FILTER_VALIDATE_EMAIL)
-                ? "{$label} deve ser um e-mail válido."
+                ? trans('ptah::ui.validation_email', ['label' => $label])
                 : null,
             'url'      => ! filter_var($value, FILTER_VALIDATE_URL)
-                ? "{$label} deve ser uma URL válida."
+                ? trans('ptah::ui.validation_url', ['label' => $label])
                 : null,
             'integer'  => ! ctype_digit(ltrim((string) $value, '-'))
-                ? "{$label} deve ser um número inteiro."
+                ? trans('ptah::ui.validation_integer', ['label' => $label])
                 : null,
             'numeric'  => ! is_numeric($value)
-                ? "{$label} deve ser um valor numérico."
+                ? trans('ptah::ui.validation_numeric', ['label' => $label])
                 : null,
-            // alpha — apenas letras (Unicode)
+            // alpha — letters only (Unicode)
             'alpha'    => ! preg_match('/^\p{L}+$/u', (string) $value)
-                ? "{$label} deve conter apenas letras."
+                ? trans('ptah::ui.validation_alpha', ['label' => $label])
                 : null,
-            // alphaNum — letras e números
+            // alphaNum — letters and digits
             'alphanum' => ! preg_match('/^[\p{L}\d]+$/u', (string) $value)
-                ? "{$label} deve conter apenas letras e números."
+                ? trans('ptah::ui.validation_alpha_num', ['label' => $label])
                 : null,
-            // ncm — 8 dígitos (pode vir formatado como 0000.00.00 ou 00000000)
+            // ncm — 8 digits (may be formatted as 0000.00.00 or 00000000)
             'ncm'      => ! preg_match('/^\d{4}\.\d{2}\.\d{2}$|^\d{8}$/', (string) $value)
-                ? "{$label} deve ser um NCM válido (ex: 8471.30.19 ou 84713019)."
+                ? trans('ptah::ui.validation_ncm', ['label' => $label])
                 : null,
             'cpf'      => ! $this->validateCpf((string) $value)
-                ? "{$label} inválido."
+                ? trans('ptah::ui.validation_invalid', ['label' => $label])
                 : null,
             'cnpj'     => ! $this->validateCnpj((string) $value)
-                ? "{$label} inválido."
+                ? trans('ptah::ui.validation_invalid', ['label' => $label])
                 : null,
             'phone'    => ! preg_match('/^\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4}$/', preg_replace('/\D/', '', (string) $value))
-                ? "{$label} deve ser um telefone válido."
+                ? trans('ptah::ui.validation_phone', ['label' => $label])
                 : null,
             default    => null,
         };
@@ -176,7 +176,7 @@ class FormValidatorService
         $num = (float) $value;
 
         if ($num < $min || $num > $max) {
-            return "{$label} deve estar entre {$min} e {$max}.";
+            return trans('ptah::ui.validation_between', ['label' => $label, 'min' => $min, 'max' => $max]);
         }
 
         return null;
@@ -184,13 +184,13 @@ class FormValidatorService
 
     protected function validateRegex(mixed $value, string $pattern, string $label): ?string
     {
-        // Encapsula se não tiver delimitadores
+        // Wraps if there are no delimiters
         if (! preg_match('/^[\/~@#%\|!]/', $pattern)) {
             $pattern = '/' . $pattern . '/';
         }
 
         if (! @preg_match($pattern, (string) $value)) {
-            return "{$label} possui formato inválido.";
+            return trans('ptah::ui.validation_regex', ['label' => $label]);
         }
 
         return null;
@@ -245,7 +245,7 @@ class FormValidatorService
     // ── Helpers para novas regras ────────────────────────────────────────────────
 
     /**
-     * digitsBetween:N,M — verifica se o valor tem entre N e M dígitos.
+     * digitsBetween:N,M — checks whether the value has between N and M digits.
      */
     protected function validateDigitsBetween(mixed $value, string $param, string $label): ?string
     {
@@ -258,13 +258,13 @@ class FormValidatorService
         $len    = strlen($digits);
 
         return ($len < $min || $len > $max)
-            ? "{$label} deve ter entre {$min} e {$max} dígitos."
+            ? trans('ptah::ui.validation_digits_between', ['label' => $label, 'min' => $min, 'max' => $max])
             : null;
     }
 
     /**
-     * after:ref / before:ref — compara data do campo com uma referência.
-     * Referência pode ser "today" ou uma data legível por strtotime().
+     * after:ref / before:ref — compares the field date with a reference.
+     * Reference can be "today" or any date readable by strtotime().
      */
     protected function validateDateComparison(mixed $value, string $ref, string $direction, string $label): ?string
     {
@@ -272,37 +272,37 @@ class FormValidatorService
         $refDate   = strtolower($ref) === 'today' ? strtotime('today') : strtotime($ref);
 
         if ($fieldDate === false || $refDate === false) {
-            return "{$label} possui uma data inválida.";
+            return trans('ptah::ui.validation_date_invalid', ['label' => $label]);
         }
 
         if ($direction === 'after' && $fieldDate <= $refDate) {
-            return "{$label} deve ser uma data posterior a {$ref}.";
+            return trans('ptah::ui.validation_after', ['label' => $label, 'ref' => $ref]);
         }
         if ($direction === 'before' && $fieldDate >= $refDate) {
-            return "{$label} deve ser uma data anterior a {$ref}.";
+            return trans('ptah::ui.validation_before', ['label' => $label, 'ref' => $ref]);
         }
 
         return null;
     }
 
     /**
-     * confirmed:fieldName — verifica se o campo é igual ao campo de confirmação.
+     * confirmed:fieldName — checks whether the field matches the confirmation field.
      */
     protected function validateConfirmed(mixed $value, string $confirmField, array $formData, string $label): ?string
     {
         $confirmValue = $formData[$confirmField] ?? null;
 
         return $value !== $confirmValue
-            ? "{$label} não confere com a confirmação."
+            ? trans('ptah::ui.validation_confirmed', ['label' => $label])
             : null;
     }
 
     /**
-     * unique:Model,column[,ignoreId] — verifica unicidade via Eloquent.
-     * Exemplo: "unique:App\Models\Product,email"
-     *          "unique:Product,email"   (auto-prefixo App\Models\)
+     * unique:Model,column[,ignoreId] — checks uniqueness via Eloquent.
+     * Examples: "unique:App\Models\Product,email"
+     *           "unique:Product,email"   (auto-prefixes App\Models\)
      *
-     * Ignora automaticamente o registro em edição quando $formData['id'] existir.
+     * Automatically ignores the record under edit when $formData['id'] exists.
      */
     protected function validateUnique(mixed $value, string $param, array $formData, string $label): ?string
     {
@@ -310,13 +310,13 @@ class FormValidatorService
         $model  = $parts[0] ?? '';
         $column = $parts[1] ?? 'id';
 
-        // Auto-prefixo se não houver namespace completo
+        // Auto-prefix when there is no full namespace
         if (! str_contains($model, '\\')) {
             $model = "App\\Models\\{$model}";
         }
 
         if (! class_exists($model)) {
-            return null; // modelo não encontrado → ignora silenciosamente
+            return null; // model not found → ignore silently
         }
 
         $ignoreId = $parts[2] ?? ($formData['id'] ?? null);
@@ -327,13 +327,13 @@ class FormValidatorService
         }
 
         return $query->exists()
-            ? "{$label} já está em uso."
+            ? trans('ptah::ui.validation_unique', ['label' => $label])
             : null;
     }
 
     /**
-     * dateFormat:FORMAT — valida se o valor segue o formato de data especificado.
-     * Exemplo: "dateFormat:d/m/Y"
+     * dateFormat:FORMAT — validates whether the value follows the specified date format.
+     * Example: "dateFormat:d/m/Y"
      */
     protected function validateDateFormat(mixed $value, string $format, string $label): ?string
     {
@@ -341,15 +341,15 @@ class FormValidatorService
         $valid = $date && $date->format($format) === (string) $value;
 
         return ! $valid
-            ? "{$label} deve estar no formato {$format}."
+            ? trans('ptah::ui.validation_date_format', ['label' => $label, 'format' => $format])
             : null;
     }
 
-    // ── Utilitários ─────────────────────────────────────────────────────────────
+    // ── Utilities ───────────────────────────────────────────────────────────────
 
     /**
-     * Aceita tanto booleano (true/false) quanto legado string ('S'/'N').
-     * Retorna true para: true, 'S', 1, '1'.
+     * Accepts both boolean (true/false) and legacy string ('S'/'N').
+     * Returns true for: true, 'S', 1, '1'.
      */
     protected function ptahBool(mixed $value): bool
     {

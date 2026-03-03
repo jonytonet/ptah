@@ -18,7 +18,9 @@ class TwoFactorCodeMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Seu código de verificação — ' . config('app.name'));
+        return new Envelope(
+            subject: trans('ptah::ui.mail_two_factor_subject', ['app' => config('app.name')])
+        );
     }
 
     public function content(): Content

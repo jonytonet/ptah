@@ -27,7 +27,7 @@ class CompanyList extends Component
     public bool $isEditing  = false;
     public ?int $editingId  = null;
 
-    // ── Campos do formulário ───────────────────────────────────────────
+    // ── Form fields ─────────────────────────────────────────────────────────
     public string $name       = '';
     public string $label      = '';
     public string $email      = '';
@@ -39,7 +39,7 @@ class CompanyList extends Component
     public array  $address    = [];
     public array  $settings   = [];
 
-    // ── Confirmação de exclusão ────────────────────────────────────────
+    // ── Delete confirmation ────────────────────────────────────────────
     public ?int  $deleteId        = null;
     public bool  $showDeleteModal = false;
 
@@ -65,7 +65,7 @@ class CompanyList extends Component
         ];
     }
 
-    // ── Paginação ──────────────────────────────────────────────────────
+    // ── Pagination ─────────────────────────────────────────────────────
 
     public function updatingSearch(): void
     {
@@ -129,19 +129,19 @@ class CompanyList extends Component
 
             if ($this->isEditing) {
                 Company::findOrFail($this->editingId)->update($data);
-                $this->flash('Empresa atualizada com sucesso!');
+                $this->flash('Company updated successfully!');
             } else {
                 Company::create($data);
-                $this->flash('Empresa criada com sucesso!');
+                $this->flash('Company created successfully!');
             }
 
-            // Invalida cache de companies
+            // Invalidate companies cache
             app(\Ptah\Services\Company\CompanyService::class)->forgetListCache();
 
             $this->showModal = false;
             $this->resetForm();
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao salvar: ' . $e->getMessage();
+            $this->errorMsg = 'Error saving: ' . $e->getMessage();
         }
     }
 
@@ -157,15 +157,15 @@ class CompanyList extends Component
             $company = Company::findOrFail($this->deleteId);
 
             if ($company->is_default) {
-                $this->errorMsg = 'A empresa padrão não pode ser excluída.';
+                $this->errorMsg = 'The default company cannot be deleted.';
                 $this->showDeleteModal = false;
                 return;
             }
 
             $company->delete();
-            $this->flash('Empresa excluída.');
+            $this->flash('Company deleted.');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao excluir: ' . $e->getMessage();
+            $this->errorMsg = 'Error deleting: ' . $e->getMessage();
         }
 
         $this->showDeleteModal = false;

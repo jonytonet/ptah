@@ -20,40 +20,40 @@ class {{ entity }}ApiController extends BaseApiController
     /**
      * @OA\Get(
      *     path="/api/v1/{{ swagger_path }}",
-     *     summary="Retorna lista paginada de {{ entities }}",
+     *     summary="Returns paginated list of {{ entities }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit",      in="query", description="Itens por página",           required=false, @OA\Schema(type="integer", example=15)),
-     *     @OA\Parameter(name="page",       in="query", description="Página",                     required=false, @OA\Schema(type="integer", example=1)),
-     *     @OA\Parameter(name="order",      in="query", description="Coluna de ordenação",       required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="direction",  in="query", description="Direção: ASC ou DESC",       required=false, @OA\Schema(type="string", enum={"ASC","DESC"}, example="DESC")),
-     *     @OA\Parameter(name="fields",     in="query", description="Campos a retornar (csv)",   required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="search",     in="query", description="Busca OR em todos os campos", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="searchLike", in="query", description="Busca incremental (LIKE)",   required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="searchLikeType", in="query", description="AND ou OR para searchLike", required=false, @OA\Schema(type="string", enum={"AND","OR"})),
-     *     @OA\Parameter(name="relations",  in="query", description="Carregar relações (csv)",    required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="whereIn",    in="query", description="Filtro whereIn: col:v1,v2", required=false, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Listagem retornada com sucesso"),
-     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Parameter(name="limit",      in="query", description="Items per page",              required=false, @OA\Schema(type="integer", example=15)),
+     *     @OA\Parameter(name="page",       in="query", description="Page",                        required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="order",      in="query", description="Sort column",                  required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="direction",  in="query", description="Direction: ASC or DESC",        required=false, @OA\Schema(type="string", enum={"ASC","DESC"}, example="DESC")),
+     *     @OA\Parameter(name="fields",     in="query", description="Fields to return (csv)",       required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="search",     in="query", description="OR search across all fields", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="searchLike", in="query", description="Incremental search (LIKE)",    required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="searchLikeType", in="query", description="AND or OR for searchLike", required=false, @OA\Schema(type="string", enum={"AND","OR"})),
+     *     @OA\Parameter(name="relations",  in="query", description="Load relations (csv)",          required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="whereIn",    in="query", description="whereIn filter: col:v1,v2",   required=false, @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Listing returned successfully"),
+     *     @OA\Response(response=401, description="Unauthorized"),
      * )
      */
     public function index(Request $request): JsonResponse
     {
         ${{ entities }} = $this->service->getDados($request);
 
-        return BaseResponse::paginated(${{ entities }}, 'Listagem de {{ entities }} retornada com sucesso');
+        return BaseResponse::paginated(${{ entities }}, '{{ entities }} listing returned successfully');
     }
 
     /**
      * @OA\Post(
      *     path="/api/v1/{{ swagger_path }}",
-     *     summary="Cria um novo {{ entity }}",
+     *     summary="Creates a new {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Create{{ entity }}Request")),
-     *     @OA\Response(response=201, description="{{ entity }} criado com sucesso"),
-     *     @OA\Response(response=422, description="Erro de validação"),
-     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Response(response=201, description="{{ entity }} created successfully"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized"),
      * )
      */
     public function store(Create{{ entity }}ApiRequest $request): JsonResponse
@@ -62,20 +62,20 @@ class {{ entity }}ApiController extends BaseApiController
 
         return BaseResponse::created(
             new {{ entity }}Resource(${{ entity_lower }}),
-            '{{ entity }} criado com sucesso'
+            '{{ entity }} created successfully'
         );
     }
 
     /**
      * @OA\Get(
      *     path="/api/v1/{{ swagger_path }}/{id}",
-     *     summary="Retorna um {{ entity }} pelo ID",
+     *     summary="Returns a {{ entity }} by ID",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do {{ entity }}", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="{{ entity }} retornado com sucesso"),
-     *     @OA\Response(response=404, description="{{ entity }} não encontrado"),
-     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="{{ entity }} returned successfully"),
+     *     @OA\Response(response=404, description="{{ entity }} not found"),
+     *     @OA\Response(response=401, description="Unauthorized"),
      * )
      */
     public function show(int|string $id): JsonResponse
@@ -83,24 +83,24 @@ class {{ entity }}ApiController extends BaseApiController
         ${{ entity_lower }} = $this->service->find($id);
 
         if (! ${{ entity_lower }}) {
-            return BaseResponse::notFound('{{ entity }} não encontrado');
+            return BaseResponse::notFound('{{ entity }} not found');
         }
 
-        return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} retornado com sucesso');
+        return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} returned successfully');
     }
 
     /**
      * @OA\Put(
      *     path="/api/v1/{{ swagger_path }}/{id}",
-     *     summary="Atualiza um {{ entity }} existente",
+     *     summary="Updates an existing {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do {{ entity }}", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Update{{ entity }}Request")),
-     *     @OA\Response(response=200, description="{{ entity }} atualizado com sucesso"),
-     *     @OA\Response(response=404, description="{{ entity }} não encontrado"),
-     *     @OA\Response(response=422, description="Erro de validação"),
-     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Response(response=200, description="{{ entity }} updated successfully"),
+     *     @OA\Response(response=404, description="{{ entity }} not found"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized"),
      * )
      */
     public function update(Update{{ entity }}ApiRequest $request, int|string $id): JsonResponse
@@ -108,24 +108,24 @@ class {{ entity }}ApiController extends BaseApiController
         ${{ entity_lower }} = $this->service->find($id);
 
         if (! ${{ entity_lower }}) {
-            return BaseResponse::notFound('{{ entity }} não encontrado');
+            return BaseResponse::notFound('{{ entity }} not found');
         }
 
         ${{ entity_lower }} = $this->service->update($id, $request->validated());
 
-        return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} atualizado com sucesso');
+        return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} updated successfully');
     }
 
     /**
      * @OA\Delete(
      *     path="/api/v1/{{ swagger_path }}/{id}",
-     *     summary="Remove um {{ entity }}",
+     *     summary="Removes a {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do {{ entity }}", @OA\Schema(type="integer")),
-     *     @OA\Response(response=204, description="{{ entity }} removido com sucesso"),
-     *     @OA\Response(response=404, description="{{ entity }} não encontrado"),
-     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
+     *     @OA\Response(response=204, description="{{ entity }} removed successfully"),
+     *     @OA\Response(response=404, description="{{ entity }} not found"),
+     *     @OA\Response(response=401, description="Unauthorized"),
      * )
      */
     public function destroy(int|string $id): JsonResponse
@@ -133,10 +133,10 @@ class {{ entity }}ApiController extends BaseApiController
         $deleted = $this->service->destroy($id);
 
         if (! $deleted) {
-            return BaseResponse::notFound('{{ entity }} não encontrado');
+            return BaseResponse::notFound('{{ entity }} not found');
         }
 
-        return BaseResponse::noContent('{{ entity }} removido com sucesso');
+        return BaseResponse::noContent('{{ entity }} removed successfully');
     }
 }
 

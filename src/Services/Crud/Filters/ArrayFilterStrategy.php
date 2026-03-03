@@ -9,9 +9,9 @@ use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Estratégia de filtro para campos de array (whereIn / whereNotIn).
+ * Filter strategy for array fields (whereIn / whereNotIn).
  *
- * Aceita arrays diretos ou strings separadas por vírgula.
+ * Accepts direct arrays or comma-separated strings.
  */
 class ArrayFilterStrategy implements FilterStrategyInterface
 {
@@ -23,7 +23,7 @@ class ArrayFilterStrategy implements FilterStrategyInterface
             return null;
         }
 
-        // Normaliza string CSV para array
+        // Normalise CSV string into array
         if (is_string($value)) {
             $value = array_map('trim', explode(',', $value));
             $value = array_filter($value, fn($v) => $v !== '');
@@ -32,7 +32,7 @@ class ArrayFilterStrategy implements FilterStrategyInterface
                 return null;
             }
 
-            // Retorna um novo DTO com value corrigido
+            // Returns a new DTO with the corrected value
             return new FilterDTO(
                 field:    $filter->field,
                 value:    array_values($value),

@@ -84,15 +84,15 @@ class DepartmentList extends Component
 
             if ($this->isEditing) {
                 Department::findOrFail($this->editingId)->update($data);
-                $this->successMsg = 'Departamento atualizado.';
+                $this->successMsg = 'Department updated.';
             } else {
                 Department::create($data);
-                $this->successMsg = 'Departamento criado.';
+                $this->successMsg = 'Department created.';
             }
 
             $this->showModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Error: ' . $e->getMessage();
         }
     }
 
@@ -106,9 +106,9 @@ class DepartmentList extends Component
     {
         try {
             Department::findOrFail($this->deleteId)->delete();
-            $this->successMsg = 'Departamento excluído.';
+            $this->successMsg = 'Department deleted.';
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Error: ' . $e->getMessage();
         }
 
         $this->showDeleteModal = false;

@@ -32,7 +32,7 @@ class RoleList extends Component
     public string $sort      = 'name';
     public string $direction = 'asc';
 
-    // ── Modal de criação/edição ────────────────────────────────────────
+    // ── Create/edit modal ─────────────────────────────────────────────
     public bool  $showModal  = false;
     public bool  $isEditing  = false;
     public ?int  $editingId  = null;
@@ -43,7 +43,7 @@ class RoleList extends Component
     public bool  $is_master     = false;
     public bool  $is_active     = true;
 
-    // ── Modal de bind de permissões ────────────────────────────────────
+    // ── Permission bind modal ─────────────────────────────────────────
     public bool  $showBindModal  = false;
     public ?int  $bindingRoleId  = null;
     public string $bindingRoleName = '';
@@ -51,7 +51,7 @@ class RoleList extends Component
     public array $bindObjects     = [];
     public int   $bindFilterPageId = 0;
 
-    // ── Confirmação de exclusão ────────────────────────────────────────
+    // ── Delete confirmation ────────────────────────────────────────────
     public ?int  $deleteId        = null;
     public bool  $showDeleteModal = false;
 
@@ -119,21 +119,21 @@ class RoleList extends Component
             if ($this->isEditing) {
                 $role = Role::findOrFail($this->editingId);
                 $this->roleService->update($role, $data);
-                $this->successMsg = 'Role atualizado.';
+                $this->successMsg = 'Role updated.';
             } else {
                 $this->roleService->create($data);
-                $this->successMsg = 'Role criado.';
+                $this->successMsg = 'Role created.';
             }
 
             $this->showModal = false;
         } catch (ValidationException $e) {
-            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Erro de validação.';
+            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Validation error.';
         } catch (\Throwable $e) {
             $this->errorMsg = 'Erro: ' . $e->getMessage();
         }
     }
 
-    // ── Modal de Bind de Permissões ────────────────────────────────────
+    // ── Permission Bind Modal ──────────────────────────────────────────────────────
 
     public function openBind(int $roleId): void
     {
@@ -142,7 +142,7 @@ class RoleList extends Component
         $this->bindingRoleId   = $roleId;
         $this->bindingRoleName = $role->name;
 
-        // Monta lista de todos os objetos com as permissões existentes do role
+        // Build list of all objects with existing permissions of the role
         $existingMap = $role->permissions
             ->keyBy('page_object_id')
             ->map(fn (RolePermission $rp) => $rp->toCrudArray());
@@ -193,14 +193,14 @@ class RoleList extends Component
 
         try {
             $this->roleService->syncPageBindings($role, $bindings);
-            $this->successMsg    = "Permissões de '{$role->name}' atualizadas.";
+            $this->successMsg    = "Permissions for '{$role->name}' updated.";
             $this->showBindModal = false;
         } catch (\Throwable $e) {
             $this->errorMsg = 'Erro: ' . $e->getMessage();
         }
     }
 
-    // ── Exclusão ───────────────────────────────────────────────────────
+    // ── Deletion ───────────────────────────────────────────────────────
 
     public function confirmDelete(int $id): void
     {
@@ -213,9 +213,9 @@ class RoleList extends Component
         try {
             $role = Role::findOrFail($this->deleteId);
             $this->roleService->delete($role);
-            $this->successMsg = 'Role excluído.';
+            $this->successMsg = 'Role deleted.';
         } catch (ValidationException $e) {
-            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Erro.';
+            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Error.';
         } catch (\Throwable $e) {
             $this->errorMsg = 'Erro: ' . $e->getMessage();
         }

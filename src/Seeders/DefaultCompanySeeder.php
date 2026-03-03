@@ -9,9 +9,9 @@ use Illuminate\Support\Str;
 use Ptah\Models\Company;
 
 /**
- * Cria a empresa padrão do sistema, se ainda não existir.
+ * Creates the system default company if it does not yet exist.
  *
- * Idempotente: seguro para rodar múltiplas vezes.
+ * Idempotent: safe to run multiple times.
  */
 class DefaultCompanySeeder extends Seeder
 {
@@ -24,7 +24,7 @@ class DefaultCompanySeeder extends Seeder
             ->first();
 
         if (!$company) {
-            // Gera label automático: primeiras 4 letras do nome em maiúsculo
+            // Auto-generate label: first 4 uppercase letters of the name
             $autoLabel = strtoupper(Str::substr(Str::ascii($name), 0, 4));
 
             Company::create([
@@ -36,11 +36,11 @@ class DefaultCompanySeeder extends Seeder
             ]);
 
             $this->command?->getOutput()?->writeln(
-                "  <info>✔</info> Empresa padrão criada: <comment>{$name}</comment>"
+                "  <info>✔</info> Default company created: <comment>{$name}</comment>"
             );
         } else {
             $this->command?->getOutput()?->writeln(
-                "  <comment>→</comment> Empresa padrão já existe: <comment>{$company->name}</comment>"
+                "  <comment>→</comment> Default company already exists: <comment>{$company->name}</comment>"
             );
         }
     }

@@ -25,7 +25,7 @@ class PageObject extends Model
     use HasAuditFields;
     protected $table = 'ptah_page_objects';
 
-    /** Tipos de objeto disponíveis */
+    /** Available object types */
     public const TYPES = ['page', 'button', 'field', 'link', 'section', 'api', 'report', 'tab'];
 
     protected $fillable = [

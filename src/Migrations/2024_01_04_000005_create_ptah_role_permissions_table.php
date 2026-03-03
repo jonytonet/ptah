@@ -18,13 +18,13 @@ return new class extends Migration
             $table->foreignId('page_object_id')
                   ->constrained('ptah_page_objects')
                   ->cascadeOnDelete();
-            // Flags CRUD individuais — granularidade total
+            // Individual CRUD flags — full granularity
             $table->boolean('can_create')->default(false);
             $table->boolean('can_read')->default(true);
             $table->boolean('can_update')->default(false);
             $table->boolean('can_delete')->default(false);
-            // Metadados adicionais: útil para sistemas que precisam de condições extras
-            // ex: { "own_only": true, "max_rows": 100 }
+            // Additional metadata: useful for systems that require extra conditions
+            // e.g. { "own_only": true, "max_rows": 100 }
             $table->json('extra')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();

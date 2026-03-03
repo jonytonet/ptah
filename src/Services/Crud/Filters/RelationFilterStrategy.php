@@ -9,15 +9,15 @@ use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Estratégia de filtro para campos de relacionamento Eloquent.
+ * Filter strategy for Eloquent relationship fields.
  *
- * Suporta whereHas com busca textual, numérica e agregados (SUM/COUNT/AVG/MAX/MIN).
+ * Supports whereHas with textual, numeric, and aggregate searches (SUM/COUNT/AVG/MAX/MIN).
  *
- * Configuração via FilterDTO::options:
- *   'whereHas'       => 'supplier'                    (nome da relação)
- *   'column'         => 'name'                        (coluna dentro da relação)
- *   'aggregate'      => 'count'                       (opcional — 'sum'|'count'|'avg'|'max'|'min')
- *   'aggregateColumn'=> 'amount'                      (coluna para o agregado)
+ * Configuration via FilterDTO::options:
+ *   'whereHas'       => 'supplier'                    (relationship name)
+ *   'column'         => 'name'                        (column within the relationship)
+ *   'aggregate'      => 'count'                       (optional — 'sum'|'count'|'avg'|'max'|'min')
+ *   'aggregateColumn'=> 'amount'                      (column for the aggregate)
  */
 class RelationFilterStrategy implements FilterStrategyInterface
 {
@@ -32,9 +32,9 @@ class RelationFilterStrategy implements FilterStrategyInterface
             return null;
         }
 
-        // Se value é array de options (colunas select), tenta extrair valor real
+        // If value is an options array (select columns), try to extract the real value
         if (is_array($value) && isset($value[0]['value'])) {
-            return null; // Estrutura inválida — ignorar
+            return null; // Invalid structure — ignore
         }
 
         return $filter;
@@ -56,7 +56,7 @@ class RelationFilterStrategy implements FilterStrategyInterface
         $aggregate = strtolower($options['aggregate'] ?? '');
         $aggColumn = $options['aggregateColumn'] ?? $column;
 
-        // Validação do operador
+        // Operator validation
         if (! in_array(strtoupper($operator), self::ALLOWED_OPERATORS, true)) {
             $operator = '=';
         }
@@ -66,18 +66,18 @@ class RelationFilterStrategy implements FilterStrategyInterface
             return $query->where($normalized->field, $operator, $value);
         }
 
-        // Filtro com agregado (COUNT > 0, SUM >= 100, etc.)
+        // Aggregate filter (COUNT > 0, SUM >= 100, etc.)
         if ($aggregate && in_array($aggregate, self::ALLOWED_AGGREGATES, true)) {
             return $this->applyAggregateFilter($query, $whereHas, $aggColumn, $aggregate, $operator, $value);
         }
 
-        // whereHas padrão
+        // Standard whereHas
         return $query->whereHas($whereHas, function (Builder $q) use ($column, $operator, $value) {
             if (! $column) {
                 return;
             }
 
-            // Garante que value seja scalar
+            // Ensure value is scalar
             if (is_array($value)) {
                 $value = $value[0] ?? '';
             }

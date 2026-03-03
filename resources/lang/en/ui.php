@@ -77,6 +77,9 @@ return [
     'date_last_month' => 'Last month',
     'date_quarter'    => 'Quarter',
     'date_year'       => 'This year',
+    'filter_period_label'   => 'Period',
+    'date_range_from_label' => 'from',
+    'date_range_to_label'   => 'to',
 
     /*
     |--------------------------------------------------------------------------
@@ -138,8 +141,20 @@ return [
     | Boolean select options (CrudConfig)
     |--------------------------------------------------------------------------
     */
-    'bool_yes' => 'Yes',
-    'bool_no'  => 'No',
+    'bool_yes'    => 'Yes',
+    'bool_no'     => 'No',
+    'flag_green'  => 'Green',
+    'flag_yellow' => 'Yellow',
+    'flag_red'    => 'Red',
+
+    /*
+    |--------------------------------------------------------------------------
+    | CRUD runtime messages
+    |--------------------------------------------------------------------------
+    */
+    'crud_load_error'  => 'Failed to load data. Preferences reset.',
+    'export_processing'=> 'Processing... you will receive a notification.',
+    'crud_save_error'  => 'Error saving: :message',
 
     /*
     |--------------------------------------------------------------------------
@@ -183,5 +198,60 @@ return [
     */
     'two_fa_code_invalid' => 'Invalid or expired code.',
     'two_fa_email_sent'   => 'Code sent to :email',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mail
+    |--------------------------------------------------------------------------
+    */
+    'mail_two_factor_subject' => 'Your verification code — :app',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation messages (FormValidatorService)
+    |--------------------------------------------------------------------------
+    */
+    'validation_required'       => ':label is required.',
+    'validation_min'            => ':label must be at least :param.',
+    'validation_max'            => ':label must be at most :param.',
+    'validation_minlength'      => ':label must be at least :param characters.',
+    'validation_maxlength'      => ':label must be at most :param characters.',
+    'validation_between'        => ':label must be between :min and :max.',
+    'validation_digits'         => ':label must have exactly :param digit(s).',
+    'validation_digits_between' => ':label must have between :min and :max digits.',
+    'validation_in'             => ':label must be one of: :param.',
+    'validation_not_in'         => ':label must not be: :param.',
+    'validation_email'          => ':label must be a valid e-mail.',
+    'validation_url'            => ':label must be a valid URL.',
+    'validation_integer'        => ':label must be an integer.',
+    'validation_numeric'        => ':label must be a numeric value.',
+    'validation_alpha'          => ':label must contain only letters.',
+    'validation_alpha_num'      => ':label must contain only letters and numbers.',
+    'validation_ncm'            => ':label must be a valid NCM (e.g. 8471.30.19 or 84713019).',
+    'validation_invalid'        => ':label is invalid.',
+    'validation_phone'          => ':label must be a valid phone number.',
+    'validation_regex'          => ':label has an invalid format.',
+    'validation_date_invalid'   => ':label has an invalid date.',
+    'validation_after'          => ':label must be a date after :ref.',
+    'validation_before'         => ':label must be a date before :ref.',
+    'validation_confirmed'      => ':label does not match the confirmation.',
+    'validation_unique'         => ':label is already in use.',
+    'validation_date_format'    => ':label must be in the format :format.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role validation (RoleService)
+    |--------------------------------------------------------------------------
+    */
+    'role_master_cannot_deactivate' => 'The MASTER role cannot be deactivated.',
+    'role_master_cannot_delete'     => 'The MASTER role cannot be deleted.',
+    'role_master_already_exists'    => 'A MASTER role already exists. Only one MASTER role is allowed.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | General
+    |--------------------------------------------------------------------------
+    */
+    'unknown' => 'Unknown',
 
 ];

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * Associação user × role × empresa. Sem FK para users/companies do host.
+ * user × role × company association. No FK to host users/companies.
  *
  * @property int      $id
  * @property int      $user_id
@@ -62,7 +62,7 @@ class UserRole extends Model
             return $query->whereNull('company_id');
         }
 
-        // Retorna registros da empresa específica OU registros globais (sem empresa)
+            // Returns records for the specific company OR global records (without a company)
         return $query->where(function (Builder $q) use ($companyId) {
             $q->where('company_id', $companyId)
               ->orWhereNull('company_id');

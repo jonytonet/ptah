@@ -10,7 +10,7 @@ use Livewire\Component;
 #[Layout('ptah::layouts.forge-dashboard')]
 class PermissionGuide extends Component
 {
-    /** Aba ativa da documentação */
+    /** Active documentation tab */
     public string $activeTab = 'overview';
 
     public function render()

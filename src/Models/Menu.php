@@ -72,8 +72,8 @@ class Menu extends Model
     // ── Tree Builder ───────────────────────────────────────────────────
 
     /**
-     * Retorna a árvore de menus pré-processada para a sidebar.
-     * Formato compatível com forge-sidebar e o exemplo do erp-system/Menu.php.
+     * Returns the pre-processed menu tree for the sidebar.
+     * Format compatible with forge-sidebar and the erp-system/Menu.php example.
      */
     public static function getTreeForSidebar(): array
     {
@@ -88,7 +88,7 @@ class Menu extends Model
     }
 
     /**
-     * Invalida o cache do menu (chamar após salvar/deletar itens).
+     * Invalidates the menu cache (call after saving/deleting items).
      */
     public static function clearCache(): void
     {
@@ -96,7 +96,7 @@ class Menu extends Model
     }
 
     /**
-     * Constrói a estrutura hierárquica recursivamente até max_depth.
+     * Builds the hierarchical structure recursively up to max_depth.
      */
     private static function buildTree(): array
     {
@@ -116,9 +116,9 @@ class Menu extends Model
 
         return array_map(function (array $item) use ($all, $maxDepth, $depth) {
             $item['children'] = static::nestItems($all, $item['id'], $maxDepth, $depth + 1);
-            // Compatibilidade com o padrão do erp-system (label/icon string)
+            // Compatibility with the erp-system pattern (label/icon string)
             $item['label'] = $item['text'];
-            // Usa o path exato sem wildcard — a sidebar testa exato + subrotas (url/*)
+            // Uses the exact path without wildcard — the sidebar tests exact + sub-routes (url/*)
             $item['match'] = $item['url'] ? ltrim(rtrim($item['url'], '/'), '/') : null;
             return $item;
         }, array_values($items));

@@ -14,16 +14,16 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->unsignedBigInteger('company_id')->nullable();
-            // obj_key salvo como string (não FK) para preservar histórico mesmo
-            // se o objeto for excluído futuramente
+            // obj_key saved as string (not FK) to preserve history even
+            // if the object is deleted in the future
             $table->string('resource_key')->nullable();
             $table->string('action', 20); // create|read|update|delete
             $table->enum('result', ['granted', 'denied'])->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
-            // Contexto extra: request URI, method, etc.
+            // Extra context: request URI, method, etc.
             $table->json('context')->nullable();
-            // Apenas created_at — sem updated_at (log imutável)
+            // Only created_at — no updated_at (immutable log)
             $table->timestamp('created_at')->useCurrent()->index();
 
             $table->index(['user_id', 'created_at']);

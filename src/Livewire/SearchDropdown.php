@@ -10,25 +10,25 @@ use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
 
 /**
- * Componente Livewire SearchDropdown.
+ * Livewire SearchDropdown component.
  *
- * Dropdown de busca dinâmica com suporte a:
- *  - Busca em modelo direto ou via serviço personalizado
- *  - Múltiplos campos de exibição (label, labelSecondary, labelLast)
- *  - Filtros adicionais na query (dataFilter)
- *  - Máscaras de formatação por campo (formatValue)
- *  - Evento de seleção configurável via $listens
+ * Dynamic search dropdown with support for:
+ *  - Direct-model search or via custom service
+ *  - Multiple display fields (label, labelSecondary, labelLast)
+ *  - Additional query filters (dataFilter)
+ *  - Per-field format masks (formatValue)
+ *  - Configurable selection event via $listens
  *
- * Livewire 3 — usa dispatch() e #[On(...)].
+ * Livewire 3 — uses dispatch() and #[On(...)].
  *
- * Uso básico:
+ * Basic usage:
  *   @livewire('ptah-search-dropdown', [
  *       'model'  => 'Product',
  *       'label'  => 'name',
  *       'listens' => 'onProductSelected',
  *   ])
  *
- * Uso com serviço:
+ * With a service:
  *   @livewire('ptah-search-dropdown', [
  *       'model'      => 'Product',
  *       'label'      => 'name',
@@ -37,57 +37,57 @@ use Ptah\DTO\SearchDropdownDTO;
  */
 class SearchDropdown extends Component
 {
-    // ── Dados ──────────────────────────────────────────────────────────────
+    // ── Data ───────────────────────────────────────────────────────────────
 
-    /** Resultados da busca */
+    /** Search results */
     public array $dataModel = [];
 
-    // ── Configuração de campos ─────────────────────────────────────────────
+    // ── Field configuration ─────────────────────────────────────────────────
 
-    /** Coluna cujo valor será retornado no evento (geralmente "id") */
+    /** Column whose value is returned in the event (usually "id") */
     public string $value = 'id';
 
-    /** Coluna exibida como label principal */
+    /** Column displayed as the main label */
     public string $label = 'name';
 
-    /** Coluna exibida como label secundário (opcional) */
+    /** Column displayed as secondary label (optional) */
     public ?string $labelSecondary = null;
 
-    /** Coluna exibida como terceiro label (opcional) */
+    /** Column displayed as third label (optional) */
     public ?string $labelLast = null;
 
-    /** Colunas extras incluídas no LIKE de busca */
+    /** Extra columns included in the LIKE search */
     public array $arraySearch = [];
 
-    // ── Configuração do modelo / serviço ───────────────────────────────────
+    // ── Model / service configuration ───────────────────────────────────────
 
     /**
-     * Nome do modelo para busca.
-     * Suporta subdiretórios: "Product", "Purchase/Order".
+     * Model name for searching.
+     * Supports sub-directories: "Product", "Purchase/Order".
      */
     public string $model = '';
 
-    /** Classe FQCN resolvida do modelo */
+    /** Resolved model FQCN class */
     public string $modelClass = '';
 
-    /** Classe FQCN resolvida do serviço */
+    /** Resolved service FQCN class */
     public string $serviceClass = '';
 
     /**
-     * Nome do método do serviço a ser chamado para busca.
-     * Quando preenchido, usa $serviceClass->{$useService}(SearchDropdownDTO).
+     * Service method name to be called for searching.
+     * When set, uses $serviceClass->{$useService}(SearchDropdownDTO).
      */
     public ?string $useService = null;
 
-    // ── Busca e filtros ────────────────────────────────────────────────────
+    // ── Search and filters ─────────────────────────────────────────────────
 
-    /** Termo digitado pelo usuário */
+    /** Term typed by the user */
     public ?string $searchTerm = null;
 
-    /** Filtros WHERE adicionais: [['col', 'op', 'val'], ...] ou ['col' => 'val'] */
+    /** Additional WHERE filters: [['col', 'op', 'val'], ...] or ['col' => 'val'] */
     public array $dataFilter = [];
 
-    /** Limite de resultados */
+    /** Result limit */
     public int $limit = 10;
 
     /** ORDER BY raw */
@@ -95,47 +95,47 @@ class SearchDropdown extends Component
 
     // ── UI ─────────────────────────────────────────────────────────────────
 
-    /** Chave única do componente (para wire:key) */
+    /** Unique component key (for wire:key) */
     public string $key = '';
 
-    /** Placeholder do input */
-    public string $placeholder = 'Selecione';
+    /** Input placeholder */
+    public string $placeholder = 'Select';
 
-    /** Posição inicial da lista: "top" ou "bottom" */
+    /** Initial list position: "top" or "bottom" */
     public string $startList = 'bottom';
 
-    /** Se true, carrega dados mesmo sem termo de busca. */
+    /** If true, loads data even without a search term. */
     public bool $initWithData = true;
 
-    /** Controla visibilidade do dropdown */
+    /** Controls dropdown visibility */
     public bool $show = false;
 
-    // ── Evento ────────────────────────────────────────────────────────────
+    // ── Event ─────────────────────────────────────────────────────────────
 
-    /** Nome do evento Livewire 3 disparado ao selecionar um item */
+    /** Livewire 3 event name fired when an item is selected */
     public string $listens = 'searchDropdownResult';
 
-    /** Valor extra passado no payload do evento */
+    /** Extra value passed in the event payload */
     public string $coringa = '';
 
-    // ── Máscaras de formatação ─────────────────────────────────────────────
+    // ── Format masks ───────────────────────────────────────────────────────
 
     /**
-     * Máscaras de formatação por slot.
-     * Cada máscara pode ser:
-     *   - "defaultMask"         → exibe o valor sem transformação
-     *   - "cnpj"                → formata como CNPJ
-     *   - "cpf"                 → formata como CPF
+     * Format masks per slot.
+     * Each mask can be:
+     *   - "defaultMask"         → displays the value without transformation
+     *   - "cnpj"                → formats as CNPJ
+     *   - "cpf"                 → formats as CPF
      *   - "money"               → R$ 1.234,56
      *   - "phone"               → (11) 9 9999-9999
      *   - "date"                → dd/mm/yyyy
-     *   - nome de método público do componente filho
+     *   - name of a public method of the child component
      */
     public string $maskLabel     = 'defaultMask';
     public string $maskSecondary = 'defaultMask';
     public string $maskLast      = 'defaultMask';
 
-    // ── Inicialização ──────────────────────────────────────────────────────
+    // ── Initialisation ─────────────────────────────────────────────────────
 
     public function mount(): void
     {
@@ -153,11 +153,7 @@ class SearchDropdown extends Component
         return view('ptah::livewire.search-dropdown', compact('data'));
     }
 
-    // ── Dados ──────────────────────────────────────────────────────────────
-
-    /**
-     * Carrega os dados via serviço ou modelo.
-     */
+    // ── Data ───────────────────────────────────────────────────────────────
     private function loadData(): void
     {
         if ($this->useService) {
@@ -168,8 +164,8 @@ class SearchDropdown extends Component
     }
 
     /**
-     * Busca usando um serviço personalizado.
-     * O serviço deve aceitar um SearchDropdownDTO como argumento.
+     * Searches using a custom service.
+     * The service must accept a SearchDropdownDTO as argument.
      */
     private function loadDataViaService(): void
     {
@@ -189,11 +185,11 @@ class SearchDropdown extends Component
     }
 
     /**
-     * Busca diretamente no modelo Eloquent.
+     * Queries directly from the Eloquent model.
      */
     private function loadDataViaModel(): void
     {
-        // Se já temos um termo, garante que initWithData fique ativo
+        // If we already have a term, ensure initWithData stays active
         if (strlen((string) $this->searchTerm) > 1) {
             $this->initWithData = true;
         }
@@ -203,7 +199,7 @@ class SearchDropdown extends Component
         /** @var \Illuminate\Database\Eloquent\Model $query */
         $query = app()->make($this->modelClass)->select(array_values($cols));
 
-        // Aplica LIKE nos campos configurados
+        // Apply LIKE on the configured fields
         if (!empty($this->searchTerm)) {
             $searchCols = array_merge(
                 array_filter([$this->label, $this->labelSecondary, $this->labelLast, $this->value]),
@@ -217,7 +213,7 @@ class SearchDropdown extends Component
             });
         }
 
-        // Filtros adicionais
+        // Additional filters
         if (!empty($this->dataFilter)) {
             $query->where($this->dataFilter);
         }
@@ -229,32 +225,32 @@ class SearchDropdown extends Component
             ->toArray();
     }
 
-    // ── Eventos UI ─────────────────────────────────────────────────────────
+    // ── UI events ────────────────────────────────────────────────────────────
 
-    /** Abre/fecha o dropdown */
+    /** Opens/closes the dropdown */
     public function toggleShow(): void
     {
         $this->show = !$this->show;
     }
 
-    /** Recebe evento externo para fechar/abrir */
+    /** Receives external event to close/open */
     #[On('changeShow')]
     public function changeShow(): void
     {
         $this->toggleShow();
     }
 
-    /** Limpa o termo de busca via evento externo */
+    /** Clears the search term via external event */
     #[On('clearSearchDropdown')]
     public function clearSearchDropdown(): void
     {
         $this->searchTerm = '';
     }
 
-    // ── Seleção ────────────────────────────────────────────────────────────
+    // ── Selection ────────────────────────────────────────────────────────────
 
     /**
-     * Processa a seleção de um item e dispara o evento configurado.
+     * Processes the selection of an item and fires the configured event.
      */
     public function selectedItem(array $item): void
     {
@@ -272,7 +268,7 @@ class SearchDropdown extends Component
     }
 
     /**
-     * Limpa a seleção e dispara o evento com valores vazios.
+     * Clears the selection and fires the event with empty values.
      */
     public function clearData(): void
     {
@@ -288,13 +284,13 @@ class SearchDropdown extends Component
         $this->show       = false;
     }
 
-    // ── Formatação ─────────────────────────────────────────────────────────
+    // ── Formatting ────────────────────────────────────────────────────────────
 
     /**
-     * Aplica uma máscara de formatação a um valor.
+     * Applies a format mask to a value.
      *
-     * Máscaras suportadas:
-     *   defaultMask → sem transformação
+     * Supported masks:
+     *   defaultMask → no transformation
      *   cnpj        → 00.000.000/0000-00
      *   cpf         → 000.000.000-00
      *   money       → R$ 1.234,56
@@ -319,11 +315,11 @@ class SearchDropdown extends Component
         };
     }
 
-    // ── Helpers internos ───────────────────────────────────────────────────
+    // ── Internal helpers ───────────────────────────────────────────────────────────
 
     /**
-     * Resolve as classes FQCN do modelo e serviço com base em $model.
-     * Suporta subdiretórios separados por "/": "Purchase/Order" → App\Models\Purchase\Order.
+     * Resolves the model and service FQCN classes based on $model.
+     * Supports sub-directories separated by "/": "Purchase/Order" → App\Models\Purchase\Order.
      */
     protected function resolveModelClass(): void
     {

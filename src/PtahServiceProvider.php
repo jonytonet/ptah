@@ -70,11 +70,11 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(TwoFactorService::class);
         $this->app->singleton(SessionService::class);
 
-        // Módulo company
+        // Company module
         $this->app->singleton(CompanyService::class);
         $this->app->bind(CompanyServiceContract::class, CompanyService::class);
 
-        // Módulo permissions
+        // Permissions module
         $this->app->singleton(PermissionService::class);
         $this->app->singleton(RoleService::class);
         $this->app->bind(PermissionServiceContract::class, PermissionService::class);
@@ -93,7 +93,7 @@ class PtahServiceProvider extends ServiceProvider
             $this->app->setLocale(config('ptah.locale', 'en'));
         }
 
-        // Carrega as translations do pacote com namespace 'ptah'
+        // Loads package translations with namespace 'ptah'
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'ptah');
 
         $this->registerCommands();
@@ -105,8 +105,8 @@ class PtahServiceProvider extends ServiceProvider
         $this->loadMigrations();
         $this->registerLivewire();
 
-        // Informa o middleware Authenticate do Laravel onde redirecionar
-        // usuários não autenticados quando o módulo auth do Ptah está ativo.
+        // Informs Laravel's Authenticate middleware where to redirect
+        // unauthenticated users when the Ptah auth module is active.
         if (config('ptah.modules.auth')) {
             Authenticate::redirectUsing(function ($request) {
                 if (! $request->expectsJson()) {
@@ -117,7 +117,7 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra os comandos Artisan do pacote.
+     * Registers the package's Artisan commands.
      */
     protected function registerCommands(): void
     {
@@ -133,7 +133,7 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra diretivas Blade do Ptah.
+     * Registers Ptah Blade directives.
      */
     protected function registerBladeDirectives(): void
     {
@@ -147,7 +147,7 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra alias de middleware do pacote.
+     * Registers the package middleware alias.
      */
     protected function registerMiddleware(): void
     {
@@ -157,70 +157,70 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra as views e componentes Blade do Ptah Forge.
+     * Registers Ptah Forge views and Blade components.
      */
     protected function registerViews(): void
     {
         $viewsPath = __DIR__ . '/../resources/views';
 
-        // Carrega as views com namespace 'ptah'
+        // Loads views with namespace 'ptah'
         $this->loadViewsFrom($viewsPath, 'ptah');
 
-        // Registra os componentes Blade forge-* sem prefixo adicional:
+        // Registers anonymous Blade components forge-* without additional prefix:
         // forge-button.blade.php  → <x-forge-button>
         // forge-breadcrumb.blade.php → <x-forge-breadcrumb>
         Blade::anonymousComponentPath($viewsPath . '/components');
     }
 
     /**
-     * Registra os arquivos publicáveis via vendor:publish.
+     * Registers publishable files via vendor:publish.
      */
     protected function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
-            // Publicar stubs
+            // Publish stubs
             $this->publishes([
                 __DIR__ . '/Stubs' => base_path('stubs/ptah'),
             ], 'ptah-stubs');
 
-            // Publicar configuração
+            // Publish configuration
             $this->publishes([
                 __DIR__ . '/../config/ptah.php' => config_path('ptah.php'),
             ], 'ptah-config');
 
-            // Publicar migrations
+            // Publish migrations
             $this->publishes([
                 __DIR__ . '/Migrations' => database_path('migrations'),
             ], 'ptah-migrations');
 
-            // Publicar views/componentes Forge (permite customização local)
+            // Publish Forge views/components (allows local customisation)
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/ptah'),
             ], 'ptah-views');
 
-            // Publicar assets CSS do Forge
+            // Publish Forge CSS assets
             $this->publishes([
                 __DIR__ . '/../resources/css' => resource_path('css/vendor/ptah'),
             ], 'ptah-assets');
 
-            // Publicar translations (permite customização por projeto)
+            // Publish translations (allows per-project customisation)
             $this->publishes([
                 __DIR__ . '/../resources/lang' => lang_path('vendor/ptah'),
             ], 'ptah-lang');
 
-            // Publicar módulo auth (migrations + views)
+            // Publish auth module (migrations + views)
             $this->publishes([
                 __DIR__ . '/Migrations/2024_01_03_000001_add_two_factor_columns_to_users_table.php'
                     => database_path('migrations/2024_01_03_000001_add_two_factor_columns_to_users_table.php'),
             ], 'ptah-auth');
 
-            // Publicar módulo menu (migration)
+            // Publish menu module (migration)
             $this->publishes([
                 __DIR__ . '/Migrations/2024_01_03_000000_create_menus_table.php'
                     => database_path('migrations/2024_01_03_000000_create_menus_table.php'),
             ], 'ptah-menu');
 
-            // Publicar módulo company (migrations)
+            // Publish company module (migrations)
             $this->publishes([
                 __DIR__ . '/Migrations/2024_01_04_000000_create_ptah_companies_table.php'
                     => database_path('migrations/2024_01_04_000000_create_ptah_companies_table.php'),
@@ -228,7 +228,7 @@ class PtahServiceProvider extends ServiceProvider
                     => database_path('migrations/2024_01_04_000001_create_ptah_departments_table.php'),
             ], 'ptah-company');
 
-            // Publicar módulo permissions (migrations)
+            // Publish permissions module (migrations)
             $this->publishes([
                 __DIR__ . '/Migrations/2024_01_04_000002_create_ptah_roles_table.php'
                     => database_path('migrations/2024_01_04_000002_create_ptah_roles_table.php'),
@@ -244,7 +244,7 @@ class PtahServiceProvider extends ServiceProvider
                     => database_path('migrations/2024_01_04_000007_create_ptah_permission_audits_table.php'),
             ], 'ptah-permissions');
 
-            // Publicar módulo API (BaseResponse, BaseApiController, SwaggerInfo)
+            // Publish API module (BaseResponse, BaseApiController, SwaggerInfo)
             $this->publishes([
                 __DIR__ . '/Stubs/base-response.stub'       => app_path('Responses/BaseResponse.php'),
                 __DIR__ . '/Stubs/base-api-controller.stub' => app_path('Http/Controllers/API/BaseApiController.php'),
@@ -271,12 +271,12 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra os componentes Livewire do Ptah.
+     * Registers Ptah Livewire components.
      */
     protected function registerLivewire(): void
     {
         if (class_exists(Livewire::class)) {
-            // NOTA: não usar '::' nos aliases (reservado para Blade vendors no Livewire 4)
+            // NOTE: do not use '::' in aliases (reserved for Blade vendors in Livewire 4)
             Livewire::component('ptah-base-crud',       BaseCrud::class);
             Livewire::component('ptah-search-dropdown', SearchDropdown::class);
             Livewire::component('ptah-crud-config',     CrudConfig::class);

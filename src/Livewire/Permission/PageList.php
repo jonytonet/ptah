@@ -16,7 +16,7 @@ class PageList extends Component
 {
     use WithPagination;
 
-    // ── Páginas ────────────────────────────────────────────────────────
+    // ── Pages ─────────────────────────────────────────────────────────
     public string $search    = '';
     public string $sort      = 'name';
     public string $direction = 'asc';
@@ -32,7 +32,7 @@ class PageList extends Component
     public bool   $page_is_active = true;
     public int    $page_sort_order = 0;
 
-    // ── Objetos da página selecionada ──────────────────────────────────
+    // ── Selected page objects ──────────────────────────────────────────
     public ?int  $selectedPageId   = null;
     public string $selectedPageName = '';
     public string $objSearch       = '';
@@ -47,7 +47,7 @@ class PageList extends Component
     public int    $obj_order     = 0;
     public bool   $obj_is_active = true;
 
-    // ── Confirmações ──────────────────────────────────────────────────
+    // ── Confirmations ─────────────────────────────────────────────────────
     public ?int  $deletePageId    = null;
     public ?int  $deleteObjId     = null;
     public bool  $showDeleteModal = false;
@@ -84,7 +84,7 @@ class PageList extends Component
     public function updatingSearch(): void    { $this->resetPage(); }
     public function updatingObjSearch(): void { $this->resetPage(); }
 
-    // ── CRUD de Páginas ────────────────────────────────────────────────
+    // ── Pages CRUD ────────────────────────────────────────────────────
 
     public function createPage(): void
     {
@@ -129,10 +129,10 @@ class PageList extends Component
 
             if ($this->isEditingPage) {
                 PtahPage::findOrFail($this->editingPageId)->update($data);
-                $this->successMsg = 'Página atualizada.';
+                $this->successMsg = 'Page updated.';
             } else {
                 PtahPage::create($data);
-                $this->successMsg = 'Página criada.';
+                $this->successMsg = 'Page created.';
             }
 
             $this->showPageModal = false;
@@ -195,10 +195,10 @@ class PageList extends Component
 
             if ($this->isEditingObj) {
                 PageObject::findOrFail($this->editingObjId)->update($data);
-                $this->successMsg = 'Objeto atualizado.';
+                $this->successMsg = 'Object updated.';
             } else {
                 PageObject::create($data);
-                $this->successMsg = 'Objeto criado.';
+                $this->successMsg = 'Object created.';
             }
 
             $this->showObjModal = false;
@@ -207,7 +207,7 @@ class PageList extends Component
         }
     }
 
-    // ── Exclusões ──────────────────────────────────────────────────────
+    // ── Deletions ──────────────────────────────────────────────────────
 
     public function confirmDeletePage(int $id): void
     {
@@ -228,13 +228,13 @@ class PageList extends Component
         try {
             if ($this->deleteTarget === 'page') {
                 PtahPage::findOrFail($this->deletePageId)->delete();
-                $this->successMsg = 'Página excluída.';
+                $this->successMsg = 'Page deleted.';
                 if ($this->selectedPageId === $this->deletePageId) {
                     $this->selectedPageId = null;
                 }
             } elseif ($this->deleteTarget === 'obj') {
                 PageObject::findOrFail($this->deleteObjId)->delete();
-                $this->successMsg = 'Objeto excluído.';
+                $this->successMsg = 'Object deleted.';
             }
         } catch (\Throwable $e) {
             $this->errorMsg = 'Erro: ' . $e->getMessage();

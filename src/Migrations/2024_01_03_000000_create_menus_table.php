@@ -15,7 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable()->comment('ID do menu pai (null = raiz)');
             $table->string('text')->comment('Texto exibido no menu');
             $table->string('url')->nullable()->comment('URL de destino (menuLink)');
-            $table->string('icon')->nullable()->default('bx bx-circle')->comment('Classe do ícone (ex: bx bx-home)');
+            $table->string('icon')->nullable()->default('bx bx-circle')->comment('Icon class (e.g.: bx bx-home)');
             $table->enum('type', ['menuLink', 'menuGroup'])->default('menuLink');
             $table->enum('target', ['_self', '_blank'])->default('_self');
             $table->unsignedSmallInteger('link_order')->default(0);

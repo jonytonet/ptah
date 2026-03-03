@@ -18,7 +18,7 @@ use Illuminate\Routing\Controller;
 class BaseApiController extends Controller
 {
     /**
-     * Resposta de sucesso genérica.
+     * Generic success response.
      */
     protected function successResponse(mixed $data, string $message = 'OK', int $status = 200): JsonResponse
     {
@@ -26,7 +26,7 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Resposta paginada com meta de paginação.
+     * Paginated response with pagination meta.
      */
     protected function paginatedResponse(LengthAwarePaginator $paginator, string $message = 'OK'): JsonResponse
     {

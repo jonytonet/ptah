@@ -121,7 +121,7 @@ class BindingGenerator extends AbstractGenerator
         $closePos = $pos - 1; // position of '}'
         $inner    = substr($content, $openPos, $closePos - $openPos);
 
-        // Remove o placeholder `//` mas preserva conteúdo real
+        // Remove the `//` placeholder but preserve real content
         $cleanedInner = preg_replace('/^\s*\/\/\s*$/m', '', $inner);
         $cleanedInner = rtrim($cleanedInner ?? $inner);
 

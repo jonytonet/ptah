@@ -10,14 +10,14 @@ use Illuminate\Foundation\Http\FormRequest;
  * @OA\Schema(
  *     schema="Create{{ entity }}Request",
  *     title="Create{{ entity }}Request",
- *     description="Parâmetros para criação de {{ entity }}",
+ *     description="Parameters for creating a {{ entity }}",
  *     required={},
  * )
  */
 class Create{{ entity }}ApiRequest extends FormRequest
 {
     /**
-     * Determina se o usuário tem autorização para realizar esta requisição.
+     * Determines whether the user is authorised to make this request.
      */
     public function authorize(): bool
     {
@@ -25,7 +25,7 @@ class Create{{ entity }}ApiRequest extends FormRequest
     }
 
     /**
-     * Regras de validação.
+     * Validation rules.
      *
      * @return array<string, array<int, mixed>|string>
      */

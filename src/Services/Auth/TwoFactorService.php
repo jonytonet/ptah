@@ -13,18 +13,18 @@ use Illuminate\Support\Str;
 class TwoFactorService
 {
     private const EMAIL_PREFIX = 'ptah_2fa_email_';
-    private const EMAIL_TTL    = 600; // 10 minutos
+    private const EMAIL_TTL    = 600; // 10 minutes
 
     // ── TOTP ───────────────────────────────────────────────────────────────
 
     /**
-     * Gera um novo secret TOTP, QR code SVG data URI e recovery codes.
-     * Requer pragmarx/google2fa-laravel.
+     * Generates a new TOTP secret, QR code SVG data URI and recovery codes.
+     * Requires pragmarx/google2fa-laravel.
      */
     public function enableTotp(Authenticatable $user): array
     {
         if (! class_exists(\PragmaRX\Google2FALaravel\Google2FA::class)) {
-            throw new \RuntimeException('Instale pragmarx/google2fa-laravel para usar TOTP.');
+            throw new \RuntimeException('Install pragmarx/google2fa-laravel to use TOTP.');
         }
 
         /** @var \PragmaRX\Google2FA\Google2FA $google2fa */
@@ -37,7 +37,7 @@ class TwoFactorService
 
         $qrUrl = $google2fa->getQRCodeUrl($appName, $email, $secret);
 
-        // Salva temporariamente — confirma apenas após verificação
+        // Saved temporarily — confirmed only after verification
         $user->forceFill(['two_factor_secret' => encrypt($secret)])->save();
 
         $qrImageUri = $this->qrCodeUri($qrUrl);
@@ -50,7 +50,7 @@ class TwoFactorService
     }
 
     /**
-     * Confirma a ativação TOTP após o usuário validar o código.
+     * Confirms TOTP activation after the user validates the code.
      */
     public function confirmTotp(Authenticatable $user, string $code, array $recoveryCodes): bool
     {
@@ -68,7 +68,7 @@ class TwoFactorService
     }
 
     /**
-     * Verifica um código TOTP.
+     * Verifies a TOTP code.
      */
     public function verifyTotp(Authenticatable $user, string $code): bool
     {
@@ -87,7 +87,7 @@ class TwoFactorService
     // ── Email OTP ──────────────────────────────────────────────────────────
 
     /**
-     * Gera e envia código de 6 dígitos por e-mail.
+     * Generates and sends a 6-digit code via e-mail.
      */
     public function sendEmailCode(Authenticatable $user): void
     {
@@ -97,7 +97,7 @@ class TwoFactorService
 
         Mail::to($user->email)->send(new \Ptah\Mail\TwoFactorCodeMail($code));
 
-        // Ativa o tipo email se não havia 2FA configurado
+        // Activates the email type if no 2FA was previously configured
         if (is_null($user->two_factor_type)) {
             $user->forceFill([
                 'two_factor_type'         => 'email',
@@ -107,7 +107,7 @@ class TwoFactorService
     }
 
     /**
-     * Verifica o código de e-mail.
+     * Verifies the e-mail code.
      */
     public function verifyEmailCode(Authenticatable $user, string $code): bool
     {
@@ -124,7 +124,7 @@ class TwoFactorService
     // ── Recovery ───────────────────────────────────────────────────────────
 
     /**
-     * Verifica e consome um recovery code (uso único).
+     * Verifies and consumes a recovery code (single use).
      */
     public function verifyRecoveryCode(Authenticatable $user, string $code): bool
     {
@@ -145,7 +145,7 @@ class TwoFactorService
     }
 
     /**
-     * Retorna os recovery codes descriptografados do usuário.
+     * Returns the user's decrypted recovery codes.
      */
     public function getRecoveryCodes(Authenticatable $user): array
     {
@@ -157,7 +157,7 @@ class TwoFactorService
     }
 
     /**
-     * Gera novos recovery codes, salva encrypted e retorna o array plain.
+     * Generates new recovery codes, saves them encrypted and returns the plain array.
      */
     public function regenerateRecoveryCodes(Authenticatable $user): array
     {
@@ -171,7 +171,7 @@ class TwoFactorService
     }
 
     /**
-     * Desativa o 2FA completamente.
+     * Disables 2FA entirely.
      */
     public function disable(Authenticatable $user): void
     {
@@ -184,7 +184,7 @@ class TwoFactorService
     }
 
     /**
-     * O usuário tem 2FA ativo e confirmado?
+     * Does the user have 2FA active and confirmed?
      */
     public function isEnabled(Authenticatable $user): bool
     {

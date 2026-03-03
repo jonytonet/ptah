@@ -9,9 +9,9 @@ use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Estratégia de filtro para campos de texto.
+ * Filter strategy for text fields.
  *
- * Operadores suportados: LIKE (padrão), =, !=, IN, NOT IN
+ * Supported operators: LIKE (default), =, !=, IN, NOT IN
  */
 class TextFilterStrategy implements FilterStrategyInterface
 {

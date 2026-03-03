@@ -1,7 +1,7 @@
 <x-forge-dashboard-layout>
     <x-slot:title>{{ entity }}</x-slot:title>
 
-    {{-- Cabeçalho da página --}}
+    {{-- Page header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold text-dark">{{ entity }}</h1>

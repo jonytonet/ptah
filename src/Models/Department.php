@@ -48,7 +48,7 @@ class Department extends Model
     }
 
     // ─────────────────────────────────────────
-    // Relacionamentos
+    // Relationships
     // ─────────────────────────────────────────
 
     public function roles(): HasMany

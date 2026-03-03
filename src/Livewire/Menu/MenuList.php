@@ -27,7 +27,7 @@ class MenuList extends Component
     public bool  $isEditing = false;
     public ?int  $editingId = null;
 
-    // ── Campos do formulário ───────────────────────────────────────────
+    // ── Form fields ────────────────────────────────────────────────
     public string $text       = '';
     public string $url        = '';
     public string $icon       = 'bx bx-circle';
@@ -45,7 +45,7 @@ class MenuList extends Component
     public string $successMsg = '';
     public string $errorMsg   = '';
 
-    // ── Regras de validação ────────────────────────────────────────────
+    // ── Validation rules ──────────────────────────────────────────────
     protected function rules(): array
     {
         return [
@@ -61,8 +61,8 @@ class MenuList extends Component
     }
 
     protected $messages = [
-        'text.required'    => 'O texto do menu é obrigatório.',
-        'parent_id.exists' => 'O grupo pai selecionado não existe.',
+        'text.required'    => 'The menu text is required.',
+        'parent_id.exists' => 'The selected parent group does not exist.',
     ];
 
     // ── Lifecycle ──────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ class MenuList extends Component
 
             $menu->delete();
             app(MenuService::class)->clearCache();
-            $this->successMsg = "Item excluído.";
+            $this->successMsg = "Item deleted.";
 
         } catch (\Throwable $e) {
             $this->errorMsg = 'Erro ao excluir: ' . $e->getMessage();

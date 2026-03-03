@@ -68,7 +68,7 @@ class CrudConfigGenerator extends AbstractGenerator
         }
     }
 
-    // ── Construção do config ────────────────────────────────────────────────
+    // ── Config construction ──────────────────────────────────────────────────
 
     private function buildConfig(EntityContext $context): array
     {

@@ -10,14 +10,14 @@ use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Estratégia de filtro para campos de data e datetime.
+ * Filter strategy for date and datetime fields.
  *
- * Operadores suportados: =, !=, >, <, >=, <=, BETWEEN
- * Normaliza datas via Carbon para garantir startOfDay / endOfDay em BETWEEN.
+ * Supported operators: =, !=, >, <, >=, <=, BETWEEN
+ * Normalises dates via Carbon to ensure startOfDay / endOfDay in BETWEEN.
  */
 class DateFilterStrategy implements FilterStrategyInterface
 {
-    /** @param string $type 'date' ou 'datetime' */
+    /** @param string $type 'date' or 'datetime' */
     public function __construct(protected string $type = 'date') {}
 
     public function normalize(FilterDTO $filter): ?FilterDTO
@@ -62,7 +62,7 @@ class DateFilterStrategy implements FilterStrategyInterface
             return $this->applyRange($query, $field, $parts[0] ?? null, $parts[1] ?? null);
         }
 
-        // Campo inteiro {field}_start / {field}_end já resolvido no FilterService
+        // Whole range {field}_start / {field}_end already resolved in FilterService
         if ($operator === 'BETWEEN' && is_string($value)) {
             return $query->whereDate($field, '=', $value);
         }
@@ -76,7 +76,7 @@ class DateFilterStrategy implements FilterStrategyInterface
             return $query->whereNotNull($field);
         }
 
-        // Comparações simples
+        // Simple comparisons
         if ($this->type === 'datetime') {
             try {
                 $dt = Carbon::parse($value);

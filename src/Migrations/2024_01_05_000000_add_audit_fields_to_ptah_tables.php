@@ -7,13 +7,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Adiciona campos de auditoria (created_by / updated_by / deleted_by) às
- * tabelas do pacote Ptah que ainda não os possuíam.
+ * Adds audit fields (created_by / updated_by / deleted_by) to
+ * the Ptah package tables that did not yet have them.
  *
- * Usa hasColumn() para ser idempotente — pode rodar em instalações novas
- * e em projetos que já estejam em produção sem causar erros.
+ * Uses hasColumn() to be idempotent — can run on fresh installations
+ * and on projects already in production without causing errors.
  *
- * Tabelas contempladas:
+ * Tables covered:
  *  - ptah_departments   → + deleted_by
  *  - ptah_roles         → + deleted_by
  *  - menus              → + created_by, updated_by, deleted_by
@@ -21,27 +21,27 @@ use Illuminate\Support\Facades\Schema;
  *  - ptah_pages         → + created_by, updated_by
  *  - ptah_page_objects  → + created_by, updated_by
  *
- * (ptah_companies já possui todos os campos desde a migration original.)
+ * (ptah_companies already has all fields since the original migration.)
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        // ── ptah_departments: adiciona deleted_by ─────────────────────────
+        // ── ptah_departments: add deleted_by ──────────────────────────────
         if (Schema::hasTable('ptah_departments') && ! Schema::hasColumn('ptah_departments', 'deleted_by')) {
             Schema::table('ptah_departments', function (Blueprint $table) {
                 $table->unsignedBigInteger('deleted_by')->nullable()->index()->after('updated_by');
             });
         }
 
-        // ── ptah_roles: adiciona deleted_by ───────────────────────────────
+        // ── ptah_roles: add deleted_by ────────────────────────────────────
         if (Schema::hasTable('ptah_roles') && ! Schema::hasColumn('ptah_roles', 'deleted_by')) {
             Schema::table('ptah_roles', function (Blueprint $table) {
                 $table->unsignedBigInteger('deleted_by')->nullable()->index()->after('updated_by');
             });
         }
 
-        // ── menus: adiciona created_by / updated_by / deleted_by ──────────
+        // ── menus: add created_by / updated_by / deleted_by ─────────────
         if (Schema::hasTable('menus')) {
             Schema::table('menus', function (Blueprint $table) {
                 if (! Schema::hasColumn('menus', 'created_by')) {
@@ -56,7 +56,7 @@ return new class extends Migration
             });
         }
 
-        // ── crud_configs: adiciona created_by / updated_by ────────────────
+        // ── crud_configs: add created_by / updated_by ─────────────────────
         if (Schema::hasTable('crud_configs')) {
             Schema::table('crud_configs', function (Blueprint $table) {
                 if (! Schema::hasColumn('crud_configs', 'created_by')) {
@@ -68,7 +68,7 @@ return new class extends Migration
             });
         }
 
-        // ── ptah_pages: adiciona created_by / updated_by ─────────────────
+        // ── ptah_pages: add created_by / updated_by ──────────────────────
         if (Schema::hasTable('ptah_pages')) {
             Schema::table('ptah_pages', function (Blueprint $table) {
                 if (! Schema::hasColumn('ptah_pages', 'created_by')) {
@@ -80,7 +80,7 @@ return new class extends Migration
             });
         }
 
-        // ── ptah_page_objects: adiciona created_by / updated_by ──────────
+        // ── ptah_page_objects: add created_by / updated_by ─────────────
         if (Schema::hasTable('ptah_page_objects')) {
             Schema::table('ptah_page_objects', function (Blueprint $table) {
                 if (! Schema::hasColumn('ptah_page_objects', 'created_by')) {
@@ -92,7 +92,7 @@ return new class extends Migration
             });
         }
 
-        // ── ptah_user_roles: adiciona updated_by / deleted_by ─────────────
+        // ── ptah_user_roles: add updated_by / deleted_by ─────────────────
         if (Schema::hasTable('ptah_user_roles')) {
             Schema::table('ptah_user_roles', function (Blueprint $table) {
                 if (! Schema::hasColumn('ptah_user_roles', 'updated_by')) {
@@ -104,7 +104,7 @@ return new class extends Migration
             });
         }
 
-        // ── ptah_role_permissions: adiciona deleted_by ────────────────────
+        // ── ptah_role_permissions: add deleted_by ──────────────────────────
         if (Schema::hasTable('ptah_role_permissions') && ! Schema::hasColumn('ptah_role_permissions', 'deleted_by')) {
             Schema::table('ptah_role_permissions', function (Blueprint $table) {
                 $table->unsignedBigInteger('deleted_by')->nullable()->index()->after('updated_by');

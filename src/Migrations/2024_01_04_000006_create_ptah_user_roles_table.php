@@ -12,14 +12,14 @@ return new class extends Migration
     {
         Schema::create('ptah_user_roles', function (Blueprint $table) {
             $table->id();
-            // Sem FK: o pacote não conhece o model User do app host.
-            // Compatível com UUID ou BIGINT.
+            // No FK: the package does not know the host app's User model.
+            // Compatible with UUID or BIGINT.
             $table->unsignedBigInteger('user_id')->index();
             $table->foreignId('role_id')
                   ->constrained('ptah_roles')
                   ->cascadeOnDelete();
-            // company_id sem FK: pode apontar para ptah_companies ou qualquer outra tabela
-            // null = associação global (sem empresa específica — sistemas single-tenant)
+            // company_id without FK: can point to ptah_companies or any other table
+            // null = global association (no specific company — single-tenant systems)
             $table->unsignedBigInteger('company_id')->nullable()->index();
             $table->boolean('is_active')->default(true)->index();
             $table->unsignedBigInteger('created_by')->nullable();
@@ -28,11 +28,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Evita duplicação user+role+empresa
-            // ⚠ LIMITAÇÃO MYSQL: índices UNIQUE com NULL permitem múltiplas linhas
-            //   com company_id IS NULL (NULL ≠ NULL em SQL). Em PostgreSQL 15+
-            //   e MySQL 8.0.13+ é possível usar partial/functional indexes.
-            //   A aplicação garante unicidade via updateOrCreate com WHERE IS NULL.
+            // Prevents user+role+company duplication
+            // ⚠ MYSQL LIMITATION: UNIQUE indexes with NULL allow multiple rows
+            //   with company_id IS NULL (NULL ≠ NULL in SQL). In PostgreSQL 15+
+            //   and MySQL 8.0.13+ it is possible to use partial/functional indexes.
+            //   The application ensures uniqueness via updateOrCreate with WHERE IS NULL.
             $table->unique(['user_id', 'role_id', 'company_id'], 'ptah_user_roles_unique');
             $table->index(['user_id', 'is_active']);
         });

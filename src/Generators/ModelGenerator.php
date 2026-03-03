@@ -86,7 +86,7 @@ class ModelGenerator extends AbstractGenerator
         );
 
         if ($patched === null || $patched === $content) {
-            // Regex não encontrou o padrão esperado — salva aviso e pula
+            // Regex did not find the expected pattern — saves warning and skips
             return GeneratorResult::skipped(
                 "Model [{$context->entity}] (swagger — class declaration not found)",
                 $path,

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * Usa "PtahPage" para evitar conflito com classes \Page de outros pacotes.
+ * Uses "PtahPage" to avoid conflicts with \Page classes from other packages.
  *
  * @property int         $id
  * @property string      $slug
