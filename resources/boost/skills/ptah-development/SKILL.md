@@ -518,6 +518,368 @@ public function index(Request $request): JsonResponse
 
 ---
 
+## Performance & High Demand Architecture
+
+> This project is designed for **high-performance, high-concurrency** workloads.
+> Every code decision must consider scalability. Treat performance as a first-class requirement, not an afterthought.
+
+### Cardinal Rules
+
+| Rule | Detail |
+|---|---|
+| **Never nest foreach inside foreach** | Use `keyBy()`, `groupBy()` or a single keyed array lookup instead |
+| **Never query inside a loop** | All IDs must be collected first, then fetched in one `whereIn()` — N+1 is a bug |
+| **Eager-load always** | `with(['relation'])` on every query that accesses a relation |
+| **Cache hot data** | Any data read more than once per request or unchanged for minutes belongs in cache |
+| **Queue heavy work** | Email, PDF, export, external API calls, image processing → always a Job |
+| **Index every FK and filter column** | No query without an index on filtered / joined columns |
+| **Chunk large datasets** | Never `->get()` on unbounded result sets — use `->chunk()` or cursor |
+
+---
+
+### Cache — Mandatory Patterns
+
+#### Tag-based cache (Redis)
+
+```php
+// ✅ Always use tags for grouped invalidation
+Cache::tags(['products', 'catalog'])->remember(
+    "product:{$id}",
+    now()->addMinutes(30),
+    fn () => $this->repo->findOrFail($id)
+);
+
+// Invalidate on write
+public function update(int $id, array $data): Product
+{
+    $result = $this->repo->update($id, $data);
+    Cache::tags(['products', 'catalog'])->flush();
+    return $result;
+}
+```
+
+#### Cache keys — naming convention
+
+```php
+// pattern: {entity}:{id|variant}:{context}
+"product:{$id}"                  // single record
+"products:active"                // list
+"products:category:{$catId}"     // filtered list
+"user:{$userId}:cart"            // user-scoped
+```
+
+#### What to cache (and for how long)
+
+| Data | TTL | Tags |
+|---|---|---|
+| Reference/lookup tables (species, breeds, categories) | 24h | `['reference']` |
+| Product catalog listing | 30 min | `['products', 'catalog']` |
+| Individual product | 30 min | `['products', "product:{$id}"]` |
+| User-specific data (cart, preferences) | session | `['user:{$id}']` |
+| Dashboard aggregates | 5 min | `['reports']` |
+| Auth / permissions | until logout | `['permissions', "user:{$id}"]` |
+
+#### Never cache
+
+```php
+// ❌ Never cache mutable financial / stock data without explicit invalidation
+// ❌ Never cache full paginated results (cache the data, not the paginator)
+// ❌ Never hardcode TTL in Controller or Livewire — always in Service or Repository
+```
+
+---
+
+### Jobs & Queues — Mandatory Patterns
+
+#### What must be a Job
+
+```
+✅ Sending emails / SMS / WhatsApp notifications
+✅ Generating PDF / Excel exports
+✅ Syncing stock with external ERP/API
+✅ Resizing / processing uploaded images
+✅ Webhook dispatch
+✅ Heavy aggregation / report generation
+✅ Invalidating distributed cache across nodes
+✅ Any operation > 200ms
+```
+
+#### Job structure
+
+```php
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Order;
+use App\Contracts\Services\OrderServiceContract;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
+final class ProcessOrderJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries   = 3;
+    public int $backoff = 60; // seconds between retries
+
+    public function __construct(private readonly int $orderId) {}
+
+    public function handle(OrderServiceContract $service): void
+    {
+        $service->processOrder($this->orderId);
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        \Log::error("ProcessOrderJob failed for order {$this->orderId}: {$e->getMessage()}");
+    }
+}
+
+// Dispatch from Service — never from Controller or Livewire directly
+ProcessOrderJob::dispatch($order->id)->onQueue('orders');
+```
+
+#### Named queues — priority tiers
+
+```
+high    → auth, payments, critical notifications
+default → order processing, stock movements
+low     → reports, PDF exports, bulk emails, image processing
+```
+
+#### Required in production
+
+```bash
+# Laravel Horizon (Redis-backed queue dashboard)
+composer require laravel/horizon
+php artisan horizon:install
+php artisan horizon
+```
+
+---
+
+### Database Indexes — Mandatory Rules
+
+#### Every migration must include indexes on
+
+```
+✅ All _id foreign key columns (auto-handled by foreignId())
+✅ All columns used in WHERE clauses (status, is_active, type)
+✅ All columns used in ORDER BY frequently  
+✅ Composite indexes for multi-column filters
+✅ Unique indexes for natural keys (sku, slug, cpf, email, code)
+```
+
+#### Migration patterns
+
+```php
+public function up(): void
+{
+    Schema::create('products', function (Blueprint $table) {
+        $table->id();
+        $table->string('sku', 50)->unique();
+        $table->string('name');
+        $table->decimal('price', 10, 2);
+        $table->integer('stock')->default(0);
+        $table->boolean('is_active')->default(true)->index();
+        $table->boolean('is_featured')->default(false);
+        $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+        $table->foreignId('brand_id')->constrained()->cascadeOnDelete();
+        $table->softDeletes();
+        $table->timestamps();
+
+        // Composite indexes for common query patterns
+        $table->index(['is_active', 'is_featured']);          // catalog listing
+        $table->index(['category_id', 'is_active', 'price']); // filtered catalog
+        $table->index(['deleted_at', 'is_active']);           // soft-delete fast filter
+    });
+}
+```
+
+#### Forced index in Repository (when query plan regression is detected)
+
+```php
+// Available via BaseRepository::useIndex()
+public function getActiveFeatured(): Collection
+{
+    return $this->useIndex('products_is_active_is_featured_index')
+        ->where('is_active', true)
+        ->where('is_featured', true)
+        ->with(['category', 'brand'])
+        ->get();
+}
+```
+
+---
+
+### N+1 — Forbidden Query Patterns
+
+```php
+// ❌ CRITICAL BUG — N+1: 1 query for products + N queries for categories
+$products = Product::all();
+foreach ($products as $product) {
+    echo $product->category->name; // query per iteration
+}
+
+// ✅ Correct — 2 queries total
+$products = Product::with('category')->get();
+
+// ❌ CRITICAL BUG — nested foreach O(n²)
+foreach ($orders as $order) {
+    foreach ($items as $item) {
+        if ($item->order_id === $order->id) { ... } // O(n²)
+    }
+}
+
+// ✅ Correct — O(n) using keyBy
+$itemsByOrder = $items->groupBy('order_id'); // one pass
+foreach ($orders as $order) {
+    $orderItems = $itemsByOrder->get($order->id, collect());
+}
+
+// ❌ CRITICAL BUG — query inside loop
+foreach ($productIds as $id) {
+    $stock = Stock::where('product_id', $id)->sum('qty'); // N queries
+}
+
+// ✅ Correct — one query with groupBy
+$stocks = Stock::whereIn('product_id', $productIds)
+    ->selectRaw('product_id, SUM(qty) as total')
+    ->groupBy('product_id')
+    ->pluck('total', 'product_id');
+
+foreach ($productIds as $id) {
+    $stock = $stocks[$id] ?? 0;
+}
+```
+
+---
+
+### Large Datasets — Chunking & Cursor
+
+```php
+// ❌ Never — loads everything into memory
+$all = Order::where('status', 'pending')->get();
+foreach ($all as $order) { ... }
+
+// ✅ chunk() — processes in batches (memory safe)
+Order::where('status', 'pending')
+    ->chunk(200, function (Collection $batch) {
+        foreach ($batch as $order) {
+            ProcessOrderJob::dispatch($order->id)->onQueue('orders');
+        }
+    });
+
+// ✅ lazy() — generator-based cursor for read-only operations
+Order::where('status', 'pending')->lazy()->each(function (Order $order) {
+    // one record in memory at a time
+    ReportJob::dispatch($order->id);
+});
+
+// ✅ chunkById() — safer than chunk() for delete/update within the loop
+Order::where('status', 'cancelled')->chunkById(500, fn ($batch) => ...);
+```
+
+---
+
+### Livewire Performance Rules
+
+```php
+// ❌ Computing expensive data on every Livewire render
+public function render()
+{
+    return view('livewire.dashboard', [
+        'stats' => $this->service->getFullStats(),    // heavy query on every interaction
+        'chart' => $this->service->buildChartData(),  // heavy query on every interaction
+    ]);
+}
+
+// ✅ Use #[Computed] with cache TTL
+use Livewire\Attributes\Computed;
+
+#[Computed(seconds: 300)]
+public function stats(): array
+{
+    return $this->service->getFullStats();
+}
+
+#[Computed(seconds: 300)]
+public function chartData(): array
+{
+    return $this->service->buildChartData();
+}
+
+// ✅ Lazy-load expensive sections
+#[Lazy]
+public function render() { ... }
+
+// ✅ wire:model.blur on all text inputs — avoids a server round-trip per keystroke
+<x-forge-input wire:model.blur="search" />
+```
+
+---
+
+### Recommended Tools
+
+| Tool | Purpose | When to use |
+|---|---|---|
+| **Redis** | Primary cache + queue driver | Always in staging/production |
+| **Laravel Horizon** | Queue dashboard + monitoring | Any project with jobs |
+| **Laravel Telescope** (dev only) | Query/job/cache/request inspector | Development only (`--dev`) |
+| **Laravel Octane** | App server (Swoole/FrankenPHP) | High-concurrency APIs |
+| **Laravel Scout** | Full-text search (Meilisearch/Algolia) | Search on large text catalogs |
+| **Clockwork** | Timeline profiler (browser devtools) | Browser-side profiling in dev |
+
+```bash
+# Essential installations
+composer require laravel/horizon
+composer require laravel/scout
+composer require meilisearch/meilisearch-php http-interop/http-factory-guzzle
+composer require --dev laravel/telescope
+composer require --dev itsgoingd/clockwork
+```
+
+---
+
+### Performance Anti-Patterns (forbidden)
+
+```
+❌ foreach inside foreach on Eloquent collections
+❌ query inside any loop (foreach, while, array_map)
+❌ ->get() without ->with() when relations are accessed
+❌ ->all() or ->get() on tables with > 10k rows without pagination/chunk
+❌ Cache::remember() inside a loop
+❌ Dispatching individual Jobs inside a loop — use Bus::batch()
+❌ Synchronous email send (Mail::send) in web request — always Mail::queue()
+❌ Calling external HTTP APIs synchronously in a web request
+❌ Heavy computation in Livewire property (use #[Computed])
+❌ SELECT * with unneeded columns — always ->select(['id','name',...])
+❌ Missing index on any WHERE, ORDER BY or JOIN column
+❌ DB::statement / raw SQL without sanitization
+```
+
+---
+
+### Performance Anti-Pattern Checklist (agent must enforce)
+
+Before generating or accepting any code, verify:
+
+```
+[ ] Does any Repository method query inside a loop? → FIX: collect IDs first, then whereIn()
+[ ] Does any method call ->get() on an unbounded result set? → FIX: paginate() or chunk()
+[ ] Are all relations eager-loaded with with([]) before foreach? → FIX: add ->with()
+[ ] Is any heavy or async operation in a synchronous request? → FIX: dispatch a Job
+[ ] Is frequently read data computed fresh every request? → FIX: Cache::tags()->remember()
+[ ] Are any new filter columns missing an index in the migration? → FIX: $table->index()
+[ ] Does any Livewire method run expensive queries on every render? → FIX: #[Computed]
+```
+
+---
+
 ## Commit Convention
 
 > ⚠️ **ALWAYS run Pint before any commit.** Never commit unformatted PHP code.

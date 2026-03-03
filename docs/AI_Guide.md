@@ -17,6 +17,7 @@
 8. [Workflow Recomendado](#workflow-recomendado)
 9. [Dicas de Produtividade](#dicas-de-produtividade)
 10. [Armadilhas Comuns](#armadilhas-comuns)
+11. [Performance e Alta Demanda](#performance-e-alta-demanda)
 
 ---
 
@@ -307,3 +308,114 @@ Em sessões que envolvem muitos arquivos, resuma o estado atual ao agente:
 | Ignorar soft delete na unicidade | Lembre: `Rule::unique()->ignore($id)` e verificar `withTrashed()` quando necessário |
 | Agente gera bind manual no TestCase | "O `PtahServiceProvider` já registra todos os binds automaticamente" |
 | Commit sem mensagem semântica | Padrão: `feat:` / `fix:` / `docs:` / `refactor:` / `test:` |
+
+---
+
+## Performance e Alta Demanda
+
+> Este projeto é voltado para **alta performance e alta concorrência**.
+> Performance é um requisito de primeira classe, não um detalhe de implementação.
+
+### Regras cardinais para qualquer prompt de código
+
+Sempre inclua estas restrições ao solicitar geração de código:
+
+```
+RESTRIÇÕES DE PERFORMANCE (obrigatórias):
+- NUNCA gere foreach dentro de foreach em coleções Eloquent
+  Use keyBy() / groupBy() + lookup por chave O(1)
+- NUNCA gere query dentro de loop
+  Colete os IDs primeiro, depois whereIn() em uma única query
+- SEMPRE use with(['relation']) antes de qualquer foreach que acesse relações
+- Qualquer operação pesada (email, PDF, export, API externa) deve ser um Job (Queue)
+- Cache com Cache::tags()->remember() para dados lidos com frequência
+- Toda migration nova deve incluir index() nas colunas de filtro, FK e order
+- Não use ->get() sem limitação em tabelas grandes — use paginate() ou chunk()
+```
+
+### Prompt tipo: Gerar opção com performance
+
+```
+Gere o método {nome} no {ProductRepository} seguindo as regras de alta performance:
+
+1. EAGER LOAD: use with(['category','brand']) — nunca acesse relações dentro de foreach
+2. SEM N+1: colete todos os IDs necessários e busque em whereIn() único
+3. CACHE: envolva com Cache::tags(['products'])->remember('products:active', 1800, fn()=>...)
+4. PAGINADO: retorne paginate(20) — nunca ->get() sem limite
+5. INDEX: confirme que as colunas filtradas têm index na migration
+6. JOB: se o método for pesado (> 200ms), retorne void e despache um Job
+```
+
+### Jobs — regra do agente
+
+```
+Sempre que o agente identificar qualquer uma dessas operações em código síncrono:
+  - Envio de email / SMS / notificação push
+  - Geração de PDF ou Excel
+  - Chamada a API externa (pagamentos, frete, CEP, ERP)
+  - Processamento de imagem (resize, crop, compress)
+  - Atualização de estoque em lote
+  - Geração de relatório ou agregação pesada
+
+O agente DEVE mover essa lógica para um Job e disparar com dispatch().
+Nunca executar sôncrono dentro de Request/Response cycle.
+```
+
+### Cache — regra do agente
+
+```
+O agente DEVe envolver com Cache::tags()->remember() toda query que:
+  - Busca tabelas de referência (species, breeds, categories, services)
+  - Lista produtos ativos do catálogo
+  - Agrega totais de dashboard
+  - Carrega permissões do usuário
+
+TTL recomendados:
+  - Tabelas de referência imutáveis: 86400 (24h)
+  - Catálogo de produtos: 1800 (30min)
+  - Agregados de dashboard: 300 (5min)
+  - Permissões do usuário: até logout (invalidar no login/logout)
+```
+
+### Indexes — regra do agente
+
+Sempre que o agente gerar uma migration nova, deve incluir indexes em:
+
+```php
+// Obrigatório em toda migration
+$table->index('is_active');           // filtro booleano padrão
+$table->index('status');              // enum/status é quase sempre filtrado
+$table->index(['deleted_at', 'is_active']); // soft-delete + ativo
+$table->index(['created_at']);        // ORDER BY padrão
+
+// Compostos quando o padrão de query é conhecido
+$table->index(['category_id', 'is_active', 'price']); // filtro de catálogo
+$table->index(['client_id', 'status']);               // pedidos por cliente
+```
+
+### Ferramentas de apoio (instalar no projeto)
+
+```bash
+# Produção
+composer require laravel/horizon                  # monitoramento de filas Redis
+composer require laravel/scout                    # full-text search (Meilisearch)
+
+# Desenvolvimento (--dev)
+composer require --dev laravel/telescope          # inspetor de queries, jobs, cache
+composer require --dev itsgoingd/clockwork        # profiler no browser devtools
+```
+
+### Anti-patterns que o agente deve RECUSAR gerar
+
+```
+❌ foreach dentro de foreach em coleções Eloquent
+❌ query (findBy, where, all, get) dentro de qualquer laço
+❌ ->with() omitido quando a view/code acessa relações
+❌ Mail::send() ou SMS síncrono em request web
+❌ Cache::remember() sem tags (impossível invalidar por grupo)
+❌ ->get() em tabela sem paginate/limit/chunk
+❌ SELECT * em queries de lista (ótimo: ->select(['id','name','status']))
+❌ Migration sem index nas colunas de filtro ou FK
+❌ Lógica pesada em propriedade Livewire sem #[Computed]
+❌ Chamada HTTP externa síncrona dentro de controller
+```
