@@ -143,12 +143,12 @@ public function existsBySku(string $sku): bool
 ```bash
 # Single entity
 php artisan ptah:forge Product \
-  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:foreign,is_active:boolean" \
+  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean" \
   --soft-delete
 
 # Sub-folder (large projects)
 php artisan ptah:forge Inventory/ProductStock \
-  --fields="product_id:foreign,location:string,qty:integer"
+  --fields="product_id:unsignedBigInteger,location:string,qty:integer"
 # model key = 'Inventory/ProductStock'
 # namespace = App\Models\Inventory\ProductStock
 ```
@@ -392,7 +392,7 @@ Instala automaticamente `darkaonline/l5-swagger` e publica:
 
 ```bash
 php artisan ptah:forge Catalog/Product --api \
-  "name:string" "price:decimal" "category_id:foreign" "is_active:boolean"
+  "name:string" "price:decimal" "category_id:unsignedBigInteger" "is_active:boolean"
 ```
 
 Gera automaticamente:

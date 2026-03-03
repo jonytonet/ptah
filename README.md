@@ -621,6 +621,7 @@ php artisan ptah:forge Product \
 | `integer` | `int` | `$table->integer('campo')` |
 | `bigInteger` | `bigint` | `$table->bigInteger('campo')` |
 | `unsignedBigInteger` | `ubigint` | veja nota FK abaixo |
+| `foreignId` | `foreign` | veja nota FK abaixo |
 | `decimal(p,s)` | — | `$table->decimal('campo', p, s)` |
 | `float` | — | `$table->float('campo')` |
 | `boolean` | `bool` | `$table->boolean('campo')` |
@@ -629,7 +630,7 @@ php artisan ptah:forge Product \
 | `json` | — | `$table->json('campo')` |
 | `enum(a\|b\|c)` | — | `$table->enum('campo', ['a','b','c'])` |
 
-> **Detecção automática de FK** — Qualquer campo cujo nome termine em `_id` e cujo tipo seja `unsignedBigInteger` (ou `bigInteger`/`foreignId`) é reconhecido como chave estrangeira. O `ptah:forge` gera automaticamente:
+> **Detecção automática de FK** — Qualquer campo cujo nome termine em `_id` e cujo tipo seja `unsignedBigInteger` (ou `bigInteger` / `foreignId` / alias `foreign`) é reconhecido como chave estrangeira. O `ptah:forge` gera automaticamente:
 >
 > - **Migration:** `$table->foreignId('x_id')->constrained('xs')->cascadeOnDelete()`  
 >   (com `:nullable` → `->nullable()->constrained('xs')->nullOnDelete()`)
@@ -2070,7 +2071,7 @@ Quando ativado, o módulo instala e configura tudo o que é necessário para cri
 
 ```bash
 php artisan ptah:forge Catalog/Product --api \
-  "name:string" "price:decimal" "category_id:foreign" "is_active:boolean"
+  "name:string" "price:decimal" "category_id:unsignedBigInteger" "is_active:boolean"
 ```
 
 **BaseResponse — envelope padrão:**

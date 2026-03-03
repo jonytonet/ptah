@@ -108,7 +108,7 @@ GERE:
 
 ```bash
 php artisan ptah:forge Product \
-  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:foreign,is_active:boolean,description:text" \
+  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
   --soft-delete
 ```
 

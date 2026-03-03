@@ -83,7 +83,7 @@ In `forge-*` components, use `color="primary"`, `color="danger"`, `type="success
 
 <code-snippet name="Generate entity scaffolding" lang="bash">
 php artisan ptah:forge Product \
-  --fields="name:string,price:decimal,is_active:boolean,category_id:foreign" \
+  --fields="name:string,price:decimal,is_active:boolean,category_id:unsignedBigInteger" \
   --soft-delete
 </code-snippet>
 
