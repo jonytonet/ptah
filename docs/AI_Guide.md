@@ -407,6 +407,9 @@ composer require --dev laravel/telescope          # inspetor de queries, jobs, c
 composer require --dev itsgoingd/clockwork        # profiler no browser devtools
 ```
 
+> **⚠️ Horizon requer Linux/WSL** — `laravel/horizon` depende das extensões `ext-pcntl` e `ext-posix`, disponíveis apenas em ambientes Unix.
+> Instale Horizon **somente no servidor de produção ou em WSL**. Em máquinas Windows nativas, use `php artisan queue:work` para desenvolvimento local.
+
 ### Anti-patterns que o agente deve RECUSAR gerar
 
 ```

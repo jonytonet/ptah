@@ -195,9 +195,18 @@ CSS;
 
     /**
      * Executa as migrations.
+     *
+     * Idempotente: se as tabelas principais do Ptah já existem
+     * (banco já foi migrado anteriormente), pula sem perguntar.
      */
     protected function runMigrations(): void
     {
+        // Detecta re-execução (--boost, --force etc.) sem recriação
+        if (Schema::hasTable('ptah_companies') && Schema::hasTable('users')) {
+            $this->components->info('Migrations já executadas — pulando.');
+            return;
+        }
+
         if ($this->confirm('Deseja executar as migrations agora?', true)) {
             $this->components->task('Executando migrations', function () {
                 $this->call('migrate');
@@ -293,7 +302,24 @@ CSS;
         $this->components->task('Configurando Boost (boost:install)', function () {
             // Recarrega os providers para que o BoostServiceProvider esteja disponível
             $this->call('package:discover', ['--ansi' => true]);
-            $this->call('boost:install');
+
+            // Verifica se o comando já está registrado antes de chamar
+            if (! $this->getApplication()->has('boost:install')) {
+                $this->components->warn(
+                    'O comando boost:install não está disponível nesta sessão.'.PHP_EOL.
+                    'Execute manualmente: <fg=green>php artisan boost:install</>'
+                );
+                return;
+            }
+
+            try {
+                $this->call('boost:install');
+            } catch (\Throwable $e) {
+                $this->components->warn(
+                    'Falha ao executar boost:install: '.$e->getMessage().PHP_EOL.
+                    'Execute manualmente: <fg=green>php artisan boost:install</>'
+                );
+            }
         });
 
         $this->components->info(

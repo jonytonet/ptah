@@ -657,9 +657,11 @@ php artisan ptah:forge Product \
 email:string:unique
 price:decimal(10,2):nullable
 city:string:surname=Cidade
-price:decimal(10,2):nullable:surname=Preço
+price:decimal(10,2):nullable:surname=Preco
 status:enum(active|inactive):unique:surname=Status
 ```
+
+> **Encoding no Windows** — O PowerShell pode causar problemas de encoding com acentos em `surname=`. Se ocorrer, evite acentos no modificador inline (`surname=Descricao`) e edite o `colsNomeLogico` diretamente na tabela `crud_configs` após a geração. Outra opção: use `--db` com o campo `COMMENT` da coluna MySQL, que é lido sem passar pelo shell.
 
 > **`surname` / `label`** — define o texto que aparece no cabeçalho da coluna no **BaseCrud** (`colsNomeLogico`).  
 > Sem esse modificador o ptah usa `humanLabel()` que converte `snake_case → Title Case` automaticamente.  
@@ -711,6 +713,8 @@ php artisan ptah:module api
 # 2. Gerar a entidade
 php artisan ptah:forge Catalog/Product --api
 ```
+
+> **Adicionando API a uma entidade já existente** — Se a entidade já foi gerada no modo web e você quer adicionar a camada API posteriormente, use `--api --force`. A migration **não será regenerada** — o Ptah detecta automaticamente se já existe uma migration para a tabela e a pula. Apenas Controller API, Requests API e Routes serão criados/sobrescritos.
 
 **O que é gerado:**
 
