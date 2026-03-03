@@ -149,4 +149,40 @@ return [
     */
     'permission_denied' => 'Você não tem permissão para realizar esta ação.',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Auth — páginas Livewire
+    |--------------------------------------------------------------------------
+    */
+    'auth_link_sent'           => 'Link de recuperação enviado! Verifique seu e-mail.',
+    'auth_too_many_attempts'   => 'Muitas tentativas. Tente novamente em :seconds segundos.',
+    'auth_invalid_credentials' => 'E-mail ou senha incorretos.',
+    'auth_password_reset_ok'   => 'Senha alterada com sucesso! Faça login.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Página de perfil
+    |--------------------------------------------------------------------------
+    */
+    'profile_updated'          => 'Perfil atualizado com sucesso!',
+    'profile_password_wrong'   => 'Senha atual incorreta.',
+    'profile_password_updated' => 'Senha alterada com sucesso!',
+    'profile_totp_enabled'     => 'Autenticação TOTP ativada!',
+    'profile_totp_invalid'     => 'Código inválido. Tente novamente.',
+    'profile_email_2fa_sent'   => 'Código enviado! Verifique seu e-mail para confirmar.',
+    'profile_recovery_regen'   => 'Códigos regenerados. Guarde-os em local seguro!',
+    'profile_2fa_disabled'     => 'Autenticação em duas etapas desativada.',
+    'profile_session_revoked'  => 'Sessão encerrada.',
+    'profile_sessions_revoked' => ':count sessão(ões) encerrada(s).',
+    'profile_photo_updated'    => 'Foto atualizada!',
+    'profile_photo_removed'    => 'Foto removida.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Página de verificação 2FA
+    |--------------------------------------------------------------------------
+    */
+    'two_fa_code_invalid' => 'Código inválido ou expirado.',
+    'two_fa_email_sent'   => 'Código enviado para :email',
+
 ];

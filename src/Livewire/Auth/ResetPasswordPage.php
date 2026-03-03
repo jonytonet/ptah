@@ -57,7 +57,7 @@ class ResetPasswordPage extends Component
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            session()->flash('status', 'Senha alterada com sucesso! Faça login.');
+            session()->flash('status', trans('ptah::ui.auth_password_reset_ok'));
             $this->redirect(route('ptah.auth.login'), navigate: true);
         } else {
             $this->errorMsg = __($status);

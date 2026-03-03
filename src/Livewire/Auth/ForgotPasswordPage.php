@@ -27,7 +27,7 @@ class ForgotPasswordPage extends Component
         $response = Password::sendResetLink(['email' => $this->email]);
 
         if ($response === Password::RESET_LINK_SENT) {
-            $this->status = 'Link de recuperação enviado! Verifique seu e-mail.';
+            $this->status = trans('ptah::ui.auth_link_sent');
             $this->reset('email');
         } else {
             $this->errorMsg = __($response);

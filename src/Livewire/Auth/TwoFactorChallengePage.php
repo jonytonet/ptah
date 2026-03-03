@@ -49,7 +49,7 @@ class TwoFactorChallengePage extends Component
         }
 
         if (! $valid) {
-            $this->errorMsg = 'Código inválido ou expirado.';
+            $this->errorMsg = trans('ptah::ui.two_fa_code_invalid');
             $this->reset('code');
             return;
         }
@@ -68,7 +68,7 @@ class TwoFactorChallengePage extends Component
         $userModel = config('auth.providers.users.model', \App\Models\User::class);
         $user = $userModel::findOrFail($userId);
         $twoFactor->sendEmailCode($user);
-        session()->flash('code_sent', 'Código enviado para ' . $user->email);
+        session()->flash('code_sent', trans('ptah::ui.two_fa_email_sent', ['email' => $user->email]));
     }
 
     public function render()

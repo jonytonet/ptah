@@ -36,13 +36,13 @@ class LoginPage extends Component
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
-            $this->errorMessage = "Muitas tentativas. Tente novamente em {$seconds} segundos.";
+            $this->errorMessage = trans('ptah::ui.auth_too_many_attempts', ['seconds' => $seconds]);
             return;
         }
 
         if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($throttleKey);
-            $this->errorMessage = 'E-mail ou senha incorretos.';
+            $this->errorMessage = trans('ptah::ui.auth_invalid_credentials');
             $this->reset('password');
             return;
         }
@@ -51,7 +51,7 @@ class LoginPage extends Component
 
         $user = Auth::user();
 
-        // 2FA ativo → redireciona para o challenge
+        // 2FA active → redirect to the challenge
         if ($twoFactor->isEnabled($user)) {
             Session::put('ptah.2fa.user_id', $user->getKey());
             Auth::logout();
@@ -61,7 +61,7 @@ class LoginPage extends Component
 
         Session::regenerate();
 
-        // Define a empresa ativa na sessão (is_default → primeira ativa → primeira de todas)
+        // Set the active company in the session (is_default → first active → first of all)
         app(CompanyService::class)->initSession();
 
         $this->redirect(config('ptah.auth.home', '/dashboard'), navigate: true);

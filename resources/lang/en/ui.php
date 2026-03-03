@@ -148,4 +148,40 @@ return [
     */
     'permission_denied' => 'You do not have permission to perform this action.',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Auth — Livewire pages
+    |--------------------------------------------------------------------------
+    */
+    'auth_link_sent'           => 'Recovery link sent! Check your email.',
+    'auth_too_many_attempts'   => 'Too many attempts. Try again in :seconds seconds.',
+    'auth_invalid_credentials' => 'Invalid email or password.',
+    'auth_password_reset_ok'   => 'Password changed successfully! Please log in.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Profile page
+    |--------------------------------------------------------------------------
+    */
+    'profile_updated'          => 'Profile updated successfully!',
+    'profile_password_wrong'   => 'Current password is incorrect.',
+    'profile_password_updated' => 'Password changed successfully!',
+    'profile_totp_enabled'     => 'TOTP authentication enabled!',
+    'profile_totp_invalid'     => 'Invalid code. Please try again.',
+    'profile_email_2fa_sent'   => 'Code sent! Check your email to confirm.',
+    'profile_recovery_regen'   => 'Codes regenerated. Store them in a safe place!',
+    'profile_2fa_disabled'     => 'Two-factor authentication disabled.',
+    'profile_session_revoked'  => 'Session ended.',
+    'profile_sessions_revoked' => ':count session(s) ended.',
+    'profile_photo_updated'    => 'Photo updated!',
+    'profile_photo_removed'    => 'Photo removed.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Two-factor challenge page
+    |--------------------------------------------------------------------------
+    */
+    'two_fa_code_invalid' => 'Invalid or expired code.',
+    'two_fa_email_sent'   => 'Code sent to :email',
+
 ];

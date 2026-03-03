@@ -21,16 +21,16 @@ class ProfilePage extends Component
 
     public string $activeTab = 'profile';
 
-    // ── Aba: Perfil ────────────────────────────────────────────────────
+    // ── Tab: Profile ───────────────────────────────────────────────────
     public string $name  = '';
     public string $email = '';
 
-    // ── Aba: Senha ─────────────────────────────────────────────────────
+    // ── Tab: Password ──────────────────────────────────────────────────
     public string $current_password      = '';
     public string $password              = '';
     public string $password_confirmation = '';
 
-    // ── Aba: 2FA ───────────────────────────────────────────────────────
+    // ── Tab: 2FA ────────────────────────────────────────────────────────
     public string $totpType      = '';   // totp | email
     public string $totpSecret    = '';
     public string $qrCodeSvg     = '';
@@ -38,10 +38,10 @@ class ProfilePage extends Component
     public string $totp_code     = '';
     public bool   $showSetup2fa  = false;
 
-    // ── Aba: Sessões ───────────────────────────────────────────────────
+    // ── Tab: Sessions ──────────────────────────────────────────────────
     public array $sessions = [];
 
-    // ── Aba: Foto ──────────────────────────────────────────────────────
+    // ── Tab: Photo ─────────────────────────────────────────────────────
     public $photo = null;
 
     // ── Feedback ───────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ class ProfilePage extends Component
         $this->totpType = $user->two_factor_type ?? '';
     }
 
-    // ── Perfil ─────────────────────────────────────────────────────────────
+    // ── Profile ────────────────────────────────────────────────────────────
 
     public function saveProfile(): void
     {
@@ -70,10 +70,10 @@ class ProfilePage extends Component
             'email' => $this->email,
         ])->save();
 
-        $this->flash('Perfil atualizado com sucesso!');
+        $this->flash(trans('ptah::ui.profile_updated'));
     }
 
-    // ── Senha ──────────────────────────────────────────────────────────────
+    // ── Password ───────────────────────────────────────────────────────────
 
     public function savePassword(): void
     {
@@ -85,13 +85,13 @@ class ProfilePage extends Component
         $user = Auth::user();
 
         if (! Hash::check($this->current_password, $user->password)) {
-            $this->errorMsg = 'Senha atual incorreta.';
+            $this->errorMsg = trans('ptah::ui.profile_password_wrong');
             return;
         }
 
         $user->forceFill(['password' => Hash::make($this->password)])->save();
         $this->reset(['current_password', 'password', 'password_confirmation']);
-        $this->flash('Senha alterada com sucesso!');
+        $this->flash(trans('ptah::ui.profile_password_updated'));
     }
 
     // ── 2FA ────────────────────────────────────────────────────────────────
@@ -114,9 +114,9 @@ class ProfilePage extends Component
         if ($twoFactor->confirmTotp(Auth::user(), $this->totp_code, $this->recoveryCodes)) {
             $this->showSetup2fa  = false;
             $this->recoveryCodes = [];
-            $this->flash('Autenticação TOTP ativada!');
+            $this->flash(trans('ptah::ui.profile_totp_enabled'));
         } else {
-            $this->errorMsg = 'Código inválido. Tente novamente.';
+            $this->errorMsg = trans('ptah::ui.profile_totp_invalid');
         }
 
         $this->reset('totp_code');
@@ -126,7 +126,7 @@ class ProfilePage extends Component
     {
         $twoFactor->sendEmailCode(Auth::user());
         $this->totpType = 'email';
-        $this->flash('Código enviado! Verifique seu e-mail para confirmar.');
+        $this->flash(trans('ptah::ui.profile_email_2fa_sent'));
     }
 
     public function loadRecoveryCodes(TwoFactorService $twoFactor): void
@@ -137,7 +137,7 @@ class ProfilePage extends Component
     public function regenerateRecoveryCodes(TwoFactorService $twoFactor): void
     {
         $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(Auth::user());
-        $this->flash('Códigos regenerados. Guarde-os em local seguro!');
+        $this->flash(trans('ptah::ui.profile_recovery_regen'));
     }
 
     public function disableTwoFactor(TwoFactorService $twoFactor): void
@@ -145,10 +145,10 @@ class ProfilePage extends Component
         $twoFactor->disable(Auth::user());
         $this->totpType     = '';
         $this->showSetup2fa = false;
-        $this->flash('Autenticação em duas etapas desativada.');
+        $this->flash(trans('ptah::ui.profile_2fa_disabled'));
     }
 
-    // ── Sessões ────────────────────────────────────────────────────────────
+    // ── Sessions ───────────────────────────────────────────────────────────
 
     public function loadSessions(SessionService $sessionService): void
     {
@@ -159,7 +159,7 @@ class ProfilePage extends Component
     {
         $sessionService->revokeSession($sessionId);
         $this->loadSessions($sessionService);
-        $this->flash('Sessão encerrada.');
+        $this->flash(trans('ptah::ui.profile_session_revoked'));
     }
 
     public function revokeOtherSessions(SessionService $sessionService): void
@@ -169,10 +169,10 @@ class ProfilePage extends Component
             Request::session()->getId()
         );
         $this->loadSessions($sessionService);
-        $this->flash("{$count} sessão(ões) encerrada(s).");
+        $this->flash(trans('ptah::ui.profile_sessions_revoked', ['count' => $count]));
     }
 
-    // ── Foto ───────────────────────────────────────────────────────────────
+    // ── Photo ──────────────────────────────────────────────────────────────
 
     public function savePhoto(): void
     {
@@ -188,7 +188,7 @@ class ProfilePage extends Component
         }
 
         $this->reset('photo');
-        $this->flash('Foto atualizada!');
+        $this->flash(trans('ptah::ui.profile_photo_updated'));
     }
 
     public function removePhoto(): void
@@ -200,7 +200,7 @@ class ProfilePage extends Component
             $user->forceFill(['profile_photo_path' => null])->save();
         }
 
-        $this->flash('Foto removida.');
+        $this->flash(trans('ptah::ui.profile_photo_removed'));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
