@@ -65,7 +65,7 @@
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Novo
+                    {{ __('ptah::ui.btn_new') }}
                 </button>
             @endif
         @endif
@@ -81,7 +81,7 @@
                 <input
                     wire:model.live.debounce.400ms="search"
                     type="text"
-                    placeholder="Buscar..."
+                    placeholder="{{ __('ptah::ui.search_placeholder') }}"
                     class="w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg transition-colors {{ $T['search'] }}"
                 />
             </div>
@@ -100,12 +100,12 @@
                 <button wire:click="toggleFilters"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
                            {{ $showFilters ? $T['btn_on'] : $T['btn'] }}"
-                    title="Filtros">
+                    title="{{ __('ptah::ui.btn_filters') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="hidden sm:inline">Filtros</span>
+                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_filters') }}</span>
                     @if ($activeFilterCount > 0)
                         <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-danger">
                             {{ $activeFilterCount }}
@@ -119,18 +119,18 @@
                 <button wire:click="toggleTrashed"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
                            {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : $T['btn'] }}"
-                    title="{{ $showTrashed ? 'Ver ativos' : 'Ver excluídos' }}">
+                    title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                     @if ($showTrashed)
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
                         </svg>
-                        <span class="hidden sm:inline">Voltar</span>
+                        <span class="hidden sm:inline">{{ __('ptah::ui.btn_back') }}</span>
                     @else
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
-                        <span class="hidden sm:inline">Lixeira</span>
+                        <span class="hidden sm:inline">{{ __('ptah::ui.btn_trash') }}</span>
                     @endif
                 </button>
             @endif
@@ -140,12 +140,12 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
-                        title="Exportar">
+                        title="{{ __('ptah::ui.btn_export') }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        <span class="hidden sm:inline">Exportar</span>
+                        <span class="hidden sm:inline">{{ __('ptah::ui.btn_export') }}</span>
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
@@ -186,12 +186,12 @@
                     <button @click="open = !open"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
                                {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : $T['btn'] }}"
-                        title="Colunas">
+                        title="{{ __('ptah::ui.btn_columns') }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M3 10h18M3 14h18M10 6v12M14 6v12"/>
                         </svg>
-                        <span class="hidden sm:inline">Colunas</span>
+                        <span class="hidden sm:inline">{{ __('ptah::ui.btn_columns') }}</span>
                         @if ($hiddenColumnsCount > 0)
                             <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-amber-500">
                                 {{ $hiddenColumnsCount }}
@@ -207,11 +207,11 @@
                         <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                             <button wire:click="showAllColumns" @click="open = false"
                                 class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
-                                Mostrar todas
+                                {{ __('ptah::ui.col_show_all') }}
                             </button>
                             <button wire:click="hideAllColumns" @click="open = false"
                                 class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
-                                Ocultar todas
+                                {{ __('ptah::ui.col_hide_all') }}
                             </button>
                         </div>
                         {{-- Lista de colunas --}}
@@ -234,17 +234,17 @@
             {{-- Densidade da visualização --}}
             @php
                 $densityMap = [
-                    'compact'     => ['icon' => '≡', 'label' => 'Compacto'],
-                    'comfortable' => ['icon' => '☰', 'label' => 'Confortável'],
-                    'spacious'    => ['icon' => '⊟', 'label' => 'Espaçoso'],
+                    'compact'     => ['icon' => '≡', 'label' => __('ptah::ui.density_compact')],
+                    'comfortable' => ['icon' => '☰', 'label' => __('ptah::ui.density_comfortable')],
+                    'spacious'    => ['icon' => '⊟', 'label' => __('ptah::ui.density_spacious')],
                 ];
             @endphp
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
-                    title="Densidade">
+                    title="{{ __('ptah::ui.btn_density') }}">
                     <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
-                    <span class="hidden sm:inline">Densidade</span>
+                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_density') }}</span>
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
@@ -272,7 +272,7 @@
             {{-- Atualizar --}}
             <button wire:click="$refresh"
                 class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 focus:outline-none"
-                title="Atualizar">
+                title="{{ __('ptah::ui.btn_refresh') }}">
                 <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -284,7 +284,7 @@
             @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
                 <button wire:click="clearFilters"
                     class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-400 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 focus:outline-none"
-                    title="Limpar filtros">
+                    title="{{ __('ptah::ui.btn_clear_filters') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -295,7 +295,7 @@
             <select wire:model.live="perPage"
                 class="text-sm border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 {{ $T['perpage'] }}">
                 @foreach ([10, 15, 25, 50, 100] as $n)
-                    <option value="{{ $n }}">{{ $n }} / pág.</option>
+                    <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>
                 @endforeach
             </select>
 
@@ -312,7 +312,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="text-sm font-semibold {{ $T['fp_text'] }}">Filtros</span>
+                    <span class="text-sm font-semibold {{ $T['fp_text'] }}">{{ __('ptah::ui.filters_title') }}</span>
                     @if ($activeFilterCount > 0)
                         <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium border border-indigo-100">
                             {{ $activeFilterCount }} ativo{{ $activeFilterCount > 1 ? 's' : '' }}
@@ -324,7 +324,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                    Limpar tudo
+                    {{ __('ptah::ui.filters_clear_all') }}
                 </button>
             </div>
 
@@ -337,20 +337,20 @@
                         ->where('colsTipo', 'date')
                         ->isNotEmpty();
                     $quickLabels = [
-                        'today'     => 'Hoje',
-                        'yesterday' => 'Ontem',
-                        'last7'     => '7 dias',
-                        'last30'    => '30 dias',
-                        'week'      => 'Esta semana',
-                        'month'     => 'Este mês',
-                        'lastMonth' => 'Mês passado',
-                        'quarter'   => 'Trimestre',
-                        'year'      => 'Este ano',
+                        'today'     => __('ptah::ui.date_today'),
+                        'yesterday' => __('ptah::ui.date_yesterday'),
+                        'last7'     => __('ptah::ui.date_last7'),
+                        'last30'    => __('ptah::ui.date_last30'),
+                        'week'      => __('ptah::ui.date_week'),
+                        'month'     => __('ptah::ui.date_month'),
+                        'lastMonth' => __('ptah::ui.date_last_month'),
+                        'quarter'   => __('ptah::ui.date_quarter'),
+                        'year'      => __('ptah::ui.date_year'),
                     ];
                 @endphp
                 @if ($hasDateFilterCols)
                     <div>
-                        <p class="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">Atalhos de data</p>
+                        <p class="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">{{ __('ptah::ui.filters_date_shortcuts') }}</p>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($quickLabels as $period => $qlabel)
                                 <button wire:click="applyQuickDateFilter('{{ $period }}')"
@@ -388,7 +388,7 @@
                                     <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p class="mb-1 text-xs text-gray-400">De</p>
+                                            <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
                                                     class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
@@ -402,7 +402,7 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="mb-1 text-xs text-gray-400">Até</p>
+                                            <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
                                                     class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
@@ -424,7 +424,7 @@
                                     <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
                                     <select wire:model.live="filters.{{ $cfField }}"
                                         class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none">
-                                        <option value="">-- Todos --</option>
+                                        <option value="">{{ __('ptah::ui.filters_all') }}</option>
                                         @foreach ($col['colsSelect'] as $optLabel => $optVal)
                                             <option value="{{ $optVal }}">{{ $optLabel }}</option>
                                         @endforeach
@@ -470,7 +470,7 @@
                                             <input type="text"
                                                 wire:keyup.debounce.300ms="filterSearchDropdown('{{ $cfField }}', $event.target.value)"
                                                 @focus="$wire.openFilterDropdown('{{ $cfField }}')"
-                                                placeholder="{{ $cfFilterSelected ? 'Alterar...' : 'Buscar ' . $cfLabel . '...' }}"
+                                                placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
                                                 autocomplete="off"
                                                 class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 pr-8 focus:ring-1 focus:ring-primary/30 focus:outline-none bg-white"
                                             />
@@ -494,7 +494,7 @@
                                                     {{ $opt['label'] }}
                                                 </button>
                                             @empty
-                                                <p class="px-3 py-2 text-xs italic text-gray-400">Nenhum resultado encontrado.</p>
+                                                <p class="px-3 py-2 text-xs italic text-gray-400">{{ __('ptah::ui.filters_no_results') }}</p>
                                             @endforelse
                                         </div>
                                     </div>
@@ -516,11 +516,11 @@
                                                 <option value="<">&lt;</option>
                                                 <option value="<=">&le;</option>
                                             @else
-                                                <option value="LIKE">contém</option>
-                                                <option value="=">igual a</option>
-                                                <option value="!=">diferente</option>
-                                                <option value="LIKE_START">inicia com</option>
-                                                <option value="LIKE_END">termina com</option>
+                                                <option value="LIKE">{{ __('ptah::ui.filters_op_contains') }}</option>
+                                                <option value="=">{{ __('ptah::ui.filters_op_equals') }}</option>
+                                                <option value="!=">{{ __('ptah::ui.filters_op_not_equals') }}</option>
+                                                <option value="LIKE_START">{{ __('ptah::ui.filters_op_starts') }}</option>
+                                                <option value="LIKE_END">{{ __('ptah::ui.filters_op_ends') }}</option>
                                             @endif
                                         </select>
                                         <input type="{{ $isNum ? 'number' : 'text' }}"
@@ -550,7 +550,7 @@
                                                 wire:keyup="searchDropdown('cf_{{ $cfField }}', $event.target.value)"
                                                 @focus="open = true"
                                                 @click.outside="open = false"
-                                                placeholder="Buscar {{ $cfLabel }}..."
+                                                placeholder="{{ __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
                                                 class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
                                             @if (!empty($sdResults['cf_' . $cfField]))
                                                 <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
@@ -597,7 +597,7 @@
                 {{-- Filtros salvos --}}
                 @if (!empty($savedFilters))
                     <div class="flex flex-wrap items-center gap-2 pt-1">
-                        <span class="text-xs font-medium text-gray-400">Salvos:</span>
+                        <span class="text-xs font-medium text-gray-400">{{ __('ptah::ui.filters_saved') }}</span>
                         @foreach (array_keys($savedFilters) as $sfName)
                             <div class="flex items-center">
                                 <button wire:click="loadNamedFilter('{{ $sfName }}')"
@@ -625,7 +625,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
                         </svg>
-                        Salvar filtro atual com nome
+                        {{ __('ptah::ui.filters_save_action') }}
                     </button>
                 </template>
                 <template x-if="saving">
@@ -633,16 +633,16 @@
                         <input type="text" x-model="name"
                             @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             @keydown.escape="saving = false; name = '';"
-                            placeholder="Ex: Clientes ativos SP"
+                            placeholder="{{ __('ptah::ui.filters_save_placeholder') }}"
                             class="flex-1 text-sm border rounded-lg px-3 py-1.5 {{ $T['fp_save_in'] }}"
                             x-init="$nextTick(() => $el.focus())" />
                         <button @click="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
-                            Salvar
+                            {{ __('ptah::ui.filters_btn_save') }}
                         </button>
                         <button @click="saving = false; name = '';"
                             class="text-xs text-gray-400 transition-colors hover:text-gray-600">
-                            Cancelar
+                            {{ __('ptah::ui.filters_btn_cancel') }}
                         </button>
                     </div>
                 </template>
@@ -680,7 +680,7 @@
                                 <div class="flex items-center gap-1.5">
                                     {{-- Grip (initia o drag) --}}
                                     <span class="text-gray-300 transition-colors select-none ptah-drag-grip shrink-0 cursor-grab hover:text-gray-500"
-                                          title="Arrastar para reordenar">
+                                          title="{{ __('ptah::ui.col_drag_title') }}">
                                         <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                                             <circle cx="7" cy="5"  r="1.5"/><circle cx="13" cy="5"  r="1.5"/>
                                             <circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/>
@@ -712,14 +712,14 @@
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
                             <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap {{ $T['th_text'] }}">
-                                {{ $col['colsNomeLogico'] ?? 'Ação' }}
+                                {{ $col['colsNomeLogico'] ?? __('ptah::ui.col_default_action') }}
                             </th>
                         @endif
                     @endforeach
 
                     {{-- Coluna de ações padrão --}}
                     @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
-                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase {{ $T['th_text'] }}">Ações</th>
+                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase {{ $T['th_text'] }}">{{ __('ptah::ui.col_actions') }}</th>
                     @endif
                 </tr>
             </thead>
@@ -825,7 +825,7 @@
                                         @if (!($permissions['edit'] ?? null) || (auth()->check() && auth()->user()->can($permissions['edit'])))
                                             <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
                                                 @click.stop
-                                                class="transition-colors text-primary hover:text-primary/80" title="Editar">
+                                                class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                 </svg>
@@ -837,7 +837,7 @@
                                     @if ($showTrashed && method_exists($row, 'trashed') && $row->trashed())
                                         <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
                                             @click.stop
-                                            class="transition-colors text-success hover:text-success/80" title="Restaurar">
+                                            class="transition-colors text-success hover:text-success/80" title="{{ __('ptah::ui.btn_restore_title') }}">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                             </svg>
@@ -846,7 +846,7 @@
                                         @if (!($permissions['delete'] ?? null) || (auth()->check() && auth()->user()->can($permissions['delete'])))
                                             <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
                                                 @click.stop
-                                                class="transition-colors text-danger hover:text-danger/80" title="Excluir">
+                                                class="transition-colors text-danger hover:text-danger/80" title="{{ __('ptah::ui.btn_delete_title') }}">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
@@ -869,8 +869,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold {{ $T['empty_ttl'] }}">Nenhum registro encontrado</p>
-                                    <p class="text-xs mt-0.5 {{ $T['empty_sub'] }}">Ajuste os filtros ou adicione um novo item</p>
+                                    <p class="text-sm font-semibold {{ $T['empty_ttl'] }}">{{ __('ptah::ui.empty_title') }}</p>
+                                    <p class="text-xs mt-0.5 {{ $T['empty_sub'] }}">{{ __('ptah::ui.empty_subtitle') }}</p>
                                 </div>
                             </div>
                         </td>
@@ -888,7 +888,7 @@
                                 <td class="px-3 py-2.5 {{ $T['tfoot_td'] }} {{ $col['colsAlign'] ?? 'text-start' }}">
                                     @if ($totVal !== null)
                                         @if (($col['colsHelper'] ?? '') === 'currencyFormat')
-                                            R$ {{ number_format((float)$totVal, 2, ',', '.') }}
+                                        {{ __('ptah::ui.currency_prefix') }}{{ number_format((float)$totVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
                                         @else
                                             {{ $totVal }}
                                         @endif
@@ -907,8 +907,7 @@
     {{-- ── Paginação ────────────────────────────────────────────────────── --}}
     <div class="flex items-center justify-between mt-4 text-sm text-gray-500">
         <span>
-            Exibindo {{ $rows->firstItem() ?? 0 }}&ndash;{{ $rows->lastItem() ?? 0 }}
-            de {{ $rows->total() }} registros
+            {{ __('ptah::ui.pagination', ['first' => $rows->firstItem() ?? 0, 'last' => $rows->lastItem() ?? 0, 'total' => $rows->total()]) }}
         </span>
         <div>
             {{ $rows->links('ptah::components.forge-pagination') }}
@@ -951,9 +950,9 @@
                         </div>
                         <div>
                             <h2 class="text-[13px] font-semibold leading-tight {{ $T['modal_ttl'] }}">
-                                {{ $editingId ? 'Editar' : 'Novo' }} {{ $crudTitle }}
+                                {{ $editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix') }} {{ $crudTitle }}
                             </h2>
-                            <p class="text-[11px] leading-tight {{ $T['modal_sub'] }}">{{ $editingId ? 'Altere os campos e salve' : 'Preencha os campos abaixo' }}</p>
+                            <p class="text-[11px] leading-tight {{ $T['modal_sub'] }}">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
                         </div>
                     </div>
                     <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -1012,7 +1011,7 @@
                                                 open: false,
                                                 selected: {{ $fInitSel }},
                                                 options: {{ json_encode($fOptions) }},
-                                                placeholder: 'Selecione...',
+                                                placeholder: '{{ __('ptah::ui.select_placeholder') }}',
                                                 get displayLabel() {
                                                     if (this.selected === null || this.selected === '') return this.placeholder;
                                                     const opt = this.options.find(o => String(o.value) === String(this.selected));
@@ -1111,7 +1110,7 @@
                                                     x-model="displayVal"
                                                     wire:keyup.debounce.300ms="searchDropdown('{{ $fField }}', $event.target.value)"
                                                     @focus="$wire.openDropdown('{{ $fField }}')"
-                                                    placeholder="Buscar {{ $fLabel }}..."
+                                                    placeholder="{{ __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
                                                     autocomplete="off"
                                                     class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 {{ $T['form_in'] }}"
                                                 />
@@ -1136,7 +1135,7 @@
                                                         {{ $opt['label'] }}
                                                     </button>
                                                 @empty
-                                                    <p class="px-4 py-3 text-xs italic text-gray-400">Nenhum resultado encontrado.</p>
+                                                    <p class="px-4 py-3 text-xs italic text-gray-400">{{ __('ptah::ui.no_results') }}</p>
                                                 @endforelse
                                             </div>
                                         </div>
@@ -1183,10 +1182,10 @@
                 {{-- Footer --}}
                 <div class="flex items-center justify-end gap-3 px-6 py-4 border-t {{ $T['modal_ft'] }}">
                     <x-forge-button wire:click="closeModal" color="dark" flat :disabled="$creating">
-                        Cancelar
+                        {{ __('ptah::ui.btn_cancel') }}
                     </x-forge-button>
                     <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
-                        {{ $editingId ? 'Salvar Alterações' : 'Criar' }}
+                        {{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}
                     </x-forge-button>
                 </div>
 
@@ -1210,13 +1209,13 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold {{ $T['modal_ttl'] }}">Confirmar exclusão</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Esta ação não pode ser desfeita.</p>
+                        <h3 class="text-sm font-semibold {{ $T['modal_ttl'] }}">{{ __('ptah::ui.delete_title') }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.delete_message') }}</p>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 px-6 py-4 {{ $T['del_ft'] }}">
-                    <x-forge-button wire:click="cancelDelete" color="dark" flat>Cancelar</x-forge-button>
-                    <x-forge-button wire:click="deleteRecord" color="danger">Excluir</x-forge-button>
+                    <x-forge-button wire:click="cancelDelete" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                    <x-forge-button wire:click="deleteRecord" color="danger">{{ __('ptah::ui.btn_delete') }}</x-forge-button>
                 </div>
             </div>
         </div>

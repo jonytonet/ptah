@@ -114,7 +114,7 @@ class CrudConfigGenerator extends AbstractGenerator
         // Coluna ID sempre presente
         $cols[] = [
             'colsNomeFisico'  => 'id',
-            'colsNomeLogico'  => 'ID',
+            'colsNomeLogico'  => trans('ptah::ui.col_id'),
             'colsTipo'        => 'number',
             'colsGravar'      => false,
             'colsRequired'    => false,
@@ -130,7 +130,7 @@ class CrudConfigGenerator extends AbstractGenerator
         // created_at
         $cols[] = [
             'colsNomeFisico'  => 'created_at',
-            'colsNomeLogico'  => 'Criado em',
+            'colsNomeLogico'  => trans('ptah::ui.col_created_at'),
             'colsTipo'        => 'date',
             'colsGravar'      => false,
             'colsRequired'    => false,
@@ -171,9 +171,9 @@ class CrudConfigGenerator extends AbstractGenerator
             $col['colsSelect'] = $this->buildEnumSelect($field->enumValues);
         }
 
-        // Boolean → select Sim/Não
+        // Boolean → select Yes/No (respects PTAH_LOCALE)
         if ($field->type === 'boolean') {
-            $col['colsSelect'] = ['Sim' => '1', 'Não' => '0'];
+            $col['colsSelect'] = [trans('ptah::ui.bool_yes') => '1', trans('ptah::ui.bool_no') => '0'];
             $col['colsHelper'] = 'yesOrNot';
         }
 

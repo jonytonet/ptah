@@ -44,6 +44,7 @@ class InstallCommand extends Command
         $this->publishConfig();
         $this->publishStubs();
         $this->publishMigrations();
+        $this->publishLang();
         $this->updateAppCss();
         $this->runMigrations();
         $this->createStorageLink();
@@ -108,6 +109,19 @@ class InstallCommand extends Command
         $this->components->task('Publicando migrations', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-migrations',
+                '--force' => $this->option('force'),
+            ]);
+        });
+    }
+
+    /**
+     * Publica os arquivos de tradução.
+     */
+    protected function publishLang(): void
+    {
+        $this->components->task('Publicando traduções', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-lang',
                 '--force' => $this->option('force'),
             ]);
         });

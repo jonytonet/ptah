@@ -81,6 +81,12 @@ class PtahServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Aplica o locale do ptah (independente do APP_LOCALE do projeto)
+        $this->app->setLocale(config('ptah.locale', 'en'));
+
+        // Carrega as translations do pacote com namespace 'ptah'
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'ptah');
+
         $this->registerCommands();
         $this->registerPublishing();
         $this->registerViews();
@@ -187,6 +193,11 @@ class PtahServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../resources/css' => resource_path('css/vendor/ptah'),
             ], 'ptah-assets');
+
+            // Publicar translations (permite customização por projeto)
+            $this->publishes([
+                __DIR__ . '/../resources/lang' => lang_path('vendor/ptah'),
+            ], 'ptah-lang');
 
             // Publicar módulo auth (migrations + views)
             $this->publishes([

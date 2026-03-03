@@ -25,14 +25,14 @@
             --}}
 
             <div class="flex items-center gap-3 pt-2">
-                <x-forge-button type="submit" color="primary">Atualizar</x-forge-button>
+                <x-forge-button type="submit" color="primary">{{ __('ptah::ui.btn_update') }}</x-forge-button>
                 <x-forge-button
                     tag="a"
                     href="{{ route('{{ entity_lower }}.index') }}"
                     color="dark"
                     flat
                 >
-                    Cancelar
+                    {{ __('ptah::ui.btn_cancel') }}
                 </x-forge-button>
             </div>
         </form>

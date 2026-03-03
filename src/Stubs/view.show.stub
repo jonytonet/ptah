@@ -8,10 +8,10 @@
         </div>
         <div class="flex gap-2">
             <x-forge-button tag="a" href="{{ route('{{ entity_lower }}.edit', ${{ entity_lower }}) }}" color="warn">
-                Editar
+                {{ __('ptah::ui.btn_edit') }}
             </x-forge-button>
             <x-forge-button tag="a" href="{{ route('{{ entity_lower }}.index') }}" color="dark" flat>
-                Voltar
+                {{ __('ptah::ui.btn_back') }}
             </x-forge-button>
         </div>
     </div>
@@ -20,18 +20,18 @@
         {{-- Exiba os detalhes do {{ entity }} aqui --}}
         <dl class="divide-y divide-gray-100">
             <div class="grid grid-cols-3 gap-4 py-3">
-                <dt class="text-sm font-medium text-gray-500">ID</dt>
+                <dt class="text-sm font-medium text-gray-500">{{ __('ptah::ui.col_id') }}</dt>
                 <dd class="col-span-2 text-sm text-dark">{{ ${{ entity_lower }}->id }}</dd>
             </div>
             {{-- Adicione mais campos aqui --}}
             <div class="grid grid-cols-3 gap-4 py-3">
-                <dt class="text-sm font-medium text-gray-500">Criado em</dt>
+                <dt class="text-sm font-medium text-gray-500">{{ __('ptah::ui.col_created_at') }}</dt>
                 <dd class="col-span-2 text-sm text-dark">
                     {{ ${{ entity_lower }}->created_at?->format('d/m/Y H:i') }}
                 </dd>
             </div>
             <div class="grid grid-cols-3 gap-4 py-3">
-                <dt class="text-sm font-medium text-gray-500">Atualizado em</dt>
+                <dt class="text-sm font-medium text-gray-500">{{ __('ptah::ui.col_updated_at') }}</dt>
                 <dd class="col-span-2 text-sm text-dark">
                     {{ ${{ entity_lower }}->updated_at?->format('d/m/Y H:i') }}
                 </dd>

@@ -4,6 +4,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Locale / Idioma da interface
+    |--------------------------------------------------------------------------
+    |
+    | Define o idioma usado nos textos de UI gerados pelo ptah (base-crud,
+    | stubs de view, labels automáticos do CrudConfigGenerator).
+    | Valores suportados: 'en' (padrão), 'pt_BR'.
+    |
+    | Para usar pt-BR: adicione PTAH_LOCALE=pt_BR no .env do projeto.
+    | Para customizar strings: php artisan vendor:publish --tag=ptah-lang
+    |
+    */
+    'locale' => env('PTAH_LOCALE', 'en'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Caminhos de geração de arquivos
     |--------------------------------------------------------------------------
     |
