@@ -301,6 +301,32 @@ class HasAuditFieldsTest extends TestCase
         $this->assertDatabaseMissing('no_soft_delete_stubs', ['id' => $record->id]);
     }
 
+    /**
+     * forceDelete() removes the row completely — deleted_at is never set, so
+     * trashed() returns false and the trait's `deleted` handler returns early
+     * without attempting a raw UPDATE on a non-existent row.
+     *
+     * Regression guard for [M-2]: old code used method_exists($model, 'getDeletedAtColumn')
+     * which always returned true on SoftDelete models, potentially causing a
+     * spurious UPDATE. The fix uses trashed() which correctly reports false
+     * when deleted_at was never set (direct forceDelete).
+     */
+    #[Test]
+    public function nao_preenche_deleted_by_em_force_delete(): void
+    {
+        $this->createAndLoginUser();
+        $record = AuditableStub::create(['name' => 'Force Delete']);
+
+        // forceDelete() must not throw; the trait's deleted handler must return early
+        $record->forceDelete();
+
+        // Row must be completely gone — not soft-deleted
+        $this->assertDatabaseMissing('has_audit_stubs', ['id' => $record->id]);
+
+        // Ensure there is no trace of a soft-deleted row either
+        $this->assertNull(AuditableStub::withTrashed()->find($record->id));
+    }
+
     // ── Relationships ─────────────────────────────────────────────────────────
 
     #[Test]

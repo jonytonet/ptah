@@ -57,7 +57,11 @@ class PtahServiceProvider extends ServiceProvider
             'ptah'
         );
 
-        $this->app->singleton(SchemaInspector::class);
+        // SchemaInspector is only needed during Artisan code-generation commands.
+        // Binding it as a singleton in every HTTP request wastes memory.
+        if ($this->app->runningInConsole()) {
+            $this->app->singleton(SchemaInspector::class);
+        }
         $this->app->singleton(CacheService::class);
         $this->app->singleton(CrudConfigService::class);
         $this->app->singleton(FilterService::class);
@@ -81,8 +85,13 @@ class PtahServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Aplica o locale do ptah (independente do APP_LOCALE do projeto)
-        $this->app->setLocale(config('ptah.locale', 'en'));
+        // Only override the host application's locale when explicitly requested.
+        // Changing the locale globally in a ServiceProvider would silently
+        // break Carbon formatting, validation messages and every package that
+        // reads App::getLocale() in the host project.
+        if (config('ptah.force_locale', false)) {
+            $this->app->setLocale(config('ptah.locale', 'en'));
+        }
 
         // Carrega as translations do pacote com namespace 'ptah'
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'ptah');
@@ -245,11 +254,20 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Carrega as migrations do pacote.
+     * Loads Ptah migrations conditionally by enabled module.
+     *
+     * When NO modules are enabled (pure code-generator usage), no migrations
+     * are registered so the host project is not polluted with unexpected tables.
+     * When at least one module is active, all Ptah migrations are loaded because
+     * the tables are inter-dependent (roles reference companies, etc.).
      */
     protected function loadMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/Migrations');
+        $modulesEnabled = array_filter(config('ptah.modules', []));
+
+        if (! empty($modulesEnabled)) {
+            $this->loadMigrationsFrom(__DIR__ . '/Migrations');
+        }
     }
 
     /**
@@ -296,7 +314,7 @@ class PtahServiceProvider extends ServiceProvider
      */
     protected function registerRoutes(): void
     {
-        if (app()->environment(['local', 'development', 'staging'])) {
+        if (app()->environment(['local', 'development'])) {
             /** @var \Illuminate\Routing\Router $router */
             $router = $this->app->make('router');
 

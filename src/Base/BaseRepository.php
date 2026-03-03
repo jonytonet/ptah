@@ -31,9 +31,41 @@ abstract class BaseRepository implements BaseRepositoryInterface
     ];
 
     /**
-     * @param Model $model Instância do model Eloquent associado ao repositório.
+     * SQL operators accepted in `additionalQueries` request param.
+     * Anything outside this list is silently discarded to prevent injection.
+     *
+     * @var array<int, string>
+     */
+    protected const ALLOWED_OPERATORS = ['=', '!=', '<>', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE'];
+
+    /**
+     * @param Model $model Eloquent model instance bound to this repository.
      */
     public function __construct(protected Model $model) {}
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the column listing for the model's table.
+     * Result is memoised per table name to avoid repeated schema queries.
+     * Exposed publicly so services/controllers can validate user input.
+     *
+     * @return array<int, string>
+     */
+    public function getTableColumns(): array
+    {
+        static $cache = [];
+
+        $table = $this->model->getTable();
+
+        if (! isset($cache[$table])) {
+            $cache[$table] = Schema::getColumnListing($table);
+        }
+
+        return $cache[$table];
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // CRUD básico
@@ -153,16 +185,19 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         if ($request->has('fields')) {
-            $query->select($this->mountFieldsToSelect($request));
+            $query->select($this->buildSelectFields($request));
         }
 
+        $validColumns = $this->getTableColumns();
+
         foreach ($inputs as $key => $value) {
-            if ($value !== null && $value !== '') {
+            // Only allow columns that actually exist — prevents arbitrary column injection.
+            if ($value !== null && $value !== '' && in_array($key, $validColumns, true)) {
                 $query->where($key, $value);
             }
         }
 
-        return $this->getWherehas($query, $request, $relations, 'AND');
+        return $this->applyWhereHas($query, $request, $relations, 'AND');
     }
 
     /**
@@ -182,7 +217,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         if ($request->has('fields')) {
-            $query->select($this->mountFieldsToSelect($request));
+            $query->select($this->buildSelectFields($request));
         }
 
         if (! empty($input) && trim($input) !== 'Busca') {
@@ -204,11 +239,14 @@ abstract class BaseRepository implements BaseRepositoryInterface
             });
         }
 
-        return $this->getWherehas($query, $request, $relations, 'OR');
+        return $this->applyWhereHas($query, $request, $relations, 'OR');
     }
 
     /**
-     * Busca incremental pelo param `searchLike`.
+     * Incremental search via the `searchLike` request param.
+     * Supports comparison operators via custom tokens: `}` = >=, `{` = <=, `>`, `<`.
+     * Also handles `whereIn` and `additionalQueries` params.
+     * Column names and operators are validated against a whitelist.
      * Suporta operadores >, >=, <=, < (usando } e { como tokens),
      * whereIn e additionalQueries.
      *
@@ -225,7 +263,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         if ($request->has('fields')) {
-            $query->select($this->mountFieldsToSelect($request));
+            $query->select($this->buildSelectFields($request));
         }
 
         $type    = strtoupper($request->get('searchLikeType', 'AND')) === 'OR' ? 'orWhere' : 'where';
@@ -272,30 +310,44 @@ abstract class BaseRepository implements BaseRepositoryInterface
             });
         }
 
-        // whereIn
-        $whereInRaw = $request->get('whereIn', '');
+        // whereIn — column name is validated against the table schema to prevent injection.
+        $whereInRaw   = $request->get('whereIn', '');
+        $validColumns = $this->getTableColumns();
+
         if (! empty($whereInRaw) && $whereInRaw !== 'whereIn') {
             foreach (explode(';', $whereInRaw) as $segment) {
                 $parts = explode(':', $segment, 2);
                 if (count($parts) === 2) {
-                    $query->whereIn(trim($parts[0]), explode(',', $parts[1]));
+                    $col = trim($parts[0]);
+                    if (in_array($col, $validColumns, true)) {
+                        $query->whereIn($col, explode(',', $parts[1]));
+                    }
                 }
             }
         }
 
-        // additionalQueries  ex: "col1:op:val;col2:=:val2"
+        // additionalQueries  ex: "col1:=:val;col2:>=:val2"
+        // Column is validated against the schema; operator against ALLOWED_OPERATORS.
         $additionalRaw = $request->get('additionalQueries', '');
         if (! empty($additionalRaw)) {
             foreach (explode(';', $additionalRaw) as $segment) {
                 $parts = explode(':', $segment, 3);
                 if (count($parts) === 3) {
                     [$col, $op, $val] = $parts;
-                    $query->where(trim($col), trim($op), trim($val));
+                    $col = trim($col);
+                    $op  = strtoupper(trim($op));
+
+                    if (
+                        in_array($col, $validColumns, true)
+                        && in_array($op, self::ALLOWED_OPERATORS, true)
+                    ) {
+                        $query->where($col, $op, trim($val));
+                    }
                 }
             }
         }
 
-        return $this->getWherehas($query, $request, $relations, 'OR');
+        return $this->applyWhereHas($query, $request, $relations, 'OR');
     }
 
     /**
@@ -323,29 +375,24 @@ abstract class BaseRepository implements BaseRepositoryInterface
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Busca registros por uma coluna e valor específicos.
-     * Aceita multi-assinatura: string simples, array de wheres,
-     * Closure de query ou Builder pré-criado (para encadeamento com useIndex).
+     * Searches records by column and value.
+     * Accepts three signatures:
      *
-     * Quando $reference é Builder (retorno de useIndex()), os próximos parâmetros
-     * mapeiam para: $value=coluna, $operator=operador, $boolean=valor.
-     * Exemplo correto com Builder:  findBy($this->useIndex('idx_name'), 'name', '=', 'Jony')
+     *   findBy(string $column, mixed $value, string $operator = '=')
+     *   findBy(array  $wheres)   — multiple AND conditions
+     *   findBy(Closure $callback) — full query closure
+     *
+     * For index-hint enchaing use findByBuilder() instead.
      *
      * @example $this->findBy('status', 'active')->get()
-     * @example $this->findBy(['status' => 'active', 'is_active' => true])->get()
-     * @example $this->findBy($this->useIndex('idx_status'), 'status', '=', 'active')->get()
+     * @example $this->findBy(['status' => 'active', 'amount' => 10])->get()
+     * @example $this->findBy(fn ($q) => $q->where('amount', '>', 5))->get()
      */
     public function findBy(
-        string|array|Closure|Builder $reference,
+        string|array|Closure $reference,
         mixed $value = null,
-        string $operator = '=',
-        string $boolean = 'and'
+        string $operator = '='
     ): Builder {
-        if ($reference instanceof Builder) {
-            // Encadeamento com useIndex() — usa o Builder recebido como base
-            return $reference->where($value, $operator, $boolean);
-        }
-
         $query = $this->model->newQuery();
 
         if ($reference instanceof Closure) {
@@ -357,6 +404,21 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         return $query->where($reference, $operator, $value);
+    }
+
+    /**
+     * Applies a simple where clause to an existing Builder (e.g. from useIndex()).
+     * This is the clean replacement for the old Builder-branch of findBy().
+     *
+     * @example $this->findByBuilder($this->useIndex('idx_name'), 'name', '=', 'Jony')->get()
+     */
+    public function findByBuilder(
+        Builder $query,
+        string $column,
+        string $operator = '=',
+        mixed $value = null
+    ): Builder {
+        return $query->where($column, $operator, $value);
     }
 
     /**
@@ -377,11 +439,15 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Retorna array de colunas a partir do param `fields` da request.
+     * Returns the SELECT column list from the `fields` query param.
+     *
+     * Only columns that actually exist in the table are accepted.
+     * Unknown identifiers are silently dropped; when nothing valid remains,
+     * ['*'] is returned to avoid an empty SELECT.
      *
      * @return array<int, string>
      */
-    public function mountFieldsToSelect(Request $request): array
+    public function buildSelectFields(Request $request): array
     {
         $fields = $request->get('fields', '');
 
@@ -389,14 +455,28 @@ abstract class BaseRepository implements BaseRepositoryInterface
             return ['*'];
         }
 
-        return array_map('trim', explode(',', $fields));
+        $requested = array_map('trim', explode(',', $fields));
+        $valid     = array_values(
+            array_intersect($requested, $this->getTableColumns())
+        );
+
+        return $valid ?: ['*'];
     }
 
     /**
-     * Aplica whereHas para relacionamentos quando passados via Request (?relations=foo,bar).
-     * Interno — usado pelos métodos de busca avançada.
+     * @deprecated Use buildSelectFields() instead.
+     * @return array<int, string>
      */
-    protected function getWherehas(
+    public function mountFieldsToSelect(Request $request): array
+    {
+        return $this->buildSelectFields($request);
+    }
+
+    /**
+     * Applies whereHas clauses for relations passed via Request (?relations=foo,bar).
+     * Internal — used by the advanced-search methods.
+     */
+    protected function applyWhereHas(
         Builder $baseModel,
         Request $request,
         array $relations,
@@ -420,6 +500,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
         foreach ($relations as $relation) {
             $baseModel->{$method}($relation, function (Builder $q) use ($term): void {
+                // Use the related model's column listing — stored per-table for efficiency.
                 $columns = Schema::getColumnListing($q->getModel()->getTable());
                 $q->where(function (Builder $inner) use ($term, $columns): void {
                     foreach ($columns as $col) {
@@ -471,13 +552,28 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Trunca a tabela desabilitando verificações de FK temporariamente.
+     * Truncates the table, temporarily disabling FK checks where supported.
+     *
+     * Driver-aware:
+     *  - MySQL/MariaDB : SET FOREIGN_KEY_CHECKS=0 ... =1
+     *  - PostgreSQL    : TRUNCATE ... RESTART IDENTITY CASCADE
+     *  - SQLite/others : plain truncate (no FK-check syntax needed)
      */
     public function truncate(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        $this->model->newQuery()->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            $this->model->newQuery()->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } elseif ($driver === 'pgsql') {
+            $table = $this->model->getTable();
+            DB::statement("TRUNCATE TABLE \"{$table}\" RESTART IDENTITY CASCADE");
+        } else {
+            // SQLite and others: plain truncate (no FK-check syntax required)
+            $this->model->newQuery()->truncate();
+        }
     }
 
     /**
@@ -493,18 +589,22 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Adiciona USE INDEX ao Builder para forçar uso de índice MySQL específico.
-     * Pode ser encadeado com findBy() ou where().
+     * Hints MySQL/MariaDB to use a specific index (USE INDEX).
+     * On other drivers (PostgreSQL, SQLite, etc.) the hint is silently omitted
+     * and a plain Builder is returned so the query still executes correctly.
      *
      * @example $this->useIndex('idx_status')->where('status', 'active')->get()
-     * @example $this->findBy($this->useIndex('idx_name'), 'name', 'Jony')->get()
+     * @example $this->findByBuilder($this->useIndex('idx_name'), 'name', '=', 'Jony')->get()
      */
     public function useIndex(string $indexName): Builder
     {
-        $table = $this->model->getTable();
+        $query  = $this->model->newQuery();
+        $driver = DB::connection()->getDriverName();
 
-        $query = $this->model->newQuery();
-        $query->getQuery()->fromRaw("`{$table}` USE INDEX (`{$indexName}`)");
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            $table = $this->model->getTable();
+            $query->getQuery()->fromRaw("`{$table}` USE INDEX (`{$indexName}`)");
+        }
 
         return $query;
     }

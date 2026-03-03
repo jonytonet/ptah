@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Ptah\DTO;
 
+use Illuminate\Http\Request;
+use Ptah\Base\BaseDTO;
+
 /**
- * DTO de filtro utilizado pelo FilterService do BaseCrud.
+ * DTO used by FilterService inside BaseCrud.
  *
- * Transporta os dados de um filtro entre camadas (Livewire → Service → Query Builder).
+ * Carries filter data between layers (Livewire → Service → Query Builder).
+ * Extends BaseDTO so it satisfies any code that type-hints BaseDTO.
  */
-final class FilterDTO
+final class FilterDTO extends BaseDTO
 {
     /**
      * @param string $field     Nome do campo ou da relação
@@ -27,7 +31,16 @@ final class FilterDTO
     ) {}
 
     /**
-     * Cria a partir de array.
+     * Creates an instance from a Request object (satisfies BaseDTO contract).
+     * Delegates to fromArray() for consistency with the existing factory method.
+     */
+    public static function fromRequest(Request $request): static
+    {
+        return static::fromArray($request->all());
+    }
+
+    /**
+     * Creates from array.
      */
     public static function fromArray(array $data): self
     {

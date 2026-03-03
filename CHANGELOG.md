@@ -18,7 +18,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `createQuietly`/`updateQuietly` event-suppression, `replicate`
 - **Unit tests — `BaseService`** (`tests/Unit/Base/BaseServiceTest.php`)
   - 9 test cases: `destroy` returns `false` for missing ID (vs `delete` which throws),
-    `destroy` removes existing record, `show` returns model or null, `getDados` routing
+    `destroy` removes existing record, `show` returns model or null, `getData` routing
     (search → advancedSearch, searchLike → searchLike, default → findAllFieldsAnd),
     `limit`/`direction` respected, `relations` sentinel `'Relacao'` produces empty array
 - **Unit tests — `HasCrud`** (`tests/Unit/Traits/HasCrudTest.php`)
@@ -26,8 +26,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `findOrFail`, `create`, `update`, `delete`), confirming no method-name typos or
     signature drift against `BaseRepositoryInterface`
 - **Unit tests — `HasAuditFields`** (`tests/Unit/Traits/HasAuditFieldsTest.php`)
-  - 13 test cases covering all boot events, the `=== null` guard, guest behaviour,
-    `NoFillable` tolerance, hard-delete safety, updating-event semantics and all three
+  - 14 test cases (new: `nao_preenche_deleted_by_em_force_delete` regression guard for [M-2])
+  - All boot events, `=== null` guard, guest behaviour, `NoFillable` tolerance,
+    hard-delete safety, `forceDelete` safety, updating-event semantics and all three
     `createdBy` / `updatedBy` / `deletedBy` relationships
   - Dedicated stub tables in `tests/migrations/` (`has_audit_stubs`, `no_soft_delete_stubs`)
   - Self-contained stub models (`AuditableStub`, `AuditableNoFillableStub`,
@@ -37,6 +38,56 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`tests/migrations/2024_01_10_000002_create_base_crud_stubs_table.php`** — `items` stub
   table (id, name, status, amount, timestamps) shared by BaseRepository, BaseService and
   HasCrud test suites
+- **`BaseRepository::findByBuilder()`** — clean replacement for `findBy(Builder)` branch,
+  accepts `(Builder $query, string $column, string $operator, mixed $value)` with explicit
+  operator as first-class param; old Builder-union in `findBy()` removed [M-3]
+- **`BaseRepository::getTableColumns()`** — public memoised helper (static cache per table)
+  that returns validated column names for the model's table; replaces the former private
+  `tableColumns()` anonymous function; exposed via `BaseService::getTableColumns()` delegation
+- **`BaseService::getData()`** — renamed from `getDados()` with English name and
+  `orderByRaw("{$col} {$dir}")` replaced by `orderBy($col, $dir)` with column/direction
+  whitelisting [C-1]; `getDados()` kept as `@deprecated` alias for backward compatibility
+- **`BaseRepositoryInterface`** — 15 previously unspecified methods added: `advancedSearch`,
+  `searchLike`, `findAllFieldsAnd`, `autocompleteSearch`, `allQuery`, `findBy` (updated
+  signature), `findByBuilder`, `findByIn`, `updateBatch`, `updateQuietly`, `createQuietly`,
+  `truncate`, `replicate`, `useIndex`, `buildSelectFields`, `getTableColumns`, `getKeyName` [A-1]
+- **`FilterDTO`** — now extends `BaseDTO` and implements `fromRequest(Request): static` [B-2]
+
+### Changed
+- **`BaseRepository::mountFieldsToSelect()`** renamed to `buildSelectFields()` — now also
+  intersects requested fields against real table columns preventing column enumeration [A-3];
+  deprecated alias `mountFieldsToSelect()` retained for backward compat
+- **`BaseRepository::getWherehas()`** renamed to `applyWhereHas()` (protected internal method)
+- **`BaseRepository::findBy()`** — removed `Builder` union type and `$boolean` parameter;
+  use `findByBuilder()` for Builder-based queries [M-3]
+- **`BaseRepository::truncate()`** — now multi-DB aware: MySQL/MariaDB uses
+  `SET FOREIGN_KEY_CHECKS = 0/1`, PostgreSQL uses `TRUNCATE … RESTART IDENTITY CASCADE`,
+  other drivers (SQLite, etc.) use plain `DB::table()->truncate()` [C-4]
+- **`BaseRepository::useIndex()`** — returns plain Builder on non-MySQL/MariaDB drivers
+  instead of injecting a MySQL-only hint; no behaviour change on MySQL [C-5]
+- **`BaseService::destroy()`** — race condition removed: single `findOrFail()` inside
+  `try/catch ModelNotFoundException` replaces the separate `find()` + `if(model)` pattern [A-2]
+- **`BaseService::resolveRelations()`** — filters requested relations against
+  `$allowedRelations` whitelist when non-empty; default `[]` means all allowed (backward
+  compat) [A-4]
+- **`HasAuditFields` `deleted` event** — guard changed from
+  `method_exists($model, 'getDeletedAtColumn')` to `method_exists($model, 'trashed') &&
+  $model->trashed()`; `forceDelete()` now correctly skips the raw UPDATE since
+  `deleted_at` was never set and `trashed()` returns false [M-2]
+- **`PtahServiceProvider`** — `SchemaInspector` singleton registered only when
+  `runningInConsole()`; avoids unnecessary reflection overhead in HTTP requests [B-5]
+- **`PtahServiceProvider`** — `setLocale()` now opt-in via `ptah.force_locale` config
+  (`PTAH_FORCE_LOCALE` env); does not override host app locale by default [A-6]
+- **`PtahServiceProvider`** — `loadMigrationsFrom()` only called when at least one module
+  is enabled; no migrations auto-loaded on fresh installs with no modules [C-6]
+- **`PtahServiceProvider`** — demo route removed from `staging` environment; available only
+  in `local` and `development` [B-3]
+- **`SchemaInspector::fromDatabase()`** — replaced MySQL-only `SHOW FULL COLUMNS FROM`
+  with portable `Schema::getColumns()` (Laravel 10.23+); works on MySQL, PostgreSQL and
+  SQLite; `parseDbColumn()` updated to accept `array` instead of `object` [B-1]
+- **`config/ptah.php`** — added `force_locale` key; removed `'admin@123'` default from
+  `admin_password` (now `null` unless `PTAH_ADMIN_PASSWORD` is set) [M-6]; config section
+  comments translated to English
 
 ### Fixed
 - **`TestCase.php`** — replaced non-functional `loadLaravelMigrations()` (Testbench 10 ships
@@ -44,6 +95,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `tests/migrations/2014_10_12_000000_create_test_users_table.php`; this also unblocked
   `CompanyModelTest` which was silently broken for the same reason
 - **`CompanyModelTest`** — migrated from deprecated `@test` docblock to `#[Test]` attribute
+- **SQL injection** — user-supplied column names and operators in `searchLike`
+  (`whereIn`, `additionalQueries`) and `findAllFieldsAnd` validated against
+  `getTableColumns()` whitelist [C-2, C-3, M-4]
 
 ---
 

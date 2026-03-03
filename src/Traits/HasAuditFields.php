@@ -68,7 +68,8 @@ trait HasAuditFields
         //
         // A direct query-builder UPDATE is used here so we do not re-trigger
         // model events (no extra `updating` / `saving` cycles).
-        // Only runs when the model uses SoftDeletes (has getDeletedAtColumn).
+        // Only runs when the model uses SoftDeletes and was soft-deleted
+        // (not forceDelete — after forceDelete the row is gone, deleted_at is null).
         static::deleted(function ($model) {
             if (! Auth::check()) {
                 return;
@@ -78,7 +79,13 @@ trait HasAuditFields
                 return;
             }
 
-            if (! method_exists($model, 'getDeletedAtColumn')) {
+            // Not a SoftDeletes model — skip.
+            if (! method_exists($model, 'trashed')) {
+                return;
+            }
+
+            // forceDelete(): deleted_at is null → $model->trashed() is false → skip.
+            if (! $model->trashed()) {
                 return;
             }
 

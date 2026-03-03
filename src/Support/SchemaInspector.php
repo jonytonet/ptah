@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Ptah\Support;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Responsável por inspecionar campos de uma entidade.
  *
  * Duas estratégias:
- *  1. Banco de dados existente: SHOW FULL COLUMNS FROM `table`
+ *  1. Banco de dados existente: Schema::getColumns() — portável (MySQL/PostgreSQL/SQLite)
  *  2. String de --fields: "name:string,price:decimal(10,2):nullable"
  */
 class SchemaInspector
@@ -22,12 +21,15 @@ class SchemaInspector
     /**
      * Lê as colunas de uma tabela existente no banco de dados.
      *
+     * Usa Schema::getColumns() — disponível no Laravel 10.23+ e portável
+     * entre MySQL, PostgreSQL e SQLite. Não usa SQL específico de driver.
+     *
      * @return FieldDefinition[]
      */
     public function fromDatabase(string $table): array
     {
         try {
-            $columns = DB::select("SHOW FULL COLUMNS FROM `{$table}`");
+            $columns = Schema::getColumns($table);
         } catch (\Throwable) {
             return [];
         }
@@ -35,7 +37,7 @@ class SchemaInspector
         $fields = [];
 
         foreach ($columns as $col) {
-            if (in_array($col->Field, self::IGNORED_COLUMNS, true)) {
+            if (in_array($col['name'], self::IGNORED_COLUMNS, true)) {
                 continue;
             }
 
@@ -145,36 +147,45 @@ class SchemaInspector
     }
 
     /**
-     * Converte uma coluna retornada pelo `SHOW FULL COLUMNS FROM` em FieldDefinition.
+     * Converte uma coluna retornada pelo Schema::getColumns() em FieldDefinition.
+     *
+     * Formato do array (Laravel 10.23+):
+     *   'name'      => string  — nome da coluna
+     *   'type_name' => string  — tipo base sem modificadores (ex: 'int', 'varchar')
+     *   'type'      => string  — tipo completo com precisão/escala (ex: 'decimal(10,2)')
+     *   'nullable'  => bool
+     *   'comment'   => string|null
+     *
+     * @param  array<string, mixed>  $col
      */
-    private function parseDbColumn(object $col): FieldDefinition
+    private function parseDbColumn(array $col): FieldDefinition
     {
-        $raw        = strtolower((string) $col->Type);
-        $nullable   = $col->Null === 'YES';
+        // Usa 'type' (completo) para detecção; fallback para 'type_name'
+        $raw      = strtolower((string) ($col['type'] ?? $col['type_name'] ?? ''));
+        $typeName = strtolower((string) ($col['type_name'] ?? ''));
+        $nullable   = (bool) ($col['nullable'] ?? false);
         $unique     = false;
         $precision  = 10;
         $scale      = 2;
         $enumValues = [];
 
         $type = match (true) {
-            str_contains($raw, 'tinyint(1)')        => 'boolean',
+            str_contains($raw, 'tinyint(1)')                          => 'boolean',
             str_contains($raw, 'bigint unsigned')
-                || str_contains($raw, 'bigint') && str_contains((string)($col->Extra ?? ''), 'unsigned')
-                                                    => 'unsignedBigInteger',
-            str_contains($raw, 'bigint')            => 'bigInteger',
-            str_contains($raw, 'int')               => 'integer',
-            str_contains($raw, 'decimal')           => 'decimal',
-            str_contains($raw, 'float')
-                || str_contains($raw, 'double')     => 'float',
-            str_contains($raw, 'bool')              => 'boolean',
-            str_starts_with($raw, 'enum')           => 'enum',
-            str_contains($raw, 'datetime')
-                || str_contains($raw, 'timestamp')  => 'datetime',
-            $raw === 'date'                         => 'date',
-            str_contains($raw, 'longtext')          => 'longText',
-            str_contains($raw, 'text')              => 'text',
-            str_contains($raw, 'json')              => 'json',
-            default                                 => 'string',
+                || ($typeName === 'bigint' && str_contains($raw, 'unsigned'))
+                                                                      => 'unsignedBigInteger',
+            $typeName === 'bigint'                                    => 'bigInteger',
+            str_contains($typeName, 'int')                            => 'integer',
+            str_contains($typeName, 'decimal')                        => 'decimal',
+            in_array($typeName, ['float', 'double', 'real'], true)    => 'float',
+            in_array($typeName, ['bool', 'boolean'], true)            => 'boolean',
+            $typeName === 'enum'                                      => 'enum',
+            in_array($typeName, ['datetime', 'timestamp', 'timestamptz'], true) => 'datetime',
+            $typeName === 'date'                                      => 'date',
+            str_contains($typeName, 'longtext')                       => 'longText',
+            str_contains($typeName, 'text')                           => 'text',
+            in_array($typeName, ['json', 'jsonb'], true)              => 'json',
+            default                                                   => 'string',
         };
 
         if ($type === 'decimal') {
@@ -188,11 +199,10 @@ class SchemaInspector
             $enumValues = $m[1];
         }
 
-        // Usa o Comment da coluna MySQL como rótulo de exibição (se disponível)
-        $label = isset($col->Comment) ? (string) $col->Comment : '';
+        $label = isset($col['comment']) ? (string) $col['comment'] : '';
 
         return new FieldDefinition(
-            name:       $col->Field,
+            name:       (string) ($col['name'] ?? ''),
             type:       $type,
             nullable:   $nullable,
             unique:     $unique,

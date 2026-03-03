@@ -21,8 +21,20 @@ abstract class BaseService
 {
     protected BaseRepositoryInterface $repository;
 
-    /** Chave primária resolvida do model — usada como ordenação padrão. */
+    /** Primary key resolved from the model — used as default sort column. */
     protected string $keyName = 'id';
+
+    /**
+     * Allowlist of relation names that may be eager-loaded via the `relations`
+     * request param. When empty, ALL requested relations are allowed (default
+     * behaviour for backward compatibility). Override in concrete services to
+     * restrict which relationships a caller can trigger:
+     *
+     *   protected array $allowedRelations = ['category', 'tags'];
+     *
+     * @var array<int, string>
+     */
+    protected array $allowedRelations = [];
 
     public function __construct(BaseRepositoryInterface $repository)
     {
@@ -103,65 +115,76 @@ abstract class BaseService
     }
 
     /**
-     * Remove um registro — alias semântico para controllers API.
+     * Removes a record — API-controller semantic alias for delete().
+     *
+     * Unlike delete(), this method returns false when the record is not found
+     * instead of throwing ModelNotFoundException. Uses a single DB lookup to
+     * avoid the TOCTOU race condition (find-then-delete) of the old approach.
      */
     public function destroy(int|string $id): bool
     {
-        $record = $this->repository->find($id);
-
-        if (! $record) {
+        try {
+            $record = $this->repository->findOrFail($id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
             return false;
         }
 
-        return $this->repository->delete($id);
+        return (bool) $record->delete();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Busca inteligente (getDados) — orquestra os métodos avançados
+    // getData — single entry point for paginated listing
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Ponto de entrada único para listagem via API/BaseCrud.
-     * Orquestra advancedSearch, searchLike e findAllFieldsAnd
-     * de acordo com os parâmetros da Request.
+     * Single entry point for API/CRUD listing.
+     * Routes to advancedSearch, searchLike or findAllFieldsAnd based on the
+     * params present in the request.
      *
-     * Parâmetros reconhecidos:
-     *   search         — OR em todos os campos (comma-separated)
-     *   searchLike     — busca incremental com operadores
-     *   relations      — eager load (comma-separated)
-     *   order          — coluna de ordenação
-     *   direction      — ASC ou DESC
-     *   limit          — itens por página (paginate)
+     * Recognised params:
+     *   search     — OR match across all columns (comma-separated terms)
+     *   searchLike — incremental match with operator support (}, {, >, <)
+     *   relations  — eager-loaded relations (comma-separated, filtered by
+     *                $allowedRelations when non-empty)
+     *   order      — sort column (validated against real column list to
+     *                prevent SQL injection; falls back to primary key)
+     *   direction  — ASC or DESC (validated; falls back to DESC)
+     *   limit      — items per page (default 15)
      *
+     * @return LengthAwarePaginator<Model>
+     */
+    public function getData(Request $request): LengthAwarePaginator
+    {
+        $relations = $this->resolveRelations($request);
+        $limit     = (int) ($request->get('limit', 15) ?: 15);
+
+        // Validate order column against the table schema to prevent SQL injection.
+        $rawOrder    = $request->get('order', $this->keyName);
+        $rawDir      = strtoupper($request->get('direction', 'DESC'));
+        $validCols   = $this->repository->getTableColumns();
+        $orderColumn = in_array($rawOrder, $validCols, true) ? $rawOrder : $this->keyName;
+        $direction   = in_array($rawDir, ['ASC', 'DESC'], true) ? $rawDir : 'DESC';
+
+        if ($request->get('search', 'Busca') !== 'Busca') {
+            $query = $this->repository->advancedSearch($request, $relations);
+        } elseif ($request->get('searchLike', 'Incremental') !== 'Incremental') {
+            $query = $this->repository->searchLike($request, $relations);
+        } else {
+            $query = $this->repository->findAllFieldsAnd($request, $relations);
+        }
+
+        return $query
+            ->orderBy($orderColumn, $direction)
+            ->paginate($limit);
+    }
+
+    /**
+     * @deprecated Use getData() instead. Will be removed in 1.0.
      * @return LengthAwarePaginator<Model>
      */
     public function getDados(Request $request): LengthAwarePaginator
     {
-        $relations   = $this->resolveRelations($request);
-        $orderColumn = $request->get('order', $this->keyName);
-        $direction   = strtoupper($request->get('direction', 'DESC'));
-        $limit       = (int) ($request->get('limit', 15) ?: 15);
-
-        if ($request->get('search', 'Busca') !== 'Busca') {
-            // Busca OR por search
-            $query = $relations
-                ? $this->repository->advancedSearch($request, $relations)
-                : $this->repository->advancedSearch($request);
-        } elseif ($request->get('searchLike', 'Incremental') !== 'Incremental') {
-            // Busca incremental por searchLike
-            $query = $relations
-                ? $this->repository->searchLike($request, $relations)
-                : $this->repository->searchLike($request);
-        } else {
-            // Filtragem AND pelos campos da request
-            $query = $relations
-                ? $this->repository->findAllFieldsAnd($request, $relations)
-                : $this->repository->findAllFieldsAnd($request);
-        }
-
-        return $query
-            ->orderByRaw("{$orderColumn} {$direction}")
-            ->paginate($limit);
+        return $this->getData($request);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -210,15 +233,29 @@ abstract class BaseService
     }
 
     /**
-     * Busca registros por coluna e valor — aceita multi-assinatura.
+     * Searches records by column and value — three signatures:
+     *   findBy(string $column, mixed $value, string $operator = '=')
+     *   findBy(array  $wheres)
+     *   findBy(Closure $callback)
      */
     public function findBy(
-        string|array|Closure|Builder $column,
+        string|array|Closure $column,
         mixed $value = null,
-        string $operator = '=',
-        string $boolean = 'and'
+        string $operator = '='
     ): Builder {
-        return $this->repository->findBy($column, $value, $operator, $boolean);
+        return $this->repository->findBy($column, $value, $operator);
+    }
+
+    /**
+     * Applies a where clause to an existing Builder (e.g. from useIndex()).
+     */
+    public function findByBuilder(
+        Builder $query,
+        string $column,
+        string $operator = '=',
+        mixed $value = null
+    ): Builder {
+        return $this->repository->findByBuilder($query, $column, $operator, $value);
     }
 
     /**
@@ -288,20 +325,30 @@ abstract class BaseService
     }
 
     /**
-     * Retorna o nome da chave primária.
+     * Returns the primary key name.
      */
     public function getKeyName(): string
     {
         return $this->keyName;
     }
 
+    /**
+     * Returns the column listing for the model's table.
+     */
+    public function getTableColumns(): array
+    {
+        return $this->repository->getTableColumns();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
-    // Helpers privados
+    // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Resolve o array de relations a partir da request.
-     * Retorna [] se não houver param ou se for o valor padrão 'Relacao'.
+     * Resolves the relations array from the request.
+     * Returns [] when the param is absent or the UI sentinel 'Relacao'.
+     * When $allowedRelations is non-empty, the list is filtered against it
+     * so callers cannot trigger arbitrary relation eager-loads.
      *
      * @return array<int, string>
      */
@@ -313,6 +360,12 @@ abstract class BaseService
             return [];
         }
 
-        return array_filter(array_map('trim', explode(',', $raw)));
+        $requested = array_values(array_filter(array_map('trim', explode(',', $raw))));
+
+        if (! empty($this->allowedRelations)) {
+            $requested = array_values(array_intersect($requested, $this->allowedRelations));
+        }
+
+        return $requested;
     }
 }

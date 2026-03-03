@@ -47,7 +47,7 @@ class SvcStubService extends BaseService {}
  *    - retorna Model quando ID existe
  *    - retorna null quando ID não existe
  *
- *  getDados() routing:
+ *  getData() routing:
  *    - usa advancedSearch quando param 'search' está preenchido (≠ 'Busca')
  *    - usa searchLike quando param 'searchLike' está preenchido (≠ 'Incremental')
  *    - usa findAllFieldsAnd como fallback padrão (sem search/searchLike)
@@ -141,38 +141,38 @@ class BaseServiceTest extends TestCase
         $this->assertNull($this->service->show(9999));
     }
 
-    // ── getDados() routing ────────────────────────────────────────────────────
+    // ── getData() routing ─────────────────────────────────────────────────────
 
     #[Test]
-    public function getDados_usa_advancedSearch_quando_param_search_preenchido(): void
+    public function getData_usa_advancedSearch_quando_param_search_preenchido(): void
     {
         $this->createItem('Alpha');
         $this->createItem('Beta');
 
         // 'ph' only appears in 'Alpha' — advancedSearch does OR LIKE on all columns
         $request = Request::create('/', 'GET', ['search' => 'ph']);
-        $result  = $this->service->getDados($request);
+        $result  = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Alpha', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getDados_usa_searchLike_quando_param_searchLike_preenchido(): void
+    public function getData_usa_searchLike_quando_param_searchLike_preenchido(): void
     {
         $this->createItem('Barato', 'active', 5);
         $this->createItem('Caro', 'active', 100);
 
         // searchLike=amount}50 → amount >= 50 → only 'Caro'
         $request = Request::create('/', 'GET', ['searchLike' => 'amount}50']);
-        $result  = $this->service->getDados($request);
+        $result  = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Caro', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getDados_usa_findAllFieldsAnd_como_fallback_padrao(): void
+    public function getData_usa_findAllFieldsAnd_como_fallback_padrao(): void
     {
         $this->createItem('Ativo', 'active');
         $this->createItem('Inativo', 'inactive');
@@ -180,14 +180,14 @@ class BaseServiceTest extends TestCase
         // No search/searchLike → falls back to findAllFieldsAnd
         // Passing status=active as a plain query param should filter
         $request = Request::create('/', 'GET', ['status' => 'active']);
-        $result  = $this->service->getDados($request);
+        $result  = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Ativo', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getDados_respeita_limit_e_direction(): void
+    public function getData_respeita_limit_e_direction(): void
     {
         $this->createItem('Z', 'active', 30);
         $this->createItem('A', 'active', 10);
@@ -199,7 +199,7 @@ class BaseServiceTest extends TestCase
             'order'     => 'name',
             'direction' => 'ASC',
         ]);
-        $result = $this->service->getDados($request);
+        $result = $this->service->getData($request);
 
         $this->assertSame(2, $result->perPage());
         $this->assertSame(3, $result->total());
@@ -208,13 +208,13 @@ class BaseServiceTest extends TestCase
     }
 
     #[Test]
-    public function getDados_sentinel_relacao_nao_gera_eager_load(): void
+    public function getData_sentinel_relacao_nao_gera_eager_load(): void
     {
         $this->createItem('Foo');
 
         // 'Relacao' is the UI sentinel — must be treated as no relations
         $request = Request::create('/', 'GET', ['relations' => 'Relacao']);
-        $result  = $this->service->getDados($request);
+        $result  = $this->service->getData($request);
 
         // No exception should be thrown (invalid relation name would throw)
         $this->assertSame(1, $result->total());
