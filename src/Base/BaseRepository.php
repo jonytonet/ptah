@@ -306,13 +306,16 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function autocompleteSearch(Request $request, array $select, array $conditions): Builder
     {
+        /** @var Builder $query */
         $query = $this->model->newQuery()->select($select);
 
         foreach ($conditions as $condition) {
             $query->where(...$condition);
         }
 
-        return $query->limit(10);
+        $query->limit(10);
+
+        return $query;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -500,9 +503,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
     {
         $table = $this->model->getTable();
 
-        return $this->model
-            ->newQuery()
-            ->fromRaw("`{$table}` USE INDEX (`{$indexName}`)");
+        $query = $this->model->newQuery();
+        $query->getQuery()->fromRaw("`{$table}` USE INDEX (`{$indexName}`)");
+
+        return $query;
     }
 
     /**

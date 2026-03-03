@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Base;
 
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -58,7 +60,7 @@ interface BaseRepositoryInterface
      * Busca registros por coluna e valor.
      * Aceita multi-assinatura: string, array, Closure ou Builder.
      */
-    public function findBy(mixed $reference, mixed $value = null, string $operator = '=', string $boolean = 'and'): mixed;
+    public function findBy(string|array|Closure|Builder $reference, mixed $value = null, string $operator = '=', string $boolean = 'and'): Builder;
 
     /**
      * Retorna o nome da chave primária do model.
