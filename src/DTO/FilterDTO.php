@@ -16,11 +16,11 @@ use Ptah\Base\BaseDTO;
 final class FilterDTO extends BaseDTO
 {
     /**
-     * @param string $field     Nome do campo ou da relação
-     * @param mixed  $value     Valor do filtro (scalar, array para IN/BETWEEN)
-     * @param string $operator  Operador: =, >, <, >=, <=, LIKE, BETWEEN, IN
-     * @param string $type      Tipo: text, number, date, boolean, relation, array
-     * @param array  $options   Opções extras: ['relation' => 'relName', 'column' => 'col', 'whereHas' => '...']
+     * @param string $field     Field name or relation name
+     * @param mixed  $value     Filter value (scalar, array for IN/BETWEEN)
+     * @param string $operator  Operator: =, >, <, >=, <=, LIKE, BETWEEN, IN
+     * @param string $type      Type: text, number, date, boolean, relation, array
+     * @param array  $options   Extra options: ['relation' => 'relName', 'column' => 'col', 'whereHas' => '...']
      */
     public function __construct(
         public readonly string $field,
@@ -42,14 +42,14 @@ final class FilterDTO extends BaseDTO
     /**
      * Creates from array.
      */
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data): static
     {
         $field    = is_array($data['field'] ?? null) ? '' : (string) ($data['field'] ?? '');
         $operator = is_array($data['operator'] ?? null) ? '=' : (string) ($data['operator'] ?? '=');
         $value    = $data['value'] ?? null;
         $type     = $data['type'] ?? self::inferType($field, $value);
 
-        return new self(
+        return new static(
             field:    $field,
             value:    $value,
             operator: $operator,
@@ -59,7 +59,7 @@ final class FilterDTO extends BaseDTO
     }
 
     /**
-     * Infere o tipo inteligentemente a partir do campo e valor.
+     * Infers the type intelligently from the field name and value.
      */
     public static function inferType(string $field, mixed $value): string
     {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ptah\DTO;
 
 /**
- * DTO para transportar os parâmetros de busca do SearchDropdown.
+ * DTO for carrying SearchDropdown query parameters.
  */
 readonly class SearchDropdownDTO
 {
