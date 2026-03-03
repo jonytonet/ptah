@@ -15,15 +15,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Repositório base abstrato com implementação padrão do CRUD e métodos
- * avançados de busca compatíveis com o padrão de API do projeto.
+ * Abstract base repository with a standard CRUD implementation and
+ * advanced search methods compatible with the project's API convention.
  *
- * Todas as classes de repositório devem estender esta classe
- * e injetar o Model correspondente via construtor.
+ * All concrete repository classes must extend this class and inject
+ * the corresponding Eloquent model via the constructor.
  */
 abstract class BaseRepository implements BaseRepositoryInterface
 {
-    /** Campos reservados do Request que não devem ser usados como filtro de coluna. */
+    /** Request params that must never be treated as column-filter candidates. */
     protected array $reservedParams = [
         'limit', 'page', 'order', 'direction', 'fields',
         'relations', 'search', 'searchLike', 'searchLikeType',
@@ -44,7 +44,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     public function __construct(protected Model $model) {}
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
+    // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
@@ -68,11 +68,11 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CRUD básico
+    // Basic CRUD
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Retorna todos os registros.
+     * Returns all records.
      */
     public function all(): Collection
     {
@@ -80,7 +80,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Retorna registros paginados.
+     * Returns paginated records.
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -88,7 +88,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Busca um registro pelo ID.
+     * Finds a record by its ID. Returns null when not found.
      */
     public function find(int|string $id): ?Model
     {
@@ -96,7 +96,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Busca um registro pelo ID ou lança ModelNotFoundException.
+     * Finds a record by ID or throws ModelNotFoundException.
      *
      * @throws ModelNotFoundException
      */
@@ -106,7 +106,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Cria um novo registro.
+     * Creates a new record and returns the persisted model.
      *
      * @param array<string, mixed> $data
      */
@@ -116,7 +116,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Atualiza um registro existente pelo ID.
+     * Updates an existing record by ID and returns the fresh model.
      *
      * @param array<string, mixed> $data
      * @throws ModelNotFoundException
@@ -130,7 +130,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Remove um registro pelo ID.
+     * Removes a record by ID.
      *
      * @throws ModelNotFoundException
      */
@@ -142,11 +142,12 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Busca avançada (retornam Builder encadeável)
+    // Advanced search (return chainable Builder)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Constrói query base com suporte a skip/limit — ponto de entrada encadeável.
+     * Builds a base query with optional equality filters, skip and limit.
+     * Useful as a chainable starting point for custom queries.
      */
     public function allQuery(array $search = [], ?int $skip = null, ?int $limit = null): Builder
     {
@@ -170,7 +171,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Filtra com AND em todos os campos do Request que não sejam reservados.
+     * Filters records using AND on every non-reserved request param as a column=value condition.
+     * Column names are validated against the real schema to prevent arbitrary injection.
      *
      * @param array<int, string> $relations
      */
@@ -201,8 +203,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Busca OR pelo param `search` (lista separada por vírgula).
-     * Ignora se `search == 'Busca'` (valor padrão da UI).
+     * OR search via the `search` request param (comma-separated terms).
+     * Skipped when `search == 'Busca'` (UI sentinel value).
      *
      * @param array<int, string> $relations
      */
@@ -246,9 +248,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * Incremental search via the `searchLike` request param.
      * Supports comparison operators via custom tokens: `}` = >=, `{` = <=, `>`, `<`.
      * Also handles `whereIn` and `additionalQueries` params.
-     * Column names and operators are validated against a whitelist.
-     * Suporta operadores >, >=, <=, < (usando } e { como tokens),
-     * whereIn e additionalQueries.
+     * Column names and operators are validated against a whitelist to prevent injection.
      *
      * @param array<int, string> $relations
      */
@@ -283,7 +283,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
                         continue;
                     }
 
-                    // Operadores customizados: } = >= e { = <=  e > e <
+                    // Custom comparison tokens: } = >=, { = <=, >, <
                     if (preg_match('/^([^}>{<]+)([}>{<]{1,2})(.+)$/', $term, $m)) {
                         $col = trim($m[1]);
                         $raw = trim($m[2]);
@@ -299,7 +299,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
                         };
                         $q->{$type}($col, $op, $val);
                     } else {
-                        // LIKE em todas as colunas
+                        // Full-text LIKE across all table columns
                         $q->where(function (Builder $inner) use ($term, $columns): void {
                             foreach ($columns as $col) {
                                 $inner->orWhere($col, 'LIKE', "%{$term}%");
@@ -351,10 +351,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Busca para autocomplete: select específico + conditions + limit(10).
+     * Autocomplete search: specific SELECT columns + conditions + LIMIT 10.
      *
      * @param array<int, string>        $select
-     * @param array<int, array<string>> $conditions  ex: [['col', 'LIKE', '%foo%']]
+     * @param array<int, array<string>> $conditions  e.g. [['name', 'LIKE', '%foo%']]
      */
     public function autocompleteSearch(Request $request, array $select, array $conditions): Builder
     {
@@ -371,7 +371,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Utilitários de busca
+    // Search utilities
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
@@ -422,10 +422,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Busca registros cujo $column está em $values.
+     * Returns records whose $column value is in the given $values array.
      *
      * @param array<int, mixed>  $values
-     * @param array<int, string> $with
+     * @param array<int, string> $with    Relations to eager-load
      */
     public function findByIn(string $column, array $values, array $with = []): Collection
     {
@@ -461,15 +461,6 @@ abstract class BaseRepository implements BaseRepositoryInterface
         );
 
         return $valid ?: ['*'];
-    }
-
-    /**
-     * @deprecated Use buildSelectFields() instead.
-     * @return array<int, string>
-     */
-    public function mountFieldsToSelect(Request $request): array
-    {
-        return $this->buildSelectFields($request);
     }
 
     /**
@@ -514,11 +505,12 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Utilitários de escrita
+    // Write utilities
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Atualiza múltiplos registros pelos IDs em lote.
+     * Updates multiple records by ID in a single batch query.
+     * Returns the number of affected rows.
      *
      * @param array<int, int|string> $ids
      * @param array<string, mixed>   $data
@@ -529,7 +521,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Atualiza sem disparar eventos/observers.
+     * Updates a record without firing model events or observers.
      *
      * @param array<string, mixed> $data
      */
@@ -539,7 +531,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Cria um registro sem disparar eventos/observers.
+     * Creates a record without firing model events or observers.
      *
      * @param array<string, mixed> $data
      */
@@ -577,8 +569,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Retorna uma instância replicada (não persistida) do último registro encontrado.
-     * Útil para duplicação de registros.
+     * Returns an unsaved replica of the last record found.
+     * Useful for duplicating existing records.
      */
     public function replicate(): Model
     {
@@ -610,7 +602,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Retorna o nome da chave primária do model.
+     * Returns the model's primary key name.
      */
     public function getKeyName(): string
     {

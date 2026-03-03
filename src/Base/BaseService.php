@@ -12,10 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Service base abstrato que delega operações ao repositório.
+ * Abstract base service that delegates all operations to the repository.
  *
- * As classes de serviço devem estender esta classe e injetar
- * o repositório correspondente via construtor.
+ * Concrete service classes must extend this class and inject the
+ * corresponding repository via the constructor.
  */
 abstract class BaseService
 {
@@ -43,11 +43,11 @@ abstract class BaseService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CRUD básico
+    // Basic CRUD
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Retorna todos os registros.
+     * Returns all records.
      */
     public function all(): Collection
     {
@@ -55,7 +55,7 @@ abstract class BaseService
     }
 
     /**
-     * Retorna registros paginados.
+     * Returns paginated records.
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -63,7 +63,7 @@ abstract class BaseService
     }
 
     /**
-     * Busca um registro pelo ID.
+     * Finds a record by its ID. Returns null when not found.
      */
     public function find(int|string $id): ?Model
     {
@@ -71,7 +71,7 @@ abstract class BaseService
     }
 
     /**
-     * Alias de find() — padrão esperado nos controllers API.
+     * Alias for find() — expected pattern in API controllers.
      */
     public function show(int|string $id): ?Model
     {
@@ -79,7 +79,7 @@ abstract class BaseService
     }
 
     /**
-     * Busca um registro pelo ID ou lança exceção.
+     * Finds a record by ID or throws ModelNotFoundException.
      */
     public function findOrFail(int|string $id): Model
     {
@@ -87,7 +87,7 @@ abstract class BaseService
     }
 
     /**
-     * Cria um novo registro.
+     * Creates a new record and returns the persisted model.
      *
      * @param array<string, mixed> $data
      */
@@ -97,7 +97,7 @@ abstract class BaseService
     }
 
     /**
-     * Atualiza um registro existente.
+     * Updates an existing record and returns the fresh model.
      *
      * @param array<string, mixed> $data
      */
@@ -107,7 +107,7 @@ abstract class BaseService
     }
 
     /**
-     * Remove um registro — verifica existência antes de deletar.
+     * Removes a record — existence is verified by the repository.
      */
     public function delete(int|string $id): bool
     {
@@ -178,21 +178,12 @@ abstract class BaseService
             ->paginate($limit);
     }
 
-    /**
-     * @deprecated Use getData() instead. Will be removed in 1.0.
-     * @return LengthAwarePaginator<Model>
-     */
-    public function getDados(Request $request): LengthAwarePaginator
-    {
-        return $this->getData($request);
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
-    // Delegações dos métodos avançados do repositório
+    // Advanced repository method delegations
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Busca OR por termo em todos os campos.
+     * OR search across all columns.
      *
      * @param array<int, string> $relations
      */
@@ -202,7 +193,7 @@ abstract class BaseService
     }
 
     /**
-     * Busca incremental (like) com suporte a operadores.
+     * Incremental LIKE search with operator support.
      *
      * @param array<int, string> $relations
      */
@@ -212,7 +203,7 @@ abstract class BaseService
     }
 
     /**
-     * Busca AND em todos os campos da request.
+     * AND filter on all request params as column=value conditions.
      *
      * @param array<int, string> $relations
      */
@@ -259,7 +250,7 @@ abstract class BaseService
     }
 
     /**
-     * Busca registros cujo $column está em $values.
+     * Returns records whose $column value is in the given $values array.
      *
      * @param array<int, mixed>  $values
      * @param array<int, string> $with
@@ -270,7 +261,8 @@ abstract class BaseService
     }
 
     /**
-     * Atualiza múltiplos registros pelos IDs em lote.
+     * Updates multiple records by ID in a single batch query.
+     * Returns the number of affected rows.
      *
      * @param array<int, int|string> $ids
      * @param array<string, mixed>   $data
@@ -281,7 +273,7 @@ abstract class BaseService
     }
 
     /**
-     * Atualiza sem disparar eventos/observers.
+     * Updates without firing model events or observers.
      *
      * @param array<string, mixed> $data
      */
@@ -291,7 +283,7 @@ abstract class BaseService
     }
 
     /**
-     * Cria sem disparar eventos/observers.
+     * Creates without firing model events or observers.
      *
      * @param array<string, mixed> $data
      */
@@ -301,7 +293,7 @@ abstract class BaseService
     }
 
     /**
-     * Trunca a tabela.
+     * Truncates the table (driver-aware).
      */
     public function truncate(): void
     {
@@ -309,7 +301,7 @@ abstract class BaseService
     }
 
     /**
-     * Retorna instância replicada (não persistida) do último registro.
+     * Returns an unsaved replica of the last record.
      */
     public function replicate(): Model
     {
@@ -317,7 +309,7 @@ abstract class BaseService
     }
 
     /**
-     * Força uso de índice MySQL específico no repositório.
+     * Hints MySQL/MariaDB to use a specific index; degrades gracefully on other drivers.
      */
     public function useIndex(string $indexName): Builder
     {
@@ -334,6 +326,8 @@ abstract class BaseService
 
     /**
      * Returns the column listing for the model's table.
+     *
+     * @return array<int, string>
      */
     public function getTableColumns(): array
     {

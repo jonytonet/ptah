@@ -7,27 +7,27 @@ namespace Ptah\Base;
 use Illuminate\Http\Request;
 
 /**
- * DTO (Data Transfer Object) base abstrato.
+ * Abstract base DTO (Data Transfer Object).
  *
- * Todas as classes DTO devem estender esta classe e implementar
- * os métodos de conversão de/para array e Request.
+ * All DTO classes must extend this class and implement the
+ * array and Request conversion methods.
  */
 abstract class BaseDTO
 {
     /**
-     * Cria uma instância do DTO a partir de um array de dados.
+     * Creates a DTO instance from a plain data array.
      *
      * @param array<string, mixed> $data
      */
     abstract public static function fromArray(array $data): static;
 
     /**
-     * Cria uma instância do DTO a partir de um objeto Request do Laravel.
+     * Creates a DTO instance from a Laravel Request object.
      */
     abstract public static function fromRequest(Request $request): static;
 
     /**
-     * Converte o DTO para um array associativo.
+     * Converts the DTO to an associative array.
      *
      * @return array<string, mixed>
      */
