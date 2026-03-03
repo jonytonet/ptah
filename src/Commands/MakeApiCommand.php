@@ -9,12 +9,12 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
 /**
- * Comando para gerar a estrutura de uma entidade API (sem views).
+ * Generates the API structure for an entity (no views).
  *
- * Uso: php artisan ptah:make {Entity} --api
+ * Usage: php artisan ptah:make {Entity} --api
  *
- * Nota: Este comando é automaticamente invocado ao passar --api para ptah:make.
- * Pode também ser usado diretamente.
+ * Note: this command is automatically invoked when passing --api to ptah:make.
+ * It can also be used directly.
  */
 class MakeApiCommand extends Command
 {
@@ -22,13 +22,13 @@ class MakeApiCommand extends Command
      * @var string
      */
     protected $signature = 'ptah:make-api
-                            {entity : Nome da entidade (ex: Product)}
-                            {--force : Sobrescrever arquivos existentes}';
+                            {entity : Entity name (e.g. Product)}
+                            {--force : Overwrite existing files}';
 
     /**
      * @var string
      */
-    protected $description = 'Gera a estrutura API completa de uma entidade: Model, Migration, DTO, Repository, Service, Controller API, Requests e Resource.';
+    protected $description = 'Generates the complete API structure for an entity: Model, Migration, DTO, Repository, Service, API Controller, Requests and Resource.';
 
     public function __construct(protected Filesystem $files)
     {
@@ -36,7 +36,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Executa o comando.
+     * Runs the command.
      */
     public function handle(): int
     {
@@ -44,7 +44,7 @@ class MakeApiCommand extends Command
         $entityLower = Str::snake($entity);
         $entityPlural = Str::plural($entityLower);
 
-        $this->components->info("Gerando estrutura API para a entidade: {$entity}");
+        $this->components->info("Generating API structure for entity: {$entity}");
 
         $generators = [
             fn () => $this->generateModel($entity),
@@ -64,10 +64,10 @@ class MakeApiCommand extends Command
             $generator();
         }
 
-        $this->components->info('Estrutura API gerada com sucesso!');
+        $this->components->info('API structure generated successfully!');
         $this->newLine();
         $this->components->bulletList([
-            "Lembre-se de registrar o binding do repositório no AppServiceProvider:",
+            "Remember to register the repository binding in AppServiceProvider:",
             "  \$this->app->bind({$entity}RepositoryInterface::class, {$entity}Repository::class);",
         ]);
 
@@ -75,7 +75,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o arquivo do Model.
+     * Generates the Model file.
      */
     protected function generateModel(string $entity): void
     {
@@ -87,7 +87,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o arquivo de Migration.
+     * Generates the Migration file.
      */
     protected function generateMigration(string $entity, string $table): void
     {
@@ -99,7 +99,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o arquivo do DTO.
+     * Generates the DTO file.
      */
     protected function generateDTO(string $entity): void
     {
@@ -111,7 +111,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera a interface do Repositório.
+     * Generates the Repository interface.
      */
     protected function generateRepositoryInterface(string $entity): void
     {
@@ -123,7 +123,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o Repositório.
+     * Generates the Repository.
      */
     protected function generateRepository(string $entity): void
     {
@@ -136,7 +136,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o Service.
+     * Generates the Service.
      */
     protected function generateService(string $entity): void
     {
@@ -149,7 +149,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o Controller API.
+     * Generates the API Controller.
      */
     protected function generateController(
         string $entity,
@@ -167,7 +167,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera um FormRequest (Store ou Update).
+     * Generates a FormRequest (Store or Update).
      */
     protected function generateRequest(string $entity, string $type): void
     {
@@ -180,7 +180,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera o API Resource.
+     * Generates the API Resource.
      */
     protected function generateResource(string $entity): void
     {
@@ -192,14 +192,14 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Adiciona as rotas API ao arquivo routes/api.php.
+     * Appends API resource routes to routes/api.php.
      */
     protected function appendApiRoutes(string $entity, string $entityLower): void
     {
         $routesPath = base_path('routes/api.php');
 
         if (! $this->files->exists($routesPath)) {
-            $this->components->warn("Arquivo routes/api.php não encontrado. Adicione manualmente:");
+            $this->components->warn("File routes/api.php not found. Add manually:");
             $this->line("  Route::apiResource('{$entityLower}', Api\\{$entity}Controller::class);");
             return;
         }
@@ -217,7 +217,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Gera um arquivo a partir de um stub.
+     * Generates a file from a stub.
      *
      * @param array<string, string> $replacements
      */
@@ -245,7 +245,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Obtém o conteúdo de um stub.
+     * Retrieves the contents of a stub file.
      */
     protected function getStubContent(string $stub): string
     {
@@ -258,14 +258,14 @@ class MakeApiCommand extends Command
         $packagePath = __DIR__ . "/../Stubs/{$stub}.stub";
 
         if (! $this->files->exists($packagePath)) {
-            throw new \RuntimeException("Stub [{$stub}] não encontrado.");
+            throw new \RuntimeException("Stub [{$stub}] not found.");
         }
 
         return $this->files->get($packagePath);
     }
 
     /**
-     * Substitui as variáveis no conteúdo do stub.
+     * Replaces stub placeholder variables with actual values.
      *
      * @param array<string, string> $replacements
      */
@@ -279,7 +279,7 @@ class MakeApiCommand extends Command
     }
 
     /**
-     * Retorna o namespace raiz da aplicação.
+     * Returns the root namespace of the application.
      */
     protected function getAppNamespace(): string
     {

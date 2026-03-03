@@ -9,9 +9,9 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Comando de instalação do pacote Ptah.
+ * Ptah package installation command.
  *
- * Uso: php artisan ptah:install
+ * Usage: php artisan ptah:install
  */
 class InstallCommand extends Command
 {
@@ -19,15 +19,15 @@ class InstallCommand extends Command
      * @var string
      */
     protected $signature = 'ptah:install
-                            {--force    : Sobrescrever arquivos existentes}
-                            {--skip-npm : Pular npm install e npm run build}
-                            {--demo     : Instalar dados de demonstração (empresas, departamentos, roles e menu)}
-                            {--boost    : Instalar Laravel Boost para integração com agentes de IA (Copilot, Claude, Cursor)}';
+                            {--force    : Overwrite existing files}
+                            {--skip-npm : Skip npm install and npm run build}
+                            {--demo     : Install demo data (companies, departments, roles and menu)}
+                            {--boost    : Install Laravel Boost for AI agent integration (Copilot, Claude, Cursor)}';
 
     /**
      * @var string
      */
-    protected $description = 'Instala o pacote Ptah: publica configuração, stubs e executa migrations.';
+    protected $description = 'Installs the Ptah package: publishes config, stubs and runs migrations.';
 
     public function __construct(protected Filesystem $files)
     {
@@ -35,11 +35,11 @@ class InstallCommand extends Command
     }
 
     /**
-     * Executa o comando de instalação.
+     * Runs the installation command.
      */
     public function handle(): int
     {
-        $this->components->info('Instalando Ptah...');
+        $this->components->info('Installing Ptah...');
 
         $this->publishConfig();
         $this->publishStubs();
@@ -54,21 +54,21 @@ class InstallCommand extends Command
         $this->installNodeDependencies();
 
         $this->newLine();
-        $this->components->info('Ptah instalado com sucesso!');
+        $this->components->info('Ptah installed successfully!');
         $this->newLine();
         $adminEmail = config('ptah.permissions.admin_email', 'admin@admin.com');
-        $this->line('  <fg=blue>Próximos passos:</>');
-        $this->line('  1. Revise o arquivo <fg=yellow>config/ptah.php</>');
-        $this->line('  2. Adicione <fg=yellow>HasUserPreferences</> ao seu model User:');
+        $this->line('  <fg=blue>Next steps:</>');
+        $this->line('  1. Review the <fg=yellow>config/ptah.php</> file');
+        $this->line('  2. Add <fg=yellow>HasUserPreferences</> to your User model:');
         $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</>');
-        $this->line('  3. Ative os módulos necessários:');
-        $this->line('     <fg=green>php artisan ptah:module auth</>  <fg=gray>(login, 2FA, perfil)</>');
-        $this->line('     <fg=green>php artisan ptah:module menu</>  <fg=gray>(sidebar dinâmica)</>');
-        $this->line('     <fg=green>php artisan ptah:module company</>  <fg=gray>(multi-empresa)</>');
+        $this->line('  3. Enable required modules:');
+        $this->line('     <fg=green>php artisan ptah:module auth</>  <fg=gray>(login, 2FA, profile)</>');
+        $this->line('     <fg=green>php artisan ptah:module menu</>  <fg=gray>(dynamic sidebar)</>');
+        $this->line('     <fg=green>php artisan ptah:module company</>  <fg=gray>(multi-company)</>');
         $this->line('     <fg=green>php artisan ptah:module permissions</>  <fg=gray>(RBAC)</>');
-        $this->line('  4. Acesse o sistema com: <fg=yellow>' . $adminEmail . '</>');
-        $this->line('  5. Gere entidades com: <fg=green>php artisan ptah:forge {Entity}</>');
-        $this->line('  6. Para integração com agentes de IA:');
+        $this->line('  4. Sign in with: <fg=yellow>' . $adminEmail . '</>');
+        $this->line('  5. Scaffold entities with: <fg=green>php artisan ptah:forge {Entity}</>');
+        $this->line('  6. For AI agent integration:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
         $this->newLine();
 
@@ -76,11 +76,11 @@ class InstallCommand extends Command
     }
 
     /**
-     * Publica o arquivo de configuração.
+     * Publishes the configuration file.
      */
     protected function publishConfig(): void
     {
-        $this->components->task('Publicando configuração', function () {
+        $this->components->task('Publishing configuration', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-config',
                 '--force' => $this->option('force'),
@@ -89,11 +89,11 @@ class InstallCommand extends Command
     }
 
     /**
-     * Publica os stubs.
+     * Publishes the stubs.
      */
     protected function publishStubs(): void
     {
-        $this->components->task('Publicando stubs', function () {
+        $this->components->task('Publishing stubs', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-stubs',
                 '--force' => $this->option('force'),
@@ -102,11 +102,11 @@ class InstallCommand extends Command
     }
 
     /**
-     * Publica as migrations.
+     * Publishes migrations.
      */
     protected function publishMigrations(): void
     {
-        $this->components->task('Publicando migrations', function () {
+        $this->components->task('Publishing migrations', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-migrations',
                 '--force' => $this->option('force'),
@@ -115,11 +115,11 @@ class InstallCommand extends Command
     }
 
     /**
-     * Publica os arquivos de tradução.
+     * Publishes language files.
      */
     protected function publishLang(): void
     {
-        $this->components->task('Publicando traduções', function () {
+        $this->components->task('Publishing translations', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-lang',
                 '--force' => $this->option('force'),
@@ -128,22 +128,22 @@ class InstallCommand extends Command
     }
 
     /**
-     * Injeta os design tokens e source paths do Ptah no app.css do projeto.
-     * Necessário para que o Tailwind CSS v4 compile as classes do Forge corretamente.
+     * Injects Ptah design tokens and source paths into the project's app.css.
+     * Required for Tailwind CSS v4 to compile Forge classes correctly.
      */
     protected function updateAppCss(): void
     {
-        $this->components->task('Configurando Tailwind CSS (app.css)', function () {
+        $this->components->task('Configuring Tailwind CSS (app.css)', function () {
             $appCss = resource_path('css/app.css');
 
             if (! file_exists($appCss)) {
-                $this->components->warn('resources/css/app.css não encontrado — configure manualmente os tokens Tailwind.');
+                $this->components->warn('resources/css/app.css not found — configure Tailwind tokens manually.');
                 return;
             }
 
             $content = file_get_contents($appCss);
 
-            // Adiciona @source para as views do pacote Ptah (se ainda não existe)
+            // Add @source for Ptah package views (if not already present)
             $ptahSource = "@source '../../vendor/jonytonet/ptah/resources/views/**/*.blade.php';";
             if (! str_contains($content, 'vendor/jonytonet/ptah')) {
                 // Insere após a última diretiva @source existente
@@ -157,9 +157,9 @@ class InstallCommand extends Command
                 file_put_contents($appCss, $content);
             }
 
-            // Adiciona tokens de design Forge no @theme (se ainda não existe)
+            // Add Forge design tokens inside @theme (if not already present)
             if (str_contains($content, '--color-primary')) {
-                return; // já configurado
+                return; // already configured
             }
 
             $themeTokens = <<<'CSS'
@@ -194,35 +194,35 @@ CSS;
     }
 
     /**
-     * Executa as migrations.
+     * Runs migrations.
      *
-     * Idempotente: se as tabelas principais do Ptah já existem
-     * (banco já foi migrado anteriormente), pula sem perguntar.
+     * Idempotent: if the main Ptah tables already exist
+     * (database was migrated previously), skips without prompting.
      */
     protected function runMigrations(): void
     {
-        // Detecta re-execução (--boost, --force etc.) sem recriação
+        // Detect re-execution (--boost, --force etc.) without re-creation
         if (Schema::hasTable('ptah_companies') && Schema::hasTable('users')) {
-            $this->components->info('Migrations já executadas — pulando.');
+            $this->components->info('Migrations already run — skipping.');
             return;
         }
 
-        if ($this->confirm('Deseja executar as migrations agora?', true)) {
-            $this->components->task('Executando migrations', function () {
+        if ($this->confirm('Run migrations now?', true)) {
+            $this->components->task('Running migrations', function () {
                 $this->call('migrate');
             });
         }
     }
 
     /**
-     * Cria o symlink public/storage → storage/app/public.
-     * Necessário para uploads (fotos de perfil, logos etc.)
+     * Creates the public/storage symlink → storage/app/public.
+     * Required for uploads (profile photos, logos, etc.)
      */
     protected function createStorageLink(): void
     {
-        $this->components->task('Criando link public/storage', function () {
+        $this->components->task('Creating public/storage link', function () {
             if (file_exists(public_path('storage'))) {
-                $this->components->warn('Link public/storage já existe, pulando.');
+                $this->components->warn('Link public/storage already exists, skipping.');
                 return;
             }
             $this->call('storage:link');
@@ -230,23 +230,23 @@ CSS;
     }
 
     /**
-     * Cria a empresa padrão e o usuário admin a partir das configs/.env.
-     * Só executa se as migrations do ptah já foram rodadas.
+     * Creates the default company and admin user from config/.env values.
+     * Only runs if Ptah migrations have already been executed.
      */
     protected function seedDefaultAdmin(): void
     {
         if (! Schema::hasTable('ptah_companies')) {
-            $this->components->warn('Tabelas do ptah não encontradas — rode `php artisan migrate` e depois `php artisan db:seed --class=\\Ptah\\Seeders\\DefaultAdminSeeder`.');
+            $this->components->warn('Ptah tables not found — run `php artisan migrate` and then `php artisan db:seed --class=\\Ptah\\Seeders\\DefaultAdminSeeder`.');
             return;
         }
 
-        $this->components->task('Criando empresa padrão e usuário admin', function () {
+        $this->components->task('Creating default company and admin user', function () {
             $this->call('db:seed', ['--class' => \Ptah\Seeders\DefaultAdminSeeder::class]);
         });
     }
 
     /**
-     * Instala dados de demonstração quando --demo é passado.
+     * Seeds demo data when --demo is passed.
      */
     protected function seedDemoData(): void
     {
@@ -255,21 +255,21 @@ CSS;
         }
 
         if (! Schema::hasTable('ptah_companies')) {
-            $this->components->warn('Tabelas do ptah não encontradas — execute `php artisan migrate` antes de rodar o seeder de demo.');
+            $this->components->warn('Ptah tables not found — run `php artisan migrate` before running the demo seeder.');
             return;
         }
 
-        $this->components->task('Instalando dados de demonstração', function () {
+        $this->components->task('Installing demo data', function () {
             $this->call('db:seed', ['--class' => \Ptah\Seeders\PtahDemoSeeder::class]);
         });
 
-        $this->components->info('Dados demo instalados — acesse o sistema para visualizá-los.');
+        $this->components->info('Demo data installed — sign in to explore it.');
     }
 
     /**
-     * Instala o Laravel Boost quando --boost é passado.
+     * Installs Laravel Boost when --boost is passed.
      *
-     * Executa:
+     * Runs:
      *   1. composer require laravel/boost --dev
      *   2. php artisan boost:install
      */
@@ -280,10 +280,10 @@ CSS;
         }
 
         $this->newLine();
-        $this->components->info('Instalando Laravel Boost para integração com agentes de IA...');
+        $this->components->info('Installing Laravel Boost for AI agent integration...');
 
         $this->components->task(
-            'Instalando laravel/boost via Composer',
+            'Installing laravel/boost via Composer',
             function () {
                 $composer = $this->findComposer();
                 $this->runProcess([$composer, 'require', 'laravel/boost', '--dev'], base_path());
@@ -293,21 +293,21 @@ CSS;
         // Verifica se o pacote foi de fato instalado (independente do exit code no Windows)
         if (! file_exists(base_path('vendor/laravel/boost'))) {
             $this->components->warn(
-                'Não foi possível instalar laravel/boost automaticamente. '.PHP_EOL.
-                'Execute manualmente: <fg=green>composer require laravel/boost --dev</>'
+                'Could not install laravel/boost automatically. '.PHP_EOL.
+                'Run manually: <fg=green>composer require laravel/boost --dev</>'
             );
             return;
         }
 
-        $this->components->task('Configurando Boost (boost:install)', function () {
-            // Recarrega os providers para que o BoostServiceProvider esteja disponível
+        $this->components->task('Configuring Boost (boost:install)', function () {
+            // Reload providers so BoostServiceProvider becomes available
             $this->call('package:discover', ['--ansi' => true]);
 
-            // Verifica se o comando já está registrado antes de chamar
+            // Check the command is registered before calling it
             if (! $this->getApplication()->has('boost:install')) {
                 $this->components->warn(
-                    'O comando boost:install não está disponível nesta sessão.'.PHP_EOL.
-                    'Execute manualmente: <fg=green>php artisan boost:install</>'
+                    'The boost:install command is not available in this session.'.PHP_EOL.
+                    'Run manually: <fg=green>php artisan boost:install</>'
                 );
                 return;
             }
@@ -316,19 +316,19 @@ CSS;
                 $this->call('boost:install');
             } catch (\Throwable $e) {
                 $this->components->warn(
-                    'Falha ao executar boost:install: '.$e->getMessage().PHP_EOL.
-                    'Execute manualmente: <fg=green>php artisan boost:install</>'
+                    'Failed to run boost:install: '.$e->getMessage().PHP_EOL.
+                    'Run manually: <fg=green>php artisan boost:install</>'
                 );
             }
         });
 
         $this->components->info(
-            'Laravel Boost instalado! Os guidelines do Ptah serão carregados automaticamente pelos agentes de IA.'
+            'Laravel Boost installed! Ptah guidelines will be automatically loaded by AI agents.'
         );
     }
 
     /**
-     * Detecta o executável do Composer disponível no sistema.
+     * Detects the Composer executable available on the system.
      */
     protected function findComposer(): string
     {
@@ -342,8 +342,8 @@ CSS;
     }
 
     /**
-     * Executa npm install e npm run build se package.json existir.
-     * Pode ser ignorado com --skip-npm.
+     * Runs npm install and npm run build if package.json exists.
+     * Can be skipped with --skip-npm.
      */
     protected function installNodeDependencies(): void
     {
@@ -355,27 +355,27 @@ CSS;
             return;
         }
 
-        // Detecta npm ou yarn
+        // Detect npm or yarn
         $npm = $this->findNodePackageManager();
 
         if (! $npm) {
-            $this->components->warn('npm/yarn não encontrado — instale as dependências manualmente: npm install && npm run build');
+            $this->components->warn('npm/yarn not found — install dependencies manually: npm install && npm run build');
             return;
         }
 
-        $this->components->task('Instalando dependências Node (npm install)', function () use ($npm) {
+        $this->components->task('Installing Node dependencies (npm install)', function () use ($npm) {
             $exitCode = $this->runProcess([$npm, 'install'], base_path());
             return $exitCode === 0;
         });
 
-        $this->components->task('Compilando assets (npm run build)', function () use ($npm) {
+        $this->components->task('Building assets (npm run build)', function () use ($npm) {
             $exitCode = $this->runProcess([$npm, 'run', 'build'], base_path());
             return $exitCode === 0;
         });
     }
 
     /**
-     * Executa um processo externo e exibe a saída em tempo real.
+     * Runs an external process and streams its output in real time.
      */
     protected function runProcess(array $command, string $cwd): int
     {
@@ -389,7 +389,7 @@ CSS;
     }
 
     /**
-     * Detecta o gerenciador de pacotes Node disponível.
+     * Detects the available Node package manager.
      */
     protected function findNodePackageManager(): ?string
     {

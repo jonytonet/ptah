@@ -9,11 +9,11 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
 /**
- * Comando para gerar documentação Swagger/OpenAPI para uma entidade.
+ * Generates Swagger/OpenAPI documentation for an entity.
  *
- * Uso: php artisan ptah:docs {Entity}
+ * Usage: php artisan ptah:docs {Entity}
  *
- * Requer o pacote darkaonline/l5-swagger para geração completa.
+ * Requires the darkaonline/l5-swagger package for full generation.
  */
 class MakeDocsCommand extends Command
 {
@@ -21,13 +21,13 @@ class MakeDocsCommand extends Command
      * @var string
      */
     protected $signature = 'ptah:docs
-                            {entity? : Nome da entidade para documentar (opcional, documenta todas se omitido)}
-                            {--force : Sobrescrever arquivos existentes}';
+                            {entity? : Entity name to document (optional; documents all if omitted)}
+                            {--force : Overwrite existing files}';
 
     /**
      * @var string
      */
-    protected $description = 'Gera anotações Swagger/OpenAPI para uma entidade.';
+    protected $description = 'Generates Swagger/OpenAPI annotations for an entity.';
 
     public function __construct(protected Filesystem $files)
     {
@@ -35,7 +35,7 @@ class MakeDocsCommand extends Command
     }
 
     /**
-     * Executa o comando.
+     * Runs the command.
      */
     public function handle(): int
     {
@@ -45,14 +45,14 @@ class MakeDocsCommand extends Command
             $entity = Str::studly($entity);
             $this->generateDocs($entity);
         } else {
-            $this->components->warn('Nenhuma entidade especificada. Especifique uma entidade com: ptah:docs {Entity}');
+            $this->components->warn('No entity specified. Provide one with: ptah:docs {Entity}');
         }
 
         return self::SUCCESS;
     }
 
     /**
-     * Gera as anotações Swagger para a entidade.
+     * Generates Swagger annotations for the entity.
      */
     protected function generateDocs(string $entity): void
     {
@@ -62,13 +62,13 @@ class MakeDocsCommand extends Command
         $controllerPath = config('ptah.paths.controllers') . "/{$entity}Controller.php";
 
         if (! $this->files->exists($controllerPath)) {
-            $this->components->error("Controller [{$entity}Controller] não encontrado. Execute ptah:make {$entity} primeiro.");
+            $this->components->error("Controller [{$entity}Controller] not found. Run ptah:make {$entity} first.");
             return;
         }
 
         $annotations = $this->buildSwaggerAnnotations($entity, $entityLower, $entityPlural);
 
-        // Insere as anotações no início do controller, após o declare(strict_types=1)
+        // Insert annotations at the beginning of the controller, after declare(strict_types=1)
         $controllerContent = $this->files->get($controllerPath);
 
         if (str_contains($controllerContent, '@OA\\')) {
@@ -80,19 +80,19 @@ class MakeDocsCommand extends Command
 
         $this->components->twoColumnDetail("Docs [{$entity}Controller]", '<fg=green;options=bold>DONE</>');
         $this->newLine();
-        $this->components->info('Anotações Swagger geradas:');
+        $this->components->info('Swagger annotations generated:');
         $this->line($annotations);
         $this->newLine();
-        $this->components->warn('Adicione as anotações acima à classe do controller manualmente.');
+        $this->components->warn('Add the annotations above to the controller class manually.');
 
         if (! class_exists('L5Swagger\\L5SwaggerServiceProvider')) {
             $this->newLine();
-            $this->components->warn('Para geração completa de docs, instale: composer require darkaonline/l5-swagger');
+            $this->components->warn('For full docs generation, install: composer require darkaonline/l5-swagger');
         }
     }
 
     /**
-     * Constrói as anotações Swagger para a entidade.
+     * Builds the Swagger annotations for the entity.
      */
     protected function buildSwaggerAnnotations(
         string $entity,
@@ -101,48 +101,48 @@ class MakeDocsCommand extends Command
     ): string {
         return <<<ANNOTATIONS
 /**
- * @OA\\Tag(name="{$entity}", description="Operações de {$entity}")
+ * @OA\\Tag(name="{$entity}", description="{$entity} operations")
  *
  * @OA\\Get(
  *     path="/api/{$entityPlural}",
  *     tags={"{$entity}"},
- *     summary="Lista todos os {$entityLower}s",
- *     @OA\\Response(response=200, description="Lista paginada de {$entityLower}s")
+ *     summary="List all {$entityLower}s",
+ *     @OA\\Response(response=200, description="Paginated list of {$entityLower}s")
  * )
  *
  * @OA\\Post(
  *     path="/api/{$entityPlural}",
  *     tags={"{$entity}"},
- *     summary="Cria um novo {$entityLower}",
- *     @OA\\Response(response=201, description="{$entity} criado"),
- *     @OA\\Response(response=422, description="Erro de validação")
+ *     summary="Create a new {$entityLower}",
+ *     @OA\\Response(response=201, description="{$entity} created"),
+ *     @OA\\Response(response=422, description="Validation error")
  * )
  *
  * @OA\\Get(
  *     path="/api/{$entityPlural}/{id}",
  *     tags={"{$entity}"},
- *     summary="Retorna um {$entityLower} específico",
+ *     summary="Retrieve a specific {$entityLower}",
  *     @OA\\Parameter(name="id", in="path", required=true, @OA\\Schema(type="integer")),
- *     @OA\\Response(response=200, description="{$entity} encontrado"),
- *     @OA\\Response(response=404, description="{$entity} não encontrado")
+ *     @OA\\Response(response=200, description="{$entity} found"),
+ *     @OA\\Response(response=404, description="{$entity} not found")
  * )
  *
  * @OA\\Put(
  *     path="/api/{$entityPlural}/{id}",
  *     tags={"{$entity}"},
- *     summary="Atualiza um {$entityLower}",
+ *     summary="Update a {$entityLower}",
  *     @OA\\Parameter(name="id", in="path", required=true, @OA\\Schema(type="integer")),
- *     @OA\\Response(response=200, description="{$entity} atualizado"),
- *     @OA\\Response(response=404, description="{$entity} não encontrado")
+ *     @OA\\Response(response=200, description="{$entity} updated"),
+ *     @OA\\Response(response=404, description="{$entity} not found")
  * )
  *
  * @OA\\Delete(
  *     path="/api/{$entityPlural}/{id}",
  *     tags={"{$entity}"},
- *     summary="Remove um {$entityLower}",
+ *     summary="Delete a {$entityLower}",
  *     @OA\\Parameter(name="id", in="path", required=true, @OA\\Schema(type="integer")),
- *     @OA\\Response(response=204, description="{$entity} removido"),
- *     @OA\\Response(response=404, description="{$entity} não encontrado")
+ *     @OA\\Response(response=204, description="{$entity} deleted"),
+ *     @OA\\Response(response=404, description="{$entity} not found")
  * )
  */
 ANNOTATIONS;

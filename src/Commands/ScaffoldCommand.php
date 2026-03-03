@@ -27,9 +27,9 @@ use Ptah\Support\EntityContext;
 use Ptah\Support\SchemaInspector;
 
 /**
- * Comando principal do Ptah — gera a estrutura completa de uma entidade.
+ * Main Ptah command — generates the complete structure for an entity.
  *
- * Uso:
+ * Usage:
  *   php artisan ptah:forge Product
  *   php artisan ptah:forge Product/ProductStock
  *   php artisan ptah:forge Product/ProductStock --table=product_stocks
@@ -39,26 +39,26 @@ use Ptah\Support\SchemaInspector;
  *   php artisan ptah:forge Product --no-soft-deletes
  *   php artisan ptah:forge Product --force
  *
- * Arquitetura (SOLID):
- *  - Single Responsibility : cada Generator cuida de um único artefato
- *  - Open/Closed           : novos generators podem ser adicionados sem alterar este comando
- *  - Liskov Substitution   : todos os generators implementam GeneratorInterface
- *  - Interface Segregation : GeneratorInterface é mínima (generate + shouldRun)
- *  - Dependency Inversion  : injetamos Filesystem e SchemaInspector via construtor
+ * Architecture (SOLID):
+ *  - Single Responsibility : each Generator handles one single artefact
+ *  - Open/Closed           : new generators can be added without changing this command
+ *  - Liskov Substitution   : all generators implement GeneratorInterface
+ *  - Interface Segregation : GeneratorInterface is minimal (generate + shouldRun)
+ *  - Dependency Inversion  : Filesystem and SchemaInspector are injected via constructor
  */
 class ScaffoldCommand extends Command
 {
     protected $signature = 'ptah:forge
-        {entity                  : Nome da entidade em PascalCase, com subfolder opcional (ex: Product, Product/ProductStock)}
-        {--table=                : Nome da tabela no banco (padrão: plural snake_case da entidade)}
-        {--fields=               : Definição dos campos: "name:string,price:decimal(10,2):nullable" }
-        {--db                    : Lê os campos diretamente da tabela no banco de dados}
-        {--api                   : Gera também a estrutura de API além do web (Controller API, Requests API, Swagger e Routes API)}
-        {--api-only              : Gera SOMENTE a estrutura de API, sem views web (comportamento legado do --api)}
-        {--no-soft-deletes       : Não adiciona SoftDeletes ao model}
-        {--force                 : Sobrescreve arquivos existentes sem confirmação}';
+        {entity                  : Entity name in PascalCase, with optional subfolder (e.g.: Product, Product/ProductStock)}
+        {--table=                : Table name in the database (default: plural snake_case of the entity)}
+        {--fields=               : Field definitions: "name:string,price:decimal(10,2):nullable" }
+        {--db                    : Read fields directly from the database table}
+        {--api                   : Also generate the API structure in addition to web (API Controller, API Requests, Swagger and API Routes)}
+        {--api-only              : Generate ONLY the API structure, without web views (legacy behaviour of --api)}
+        {--no-soft-deletes       : Do not add SoftDeletes to the model}
+        {--force                 : Overwrite existing files without confirmation}';
 
-    protected $description = 'Forge — gera a estrutura completa de uma entidade (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
+    protected $description = 'Forge — generates the complete structure for an entity (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
 
     public function __construct(
         protected Filesystem     $files,
@@ -69,19 +69,19 @@ class ScaffoldCommand extends Command
 
     public function handle(): int
     {
-        // ── Subfolder support: aceita Product/ProductStock ou Product\ProductStock ──
+        // ── Subfolder support: accepts Product/ProductStock or Product\ProductStock ──
         $rawEntity = $this->argument('entity');
         $parts     = array_values(array_filter(
             array_map('trim', preg_split('/[\\\\\\/]/', $rawEntity))
         ));
         $entity    = Str::studly((string) array_pop($parts));
-        $subFolder = implode('/', array_map(fn(string $p) => Str::studly($p), $parts)); // ex: 'Product'
+        $subFolder = implode('/', array_map(fn(string $p) => Str::studly($p), $parts)); // e.g.: 'Product'
 
         $entityLower        = Str::snake($entity);
         $entityPlural       = Str::plural($entityLower);
         $entityPluralStudly = Str::studly($entityPlural);
         $table              = $this->option('table') ?: $entityPlural;
-        $withViews          = ! $this->option('api-only'); // false apenas com --api-only
+        $withViews          = ! $this->option('api-only'); // false only with --api-only
         $withApi            = $this->option('api') || $this->option('api-only');
         $withSoftDeletes    = ! $this->option('no-soft-deletes');
         $force              = (bool) $this->option('force');
@@ -89,7 +89,7 @@ class ScaffoldCommand extends Command
         // ── Resolve fields ──────────────────────────────────────────────
         $fields = $this->resolveFields($table);
 
-        // ── Build context (imutável, passado a todos os generators) ─────
+        // ── Build context (immutable, passed to all generators) ─────────
         $context = new EntityContext(
             entity:             $entity,
             entityLower:        $entityLower,
@@ -109,13 +109,13 @@ class ScaffoldCommand extends Command
         // ── Header ──────────────────────────────────────────────────────
         $this->newLine();
         $displayName = $subFolder ? "{$subFolder}/{$entity}" : $entity;
-        $this->components->info("Ptah Forge — Gerando: <fg=yellow>{$displayName}</>");
+        $this->components->info("Ptah Forge — Generating: <fg=yellow>{$displayName}</>");
         $modeLabel = match(true) {
             $withViews && $withApi => 'Web + API',
             $withApi              => 'API only',
             default               => 'Web',
         };
-        $this->line("  <fg=gray>Tabela: {$table} | Campos: " . count($fields) .
+        $this->line("  <fg=gray>Table: {$table} | Fields: " . count($fields) .
             " | Modo: {$modeLabel}</>");
         $this->newLine();
 
@@ -136,7 +136,7 @@ class ScaffoldCommand extends Command
     // ── Orchestration ──────────────────────────────────────────────────────
 
     /**
-     * Instancia e executa todos os generators na ordem correcta.
+     * Instantiates and runs all generators in the correct order.
      *
      * @return GeneratorResult[]
      */
@@ -152,7 +152,7 @@ class ScaffoldCommand extends Command
                 continue;
             }
 
-            // Generators especiais que produzem múltiplos artefatos
+            // Special generators that produce multiple artefacts
             if ($generator instanceof RequestGenerator) {
                 if ($context->withViews) {
                     // Web: Store + Update
@@ -189,8 +189,8 @@ class ScaffoldCommand extends Command
     }
 
     /**
-     * Retorna todos os generators disponíveis.
-     * Para adicionar um novo gerador, basta incluir aqui (OCP).
+     * Returns all available generators.
+     * To add a new generator, simply include it here (OCP).
      *
      * @return GeneratorInterface[]
      */
@@ -217,9 +217,9 @@ class ScaffoldCommand extends Command
     // ── Field resolution ───────────────────────────────────────────────────
 
     /**
-     * Resolve os campos a partir das opções fornecidas.
+     * Resolves fields from the provided options.
      *
-     * Prioridade: --db > --fields > nenhum (sem campos definidos)
+     * Priority: --db > --fields > none (no fields defined)
      *
      * @return \Ptah\Support\FieldDefinition[]
      */
@@ -229,9 +229,9 @@ class ScaffoldCommand extends Command
             $fields = $this->inspector->fromDatabase($table);
 
             if (empty($fields)) {
-                $this->components->warn("Tabela [{$table}] não encontrada ou sem colunas. Nenhum campo será pré-preenchido.");
+                $this->components->warn("Table [{$table}] not found or has no columns. No fields will be pre-filled.");
             } else {
-                $this->components->info(count($fields) . " campo(s) lido(s) da tabela [{$table}].");
+                $this->components->info(count($fields) . " field(s) read from table [{$table}].");
             }
 
             return $fields;
@@ -247,7 +247,7 @@ class ScaffoldCommand extends Command
     // ── Output ─────────────────────────────────────────────────────────────
 
     /**
-     * Exibe a tabela de resumo dos resultados.
+     * Displays the results summary table.
      *
      * @param GeneratorResult[] $results
      */
@@ -258,7 +258,7 @@ class ScaffoldCommand extends Command
             $r->formattedStatus(),
         ], $results);
 
-        $this->table(['Artefato', 'Status'], $rows);
+        $this->table(['Artifact', 'Status'], $rows);
         $this->newLine();
 
         $done    = count(array_filter($results, fn($r) => $r->isDone()));
@@ -266,9 +266,9 @@ class ScaffoldCommand extends Command
         $errors  = count(array_filter($results, fn($r) => $r->isError()));
 
         $this->line(
-            "  <fg=green>{$done} criado(s)</> · " .
-            "<fg=yellow>{$skipped} ignorado(s)</> · " .
-            "<fg=red>{$errors} erro(s)</>"
+            "  <fg=green>{$done} created</> · " .
+            "<fg=yellow>{$skipped} skipped</> · " .
+            "<fg=red>{$errors} error(s)</>"
         );
 
         if ($errors > 0) {
@@ -280,34 +280,34 @@ class ScaffoldCommand extends Command
     }
 
     /**
-     * Exibe as próximas etapas sugeridas após a geração.
+     * Displays suggested next steps after generation.
      */
     private function printNextSteps(EntityContext $context): void
     {
         $ns = rtrim($context->rootNamespace, '\\');
 
         $this->newLine();
-        $this->line('  <fg=blue;options=bold>Próximos passos:</> ');
+        $this->line('  <fg=blue;options=bold>Next steps:</> ');
         $this->newLine();
 
-        $this->line("  <fg=green>✔ Binding registrado automaticamente no AppServiceProvider.</>");
+        $this->line("  <fg=green>✔ Binding automatically registered in AppServiceProvider.</>");
         $this->newLine();
 
-        $this->line("  <fg=yellow>1. Execute a migration:</>");
+        $this->line("  <fg=yellow>1. Run the migration:</>");
         $this->line("     <fg=gray>php artisan migrate</>");
         $this->newLine();
 
         if (! empty($context->fields)) {
-            $this->line("  <fg=yellow>2. Revise as regras de validação nos Requests gerados.</>");
+            $this->line("  <fg=yellow>2. Review the validation rules in the generated Requests.</>");
             $this->newLine();
         }
 
         if ($context->withViews) {
-            $this->line("  <fg=yellow>Acesse:</> <fg=gray>/{$context->entityLower}</>");
+            $this->line("  <fg=yellow>Access:</> <fg=gray>/{$context->entityLower}</>");
             $this->newLine();
-            $this->line("  <fg=blue>→ A tela usa o Livewire BaseCrud. A configuração foi salva em <fg=gray>crud_configs</> e pode ser ajustada diretamente no banco.</>");
+            $this->line("  <fg=blue>→ The screen uses Livewire BaseCrud. Configuration saved in <fg=gray>crud_configs</> and can be adjusted directly in the database.</>");
         } else {
-            $this->line("  <fg=yellow>Endpoint API:</> <fg=gray>/api/{$context->entityPlural}</>");
+            $this->line("  <fg=yellow>API Endpoint:</> <fg=gray>/api/{$context->entityPlural}</>");
         }
 
         $this->newLine();
