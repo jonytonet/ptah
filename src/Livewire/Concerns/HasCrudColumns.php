@@ -96,7 +96,7 @@ trait HasCrudColumns
 
     // ── Counts ────────────────────────────────────────────────────────────────
 
-    public function updateHiddenColumnsCount(): void
+    protected function updateHiddenColumnsCount(): void
     {
         $this->hiddenColumnsCount = (int) count(
             array_filter($this->formDataColumns, fn($v) => ! $v)

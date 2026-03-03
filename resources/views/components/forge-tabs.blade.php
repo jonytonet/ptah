@@ -14,8 +14,8 @@
 
     Props:
       - tabs      : array [ ['id' => '', 'label' => '', 'slot' => ''], ... ]  (Modo 2)
-      - color     : primary | success | danger | warn  (padrão: primary)
-      - defaultTab: string (id da aba inicial, Modo 2)
+      - color     : primary | success | danger | warn  (default: primary)
+      - defaultTab: string (initial tab id, Mode 2)
 --}}
 @props([
     'tabs'       => [],

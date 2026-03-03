@@ -1,10 +1,10 @@
 {{--
     forge-page-header — Ptah Forge
     Props:
-      - title    : string  - título principal da página (obrigatório)
-      - subtitle : string  - subtítulo / descrição (opcional)
-      - back     : string  - URL para botão "voltar" (opcional)
-    Slots: default (ações à direita, ex: botões)
+      - title    : string  - main page title (required)
+      - subtitle : string  - subtitle / description (optional)
+      - back     : string  - URL for back button (optional)
+    Slots: default (right-side actions, e.g. buttons)
 --}}
 @props([
     'title'    => '',

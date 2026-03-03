@@ -1,9 +1,9 @@
 {{--
     forge-spinner — Ptah Forge
     Props:
-      - color: primary | success | danger | warn | dark | light | white  (padrão: primary)
-      - size : sm | md | lg  (padrão: md)
-      - type : circle | dots | wave  (padrão: circle)
+      - color: primary | success | danger | warn | dark | light | white  (default: primary)
+      - size : sm | md | lg  (default: md)
+      - type : circle | dots | wave  (default: circle)
 --}}
 @props([
     'color' => 'primary',

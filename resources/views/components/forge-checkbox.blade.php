@@ -2,7 +2,7 @@
     forge-checkbox — Ptah Forge
     Props:
       - label   : string
-      - color   : primary | success | danger | warn  (padrão: primary)
+      - color   : primary | success | danger | warn  (default: primary)
       - checked : boolean
       - disabled: boolean
 --}}

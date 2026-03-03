@@ -1,13 +1,13 @@
 {{--
     forge-avatar — Ptah Forge
     Props:
-      - src          : URL da imagem
+      - src          : image URL
       - alt          : string
-      - size         : xs | sm | md | lg | xl  (padrão: md)
+      - size         : xs | sm | md | lg | xl  (default: md)
       - color        : primary | success | danger | warn | dark | light
-      - text         : iniciais quando não há imagem
+      - text         : initials when no image is provided
       - badgeColor   : online | offline | busy | primary | success | danger | warn
-      - badgePosition: top-right | bottom-right  (padrão: bottom-right)
+      - badgePosition: top-right | bottom-right  (default: bottom-right)
 --}}
 @props([
     'src'           => null,

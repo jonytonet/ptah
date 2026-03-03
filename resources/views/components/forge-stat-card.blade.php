@@ -4,12 +4,12 @@
       - title     : string
       - value     : string
       - icon      : HTML raw string
-      - color     : primary | success | danger | warn | dark  (padrão: primary)
+      - color     : primary | success | danger | warn | dark  (default: primary)
       - trend     : string (+5% / -2%)
       - trendLabel: string
 --}}
 @props([
-    'title'      => 'Métrica',
+    'title'      => 'Metric',
     'value'      => '0',
     'icon'       => null,
     'color'      => 'primary',

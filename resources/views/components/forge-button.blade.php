@@ -1,16 +1,16 @@
 {{--
     forge-button — Ptah Forge
     Props:
-      - color   : primary | success | danger | warn | dark | light  (padrão: primary)
-      - size    : sm | md | lg  (padrão: md)
-      - flat    : boolean - fundo transparente
-      - relief  : boolean - aparência sólida sem sombra
-      - rounded : boolean - totalmente arredondado
+      - color   : primary | success | danger | warn | dark | light  (default: primary)
+      - size    : sm | md | lg  (default: md)
+      - flat    : boolean - transparent background
+      - relief  : boolean - solid appearance without shadow
+      - rounded : boolean - fully rounded
       - disabled: boolean
-      - loading : boolean - exibe spinner inline
+      - loading : boolean - shows inline spinner
     Slots:
-      - default : texto do botão
-      - icon    : ícone opcional
+      - default : button text
+      - icon    : optional icon
 --}}
 @props([
     'color'    => 'primary',

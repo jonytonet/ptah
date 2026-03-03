@@ -2,10 +2,10 @@
     forge-tab — Ptah Forge
     Sub-componente de <x-forge-tabs> (slot "tabs").
     Props:
-      - key    : string  - identificador da aba (informativo, não aplicado por este componente)
-      - active : bool    - se é a aba selecionada
-      - color  : primary | success | danger | warn (padrão: primary)
-    Aceita quaisquer atributos extras (wire:click, @click, etc.)
+      - key    : string  - tab identifier (informational, not applied by this component)
+      - active : bool    - whether this tab is selected
+      - color  : primary | success | danger | warn (default: primary)
+    Accepts any extra attributes (wire:click, @click, etc.)
 --}}
 @props([
     'key'    => '',

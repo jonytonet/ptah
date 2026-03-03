@@ -1,11 +1,11 @@
 {{--
     forge-notification — Ptah Forge
     Props:
-      - color   : primary | success | danger | warn | dark  (padrão: primary)
+      - color   : primary | success | danger | warn | dark  (default: primary)
       - title   : string
       - text    : string
-      - position: top-right | top-left | bottom-right | bottom-left  (padrão: top-right)
-      - duration: int ms — 0 para não fechar automaticamente  (padrão: 4000)
+      - position: top-right | top-left | bottom-right | bottom-left  (default: top-right)
+      - duration: int ms — 0 to disable auto-close  (default: 4000)
     Uso:
       <div x-data="{ show: false }">
           <x-forge-button @click="show = true">Notificar</x-forge-button>
@@ -98,7 +98,7 @@
             type="button"
             @click="show = false; $dispatch('close')"
             class="shrink-0 opacity-80 hover:opacity-100 transition-opacity focus:outline-none"
-            aria-label="Fechar notificação"
+            aria-label="Close notification"
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

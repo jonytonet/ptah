@@ -2,11 +2,11 @@
     forge-switch — Ptah Forge
     Props:
       - label   : string
-      - color   : primary | success | danger | warn  (padrão: primary)
+      - color   : primary | success | danger | warn  (default: primary)
       - checked : boolean
       - disabled: boolean
-      - size    : sm | md | lg  (padrão: md)
-    Requer Alpine.js
+      - size    : sm | md | lg  (default: md)
+    Requires Alpine.js
 --}}
 @props([
     'label'    => null,

@@ -2,20 +2,20 @@
     forge-modal — Ptah Forge
     Props:
       - title: string
-      - size : sm | md | lg | xl | full  (padrão: md)
+      - size : sm | md | lg | xl | full  (default: md)
     Slots: default, footer
     Uso:
       <div x-data="{ open: false }">
           <x-forge-button @click="open = true">Abrir</x-forge-button>
-          <x-forge-modal title="Título" x-bind:open="open" @close="open = false">
-              Conteúdo
+          <x-forge-modal title="Title" x-bind:open="open" @close="open = false">
+              Content
               <x-slot:footer>
                   <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
                   <x-forge-button>Salvar</x-forge-button>
               </x-slot:footer>
           </x-forge-modal>
       </div>
-    Requer Alpine.js
+    Requires Alpine.js
 --}}
 @props([
     'title' => '',

@@ -113,7 +113,7 @@
                         </th>
                     @endforeach
                     @isset($actions)
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Ações</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                     @endisset
                 </tr>
             </thead>

@@ -3,14 +3,14 @@
     Props:
       - label    : string
       - placeholder: string
-      - rows     : int  (padrão: 4)
-      - color    : primary | success | danger | warn  (padrão: primary)
+      - rows     : int  (default: 4)
+      - color    : primary | success | danger | warn  (default: primary)
       - state    : normal | success | danger | warn
       - disabled : boolean
       - helper   : string
       - maxlength: int
-      - counter  : boolean - exibe contador de caracteres
-    Requer Alpine.js (counter)
+      - counter  : boolean - shows character counter
+    Requires Alpine.js (counter)
 --}}
 @props([
     'label'       => null,

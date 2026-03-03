@@ -2,11 +2,11 @@
 <div>
     <div class="mb-5 flex items-start justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">Guia do Sistema de Permissões</h1>
-            <p class="text-sm text-slate-500 mt-0.5">Como funciona o ACL do Ptah e como configurar acessos passo a passo.</p>
+            <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.guide_title') }}</h1>
+            <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.guide_subtitle') }}</p>
         </div>
         <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full shrink-0">
-            📖 Documentação
+            {{ __('ptah::ui.guide_badge') }}
         </span>
     </div>
 

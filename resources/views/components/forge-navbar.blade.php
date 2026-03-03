@@ -3,10 +3,10 @@
     Props:
       - appName: string
       - logoUrl: string
-      - sticky : boolean  (padrão: true)
+      - sticky : boolean  (default: true)
     Slots: brand, actions
-    Requer Alpine.js — emite evento 'toggle-sidebar'
-    Dark mode: reage à classe .ptah-dark no ancestral (forge-dashboard-layout)
+    Requires Alpine.js — emits 'toggle-sidebar' event
+    Dark mode: reacts to .ptah-dark class on ancestor (forge-dashboard-layout)
 --}}
 @props([
     'appName' => config('app.name', 'Ptah'),
@@ -35,7 +35,7 @@
             {{-- Desktop: expande/recolhe sidebar --}}
             <button
                 @click="toggleSidebarCollapse()"
-                :title="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+                :title="sidebarCollapsed ? 'Expand menu' : 'Collapse menu'"
                 class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
             >
                 {{-- Sidebar aberta → painel esquerdo preenchido (clica para recolher) --}}
@@ -80,18 +80,18 @@
             @isset($actions)
                 {{ $actions }}
             @else
-                {{-- Botão toggle Dark Mode --}}
+                {{-- Dark Mode toggle button --}}
                 <button
                     @click="toggleDark()"
                     class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
-                    :title="darkMode ? 'Mudar para modo claro' : 'Mudar para modo escuro'"
+                    :title="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
                 >
-                    {{-- Ícone Sol (light mode ativo) --}}
+                    {{-- Sun icon (light mode active) --}}
                     <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                     </svg>
-                    {{-- Ícone Lua (dark mode ativo) --}}
+                    {{-- Moon icon (dark mode active) --}}
                     <svg x-show="darkMode" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
@@ -105,7 +105,7 @@
                         @click="openAdmin = !openAdmin"
                         :class="openAdmin ? 'bg-gray-100 text-primary' : 'text-gray-500 hover:bg-gray-100 hover:text-primary'"
                         class="ptah-navbar-icon-btn relative p-2 rounded-xl transition-colors"
-                        title="Administração"
+                        title="Administration"
                     >
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -144,7 +144,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            Departamentos
+                            Departments
                         </a>
                         @endif
 
@@ -156,11 +156,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
-                            Perfis de acesso
+                            Access Profiles
                         </a>
                         @endif
 
-                        {{-- Páginas / objetos --}}
+                        {{-- Pages / Objects --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
                         <a href="{{ route('ptah.acl.pages') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -168,11 +168,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
-                            Páginas e objetos
+                            Pages & Objects
                         </a>
                         @endif
 
-                        {{-- Usuários e permissões --}}
+                        {{-- Users & Permissions --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
                         <a href="{{ route('ptah.acl.users') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -180,7 +180,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                             </svg>
-                            Usuários e permissões
+                            Users & Permissions
                         </a>
                         @endif
 
@@ -196,7 +196,7 @@
                         </a>
                         @endif
 
-                        {{-- Guia do sistema de permissões --}}
+                        {{-- Permissions guide --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.guide'))
                         <a href="{{ route('ptah.acl.guide') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -204,7 +204,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                             </svg>
-                            Guia de permissões
+                            Permissions Guide
                         </a>
                         @endif
 
@@ -218,7 +218,7 @@
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
                             </svg>
-                            Gerenciar menu
+                            Manage Menu
                         </a>
                         @endif
                     </div>
@@ -252,7 +252,7 @@
                             </div>
                         @endif
                         <span class="ptah-navbar-username hidden lg:block text-sm font-medium text-dark">
-                            {{ auth()->user()->name ?? 'Usuário' }}
+                            {{ auth()->user()->name ?? 'User' }}
                         </span>
                         <svg class="hidden lg:block h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -281,7 +281,7 @@
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
-                            Perfil
+                            Profile
                         </a>
                         <hr class="my-1 border-gray-100">
                         <form method="POST" action="{{ $logoutAction }}">
@@ -291,7 +291,7 @@
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
-                                Sair
+                                Log out
                             </button>
                         </form>
                     </div>

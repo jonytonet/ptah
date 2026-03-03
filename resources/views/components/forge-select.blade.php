@@ -1,21 +1,21 @@
 {{--
     forge-select — Ptah Forge
     Props:
-      - label      : string (label acima do campo)
+      - label      : string (label above the field)
       - options    : array [ ['value' => '', 'label' => ''], ... ]
-      - placeholder: string  (padrão: 'Selecione...')
+      - placeholder: string  (default: 'Select...')
       - multiple   : boolean
       - disabled   : boolean
       - required   : boolean
-      - error      : string|null  (sobrescreve state para danger)
-      - selected   : mixed|null   (valor inicial)
-      - name       : consumido internamente
-    Requer Alpine.js
+      - error      : string|null  (overrides state to danger)
+      - selected   : mixed|null   (initial value)
+      - name       : consumed internally
+    Requires Alpine.js
 --}}
 @props([
     'label'       => '',
     'options'     => [],
-    'placeholder' => 'Selecione...',
+    'placeholder' => 'Select...',
     'multiple'    => false,
     'disabled'    => false,
     'required'    => false,

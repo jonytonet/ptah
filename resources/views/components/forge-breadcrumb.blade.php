@@ -2,7 +2,7 @@
     forge-breadcrumb — Ptah Forge
     Props:
       - items    : array [ ['url' => '...', 'label' => '...'], ... ]
-      - separator: string  (padrão: '/')
+      - separator: string  (default: '/')
 --}}
 @props([
     'items'     => [],

@@ -2,12 +2,12 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">Verificação em duas etapas</h2>
+        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.two_fa_page_title') }}</h2>
         <p class="text-sm text-gray-500 mt-1">
             @if ($usingRecovery)
-                Digite um dos seus códigos de recuperação
+                {{ __('ptah::ui.two_fa_recovery_subtitle') }}
             @else
-                Digite o código do seu aplicativo autenticador ou e-mail
+                {{ __('ptah::ui.two_fa_auth_subtitle') }}
             @endif
         </p>
     </div>
@@ -24,7 +24,7 @@
         <x-forge-input
             :name="$usingRecovery ? 'recovery_code' : 'code'"
             :type="$usingRecovery ? 'text' : 'text'"
-            :label="$usingRecovery ? 'Código de recuperação' : 'Código de verificação'"
+            :label="$usingRecovery ? __('ptah::ui.two_fa_recovery_code_label') : __('ptah::ui.two_fa_verification_label')"
             wire:model="code"
             :error="$errors->first('code')"
             required
@@ -32,9 +32,9 @@
         />
 
         <x-forge-button type="submit" color="primary" class="w-full" wire:loading.attr="disabled">
-            <span wire:loading.remove>Verificar</span>
+            <span wire:loading.remove>{{ __('ptah::ui.two_fa_verify_btn') }}</span>
             <span wire:loading class="flex items-center justify-center gap-2">
-                <x-forge-spinner size="sm" /> Verificando...
+                <x-forge-spinner size="sm" /> {{ __('ptah::ui.two_fa_verifying') }}
             </span>
         </x-forge-button>
     </form>
@@ -46,9 +46,9 @@
             class="text-primary hover:underline font-medium"
         >
             @if ($usingRecovery)
-                Usar código do autenticador
+                {{ __('ptah::ui.two_fa_use_authenticator') }}
             @else
-                Usar código de recuperação
+                {{ __('ptah::ui.two_fa_use_recovery_code') }}
             @endif
         </button>
 
@@ -57,11 +57,11 @@
             wire:click="sendEmailCode"
             class="text-gray-500 hover:text-primary hover:underline"
         >
-            Reenviar código por e-mail
+            {{ __('ptah::ui.two_fa_resend_email') }}
         </button>
 
         <a href="{{ route('ptah.auth.login') }}" class="text-gray-400 hover:text-gray-600 hover:underline">
-            Voltar ao login
+                {{ __('ptah::ui.two_fa_back_login') }}
         </a>
     </div>
 </div>

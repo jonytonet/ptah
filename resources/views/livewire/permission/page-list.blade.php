@@ -1,8 +1,8 @@
 {{-- ptah::livewire.permission.page-list --}}
 <div>
     <div class="mb-5">
-        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">Páginas e Objetos</h1>
-        <p class="text-sm text-slate-500 mt-0.5">Cadastre as páginas do sistema e seus objetos (botões, campos, links) para controle de acesso.</p>
+        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.page_title') }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.page_subtitle') }}</p>
     </div>
 
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
@@ -13,18 +13,18 @@
         {{-- ── COLUNA: Páginas ──────────────────────────────── --}}
         <div>
             <div class="flex items-center justify-between mb-3">
-                <h2 class="font-semibold text-slate-700">Páginas</h2>
+                <h2 class="font-semibold text-slate-700">{{ __('ptah::ui.page_col_pages') }}</h2>
                 <button wire:click="createPage"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    Página
+                    {{ __('ptah::ui.page_new_btn') }}
                 </button>
             </div>
             <div class="relative mb-3">
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" placeholder="Buscar página..."
+                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.page_search_ph')"
                     class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-500 outline-none transition-all"/>
             </div>
 
@@ -63,8 +63,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-700">Nenhuma página cadastrada</p>
-                                    <p class="text-xs mt-0.5 text-slate-400">Crie a primeira página para começar.</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.page_empty_found') }}</p>
+                                    <p class="text-xs mt-0.5 text-slate-400">{{ __('ptah::ui.page_empty_hint') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -72,7 +72,7 @@
                 </div>
                 @if ($pageRows->hasPages())
                     <div class="flex items-center justify-between px-4 py-2 border-t border-slate-200 text-sm text-slate-500">
-                        <span>{{ $pageRows->firstItem() }}–{{ $pageRows->lastItem() }} de {{ $pageRows->total() }}</span>
+                        <span>{{ __('ptah::ui.company_pagination', ['first' => $pageRows->firstItem(), 'last' => $pageRows->lastItem(), 'total' => $pageRows->total()]) }}</span>
                         <div>{{ $pageRows->links() }}</div>
                     </div>
                 @endif
@@ -84,7 +84,7 @@
             @if ($selectedPageId)
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="font-semibold text-slate-700">
-                        Objetos — <span class="text-blue-600">{{ $selectedPageName }}</span>
+                        {{ __('ptah::ui.page_objects_header', ['page' => $selectedPageName]) }}
                     </h2>
                     <button wire:click="createObj"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
@@ -96,7 +96,7 @@
                     <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                     </svg>
-                    <input wire:model.live.debounce.300ms="objSearch" type="search" placeholder="Buscar objeto..."
+                    <input wire:model.live.debounce.300ms="objSearch" type="search" :placeholder="__('ptah::ui.page_obj_search_ph')"
                         class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-500 outline-none transition-all"/>
                 </div>
 
@@ -104,10 +104,10 @@
                     <table class="w-full text-sm">
                         <thead class="bg-slate-50 border-b-2 border-slate-200">
                             <tr>
-                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Chave / Label</th>
-                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Tipo</th>
-                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Seção</th>
-                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Ações</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.page_obj_col_key_label') }}</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.page_obj_col_type') }}</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.page_obj_col_section') }}</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.page_obj_col_actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -142,8 +142,8 @@
                                                 </svg>
                                             </div>
                                             <div>
-                                                <p class="text-sm font-semibold text-slate-700">Nenhum objeto nesta página</p>
-                                                <p class="text-xs mt-0.5 text-slate-400">Adicione objetos para controlar o acesso.</p>
+                                                <p class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.page_obj_empty_found') }}</p>
+                                                <p class="text-xs mt-0.5 text-slate-400">{{ __('ptah::ui.page_obj_empty_hint') }}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -154,7 +154,7 @@
                 </div>
                 @if ($objRows?->hasPages())
                     <div class="flex items-center justify-between mt-2 text-sm text-slate-500">
-                        <span>{{ $objRows->firstItem() }}–{{ $objRows->lastItem() }} de {{ $objRows->total() }}</span>
+                        <span>{{ __('ptah::ui.company_pagination', ['first' => $objRows->firstItem(), 'last' => $objRows->lastItem(), 'total' => $objRows->total()]) }}</span>
                         <div>{{ $objRows->links() }}</div>
                     </div>
                 @endif
@@ -164,7 +164,7 @@
                         <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        <p class="text-sm">Selecione uma página para ver seus objetos</p>
+                        <p class="text-sm">{{ __('ptah::ui.page_select_hint') }}</p>
                     </div>
                 </div>
             @endif
@@ -173,68 +173,68 @@
 
     {{-- Modal Página --}}
     <div x-data="{ open: @entangle('showPageModal').live }">
-        <x-forge-modal :title="$isEditingPage ? 'Editar Página' : 'Nova Página'" size="md">
+        <x-forge-modal :title="$isEditingPage ? __('ptah::ui.page_modal_edit') : __('ptah::ui.page_modal_new')" size="md">
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <x-forge-input label="Slug *" wire:model="page_slug" :error="$errors->first('page_slug')" placeholder="admin.users" class="font-mono" required />
-                    <x-forge-input label="Nome *" wire:model="page_name" :error="$errors->first('page_name')" required />
+                    <x-forge-input :label="__('ptah::ui.page_form_slug')" wire:model="page_slug" :error="$errors->first('page_slug')" placeholder="admin.users" class="font-mono" required />
+                    <x-forge-input :label="__('ptah::ui.page_form_name')" wire:model="page_name" :error="$errors->first('page_name')" required />
                 </div>
-                <x-forge-textarea label="Descrição" wire:model="page_description" rows="2" />
+                <x-forge-textarea :label="__('ptah::ui.page_form_desc')" wire:model="page_description" rows="2" />
                 <div class="grid grid-cols-2 gap-4">
-                    <x-forge-input label="Rota Laravel" wire:model="page_route" placeholder="admin.users.index" />
-                    <x-forge-input label="Ícone" wire:model="page_icon" placeholder="bx bx-home ou fas fa-home" />
+                    <x-forge-input :label="__('ptah::ui.page_form_route')" wire:model="page_route" placeholder="admin.users.index" />
+                    <x-forge-input :label="__('ptah::ui.page_form_icon')" wire:model="page_icon" placeholder="bx bx-home ou fas fa-home" />
                 </div>
                 <div class="flex items-center gap-6">
-                    <x-forge-switch wire:model="page_is_active" label="Página ativa" />
-                    <x-forge-input label="Ordem" wire:model="page_sort_order" type="number" class="w-24" />
+                    <x-forge-switch wire:model="page_is_active" :label="__('ptah::ui.page_form_active')" />
+                    <x-forge-input :label="__('ptah::ui.page_form_order')" wire:model="page_sort_order" type="number" class="w-24" />
                 </div>
             </div>
             <x-slot name="footer">
-                <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
-                <x-forge-button wire:click="savePage" color="primary">Salvar</x-forge-button>
+                <x-forge-button color="light" @click="open = false">{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="savePage" color="primary">{{ __('ptah::ui.btn_save') }}</x-forge-button>
             </x-slot>
         </x-forge-modal>
     </div>
 
     {{-- Modal Objeto --}}
     <div x-data="{ open: @entangle('showObjModal').live }">
-        <x-forge-modal :title="$isEditingObj ? 'Editar Objeto' : 'Novo Objeto'" size="md">
+        <x-forge-modal :title="$isEditingObj ? __('ptah::ui.page_obj_modal_edit') : __('ptah::ui.page_obj_modal_new')" size="md">
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <x-forge-input label="Seção" wire:model="obj_section" placeholder="main / toolbar / form" required />
+                    <x-forge-input :label="__('ptah::ui.page_obj_form_section')" wire:model="obj_section" placeholder="main / toolbar / form" required />
                     <x-forge-select
-                        label="Tipo *"
+                        :label="__('ptah::ui.page_obj_form_type')"
                         wire:model="obj_type"
                         :options="collect($objTypes)->map(fn($t)=>['value'=>$t,'label'=>$t])->toArray()"
                     />
                 </div>
-                <x-forge-input label="Chave *" wire:model="obj_key" :error="$errors->first('obj_key')" placeholder="users.store" class="font-mono" required />
-                <x-forge-input label="Label *" wire:model="obj_label" :error="$errors->first('obj_label')" placeholder="Criar usuário" required />
+                <x-forge-input :label="__('ptah::ui.page_obj_form_key')" wire:model="obj_key" :error="$errors->first('obj_key')" placeholder="users.store" class="font-mono" required />
+                <x-forge-input :label="__('ptah::ui.page_obj_form_label')" wire:model="obj_label" :error="$errors->first('obj_label')" placeholder="Criar usuário" required />
                 <div class="flex items-center gap-6">
-                    <x-forge-switch wire:model="obj_is_active" label="Objeto ativo" />
-                    <x-forge-input label="Ordem" wire:model="obj_order" type="number" class="w-24" />
+                    <x-forge-switch wire:model="obj_is_active" :label="__('ptah::ui.page_obj_form_active')" />
+                    <x-forge-input :label="__('ptah::ui.page_obj_form_order')" wire:model="obj_order" type="number" class="w-24" />
                 </div>
             </div>
             <x-slot name="footer">
-                <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
-                <x-forge-button wire:click="saveObj" color="primary">Salvar</x-forge-button>
+                <x-forge-button color="light" @click="open = false">{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="saveObj" color="primary">{{ __('ptah::ui.btn_save') }}</x-forge-button>
             </x-slot>
         </x-forge-modal>
     </div>
 
     {{-- Modal exclusão --}}
     <div x-data="{ open: @entangle('showDeleteModal').live }">
-        <x-forge-modal title="Confirmar exclusão" size="sm">
+        <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
             <p class="text-slate-600">
                 @if ($deleteTarget === 'page')
-                    Excluir esta página? Todos os objetos vinculados também serão removidos.
+                    {{ __('ptah::ui.page_delete_page_text') }}
                 @else
-                    Excluir este objeto? As permissões de roles vinculadas serão removidas.
+                    {{ __('ptah::ui.page_delete_obj_text') }}
                 @endif
             </p>
             <x-slot name="footer">
-                <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
-                <x-forge-button wire:click="deleteConfirmed" color="danger">Excluir</x-forge-button>
+                <x-forge-button color="light" @click="open = false">{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="deleteConfirmed" color="danger">{{ __('ptah::ui.btn_delete') }}</x-forge-button>
             </x-slot>
         </x-forge-modal>
     </div>

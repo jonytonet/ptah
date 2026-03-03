@@ -3,7 +3,7 @@
     Props:
       - type     : default | primary | success | danger | warn | dark
       - flat     : boolean - sem sombra
-      - hoverable: boolean - elevação no hover
+      - hoverable: boolean - hover elevation effect
     Slots: header, default, footer, img
 --}}
 @props([

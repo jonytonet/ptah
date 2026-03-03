@@ -1,11 +1,11 @@
 {{--
     forge-progress — Ptah Forge
     Props:
-      - value   : 0–100  (padrão: 0)
-      - color   : primary | success | danger | warn | dark  (padrão: primary)
-      - size    : sm | md | lg | xl  (padrão: md)
-      - label   : boolean - exibe percentual
-      - animated: boolean - pulso de animação
+      - value   : 0–100  (default: 0)
+      - color   : primary | success | danger | warn | dark  (default: primary)
+      - size    : sm | md | lg | xl  (default: md)
+      - label   : boolean - shows percentage
+      - animated: boolean - animation pulse
 --}}
 @props([
     'value'    => 0,

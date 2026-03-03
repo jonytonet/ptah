@@ -1,15 +1,15 @@
 {{-- resources/views/livewire/auth/profile.blade.php --}}
 <div>
-    <x-forge-page-header title="Meu perfil" subtitle="Gerencie suas informações pessoais e segurança" />
+    <x-forge-page-header :title="__('ptah::ui.profile_title')" :subtitle="__('ptah::ui.profile_subtitle')" />
 
     {{-- Tabs --}}
     <x-forge-tabs>
         <x-slot name="tabs">
-            <x-forge-tab key="profile"      :active="$activeTab === 'profile'"      wire:click="$set('activeTab','profile')">Perfil</x-forge-tab>
-            <x-forge-tab key="password"     :active="$activeTab === 'password'"     wire:click="$set('activeTab','password')">Senha</x-forge-tab>
-            <x-forge-tab key="two_factor"   :active="$activeTab === 'two_factor'"   wire:click="$set('activeTab','two_factor')">Autenticação 2FA</x-forge-tab>
-            <x-forge-tab key="sessions"     :active="$activeTab === 'sessions'"     wire:click="$set('activeTab','sessions'); $wire.loadSessions()">Sessões</x-forge-tab>
-            <x-forge-tab key="photo"        :active="$activeTab === 'photo'"        wire:click="$set('activeTab','photo')">Foto</x-forge-tab>
+            <x-forge-tab key="profile"      :active="$activeTab === 'profile'"      wire:click="$set('activeTab','profile')">{{ __('ptah::ui.profile_tab_profile') }}</x-forge-tab>
+            <x-forge-tab key="password"     :active="$activeTab === 'password'"     wire:click="$set('activeTab','password')">{{ __('ptah::ui.profile_tab_password') }}</x-forge-tab>
+            <x-forge-tab key="two_factor"   :active="$activeTab === 'two_factor'"   wire:click="$set('activeTab','two_factor')">{{ __('ptah::ui.profile_tab_2fa') }}</x-forge-tab>
+            <x-forge-tab key="sessions"     :active="$activeTab === 'sessions'"     wire:click="$set('activeTab','sessions'); $wire.loadSessions()">{{ __('ptah::ui.profile_tab_sessions') }}</x-forge-tab>
+            <x-forge-tab key="photo"        :active="$activeTab === 'photo'"        wire:click="$set('activeTab','photo')">{{ __('ptah::ui.profile_tab_photo') }}</x-forge-tab>
         </x-slot>
 
         {{-- ── ABA: PERFIL ── --}}
@@ -20,10 +20,10 @@
             @endif
 
             <form wire:submit="saveProfile" class="space-y-5 max-w-lg">
-                <x-forge-input name="name"  label="Nome"   wire:model="name"  :error="$errors->first('name')"  required />
+                <x-forge-input name="name"  :label="__('ptah::ui.profile_name')"   wire:model="name"  :error="$errors->first('name')"  required />
                 <x-forge-input name="email" type="email" label="E-mail" wire:model="email" :error="$errors->first('email')" required />
 
-                <x-forge-button type="submit" color="primary">Salvar perfil</x-forge-button>
+                <x-forge-button type="submit" color="primary">{{ __('ptah::ui.profile_save_btn') }}</x-forge-button>
             </form>
         </x-forge-card>
         @endif
@@ -39,14 +39,14 @@
             @endif
 
             <form wire:submit="savePassword" class="space-y-5 max-w-lg">
-                <x-forge-input name="current_password" type="password" label="Senha atual"
+                <x-forge-input name="current_password" type="password" :label="__('ptah::ui.profile_current_pw')"
                     wire:model="current_password" :error="$errors->first('current_password')" required />
-                <x-forge-input name="password" type="password" label="Nova senha"
+                <x-forge-input name="password" type="password" :label="__('ptah::ui.profile_new_pw')"
                     wire:model="password" :error="$errors->first('password')" required />
-                <x-forge-input name="password_confirmation" type="password" label="Confirmar nova senha"
+                <x-forge-input name="password_confirmation" type="password" :label="__('ptah::ui.profile_confirm_pw')"
                     wire:model="password_confirmation" required />
 
-                <x-forge-button type="submit" color="primary">Alterar senha</x-forge-button>
+                <x-forge-button type="submit" color="primary">{{ __('ptah::ui.profile_change_pw_btn') }}</x-forge-button>
             </form>
         </x-forge-card>
         @endif
@@ -65,8 +65,7 @@
             @if (!auth()->user()->two_factor_confirmed_at)
                 <div class="max-w-lg">
                     <p class="text-gray-600 mb-5">
-                        A autenticação em duas etapas adiciona uma camada extra de segurança à sua conta.
-                        Escolha o método que preferir:
+                        {{ __('ptah::ui.profile_2fa_intro') }}
                     </p>
 
                     {{-- Método TOTP --}}
@@ -79,29 +78,29 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-semibold text-dark text-sm">App Autenticador (TOTP)</p>
-                                <p class="text-xs text-gray-500">Google Authenticator, Authy, Bitwarden…</p>
+                                <p class="font-semibold text-dark text-sm">Authenticator App (TOTP)</p>
+                                <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_totp_apps') }}</p>
                             </div>
                         </div>
 
                         @if ($showSetup2fa && $totpType === 'totp')
                             {{-- QR Code setup --}}
                             <div class="space-y-4">
-                                <p class="text-sm text-gray-600">Escaneie o QR code com o seu aplicativo autenticador:</p>
+                                <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_scan_qr') }}</p>
                                 <div class="flex justify-center p-3 bg-white rounded-lg border border-gray-200 w-fit mx-auto">
                                     <img src="{{ $qrCodeSvg }}" alt="QR Code 2FA" class="w-[200px] h-[200px]">
                                 </div>
                                 <p class="text-xs text-gray-500 text-center">
-                                    Ou insira a chave manualmente: <code class="font-mono bg-gray-100 dark:bg-dark-3 px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
+                                    {{ __('ptah::ui.profile_enter_key') }} <code class="font-mono bg-gray-100 dark:bg-dark-3 px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
                                 </p>
                                 <form wire:submit="confirmTotp" class="flex gap-2">
                                     <x-forge-input name="totp_code" wire:model="totp_code" placeholder="000000"
                                         class="flex-1" :error="$errors->first('totp_code')" />
-                                    <x-forge-button type="submit" color="primary">Confirmar</x-forge-button>
+                                    <x-forge-button type="submit" color="primary">{{ __('ptah::ui.profile_confirm_btn') }}</x-forge-button>
                                 </form>
                             </div>
                         @else
-                            <x-forge-button wire:click="initTotp" color="secondary" size="sm">Configurar</x-forge-button>
+                            <x-forge-button wire:click="initTotp" color="secondary" size="sm">{{ __('ptah::ui.profile_setup_btn') }}</x-forge-button>
                         @endif
                     </div>
 
@@ -117,10 +116,10 @@
                                 </div>
                                 <div>
                                     <p class="font-semibold text-dark text-sm">E-mail</p>
-                                    <p class="text-xs text-gray-500">Código enviado para {{ auth()->user()->email }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_email_code_hint', ['email' => auth()->user()->email]) }}</p>
                                 </div>
                             </div>
-                            <x-forge-button wire:click="enableEmailTwoFactor" color="secondary" size="sm">Ativar</x-forge-button>
+                            <x-forge-button wire:click="enableEmailTwoFactor" color="secondary" size="sm">{{ __('ptah::ui.profile_enable_btn') }}</x-forge-button>
                         </div>
                     </div>
                 </div>
@@ -128,32 +127,32 @@
                 {{-- 2FA já ativo --}}
                 <div class="max-w-lg space-y-5">
                     <x-forge-alert type="success">
-                        2FA está <strong>ativo</strong>
-                        ({{ auth()->user()->two_factor_type === 'totp' ? 'App Autenticador' : 'E-mail' }}).
+                        {{ __('ptah::ui.profile_2fa_active_label') }}
+                        ({{ auth()->user()->two_factor_type === 'totp' ? __('ptah::ui.profile_2fa_authenticator') : 'E-mail' }}).
                     </x-forge-alert>
 
                     {{-- Códigos de recuperação --}}
                     @if ($recoveryCodes)
                     <div>
-                        <p class="font-semibold text-sm text-dark mb-2">Códigos de recuperação</p>
-                        <p class="text-xs text-gray-500 mb-3">Guarde estes códigos em local seguro — cada um só pode ser usado uma vez.</p>
+                        <p class="font-semibold text-sm text-dark mb-2">{{ __('ptah::ui.profile_recovery_codes_title') }}</p>
+                        <p class="text-xs text-gray-500 mb-3">{{ __('ptah::ui.profile_recovery_codes_hint') }}</p>
                         <div class="grid grid-cols-2 gap-1 font-mono text-sm bg-gray-50 dark:bg-dark-3 p-3 rounded-lg">
                             @foreach ($recoveryCodes as $rc)
                                 <span>{{ $rc }}</span>
                             @endforeach
                         </div>
                         <x-forge-button wire:click="regenerateRecoveryCodes" color="secondary" size="sm" class="mt-3">
-                            Regenerar códigos
+                            {{ __('ptah::ui.profile_regenerate_btn') }}
                         </x-forge-button>
                     </div>
                     @else
                     <x-forge-button wire:click="loadRecoveryCodes" color="secondary" size="sm">
-                        Ver códigos de recuperação
+                        {{ __('ptah::ui.profile_view_recovery_btn') }}
                     </x-forge-button>
                     @endif
 
-                    <x-forge-button wire:click="disableTwoFactor" color="danger" wire:confirm="Desativar 2FA?">
-                        Desativar 2FA
+                    <x-forge-button wire:click="disableTwoFactor" color="danger" wire:confirm="{{ __('ptah::ui.profile_disable_2fa_confirm') }}">
+                        {{ __('ptah::ui.profile_disable_2fa_btn') }}
                     </x-forge-button>
                 </div>
             @endif
@@ -168,15 +167,15 @@
             @endif
 
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm text-gray-600">Dispositivos com sessão ativa na sua conta.</p>
+                <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_sessions_intro') }}</p>
                 <x-forge-button wire:click="revokeOtherSessions" color="danger" size="sm"
-                    wire:confirm="Desconectar todos os outros dispositivos?">
-                    Desconectar outros
+                    wire:confirm="{{ __('ptah::ui.profile_disconnect_confirm') }}">
+                    {{ __('ptah::ui.profile_disconnect_others') }}
                 </x-forge-button>
             </div>
 
             @if (empty($sessions))
-                <p class="text-sm text-gray-400 text-center py-6">Nenhuma sessão encontrada.</p>
+                <p class="text-sm text-gray-400 text-center py-6">{{ __('ptah::ui.profile_no_sessions') }}</p>
             @else
                 <div class="divide-y divide-gray-100 dark:divide-dark-3">
                     @foreach ($sessions as $session)
@@ -197,20 +196,20 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-dark">
-                                    {{ $session['browser'] ?? 'Navegador desconhecido' }}
+                                    {{ $session['browser'] ?? __('ptah::ui.profile_unknown_browser') }}
                                     @if($session['is_current'])
-                                        <span class="ml-1 text-xs text-green-600 font-semibold">(esta sessão)</span>
+                                        <span class="ml-1 text-xs text-green-600 font-semibold">({{ __('ptah::ui.profile_this_session') }})</span>
                                     @endif
                                 </p>
                                 <p class="text-xs text-gray-500">
                                     {{ $session['platform'] ?? '' }} · {{ $session['ip_address'] ?? '' }}
-                                    · última atividade {{ $session['last_activity_human'] ?? '' }}
+                                    · {{ __('ptah::ui.profile_last_activity') }} {{ $session['last_activity_human'] ?? '' }}
                                 </p>
                             </div>
                         </div>
                         @if (!$session['is_current'])
                             <x-forge-button wire:click="revokeSession('{{ $session['id'] }}')" color="secondary" size="xs">
-                                Revogar
+                                {{ __('ptah::ui.profile_revoke_btn') }}
                             </x-forge-button>
                         @endif
                     </div>
@@ -245,7 +244,7 @@
 
                 <div class="w-full space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-dark mb-1">Selecionar imagem</label>
+                        <label class="block text-sm font-medium text-dark mb-1">{{ __('ptah::ui.profile_select_image') }}</label>
                         <input type="file" wire:model="photo" accept="image/*"
                                class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
                         @error('photo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
@@ -253,16 +252,16 @@
 
                     <div class="flex gap-2">
                         <x-forge-button wire:click="savePhoto" color="primary" wire:loading.attr="disabled" class="flex-1">
-                            <span wire:loading.remove wire:target="savePhoto">Salvar foto</span>
+                            <span wire:loading.remove wire:target="savePhoto">{{ __('ptah::ui.profile_save_photo_btn') }}</span>
                             <span wire:loading wire:target="savePhoto" class="flex items-center justify-center gap-2">
-                                <x-forge-spinner size="sm" /> Salvando...
+                                <x-forge-spinner size="sm" /> {{ __('ptah::ui.profile_saving') }}
                             </span>
                         </x-forge-button>
 
                         @if (auth()->user()->profile_photo_path)
                             <x-forge-button wire:click="removePhoto" color="secondary"
-                                wire:confirm="Remover foto de perfil?">
-                                Remover
+                                wire:confirm="{{ __('ptah::ui.profile_remove_confirm') }}">
+                                {{ __('ptah::ui.profile_remove_btn') }}
                             </x-forge-button>
                         @endif
                     </div>

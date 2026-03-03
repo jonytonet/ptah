@@ -2,8 +2,8 @@
     forge-stepper — Ptah Forge
     Props:
       - steps      : array [ ['label' => '', 'description' => ''], ... ]
-      - currentStep: int  (padrão: 1)
-      - color      : primary | success | warn  (padrão: primary)
+      - currentStep: int  (default: 1)
+      - color      : primary | success | warn  (default: primary)
 --}}
 @props([
     'steps'       => [],

@@ -18,7 +18,7 @@
                     class="input-group-text fw-bold"
                     style="cursor: pointer;"
                     wire:click="clearData"
-                    title="Limpar"
+                    :title="__('ptah::ui.btn_clear')"
                 >
                     <em class="bx bx-x fs-5"></em>
                 </button>

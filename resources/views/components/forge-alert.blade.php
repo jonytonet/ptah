@@ -1,10 +1,10 @@
 {{--
     forge-alert — Ptah Forge
     Props:
-      - color   : primary | success | danger | warn | dark  (padrão: primary)
-      - closable: boolean - exibe botão de fechar
-      - title   : string - título opcional
-    Requer Alpine.js
+      - color   : primary | success | danger | warn | dark  (default: primary)
+      - closable: boolean - shows a close button
+      - title   : string - optional title
+    Requires Alpine.js
 --}}
 @props([
     'color'    => 'primary',

@@ -1,8 +1,8 @@
 {{-- ptah::livewire.permission.audit-list --}}
 <div>
     <div class="mb-5">
-        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">Auditoria de Permissões</h1>
-        <p class="text-sm text-slate-500 mt-0.5">Log de acessos concedidos e negados. Somente leitura.</p>
+        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.audit_title') }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.audit_subtitle') }}</p>
     </div>
 
     {{-- Barra de filtros --}}
@@ -12,33 +12,33 @@
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" placeholder="Buscar recurso, IP, usuário..."
+                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.audit_search_ph')"
                     class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
             </div>
         </div>
         <select wire:model.live="filterResult"
             class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all">
-            <option value="">Todos os resultados</option>
-            <option value="granted">✅ Concedido</option>
-            <option value="denied">❌ Negado</option>
+            <option value="">{{ __('ptah::ui.audit_all_results') }}</option>
+            <option value="granted">{{ __('ptah::ui.audit_result_granted') }}</option>
+            <option value="denied">{{ __('ptah::ui.audit_result_denied') }}</option>
         </select>
         <select wire:model.live="filterAction"
             class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all">
-            <option value="">Todas as ações</option>
-            <option value="create">Criar</option>
-            <option value="read">Ler</option>
-            <option value="update">Editar</option>
-            <option value="delete">Excluir</option>
+            <option value="">{{ __('ptah::ui.audit_all_actions') }}</option>
+            <option value="create">{{ __('ptah::ui.audit_action_create') }}</option>
+            <option value="read">{{ __('ptah::ui.audit_action_read') }}</option>
+            <option value="update">{{ __('ptah::ui.audit_action_update') }}</option>
+            <option value="delete">{{ __('ptah::ui.audit_action_delete') }}</option>
         </select>
         <input wire:model.live="dateFrom" type="date"
             class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
-            title="De"/>
+            :title="__('ptah::ui.audit_title_from')"/>
         <input wire:model.live="dateTo" type="date"
             class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
-            title="Até"/>
+            :title="__('ptah::ui.audit_title_to')"/>
         <button wire:click="clearFilters"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors select-none">
-            Limpar
+            {{ __('ptah::ui.btn_clear') }}
         </button>
     </div>
 
@@ -46,12 +46,12 @@
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Data/Hora</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Usuário</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Recurso</th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Ação</th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Resultado</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">IP</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_datetime') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_user') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_resource') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_action') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_result') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.audit_col_ip') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -75,14 +75,14 @@
                                     'delete' => 'bg-red-100 text-red-700',
                                     default  => 'bg-slate-100 text-slate-600',
                                 } }}">
-                                {{ ucfirst($row->action) }}
+                                {{ __('ptah::ui.audit_action_' . $row->action, [], null) ?: ucfirst($row->action) }}
                             </span>
                         </td>
                         <td class="px-3 py-2.5 text-center">
                             @if ($row->result === 'granted')
-                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">✅ Concedido</span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{{ __('ptah::ui.audit_result_granted') }}</span>
                             @else
-                                <span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">❌ Negado</span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">{{ __('ptah::ui.audit_result_denied') }}</span>
                             @endif
                         </td>
                         <td class="px-3 py-2.5 text-xs text-slate-400 font-mono">{{ $row->ip_address ?? '—' }}</td>
@@ -98,11 +98,11 @@
                                 </div>
                                 <div>
                                     @if ($search || $filterResult || $filterAction)
-                                        <p class="text-sm font-semibold text-slate-700">Nenhum registro encontrado</p>
-                                        <p class="text-xs mt-0.5 text-slate-400">Tente ajustar os filtros aplicados.</p>
+                                        <p class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.audit_empty_filtered') }}</p>
+                                        <p class="text-xs mt-0.5 text-slate-400">{{ __('ptah::ui.audit_empty_filtered_hint') }}</p>
                                     @else
-                                        <p class="text-sm font-semibold text-slate-700">Nenhum registro de auditoria</p>
-                                        <p class="text-xs mt-0.5 text-slate-400">Ative com <code class="font-mono bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env.</p>
+                                        <p class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.audit_empty_title') }}</p>
+                                        <p class="text-xs mt-0.5 text-slate-400">{{ __('ptah::ui.audit_empty_hint') }}</p>
                                     @endif
                                 </div>
                             </div>
@@ -115,7 +115,7 @@
 
     @if ($rows->hasPages())
     <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
-        <span>{{ $rows->firstItem() }}–{{ $rows->lastItem() }} de {{ $rows->total() }}</span>
+        <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
         <div>{{ $rows->links() }}</div>
     </div>
     @endif

@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">Entrar na sua conta</h2>
-        <p class="text-sm text-gray-500 mt-1">Bem-vindo de volta</p>
+        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.login_title') }}</h2>
+        <p class="text-sm text-gray-500 mt-1">{{ __('ptah::ui.login_subtitle') }}</p>
     </div>
 
     {{-- Status message (após reset de senha) --}}
@@ -31,7 +31,7 @@
         <x-forge-input
             name="password"
             type="password"
-            label="Senha"
+            :label="__('ptah::ui.login_password')"
             wire:model="password"
             :error="$errors->first('password')"
             required
@@ -40,17 +40,17 @@
         <div class="flex items-center justify-between text-sm">
             <label class="flex items-center gap-2 cursor-pointer text-gray-600">
                 <input type="checkbox" wire:model="remember" class="rounded border-gray-300 text-primary focus:ring-primary/30">
-                Lembrar-me
+                {{ __('ptah::ui.login_remember_me') }}
             </label>
             <a href="{{ route('ptah.auth.forgot-password') }}" class="text-primary hover:underline font-medium">
-                Esqueceu a senha?
+                {{ __('ptah::ui.login_forgot') }}
             </a>
         </div>
 
         <x-forge-button type="submit" color="primary" class="w-full" wire:loading.attr="disabled">
-            <span wire:loading.remove>Entrar</span>
+            <span wire:loading.remove>{{ __('ptah::ui.login_btn') }}</span>
             <span wire:loading class="flex items-center justify-center gap-2">
-                <x-forge-spinner size="sm" /> Entrando...
+                <x-forge-spinner size="sm" /> {{ __('ptah::ui.login_btn_loading') }}
             </span>
         </x-forge-button>
     </form>

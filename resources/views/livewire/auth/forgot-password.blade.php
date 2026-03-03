@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">Recuperar senha</h2>
-        <p class="text-sm text-gray-500 mt-1">Enviaremos um link de redefinição para o seu e-mail</p>
+        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.forgot_title') }}</h2>
+        <p class="text-sm text-gray-500 mt-1">{{ __('ptah::ui.forgot_subtitle') }}</p>
     </div>
 
     @if ($status)
@@ -26,15 +26,15 @@
         />
 
         <x-forge-button type="submit" color="primary" class="w-full" wire:loading.attr="disabled">
-            <span wire:loading.remove>Enviar link de recuperação</span>
+            <span wire:loading.remove>{{ __('ptah::ui.forgot_btn') }}</span>
             <span wire:loading class="flex items-center justify-center gap-2">
-                <x-forge-spinner size="sm" /> Enviando...
+                <x-forge-spinner size="sm" /> {{ __('ptah::ui.forgot_btn_loading') }}
             </span>
         </x-forge-button>
     </form>
 
     <p class="text-center text-sm text-gray-500 mt-6">
-        Lembrou a senha?
-        <a href="{{ route('ptah.auth.login') }}" class="text-primary hover:underline font-medium">Voltar ao login</a>
+        {{ __('ptah::ui.forgot_remembered') }}
+        <a href="{{ route('ptah.auth.login') }}" class="text-primary hover:underline font-medium">{{ __('ptah::ui.forgot_back_login') }}</a>
     </p>
 </div>

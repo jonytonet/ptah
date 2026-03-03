@@ -1,10 +1,10 @@
 {{--
     forge-badge — Ptah Forge
     Props:
-      - color   : primary | success | danger | warn | dark | light  (padrão: danger)
+      - color   : primary | success | danger | warn | dark | light  (default: danger)
       - position: top-right | top-left | bottom-right | bottom-left
       - value   : string | number
-      - dot     : boolean - apenas um ponto sem valor
+      - dot     : boolean - dot indicator only, no value
 --}}
 @props([
     'color'    => 'danger',

@@ -250,6 +250,396 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Auth — Página de login
+    |--------------------------------------------------------------------------
+    */
+    'login_title'        => 'Entrar na sua conta',
+    'login_subtitle'     => 'Bem-vindo de volta',
+    'login_password'     => 'Senha',
+    'login_remember_me'  => 'Lembrar-me',
+    'login_forgot'       => 'Esqueceu a senha?',
+    'login_btn'          => 'Entrar',
+    'login_btn_loading'  => 'Entrando...',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth — Recuperar senha
+    |--------------------------------------------------------------------------
+    */
+    'forgot_title'        => 'Recuperar senha',
+    'forgot_subtitle'     => 'Enviaremos um link de redefinição para o seu e-mail',
+    'forgot_btn'          => 'Enviar link de recuperação',
+    'forgot_btn_loading'  => 'Enviando...',
+    'forgot_remembered'   => 'Lembrou sua senha?',
+    'forgot_back_login'   => 'Voltar ao login',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth — Redefinir senha
+    |--------------------------------------------------------------------------
+    */
+    'reset_title'            => 'Nova senha',
+    'reset_subtitle'         => 'Digite e confirme sua nova senha',
+    'reset_new_password'     => 'Nova senha',
+    'reset_confirm_password' => 'Confirmar nova senha',
+    'reset_btn'              => 'Redefinir senha',
+    'reset_btn_loading'      => 'Salvando...',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth — Verificação em dois fatores
+    |--------------------------------------------------------------------------
+    */
+    'two_fa_page_title'          => 'Verificação em dois passos',
+    'two_fa_recovery_subtitle'   => 'Digite um dos seus códigos de recuperação',
+    'two_fa_auth_subtitle'       => 'Digite o código do seu aplicativo autenticador ou e-mail',
+    'two_fa_recovery_code_label' => 'Código de recuperação',
+    'two_fa_verification_label'  => 'Código de verificação',
+    'two_fa_verify_btn'          => 'Verificar',
+    'two_fa_verifying'           => 'Verificando...',
+    'two_fa_use_authenticator'   => 'Usar código autenticador',
+    'two_fa_use_recovery_code'   => 'Usar código de recuperação',
+    'two_fa_resend_email'        => 'Reenviar código por e-mail',
+    'two_fa_back_login'          => 'Voltar ao login',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+    'dashboard_subtitle'    => 'Visão geral do sistema',
+    'dashboard_welcome'     => 'Bem-vindo',
+    'dashboard_system'      => 'Sistema',
+    'dashboard_environment' => 'Ambiente',
+    'dashboard_laravel_ver' => 'Versão do Laravel',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Perfil — Labels de UI
+    |--------------------------------------------------------------------------
+    */
+    'profile_title'               => 'Meu Perfil',
+    'profile_subtitle'            => 'Gerencie suas informações pessoais e segurança',
+    'profile_tab_profile'         => 'Perfil',
+    'profile_tab_password'        => 'Senha',
+    'profile_tab_2fa'             => 'Autenticação 2FA',
+    'profile_tab_sessions'        => 'Sessões',
+    'profile_tab_photo'           => 'Foto',
+    'profile_name'                => 'Nome',
+    'profile_save_btn'            => 'Salvar perfil',
+    'profile_current_pw'          => 'Senha atual',
+    'profile_new_pw'              => 'Nova senha',
+    'profile_confirm_pw'          => 'Confirmar nova senha',
+    'profile_change_pw_btn'       => 'Alterar senha',
+    'profile_2fa_intro'           => 'A autenticação em dois fatores adiciona uma camada extra de segurança à sua conta. Escolha seu método preferido:',
+    'profile_totp_apps'           => 'Google Authenticator, Authy, Bitwarden\u2026',
+    'profile_scan_qr'             => 'Escaneie o QR code com seu aplicativo autenticador:',
+    'profile_enter_key'           => 'Ou insira a chave manualmente:',
+    'profile_confirm_btn'         => 'Confirmar',
+    'profile_setup_btn'           => 'Configurar',
+    'profile_email_code_hint'     => 'Código enviado para :email',
+    'profile_enable_btn'          => 'Ativar',
+    'profile_2fa_active_label'    => '2FA está ativo',
+    'profile_2fa_authenticator'   => 'Aplicativo Autenticador',
+    'profile_recovery_codes_title'=> 'Códigos de recuperação',
+    'profile_recovery_codes_hint' => 'Guarde esses códigos em local seguro \u2014 cada um pode ser usado apenas uma vez.',
+    'profile_regenerate_btn'      => 'Regenerar códigos',
+    'profile_view_recovery_btn'   => 'Ver códigos de recuperação',
+    'profile_disable_2fa_btn'     => 'Desativar 2FA',
+    'profile_disable_2fa_confirm' => 'Desativar 2FA?',
+    'profile_sessions_intro'      => 'Dispositivos com sessões ativas na sua conta.',
+    'profile_disconnect_others'   => 'Desconectar outros',
+    'profile_disconnect_confirm'  => 'Desconectar todos os outros dispositivos?',
+    'profile_no_sessions'         => 'Nenhuma sessão encontrada.',
+    'profile_this_session'        => 'esta sessão',
+    'profile_unknown_browser'     => 'Navegador desconhecido',
+    'profile_last_activity'       => 'última atividade',
+    'profile_revoke_btn'          => 'Revogar',
+    'profile_select_image'        => 'Selecionar imagem',
+    'profile_save_photo_btn'      => 'Salvar foto',
+    'profile_saving'              => 'Salvando...',
+    'profile_remove_btn'          => 'Remover',
+    'profile_remove_confirm'      => 'Remover foto de perfil?',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Labels de status (compartilhados)
+    |--------------------------------------------------------------------------
+    */
+    'lbl_active'              => 'Ativo',
+    'lbl_inactive'            => 'Inativo',
+    'lbl_all_types'           => 'Todos os tipos',
+    'btn_clear'               => 'Limpar',
+    'switcher_select_company' => 'Selecionar empresa',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Empresas
+    |--------------------------------------------------------------------------
+    */
+    'company_title'           => 'Empresas',
+    'company_subtitle'        => 'Gerencie as empresas e filiais do sistema.',
+    'company_new_btn'         => 'Nova Empresa',
+    'company_search_ph'       => 'Buscar por nome, e-mail ou CNPJ...',
+    'company_col_abbr'        => 'Sigla',
+    'company_col_name'        => 'Nome',
+    'company_col_default'     => 'Padrão',
+    'company_col_status'      => 'Status',
+    'company_col_actions'     => 'Ações',
+    'company_pagination'      => ':first\u2013:last de :total',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Menu
+    |--------------------------------------------------------------------------
+    */
+    'menu_title'           => 'Gerenciar Menu',
+    'menu_subtitle'        => 'Cadastre e organize os itens da barra lateral do sistema.',
+    'menu_new_item_btn'    => 'Novo Item',
+    'menu_search_ph'       => 'Buscar item de menu...',
+    'menu_all_types'       => 'Todos os tipos',
+    'menu_col_icon'        => 'Ícone',
+    'menu_col_text'        => 'Texto',
+    'menu_col_type'        => 'Tipo',
+    'menu_col_url'         => 'URL',
+    'menu_col_parent'      => 'Grupo pai',
+    'menu_col_order'       => 'Ordem',
+    'menu_col_status'      => 'Status',
+    'menu_col_actions'     => 'Ações',
+    'menu_empty'           => 'Adicione o primeiro item usando o botão \'Novo Item\'',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Roles / Permissões
+    |--------------------------------------------------------------------------
+    */
+    'role_title'              => 'Roles / Perfis',
+    'role_subtitle'           => 'Gerencie os perfis de acesso e suas permissões por objeto.',
+    'role_new_btn'            => 'Novo Role',
+    'role_search_ph'          => 'Buscar role...',
+    'role_col_name'           => 'Nome',
+    'role_col_department'     => 'Departamento',
+    'role_col_permissions'    => 'Permissões',
+    'role_col_status'         => 'Status',
+    'role_col_actions'        => 'Ações',
+    'role_objects_count'      => ':count objetos',
+    'role_manage_perms_btn'       => '\uD83D\uDD11 Permissões',
+    'role_manage_perms_title'     => 'Gerenciar permissões',
+    'role_form_title_edit'        => 'Editar Role',
+    'role_form_name'              => 'Nome *',
+    'role_form_desc'              => 'Descrição',
+    'role_form_color'             => 'Cor (hex)',
+    'role_form_dept'              => 'Departamento',
+    'role_form_active'            => 'Role ativo',
+    'role_form_no_dept'           => 'Sem departamento',
+    'role_form_master'            => 'Role MASTER (bypass total)',
+    'role_form_is_master_badge'   => '\uD83D\uDC51 Este é o role MASTER',
+    'role_form_master_warn'       => '\u26A0\uFE0F Roles MASTER têm acesso irrestrito. Apenas 1 role pode ser MASTER.',
+    'role_empty_found'            => 'Nenhum role encontrado',
+    'role_empty_hint'             => 'Adicione o primeiro perfil de acesso',
+    'role_bind_modal_prefix'      => 'Gerenciar Permissões \u2014',
+    'role_bind_perm_read'         => 'Ler',
+    'role_bind_perm_create'       => 'Criar',
+    'role_bind_perm_edit'         => 'Editar',
+    'role_bind_perm_delete'       => 'Excluir',
+    'role_bind_empty'             => 'Nenhum objeto cadastrado. Acesse Páginas e cadastre os objetos primeiro.',
+    'role_bind_save'              => 'Salvar Permissões',
+    'role_delete_text'            => 'Excluir este role? As permissões e vínculos com usuários serão removidos.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Empresas (formulário)
+    |--------------------------------------------------------------------------
+    */
+    'company_modal_new'           => 'Nova Empresa',
+    'company_modal_edit'          => 'Editar Empresa',
+    'company_form_label'          => 'Sigla (4 chars)',
+    'company_form_label_hint'     => 'Exibida no badge do menu',
+    'company_form_phone'          => 'Telefone',
+    'company_form_phone_ph'       => '(00) 00000-0000',
+    'company_form_email_ph'       => 'contato@empresa.com',
+    'company_form_doc_type'       => 'Tipo de documento',
+    'company_form_is_active'      => 'Empresa ativa',
+    'company_form_is_default'     => 'Empresa padrão',
+    'company_empty_found'         => 'Nenhuma empresa encontrada',
+    'company_empty_adjust'        => 'Ajuste o filtro de busca',
+    'company_empty_add'           => 'Adicione a primeira empresa',
+    'company_delete_text'         => 'Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Menu (formulário)
+    |--------------------------------------------------------------------------
+    */
+    'menu_form_title_new'         => 'Novo Item de Menu',
+    'menu_form_title_edit'        => 'Editar Item de Menu',
+    'menu_form_type'              => 'Tipo',
+    'menu_form_direct_link'       => 'Link direto',
+    'menu_form_group_type'        => 'Grupo (com sub-itens)',
+    'menu_form_text_label'        => 'Texto exibido',
+    'menu_form_text_ph'           => 'ex: Produtos, Relatórios\u2026',
+    'menu_form_url_ph'            => '/dashboard, /produtos, https://\u2026',
+    'menu_form_icon_label'        => 'Ícone',
+    'menu_form_icon_hint'         => '(classe CSS \u2014 Boxicons ou FontAwesome)',
+    'menu_form_icon_ph'           => 'bx bx-home  /  fas fa-user',
+    'menu_form_parent_group'      => 'Grupo pai',
+    'menu_form_root'              => '\u2014 Raiz (nível superior) \u2014',
+    'menu_form_order'             => 'Ordem',
+    'menu_form_opening'           => 'Abertura',
+    'menu_form_same_tab'          => 'Mesma aba',
+    'menu_form_new_tab'           => 'Nova aba',
+    'menu_form_active'            => 'Ativo',
+    'menu_save_changes'           => 'Salvar alterações',
+    'menu_create_item'            => 'Criar item',
+    'menu_delete_title'           => 'Excluir item',
+    'menu_delete_text'            => 'Essa ação não pode ser desfeita. Se for um grupo, os filhos serão desvinculados.',
+    'menu_delete_confirm'         => 'Sim, excluir',
+    'menu_group_badge'            => 'Grupo',
+    'menu_link_badge'             => 'Link',
+    'menu_toggle_disable'         => 'Clique para desativar',
+    'menu_toggle_enable'          => 'Clique para ativar',
+    'menu_empty_found'            => 'Nenhum item de menu encontrado',
+
+    /*
+    |--------------------------------------------------------------------------
+    | UI compartilhada
+    |--------------------------------------------------------------------------
+    */
+    'btn_saving'                  => 'Salvando...',
+    'btn_yes_delete'              => 'Sim, excluir',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Departamentos
+    |--------------------------------------------------------------------------
+    */
+    'dept_title'           => 'Departamentos',
+    'dept_subtitle'        => 'Agrupe perfis/roles por departamento.',
+    'dept_new_btn'         => 'Novo Departamento',
+    'dept_search_ph'       => 'Buscar departamento...',
+    'dept_col_name'        => 'Nome',
+    'dept_col_desc'        => 'Descrição',
+    'dept_col_roles'       => 'Roles',
+    'dept_col_status'      => 'Status',
+    'dept_col_actions'     => 'Ações',
+    'dept_empty_found'     => 'Nenhum departamento encontrado',
+    'dept_empty_hint'      => 'Adicione o primeiro departamento',
+    'dept_modal_new'       => 'Novo Departamento',
+    'dept_modal_edit'      => 'Editar Departamento',
+    'dept_form_name'       => 'Nome *',
+    'dept_form_desc'       => 'Descrição',
+    'dept_form_active'     => 'Departamento ativo',
+    'dept_delete_text'     => 'Excluir este departamento? Roles vinculados perderão o departamento.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Auditoria
+    |--------------------------------------------------------------------------
+    */
+    'audit_title'             => 'Auditoria de Permissões',
+    'audit_subtitle'          => 'Log de acessos concedidos e negados. Somente leitura.',
+    'audit_search_ph'         => 'Buscar recurso, IP, usuário...',
+    'audit_all_results'       => 'Todos os resultados',
+    'audit_result_granted'    => '\u2705 Concedido',
+    'audit_result_denied'     => '\u274C Negado',
+    'audit_all_actions'       => 'Todas as ações',
+    'audit_action_create'     => 'Criar',
+    'audit_action_read'       => 'Ler',
+    'audit_action_update'     => 'Editar',
+    'audit_action_delete'     => 'Excluir',
+    'audit_title_from'        => 'De',
+    'audit_title_to'          => 'Até',
+    'audit_col_datetime'      => 'Data/Hora',
+    'audit_col_user'          => 'Usuário',
+    'audit_col_resource'      => 'Recurso',
+    'audit_col_action'        => 'Ação',
+    'audit_col_result'        => 'Resultado',
+    'audit_col_ip'            => 'IP',
+    'audit_empty_filtered'    => 'Nenhum registro encontrado',
+    'audit_empty_filtered_hint'=> 'Tente ajustar os filtros aplicados.',
+    'audit_empty_title'       => 'Nenhum registro de auditoria',
+    'audit_empty_hint'        => 'Ative com PTAH_PERMISSION_AUDIT=true no .env.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Páginas e Objetos
+    |--------------------------------------------------------------------------
+    */
+    'page_title'              => 'Páginas e Objetos',
+    'page_subtitle'           => 'Cadastre as páginas do sistema e seus objetos (botões, campos, links) para controle de acesso.',
+    'page_col_pages'          => 'Páginas',
+    'page_new_btn'            => 'Página',
+    'page_search_ph'          => 'Buscar página...',
+    'page_empty_found'        => 'Nenhuma página cadastrada',
+    'page_empty_hint'         => 'Crie a primeira página para começar.',
+    'page_objects_header'     => 'Objetos \u2014 :page',
+    'page_new_obj_btn'        => 'Objeto',
+    'page_obj_search_ph'      => 'Buscar objeto...',
+    'page_obj_col_key_label'  => 'Chave / Label',
+    'page_obj_col_type'       => 'Tipo',
+    'page_obj_col_section'    => 'Seção',
+    'page_obj_col_actions'    => 'Ações',
+    'page_obj_empty_found'    => 'Nenhum objeto nesta página',
+    'page_obj_empty_hint'     => 'Adicione objetos para controlar o acesso.',
+    'page_select_hint'        => 'Selecione uma página para ver seus objetos',
+    'page_modal_new'          => 'Nova Página',
+    'page_modal_edit'         => 'Editar Página',
+    'page_form_slug'          => 'Slug *',
+    'page_form_name'          => 'Nome *',
+    'page_form_desc'          => 'Descrição',
+    'page_form_route'         => 'Rota Laravel',
+    'page_form_icon'          => 'Ícone',
+    'page_form_active'        => 'Página ativa',
+    'page_form_order'         => 'Ordem',
+    'page_obj_modal_new'      => 'Novo Objeto',
+    'page_obj_modal_edit'     => 'Editar Objeto',
+    'page_obj_form_section'   => 'Seção',
+    'page_obj_form_type'      => 'Tipo *',
+    'page_obj_form_key'       => 'Chave *',
+    'page_obj_form_label'     => 'Label *',
+    'page_obj_form_active'    => 'Objeto ativo',
+    'page_obj_form_order'     => 'Ordem',
+    'page_delete_page_text'   => 'Excluir esta página? Todos os objetos vinculados também serão removidos.',
+    'page_delete_obj_text'    => 'Excluir este objeto? As permissões de roles vinculadas serão removidas.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Ajuste de Acesso de Usuários
+    |--------------------------------------------------------------------------
+    */
+    'user_perm_title'         => 'Usuários \u2014 Controle de Acesso',
+    'user_perm_subtitle'      => 'Atribua roles e empresas aos usuários do sistema.',
+    'user_perm_search_ph'     => 'Buscar por nome ou e-mail...',
+    'user_perm_all_roles'     => 'Todos os roles',
+    'user_perm_col_user'      => 'Usuário',
+    'user_perm_col_roles'     => 'Roles atribuídos',
+    'user_perm_col_actions'   => 'Ações',
+    'user_perm_no_roles'      => 'Sem roles',
+    'user_perm_manage_btn'    => '\uD83D\uDD11 Gerenciar Acesso',
+    'user_perm_empty'         => 'Nenhum usuário encontrado',
+    'user_perm_empty_hint'    => 'Tente ajustar os filtros de busca.',
+    'user_perm_modal_prefix'  => 'Acesso \u2014',
+    'user_perm_assigned_roles'=> 'Roles atribuídos',
+    'user_perm_remove_btn'    => 'Remover',
+    'user_perm_protected'     => 'Protegido',
+    'user_perm_no_assigned'   => 'Nenhum role atribuído.',
+    'user_perm_add_role'      => 'Adicionar role',
+    'user_perm_company_label' => 'Empresa',
+    'user_perm_global'        => 'Global (sem empresa)',
+    'user_perm_add_btn'       => 'Adicionar',
+    'user_perm_close_btn'     => 'Fechar',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Módulo — Guia de Permissões
+    |--------------------------------------------------------------------------
+    */
+    'guide_title'    => 'Guia do Sistema de Permissões',
+    'guide_subtitle' => 'Como funciona o ACL do Ptah e como configurar acessos passo a passo.',
+    'guide_badge'    => '\uD83D\uDCD6 Documentação',
+
+    /*
+    |--------------------------------------------------------------------------
     | Geral
     |--------------------------------------------------------------------------
     */

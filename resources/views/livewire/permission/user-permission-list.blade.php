@@ -1,8 +1,8 @@
 {{-- ptah::livewire.permission.user-permission-list --}}
 <div>
     <div class="mb-5">
-        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">Usuários — Controle de Acesso</h1>
-        <p class="text-sm text-slate-500 mt-0.5">Atribua roles e empresas aos usuários do sistema.</p>
+        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.user_perm_title') }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.user_perm_subtitle') }}</p>
     </div>
 
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
@@ -14,13 +14,13 @@
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" placeholder="Buscar por nome ou e-mail..."
+                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.user_perm_search_ph')"
                     class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
             </div>
         </div>
         <select wire:model.live="filterRole"
             class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all">
-            <option value="0">Todos os roles</option>
+            <option value="0">{{ __('ptah::ui.user_perm_all_roles') }}</option>
             @foreach ($roles as $r)
                 <option value="{{ $r->id }}">{{ $r->is_master ? '👑 ' : '' }}{{ $r->name }}</option>
             @endforeach
@@ -31,9 +31,9 @@
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Usuário</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Roles atribuídos</th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Ações</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.user_perm_col_user') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.user_perm_col_roles') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.user_perm_col_actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -66,14 +66,14 @@
                                         @endif
                                     </span>
                                 @empty
-                                    <span class="text-xs text-slate-400">Sem roles</span>
+                                    <span class="text-xs text-slate-400">{{ __('ptah::ui.user_perm_no_roles') }}</span>
                                 @endforelse
                             </div>
                         </td>
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <button wire:click="openUserModal({{ $user->id }}, '{{ addslashes($user->name) }}')"
                                 class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors">
-                                🔑 Gerenciar Acesso
+                                {{ __('ptah::ui.user_perm_manage_btn') }}
                             </button>
                         </td>
                     </tr>
@@ -87,8 +87,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-700">Nenhum usuário encontrado</p>
-                                    <p class="text-xs mt-0.5 text-slate-400">Tente ajustar os filtros de busca.</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.user_perm_empty') }}</p>
+                                    <p class="text-xs mt-0.5 text-slate-400">{{ __('ptah::ui.user_perm_empty_hint') }}</p>
                                 </div>
                             </div>
                         </td>
@@ -100,18 +100,18 @@
 
     @if ($rows->hasPages())
     <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
-        <span>{{ $rows->firstItem() }}–{{ $rows->lastItem() }} de {{ $rows->total() }}</span>
+        <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
         <div>{{ $rows->links() }}</div>
     </div>
     @endif
 
     {{-- Modal de gestão de roles do usuário --}}
     <div x-data="{ open: @entangle('showModal').live }">
-        <x-forge-modal title="Acesso — {{ $bindingUserName }}" size="lg">
+        <x-forge-modal :title="__('ptah::ui.user_perm_modal_prefix') . ' ' . $bindingUserName" size="lg">
             <div class="space-y-5">
                 {{-- Roles atuais --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-700 mb-2">Roles atribuídos</h3>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ __('ptah::ui.user_perm_assigned_roles') }}</h3>
                     @if ($assignedRoles)
                         <div class="space-y-1">
                             @foreach ($assignedRoles as $ar)
@@ -125,22 +125,22 @@
                                     </div>
                                     @if (!$ar['role_master'])
                                         <button wire:click="removeRole({{ $ar['id'] }})" class="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">
-                                            Remover
+                                            {{ __('ptah::ui.user_perm_remove_btn') }}
                                         </button>
                                     @else
-                                        <span class="text-xs text-amber-500">Protegido</span>
+                                        <span class="text-xs text-amber-500">{{ __('ptah::ui.user_perm_protected') }}</span>
                                     @endif
                                 </div>
                             @endforeach
                         </div>
                     @else
-                        <p class="text-sm text-slate-400 italic">Nenhum role atribuído.</p>
+                        <p class="text-sm text-slate-400 italic">{{ __('ptah::ui.user_perm_no_assigned') }}</p>
                     @endif
                 </div>
 
                 {{-- Adicionar novo --}}
                 <div class="border-t border-slate-200 pt-4">
-                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Adicionar role</h3>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ __('ptah::ui.user_perm_add_role') }}</h3>
                     <div class="grid grid-cols-2 gap-3">
                         <x-forge-select
                             label="Role"
@@ -148,18 +148,18 @@
                             :options="$roles->map(fn($r)=>['value'=>$r->id,'label'=>($r->is_master?'👑 ':''). $r->name])->prepend(['value'=>0,'label'=>'Selecione...'])->toArray()"
                         />
                         <x-forge-select
-                            label="Empresa"
+                            :label="__('ptah::ui.user_perm_company_label')"
                             wire:model="newCompanyId"
-                            :options="$companies->map(fn($c)=>['value'=>$c->id,'label'=>$c->name])->prepend(['value'=>0,'label'=>'Global (sem empresa)'])->toArray()"
+                            :options="$companies->map(fn($c)=>['value'=>$c->id,'label'=>$c->name])->prepend(['value'=>0,'label'=>__('ptah::ui.user_perm_global')])->toArray()"
                         />
                     </div>
                     <div class="mt-3">
-                        <x-forge-button wire:click="addRole" color="primary" size="sm">Adicionar</x-forge-button>
+                        <x-forge-button wire:click="addRole" color="primary" size="sm">{{ __('ptah::ui.user_perm_add_btn') }}</x-forge-button>
                     </div>
                 </div>
             </div>
             <x-slot name="footer">
-                <x-forge-button color="light" @click="open = false">Fechar</x-forge-button>
+                <x-forge-button color="light" @click="open = false">{{ __('ptah::ui.user_perm_close_btn') }}</x-forge-button>
             </x-slot>
         </x-forge-modal>
     </div>

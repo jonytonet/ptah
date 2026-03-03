@@ -2,7 +2,7 @@
     forge-radio — Ptah Forge
     Props:
       - label   : string
-      - color   : primary | success | danger | warn  (padrão: primary)
+      - color   : primary | success | danger | warn  (default: primary)
       - value   : string
       - name    : string
       - disabled: boolean

@@ -1,18 +1,18 @@
 {{--
     forge-dashboard-layout — Ptah Forge
-    Componente de layout completo para dashboard:
-      sidebar + navbar + conteúdo principal
+    Full layout component for dashboard:
+      sidebar + navbar + main content
     Props:
       - appName : string
       - logoUrl : string
       - title   : string
-    Comportamentos automáticos:
-      - Dark mode baseado no SO do usuário (prefers-color-scheme) com override manual
-      - Sidebar collapse/expand persistido em localStorage
-    Uso:
+    Automatic behaviours:
+      - Dark mode based on OS preference (prefers-color-scheme) with manual override
+      - Sidebar collapse/expand persisted in localStorage
+    Usage:
       <x-forge-dashboard-layout>
           <x-slot:title>Dashboard</x-slot:title>
-          <p>Seu conteúdo aqui</p>
+          <p>Your content here</p>
       </x-forge-dashboard-layout>
 --}}
 @props([

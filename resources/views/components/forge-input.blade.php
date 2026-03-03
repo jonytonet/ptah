@@ -3,7 +3,7 @@
     Props:
       - label      : string (label acima do campo)
       - placeholder: string
-      - type       : text | email | password | number | date | ...  (padrão: text)
+      - type       : text | email | password | number | date | ...  (default: text)
       - state      : normal | success | danger | warn
       - iconAfter  : HTML string
       - iconBefore : HTML string
@@ -11,9 +11,9 @@
       - loading    : boolean
       - message    : string
       - required   : boolean
-      - error      : string|null  (sobrescreve state para danger e exibe mensagem)
-      - value      : consumido internamente (não vaza ao $attributes)
-      - name       : consumido internamente (não vaza ao $attributes)
+      - error      : string|null  (overrides state to danger and shows message)
+      - value      : consumed internally (not leaked to $attributes)
+      - name       : consumed internally (not leaked to $attributes)
 --}}
 @props([
     'label'       => '',

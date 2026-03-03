@@ -1,9 +1,9 @@
 {{--
     forge-pagination — Ptah Forge
-    View de paginação compatível com $paginator->links('ptah::components.forge-pagination').
-    Variáveis injetadas pelo Laravel LengthAwarePaginator:
+    Pagination view compatible with $paginator->links('ptah::components.forge-pagination').
+    Variables injected by Laravel LengthAwarePaginator:
       - $paginator : LengthAwarePaginator
-      - $elements  : array (números de página ou "...")
+      - $elements  : array (page numbers or "...")
 --}}
 @if ($paginator->hasPages())
 <div class="ptah-pagination flex items-center justify-between gap-4">
@@ -11,19 +11,19 @@
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
         @if ($paginator->onFirstPage())
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">← Anterior</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">← Previous</span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">← Anterior</button>
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">← Previous</button>
         @endif
 
         <span class="text-sm text-gray-500">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
 
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">Próximo →</button>
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">Next →</button>
         @else
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">Próximo →</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-400 opacity-40 cursor-not-allowed">Next →</span>
         @endif
     </div>
 
@@ -86,7 +86,7 @@
     </div>
 
     <p class="text-xs text-gray-400 hidden sm:block">
-        Página {{ $paginator->currentPage() }} de {{ $paginator->lastPage() }}
+        Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}
     </p>
 </div>
 @endif
