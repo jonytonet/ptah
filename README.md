@@ -695,7 +695,8 @@ Lê as colunas diretamente via `SHOW FULL COLUMNS FROM` e pré-preenche `$fillab
 | `--table=` | Nome da tabela no banco | plural snake_case da entidade |
 | `--fields=` | Definição dos campos em string | (vazio) |
 | `--db` | Lê campos da tabela existente | `false` |
-| `--api` | Gera apenas estrutura API (sem views) | `false` |
+| `--api` | Gera estrutura web **e** API juntos (modo combinado) | `false` |
+| `--api-only` | Gera **somente** estrutura API, sem views web | `false` |
 | `--no-soft-deletes` | Não inclui SoftDeletes no Model | `false` |
 | `--force` | Sobrescreve arquivos existentes | `false` |
 
@@ -710,30 +711,38 @@ Lê as colunas diretamente via `SHOW FULL COLUMNS FROM` e pré-preenche `$fillab
 # 1. Ativar o módulo uma vez por projeto
 php artisan ptah:module api
 
-# 2. Gerar a entidade
-php artisan ptah:forge Catalog/Product --api
+# 2a. Modo combinado (web + API em um único comando) — recomendado
+php artisan ptah:forge Catalog/Product --fields="..." --api
+
+# 2b. Somente API, sem views web (comportamento legado)
+php artisan ptah:forge Catalog/Product --fields="..." --api-only
 ```
 
-> **Adicionando API a uma entidade já existente** — Se a entidade já foi gerada no modo web e você quer adicionar a camada API posteriormente, use `--api --force`. A migration **não será regenerada** — o Ptah detecta automaticamente se já existe uma migration para a tabela e a pula. Apenas Controller API, Requests API e Routes serão criados/sobrescritos.
+**Modo combinado (`--api`)** gera todos os artefatos web e API de uma vez.
+Se a entidade já existir, a Model original é **preservada** (`$fillable`, `$casts`, relacionamentos) e apenas o bloco `@OA\Schema` é injetado — a migration também é pulada automaticamente.
 
-**O que é gerado:**
+**O que é gerado (modo `--api` combinado):**
 
 | Artefato | Local |
 |---|---|
+| Controller web (Livewire) | `app/Http/Controllers/Catalog/ProductController.php` |
+| Views (index) | `resources/views/livewire/catalog/product/` |
+| CrudConfig JSON | banco de dados (tabela `crud_configs`) |
 | Controller com Swagger `@OA\*` completo | `app/Http/Controllers/API/Catalog/ProductController.php` |
 | Request de criação | `app/Http/Requests/API/Catalog/CreateProductApiRequest.php` |
 | Request de atualização | `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php` |
 | Model com `@OA\Schema` | `app/Models/Catalog/Product.php` |
+| Rotas web | `routes/web/catalog/product.php` |
 | Rotas prefixadas com `v1` | `routes/api/catalog/product.php` |
 
-**Diferenciais do modo `--api`:**
+**Diferenciais dos modos API:**
 - Controller extende `BaseApiController` (publicado pelo módulo); nunca `Controller` diretamente
 - Todos os métodos retornam via `BaseResponse::` — nunca `response()->json()` avulso
 - `index()` usa `$this->service->getDados($request)` — busca inteligente OR / AND / searchLike / paginação automática
 - Anotações Swagger geradas automaticamente: `@OA\Get`, `@OA\Post`, `@OA\Put`, `@OA\Delete`
 - Namespace `App\Http\Controllers\API\` (maiúsculo)
 - Prefixo de rota `Route::prefix('v1')`
-- Views **não são geradas**
+- Com `--api-only`: views **não são geradas** (equivale ao antigo comportamento de `--api`)
 
 ---
 
@@ -978,13 +987,13 @@ ScaffoldCommand (ptah:forge)
          ├── RepositoryInterfaceGenerator
          ├── RepositoryGenerator
          ├── ServiceGenerator
-         ├── ControllerGenerator        (shouldRun: sem --api)
-         ├── ControllerApiGenerator     (shouldRun: com --api)
-         ├── RequestGenerator           (gera Store + Update)
+         ├── ControllerGenerator        (shouldRun: withViews — sem --api-only)
+         ├── ControllerApiGenerator     (shouldRun: withApi — com --api ou --api-only)
+         ├── RequestGenerator           (gera Store+Update web e/ou CreateApi+UpdateApi conforme flags)
          ├── ResourceGenerator
-         ├── CrudConfigGenerator        (shouldRun: sem --api — salva JSON no banco)
-         ├── ViewGenerator              (shouldRun: sem --api, gera view index)
-         └── RouteGenerator
+         ├── CrudConfigGenerator        (shouldRun: withViews — sem --api-only)
+         ├── ViewGenerator              (shouldRun: withViews — sem --api-only)
+         └── RouteGenerator             (generateWebRoute se withViews; generateApiRoute se withApi)
 
 BaseCrud (Livewire Component)
     │

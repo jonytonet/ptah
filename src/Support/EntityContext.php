@@ -44,11 +44,12 @@ readonly class EntityContext
         public string $table,              // product_stocks (ou valor de --table)
         public string $rootNamespace,      // App\
         public string $timestamp,          // 2026_02_25_120000
-        public bool   $withViews,          // false se --api
+        public bool   $withViews,          // false quando --api-only
         public bool   $withSoftDeletes,    // true por padrão
         public bool   $force,              // --force
         public array  $fields,
         public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
+        public bool   $withApi   = false,  // true quando --api ou --api-only
     ) {
         $nsBase = rtrim($rootNamespace, '\\') . '\\Models';
         $this->modelNamespace = $subFolder

@@ -55,7 +55,7 @@ class ControllerApiGenerator extends AbstractGenerator
 
     public function shouldRun(EntityContext $context): bool
     {
-        return ! $context->withViews; // só roda no modo --api
+        return $context->withApi; // roda tanto em --api (combinado) quanto em --api-only
     }
 
     protected function label(): string

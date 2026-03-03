@@ -16,16 +16,16 @@ class RequestGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        if (! $context->withViews) {
-            // Modo API — gera Create e Update com nomenclatura nova
+        // Este método só é chamado quando apenas um dos modos está ativo.
+        // No modo combinado (withApi + withViews), o ScaffoldCommand chama
+        // diretamente generateStore/Update e generateCreateApi/UpdateApi.
+        if ($context->withApi && ! $context->withViews) {
             $this->generateCreateApi($context);
-
             return $this->generateUpdateApi($context);
         }
 
-        // Modo Web — gera Store e Update
+        // Web-only
         $this->generateStore($context);
-
         return $this->generateUpdate($context);
     }
 

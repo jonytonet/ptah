@@ -19,9 +19,23 @@ class RouteGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
+        // Este método só é chamado quando não é modo combinado.
+        // No modo combinado, ScaffoldCommand chama generateWebRoute/generateApiRoute diretamente.
         return $context->withViews
             ? $this->appendWebRoute($context)
             : $this->appendApiRoute($context);
+    }
+
+    /** Exposto para o ScaffoldCommand usar no modo combinado (web + api). */
+    public function generateWebRoute(EntityContext $context): GeneratorResult
+    {
+        return $this->appendWebRoute($context);
+    }
+
+    /** Exposto para o ScaffoldCommand usar no modo combinado (web + api). */
+    public function generateApiRoute(EntityContext $context): GeneratorResult
+    {
+        return $this->appendApiRoute($context);
     }
 
     protected function label(): string

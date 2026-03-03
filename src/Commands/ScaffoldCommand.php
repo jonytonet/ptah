@@ -53,7 +53,8 @@ class ScaffoldCommand extends Command
         {--table=                : Nome da tabela no banco (padrão: plural snake_case da entidade)}
         {--fields=               : Definição dos campos: "name:string,price:decimal(10,2):nullable" }
         {--db                    : Lê os campos diretamente da tabela no banco de dados}
-        {--api                   : Gera somente a estrutura de API (sem views)}
+        {--api                   : Gera também a estrutura de API além do web (Controller API, Requests API, Swagger e Routes API)}
+        {--api-only              : Gera SOMENTE a estrutura de API, sem views web (comportamento legado do --api)}
         {--no-soft-deletes       : Não adiciona SoftDeletes ao model}
         {--force                 : Sobrescreve arquivos existentes sem confirmação}';
 
@@ -80,7 +81,8 @@ class ScaffoldCommand extends Command
         $entityPlural       = Str::plural($entityLower);
         $entityPluralStudly = Str::studly($entityPlural);
         $table              = $this->option('table') ?: $entityPlural;
-        $withViews          = ! $this->option('api');
+        $withViews          = ! $this->option('api-only'); // false apenas com --api-only
+        $withApi            = $this->option('api') || $this->option('api-only');
         $withSoftDeletes    = ! $this->option('no-soft-deletes');
         $force              = (bool) $this->option('force');
 
@@ -101,14 +103,20 @@ class ScaffoldCommand extends Command
             force:              $force,
             fields:             $fields,
             subFolder:          $subFolder,
+            withApi:            $withApi,
         );
 
         // ── Header ──────────────────────────────────────────────────────
         $this->newLine();
         $displayName = $subFolder ? "{$subFolder}/{$entity}" : $entity;
         $this->components->info("Ptah Forge — Gerando: <fg=yellow>{$displayName}</>");
+        $modeLabel = match(true) {
+            $withViews && $withApi => 'Web + API',
+            $withApi              => 'API only',
+            default               => 'Web',
+        };
         $this->line("  <fg=gray>Tabela: {$table} | Campos: " . count($fields) .
-            " | Modo: " . ($withViews ? 'Web' : 'API') . "</>");
+            " | Modo: {$modeLabel}</>");
         $this->newLine();
 
         // ── Run generators ───────────────────────────────────────────────
@@ -147,13 +155,24 @@ class ScaffoldCommand extends Command
             // Generators especiais que produzem múltiplos artefatos
             if ($generator instanceof RequestGenerator) {
                 if ($context->withViews) {
-                    // Modo Web: Store + Update
+                    // Web: Store + Update
                     $results[] = $generator->generateStore($context);
                     $results[] = $generator->generateUpdate($context);
-                } else {
-                    // Modo API: CreateApiRequest + UpdateApiRequest
+                }
+                if ($context->withApi) {
+                    // API: Create + Update
                     $results[] = $generator->generateCreateApi($context);
                     $results[] = $generator->generateUpdateApi($context);
+                }
+                continue;
+            }
+
+            if ($generator instanceof RouteGenerator) {
+                if ($context->withViews) {
+                    $results[] = $generator->generateWebRoute($context);
+                }
+                if ($context->withApi) {
+                    $results[] = $generator->generateApiRoute($context);
                 }
                 continue;
             }
