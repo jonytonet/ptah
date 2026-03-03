@@ -10,18 +10,18 @@ use Illuminate\Http\Response;
 use Ptah\Services\Permission\PermissionService;
 
 /**
- * Middleware de verificação de permissões Ptah.
+ * Ptah permission-check middleware.
  *
- * Registrado como 'ptah.can' no ServiceProvider.
+ * Registered as 'ptah.can' in the ServiceProvider.
  *
- * Uso nas rotas:
+ * Usage in routes:
  *   Route::middleware('ptah.can:users.store,create')
  *   Route::middleware('ptah.can:reports,read,optional_company_id')
  *
- * Parâmetros:
- *   1. objectKey  — chave do objeto (ex: 'users.store')
- *   2. action     — ação: create|read|update|delete
- *   3. companyId  — opcional; se omitido usa session/auth
+ * Parameters:
+ *   1. objectKey  — object key (e.g. 'users.store')
+ *   2. action     — action: create|read|update|delete
+ *   3. companyId  — optional; uses session/auth if omitted
  */
 class PtahPermission
 {
@@ -34,16 +34,18 @@ class PtahPermission
         $resolvedCompanyId = $companyId !== null ? (int) $companyId : null;
 
         if (!$this->permission->check(null, $objectKey, $action, $resolvedCompanyId)) {
+            $message = trans('ptah::ui.permission_denied');
+
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Você não tem permissão para realizar esta ação.',
+                    'message' => $message,
                     'error'   => 'permission_denied',
                     'key'     => $objectKey,
                     'action'  => $action,
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            abort(403, 'Você não tem permissão para realizar esta ação.');
+            abort(403, $message);
         }
 
         return $next($request);

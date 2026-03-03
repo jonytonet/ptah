@@ -142,4 +142,11 @@ return [
     'bool_yes' => 'Sim',
     'bool_no'  => 'Não',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Permissions / Middleware
+    |--------------------------------------------------------------------------
+    */
+    'permission_denied' => 'Você não tem permissão para realizar esta ação.',
+
 ];
