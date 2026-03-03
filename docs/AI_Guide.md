@@ -103,14 +103,21 @@ GERE:
   3. O Model com casts, fillable e scope `active()`
   4. O DTO, Repository, Service e Contracts seguindo SOLID
   5. Regras de validação no StoreProductRequest / UpdateProductRequest
+  6. [Opcional] Adicione --api para gerar também Controller API com Swagger e rotas v1
 ```
 
 ### Resultado esperado
 
 ```bash
+# Somente web (default)
 php artisan ptah:forge Product \
   --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
   --soft-delete
+
+# Web + API (modo combinado — recomendado quando há cenário de marketplace/app)
+php artisan ptah:forge Product \
+  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
+  --soft-delete --api
 ```
 
 ---
@@ -236,6 +243,8 @@ LOCALIZAÇÃO DOS ARQUIVOS:
 ```
 1. SCAFFOLDING
    ↓ ptah:forge {Entity} --fields="..." --soft-delete
+   ↓ Adicione --api para gerar web + API juntos (Controller API, Swagger, rotas v1)
+   ↓ Use --api-only para gerar somente API (sem views web)
    ↓ Revisar migration, model e DTO gerados
 
 2. CONFIGURAÇÃO DO BASECRUD

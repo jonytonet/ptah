@@ -391,16 +391,25 @@ Instala automaticamente `darkaonline/l5-swagger` e publica:
 ### Gerando entidades com API
 
 ```bash
-php artisan ptah:forge Catalog/Product --api \
-  "name:string" "price:decimal" "category_id:unsignedBigInteger" "is_active:boolean"
+# Modo combinado (web + API em um único comando) — recomendado
+php artisan ptah:forge Catalog/Product \
+  --fields="name:string,price:decimal,category_id:unsignedBigInteger,is_active:boolean" \
+  --api
 ```
 
-Gera automaticamente:
+Gera automaticamente **web e API juntos**:
+- `app/Http/Controllers/Catalog/ProductController.php` — controller web (Livewire)
+- `resources/views/livewire/catalog/product/` — views
 - `app/Http/Controllers/API/Catalog/ProductController.php` — Swagger `@OA\*` completo
 - `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
 - `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
 - `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
-- `routes/api/catalog/product.php` — `Route::prefix('v1')`
+- `routes/web/catalog/product.php` + `routes/api/catalog/product.php` — `Route::prefix('v1')`
+
+> **Model preservado:** Se a entidade já existir, `--api` injeta apenas o bloco `@OA\Schema` na model
+> sem sobrescrever `$fillable`, `$casts` ou relacionamentos.
+
+> **Somente API (sem views):** use `--api-only` — comportamento legado do antigo `--api`.
 
 ### Workflow completo
 
@@ -408,8 +417,10 @@ Gera automaticamente:
 # 1. Instalar módulo (uma vez por projeto)
 php artisan ptah:module api
 
-# 2. Gerar entidade
-php artisan ptah:forge Catalog/Product --api "name:string" "price:decimal"
+# 2. Gerar entidade (web + API juntos)
+php artisan ptah:forge Catalog/Product \
+  --fields="name:string,price:decimal" \
+  --api
 
 # 3. Corrigir TODOs de imports nos arquivos gerados
 # 4. Rodar pint
