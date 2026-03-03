@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Unit\Models;
 
+use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\Company;
 use Ptah\Tests\Factories\CompanyFactory;
 use Ptah\Tests\TestCase;
@@ -22,7 +23,7 @@ class CompanyModelTest extends TestCase
 {
     // ── getLabelDisplay ────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function retorna_label_configurado_em_maiusculo(): void
     {
         $company = CompanyFactory::new()->make(['label' => 'acme']);
@@ -30,7 +31,7 @@ class CompanyModelTest extends TestCase
         $this->assertSame('ACME', $company->getLabelDisplay());
     }
 
-    /** @test */
+    #[Test]
     public function retorna_iniciais_quando_label_e_nulo(): void
     {
         $company = CompanyFactory::new()->make(['name' => 'Acme Corp Solutions', 'label' => null]);
@@ -39,7 +40,7 @@ class CompanyModelTest extends TestCase
         $this->assertSame('ACS', $company->getLabelDisplay());
     }
 
-    /** @test */
+    #[Test]
     public function retorna_iniciais_quando_label_e_string_vazia(): void
     {
         $company = CompanyFactory::new()->make(['name' => 'Beta Tecnologia', 'label' => '']);
@@ -47,7 +48,7 @@ class CompanyModelTest extends TestCase
         $this->assertSame('BT', $company->getLabelDisplay());
     }
 
-    /** @test */
+    #[Test]
     public function label_display_retorna_maximo_de_4_chars(): void
     {
         $company = CompanyFactory::new()->make([
@@ -58,7 +59,7 @@ class CompanyModelTest extends TestCase
         $this->assertLessThanOrEqual(4, strlen($company->getLabelDisplay()));
     }
 
-    /** @test */
+    #[Test]
     public function label_display_para_nome_de_palavra_unica(): void
     {
         $company = CompanyFactory::new()->make(['name' => 'Ptah', 'label' => null]);
@@ -68,7 +69,7 @@ class CompanyModelTest extends TestCase
 
     // ── Scopes ────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function scope_active_retorna_apenas_empresas_ativas(): void
     {
         CompanyFactory::new()->create(['is_active' => true,  'name' => 'Ativa',   'label' => 'ATIV']);
@@ -80,7 +81,7 @@ class CompanyModelTest extends TestCase
         $this->assertSame('Ativa', $active->first()->name);
     }
 
-    /** @test */
+    #[Test]
     public function scope_default_retorna_empresa_padrao(): void
     {
         CompanyFactory::new()->create(['is_default' => true,  'name' => 'Padrão', 'label' => 'PADR']);
@@ -94,7 +95,7 @@ class CompanyModelTest extends TestCase
 
     // ── Auto-slug ──────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function auto_gera_slug_ao_criar(): void
     {
         $company = CompanyFactory::new()->create(['name' => 'Minha Empresa', 'label' => 'MINE']);
@@ -102,7 +103,7 @@ class CompanyModelTest extends TestCase
         $this->assertSame('minha-empresa', $company->fresh()->slug);
     }
 
-    /** @test */
+    #[Test]
     public function nao_sobrescreve_slug_se_ja_definido(): void
     {
         $company = CompanyFactory::new()->create([
@@ -116,7 +117,7 @@ class CompanyModelTest extends TestCase
 
     // ── Soft Deletes ───────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function soft_delete_nao_remove_registro_do_banco(): void
     {
         $company = CompanyFactory::new()->create(['label' => 'SFTD']);

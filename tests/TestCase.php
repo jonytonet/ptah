@@ -51,8 +51,11 @@ abstract class TestCase extends OrchestraTestCase
      */
     protected function defineDatabaseMigrations(): void
     {
-        // Migrations do Laravel base (cria tabela users, etc.)
-        $this->loadLaravelMigrations();
+        // Test migrations: creates the users table (timestamp 2014_...) so it
+        // exists before Ptah migrations (e.g. add_two_factor_columns_to_users)
+        // attempt to ALTER it. loadLaravelMigrations() is intentionally absent
+        // because Testbench 10 ships an empty laravel/database/migrations dir.
+        $this->loadMigrationsFrom(__DIR__ . '/migrations');
 
         // Migrations do Ptah (companies, roles, etc.)
         $this->loadMigrationsFrom(__DIR__ . '/../src/Migrations');
