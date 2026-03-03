@@ -13,10 +13,10 @@
     {{-- Navegação de abas --}}
     <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 pb-0">
         @foreach ([
-            ['key' => 'overview',  'label' => '🗺️ Visão Geral'],
-            ['key' => 'setup',     'label' => '🔧 Passo a Passo'],
-            ['key' => 'code',      'label' => '💻 Exemplos de Código'],
-            ['key' => 'faq',       'label' => '❓ Perguntas Frequentes'],
+            ['key' => 'overview',  'label' => __('ptah::ui.guide_tab_overview')],
+            ['key' => 'setup',     'label' => __('ptah::ui.guide_tab_setup')],
+            ['key' => 'code',      'label' => __('ptah::ui.guide_tab_code')],
+            ['key' => 'faq',       'label' => __('ptah::ui.guide_tab_faq')],
         ] as $tab)
             <button
                 wire:click="$set('activeTab', '{{ $tab['key'] }}')"
@@ -37,13 +37,9 @@
 
         {{-- Intro --}}
         <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-6">
-            <h2 class="text-lg font-bold text-indigo-900 mb-2">O que é o sistema de permissões do Ptah?</h2>
+            <h2 class="text-lg font-bold text-indigo-900 mb-2">{{ __('ptah::ui.guide_ov_title') }}</h2>
             <p class="text-sm text-indigo-800 leading-relaxed">
-                O ACL (Access Control List) do Ptah é um sistema de controle de acesso baseado em <strong>Roles (perfis)</strong>,
-                inspirado no padrão RBAC. Ele permite definir <em>quem pode fazer o quê</em> em cada parte do sistema,
-                com granularidade até o nível de botão ou campo individual.<br><br>
-                Ao contrário do simples <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code> do Laravel,
-                o Ptah ACL é <strong>dinâmico e gerenciável pela interface</strong> — sem necessidade de alterar código para adicionar novas permissões.
+                {!! __('ptah::ui.guide_ov_body') !!}
             </p>
         </div>
 
@@ -51,7 +47,7 @@
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                 <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">1</span>
-                Arquitetura — Como os conceitos se relacionam
+                {{ __('ptah::ui.guide_ov_arch_title') }}
             </h2>
             <div class="overflow-x-auto">
                 <div class="min-w-[700px] flex items-center justify-center gap-0 py-4">
@@ -60,10 +56,10 @@
                     <div class="flex flex-col items-center gap-2">
                         <div class="w-36 bg-amber-50 border-2 border-amber-200 rounded-xl p-3 text-center">
                             <div class="text-2xl mb-1">🏢</div>
-                            <p class="text-xs font-bold text-amber-800">Departamentos</p>
-                            <p class="text-xs text-amber-600 mt-0.5">Agrupamento lógico opcional dos Roles</p>
+                            <p class="text-xs font-bold text-amber-800">{{ __('ptah::ui.guide_ov_dept_title') }}</p>
+                            <p class="text-xs text-amber-600 mt-0.5">{{ __('ptah::ui.guide_ov_dept_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">ex: TI, Comercial, Financeiro</p>
+                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_dept_ex') }}</p>
                     </div>
 
                     {{-- Seta --}}
@@ -73,10 +69,10 @@
                     <div class="flex flex-col items-center gap-2">
                         <div class="w-36 bg-purple-50 border-2 border-purple-300 rounded-xl p-3 text-center">
                             <div class="text-2xl mb-1">🎭</div>
-                            <p class="text-xs font-bold text-purple-800">Roles / Perfis</p>
-                            <p class="text-xs text-purple-600 mt-0.5">Carrega as permissões por objeto</p>
+                            <p class="text-xs font-bold text-purple-800">{{ __('ptah::ui.guide_ov_roles_title') }}</p>
+                            <p class="text-xs text-purple-600 mt-0.5">{{ __('ptah::ui.guide_ov_roles_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">ex: Admin, Vendedor, Suporte</p>
+                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_roles_ex') }}</p>
                     </div>
 
                     {{-- Seta --}}
@@ -86,10 +82,10 @@
                     <div class="flex flex-col items-center gap-2">
                         <div class="w-40 bg-blue-50 border-2 border-blue-300 rounded-xl p-3 text-center">
                             <div class="text-2xl mb-1">📄</div>
-                            <p class="text-xs font-bold text-blue-800">Páginas + Objetos</p>
-                            <p class="text-xs text-blue-600 mt-0.5">O que pode ser controlado</p>
+                            <p class="text-xs font-bold text-blue-800">{{ __('ptah::ui.guide_ov_pages_title') }}</p>
+                            <p class="text-xs text-blue-600 mt-0.5">{{ __('ptah::ui.guide_ov_pages_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[140px]">ex: /vendas, botão "Exportar", campo "Desconto"</p>
+                        <p class="text-xs text-slate-400 text-center max-w-[140px]">{{ __('ptah::ui.guide_ov_pages_ex') }}</p>
                     </div>
 
                     {{-- Seta --}}
@@ -99,10 +95,10 @@
                     <div class="flex flex-col items-center gap-2">
                         <div class="w-36 bg-green-50 border-2 border-green-300 rounded-xl p-3 text-center">
                             <div class="text-2xl mb-1">👤</div>
-                            <p class="text-xs font-bold text-green-800">Usuários</p>
-                            <p class="text-xs text-green-600 mt-0.5">Recebem Roles por Empresa</p>
+                            <p class="text-xs font-bold text-green-800">{{ __('ptah::ui.guide_ov_users_title') }}</p>
+                            <p class="text-xs text-green-600 mt-0.5">{{ __('ptah::ui.guide_ov_users_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">ex: João — Admin na Empresa A</p>
+                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_users_ex') }}</p>
                     </div>
 
                     {{-- Seta --}}
@@ -112,10 +108,10 @@
                     <div class="flex flex-col items-center gap-2">
                         <div class="w-36 bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-center">
                             <div class="text-2xl mb-1">🏭</div>
-                            <p class="text-xs font-bold text-slate-700">Empresas</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Escopo do vínculo (opcional)</p>
+                            <p class="text-xs font-bold text-slate-700">{{ __('ptah::ui.guide_ov_co_title') }}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_ov_co_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">ex: Multi-tenant ou Global</p>
+                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_co_ex') }}</p>
                     </div>
 
                 </div>
@@ -126,18 +122,17 @@
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                 <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">2</span>
-                Conceitos fundamentais
+                {{ __('ptah::ui.guide_ov_concepts_title') }}
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🎭</span>
-                        <h3 class="text-sm font-bold text-slate-800">Role (Perfil)</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_role_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Um Role é um conjunto de permissões. Em vez de dar permissões diretamente ao usuário,
-                        você cria um Role com as permissões e atribui o Role ao usuário.
+                        {{ __('ptah::ui.guide_con_role_body') }}
                     </p>
                     <div class="mt-3 flex flex-wrap gap-1">
                         <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Admin</span>
@@ -149,11 +144,10 @@
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📄</span>
-                        <h3 class="text-sm font-bold text-slate-800">Página</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_page_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Representa um módulo ou rota do sistema. Cada Página contém <strong>Objetos</strong> —
-                        elementos individuais cujo acesso pode ser controlado (botões, campos, links, ações).
+                        {!! __('ptah::ui.guide_con_page_body') !!}
                     </p>
                     <div class="mt-3 flex flex-wrap gap-1">
                         <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">admin.vendas</span>
@@ -164,14 +158,13 @@
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🔑</span>
-                        <h3 class="text-sm font-bold text-slate-800">Objeto + Permissão</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_obj_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Um Objeto é um elemento granular dentro de uma Página. Cada objeto tem 4 flags de permissão:
-                        <strong>Ler, Criar, Editar, Excluir</strong>. Um Role pode ter permissão parcial (só ler, por exemplo).
+                        {!! __('ptah::ui.guide_con_obj_body') !!}
                     </p>
                     <div class="mt-3 grid grid-cols-4 gap-1">
-                        @foreach (['Ler', 'Criar', 'Editar', 'Excluir'] as $perm)
+                        @foreach ([__('ptah::ui.guide_con_perms_read'), __('ptah::ui.guide_con_perms_create'), __('ptah::ui.guide_con_perms_edit'), __('ptah::ui.guide_con_perms_delete')] as $perm)
                         <div class="text-center">
                             <div class="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center mx-auto"><span class="text-green-600 text-xs font-bold">✓</span></div>
                             <p class="text-xs text-slate-500 mt-0.5">{{ $perm }}</p>
@@ -183,36 +176,33 @@
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">👑</span>
-                        <h3 class="text-sm font-bold text-slate-800">Role MASTER</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_master_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Um Role marcado como MASTER tem acesso irrestrito a <strong>todos os recursos</strong>,
-                        ignorando verificações. Só pode existir 1 Role MASTER. Use apenas para superadmins.
+                        {!! __('ptah::ui.guide_con_master_body') !!}
                     </p>
                     <div class="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2">
-                        ⚠️ Use com cuidado — bypassa todas as verificações
+                        {{ __('ptah::ui.guide_con_master_warn') }}
                     </div>
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🏭</span>
-                        <h3 class="text-sm font-bold text-slate-800">Escopo por Empresa</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_scope_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Um usuário pode ter Roles diferentes em empresas diferentes. Ex: João é Admin na
-                        Empresa A e apenas Leitor na Empresa B. Defina <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code> para acesso global.
+                        {!! __('ptah::ui.guide_con_scope_body') !!}
                     </p>
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📋</span>
-                        <h3 class="text-sm font-bold text-slate-800">Auditoria</h3>
+                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_audit_title') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Quando habilitada, cada verificação de permissão é registrada em log com usuário, recurso,
-                        ação e resultado (concedido/negado). Ative com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code> no .env.
+                        {!! __('ptah::ui.guide_con_audit_body') !!}
                     </p>
                 </div>
 
@@ -223,56 +213,56 @@
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                 <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">3</span>
-                Fluxo de verificação de acesso
+                {{ __('ptah::ui.guide_ov_flow_title') }}
             </h2>
             <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm overflow-x-auto">
                 <div class="min-w-[500px] flex flex-col items-center gap-0">
                     {{-- Início --}}
-                    <div class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-full">Usuário tenta acessar recurso</div>
+                    <div class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-full">{{ __('ptah::ui.guide_flow_start') }}</div>
                     <div class="w-px h-5 bg-slate-300"></div>
                     {{-- Passo 1 --}}
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-64">① Usuário está autenticado?</div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-64">{{ __('ptah::ui.guide_flow_q1') }}</div>
                     <div class="flex gap-8 items-start">
                         <div class="flex flex-col items-center">
                             <div class="w-px h-4 bg-slate-300"></div>
-                            <div class="text-xs text-green-600 font-bold">Sim</div>
+                            <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                             <div class="w-px h-4 bg-slate-300"></div>
                             {{-- Passo 2 --}}
-                            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">② Algum Role do usuário é MASTER?</div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q2') }}</div>
                             <div class="flex gap-8 items-start">
                                 <div class="flex flex-col items-center">
                                     <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="text-xs text-green-600 font-bold">Sim</div>
+                                    <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                                     <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">✅ ACESSO LIBERADO</div>
+                                    <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
                                 </div>
                                 <div class="flex flex-col items-center">
                                     <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="text-xs text-red-500 font-bold">Não</div>
+                                    <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                                     <div class="w-px h-4 bg-slate-300"></div>
                                     {{-- Passo 3 --}}
-                                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">③ Role possui permissão (ex: can_read) para este objeto?</div>
+                                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q3') }}</div>
                                     <div class="flex gap-6 items-start mt-0">
                                         <div class="flex flex-col items-center">
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="text-xs text-green-600 font-bold">Sim</div>
+                                            <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">✅ ACESSO LIBERADO</div>
+                                            <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
                                         </div>
                                         <div class="flex flex-col items-center">
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="text-xs text-red-500 font-bold">Não</div>
+                                            <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">🚫 ACESSO NEGADO</div>
+                                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_denied') }}</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="flex flex-col items-center mt-4">
-                            <div class="text-xs text-red-500 font-bold">Não</div>
+                            <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                             <div class="w-px h-4 bg-slate-300"></div>
-                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">🚫 Redireciona para login</div>
+                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_login') }}</div>
                         </div>
                     </div>
                 </div>
@@ -289,9 +279,7 @@
     <div class="space-y-6">
 
         <x-forge-alert type="primary">
-            <strong>Pré-requisito:</strong> Execute <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code>
-            para criar as tabelas do Ptah, e <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code>
-            para criar a empresa padrão.
+            {!! __('ptah::ui.guide_setup_prereq') !!}
         </x-forge-alert>
 
         {{-- Passo 1 --}}
@@ -299,23 +287,23 @@
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">Cadastrar Departamentos <span class="text-slate-400 font-normal">(Opcional)</span></h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Agrupe seus Roles em departamentos para melhor organização.</p>
+                    <h3 class="text-sm font-bold text-slate-800">{!! __('ptah::ui.guide_s1_title') !!}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
                 </div>
                 <a href="{{ route('ptah.acl.departments') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
-                    Ir para Departamentos →
+                    {{ __('ptah::ui.guide_s1_btn') }}
                 </a>
             </div>
             <div class="px-5 py-4 space-y-3">
                 <p class="text-sm text-slate-600 leading-relaxed">
-                    Departamentos são agrupamentos lógicos opcionais para seus Roles. Útil quando o sistema tem muitos perfis.
+                    {{ __('ptah::ui.guide_s1_body') }}
                 </p>
                 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-600">
-                    <strong>Exemplo:</strong>
+                    <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
                     <ul class="mt-2 space-y-1 list-none">
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> Departamento <strong>TI</strong> → Roles: Desenvolvedor, DevOps, Suporte TI</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> Departamento <strong>Comercial</strong> → Roles: Vendedor, Gerente Comercial, SDR</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> Departamento <strong>Financeiro</strong> → Roles: Analista Financeiro, Controller</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_it') !!}</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
                     </ul>
                 </div>
             </div>
@@ -326,29 +314,28 @@
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">Cadastrar Páginas e Objetos</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Registre os módulos do sistema e o que pode ser controlado neles.</p>
+                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s2_title') }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
                 </div>
                 <a href="{{ route('ptah.acl.pages') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
-                    Ir para Páginas →
+                    {{ __('ptah::ui.guide_s2_btn') }}
                 </a>
             </div>
             <div class="px-5 py-4 space-y-4">
                 <p class="text-sm text-slate-600 leading-relaxed">
-                    Uma <strong>Página</strong> representa um módulo ou seção do sistema (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.vendas</code>).
-                    Cada página pode ter vários <strong>Objetos</strong> — que representam elementos granulares como botões, campos ou ações.
+                    {!! __('ptah::ui.guide_s2_body') !!}
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 class="text-xs font-bold text-blue-800 mb-2">📄 Exemplo de Página</h4>
+                        <h4 class="text-xs font-bold text-blue-800 mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
                         <table class="w-full text-xs">
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium w-24">Slug</td><td class="py-1 font-mono text-blue-700">admin.vendas</td></tr>
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium">Nome</td><td class="py-1 text-blue-700">Módulo de Vendas</td></tr>
-                            <tr><td class="py-1 text-blue-600 font-medium">Ícone</td><td class="py-1 text-blue-700">🛒</td></tr>
+                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono text-blue-700">admin.vendas</td></tr>
+                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_name') }}</td><td class="py-1 text-blue-700">Módulo de Vendas</td></tr>
+                            <tr><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1 text-blue-700">🛒</td></tr>
                         </table>
                     </div>
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <h4 class="text-xs font-bold text-green-800 mb-2">🔑 Objetos desta Página</h4>
+                        <h4 class="text-xs font-bold text-green-800 mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between text-xs">
                                 <span class="font-mono text-green-700">vendas.criar-pedido</span>
@@ -373,29 +360,28 @@
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">Criar Roles e definir permissões</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Crie os perfis de acesso e configure quais objetos cada perfil pode acessar.</p>
+                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s3_title') }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
                 </div>
                 <a href="{{ route('ptah.acl.roles') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
-                    Ir para Roles →
+                    {{ __('ptah::ui.guide_s3_btn') }}
                 </a>
             </div>
             <div class="px-5 py-4 space-y-4">
                 <p class="text-sm text-slate-600 leading-relaxed">
-                    Crie um Role com nome e cor. Depois clique em <strong>🔑 Permissões</strong> para definir
-                    quais objetos este Role pode <em>Ler, Criar, Editar e Excluir</em>.
+                    {!! __('ptah::ui.guide_s3_body') !!}
                 </p>
                 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <h4 class="text-xs font-bold text-slate-700 mb-3">Exemplo: Role "Vendedor Padrão"</h4>
+                    <h4 class="text-xs font-bold text-slate-700 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs border-collapse">
                             <thead>
                                 <tr class="bg-slate-200">
-                                    <th class="px-3 py-2 text-left text-slate-600 font-semibold rounded-tl-lg">Objeto</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">Ler</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">Criar</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">Editar</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold rounded-tr-lg">Excluir</th>
+                                    <th class="px-3 py-2 text-left text-slate-600 font-semibold rounded-tl-lg">{{ __('ptah::ui.guide_s3_col_obj') }}</th>
+                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_read') }}</th>
+                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_create') }}</th>
+                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_edit') }}</th>
+                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold rounded-tr-lg">{{ __('ptah::ui.guide_s3_col_delete') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
@@ -420,7 +406,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-xs text-slate-400 mt-2">↑ Vendedor pode criar pedidos mas não vê desconto e não pode exportar de forma irrestrita.</p>
+                    <p class="text-xs text-slate-400 mt-2">{{ __('ptah::ui.guide_s3_note') }}</p>
                 </div>
             </div>
         </div>
@@ -430,30 +416,27 @@
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">4</span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">Vincular usuários a Roles</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Atribua um ou mais Roles a cada usuário, com escopo de empresa.</p>
+                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s4_title') }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
                 </div>
                 <a href="{{ route('ptah.acl.users') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
-                    Ir para Usuários →
+                    {{ __('ptah::ui.guide_s4_btn') }}
                 </a>
             </div>
             <div class="px-5 py-4 space-y-3">
                 <p class="text-sm text-slate-600 leading-relaxed">
-                    Na tela de Controle de Acesso, clique em <strong>🔑 Gerenciar Acesso</strong> ao lado do usuário.
-                    Selecione um Role e uma Empresa (ou "Global" para acesso sem escopo).
+                    {!! __('ptah::ui.guide_s4_body') !!}
                 </p>
                 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm">
-                    <h4 class="text-xs font-bold text-slate-700 mb-2">Exemplo: Usuário <span class="text-indigo-600">João Silva</span></h4>
+                    <h4 class="text-xs font-bold text-slate-700 mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
                     <div class="space-y-2">
                         <div class="flex items-center gap-2 text-xs">
                             <span class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
-                            Role <strong class="text-purple-700">Admin</strong> na empresa <strong>Empresa A Ltda</strong>
-                            <span class="text-slate-400">→ acesso total na Empresa A</span>
+                            {!! __('ptah::ui.guide_s4_ex1') !!}
                         </div>
                         <div class="flex items-center gap-2 text-xs">
                             <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
-                            Role <strong class="text-blue-700">Leitor</strong> na empresa <strong>Empresa B SA</strong>
-                            <span class="text-slate-400">→ só pode ler na Empresa B</span>
+                            {!! __('ptah::ui.guide_s4_ex2') !!}
                         </div>
                     </div>
                 </div>
@@ -465,19 +448,17 @@
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold flex items-center justify-center shrink-0">5</span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">Usar as permissões no código</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Veja a aba "Exemplos de Código" para detalhes completos.</p>
+                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s5_title') }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
                 </div>
                 <button wire:click="$set('activeTab', 'code')"
                     class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200">
-                    Ver exemplos →
+                    {{ __('ptah::ui.guide_s5_btn') }}
                 </button>
             </div>
             <div class="px-5 py-4">
                 <p class="text-sm text-slate-600">
-                    Use o helper <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah_can('objeto.chave', 'read')</code>
-                    nas views Blade ou o middleware <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah.can:objeto.chave,read</code>
-                    nas rotas para proteger o acesso.
+                    {!! __('ptah::ui.guide_s5_body') !!}
                 </p>
             </div>
         </div>
@@ -709,10 +690,9 @@
         <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-5 flex items-center gap-4">
             <div class="text-4xl">🙋</div>
             <div>
-                <h3 class="text-sm font-bold text-indigo-900 mb-1">Precisa de mais ajuda?</h3>
+                <h3 class="text-sm font-bold text-indigo-900 mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
                 <p class="text-xs text-indigo-700">
-                    Consulte a <strong>Visão Geral</strong> para entender a arquitetura, o <strong>Passo a Passo</strong> para configurar
-                    e os <strong>Exemplos de Código</strong> para integrar no seu projeto.
+                    {!! __('ptah::ui.guide_faq_help_body') !!}
                 </p>
             </div>
         </div>

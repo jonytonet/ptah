@@ -638,6 +638,138 @@ return [
     'guide_subtitle' => 'Como funciona o ACL do Ptah e como configurar acessos passo a passo.',
     'guide_badge'    => '\uD83D\uDCD6 Documentação',
 
+    // Abas
+    'guide_tab_overview' => '🗺️ Visão Geral',
+    'guide_tab_setup'    => '🔧 Passo a Passo',
+    'guide_tab_code'     => '💻 Exemplos de Código',
+    'guide_tab_faq'      => '❓ Perguntas Frequentes',
+
+    // Visão Geral — Introdução
+    'guide_ov_title' => 'O que é o sistema de permissões do Ptah?',
+    'guide_ov_body'  => 'O ACL (Access Control List) do Ptah é um sistema de controle de acesso baseado em <strong>Roles (perfis)</strong>, inspirado no padrão RBAC. Ele permite definir <em>quem pode fazer o quê</em> em cada parte do sistema, com granularidade até o nível de botão ou campo individual.<br><br>Ao contrário do simples <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code> do Laravel, o Ptah ACL é <strong>dinâmico e gerenciável pela interface</strong> — sem necessidade de alterar código para adicionar novas permissões.',
+
+    // Visão Geral — Arquitetura
+    'guide_ov_arch_title'  => 'Arquitetura — Como os conceitos se relacionam',
+    'guide_ov_dept_title'  => 'Departamentos',
+    'guide_ov_dept_desc'   => 'Agrupamento lógico opcional dos Roles',
+    'guide_ov_dept_ex'     => 'ex: TI, Comercial, Financeiro',
+    'guide_ov_roles_title' => 'Roles / Perfis',
+    'guide_ov_roles_desc'  => 'Carrega as permissões por objeto',
+    'guide_ov_roles_ex'    => 'ex: Admin, Vendedor, Suporte',
+    'guide_ov_pages_title' => 'Páginas + Objetos',
+    'guide_ov_pages_desc'  => 'O que pode ser controlado',
+    'guide_ov_pages_ex'    => 'ex: /vendas, botão "Exportar", campo "Desconto"',
+    'guide_ov_users_title' => 'Usuários',
+    'guide_ov_users_desc'  => 'Recebem Roles por Empresa',
+    'guide_ov_users_ex'    => 'ex: João — Admin na Empresa A',
+    'guide_ov_co_title'    => 'Empresas',
+    'guide_ov_co_desc'     => 'Escopo do vínculo (opcional)',
+    'guide_ov_co_ex'       => 'ex: Multi-tenant ou Global',
+
+    // Visão Geral — Conceitos
+    'guide_ov_concepts_title' => 'Conceitos fundamentais',
+    'guide_con_role_title'    => 'Role (Perfil)',
+    'guide_con_role_body'     => 'Um Role é um conjunto de permissões. Em vez de dar permissões diretamente ao usuário, você cria um Role com as permissões e atribui o Role ao usuário.',
+    'guide_con_page_title'    => 'Página',
+    'guide_con_page_body'     => 'Representa um módulo ou rota do sistema. Cada Página contém <strong>Objetos</strong> — elementos individuais cujo acesso pode ser controlado (botões, campos, links, ações).',
+    'guide_con_obj_title'     => 'Objeto + Permissão',
+    'guide_con_obj_body'      => 'Um Objeto é um elemento granular dentro de uma Página. Cada objeto tem 4 flags de permissão: <strong>Ler, Criar, Editar, Excluir</strong>. Um Role pode ter permissão parcial (só ler, por exemplo).',
+    'guide_con_perms_read'    => 'Ler',
+    'guide_con_perms_create'  => 'Criar',
+    'guide_con_perms_edit'    => 'Editar',
+    'guide_con_perms_delete'  => 'Excluir',
+    'guide_con_master_title'  => 'Role MASTER',
+    'guide_con_master_body'   => 'Um Role marcado como MASTER tem acesso irrestrito a <strong>todos os recursos</strong>, ignorando verificações. Só pode existir 1 Role MASTER. Use apenas para superadmins.',
+    'guide_con_master_warn'   => '⚠️ Use com cuidado — bypassa todas as verificações',
+    'guide_con_scope_title'   => 'Escopo por Empresa',
+    'guide_con_scope_body'    => 'Um usuário pode ter Roles diferentes em empresas diferentes. Ex: João é Admin na Empresa A e apenas Leitor na Empresa B. Defina <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code> para acesso global.',
+    'guide_con_audit_title'   => 'Auditoria',
+    'guide_con_audit_body'    => 'Quando habilitada, cada verificação de permissão é registrada em log com usuário, recurso, ação e resultado (concedido/negado). Ative com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code> no .env.',
+
+    // Visão Geral — Fluxo
+    'guide_ov_flow_title' => 'Fluxo de verificação de acesso',
+    'guide_flow_start'    => 'Usuário tenta acessar recurso',
+    'guide_flow_q1'       => '① Usuário está autenticado?',
+    'guide_flow_q2'       => '② Algum Role do usuário é MASTER?',
+    'guide_flow_q3'       => '③ Role possui permissão (ex: can_read) para este objeto?',
+    'guide_flow_yes'      => 'Sim',
+    'guide_flow_no'       => 'Não',
+    'guide_flow_granted'  => '✅ ACESSO LIBERADO',
+    'guide_flow_denied'   => '🚫 ACESSO NEGADO',
+    'guide_flow_login'    => '🚫 Redireciona para login',
+
+    // Passo a Passo — Pré-requisito
+    'guide_setup_prereq' => '<strong>Pré-requisito:</strong> Execute <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> para criar as tabelas do Ptah, e <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> para criar a empresa padrão.',
+
+    // Passo 1
+    'guide_s1_title'    => 'Cadastrar Departamentos <span class="text-slate-400 font-normal">(Opcional)</span>',
+    'guide_s1_desc'     => 'Agrupe seus Roles em departamentos para melhor organização.',
+    'guide_s1_btn'      => 'Ir para Departamentos →',
+    'guide_s1_body'     => 'Departamentos são agrupamentos lógicos opcionais para seus Roles. Útil quando o sistema tem muitos perfis.',
+    'guide_s1_example'  => 'Exemplo',
+    'guide_s1_ex_it'    => 'Departamento <strong>TI</strong> → Roles: Desenvolvedor, DevOps, Suporte TI',
+    'guide_s1_ex_sales' => 'Departamento <strong>Comercial</strong> → Roles: Vendedor, Gerente Comercial, SDR',
+    'guide_s1_ex_fin'   => 'Departamento <strong>Financeiro</strong> → Roles: Analista Financeiro, Controller',
+
+    // Passo 2
+    'guide_s2_title'      => 'Cadastrar Páginas e Objetos',
+    'guide_s2_desc'       => 'Registre os módulos do sistema e o que pode ser controlado neles.',
+    'guide_s2_btn'        => 'Ir para Páginas →',
+    'guide_s2_body'       => 'Uma <strong>Página</strong> representa um módulo ou seção do sistema (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.vendas</code>). Cada página pode ter vários <strong>Objetos</strong> — que representam elementos granulares como botões, campos ou ações.',
+    'guide_s2_page_title' => '📄 Exemplo de Página',
+    'guide_s2_page_slug'  => 'Slug',
+    'guide_s2_page_name'  => 'Nome',
+    'guide_s2_page_icon'  => 'Ícone',
+    'guide_s2_obj_title'  => '🔑 Objetos desta Página',
+
+    // Passo 3
+    'guide_s3_title'      => 'Criar Roles e definir permissões',
+    'guide_s3_desc'       => 'Crie os perfis de acesso e configure quais objetos cada perfil pode acessar.',
+    'guide_s3_btn'        => 'Ir para Roles →',
+    'guide_s3_body'       => 'Crie um Role com nome e cor. Depois clique em <strong>🔑 Permissões</strong> para definir quais objetos este Role pode <em>Ler, Criar, Editar e Excluir</em>.',
+    'guide_s3_ex_title'   => 'Exemplo: Role "Vendedor Padrão"',
+    'guide_s3_col_obj'    => 'Objeto',
+    'guide_s3_col_read'   => 'Ler',
+    'guide_s3_col_create' => 'Criar',
+    'guide_s3_col_edit'   => 'Editar',
+    'guide_s3_col_delete' => 'Excluir',
+    'guide_s3_note'       => '↑ Vendedor pode criar pedidos mas não vê desconto e não pode exportar de forma irrestrita.',
+
+    // Passo 4
+    'guide_s4_title'    => 'Vincular usuários a Roles',
+    'guide_s4_desc'     => 'Atribua um ou mais Roles a cada usuário, com escopo de empresa.',
+    'guide_s4_btn'      => 'Ir para Usuários →',
+    'guide_s4_body'     => 'Na tela de Controle de Acesso, clique em <strong>🔑 Gerenciar Acesso</strong> ao lado do usuário. Selecione um Role e uma Empresa (ou "Global" para acesso sem escopo).',
+    'guide_s4_ex_title' => 'Exemplo: Usuário <span class="text-indigo-600">João Silva</span>',
+    'guide_s4_ex1'      => 'Role <strong class="text-purple-700">Admin</strong> na empresa <strong>Empresa A Ltda</strong> <span class="text-slate-400">→ acesso total na Empresa A</span>',
+    'guide_s4_ex2'      => 'Role <strong class="text-blue-700">Leitor</strong> na empresa <strong>Empresa B SA</strong> <span class="text-slate-400">→ só pode ler na Empresa B</span>',
+
+    // Passo 5
+    'guide_s5_title' => 'Usar as permissões no código',
+    'guide_s5_desc'  => 'Veja a aba "Exemplos de Código" para detalhes completos.',
+    'guide_s5_btn'   => 'Ver exemplos →',
+    'guide_s5_body'  => 'Use o helper <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah_can(\'objeto.chave\', \'read\')</code> nas views Blade ou o middleware <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah.can:objeto.chave,read</code> nas rotas para proteger o acesso.',
+
+    // FAQ
+    'guide_faq_q1' => 'O que acontece se o usuário não tiver nenhum Role?',
+    'guide_faq_a1' => 'Sem nenhum Role, o usuário não terá acesso a nenhum objeto controlado. As verificações com <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_can()</code> retornam <strong>false</strong> e o middleware <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah.can</code> retorna HTTP 403.',
+    'guide_faq_q2' => 'Posso ter mais de um Role por usuário?',
+    'guide_faq_a2' => 'Sim! Um usuário pode ter múltiplos Roles, inclusive em empresas diferentes. Se qualquer um dos Roles do usuário tiver a permissão solicitada, o acesso é concedido.',
+    'guide_faq_q3' => 'O que é o Role MASTER e quando usar?',
+    'guide_faq_a3' => 'Um Role MASTER bypassa <strong>todas</strong> as verificações de permissão, concedendo acesso irrestrito. Use exclusivamente para superadministradores do sistema. Só pode existir 1 Role MASTER configurado.',
+    'guide_faq_q4' => 'Como funciona o escopo por empresa?',
+    'guide_faq_a4' => 'Ao vincular um usuário a um Role, você pode especificar uma Empresa. A verificação considera apenas os Roles válidos para a empresa atual do contexto. Vínculos com empresa <code class="font-mono text-xs bg-slate-100 px-1 rounded">NULL</code> são válidos globalmente.',
+    'guide_faq_q5' => 'As permissões são cacheadas?',
+    'guide_faq_a5' => 'Sim. O Ptah usa o cache do Laravel para evitar queries excessivas. O cache é invalidado automaticamente quando os vínculos de um usuário são alterados via interface. Você pode limpar com <code class="font-mono text-xs bg-slate-100 px-1 rounded">php artisan cache:clear</code>.',
+    'guide_faq_q6' => 'Posso criar Páginas e Objetos automaticamente via código?',
+    'guide_faq_a6' => 'Sim. Use o seeder ou crie registros em <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\Page</code> e <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\PageObject</code> diretamente. É útil para popular via migration ao fazer deploy.',
+    'guide_faq_q7' => 'O que acontece se eu excluir um Objeto que já tem permissões definidas?',
+    'guide_faq_a7' => 'As entradas da tabela de permissões associadas ao objeto são removidas em cascata. Os Roles que tinham aquele objeto perdem a permissão automaticamente. Usuários MASTER não são afetados (bypass).',
+    'guide_faq_q8' => 'Como auditar quem acessou o que?',
+    'guide_faq_a8' => 'Habilite <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env. Cada verificação (concedida ou negada) será registrada na tabela <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code>. Acesse o log em <a href=":audit_url" class="text-indigo-600 underline">Auditoria</a>.',
+    'guide_faq_help_title' => 'Precisa de mais ajuda?',
+    'guide_faq_help_body'  => 'Consulte a <strong>Visão Geral</strong> para entender a arquitetura, o <strong>Passo a Passo</strong> para configurar e os <strong>Exemplos de Código</strong> para integrar no seu projeto.',
+
     /*
     |--------------------------------------------------------------------------
     | Geral

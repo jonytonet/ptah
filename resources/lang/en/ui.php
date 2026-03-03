@@ -637,6 +637,138 @@ return [
     'guide_subtitle' => 'How the Ptah ACL works and how to configure access step by step.',
     'guide_badge'    => '\uD83D\uDCD6 Documentation',
 
+    // Tabs
+    'guide_tab_overview' => '🗺️ Overview',
+    'guide_tab_setup'    => '🔧 Step by Step',
+    'guide_tab_code'     => '💻 Code Examples',
+    'guide_tab_faq'      => '❓ FAQ',
+
+    // Overview — Intro
+    'guide_ov_title' => "What is Ptah's permission system?",
+    'guide_ov_body'  => 'The Ptah ACL (Access Control List) is an access control system based on <strong>Roles</strong>, inspired by the RBAC standard. It allows you to define <em>who can do what</em> in each part of the system, with granularity down to a button or individual field level.<br><br>Unlike Laravel\'s simple <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code>, Ptah ACL is <strong>dynamic and manageable via interface</strong> — no need to change code to add new permissions.',
+
+    // Overview — Architecture
+    'guide_ov_arch_title'  => 'Architecture — How concepts relate',
+    'guide_ov_dept_title'  => 'Departments',
+    'guide_ov_dept_desc'   => 'Optional logical grouping of Roles',
+    'guide_ov_dept_ex'     => 'ex: IT, Sales, Finance',
+    'guide_ov_roles_title' => 'Roles / Profiles',
+    'guide_ov_roles_desc'  => 'Carries permissions per object',
+    'guide_ov_roles_ex'    => 'ex: Admin, Seller, Support',
+    'guide_ov_pages_title' => 'Pages + Objects',
+    'guide_ov_pages_desc'  => 'What can be controlled',
+    'guide_ov_pages_ex'    => 'ex: /sales, "Export" button, "Discount" field',
+    'guide_ov_users_title' => 'Users',
+    'guide_ov_users_desc'  => 'Receive Roles per Company',
+    'guide_ov_users_ex'    => 'ex: John — Admin in Company A',
+    'guide_ov_co_title'    => 'Companies',
+    'guide_ov_co_desc'     => 'Binding scope (optional)',
+    'guide_ov_co_ex'       => 'ex: Multi-tenant or Global',
+
+    // Overview — Concepts
+    'guide_ov_concepts_title' => 'Core concepts',
+    'guide_con_role_title'    => 'Role (Profile)',
+    'guide_con_role_body'     => 'A Role is a set of permissions. Instead of giving permissions directly to the user, you create a Role with the permissions and assign the Role to the user.',
+    'guide_con_page_title'    => 'Page',
+    'guide_con_page_body'     => 'Represents a module or route in the system. Each Page contains <strong>Objects</strong> — individual elements whose access can be controlled (buttons, fields, links, actions).',
+    'guide_con_obj_title'     => 'Object + Permission',
+    'guide_con_obj_body'      => 'An Object is a granular element within a Page. Each object has 4 permission flags: <strong>Read, Create, Edit, Delete</strong>. A Role can have partial permission (read-only, for example).',
+    'guide_con_perms_read'    => 'Read',
+    'guide_con_perms_create'  => 'Create',
+    'guide_con_perms_edit'    => 'Edit',
+    'guide_con_perms_delete'  => 'Delete',
+    'guide_con_master_title'  => 'MASTER Role',
+    'guide_con_master_body'   => 'A Role marked as MASTER has unrestricted access to <strong>all resources</strong>, bypassing checks. Only 1 MASTER Role can exist. Use only for superadmins.',
+    'guide_con_master_warn'   => '⚠️ Use with care — bypasses all checks',
+    'guide_con_scope_title'   => 'Company Scope',
+    'guide_con_scope_body'    => 'A user can have different Roles in different companies. Example: John is Admin in Company A and only Reader in Company B. Set <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code> for global access.',
+    'guide_con_audit_title'   => 'Audit',
+    'guide_con_audit_body'    => 'When enabled, each permission check is logged with user, resource, action and result (granted/denied). Enable with <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code> in .env.',
+
+    // Overview — Flow
+    'guide_ov_flow_title' => 'Access verification flow',
+    'guide_flow_start'    => 'User tries to access resource',
+    'guide_flow_q1'       => '① Is user authenticated?',
+    'guide_flow_q2'       => '② Does any user Role have MASTER?',
+    'guide_flow_q3'       => '③ Does Role have permission (e.g.: can_read) for this object?',
+    'guide_flow_yes'      => 'Yes',
+    'guide_flow_no'       => 'No',
+    'guide_flow_granted'  => '✅ ACCESS GRANTED',
+    'guide_flow_denied'   => '🚫 ACCESS DENIED',
+    'guide_flow_login'    => '🚫 Redirect to login',
+
+    // Setup tab - Prerequisite
+    'guide_setup_prereq' => '<strong>Prerequisite:</strong> Run <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> to create the Ptah tables, and <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> to create the default company.',
+
+    // Setup — Step 1
+    'guide_s1_title'    => 'Register Departments <span class="text-slate-400 font-normal">(Optional)</span>',
+    'guide_s1_desc'     => 'Group your Roles into departments for better organization.',
+    'guide_s1_btn'      => 'Go to Departments →',
+    'guide_s1_body'     => 'Departments are optional logical groupings for your Roles. Useful when the system has many profiles.',
+    'guide_s1_example'  => 'Example',
+    'guide_s1_ex_it'    => 'Department <strong>IT</strong> → Roles: Developer, DevOps, IT Support',
+    'guide_s1_ex_sales' => 'Department <strong>Sales</strong> → Roles: Seller, Sales Manager, SDR',
+    'guide_s1_ex_fin'   => 'Department <strong>Finance</strong> → Roles: Financial Analyst, Controller',
+
+    // Setup — Step 2
+    'guide_s2_title'      => 'Register Pages and Objects',
+    'guide_s2_desc'       => 'Register the system modules and what can be controlled in them.',
+    'guide_s2_btn'        => 'Go to Pages →',
+    'guide_s2_body'       => 'A <strong>Page</strong> represents a module or section of the system (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.sales</code>). Each page can have multiple <strong>Objects</strong> — representing granular elements such as buttons, fields or actions.',
+    'guide_s2_page_title' => '📄 Page Example',
+    'guide_s2_page_slug'  => 'Slug',
+    'guide_s2_page_name'  => 'Name',
+    'guide_s2_page_icon'  => 'Icon',
+    'guide_s2_obj_title'  => '🔑 Objects of this Page',
+
+    // Setup — Step 3
+    'guide_s3_title'      => 'Create Roles and define permissions',
+    'guide_s3_desc'       => 'Create access profiles and configure which objects each profile can access.',
+    'guide_s3_btn'        => 'Go to Roles →',
+    'guide_s3_body'       => 'Create a Role with name and color. Then click <strong>🔑 Permissions</strong> to define which objects this Role can <em>Read, Create, Edit and Delete</em>.',
+    'guide_s3_ex_title'   => 'Example: Role "Standard Seller"',
+    'guide_s3_col_obj'    => 'Object',
+    'guide_s3_col_read'   => 'Read',
+    'guide_s3_col_create' => 'Create',
+    'guide_s3_col_edit'   => 'Edit',
+    'guide_s3_col_delete' => 'Delete',
+    'guide_s3_note'       => '↑ Seller can create orders but cannot see discounts and cannot export without restriction.',
+
+    // Setup — Step 4
+    'guide_s4_title'    => 'Link users to Roles',
+    'guide_s4_desc'     => 'Assign one or more Roles to each user, with company scope.',
+    'guide_s4_btn'      => 'Go to Users →',
+    'guide_s4_body'     => 'On the Access Control screen, click <strong>🔑 Manage Access</strong> next to the user. Select a Role and a Company (or "Global" for scope-free access).',
+    'guide_s4_ex_title' => 'Example: User <span class="text-indigo-600">John Silva</span>',
+    'guide_s4_ex1'      => 'Role <strong class="text-purple-700">Admin</strong> at company <strong>Company A Ltda</strong> <span class="text-slate-400">→ full access in Company A</span>',
+    'guide_s4_ex2'      => 'Role <strong class="text-blue-700">Reader</strong> at company <strong>Company B SA</strong> <span class="text-slate-400">→ read-only in Company B</span>',
+
+    // Setup — Step 5
+    'guide_s5_title' => 'Use permissions in code',
+    'guide_s5_desc'  => 'See the "Code Examples" tab for full details.',
+    'guide_s5_btn'   => 'See examples →',
+    'guide_s5_body'  => 'Use the helper <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah_can(\'object.key\', \'read\')</code> in Blade views or the middleware <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah.can:object.key,read</code> in routes to protect access.',
+
+    // FAQ items
+    'guide_faq_q1' => 'What happens if the user has no Role?',
+    'guide_faq_a1' => 'Without any Role, the user will not have access to any controlled object. Checks with <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_can()</code> return <strong>false</strong> and the middleware <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah.can</code> returns HTTP 403.',
+    'guide_faq_q2' => 'Can a user have more than one Role?',
+    'guide_faq_a2' => 'Yes! A user can have multiple Roles, including in different companies. If any of the user\'s Roles has the requested permission, access is granted.',
+    'guide_faq_q3' => 'What is the MASTER Role and when should I use it?',
+    'guide_faq_a3' => 'A MASTER Role bypasses <strong>all</strong> permission checks, granting unrestricted access. Use exclusively for system superadmins. Only 1 MASTER Role can be configured.',
+    'guide_faq_q4' => 'How does company scope work?',
+    'guide_faq_a4' => 'When linking a user to a Role, you can specify a Company. The check considers only the Roles valid for the current company context. Links with company <code class="font-mono text-xs bg-slate-100 px-1 rounded">NULL</code> are valid globally.',
+    'guide_faq_q5' => 'Are permissions cached?',
+    'guide_faq_a5' => 'Yes. Ptah uses Laravel\'s cache to avoid excessive queries. The cache is automatically invalidated when a user\'s links are changed via the interface. You can clear it with <code class="font-mono text-xs bg-slate-100 px-1 rounded">php artisan cache:clear</code>.',
+    'guide_faq_q6' => 'Can I create Pages and Objects automatically via code?',
+    'guide_faq_a6' => 'Yes. Use the seeder or create records in <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\Page</code> and <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\PageObject</code> directly. Useful for populating via migration on deploy.',
+    'guide_faq_q7' => 'What happens if I delete an Object that already has defined permissions?',
+    'guide_faq_a7' => 'The permission table entries associated with the object are cascade-removed. Roles that had that object lose permission automatically. MASTER users are not affected (bypass).',
+    'guide_faq_q8' => 'How to audit who accessed what?',
+    'guide_faq_a8' => 'Enable <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> in .env. Each check (granted or denied) will be logged in the <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code> table. Access the log at <a href=":audit_url" class="text-indigo-600 underline">Audit</a>.',
+    'guide_faq_help_title' => 'Need more help?',
+    'guide_faq_help_body'  => 'Check the <strong>Overview</strong> to understand the architecture, the <strong>Step by Step</strong> to configure, and the <strong>Code Examples</strong> to integrate into your project.',
+
     /*
     |--------------------------------------------------------------------------
     | General
