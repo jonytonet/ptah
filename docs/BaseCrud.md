@@ -379,7 +379,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | Chave | Tipo | Descrição |
 |---|---|---|
 | `colsNomeFisico` | `string` | Nome real do campo na tabela |
-| `colsNomeLogico` | `string` | Rótulo exibido ao usuário |
+| `colsNomeLogico` | `string` | Rótulo exibido ao usuário. Para os campos `id`, `created_at` e `updated_at` o padrão é localizado automaticamente via `trans('ptah::ui.col_id')` etc. — use o modificador `surname=`/`label=` no `ptah:forge` para sobrescrever |
 | `colsTipo` | `string` | Tipo da coluna — veja [Tipos de Coluna](#tipos-de-coluna) |
 | `colsGravar` | `'S'\|'N'` | Campo incluído ao salvar |
 | `colsRequired` | `'S'\|'N'` | Obrigatório no formulário |

@@ -78,6 +78,7 @@ O pacote é dividido em três subsistemas complementares:
   - [Módulo API — visão rápida](#módulo-api--visão-rápida)
 - [Configuração](#-configuração)
 - [Customizando Stubs](#-customizando-stubs)
+- [Internacionalização (i18n)](#-internacionalização-i18n)
 - [Testes](#-testes)
 - [Laravel Boost — Integração com IA](#-laravel-boost--integração-com-ia)
 - [Desenvolvimento com IA](#-desenvolvimento-com-ia)
@@ -140,6 +141,9 @@ php artisan vendor:publish --tag=ptah-stubs
 
 # Migrations
 php artisan vendor:publish --tag=ptah-migrations
+
+# Traduções da UI (para customizar ou adicionar novos idiomas)
+php artisan vendor:publish --tag=ptah-lang
 ```
 
 ---
@@ -2147,6 +2151,9 @@ Arquivo `config/ptah.php` após `ptah:install`:
 
 ```php
 return [
+    // Idioma da interface (en | pt_BR). Pode ser definido via .env: PTAH_LOCALE=pt_BR
+    'locale' => env('PTAH_LOCALE', 'en'),
+
     // Caminhos onde os artefatos gerados serão criados
     'paths' => [
         'models'       => app_path('Models'),
@@ -2239,6 +2246,65 @@ Após publicar com `ptah:install` ou `vendor:publish --tag=ptah-stubs`, os stubs
 | `view.create.stub` | View de criação |
 | `view.edit.stub` | View de edição |
 | `view.show.stub` | View de detalhes |
+
+---
+
+## 🌐 Internacionalização (i18n)
+
+O Ptah suporta **inglês** (padrão) e **português do Brasil** na interface do BaseCrud. O idioma é controlado pela chave `PTAH_LOCALE` no `.env`.
+
+### Configurar o idioma
+
+```env
+# .env
+PTAH_LOCALE=pt_BR   # interface em português (padrão para projetos brasileiros)
+PTAH_LOCALE=en      # interface em inglês (padrão do pacote)
+```
+
+Sem a variável definida, o pacote usa `en`.
+
+### Textos cobertos pela localização
+
+| Área | Exemplos |
+|---|---|
+| Toolbar | Novo, Buscar…, Filtros, Exportar, Colunas, Atualizar, Limpar filtros |
+| Painel de filtros | Filtros, Atalhos de data, De / Até, Todos, Contém / Igual / Diferente / Começa com / Termina com |
+| Atalhos de data | Hoje, Ontem, Últimos 7 dias, Últimos 30 dias, Esta semana, Este mês, Último mês, Trimestre, Ano |
+| Tabela | Editar, Restaurar, Excluir, Sem registros encontrados |
+| Paginação | Exibindo 1–25 de 100 registros |
+| Modal | Editar / Novo, Cancelar, Salvar Alterações, Criar |
+| Modal de deleção | Confirmar Exclusão, Cancelar, Excluir |
+| Formatação | Prefixo de moeda (`R$` em pt_BR, `$` em en), separadores decimal e de milhar |
+| Labels automáticos | ID, Criado em, Atualizado em (via `trans('ptah::ui.col_id')` etc.) |
+| Booleanos | Sim / Não — usados em filtros de select |
+
+### Customizando traduções
+
+Publique os arquivos de tradução e edite conforme necessário:
+
+```bash
+php artisan vendor:publish --tag=ptah-lang
+```
+
+Os arquivos ficam em `lang/vendor/ptah/` do seu projeto:
+
+```
+lang/vendor/ptah/
+├── en/
+│   └── ui.php
+└── pt_BR/
+    └── ui.php
+```
+
+O Ptah sempre prioriza os arquivos publicados sobre os originais do pacote.
+
+### Adicionando um novo idioma
+
+1. Publique as traduções: `vendor:publish --tag=ptah-lang`
+2. Crie `lang/vendor/ptah/es/ui.php` com as 58 chaves traduzidas
+3. Configure `.env`: `PTAH_LOCALE=es`
+
+> **`surname=` / `label=` sempre prevalece** — rótulos definidos explicitamente via modificador `surname=` (ou `label=`) no `ptah:forge` nunca são sobrescritos pela tradução automática.
 
 ### Variáveis disponíveis nos stubs
 

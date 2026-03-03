@@ -30,6 +30,7 @@ Pacote:    jonytonet/ptah
 Laravel:   12.x  |  PHP 8.3  |  Livewire 3  |  Tailwind v4  |  Alpine.js 3
 Ícones:    Boxicons 2.1.4 + FontAwesome 6.7.2 (via CDN — nunca SVG inline)
 Dark mode: classe `.ptah-dark` no elemento raiz — CSS centralizado no forge-dashboard-layout
+Locale:    PTAH_LOCALE=en (padrão) | pt_BR — textos da UI via `__('ptah::ui.*')`
 Testes:    Orchestra Testbench + PHPUnit 11 + SQLite :memory:
 ```
 
@@ -308,6 +309,7 @@ Em sessões que envolvem muitos arquivos, resuma o estado atual ao agente:
 | Ignorar soft delete na unicidade | Lembre: `Rule::unique()->ignore($id)` e verificar `withTrashed()` quando necessário |
 | Agente gera bind manual no TestCase | "O `PtahServiceProvider` já registra todos os binds automaticamente" |
 | Commit sem mensagem semântica | Padrão: `feat:` / `fix:` / `docs:` / `refactor:` / `test:` |
+| Texto de UI hardcoded em português | "Textos da UI ficam em `__('ptah::ui.KEY')` — nunca hardcode strings visuas ao usuário" |
 
 ---
 
