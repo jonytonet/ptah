@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Ptah\Traits\HasAuditFields;
 
 class Menu extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasAuditFields;
 
     public $table = 'menus';
 
@@ -25,12 +26,18 @@ class Menu extends Model
         'target',
         'link_order',
         'is_active',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
         'is_active'  => 'boolean',
         'link_order' => 'integer',
         'parent_id'  => 'integer',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'deleted_by' => 'integer',
     ];
 
     // ── Relacionamentos ────────────────────────────────────────────────

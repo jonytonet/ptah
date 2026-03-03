@@ -624,6 +624,7 @@ O módulo **company** adiciona gestão completa de empresas e departamentos ao P
 - `CompanyService` com contexto por sessão, cache e suporte multi-empresa
 - Tela `/ptah-companies` com Livewire 3
 - `DefaultCompanySeeder` idempotente
+- Todos os models (`Company`, `Department`) usam a trait `HasAuditFields` — `created_by`, `updated_by` e `deleted_by` preenchidos automaticamente via Eloquent events
 
 **Ativação rápida:**
 
@@ -652,6 +653,7 @@ O módulo **permissions** implementa ACL hierárquica granular baseada em roles.
 - Middleware: `ptah.can:objeto,acao`
 - 5 telas admin Livewire: Departamentos, Roles, Páginas/Objetos, Usuários ACL, Auditoria
 - `DefaultAdminSeeder` idempotente que cria toda a cadeia admin
+- Todos os models (`Role`, `PtahPage`, `PageObject`, `UserRole`, `RolePermission`) usam a trait `HasAuditFields` — rastreamento automático de quem criou, editou e excluiu cada registro
 
 **Ativação rápida:**
 

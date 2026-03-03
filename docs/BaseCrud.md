@@ -66,6 +66,7 @@
 - **Ícones em colunas** (cabeçalho + célula) via Boxicons, FontAwesome ou Heroicons
 - **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
 - **JOINs configuráveis** (LEFT / INNER) declarados no CrudConfig — sem Eloquent, com suporte completo a filtro, sort e export
+- **Auditoria automática** de `created_by` / `updated_by` / `deleted_by` via trait `HasAuditFields` — preenchida automaticamente nos eventos Eloquent; `save()` e `deleteRecord()` injetam os valores explicitamente como camada adicional; `bulkDelete()` usa `->each()` para garantir que os eventos disparem em cada registro
 
 ---
 

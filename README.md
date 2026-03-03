@@ -43,6 +43,7 @@ O pacote é dividido em três subsistemas complementares:
   - [Modo API](#modo-api)
   - [Arquivos gerados](#arquivos-gerados)
   - [Próximos passos pós-geração](#próximos-passos-pós-geração)
+  - [HasAuditFields — Auditoria Automática](#hasauditfields--auditoria-automática)
 - [Arquitetura das camadas](#-arquitetura-das-camadas)
 - [Arquitetura SOLID dos Geradores](#-arquitetura-solid-dos-geradores)
 - [Sistema de UserPreferences](#-sistema-de-userpreferences)
@@ -843,6 +844,45 @@ Proximos passos:
    php artisan tinker
    >>> \Ptah\Models\CrudConfig::where('model', 'Product')->first()->config
 ```
+
+---
+
+### HasAuditFields — Auditoria Automática
+
+Todo model gerado pelo `ptah:forge` inclui automaticamente a trait `Ptah\Traits\HasAuditFields` e as respectivas colunas na migration.
+
+**Colunas incluídas em toda migration:**
+
+| Coluna | Tipo | Preenchida quando |
+|---|---|---|
+| `created_by` | `unsignedBigInteger` nullable | Evento Eloquent `creating` |
+| `updated_by` | `unsignedBigInteger` nullable | Eventos `creating` e `updating` |
+| `deleted_by` | `unsignedBigInteger` nullable | Evento `deleted` (somente se `--soft-delete`) |
+
+**Comportamento da trait:**
+
+- `created_by` é preenchido apenas uma vez (`=== null`) — nunca sobrescreve um valor existente
+- `updated_by` é sempre atualizado a cada `save()`
+- `deleted_by` é preenchido via SQL direto no evento `deleted` (após o soft-delete ser confirmado), evitando estado inconsistente caso a exclusão falhe
+- Campos ignorados silenciosamente se não estiverem no `$fillable` do model
+- Usuário resolvido via `Auth::id()` — funciona em qualquer guard configurado
+
+**Relacionamentos disponíveis:**
+
+```php
+$record->createdBy  // BelongsTo → User
+$record->updatedBy  // BelongsTo → User
+$record->deletedBy  // BelongsTo → User
+```
+
+O model User é resolvido a partir de `config('auth.providers.users.model')`, respeitando qualquer customização do projeto.
+
+**BaseCrud também injeta os campos explicitamente** em `save()` e `deleteRecord()` como camada adicional de segurança (belt-and-suspenders). `bulkDelete()` chama `->delete()` em cada registro individualmente para garantir que os eventos Eloquent disparem.
+
+> **Nota:** projetos existentes que atualizem o pacote devem executar a migration
+> `2024_01_05_000000_add_audit_fields_to_ptah_tables.php`, que adiciona
+> as colunas de auditoria às tabelas internas do Ptah de forma idempotente
+> (verificação via `hasColumn()` antes de cada `ALTER TABLE`).
 
 ---
 

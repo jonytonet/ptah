@@ -32,6 +32,9 @@ Laravel:   12.x  |  PHP 8.3  |  Livewire 3  |  Tailwind v4  |  Alpine.js 3
 Dark mode: classe `.ptah-dark` no elemento raiz — CSS centralizado no forge-dashboard-layout
 Locale:    PTAH_LOCALE=en (padrão) | pt_BR — textos da UI via `__('ptah::ui.*')`
 Testes:    Orchestra Testbench + PHPUnit 11 + SQLite :memory:
+Auditoria: HasAuditFields trait (Ptah\Traits\HasAuditFields) — todo model gerado inclui
+           created_by/updated_by/deleted_by preenchidos automaticamente via Eloquent events;
+           BaseCrud injeta explicitamente em save()/deleteRecord(); bulkDelete() usa each()
 ```
 
 > **Dica:** execute `php artisan ptah:install --boost` para instalar o [Laravel Boost](https://laravel.com/docs/12.x/boost)
@@ -319,6 +322,8 @@ Em sessões que envolvem muitos arquivos, resuma o estado atual ao agente:
 | Agente gera bind manual no TestCase | "O `PtahServiceProvider` já registra todos os binds automaticamente" |
 | Commit sem mensagem semântica | Padrão: `feat:` / `fix:` / `docs:` / `refactor:` / `test:` |
 | Texto de UI hardcoded em português | "Textos da UI ficam em `__('ptah::ui.KEY')` — nunca hardcode strings visuas ao usuário" |
+| Preencher `created_by`/`updated_by` manualmente | Nunca preencha esses campos no service/controller/Livewire — a trait `HasAuditFields` e o `BaseCrud` fazem isso automaticamente via Eloquent events |
+| Usar `->whereIn()->delete()` no bulk | Isso bypassa os eventos Eloquent — use `->each(fn($r) => $r->delete())` para que `HasAuditFields` dispare `deleted_by` em cada registro |
 
 ---
 

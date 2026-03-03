@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Ptah\Traits\HasAuditFields;
 
 /**
  * @property int         $id
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PageObject extends Model
 {
+    use HasAuditFields;
     protected $table = 'ptah_page_objects';
 
     /** Tipos de objeto disponíveis */
@@ -34,11 +36,15 @@ class PageObject extends Model
         'obj_type',
         'obj_order',
         'is_active',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'obj_order' => 'integer',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
     ];
 
     // ─────────────────────────────────────────

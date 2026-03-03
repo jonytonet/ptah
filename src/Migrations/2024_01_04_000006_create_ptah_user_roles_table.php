@@ -23,6 +23,8 @@ return new class extends Migration
             $table->unsignedBigInteger('company_id')->nullable()->index();
             $table->boolean('is_active')->default(true)->index();
             $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->unsignedBigInteger('deleted_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

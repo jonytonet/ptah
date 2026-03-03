@@ -25,6 +25,8 @@ return new class extends Migration
                   ->default('button');
             $table->integer('obj_order')->default(0);
             $table->boolean('is_active')->default(true)->index();
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
 
             // Garante que obj_key seja único por página (pode repetir entre páginas diferentes)

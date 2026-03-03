@@ -630,11 +630,24 @@ class BaseCrud extends Component
 
         try {
             $modelInstance = $this->resolveEloquentModel();
+            $fillable      = $modelInstance->getFillable();
+            $userId        = Auth::id();
 
             if ($this->editingId) {
                 $record = $modelInstance->newQuery()->findOrFail($this->editingId);
+                // Registra quem atualizou
+                if ($userId && in_array('updated_by', $fillable, true)) {
+                    $data['updated_by'] = $userId;
+                }
                 $record->update($data);
             } else {
+                // Registra quem criou
+                if ($userId && in_array('created_by', $fillable, true)) {
+                    $data['created_by'] = $userId;
+                }
+                if ($userId && in_array('updated_by', $fillable, true)) {
+                    $data['updated_by'] = $userId;
+                }
                 $modelInstance->newQuery()->create($data);
             }
 
@@ -674,6 +687,12 @@ class BaseCrud extends Component
         $record        = $modelInstance->newQuery()->find($this->deletingId);
 
         if ($record) {
+            // Registra quem deletou (SoftDelete)
+            $fillable = $record->getFillable();
+            if (Auth::id() && in_array('deleted_by', $fillable, true) && method_exists($record, 'getDeletedAtColumn')) {
+                $record->deleted_by = Auth::id();
+                $record->saveQuietly();
+            }
             $record->delete();
             $this->cacheService->invalidateModel($this->model);
             $this->updateTrashedCount();
@@ -1280,7 +1299,11 @@ class BaseCrud extends Component
         $modelInstance = $this->resolveEloquentModel();
 
         if ($modelInstance) {
-            $modelInstance->newQuery()->whereIn('id', $this->selectedRows)->delete();
+            // Usa each() + delete() individualmente para disparar os eventos Eloquent
+            // e o HasAuditFields trait registrar deleted_by em cada registro.
+            $modelInstance->newQuery()->whereIn('id', $this->selectedRows)->each(
+                fn ($record) => $record->delete()
+            );
             $this->cacheService->invalidateModel($this->model);
             $this->updateTrashedCount();
         }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Ptah\Traits\HasAuditFields;
 
 /**
  * @property int         $id
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
  */
 class Company extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasAuditFields;
 
     protected $table = 'ptah_companies';
 
@@ -54,6 +55,9 @@ class Company extends Model
         'settings'   => 'array',
         'is_default' => 'boolean',
         'is_active'  => 'boolean',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'deleted_by' => 'integer',
     ];
 
     // ─────────────────────────────────────────

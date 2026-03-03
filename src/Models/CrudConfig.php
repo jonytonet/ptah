@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Ptah\Traits\HasAuditFields;
 
 /**
  * Model para configurações do BaseCrud.
@@ -18,12 +19,16 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CrudConfig extends Model
 {
+    use HasAuditFields;
+
     protected $table = 'crud_configs';
 
-    protected $fillable = ['model', 'config'];
+    protected $fillable = ['model', 'config', 'created_by', 'updated_by'];
 
     protected $casts = [
-        'config' => 'array',
+        'config'     => 'array',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
     ];
 
     // ── Accessors para sub-seções do config ────────────────────────────────

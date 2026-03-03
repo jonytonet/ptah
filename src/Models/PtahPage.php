@@ -7,6 +7,7 @@ namespace Ptah\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Ptah\Traits\HasAuditFields;
 
 /**
  * Usa "PtahPage" para evitar conflito com classes \Page de outros pacotes.
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PtahPage extends Model
 {
+    use HasAuditFields;
     protected $table = 'ptah_pages';
 
     protected $fillable = [
@@ -32,11 +34,15 @@ class PtahPage extends Model
         'icon',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
         'is_active'  => 'boolean',
         'sort_order' => 'integer',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
     ];
 
     // ─────────────────────────────────────────

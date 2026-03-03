@@ -14,6 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('model')->unique()->comment('Nome da entidade, ex: Product ou Purchase/Order/PurchaseOrders');
             $table->json('config')->comment('Configuração completa do BaseCrud em JSON');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
 
             $table->index('model');

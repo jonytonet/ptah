@@ -90,14 +90,19 @@ readonly class EntityContext
      */
     public function fillableList(): string
     {
-        if (empty($this->fields)) {
-            return "// Adicione os campos aqui";
+        $base = empty($this->fields)
+            ? ['// Adicione os campos aqui']
+            : array_map(fn(FieldDefinition $f) => "'{$f->name}'", $this->fields);
+
+        // Campos de auditoria — preenchidos automaticamente pelo HasAuditFields trait
+        $base[] = "'created_by'";
+        $base[] = "'updated_by'";
+
+        if ($this->withSoftDeletes) {
+            $base[] = "'deleted_by'";
         }
 
-        return implode(",\n        ", array_map(
-            fn(FieldDefinition $f) => "'{$f->name}'",
-            $this->fields
-        ));
+        return implode(",\n        ", $base);
     }
 
     /**
@@ -106,14 +111,19 @@ readonly class EntityContext
      */
     public function castsList(): string
     {
-        if (empty($this->fields)) {
-            return "// 'campo' => 'tipo',";
+        $base = empty($this->fields)
+            ? ['// \'campo\' => \'tipo\',']
+            : array_map(fn(FieldDefinition $f) => "'{$f->name}' => '{$f->castType()}',", $this->fields);
+
+        // Casts dos campos de auditoria
+        $base[] = "'created_by' => 'integer',";
+        $base[] = "'updated_by' => 'integer',";
+
+        if ($this->withSoftDeletes) {
+            $base[] = "'deleted_by' => 'integer',";
         }
 
-        return implode("\n        ", array_map(
-            fn(FieldDefinition $f) => "'{$f->name}' => '{$f->castType()}',",
-            $this->fields
-        ));
+        return implode("\n        ", $base);
     }
 
     /**
@@ -264,6 +274,13 @@ readonly class EntityContext
 
         foreach ($this->fields as $field) {
             $lines[] = "            '{$field->name}' => \$this->{$field->name},";
+        }
+
+        $lines[] = "            'created_by' => \$this->created_by,";
+        $lines[] = "            'updated_by' => \$this->updated_by,";
+
+        if ($this->withSoftDeletes) {
+            $lines[] = "            'deleted_by' => \$this->deleted_by,";
         }
 
         $lines[] = "            'created_at' => \$this->created_at,";

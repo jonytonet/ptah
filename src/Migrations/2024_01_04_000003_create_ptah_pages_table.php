@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('icon')->nullable();
             $table->boolean('is_active')->default(true)->index();
             $table->integer('sort_order')->default(0);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             // Sem softDeletes: páginas são registros de sistema, nunca "deletadas"
         });

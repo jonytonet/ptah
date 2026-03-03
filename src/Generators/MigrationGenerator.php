@@ -31,12 +31,21 @@ class MigrationGenerator extends AbstractGenerator
         $filename = "{$context->timestamp}_create_{$context->table}_table.php";
         $path     = database_path("migrations/{$filename}");
 
+        // Colunas de auditoria: created_by / updated_by sempre; deleted_by só com softDeletes
+        $auditCols  = "            \$table->unsignedBigInteger('created_by')->nullable()->index();\n";
+        $auditCols .= "            \$table->unsignedBigInteger('updated_by')->nullable()->index();\n";
+
+        if ($context->withSoftDeletes) {
+            $auditCols .= "            \$table->unsignedBigInteger('deleted_by')->nullable()->index();\n";
+        }
+
         return $this->writeFile(
             path: $path,
             stub: 'migration',
             replacements: [
-                'table'   => $context->table,
-                'columns' => $context->migrationColumns(),
+                'table'         => $context->table,
+                'columns'       => $context->migrationColumns(),
+                'audit_columns' => $auditCols,
             ],
             force: $context->force,
             labelOverride: $label,

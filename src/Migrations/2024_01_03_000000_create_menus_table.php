@@ -20,6 +20,9 @@ return new class extends Migration
             $table->enum('target', ['_self', '_blank'])->default('_self');
             $table->unsignedSmallInteger('link_order')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->unsignedBigInteger('deleted_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

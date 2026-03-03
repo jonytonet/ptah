@@ -7,6 +7,7 @@ namespace Ptah\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Ptah\Traits\HasAuditFields;
 
 /**
  * @property int        $id
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class RolePermission extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasAuditFields;
 
     protected $table = 'ptah_role_permissions';
 
@@ -34,6 +35,7 @@ class RolePermission extends Model
         'extra',
         'created_by',
         'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
@@ -42,6 +44,9 @@ class RolePermission extends Model
         'can_update' => 'boolean',
         'can_delete' => 'boolean',
         'extra'      => 'array',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'deleted_by' => 'integer',
     ];
 
     // ─────────────────────────────────────────
