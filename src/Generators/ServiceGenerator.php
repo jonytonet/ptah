@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o Service da entidade.
+ * Generates the Service for the entity.
  *
  * Stub: service.stub
  * Placeholders: namespace, entity, rootNamespace

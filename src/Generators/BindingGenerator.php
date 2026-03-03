@@ -7,13 +7,13 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Injeta automaticamente o binding Interface→Concrete no AppServiceProvider.
+ * Automatically injects the Interface→Concrete binding into AppServiceProvider.
  *
- * Comportamento:
- *  - Encontra app/Providers/AppServiceProvider.php
- *  - Adiciona os `use` imports se ainda não existirem
- *  - Insere `$this->app->bind(...)` dentro de register()
- *  - Idempotente: pula se o binding já existir
+ * Behaviour:
+ *  - Locates app/Providers/AppServiceProvider.php
+ *  - Adds `use` imports if they do not already exist
+ *  - Inserts `$this->app->bind(...)` inside register()
+ *  - Idempotent: skips if the binding already exists
  */
 class BindingGenerator extends AbstractGenerator
 {
@@ -23,7 +23,7 @@ class BindingGenerator extends AbstractGenerator
         $label        = 'Binding [AppServiceProvider]';
 
         if (! $this->files->exists($providerPath)) {
-            return GeneratorResult::error($label, $providerPath, 'AppServiceProvider.php não encontrado.');
+            return GeneratorResult::error($label, $providerPath, 'AppServiceProvider.php not found.');
         }
 
         $content    = $this->files->get($providerPath);
@@ -32,12 +32,12 @@ class BindingGenerator extends AbstractGenerator
         $interface  = $context->subNs("{$ns}\\Repositories\\Contracts") . "\\{$entity}RepositoryInterface";
         $repository = $context->subNs("{$ns}\\Repositories") . "\\{$entity}Repository";
 
-        // Idempotente — já vinculado?
+        // Idempotent — already bound?
         if (str_contains($content, "{$entity}RepositoryInterface::class")) {
             return GeneratorResult::skipped($label, $providerPath);
         }
 
-        // 1. Adiciona imports
+        // 1. Add imports
         $useInterface  = "use {$interface};";
         $useRepository = "use {$repository};";
 
@@ -48,7 +48,7 @@ class BindingGenerator extends AbstractGenerator
             $content = $this->addUseImport($content, $useRepository);
         }
 
-        // 2. Injeta o bind() dentro de register()
+        // 2. Inject bind() inside register()
         $binding = "\$this->app->bind({$entity}RepositoryInterface::class, {$entity}Repository::class);";
         $content = $this->injectIntoRegister($content, $binding);
 
@@ -65,11 +65,11 @@ class BindingGenerator extends AbstractGenerator
     // ── Helpers ────────────────────────────────────────────────────────────
 
     /**
-     * Insere um `use` statement após o último `use` existente (ou após namespace).
+     * Inserts a `use` statement after the last existing `use` (or after namespace).
      */
     private function addUseImport(string $content, string $useStatement): string
     {
-        // Procura todos os `use` statements existentes
+        // Search all existing `use` statements
         if (preg_match_all('/^use\s+[^;]+;/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
             $last      = end($matches[0]);
             $insertPos = $last[1] + strlen($last[0]);
@@ -77,7 +77,7 @@ class BindingGenerator extends AbstractGenerator
             return substr($content, 0, $insertPos) . "\n" . $useStatement . substr($content, $insertPos);
         }
 
-        // Sem `use` — insere após a declaração de namespace
+        // No `use` found — insert after namespace declaration
         if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE)) {
             $insertPos = $m[0][1] + strlen($m[0][0]);
 
@@ -88,22 +88,22 @@ class BindingGenerator extends AbstractGenerator
     }
 
     /**
-     * Injeta uma linha dentro do corpo de register(), substituindo o comentário
-     * placeholder ou anexando antes do fechamento da função.
+     * Injects a line into the body of register(), replacing the placeholder
+     * comment or appending before the closing brace.
      */
     private function injectIntoRegister(string $content, string $binding): string
     {
-        // Encontra a abertura de register()
+        // Find the opening of register()
         $pattern = '/(public\s+function\s+register\s*\(\s*\)\s*(?::\s*void\s*)?\{)/';
 
         if (! preg_match($pattern, $content, $matches, PREG_OFFSET_CAPTURE)) {
-            // Sem register() — não altera
+            // No register() found — return unchanged
             return $content;
         }
 
         $openPos = $matches[0][1] + strlen($matches[0][0]);
 
-        // Encontra a chave de fechamento correspondente
+        // Find the matching closing brace
         $depth  = 1;
         $pos    = $openPos;
         $length = strlen($content);
@@ -118,7 +118,7 @@ class BindingGenerator extends AbstractGenerator
             $pos++;
         }
 
-        $closePos = $pos - 1; // posição do '}'
+        $closePos = $pos - 1; // position of '}'
         $inner    = substr($content, $openPos, $closePos - $openPos);
 
         // Remove o placeholder `//` mas preserva conteúdo real

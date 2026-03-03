@@ -9,21 +9,21 @@ use Ptah\Generators\Contracts\GeneratorInterface;
 use Ptah\Support\EntityContext;
 
 /**
- * Classe base para todos os geradores.
+ * Base class for all generators.
  *
- * Fornece:
- *  - writeFile()    → escreve o arquivo com verificação de sobrescrita
- *  - resolveStub()  → prioriza stubs publicados em stubs/ptah/ sobre os do pacote
- *  - replaceVars()  → substitui {{ variavel }} no conteúdo do stub
- *  - shouldRun()    → padrão: sempre roda (sobrescreva quando necessário)
+ * Provides:
+ *  - writeFile()    → writes the file with overwrite check
+ *  - resolveStub()  → prefers stubs published in stubs/ptah/ over package stubs
+ *  - replaceVars()  → replaces {{ variable }} placeholders in stub content
+ *  - shouldRun()    → default: always runs (override when conditions are needed)
  */
 abstract class AbstractGenerator implements GeneratorInterface
 {
     public function __construct(protected Filesystem $files) {}
 
     /**
-     * Por padrão, todos os geradores são executados.
-     * Sobrescreva para implementar condições (ex: só roda sem --api).
+     * All generators run by default.
+     * Override to add conditions (e.g. only run without --api).
      */
     public function shouldRun(EntityContext $context): bool
     {
@@ -33,7 +33,7 @@ abstract class AbstractGenerator implements GeneratorInterface
     // ── Helpers protegidos ─────────────────────────────────────────────────
 
     /**
-     * Cria o diretório e escreve o arquivo gerado a partir de um stub.
+     * Creates the directory and writes the file generated from a stub.
      *
      * @param array<string, string> $replacements
      */
@@ -68,14 +68,14 @@ abstract class AbstractGenerator implements GeneratorInterface
     }
 
     /**
-     * Retorna o label exibido no terminal.
-     * Cada subclasse deve definir seu label.
+     * Returns the label displayed in the terminal.
+     * Each subclass must define its own label.
      */
     abstract protected function label(): string;
 
     /**
-     * Resolve o conteúdo de um stub.
-     * Prioriza stubs publicados em stubs/ptah/ (customizados pelo usuário).
+     * Resolves the content of a stub file.
+     * Prefers stubs published in stubs/ptah/ (customised by the user).
      */
     protected function resolveStub(string $stub): string
     {
@@ -88,14 +88,14 @@ abstract class AbstractGenerator implements GeneratorInterface
         $package = __DIR__ . "/../Stubs/{$stub}.stub";
 
         if (! $this->files->exists($package)) {
-            throw new \RuntimeException("Stub [{$stub}.stub] não encontrado.");
+            throw new \RuntimeException("Stub [{$stub}.stub] not found.");
         }
 
         return $this->files->get($package);
     }
 
     /**
-     * Substitui todos os placeholders {{ variavel }} no conteúdo do stub.
+     * Replaces all {{ variable }} placeholders in stub content.
      *
      * @param array<string, string> $replacements
      */

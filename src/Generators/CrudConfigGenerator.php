@@ -10,12 +10,12 @@ use Ptah\Support\EntityContext;
 use Ptah\Support\FieldDefinition;
 
 /**
- * Gerador de CrudConfig.
+ * CrudConfig generator.
  *
- * Cria (ou atualiza) a linha na tabela `crud_configs` com toda a configuração
- * padrão do BaseCrud para a entidade scaffolded.
+ * Creates (or updates) the row in the `crud_configs` table with the full
+ * default BaseCrud configuration for the scaffolded entity.
  *
- * Não usa stubs — persiste diretamente no banco via CrudConfigService.
+ * Does not use stubs — persists directly to the database via CrudConfigService.
  */
 class CrudConfigGenerator extends AbstractGenerator
 {
@@ -30,8 +30,8 @@ class CrudConfigGenerator extends AbstractGenerator
     }
 
     /**
-     * Só roda quando gera views (modo web).
-     * No modo --api não existe tela de listagem.
+     * Only runs when generating views (web mode).
+     * In --api mode there is no list screen.
      */
     public function shouldRun(EntityContext $context): bool
     {
@@ -39,11 +39,11 @@ class CrudConfigGenerator extends AbstractGenerator
     }
 
     /**
-     * Gera e salva a configuração do CRUD no banco.
+     * Generates and persists the CRUD configuration to the database.
      */
     public function generate(EntityContext $context): GeneratorResult
     {
-        // Inclui subfolder no identificador: Product/ProductStock
+        // Include subfolder in identifier: Product/ProductStock
         $crudIdentifier = $context->subFolder
             ? $context->subFolder . '/' . $context->entity
             : $context->entity;
@@ -53,7 +53,7 @@ class CrudConfigGenerator extends AbstractGenerator
         try {
             $service = app(CrudConfigService::class);
 
-            // Se já existe e não é --force, pula
+            // If it already exists and --force is not set, skip
             $existing = $service->find($crudIdentifier);
             if ($existing && ! $context->force) {
                 return GeneratorResult::skipped($label, 'crud_configs');
@@ -72,7 +72,7 @@ class CrudConfigGenerator extends AbstractGenerator
 
     private function buildConfig(EntityContext $context): array
     {
-        // Inclui subfolder no identificador para BaseCrud resolver corretamente (ex: Product/ProductStock)
+        // Include subfolder in identifier for BaseCrud to resolve correctly (e.g. Product/ProductStock)
         $crudIdentifier = $context->subFolder
             ? $context->subFolder . '/' . $context->entity
             : $context->entity;
@@ -103,15 +103,15 @@ class CrudConfigGenerator extends AbstractGenerator
     }
 
     /**
-     * Constrói as colunas a partir dos FieldDefinitions da EntityContext.
+     * Builds the columns from the EntityContext FieldDefinitions.
      *
-     * Ordem: id (read-only) → campos da entidade → created_at (read-only)
+     * Order: id (read-only) → entity fields → created_at (read-only)
      */
     private function buildCols(EntityContext $context): array
     {
         $cols = [];
 
-        // Coluna ID sempre presente
+        // ID column always present
         $cols[] = [
             'colsNomeFisico'  => 'id',
             'colsNomeLogico'  => trans('ptah::ui.col_id'),
@@ -122,7 +122,7 @@ class CrudConfigGenerator extends AbstractGenerator
             'colsIsFilterable'=> true,
         ];
 
-        // Campos da entidade
+        // Entity fields
         foreach ($context->fields as $field) {
             $cols[] = $this->buildColFromField($field);
         }
@@ -143,7 +143,7 @@ class CrudConfigGenerator extends AbstractGenerator
     }
 
     /**
-     * Converte um FieldDefinition em um col do CrudConfig.
+     * Converts a FieldDefinition into a CrudConfig col entry.
      */
     private function buildColFromField(FieldDefinition $field): array
     {
@@ -160,13 +160,13 @@ class CrudConfigGenerator extends AbstractGenerator
             'colsIsFilterable'=> true,
         ];
 
-        // Campos FK → relação
+        // FK fields → relation
         if (str_ends_with($field->name, '_id')) {
             $col['colsRelacao']      = '';
             $col['colsRelacaoExibe'] = '';
         }
 
-        // Enum → select com opções
+        // Enum → select with options
         if ($field->type === 'enum' && ! empty($field->enumValues)) {
             $col['colsSelect'] = $this->buildEnumSelect($field->enumValues);
         }
@@ -177,7 +177,7 @@ class CrudConfigGenerator extends AbstractGenerator
             $col['colsHelper'] = 'yesOrNot';
         }
 
-        // Decimal/float → helper de moeda (para campos price/value/amount)
+        // Decimal/float → currency helper (for price/value/amount fields)
         if (in_array($field->type, ['decimal', 'float', 'double'])) {
             if ($this->isCurrencyField($field->name)) {
                 $col['colsHelper'] = 'currencyFormat';
@@ -195,7 +195,7 @@ class CrudConfigGenerator extends AbstractGenerator
     }
 
     /**
-     * Mapeia o tipo do FieldDefinition para o colsTipo do BaseCrud.
+     * Maps the FieldDefinition type to BaseCrud's colsTipo.
      */
     private function mapTipo(FieldDefinition $field): string
     {

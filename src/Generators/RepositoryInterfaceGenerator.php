@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera a Interface do Repositório.
+ * Generates the Repository Interface.
  *
  * Stub: repository.interface.stub
  * Placeholders: namespace, entity

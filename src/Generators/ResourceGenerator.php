@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o API Resource da entidade.
+ * Generates the API Resource for the entity.
  *
  * Stub: resource.stub
  * Placeholders: namespace, entity, resource_fields

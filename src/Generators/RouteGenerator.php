@@ -10,29 +10,29 @@ use Ptah\Generators\Contracts\GeneratorInterface;
 use Ptah\Support\EntityContext;
 
 /**
- * Adiciona rotas ao arquivo routes/web.php ou routes/api.php.
+ * Appends routes to routes/web.php or routes/api.php.
  *
  * Web: Route::resource(...)
- * API: Route::apiResource(...) dentro de Route::prefix('v1')
+ * API: Route::apiResource(...) inside Route::prefix('v1')
  */
 class RouteGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        // Este método só é chamado quando não é modo combinado.
-        // No modo combinado, ScaffoldCommand chama generateWebRoute/generateApiRoute diretamente.
+        // This method is only called when not in combined mode.
+        // In combined mode, ScaffoldCommand calls generateWebRoute/generateApiRoute directly.
         return $context->withViews
             ? $this->appendWebRoute($context)
             : $this->appendApiRoute($context);
     }
 
-    /** Exposto para o ScaffoldCommand usar no modo combinado (web + api). */
+    /** Exposed for ScaffoldCommand to use in combined mode (web + api). */
     public function generateWebRoute(EntityContext $context): GeneratorResult
     {
         return $this->appendWebRoute($context);
     }
 
-    /** Exposto para o ScaffoldCommand usar no modo combinado (web + api). */
+    /** Exposed for ScaffoldCommand to use in combined mode (web + api). */
     public function generateApiRoute(EntityContext $context): GeneratorResult
     {
         return $this->appendApiRoute($context);
@@ -51,7 +51,7 @@ class RouteGenerator extends AbstractGenerator
         $label      = 'Routes [web.php]';
 
         if (! $this->files->exists($routesPath)) {
-            return GeneratorResult::error($label, $routesPath, 'routes/web.php não encontrado.');
+            return GeneratorResult::error($label, $routesPath, 'routes/web.php not found.');
         }
 
         $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers") . "\\{$context->entity}Controller";
@@ -66,10 +66,10 @@ class RouteGenerator extends AbstractGenerator
         $label      = 'Routes [api.php]';
 
         if (! $this->files->exists($routesPath)) {
-            // Tenta web.php como fallback
+            // Try web.php as fallback
             $routesPath = base_path('routes/web.php');
             if (! $this->files->exists($routesPath)) {
-                return GeneratorResult::error($label, $routesPath, 'routes/api.php não encontrado.');
+                return GeneratorResult::error($label, $routesPath, 'routes/api.php not found.');
             }
         }
 

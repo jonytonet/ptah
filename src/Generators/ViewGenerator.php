@@ -7,17 +7,17 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera apenas a view index (BaseCrud gerencia create/edit/show via modal Livewire).
+ * Generates only the index view (BaseCrud manages create/edit/show via Livewire modals).
  *
  * Stubs: view.index.stub
  * Placeholders: entity, entity_lower, entities
  *
- * Só é executado quando --api NÃO está ativo.
+ * Only runs when --api is NOT active.
  */
 class ViewGenerator extends AbstractGenerator
 {
     /**
-     * Gera a view index e retorna o resultado.
+     * Generates the index view and returns the result.
      */
     public function generate(EntityContext $context): GeneratorResult
     {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Generators;
 
 /**
- * Value object imutável que representa o resultado de uma geração.
+ * Immutable value object representing the result of a generation.
  */
 readonly class GeneratorResult
 {
@@ -51,7 +51,7 @@ readonly class GeneratorResult
     }
 
     /**
-     * Retorna o status formatado para exibição no terminal.
+     * Returns the status formatted for terminal display.
      */
     public function formattedStatus(): string
     {

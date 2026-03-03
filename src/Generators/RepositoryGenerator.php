@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera a implementação concreta do Repositório.
+ * Generates the concrete Repository implementation.
  *
  * Stub: repository.stub
  * Placeholders: namespace, entity, rootNamespace

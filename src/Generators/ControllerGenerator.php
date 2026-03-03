@@ -7,12 +7,12 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o Controller Web da entidade.
+ * Generates the Web Controller for the entity.
  *
  * Stub: controller.stub
  * Placeholders: namespace, entity, entity_lower, entities, rootNamespace
  *
- * Não é executado quando --api está ativo (use ControllerApiGenerator).
+ * Not executed when --api is active (use ControllerApiGenerator instead).
  */
 class ControllerGenerator extends AbstractGenerator
 {

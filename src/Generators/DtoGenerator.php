@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o DTO (Data Transfer Object) da entidade.
+ * Generates the DTO (Data Transfer Object) for the entity.
  *
  * Stub: dto.stub
  * Placeholders: namespace, entity, dto_properties, dto_from_array

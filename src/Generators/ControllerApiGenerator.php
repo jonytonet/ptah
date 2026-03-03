@@ -8,13 +8,13 @@ use Illuminate\Support\Str;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o Controller API da entidade.
+ * Generates the API Controller for the entity.
  *
  * Stub: controller.api.stub
- * Só é executado quando --api está ativo.
+ * Only runs when --api is active.
  *
- * Namespace gerado: App\Http\Controllers\API\{Folder}\{Entity}ApiController
- * Requests gerados: App\Http\Requests\API\{Folder}\{Create|Update}{Entity}ApiRequest
+ * Generated namespace: App\Http\Controllers\API\{Folder}\{Entity}ApiController
+ * Generated requests:  App\Http\Requests\API\{Folder}\{Create|Update}{Entity}ApiRequest
  */
 class ControllerApiGenerator extends AbstractGenerator
 {
@@ -28,9 +28,9 @@ class ControllerApiGenerator extends AbstractGenerator
         $serviceFqn = $context->subNs($context->rootNamespace . 'Services') . '\\' . $context->entity . 'Service';
         $resourceFqn = $context->subNs($context->rootNamespace . 'Http\\Resources') . '\\' . $context->entity . 'Resource';
 
-        // Swagger: tag = top-level folder (ex: 'Catalog') ou nome da entidade
+        // Swagger: tag = top-level folder (e.g. 'Catalog') or entity name
         $swaggerTag  = $this->resolveSwaggerTag($context);
-        // Swagger: path = entity plural em kebab-case (ex: 'products', 'animal-breeds')
+        // Swagger: path = entity plural in kebab-case (e.g. 'products', 'animal-breeds')
         $swaggerPath = Str::kebab($context->entityPlural);
 
         return $this->writeFile(
@@ -55,7 +55,7 @@ class ControllerApiGenerator extends AbstractGenerator
 
     public function shouldRun(EntityContext $context): bool
     {
-        return $context->withApi; // roda tanto em --api (combinado) quanto em --api-only
+        return $context->withApi; // runs for both --api (combined) and --api-only
     }
 
     protected function label(): string
@@ -64,10 +64,10 @@ class ControllerApiGenerator extends AbstractGenerator
     }
 
     /**
-     * Extrai o top-level folder do subFolder para usar como tag Swagger.
-     * Ex: subFolder='Catalog/Product' → 'Catalog'
-     *     subFolder='Catalog'         → 'Catalog'
-     *     subFolder=''               → nome da entidade
+     * Extracts the top-level folder from subFolder to use as the Swagger tag.
+     * E.g.: subFolder='Catalog/Product' → 'Catalog'
+     *       subFolder='Catalog'         → 'Catalog'
+     *       subFolder=''               → entity name
      */
     private function resolveSwaggerTag(EntityContext $context): string
     {

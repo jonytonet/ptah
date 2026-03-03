@@ -7,18 +7,18 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera os FormRequests da entidade.
+ * Generates the FormRequests for the entity.
  *
- * Modo Web:  StoreRequest e UpdateRequest  em Http/Requests/{Folder}/
- * Modo API:  CreateApiRequest e UpdateApiRequest em Http/Requests/API/{Folder}/
+ * Web mode: StoreRequest and UpdateRequest under Http/Requests/{Folder}/
+ * API mode: CreateApiRequest and UpdateApiRequest under Http/Requests/API/{Folder}/
  */
 class RequestGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        // Este método só é chamado quando apenas um dos modos está ativo.
-        // No modo combinado (withApi + withViews), o ScaffoldCommand chama
-        // diretamente generateStore/Update e generateCreateApi/UpdateApi.
+        // This method is only called when exactly one mode is active.
+        // In combined mode (withApi + withViews), ScaffoldCommand calls
+        // generateStore/Update and generateCreateApi/UpdateApi directly.
         if ($context->withApi && ! $context->withViews) {
             $this->generateCreateApi($context);
             return $this->generateUpdateApi($context);

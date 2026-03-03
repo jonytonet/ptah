@@ -7,7 +7,7 @@ namespace Ptah\Generators;
 use Ptah\Support\EntityContext;
 
 /**
- * Gera o arquivo de Migration da entidade.
+ * Generates the Migration file for the entity.
  *
  * Stub: migration.stub
  * Placeholders: table, columns
@@ -18,11 +18,11 @@ class MigrationGenerator extends AbstractGenerator
     {
         $label = "Migration [create_{$context->table}_table]";
 
-        // Migrations são artefatos imutáveis de banco — nunca sobrescrever.
-        // Se já existe qualquer arquivo *_create_{table}_table.php, ignoramos
-        // independentemente do --force. Isso protege contra o cenário:
-        //   1. ptah:forge Product        (web)  → migration criada
-        //   2. ptah:forge Product --api --force → NÃO deve recriar a migration
+        // Migrations are immutable database artefacts — never overwrite.
+        // If any *_create_{table}_table.php file already exists, skip it
+        // regardless of --force. This protects against the scenario:
+        //   1. ptah:forge Product        (web)  → migration created
+        //   2. ptah:forge Product --api --force → must NOT recreate the migration
         $existing = glob(database_path("migrations/*_create_{$context->table}_table.php")) ?: [];
         if (! empty($existing)) {
             return GeneratorResult::skipped($label, $existing[0]);
@@ -31,7 +31,7 @@ class MigrationGenerator extends AbstractGenerator
         $filename = "{$context->timestamp}_create_{$context->table}_table.php";
         $path     = database_path("migrations/{$filename}");
 
-        // Colunas de auditoria: created_by / updated_by sempre; deleted_by só com softDeletes
+        // Audit columns: created_by / updated_by always; deleted_by only with softDeletes
         $auditCols  = "            \$table->unsignedBigInteger('created_by')->nullable()->index();\n";
         $auditCols .= "            \$table->unsignedBigInteger('updated_by')->nullable()->index();\n";
 

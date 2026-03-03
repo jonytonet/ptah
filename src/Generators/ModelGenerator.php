@@ -8,7 +8,7 @@ use Ptah\Support\EntityContext;
 use Ptah\Support\FieldDefinition;
 
 /**
- * Gera o Model Eloquent da entidade.
+ * Generates the Eloquent Model for the entity.
  *
  * Stub: model.stub
  * Placeholders: namespace, entity, table, fillable, casts,
@@ -18,14 +18,14 @@ class ModelGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        // Subpasta: app/Models/Product/ProductStock.php
+        // Subfolder: app/Models/Product/ProductStock.php
         $subDir = $context->subFolder ? '/' . str_replace('\\', '/', $context->subFolder) : '';
         $path   = config('ptah.paths.models') . "{$subDir}/{$context->entity}.php";
 
-        // ── Modo "adicionar API" (--api sem --api-only) + arquivo já existe ──────
-        // Nesse fluxo o model já tem $fillable, $casts e relacionamentos corretos.
-        // Sobrescrever perderia customizações do desenvolvedor.
-        // Em vez disso, apenas injetamos o @OA\Schema block se ainda não estiver lá.
+        // ── "Add API" mode (--api without --api-only) + file already exists ──────
+        // In this flow the model already has the correct $fillable, $casts and relationships.
+        // Overwriting it would lose developer customisations.
+        // Instead, inject the @OA\Schema block only if it is not already there.
         if ($context->withApi && $context->withViews && file_exists($path)) {
             return $this->injectSwaggerSchema($path, $context);
         }
@@ -38,7 +38,7 @@ class ModelGenerator extends AbstractGenerator
             $softDeletesTrait = "    use SoftDeletes;\n";
         }
 
-        // Gera @OA\Schema quando o modo API estiver ativo
+        // Generate @OA\Schema when API mode is active
         $swaggerSchema = $context->withApi ? $this->buildSwaggerSchema($context) : '';
 
         return $this->writeFile(
@@ -62,23 +62,23 @@ class ModelGenerator extends AbstractGenerator
     }
 
     /**
-     * Injeta o bloco @OA\Schema no model existente sem sobrescrever o arquivo.
-     * Usado no modo "adicionar API" (--api) quando o model já foi criado (modo web).
-     * Se o @OA\Schema já existir no arquivo, retorna skipped.
+     * Injects the @OA\Schema block into an existing model without overwriting the file.
+     * Used in "add API" mode (--api) when the model was already created in web mode.
+     * Returns skipped if @OA\Schema is already present in the file.
      */
     private function injectSwaggerSchema(string $path, EntityContext $context): GeneratorResult
     {
         $label   = "Model [{$context->entity}] (swagger injected)";
         $content = $this->files->get($path);
 
-        // Já tem @OA\Schema — nada a fazer
+        // Already has @OA\Schema — nothing to do
         if (str_contains($content, '@OA\\Schema') || str_contains($content, '@OA\Schema')) {
             return GeneratorResult::skipped($label, $path);
         }
 
         $schema = $this->buildSwaggerSchema($context);
 
-        // Insere o bloco imediatamente antes da declaração `class XyzAbc`
+        // Insert the block immediately before the `class XyzAbc` declaration
         $patched = preg_replace(
             '/^(class\s+' . preg_quote($context->entity, '/') . '\s+)/m',
             $schema . "\n$1",
@@ -104,8 +104,8 @@ class ModelGenerator extends AbstractGenerator
     }
 
     /**
-     * Gera o bloco de anotação @OA\Schema para o modelo.
-     * Mapeia os tipos dos campos para tipos OpenAPI.
+     * Builds the @OA\Schema annotation block for the model.
+     * Maps field types to OpenAPI types.
      */
     private function buildSwaggerSchema(EntityContext $context): string
     {
@@ -141,7 +141,7 @@ SCHEMA;
     }
 
     /**
-     * Mapeia tipo de campo para [tipo OpenAPI, formato].
+     * Maps a field type to [OpenAPI type, format].
      *
      * @return array{string, string}
      */

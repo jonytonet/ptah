@@ -8,21 +8,21 @@ use Ptah\Support\EntityContext;
 use Ptah\Generators\GeneratorResult;
 
 /**
- * Contrato para todos os geradores de artefatos do Ptah.
+ * Contract for all Ptah artefact generators.
  *
- * Cada implementação é responsável por um único artefato (SRP).
- * Novos geradores podem ser adicionados sem modificar o comando (OCP).
+ * Each implementation is responsible for a single artefact (SRP).
+ * New generators can be added without modifying the command (OCP).
  */
 interface GeneratorInterface
 {
     /**
-     * Executa a geração do artefato.
+     * Runs the artefact generation.
      */
     public function generate(EntityContext $context): GeneratorResult;
 
     /**
-     * Indica se o gerador deve ser executado dado o contexto atual.
-     * Permite pular geradores de view quando --api está ativo, por exemplo.
+     * Indicates whether the generator should run for the given context.
+     * Allows skipping view generators when --api is active, for example.
      */
     public function shouldRun(EntityContext $context): bool;
 }
