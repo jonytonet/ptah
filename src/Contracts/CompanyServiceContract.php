@@ -10,35 +10,35 @@ use Ptah\Models\Company;
 interface CompanyServiceContract
 {
     /**
-     * Retorna a empresa marcada como padrão (is_default = true).
-     * Cria automaticamente se não existir e createIfMissing = true.
+     * Returns the company marked as default (is_default = true).
+     * Automatically creates one if it does not exist and createIfMissing = true.
      */
     public function getDefault(bool $createIfMissing = false): ?Company;
 
     /**
-     * Busca uma empresa pelo ID.
+     * Finds a company by ID.
      */
     public function getById(int $id): ?Company;
 
     /**
-     * Retorna todas as empresas ativas em que o usuário tem algum role.
+     * Returns all active companies where the user has any role.
      *
      * @return Collection<int, Company>
      */
     public function getUserCompanies(mixed $user): Collection;
 
     /**
-     * Retorna o ID da empresa ativa da sessão/contexto atual.
+     * Returns the active company ID for the current session/context.
      */
     public function getCurrentCompanyId(): ?int;
 
     /**
-     * Define a empresa ativa na sessão.
+     * Sets the active company in the session.
      */
     public function setCurrentCompany(int $companyId): void;
 
     /**
-     * Invalida o cache de empresas.
+     * Invalidates the company cache.
      */
     public function clearCache(mixed $user = null): void;
 }

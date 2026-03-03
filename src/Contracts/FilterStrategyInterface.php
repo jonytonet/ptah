@@ -8,25 +8,25 @@ use Illuminate\Database\Eloquent\Builder;
 use Ptah\DTO\FilterDTO;
 
 /**
- * Contrato para estratégias de filtro do FilterService.
+ * Contract for filter strategies used by FilterService.
  *
- * Cada estratégia é responsável por aplicar um tipo específico
- * de filtro ao Query Builder do Eloquent.
+ * Each strategy is responsible for applying a specific type
+ * of filter to the Eloquent Query Builder.
  */
 interface FilterStrategyInterface
 {
     /**
-     * Aplica o filtro ao Builder.
+     * Applies the filter to the Builder.
      *
-     * @param Builder   $query  Query Builder do Eloquent
-     * @param FilterDTO $filter DTO com field, value, operator, type, options
+     * @param Builder   $query  Eloquent Query Builder
+     * @param FilterDTO $filter DTO with field, value, operator, type, options
      * @return Builder
      */
     public function apply(Builder $query, FilterDTO $filter): Builder;
 
     /**
-     * Valida e normaliza o DTO antes de aplicar.
-     * Retorna null se o filtro deve ser ignorado.
+     * Validates and normalises the DTO before applying.
+     * Returns null if the filter should be skipped.
      */
     public function normalize(FilterDTO $filter): ?FilterDTO;
 }

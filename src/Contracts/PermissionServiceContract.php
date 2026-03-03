@@ -7,49 +7,49 @@ namespace Ptah\Contracts;
 interface PermissionServiceContract
 {
     /**
-     * Verifica se o usuário tem permissão para executar a ação no objeto.
+     * Checks whether the user has permission to perform the action on the object.
      *
-     * @param  mixed       $user       Usuário, user ID ou null (usa auth atual)
-     * @param  string      $objectKey  Chave do objeto (ex: 'users.store')
+     * @param  mixed       $user       User, user ID or null (uses current auth)
+     * @param  string      $objectKey  Object key (e.g. 'users.store')
      * @param  string      $action     create|read|update|delete
-     * @param  int|null    $companyId  ID da empresa (null = session/auth context)
+     * @param  int|null    $companyId  Company ID (null = session/auth context)
      */
     public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool;
 
     /**
-     * Verifica se o usuário possui role MASTER (bypass total).
+     * Checks whether the user has the MASTER role (full bypass).
      */
     public function isMaster(mixed $user = null): bool;
 
     /**
-     * Retorna o mapa completo de permissões do usuário.
+     * Returns the full permissions map for the user.
      *
      * @return array<string, array{create: bool, read: bool, update: bool, delete: bool}>
      */
     public function getPermissions(mixed $user = null, ?int $companyId = null): array;
 
     /**
-     * Retorna os IDs de empresa onde o usuário tem acesso ao recurso/ação.
+     * Returns the company IDs where the user has access to the resource/action.
      *
      * @return int[]
      */
     public function getCompaniesForResource(mixed $user, string $objectKey, string $action): array;
 
     /**
-     * Associa um role ao usuário (cria UserRole para cada empresa).
+     * Associates a role with the user (creates a UserRole for each company).
      *
-     * @param  int[] $companyIds  IDs de empresa; [] = sem empresa (single-company)
+     * @param  int[] $companyIds  Company IDs; [] = no company (single-company)
      */
     public function syncRole(mixed $user, int $roleId, array $companyIds = []): void;
 
     /**
-     * Remove a associação role-usuário (soft delete de UserRole).
+     * Removes the role-user association (soft delete of UserRole).
      */
     public function detachRole(mixed $user, int $roleId, ?int $companyId = null): void;
 
     /**
-     * Invalida o cache de permissões do usuário.
-     * Sem parâmetros = invalida tudo.
+     * Invalidates the user's permission cache.
+     * Without parameters = invalidates everything.
      */
     public function clearCache(mixed $user = null, ?int $companyId = null): void;
 }
