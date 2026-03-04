@@ -85,8 +85,8 @@ class RelationFilterStrategy implements FilterStrategyInterface
             $op = strtoupper($operator);
 
             match (true) {
-                $op === 'LIKE'     => $q->where($column, 'LIKE', '%' . $value . '%'),
-                $op === 'NOT LIKE' => $q->where($column, 'NOT LIKE', '%' . $value . '%'),
+                $op === 'LIKE'     => $q->whereRaw('LOWER(' . $column . ') LIKE ?', ['%' . mb_strtolower($value) . '%']),
+                $op === 'NOT LIKE' => $q->whereRaw('LOWER(' . $column . ') NOT LIKE ?', ['%' . mb_strtolower($value) . '%']),
                 $op === 'IN'       => $q->whereIn($column, (array) $value),
                 $op === 'NOT IN'   => $q->whereNotIn($column, (array) $value),
                 default            => $q->where($column, $operator, $value),
