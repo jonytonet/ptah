@@ -1,49 +1,4 @@
-<div class="ptah-base-crud {{ ($theme ?? 'light') === 'dark' ? 'ptah-dark' : '' }}" wire:key="base-crud-{{ $crudTitle }}">
-@php
-    $_dk = ($theme ?? 'light') === 'dark';
-    $T = [
-        'toolbar'    => $_dk ? 'bg-slate-900 border-slate-700'         : 'bg-white border-slate-200',
-        'search'     => $_dk ? 'bg-slate-800/60 border-slate-600 text-slate-200 placeholder-slate-500 focus:bg-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500' : 'border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-indigo-500/20 focus:border-indigo-400',
-        'btn'        => $_dk ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
-        'btn_on'     => 'bg-indigo-600 text-white border-indigo-600 shadow-sm',
-        'perpage'    => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500' : 'border-slate-200 bg-white text-slate-600 focus:border-indigo-400',
-        'fp_card'    => $_dk ? 'bg-slate-900 border-slate-700'         : 'bg-white border-slate-200',
-        'fp_hd'      => $_dk ? 'bg-slate-800/60 border-slate-700'      : 'bg-slate-50 border-slate-100',
-        'fp_ft'      => $_dk ? 'bg-slate-800/40 border-slate-700'      : 'bg-slate-50/60 border-slate-100',
-        'fp_text'    => $_dk ? 'text-slate-300'                        : 'text-slate-700',
-        'fp_muted'   => $_dk ? 'text-slate-500'                        : 'text-gray-400',
-        'fp_input'   => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:ring-1 focus:ring-indigo-500/30 focus:border-indigo-500 focus:outline-none' : 'border-gray-300 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none',
-        'fp_label'   => $_dk ? 'text-slate-400'                        : 'text-gray-600',
-        'fp_save_in' => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500 focus:outline-none' : 'border-slate-200 focus:ring-1 focus:ring-indigo-400/40 focus:border-indigo-400 focus:outline-none',
-        'tbl_wrap'   => $_dk ? 'border-slate-700'                      : 'border-slate-200',
-        'thead'      => $_dk ? 'bg-slate-800/80 border-b-2 border-slate-700' : 'bg-slate-50 border-b-2 border-slate-200',
-        'th_text'    => $_dk ? 'text-slate-400'                        : 'text-slate-500',
-        'tbody_div'  => $_dk ? 'divide-y divide-slate-700/50'          : 'divide-y divide-slate-100',
-        'tr'         => $_dk ? 'ptah-tr hover:bg-slate-700/60'         : 'ptah-tr hover:bg-violet-50/70',
-        'empty_box'  => $_dk ? 'bg-slate-700/60'                       : 'bg-slate-100',
-        'empty_ttl'  => $_dk ? 'text-slate-300'                        : 'text-slate-700',
-        'empty_sub'  => $_dk ? 'text-slate-500'                        : 'text-slate-400',
-        'tfoot'      => $_dk ? 'font-semibold border-t-2 border-slate-700 bg-slate-800/60' : 'font-semibold border-t-2 border-slate-200 bg-slate-50',
-        'tfoot_td'   => $_dk ? 'text-slate-300'                        : 'text-slate-700',
-        'pag'        => $_dk ? 'text-slate-400'                        : 'text-gray-500',
-        'dd'         => $_dk ? 'bg-slate-800 border-slate-700'         : 'bg-white border-slate-100',
-        'dd_item'    => $_dk ? 'text-slate-300 hover:bg-slate-700/60'  : 'text-gray-700 hover:bg-gray-50',
-        'modal_card' => $_dk ? 'bg-slate-900'                          : 'bg-white',
-        'modal_hd'   => $_dk ? 'bg-slate-800/50 border-slate-700'      : 'bg-white border-slate-100',
-        'modal_icon' => $_dk ? 'bg-indigo-900/50'                      : 'bg-indigo-50',
-        'modal_ttl'  => $_dk ? 'text-slate-100'                        : 'text-slate-800',
-        'modal_sub'  => $_dk ? 'text-slate-500'                        : 'text-slate-400',
-        'modal_body' => $_dk ? 'bg-slate-800/20'                       : 'bg-slate-50/40',
-        'modal_ft'   => $_dk ? 'bg-slate-800/50 border-slate-700'      : 'bg-white border-slate-100',
-        'form_lbl'   => $_dk ? 'text-slate-400'                        : 'text-slate-600',
-        'form_in'    => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-white border-slate-200 text-gray-800 focus:border-indigo-500 focus:ring-indigo-100/50',
-        'form_sel'   => $_dk ? 'bg-slate-800 border-slate-600 text-slate-200 px-3 py-2.5 cursor-pointer' : 'bg-white border-slate-200 text-gray-800 px-3 py-2.5 cursor-pointer',
-        'del_card'   => $_dk ? 'bg-slate-900'                          : 'bg-white',
-        'del_ft'     => $_dk ? 'bg-slate-800/50'                       : 'bg-slate-50',
-        'ql_btn'     => $_dk ? 'bg-slate-800 text-slate-300 border-slate-600 hover:border-indigo-500 hover:text-indigo-400' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600',
-        'ql_on'      => 'bg-indigo-600 text-white border-indigo-600 shadow-sm',
-    ];
-@endphp
+<div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}">
 
     {{-- ── Mensagens de sessão ──────────────────────────────────────────── --}}
     @if (session('crud-success') || $exportStatus)
@@ -55,7 +10,7 @@
     @if (!empty($crudConfig))
 
     {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl {{ $T['toolbar'] }}">
+    <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl ptah-c-toolbar">
 
         {{-- Botão Novo --}}
         @if ($permissions['showCreateButton'] ?? true)
@@ -82,7 +37,7 @@
                     wire:model.live.debounce.400ms="search"
                     type="text"
                     placeholder="{{ __('ptah::ui.search_placeholder') }}"
-                    class="w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg transition-colors {{ $T['search'] }}"
+                    class="w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg transition-colors ptah-c-search"
                 />
             </div>
         </div>
@@ -99,7 +54,7 @@
             @if ($hasFilterable)
                 <button wire:click="toggleFilters"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                           {{ $showFilters ? $T['btn_on'] : $T['btn'] }}"
+                           {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                     title="{{ __('ptah::ui.btn_filters') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -118,7 +73,7 @@
             @if ($permissions['showTrashButton'] ?? true)
                 <button wire:click="toggleTrashed"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                           {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : $T['btn'] }}"
+                           {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : 'ptah-c-btn' }}"
                     title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                     @if ($showTrashed)
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,7 +94,7 @@
             @if (!empty($exportCfg['enabled']))
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none ptah-c-btn"
                         title="{{ __('ptah::ui.btn_export') }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -151,10 +106,10 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[160px] py-1.5 {{ $T['dd'] }}">
+                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[160px] py-1.5 ptah-c-dd">
                         @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                             <button wire:click="export('{{ $fmt }}')" @click="open = false"
-                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm {{ $T['dd_item'] }}">
+                                class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
                                 @if ($fmt === 'excel')
                                     <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -185,7 +140,7 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
-                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : $T['btn'] }}"
+                               {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'ptah-c-btn' }}"
                         title="{{ __('ptah::ui.btn_columns') }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -202,7 +157,7 @@
                         </svg>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto {{ $T['dd'] }}">
+                         class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
                         {{-- Ações rápidas --}}
                         <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                             <button wire:click="showAllColumns" @click="open = false"
@@ -241,7 +196,7 @@
             @endphp
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none {{ $T['btn'] }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none ptah-c-btn"
                     title="{{ __('ptah::ui.btn_density') }}">
                     <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                     <span class="hidden sm:inline">{{ __('ptah::ui.btn_density') }}</span>
@@ -250,10 +205,10 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[180px] py-1 {{ $T['dd'] }}">
+                     class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[180px] py-1 ptah-c-dd">
                     @foreach ($densityMap as $d => $info)
                         <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
-                            class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors {{ $T['dd_item'] }}
+                            class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
                                    {{ $viewDensity === $d ? 'font-semibold text-indigo-600' : '' }}">
                             <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
                             @if ($viewDensity === $d)
@@ -271,7 +226,7 @@
 
             {{-- Atualizar --}}
             <button wire:click="$refresh"
-                class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none {{ $T['btn'] }}"
+                class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none ptah-c-btn"
                 title="{{ __('ptah::ui.btn_refresh') }}">
                 <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -293,7 +248,7 @@
 
             {{-- Per page --}}
             <select wire:model.live="perPage"
-                class="text-sm border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 {{ $T['perpage'] }}">
+                class="text-sm border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage">
                 @foreach ([10, 15, 25, 50, 100] as $n)
                     <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>
                 @endforeach
@@ -304,15 +259,15 @@
 
     {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
     @if ($showFilters)
-        <div class="mb-4 overflow-hidden border shadow-sm rounded-xl {{ $T['fp_card'] }}">
+        <div class="mb-4 overflow-hidden border shadow-sm rounded-xl ptah-c-fp_card">
 
-            <div class="flex items-center justify-between px-5 py-3.5 border-b {{ $T['fp_hd'] }}">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="text-sm font-semibold {{ $T['fp_text'] }}">{{ __('ptah::ui.filters_title') }}</span>
+                    <span class="text-sm font-semibold ptah-c-fp_text">{{ __('ptah::ui.filters_title') }}</span>
                     @if ($activeFilterCount > 0)
                         <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium border border-indigo-100">
                             {{ $activeFilterCount }} ativo{{ $activeFilterCount > 1 ? 's' : '' }}
@@ -385,34 +340,34 @@
                             {{-- Date: mostra De / Até com operador --}}
                             @if ($cfTipo === 'date')
                                 <div class="sm:col-span-2">
-                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
-                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 {{ $T['fp_input'] }}">
+                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
                                                     <option value=">=">&ge;</option>
                                                     <option value=">">&gt;</option>
                                                     <option value="=">=</option>
                                                 </select>
                                                 <input type="date"
                                                     wire:model.live="dateRanges.{{ $cfField }}_start"
-                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 {{ $T['fp_input'] }}" />
+                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 ptah-c-fp_input" />
                                             </div>
                                         </div>
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
-                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 {{ $T['fp_input'] }}">
+                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
                                                     <option value="<=">&le;</option>
                                                     <option value="<">&lt;</option>
                                                     <option value="=">=</option>
                                                 </select>
                                                 <input type="date"
                                                     wire:model.live="dateRanges.{{ $cfField }}_end"
-                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 {{ $T['fp_input'] }}" />
+                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 ptah-c-fp_input" />
                                             </div>
                                         </div>
                                     </div>
@@ -421,9 +376,9 @@
                             {{-- Select / Enum --}}
                             @elseif ($cfTipo === 'select' && !empty($col['colsSelect']))
                                 <div>
-                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                     <select wire:model.live="filters.{{ $cfField }}"
-                                        class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}">
+                                        class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input">
                                         <option value="">{{ __('ptah::ui.filters_all') }}</option>
                                         @foreach ($col['colsSelect'] as $optLabel => $optVal)
                                             <option value="{{ $optVal }}">{{ $optLabel }}</option>
@@ -439,7 +394,7 @@
                                     $cfFilterHasRes   = !empty($sdResults[$cfFilterKey]);
                                 @endphp
                                 <div>
-                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
 
                                     {{-- Badge de seleção ativa --}}
                                     @if ($cfFilterSelected)
@@ -472,7 +427,7 @@
                                                 @focus="$wire.openFilterDropdown('{{ $cfField }}')"
                                                 placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
                                                 autocomplete="off"
-                                                class="w-full text-sm rounded-lg px-2.5 py-2 pr-8 {{ $T['fp_input'] }}"
+                                                class="w-full text-sm rounded-lg px-2.5 py-2 pr-8 ptah-c-fp_input"
                                             />
                                             <button type="button"
                                                 tabindex="-1"
@@ -485,7 +440,7 @@
                                             </button>
                                         </div>
                                         <div x-show="open" x-cloak
-                                            class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 {{ $T['dd'] }}">
+                                            class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 ptah-c-dd">
                                             @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                                 <button type="button"
                                                     wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
@@ -504,10 +459,10 @@
                             @else
                                 @php $isNum = $cfTipo === 'number'; @endphp
                                 <div>
-                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                     <div class="flex gap-1">
                                         <select wire:model.live="filterOperators.{{ $cfField }}"
-                                            class="text-xs rounded-lg px-1.5 py-2 w-[90px] shrink-0 {{ $T['fp_input'] }}">
+                                            class="text-xs rounded-lg px-1.5 py-2 w-[90px] shrink-0 ptah-c-fp_input">
                                             @if ($isNum)
                                                 <option value="=">=</option>
                                                 <option value="!=">&ne;</option>
@@ -527,7 +482,7 @@
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
                                             @if($isNum) step="any" @endif
-                                            class="flex-1 min-w-0 text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
+                                            class="flex-1 min-w-0 text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
                                     </div>
                                 </div>
                             @endif
@@ -543,7 +498,7 @@
                             @endphp
                             @if ($cfField)
                                 <div>
-                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                     @if ($cfType === 'searchdropdown')
                                         <div class="relative" x-data="{ open: false }">
                                             <input type="text"
@@ -551,9 +506,9 @@
                                                 @focus="open = true"
                                                 @click.outside="open = false"
                                                 placeholder="{{ __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
-                                                class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
+                                                class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
                                             @if (!empty($sdResults['cf_' . $cfField]))
-                                                <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 {{ $T['dd'] }}">
+                                                <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 ptah-c-dd">
                                                     @foreach ($sdResults['cf_' . $cfField] as $opt)
                                                         <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                             @click="open = false"
@@ -567,15 +522,15 @@
                                     @elseif ($cfType === 'date')
                                         <input type="date"
                                             wire:model.live="filters.{{ $cfField }}"
-                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
                                     @elseif ($cfType === 'number')
                                         <input type="number"
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
-                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
                                     @elseif ($cfType === 'select' && !empty($cf['colsSelect']))
                                         <select wire:model.live="filters.{{ $cfField }}"
-                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}">
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input">
                                             <option value="">{{ __('ptah::ui.filters_all') }}</option>
                                             @foreach ($cf['colsSelect'] as $optLabel => $optVal)
                                                 <option value="{{ $optVal }}">{{ $optLabel }}</option>
@@ -585,7 +540,7 @@
                                         <input type="text"
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
-                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
                                     @endif
                                 </div>
                             @endif
@@ -616,7 +571,7 @@
             </div>{{-- /p-4 --}}
 
             {{-- Footer: salvar filtro --}}
-            <div class="flex items-center gap-2 px-5 py-3 border-t {{ $T['fp_ft'] }}"
+            <div class="flex items-center gap-2 px-5 py-3 border-t ptah-c-fp_ft"
                  x-data="{ saving: false, name: '' }">
                 <template x-if="!saving">
                     <button @click="saving = true"
@@ -634,7 +589,7 @@
                             @keydown.enter="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             @keydown.escape="saving = false; name = '';"
                             placeholder="{{ __('ptah::ui.filters_save_placeholder') }}"
-                            class="flex-1 text-sm border rounded-lg px-3 py-1.5 {{ $T['fp_save_in'] }}"
+                            class="flex-1 text-sm border rounded-lg px-3 py-1.5 ptah-c-fp_save_in"
                             x-init="$nextTick(() => $el.focus())" />
                         <button @click="if(name.trim()) { $wire.saveNamedFilter(name.trim()); saving = false; name = ''; }"
                             class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
@@ -656,7 +611,7 @@
         <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
             @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
-            <thead class="{{ $crudConfig['theadClass'] ?? $T['thead'] }}">
+            <thead class="{{ $crudConfig['theadClass'] ?? 'ptah-c-thead' }}">
                 <tr id="ptah-thead-row-{{ $crudTitle }}">
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
@@ -669,7 +624,7 @@
                                 $savedWidth  = $columnWidths[$colField] ?? null;
                                 $thStyle     = $savedWidth ? "width:{$savedWidth}px;min-width:60px;" : 'min-width:60px;';
                             @endphp
-                            <th class="relative px-3 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap {{ $T['th_text'] }} {{ $colAlign }} ptah-sortable-col"
+                            <th class="relative px-3 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap ptah-c-th_text {{ $colAlign }} ptah-sortable-col"
                                 data-column="{{ $colField }}"
                                 style="{{ $thStyle }}"
                                 draggable="true"
@@ -711,7 +666,7 @@
                     {{-- Colunas action --}}
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap {{ $T['th_text'] }}">
+                            <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text">
                                 {{ $col['colsNomeLogico'] ?? __('ptah::ui.col_default_action') }}
                             </th>
                         @endif
@@ -719,12 +674,12 @@
 
                     {{-- Coluna de ações padrão --}}
                     @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
-                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase {{ $T['th_text'] }}">{{ __('ptah::ui.col_actions') }}</th>
+                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase ptah-c-th_text">{{ __('ptah::ui.col_actions') }}</th>
                     @endif
                 </tr>
             </thead>
 
-            <tbody class="{{ $T['tbody_div'] }}">
+            <tbody class="ptah-c-tbody_div">
                 @forelse ($rows as $row)
                     @php
                         $rowStyle = $this->getRowStyle($row);
@@ -736,7 +691,7 @@
                     @endphp
 
                     <tr style="{{ $rowStyle }}"
-                        class="transition-colors {{ $T['tr'] }}
+                        class="transition-colors ptah-c-tr
                             @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
                             {{ $rowLink ? 'cursor-pointer' : '' }}"
                         @if($rowLink) @click="window.location='{{ $rowLink }}'" @endif
@@ -863,14 +818,14 @@
                     <tr>
                         <td colspan="99" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl {{ $T['empty_box'] }}">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl ptah-c-empty_box">
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold {{ $T['empty_ttl'] }}">{{ __('ptah::ui.empty_title') }}</p>
-                                    <p class="text-xs mt-0.5 {{ $T['empty_sub'] }}">{{ __('ptah::ui.empty_subtitle') }}</p>
+                                    <p class="text-sm font-semibold ptah-c-empty_ttl">{{ __('ptah::ui.empty_title') }}</p>
+                                    <p class="text-xs mt-0.5 ptah-c-empty_sub">{{ __('ptah::ui.empty_subtitle') }}</p>
                                 </div>
                             </div>
                         </td>
@@ -880,12 +835,12 @@
 
             {{-- Totalizadores --}}
             @if (!empty($totData))
-                <tfoot class="{{ $T['tfoot'] }}">
+                <tfoot class="ptah-c-tfoot">
                     <tr>
                         @foreach ($visibleCols as $col)
                             @if (($col['colsTipo'] ?? '') !== 'action')
                                 @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
-                                <td class="px-3 py-2.5 {{ $T['tfoot_td'] }} {{ $col['colsAlign'] ?? 'text-start' }}">
+                                <td class="px-3 py-2.5 ptah-c-tfoot_td {{ $col['colsAlign'] ?? 'text-start' }}">
                                     @if ($totVal !== null)
                                         @if (($col['colsHelper'] ?? '') === 'currencyFormat')
                                         {{ __('ptah::ui.currency_prefix') }}{{ number_format((float)$totVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
@@ -935,12 +890,12 @@
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
 
             {{-- Painel do modal --}}
-            <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 {{ $T['modal_card'] }}">
+            <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 ptah-c-modal_card">
 
                 {{-- Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b {{ $T['modal_hd'] }}">
+                <div class="flex items-center justify-between px-6 py-4 border-b ptah-c-modal_hd">
                     <div class="flex items-center gap-3">
-                        <div class="flex items-center justify-center w-8 h-8 rounded-lg {{ $T['modal_icon'] }}">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg ptah-c-modal_icon">
                             <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 @if($editingId)
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -950,10 +905,10 @@
                             </svg>
                         </div>
                         <div>
-                            <h2 class="text-[13px] font-semibold leading-tight {{ $T['modal_ttl'] }}">
+                            <h2 class="text-[13px] font-semibold leading-tight ptah-c-modal_ttl">
                                 {{ $editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix') }} {{ $crudTitle }}
                             </h2>
-                            <p class="text-[11px] leading-tight {{ $T['modal_sub'] }}">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
+                            <p class="text-[11px] leading-tight ptah-c-modal_sub">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
                         </div>
                     </div>
                     <button wire:click="closeModal" class="p-2 transition-colors rounded-lg {{ $_dk ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}">
@@ -971,7 +926,7 @@
                 @endif
 
                 {{-- Body --}}
-                <div class="flex-1 px-6 py-5 overflow-y-auto {{ $T['modal_body'] }}">
+                <div class="flex-1 px-6 py-5 overflow-y-auto ptah-c-modal_body">
                     <div class="flex flex-col gap-4">
 
                         @foreach ($formCols as $col)
@@ -1004,7 +959,7 @@
                                         $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1035,7 +990,7 @@
                                             <div
                                                 @click="open = !open"
                                                 :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
-                                                class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 {{ $T['form_sel'] }}"
+                                                class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 ptah-c-form_sel"
                                             >
                                                 <span
                                                     :class="(selected !== null && selected !== '') ? '{{ $_dk ? 'text-slate-200' : 'text-gray-800' }}' : 'text-gray-400'"
@@ -1054,7 +1009,7 @@
                                                 x-transition:enter="transition ease-out duration-150"
                                                 x-transition:enter-start="opacity-0 -translate-y-1"
                                                 x-transition:enter-end="opacity-100 translate-y-0"
-                                                class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 {{ $T['dd'] }}">
+                                                class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 ptah-c-dd">
                                             >
                                                 <ul class="py-1">
                                                     <template x-for="option in options" :key="option.value">
@@ -1084,7 +1039,7 @@
                                         $sdHasResults = !empty($sdResults[$fField]);
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <div
@@ -1113,7 +1068,7 @@
                                                     @focus="$wire.openDropdown('{{ $fField }}')"
                                                     placeholder="{{ __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
                                                     autocomplete="off"
-                                                    class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 {{ $T['form_in'] }}"
+                                                    class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                                 />
                                                 <button type="button"
                                                     tabindex="-1"
@@ -1127,7 +1082,7 @@
                                             </div>
                                             <input type="hidden" wire:model="formData.{{ $fField }}" />
                                             <div x-show="open" x-cloak
-                                                class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-xl max-h-48 {{ $T['dd'] }}">
+                                                class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-xl max-h-48 ptah-c-dd">
                                                 @forelse ($sdResults[$fField] ?? [] as $opt)
                                                     <button type="button"
                                                         wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
@@ -1155,7 +1110,7 @@
                                         };
                                     @endphp
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide {{ $T['form_lbl'] }}">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -1181,7 +1136,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t {{ $T['modal_ft'] }}">
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t ptah-c-modal_ft">
                     <x-forge-button @click="$wire.showModal = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
                         {{ __('ptah::ui.btn_cancel') }}
                     </x-forge-button>
@@ -1201,19 +1156,19 @@
         @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cancelDelete"></div>
-            <div class="relative w-full max-w-sm mx-4 overflow-hidden shadow-2xl rounded-2xl {{ $T['del_card'] }}">
-                <div class="flex items-center gap-4 px-6 py-5 border-b {{ $T['modal_hd'] }}">
+            <div class="relative w-full max-w-sm mx-4 overflow-hidden shadow-2xl rounded-2xl ptah-c-del_card">
+                <div class="flex items-center gap-4 px-6 py-5 border-b ptah-c-modal_hd">
                     <div class="flex items-center justify-center flex-shrink-0 w-11 h-11 rounded-xl bg-red-50 ring-4 ring-red-50">
                         <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold {{ $T['modal_ttl'] }}">{{ __('ptah::ui.delete_title') }}</h3>
+                        <h3 class="text-sm font-semibold ptah-c-modal_ttl">{{ __('ptah::ui.delete_title') }}</h3>
                         <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.delete_message') }}</p>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 px-6 py-4 {{ $T['del_ft'] }}">
+                <div class="flex justify-end gap-3 px-6 py-4 ptah-c-del_ft">
                     <x-forge-button wire:click="cancelDelete" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
                     <x-forge-button wire:click="deleteRecord" color="danger">{{ __('ptah::ui.btn_delete') }}</x-forge-button>
                 </div>

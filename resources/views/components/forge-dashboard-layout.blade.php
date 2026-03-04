@@ -421,8 +421,8 @@
             })(),
 
             init() {
-                /* Sincronizar cookie com localStorage para PHP leitura server-side */
-                document.cookie = 'ptah_dark_mode=' + this.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
+                /* Aplica ptah-dark no body para cobrir elementos @teleport('body') */
+                document.body.classList.toggle('ptah-dark', this.darkMode);
 
                 /* Reagir a mudanças de preferência do SO em tempo real */
                 var self = this;
@@ -430,7 +430,7 @@
                     .addEventListener('change', function(e) {
                         if (localStorage.getItem('ptah_dark_mode') === null) {
                             self.darkMode = e.matches;
-                            document.cookie = 'ptah_dark_mode=' + self.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
+                            document.body.classList.toggle('ptah-dark', self.darkMode);
                         }
                     });
             },
@@ -438,7 +438,7 @@
             toggleDark() {
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
-                document.cookie = 'ptah_dark_mode=' + this.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
+                document.body.classList.toggle('ptah-dark', this.darkMode);
             },
 
             toggleSidebarCollapse() {
