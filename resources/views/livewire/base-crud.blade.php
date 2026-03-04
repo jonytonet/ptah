@@ -60,7 +60,7 @@
         {{-- Botão Novo --}}
         @if ($permissions['showCreateButton'] ?? true)
             @if (!($permissions['create'] ?? null) || (auth()->check() && auth()->user()->can($permissions['create'])))
-                <button wire:click="openCreate"
+                <button @click="$wire.showModal = true; $wire.prepareCreate()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -925,13 +925,14 @@
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Criar / Editar ─────────────────────────────────────────── --}}
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
-    @if ($showModal)
-        @teleport('body')
+    @teleport('body')
         <div class="fixed inset-0 z-50 flex items-center justify-center"
-             x-data x-on:keydown.escape.window="$wire.closeModal()">
+             x-show="$wire.showModal"
+             x-cloak
+             x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }">
 
             {{-- Overlay --}}
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeModal"></div>
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
 
             {{-- Painel do modal --}}
             <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 {{ $T['modal_card'] }}">
@@ -1181,7 +1182,7 @@
 
                 {{-- Footer --}}
                 <div class="flex items-center justify-end gap-3 px-6 py-4 border-t {{ $T['modal_ft'] }}">
-                    <x-forge-button wire:click="closeModal" color="dark" flat :disabled="$creating">
+                    <x-forge-button @click="$wire.showModal = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
                         {{ __('ptah::ui.btn_cancel') }}
                     </x-forge-button>
                     <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
@@ -1192,7 +1193,6 @@
             </div>
         </div>
         @endteleport
-    @endif
 
     {{-- ═══════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Confirmar Exclusão ─────────────────────────────────────── --}}

@@ -11,7 +11,11 @@ trait HasCrudForm
 {
     // ── Form modal ─────────────────────────────────────────────────────────────
 
-    public function openCreate(): void
+    /**
+     * Resets the create form state — called by the Alpine "New" button.
+     * Does NOT set showModal (Alpine handles visibility instantly on the client).
+     */
+    public function prepareCreate(): void
     {
         $this->formData   = [];
         $this->formErrors = [];
@@ -19,7 +23,16 @@ trait HasCrudForm
         $this->sdSearches = [];
         $this->sdResults  = [];
         $this->sdLabels   = [];
-        $this->showModal  = true;
+    }
+
+    /**
+     * Legacy alias — kept for backward compatibility.
+     * Prefer the Alpine approach: @click="$wire.showModal = true; $wire.prepareCreate()"
+     */
+    public function openCreate(): void
+    {
+        $this->prepareCreate();
+        $this->showModal = true;
     }
 
     public function openEdit(int $id): void
