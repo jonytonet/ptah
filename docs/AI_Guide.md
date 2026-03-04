@@ -14,10 +14,11 @@
 5. [Prompt: Criar Módulo Opcional](#prompt-criar-módulo-opcional)
 6. [Prompt: Adicionar Validação e Regra de Negócio](#prompt-adicionar-validação-e-regra-de-negócio)
 7. [Prompt: Escrever Testes](#prompt-escrever-testes)
-8. [Workflow Recomendado](#workflow-recomendado)
-9. [Dicas de Produtividade](#dicas-de-produtividade)
-10. [Armadilhas Comuns](#armadilhas-comuns)
-11. [Performance e Alta Demanda](#performance-e-alta-demanda)
+8. [Prompt: Customizar Exportação Excel/PDF](#prompt-customizar-exportação-excelpdf)
+9. [Workflow Recomendado](#workflow-recomendado)
+10. [Dicas de Produtividade](#dicas-de-produtividade)
+11. [Armadilhas Comuns](#armadilhas-comuns)
+12. [Performance e Alta Demanda](#performance-e-alta-demanda)
 
 ---
 
@@ -238,6 +239,63 @@ LOCALIZAÇÃO DOS ARQUIVOS:
   tests/Unit/Models/CompanyModelTest.php
   tests/Feature/Livewire/CompanyListTest.php
 ```
+
+---
+
+## Prompt: Customizar Exportação Excel/PDF
+
+Use quando precisar personalizar a formatação dos valores exportados ou adicionar colunas calculadas.
+
+```
+Customize a exportação Excel/PDF do BaseCrud para o model Product no pacote jonytonet/ptah.
+
+CONTEXTO:
+  - O sistema usa maatwebsite/excel (Excel) e barryvdh/laravel-dompdf (PDF)
+  - A classe CrudExport (Ptah\Exports\CrudExport) controla a formatação
+  - O template Blade (ptah::exports.pdf) controla o layout do PDF
+  - Apenas colunas visíveis são exportadas (exclui action columns)
+
+PERSONALIZAÇÕES SOLICITADAS:
+
+1. FORMATAÇÃO DE VALORES:
+   - Campos tipo 'money': exibir como "R$ 1.234,56" (não apenas o número bruto)
+   - Campos tipo 'enum': usar o label ao invés do valor numérico
+   - Datas: usar formato "d/m/Y" sem horário
+   - Campos nulos: exibir "-" ao invés de vazio
+
+2. COLUNA CALCULADA:
+   - Adicionar coluna "Total" (quantity * price) no Excel e PDF
+   - Esta coluna não existe no banco — deve ser calculada durante a exportação
+
+3. ESTILO DO PDF:
+   - Logo da empresa no cabeçalho
+   - Fonte Roboto ao invés de DejaVu Sans
+   - Valores monetários alinhados à direita
+   - Totalizador no rodapé (soma da coluna 'Total')
+
+RESTRIÇÕES:
+  - NÃO altere a lógica de seleção de colunas visíveis
+  - Mantenha compatibilidade com CrudConfig (colsNomeLogico, colsTipo, etc.)
+  - Use apenas CSS inline no template PDF (sem classes Tailwind)
+  - A formatação deve funcionar tanto na exportação completa quanto no bulk export
+
+ARQUIVOS A MODIFICAR:
+  - ptah/src/Exports/CrudExport.php → método formatValue()
+  - ptah/resources/views/exports/pdf.blade.php → layout e estilos
+```
+
+### Resultado esperado
+
+O agente deve:
+
+1. Adicionar lógica no `formatValue()` para cada tipo customizado
+2. Criar método auxiliar `getSelectLabel()` se necessário
+3. Adicionar coluna calculada no `map()` e `headings()`
+4. Atualizar template PDF com:
+   - `<style>` inline com fonte Roboto via Google Fonts
+   - Logo no cabeçalho (checar se existe antes)
+   - Alinhamento condicional por tipo de coluna
+   - Footer com totalizador
 
 ---
 

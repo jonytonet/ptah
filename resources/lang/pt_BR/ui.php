@@ -159,6 +159,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Export PDF/Excel
+    |--------------------------------------------------------------------------
+    */
+    'export_date'           => 'Data de exportação',
+    'export_total_records'  => 'Total de registros',
+    'export_no_data'        => 'Nenhum registro encontrado para exportar.',
+    'export_totalizers'     => 'Totalizadores',
+    'export_sum'            => 'Soma',
+    'export_avg'            => 'Média',
+    'export_count'          => 'Contagem',
+    'export_max'            => 'Máximo',
+    'export_min'            => 'Mínimo',
+
+    /*
+    |--------------------------------------------------------------------------
     | Permissions / Middleware
     |--------------------------------------------------------------------------
     */

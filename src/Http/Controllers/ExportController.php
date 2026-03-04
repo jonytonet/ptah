@@ -97,11 +97,15 @@ class ExportController
             abort(404, 'Nenhum registro encontrado para exportar');
         }
 
+        // Buscar totalizadores se configurados
+        $totalizers = $this->getTotalizers($query, $modelName);
+
         return Pdf::loadView('ptah::exports.pdf', [
-                'data'      => $data,
-                'columns'   => $columns,
-                'modelName' => $modelName,
-                'date'      => now()->format('d/m/Y H:i:s'),
+                'data'       => $data,
+                'columns'    => $columns,
+                'modelName'  => $modelName,
+                'date'       => now()->format('d/m/Y H:i:s'),
+                'totalizers' => $totalizers,
             ])
             ->setPaper('a4', 'portrait')
             ->download($fileName . '.pdf');
@@ -157,5 +161,71 @@ class ExportController
         }
         
         return null;
+    }
+
+    /**
+     * Busca totalizadores configurados no CrudConfig
+     */
+    protected function getTotalizers($query, string $modelName): array
+    {
+        try {
+            // Buscar configuração do CRUD
+            $crudConfig = \Ptah\Models\CrudConfig::where('model_name', $modelName)->first();
+            
+            if (!$crudConfig) {
+                return [];
+            }
+
+            $config = $crudConfig->config ?? [];
+            $totConfig = $config['totalizadores'] ?? [];
+
+            // Verificar se totalizadores estão habilitados e tem colunas
+            if (empty($totConfig['enabled']) || empty($totConfig['columns'])) {
+                return [];
+            }
+
+            // Verificar se está visível na UI (opcional - sempre mostrar no PDF se configurado)
+            $uiConfig = $config['ui'] ?? [];
+            if (!($uiConfig['showTotalizador'] ?? false)) {
+                return [];
+            }
+
+            $result = [];
+
+            // Calcular cada totalizador
+            foreach ($totConfig['columns'] as $totCol) {
+                $field     = $totCol['field']     ?? null;
+                $aggregate = $totCol['aggregate'] ?? 'sum';
+                $label     = $totCol['label']     ?? ucwords(str_replace('_', ' ', $field));
+
+                if (!$field) {
+                    continue;
+                }
+
+                // Clonar query para cada agregação
+                $cloned = clone $query;
+
+                $value = match ($aggregate) {
+                    'sum'   => $cloned->sum($field),
+                    'count' => $cloned->count($field),
+                    'avg'   => round((float) $cloned->avg($field), 2),
+                    'max'   => $cloned->max($field),
+                    'min'   => $cloned->min($field),
+                    default => null,
+                };
+
+                $result[] = [
+                    'field'     => $field,
+                    'label'     => $label,
+                    'aggregate' => $aggregate,
+                    'value'     => $value,
+                ];
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            // Se houver erro, retornar array vazio
+            return [];
+        }
     }
 }

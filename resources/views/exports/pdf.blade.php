@@ -69,6 +69,56 @@
             background-color: #f1f5f9;
         }
         
+        .totalizers {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .totalizers h3 {
+            font-size: 12px;
+            color: #0f172a;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .totalizers-table {
+            width: 100%;
+            border: none;
+        }
+        
+        .totalizers-table tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .totalizers-table tr:last-child {
+            border-bottom: none;
+        }
+        
+        .totalizer-label {
+            padding: 8px 0;
+            font-size: 9px;
+            color: #475569;
+            font-weight: 500;
+        }
+        
+        .totalizer-type {
+            color: #94a3b8;
+            font-weight: normal;
+            font-size: 8px;
+            text-transform: lowercase;
+        }
+        
+        .totalizer-value {
+            padding: 8px 0;
+            text-align: right;
+            font-size: 10px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        
         .footer {
             margin-top: 30px;
             padding-top: 10px;
@@ -90,8 +140,8 @@
     <div class="header">
         <h1>{{ $modelName }}</h1>
         <div class="meta">
-            <strong>Data de exportação:</strong> {{ $date }} |
-            <strong>Total de registros:</strong> {{ count($data) }}
+            <strong>{{ __('ptah::ui.export_date') }}:</strong> {{ $date }} |
+            <strong>{{ __('ptah::ui.export_total_records') }}:</strong> {{ count($data) }}
         </div>
     </div>
 
@@ -166,14 +216,30 @@
                 @endforeach
             </tbody>
         </table>
+
+        {{-- Totalizadores --}}
+        @if(!empty($totalizers))
+            <div class="totalizers">
+                <h3>{{ __('ptah::ui.export_totalizers') }}</h3>
+                <table class="totalizers-table">
+                    @foreach($totalizers as $totalizer)
+                        <tr>
+                            <td class="totalizer-label">
+                                {{ $totalizer['label'] }}
+                                <span class="totalizer-type">({{ __('ptah::ui.export_' . $totalizer['aggregate']) }})</span>
+                            </td>
+                            <td class="totalizer-value">
+                                {{ is_numeric($totalizer['value']) ? number_format($totalizer['value'], 2, ',', '.') : $totalizer['value'] }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+        @endif
     @else
         <div class="no-data">
-            Nenhum registro encontrado para exportar.
+            {{ __('ptah::ui.export_no_data') }}
         </div>
     @endif
-
-    <div class="footer">
-        Gerado automaticamente pelo sistema • {{ config('app.name') }}
-    </div>
 </body>
 </html>

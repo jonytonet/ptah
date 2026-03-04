@@ -158,6 +158,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Export PDF/Excel
+    |--------------------------------------------------------------------------
+    */
+    'export_date'           => 'Export date',
+    'export_total_records'  => 'Total records',
+    'export_no_data'        => 'No records found to export.',
+    'export_totalizers'     => 'Totalizers',
+    'export_sum'            => 'Sum',
+    'export_avg'            => 'Average',
+    'export_count'          => 'Count',
+    'export_max'            => 'Maximum',
+    'export_min'            => 'Minimum',
+
+    /*
+    |--------------------------------------------------------------------------
     | Permissions / Middleware
     |--------------------------------------------------------------------------
     */
