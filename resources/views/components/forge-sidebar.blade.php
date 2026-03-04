@@ -257,7 +257,7 @@
             @csrf
             <button
                 type="submit"
-                title="Log out"
+                title="{{ __('ptah::ui.navbar_user_logout') }}"
                 class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-danger hover:bg-danger-light transition-all duration-200"
             >
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
@@ -266,7 +266,7 @@
                 <span
                     :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                     class="whitespace-nowrap text-sm font-medium transition-all duration-300">
-                    Log out
+                    {{ __('ptah::ui.navbar_user_logout') }}
                 </span>
             </button>
         </form>

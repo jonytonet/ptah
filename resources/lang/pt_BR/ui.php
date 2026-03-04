@@ -1300,4 +1300,23 @@ return [
     */
     'groupby_label' => 'Agrupado por :field',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Navbar & Sidebar
+    |--------------------------------------------------------------------------
+    */
+    'navbar_dark_title'        => 'Ativar modo escuro',
+    'navbar_light_title'       => 'Ativar modo claro',
+    'navbar_admin_title'       => 'Administração',
+    'navbar_admin_company'     => 'Empresa',
+    'navbar_admin_departments' => 'Departamentos',
+    'navbar_admin_roles'       => 'Perfis de Acesso',
+    'navbar_admin_pages'       => 'Páginas & Objetos',
+    'navbar_admin_users'       => 'Usuários & Permissões',
+    'navbar_admin_audit'       => 'Log de Auditoria',
+    'navbar_admin_guide'       => 'Guia de Permissões',
+    'navbar_admin_menu'        => 'Gerenciar Menu',
+    'navbar_user_profile'      => 'Perfil',
+    'navbar_user_logout'       => 'Sair',
+
 ];

@@ -1299,4 +1299,23 @@ return [
     */
     'groupby_label' => 'Grouped by :field',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Navbar & Sidebar
+    |--------------------------------------------------------------------------
+    */
+    'navbar_dark_title'        => 'Switch to dark mode',
+    'navbar_light_title'       => 'Switch to light mode',
+    'navbar_admin_title'       => 'Administration',
+    'navbar_admin_company'     => 'Company',
+    'navbar_admin_departments' => 'Departments',
+    'navbar_admin_roles'       => 'Access Profiles',
+    'navbar_admin_pages'       => 'Pages & Objects',
+    'navbar_admin_users'       => 'Users & Permissions',
+    'navbar_admin_audit'       => 'Audit Log',
+    'navbar_admin_guide'       => 'Permissions Guide',
+    'navbar_admin_menu'        => 'Manage Menu',
+    'navbar_user_profile'      => 'Profile',
+    'navbar_user_logout'       => 'Log out',
+
 ];
