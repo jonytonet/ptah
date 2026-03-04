@@ -253,7 +253,7 @@
                                     <div x-show="previewUrl" x-cloak class="mt-3">
                                         <img :src="previewUrl" alt="{{ __('ptah::ui.image_preview_label') }}"
                                              class="max-h-48 rounded-xl border border-slate-200 object-contain bg-slate-50 shadow-sm"
-                                             @error="previewUrl = ''" />
+                                             @@error="previewUrl = ''" />
                                     </div>
                                     @if ($fError)<p class="mt-1 text-xs text-red-500">{{ $fError }}</p>@endif
                                 </div>
