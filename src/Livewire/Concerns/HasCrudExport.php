@@ -110,7 +110,7 @@ trait HasCrudExport
             
             $exportColumns[] = [
                 'field' => $col['colsNomeFisico'] ?? '',
-                'label' => $col['colsNome'] ?? '',
+                'label' => $col['colsNomeLogico'] ?? '',
                 'type'  => $tipo,
             ];
         }
