@@ -1120,6 +1120,272 @@ protected function getVisibleColumnsForExport(): array
         {{ $exportStatus }}
     </div>
 @endif
+```
+
+### Bulk Export (Exportar Selecionados)
+
+Para exportar apenas os registros selecionados, use `bulkExport()`:
+
+```blade
+{{-- Painel de ações em massa --}}
+@if (count($selectedRows) > 0)
+    <div class="ptah-bulk-panel">
+        <span>{{ count($selectedRows) }} selecionado(s)</span>
+        
+        {{-- Botões de exportação --}}
+        <button wire:click="bulkExport('excel')" class="ptah-btn-sm">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+        
+        <button wire:click="bulkExport('pdf')" class="ptah-btn-sm">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+    </div>
+@endif
+```
+
+**Fluxo:**
+1. Usuário seleciona registros via checkboxes
+2. Clica em "Exportar Excel" ou "Exportar PDF"
+3. Evento `ptah:bulk-export` é disparado com os IDs selecionados
+4. JavaScript abre nova aba com URL de download
+5. `ExportController::bulkExport()` gera o arquivo apenas com os IDs fornecidos
+
+### Personalização de Colunas
+
+As colunas exportadas são **automaticamente** as mesmas visíveis na tabela. Para controlar quais colunas aparecerão:
+
+**1. Via interface visual (ícone 👁️)**
+- Clique no ícone de olho na toolbar
+- Marque/desmarque as colunas desejadas
+- A exportação usará apenas as marcadas
+
+**2. Via código (ocultar por padrão)**
+```json
+{
+  "colsNomeFisico": "internal_notes",
+  "colsNomeLogico": "Notas Internas",
+  "colsVisible": false  // Oculta por padrão
+}
+```
+
+**3. Via ordem de colunas**
+- Use drag & drop para reordenar
+- A exportação respeita a nova ordem
+
+### Formatação Customizada
+
+Para personalizar a formatação dos valores exportados, edite o método `formatValue()` em [CrudExport.php](../src/Exports/CrudExport.php):
+
+```php
+protected function formatValue($value, string $type = '')
+{
+    // Formatar datas
+    if ($value instanceof \DateTimeInterface) {
+        return $value->format('d/m/Y H:i:s');
+    }
+    
+    // Formatar booleanos
+    if (is_bool($value)) {
+        return $value ? 'Sim' : 'Não';
+    }
+    
+    // EXEMPLO: Formatar valores monetários
+    if ($type === 'money') {
+        return 'R$ ' . number_format((float)$value, 2, ',', '.');
+    }
+    
+    // EXEMPLO: Formatar enums/selects
+    if ($type === 'select' && is_numeric($value)) {
+        // Aqui você pode buscar o label do select
+        return $this->getSelectLabel($value);
+    }
+    
+    return $value ?? '';
+}
+```
+
+### Troubleshooting
+
+#### Excel não mostra headers
+
+**Causa:** Labels das colunas estão vazios no CrudConfig.
+
+**Solução:** O sistema agora usa fallback automático. Se `colsNomeLogico` (label) estiver vazio, formata o `colsNomeFisico` (field):
+- `created_at` → `Created At`
+- `category_id` → `Category Id`
+
+Para texto customizado, preencha `colsNomeLogico` na aba **Colunas** do CrudConfig Modal.
+
+#### PDF retorna erro 500
+
+**Causa comum:** Template Blade com erro de sintaxe ou dados inválidos.
+
+**Solução:**
+1. Verifique o log do Laravel: `storage/logs/laravel.log`
+2. Teste o template isoladamente:
+   ```bash
+   php artisan tinker
+   >>> Barryvdh\DomPDF\Facade\Pdf::loadView('ptah::exports.pdf', ['data' => collect([]), 'columns' => [], 'modelName' => 'Test', 'date' => now()->format('d/m/Y H:i:s')])->download('test.pdf');
+   ```
+
+#### Exportação não respeita filtros
+
+**Causa:** Os filtros são passados via `$this->filters` do Livewire.
+
+**Verificação:** Certifique-se de que os filtros estão sendo aplicados na listagem antes de exportar.
+
+#### Timeout em exportações grandes
+
+**Causa:** Mais de 1000 registros sendo exportados sincronamente.
+
+**Solução:** 
+1. Ajuste `asyncThreshold` no CrudConfig:
+   ```json
+   "exportConfig": {
+     "asyncThreshold": 500  // Menor = vai para Job mais cedo
+   }
+   ```
+
+2. Configure fila no Laravel:
+   ```bash
+   php artisan queue:work
+   ```
+
+3. Implemente `BaseCrudExportJob` (futuro) para processar em background e notificar usuário quando pronto.
+
+### Boas Práticas
+
+#### 1. Limite de registros
+```json
+"exportConfig": {
+  "asyncThreshold": 500,
+  "maxRecords": 10000  // Futuro: limite máximo de registros
+}
+```
+
+#### 2. Cache de queries pesadas
+Se sua tabela tem milhões de registros, considere adicionar índices nas colunas filtradas:
+
+```php
+// migration
+$table->index(['status', 'created_at']);
+$table->index('company_id');
+```
+
+#### 3. Colunas computadas
+Se você tem colunas com `colsRenderer` complexo, considere criar um accessor no Model para facilitar a exportação:
+
+```php
+// Model
+protected function totalValue(): Attribute
+{
+    return Attribute::make(
+        get: fn() => $this->quantity * $this->price
+    );
+}
+```
+
+#### 4. Labels multilíngue
+Use chaves de tradução nos labels:
+
+```json
+{
+  "colsNomeLogico": "{{ __('products.fields.name') }}"
+}
+```
+
+### Exemplo Completo
+
+```blade
+{{-- Toolbar com exportação --}}
+<div class="ptah-toolbar">
+    {{-- Esquerda: Busca e filtros --}}
+    <div class="flex gap-2">
+        <input type="text" 
+               wire:model.live.debounce.300ms="search" 
+               placeholder="Buscar...">
+        
+        <button wire:click="$toggle('showFilters')">
+            <i class="fas fa-filter"></i> Filtros
+        </button>
+    </div>
+    
+    {{-- Direita: Ações --}}
+    <div class="flex gap-2">
+        {{-- Exportação --}}
+        @if ($permissions['export'] ?? false)
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="ptah-btn-secondary">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+                
+                <div x-show="open" 
+                     @click.outside="open = false"
+                     class="ptah-dropdown">
+                    <button wire:click="export('excel')" 
+                            @click="open = false">
+                        <i class="fas fa-file-excel text-green-600"></i>
+                        Excel (.xlsx)
+                    </button>
+                    
+                    <button wire:click="export('pdf')" 
+                            @click="open = false">
+                        <i class="fas fa-file-pdf text-red-600"></i>
+                        PDF
+                    </button>
+                </div>
+            </div>
+        @endif
+        
+        {{-- Criar novo --}}
+        @if ($permissions['create'] ?? false)
+            <button wire:click="openCreate()" class="ptah-btn-primary">
+                <i class="fas fa-plus"></i> Novo
+            </button>
+        @endif
+    </div>
+</div>
+
+{{-- Painel de seleção em massa --}}
+@if (count($selectedRows) > 0)
+    <div class="ptah-bulk-panel">
+        <div class="flex items-center gap-4">
+            <span class="font-medium">
+                {{ count($selectedRows) }} registro(s) selecionado(s)
+            </span>
+            
+            <div class="flex gap-2">
+                <button wire:click="bulkExport('excel')" class="ptah-btn-sm">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                
+                <button wire:click="bulkExport('pdf')" class="ptah-btn-sm">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                
+                <button wire:click="bulkDelete()" 
+                        class="ptah-btn-sm ptah-btn-danger"
+                        onclick="return confirm('Excluir {{ count($selectedRows) }} registro(s)?')">
+                    <i class="fas fa-trash"></i> Excluir
+                </button>
+            </div>
+            
+            <button wire:click="clearSelection()" class="ptah-link">
+                Limpar seleção
+            </button>
+        </div>
+    </div>
+@endif
+
+{{-- Status de exportação (processamento assíncrono) --}}
+@if ($exportStatus)
+    <div class="ptah-alert ptah-alert-info">
+        <i class="fas fa-spinner fa-spin"></i>
+        {{ $exportStatus }}
+    </div>
+@endif
+```
 
 ---
 
