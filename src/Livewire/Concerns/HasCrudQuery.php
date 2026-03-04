@@ -44,7 +44,7 @@ trait HasCrudQuery
             // Soft delete
             $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($modelInstance));
             if ($usesSoftDeletes && $this->showTrashed) {
-                $query->withTrashed();
+                $query->onlyTrashed();
             }
 
             // Eager-load relationships visible in the table
