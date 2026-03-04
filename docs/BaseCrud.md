@@ -1004,7 +1004,9 @@ O BaseCrud inclui sistema completo de exportação para **Excel** (.xlsx) e **PD
 - ✅ **Respeita filtros** — aplica os mesmos filtros ativos na tabela
 - ✅ **Bulk export** — exporta apenas registros selecionados
 - ✅ **Sync/Async** — exportação síncrona para poucos registros, assíncrona para grandes volumes
-- ✅ **Labels customizados** — usa os labels configurados no CrudConfig
+- ✅ **Labels customizados** — usa os labels (surnames) configurados no CrudConfig
+- ✅ **Totalizadores no PDF** — inclui automaticamente agregações (soma, média, etc.) se configuradas
+- ✅ **Multilíngue** — textos da interface traduzidos via `__('ptah::ui.*')`
 
 ### Dependências Necessárias
 
@@ -1090,7 +1092,46 @@ protected function getVisibleColumnsForExport(): array
 - Tabela estilizada com alternância de cores
 - Cabeçalho com nome do model e data de exportação
 - Textos longos truncados em 100 caracteres
-- Rodapé com nome do sistema
+- **Totalizadores (automáticos)** — se configurados no CrudConfig e visíveis (`showTotalizador: true`)
+- Textos traduzidos via `__('ptah::ui.*')` para suporte multilíngue
+
+### Totalizadores no PDF
+
+Se você tem totalizadores configurados no seu CrudConfig, eles serão automaticamente incluídos no PDF exportado:
+
+```json
+{
+  "ui": {
+    "showTotalizador": true
+  },
+  "totalizadores": {
+    "enabled": true,
+    "columns": [
+      {
+        "field": "total",
+        "label": "Total Geral",
+        "aggregate": "sum"
+      },
+      {
+        "field": "quantity",
+        "label": "Quantidade",
+        "aggregate": "count"
+      }
+    ]
+  }
+}
+```
+
+**Agregações suportadas:**
+- `sum` — Soma
+- `avg` — Média
+- `count` — Contagem
+- `max` — Máximo
+- `min` — Mínimo
+
+Os totalizadores aparecem em uma seção dedicada no rodapé do PDF, com os valores formatados (números com separadores de milhares e decimais).
+
+> **Nota:** Totalizadores só aparecem no PDF se `ui.showTotalizador` for `true`. Excel não inclui totalizadores atualmente (apenas dados tabulares).
 
 ### Template Blade
 
