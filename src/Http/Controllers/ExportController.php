@@ -1,13 +1,13 @@
 <?php
 
-namespace Jonytonet\Ptah\Http\Controllers;
+namespace Ptah\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\LaravelPdf\Facades\Pdf;
-use Jonytonet\Ptah\Exports\CrudExport;
+use Ptah\Exports\CrudExport;
 
 class ExportController
 {

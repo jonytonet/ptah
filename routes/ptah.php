@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Jonytonet\Ptah\Http\Controllers\ExportController;
+use Ptah\Http\Controllers\ExportController;
 
 /*
 |--------------------------------------------------------------------------

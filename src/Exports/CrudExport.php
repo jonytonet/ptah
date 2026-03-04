@@ -1,6 +1,6 @@
 <?php
 
-namespace Jonytonet\Ptah\Exports;
+namespace Ptah\Exports;
 
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
