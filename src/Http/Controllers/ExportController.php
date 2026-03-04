@@ -21,8 +21,10 @@ class ExportController
         $filters    = json_decode($request->input('filters', '{}'), true);
         $columns    = json_decode($request->input('columns', '[]'), true);
 
-        // Validar que o model existe
-        if (!class_exists($modelClass)) {
+        // Resolver a classe do model (suporta com/sem namespace)
+        $modelClass = $this->resolveModelClass($modelClass);
+        
+        if (!$modelClass) {
             abort(404, 'Model não encontrado');
         }
 
@@ -53,7 +55,10 @@ class ExportController
         $ids        = json_decode($request->input('ids', '[]'), true);
         $columns    = json_decode($request->input('columns', '[]'), true);
 
-        if (!class_exists($modelClass)) {
+        // Resolver a classe do model (suporta com/sem namespace)
+        $modelClass = $this->resolveModelClass($modelClass);
+        
+        if (!$modelClass) {
             abort(404, 'Model não encontrado');
         }
 
@@ -125,6 +130,31 @@ class ExportController
             } else {
                 // Filtro simples (valor direto)
                 $query->where($field, $value);
+    
+    /**
+     * Resolve o namespace completo da classe do model
+     * Segue a mesma lógica do BaseCrud::resolveEloquentModel()
+     */
+    protected function resolveModelClass(string $modelName): ?string
+    {
+        // Converter barras para namespace (ex: "Purchase/Order" -> "Purchase\Order")
+        $class = str_replace('/', '\\', $modelName);
+        
+        // Tentar vários prefixos conhecidos
+        $candidates = [
+            $class,                                          // Já vem com namespace completo
+            'App\\Models\\' . $class,                       // Laravel padrão
+            app()->getNamespace() . 'Models\\' . $class,    // Namespace customizado
+        ];
+        
+        foreach ($candidates as $candidate) {
+            if (class_exists($candidate)) {
+                return $candidate;
+            }
+        }
+        
+        return null;
+    }
             }
         }
     }
