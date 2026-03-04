@@ -52,11 +52,11 @@
     // Fallback quando vazio
     if (empty($menuItems)) {
         $menuItems = [
-            ['label' => 'Dashboard',     'url' => '/dashboard', 'icon' => 'bx bx-home-alt',   'type' => 'menuLink', 'match' => 'dashboard', 'children' => []],
-            ['label' => 'Usuários',      'url' => '/users',     'icon' => 'bx bx-user',        'type' => 'menuLink', 'match' => 'users*',    'children' => []],
-            ['label' => 'Produtos',      'url' => '/products',  'icon' => 'bx bx-cube',        'type' => 'menuLink', 'match' => 'products*', 'children' => []],
-            ['label' => 'Relatórios',    'url' => '/reports',   'icon' => 'bx bx-bar-chart',   'type' => 'menuLink', 'match' => 'reports*',  'children' => []],
-            ['label' => 'Configurações', 'url' => '/settings',  'icon' => 'bx bx-cog',         'type' => 'menuLink', 'match' => 'settings*', 'children' => []],
+            ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'type' => 'menuLink', 'match' => 'dashboard', 'children' => []],
+            ['label' => 'Users',     'url' => '/users',     'icon' => 'bx bx-user',       'type' => 'menuLink', 'match' => 'users*',    'children' => []],
+            ['label' => 'Products',  'url' => '/products',  'icon' => 'bx bx-cube',       'type' => 'menuLink', 'match' => 'products*', 'children' => []],
+            ['label' => 'Reports',   'url' => '/reports',   'icon' => 'bx bx-bar-chart',  'type' => 'menuLink', 'match' => 'reports*',  'children' => []],
+            ['label' => 'Settings',  'url' => '/settings',  'icon' => 'bx bx-cog',        'type' => 'menuLink', 'match' => 'settings*', 'children' => []],
         ];
     }
 
@@ -247,12 +247,17 @@
     </nav>
 
     {{-- Logout --}}
+    @php
+        $logoutAction = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
+            ? route('ptah.auth.logout')
+            : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
+    @endphp
     <div class="ptah-sidebar-footer p-2 border-t border-gray-100 flex-shrink-0">
-        <form method="POST" action="{{ \Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#' }}">
+        <form method="POST" action="{{ $logoutAction }}">
             @csrf
             <button
                 type="submit"
-                title="Sair"
+                title="Log out"
                 class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-danger hover:bg-danger-light transition-all duration-200"
             >
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
@@ -261,7 +266,7 @@
                 <span
                     :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                     class="whitespace-nowrap text-sm font-medium transition-all duration-300">
-                    Sair
+                    Log out
                 </span>
             </button>
         </form>
