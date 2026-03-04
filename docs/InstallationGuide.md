@@ -136,6 +136,20 @@ Create the database:
 mysql -u root -p -e "CREATE DATABASE ptah_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
+### Language / locale
+
+> ⚠️ **ptah does not officially support pt_BR.** This guide was fully written and validated with `APP_LOCALE=en`. The package ships translation files for both `en` and `pt_BR` under `lang/vendor/ptah/`, but the **pt_BR strings are not maintained** and may be incomplete or outdated.
+
+The default Laravel 12 `.env` ships with English already set:
+
+```env
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+```
+
+**Leave these values as-is.** Changing to `pt_BR` is possible but not supported — some labels, error messages and UI strings inside ptah will remain in English regardless.
+
 ---
 
 ## Step 4 — Run ptah:install
