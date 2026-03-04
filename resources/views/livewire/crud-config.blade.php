@@ -2435,7 +2435,7 @@
                                 </div>
                                 @if (!empty($groupBy))
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full">
-                                    <i class="bx bx-check-circle"></i> Ativo
+                                    <i class="bx bx-check-circle"></i> {{ __('ptah::ui.cfg_gen_groupby_active') }}
                                 </span>
                                 @endif
                             </div>
@@ -2445,13 +2445,12 @@
                                     placeholder="ex: company_id, branch_group_id"
                                     class="font-mono cfg-input" />
                                 <p class="text-[11px] text-slate-400 mt-1">
-                                    Deixe vazio para desativar. Quando preenchido, a listagem retorna
-                                    <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {campo} ... GROUP BY {campo}</code>.
+                                    {!! __('ptah::ui.cfg_gen_groupby_hint') !!}
                                 </p>
                             </div>
                             @if (!empty($groupBy))
                             <div class="p-2.5 rounded-lg bg-slate-900 text-[11px] font-mono text-slate-300">
-                                <span class="text-slate-500">-- Query gerada:</span><br>
+                                <span class="text-slate-500">{{ __('ptah::ui.cfg_gen_groupby_preview_label') }}</span><br>
                                 SELECT MIN(<span class="text-yellow-300">tabela</span>.id) AS id, <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span><br>
                                 FROM <span class="text-yellow-300">tabela</span><br>
                                 GROUP BY <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span>
@@ -2468,23 +2467,23 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
                                     <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeCreate(&amp;$data)</p>
-                                    <p class="text-[10px] text-slate-400">Executado antes de INSERT. Mute <code class="px-1 bg-white rounded border border-slate-200">$data</code> por referência.</p>
+                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_before_create_desc') !!}</p>
                                 </div>
                                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
                                     <p class="text-[11px] font-semibold text-slate-600 mb-1">afterCreate($record)</p>
-                                    <p class="text-[10px] text-slate-400">Executado após INSERT. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.</p>
+                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_after_create_desc') !!}</p>
                                 </div>
                                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
                                     <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeUpdate(&amp;$data, $record)</p>
-                                    <p class="text-[10px] text-slate-400">Executado antes de UPDATE. Acessa o registro original via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.</p>
+                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_before_update_desc') !!}</p>
                                 </div>
                                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
                                     <p class="text-[11px] font-semibold text-slate-600 mb-1">afterUpdate($record)</p>
-                                    <p class="text-[10px] text-slate-400">Executado após UPDATE. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.</p>
+                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_after_update_desc') !!}</p>
                                 </div>
                             </div>
                             <div class="p-3 rounded-lg bg-slate-900 text-[11px] font-mono leading-relaxed">
-                                <p class="text-slate-500 mb-1.5">// Sobrescreva no seu componente Livewire:</p>
+                                <p class="text-slate-500 mb-1.5">{{ __('ptah::ui.cfg_gen_hooks_code_comment') }}</p>
                                 <p class="text-indigo-300">protected function <span class="text-green-400">beforeCreate</span>(<span class="text-yellow-300">array &amp;$data</span>): void</p>
                                 <p class="text-slate-400">{ $data[<span class="text-amber-300">'slug'</span>] = \Str::slug($data[<span class="text-amber-300">'name'</span>]); }</p>
                                 <p class="text-indigo-300 mt-2">protected function <span class="text-green-400">afterCreate</span>(\Illuminate\Database\Eloquent\Model <span class="text-yellow-300">$record</span>): mixed</p>

@@ -1107,6 +1107,14 @@ return [
     // General > Lifecycle Hooks
     'cfg_gen_hooks'                => 'Lifecycle Hooks',
     'cfg_gen_hooks_desc'           => 'Override these methods in your Livewire component to run logic before/after each save.',
+    'cfg_gen_groupby_active'           => 'Active',
+    'cfg_gen_groupby_hint'             => 'Leave empty to disable. When set, the listing returns <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {field} ... GROUP BY {field}</code>.',
+    'cfg_gen_groupby_preview_label'    => '-- Generated query:',
+    'cfg_gen_hooks_before_create_desc' => 'Runs before INSERT. Mutate <code class="px-1 bg-white rounded border border-slate-200">$data</code> by reference.',
+    'cfg_gen_hooks_after_create_desc'  => 'Runs after INSERT. Return <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> to redirect.',
+    'cfg_gen_hooks_before_update_desc' => 'Runs before UPDATE. Access original record via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.',
+    'cfg_gen_hooks_after_update_desc'  => 'Runs after UPDATE. Return <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> to redirect.',
+    'cfg_gen_hooks_code_comment'       => '// Override in your Livewire component:',
 
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Physical Name</strong> = the alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',

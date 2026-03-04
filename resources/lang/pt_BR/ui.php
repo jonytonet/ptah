@@ -1108,6 +1108,14 @@ return [
     // General > Lifecycle Hooks
     'cfg_gen_hooks'                => 'Lifecycle Hooks',
     'cfg_gen_hooks_desc'           => 'Sobrescreva esses métodos no seu componente Livewire para executar lógica antes/após cada save.',
+    'cfg_gen_groupby_active'           => 'Ativo',
+    'cfg_gen_groupby_hint'             => 'Deixe vazio para desativar. Quando preenchido, a listagem retorna <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {campo} ... GROUP BY {campo}</code>.',
+    'cfg_gen_groupby_preview_label'    => '-- Query gerada:',
+    'cfg_gen_hooks_before_create_desc' => 'Executado antes de INSERT. Mute <code class="px-1 bg-white rounded border border-slate-200">$data</code> por referência.',
+    'cfg_gen_hooks_after_create_desc'  => 'Executado após INSERT. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.',
+    'cfg_gen_hooks_before_update_desc' => 'Executado antes de UPDATE. Acessa o registro original via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.',
+    'cfg_gen_hooks_after_update_desc'  => 'Executado após UPDATE. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.',
+    'cfg_gen_hooks_code_comment'       => '// Sobrescreva no seu componente Livewire:',
 
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
