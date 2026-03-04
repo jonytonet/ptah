@@ -421,7 +421,7 @@
             })(),
 
             init() {
-                /* Aplica ptah-dark no body para cobrir elementos @teleport('body') */
+                /* Aplica ptah-dark no body para cobrir elementos @@teleport('body') */
                 document.body.classList.toggle('ptah-dark', this.darkMode);
 
                 /* Reagir a mudanças de preferência do SO em tempo real */
