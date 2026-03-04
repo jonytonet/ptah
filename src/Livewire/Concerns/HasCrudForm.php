@@ -101,12 +101,18 @@ trait HasCrudForm
 
             if ($this->editingId) {
                 $record = $modelInstance->newQuery()->findOrFail($this->editingId);
+                // Hook: permite mutação dos dados antes de atualizar
+                $this->beforeUpdate($data, $record);
                 // Record who updated
                 if ($userId && in_array('updated_by', $fillable, true)) {
                     $data['updated_by'] = $userId;
                 }
                 $record->update($data);
+                // Hook: ação após atualizar (pode retornar redirect)
+                $redirect = $this->afterUpdate($record);
             } else {
+                // Hook: permite mutação dos dados antes de criar
+                $this->beforeCreate($data);
                 // Record who created
                 if ($userId && in_array('created_by', $fillable, true)) {
                     $data['created_by'] = $userId;
@@ -114,7 +120,9 @@ trait HasCrudForm
                 if ($userId && in_array('updated_by', $fillable, true)) {
                     $data['updated_by'] = $userId;
                 }
-                $modelInstance->newQuery()->create($data);
+                $record = $modelInstance->newQuery()->create($data);
+                // Hook: ação após criar (pode retornar redirect)
+                $redirect = $this->afterCreate($record);
             }
 
             // Invalidate cache
@@ -122,12 +130,54 @@ trait HasCrudForm
 
             $this->closeModal();
             $this->dispatch('crud-saved', model: $this->model);
+
+            // Se o hook retornou um RedirectResponse, executa o redirect
+            if (isset($redirect) && $redirect instanceof \Illuminate\Http\RedirectResponse) {
+                redirect($redirect->getTargetUrl());
+            }
         } catch (\Throwable $e) {
             $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', [':message' => $e->getMessage()]);
         }
 
         $this->creating = false;
     }
+
+    // ── Lifecycle Hooks ────────────────────────────────────────────────────────
+
+    /**
+     * Chamado antes de inserir um novo registro.
+     * Sobrescreva para mutate de $data ou disparar lógica pré-criação.
+     *
+     * @param array<string, mixed> $data  Dados do formulário (por referência)
+     */
+    protected function beforeCreate(array &$data): void {}
+
+    /**
+     * Chamado antes de atualizar um registro existente.
+     * Sobrescreva para mutate de $data ou disparar lógica pré-atualização.
+     *
+     * @param array<string, mixed>                          $data   Dados do formulário (por referência)
+     * @param \Illuminate\Database\Eloquent\Model $record  Registro que será atualizado
+     */
+    protected function beforeUpdate(array &$data, \Illuminate\Database\Eloquent\Model $record): void {}
+
+    /**
+     * Chamado após a criação bem-sucedida de um novo registro.
+     * Retorne um RedirectResponse para redirecionar o usuário após o save.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model          $record  Registro recém-criado
+     * @return \Illuminate\Http\RedirectResponse|null
+     */
+    protected function afterCreate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+
+    /**
+     * Chamado após a atualização bem-sucedida de um registro existente.
+     * Retorne um RedirectResponse para redirecionar o usuário após o save.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model          $record  Registro atualizado
+     * @return \Illuminate\Http\RedirectResponse|null
+     */
+    protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 

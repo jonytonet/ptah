@@ -852,6 +852,11 @@ return [
     'cfg_col_type_sd'              => 'searchdropdown — Relational Search',
     'cfg_col_type_boolean'         => 'boolean — Yes/No',
     'cfg_col_type_textarea'        => 'textarea — Long Text',
+    'cfg_col_type_image'           => 'image — Image with Preview',
+
+    // Image input
+    'image_pick_file'              => 'Pick a file…',
+    'image_preview_label'          => 'preview',
 
     // Cell style
     'cfg_col_cell_style_title'     => 'Cell Style',
@@ -1269,5 +1274,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'unknown' => 'Unknown',
+
+    /*
+    |--------------------------------------------------------------------------
+    | GroupBy
+    |--------------------------------------------------------------------------
+    */
+    'groupby_label' => 'Grouped by :field',
 
 ];

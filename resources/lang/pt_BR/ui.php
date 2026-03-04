@@ -853,6 +853,11 @@ return [
     'cfg_col_type_sd'              => 'searchdropdown — Busca Relacional',
     'cfg_col_type_boolean'         => 'boolean — Sim/Não',
     'cfg_col_type_textarea'        => 'textarea — Texto Longo',
+    'cfg_col_type_image'           => 'image — Imagem com Preview',
+
+    // Input de imagem
+    'image_pick_file'              => 'Escolher arquivo…',
+    'image_preview_label'          => 'visualização',
 
     // Estilo da célula
     'cfg_col_cell_style_title'     => 'Estilo da Célula',
@@ -1270,5 +1275,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'unknown' => 'Desconhecido',
+
+    /*
+    |--------------------------------------------------------------------------
+    | GroupBy
+    |--------------------------------------------------------------------------
+    */
+    'groupby_label' => 'Agrupado por :field',
 
 ];

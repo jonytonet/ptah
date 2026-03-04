@@ -371,6 +371,7 @@
                                             <option value="searchdropdown">{{ __('ptah::ui.cfg_col_type_sd') }}</option>
                                             <option value="boolean">{{ __('ptah::ui.cfg_col_type_boolean') }}</option>
                                             <option value="textarea">{{ __('ptah::ui.cfg_col_type_textarea') }}</option>
+                                            <option value="image">{{ __('ptah::ui.cfg_col_type_image') }}</option>
                                         </select>
                                     </div>
                                     <div>

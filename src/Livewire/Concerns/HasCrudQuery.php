@@ -114,6 +114,20 @@ trait HasCrudQuery
                 $this->filterService->applyFilters($query, $cfFilters);
             }
 
+            // GROUP BY support (configGroupBy)
+            if ($groupBy = $this->crudConfig['groupBy'] ?? null) {
+                $mainTable = $modelInstance->getTable();
+                $query
+                    ->select([
+                        \Illuminate\Support\Facades\DB::raw("MIN({$mainTable}.id) as id"),
+                        "{$mainTable}.{$groupBy}",
+                    ])
+                    ->groupBy("{$mainTable}.{$groupBy}")
+                    ->orderBy("{$mainTable}.{$groupBy}", $this->direction);
+
+                return $query->paginate($this->perPage);
+            }
+
             // Sorting (supports relation via JOIN)
             $relationInfo = $this->getOrderByRelationInfo($this->sort);
 
