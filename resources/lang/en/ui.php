@@ -919,6 +919,211 @@ return [
     'cfg_col_btn_save'             => 'Save Column Changes',
     'cfg_col_btn_add'              => 'Add Column',
 
+    // Columns > Basic extra
+    'cfg_col_select_opts'          => 'Select Options',
+    'cfg_col_custom_method'        => 'Custom Method (PHP)',
+    'cfg_col_method_raw_label'     => 'colsMetodoRaw — Render return as raw HTML (no escape)',
+    'cfg_col_method_syntax'        => 'View syntax and examples',
+    'cfg_col_order_by'             => 'Alternative sort (colsOrderBy)',
+
+    // Columns > Cell Style extra labels
+    'cfg_col_cell_style_hint'      => 'Applied to the cell content wrapper',
+    'cfg_col_cell_min_width'       => 'Min Width (colsMinWidth)',
+    'cfg_col_cell_icon_prefix'     => 'Prefix Icon (colsCellIcon)',
+    'cfg_col_cell_tw_class'        => 'Tailwind Class / Extra CSS',
+
+    // Columns > Renderer select options
+    'cfg_col_renderer_label'       => 'Renderer',
+    'cfg_col_renderer_none'        => '— None (raw value) —',
+    'cfg_col_renderer_opt_badge'   => 'badge — Colored badge by value',
+    'cfg_col_renderer_opt_pill'    => 'pill — Rounded pill',
+    'cfg_col_renderer_opt_boolean' => 'boolean — Yes / No',
+    'cfg_col_renderer_opt_money'   => 'money — Monetary value',
+    'cfg_col_renderer_opt_date'    => 'date — Date (d/m/Y)',
+    'cfg_col_renderer_opt_datetime'=> 'datetime — Date and Time',
+    'cfg_col_renderer_opt_link'    => 'link — Clickable link',
+    'cfg_col_renderer_opt_image'   => 'image — Thumbnail',
+    'cfg_col_renderer_opt_truncate'=> 'truncate — Truncated text',
+    'cfg_col_renderer_group_data'  => 'Data',
+    'cfg_col_renderer_opt_number'  => 'number — Formatted number (1,234.56)',
+    'cfg_col_renderer_opt_filesize'=> 'filesize — File size (KB/MB)',
+    'cfg_col_renderer_opt_duration'=> 'duration — Duration (1h 35min)',
+    'cfg_col_renderer_opt_code'    => 'code — Monospace code',
+    'cfg_col_renderer_opt_color_sw'=> 'color — Hex color swatch',
+    'cfg_col_renderer_group_visual'=> 'Visual',
+    'cfg_col_renderer_opt_progress'=> 'progress — Progress bar',
+    'cfg_col_renderer_opt_rating'  => 'rating — Star rating',
+    'cfg_col_renderer_opt_qrcode'  => 'qrcode — QR Code (via JS)',
+
+    // Columns > Mask extra
+    'cfg_col_mask_regex'           => 'Regex Pattern (IMask)',
+    'cfg_col_valid_hint'           => 'Additional rules beyond <strong>Required</strong> (configured in Basic tab).',
+
+    // Columns > SearchDropdown
+    'cfg_col_sd_search_mode'       => 'Search Mode',
+    'cfg_col_sd_mode_service'      => 'Custom Service',
+    'cfg_col_sd_model'             => 'Model (relative to App\\Models)',
+    'cfg_col_sd_service'           => 'Service (relative to App\\Services)',
+    'cfg_col_sd_method'            => 'Service Method',
+    'cfg_col_sd_value_field'       => 'Value Field (value)',
+    'cfg_col_sd_label_field'       => 'Label Field (label)',
+    'cfg_col_sd_label_secondary'   => 'Secondary Label (optional)',
+    'cfg_col_sd_order_by'          => 'Sort order (orderByRaw)',
+    'cfg_col_sd_limit'             => 'Results Limit',
+    'cfg_col_sd_filters'           => 'Static Filters (JSON)',
+
+    // Columns > Totalizer extra
+    'cfg_col_total_func'           => 'Function',
+    'cfg_col_total_format'         => 'Format',
+    'cfg_col_total_sum'            => 'SUM — Sum',
+    'cfg_col_total_avg'            => 'AVG — Average',
+    'cfg_col_total_count'          => 'COUNT — Count',
+    'cfg_col_total_min'            => 'MIN — Minimum',
+    'cfg_col_total_max'            => 'MAX — Maximum',
+
+    // Filter aggregate options
+    'cfg_filter_agg_sum'           => 'SUM — sum of values',
+    'cfg_filter_agg_count'         => 'COUNT — record count',
+    'cfg_filter_agg_avg'           => 'AVG — average',
+    'cfg_filter_agg_max'           => 'MAX — maximum value',
+    'cfg_filter_agg_min'           => 'MIN — minimum value',
+    'cfg_filter_agg_hint'          => 'Only fill if you want to filter by a calculated value (ex: SUM >= 100).',
+
+    // Shared operator options
+    'op_eq'                        => '= (equals)',
+    'op_eq2'                       => '== (equals)',
+    'op_neq'                       => '!= (different)',
+    'op_like'                      => 'LIKE (contains text)',
+    'op_gt'                        => '> (greater than)',
+    'op_lt'                        => '< (less than)',
+    'op_gte'                       => '>= (greater or equal)',
+    'op_lte'                       => '<= (less or equal)',
+    'op_style_case_hint'           => 'Exact as in the database (case-sensitive).',
+
+    // base-crud
+    'crud_no_config'               => 'BaseCrud configuration not found for',
+
+    // Columns > Select options placeholder & inline hint
+    'cfg_col_select_opts_ph'       => 'key;Label;;key2;Label2',
+    'cfg_col_select_fmt_hint'      => 'Format: <code class="px-1 rounded bg-slate-100">key;Label</code> separated by <code class="px-1 rounded bg-slate-100">;;</code>',
+
+    // Columns > Cell icon hint
+    'cfg_col_cell_icon_hint'       => 'CSS class of the icon (Boxicons, FontAwesome...)',
+
+    // Columns > Badge / Pill map
+    'cfg_col_badge_map_hint'       => 'Each entry maps a database value to a label and color.',
+    'cfg_col_badge_label_ph'       => 'label',
+
+    // Columns > Boolean renderer placeholder
+    'cfg_col_bool_false_ph'        => 'No',
+
+    // Columns > Currency options
+    'cfg_col_currency_brl'         => 'BRL — Brazilian Real',
+    'cfg_col_currency_usd'         => 'USD — Dollar',
+    'cfg_col_currency_eur'         => 'EUR — Euro',
+
+    // Columns > Mask select options
+    'cfg_col_mask_none'            => '— No mask —',
+    'cfg_col_mask_grp_monetary'    => 'Monetary',
+    'cfg_col_mask_ean13'           => 'ean13 — 0000000000000 (13 digits)',
+    'cfg_col_mask_grp_vehicle'     => 'Vehicles',
+    'cfg_col_mask_uppercase_opt'   => 'uppercase — automatic UPPERCASE',
+    'cfg_col_mask_custom_regex_opt'=> 'custom_regex — Custom expression',
+    'cfg_col_mask_plate_sfx'       => '(upper. + alphanum.)',
+    'cfg_col_mask_trim_opt'        => 'trim — Remove spaces from edges',
+    'cfg_col_mask_transform_save'  => '⚡ Transformation applied on save:',
+    'cfg_col_mask_plate_case'      => '(uppercase + alphanumeric)',
+
+    // Columns > Validation inline hints
+    'cfg_col_valid_confirmed_hint' => 'Confirmation field name in the form',
+    'cfg_col_valid_unique_hint'    => 'Automatically ignores the record being edited',
+
+    // Columns > Relation inline hints
+    'cfg_col_rel_name_hint'        => 'Relation method name on the Model',
+    'cfg_col_rel_nested_title'     => '🔗 Nested Relation (Dot Notation)',
+    'cfg_col_rel_nested_desc'      => 'Use when data is at multiple levels:',
+    'cfg_col_rel_nested_auto'      => 'Eager loading is automatic. The last segment is the field; the previous ones are the relations.',
+    'cfg_col_rel_nested_label'     => 'Dot Notation Path',
+
+    // Columns > SearchDropdown type hint
+    'cfg_col_sd_type_hint'         => 'Configuration for type <strong>searchdropdown</strong>. Available only when the column type is SearchDropdown.',
+
+    // Filter > field inline hints
+    'cfg_filter_field_hint'        => 'Unique name for this filter. Does not need to exist in the database.',
+    'cfg_filter_rel_method_hint'   => 'Relation method name on the Model (ex: <code class="px-1 rounded bg-slate-100">supplier</code>, <code class="px-1 rounded bg-slate-100">stockMovements</code>).',
+    'cfg_filter_rel_col_hint'      => 'Column inside the related table that will be filtered.',
+
+    // Filter > guide box titles & descriptions
+    'cfg_filter_guide_s1_title'    => '① Simple filter — direct field in the table',
+    'cfg_filter_guide_s1_desc'     => 'Use when the field you want to filter is in the model\'s own table.',
+    'cfg_filter_guide_s2_title'    => '② Filter via relation — whereHas',
+    'cfg_filter_guide_s2_desc'     => 'Use when the field is in an Eloquent relation (ex: filter Products by Supplier name).',
+    'cfg_filter_guide_s3_title'    => '③ Aggregate filter — whereHas + Aggregate',
+    'cfg_filter_guide_s3_desc'     => 'Use to filter by calculated values within a relation (ex: products with total stock &gt; X).',
+    'cfg_filter_guide_tip'         => '<strong>Tip:</strong> The <em>Field</em> is just an internal identifier — it does not need to exist in the database. What matters for the query is the <em>whereHas</em> + <em>Relation Field</em>.',
+
+    // Style > guide box
+    'cfg_style_guide_intro'        => 'The CSS style is applied to the <strong>entire row</strong> of the table when the condition is true. The <strong>Field</strong> must be a real model attribute (database column or relation).',
+    'cfg_style_guide_ex2_title'    => '② Highlight by numeric value',
+    'cfg_style_guide_ex2_sample'   => 'Example — critical stock ≤ 5',
+    'cfg_style_guide_tip'          => 'The CSS is applied as <code class="px-1 rounded bg-slate-100">style=""</code> directly on the <code class="px-1 rounded bg-slate-100">&lt;tr&gt;</code> tag.',
+
+    // JOIN > guide box
+    'cfg_join_guide_intro'         => 'Configurable JOINs allow bringing columns from other tables <strong>without Eloquent relationships</strong>, with support for filtering, sorting and export.',
+    'cfg_join_guide_ex1_title'     => 'Simple example — 1 level',
+    'cfg_join_guide_ex2_title'     => 'Chained example — 2 JOINs (3 levels)',
+    'cfg_join_guide_j1_title'      => 'JOIN 1 — intermediate (no extra columns)',
+    'cfg_join_guide_j2_title'      => 'JOIN 2 — target table (with column)',
+    'cfg_join_guide_chain_note'    => 'The 2nd JOIN can use columns from the 1st JOIN in the ON condition — SQL is generated in sequence.',
+
+    // JOIN > form inline hints
+    'cfg_join_distinct_hint'       => 'Avoids duplicate rows when the JOIN can generate multiple matches (1-to-many).',
+    'cfg_join_selectraw_hint'      => 'Each line defines a column: <code class="px-1 rounded bg-slate-100">table.column:alias</code>. The alias is how the field appears in Blade and filters. If you omit the alias, it will be auto-generated (ex: <code class="px-1 rounded bg-slate-100">suppliers.name</code> → <code class="px-1 rounded bg-slate-100">suppliers_name</code>).',
+    'cfg_join_exist_err_prefix'    => 'A JOIN for table',
+    'cfg_join_exist_err_suffix'    => 'already exists. Edit the existing one or use a different name.',
+    'cfg_join_notice_title'        => 'Next step: add the columns in the <span class="text-indigo-700">Columns</span> tab',
+    'cfg_join_notice_footer'       => 'For chained JOINs (3+ levels), set up an intermediate JOIN <em>without columns</em> and a second JOIN with the desired columns. See the guide above for the full example.',
+
+    // Shared guide-box terms (reused across Columns/Filter/JOIN guides)
+    'cfg_term_phys_name'           => 'Physical Name',
+    'cfg_term_sql_source'          => 'SQL Source',
+    'cfg_term_rel_name_ph'         => '(relation name)',
+
+    // General tab form hints
+    'cfg_gen_display_name_ph'      => 'e.g. Business Partners',
+    'cfg_gen_display_name_hint'    => 'Appears in the modal header and toolbar. Default: model name.',
+    'cfg_gen_broadcast_off_hint'   => 'Enable to configure the Echo channel and event that will trigger automatic table update.',
+
+    // JOIN notice box list items
+    'cfg_join_notice_phys'         => '<strong>Physical Name</strong> = the alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
+    'cfg_join_notice_sql'          => '<strong>SQL Source</strong> = qualified SQL name (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — enables filters and sorting',
+
+    // JOIN guide box: rules list items
+    'cfg_join_guide_rule_phys'     => '<strong>Physical Name</strong> = alias declared in the Columns field above (ex: <code class="px-1 rounded bg-slate-100">product_name</code>)',
+    'cfg_join_guide_rule_left'     => '<strong>LEFT JOIN</strong> keeps records without a match (optional data). <strong>INNER JOIN</strong> filters only matching records.',
+
+    // Columns > SQL Source info box (always-visible reference box)
+    'cfg_col_field_guide_title'    => 'Relationship between Physical Name and SQL Source:',
+    'cfg_col_field_guide_phys_desc'=> '= alias declared in the JOIN (ex: <code class="px-1 bg-white rounded">supplier_name</code>). This is how Blade accesses the value.',
+    'cfg_col_field_guide_sql_desc' => '= qualified SQL name (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Used in <code class="px-1 bg-white rounded">WHERE</code> and <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Without this, filters won\'t work.</strong>',
+    'cfg_col_field_guide_formats'  => 'Accepted formats <span class="text-slate-400">(the system corrects automatically)</span>:',
+    'cfg_col_field_guide_enc'      => 'chained → extracted as',
+
+    // Columns > Method syntax guide bullets
+    'cfg_col_method_guide_sub'     => 'replaced by the field value in the record',
+    'cfg_col_method_guide_multi'   => 'Multiple parameters separated by comma — each becomes a separate PHP argument',
+    'cfg_col_method_guide_prefix'  => 'is added automatically',
+
+    // Badge/Pill renderer — color swatch tooltip names
+    'color_green'                  => 'Green',
+    'color_yellow'                 => 'Yellow',
+    'color_red'                    => 'Red',
+    'color_blue'                   => 'Blue',
+    'color_indigo'                 => 'Indigo',
+    'color_purple'                 => 'Purple',
+    'color_pink'                   => 'Pink',
+    'color_gray'                   => 'Gray',
+
     // Actions tab
     'cfg_act_tab_title'            => 'Row Actions',
     'cfg_act_th_name'              => 'Name',

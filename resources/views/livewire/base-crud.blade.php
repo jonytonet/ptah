@@ -917,7 +917,7 @@
     @else
         {{-- Sem configuração --}}
         <x-forge-alert type="warning">
-            Configuração de BaseCrud não encontrada para <strong>{{ $model }}</strong>.
+            {{ __('ptah::ui.crud_no_config') }} <strong>{{ $model }}</strong>.
             Execute <code>php artisan ptah:forge {{ $model }}</code> para gerar.
         </x-forge-alert>
     @endif

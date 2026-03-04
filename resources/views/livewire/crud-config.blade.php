@@ -311,18 +311,18 @@
                                             placeholder="ex: suppliers.name"
                                             class="font-mono cfg-input" />
                                         <div class="mt-2 p-3 rounded-lg border border-sky-100 bg-sky-50/60 text-[11px] space-y-1.5">
-                                            <p class="font-semibold text-sky-700">Relação entre Nome Físico e Fonte SQL:</p>
+                                            <p class="font-semibold text-sky-700">{{ __('ptah::ui.cfg_col_field_guide_title') }}</p>
                                             <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-slate-600">
-                                                <span class="font-mono font-semibold text-indigo-700">Nome Físico</span>
-                                                <span>= alias declarado no JOIN (ex: <code class="px-1 bg-white rounded">supplier_name</code>). É como o Blade acessa o valor.</span>
-                                                <span class="font-mono font-semibold text-sky-700">Fonte SQL</span>
-                                                <span>= nome qualificado SQL (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Usado em <code class="px-1 bg-white rounded">WHERE</code> e <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong></span>
+                                                <span class="font-mono font-semibold text-indigo-700">{{ __('ptah::ui.cfg_term_phys_name') }}</span>
+                                                <span>{!! __('ptah::ui.cfg_col_field_guide_phys_desc') !!}</span>
+                                                <span class="font-mono font-semibold text-sky-700">{{ __('ptah::ui.cfg_term_sql_source') }}</span>
+                                                <span>{!! __('ptah::ui.cfg_col_field_guide_sql_desc') !!}</span>
                                             </div>
-                                            <p class="pt-1 border-t text-slate-500 border-sky-100">Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:</p>
+                                            <p class="pt-1 border-t text-slate-500 border-sky-100">{!! __('ptah::ui.cfg_col_field_guide_formats') !!}</p>
                                             <ul class="space-y-0.5 text-slate-500">
                                                 <li><code class="px-1 font-mono bg-white rounded">suppliers.name</code> <span class="text-slate-400">— qualificado SQL (correto)</span></li>
                                                 <li><code class="px-1 font-mono bg-white rounded">supplier.name</code> <span class="text-slate-400">— singular Eloquent → convertido para <code class="px-1 bg-white rounded">suppliers.name</code></span></li>
-                                                <li><code class="px-1 font-mono bg-white rounded">product_supplier.product.name</code> <span class="text-slate-400">— encadeado → extraído como <code class="px-1 bg-white rounded">products.name</code></span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">product_supplier.product.name</code> <span class="text-slate-400">— {{ __('ptah::ui.cfg_col_field_guide_enc') }} <code class="px-1 bg-white rounded">products.name</code></span></li>
                                             </ul>
                                             <p class="font-medium text-amber-700">⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.</p>
                                         </div>
@@ -368,16 +368,14 @@
                                     {{-- Select options (condicional) --}}
                                     @if (($formDataField['colsTipo'] ?? '') === 'select')
                                     <div class="col-span-2">
-                                        <label class="cfg-label">Opções do Select</label>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_select_opts') }}</label>
                                         <input type="text" wire:model="formDataField.colsSelect"
-                                            placeholder="chave;Rótulo;;chave2;Rótulo2" class="font-mono cfg-input" />
-                                        <p class="text-[11px] text-slate-400 mt-1">Formato: <code
-                                                class="px-1 rounded bg-slate-100">chave;Rótulo</code> separados por
-                                            <code class="px-1 rounded bg-slate-100">;;</code></p>
+                                            placeholder="{{ __('ptah::ui.cfg_col_select_opts_ph') }}" class="font-mono cfg-input" />
+                                        <p class="text-[11px] text-slate-400 mt-1">{!! __('ptah::ui.cfg_col_select_fmt_hint') !!}</p>
                                     </div>
                                     @endif
                                     <div>
-                                        <label class="cfg-label">Método Customizado (PHP)</label>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_custom_method') }}</label>
                                         <input type="text" wire:model="formDataField.colsMetodoCustom"
                                             placeholder="App\Services\MyService\formatValue(%campo%)"
                                             class="cfg-input font-mono text-[11px]" />
@@ -387,7 +385,7 @@
                                                 class="text-indigo-600 rounded border-slate-300" />
                                             <label for="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 class="text-[11px] text-slate-600 cursor-pointer select-none">
-                                                <strong>colsMetodoRaw</strong> — Renderizar retorno como HTML bruto (sem escape)
+                                                <strong>colsMetodoRaw</strong> — {{ __('ptah::ui.cfg_col_method_raw_label') }}
                                             </label>
                                         </div>
                                         {{-- Guia de sintaxe (colapsável) --}}
@@ -397,16 +395,16 @@
                                                 <svg class="w-3 h-3 transition-transform" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                                 </svg>
-                                                Ver sintaxe e exemplos
+                                                {{ __('ptah::ui.cfg_col_method_syntax') }}
                                             </button>
                                             <div x-show="open" x-cloak x-transition
                                                 class="mt-2 p-3 rounded-lg border border-indigo-100 bg-indigo-50/60 text-[11px] space-y-2">
                                                 <p class="font-semibold text-indigo-700">Sintaxe: <code class="px-1 font-mono bg-white rounded">Namespace\Classe\metodo(%campo1%, %campo2%, 'literal')</code></p>
                                                 <ul class="space-y-1 list-disc list-inside text-slate-600">
-                                                    <li><code class="px-1 font-mono bg-white rounded">%campo%</code> → substituído pelo valor do campo no registro</li>
+                                                    <li><code class="px-1 font-mono bg-white rounded">%campo%</code> → {{ __('ptah::ui.cfg_col_method_guide_sub') }}</li>
                                                     <li><code class="px-1 font-mono bg-white rounded">'literal'</code> ou <code class="px-1 font-mono bg-white rounded">"literal"</code> → string passada diretamente</li>
-                                                    <li>Múltiplos parâmetros separados por vírgula — cada um vira um argumento PHP separado</li>
-                                                    <li>O prefixo <code class="px-1 font-mono bg-white rounded">App\Services\</code> é adicionado automaticamente</li>
+                                                    <li>{{ __('ptah::ui.cfg_col_method_guide_multi') }}</li>
+                                                    <li>O prefixo <code class="px-1 font-mono bg-white rounded">App\Services\</code> {{ __('ptah::ui.cfg_col_method_guide_prefix') }}</li>
                                                 </ul>
                                                 <div class="space-y-1 text-slate-500">
                                                     <p class="font-medium text-slate-600">Exemplos:</p>
@@ -418,7 +416,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="cfg-label">Ordenação alternativa (colsOrderBy)</label>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_order_by') }}</label>
                                         <input type="text" wire:model="formDataField.colsOrderBy"
                                             placeholder="campo_db ou relation.campo" class="cfg-input" />
                                     </div>
@@ -440,23 +438,21 @@
                                                 <input type="text" wire:model.live="formDataField.colsCellStyle"
                                                     placeholder="font-weight:700; color:#1a56db; font-size:13px;"
                                                     class="cfg-input font-mono text-[11px]" />
-                                                <p class="text-[11px] text-slate-400 mt-1">Aplicado no wrapper do
-                                                    conteúdo da célula</p>
+                                                <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_cell_style_hint') }}</p>
                                             </div>
                                             <div>
-                                                <label class="cfg-label">Largura Mínima (colsMinWidth)</label>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_min_width') }}</label>
                                                 <input type="text" wire:model="formDataField.colsMinWidth"
                                                     placeholder="140px ou 8rem" class="cfg-input" />
                                             </div>
                                             <div>
-                                                <label class="cfg-label">Ícone Prefixo (colsCellIcon)</label>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_icon_prefix') }}</label>
                                                 <input type="text" wire:model="formDataField.colsCellIcon"
                                                     placeholder="bx bx-user-circle mr-1" class="font-mono cfg-input" />
-                                                <p class="text-[11px] text-slate-400 mt-1">Classe CSS do ícone
-                                                    (Boxicons, FontAwesome...)</p>
+                                                <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_cell_icon_hint') }}</p>
                                             </div>
                                             <div>
-                                                <label class="cfg-label">Classe Tailwind / CSS Extra</label>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_tw_class') }}</label>
                                                 <input type="text" wire:model="formDataField.colsCellClass"
                                                     placeholder="font-bold text-blue-600 uppercase"
                                                     class="font-mono cfg-input" />
@@ -487,29 +483,29 @@
                                 {{-- ── Exibição / Renderer DSL ──────────────────── --}}
                                 <div x-show="editTab === 'renderer'" class="space-y-4">
                                     <div>
-                                        <label class="cfg-label">Renderer</label>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_label') }}</label>
                                         <select wire:model.live="formDataField.colsRenderer" class="max-w-xs cfg-input">
-                                            <option value="">— Nenhum (valor bruto) —</option>
-                                            <option value="badge">badge — Badge colorido por valor</option>
-                                            <option value="pill">pill — Pill arredondado</option>
-                                            <option value="boolean">boolean — Sim / Não</option>
-                                            <option value="money">money — Valor monetário</option>
-                                            <option value="date">date — Data (d/m/Y)</option>
-                                            <option value="datetime">datetime — Data e Hora</option>
-                                            <option value="link">link — Link clicável</option>
-                                            <option value="image">image — Imagem miniatura</option>
-                                            <option value="truncate">truncate — Texto truncado</option>
-                                            <optgroup label="Dados">
-                                                <option value="number">number — Número formatado (1.234,56)</option>
-                                                <option value="filesize">filesize — Tamanho de arquivo (KB/MB)</option>
-                                                <option value="duration">duration — Duração (1h 35min)</option>
-                                                <option value="code">code — Código monospace</option>
-                                                <option value="color">color — Swatch de cor hex</option>
+                                            <option value="">{{ __('ptah::ui.cfg_col_renderer_none') }}</option>
+                                            <option value="badge">{{ __('ptah::ui.cfg_col_renderer_opt_badge') }}</option>
+                                            <option value="pill">{{ __('ptah::ui.cfg_col_renderer_opt_pill') }}</option>
+                                            <option value="boolean">{{ __('ptah::ui.cfg_col_renderer_opt_boolean') }}</option>
+                                            <option value="money">{{ __('ptah::ui.cfg_col_renderer_opt_money') }}</option>
+                                            <option value="date">{{ __('ptah::ui.cfg_col_renderer_opt_date') }}</option>
+                                            <option value="datetime">{{ __('ptah::ui.cfg_col_renderer_opt_datetime') }}</option>
+                                            <option value="link">{{ __('ptah::ui.cfg_col_renderer_opt_link') }}</option>
+                                            <option value="image">{{ __('ptah::ui.cfg_col_renderer_opt_image') }}</option>
+                                            <option value="truncate">{{ __('ptah::ui.cfg_col_renderer_opt_truncate') }}</option>
+                                            <optgroup label="{{ __('ptah::ui.cfg_col_renderer_group_data') }}">
+                                                <option value="number">{{ __('ptah::ui.cfg_col_renderer_opt_number') }}</option>
+                                                <option value="filesize">{{ __('ptah::ui.cfg_col_renderer_opt_filesize') }}</option>
+                                                <option value="duration">{{ __('ptah::ui.cfg_col_renderer_opt_duration') }}</option>
+                                                <option value="code">{{ __('ptah::ui.cfg_col_renderer_opt_code') }}</option>
+                                                <option value="color">{{ __('ptah::ui.cfg_col_renderer_opt_color_sw') }}</option>
                                             </optgroup>
-                                            <optgroup label="Visuais">
-                                                <option value="progress">progress — Barra de progresso</option>
-                                                <option value="rating">rating — Estrelas de avaliação</option>
-                                                <option value="qrcode">qrcode — QR Code (via JS)</option>
+                                            <optgroup label="{{ __('ptah::ui.cfg_col_renderer_group_visual') }}">
+                                                <option value="progress">{{ __('ptah::ui.cfg_col_renderer_opt_progress') }}</option>
+                                                <option value="rating">{{ __('ptah::ui.cfg_col_renderer_opt_rating') }}</option>
+                                                <option value="qrcode">{{ __('ptah::ui.cfg_col_renderer_opt_qrcode') }}</option>
                                             </optgroup>
                                         </select>
                                     </div>
@@ -518,8 +514,7 @@
                                     @if (in_array($formDataField['colsRenderer'] ?? '', ['badge', 'pill']))
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_badge_map') }}</label>
-                                        <p class="text-[11px] text-slate-400 mb-2">Cada entrada mapeia um valor do banco
-                                            para um rótulo e cor.</p>
+                                        <p class="text-[11px] text-slate-400 mb-2">{{ __('ptah::ui.cfg_col_badge_map_hint') }}</p>
                                         @foreach ($formDataField['colsRendererBadges'] ?? [] as $bi => $badge)
                                         <div class="flex items-center gap-2 mb-2">
                                             <input type="text"
@@ -527,18 +522,18 @@
                                                 placeholder="valor" class="flex-1 font-mono cfg-input-sm" />
                                             <input type="text"
                                                 wire:model="formDataField.colsRendererBadges.{{ $bi }}.label"
-                                                placeholder="rótulo" class="flex-1 cfg-input-sm" />
+                                                placeholder="{{ __('ptah::ui.cfg_col_badge_label_ph') }}" class="flex-1 cfg-input-sm" />
                                             {{-- Swatches de Cor --}}
                                             @php
                                             $swPre = [
-                                            ['k'=>'green', 'bg'=>'#22c55e','t'=>'Verde'],
-                                            ['k'=>'yellow', 'bg'=>'#eab308','t'=>'Amarelo'],
-                                            ['k'=>'red', 'bg'=>'#ef4444','t'=>'Vermelho'],
-                                            ['k'=>'blue', 'bg'=>'#3b82f6','t'=>'Azul'],
-                                            ['k'=>'indigo', 'bg'=>'#6366f1','t'=>'Índigo'],
-                                            ['k'=>'purple', 'bg'=>'#a855f7','t'=>'Roxo'],
-                                            ['k'=>'pink', 'bg'=>'#ec4899','t'=>'Rosa'],
-                                            ['k'=>'gray', 'bg'=>'#9ca3af','t'=>'Cinza'],
+                                            ['k'=>'green', 'bg'=>'#22c55e','t'=>__('ptah::ui.color_green')],
+                                            ['k'=>'yellow', 'bg'=>'#eab308','t'=>__('ptah::ui.color_yellow')],
+                                            ['k'=>'red', 'bg'=>'#ef4444','t'=>__('ptah::ui.color_red')],
+                                            ['k'=>'blue', 'bg'=>'#3b82f6','t'=>__('ptah::ui.color_blue')],
+                                            ['k'=>'indigo', 'bg'=>'#6366f1','t'=>__('ptah::ui.color_indigo')],
+                                            ['k'=>'purple', 'bg'=>'#a855f7','t'=>__('ptah::ui.color_purple')],
+                                            ['k'=>'pink', 'bg'=>'#ec4899','t'=>__('ptah::ui.color_pink')],
+                                            ['k'=>'gray', 'bg'=>'#9ca3af','t'=>__('ptah::ui.color_gray')],
                                             ];
                                             $swCur = $badge['color'] ?? 'gray';
                                             $swHex = str_starts_with($swCur, '#');
@@ -585,7 +580,7 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_bool_false') }}</label>
                                             <input type="text" wire:model="formDataField.colsRendererBoolFalse"
-                                                placeholder="Não" class="cfg-input" />
+                                                placeholder="{{ __('ptah::ui.cfg_col_bool_false_ph') }}" class="cfg-input" />
                                         </div>
                                     </div>
                                     @endif
@@ -596,9 +591,9 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_currency') }}</label>
                                             <select wire:model="formDataField.colsRendererCurrency" class="cfg-input">
-                                                <option value="BRL">BRL — Real Brasileiro</option>
-                                                <option value="USD">USD — Dólar</option>
-                                                <option value="EUR">EUR — Euro</option>
+                                                <option value="BRL">{{ __('ptah::ui.cfg_col_currency_brl') }}</option>
+                                                <option value="USD">{{ __('ptah::ui.cfg_col_currency_usd') }}</option>
+                                                <option value="EUR">{{ __('ptah::ui.cfg_col_currency_eur') }}</option>
                                             </select>
                                         </div>
                                         <div>
@@ -740,8 +735,8 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_label') }}</label>
                                             <select wire:model.live="formDataField.colsMask" class="cfg-input">
-                                                <option value="">— Sem máscara —</option>
-                                                <optgroup label="Monetário">
+                                                <option value="">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
+                                                <optgroup label="{{ __('ptah::ui.cfg_col_mask_grp_monetary') }}">
                                                     <option value="money_brl">money_brl — R$ 1.253,08</option>
                                                     <option value="money_usd">money_usd — $ 1,253.08</option>
                                                     <option value="percent">percent — 99,99%</option>
@@ -752,13 +747,13 @@
                                                     <option value="rg">rg — 00.000.000-0</option>
                                                     <option value="pis">pis — 000.00000.00-0</option>
                                                     <option value="ncm">ncm — 0000.00.00</option>
-                                                    <option value="ean13">ean13 — 0000000000000 (13 dígitos)</option>
+                                                    <option value="ean13">{{ __('ptah::ui.cfg_col_mask_ean13') }}</option>
                                                 </optgroup>
                                                 <optgroup label="Contato">
                                                     <option value="phone">phone — (00) 0 0000-0000</option>
                                                     <option value="cep">cep — 00000-000</option>
                                                 </optgroup>
-                                                <optgroup label="Veículos">
+                                                <optgroup label="{{ __('ptah::ui.cfg_col_mask_grp_vehicle') }}">
                                                     <option value="plate">plate — ABC-1234 / Mercosul ABC1A23</option>
                                                 </optgroup>
                                                 <optgroup label="Pagamento">
@@ -771,8 +766,8 @@
                                                 </optgroup>
                                                 <optgroup label="Texto">
                                                     <option value="integer">integer — Somente inteiros</option>
-                                                    <option value="uppercase">uppercase — MAIÚSCULAS automático</option>
-                                                    <option value="custom_regex">custom_regex — Expressão personalizada
+                                                    <option value="uppercase">{{ __('ptah::ui.cfg_col_mask_uppercase_opt') }}</option>
+                                                    <option value="custom_regex">{{ __('ptah::ui.cfg_col_mask_custom_regex_opt') }}
                                                     </option>
                                                 </optgroup>
                                             </select>
@@ -785,19 +780,19 @@
                                                 </option>
                                                 <option value="digits_only">digits_only — "055.465.309-52" →
                                                     "05546530952"</option>
-                                                <option value="plate_clean">plate_clean — "ABC-1234" → "ABC1234" (maiúsc. + alfanum.)</option>
+                                                <option value="plate_clean">plate_clean — "ABC-1234" → "ABC1234" {{ __('ptah::ui.cfg_col_mask_plate_sfx') }}</option>
                                                 <option value="date_br_to_iso">date_br_to_iso — "01/12/2024" → "2024-12-01"</option>
                                                 <option value="date_iso_to_br">date_iso_to_br — "2024-12-01" → "01/12/2024"</option>
                                                 <option value="uppercase">uppercase — "texto" → "TEXTO"</option>
                                                 <option value="lowercase">lowercase — "TEXTO" → "texto"</option>
-                                                <option value="trim">trim — Remove espaços das bordas</option>
+                                                <option value="trim">{{ __('ptah::ui.cfg_col_mask_trim_opt') }}</option>
                                             </select>
                                         </div>
                                     </div>
 
                                     @if (($formDataField['colsMask'] ?? '') === 'custom_regex')
                                     <div>
-                                        <label class="cfg-label">Padrão Regex (IMask)</label>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_regex') }}</label>
                                         <input type="text" wire:model="formDataField.colsMaskRegex"
                                             placeholder="Ex: 000-000-A ou /^[A-Z]{3}$/" class="font-mono cfg-input" />
                                     </div>
@@ -806,14 +801,13 @@
                                     {{-- Preview da transformação --}}
                                     @if (!empty($formDataField['colsMaskTransform']))
                                     <div class="px-4 py-3 border rounded-lg bg-amber-50 border-amber-200">
-                                        <p class="mb-1 text-xs font-semibold text-amber-700">⚡ Transformação aplicada ao
-                                            salvar:</p>
+                                        <p class="mb-1 text-xs font-semibold text-amber-700">{{ __('ptah::ui.cfg_col_mask_transform_save') }}</p>
                                         <p class="text-xs text-amber-600">
                                             @switch($formDataField['colsMaskTransform'])
                                             @case('money_to_float') R$ 1.253,08 → <strong>1253.08</strong> @break
                                             @case('digits_only') 055.465.309-52 → <strong>05546530952</strong> (remove
                                             non-digits) @break
-                                            @case('plate_clean') "ABC-1234" → <strong>ABC1234</strong> (maiúsculas + alfanumérico) @break
+                                            @case('plate_clean') "ABC-1234" → <strong>ABC1234</strong> {{ __('ptah::ui.cfg_col_mask_plate_case') }} @break
                                             @case('date_br_to_iso') "01/12/2024" → <strong>2024-12-01</strong> @break
                                             @case('date_iso_to_br') "2024-12-01" → <strong>01/12/2024</strong> @break
                                             @case('uppercase') "texto" → <strong>"TEXTO"</strong> @break
@@ -827,8 +821,7 @@
 
                                 {{-- ── Validações ──────────────────────────────── --}}
                                 <div x-show="editTab === 'validation'" class="space-y-4">
-                                    <p class="text-xs text-slate-500">Regras adicionais além do
-                                        <strong>Obrigatório</strong> (configurado na aba Básico).</p>
+                                    <p class="text-xs text-slate-500">{!! __('ptah::ui.cfg_col_valid_hint') !!}</p>
                                     <div class="grid grid-cols-3 gap-3">
                                         @php
                                         $currentValidations = $formDataField['colsValidations'] ?? [];
@@ -961,7 +954,7 @@
                                                     if ($event.target.value !== '') rules.push('confirmed:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
                                                 " placeholder="password_confirmation" class="font-mono cfg-input" />
-                                            <p class="text-[11px] text-slate-400 mt-1">Nome do campo de confirmação no form</p>
+                                            <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_valid_confirmed_hint') }}</p>
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_unique') }}</label>
@@ -972,7 +965,7 @@
                                                     if ($event.target.value !== '') rules.push('unique:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
                                                 " placeholder="Product,email" class="font-mono cfg-input" />
-                                            <p class="text-[11px] text-slate-400 mt-1">Ignora o registro em edição automaticamente</p>
+                                            <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_valid_unique_hint') }}</p>
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_in') }}</label>
@@ -1016,8 +1009,7 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_name') }}</label>
                                             <input type="text" wire:model="formDataField.colsRelacao"
                                                 placeholder="ex: supplier" class="font-mono cfg-input" />
-                                            <p class="text-[11px] text-slate-400 mt-1">Nome do método de relação no
-                                                Model</p>
+                                            <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_rel_name_hint') }}</p>
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_display') }}</label>
@@ -1029,17 +1021,15 @@
                                         class="p-4 space-y-3 border-2 border-indigo-200 border-dashed rounded-lg bg-indigo-50/50">
                                         <div>
                                             <p class="mb-1 text-xs font-semibold text-indigo-700">
-                                                🔗 Relação Aninhada (Dot Notation)
+                                                {{ __('ptah::ui.cfg_col_rel_nested_title') }}
                                             </p>
-                                            <p class="text-[11px] text-indigo-600 mb-3">Use quando o dado está em
-                                                múltiplos níveis: <code
+                                            <p class="text-[11px] text-indigo-600 mb-3">{{ __('ptah::ui.cfg_col_rel_nested_desc') }} <code
                                                     class="px-1 font-mono bg-white rounded">address.city.name</code></p>
-                                            <label class="cfg-label">Caminho Dot Notation</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_nested_label') }}</label>
                                             <input type="text" wire:model="formDataField.colsRelacaoNested"
                                                 placeholder="ex: address.city.name ou supplier.contact.email"
                                                 class="font-mono cfg-input" />
-                                            <p class="text-[11px] text-slate-400 mt-1">O eager loading é automático. O
-                                                último segmento é o campo; os anteriores são as relações.</p>
+                                            <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_col_rel_nested_auto') }}</p>
                                         </div>
                                         @if (!empty($formDataField['colsRelacaoNested']))
                                         @php $nestedParts = explode('.', $formDataField['colsRelacaoNested']); @endphp
@@ -1063,13 +1053,11 @@
                                 {{-- ── SearchDropdown Config ───────────────────── --}}
                                 <div x-show="editTab === 'sd'" class="space-y-4">
                                     <div class="px-4 py-3 border border-blue-200 rounded-lg bg-blue-50">
-                                        <p class="text-xs text-blue-700">Configuração para tipo
-                                            <strong>searchdropdown</strong>. Disponível apenas quando o tipo da coluna
-                                            for SearchDropdown.</p>
+                                        <p class="text-xs text-blue-700">{!! __('ptah::ui.cfg_col_sd_type_hint') !!}</p>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div class="col-span-2">
-                                            <label class="cfg-label">Modo de Busca</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_search_mode') }}</label>
                                             <div class="flex gap-3">
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="radio" wire:model.live="formDataField.colsSDMode"
@@ -1080,54 +1068,53 @@
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="radio" wire:model.live="formDataField.colsSDMode"
                                                         value="service" class="text-indigo-600" />
-                                                    <span class="text-xs font-medium text-slate-700">Service
-                                                        customizado</span>
+                                                    <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_col_sd_mode_service') }}</span>
                                                 </label>
                                             </div>
                                         </div>
                                         @if (($formDataField['colsSDMode'] ?? 'model') === 'model')
                                         <div class="col-span-2">
-                                            <label class="cfg-label">Model (caminho relativo a App\Models)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_model') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDModel"
                                                 placeholder="ex: Entrie/ShippingCompanies"
                                                 class="font-mono cfg-input" />
                                         </div>
                                         @else
                                         <div>
-                                            <label class="cfg-label">Service (caminho relativo a App\Services)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_service') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDService"
                                                 placeholder="ex: Entrie/ShippingCompaniesService"
                                                 class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Método do Service</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_method') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDServiceMethod"
                                                 placeholder="ex: searchDropDownOfShippingCompanies"
                                                 class="font-mono cfg-input" />
                                         </div>
                                         @endif
                                         <div>
-                                            <label class="cfg-label">Campo Valor (value)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_value_field') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDValueField"
                                                 placeholder="id" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Campo Label (label)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_field') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDLabelField"
                                                 placeholder="name" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Label Secundário (opcional)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_secondary') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDLabelSecondary"
                                                 placeholder="cnpj" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Ordenação (orderByRaw)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_order_by') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDOrderBy"
                                                 placeholder="id asc" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Limite de Resultados</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_limit') }}</label>
                                             <input type="number" wire:model="formDataField.colsSDLimit" placeholder="10"
                                                 min="1" max="100" class="cfg-input" />
                                         </div>
@@ -1137,7 +1124,7 @@
                                                 placeholder="Buscar..." class="cfg-input" />
                                         </div>
                                         <div class="col-span-2">
-                                            <label class="cfg-label">Filtros Estáticos (JSON)</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filters') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDFilters"
                                                 placeholder='[{"field":"active","value":"S"}]'
                                                 class="cfg-input font-mono text-[11px]" />
@@ -1156,17 +1143,17 @@
                                     @if (!empty($formDataField['totalizadorEnabled']))
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="cfg-label">Função</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_func') }}</label>
                                             <select wire:model="formDataField.totalizadorType" class="cfg-input">
-                                                <option value="sum">SUM — Soma</option>
-                                                <option value="avg">AVG — Média</option>
-                                                <option value="count">COUNT — Contagem</option>
-                                                <option value="min">MIN — Mínimo</option>
-                                                <option value="max">MAX — Máximo</option>
+                                                <option value="sum">{{ __('ptah::ui.cfg_col_total_sum') }}</option>
+                                                <option value="avg">{{ __('ptah::ui.cfg_col_total_avg') }}</option>
+                                                <option value="count">{{ __('ptah::ui.cfg_col_total_count') }}</option>
+                                                <option value="min">{{ __('ptah::ui.cfg_col_total_min') }}</option>
+                                                <option value="max">{{ __('ptah::ui.cfg_col_total_max') }}</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="cfg-label">Formato</label>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_format') }}</label>
                                             <select wire:model="formDataField.totalizadorFormat" class="cfg-input">
                                                 <option value="currency">currency — R$ 1.253,08</option>
                                                 <option value="number">number — 1.253,08</option>
@@ -1375,53 +1362,52 @@
 
                                 {{-- Cenário 1 --}}
                                 <div class="p-3 bg-white border rounded-lg border-slate-200">
-                                    <p class="font-semibold text-slate-700 mb-1.5">① Filtro simples — campo direto na tabela</p>
-                                    <p class="mb-2 text-slate-500">Use quando o campo que você quer filtrar está na própria tabela do model.</p>
+                                    <p class="font-semibold text-slate-700 mb-1.5">{{ __('ptah::ui.cfg_filter_guide_s1_title') }}</p>
+                                    <p class="mb-2 text-slate-500">{{ __('ptah::ui.cfg_filter_guide_s1_desc') }}</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">status</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Status</span>
                                         <span class="text-slate-400">Tipo</span>                <span class="text-indigo-700">select</span>
                                         <span class="text-slate-400">Operador</span>            <span class="text-indigo-700">=</span>
                                         <span class="text-slate-400">whereHas</span>            <span class="text-slate-300">— vazio —</span>
-                                        <span class="text-slate-400">Campo na Relação</span>    <span class="text-slate-300">— vazio —</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_rel_field') }}</span>    <span class="text-slate-300">— vazio —</span>
                                     </div>
                                     <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">WHERE status = 'ativo'</code></p>
                                 </div>
 
                                 {{-- Cenário 2 --}}
                                 <div class="p-3 bg-white border rounded-lg border-slate-200">
-                                    <p class="font-semibold text-slate-700 mb-1.5">② Filtro via relação — whereHas</p>
-                                    <p class="mb-2 text-slate-500">Use quando o campo está em uma relação Eloquent (ex: filtrar Produtos pelo nome do Fornecedor).</p>
+                                    <p class="font-semibold text-slate-700 mb-1.5">{{ __('ptah::ui.cfg_filter_guide_s2_title') }}</p>
+                                    <p class="mb-2 text-slate-500">{{ __('ptah::ui.cfg_filter_guide_s2_desc') }}</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">supplier_name</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Fornecedor</span>
                                         <span class="text-slate-400">Tipo</span>                <span class="text-indigo-700">text</span>
                                         <span class="text-slate-400">Operador</span>            <span class="text-indigo-700">LIKE</span>
                                         <span class="text-slate-400">whereHas</span>            <span class="text-indigo-700">supplier</span>
-                                        <span class="text-slate-400">Campo na Relação</span>    <span class="text-indigo-700">name</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_rel_field') }}</span>    <span class="text-indigo-700">name</span>
                                     </div>
                                     <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">WHERE EXISTS (SELECT * FROM suppliers WHERE name LIKE '%...%')</code></p>
                                 </div>
 
                                 {{-- Cenário 3 --}}
                                 <div class="p-3 bg-white border rounded-lg border-slate-200">
-                                    <p class="font-semibold text-slate-700 mb-1.5">③ Filtro com agregação — whereHas + Aggregate</p>
-                                    <p class="mb-2 text-slate-500">Use para filtrar por valores calculados dentro de uma relação (ex: produtos com estoque total &gt; X).</p>
+                                    <p class="font-semibold text-slate-700 mb-1.5">{{ __('ptah::ui.cfg_filter_guide_s3_title') }}</p>
+                                    <p class="mb-2 text-slate-500">{{ __('ptah::ui.cfg_filter_guide_s3_desc') }}</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Campo (field)</span>       <span class="text-indigo-700">stock_qty</span>
                                         <span class="text-slate-400">Label</span>               <span class="text-indigo-700">Qtd. Estoque</span>
                                         <span class="text-slate-400">Tipo</span>                <span class="text-indigo-700">number</span>
                                         <span class="text-slate-400">Operador</span>            <span class="text-indigo-700">&gt;=</span>
                                         <span class="text-slate-400">whereHas</span>            <span class="text-indigo-700">stockMovements</span>
-                                        <span class="text-slate-400">Campo na Relação</span>    <span class="text-indigo-700">quantity</span>
-                                        <span class="text-slate-400">Agregação</span>           <span class="text-indigo-700">SUM</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_rel_field') }}</span>    <span class="text-indigo-700">quantity</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_aggregate') }}</span>           <span class="text-indigo-700">SUM</span>
                                     </div>
                                     <p class="mt-2 italic text-slate-400">→ Gera: <code class="px-1 rounded bg-slate-100">HAVING SUM(quantity) &gt;= 100</code></p>
                                 </div>
 
                                 <p class="text-[11px] text-slate-400 pt-1">
-                                    <strong>Dica:</strong> O <em>Campo (field)</em> é apenas um identificador interno — não precisa existir no banco.
-                                    O que importa para a query é o <em>whereHas</em> + <em>Campo na Relação</em>.
+                                    {!! __('ptah::ui.cfg_filter_guide_tip') !!}
                                 </p>
                             </div>
                         </div>
@@ -1465,7 +1451,7 @@
                                     <input type="text" wire:model="formDataFilter.field"
                                         placeholder="ex: supplier_name"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Nome único para este filtro. Não precisa existir no banco.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_filter_field_hint') }}</p>
                                 </div>
 
                                 {{-- Label --}}
@@ -1492,12 +1478,12 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_filter_op_label') }}</label>
                                     <select wire:model="formDataFilter.defaultOperator" class="cfg-input">
-                                        <option value="=">=  (igual)</option>
-                                        <option value="LIKE">LIKE  (contém texto)</option>
-                                        <option value=">"> >  (maior que)</option>
-                                        <option value="<"> &lt;  (menor que)</option>
-                                        <option value=">=">>=  (maior ou igual)</option>
-                                        <option value="<=">&lt;=  (menor ou igual)</option>
+                                        <option value="=">{{ __('ptah::ui.op_eq') }}</option>
+                                        <option value="LIKE">{{ __('ptah::ui.op_like') }}</option>
+                                        <option value=">">{{ __('ptah::ui.op_gt') }}</option>
+                                        <option value="<">{{ __('ptah::ui.op_lt') }}</option>
+                                        <option value=">=">{{ __('ptah::ui.op_gte') }}</option>
+                                        <option value="<=">{{ __('ptah::ui.op_lte') }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -1513,12 +1499,12 @@
                                 {{-- whereHas --}}
                                 <div>
                                     <label class="cfg-label">
-                                        whereHas <span class="font-normal text-slate-400">(nome da relação)</span>
+                                        whereHas <span class="font-normal text-slate-400">{{ __('ptah::ui.cfg_term_rel_name_ph') }}</span>
                                     </label>
                                     <input type="text" wire:model="formDataFilter.whereHas"
                                         placeholder="ex: supplier"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Nome do método de relação no Model (ex: <code class="px-1 rounded bg-slate-100">supplier</code>, <code class="px-1 rounded bg-slate-100">stockMovements</code>).</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{!! __('ptah::ui.cfg_filter_rel_method_hint') !!}</p>
                                 </div>
 
                                 {{-- Campo na relação --}}
@@ -1529,7 +1515,7 @@
                                     <input type="text" wire:model="formDataFilter.field_relation"
                                         placeholder="ex: name"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Coluna dentro da tabela relacionada que será filtrada.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_filter_rel_col_hint') }}</p>
                                 </div>
 
                                 {{-- Agregação --}}
@@ -1539,13 +1525,13 @@
                                     </label>
                                     <select wire:model="formDataFilter.aggregate" class="cfg-input">
                                         <option value="">{{ __('ptah::ui.cfg_filter_agg_none') }}</option>
-                                        <option value="SUM">SUM — soma dos valores</option>
-                                        <option value="COUNT">COUNT — contagem de registros</option>
-                                        <option value="AVG">AVG — média</option>
-                                        <option value="MAX">MAX — valor máximo</option>
-                                        <option value="MIN">MIN — valor mínimo</option>
+                                        <option value="SUM">{{ __('ptah::ui.cfg_filter_agg_sum') }}</option>
+                                        <option value="COUNT">{{ __('ptah::ui.cfg_filter_agg_count') }}</option>
+                                        <option value="AVG">{{ __('ptah::ui.cfg_filter_agg_avg') }}</option>
+                                        <option value="MAX">{{ __('ptah::ui.cfg_filter_agg_max') }}</option>
+                                        <option value="MIN">{{ __('ptah::ui.cfg_filter_agg_min') }}</option>
                                     </select>
-                                    <p class="text-[11px] text-slate-400 mt-1">Só preencha se quiser filtrar por um valor calculado (ex: SUM >= 100).</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_filter_agg_hint') }}</p>
                                 </div>
                             </div>
 
@@ -1574,7 +1560,7 @@
                                 <i class="text-lg text-indigo-400 transition-transform bx" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
-                                <p class="text-slate-500">O estilo CSS é aplicado na <strong>linha inteira</strong> da tabela quando a condição é verdadeira. O <strong>Campo</strong> deve ser um atributo real do model (coluna do banco ou relação).</p>
+                                <p class="text-slate-500">{!! __('ptah::ui.cfg_style_guide_intro') !!}</p>
 
                                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {{-- Exemplo 1 --}}
@@ -1593,7 +1579,7 @@
 
                                     {{-- Exemplo 2 --}}
                                     <div class="p-3 bg-white border rounded-lg border-slate-200">
-                                        <p class="mb-2 font-semibold text-slate-700">② Destaque por valor numérico</p>
+                                        <p class="mb-2 font-semibold text-slate-700">{{ __('ptah::ui.cfg_style_guide_ex2_title') }}</p>
                                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span>  <span class="text-indigo-700">stock</span>
                                             <span class="text-slate-400">Operador</span> <span class="text-indigo-700">&lt;=</span>
@@ -1601,7 +1587,7 @@
                                             <span class="text-slate-400">CSS</span>   <span class="text-indigo-700">background:#F8D7DA;color:#721C24;font-weight:bold;</span>
                                         </div>
                                         <div class="mt-2 px-3 py-1.5 rounded text-xs font-medium" style="background:#F8D7DA;color:#721C24;font-weight:bold;">
-                                            Exemplo — estoque crítico ≤ 5
+                                            {{ __('ptah::ui.cfg_style_guide_ex2_sample') }}
                                         </div>
                                     </div>
 
@@ -1624,7 +1610,7 @@
                                     <strong>Dica:</strong> O <em>Campo</em> deve ser um atributo do Model (coluna do banco).
                                     Exemplo: para o model <code class="px-1 rounded bg-slate-100">BusinessPartner</code> use
                                     <code class="px-1 rounded bg-slate-100">status</code>, <code class="px-1 rounded bg-slate-100">type</code>, <code class="px-1 rounded bg-slate-100">name</code> etc.
-                                    O CSS é aplicado como <code class="px-1 rounded bg-slate-100">style=""</code> direto na tag <code class="px-1 rounded bg-slate-100">&lt;tr&gt;</code>.
+                                    {!! __('ptah::ui.cfg_style_guide_tip') !!}
                                 </p>
                             </div>
                         </div>
@@ -1664,19 +1650,19 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_style_op_label') }}</label>
                                     <select wire:model="formDataStyle.condition" class="cfg-input">
-                                        <option value="==">== (igual)</option>
-                                        <option value="!=">!= (diferente)</option>
-                                        <option value=">">> (maior)</option>
-                                        <option value="<">&lt; (menor)</option>
-                                        <option value=">=">>= (maior ou igual)</option>
-                                        <option value="<=">&lt;= (menor ou igual)</option>
+                                        <option value="==">{{ __('ptah::ui.op_eq2') }}</option>
+                                        <option value="!=">{{ __('ptah::ui.op_neq') }}</option>
+                                        <option value=">">{{ __('ptah::ui.op_gt') }}</option>
+                                        <option value="<">{{ __('ptah::ui.op_lt') }}</option>
+                                        <option value=">=">{{ __('ptah::ui.op_gte') }}</option>
+                                        <option value="<=">{{ __('ptah::ui.op_lte') }}</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_style_val_label') }}</label>
                                     <input type="text" wire:model="formDataStyle.value" placeholder="ex: Active"
                                         class="font-mono cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Exato como está no banco (case-sensitive).</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.op_style_case_hint') }}</p>
                                 </div>
                             </div>
                             <div>
@@ -1746,11 +1732,11 @@
                                 <i class="text-lg text-indigo-400 transition-transform bx" :class="open ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
-                                <p class="pt-1 text-slate-500">JOINs configuráveis permitem trazer colunas de outras tabelas <strong>sem relacionamento Eloquent</strong>, com suporte a filtro, sort e export.</p>
+                                <p class="pt-1 text-slate-500">{!! __('ptah::ui.cfg_join_guide_intro') !!}</p>
 
                                 {{-- Exemplo simples --}}
                                 <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
-                                    <p class="font-semibold text-slate-700">Exemplo simples — 1 nível</p>
+                                    <p class="font-semibold text-slate-700">{{ __('ptah::ui.cfg_join_guide_ex1_title') }}</p>
                                     <p class="text-[11px] text-slate-400 mb-2">Mostrar o nome do fornecedor diretamente em <code class="px-1 rounded bg-slate-100">products</code>:</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                         <span class="text-slate-400">Tipo</span>         <span class="text-indigo-700">left</span>
@@ -1761,7 +1747,7 @@
                                     </div>
                                     <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
                                         <span class="font-sans text-slate-500">Na aba Colunas:</span><span></span>
-                                        <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">supplier_name</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_term_phys_name') }}</span>  <span class="text-indigo-700">supplier_name</span>
                                         <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">suppliers.name</span>
                                         <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
                                     </div>
@@ -1769,14 +1755,14 @@
 
                                 {{-- Exemplo encadeado --}}
                                 <div class="p-3 bg-white border border-indigo-100 rounded-lg space-y-1.5">
-                                    <p class="font-semibold text-slate-700">Exemplo encadeado — 2 JOINs (3 níveis)</p>
+                                    <p class="font-semibold text-slate-700">{{ __('ptah::ui.cfg_join_guide_ex2_title') }}</p>
                                     <p class="text-[11px] text-slate-400 mb-2">
                                         Mostrar o nome do produto em <code class="px-1 rounded bg-slate-100">product_stocks</code>, onde
                                         <code class="px-1 rounded bg-slate-100">product_stocks → product_suppliers → products</code>.
                                         Configure <strong>dois JOINs</strong> na ordem correta:
                                     </p>
 
-                                    <p class="text-[11px] font-semibold text-slate-600">JOIN 1 — intermediário (sem colunas extras)</p>
+                                    <p class="text-[11px] font-semibold text-slate-600">{{ __('ptah::ui.cfg_join_guide_j1_title') }}</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px] mb-2">
                                         <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">product_suppliers</span>
                                         <span class="text-slate-400">ON esquerda</span> <span class="text-indigo-700">product_stocks.product_supplier_id</span>
@@ -1784,7 +1770,7 @@
                                         <span class="text-slate-400">Colunas</span>     <span class="text-slate-400">— deixar vazio —</span>
                                     </div>
 
-                                    <p class="text-[11px] font-semibold text-slate-600">JOIN 2 — tabela de destino (com coluna)</p>
+                                    <p class="text-[11px] font-semibold text-slate-600">{{ __('ptah::ui.cfg_join_guide_j2_title') }}</p>
                                     <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px] mb-2">
                                         <span class="text-slate-400">Tabela</span>       <span class="text-indigo-700">products</span>
                                         <span class="text-slate-400">ON esquerda</span> <span class="text-indigo-700">product_suppliers.product_id</span>
@@ -1794,20 +1780,20 @@
 
                                     <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono bg-indigo-50 rounded p-2 text-[11px]">
                                         <span class="font-sans text-slate-500">Na aba Colunas:</span><span></span>
-                                        <span class="text-slate-400">Nome Físico</span>  <span class="text-indigo-700">product_name</span>
+                                        <span class="text-slate-400">{{ __('ptah::ui.cfg_term_phys_name') }}</span>  <span class="text-indigo-700">product_name</span>
                                         <span class="text-slate-400">Fonte SQL</span>    <span class="text-indigo-700">products.name</span>
                                         <span class="text-slate-400">Gravar</span>       <span class="text-slate-400">☐ desativado</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 mt-1.5">O 2° JOIN pode usar colunas do 1° JOIN na condição ON — o SQL é gerado em sequência.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1.5">{{ __('ptah::ui.cfg_join_guide_chain_note') }}</p>
                                 </div>
 
                                 <div class="p-3 space-y-1 bg-white border rounded-lg border-slate-200">
                                     <p class="mb-1 font-semibold text-slate-700">Regras importantes</p>
                                     <ul class="space-y-1 text-[11px] text-slate-500 list-disc list-inside">
-                                        <li><strong>Nome Físico</strong> = alias declarado no campo Colunas acima (ex: <code class="px-1 rounded bg-slate-100">product_name</code>)</li>
+                                        <li>{!! __('ptah::ui.cfg_join_guide_rule_phys') !!}</li>
                                         <li><strong>Fonte SQL</strong> = nome qualificado SQL usado em WHERE/ORDER BY (ex: <code class="px-1 rounded bg-slate-100">products.name</code>)</li>
                                         <li><strong>Gravar</strong> deve estar <em>desativado</em> — nunca grave em colunas de outra tabela</li>
-                                        <li><strong>LEFT JOIN</strong> mantém registros sem correspondência (dados opcionais). <strong>INNER JOIN</strong> filtra apenas com correspondência.</li>
+                                        <li>{!! __('ptah::ui.cfg_join_guide_rule_left') !!}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -1921,7 +1907,7 @@
                                     @if(($formDataJoin['table'] ?? '') !== '' && in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && $editingJoinIndex < 0)
                                     <p class="mt-1 text-[11px] font-medium text-red-600 flex items-center gap-1">
                                         <i class="bx bx-error-circle"></i>
-                                        Já existe um JOIN para a tabela <code class="px-1 bg-red-100 rounded">{{ $formDataJoin['table'] }}</code>. Edite o existente ou use outro nome.
+                                        {{ __('ptah::ui.cfg_join_exist_err_prefix') }} <code class="px-1 bg-red-100 rounded">{{ $formDataJoin['table'] }}</code>{{ __('ptah::ui.cfg_join_exist_err_suffix') }}
                                     </p>
                                     @else
                                     <p class="mt-1 text-[11px] text-slate-400">Nome exato da tabela no banco de dados.</p>
@@ -1952,7 +1938,7 @@
                                 <input type="checkbox" wire:model="formDataJoin.distinct" class="w-4 h-4 text-indigo-600 rounded border-slate-300" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">{{ __('ptah::ui.cfg_join_distinct') }}</span>
-                                    <p class="text-[11px] text-slate-400">Evita linhas duplicadas quando o JOIN pode gerar múltiplas correspondências (1-para-muitos).</p>
+                                    <p class="text-[11px] text-slate-400">{{ __('ptah::ui.cfg_join_distinct_hint') }}</p>
                                 </div>
                             </label>
 
@@ -1965,24 +1951,21 @@
                                 <textarea wire:model="formDataJoin.selectRaw" rows="4"
                                     placeholder="suppliers.name:supplier_name&#10;suppliers.phone:supplier_phone&#10;suppliers.cnpj:supplier_cnpj"
                                     class="w-full px-3 py-2 font-mono text-xs bg-white border rounded-lg resize-y border-slate-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
-                                <p class="mt-1 text-[11px] text-slate-400">
-                                    Cada linha define uma coluna: <code class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>. O alias é como o campo aparece no Blade e nos filtros.
-                                    Se omitir o alias, será gerado automaticamente (ex: <code class="px-1 rounded bg-slate-100">suppliers.name</code> → <code class="px-1 rounded bg-slate-100">suppliers_name</code>).
-                                </p>
+                                <p class="mt-1 text-[11px] text-slate-400">{!! __('ptah::ui.cfg_join_selectraw_hint') !!}</p>
                             </div>
 
                             {{-- Notice pós-JOIN --}}
                             <div class="flex gap-3 p-3.5 text-[11px] rounded-lg border border-amber-200 bg-amber-50 text-amber-800">
                                 <i class="bx bx-bulb text-base shrink-0 mt-0.5 text-amber-500"></i>
                                 <div class="space-y-1.5">
-                                    <p class="font-semibold">Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span></p>
+                                    <p class="font-semibold">{!! __('ptah::ui.cfg_join_notice_title') !!}</p>
                                     <p>Para cada alias definido acima, crie uma coluna com:</p>
                                     <ul class="list-disc list-inside space-y-0.5 ml-1">
-                                        <li><strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)</li>
-                                        <li><strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — habilita filtros e ordenação</li>
+                                        <li>{!! __('ptah::ui.cfg_join_notice_phys') !!}</li>
+                                        <li>{!! __('ptah::ui.cfg_join_notice_sql') !!}</li>
                                         <li><strong>Gravar</strong> = desativado — nunca grave em colunas de outras tabelas</li>
                                     </ul>
-                                    <p class="mt-1 text-amber-700">Para JOINs encadeados (3+ níveis), configure um JOIN intermediário <em>sem colunas</em> e um segundo JOIN com as colunas desejadas. Veja o guia acima para o exemplo completo.</p>
+                                    <p class="mt-1 text-amber-700">{!! __('ptah::ui.cfg_join_notice_footer') !!}</p>
                                 </div>
                             </div>
 
@@ -2019,9 +2002,9 @@
                                 <div class="col-span-2">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_display_name') }}</label>
                                     <input type="text" wire:model="displayName"
-                                        placeholder="Ex: Parceiros de Negócio"
+                                        placeholder="{{ __('ptah::ui.cfg_gen_display_name_ph') }}"
                                         class="cfg-input" />
-                                    <p class="text-[11px] text-slate-400 mt-1">Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_gen_display_name_hint') }}</p>
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_link_linha') }}</label>
@@ -2144,7 +2127,7 @@
                                 <p class="text-slate-500 mt-1.5 text-[10px]">No Observer do Laravel, emita: <span class="text-yellow-300">broadcast(new \App\Events\{{ $bcBase }}Updated())-&gt;toOthers();</span></p>
                             </div>
                             @else
-                            <p class="text-xs text-slate-400">Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.</p>
+                            <p class="text-xs text-slate-400">{{ __('ptah::ui.cfg_gen_broadcast_off_hint') }}</p>
                             @endif
                         </div>
 

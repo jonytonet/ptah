@@ -920,6 +920,211 @@ return [
     'cfg_col_btn_save'             => 'Salvar Alterações da Coluna',
     'cfg_col_btn_add'              => 'Adicionar Coluna',
 
+    // Columns > Basic extra
+    'cfg_col_select_opts'          => 'Opções do Select',
+    'cfg_col_custom_method'        => 'Método Customizado (PHP)',
+    'cfg_col_method_raw_label'     => 'colsMetodoRaw — Renderizar retorno como HTML bruto (sem escape)',
+    'cfg_col_method_syntax'        => 'Ver sintaxe e exemplos',
+    'cfg_col_order_by'             => 'Ordenação alternativa (colsOrderBy)',
+
+    // Columns > Cell Style extra labels
+    'cfg_col_cell_style_hint'      => 'Aplicado no wrapper do conteúdo da célula',
+    'cfg_col_cell_min_width'       => 'Largura Mínima (colsMinWidth)',
+    'cfg_col_cell_icon_prefix'     => 'Ícone Prefixo (colsCellIcon)',
+    'cfg_col_cell_tw_class'        => 'Classe Tailwind / CSS Extra',
+
+    // Columns > Renderer select options
+    'cfg_col_renderer_label'       => 'Renderer',
+    'cfg_col_renderer_none'        => '— Nenhum (valor bruto) —',
+    'cfg_col_renderer_opt_badge'   => 'badge — Badge colorido por valor',
+    'cfg_col_renderer_opt_pill'    => 'pill — Pill arredondado',
+    'cfg_col_renderer_opt_boolean' => 'boolean — Sim / Não',
+    'cfg_col_renderer_opt_money'   => 'money — Valor monetário',
+    'cfg_col_renderer_opt_date'    => 'date — Data (d/m/Y)',
+    'cfg_col_renderer_opt_datetime'=> 'datetime — Data e Hora',
+    'cfg_col_renderer_opt_link'    => 'link — Link clicável',
+    'cfg_col_renderer_opt_image'   => 'image — Imagem miniatura',
+    'cfg_col_renderer_opt_truncate'=> 'truncate — Texto truncado',
+    'cfg_col_renderer_group_data'  => 'Dados',
+    'cfg_col_renderer_opt_number'  => 'number — Número formatado (1.234,56)',
+    'cfg_col_renderer_opt_filesize'=> 'filesize — Tamanho de arquivo (KB/MB)',
+    'cfg_col_renderer_opt_duration'=> 'duration — Duração (1h 35min)',
+    'cfg_col_renderer_opt_code'    => 'code — Código monospace',
+    'cfg_col_renderer_opt_color_sw'=> 'color — Swatch de cor hex',
+    'cfg_col_renderer_group_visual'=> 'Visuais',
+    'cfg_col_renderer_opt_progress'=> 'progress — Barra de progresso',
+    'cfg_col_renderer_opt_rating'  => 'rating — Estrelas de avaliação',
+    'cfg_col_renderer_opt_qrcode'  => 'qrcode — QR Code (via JS)',
+
+    // Columns > Mask extra
+    'cfg_col_mask_regex'           => 'Padrão Regex (IMask)',
+    'cfg_col_valid_hint'           => 'Regras adicionais além do <strong>Obrigatório</strong> (configurado na aba Básico).',
+
+    // Columns > SearchDropdown
+    'cfg_col_sd_search_mode'       => 'Modo de Busca',
+    'cfg_col_sd_mode_service'      => 'Service customizado',
+    'cfg_col_sd_model'             => 'Model (caminho relativo a App\Models)',
+    'cfg_col_sd_service'           => 'Service (caminho relativo a App\Services)',
+    'cfg_col_sd_method'            => 'Método do Service',
+    'cfg_col_sd_value_field'       => 'Campo Valor (value)',
+    'cfg_col_sd_label_field'       => 'Campo Label (label)',
+    'cfg_col_sd_label_secondary'   => 'Label Secundário (opcional)',
+    'cfg_col_sd_order_by'          => 'Ordenação (orderByRaw)',
+    'cfg_col_sd_limit'             => 'Limite de Resultados',
+    'cfg_col_sd_filters'           => 'Filtros Estáticos (JSON)',
+
+    // Columns > Totalizer extra
+    'cfg_col_total_func'           => 'Função',
+    'cfg_col_total_format'         => 'Formato',
+    'cfg_col_total_sum'            => 'SUM — Soma',
+    'cfg_col_total_avg'            => 'AVG — Média',
+    'cfg_col_total_count'          => 'COUNT — Contagem',
+    'cfg_col_total_min'            => 'MIN — Mínimo',
+    'cfg_col_total_max'            => 'MAX — Máximo',
+
+    // Filter aggregate options
+    'cfg_filter_agg_sum'           => 'SUM — soma dos valores',
+    'cfg_filter_agg_count'         => 'COUNT — contagem de registros',
+    'cfg_filter_agg_avg'           => 'AVG — média',
+    'cfg_filter_agg_max'           => 'MAX — valor máximo',
+    'cfg_filter_agg_min'           => 'MIN — valor mínimo',
+    'cfg_filter_agg_hint'          => 'Só preencha se quiser filtrar por um valor calculado (ex: SUM >= 100).',
+
+    // Shared operator options
+    'op_eq'                        => '= (igual)',
+    'op_eq2'                       => '== (igual)',
+    'op_neq'                       => '!= (diferente)',
+    'op_like'                      => 'LIKE (contém texto)',
+    'op_gt'                        => '> (maior que)',
+    'op_lt'                        => '< (menor que)',
+    'op_gte'                       => '>= (maior ou igual)',
+    'op_lte'                       => '<= (menor ou igual)',
+    'op_style_case_hint'           => 'Exato como está no banco (case-sensitive).',
+
+    // base-crud
+    'crud_no_config'               => 'Configuração de BaseCrud não encontrada para',
+
+    // Columns > Select options placeholder & inline hint
+    'cfg_col_select_opts_ph'       => 'chave;Rótulo;;chave2;Rótulo2',
+    'cfg_col_select_fmt_hint'      => 'Formato: <code class="px-1 rounded bg-slate-100">chave;Rótulo</code> separados por <code class="px-1 rounded bg-slate-100">;;</code>',
+
+    // Columns > Cell icon hint
+    'cfg_col_cell_icon_hint'       => 'Classe CSS do ícone (Boxicons, FontAwesome...)',
+
+    // Columns > Badge / Pill map
+    'cfg_col_badge_map_hint'       => 'Cada entrada mapeia um valor do banco para um rótulo e cor.',
+    'cfg_col_badge_label_ph'       => 'rótulo',
+
+    // Columns > Boolean renderer placeholder
+    'cfg_col_bool_false_ph'        => 'Não',
+
+    // Columns > Currency options
+    'cfg_col_currency_brl'         => 'BRL — Real Brasileiro',
+    'cfg_col_currency_usd'         => 'USD — Dólar',
+    'cfg_col_currency_eur'         => 'EUR — Euro',
+
+    // Columns > Mask select options
+    'cfg_col_mask_none'            => '— Sem máscara —',
+    'cfg_col_mask_grp_monetary'    => 'Monetário',
+    'cfg_col_mask_ean13'           => 'ean13 — 0000000000000 (13 dígitos)',
+    'cfg_col_mask_grp_vehicle'     => 'Veículos',
+    'cfg_col_mask_uppercase_opt'   => 'uppercase — MAIÚSCULAS automático',
+    'cfg_col_mask_custom_regex_opt'=> 'custom_regex — Expressão personalizada',
+    'cfg_col_mask_plate_sfx'       => '(maiúsc. + alfanum.)',
+    'cfg_col_mask_trim_opt'        => 'trim — Remove espaços das bordas',
+    'cfg_col_mask_transform_save'  => '⚡ Transformação aplicada ao salvar:',
+    'cfg_col_mask_plate_case'      => '(maiúsculas + alfanumérico)',
+
+    // Columns > Validation inline hints
+    'cfg_col_valid_confirmed_hint' => 'Nome do campo de confirmação no form',
+    'cfg_col_valid_unique_hint'    => 'Ignora o registro em edição automaticamente',
+
+    // Columns > Relation inline hints
+    'cfg_col_rel_name_hint'        => 'Nome do método de relação no Model',
+    'cfg_col_rel_nested_title'     => '🔗 Relação Aninhada (Dot Notation)',
+    'cfg_col_rel_nested_desc'      => 'Use quando o dado está em múltiplos níveis:',
+    'cfg_col_rel_nested_auto'      => 'O eager loading é automático. O último segmento é o campo; os anteriores são as relações.',
+    'cfg_col_rel_nested_label'     => 'Caminho Dot Notation',
+
+    // Columns > SearchDropdown type hint
+    'cfg_col_sd_type_hint'         => 'Configuração para tipo <strong>searchdropdown</strong>. Disponível apenas quando o tipo da coluna for SearchDropdown.',
+
+    // Filter > field inline hints
+    'cfg_filter_field_hint'        => 'Nome único para este filtro. Não precisa existir no banco.',
+    'cfg_filter_rel_method_hint'   => 'Nome do método de relação no Model (ex: <code class="px-1 rounded bg-slate-100">supplier</code>, <code class="px-1 rounded bg-slate-100">stockMovements</code>).',
+    'cfg_filter_rel_col_hint'      => 'Coluna dentro da tabela relacionada que será filtrada.',
+
+    // Filter > guide box titles & descriptions
+    'cfg_filter_guide_s1_title'    => '① Filtro simples — campo direto na tabela',
+    'cfg_filter_guide_s1_desc'     => 'Use quando o campo que você quer filtrar está na própria tabela do model.',
+    'cfg_filter_guide_s2_title'    => '② Filtro via relação — whereHas',
+    'cfg_filter_guide_s2_desc'     => 'Use quando o campo está em uma relação Eloquent (ex: filtrar Produtos pelo nome do Fornecedor).',
+    'cfg_filter_guide_s3_title'    => '③ Filtro com agregação — whereHas + Aggregate',
+    'cfg_filter_guide_s3_desc'     => 'Use para filtrar por valores calculados dentro de uma relação (ex: produtos com estoque total &gt; X).',
+    'cfg_filter_guide_tip'         => '<strong>Dica:</strong> O <em>Campo (field)</em> é apenas um identificador interno — não precisa existir no banco. O que importa para a query é o <em>whereHas</em> + <em>Campo na Relação</em>.',
+
+    // Style > guide box
+    'cfg_style_guide_intro'        => 'O estilo CSS é aplicado na <strong>linha inteira</strong> da tabela quando a condição é verdadeira. O <strong>Campo</strong> deve ser um atributo real do model (coluna do banco ou relação).',
+    'cfg_style_guide_ex2_title'    => '② Destaque por valor numérico',
+    'cfg_style_guide_ex2_sample'   => 'Exemplo — estoque crítico ≤ 5',
+    'cfg_style_guide_tip'          => 'O CSS é aplicado como <code class="px-1 rounded bg-slate-100">style=""</code> direto na tag <code class="px-1 rounded bg-slate-100">&lt;tr&gt;</code>.',
+
+    // JOIN > guide box
+    'cfg_join_guide_intro'         => 'JOINs configuráveis permitem trazer colunas de outras tabelas <strong>sem relacionamento Eloquent</strong>, com suporte a filtro, sort e export.',
+    'cfg_join_guide_ex1_title'     => 'Exemplo simples — 1 nível',
+    'cfg_join_guide_ex2_title'     => 'Exemplo encadeado — 2 JOINs (3 níveis)',
+    'cfg_join_guide_j1_title'      => 'JOIN 1 — intermediário (sem colunas extras)',
+    'cfg_join_guide_j2_title'      => 'JOIN 2 — tabela de destino (com coluna)',
+    'cfg_join_guide_chain_note'    => 'O 2° JOIN pode usar colunas do 1° JOIN na condição ON — o SQL é gerado em sequência.',
+
+    // JOIN > form inline hints
+    'cfg_join_distinct_hint'       => 'Evita linhas duplicadas quando o JOIN pode gerar múltiplas correspondências (1-para-muitos).',
+    'cfg_join_selectraw_hint'      => 'Cada linha define uma coluna: <code class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>. O alias é como o campo aparece no Blade e nos filtros. Se omitir o alias, será gerado automaticamente (ex: <code class="px-1 rounded bg-slate-100">suppliers.name</code> → <code class="px-1 rounded bg-slate-100">suppliers_name</code>).',
+    'cfg_join_exist_err_prefix'    => 'Já existe um JOIN para a tabela',
+    'cfg_join_exist_err_suffix'    => '. Edite o existente ou use outro nome.',
+    'cfg_join_notice_title'        => 'Próximo passo: adicionar as colunas na aba <span class="text-indigo-700">Colunas</span>',
+    'cfg_join_notice_footer'       => 'Para JOINs encadeados (3+ níveis), configure um JOIN intermediário <em>sem colunas</em> e um segundo JOIN com as colunas desejadas. Veja o guia acima para o exemplo completo.',
+
+    // Termos compartilhados (guide-boxes)
+    'cfg_term_phys_name'           => 'Nome Físico',
+    'cfg_term_sql_source'          => 'Fonte SQL',
+    'cfg_term_rel_name_ph'         => '(nome da relação)',
+
+    // Aba Geral — hints de formulário
+    'cfg_gen_display_name_ph'      => 'Ex: Parceiros de Negócio',
+    'cfg_gen_display_name_hint'    => 'Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.',
+    'cfg_gen_broadcast_off_hint'   => 'Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.',
+
+    // JOIN notice box list items
+    'cfg_join_notice_phys'         => '<strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
+    'cfg_join_notice_sql'          => '<strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — habilita filtros e ordenação',
+
+    // JOIN guide box: itens da lista de regras
+    'cfg_join_guide_rule_phys'     => '<strong>Nome Físico</strong> = alias declarado no campo Colunas acima (ex: <code class="px-1 rounded bg-slate-100">product_name</code>)',
+    'cfg_join_guide_rule_left'     => '<strong>LEFT JOIN</strong> mantém registros sem correspondência (dados opcionais). <strong>INNER JOIN</strong> filtra apenas com correspondência.',
+
+    // Colunas > Caixa de informações Fonte SQL (sempre visível)
+    'cfg_col_field_guide_title'    => 'Relação entre Nome Físico e Fonte SQL:',
+    'cfg_col_field_guide_phys_desc'=> '= alias declarado no JOIN (ex: <code class="px-1 bg-white rounded">supplier_name</code>). É como o Blade acessa o valor.',
+    'cfg_col_field_guide_sql_desc' => '= nome qualificado SQL (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Usado em <code class="px-1 bg-white rounded">WHERE</code> e <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong>',
+    'cfg_col_field_guide_formats'  => 'Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:',
+    'cfg_col_field_guide_enc'      => 'encadeado → extraído como',
+
+    // Colunas > Bullets do guia de sintaxe de método
+    'cfg_col_method_guide_sub'     => 'substituído pelo valor do campo no registro',
+    'cfg_col_method_guide_multi'   => 'Múltiplos parâmetros separados por vírgula — cada um vira um argumento PHP separado',
+    'cfg_col_method_guide_prefix'  => 'é adicionado automaticamente',
+
+    // Nomes das cores (swatches badge/pill)
+    'color_green'                  => 'Verde',
+    'color_yellow'                 => 'Amarelo',
+    'color_red'                    => 'Vermelho',
+    'color_blue'                   => 'Azul',
+    'color_indigo'                 => 'Índigo',
+    'color_purple'                 => 'Roxo',
+    'color_pink'                   => 'Rosa',
+    'color_gray'                   => 'Cinza',
+
     // Aba Ações
     'cfg_act_tab_title'            => 'Ações por Linha',
     'cfg_act_th_name'              => 'Nome',
