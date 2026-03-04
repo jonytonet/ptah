@@ -238,7 +238,7 @@
             {{-- Limpar filtros (visível quando houver algo ativo) --}}
             @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
                 <button wire:click="clearFilters"
-                    class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 {{ $_dk ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-400' }}"
+                    class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn"
                     title="{{ __('ptah::ui.btn_clear_filters') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -445,7 +445,7 @@
                                                 <button type="button"
                                                     wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                     @click="open = false"
-                                                    class="block w-full px-3 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'hover:bg-violet-50 hover:text-violet-700' }}">
+                                                    class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
                                                     {{ $opt['label'] }}
                                                 </button>
                                             @empty
@@ -512,7 +512,7 @@
                                                     @foreach ($sdResults['cf_' . $cfField] as $opt)
                                                         <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                             @click="open = false"
-                                                            class="block w-full px-3 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'hover:bg-violet-50' }}">
+                                                            class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
                                                             {{ $opt['label'] }}
                                                         </button>
                                                     @endforeach
@@ -911,7 +911,7 @@
                             <p class="text-[11px] leading-tight ptah-c-modal_sub">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
                         </div>
                     </div>
-                    <button wire:click="closeModal" class="p-2 transition-colors rounded-lg {{ $_dk ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}">
+                    <button wire:click="closeModal" class="p-2 transition-colors rounded-lg ptah-c-modal_close">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -941,7 +941,7 @@
 
                 $fBorderClass  = $fError
                                     ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                                    : ($_dk ? 'border-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20' : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100/50');
+                                    : 'ptah-c-form_border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100';
                             @endphp
 
                             <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -993,7 +993,7 @@
                                                 class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 ptah-c-form_sel"
                                             >
                                                 <span
-                                                    :class="(selected !== null && selected !== '') ? '{{ $_dk ? 'text-slate-200' : 'text-gray-800' }}' : 'text-gray-400'"
+                                                    :class="(selected !== null && selected !== '') ? 'ptah-c-sel_val' : 'text-gray-400'"
                                                     class="pr-4 text-sm truncate"
                                                     x-text="displayLabel"
                                                 ></span>
@@ -1015,7 +1015,7 @@
                                                     <template x-for="option in options" :key="option.value">
                                                         <li
                                                             @click="toggle(option.value)"
-                                                            :class="isSelected(option.value) ? '{{ $_dk ? 'bg-indigo-900/40 text-indigo-300' : 'bg-violet-50 text-violet-700' }}' : '{{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'text-gray-700 hover:bg-gray-50' }}'"
+                                                            :class="isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
                                                             class="flex items-center justify-between px-4 py-2 text-sm cursor-pointer"
                                                         >
                                                             <span x-text="option.label"></span>
@@ -1087,7 +1087,7 @@
                                                     <button type="button"
                                                         wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                         @click="open = false"
-                                                        class="block w-full px-4 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60 hover:text-indigo-300' : 'hover:bg-violet-50 hover:text-violet-700' }}">
+                                                        class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
                                                         {{ $opt['label'] }}
                                                     </button>
                                                 @empty
