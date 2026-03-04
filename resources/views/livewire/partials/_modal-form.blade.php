@@ -259,40 +259,28 @@
                                 </div>
 
                             @else
-                                {{-- ── Input inline (text / number / date / textarea) ── --}}
+                                {{-- ── Input inline (text / number / date) ── --}}
                                 @php
                                     $fInputType = match($fTipo) {
-                                        'date'     => 'date',
-                                        'number'   => 'number',
-                                        'textarea' => 'textarea',
-                                        default    => 'text',
+                                        'date'   => 'date',
+                                        'number' => 'number',
+                                        default  => 'text',
                                     };
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
-                                    @if ($fInputType === 'textarea')
-                                        <textarea
-                                            name="{{ $fField }}"
-                                            wire:model="formData.{{ $fField }}"
-                                            @if($fRequired) required @endif
-                                            rows="4"
-                                            placeholder=""
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
-                                        ></textarea>
-                                    @else
-                                        <input
-                                            type="{{ $fInputType }}"
-                                            name="{{ $fField }}"
-                                            wire:model="formData.{{ $fField }}"
-                                            @if($fRequired) required @endif
-                                            @if($fTipo === 'number') step="any" @endif
-                                            @if($fMask) data-mask="{{ $fMask }}" @endif
-                                            placeholder=""
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
-                                        />
-                                    @endif
+                                    <input
+                                        type="{{ $fInputType }}"
+                                        name="{{ $fField }}"
+                                        wire:model="formData.{{ $fField }}"
+                                        @if($fRequired) required @endif
+                                        @if($fTipo === 'number') step="any" @endif
+                                        @if($fMask) data-mask="{{ $fMask }}" @endif
+                                        placeholder=""
+                                        class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                    />
                                     @if ($fError)
                                         <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
                                     @endif
