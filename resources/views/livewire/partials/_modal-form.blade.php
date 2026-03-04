@@ -86,11 +86,25 @@
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <div
+                                        wire:key="ptah-select-{{ $fField }}-{{ $editingId ?? 'new' }}"
                                         x-data="{
                                             open: false,
                                             selected: {{ $fInitSel }},
                                             options: {{ json_encode($fOptions) }},
                                             placeholder: '{{ __('ptah::ui.select_placeholder') }}',
+                                            init() {
+                                                // Reage a mudanças no formData quando openEdit() popula o valor
+                                                this.\$wire.\$watch('formData.{{ $fField }}', (val) => {
+                                                    if (val !== null && val !== undefined) {
+                                                        // Converte boolean PHP → string para comparação com options
+                                                        this.selected = typeof val === 'boolean' 
+                                                            ? (val ? '1' : '0') 
+                                                            : String(val);
+                                                    } else {
+                                                        this.selected = null;
+                                                    }
+                                                });
+                                            },
                                             get displayLabel() {
                                                 if (this.selected === null || this.selected === '') return this.placeholder;
                                                 const opt = this.options.find(o => String(o.value) === String(this.selected));
@@ -272,51 +286,63 @@
                                 @endphp
 
                                 @if($fMask === 'money_brl')
-                                    {{-- ── Money BRL: Alpine inline mask + wire:ignore to survive Livewire morph ── --}}
-                                    @php $moneyInit = is_numeric($fValue) ? (float) $fValue : 0.0; @endphp
-                                    <div class="w-full" wire:ignore>
-                                        <div
-                                            x-data="{
-                                                display: '{{ number_format($moneyInit, 2, ',', '.') }}',
-                                                fmt(n) {
-                                                    const val = parseFloat(n) || 0;
-                                                    return 'R$ ' + val.toFixed(2)
-                                                        .replace('.', ',')
-                                                        .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-                                                },
-                                                init() {
-                                                    this.display = this.fmt({{ $moneyInit }});
-                                                },
-                                                onInput(e) {
-                                                    const digits = e.target.value.replace(/\D/g, '');
-                                                    const n = parseInt(digits || '0', 10) / 100;
-                                                    const formatted = this.fmt(n);
-                                                    e.target.value = formatted;
-                                                    this.display = formatted;
-                                                    const hidden = this.$refs.moneyHidden;
-                                                    hidden.value = formatted;
-                                                    hidden.dispatchEvent(new Event('change', { bubbles: true }));
-                                                }
-                                            }"
-                                        >
-                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                                {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
-                                            </label>
-                                            <input
-                                                type="text"
-                                                x-bind:value="display"
-                                                @input="onInput($event)"
-                                                @focus="$event.target.setSelectionRange($event.target.value.length, $event.target.value.length)"
-                                                @if($fRequired) required @endif
-                                                placeholder="R$ 0,00"
-                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
-                                            />
-                                            <input
-                                                type="hidden"
-                                                x-ref="moneyHidden"
-                                                wire:model="formData.{{ $fField }}"
-                                            />
-                                        </div>
+                                    {{-- ── Money BRL: Alpine inline mask ── --}}
+                                    {{-- wire:key on the outer div forces full destroy+recreate on create↔edit switch --}}
+                                    <div
+                                        class="w-full"
+                                        wire:key="ptah-money-{{ $fField }}-{{ $editingId ?? 'new' }}"
+                                        x-data="{
+                                            display: '',
+                                            fmt(n) {
+                                                const v = parseFloat(n) || 0;
+                                                return 'R$ ' + v.toFixed(2)
+                                                    .replace('.', ',')
+                                                    .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                                            },
+                                            init() {
+                                                // Read directly from Livewire state (not PHP-rendered) so
+                                                // create→edit never carries stale display value.
+                                                const raw = this.$wire.formData?.['{{ $fField }}'] ?? 0;
+                                                this.display = this.fmt(parseFloat(raw) || 0);
+                                                // Keep in sync when openEdit() sets formData from server
+                                                this.$wire.$watch('formData.{{ $fField }}', (val) => {
+                                                    if (val === null || val === undefined) return;
+                                                    // Ignore values already formatted (contain letters/symbols)
+                                                    if (/[a-zA-Z$]/.test(String(val))) return;
+                                                    this.display = this.fmt(parseFloat(val) || 0);
+                                                });
+                                            },
+                                            onInput(e) {
+                                                const digits = e.target.value.replace(/\D/g, '');
+                                                const n = parseInt(digits || '0', 10) / 100;
+                                                const f = this.fmt(n);
+                                                e.target.value = f;
+                                                this.display = f;
+                                                const h = this.$refs.moneyHidden;
+                                                h.value = f;
+                                                // Livewire 3 wire:model (deferred) collects on action;
+                                                // dispatch 'input' so Livewire also gets it on .live if ever used
+                                                h.dispatchEvent(new Event('input', { bubbles: true }));
+                                            }
+                                        }"
+                                    >
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <input
+                                            type="text"
+                                            x-bind:value="display"
+                                            @input="onInput($event)"
+                                            @focus="$event.target.setSelectionRange($event.target.value.length, $event.target.value.length)"
+                                            @if($fRequired) required @endif
+                                            placeholder="R$ 0,00"
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                        />
+                                        <input
+                                            type="hidden"
+                                            x-ref="moneyHidden"
+                                            wire:model="formData.{{ $fField }}"
+                                        />
                                         @if ($fError)
                                             <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
                                         @endif
