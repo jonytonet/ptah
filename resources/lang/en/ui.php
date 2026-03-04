@@ -1099,6 +1099,15 @@ return [
     'cfg_gen_display_name_hint'    => 'Appears in the modal header and toolbar. Default: model name.',
     'cfg_gen_broadcast_off_hint'   => 'Enable to configure the Echo channel and event that will trigger automatic table update.',
 
+    // General > GroupBy
+    'cfg_gen_groupby'              => 'Record Grouping (GROUP BY)',
+    'cfg_gen_groupby_desc'         => 'Groups query results by a column without any Eloquent changes. Leave empty to disable.',
+    'cfg_gen_groupby_field'        => 'GROUP BY Field',
+
+    // General > Lifecycle Hooks
+    'cfg_gen_hooks'                => 'Lifecycle Hooks',
+    'cfg_gen_hooks_desc'           => 'Override these methods in your Livewire component to run logic before/after each save.',
+
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Physical Name</strong> = the alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
     'cfg_join_notice_sql'          => '<strong>SQL Source</strong> = qualified SQL name (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — enables filters and sorting',

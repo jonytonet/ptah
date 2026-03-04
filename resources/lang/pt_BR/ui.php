@@ -1100,6 +1100,15 @@ return [
     'cfg_gen_display_name_hint'    => 'Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.',
     'cfg_gen_broadcast_off_hint'   => 'Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.',
 
+    // General > GroupBy
+    'cfg_gen_groupby'              => 'Agrupamento de Registros (GROUP BY)',
+    'cfg_gen_groupby_desc'         => 'Agrupa os resultados da query por um campo sem alterar o Eloquent. Deixe vazio para desativar.',
+    'cfg_gen_groupby_field'        => 'Campo para GROUP BY',
+
+    // General > Lifecycle Hooks
+    'cfg_gen_hooks'                => 'Lifecycle Hooks',
+    'cfg_gen_hooks_desc'           => 'Sobrescreva esses métodos no seu componente Livewire para executar lógica antes/após cada save.',
+
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
     'cfg_join_notice_sql'          => '<strong>Fonte SQL</strong> = nome qualificado SQL (ex: <code class="px-1 rounded bg-amber-100">suppliers.name</code>) — habilita filtros e ordenação',

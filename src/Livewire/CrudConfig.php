@@ -79,6 +79,9 @@ class CrudConfig extends Component
     public string $broadcastChannel = ''; // empty = auto-generated
     public string $broadcastEvent   = ''; // empty = auto-generated
 
+    // ── GroupBy ────────────────────────────────────────────────────────
+    public string $groupBy = ''; // field name for GROUP BY, empty = disabled
+
     // ── Visual Theme ────────────────────────────────────────────────────
     public string $theme = 'light'; // 'light' | 'dark'
 
@@ -212,6 +215,9 @@ class CrudConfig extends Component
         $this->broadcastEnabled = (bool) ($bc['enabled'] ?? false);
         $this->broadcastChannel = $bc['channel'] ?? '';
         $this->broadcastEvent   = $bc['event']   ?? '';
+
+        // GroupBy
+        $this->groupBy = $cfg['groupBy'] ?? '';
 
         // Theme
         $this->theme = $cfg['theme'] ?? 'light';
@@ -724,6 +730,7 @@ class CrudConfig extends Component
                 'event'   => $this->broadcastEvent   ?: null,
             ],
             'theme'           => $this->theme,
+            'groupBy'         => $this->groupBy ?: null,
         ]);
     }
 

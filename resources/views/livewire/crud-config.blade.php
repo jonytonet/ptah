@@ -1,6 +1,6 @@
 <div>
     {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
-    @can('admin')
+    @ptahCan('configCrud', 'read')
     <button @click="$wire.showModal = true; $wire.prepareModal()"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 rounded-lg bg-transparent hover:bg-slate-100 hover:text-slate-700 transition-all duration-150 focus:outline-none"
         title="{{ __('ptah::ui.cfg_btn_title') }}">
@@ -12,19 +12,19 @@
         </svg>
         <span class="hidden md:inline">Config</span>
     </button>
-    @endcan
+    @endptahCan
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @teleport('body')
     <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
-        x-show="$wire.showModal"
-        x-cloak
+        x-show="$wire.showModal" x-cloak
         x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }"
         class="fixed inset-0 z-[9999] flex items-center justify-center">
         {{-- Backdrop --}}
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()">
+        </div>
 
         {{-- Shell --}}
         <div class="relative flex w-full mx-4 overflow-hidden bg-white shadow-2xl max-w-7xl rounded-2xl"
@@ -343,7 +343,8 @@
                                             <ul class="space-y-0.5 text-slate-500">
                                                 <li><code class="px-1 font-mono bg-white rounded">suppliers.name</code>
                                                     <span class="text-slate-400">{!!
-                                                        __('ptah::ui.cfg_col_field_guide_qualified') !!}</span></li>
+                                                        __('ptah::ui.cfg_col_field_guide_qualified') !!}</span>
+                                                </li>
                                                 <li><code class="px-1 font-mono bg-white rounded">supplier.name</code>
                                                     <span class="text-slate-400">{!!
                                                         __('ptah::ui.cfg_col_field_guide_singular') !!} <code
@@ -371,7 +372,6 @@
                                             <option value="searchdropdown">{{ __('ptah::ui.cfg_col_type_sd') }}</option>
                                             <option value="boolean">{{ __('ptah::ui.cfg_col_type_boolean') }}</option>
                                             <option value="textarea">{{ __('ptah::ui.cfg_col_type_textarea') }}</option>
-                                            <option value="image">{{ __('ptah::ui.cfg_col_type_image') }}</option>
                                         </select>
                                     </div>
                                     <div>
@@ -1451,12 +1451,13 @@
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_color_label') }}</label>
-                                    <option value="primary">primary</option>
-                                    <option value="success">success</option>
-                                    <option value="danger">danger</option>
-                                    <option value="warning">warning</option>
-                                    <option value="info">info</option>
-                                    <option value="secondary">secondary</option>
+                                    <select wire:model="formDataAction.actionColor" class="cfg-input">
+                                        <option value="primary">primary</option>
+                                        <option value="success">success</option>
+                                        <option value="danger">danger</option>
+                                        <option value="warning">warning</option>
+                                        <option value="info">info</option>
+                                        <option value="secondary">secondary</option>
                                     </select>
                                 </div>
                                 <div>
@@ -2423,6 +2424,72 @@
                             @else
                             <p class="text-xs text-slate-400">{{ __('ptah::ui.cfg_gen_broadcast_off_hint') }}</p>
                             @endif
+                        </div>
+
+                        {{-- Agrupamento (GROUP BY) --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
+                            <div class="flex items-start justify-between pb-2 border-b border-slate-100">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_gen_groupby') }}</h3>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ __('ptah::ui.cfg_gen_groupby_desc') }}</p>
+                                </div>
+                                @if (!empty($groupBy))
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full">
+                                    <i class="bx bx-check-circle"></i> Ativo
+                                </span>
+                                @endif
+                            </div>
+                            <div class="max-w-sm">
+                                <label class="cfg-label">{{ __('ptah::ui.cfg_gen_groupby_field') }}</label>
+                                <input type="text" wire:model="groupBy"
+                                    placeholder="ex: company_id, branch_group_id"
+                                    class="font-mono cfg-input" />
+                                <p class="text-[11px] text-slate-400 mt-1">
+                                    Deixe vazio para desativar. Quando preenchido, a listagem retorna
+                                    <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {campo} ... GROUP BY {campo}</code>.
+                                </p>
+                            </div>
+                            @if (!empty($groupBy))
+                            <div class="p-2.5 rounded-lg bg-slate-900 text-[11px] font-mono text-slate-300">
+                                <span class="text-slate-500">-- Query gerada:</span><br>
+                                SELECT MIN(<span class="text-yellow-300">tabela</span>.id) AS id, <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span><br>
+                                FROM <span class="text-yellow-300">tabela</span><br>
+                                GROUP BY <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span>
+                            </div>
+                            @endif
+                        </div>
+
+                        {{-- Lifecycle Hooks --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
+                            <div class="pb-2 border-b border-slate-100">
+                                <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_gen_hooks') }}</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">{{ __('ptah::ui.cfg_gen_hooks_desc') }}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeCreate(&amp;$data)</p>
+                                    <p class="text-[10px] text-slate-400">Executado antes de INSERT. Mute <code class="px-1 bg-white rounded border border-slate-200">$data</code> por referência.</p>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">afterCreate($record)</p>
+                                    <p class="text-[10px] text-slate-400">Executado após INSERT. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.</p>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeUpdate(&amp;$data, $record)</p>
+                                    <p class="text-[10px] text-slate-400">Executado antes de UPDATE. Acessa o registro original via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.</p>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">afterUpdate($record)</p>
+                                    <p class="text-[10px] text-slate-400">Executado após UPDATE. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.</p>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-lg bg-slate-900 text-[11px] font-mono leading-relaxed">
+                                <p class="text-slate-500 mb-1.5">// Sobrescreva no seu componente Livewire:</p>
+                                <p class="text-indigo-300">protected function <span class="text-green-400">beforeCreate</span>(<span class="text-yellow-300">array &amp;$data</span>): void</p>
+                                <p class="text-slate-400">{ $data[<span class="text-amber-300">'slug'</span>] = \Str::slug($data[<span class="text-amber-300">'name'</span>]); }</p>
+                                <p class="text-indigo-300 mt-2">protected function <span class="text-green-400">afterCreate</span>(\Illuminate\Database\Eloquent\Model <span class="text-yellow-300">$record</span>): mixed</p>
+                                <p class="text-slate-400">{ return redirect()->route(<span class="text-amber-300">'orders.show'</span>, $record->id); }</p>
+                            </div>
                         </div>
 
                         {{-- Tema Visual --}}
