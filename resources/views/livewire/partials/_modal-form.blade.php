@@ -272,59 +272,91 @@
                                 @endphp
 
                                 @if($fMask === 'money_brl')
-                                    {{-- ── Money BRL input with Alpine real-time formatting ── --}}
-                                    @php
-                                        $moneyInit = is_numeric($fValue) ? (float) $fValue : 0.0;
-                                    @endphp
-                                    <div class="w-full"
-                                        x-data="{
-                                            display: '',
-                                            init() {
-                                                this.display = this.fmt({{ $moneyInit }});
-                                            },
-                                            fmt(n) {
-                                                const val = parseFloat(n) || 0;
-                                                return 'R\$ ' + val.toFixed(2)
-                                                    .replace('.', ',')
-                                                    .replace(/(\d)(?=(\d{3})+(?!\d))/g, '\$1.');
-                                            },
-                                            onInput(e) {
-                                                const digits = e.target.value.replace(/\D/g, '');
-                                                const n = parseInt(digits || '0', 10) / 100;
-                                                const formatted = this.fmt(n);
-                                                e.target.value = formatted;
-                                                this.display = formatted;
-                                                this.\$refs.moneyHidden.value = formatted;
-                                                this.\$refs.moneyHidden.dispatchEvent(new Event('change', { bubbles: true }));
-                                            }
-                                        }"
-                                        x-init="init()"
-                                    >
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
-                                        </label>
-                                        <input
-                                            type="text"
-                                            :value="display"
-                                            @input.prevent="onInput(\$event)"
-                                            @focus="\$event.target.setSelectionRange(\$event.target.value.length, \$event.target.value.length)"
-                                            @if($fRequired) required @endif
-                                            placeholder="R$ 0,00"
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
-                                        />
-                                        <input
-                                            type="hidden"
-                                            x-ref="moneyHidden"
-                                            name="{{ $fField }}"
-                                            wire:model="formData.{{ $fField }}"
-                                        />
+                                    {{-- ── Money BRL: Alpine inline mask + wire:ignore to survive Livewire morph ── --}}
+                                    @php $moneyInit = is_numeric($fValue) ? (float) $fValue : 0.0; @endphp
+                                    <div class="w-full" wire:ignore>
+                                        <div
+                                            x-data="{
+                                                display: '{{ number_format($moneyInit, 2, ',', '.') }}',
+                                                fmt(n) {
+                                                    const val = parseFloat(n) || 0;
+                                                    return 'R$ ' + val.toFixed(2)
+                                                        .replace('.', ',')
+                                                        .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                                                },
+                                                init() {
+                                                    this.display = this.fmt({{ $moneyInit }});
+                                                },
+                                                onInput(e) {
+                                                    const digits = e.target.value.replace(/\D/g, '');
+                                                    const n = parseInt(digits || '0', 10) / 100;
+                                                    const formatted = this.fmt(n);
+                                                    e.target.value = formatted;
+                                                    this.display = formatted;
+                                                    const hidden = this.$refs.moneyHidden;
+                                                    hidden.value = formatted;
+                                                    hidden.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }
+                                            }"
+                                        >
+                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                                {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                            </label>
+                                            <input
+                                                type="text"
+                                                x-bind:value="display"
+                                                @input="onInput($event)"
+                                                @focus="$event.target.setSelectionRange($event.target.value.length, $event.target.value.length)"
+                                                @if($fRequired) required @endif
+                                                placeholder="R$ 0,00"
+                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                            />
+                                            <input
+                                                type="hidden"
+                                                x-ref="moneyHidden"
+                                                wire:model="formData.{{ $fField }}"
+                                            />
+                                        </div>
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        @endif
+                                    </div>
+
+                                @elseif($fMask === 'uppercase')
+                                    {{-- ── Uppercase: live text-transform + wire:ignore ── --}}
+                                    <div class="w-full" wire:ignore>
+                                        <div
+                                            x-data="{
+                                                value: '{{ addslashes((string)$fValue) }}',
+                                                onInput(e) {
+                                                    this.value = e.target.value.toUpperCase();
+                                                    e.target.value  = this.value;
+                                                    this.$refs.upHidden.value = this.value;
+                                                    this.$refs.upHidden.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }
+                                            }"
+                                        >
+                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                                {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                            </label>
+                                            <input
+                                                type="text"
+                                                x-bind:value="value"
+                                                @input="onInput($event)"
+                                                style="text-transform: uppercase"
+                                                @if($fRequired) required @endif
+                                                placeholder=""
+                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                            />
+                                            <input type="hidden" x-ref="upHidden" wire:model="formData.{{ $fField }}" />
+                                        </div>
                                         @if ($fError)
                                             <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
                                         @endif
                                     </div>
 
                                 @else
-                                    {{-- ── Regular input (text / number / date) ── --}}
+                                    {{-- ── Regular input (text / number / date / other masks via server-side transform) ── --}}
                                     <div class="w-full">
                                         <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
