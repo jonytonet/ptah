@@ -40,6 +40,10 @@
 29. [Tema Visual (Light / Dark)](#tema-visual-light--dark)
 30. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
 31. [JOINs Configuráveis](#joins-configuráveis)
+32. [Lifecycle Hooks](#lifecycle-hooks)
+33. [configGroupBy — Agrupamento de Registros](#configgroupby--agrupamento-de-registros)
+34. [Input Tipo Image](#input-tipo-image)
+35. [Estrutura de Partials (Blade)](#estrutura-de-partials-blade)
 
 ---
 
@@ -67,6 +71,10 @@
 - **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
 - **JOINs configuráveis** (LEFT / INNER) declarados no CrudConfig — sem Eloquent, com suporte completo a filtro, sort e export
 - **Auditoria automática** de `created_by` / `updated_by` / `deleted_by` via trait `HasAuditFields` — preenchida automaticamente nos eventos Eloquent; `save()` e `deleteRecord()` injetam os valores explicitamente como camada adicional; `bulkDelete()` usa `->each()` para garantir que os eventos disparem em cada registro
+- **Lifecycle hooks** (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`) — ganchos de extensão no ciclo de salvar, com suporte a mutação do `$data` por referência e redirecionamento via `RedirectResponse`
+- **configGroupBy** — agrupamento de registros via `GROUP BY` declarativo no CrudConfig, sem Eloquent
+- **Input tipo `image`** — campo de imagem no formulário com preview ao vivo (URL ou arquivo local via FileReader)
+- **Blade particionado** — view base dividida em 7 partials independentes para facilitar manutenção
 
 ---
 
@@ -426,6 +434,7 @@ Valor de `colsTipo`:
 | `searchdropdown` | Campo com busca dinâmica (SD) |
 | `array` | Lista de valores |
 | `relation` | Filtro via `whereHas` |
+| `image` | Imagem com preview ao vivo (URL ou arquivo local) |
 
 ---
 
@@ -1526,3 +1535,239 @@ LEFT JOIN suppliers ON products.supplier_id = suppliers.id
 WHERE suppliers.name LIKE '%acme%'
 ORDER BY suppliers.name ASC
 ```
+
+---
+
+## Lifecycle Hooks
+
+O `HasCrudForm` expõe quatro hooks que podem ser sobrescritos no componente filho para executar lógica antes ou depois de persistir um registro.
+
+### Assinaturas
+
+```php
+// Antes de INSERT — mutação do $data por referência
+protected function beforeCreate(array &$data): void {}
+
+// Antes de UPDATE — mutação do $data por referência; acesso ao $record original
+protected function beforeUpdate(array &$data, \Illuminate\Database\Eloquent\Model $record): void {}
+
+// Após INSERT — retorne RedirectResponse para redirecionar; null = comportamento padrão
+protected function afterCreate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+
+// Após UPDATE — retorne RedirectResponse para redirecionar; null = comportamento padrão
+protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+```
+
+### Ordem de execução no `save()`
+
+```
+validate()
+  ↓
+buildData()
+  ↓
+applyMaskTransforms()
+  ↓
+beforeCreate(&$data)   ← ou beforeUpdate(&$data, $record)
+  ↓
+created_by / updated_by
+  ↓
+create() / update()
+  ↓
+afterCreate($record)   ← ou afterUpdate($record)
+  ↓
+se retornou RedirectResponse → redirect
+  ↓
+closeModal() + dispatch('crud-saved')
+```
+
+### Exemplo — beforeCreate
+
+```php
+protected function beforeCreate(array &$data): void
+{
+    // Gera slug automaticamente antes de inserir
+    $data['slug'] = \Str::slug($data['name']);
+
+    // Força empresa do usuário logado
+    $data['company_id'] = auth()->user()->company_id;
+}
+```
+
+### Exemplo — beforeUpdate
+
+```php
+protected function beforeUpdate(array &$data, Model $record): void
+{
+    // Só recalcula o hash se a senha mudou
+    if (!empty($data['password']) && $data['password'] !== $record->password) {
+        $data['password'] = bcrypt($data['password']);
+    }
+}
+```
+
+### Exemplo — afterCreate (com redirecionamento)
+
+```php
+protected function afterCreate(Model $record): mixed
+{
+    // Após criar uma ordem, redireciona para a página de detalhes
+    return redirect()->route('orders.show', $record->id);
+}
+```
+
+### Exemplo — afterUpdate
+
+```php
+protected function afterUpdate(Model $record): mixed
+{
+    // Dispara notificação sem redirecionar
+    $record->notify(new StatusChangedNotification());
+
+    return null; // mantém o modal fechado
+}
+```
+
+> **Nota:** os hooks `before*` recebem `$data` por referência — qualquer alteração ao array dentro do hook reflete na gravação. Os hooks `after*` recebem o `Model` já persistido e com `id` preenchido.
+
+---
+
+## configGroupBy — Agrupamento de Registros
+
+Permite agrupar os registros da listagem via `GROUP BY` declarativo no `CrudConfig`, sem nenhum ajuste no Eloquent Model.
+
+### Como configurar
+
+Na aba **Geral** do CrudConfig Modal (ou editando o JSON diretamente), adicione a chave `groupBy`:
+
+```json
+{
+  "groupBy": "branch_group_id"
+}
+```
+
+### Comportamento interno
+
+Quando `groupBy` está presente, o ptah:
+
+1. Aplica `SELECT MIN({tabela}.id) AS id, {tabela}.{campo}` — garante um `id` representativo por grupo.
+2. Aplica `GROUP BY {tabela}.{campo}`.
+3. Aplica `ORDER BY {tabela}.{campo} {direction}` — usa a direção da preferência do usuário.
+4. Retorna paginado (`.paginate($perPage)`).
+5. **Ignora** a lógica de sort/order posterior — o bloco `groupBy` retorna cedo.
+
+> O SELECT reduzido significa que apenas o campo agrupado e o `id` mínimo chegam ao blade. Colunas de outras relações provavelmente estarão ausentes. Use `configGroupBy` quando a intenção for listar grupos distintos (ex: uma linha por empresa, uma linha por categoria).
+
+### Exemplo de uso real
+
+```json
+"groupBy": "company_id"
+```
+
+```sql
+-- Query gerada internamente
+SELECT MIN(products.id) AS id, products.company_id
+FROM products
+GROUP BY products.company_id
+ORDER BY products.company_id ASC
+LIMIT 25 OFFSET 0
+```
+
+### Rótulo de agrupamento na view (opcional)
+
+O pacote inclui a chave de tradução `ptah::ui.groupby_label`:
+
+```php
+// en
+'groupby_label' => 'Grouped by :field'
+
+// pt_BR
+'groupby_label' => 'Agrupado por :field'
+```
+
+Use-a na view customizada quando quiser exibir um indicador visual do agrupamento ativo.
+
+---
+
+## Input Tipo Image
+
+O tipo `image` exibe um campo de imagem no formulário modal com preview ao vivo.
+
+### Configuração da coluna
+
+```json
+{
+  "colsNomeFisico": "photo_url",
+  "colsNomeLogico": "Foto",
+  "colsTipo": "image",
+  "colsGravar": "S"
+}
+```
+
+### Comportamento no formulário
+
+O campo renderiza **dois controles** e um **preview**:
+
+| Controle | Descrição |
+|---|---|
+| Campo de texto (URL) | Permite colar uma URL diretamente; o preview atualiza ao digitar (debounce via Alpine) |
+| Botão "Escolher arquivo" | Abre o seletor de arquivos; o arquivo é lido via `FileReader.readAsDataURL()` e exibido como preview; a URL `data:` é armazenada em `formData` |
+| Preview `<img>` | Visível quando há URL ou arquivo selecionado; renderiza abaixo dos controles |
+
+### O que é gravado
+
+O `formData[campo]` recebe:
+
+- **URL externa** (string): ex. `https://cdn.example.com/foto.jpg`
+- **Data URL** (string): ex. `data:image/png;base64,...` (quando um arquivo local é escolhido)
+
+Em ambos os casos é uma `string`, compatível com colunas `string`/`text` no banco.
+
+> Para armazenar o arquivo em disco, sobrescreva o hook `beforeCreate` ou `beforeUpdate` para mover o conteúdo de `data:` para o storage e substituir o valor pelo caminho final antes da gravação.
+
+### Chaves de tradução
+
+| Chave | en | pt_BR |
+|---|---|---|
+| `cfg_col_type_image` | `image — Image with Preview` | `image — Imagem com Preview` |
+| `image_pick_file` | `Pick a file…` | `Escolher arquivo…` |
+| `image_preview_label` | `preview` | `visualização` |
+
+---
+
+## Estrutura de Partials (Blade)
+
+O view principal `ptah::livewire.base-crud` é um esqueleto de ~40 linhas que inclui 7 partials independentes:
+
+```blade
+<div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}">
+    {{-- Flash de sucesso / status de export --}}
+
+    @if (!empty($crudConfig))
+        @include('ptah::livewire.partials._toolbar')
+        @include('ptah::livewire.partials._filter-panel')
+        @include('ptah::livewire.partials._table')
+        @include('ptah::livewire.partials._pagination')
+    @else
+        {{-- Estado vazio: sem CrudConfig --}}
+    @endif
+
+    @include('ptah::livewire.partials._modal-form')
+    @include('ptah::livewire.partials._modal-delete')
+    {{-- Loading overlay --}}
+    @include('ptah::livewire.partials._scripts')
+</div>
+```
+
+### Arquivo → responsabilidade
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `_toolbar.blade.php` | Barra superior: botão Novo, busca global, filtros, lixeira, export, colunas, densidade, config, refresh, clear, per-page |
+| `_filter-panel.blade.php` | Painel de filtros (`@if ($showFilters)`): atalhos de data, campos filtráveis, filtros salvos, rodapé do painel |
+| `_table.blade.php` | Tabela: `<thead>` com drag/sort/resize, `<tbody>` com linhas/ações/estado vazio, `<tfoot>` com totalizadores |
+| `_pagination.blade.php` | Div de paginação: links first/last/next/prev, contador de registros |
+| `_modal-form.blade.php` | Modal de criação/edição: `@teleport('body')` + Alpine, campos por tipo (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
+| `_modal-delete.blade.php` | Modal de confirmação de exclusão: `@teleport('body')` + Alpine |
+| `_scripts.blade.php` | Bloco `@once` com estilos e JS de drag-and-drop de colunas e resize |
+
+> **Publicar somente o partial que precisa customizar** — como os partials usam `ptah::livewire.partials.*`, basta publicar o arquivo específico via `php artisan vendor:publish --tag=ptah-views` e editar o arquivo publicado em `resources/views/vendor/ptah/livewire/partials/`.
