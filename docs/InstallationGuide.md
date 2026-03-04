@@ -370,19 +370,540 @@ Login with:
 
 ## Optional modules
 
-ptah ships optional modules that can be enabled in `config/ptah.php` and activated via Artisan commands. See [Modules.md](Modules.md) for full documentation.
+ptah ships optional modules activated via Artisan. Each module writes its `.env` flag to `true` and runs its own migrations.
 
-### Available modules
+```bash
+# See current status of all modules
+php artisan ptah:module --list
+```
 
-| Module | Command | Description |
-|--------|---------|-------------|
-| Auth | `php artisan ptah:module auth` | 2FA, session control |
-| Menu | `php artisan ptah:module menu` | Dynamic sidebar menu |
-| Company | `php artisan ptah:module company` | Multi-company / multi-tenant |
-| Permissions | `php artisan ptah:module permissions` | Role-based access control |
-| API | `php artisan ptah:module api` | REST API with Swagger |
+```
++-------------+-------------------------+------------+
+| Module      | .env Variable           | Status     |
++-------------+-------------------------+------------+
+| auth        | PTAH_MODULE_AUTH        | ✘ inactive |
+| menu        | PTAH_MODULE_MENU        | ✘ inactive |
+| company     | PTAH_MODULE_COMPANY     | ✘ inactive |
+| permissions | PTAH_MODULE_PERMISSIONS | ✘ inactive |
+| api         | PTAH_MODULE_API         | ✘ inactive |
++-------------+-------------------------+------------+
+```
 
-Each module adds its own routes, views, and migrations. Enable them one at a time and run `php artisan migrate` after each.
+---
+
+### Module: auth
+
+Activates login, logout, remember-me, session protection and optional TOTP two-factor authentication via Livewire pages managed by ptah.
+
+```bash
+php artisan ptah:module auth
+```
+
+**Real output:**
+
+```
+   INFO  Enabling module: auth.
+
+  Publishing 2FA migration
+
+   INFO  Publishing [ptah-auth] assets.
+
+  File [...2024_01_03_000001_add_two_factor_columns_to_users_table.php] already exists  SKIPPED
+  ...................................................... 8.21ms DONE
+  Running migrations
+
+   INFO  Nothing to migrate.
+
+  ...................................................... 29.61ms DONE
+
+   INFO  Module 'auth' enabled successfully!
+
+  Next steps:
+  1. Make sure your User model uses HasUserPreferences
+  2. Configure config/ptah.php (auth section)
+  3. Add the authentication middleware to desired routes
+  4. For TOTP 2FA install: composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
+```
+
+> The migration `add_two_factor_columns_to_users_table` adds `two_factor_secret`, `two_factor_recovery_codes` and `two_factor_confirmed_at` to the `users` table. If you ran `ptah:install` before enabling this module, the migration is already in the database and will be skipped.
+
+**What is set in `.env`:**
+
+```env
+PTAH_MODULE_AUTH=true
+```
+
+**`config/ptah.php` section to review:**
+
+```php
+'auth' => [
+    'guard'               => 'web',
+    'home'                => '/dashboard',
+    'register_enabled'    => false,
+    'two_factor'          => true,
+    'remember_me'         => true,
+    'session_protection'  => true,
+],
+```
+
+**Add trait to User model** (`app/Models/User.php`):
+
+```php
+use Ptah\Traits\HasUserPreferences;
+
+class User extends Authenticatable
+{
+    use HasUserPreferences;
+    // ...
+}
+```
+
+**For TOTP two-factor (optional):**
+
+```bash
+composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
+```
+
+---
+
+### Module: menu
+
+Activates a dynamic sidebar menu, configurable via the `/ptah-menu` admin screen (database driver) or via `config/ptah.php` (config driver).
+
+```bash
+php artisan ptah:module menu
+```
+
+**Real output:**
+
+```
+   INFO  Enabling module: menu.
+
+  Publishing menu migration
+
+   INFO  Publishing [ptah-menu] assets.
+
+  File [...2024_01_03_000000_create_menus_table.php] already exists  SKIPPED
+  .................................................... 6.27ms DONE
+  Running migrations
+
+   INFO  Nothing to migrate.
+
+  .................................................... 36.98ms DONE
+
+   INFO  Module 'menu' enabled successfully!
+
+  Next steps:
+  1. Set PTAH_MENU_DRIVER=database in .env (default: config)
+  2. Manage menu items at /ptah-menu (requires the auth module)
+```
+
+**What is set in `.env`:**
+
+```env
+PTAH_MODULE_MENU=true
+```
+
+**Choose the menu driver** (add to `.env`):
+
+```env
+# Use the database-driven menu manager (recommended for production)
+PTAH_MENU_DRIVER=database
+
+# Or keep the default static config-driven menu
+# PTAH_MENU_DRIVER=config
+```
+
+**`config/ptah.php` section (config driver):**
+
+```php
+'menu' => [
+    'driver'       => env('PTAH_MENU_DRIVER', 'config'),
+    'sidebar_items' => [
+        // ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home'],
+    ],
+],
+```
+
+---
+
+### Module: company
+
+Activates multi-company / multi-tenant support. Provides a company switcher, department management and `CompanyService` helpers.
+
+```bash
+php artisan ptah:module company
+```
+
+**Real output:**
+
+```
+   INFO  Enabling module: company.
+
+  Publishing company migrations
+
+   INFO  Publishing [ptah-company] assets.
+
+  File [...2024_01_04_000000_create_ptah_companies_table.php] already exists  SKIPPED
+  File [...2024_01_04_000001_create_ptah_departments_table.php] already exists  SKIPPED
+  ................................................ 5.03ms DONE
+  Running migrations
+
+   INFO  Nothing to migrate.
+
+  ................................................ 28.77ms DONE
+  Seeding default company
+
+   INFO  Seeding database.
+
+  → Default company already exists: Laravel
+  ..................................................... 15.48ms DONE
+
+   INFO  Module 'company' enabled successfully!
+
+  Next steps:
+  1. Visit /ptah-companies to manage companies
+  2. Configure ptah.company in config/ptah.php to customise behaviour
+  3. Use CompanyService::getCurrentCompanyId() in your queries
+```
+
+**What is set in `.env`:**
+
+```env
+PTAH_MODULE_COMPANY=true
+```
+
+**Using CompanyService in queries:**
+
+```php
+use Ptah\Services\CompanyService;
+
+$companyId = CompanyService::getCurrentCompanyId();
+$products = Product::where('company_id', $companyId)->get();
+```
+
+**Available routes:**
+
+| Route | Description |
+|-------|-------------|
+| `/ptah-companies` | Manage companies |
+| `/ptah-departments` | Manage departments |
+
+---
+
+### Module: permissions
+
+Activates full RBAC — roles, pages, page objects, middleware guards and Blade directives. This module also seeds the default admin user.
+
+```bash
+php artisan ptah:module permissions
+```
+
+**Real output:**
+
+```
+   INFO  Enabling module: permissions.
+
+  Publishing permissions migrations
+
+   INFO  Publishing [ptah-permissions] assets.
+
+  File [...create_ptah_roles_table.php] already exists  SKIPPED
+  File [...create_ptah_pages_table.php] already exists  SKIPPED
+  File [...create_ptah_page_objects_table.php] already exists  SKIPPED
+  File [...create_ptah_role_permissions_table.php] already exists  SKIPPED
+  File [...create_ptah_user_roles_table.php] already exists  SKIPPED
+  File [...create_ptah_permission_audits_table.php] already exists  SKIPPED
+  ............................................. 12.33ms DONE
+  Running migrations
+
+   INFO  Nothing to migrate.
+
+  ............................................. 37.89ms DONE
+  Seeding default admin
+
+   INFO  Seeding database.
+
+  → Default company: Laravel
+  → Department: Administration
+  → MASTER role: MASTER
+  → Admin user: admin@admin.com
+  → Binding already exists.
+  ....................................................... 52.83ms DONE
+
+  ╔══════════════════════════════════════════╗
+  ║  Admin created successfully!             ║
+  ║  E-mail   :  admin@admin.com             ║
+  ║  Password :  (set via PTAH_ADMIN_PASSWORD or reset via tinker)
+  ║  ⚠ Change your password on first login!  ║
+  ╚══════════════════════════════════════════╝
+
+   INFO  Module 'permissions' enabled successfully!
+
+  Next steps:
+  1. Visit /ptah-pages and register the system pages and objects
+  2. In /ptah-roles create roles and configure permissions per object
+  3. In /ptah-users-acl assign roles to users
+  4. Use @ptahCan('key', 'action') in Blade views
+  5. Use Route::middleware('ptah.can:resource,action') on routes
+  6. For audit logging set PTAH_PERMISSION_AUDIT=true in .env
+```
+
+**What is set in `.env`:**
+
+```env
+PTAH_MODULE_PERMISSIONS=true
+```
+
+> **Important — admin password:** The admin password is read from `config('ptah.permissions.admin_password')`, which maps to `env('PTAH_ADMIN_PASSWORD')`. Since this variable isn't set by default, the displayed password will be blank. **Always define `PTAH_ADMIN_PASSWORD` in `.env` before running this module**, or reset the password immediately after:
+>
+> ```bash
+> php artisan tinker
+> >>> \App\Models\User::where('email','admin@admin.com')->first()->update(['password' => bcrypt('your-password')]);
+> ```
+>
+> Add to `.env` before enabling:
+> ```env
+> PTAH_ADMIN_PASSWORD=YourSecurePassword123
+> ```
+
+**Blade directive:**
+
+```blade
+@ptahCan('products', 'edit')
+    <a href="{{ route('product.edit', $product) }}">Edit</a>
+@endptahCan
+```
+
+**Route middleware:**
+
+```php
+Route::middleware(['auth', 'ptah.can:products,edit'])->group(function () {
+    Route::resource('products', ProductController::class);
+});
+```
+
+**Audit logging:**
+
+```env
+PTAH_PERMISSION_AUDIT=true
+```
+
+**Available routes:**
+
+| Route | Description |
+|-------|-------------|
+| `/ptah-pages` | Register system pages and objects |
+| `/ptah-roles` | Create roles and configure permissions |
+| `/ptah-users-acl` | Assign roles to users |
+
+---
+
+### Module: api
+
+Installs `darkaonline/l5-swagger` via Composer and publishes three base classes: `BaseApiController`, `BaseResponse`, and `SwaggerInfo`.
+
+> **Note:** This module runs `composer require darkaonline/l5-swagger`. Make sure your proxy/network allows it, or install manually first then run `ptah:module api`.
+
+```bash
+php artisan ptah:module api
+```
+
+**Real output:**
+
+```
+   INFO  Enabling module: api.
+
+  Instalando darkaonline/l5-swagger ......................................... 1m DONE
+  Publishing API base classes
+
+   INFO  Publishing [ptah-api] assets.
+
+  Copying file [...base-response.stub] to [...app/Responses/BaseResponse.php]  DONE
+  Copying file [...base-api-controller.stub] to [...app/Http/Controllers/API/BaseApiController.php]  DONE
+  Copying file [...swagger-info.stub] to [...app/Http/Controllers/API/SwaggerInfo.php]  DONE
+
+  ................................................. 31.95ms DONE
+  Publishing L5-Swagger config ................................................ 0.02ms DONE
+
+   INFO  Module 'api' enabled successfully!
+
+  Next steps:
+  1. Visit /api/documentation to see the Swagger UI
+  2. Regenerate docs: php artisan l5-swagger:generate
+  3. Scaffold entities with: php artisan ptah:forge Catalog/Product --api
+  4. ⚠  NEVER use response()->json() — use BaseResponse::
+  5. Configure the scan path in config/l5-swagger.php if needed
+```
+
+**What is set in `.env`:**
+
+```env
+PTAH_MODULE_API=true
+```
+
+**Files published:**
+
+| File | Purpose |
+|------|---------|
+| `app/Responses/BaseResponse.php` | Standard API response wrapper |
+| `app/Http/Controllers/API/BaseApiController.php` | Base controller for all API controllers |
+| `app/Http/Controllers/API/SwaggerInfo.php` | Swagger `@OA\Info` annotation |
+| `config/l5-swagger.php` | L5-Swagger configuration |
+
+**Example — using BaseResponse:**
+
+```php
+use App\Responses\BaseResponse;
+
+public function index(): JsonResponse
+{
+    $items = ProductResource::collection(Product::paginate());
+    return BaseResponse::success($items);
+}
+```
+
+**Generate Swagger docs:**
+
+```bash
+php artisan l5-swagger:generate
+```
+
+Then visit [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation).
+
+**Scaffold an API entity with ptah:forge:**
+
+```bash
+php artisan ptah:forge Product --api \
+  --fields="name:string,price:decimal(10,2),is_active:boolean"
+```
+
+---
+
+## Laravel Boost — AI agent integration
+
+[Laravel Boost](https://laravel.com/docs/boost) wires AI agents (GitHub Copilot, Claude, Cursor, Gemini, etc.) with your project via **guidelines**, **skills** and an **MCP server**. When ptah is installed, its own guidelines are automatically offered at install time.
+
+```bash
+php artisan ptah:install --boost
+```
+
+> If ptah is already installed, you can add Boost later with the same command — all existing resources are skipped and only Boost is installed.
+
+**What `--boost` does:**
+
+1. Runs `composer require laravel/boost --dev` (installs `laravel/boost v2+`, `laravel/mcp`, `laravel/roster`)
+2. Runs `php artisan boost:install` (interactive — see below)
+
+**Real output (Composer step):**
+
+```
+   INFO  Installing Laravel Boost for AI agent integration...
+
+  Installing laravel/boost via Composer
+  - Locking laravel/boost (v2.2.2)
+  - Locking laravel/mcp (v0.6.0)
+  - Locking laravel/roster (v0.5.0)
+  ...
+  - Installing laravel/boost (v2.2.2): Extracting archive
+  ......................................................... 29s DONE
+```
+
+> **Note:** `boost:install` is an interactive command. Because it runs in a spawned process from `ptah:install`, the interactive prompts may not be available. If you see `"The boost:install command is not available in this session"`, run it manually:
+
+```bash
+php artisan boost:install
+```
+
+**Real output (boost:install):**
+
+```
+██████╗   ██████╗   ██████╗  ███████╗ ████████╗
+...
+ ✦ Laravel Boost :: Install :: We Must Ship ✦
+
+  Which Boost features would you like to configure? [guidelines,skills,mcp]
+  ❯ AI Guidelines ..................... guidelines
+    Agent Skills ........................ skills
+    Boost MCP Server Configuration .......... mcp
+
+  Which third-party AI guidelines/skills would you like to install? [None]
+  ❯ None
+    jonytonet/ptah (guidelines, skills) .. jonytonet/ptah
+
+  Which AI agents would you like to configure? [Claude Code]
+  ❯ Amp · Claude Code · Codex · Cursor · Gemini CLI · GitHub Copilot · Junie · OpenCode
+
+
+Adding 8 guidelines to your selected agents
+
+ ┌───────┬──────────────┬──────────────┬──────────────────┐
+ │ boost │ foundation   │ laravel/core │ laravel/v12      │
+ ├───────┼──────────────┼──────────────┼──────────────────┤
+ │ php   │ phpunit/core │ pint/core    │ tailwindcss/core │
+ └───────┴──────────────┴──────────────┴──────────────────┘
+
+  Claude Code... ✓
+
+Syncing 1 skills for skills-capable agents
+
+ ┌─────────────────────────┐
+ │ tailwindcss-development │
+ └─────────────────────────┘
+
+  Claude Code... ✓
+
+Installing MCP servers to your selected Agents
+
+  Claude Code... ✓
+
+              Enjoy the boost 🚀
+```
+
+**Packages installed by Boost:**
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `laravel/boost` | v2.2.2 | Core guidelines + agent integration |
+| `laravel/mcp` | v0.6.0 | MCP server protocol |
+| `laravel/roster` | v0.5.0 | Skills roster for AI agents |
+
+**What Boost configures:**
+
+- **Guidelines** — Markdown files in `.github/` (Copilot), `CLAUDE.md` (Claude), `.cursor/` (Cursor), etc., containing project-specific instructions for AI agents
+- **Skills** — reusable agent skills (e.g. `tailwindcss-development`)
+- **MCP Server** — exposes your Laravel app as an MCP-compatible server so AI agents can introspect routes, models and more
+
+When `jonytonet/ptah` is selected as a third-party guideline provider, Boost copies ptah's guidelines (from `vendor/jonytonet/ptah/resources/boost/guidelines/`) into your project's agent config, giving every AI agent deep knowledge of ptah conventions.
+
+---
+
+## Final state — all modules active
+
+After installing all modules, running `php artisan ptah:module --list` should show:
+
+```
++-------------+-------------------------+----------+
+| Module      | .env Variable           | Status   |
++-------------+-------------------------+----------+
+| auth        | PTAH_MODULE_AUTH        | ✔ active |
+| menu        | PTAH_MODULE_MENU        | ✔ active |
+| company     | PTAH_MODULE_COMPANY     | ✔ active |
+| permissions | PTAH_MODULE_PERMISSIONS | ✔ active |
+| api         | PTAH_MODULE_API         | ✔ active |
++-------------+-------------------------+----------+
+```
+
+And `composer show | grep -E "boost|ptah|livewire|swagger"` should list:
+
+```
+darkaonline/l5-swagger   8.x
+jonytonet/ptah           1.0.0
+laravel/boost            v2.2.2
+laravel/mcp              v0.6.0
+laravel/roster           v0.5.0
+livewire/livewire        v4.2.1
+```
 
 ---
 
