@@ -247,12 +247,32 @@ trait HasCrudForm
             $val = $data[$field];
 
             $data[$field] = match ($transform) {
-                // "R$ 1.253,08" → 1253.08
-                'money_to_float' => (float) str_replace(
-                    ['.', ','],
-                    ['',  '.'],
-                    preg_replace('/[^0-9,]/', '', (string) $val)
-                ),
+                // "R$ 1.253,08" → 1253.08  |  "25.5" → 25.5  |  "25,50" → 25.5
+                'money_to_float' => (function () use ($val): float {
+                    $s     = trim((string) $val);
+                    $clean = preg_replace('/[^0-9.,]/', '', $s);
+                    if ($clean === '') return 0.0;
+                    $dotPos   = strrpos($clean, '.');
+                    $commaPos = strrpos($clean, ',');
+                    // Both separators present → whichever is last is the decimal
+                    if ($dotPos !== false && $commaPos !== false) {
+                        if ($commaPos > $dotPos) {
+                            // BR format: "1.234,56" → 1234.56
+                            return (float) str_replace(['.', ','], ['', '.'], $clean);
+                        }
+                        // EN format: "1,234.56" → 1234.56
+                        return (float) str_replace(',', '', $clean);
+                    }
+                    // Only comma: "25,50" (decimal) or "1,000" (thousands)
+                    if ($commaPos !== false) {
+                        $decimals = substr($clean, $commaPos + 1);
+                        return strlen($decimals) <= 2
+                            ? (float) str_replace(',', '.', $clean)
+                            : (float) str_replace(',', '', $clean);
+                    }
+                    // Only dot or no separator: plain float "25.50" or integer "25550"
+                    return (float) $clean;
+                })(),
                 // "055.465.309-52" → "05546530952"
                 'digits_only' => preg_replace('/\D/', '', (string) $val),
                 // Uppercase + alphanumeric only (license plate)

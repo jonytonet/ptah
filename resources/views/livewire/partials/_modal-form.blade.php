@@ -74,7 +74,9 @@
                                         ->map(fn($v, $k) => ['value' => (string)$v, 'label' => $k])
                                         ->values()
                                         ->toArray();
-                                    $fInitSel  = $fValue !== '' ? json_encode((string)$fValue) : 'null';
+                                    // Handle PHP booleans (cast:boolean): false → '0', true → '1'
+                                    $fValSel  = is_bool($fValue) ? ($fValue ? '1' : '0') : $fValue;
+                                    $fInitSel = ($fValSel !== '' && $fValSel !== null) ? json_encode((string)$fValSel) : 'null';
                                     $fBorderNormal = $fError ? 'border-red-400' : 'border-slate-200';
                                     $fBorderOpen   = $fError ? 'border-red-500' : 'border-indigo-500';
                                     $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
@@ -258,32 +260,89 @@
                                 </div>
 
                             @else
-                                {{-- ── Input inline (text / number / date) ── --}}
+                                {{-- ── Input inline (text / number / date / masked) ── --}}
                                 @php
                                     $fInputType = match($fTipo) {
                                         'date'   => 'date',
                                         'number' => 'number',
                                         default  => 'text',
                                     };
+                                    // Masked inputs must always be type=text
+                                    if ($fMask) $fInputType = 'text';
                                 @endphp
-                                <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                        {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
-                                    </label>
-                                    <input
-                                        type="{{ $fInputType }}"
-                                        name="{{ $fField }}"
-                                        wire:model="formData.{{ $fField }}"
-                                        @if($fRequired) required @endif
-                                        @if($fTipo === 'number') step="any" @endif
-                                        @if($fMask) data-mask="{{ $fMask }}" @endif
-                                        placeholder=""
-                                        class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
-                                    />
-                                    @if ($fError)
-                                        <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
-                                    @endif
-                                </div>
+
+                                @if($fMask === 'money_brl')
+                                    {{-- ── Money BRL input with Alpine real-time formatting ── --}}
+                                    @php
+                                        $moneyInit = is_numeric($fValue) ? (float) $fValue : 0.0;
+                                    @endphp
+                                    <div class="w-full"
+                                        x-data="{
+                                            display: '',
+                                            init() {
+                                                this.display = this.fmt({{ $moneyInit }});
+                                            },
+                                            fmt(n) {
+                                                const val = parseFloat(n) || 0;
+                                                return 'R\$ ' + val.toFixed(2)
+                                                    .replace('.', ',')
+                                                    .replace(/(\d)(?=(\d{3})+(?!\d))/g, '\$1.');
+                                            },
+                                            onInput(e) {
+                                                const digits = e.target.value.replace(/\D/g, '');
+                                                const n = parseInt(digits || '0', 10) / 100;
+                                                const formatted = this.fmt(n);
+                                                e.target.value = formatted;
+                                                this.display = formatted;
+                                                this.\$refs.moneyHidden.value = formatted;
+                                                this.\$refs.moneyHidden.dispatchEvent(new Event('change', { bubbles: true }));
+                                            }
+                                        }"
+                                        x-init="init()"
+                                    >
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <input
+                                            type="text"
+                                            :value="display"
+                                            @input.prevent="onInput(\$event)"
+                                            @focus="\$event.target.setSelectionRange(\$event.target.value.length, \$event.target.value.length)"
+                                            @if($fRequired) required @endif
+                                            placeholder="R$ 0,00"
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                        />
+                                        <input
+                                            type="hidden"
+                                            x-ref="moneyHidden"
+                                            name="{{ $fField }}"
+                                            wire:model="formData.{{ $fField }}"
+                                        />
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        @endif
+                                    </div>
+
+                                @else
+                                    {{-- ── Regular input (text / number / date) ── --}}
+                                    <div class="w-full">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        </label>
+                                        <input
+                                            type="{{ $fInputType }}"
+                                            name="{{ $fField }}"
+                                            wire:model="formData.{{ $fField }}"
+                                            @if($fRequired) required @endif
+                                            @if($fTipo === 'number' && !$fMask) step="any" @endif
+                                            placeholder=""
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                        />
+                                        @if ($fError)
+                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        @endif
+                                    </div>
+                                @endif
                             @endif
 
                         </div>
