@@ -1108,6 +1108,10 @@ return [
     'cfg_col_field_guide_sql_desc' => '= qualified SQL name (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Used in <code class="px-1 bg-white rounded">WHERE</code> and <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Without this, filters won\'t work.</strong>',
     'cfg_col_field_guide_formats'  => 'Accepted formats <span class="text-slate-400">(the system corrects automatically)</span>:',
     'cfg_col_field_guide_enc'      => 'chained → extracted as',
+    'cfg_col_field_guide_qualified' => '— qualified SQL (correct)',
+    'cfg_col_field_guide_singular'  => '— singular Eloquent → converted to',
+    'cfg_col_sql_optional'          => '(optional — only for JOIN columns)',
+    'cfg_col_write_warn'            => '⚠ <strong>Write</strong> must be disabled for JOIN columns — never write to external tables.',
 
     // Columns > Method syntax guide bullets
     'cfg_col_method_guide_sub'     => 'replaced by the field value in the record',

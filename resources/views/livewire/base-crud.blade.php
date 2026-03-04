@@ -271,7 +271,7 @@
 
             {{-- Atualizar --}}
             <button wire:click="$refresh"
-                class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 focus:outline-none"
+                class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none {{ $T['btn'] }}"
                 title="{{ __('ptah::ui.btn_refresh') }}">
                 <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,7 +283,7 @@
             {{-- Limpar filtros (visível quando houver algo ativo) --}}
             @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
                 <button wire:click="clearFilters"
-                    class="inline-flex items-center justify-center p-2 transition-colors bg-white border rounded-lg text-slate-400 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 focus:outline-none"
+                    class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 {{ $_dk ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-400' }}"
                     title="{{ __('ptah::ui.btn_clear_filters') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -304,7 +304,7 @@
 
     {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
     @if ($showFilters)
-        <div class="mb-4 overflow-hidden bg-white border shadow-sm border-slate-200 rounded-xl">
+        <div class="mb-4 overflow-hidden border shadow-sm rounded-xl {{ $T['fp_card'] }}">
 
             <div class="flex items-center justify-between px-5 py-3.5 border-b {{ $T['fp_hd'] }}">
                 <div class="flex items-center gap-2">
@@ -385,34 +385,34 @@
                             {{-- Date: mostra De / Até com operador --}}
                             @if ($cfTipo === 'date')
                                 <div class="sm:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
-                                                    class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
+                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 {{ $T['fp_input'] }}">
                                                     <option value=">=">&ge;</option>
                                                     <option value=">">&gt;</option>
                                                     <option value="=">=</option>
                                                 </select>
                                                 <input type="date"
                                                     wire:model.live="dateRanges.{{ $cfField }}_start"
-                                                    class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 {{ $T['fp_input'] }}" />
                                             </div>
                                         </div>
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
                                             <div class="flex gap-1">
                                                 <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
-                                                    class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[58px] shrink-0">
+                                                    class="text-xs rounded-lg px-1.5 py-2 w-[58px] shrink-0 {{ $T['fp_input'] }}">
                                                     <option value="<=">&le;</option>
                                                     <option value="<">&lt;</option>
                                                     <option value="=">=</option>
                                                 </select>
                                                 <input type="date"
                                                     wire:model.live="dateRanges.{{ $cfField }}_end"
-                                                    class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                                    class="flex-1 min-w-0 text-sm rounded-lg px-2 py-1.5 {{ $T['fp_input'] }}" />
                                             </div>
                                         </div>
                                     </div>
@@ -421,9 +421,9 @@
                             {{-- Select / Enum --}}
                             @elseif ($cfTipo === 'select' && !empty($col['colsSelect']))
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
                                     <select wire:model.live="filters.{{ $cfField }}"
-                                        class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none">
+                                        class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}">
                                         <option value="">{{ __('ptah::ui.filters_all') }}</option>
                                         @foreach ($col['colsSelect'] as $optLabel => $optVal)
                                             <option value="{{ $optVal }}">{{ $optLabel }}</option>
@@ -439,7 +439,7 @@
                                     $cfFilterHasRes   = !empty($sdResults[$cfFilterKey]);
                                 @endphp
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
 
                                     {{-- Badge de seleção ativa --}}
                                     @if ($cfFilterSelected)
@@ -472,7 +472,7 @@
                                                 @focus="$wire.openFilterDropdown('{{ $cfField }}')"
                                                 placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
                                                 autocomplete="off"
-                                                class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 pr-8 focus:ring-1 focus:ring-primary/30 focus:outline-none bg-white"
+                                                class="w-full text-sm rounded-lg px-2.5 py-2 pr-8 {{ $T['fp_input'] }}"
                                             />
                                             <button type="button"
                                                 tabindex="-1"
@@ -485,12 +485,12 @@
                                             </button>
                                         </div>
                                         <div x-show="open" x-cloak
-                                            class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
+                                            class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 {{ $T['dd'] }}">
                                             @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                                 <button type="button"
                                                     wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                     @click="open = false"
-                                                    class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
+                                                    class="block w-full px-3 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'hover:bg-violet-50 hover:text-violet-700' }}">
                                                     {{ $opt['label'] }}
                                                 </button>
                                             @empty
@@ -504,10 +504,10 @@
                             @else
                                 @php $isNum = $cfTipo === 'number'; @endphp
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
                                     <div class="flex gap-1">
                                         <select wire:model.live="filterOperators.{{ $cfField }}"
-                                            class="text-xs border border-gray-300 rounded-lg px-1.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none w-[90px] shrink-0">
+                                            class="text-xs rounded-lg px-1.5 py-2 w-[90px] shrink-0 {{ $T['fp_input'] }}">
                                             @if ($isNum)
                                                 <option value="=">=</option>
                                                 <option value="!=">&ne;</option>
@@ -527,7 +527,7 @@
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
                                             @if($isNum) step="any" @endif
-                                            class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            class="flex-1 min-w-0 text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
                                     </div>
                                 </div>
                             @endif
@@ -543,7 +543,7 @@
                             @endphp
                             @if ($cfField)
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $cfLabel }}</label>
+                                    <label class="block text-xs font-medium mb-1.5 {{ $T['fp_label'] }}">{{ $cfLabel }}</label>
                                     @if ($cfType === 'searchdropdown')
                                         <div class="relative" x-data="{ open: false }">
                                             <input type="text"
@@ -551,13 +551,13 @@
                                                 @focus="open = true"
                                                 @click.outside="open = false"
                                                 placeholder="{{ __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
-                                                class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                                class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
                                             @if (!empty($sdResults['cf_' . $cfField]))
-                                                <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg max-h-48">
+                                                <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-lg max-h-48 {{ $T['dd'] }}">
                                                     @foreach ($sdResults['cf_' . $cfField] as $opt)
                                                         <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                             @click="open = false"
-                                                            class="block w-full px-3 py-2 text-sm text-left hover:bg-violet-50">
+                                                            class="block w-full px-3 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'hover:bg-violet-50' }}">
                                                             {{ $opt['label'] }}
                                                         </button>
                                                     @endforeach
@@ -567,16 +567,16 @@
                                     @elseif ($cfType === 'date')
                                         <input type="date"
                                             wire:model.live="filters.{{ $cfField }}"
-                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
                                     @elseif ($cfType === 'number')
                                         <input type="number"
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
-                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
                                     @elseif ($cfType === 'select' && !empty($cf['colsSelect']))
                                         <select wire:model.live="filters.{{ $cfField }}"
-                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 bg-white focus:ring-1 focus:ring-primary/30 focus:outline-none">
-                                            <option value="">-- Todos --</option>
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}">
+                                            <option value="">{{ __('ptah::ui.filters_all') }}</option>
                                             @foreach ($cf['colsSelect'] as $optLabel => $optVal)
                                                 <option value="{{ $optVal }}">{{ $optLabel }}</option>
                                             @endforeach
@@ -585,7 +585,7 @@
                                         <input type="text"
                                             wire:model.live.debounce.400ms="filters.{{ $cfField }}"
                                             placeholder="{{ $cfLabel }}..."
-                                            class="w-full text-sm border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-primary/30 focus:outline-none" />
+                                            class="w-full text-sm rounded-lg px-2.5 py-2 {{ $T['fp_input'] }}" />
                                     @endif
                                 </div>
                             @endif
@@ -955,7 +955,7 @@
                             <p class="text-[11px] leading-tight {{ $T['modal_sub'] }}">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
                         </div>
                     </div>
-                    <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <button wire:click="closeModal" class="p-2 transition-colors rounded-lg {{ $_dk ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -1037,7 +1037,7 @@
                                                 class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 {{ $T['form_sel'] }}"
                                             >
                                                 <span
-                                                    :class="(selected !== null && selected !== '') ? 'text-gray-800' : 'text-gray-400'"
+                                                    :class="(selected !== null && selected !== '') ? '{{ $_dk ? 'text-slate-200' : 'text-gray-800' }}' : 'text-gray-400'"
                                                     class="pr-4 text-sm truncate"
                                                     x-text="displayLabel"
                                                 ></span>
@@ -1059,7 +1059,7 @@
                                                     <template x-for="option in options" :key="option.value">
                                                         <li
                                                             @click="toggle(option.value)"
-                                                            :class="isSelected(option.value) ? 'bg-violet-50 text-violet-700' : 'text-gray-700 hover:bg-gray-50'"
+                                                            :class="isSelected(option.value) ? '{{ $_dk ? 'bg-indigo-900/40 text-indigo-300' : 'bg-violet-50 text-violet-700' }}' : '{{ $_dk ? 'text-slate-300 hover:bg-slate-700/60' : 'text-gray-700 hover:bg-gray-50' }}'"
                                                             class="flex items-center justify-between px-4 py-2 text-sm cursor-pointer"
                                                         >
                                                             <span x-text="option.label"></span>
@@ -1126,12 +1126,12 @@
                                             </div>
                                             <input type="hidden" wire:model="formData.{{ $fField }}" />
                                             <div x-show="open" x-cloak
-                                                class="absolute z-30 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl max-h-48">
+                                                class="absolute z-30 w-full mt-1 overflow-y-auto rounded-lg shadow-xl max-h-48 {{ $T['dd'] }}">
                                                 @forelse ($sdResults[$fField] ?? [] as $opt)
                                                     <button type="button"
                                                         wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                         @click="open = false"
-                                                        class="block w-full px-4 py-2 text-sm text-left hover:bg-violet-50 hover:text-violet-700">
+                                                        class="block w-full px-4 py-2 text-sm text-left {{ $_dk ? 'text-slate-300 hover:bg-slate-700/60 hover:text-indigo-300' : 'hover:bg-violet-50 hover:text-violet-700' }}">
                                                         {{ $opt['label'] }}
                                                     </button>
                                                 @empty

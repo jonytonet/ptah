@@ -1109,6 +1109,10 @@ return [
     'cfg_col_field_guide_sql_desc' => '= nome qualificado SQL (ex: <code class="px-1 bg-white rounded">suppliers.name</code>). Usado em <code class="px-1 bg-white rounded">WHERE</code> e <code class="px-1 bg-white rounded">ORDER BY</code>. <strong>Sem isso, filtros não funcionam.</strong>',
     'cfg_col_field_guide_formats'  => 'Formatos aceitos <span class="text-slate-400">(o sistema corrige automaticamente)</span>:',
     'cfg_col_field_guide_enc'      => 'encadeado → extraído como',
+    'cfg_col_field_guide_qualified' => '— qualificado SQL (correto)',
+    'cfg_col_field_guide_singular'  => '— singular Eloquent → convertido para',
+    'cfg_col_sql_optional'          => '(opcional — somente para colunas de JOIN)',
+    'cfg_col_write_warn'            => '⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.',
 
     // Colunas > Bullets do guia de sintaxe de método
     'cfg_col_method_guide_sub'     => 'substituído pelo valor do campo no registro',

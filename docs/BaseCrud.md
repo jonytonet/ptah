@@ -63,7 +63,7 @@
 - Error recovery automático (limpa preferências corrompidas)
 - Cache com invalidação por model
 - **Estilos condicionais de linha** com guard contra campos inválidos
-- **Ícones em colunas** (cabeçalho + célula) via Boxicons, FontAwesome ou Heroicons
+- **Ícones em colunas** (cabeçalho + célula) via Boxicons ou FontAwesome
 - **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
 - **JOINs configuráveis** (LEFT / INNER) declarados no CrudConfig — sem Eloquent, com suporte completo a filtro, sort e export
 - **Auditoria automática** de `created_by` / `updated_by` / `deleted_by` via trait `HasAuditFields` — preenchida automaticamente nos eventos Eloquent; `save()` e `deleteRecord()` injetam os valores explicitamente como camada adicional; `bulkDelete()` usa `->each()` para garantir que os eventos disparem em cada registro
@@ -389,7 +389,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsRendererBadges` | `array\|null` | Mapa `["valor" => "cor"]` para `badge`/`pill` |
 | `colsCellStyle` | `string\|null` | CSS inline no `<span>` da célula |
 | `colsCellClass` | `string\|null` | Classes Tailwind adicionais da célula |
-| `colsCellIcon` | `string\|null` | Classe de ícone prefixada ao conteúdo da célula **e ao cabeçalho** `<th>`. Suporta Boxicons (`bx bx-*`), FontAwesome (`fas fa-*`) e Heroicons (`heroicon-*`) |
+| `colsCellIcon` | `string\|null` | Classe de ícone prefixada ao conteúdo da célula **e ao cabeçalho** `<th>`. Suporta Boxicons (`bx bx-*`) e FontAwesome (`fas fa-*`) 
 | `colsMinWidth` | `string\|null` | Largura mínima do th (ex: `"120px"`) |
 | `colsMask` | `string\|null` | Máscara: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
 | `colsMaskTransform` | `string\|null` | Transformação pós-máscara: `upper`, `lower`, `ucfirst` |

@@ -305,7 +305,7 @@
                                         <label class="cfg-label">
                                             {{ __('ptah::ui.cfg_col_sql_label') }}
                                             <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-700">JOIN</span>
-                                            <span class="font-normal text-slate-400">(opcional — somente para colunas de JOIN)</span>
+                                            <span class="font-normal text-slate-400">{!! __('ptah::ui.cfg_col_sql_optional') !!}</span>
                                         </label>
                                         <input type="text" wire:model="formDataField.colsSource"
                                             placeholder="ex: suppliers.name"
@@ -320,11 +320,11 @@
                                             </div>
                                             <p class="pt-1 border-t text-slate-500 border-sky-100">{!! __('ptah::ui.cfg_col_field_guide_formats') !!}</p>
                                             <ul class="space-y-0.5 text-slate-500">
-                                                <li><code class="px-1 font-mono bg-white rounded">suppliers.name</code> <span class="text-slate-400">— qualificado SQL (correto)</span></li>
-                                                <li><code class="px-1 font-mono bg-white rounded">supplier.name</code> <span class="text-slate-400">— singular Eloquent → convertido para <code class="px-1 bg-white rounded">suppliers.name</code></span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">suppliers.name</code> <span class="text-slate-400">{!! __('ptah::ui.cfg_col_field_guide_qualified') !!}</span></li>
+                                                <li><code class="px-1 font-mono bg-white rounded">supplier.name</code> <span class="text-slate-400">{!! __('ptah::ui.cfg_col_field_guide_singular') !!} <code class="px-1 bg-white rounded">suppliers.name</code></span></li>
                                                 <li><code class="px-1 font-mono bg-white rounded">product_supplier.product.name</code> <span class="text-slate-400">— {{ __('ptah::ui.cfg_col_field_guide_enc') }} <code class="px-1 bg-white rounded">products.name</code></span></li>
                                             </ul>
-                                            <p class="font-medium text-amber-700">⚠ <strong>Gravar</strong> deve estar desativado para colunas de JOIN — nunca escreva em tabelas externas.</p>
+                                            <p class="font-medium text-amber-700">{!! __('ptah::ui.cfg_col_write_warn') !!}</p>
                                         </div>
                                     </div>
                                     <div>
