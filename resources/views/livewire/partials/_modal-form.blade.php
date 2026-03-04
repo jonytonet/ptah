@@ -131,7 +131,6 @@
                                             x-transition:enter-start="opacity-0 -translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
                                             class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 ptah-c-dd">
-                                        >
                                             <ul class="py-1">
                                                 <template x-for="option in options" :key="option.value">
                                                     <li

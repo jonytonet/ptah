@@ -136,7 +136,7 @@ trait HasCrudForm
                 redirect($redirect->getTargetUrl());
             }
         } catch (\Throwable $e) {
-            $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', [':message' => $e->getMessage()]);
+            $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]);
         }
 
         $this->creating = false;
