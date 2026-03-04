@@ -119,7 +119,11 @@ class CrudConfig extends Component
 
     // ── Modal ────────────────────────────────────────────────────────────────
 
-    public function openModal(): void
+    /**
+     * Recarrega config do DB e reseta formulários sem abrir o modal.
+     * Chamado via Alpine: @click="$wire.showModal = true; $wire.prepareModal()"
+     */
+    public function prepareModal(): void
     {
         $this->loadFromDb();
         $this->formDataField  = [];
@@ -130,6 +134,12 @@ class CrudConfig extends Component
         $this->editingFieldIndex  = -1;
         $this->editingActionIndex = -1;
         $this->editingJoinIndex   = -1;
+    }
+
+    /** @deprecated Use Alpine: @click="$wire.showModal = true; $wire.prepareModal()" */
+    public function openModal(): void
+    {
+        $this->prepareModal();
         $this->showModal = true;
     }
 

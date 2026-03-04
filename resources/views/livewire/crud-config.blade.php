@@ -1,7 +1,7 @@
 <div>
     {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
     @can('admin')
-    <button wire:click="openModal"
+    <button @click="$wire.showModal = true; $wire.prepareModal()"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 rounded-lg bg-transparent hover:bg-slate-100 hover:text-slate-700 transition-all duration-150 focus:outline-none"
         title="{{ __('ptah::ui.cfg_btn_title') }}">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -17,12 +17,14 @@
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
-    @if ($showModal)
     @teleport('body')
     <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
-        class="fixed inset-0 z-[9999] flex items-center justify-center" @keydown.escape.window="$wire.closeModal()">
+        x-show="$wire.showModal"
+        x-cloak
+        x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }"
+        class="fixed inset-0 z-[9999] flex items-center justify-center">
         {{-- Backdrop --}}
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeModal"></div>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
 
         {{-- Shell --}}
         <div class="relative flex w-full mx-4 overflow-hidden bg-white shadow-2xl max-w-7xl rounded-2xl"
@@ -125,7 +127,7 @@
                                 permissions: '{{ __('ptah::ui.cfg_tab_desc_permissions') }}'
                             }[tab]"></p>
                     </div>
-                    <button wire:click="closeModal"
+                    <button @click="$wire.showModal = false; $wire.closeModal()"
                         class="p-2 transition-colors rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -2530,7 +2532,7 @@
                         count($conditionStyles) }} {{ __('ptah::ui.cfg_footer_unit_styles') }}
                     </p>
                     <div class="flex gap-3">
-                        <button wire:click="closeModal"
+                        <button @click="$wire.showModal = false; $wire.closeModal()"
                             class="px-4 py-2 text-xs font-semibold transition-colors bg-white border rounded-lg text-slate-600 border-slate-300 hover:bg-slate-50">
                             {{ __('ptah::ui.cfg_footer_cancel') }}
                         </button>
@@ -2550,7 +2552,6 @@
         </div>{{-- /shell --}}
     </div>{{-- /fixed --}}
     @endteleport
-    @endif
 
     @once
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" defer></script>
