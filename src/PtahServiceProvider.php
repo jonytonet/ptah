@@ -322,6 +322,9 @@ class PtahServiceProvider extends ServiceProvider
                    ->name('ptah.forge.demo');
         }
 
+        // Rotas principais do Ptah (exportação, etc.)
+        $this->loadRoutesFrom(__DIR__ . '/../routes/ptah.php');
+
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-auth.php');
         }

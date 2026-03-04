@@ -38,6 +38,9 @@ trait HasCrudExport
         $count = $query->count();
         $async = $count > (int) ($exportConfig['asyncThreshold'] ?? 1000);
 
+        // Pegar apenas colunas visíveis para exportação
+        $visibleColumns = $this->getVisibleColumnsForExport();
+
         if ($async) {
             $this->dispatchExportJob($format, $exportConfig);
             $this->exportStatus = trans('ptah::ui.export_processing');
@@ -47,6 +50,7 @@ trait HasCrudExport
                 'model'   => $this->model,
                 'format'  => $format,
                 'filters' => $this->filters,
+                'columns' => $visibleColumns,
             ]);
             $this->exportStatus = '';
         }
@@ -60,10 +64,14 @@ trait HasCrudExport
             return;
         }
 
+        // Pegar apenas colunas visíveis para exportação
+        $visibleColumns = $this->getVisibleColumnsForExport();
+
         $this->dispatch('ptah:bulk-export', [
-            'model'  => $this->model,
-            'ids'    => $this->selectedRows,
-            'format' => $format,
+            'model'   => $this->model,
+            'ids'     => $this->selectedRows,
+            'format'  => $format,
+            'columns' => $visibleColumns,
         ]);
     }
 
@@ -81,5 +89,32 @@ trait HasCrudExport
                 config:  $exportConfig,
             ));
         }
+    }
+
+    /**
+     * Retorna apenas as colunas visíveis (não-action) para exportação
+     */
+    protected function getVisibleColumnsForExport(): array
+    {
+        $visibleCols = $this->getVisibleColumns();
+        
+        $exportColumns = [];
+        
+        foreach ($visibleCols as $col) {
+            $tipo = $col['colsTipo'] ?? '';
+            
+            // Ignorar colunas de ação
+            if ($tipo === 'action') {
+                continue;
+            }
+            
+            $exportColumns[] = [
+                'field' => $col['colsNomeFisico'] ?? '',
+                'label' => $col['colsNome'] ?? '',
+                'type'  => $tipo,
+            ];
+        }
+        
+        return $exportColumns;
     }
 }

@@ -1,23 +1,28 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Jonytonet\Ptah\Http\Controllers\ExportController;
+
 /*
 |--------------------------------------------------------------------------
-| Rotas de exemplo geradas pelo Ptah
+| Rotas Ptah — Exportação
 |--------------------------------------------------------------------------
 |
-| Este arquivo contém exemplos de rotas geradas pelo comando ptah:make.
-| Em projetos reais, as rotas são adicionadas automaticamente ao routes/web.php
-| ou routes/api.php conforme o tipo de entidade gerada.
+| Rotas para exportação de dados do BaseCrud (Excel e PDF)
 |
 */
 
-// Exemplo de rota resource para uma entidade gerada com ptah:make
-// Route::resource('products', \App\Http\Controllers\ProductController::class);
-
-// Exemplo de rota API resource para uma entidade gerada com ptah:make --api
-// Route::prefix('api')->group(function () {
-//     Route::apiResource('products', \App\Http\Controllers\Api\ProductController::class);
-// });
+Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
+    
+    // Exportação com filtros
+    Route::get('/export', [ExportController::class, 'export'])
+        ->name('export');
+    
+    // Exportação em massa (itens selecionados)
+    Route::get('/export/bulk', [ExportController::class, 'bulkExport'])
+        ->name('export.bulk');
+        
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -30,3 +35,4 @@
 |
 | Remova em produção ou proteja com middleware de auth/admin.
 */
+

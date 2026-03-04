@@ -229,4 +229,45 @@
 
 })();
 </script>
-@endonce
+
+{{-- ═══════════════════════════════════════════════════════
+     EXPORT LISTENERS (Excel/PDF Download)
+    ══════════════════════════════════════════════════════════ --}}
+<script>
+(function () {
+    if (window.__ptahExportInit) return;
+    window.__ptahExportInit = true;
+
+    // Listener para exportação síncrona (Excel/PDF)
+    Livewire.on('ptah:export-sync', (event) => {
+        const data = Array.isArray(event) ? event[0] : event;
+        const { model, format, filters, columns } = data;
+        
+        const params = new URLSearchParams({
+            model: model,
+            format: format || 'excel',
+            filters: JSON.stringify(filters || {}),
+            columns: JSON.stringify(columns || [])
+        });
+        
+        const url = `/ptah/export?${params.toString()}`;
+        window.open(url, '_blank');
+    });
+
+    // Listener para exportação em massa (itens selecionados)
+    Livewire.on('ptah:bulk-export', (event) => {
+        const data = Array.isArray(event) ? event[0] : event;
+        const { model, ids, format, columns } = data;
+        
+        const params = new URLSearchParams({
+            model: model,
+            format: format || 'excel',
+            ids: JSON.stringify(ids || []),
+            columns: JSON.stringify(columns || [])
+        });
+        
+        const url = `/ptah/export/bulk?${params.toString()}`;
+        window.open(url, '_blank');
+    });
+})();
+</script>
