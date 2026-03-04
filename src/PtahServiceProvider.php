@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Ptah\Commands\InstallCommand;
-use Ptah\Commands\MakeApiCommand;
-use Ptah\Commands\MakeDocsCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\CompanyServiceContract;
@@ -125,8 +123,6 @@ class PtahServiceProvider extends ServiceProvider
             $this->commands([
                 InstallCommand::class,
                 ScaffoldCommand::class,      // ptah:forge
-                MakeApiCommand::class,
-                MakeDocsCommand::class,
                 ModuleCommand::class,        // ptah:module
             ]);
         }
