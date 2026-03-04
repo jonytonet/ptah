@@ -55,7 +55,7 @@
 .ptah-dark .ptah-c-fp_label { color: #94a3b8; }
 
 /* ── Filter panel inputs ── */
-.ptah-c-fp_input           { background-color: #ffffff; border-color: #d1d5db; color: #1e293b; }
+.ptah-c-fp_input           { background-color: #ffffff; border-color: #9ca3af; color: #1e293b; }
 .ptah-c-fp_input:focus     { box-shadow: 0 0 0 1px rgba(99,102,241,.3); border-color: #818cf8; outline: none; }
 .ptah-dark .ptah-c-fp_input { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
 .ptah-dark .ptah-c-fp_input:focus { border-color: #818cf8; box-shadow: 0 0 0 1px rgba(129,140,248,.3); }
@@ -142,12 +142,12 @@
 .ptah-c-form_lbl           { color: #475569; }
 .ptah-dark .ptah-c-form_lbl { color: #94a3b8; }
 
-.ptah-c-form_in            { background-color: #ffffff; border-color: #e2e8f0; color: #1f2937; }
+.ptah-c-form_in            { background-color: #ffffff; border-color: #94a3b8; color: #1f2937; }
 .ptah-c-form_in:focus      { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); outline: none; }
 .ptah-dark .ptah-c-form_in { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
 .ptah-dark .ptah-c-form_in:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(129,140,248,.2); outline: none; }
 
-.ptah-c-form_sel           { background-color: #ffffff; border-color: #e2e8f0; color: #1f2937; padding: .625rem .75rem; cursor: pointer; }
+.ptah-c-form_sel           { background-color: #ffffff; border-color: #cbd5e1; color: #1f2937; padding: .625rem .75rem; cursor: pointer; }
 .ptah-dark .ptah-c-form_sel { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
 
 /* ── Modal confirmação de exclusão ── */
@@ -173,7 +173,7 @@
 .ptah-dark .ptah-c-modal_close:hover { background-color: rgba(51,65,85,0.7); color: #cbd5e1; }
 
 /* ── Input border (non-error state) ── */
-.ptah-c-form_border            { border-color: #e2e8f0; }
+.ptah-c-form_border            { border-color: #94a3b8; }
 .ptah-dark .ptah-c-form_border { border-color: #475569; }
 
 /* ── Select trigger: text when value is selected ── */
