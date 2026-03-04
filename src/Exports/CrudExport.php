@@ -47,8 +47,18 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
             }, array_keys($first->toArray()));
         }
 
-        // Usar labels das colunas visíveis
-        return array_map(fn($col) => $col['label'] ?? '', $this->columns);
+        // Usar labels das colunas visíveis (se label vazio, usar field formatado)
+        return array_map(function($col) {
+            $label = $col['label'] ?? '';
+            
+            // Se label estiver vazio, usar o field formatado
+            if (empty($label)) {
+                $field = $col['field'] ?? '';
+                return ucwords(str_replace('_', ' ', $field));
+            }
+            
+            return $label;
+        }, $this->columns);
     }
 
     /**

@@ -1014,12 +1014,14 @@ O sistema de exportação requer dois pacotes no seu `composer.json`:
 {
   "require": {
     "maatwebsite/excel": "^3.1",
-    "spatie/laravel-pdf": "^1.5|^2.0"
+    "barryvdh/laravel-dompdf": "^3.0"
   }
 }
 ```
 
 > **Nota:** Se você instalou o Ptah via `composer require jonytonet/ptah`, essas dependências já foram instaladas automaticamente.
+> 
+> **Por que DOMPDF?** O `barryvdh/laravel-dompdf` funciona out-of-the-box em qualquer sistema operacional (Windows, Linux, macOS) sem necessidade de instalar Chrome/Chromium, tornando a instalação mais simples e portável.
 
 ### Configuração
 

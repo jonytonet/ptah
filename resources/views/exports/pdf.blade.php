@@ -107,7 +107,14 @@
                     @else
                         {{-- Usar apenas as colunas visíveis --}}
                         @foreach($columns as $column)
-                            <th>{{ $column['label'] ?? '' }}</th>
+                            @php
+                                $label = $column['label'] ?? '';
+                                // Se label vazio, usar field formatado
+                                if (empty($label)) {
+                                    $label = ucwords(str_replace('_', ' ', $column['field'] ?? ''));
+                                }
+                            @endphp
+                            <th>{{ $label }}</th>
                         @endforeach
                     @endif
                 </tr>

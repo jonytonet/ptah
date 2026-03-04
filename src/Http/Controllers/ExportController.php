@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use Spatie\LaravelPdf\Facades\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Ptah\Exports\CrudExport;
 
 class ExportController
@@ -97,14 +97,14 @@ class ExportController
             abort(404, 'Nenhum registro encontrado para exportar');
         }
 
-        return Pdf::view('ptah::exports.pdf', [
+        return Pdf::loadView('ptah::exports.pdf', [
                 'data'      => $data,
                 'columns'   => $columns,
                 'modelName' => $modelName,
                 'date'      => now()->format('d/m/Y H:i:s'),
             ])
-            ->format('a4')
-            ->name($fileName . '.pdf');
+            ->setPaper('a4', 'portrait')
+            ->download($fileName . '.pdf');
     }
 
     /**
