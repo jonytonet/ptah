@@ -195,3 +195,7 @@
 .ptah-c-btn_on:hover       { background-color: #ddd6fe; }
 .ptah-dark .ptah-c-btn_on  { background-color: rgba(91,33,182,0.3); border-color: #7c3aed; color: #c4b5fd; }
 .ptah-dark .ptah-c-btn_on:hover { background-color: rgba(91,33,182,0.4); }
+
+/* ── forge-button color="dark" flat — override no dark mode ── */
+.ptah-dark .ptah-btn.ptah-btn-dark           { color: #94a3b8; }
+.ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: rgba(51,65,85,0.45); color: #cbd5e1; }
