@@ -122,13 +122,14 @@ return [
     |--------------------------------------------------------------------------
     | Módulos opcionais
     |--------------------------------------------------------------------------
-    | Use `php artisan ptah:module {auth|menu|company|permissions}` para instalar cada módulo.
+    | Use `php artisan ptah:module {auth|menu|company|permissions|api}` para instalar cada módulo.
     */
     'modules' => [
         'auth'        => env('PTAH_MODULE_AUTH', false),
         'menu'        => env('PTAH_MODULE_MENU', false),
         'company'     => env('PTAH_MODULE_COMPANY', false),
         'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
+        'api'         => env('PTAH_MODULE_API', false),
     ],
 
     /*
