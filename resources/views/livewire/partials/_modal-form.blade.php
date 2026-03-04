@@ -90,13 +90,11 @@
                                         x-data="{
                                             open: false,
                                             selected: {{ $fInitSel }},
-                                            options: {{ json_encode($fOptions) }},
-                                            placeholder: '{{ __('ptah::ui.select_placeholder') }}',
+                                            options: @js($fOptions),
+                                            placeholder: @js(__('ptah::ui.select_placeholder')),
                                             init() {
-                                                // Reage a mudanças no formData quando openEdit() popula o valor
-                                                this.\$wire.\$watch('formData.{{ $fField }}', (val) => {
+                                                this.$wire.$watch('formData.{{ $fField }}', (val) => {
                                                     if (val !== null && val !== undefined) {
-                                                        // Converte boolean PHP → string para comparação com options
                                                         this.selected = typeof val === 'boolean' 
                                                             ? (val ? '1' : '0') 
                                                             : String(val);
