@@ -130,6 +130,9 @@ class ExportController
             } else {
                 // Filtro simples (valor direto)
                 $query->where($field, $value);
+            }
+        }
+    }
     
     /**
      * Resolve o namespace completo da classe do model
@@ -154,8 +157,5 @@ class ExportController
         }
         
         return null;
-    }
-            }
-        }
     }
 }
