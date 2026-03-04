@@ -6,6 +6,7 @@ namespace Ptah\Livewire;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -259,7 +260,8 @@ class BaseCrud extends Component
             'hasActiveFilters' => ! empty($this->textFilter)
                                     || $this->search !== ''
                                     || $this->quickDateFilter !== '',
-            'theme'            => $this->crudConfig['theme'] ?? 'light',
+            'theme'            => $this->crudConfig['theme']
+                                    ?? (Cookie::get('ptah_dark_mode') === 'true' ? 'dark' : 'light'),
         ]);
     }
 }

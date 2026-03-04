@@ -421,12 +421,16 @@
             })(),
 
             init() {
+                /* Sincronizar cookie com localStorage para PHP leitura server-side */
+                document.cookie = 'ptah_dark_mode=' + this.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
+
                 /* Reagir a mudanças de preferência do SO em tempo real */
                 var self = this;
                 window.matchMedia('(prefers-color-scheme: dark)')
                     .addEventListener('change', function(e) {
                         if (localStorage.getItem('ptah_dark_mode') === null) {
                             self.darkMode = e.matches;
+                            document.cookie = 'ptah_dark_mode=' + self.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
                         }
                     });
             },
@@ -434,6 +438,7 @@
             toggleDark() {
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
+                document.cookie = 'ptah_dark_mode=' + this.darkMode + '; path=/; max-age=31536000; SameSite=Lax';
             },
 
             toggleSidebarCollapse() {

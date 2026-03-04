@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 
@@ -52,11 +53,13 @@ trait HasCrudQuery
                 $query->with($relations);
             }
 
-            // Company filter (multi-tenant)
+            // Company filter (multi-tenant) — only applied when the column actually exists
             if ($this->companyFilter > 0) {
                 $table        = $modelInstance->getTable();
                 $companyField = $this->crudConfig['companyField'] ?? 'company_id';
-                $query->where("{$table}.{$companyField}", $this->companyFilter);
+                if (Schema::hasColumn($table, $companyField)) {
+                    $query->where("{$table}.{$companyField}", $this->companyFilter);
+                }
             }
 
             // External whereHas filter (pre-filtered by parent entity)
