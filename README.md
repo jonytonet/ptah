@@ -2495,6 +2495,7 @@ O arquivo [`docs/AI_Guide.md`](docs/AI_Guide.md) documenta como usar agentes de 
 
 | Documento | Conteúdo |
 |---|---|
+| **[docs/InstallationGuide.md](docs/InstallationGuide.md)** | Guia de instalação passo a passo — Laravel 11/12, ptah:install, ptah:forge e módulos opcionais |
 | **[docs/BaseCrud.md](docs/BaseCrud.md)** | Referência completa do BaseCrud — schema de colunas, tipos, filtros, renderers, exportação, preferências e configuração via UI |
 | **[docs/Modules.md](docs/Modules.md)** | Documentação dos módulos opcionais — Auth, Menu, Company, Permissions e API |
 | **[docs/Company.md](docs/Company.md)** | Módulo Company — empresas, departamentos, company switcher e multi-empresa |
