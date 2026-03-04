@@ -234,7 +234,7 @@
      EXPORT LISTENERS (Excel/PDF Download)
     ══════════════════════════════════════════════════════════ --}}
 <script>
-(function () {
+document.addEventListener('livewire:init', () => {
     if (window.__ptahExportInit) return;
     window.__ptahExportInit = true;
 
@@ -269,6 +269,6 @@
         const url = `/ptah/export/bulk?${params.toString()}`;
         window.open(url, '_blank');
     });
-})();
+});
 </script>
 @endonce
