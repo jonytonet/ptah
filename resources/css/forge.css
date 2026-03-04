@@ -183,10 +183,10 @@
 /* ── Modal criar/editar ── */
 /* Nota: modais usam @teleport('body'). body recebe .ptah-dark no toggleDark() do layout */
 .ptah-c-modal_card         { background-color: #ffffff; }
-.ptah-dark .ptah-c-modal_card { background-color: #0f172a; }
+.ptah-dark .ptah-c-modal_card { background-color: #1e293b; }
 
 .ptah-c-modal_hd           { background-color: #ffffff; border-color: #f1f5f9; }
-.ptah-dark .ptah-c-modal_hd { background-color: rgba(30,41,59,0.5); border-color: #334155; }
+.ptah-dark .ptah-c-modal_hd { background-color: #1e293b; border-color: #334155; }
 
 .ptah-c-modal_icon         { background-color: #eef2ff; }
 .ptah-dark .ptah-c-modal_icon { background-color: rgba(49,46,129,0.5); }
@@ -195,13 +195,13 @@
 .ptah-dark .ptah-c-modal_ttl { color: #f1f5f9; }
 
 .ptah-c-modal_sub          { color: #94a3b8; }
-.ptah-dark .ptah-c-modal_sub { color: #64748b; }
+.ptah-dark .ptah-c-modal_sub { color: #94a3b8; }
 
 .ptah-c-modal_body         { background-color: rgba(248,250,252,0.4); }
-.ptah-dark .ptah-c-modal_body { background-color: rgba(30,41,59,0.2); }
+.ptah-dark .ptah-c-modal_body { background-color: rgba(15,23,42,0.25); }
 
 .ptah-c-modal_ft           { background-color: #ffffff; border-color: #f1f5f9; }
-.ptah-dark .ptah-c-modal_ft { background-color: rgba(30,41,59,0.5); border-color: #334155; }
+.ptah-dark .ptah-c-modal_ft { background-color: #1e293b; border-color: #334155; }
 
 /* ── Modal form fields ── */
 .ptah-c-form_lbl           { color: #475569; }
@@ -209,15 +209,15 @@
 
 .ptah-c-form_in            { background-color: #ffffff; border-color: #e2e8f0; color: #1f2937; }
 .ptah-c-form_in:focus      { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); outline: none; }
-.ptah-dark .ptah-c-form_in { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-form_in:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(129,140,248,.2); }
+.ptah-dark .ptah-c-form_in { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
+.ptah-dark .ptah-c-form_in:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(129,140,248,.2); outline: none; }
 
 .ptah-c-form_sel           { background-color: #ffffff; border-color: #e2e8f0; color: #1f2937; padding: .625rem .75rem; cursor: pointer; }
-.ptah-dark .ptah-c-form_sel { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
+.ptah-dark .ptah-c-form_sel { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
 
 /* ── Modal confirmação de exclusão ── */
 .ptah-c-del_card           { background-color: #ffffff; }
-.ptah-dark .ptah-c-del_card { background-color: #0f172a; }
+.ptah-dark .ptah-c-del_card { background-color: #1e293b; }
 
 .ptah-c-del_ft             { background-color: #f8fafc; }
 .ptah-dark .ptah-c-del_ft  { background-color: rgba(30,41,59,0.5); }
