@@ -995,33 +995,129 @@ Total: R$ {{ number_format($totData['total_value'] ?? 0, 2, ',', '.') }}
 
 ## Exportação
 
+### Visão Geral
+
+O BaseCrud inclui sistema completo de exportação para **Excel** (.xlsx) e **PDF** com as seguintes características:
+
+- ✅ **Apenas colunas visíveis** — exporta somente as colunas atualmente visíveis na tabela (exclui colunas action)
+- ✅ **Formatação automática** — datas, booleanos, valores monetários e longos formatados
+- ✅ **Respeita filtros** — aplica os mesmos filtros ativos na tabela
+- ✅ **Bulk export** — exporta apenas registros selecionados
+- ✅ **Sync/Async** — exportação síncrona para poucos registros, assíncrona para grandes volumes
+- ✅ **Labels customizados** — usa os labels configurados no CrudConfig
+
+### Dependências Necessárias
+
+O sistema de exportação requer dois pacotes no seu `composer.json`:
+
+```json
+{
+  "require": {
+    "maatwebsite/excel": "^3.1",
+    "spatie/laravel-pdf": "^1.5|^2.0"
+  }
+}
+```
+
+> **Nota:** Se você instalou o Ptah via `composer require jonytonet/ptah`, essas dependências já foram instaladas automaticamente.
+
 ### Configuração
 
 ```json
 "exportConfig": {
   "enabled": true,
   "asyncThreshold": 1000,
-  "formats": ["excel", "csv", "pdf"]
+  "formats": ["excel", "pdf"]
 }
 ```
 
-- Se registro count ≤ `asyncThreshold` → exportação síncrona via `ptah:export-sync`.
-- Se registro count > `asyncThreshold` → dispara `Ptah\Jobs\BaseCrudExportJob` na fila.
+- **`enabled`**: Habilita/desabilita exportação (default: `true`)
+- **`asyncThreshold`**: Número de registros para mudar de sync para async (default: `1000`)
+- **`formats`**: Formatos disponíveis — `["excel", "pdf"]` (CSV removido na V2.2)
 
-### Template
+**Comportamento:**
+- Se `count ≤ asyncThreshold` → exportação **síncrona** via evento `ptah:export-sync`
+- Se `count > asyncThreshold` → dispara **Job** `Ptah\Jobs\BaseCrudExportJob` na fila
+
+### Arquitetura
+
+```
+HasCrudExport.php         → Trait do Livewire, dispara eventos
+     ↓
+_scripts.blade.php        → Listeners JS capturam eventos
+     ↓
+routes/ptah.php           → Rotas /ptah/export e /ptah/export/bulk
+     ↓
+ExportController.php      → Processa request e retorna arquivo
+     ↓
+CrudExport.php (Excel)    → Classe maatwebsite/excel
+pdf.blade.php (PDF)       → Template Blade para PDF
+```
+
+### Colunas Visíveis
+
+O sistema exporta **apenas as colunas atualmente visíveis** na tabela do BaseCrud:
+
+- ✅ Respeita a visibilidade configurada pelo usuário (ícone 👁️)
+- ✅ Respeita a ordem das colunas (drag & drop)
+- ❌ Exclui automaticamente colunas tipo `action`
+- ✅ Usa os `labels` configurados no CrudConfig como cabeçalhos
+
+**Método interno:**
+```php
+protected function getVisibleColumnsForExport(): array
+{
+    $visibleCols = $this->getVisibleColumns();
+    
+    return array_filter($visibleCols, fn($col) => 
+        ($col['colsTipo'] ?? '') !== 'action'
+    );
+}
+```
+
+### Formatação Automática
+
+**Excel (via CrudExport):**
+- Datas: `d/m/Y H:i:s`
+- Booleanos: `Sim` / `Não`
+- Cabeçalho: Negrito com fundo cinza claro
+- Auto-size de colunas
+
+**PDF (via template Blade):**
+- Layout A4
+- Tabela estilizada com alternância de cores
+- Cabeçalho com nome do model e data de exportação
+- Textos longos truncados em 100 caracteres
+- Rodapé com nome do sistema
+
+### Template Blade
 
 ```blade
-<button wire:click="$toggle('showExportMenu')">Exportar</button>
+{{-- Botão de exportação --}}
+<button wire:click="$toggle('showExportMenu')" 
+        class="ptah-btn-secondary">
+    <i class="fas fa-download"></i> Exportar
+</button>
 
+{{-- Menu de formatos --}}
 @if ($showExportMenu)
-    <button wire:click="export('excel')">Excel</button>
-    <button wire:click="export('csv')">CSV</button>
+    <div class="ptah-export-menu">
+        <button wire:click="export('excel')" class="ptah-menu-item">
+            <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button wire:click="export('pdf')" class="ptah-menu-item">
+            <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
 @endif
 
+{{-- Status de processamento --}}
 @if ($exportStatus)
-    <span>{{ $exportStatus }}</span>
+    <div class="ptah-alert ptah-alert-info">
+        <i class="fas fa-spinner fa-spin"></i>
+        {{ $exportStatus }}
+    </div>
 @endif
-```
 
 ---
 
