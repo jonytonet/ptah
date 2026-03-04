@@ -83,6 +83,7 @@ O pacote é dividido em três subsistemas complementares:
 - [Testes](#-testes)
 - [Laravel Boost — Integração com IA](#-laravel-boost--integração-com-ia)
 - [Desenvolvimento com IA](#-desenvolvimento-com-ia)
+- [Documentação](#-documentação)
 - [Comandos disponíveis](#-comandos-disponíveis)
 
 ---
@@ -1141,6 +1142,8 @@ UserPreference::remove(userId: 1, key: 'theme');
 ## 🖥️ BaseCrud — Tela Dinâmica Completa
 
 O **BaseCrud** é um componente Livewire 3 gerado e configurado automaticamente pelo `ptah:forge`. Ele entrega uma tela de listagem completa apenas com `@livewire('ptah::base-crud', ['model' => 'Product'])`, sem nenhum código adicional.
+
+> 📄 Documentação detalhada: **[docs/BaseCrud.md](docs/BaseCrud.md)**
 
 ### Como funciona
 
@@ -2485,6 +2488,18 @@ O arquivo [`docs/AI_Guide.md`](docs/AI_Guide.md) documenta como usar agentes de 
 | Escrever testes | `CompanyFactory::new()`, Testbench, feature Livewire |
 | Workflow recomendado | Scaffold → BaseCrud → regras → testes → docs → commit |
 | Armadilhas comuns | O que o agente tende a errar e como evitar |
+
+---
+
+## 📚 Documentação
+
+| Documento | Conteúdo |
+|---|---|
+| **[docs/BaseCrud.md](docs/BaseCrud.md)** | Referência completa do BaseCrud — schema de colunas, tipos, filtros, renderers, exportação, preferências e configuração via UI |
+| **[docs/Modules.md](docs/Modules.md)** | Documentação dos módulos opcionais — Auth, Menu, Company, Permissions e API |
+| **[docs/Company.md](docs/Company.md)** | Módulo Company — empresas, departamentos, company switcher e multi-empresa |
+| **[docs/Permissions.md](docs/Permissions.md)** | Módulo Permissions — RBAC, roles, middleware, helpers, Blade directives e auditoria |
+| **[docs/AI_Guide.md](docs/AI_Guide.md)** | Guia de uso com agentes de IA — prompts, templates e workflow |
 
 ---
 

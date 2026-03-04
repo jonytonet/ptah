@@ -149,7 +149,7 @@ php artisan ptah:module company      # Multi-company + department management
 php artisan ptah:module permissions  # RBAC: roles, page objects, CRUD + audit
 </code-snippet>
 
-Module flags: `.env` → `PTAH_MODULE_*=true`, read via `config('ptah.modules.*')`.  
+Module flags: `.env` → `PTAH_MODULE_*=true`, read via the `ptah.modules` config key (e.g. `ptah.modules.company`, `ptah.modules.auth`).  
 `permissions` requires `company`. All others are independent.  
 Never enable modules by editing PHP — always use `ptah:module`.
 
