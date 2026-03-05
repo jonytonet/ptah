@@ -417,24 +417,14 @@
             darkMode: (function() {
                 var saved = localStorage.getItem('ptah_dark_mode');
                 if (saved !== null) return saved === 'true';
-                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+                // Padrão: light mode (false), ignorando preferência do SO
+                return false;
             })(),
 
             init() {
                 /* Aplica ptah-dark + dark no body para cobrir elementos @@teleport('body') */
                 document.body.classList.toggle('ptah-dark', this.darkMode);
                 document.body.classList.toggle('dark', this.darkMode);
-
-                /* Reagir a mudanças de preferência do SO em tempo real */
-                var self = this;
-                window.matchMedia('(prefers-color-scheme: dark)')
-                    .addEventListener('change', function(e) {
-                        if (localStorage.getItem('ptah_dark_mode') === null) {
-                            self.darkMode = e.matches;
-                            document.body.classList.toggle('ptah-dark', self.darkMode);
-                            document.body.classList.toggle('dark', self.darkMode);
-                        }
-                    });
             },
 
             toggleDark() {
