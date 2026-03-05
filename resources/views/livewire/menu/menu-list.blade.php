@@ -138,35 +138,10 @@
     @endif
 
     {{-- ===== Modal create/edit ===== --}}
-    @if ($showModal)
-    <div
-        x-data
-        x-show="true"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/40"
-        @keydown.escape.window="$wire.showModal = false"
-    >
-        <div
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-            class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100 dark:border-slate-700"
-            @click.stop
-        >
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-                <h3 class="text-base font-bold text-slate-800 dark:text-white">
-                    {{ $isEditing ? __('ptah::ui.menu_form_title_edit') : __('ptah::ui.menu_form_title_new') }}
-                </h3>
-                <button wire:click="$set('showModal', false)" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+    <div x-data="{ open: @entangle('showModal').live }">
+        <x-forge-modal :title="$isEditing ? __('ptah::ui.menu_form_title_edit') : __('ptah::ui.menu_form_title_new')" size="lg">
 
-            {{-- Body --}}
-            <div class="px-6 py-5 space-y-4">
+            <div class="space-y-4">
 
                 {{-- Tipo --}}
                 <div>
@@ -227,7 +202,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_parent_group') }}</label>
                     <select wire:model="parent_id"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
+                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white dark:bg-slate-700">
                         <option value="">{{ __('ptah::ui.menu_form_root') }}</option>
                         @foreach ($this->groups as $group)
                             <option value="{{ $group->id }}">{{ $group->text }}</option>
@@ -246,7 +221,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_opening') }}</label>
                         <select wire:model="target"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white dark:bg-slate-700">
                             <option value="_self">{{ __('ptah::ui.menu_form_same_tab') }}</option>
                             <option value="_blank">{{ __('ptah::ui.menu_form_new_tab') }}</option>
                         </select>
@@ -262,62 +237,26 @@
 
             </div>
 
-            {{-- Footer --}}
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-2xl">
-                <button wire:click="$set('showModal', false)"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                    {{ __('ptah::ui.btn_cancel') }}
-                </button>
-                <button wire:click="save" wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all disabled:opacity-60">
+            <x-slot name="footer">
+                <x-forge-button @click="open = false" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="save" color="primary" wire:loading.attr="disabled" wire:target="save">
                     <span wire:loading wire:target="save">
                         <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
                     </span>
                     {{ $isEditing ? __('ptah::ui.menu_save_changes') : __('ptah::ui.menu_create_item') }}
-                </button>
-            </div>
-        </div>
+                </x-forge-button>
+            </x-slot>
+        </x-forge-modal>
     </div>
-    @endif
 
     {{-- ===== Modal confirmação de exclusão ===== --}}
-    @if ($showDeleteModal)
-    <div
-        x-data
-        x-show="true"
-        x-transition:enter="transition ease-out duration-150"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-        @keydown.escape.window="$wire.showDeleteModal = false"
-    >
-        <div
-            x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-slate-700"
-            @click.stop
-        >
-            <div class="flex items-center gap-4 mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex-shrink-0">
-                    <svg class="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 dark:text-white">{{ __('ptah::ui.menu_delete_title') }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ __('ptah::ui.menu_delete_text') }}</p>
-                </div>
-            </div>
-            <div class="flex gap-3 justify-end">
-                <button wire:click="$set('showDeleteModal', false)"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                    {{ __('ptah::ui.btn_cancel') }}
-                </button>
-                <button wire:click="delete"
-                    class="px-4 py-2 text-sm font-semibold text-white bg-danger hover:bg-danger/90 rounded-lg shadow-sm transition-colors">
-                    {{ __('ptah::ui.menu_delete_confirm') }}
-                </button>
-            </div>
-        </div>
+    <div x-data="{ open: @entangle('showDeleteModal').live }">
+        <x-forge-modal :title="__('ptah::ui.menu_delete_title')" size="sm">
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('ptah::ui.menu_delete_text') }}</p>
+            <x-slot name="footer">
+                <x-forge-button @click="open = false" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="delete" color="danger">{{ __('ptah::ui.menu_delete_confirm') }}</x-forge-button>
+            </x-slot>
+        </x-forge-modal>
     </div>
-    @endif
 </div>

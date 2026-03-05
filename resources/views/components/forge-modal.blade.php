@@ -1,13 +1,14 @@
 {{--
     forge-modal — Ptah Forge
     Props:
-      - title: string
-      - size : sm | md | lg | xl | full  (default: md)
+      - title    : string
+      - subtitle : string|null  (opcional, renderiza abaixo do título)
+      - size     : sm | md | lg | xl | 2xl | full  (default: md)
     Slots: default, footer
     Uso:
       <div x-data="{ open: false }">
           <x-forge-button @click="open = true">Abrir</x-forge-button>
-          <x-forge-modal title="Title" x-bind:open="open" @close="open = false">
+          <x-forge-modal title="Título" subtitle="Subtítulo opcional">
               Content
               <x-slot:footer>
                   <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
@@ -18,8 +19,9 @@
     Requires Alpine.js
 --}}
 @props([
-    'title' => '',
-    'size'  => 'md',
+    'title'    => '',
+    'subtitle' => null,
+    'size'     => 'md',
 ])
 
 @php
@@ -28,6 +30,7 @@
         'md'   => 'max-w-md',
         'lg'   => 'max-w-lg',
         'xl'   => 'max-w-xl',
+        '2xl'  => 'max-w-2xl',
         'full' => 'max-w-full mx-4',
     ];
     $sizeClass = $sizeMap[$size] ?? $sizeMap['md'];
@@ -54,7 +57,7 @@
 
     {{-- Painel --}}
     <div
-        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} bg-white rounded-2xl shadow-2xl overflow-hidden"
+        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 scale-95"
@@ -64,12 +67,17 @@
         x-transition:leave-end="opacity-0 scale-95"
     >
         {{-- Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 class="text-base font-semibold text-gray-800">{{ $title }}</h3>
+        <div class="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+            <div>
+                <h3 class="text-base font-semibold text-gray-800 dark:text-white">{{ $title }}</h3>
+                @if ($subtitle)
+                    <p class="text-xs text-gray-400 dark:text-slate-400 mt-0.5">{{ $subtitle }}</p>
+                @endif
+            </div>
             <button
                 type="button"
                 @click="open = false; $dispatch('close')"
-                class="text-gray-400 hover:text-gray-600 transition-colors duration-150 focus:outline-none"
+                class="ml-4 shrink-0 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-150 focus:outline-none"
                 aria-label="Fechar modal"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -79,13 +87,13 @@
         </div>
 
         {{-- Body --}}
-        <div class="px-6 py-5 text-sm text-gray-700">
+        <div class="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 dark:text-slate-300">
             {{ $slot }}
         </div>
 
         {{-- Footer --}}
         @if (isset($footer))
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+            <div class="shrink-0 px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
                 {{ $footer }}
             </div>
         @endif

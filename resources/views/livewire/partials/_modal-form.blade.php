@@ -1,54 +1,20 @@
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
 {{-- ── Modal Criar / Editar ─────────────────────────────────────────── --}}
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
-@teleport('body')
-    <div class="fixed inset-0 z-50 flex items-center justify-center"
-         x-show="$wire.showModal"
-         x-cloak
-         x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }">
-
-        {{-- Overlay --}}
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
-
-        {{-- Painel do modal --}}
-        <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 ptah-c-modal_card bg-white dark:bg-slate-800">
-
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 ptah-c-modal_hd">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-lg ptah-c-modal_icon">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            @if($editingId)
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            @else
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            @endif
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-[13px] font-semibold leading-tight text-slate-800 dark:text-white ptah-c-modal_ttl">
-                            {{ $editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix') }} {{ $crudTitle }}
-                        </h2>
-                        <p class="text-[11px] leading-tight text-slate-500 dark:text-slate-400 ptah-c-modal_sub">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
-                    </div>
-                </div>
-                <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 ptah-c-modal_close">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+<div x-data="{ open: @entangle('showModal').live }" @close="$wire.closeModal()">
+    <x-forge-modal
+        :title="($editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix')) . ' ' . $crudTitle"
+        :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
+        size="2xl"
+    >
+        {{-- Erro geral --}}
+        @if (!empty($formErrors['_general']))
+            <div class="mb-4">
+                <x-forge-alert type="danger">{{ $formErrors['_general'] }}</x-forge-alert>
             </div>
+        @endif
 
-            {{-- Erro geral --}}
-            @if (!empty($formErrors['_general']))
-                <div class="mx-6 mt-4">
-                    <x-forge-alert type="danger">{{ $formErrors['_general'] }}</x-forge-alert>
-                </div>
-            @endif
-
-            {{-- Body --}}
-            <div class="flex-1 px-6 py-5 overflow-y-auto ptah-c-modal_body">
-                <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4">
 
                     @foreach ($formCols as $col)
                         @php
@@ -404,19 +370,15 @@
                         </div>
                     @endforeach
 
-                </div>
-            </div>
-
-            {{-- Footer --}}
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 ptah-c-modal_ft">
-                <x-forge-button @click="$wire.showModal = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
-                    {{ __('ptah::ui.btn_cancel') }}
-                </x-forge-button>
-                <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
-                    {{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}
-                </x-forge-button>
-            </div>
-
         </div>
-    </div>
-@endteleport
+
+        <x-slot name="footer">
+            <x-forge-button @click="open = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
+                {{ __('ptah::ui.btn_cancel') }}
+            </x-forge-button>
+            <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
+                {{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}
+            </x-forge-button>
+        </x-slot>
+    </x-forge-modal>
+</div>
