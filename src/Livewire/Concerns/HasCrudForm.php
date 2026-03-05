@@ -103,6 +103,8 @@ trait HasCrudForm
                 $record = $modelInstance->newQuery()->findOrFail($this->editingId);
                 // Hook: permite mutação dos dados antes de atualizar
                 $this->beforeUpdate($data, $record);
+                // Execute dynamic lifecycle hook from config
+                $this->executeDynamicHook('beforeUpdate', $data, $record);
                 // Record who updated
                 if ($userId && in_array('updated_by', $fillable, true)) {
                     $data['updated_by'] = $userId;
@@ -110,9 +112,13 @@ trait HasCrudForm
                 $record->update($data);
                 // Hook: ação após atualizar (pode retornar redirect)
                 $redirect = $this->afterUpdate($record);
+                // Execute dynamic lifecycle hook from config
+                $this->executeDynamicHook('afterUpdate', $data, $record);
             } else {
                 // Hook: permite mutação dos dados antes de criar
                 $this->beforeCreate($data);
+                // Execute dynamic lifecycle hook from config
+                $this->executeDynamicHook('beforeCreate', $data);
                 // Record who created
                 if ($userId && in_array('created_by', $fillable, true)) {
                     $data['created_by'] = $userId;
@@ -123,6 +129,8 @@ trait HasCrudForm
                 $record = $modelInstance->newQuery()->create($data);
                 // Hook: ação após criar (pode retornar redirect)
                 $redirect = $this->afterCreate($record);
+                // Execute dynamic lifecycle hook from config
+                $this->executeDynamicHook('afterCreate', $data, $record);
             }
 
             // Invalidate cache
@@ -178,6 +186,117 @@ trait HasCrudForm
      * @return \Illuminate\Http\RedirectResponse|null
      */
     protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+
+    /**
+     * Executa código PHP dinâmico definido no CrudConfig (lifecycle hooks).
+     * Suporta duas sintaxes:
+     * 1. Classe PHP: @App\CrudHooks\ProductHooks::beforeCreate ou @ProductHooks::beforeCreate
+     * 2. Código inline: Log::info("Criando produto", $data);
+     *
+     * Com tratamento de erro robusto para não quebrar o save().
+     *
+     * @param string $hookName Nome do hook: 'beforeCreate', 'afterCreate', 'beforeUpdate', 'afterUpdate'
+     * @param array $data Dados do formulário (referência mutável)
+     * @param \Illuminate\Database\Eloquent\Model|null $record Registro (para update hooks)
+     */
+    protected function executeDynamicHook(string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record = null): void
+    {
+        $hookCode = $this->crudConfig['lifecycleHooks'][$hookName] ?? null;
+
+        if (empty($hookCode) || !is_string($hookCode)) {
+            return;
+        }
+
+        try {
+            // Detect syntax: @Class::method or @Class@method = class-based, otherwise = inline eval
+            if (str_starts_with(trim($hookCode), '@')) {
+                $this->executeClassBasedHook($hookCode, $hookName, $data, $record);
+            } else {
+                $this->executeInlineHook($hookCode, $hookName, $data, $record);
+            }
+
+        } catch (\Throwable $e) {
+            // Log error with full context but don't break execution
+            \Illuminate\Support\Facades\Log::error(
+                "[BaseCrud] Lifecycle hook '{$hookName}' failed for model {$this->model}",
+                [
+                    'hook' => $hookName,
+                    'model' => $this->model,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                    'code' => $hookCode,
+                ]
+            );
+
+            // Optionally notify user (commented out to avoid UI clutter)
+            // $this->formErrors['_lifecycle_hook'] = "Hook {$hookName} error: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Executa hook baseado em classe PHP.
+     * Sintaxes suportadas:
+     * - @App\CrudHooks\ProductHooks::methodName
+     * - @App\CrudHooks\ProductHooks@methodName
+     * - @ProductHooks::methodName (usa namespace default App\CrudHooks)
+     * - @ProductHooks@methodName (usa namespace default App\CrudHooks)
+     *
+     * @throws \RuntimeException Se classe ou método não existir
+     */
+    protected function executeClassBasedHook(string $hookCode, string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record): void
+    {
+        // Remove @ prefix and normalize separators
+        $hookCode = ltrim(trim($hookCode), '@');
+        $hookCode = str_replace('@', '::', $hookCode);
+
+        // Parse class::method or use hookName as method
+        if (str_contains($hookCode, '::')) {
+            [$className, $methodName] = explode('::', $hookCode, 2);
+        } else {
+            $className = $hookCode;
+            $methodName = $hookName; // Use hook name as method (beforeCreate, afterCreate, etc.)
+        }
+
+        // Add default namespace if not fully qualified
+        if (!str_starts_with($className, '\\') && !str_contains($className, '\\')) {
+            $className = 'App\\CrudHooks\\' . $className;
+        }
+
+        // Validate class existence
+        if (!class_exists($className)) {
+            throw new \RuntimeException("Hook class not found: {$className}");
+        }
+
+        // Validate method existence
+        if (!method_exists($className, $methodName)) {
+            throw new \RuntimeException("Hook method not found: {$className}::{$methodName}");
+        }
+
+        // Instantiate and call method with component context
+        $hookInstance = new $className();
+        $hookInstance->{$methodName}($data, $record, $this);
+    }
+
+    /**
+     * Executa hook baseado em código inline via eval().
+     * Código roda em closure isolada com variáveis disponíveis.
+     */
+    protected function executeInlineHook(string $hookCode, string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record): void
+    {
+        // Create isolated closure with available variables
+        $closure = function () use ($hookCode, &$data, $record) {
+            // Available variables for hook code:
+            // - $data (by reference) - form data array
+            // - $record (read-only) - Eloquent model instance (null for beforeCreate)
+            // - $this - access to component methods (use with caution)
+            eval($hookCode);
+        };
+
+        // Execute closure in component context
+        $closure->call($this);
+    }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 

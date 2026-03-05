@@ -9,6 +9,7 @@ Este documento lista todos os comandos Artisan disponíveis no pacote Ptah.
 1. [ptah:install](#ptahinstall)
 2. [ptah:forge](#ptahforge)
 3. [ptah:module](#ptahmodule)
+4. [ptah:config](#ptahconfig)
 
 ---
 
@@ -365,6 +366,273 @@ http://localhost/api/documentation
 1. Visite ``/api/documentation`` para ver a UI do Swagger
 2. Regenere docs após criar APIs: ``php artisan l5-swagger:generate``
 3. Ajuste scan path em ``config/l5-swagger.php`` se necessário
+
+---
+
+## ptah:config
+
+**Descrição:** Configura CRUD settings de uma model via linha de comando (alternativa ao modal visual).
+
+> 📘 **Documentação Completa:** Para guia detalhado de configuração (modal visual + CLI), exemplos práticos, comparações e troubleshooting, consulte [**Configuration.md**](Configuration.md).
+
+**Uso:**
+```bash
+# Interactive mode (wizard com perguntas)
+php artisan ptah:config "App\Models\Product"
+
+# Declarative mode (inline syntax)
+php artisan ptah:config "App\Models\Product" \
+  --column="name:text:required:label=Product Name:validation=required|max:255" \
+  --column="price:number:required:label=Price:mask=money_brl:renderer=money" \
+  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --action="approve:livewire:approve(%id%):icon=bx-check:color=success" \
+  --filter="status:select:=:options=active,inactive" \
+  --set="cacheEnabled=true" \
+  --set="itemsPerPage=25"
+
+# List current configuration
+php artisan ptah:config "App\Models\Product" --list
+
+# Reset configuration to defaults
+php artisan ptah:config "App\Models\Product" --reset
+
+# Import from JSON file
+php artisan ptah:config "App\Models\Product" --import=config.json
+
+# Export to JSON file
+php artisan ptah:config "App\Models\Product" --export=product-config.json
+
+# Non-interactive mode (skip wizard)
+php artisan ptah:config "App\Models\Product" --non-interactive \
+  --column="name:text:required"
+
+# Dry-run (show changes without saving)
+php artisan ptah:config "App\Models\Product" \
+  --column="name:text" \
+  --dry-run
+
+# Process only specific sections
+php artisan ptah:config "App\Models\Product" \
+  --only=columns,actions \
+  --column="name:text"
+
+# Skip specific sections
+php artisan ptah:config "App\Models\Product" \
+  --skip=styles,joins \
+  --column="name:text"
+
+# Force overwrite existing config
+php artisan ptah:config "App\Models\Product" \
+  --column="name:text" \
+  --force
+```
+
+**Opções:**
+- ``{model}`` — Full model class name (e.g., ``App\Models\Product``)
+- ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
+- ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
+- ``--filter=*`` — Add custom filter: ``field:type:operator:label=Label``
+- ``--style=*`` — Add style rule: ``field:operator:value:css``
+- ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
+- ``--set=*`` — Set general config: ``key=value``
+- ``--permission=*`` — Set permission: ``action=permission``
+- ``--list`` — List current configuration (beautiful table format)
+- ``--reset`` — Reset configuration to defaults
+- ``--import=`` — Import configuration from JSON file
+- ``--export=`` — Export configuration to JSON file
+- ``--non-interactive`` — Skip wizard questions, use only provided options
+- ``--force`` — Force overwrite existing configuration
+- ``--dry-run`` — Show what would be changed without saving
+- ``--only=*`` — Process only specific sections (columns,actions,filters,styles,joins,general,permissions)
+- ``--skip=*`` — Skip specific sections
+
+**Column Syntax (--column):**
+
+```bash
+# Basic format
+field:type:modifier:option=value
+
+# Examples
+name:text:required:label=Name
+email:text:required:validation=email|max:255
+price:number:label=Price:mask=money_brl:renderer=money:rendererDecimals=2
+status:select:options=active,inactive:renderer=badge:badges=active:green,inactive:red
+user_id:searchdropdown:relation=user:sdSelectColumn=name:sdValueColumn=id
+description:textarea:optional:placeholder=Enter description
+active:boolean:default=true
+created_at:datetime:readonly:renderer=datetime:rendererFormat=d/m/Y H:i:s
+
+# Modifiers (shorthands)
+required    → colsRequired = true
+optional    → colsRequired = false
+readonly    → colsEditableForm = false
+hidden      → colsVisibleList = false
+noFilter    → colsIsFilterable = false
+noSave      → colsGravar = false
+total       → colsTotal = true (add to totalizer)
+
+# Column options (option=value)
+label           → colsNomeLogico (display label)
+help            → colsHelpText (help text below field)
+placeholder     → colsPlaceholder
+default         → colsDefaultValue
+align           → colsAlign (text-start, text-center, text-end)
+width           → colsWidth (120px, 20%, auto)
+renderer        → colsRenderer (text, badge, pill, boolean, money, date, datetime, link, image, etc.)
+rendererLink    → colsRendererLink (URL pattern for link renderer)
+rendererTarget  → colsRendererTarget (_self, _blank)
+rendererCurrency→ colsRendererCurrency (BRL, USD, EUR)
+rendererDecimals→ colsRendererDecimals (2, 0)
+rendererPrefix  → colsRendererPrefix (prefix for number renderer)
+rendererSuffix  → colsRendererSuffix (suffix for number renderer)
+badges          → colsRendererBadges (value:color pairs, e.g., active:green,inactive:red)
+mask            → colsMask (money_brl, cpf, cnpj, phone, cep, date, etc.)
+maskTransform   → colsMaskTransform (money_to_float, digits_only, etc.)
+validation      → colsValidation (Laravel validation rules: required|email|max:255)
+options         → colsOptions (for select: value1:Label1,value2:Label2 or value1,value2)
+relation        → colsRelation (relation method name)
+sdTable         → colsSdTable (table for searchdropdown)
+sdSelectColumn  → colsSdSelectColumn (display column for searchdropdown)
+sdValueColumn   → colsSdValueColumn (value column for searchdropdown)
+uploadPath      → colsUploadPath (path for file uploads)
+totalizer       → colsTotal (add to totalizer)
+totalizadorType → totalizadorType (sum, avg, count, min, max)
+```
+
+**Action Syntax (--action):**
+
+```bash
+# Format
+name:type:value:icon=icon:color=color
+
+# Examples
+approve:livewire:approve(%id%):icon=bx-check:color=success
+reject:livewire:reject(%id%):icon=bx-x:color=danger
+view:link:https://example.com/view/%id%:icon=bx-show:color=primary
+export:javascript:exportData():icon=bx-download:color=info
+```
+
+**Filter Syntax (--filter):**
+
+```bash
+# Format
+field:type:operator:label=Label
+
+# Examples
+status:select:=:label=Status:options=active,inactive
+price:number:>=:label=Minimum Price
+created_at:date:>=:label=From Date
+user_id:searchdropdown:=:sdTable=users:sdSelectColumn=name
+```
+
+**Style Syntax (--style):**
+
+```bash
+# Format
+field:operator:value:background=color:color=textColor
+
+# Examples
+status:==:cancelled:background=#FEE:color=#C00
+priority:>:5:background=#FFE:fontWeight=bold
+```
+
+**Join Syntax (--join):**
+
+```bash
+# Format
+type:table:leftColumn=rightColumn:select=field1,field2
+
+# Examples
+left:users:products.user_id=users.id:select=name,email
+inner:categories:products.category_id=categories.id:select=name
+```
+
+**General Settings (--set):**
+
+```bash
+# Examples
+--set="cacheEnabled=true"
+--set="cacheTime=60"
+--set="paginationEnabled=true"
+--set="itemsPerPage=25"
+--set="searchEnabled=true"
+--set="exportEnabled=true"
+--set="softDeletes=true"
+--set="theme=dark"
+--set="compactMode=false"
+```
+
+**Permissions (--permission):**
+
+```bash
+# Examples
+--permission="list=product.index"
+--permission="create=product.create"
+--permission="edit=product.update"
+--permission="delete=product.destroy"
+```
+
+**Workflow Examples:**
+
+```bash
+# 1. Interactive wizard (recommended for first-time config)
+php artisan ptah:config "App\Models\Product"
+# Answer questions step-by-step with smart suggestions
+
+# 2. Quick declarative setup
+php artisan ptah:config "App\Models\Product" \
+  --column="name:text:required:label=Product Name" \
+  --column="sku:text:required:label=SKU:validation=required|unique:products,sku" \
+  --column="price:number:required:mask=money_brl:renderer=money" \
+  --column="stock:number:label=Stock:renderer=number:rendererDecimals=0" \
+  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --column="category_id:searchdropdown:relation=category:sdSelectColumn=name" \
+  --set="itemsPerPage=25" \
+  --set="cacheEnabled=true"
+
+# 3. View current config
+php artisan ptah:config "App\Models\Product" --list
+
+# 4. Add more columns later
+php artisan ptah:config "App\Models\Product" \
+  --column="description:textarea:optional" \
+  --column="image:file:uploadPath=products"
+
+# 5. Export for backup or sharing
+php artisan ptah:config "App\Models\Product" --export=product-config.json
+
+# 6. Import in another environment
+php artisan ptah:config "App\Models\Product" --import=product-config.json
+
+# 7. Reset to defaults
+php artisan ptah:config "App\Models\Product" --reset
+```
+
+**Benefits of CLI Configuration:**
+
+✅ **Automation** — Integrate with CI/CD pipelines  
+✅ **Version Control** — Export configs to JSON and commit  
+✅ **Batch Operations** — Configure multiple models via scripts  
+✅ **Reproducibility** — Share configs across teams/environments  
+✅ **Speed** — Faster than clicking through modal UI  
+✅ **Testability** — Script config changes with --dry-run  
+✅ **Introspection** — Smart suggestions based on model metadata  
+
+**Where configs are stored:**
+
+Configurations are saved in ``crud_configs`` table:
+- ``model`` — Full model class name
+- ``config`` — JSON configuration
+- ``updated_at`` — Last modified timestamp
+
+Cache is automatically cleared after saving.
+
+**Next Steps:**
+
+1. Configure your first model: ``php artisan ptah:config "App\Models\YourModel"``
+2. View configuration: ``php artisan ptah:config "App\Models\YourModel" --list``
+3. Refresh browser to see changes in CRUD interface
+4. Export for backup: ``php artisan ptah:config "App\Models\YourModel" --export=backup.json``
 
 ---
 

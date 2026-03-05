@@ -75,6 +75,7 @@
                     ['id' => 'permissions', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2
                     0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', 'label' => __('ptah::ui.cfg_nav_permissions'), 'count' =>
                     null],
+                    ['id' => 'hooks', 'icon' => 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', 'label' => __('ptah::ui.cfg_nav_hooks'), 'count' => null],
                     ];
                     @endphp
 
@@ -115,7 +116,8 @@
                                 styles: '{{ __('ptah::ui.cfg_tab_title_styles') }}',
                                 joins: '{{ __('ptah::ui.cfg_tab_title_joins') }}',
                                 general: '{{ __('ptah::ui.cfg_tab_title_general') }}',
-                                permissions: '{{ __('ptah::ui.cfg_tab_title_permissions') }}'
+                                permissions: '{{ __('ptah::ui.cfg_tab_title_permissions') }}',
+                                hooks: '{{ __('ptah::ui.cfg_tab_title_hooks') }}'
                             }[tab]"></h2>
                         <p class="text-xs text-slate-400 mt-0.5" x-text="{
                                 cols: '{{ __('ptah::ui.cfg_tab_desc_cols') }}',
@@ -124,7 +126,8 @@
                                 styles: '{{ __('ptah::ui.cfg_tab_desc_styles') }}',
                                 joins: '{{ __('ptah::ui.cfg_tab_desc_joins') }}',
                                 general: '{{ __('ptah::ui.cfg_tab_desc_general') }}',
-                                permissions: '{{ __('ptah::ui.cfg_tab_desc_permissions') }}'
+                                permissions: '{{ __('ptah::ui.cfg_tab_desc_permissions') }}',
+                                hooks: '{{ __('ptah::ui.cfg_tab_desc_hooks') }}'
                             }[tab]"></p>
                     </div>
                     <button @click="$wire.showModal = false; $wire.closeModal()"
@@ -2426,71 +2429,6 @@
                             @endif
                         </div>
 
-                        {{-- Agrupamento (GROUP BY) --}}
-                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
-                            <div class="flex items-start justify-between pb-2 border-b border-slate-100">
-                                <div>
-                                    <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_gen_groupby') }}</h3>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ __('ptah::ui.cfg_gen_groupby_desc') }}</p>
-                                </div>
-                                @if (!empty($groupBy))
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full">
-                                    <i class="bx bx-check-circle"></i> {{ __('ptah::ui.cfg_gen_groupby_active') }}
-                                </span>
-                                @endif
-                            </div>
-                            <div class="max-w-sm">
-                                <label class="cfg-label">{{ __('ptah::ui.cfg_gen_groupby_field') }}</label>
-                                <input type="text" wire:model="groupBy"
-                                    placeholder="ex: company_id, branch_group_id"
-                                    class="font-mono cfg-input" />
-                                <p class="text-[11px] text-slate-400 mt-1">
-                                    {!! __('ptah::ui.cfg_gen_groupby_hint') !!}
-                                </p>
-                            </div>
-                            @if (!empty($groupBy))
-                            <div class="p-2.5 rounded-lg bg-slate-900 text-[11px] font-mono text-slate-300">
-                                <span class="text-slate-500">{{ __('ptah::ui.cfg_gen_groupby_preview_label') }}</span><br>
-                                SELECT MIN(<span class="text-yellow-300">tabela</span>.id) AS id, <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span><br>
-                                FROM <span class="text-yellow-300">tabela</span><br>
-                                GROUP BY <span class="text-yellow-300">tabela</span>.<span class="text-green-400">{{ $groupBy }}</span>
-                            </div>
-                            @endif
-                        </div>
-
-                        {{-- Lifecycle Hooks --}}
-                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
-                            <div class="pb-2 border-b border-slate-100">
-                                <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_gen_hooks') }}</h3>
-                                <p class="text-[11px] text-slate-400 mt-0.5">{{ __('ptah::ui.cfg_gen_hooks_desc') }}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeCreate(&amp;$data)</p>
-                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_before_create_desc') !!}</p>
-                                </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">afterCreate($record)</p>
-                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_after_create_desc') !!}</p>
-                                </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">beforeUpdate(&amp;$data, $record)</p>
-                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_before_update_desc') !!}</p>
-                                </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                    <p class="text-[11px] font-semibold text-slate-600 mb-1">afterUpdate($record)</p>
-                                    <p class="text-[10px] text-slate-400">{!! __('ptah::ui.cfg_gen_hooks_after_update_desc') !!}</p>
-                                </div>
-                            </div>
-                            <div class="p-3 rounded-lg bg-slate-900 text-[11px] font-mono leading-relaxed">
-                                <p class="text-slate-500 mb-1.5">{{ __('ptah::ui.cfg_gen_hooks_code_comment') }}</p>
-                                <p class="text-indigo-300">protected function <span class="text-green-400">beforeCreate</span>(<span class="text-yellow-300">array &amp;$data</span>): void</p>
-                                <p class="text-slate-400">{ $data[<span class="text-amber-300">'slug'</span>] = \Str::slug($data[<span class="text-amber-300">'name'</span>]); }</p>
-                                <p class="text-indigo-300 mt-2">protected function <span class="text-green-400">afterCreate</span>(\Illuminate\Database\Eloquent\Model <span class="text-yellow-300">$record</span>): mixed</p>
-                                <p class="text-slate-400">{ return redirect()->route(<span class="text-amber-300">'orders.show'</span>, $record->id); }</p>
-                            </div>
-                        </div>
-
                         {{-- Tema Visual --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-xl border-slate-200">
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
@@ -2584,6 +2522,81 @@
                                     <span class="text-xs font-medium text-slate-700">{{ $btnLabel }}</span>
                                 </label>
                                 @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: LIFECYCLE HOOKS ───────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    <div x-show="tab === 'hooks'" class="p-6 space-y-5">
+                        <div class="p-5 space-y-5 bg-white border shadow-sm rounded-xl border-slate-200">
+                            <div class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="text-xs text-blue-800">
+                                    <p class="font-semibold mb-1">{{ __('ptah::ui.cfg_hooks_info_title') }}</p>
+                                    <p class="text-blue-700">{{ __('ptah::ui.cfg_hooks_info_desc') }}</p>
+                                </div>
+                            </div>
+
+                            {{-- beforeCreate --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_before_create') }}</label>
+                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">function(&$data)</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_create_desc') }}</p>
+                                <textarea wire:model="hookBeforeCreate" rows="6"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;$data['status'] = 'pending';&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeCreate&#10;@App\CrudHooks\ProductHooks"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
+                            {{-- afterCreate --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_after_create') }}</label>
+                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">function($record)</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_create_desc') }}</p>
+                                <textarea wire:model="hookAfterCreate" rows="6"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;Log::info('Created: ' . $record->id);&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterCreate&#10;@App\CrudHooks\ProductHooks@afterCreate"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
+                            {{-- beforeUpdate --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_before_update') }}</label>
+                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">function(&$data, $record)</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_update_desc') }}</p>
+                                <textarea wire:model="hookBeforeUpdate" rows="6"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;if ($record->status === 'published') {&#10;    $data['published_at'] = now();&#10;}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
+                            {{-- afterUpdate --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_after_update') }}</label>
+                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">function($record)</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_update_desc') }}</p>
+                                <textarea wire:model="hookAfterUpdate" rows="6"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;cache()->forget('product_' . $record->id);&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterUpdate"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
+                            <div class="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <svg class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div class="text-xs text-yellow-800">
+                                    <p class="font-semibold mb-1">{{ __('ptah::ui.cfg_hooks_warning_title') }}</p>
+                                    <p class="text-yellow-700">{{ __('ptah::ui.cfg_hooks_warning_desc') }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>

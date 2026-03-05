@@ -8,7 +8,9 @@ use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\InstallCommand;
+use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\CompanyServiceContract;
@@ -123,7 +125,9 @@ class PtahServiceProvider extends ServiceProvider
             $this->commands([
                 InstallCommand::class,
                 ScaffoldCommand::class,      // ptah:forge
+                MenuSyncCommand::class,      // ptah:menu-sync
                 ModuleCommand::class,        // ptah:module
+                ConfigCommand::class,        // ptah:config
             ]);
         }
     }
@@ -246,6 +250,11 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__ . '/Stubs/base-api-controller.stub' => app_path('Http/Controllers/API/BaseApiController.php'),
                 __DIR__ . '/Stubs/swagger-info.stub'        => app_path('Http/Controllers/API/SwaggerInfo.php'),
             ], 'ptah-api');
+
+            // Publish MenuRegistry (auto-menu system)
+            $this->publishes([
+                __DIR__ . '/../stubs/seeders/MenuRegistry.stub.php' => database_path('seeders/MenuRegistry.php'),
+            ], 'ptah-menu-registry');
         }
     }
 

@@ -801,6 +801,7 @@ return [
     'cfg_nav_joins'                => 'JOINs',
     'cfg_nav_general'              => 'Geral',
     'cfg_nav_permissions'          => 'Permissões',
+    'cfg_nav_hooks'                => 'Lifecycle Hooks',
 
     // Títulos das abas (top bar)
     'cfg_tab_title_cols'           => 'Configuração de Colunas',
@@ -810,6 +811,7 @@ return [
     'cfg_tab_title_joins'          => 'JOINs Configurados',
     'cfg_tab_title_general'        => 'Configurações Gerais',
     'cfg_tab_title_permissions'    => 'Permissões e Acesso',
+    'cfg_tab_title_hooks'          => 'Lifecycle Hooks',
 
     // Descrições das abas (top bar)
     'cfg_tab_desc_cols'            => 'Defina, ordene e configure cada coluna da tabela',
@@ -819,6 +821,25 @@ return [
     'cfg_tab_desc_joins'           => 'JOINs SQL entre tabelas — sem depender de relacionamentos Eloquent',
     'cfg_tab_desc_general'         => 'Cache, exportação, aparência e comportamento',
     'cfg_tab_desc_permissions'     => 'Gates do Laravel e visibilidade de botões',
+    'cfg_tab_desc_hooks'           => 'Execute código PHP customizado antes/depois de operações de criar/atualizar',
+
+    // Aba Lifecycle Hooks
+    'cfg_hooks_info_title'         => 'Execução Dinâmica de Código',
+    'cfg_hooks_info_desc'          => 'Escreva código PHP inline OU referencie uma classe PHP com sintaxe @. Erros são registrados em log mas não quebram a operação de salvamento.',
+    'cfg_hooks_before_create'      => 'Antes de Criar',
+    'cfg_hooks_before_create_desc' => 'Executado antes de inserir um novo registro. Modifique $data por referência. Variáveis: $data (array)',
+    'cfg_hooks_after_create'       => 'Após Criar',
+    'cfg_hooks_after_create_desc'  => 'Executado após criar um novo registro. Variáveis: $record (Model), $data (array)',
+    'cfg_hooks_before_update'      => 'Antes de Atualizar',
+    'cfg_hooks_before_update_desc' => 'Executado antes de atualizar um registro existente. Modifique $data por referência. Variáveis: $data (array), $record (Model)',
+    'cfg_hooks_after_update'       => 'Após Atualizar',
+    'cfg_hooks_after_update_desc'  => 'Executado após atualizar um registro. Variáveis: $record (Model), $data (array)',
+    'cfg_hooks_example'            => 'Exemplo',
+    'cfg_hooks_example_syntax'     => 'Duas sintaxes disponíveis:',
+    'cfg_hooks_example_inline'     => 'Código inline (eval):',
+    'cfg_hooks_example_class'      => 'Classe PHP (recomendado):',
+    'cfg_hooks_warning_title'      => 'Aviso de Segurança',
+    'cfg_hooks_warning_desc'       => 'Código inline é executado com eval(). Para lógica complexa, use classes PHP (@MinhasHooks::metodo). Apenas administradores devem ter acesso a esta configuração.',
 
     // Aba Colunas — tabela
     'cfg_col_table_title'          => 'Colunas da Tabela',
@@ -1114,23 +1135,6 @@ return [
     'cfg_gen_display_name_ph'      => 'Ex: Parceiros de Negócio',
     'cfg_gen_display_name_hint'    => 'Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.',
     'cfg_gen_broadcast_off_hint'   => 'Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.',
-
-    // General > GroupBy
-    'cfg_gen_groupby'              => 'Agrupamento de Registros (GROUP BY)',
-    'cfg_gen_groupby_desc'         => 'Agrupa os resultados da query por um campo sem alterar o Eloquent. Deixe vazio para desativar.',
-    'cfg_gen_groupby_field'        => 'Campo para GROUP BY',
-
-    // General > Lifecycle Hooks
-    'cfg_gen_hooks'                => 'Lifecycle Hooks',
-    'cfg_gen_hooks_desc'           => 'Sobrescreva esses métodos no seu componente Livewire para executar lógica antes/após cada save.',
-    'cfg_gen_groupby_active'           => 'Ativo',
-    'cfg_gen_groupby_hint'             => 'Deixe vazio para desativar. Quando preenchido, a listagem retorna <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {campo} ... GROUP BY {campo}</code>.',
-    'cfg_gen_groupby_preview_label'    => '-- Query gerada:',
-    'cfg_gen_hooks_before_create_desc' => 'Executado antes de INSERT. Mute <code class="px-1 bg-white rounded border border-slate-200">$data</code> por referência.',
-    'cfg_gen_hooks_after_create_desc'  => 'Executado após INSERT. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.',
-    'cfg_gen_hooks_before_update_desc' => 'Executado antes de UPDATE. Acessa o registro original via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.',
-    'cfg_gen_hooks_after_update_desc'  => 'Executado após UPDATE. Retorne <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> para redirecionar.',
-    'cfg_gen_hooks_code_comment'       => '// Sobrescreva no seu componente Livewire:',
 
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',

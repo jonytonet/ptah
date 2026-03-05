@@ -800,6 +800,7 @@ return [
     'cfg_nav_joins'                => 'JOINs',
     'cfg_nav_general'              => 'General',
     'cfg_nav_permissions'          => 'Permissions',
+    'cfg_nav_hooks'                => 'Lifecycle Hooks',
 
     // Top bar tab titles
     'cfg_tab_title_cols'           => 'Column Configuration',
@@ -809,6 +810,7 @@ return [
     'cfg_tab_title_joins'          => 'Configured JOINs',
     'cfg_tab_title_general'        => 'General Settings',
     'cfg_tab_title_permissions'    => 'Permissions & Access',
+    'cfg_tab_title_hooks'          => 'Lifecycle Hooks',
 
     // Top bar tab descriptions
     'cfg_tab_desc_cols'            => 'Define, sort and configure each table column',
@@ -818,6 +820,25 @@ return [
     'cfg_tab_desc_joins'           => 'SQL JOINs between tables — without relying on Eloquent relationships',
     'cfg_tab_desc_general'         => 'Cache, export, appearance and behavior',
     'cfg_tab_desc_permissions'     => 'Laravel Gates and button visibility',
+    'cfg_tab_desc_hooks'           => 'Execute custom PHP code before/after create/update operations',
+
+    // Lifecycle Hooks tab
+    'cfg_hooks_info_title'         => 'Dynamic Code Execution',
+    'cfg_hooks_info_desc'          => 'Write inline PHP code OR reference a PHP class with @ syntax. Errors are logged but won\'t break the save operation.',
+    'cfg_hooks_before_create'      => 'Before Create',
+    'cfg_hooks_before_create_desc' => 'Runs before inserting a new record. Modify $data by reference. Variables: $data (array)',
+    'cfg_hooks_after_create'       => 'After Create',
+    'cfg_hooks_after_create_desc'  => 'Runs after creating a new record. Variables: $record (Model), $data (array)',
+    'cfg_hooks_before_update'      => 'Before Update',
+    'cfg_hooks_before_update_desc' => 'Runs before updating an existing record. Modify $data by reference. Variables: $data (array), $record (Model)',
+    'cfg_hooks_after_update'       => 'After Update',
+    'cfg_hooks_after_update_desc'  => 'Runs after updating a record. Variables: $record (Model), $data (array)',
+    'cfg_hooks_example'            => 'Example',
+    'cfg_hooks_example_syntax'     => 'Two syntaxes available:',
+    'cfg_hooks_example_inline'     => 'Inline code (eval):',
+    'cfg_hooks_example_class'      => 'PHP Class (recommended):',
+    'cfg_hooks_warning_title'      => 'Security Warning',
+    'cfg_hooks_warning_desc'       => 'Inline code is executed with eval(). For complex logic, use PHP classes (@MyHooks::method). Only administrators should have access to this configuration.',
 
     // Columns tab — table
     'cfg_col_table_title'          => 'Table Columns',
@@ -1113,23 +1134,6 @@ return [
     'cfg_gen_display_name_ph'      => 'e.g. Business Partners',
     'cfg_gen_display_name_hint'    => 'Appears in the modal header and toolbar. Default: model name.',
     'cfg_gen_broadcast_off_hint'   => 'Enable to configure the Echo channel and event that will trigger automatic table update.',
-
-    // General > GroupBy
-    'cfg_gen_groupby'              => 'Record Grouping (GROUP BY)',
-    'cfg_gen_groupby_desc'         => 'Groups query results by a column without any Eloquent changes. Leave empty to disable.',
-    'cfg_gen_groupby_field'        => 'GROUP BY Field',
-
-    // General > Lifecycle Hooks
-    'cfg_gen_hooks'                => 'Lifecycle Hooks',
-    'cfg_gen_hooks_desc'           => 'Override these methods in your Livewire component to run logic before/after each save.',
-    'cfg_gen_groupby_active'           => 'Active',
-    'cfg_gen_groupby_hint'             => 'Leave empty to disable. When set, the listing returns <code class="px-1 rounded bg-slate-100">SELECT MIN(id), {field} ... GROUP BY {field}</code>.',
-    'cfg_gen_groupby_preview_label'    => '-- Generated query:',
-    'cfg_gen_hooks_before_create_desc' => 'Runs before INSERT. Mutate <code class="px-1 bg-white rounded border border-slate-200">$data</code> by reference.',
-    'cfg_gen_hooks_after_create_desc'  => 'Runs after INSERT. Return <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> to redirect.',
-    'cfg_gen_hooks_before_update_desc' => 'Runs before UPDATE. Access original record via <code class="px-1 bg-white rounded border border-slate-200">$record</code>.',
-    'cfg_gen_hooks_after_update_desc'  => 'Runs after UPDATE. Return <code class="px-1 bg-white rounded border border-slate-200">RedirectResponse</code> to redirect.',
-    'cfg_gen_hooks_code_comment'       => '// Override in your Livewire component:',
 
     // JOIN notice box list items
     'cfg_join_notice_phys'         => '<strong>Physical Name</strong> = the alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',

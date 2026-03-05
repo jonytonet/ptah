@@ -45,6 +45,7 @@ class InstallCommand extends Command
         $this->publishStubs();
         $this->publishMigrations();
         $this->publishLang();
+        $this->publishMenuRegistry();
         $this->updateAppCss();
         $this->runMigrations();
         $this->createStorageLink();
@@ -122,6 +123,19 @@ class InstallCommand extends Command
         $this->components->task('Publishing translations', function () {
             $this->call('vendor:publish', [
                 '--tag'   => 'ptah-lang',
+                '--force' => $this->option('force'),
+            ]);
+        });
+    }
+
+    /**
+     * Publishes MenuRegistry.php for auto-menu system.
+     */
+    protected function publishMenuRegistry(): void
+    {
+        $this->components->task('Publishing MenuRegistry', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-menu-registry',
                 '--force' => $this->option('force'),
             ]);
         });

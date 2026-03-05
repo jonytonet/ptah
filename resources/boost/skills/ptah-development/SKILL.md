@@ -151,6 +151,34 @@ php artisan ptah:forge Inventory/ProductStock \
   --fields="product_id:unsignedBigInteger,location:string,qty:integer"
 # model key = 'Inventory/ProductStock'
 # namespace = App\Models\Inventory\ProductStock
+
+# With API (web + API in one command)
+php artisan ptah:forge Catalog/Product \
+  --fields="name:string,price:decimal,category_id:unsignedBigInteger" \
+  --api
+```
+
+### Menu Automático
+
+Cada entidade gerada com subfolder **adiciona automaticamente** um link no menu da sidebar:
+
+```bash
+# Durante scaffolding
+php artisan ptah:forge Health/VaccinationType --fields="..."
+# → Adiciona entrada em database/seeders/MenuRegistry.php
+
+# Após gerar todas as entidades, sincronizar menu:
+php artisan ptah:menu-sync --fresh
+# → Popula tabela 'menus' com todos os links
+```
+
+**Mapeamentos automáticos:**
+- Módulo `Health` → grupo "Saúde" (ícone `bx bx-plus-medical`)
+- Entidade `VaccinationType` → link "Tipos de Vacina" (ícone `bx bx-shield-plus`)
+
+**Desabilitar menu de uma entidade:**
+```bash
+php artisan ptah:forge Health/Test --fields="..." --no-menu
 ```
 
 ---
@@ -279,7 +307,99 @@ class Product extends Model
 
 ---
 
-## Configuring BaseCrud
+## Configuring BaseCrud (CLI)
+
+### Via Command Line
+
+```bash
+# Configure complete CRUD in one command
+php artisan ptah:config "App\Models\Product" \
+  --column="id:text:label=ID:sortable=true:width=80" \
+  --column="name:text:label=Nome:sortable=true:searchable=true" \
+  --column="price:money:label=Preço:sortable=true" \
+  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
+  --style="is_active:eq:0:bg-red-50 text-red-700" \
+  --style="stock:lt:5:bg-yellow-50 text-yellow-700" \
+  --filter="is_active:boolean:eq:Ativos" \
+  --action="duplicate:wire:duplicate:bx bx-copy:info:Duplicar?" \
+  --set="itemsPerPage=15" \
+  --set="cacheEnabled=true"
+
+# List current configuration
+php artisan ptah:config "App\Models\Product" --list
+
+# Export to JSON
+php artisan ptah:config "App\Models\Product" --export=product-config.json
+
+# Import from JSON
+php artisan ptah:config "App\Models\Product" --import=product-config.json
+
+# Reset to defaults
+php artisan ptah:config "App\Models\Product" --reset
+
+# Dry-run (show changes without saving)
+php artisan ptah:config "App\Models\Product" --column="..." --dry-run
+```
+
+### Option Formats
+
+#### --column
+
+Format: `field:type:modifier1:modifier2:option1=value1:option2=value2`
+
+**Types:**
+- `text` — Plain text
+- `badge` — Colored badge (requires `badgeMap`)
+- `boolean` — ✓/✗ icon
+- `date` — Formatted date (DD/MM/YYYY)
+- `datetime` — Date + time
+- `money` — Currency (R$ 1.234,56)
+- `numeric` — Formatted number
+- `relation` — Relationship (requires `relation=model.field`)
+
+**Modifiers:**
+- `sortable=true` — Enable sorting
+- `searchable=true` — Enable search
+- `label=Text` — Column label
+- `width=80` — Width in pixels
+- `badgeMap=val1:color1:text1,val2:color2:text2` — Badge mapping
+- `relation=model.field` — Relationship path
+
+#### --style
+
+Format: `field:operator:value:css_classes`
+
+**Operators:** `eq`, `ne`, `lt`, `gt`, `lte`, `gte`
+
+**Example:** `is_active:eq:0:bg-red-50 text-red-700`
+
+#### --filter
+
+Format: `field:type:operator:label[:default_value]`
+
+**Types:** `boolean`, `select`, `numeric`, `date`
+
+**Example:** `status:select:eq:Pendentes:pending`
+
+#### --action
+
+Format: `name:type:method:icon:color[:confirm_message]`
+
+**Types:** `wire` (Livewire method), `route` (redirect), `url` (external)
+
+**Colors:** `primary`, `success`, `danger`, `warning`, `info`
+
+**Example:** `duplicate:wire:duplicate:bx bx-copy:info:Deseja duplicar?`
+
+#### --set
+
+Format: `key=value`
+
+**Settings:** `itemsPerPage=15`, `cacheEnabled=true`, `cacheTime=30`, `paginationEnabled=true`, `exportEnabled=true`
+
+---
+
+## Configuring BaseCrud (JSON)
 
 ```json
 {
@@ -897,17 +1017,16 @@ public function render() { ... }
 ```
 
 ---
-
-### Recommended Tools
+### Recommended Tools (Optional)
 
 | Tool | Purpose | When to use |
 |---|---|---|
-| **Redis** | Primary cache + queue driver | Always in staging/production |
-| **Laravel Horizon** | Queue dashboard + monitoring | Any project with jobs |
+| **Redis** | Primary cache + queue driver | Recommended for staging/production |
+| **Laravel Horizon** | Queue dashboard + monitoring | Recommended for projects with jobs |
 | **Laravel Telescope** (dev only) | Query/job/cache/request inspector | Development only (`--dev`) |
-| **Laravel Octane** | App server (Swoole/FrankenPHP) | High-concurrency APIs |
-| **Laravel Scout** | Full-text search (Meilisearch/Algolia) | Search on large text catalogs |
-| **Clockwork** | Timeline profiler (browser devtools) | Browser-side profiling in dev |
+| **Laravel Octane** | App server (Swoole/FrankenPHP) | High-concurrency APIs (optional) |
+| **Laravel Scout** | Full-text search (Meilisearch/Algolia) | Search on large text catalogs (optional) |
+| **Clockwork** | Timeline profiler (browser devtools) | Browser-side profiling in dev (optional) |
 
 ```bash
 # Essential installations
@@ -920,37 +1039,255 @@ composer require --dev itsgoingd/clockwork
 
 ---
 
-### Performance Anti-Patterns (forbidden)
+### Performance Anti-Patterns (FORBIDDEN — agent must reject these patterns)
 
+> **Critical:** These patterns cause production outages in high-traffic scenarios.
+> Agents must **refuse** to generate code containing any of these patterns and **fix** them immediately when detected in existing code.
+
+#### 1. N+1 Query Problem
+
+```php
+// ❌ CRITICAL BUG — 1 query for orders + N queries for clients
+$orders = Order::all(); // 1 query
+foreach ($orders as $order) {
+    echo $order->client->name; // N queries (one per iteration)
+}
+
+// ✅ FIX: eager load — 2 queries total
+$orders = Order::with('client')->get();
+foreach ($orders as $order) {
+    echo $order->client->name; // no extra query
+}
 ```
-❌ foreach inside foreach on Eloquent collections
-❌ query inside any loop (foreach, while, array_map)
-❌ ->get() without ->with() when relations are accessed
-❌ ->all() or ->get() on tables with > 10k rows without pagination/chunk
-❌ Cache::remember() inside a loop
-❌ Dispatching individual Jobs inside a loop — use Bus::batch()
-❌ Synchronous email send (Mail::send) in web request — always Mail::queue()
-❌ Calling external HTTP APIs synchronously in a web request
-❌ Heavy computation in Livewire property (use #[Computed])
-❌ SELECT * with unneeded columns — always ->select(['id','name',...])
-❌ Missing index on any WHERE, ORDER BY or JOIN column
-❌ DB::statement / raw SQL without sanitization
+
+#### 2. Nested foreach on Collections
+
+```php
+// ❌ CRITICAL BUG — O(n²) complexity
+foreach ($orders as $order) {
+    foreach ($items as $item) {
+        if ($item->order_id === $order->id) { // n × m iterations
+            $order->items[] = $item;
+        }
+    }
+}
+
+// ✅ FIX: groupBy() — O(n)
+$itemsByOrder = $items->groupBy('order_id');
+foreach ($orders as $order) {
+    $order->items = $itemsByOrder->get($order->id, collect());
+}
+```
+
+#### 3. Query Inside Loop
+
+```php
+// ❌ CRITICAL BUG — N queries
+foreach ($productIds as $id) {
+    $stock = Stock::where('product_id', $id)->sum('qty'); // query per iteration
+}
+
+// ✅ FIX: collect IDs, single whereIn()
+$stocks = Stock::whereIn('product_id', $productIds)
+    ->selectRaw('product_id, SUM(qty) as total')
+    ->groupBy('product_id')
+    ->pluck('total', 'product_id');
+
+foreach ($productIds as $id) {
+    $stock = $stocks[$id] ?? 0;
+}
+```
+
+#### 4. Unbounded ->get() Without Pagination
+
+```php
+// ❌ CRITICAL BUG — loads 100k rows into memory
+$all = Order::where('status', 'pending')->get();
+foreach ($all as $order) { ... }
+
+// ✅ FIX: chunk() for batch processing
+Order::where('status', 'pending')->chunk(200, function ($batch) {
+    foreach ($batch as $order) {
+        ProcessOrderJob::dispatch($order->id);
+    }
+});
+
+// ✅ FIX: lazy() for read-only iteration
+Order::where('status', 'pending')->lazy()->each(function ($order) {
+    // one record in memory at a time
+});
+```
+
+#### 5. Missing Eager Load
+
+```php
+// ❌ CRITICAL BUG — relations accessed without with()
+$products = Product::all(); // no ->with()
+foreach ($products as $p) {
+    echo $p->category->name;  // N queries
+    echo $p->brand->name;     // N queries
+}
+
+// ✅ FIX: eager load all accessed relations
+$products = Product::with(['category', 'brand'])->get();
+```
+
+#### 6. Synchronous External Calls in Web Request
+
+```php
+// ❌ CRITICAL BUG — blocks request for 2+ seconds
+public function store(Request $request)
+{
+    $order = Order::create($request->all());
+    Mail::send(new OrderConfirmation($order));        // blocks 1s
+    Http::post('https://erp.com/api/sync', $order);   // blocks 1s
+    return response()->json($order);
+}
+
+// ✅ FIX: queue everything async
+public function store(Request $request)
+{
+    $order = Order::create($request->all());
+    Mail::queue(new OrderConfirmation($order));       // instant
+    SyncOrderJob::dispatch($order->id);               // instant
+    return response()->json($order);
+}
+```
+
+#### 7. Heavy Livewire Computation on Every Render
+
+```php
+// ❌ CRITICAL BUG — runs query on every keystroke
+public function render()
+{
+    return view('livewire.dashboard', [
+        'stats' => Order::selectRaw('COUNT(*), SUM(total)')->get(), // every render
+    ]);
+}
+
+// ✅ FIX: #[Computed] with cache
+use Livewire\Attributes\Computed;
+
+#[Computed(seconds: 300)]
+public function stats()
+{
+    return Order::selectRaw('COUNT(*), SUM(total)')->get();
+}
+```
+
+#### 8. Cache Inside Loop
+
+```php
+// ❌ CRITICAL BUG — N cache reads
+foreach ($productIds as $id) {
+    $product = Cache::get("product:{$id}"); // cache hit/miss per iteration
+}
+
+// ✅ FIX: fetch all cache keys at once (Redis mget)
+$keys = array_map(fn($id) => "product:{$id}", $productIds);
+$cached = Cache::many($keys);
+
+foreach ($productIds as $id) {
+    $product = $cached["product:{$id}"] ?? null;
+    if (!$product) {
+        $product = Product::find($id);
+        Cache::put("product:{$id}", $product, 1800);
+    }
+}
+```
+
+#### 9. SELECT * With Unneeded Columns
+
+```php
+// ❌ BAD — transfers 10 columns when only 2 are needed
+$products = Product::all();
+foreach ($products as $p) {
+    echo $p->id . ' - ' . $p->name;
+}
+
+// ✅ FIX: select only needed columns
+$products = Product::select(['id', 'name'])->get();
+```
+
+#### 10. Missing Database Index
+
+```php
+// ❌ CRITICAL BUG — migration without index on filtered column
+Schema::create('orders', function (Blueprint $table) {
+    $table->id();
+    $table->string('status');  // ❌ no index
+    $table->timestamps();
+});
+
+// Repository:
+Order::where('status', 'pending')->get(); // full table scan
+
+// ✅ FIX: add index
+Schema::create('orders', function (Blueprint $table) {
+    $table->id();
+    $table->string('status')->index();  // ✅ indexed
+    $table->timestamps();
+});
+```
+
+#### 11. Individual Job Dispatch in Loop
+
+```php
+// ❌ BAD — dispatches 1000 jobs sequentially
+foreach ($orderIds as $id) {
+    ProcessOrderJob::dispatch($id); // 1000 Redis writes
+}
+
+// ✅ FIX: batch dispatch
+Bus::batch(
+    collect($orderIds)->map(fn($id) => new ProcessOrderJob($id))
+)->dispatch();
+```
+
+#### 12. Direct Delete Without Eloquent Events (HasAuditFields)
+
+```php
+// ❌ CRITICAL BUG — bypasses deleted_by audit
+Product::whereIn('id', $ids)->delete(); // no deleted event fired
+
+// ✅ FIX: delete individually to fire events
+Product::whereIn('id', $ids)->each(fn($p) => $p->delete());
 ```
 
 ---
 
-### Performance Anti-Pattern Checklist (agent must enforce)
-
-Before generating or accepting any code, verify:
+### Performance Anti-Pattern Checklist (agent must enforce before generating code)
 
 ```
-[ ] Does any Repository method query inside a loop? → FIX: collect IDs first, then whereIn()
-[ ] Does any method call ->get() on an unbounded result set? → FIX: paginate() or chunk()
-[ ] Are all relations eager-loaded with with([]) before foreach? → FIX: add ->with()
-[ ] Is any heavy or async operation in a synchronous request? → FIX: dispatch a Job
-[ ] Is frequently read data computed fresh every request? → FIX: Cache::tags()->remember()
-[ ] Are any new filter columns missing an index in the migration? → FIX: $table->index()
-[ ] Does any Livewire method run expensive queries on every render? → FIX: #[Computed]
+[ ] Does any Repository method have a query inside a loop?
+    → FIX: Collect IDs first, then ->whereIn() in one query
+
+[ ] Does any method call ->get() on an unbounded result set?
+    → FIX: Use ->paginate() or ->chunk() or ->lazy()
+
+[ ] Are all relations eager-loaded with ->with([]) before accessing them?
+    → FIX: Add ->with(['relation']) to the query
+
+[ ] Is any heavy operation (email, PDF, API call) synchronous?
+    → FIX: Dispatch a Job with ->onQueue()
+
+[ ] Is frequently read data computed fresh on every request?
+    → FIX: Use Cache::tags()->remember() with appropriate TTL
+
+[ ] Are new filter columns missing an index in the migration?
+    → FIX: Add $table->index() or ->index() after column definition
+
+[ ] Does any Livewire render() run expensive queries on every interaction?
+    → FIX: Use #[Computed(seconds: X)]
+
+[ ] Are there nested foreach loops on Eloquent collections?
+    → FIX: Use ->keyBy() or ->groupBy()
+
+[ ] Is any query selecting all columns when only a few are needed?
+    → FIX: Use ->select(['id', 'name', ...])
+
+[ ] Does any bulk delete skip Eloquent events (HasAuditFields)?
+    → FIX: Use ->each(fn($r) => $r->delete())
 ```
 
 ---

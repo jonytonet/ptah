@@ -11,29 +11,29 @@
 
 1. [Visão Geral](#visão-geral)
 2. [Uso Básico](#uso-básico)
-3. [Parâmetros de Inicialização](#parâmetros-de-inicialização)
-4. [Propriedades Públicas](#propriedades-públicas)
-5. [Métodos Públicos](#métodos-públicos)
-6. [CrudConfig — Estrutura de Colunas](#crudconfig--estrutura-de-colunas)
-7. [Tipos de Coluna](#tipos-de-coluna)
-8. [Helpers de Formatação de Célula](#helpers-de-formatação-de-célula)
-9. [Renderer DSL](#renderer-dsl)
-10. [Estilos Condicionais de Linha](#estilos-condicionais-de-linha)
-11. [Filtros](#filtros)
-12. [Filtros Rápidos de Data](#filtros-rápidos-de-data)
-13. [Busca Avançada](#busca-avançada)
-14. [Visibilidade de Colunas](#visibilidade-de-colunas)
-15. [Bulk Actions](#bulk-actions)
-16. [SearchDropdown em Formulários](#searchdropdown-em-formulários)
-17. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
-18. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
-19. [Totalizadores](#totalizadores)
-20. [Exportação](#exportação)
-21. [Preferências de Usuário (V2.1)](#preferências-de-usuário-v21)
-22. [Eventos Livewire](#eventos-livewire)
-23. [Permissões](#permissões)
-24. [Error Recovery](#error-recovery)
-25. [CrudConfig Modal](#crudconfig-modal)
+3. [⚙️ Configuração do CRUD](Configuration.md) — **Modal Visual + Comando CLI**
+4. [Parâmetros de Inicialização](#parâmetros-de-inicialização)
+5. [Propriedades Públicas](#propriedades-públicas)
+6. [Métodos Públicos](#métodos-públicos)
+7. [CrudConfig — Estrutura de Colunas](#crudconfig--estrutura-de-colunas)
+8. [Tipos de Coluna](#tipos-de-coluna)
+9. [Helpers de Formatação de Célula](#helpers-de-formatação-de-célula)
+10. [Renderer DSL](#renderer-dsl)
+11. [Estilos Condicionais de Linha](#estilos-condicionais-de-linha)
+12. [Filtros](#filtros)
+13. [Filtros Rápidos de Data](#filtros-rápidos-de-data)
+14. [Busca Avançada](#busca-avançada)
+15. [Visibilidade de Colunas](#visibilidade-de-colunas)
+16. [Bulk Actions](#bulk-actions)
+17. [SearchDropdown em Formulários](#searchdropdown-em-formulários)
+18. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
+19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
+20. [Totalizadores](#totalizadores)
+21. [Exportação](#exportação)
+22. [Preferências de Usuário (V2.1)](#preferências-de-usuário-v21)
+23. [Eventos Livewire](#eventos-livewire)
+24. [Permissões](#permissões)
+25. [Error Recovery](#error-recovery)
 26. [FormValidatorService](#formvalidatorservice)
 27. [Display Name](#display-name)
 28. [Broadcast / Tempo Real](#broadcast--tempo-real)
@@ -75,6 +75,8 @@
 - **configGroupBy** — agrupamento de registros via `GROUP BY` declarativo no CrudConfig, sem Eloquent
 - **Input tipo `image`** — campo de imagem no formulário com preview ao vivo (URL ou arquivo local via FileReader)
 - **Blade particionado** — view base dividida em 7 partials independentes para facilitar manutenção
+
+> 📝 **Configuração:** Para configurar colunas, filtros, ações e outras opções do CRUD, consulte [**Configuration.md**](Configuration.md) — documentação completa do **Modal Visual** e do **Comando CLI** (`ptah:config`).
 
 ---
 
@@ -1546,51 +1548,6 @@ Se `getRowsProperty()` lançar qualquer exceção:
     <div class="alert alert-danger">{{ session('error') }}</div>
 @endif
 ```
-
----
-
-## CrudConfig Modal
-
-O modal de configuração do CrudConfig é um componente Livewire (`ptah::crud-config`) que permite editar a configuração de colunas diretamente pela interface, sem tocar no banco manualmente.
-
-### Como acessar
-
-O botão de configuração é exibido automaticamente no BaseCrud (geralmente restrito a administradores via `@can('admin')`).
-
-### Abas disponíveis
-
-| Aba | Conteúdo |
-|---|---|
-| **Colunas** | Lista drag-and-drop das colunas. Selecione uma para editar nas sub-abas |
-| **Ações** | Configuração de permissões (create, edit, delete, export) |
-| **Filtros** | Configuração dos filtros customizados e coluna de data rápida |
-| **Estilos** | `contitionStyles`: regras de estílo condicional de linha |
-| **JOINs** | Gerencia `joins[]` — cards visuais dos JOINs ativos com detecção automática de duplicata de tabela, formulário de criação/edição e `DISTINCT` opcional |
-| **Geral** | Nome de Exibição (`displayName`), Aparência (`companyField`, `tableClass`…), Cache, Exportação, Broadcast (Echo listener), Tema Visual (light/dark) |
-| **Permissões** | Mapeamento de gates/abilities por ação |
-
-### Sub-abas por coluna (aba Colunas)
-
-Ao selecionar uma coluna na sidebar, seis sub-abas são exibidas:
-
-| Sub-aba | Campos editados |
-|---|---|
-| **Básico** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, estilo de célula (`colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`), **`colsSource`** (Fonte SQL — badge JOIN) |
-| **Exibição** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` |
-| **Badges** | `colsRendererBadges` — mapa valor→cor com seletor hex nativo + 8 swatches rápidos por linha |
-| **Relação** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` |
-| **Validação** | `colsValidations` (array de regras), `colsRequired` |
-| **Avançado** | `colsOrderBy`, `colsReverse`, `colsMetodoCustom`, `colsAlign` |
-
-### Reordenar colunas
-
-As colunas podem ser reordenadas via drag-and-drop (SortableJS). A nova ordem é persistida automaticamente via `$wire.reorderFields(newOrder)` ao soltar.
-
-### Eventos
-
-| Evento | Quando |
-|---|---|
-| `ptah:crud-config-updated` | Disparado após salvar o CrudConfig Modal. O BaseCrud ouve e invalida o cache + recarrega a config ao vivo |
 
 ---
 

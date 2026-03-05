@@ -24,6 +24,7 @@ use Ptah\Generators\RouteGenerator;
 use Ptah\Generators\ServiceGenerator;
 use Ptah\Generators\ViewGenerator;
 use Ptah\Support\EntityContext;
+use Ptah\Support\MenuRegistryWriter;
 use Ptah\Support\SchemaInspector;
 
 /**
@@ -56,13 +57,15 @@ class ScaffoldCommand extends Command
         {--api                   : Also generate the API structure in addition to web (API Controller, API Requests, Swagger and API Routes)}
         {--api-only              : Generate ONLY the API structure, without web views (legacy behaviour of --api)}
         {--no-soft-deletes       : Do not add SoftDeletes to the model}
+        {--no-menu               : Do not add entry to MenuRegistry (skip automatic menu generation)}
         {--force                 : Overwrite existing files without confirmation}';
 
     protected $description = 'Forge — generates the complete structure for an entity (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
 
     public function __construct(
-        protected Filesystem     $files,
-        protected SchemaInspector $inspector,
+        protected Filesystem          $files,
+        protected SchemaInspector     $inspector,
+        protected MenuRegistryWriter  $menuWriter,
     ) {
         parent::__construct();
     }
@@ -129,7 +132,10 @@ class ScaffoldCommand extends Command
         $this->printNextSteps($context);
 
         $hasError = collect($results)->some(fn(GeneratorResult $r) => $r->isError());
-
+        // ── Auto-register menu entry ─────────────────────────────────────────
+        if (! $hasError && ! $this->option('no-menu') && $withViews) {
+            $this->registerMenuEntry($entity, $subFolder, $entityLower);
+        }
         return $hasError ? self::FAILURE : self::SUCCESS;
     }
 
@@ -311,5 +317,50 @@ class ScaffoldCommand extends Command
         }
 
         $this->newLine();
+    }
+
+    /**
+     * Registers the entity in MenuRegistry.php for automatic menu generation.
+     * Called after successful scaffolding if --no-menu flag is not present.
+     *
+     * @param string $entity Entity name (ex: VaccinationType)
+     * @param string $subFolder Module path (ex: Health)
+     * @param string $entityLower URL slug (ex: vaccination_type)
+     * @return void
+     */
+    private function registerMenuEntry(string $entity, string $subFolder, string $entityLower): void
+    {
+        if (empty($subFolder)) {
+            // No module folder → skip menu registration
+            return;
+        }
+
+        $registryPath = database_path('seeders/MenuRegistry.php');
+
+        if (! file_exists($registryPath)) {
+            $this->components->warn('MenuRegistry.php not found — run ptah:install to create it.');
+            return;
+        }
+
+        try {
+            $url = '/' . $entityLower;
+            $added = $this->menuWriter->addEntry(
+                module: $subFolder,
+                entity: $entity,
+                url: $url,
+                registryPath: $registryPath
+            );
+
+            if ($added) {
+                $groupLabel = \Ptah\Support\MenuIconMapper::getGroupLabel($subFolder);
+                $linkLabel = \Ptah\Support\MenuIconMapper::translateEntity($entity);
+
+                $this->newLine();
+                $this->components->info("Menu entry added: <fg=yellow>{$groupLabel}</> → <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
+                $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+            }
+        } catch (\Exception $e) {
+            $this->components->warn("Could not register menu entry: {$e->getMessage()}");
+        }
     }
 }

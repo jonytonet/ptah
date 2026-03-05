@@ -85,6 +85,12 @@ class CrudConfig extends Component
     // ── Visual Theme ────────────────────────────────────────────────────
     public string $theme = 'light'; // 'light' | 'dark'
 
+    // ── Lifecycle Hooks (dynamic PHP code) ──────────────────────────────────────
+    public string $hookBeforeCreate = '';  // PHP code executed before INSERT
+    public string $hookAfterCreate  = '';  // PHP code executed after INSERT
+    public string $hookBeforeUpdate = '';  // PHP code executed before UPDATE
+    public string $hookAfterUpdate  = '';  // PHP code executed after UPDATE
+
     // ── Permissions ─────────────────────────────────────────────────────────────
 
     public string $permissionCreate     = '';
@@ -221,6 +227,13 @@ class CrudConfig extends Component
 
         // Theme
         $this->theme = $cfg['theme'] ?? 'light';
+
+        // Lifecycle Hooks
+        $hooks = $cfg['lifecycleHooks'] ?? [];
+        $this->hookBeforeCreate = $hooks['beforeCreate'] ?? '';
+        $this->hookAfterCreate  = $hooks['afterCreate']  ?? '';
+        $this->hookBeforeUpdate = $hooks['beforeUpdate'] ?? '';
+        $this->hookAfterUpdate  = $hooks['afterUpdate']  ?? '';
 
         // Permissions
         $perms = $cfg['permissions'] ?? [];
@@ -731,6 +744,12 @@ class CrudConfig extends Component
             ],
             'theme'           => $this->theme,
             'groupBy'         => $this->groupBy ?: null,
+            'lifecycleHooks'  => [
+                'beforeCreate' => $this->hookBeforeCreate ?: null,
+                'afterCreate'  => $this->hookAfterCreate  ?: null,
+                'beforeUpdate' => $this->hookBeforeUpdate ?: null,
+                'afterUpdate'  => $this->hookAfterUpdate  ?: null,
+            ],
         ]);
     }
 
