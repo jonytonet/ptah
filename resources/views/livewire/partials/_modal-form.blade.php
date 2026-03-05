@@ -14,7 +14,7 @@
         <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 ptah-c-modal_card bg-white dark:bg-slate-800">
 
             {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b ptah-c-modal_hd">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 ptah-c-modal_hd">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center justify-center w-8 h-8 rounded-lg ptah-c-modal_icon">
                         <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -408,7 +408,7 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t ptah-c-modal_ft">
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 ptah-c-modal_ft">
                 <x-forge-button @click="$wire.showModal = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
                     {{ __('ptah::ui.btn_cancel') }}
                 </x-forge-button>

@@ -152,15 +152,15 @@
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-y-4 scale-95"
             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100"
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100 dark:border-slate-700"
             @click.stop
         >
             {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 class="text-base font-bold text-slate-800">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-800 dark:text-white">
                     {{ $isEditing ? __('ptah::ui.menu_form_title_edit') : __('ptah::ui.menu_form_title_new') }}
                 </h3>
-                <button wire:click="$set('showModal', false)" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <button wire:click="$set('showModal', false)" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -170,15 +170,15 @@
 
                 {{-- Tipo --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_form_type') }} <span class="text-danger">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_type') }} <span class="text-danger">*</span></label>
                     <div class="flex gap-3">
                         <label class="flex items-center gap-2 cursor-pointer select-none">
                             <input type="radio" wire:model.live="type" value="menuLink" class="text-indigo-600">
-                            <span class="text-sm text-slate-700">{{ __('ptah::ui.menu_form_direct_link') }}</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_direct_link') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer select-none">
                             <input type="radio" wire:model.live="type" value="menuGroup" class="text-indigo-600">
-                            <span class="text-sm text-slate-700">{{ __('ptah::ui.menu_form_group_type') }}</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_group_type') }}</span>
                         </label>
                     </div>
                     @error('type') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
@@ -186,48 +186,48 @@
 
                 {{-- Texto --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_form_text_label') }} <span class="text-danger">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_text_label') }} <span class="text-danger">*</span></label>
                     <input wire:model="text" type="text" :placeholder="__('ptah::ui.menu_form_text_ph')"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
+                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
                     @error('text') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- URL (só para menuLink) --}}
                 @if ($type === 'menuLink')
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">URL</label>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">URL</label>
                     <input wire:model="url" type="text" :placeholder="__('ptah::ui.menu_form_url_ph')"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
+                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
                     @error('url') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
                 @endif
 
                 {{-- Ícone --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
                         {{ __('ptah::ui.menu_form_icon_label') }}
-                        <span class="font-normal text-slate-400">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
+                        <span class="font-normal text-slate-400 dark:text-slate-500">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
                     </label>
                     <div class="flex gap-2 items-center">
                         <input wire:model.live="icon" type="text" :placeholder="__('ptah::ui.menu_form_icon_ph')"
-                            class="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
-                        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 text-slate-600 text-xl flex-shrink-0" title="Preview">
+                            class="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
+                        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl flex-shrink-0" title="Preview">
                             <i class="{{ $icon ?: 'bx bx-circle' }}"></i>
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1">
-                        Exemplos: <code class="bg-slate-100 px-1 rounded">bx bx-home</code>
-                        <code class="bg-slate-100 px-1 rounded">fas fa-cog</code>
-                        <code class="bg-slate-100 px-1 rounded">bx bxs-shopping-bag</code>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        Exemplos: <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">bx bx-home</code>
+                        <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">fas fa-cog</code>
+                        <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">bx bxs-shopping-bag</code>
                     </p>
                     @error('icon') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Grupo pai --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_form_parent_group') }}</label>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_parent_group') }}</label>
                     <select wire:model="parent_id"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
+                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
                         <option value="">{{ __('ptah::ui.menu_form_root') }}</option>
                         @foreach ($this->groups as $group)
                             <option value="{{ $group->id }}">{{ $group->text }}</option>
@@ -239,23 +239,23 @@
                 {{-- Linha: Ordem + Abertura + Status --}}
                 <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_form_order') }}</label>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_order') }}</label>
                         <input wire:model="link_order" type="number" min="0"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_form_opening') }}</label>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_opening') }}</label>
                         <select wire:model="target"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white">
                             <option value="_self">{{ __('ptah::ui.menu_form_same_tab') }}</option>
                             <option value="_blank">{{ __('ptah::ui.menu_form_new_tab') }}</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ __('ptah::ui.menu_col_status') }}</label>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_col_status') }}</label>
                         <label class="flex items-center gap-2 cursor-pointer mt-2 select-none">
                             <input type="checkbox" wire:model="is_active" class="rounded text-indigo-600">
-                            <span class="text-sm text-slate-700">{{ __('ptah::ui.menu_form_active') }}</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_active') }}</span>
                         </label>
                     </div>
                 </div>
@@ -263,9 +263,9 @@
             </div>
 
             {{-- Footer --}}
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-2xl">
                 <button wire:click="$set('showModal', false)"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                    class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
                     {{ __('ptah::ui.btn_cancel') }}
                 </button>
                 <button wire:click="save" wire:loading.attr="disabled"
@@ -295,21 +295,21 @@
             x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
-            class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-100"
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-slate-700"
             @click.stop
         >
             <div class="flex items-center gap-4 mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-red-100 flex-shrink-0">
+                <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex-shrink-0">
                     <svg class="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                 </div>
                 <div>
-                    <h3 class="font-bold text-slate-800">{{ __('ptah::ui.menu_delete_title') }}</h3>
-                    <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.menu_delete_text') }}</p>
+                    <h3 class="font-bold text-slate-800 dark:text-white">{{ __('ptah::ui.menu_delete_title') }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ __('ptah::ui.menu_delete_text') }}</p>
                 </div>
             </div>
             <div class="flex gap-3 justify-end">
                 <button wire:click="$set('showDeleteModal', false)"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                    class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
                     {{ __('ptah::ui.btn_cancel') }}
                 </button>
                 <button wire:click="delete"
