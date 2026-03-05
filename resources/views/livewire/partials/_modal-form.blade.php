@@ -11,7 +11,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()"></div>
 
         {{-- Painel do modal --}}
-        <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 ptah-c-modal_card">
+        <div class="relative rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-4 ptah-c-modal_card bg-white dark:bg-slate-800">
 
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b ptah-c-modal_hd">

@@ -54,8 +54,8 @@ class MenuSyncCommand extends Command
         $this->components->info('Syncing menu structure...');
         $this->newLine();
 
-        // Sync dashboard
-        $dashboardId = $this->syncDashboard($registry);
+        // Skip dashboard sync — sidebar injects it hardcoded
+        // $dashboardId = $this->syncDashboard($registry);
 
         // Sync groups
         $groupCount = 0;
@@ -75,7 +75,8 @@ class MenuSyncCommand extends Command
         // Summary
         $this->newLine();
         $this->components->info("✔ Menu synced successfully!");
-        $this->line("  <fg=gray>Dashboard: 1 | Groups: {$groupCount} | Links: {$linkCount}</>");
+        $this->line("  <fg=gray>Groups: {$groupCount} | Links: {$linkCount}</>");
+        $this->line("  <fg=gray>(Dashboard is hardcoded in sidebar)</>");
         $this->newLine();
         $this->line("  <fg=blue>→ Refresh your browser to see the updated menu.</>");
 

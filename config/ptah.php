@@ -154,7 +154,7 @@ return [
     | driver 'database' lê da tabela menus.
     */
     'menu' => [
-        'driver'    => env('PTAH_MENU_DRIVER', 'config'),
+        'driver'    => env('PTAH_MENU_DRIVER', 'database'),
         'cache'     => true,
         'cache_ttl' => 300,
         'max_depth' => 4,
