@@ -115,7 +115,7 @@
     @if ($rows->hasPages())
         <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
             <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
-            <div>{{ $rows->links() }}</div>
+            <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
         </div>
     @endif
 

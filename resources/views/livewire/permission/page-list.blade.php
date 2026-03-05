@@ -73,7 +73,7 @@
                 @if ($pageRows->hasPages())
                     <div class="flex items-center justify-between px-4 py-2 border-t border-slate-200 text-sm text-slate-500">
                         <span>{{ __('ptah::ui.company_pagination', ['first' => $pageRows->firstItem(), 'last' => $pageRows->lastItem(), 'total' => $pageRows->total()]) }}</span>
-                        <div>{{ $pageRows->links() }}</div>
+                        <div>{{ $pageRows->links('ptah::components.forge-pagination') }}</div>
                     </div>
                 @endif
             </div>
@@ -155,7 +155,7 @@
                 @if ($objRows?->hasPages())
                     <div class="flex items-center justify-between mt-2 text-sm text-slate-500">
                         <span>{{ __('ptah::ui.company_pagination', ['first' => $objRows->firstItem(), 'last' => $objRows->lastItem(), 'total' => $objRows->total()]) }}</span>
-                        <div>{{ $objRows->links() }}</div>
+                        <div>{{ $objRows->links('ptah::components.forge-pagination') }}</div>
                     </div>
                 @endif
             @else

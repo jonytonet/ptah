@@ -134,7 +134,7 @@
 
     {{-- Paginação --}}
     @if ($rows->hasPages())
-        <div class="mt-4">{{ $rows->links() }}</div>
+        <div class="mt-4">{{ $rows->links('ptah::components.forge-pagination') }}</div>
     @endif
 
     {{-- ===== Modal create/edit ===== --}}
