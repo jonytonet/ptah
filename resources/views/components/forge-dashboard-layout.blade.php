@@ -6,8 +6,8 @@
       - appName : string
       - logoUrl : string
       - title   : string
-    Automatic behaviours:
-      - Dark mode based on OS preference (prefers-color-scheme) with manual override
+        Automatic behaviours:
+            - Dark mode based on app preference (class based)
       - Sidebar collapse/expand persisted in localStorage
     Usage:
       <x-forge-dashboard-layout>
@@ -19,6 +19,7 @@
     'appName' => config('app.name', 'Ptah'),
     'logoUrl' => null,
     'title'   => null,
+    'theme'   => null,
 ])
 
 <!DOCTYPE html>
@@ -40,6 +41,7 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
+                darkMode: 'class',
                 theme: {
                     extend: {
                         colors: {
@@ -396,6 +398,18 @@
     @endif
 
     @stack('styles')
+
+    <script>
+        (function () {
+            var serverTheme = @js($theme);
+            if (serverTheme === 'dark' || serverTheme === 'light') {
+                var isDark = serverTheme === 'dark';
+                localStorage.setItem('ptah_dark_mode', isDark);
+                document.documentElement.classList.toggle('ptah-dark', isDark);
+                document.documentElement.classList.toggle('dark', isDark);
+            }
+        })();
+    </script>
 </head>
 <body class="font-sans antialiased">
 
@@ -404,9 +418,9 @@
           sidebarOpen       — mobile: sidebar aberta/fechada
           sidebarCollapsed  — desktop: sidebar colapsada (icon-only) / expandida
           darkMode          — tema escuro ativo
-        Persistência em localStorage:
-          ptah_sidebar_collapsed  → 'true'/'false'
-          ptah_dark_mode          → 'true'/'false' | null (null = seguir SO)
+                Persistencia em localStorage:
+                    ptah_sidebar_collapsed -> 'true'/'false'
+                    ptah_dark_mode         -> 'true'/'false'
     --}}
     <div
         x-data="{
@@ -415,23 +429,32 @@
             sidebarCollapsed: localStorage.getItem('ptah_sidebar_collapsed') === 'true',
 
             darkMode: (function() {
+                var serverTheme = @js($theme);
+                if (serverTheme === 'dark' || serverTheme === 'light') {
+                    localStorage.setItem('ptah_dark_mode', serverTheme === 'dark');
+                    return serverTheme === 'dark';
+                }
                 var saved = localStorage.getItem('ptah_dark_mode');
                 if (saved !== null) return saved === 'true';
-                // Padrão: light mode (false), ignorando preferência do SO
                 return false;
             })(),
 
+            applyTheme(isDark) {
+                document.body.classList.toggle('ptah-dark', isDark);
+                document.body.classList.toggle('dark', isDark);
+                document.documentElement.classList.toggle('ptah-dark', isDark);
+                document.documentElement.classList.toggle('dark', isDark);
+            },
+
             init() {
-                /* Aplica ptah-dark + dark no body para cobrir elementos @@teleport('body') */
-                document.body.classList.toggle('ptah-dark', this.darkMode);
-                document.body.classList.toggle('dark', this.darkMode);
+                /* Aplica ptah-dark + dark no body/html para cobrir elementos @@teleport('body') */
+                this.applyTheme(this.darkMode);
             },
 
             toggleDark() {
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
-                document.body.classList.toggle('ptah-dark', this.darkMode);
-                document.body.classList.toggle('dark', this.darkMode);
+                this.applyTheme(this.darkMode);
             },
 
             toggleSidebarCollapse() {
