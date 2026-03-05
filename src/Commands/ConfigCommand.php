@@ -19,6 +19,9 @@ use Ptah\Commands\Config\Wizards\JoinWizard;
 use Ptah\Commands\Config\Wizards\GeneralWizard;
 use Ptah\Commands\Config\Formatters\TableFormatter;
 use Ptah\Enums\CrudConfigEnums;
+use Ptah\Exceptions\ConfigValidationException;
+use Ptah\Services\Validation\ConfigSchemaValidator;
+use Ptah\Services\Validation\Formatters\CliErrorFormatter;
 
 class ConfigCommand extends Command
 {
@@ -59,6 +62,8 @@ class ConfigCommand extends Command
     protected StyleParser $styleParser;
     protected JoinParser $joinParser;
     protected GeneralParser $generalParser;
+    protected ConfigSchemaValidator $validator;
+    protected CliErrorFormatter $errorFormatter;
     protected array $config = [];
 
     public function __construct()
@@ -71,6 +76,8 @@ class ConfigCommand extends Command
         $this->styleParser = new StyleParser();
         $this->joinParser = new JoinParser();
         $this->generalParser = new GeneralParser();
+        $this->validator = new ConfigSchemaValidator();
+        $this->errorFormatter = new CliErrorFormatter();
     }
 
     /**
@@ -416,16 +423,29 @@ class ConfigCommand extends Command
      */
     protected function saveConfiguration(string $modelClass, array $config): void
     {
-        DB::table('crud_configs')->updateOrInsert(
-            ['model' => $modelClass],
-            [
-                'config' => json_encode($config),
-                'updated_at' => now(),
-            ]
-        );
+        try {
+            // Validate configuration before saving
+            $this->validator->validate($config, $modelClass);
 
-        // Clear cache
-        cache()->forget("crud_config_{$modelClass}");
+            DB::table('crud_configs')->updateOrInsert(
+                ['model' => $modelClass],
+                [
+                    'config' => json_encode($config),
+                    'updated_at' => now(),
+                ]
+            );
+
+            // Clear cache
+            cache()->forget("crud_config_{$modelClass}");
+        } catch (ConfigValidationException $e) {
+            // Format error with CLI box drawing
+            $this->newLine();
+            $this->line($this->errorFormatter->format($e));
+            $this->newLine();
+            
+            // Exit with error code
+            exit(1);
+        }
     }
 
     /**

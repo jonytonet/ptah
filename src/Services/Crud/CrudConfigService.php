@@ -6,6 +6,7 @@ namespace Ptah\Services\Crud;
 
 use Ptah\Models\CrudConfig;
 use Ptah\Services\Cache\CacheService;
+use Ptah\Services\Validation\ConfigSchemaValidator;
 
 /**
  * BaseCrud configuration access service.
@@ -20,7 +21,10 @@ class CrudConfigService
 {
     protected string $cachePrefix = 'ptah.crud.';
 
-    public function __construct(protected CacheService $cache) {}
+    public function __construct(
+        protected CacheService $cache,
+        protected ConfigSchemaValidator $validator
+    ) {}
 
     /**
      * Fetches the configuration of a model (with automatic cache).
@@ -65,9 +69,13 @@ class CrudConfigService
      *
      * @param string $model  Model identifier
      * @param array  $config Full JSON configuration
+     * @throws \Ptah\Exceptions\ConfigValidationException
      */
     public function save(string $model, array $config): CrudConfig
     {
+        // Validate configuration before persisting
+        $this->validator->validate($config, $model);
+
         $record = CrudConfig::updateOrCreate(
             ['model' => $model],
             ['config' => $config],
@@ -84,6 +92,7 @@ class CrudConfigService
      * @param string $model   Identifier
      * @param string $section First-level key, e.g. "permissions", "exportConfig"
      * @param array  $data    Data to merge
+     * @throws \Ptah\Exceptions\ConfigValidationException
      */
     public function updateSection(string $model, string $section, array $data): CrudConfig
     {
@@ -91,6 +100,10 @@ class CrudConfigService
 
         $config              = $record->config;
         $config[$section]    = array_merge($config[$section] ?? [], $data);
+
+        // Validate the complete configuration after merging
+        $this->validator->validate($config, $model);
+
         $record->config      = $config;
         $record->save();
 
