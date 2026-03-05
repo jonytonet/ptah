@@ -421,8 +421,9 @@
             })(),
 
             init() {
-                /* Aplica ptah-dark no body para cobrir elementos @@teleport('body') */
+                /* Aplica ptah-dark + dark no body para cobrir elementos @teleport('body') */
                 document.body.classList.toggle('ptah-dark', this.darkMode);
+                document.body.classList.toggle('dark', this.darkMode);
 
                 /* Reagir a mudanças de preferência do SO em tempo real */
                 var self = this;
@@ -431,6 +432,7 @@
                         if (localStorage.getItem('ptah_dark_mode') === null) {
                             self.darkMode = e.matches;
                             document.body.classList.toggle('ptah-dark', self.darkMode);
+                            document.body.classList.toggle('dark', self.darkMode);
                         }
                     });
             },
@@ -439,6 +441,7 @@
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
                 document.body.classList.toggle('ptah-dark', this.darkMode);
+                document.body.classList.toggle('dark', this.darkMode);
             },
 
             toggleSidebarCollapse() {
@@ -446,7 +449,7 @@
                 localStorage.setItem('ptah_sidebar_collapsed', this.sidebarCollapsed);
             }
         }"
-        :class="{ 'ptah-dark': darkMode }"
+        :class="{ 'ptah-dark': darkMode, 'dark': darkMode }"
         class="min-h-screen"
     >
 

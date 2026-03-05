@@ -26,13 +26,13 @@
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-[13px] font-semibold leading-tight ptah-c-modal_ttl">
+                        <h2 class="text-[13px] font-semibold leading-tight text-slate-800 dark:text-white ptah-c-modal_ttl">
                             {{ $editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix') }} {{ $crudTitle }}
                         </h2>
-                        <p class="text-[11px] leading-tight ptah-c-modal_sub">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
+                        <p class="text-[11px] leading-tight text-slate-500 dark:text-slate-400 ptah-c-modal_sub">{{ $editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}</p>
                     </div>
                 </div>
-                <button wire:click="closeModal" class="p-2 transition-colors rounded-lg ptah-c-modal_close">
+                <button wire:click="closeModal" class="p-2 transition-colors rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 ptah-c-modal_close">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -61,8 +61,8 @@
                             $fValue    = $formData[$fField] ?? '';
 
             $fBorderClass  = $fError
-                                ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                                : 'ptah-c-form_border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100';
+                                ? 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-300'
+                                : 'border-slate-200 dark:border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-500/30';
                         @endphp
 
                         <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -77,12 +77,12 @@
                                     // Handle PHP booleans (cast:boolean): false → '0', true → '1'
                                     $fValSel  = is_bool($fValue) ? ($fValue ? '1' : '0') : $fValue;
                                     $fInitSel = ($fValSel !== '' && $fValSel !== null) ? json_encode((string)$fValSel) : 'null';
-                                    $fBorderNormal = $fError ? 'border-red-400' : 'border-slate-200';
-                                    $fBorderOpen   = $fError ? 'border-red-500' : 'border-indigo-500';
-                                    $fRingOpen     = $fError ? 'ring-2 ring-red-200' : 'ring-2 ring-indigo-100/50';
+                                    $fBorderNormal = $fError ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600';
+                                    $fBorderOpen   = $fError ? 'border-red-500' : 'border-indigo-500 dark:border-indigo-400';
+                                    $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-indigo-100/50 dark:ring-indigo-500/30';
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -125,7 +125,7 @@
                                         <div
                                             @click="open = !open"
                                             :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
-                                            class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 ptah-c-form_sel"
+                                            class="relative flex items-center justify-between rounded-lg border select-none transition-colors duration-150 bg-white dark:bg-slate-700 dark:text-white ptah-c-form_sel"
                                         >
                                             <span
                                                 :class="(selected !== null && selected !== '') ? 'ptah-c-sel_val' : 'text-gray-400'"
@@ -144,7 +144,7 @@
                                             x-transition:enter="transition ease-out duration-150"
                                             x-transition:enter-start="opacity-0 -translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                            class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 ptah-c-dd">
+                                            class="absolute z-20 w-full mt-1 overflow-auto border shadow-lg rounded-xl max-h-48 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 ptah-c-dd">
                                             <ul class="py-1">
                                                 <template x-for="option in options" :key="option.value">
                                                     <li
@@ -173,7 +173,7 @@
                                     $sdHasResults = !empty($sdResults[$fField]);
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -202,7 +202,7 @@
                                                 @focus="$wire.openDropdown('{{ $fField }}')"
                                                 placeholder="{{ __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
                                                 autocomplete="off"
-                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                             />
                                             <button type="button"
                                                 tabindex="-1"
@@ -221,7 +221,7 @@
                                                 <button type="button"
                                                     wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                     @click="open = false"
-                                                    class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
+                                                    class="block w-full px-4 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-600 dark:text-white ptah-c-dd_opt">
                                                     {{ $opt['label'] }}
                                                 </button>
                                             @empty
@@ -248,14 +248,14 @@
                                             reader.readAsDataURL(file);
                                         }
                                     }">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <input type="text"
                                         wire:model.live="formData.{{ $fField }}"
                                         @input="updateFromUrl($event.target.value)"
                                         placeholder="https://..."
-                                        class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                        class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                     />
                                     <div class="mt-2">
                                         <label class="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 transition-colors">
@@ -324,7 +324,7 @@
                                             }
                                         }"
                                     >
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -334,7 +334,7 @@
                                             @focus="$event.target.setSelectionRange($event.target.value.length, $event.target.value.length)"
                                             @if($fRequired) required @endif
                                             placeholder="R$ 0,00"
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
                                         <input
                                             type="hidden"
@@ -360,7 +360,7 @@
                                                 }
                                             }"
                                         >
-                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                                 {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                             </label>
                                             <input
@@ -370,7 +370,7 @@
                                                 style="text-transform: uppercase"
                                                 @if($fRequired) required @endif
                                                 placeholder=""
-                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                                class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                             />
                                             <input type="hidden" x-ref="upHidden" wire:model="formData.{{ $fField }}" />
                                         </div>
@@ -382,7 +382,7 @@
                                 @else
                                     {{-- ── Regular input (text / number / date / other masks via server-side transform) ── --}}
                                     <div class="w-full">
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -392,7 +392,7 @@
                                             @if($fRequired) required @endif
                                             @if($fTipo === 'number' && !$fMask) step="any" @endif
                                             placeholder=""
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
                                         @if ($fError)
                                             <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
