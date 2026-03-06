@@ -4,14 +4,14 @@
   <h3>Enterprise Structure. Startup Speed.</h3>
 
   <p>
-    Um sistema pequeno, do zero à produção, em minutos.<br>
+    Desenvolva um sistema pequeno ou médio, do zero à produção, em minutos.<br>
     Com IA, ainda mais rápido — e gastando muito menos tokens.
   </p>
 </div>
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-11%2B%20%7C%2012%2B-red)](https://laravel.com)
-[![Livewire Version](https://img.shields.io/badge/Livewire-4-purple)](https://livewire.laravel.com)
+[![Livewire Version](https://img.shields.io/badge/Livewire-4-blueviolet.svg)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
