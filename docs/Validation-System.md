@@ -1,41 +1,41 @@
-# Sistema de Validação e Mensagens de Erro — Ptah
+﻿# Validation System and Error Messages — Ptah
 
-## 📋 Visão Geral
+## 📋 Overview
 
-O Ptah implementa um sistema robusto de validação com **mensagens de erro detalhadas** que incluem:
+Ptah implements a robust validation system with **detailed error messages** that include:
 - ✅ Contexto completo (campo, valor atual vs esperado, linha do JSON)
-- ✅ Formatação visual diferenciada (CLI com box drawing, Flash HTML, JSON RFC 7807)
-- ✅ Hierarquia de exceções customizadas para diferentes cenários
-- ✅ Internacionalização (PT-BR e EN)
+- ✅ Differentiated visual formatting (CLI with box drawing, Flash HTML, JSON RFC 7807)
+- ✅ Custom exception hierarchy for different scenarios
+- ✅ Internationalization (PT-BR and EN)
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-### Hierarquia de Exceções
+### Exception Hierarchy
 
 ```
 PtahException (base abstrata)
-├── ConfigValidationException    — Erros de configuração do CRUD
-├── CommandValidationException    — Erros em comandos CLI
-├── BusinessRuleException         — Violações de regras de negócio
-└── GenerationException           — Erros no scaffolding/forge
+├── ConfigValidationException    — CRUD configuration errors
+├── CommandValidationException    — CLI command errors
+├── BusinessRuleException         — Business rule violations
+└── GenerationException           — Scaffolding/forge errors
 ```
 
-### Traits Disponíveis
+### Available Traits
 
-| Trait | Propósito |
+| Trait | Purpose |
 |-------|-----------|
-| `HasJsonContext` | Adiciona métodos para contexto JSON (path, linha, valor atual/esperado) |
-| `FormatsError` | Formata exceções para CLI, Flash, JSON |
+| `HasJsonContext` | Adds methods for JSON context (path, line, current/expected value) |
+| `FormatsError` | Formats exceptions for CLI, Flash, JSON |
 
 ### Validators
 
 | Classe | Responsabilidade |
 |--------|------------------|
-| `ConfigSchemaValidator` | Valida configuração completa do BaseCrud |
-| `CommandInputValidator` | Valida inputs de comandos Artisan |
-| `JsonSchemaBuilder` | Gera JSON Schema para documentação |
+| `ConfigSchemaValidator` | Validates complete BaseCrud configuration |
+| `CommandInputValidator` | Validates Artisan command inputs |
+| `JsonSchemaBuilder` | Generates JSON Schema for documentation |
 
 ### Formatters
 
@@ -47,9 +47,9 @@ PtahException (base abstrata)
 
 ---
 
-## 💻 Exemplos de Uso
+## 💻 Usage Examples
 
-### 1. Validação Automática no CrudConfigService
+### 1. Automatic Validation in CrudConfigService
 
 ```php
 use Ptah\Services\Crud\CrudConfigService;
@@ -62,22 +62,22 @@ try {
         'cols' => [
             [
                 'colsNomeFisico' => 'price',
-                'colsTipo' => 'invalid_type', // ❌ Tipo inválido
+                'colsTipo' => 'invalid_type', // ❌ Invalid type
             ],
         ],
     ]);
 } catch (ConfigValidationException $e) {
-    // Exibir no terminal
+    // Display in terminal
     echo $e->formatAsCliOutput();
     
-    // Ou obter contexto programaticamente
+    // Or get context programmatically
     $context = $e->getContext();
     echo "Campo: " . $e->getField();
     echo "Valor atual: " . $e->getActualValue();
 }
 ```
 
-**Output no terminal:**
+**Terminal output:**
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║ ❌ Config Validation Exception                                   ║
@@ -85,7 +85,7 @@ try {
 ║ Campo:           price                                            ║
 ║ Valor atual:     invalid_type                                     ║
 ║ Valor esperado:  text, badge, boolean, date, datetime, money...  ║
-║ Seção:           cols                                             ║
+║ Section:         cols                                             ║
 ║ Path JSON:       $.cols[0].colsTipo                               ║
 ║ Model:           Product                                          ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -93,7 +93,7 @@ try {
 
 ---
 
-### 2. Validação em Commands
+### 2. Validation in Commands
 
 ```php
 use Ptah\Services\Validation\CommandInputValidator;
@@ -111,7 +111,7 @@ class ConfigCommand extends Command
             $columnOpt = $this->option('column');
             $parsed = $this->validator->validateColumnOption($columnOpt);
             
-            // Continue com a lógica...
+            // Continue with logic...
             
         } catch (CommandValidationException $e) {
             $this->error($this->formatter->format($e));
@@ -123,7 +123,7 @@ class ConfigCommand extends Command
 }
 ```
 
-**Exemplo de erro:**
+**Error example:**
 ```bash
 php artisan ptah:config Product --column="price:invalid_type"
 ```
@@ -133,16 +133,16 @@ php artisan ptah:config Product --column="price:invalid_type"
 ╔══════════════════════════════════════════════════════════════════╗
 ║ ❌ Command Validation Exception                                  ║
 ╠══════════════════════════════════════════════════════════════════╣
-║ Opção:           column                                           ║
+║ Option:          column                                           ║
 ║ Valor atual:     price:invalid_type                               ║
 ║ Tipo esperado:   text|badge|boolean|date|datetime|money|numeric   ║
-║ Sugestão:        Use format: field:type[:modifier=value...]       ║
+║ Suggestion:      Use format: field:type[:modifier=value...]       ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-### 3. Flash Messages no Livewire
+### 3. Flash Messages in Livewire
 
 ```php
 use Ptah\Services\Validation\Formatters\FlashMessageFormatter;
@@ -155,7 +155,7 @@ class BaseCrudComponent extends Component
     public function save()
     {
         try {
-            // Validação e salvamento
+            // Validation and saving
             $this->crudConfigService->save($this->model, $this->formData);
             
         } catch (ConfigValidationException $e) {
@@ -168,7 +168,7 @@ class BaseCrudComponent extends Component
             return;
         }
         
-        session()->flash('success', 'Configuração salva com sucesso!');
+        session()->flash('success', 'Configuration saved successfully!');
     }
 }
 ```
@@ -193,9 +193,9 @@ class BaseCrudComponent extends Component
             <h3 class="text-sm font-medium text-red-800">Config Validation Exception</h3>
             <div class="mt-2 text-sm text-red-700">
                 <ul class="list-disc pl-5 space-y-1">
-                    <li><strong>Campo:</strong> price</li>
-                    <li><strong>Valor atual:</strong> invalid_type</li>
-                    <li><strong>Valor esperado:</strong> text, badge, boolean...</li>
+                    <li><strong>Field:</strong> price</li>
+                    <li><strong>Current value:</strong> invalid_type</li>
+                    <li><strong>Expected value:</strong> text, badge, boolean...</li>
                 </ul>
             </div>
         </div>
@@ -260,12 +260,12 @@ class CrudApiController extends Controller
 
 ---
 
-### 5. Criando Exceções Customizadas
+### 5. Creating Custom Exceptions
 
 ```php
 use Ptah\Exceptions\ConfigValidationException;
 
-// Método 1: Static factory methods
+// Method 1: Static factory methods
 throw ConfigValidationException::invalidColumnType(
     field: 'price',
     actualValue: 'invalid_type',
@@ -275,7 +275,7 @@ throw ConfigValidationException::invalidColumnType(
   ->withJsonPath('$.cols[0].colsTipo')
   ->withLineNumber(42);
 
-// Método 2: Usando context builder
+// Method 2: Using context builder
 throw ConfigValidationException::withContext(
     'Invalid column configuration',
     [
@@ -286,7 +286,7 @@ throw ConfigValidationException::withContext(
     ]
 );
 
-// Método 3: Fluent builder
+// Method 3: Fluent builder
 throw (new ConfigValidationException('Invalid type'))
     ->withField('price')
     ->withActualValue('invalid_type')
@@ -297,7 +297,7 @@ throw (new ConfigValidationException('Invalid type'))
 
 ---
 
-### 6. Logging de Erros
+### 6. Error Logging
 
 ```php
 use Illuminate\Support\Facades\Log;
@@ -305,7 +305,7 @@ use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Services\Validation\Formatters\JsonErrorFormatter;
 
 try {
-    // Operação que pode falhar
+    // Operation that may fail
     $this->crudConfigService->save($model, $config);
     
 } catch (ConfigValidationException $e) {
@@ -316,7 +316,7 @@ try {
         $formatter->formatForLogging($e)
     );
     
-    // Re-throw ou handle conforme necessário
+    // Re-throw or handle as needed
     throw $e;
 }
 ```
@@ -343,7 +343,7 @@ try {
 
 ---
 
-## 🔧 Validação Manual
+## 🔧 Manual Validation
 
 ### ConfigSchemaValidator
 
@@ -367,7 +367,7 @@ $config = [
 
 try {
     $validator->validate($config, 'Product');
-    echo "✅ Configuração válida!";
+    echo "✅ Configuration valid!";
 } catch (ConfigValidationException $e) {
     echo "❌ Erro: " . $e->getMessage();
     print_r($e->getContext());
@@ -390,7 +390,7 @@ try {
     echo $e->formatAsCliOutput();
 }
 
-// Validar formato de ação
+// Validate action format
 try {
     $parsed = $validator->validateActionOption('edit:wire:editRecord:icon=bx-edit:color=primary');
     // ['name' => 'edit', 'type' => 'wire', 'value' => 'editRecord', ...]
@@ -402,20 +402,20 @@ try {
 
 ---
 
-## 🌍 Internacionalização
+## 🌍 Internationalization
 
-### Usando Traduções
+### Using Translations
 
 ```php
 // config/app.php
 'locale' => 'pt_BR', // ou 'en'
 
-// As mensagens de erro serão automaticamente exibidas no idioma configurado
+// Error messages will automatically be displayed in the configured language
 ```
 
-### Adicionando Novos Idiomas
+### Adding New Languages
 
-1. Crie o arquivo de tradução:
+1. Create the translation file:
 ```bash
 cp ptah/lang/en/validation-errors.php ptah/lang/es/validation-errors.php
 ```
@@ -424,7 +424,7 @@ cp ptah/lang/en/validation-errors.php ptah/lang/es/validation-errors.php
 ```php
 // ptah/lang/es/validation-errors.php
 return [
-    'invalid_column_type' => 'Tipo de columna inválido ":type" para el campo ":field"',
+    'invalid_column_type' => 'Invalid column type ":type" for field ":field"',
     // ...
 ];
 ```
@@ -438,18 +438,18 @@ use Ptah\Services\Validation\JsonSchemaBuilder;
 
 $builder = new JsonSchemaBuilder();
 
-// Gerar schema completo
+// Generate complete schema
 $schema = $builder->buildCrudConfigSchema();
 
-// Exportar como JSON
+// Export as JSON
 $json = $builder->exportAsJson();
 file_put_contents('crud-config.schema.json', $json);
 
-// Ou salvar direto
+// Or save directly
 $builder->saveToFile('ptah/resources/schemas/crud-config.schema.json');
 ```
 
-**Schema gerado (exemplo parcial):**
+**Generated schema (partial example):**
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -482,21 +482,21 @@ $builder->saveToFile('ptah/resources/schemas/crud-config.schema.json');
 
 ## 🎯 Best Practices
 
-### 1. Sempre Capture Exceções Específicas
+### 1. Always Capture Specific Exceptions
 
 ```php
-// ❌ Evite catch genérico
+// ❌ Avoid generic catch
 try {
     $this->configService->save($model, $config);
 } catch (\Exception $e) {
-    // Perde contexto específico
+    // Loses specific context
 }
 
-// ✅ Capture exceções específicas
+// ✅ Capture specific exceptions
 try {
     $this->configService->save($model, $config);
 } catch (ConfigValidationException $e) {
-    // Tratamento específico com contexto completo
+    // Specific handling with full context
     Log::warning('Config validation failed', $e->getContext());
     session()->flash('error', $e->formatAsFlashMessage());
 } catch (BusinessRuleException $e) {
@@ -504,7 +504,7 @@ try {
 }
 ```
 
-### 2. Use Formatters Apropriados
+### 2. Use Appropriate Formatters
 
 ```php
 // CLI Command
@@ -526,11 +526,11 @@ catch (PtahException $e) {
 }
 ```
 
-### 3. Adicione Contexto Progressivamente
+### 3. Add Context Progressively
 
 ```php
 try {
-    // Operação
+    // Operation
 } catch (\Exception $e) {
     throw ConfigValidationException::withContext(
         'Failed to save configuration',
@@ -545,14 +545,14 @@ try {
 
 ## 🚀 Performance
 
-- **Validação em ~2-5ms** para configurações típicas
+- **Validation in ~2-5ms** for typical configurations
 - **Cache de schemas** compilados (Opcache)
-- **Lazy validation**: só valida o que mudou em `updateSection()`
-- **Sem overhead** quando não há erros
+- **Lazy validation**: only validates what changed in `updateSection()`
+- **No overhead** when there are no errors
 
 ---
 
-## 📚 Recursos Adicionais
+## 📚 Additional Resources
 
 - [RFC 7807 - Problem Details](https://tools.ietf.org/html/rfc7807)
 - [JSON Schema Draft 07](http://json-schema.org/draft-07/schema)
@@ -560,5 +560,5 @@ try {
 
 ---
 
-**Implementado em:** 5 de março de 2026  
-**Versão Ptah:** 2.5.0+
+**Implemented on:** March 5, 2026  
+**Ptah Version:** 2.5.0+

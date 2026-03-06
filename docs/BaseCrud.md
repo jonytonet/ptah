@@ -1,95 +1,95 @@
-# BaseCrud — Documentação Completa
+# BaseCrud — Complete Documentation
 
-**Pacote:** `jonytonet/ptah`  
+**Package:** `jonytonet/ptah`  
 **Namespace:** `Ptah\Livewire\BaseCrud`  
 **Livewire:** 3.x+
 **Laravel:** 11+
 
 ---
 
-## Sumário
+## Table of Contents
 
-1. [Visão Geral](#visão-geral)
-2. [Uso Básico](#uso-básico)
-3. [⚙️ Configuração do CRUD](Configuration.md) — **Modal Visual + Comando CLI**
-4. [Parâmetros de Inicialização](#parâmetros-de-inicialização)
-5. [Propriedades Públicas](#propriedades-públicas)
-6. [Métodos Públicos](#métodos-públicos)
-7. [CrudConfig — Estrutura de Colunas](#crudconfig--estrutura-de-colunas)
-8. [Tipos de Coluna](#tipos-de-coluna)
-9. [Helpers de Formatação de Célula](#helpers-de-formatação-de-célula)
+1. [Overview](#overview)
+2. [Basic Usage](#basic-usage)
+3. [⚙️ CRUD Configuration](Configuration.md) — **Visual Modal + CLI Command**
+4. [Initialization Parameters](#initialization-parameters)
+5. [Public Properties](#public-properties)
+6. [Public Methods](#public-methods)
+7. [CrudConfig — Column Structure](#crudconfig--column-structure)
+8. [Column Types](#column-types)
+9. [Cell Formatting Helpers](#cell-formatting-helpers)
 10. [Renderer DSL](#renderer-dsl)
-11. [Estilos Condicionais de Linha](#estilos-condicionais-de-linha)
-12. [Filtros](#filtros)
-13. [Filtros Rápidos de Data](#filtros-rápidos-de-data)
-14. [Busca Avançada](#busca-avançada)
-15. [Visibilidade de Colunas](#visibilidade-de-colunas)
+11. [Conditional Row Styles](#conditional-row-styles)
+12. [Filters](#filters)
+13. [Quick Date Filters](#quick-date-filters)
+14. [Advanced Search](#advanced-search)
+15. [Column Visibility](#column-visibility)
 16. [Bulk Actions](#bulk-actions)
-17. [SearchDropdown em Formulários](#searchdropdown-em-formulários) — ver também [SearchDropdown.md](SearchDropdown.md)
-18. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
+17. [SearchDropdown in Forms](#searchdropdown-in-forms) — see also [SearchDropdown.md](SearchDropdown.md)
+18. [WhereHas — Parent Entity Filter](#wherehas--parent-entity-filter)
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
-20. [Totalizadores](#totalizadores)
-21. [Exportação](#exportação)
-22. [Preferências de Usuário (V2.1)](#preferências-de-usuário-v21)
-23. [Eventos Livewire](#eventos-livewire)
-24. [Permissões](#permissões)
+20. [Totalisers](#totalisers)
+21. [Export](#export)
+22. [User Preferences (V2.1)](#user-preferences-v21)
+23. [Livewire Events](#livewire-events)
+24. [Permissions](#permissions)
 25. [Error Recovery](#error-recovery)
 26. [FormValidatorService](#formvalidatorservice)
 27. [Display Name](#display-name)
-28. [Broadcast / Tempo Real](#broadcast--tempo-real)
-29. [Tema Visual (Light / Dark)](#tema-visual-light--dark)
-30. [Fluxo Interno Simplificado](#fluxo-interno-simplificado)
-31. [JOINs Configuráveis](#joins-configuráveis)
+28. [Broadcast / Real-time](#broadcast--real-time)
+29. [Visual Theme (Light / Dark)](#visual-theme-light--dark)
+30. [Simplified Internal Flow](#simplified-internal-flow)
+31. [Configurable JOINs](#configurable-joins)
 32. [Lifecycle Hooks](#lifecycle-hooks)
-33. [configGroupBy — Agrupamento de Registros](#configgroupby--agrupamento-de-registros)
-34. [Input Tipo Image](#input-tipo-image)
-35. [Estrutura de Partials (Blade)](#estrutura-de-partials-blade)
+33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
+34. [Image Input](#image-input)
+35. [Partial Structure (Blade)](#partial-structure-blade)
 
 ---
 
-## Visão Geral
+## Overview
 
-`BaseCrud` é um componente Livewire 4 que gera uma tela completa de CRUD com:
+`BaseCrud` is a Livewire 4 component that generates a complete CRUD screen with:
 
-- Tabela dinâmica com sort, paginação e filtros
-- Modal de criação/edição com validação
-- Soft delete e restauração
-- Visibilidade de colunas por usuário
-- Busca global com OR em relações
-- Filtros rápidos de período (hoje/semana/mês/trimestre/ano)
-- Busca avançada com múltiplos critérios e lógica AND/OR
-- Bulk actions (seleção múltipla, exclusão, exportação, ações customizadas)
-- SearchDropdown integrado nos formulários
-- Filtro por entidade pai via `whereHas`
-- Totalizadores (sum/count/avg/max/min)
-- Exportação síncrona e assíncrona
-- Preferências persistidas por usuário (V2.1)
-- Error recovery automático (limpa preferências corrompidas)
-- Cache com invalidação por model
-- **Estilos condicionais de linha** com guard contra campos inválidos
-- **Ícones em colunas** (cabeçalho + célula) via Boxicons ou FontAwesome
-- **Filtros customizados** com suporte a `whereHas`, `whereHas` + aggregate e alias de retrocompatibilidade
-- **JOINs configuráveis** (LEFT / INNER) declarados no CrudConfig — sem Eloquent, com suporte completo a filtro, sort e export
-- **Auditoria automática** de `created_by` / `updated_by` / `deleted_by` via trait `HasAuditFields` — preenchida automaticamente nos eventos Eloquent; `save()` e `deleteRecord()` injetam os valores explicitamente como camada adicional; `bulkDelete()` usa `->each()` para garantir que os eventos disparem em cada registro
-- **Lifecycle hooks** (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`) — ganchos de extensão no ciclo de salvar, com suporte a mutação do `$data` por referência e redirecionamento via `RedirectResponse`
-- **configGroupBy** — agrupamento de registros via `GROUP BY` declarativo no CrudConfig, sem Eloquent
-- **Input tipo `image`** — campo de imagem no formulário com preview ao vivo (URL ou arquivo local via FileReader)
-- **Blade particionado** — view base dividida em 7 partials independentes para facilitar manutenção
+- Dynamic table with sort, pagination and filters
+- Create/edit modal with validation
+- Soft delete and restore
+- Per-user column visibility
+- Global search with OR on relations
+- Quick period filters (today/week/month/quarter/year)
+- Advanced search with multiple criteria and AND/OR logic
+- Bulk actions (multi-select, delete, export, custom actions)
+- SearchDropdown integrated in forms
+- Parent entity filter via `whereHas`
+- Totalisers (sum/count/avg/max/min)
+- Synchronous and asynchronous export
+- Persisted user preferences (V2.1)
+- Automatic error recovery (clears corrupted preferences)
+- Cache with model-based invalidation
+- **Conditional row styles** with guard against invalid fields
+- **Column icons** (header + cell) via Boxicons or FontAwesome
+- **Custom filters** with support for `whereHas`, `whereHas` + aggregate and backwards-compatibility aliases
+- **Configurable JOINs** (LEFT / INNER) declared in CrudConfig — no Eloquent, with full filter, sort and export support
+- **Automatic audit** of `created_by` / `updated_by` / `deleted_by` via `HasAuditFields` trait — filled automatically via Eloquent events; `save()` and `deleteRecord()` inject the values explicitly as an additional layer; `bulkDelete()` uses `->each()` to ensure events fire on every record
+- **Lifecycle hooks** (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`) — extension hooks in the save cycle, with support for mutating `$data` by reference and redirection via `RedirectResponse`
+- **configGroupBy** — declarative `GROUP BY` record grouping in CrudConfig, without Eloquent
+- **`image` input** — image field in the form with live preview (URL or local file via FileReader)
+- **Partitioned Blade** — base view split into 7 independent partials to ease maintenance
 
-> 📝 **Configuração:** Para configurar colunas, filtros, ações e outras opções do CRUD, consulte [**Configuration.md**](Configuration.md) — documentação completa do **Modal Visual** e do **Comando CLI** (`ptah:config`).
+> 📝 **Configuration:** To configure columns, filters, actions and other CRUD options, see [**Configuration.md**](Configuration.md) — complete documentation of the **Visual Modal** and the **CLI Command** (`ptah:config`).
 
 ---
 
-## Uso Básico
+## Basic Usage
 
 ```blade
-{{-- Mínimo obrigatório --}}
+{{-- Minimum required --}}
 @livewire('ptah::base-crud', ['model' => 'Product'])
 
-{{-- Com subpasta (gerado por ptah:forge Product/ProductStock) --}}
+{{-- With subfolder (generated by ptah:forge Product/ProductStock) --}}
 @livewire('ptah::base-crud', ['model' => 'Product/ProductStock'])
 
-{{-- Com parâmetros avançados --}}
+{{-- With advanced parameters --}}
 @livewire('ptah::base-crud', [
     'model'            => 'Product',
     'initialFilter'    => [['status', '=', 'active']],
@@ -99,9 +99,9 @@
 ])
 ```
 
-O `model` é o identificador que o BaseCrud usa para:
-1. Buscar a configuração na tabela `crud_configs` (campo `model`)
-2. Resolver o Eloquent Model via `resolveEloquentModel()` — `/` vira `\` no namespace
+The `model` is the identifier BaseCrud uses to:
+1. Look up the configuration in the `crud_configs` table (field `model`)
+2. Resolve the Eloquent Model via `resolveEloquentModel()` — `/` becomes `\` in the namespace
 
 ```
 'model' => 'Product/ProductStock'
@@ -109,256 +109,256 @@ O `model` é o identificador que o BaseCrud usa para:
    └─ App\Models\Product\ProductStock (namespace)
 ```
 
-> O `ptah:forge Product/ProductStock` salva automaticamente `Product/ProductStock` na coluna `model` da `crud_configs` e gera a view com o identifier correto.
+> `ptah:forge Product/ProductStock` automatically saves `Product/ProductStock` in the `model` column of `crud_configs` and generates the view with the correct identifier.
 
 ---
 
-## Parâmetros de Inicialização
+## Initialization Parameters
 
-Passados ao `@livewire(...)` ou `<livewire ...>`.
+Passed to `@livewire(...)` or `<livewire ...>`.
 
-| Parâmetro | Tipo | Padrão | Descrição |
+| Parameter | Type | Default | Description |
 |---|---|---|---|
-| `model` | `string` | — | **Obrigatório.** Identificador do model. Sem subpasta: `'Product'`. Com subpasta: `'Product/ProductStock'` (gerado automaticamente pelo `ptah:forge Product/ProductStock`). O `/` é convertido para `\` ao resolver o namespace, ex: `App\Models\Product\ProductStock` |
-| `initialFilter` | `array` | `[]` | Filtros iniciais: `[['campo', 'op', 'valor'], ...]` |
-| `whereHasFilter` | `string` | `''` | Nome da relação para pré-filtrar |
-| `whereHasCondition` | `array` | `[]` | Condição da relação: `['campo', 'op', 'valor']` |
-| `companyFilter` | `int` | `session('company_id', 0)` | ID da empresa para filtro multi-tenant |
+| `model` | `string` | — | **Required.** Model identifier. Without subfolder: `'Product'`. With subfolder: `'Product/ProductStock'` (generated automatically by `ptah:forge Product/ProductStock`). The `/` is converted to `\` when resolving the namespace, e.g. `App\Models\Product\ProductStock` |
+| `initialFilter` | `array` | `[]` | Initial filters: `[['field', 'op', 'value'], ...]` |
+| `whereHasFilter` | `string` | `''` | Relation name for pre-filtering |
+| `whereHasCondition` | `array` | `[]` | Relation condition: `['field', 'op', 'value']` |
+| `companyFilter` | `int` | `session('company_id', 0)` | Company ID for multi-tenant filter |
 
 ---
 
-## Propriedades Públicas
+## Public Properties
 
-Todas as propriedades públicas são acessíveis na view via `$this->` ou diretamente no template Blade.
+All public properties are accessible in the view via `$this->` or directly in the Blade template.
 
-### Estado da tabela
+### Table state
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$model` | `string` | `''` | Identificador do model |
-| `$crudConfig` | `array` | `[]` | Configuração completa do CrudConfig |
-| `$sort` | `string` | `'id'` | Coluna de ordenação |
-| `$direction` | `string` | `'DESC'` | Direção: `ASC` ou `DESC` |
-| `$perPage` | `int` | `25` | Registros por página |
-| `$search` | `string` | `''` | Termo de busca global |
-| `$showTrashed` | `bool` | `false` | Exibe registros soft-deletados |
-| `$trashedCount` | `int` | `0` | Quantidade de registros na lixeira |
-| `$showFilters` | `bool` | `false` | Painel de filtros visível |
+| `$model` | `string` | `''` | Model identifier |
+| `$crudConfig` | `array` | `[]` | Full CrudConfig |
+| `$sort` | `string` | `'id'` | Sort column |
+| `$direction` | `string` | `'DESC'` | Direction: `ASC` or `DESC` |
+| `$perPage` | `int` | `25` | Records per page |
+| `$search` | `string` | `''` | Global search term |
+| `$showTrashed` | `bool` | `false` | Show soft-deleted records |
+| `$trashedCount` | `int` | `0` | Number of records in trash |
+| `$showFilters` | `bool` | `false` | Filter panel visible |
 
-### Filtros
+### Filters
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$filters` | `array` | `[]` | Valores dos filtros: `[campo => valor]` |
-| `$dateRanges` | `array` | `[]` | Date ranges: `[campo_start => data, campo_end => data]` |
-| `$savedFilters` | `array` | `[]` | Filtros salvos com nome |
-| `$savingFilterName` | `?string` | `null` | Nome sendo editado ao salvar filtro |
-| `$textFilter` | `array` | `[]` | Badges de filtros ativos: `[{label, field, value}]` |
-| `$quickDateFilter` | `string` | `''` | Período ativo: `today\|week\|month\|quarter\|year` |
-| `$quickDateColumn` | `string` | `'created_at'` | Coluna de data para o filtro rápido |
+| `$filters` | `array` | `[]` | Filter values: `[field => value]` |
+| `$dateRanges` | `array` | `[]` | Date ranges: `[field_start => date, field_end => date]` |
+| `$savedFilters` | `array` | `[]` | Named saved filters |
+| `$savingFilterName` | `?string` | `null` | Name being edited when saving a filter |
+| `$textFilter` | `array` | `[]` | Active filter badges: `[{label, field, value}]` |
+| `$quickDateFilter` | `string` | `''` | Active period: `today\|week\|month\|quarter\|year` |
+| `$quickDateColumn` | `string` | `'created_at'` | Date column for quick filter |
 
-### Busca avançada
+### Advanced search
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$advancedSearchActive` | `bool` | `false` | Modo busca avançada ativo |
-| `$advancedSearchFields` | `array` | `[]` | Critérios: `[{field, operator, value, logic}]` |
-| `$searchHistory` | `array` | `[]` | Últimas 10 buscas globais |
+| `$advancedSearchActive` | `bool` | `false` | Advanced search mode active |
+| `$advancedSearchFields` | `array` | `[]` | Criteria: `[{field, operator, value, logic}]` |
+| `$searchHistory` | `array` | `[]` | Last 10 global searches |
 
-### Visibilidade de colunas
+### Column visibility
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$formDataColumns` | `array` | `[]` | Mapa `[campo => bool]` de colunas visíveis |
-| `$hiddenColumnsCount` | `int` | `0` | Contador de colunas ocultas |
+| `$formDataColumns` | `array` | `[]` | Map `[field => bool]` of visible columns |
+| `$hiddenColumnsCount` | `int` | `0` | Hidden column counter |
 
 ### Bulk actions
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$selectedRows` | `array` | `[]` | IDs das linhas selecionadas (string[]) |
-| `$selectAll` | `bool` | `false` | Todos selecionados |
-| `$bulkActionInProgress` | `bool` | `false` | Ação bulk em execução |
-| `$showBulkActions` | `bool` | `false` | Área de bulk actions visível |
+| `$selectedRows` | `array` | `[]` | IDs of selected rows (string[]) |
+| `$selectAll` | `bool` | `false` | All selected |
+| `$bulkActionInProgress` | `bool` | `false` | Bulk action in progress |
+| `$showBulkActions` | `bool` | `false` | Bulk actions area visible |
 
-### Modal de criação/edição
+### Create/edit modal
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$formData` | `array` | `[]` | Dados do formulário |
-| `$editingId` | `?int` | `null` | ID do registro sendo editado |
-| `$showModal` | `bool` | `false` | Modal visível |
-| `$creating` | `bool` | `false` | Salvamento em andamento |
-| `$formErrors` | `array` | `[]` | Erros de validação |
+| `$formData` | `array` | `[]` | Form data |
+| `$editingId` | `?int` | `null` | ID of the record being edited |
+| `$showModal` | `bool` | `false` | Modal visible |
+| `$creating` | `bool` | `false` | Save in progress |
+| `$formErrors` | `array` | `[]` | Validation errors |
 
-### Exclusão
+### Deletion
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$showDeleteConfirm` | `bool` | `false` | Confirmação de exclusão visível |
-| `$deletingId` | `?int` | `null` | ID do registro a ser excluído |
+| `$showDeleteConfirm` | `bool` | `false` | Delete confirmation visible |
+| `$deletingId` | `?int` | `null` | ID of the record to delete |
 
-### SearchDropdown no formulário
+### SearchDropdown in form
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$sdSearches` | `array` | `[]` | Termos de busca: `[campo => query]` |
-| `$sdResults` | `array` | `[]` | Resultados: `[campo => [{value, label}]]` |
-| `$sdLabels` | `array` | `[]` | Labels exibidos: `[campo => label]` |
+| `$sdSearches` | `array` | `[]` | Search terms: `[field => query]` |
+| `$sdResults` | `array` | `[]` | Results: `[field => [{value, label}]]` |
+| `$sdLabels` | `array` | `[]` | Displayed labels: `[field => label]` |
 
-### Preferências e UI
+### Preferences and UI
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$columnOrder` | `array` | `[]` | Ordem customizada das colunas |
-| `$columnWidths` | `array` | `[]` | Larguras customizadas |
+| `$columnOrder` | `array` | `[]` | Custom column order |
+| `$columnWidths` | `array` | `[]` | Custom column widths |
 | `$viewDensity` | `string` | `'comfortable'` | `compact`, `comfortable`, `spacious` |
-| `$viewMode` | `string` | `'table'` | Modo de exibição |
+| `$viewMode` | `string` | `'table'` | Display mode |
 
-### Filtro externo / multi-tenant
+### External filter / multi-tenant
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$whereHasFilter` | `string` | `''` | Relação para pré-filtrar |
-| `$whereHasCondition` | `array` | `[]` | Condição da relação |
-| `$companyFilter` | `int` | `0` | ID da empresa (0 = sem filtro) |
+| `$whereHasFilter` | `string` | `''` | Relation for pre-filtering |
+| `$whereHasCondition` | `array` | `[]` | Relation condition |
+| `$companyFilter` | `int` | `0` | Company ID (0 = no filter) |
 
-### Exportação
+### Export
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$showExportMenu` | `bool` | `false` | Menu de exportação visível |
-| `$exportStatus` | `string` | `''` | Mensagem de status da exportação |
+| `$showExportMenu` | `bool` | `false` | Export menu visible |
+| `$exportStatus` | `string` | `''` | Export status message |
 
 ---
 
-## Métodos Públicos
+## Public Methods
 
-### Tabela
+### Table
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `sortBy()` | `string $column` | Ordena pela coluna (toggle ASC/DESC) |
-| `updatedSearch()` | — | Reseta paginação ao alterar search |
-| `updatedFilters()` | — | Reseta paginação e atualiza badges |
-| `updatedDateRanges()` | — | Reseta paginação e atualiza badges |
-| `updatedPerPage()` | — | Reseta paginação e salva preferência |
-| `toggleFilters()` | — | Abre/fecha painel de filtros |
-| `clearFilters()` | — | Limpa todos os filtros |
-| `toggleTrashed()` | — | Alterna exibição de soft-deleted |
-| `setViewDensity()` | `string $density` | Define density: `compact`, `comfortable`, `spacious` |
+| `sortBy()` | `string $column` | Sort by column (toggle ASC/DESC) |
+| `updatedSearch()` | — | Resets pagination when search changes |
+| `updatedFilters()` | — | Resets pagination and updates badges |
+| `updatedDateRanges()` | — | Resets pagination and updates badges |
+| `updatedPerPage()` | — | Resets pagination and saves preference |
+| `toggleFilters()` | — | Opens/closes the filter panel |
+| `clearFilters()` | — | Clears all filters |
+| `toggleTrashed()` | — | Toggles display of soft-deleted records |
+| `setViewDensity()` | `string $density` | Sets density: `compact`, `comfortable`, `spacious` |
 
 ### Modal
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `openCreate()` | — | Abre modal em modo criação |
-| `openEdit()` | `int $id` | Abre modal em modo edição |
-| `closeModal()` | — | Fecha e limpa o modal |
-| `save()` | — | Salva o registro (criação ou edição) |
+| `openCreate()` | — | Opens modal in create mode |
+| `openEdit()` | `int $id` | Opens modal in edit mode |
+| `closeModal()` | — | Closes and clears the modal |
+| `save()` | — | Saves the record (create or edit) |
 
-### Exclusão
+### Deletion
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `confirmDelete()` | `int $id` | Abre confirmação de exclusão |
-| `cancelDelete()` | — | Cancela a exclusão |
-| `deleteRecord()` | — | Executa a exclusão (soft ou hard) |
-| `restoreRecord()` | `int $id` | Restaura registro soft-deleted |
+| `confirmDelete()` | `int $id` | Opens delete confirmation |
+| `cancelDelete()` | — | Cancels deletion |
+| `deleteRecord()` | — | Executes deletion (soft or hard) |
+| `restoreRecord()` | `int $id` | Restores a soft-deleted record |
 
-### Filtros salvos
+### Saved filters
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `saveNamedFilter()` | `string $name` | Salva conjunto de filtros com nome |
-| `loadNamedFilter()` | `string $name` | Carrega filtros pelo nome |
-| `deleteNamedFilter()` | `string $name` | Remove filtro salvo |
+| `saveNamedFilter()` | `string $name` | Saves a set of filters with a name |
+| `loadNamedFilter()` | `string $name` | Loads filters by name |
+| `deleteNamedFilter()` | `string $name` | Removes a saved filter |
 
-### Visibilidade de colunas
+### Column visibility
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `getVisibleColumns()` | — | Retorna colunas visíveis (filtered) |
-| `updateColumns()` | — | Persiste mudanças de visibilidade |
-| `showAllColumns()` | — | Torna todas as colunas visíveis |
-| `hideAllColumns()` | — | Oculta todas as colunas |
-| `resetColumnsToDefault()` | — | Restaura visibilidade padrão |
+| `getVisibleColumns()` | — | Returns visible (filtered) columns |
+| `updateColumns()` | — | Persists visibility changes |
+| `showAllColumns()` | — | Makes all columns visible |
+| `hideAllColumns()` | — | Hides all columns |
+| `resetColumnsToDefault()` | — | Resets default visibility |
 
-### Filtros de texto (badges)
+### Text filters (badges)
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `buildTextFilter()` | — | Reconstrói array de badges ativos |
-| `removeTextFilterBadge()` | `string $field` | Remove um filtro pelo campo |
+| `buildTextFilter()` | — | Rebuilds active badge array |
+| `removeTextFilterBadge()` | `string $field` | Removes a filter by field |
 
 ### Bulk actions
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `toggleSelectAll()` | — | Seleciona/deseleciona toda a página |
-| `toggleSelectRow()` | `int\|string $id` | Alterna seleção de uma linha |
-| `bulkDelete()` | — | Exclui registros selecionados |
-| `bulkExport()` | `string $format = 'excel'` | Exporta registros selecionados |
-| `executeBulkAction()` | `string $action` | Executa ação bulk configurada |
+| `toggleSelectAll()` | — | Selects/deselects the entire page |
+| `toggleSelectRow()` | `int\|string $id` | Toggles selection of a row |
+| `bulkDelete()` | — | Deletes selected records |
+| `bulkExport()` | `string $format = 'excel'` | Exports selected records |
+| `executeBulkAction()` | `string $action` | Executes a configured bulk action |
 
-### Filtros rápidos de data
+### Quick date filters
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `applyQuickDateFilter()` | `string $period` | Aplica/remove filtro de período (toggle) |
-| `updatedQuickDateFilter()` | — | Atualizado automaticamente ao mudar `$quickDateFilter` |
+| `applyQuickDateFilter()` | `string $period` | Applies/removes a period filter (toggle) |
+| `updatedQuickDateFilter()` | — | Updated automatically when `$quickDateFilter` changes |
 
-### Busca avançada
+### Advanced search
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `toggleAdvancedSearch()` | — | Ativa/desativa busca avançada |
-| `addAdvancedSearchField()` | `string $field, string $operator, mixed $value, string $logic = 'AND'` | Adiciona critério de busca |
-| `removeAdvancedSearchField()` | `int $index` | Remove critério pelo índice |
+| `toggleAdvancedSearch()` | — | Enables/disables advanced search |
+| `addAdvancedSearchField()` | `string $field, string $operator, mixed $value, string $logic = 'AND'` | Adds a search criterion |
+| `removeAdvancedSearchField()` | `int $index` | Removes a criterion by index |
 
-### Histórico de busca
+### Search history
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `clearSearchHistory()` | — | Limpa histórico de buscas |
+| `clearSearchHistory()` | — | Clears search history |
 
-### Preferências
+### Preferences
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `savePreferences()` | — | Persiste preferências (V2.1) |
+| `savePreferences()` | — | Persists preferences (V2.1) |
 
-### SearchDropdown (formulário)
+### SearchDropdown (form)
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `openDropdown()` | `string $field` | Carrega os primeiros itens (sem query) ao focar/clicar |
-| `searchDropdown()` | `string $field, string $query` | Filtra sugestões pelo texto digitado (min 1 char, debounce 300ms) |
-| `selectDropdownOption()` | `string $field, mixed $value, string $label` | Confirma seleção e atualiza `formData` e `sdLabels` |
-| `filterSearchDropdown()` | `string $field, string $query` | Busca no painel de filtros |
+| `openDropdown()` | `string $field` | Loads the first items (no query) when focused/clicked |
+| `searchDropdown()` | `string $field, string $query` | Filters suggestions by typed text (min 1 char, 300ms debounce) |
+| `selectDropdownOption()` | `string $field, mixed $value, string $label` | Confirms selection and updates `formData` and `sdLabels` |
+| `filterSearchDropdown()` | `string $field, string $query` | Search in the filter panel |
 
-### Exportação
+### Export
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `export()` | `string $format = 'excel'` | Inicia exportação (sync ou async) |
+| `export()` | `string $format = 'excel'` | Starts export (sync or async) |
 
-### Formatação
+### Formatting
 
-| Método | Parâmetros | Descrição |
+| Method | Parameters | Description |
 |---|---|---|
-| `formatCell()` | `array $col, mixed $row` | Formata o valor de uma célula |
-| `getRowStyle()` | `mixed $row` | Retorna CSS inline baseado em `contitionStyles` |
-| `getDefaultPermissionIdentifier()` | — | Ex: `"products.index"` |
-| `updateTrashedCount()` | — | Atualiza `$trashedCount` |
+| `formatCell()` | `array $col, mixed $row` | Formats the value of a cell |
+| `getRowStyle()` | `mixed $row` | Returns inline CSS based on `contitionStyles` |
+| `getDefaultPermissionIdentifier()` | — | E.g.: `"products.index"` |
+| `updateTrashedCount()` | — | Updates `$trashedCount` |
 
 ---
 
-## CrudConfig — Estrutura de Colunas
+## CrudConfig — Column Structure
 
-O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `CrudConfigService`.
+The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `CrudConfigService`.
 
-### Estrutura geral
+### General structure
 
 ```json
 {
@@ -385,98 +385,98 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 }
 ```
 
-### Definição de coluna (`ColDef`)
+### Column definition (`ColDef`)
 
-| Chave | Tipo | Descrição |
+| Key | Type | Description |
 |---|---|---|
-| `colsNomeFisico` | `string` | Nome real do campo na tabela |
-| `colsNomeLogico` | `string` | Rótulo exibido ao usuário. Para os campos `id`, `created_at` e `updated_at` o padrão é localizado automaticamente via `trans('ptah::ui.col_id')` etc. — use o modificador `surname=`/`label=` no `ptah:forge` para sobrescrever |
-| `colsTipo` | `string` | Tipo da coluna — veja [Tipos de Coluna](#tipos-de-coluna) |
-| `colsGravar` | `'S'\|'N'` | Campo incluído ao salvar |
-| `colsRequired` | `'S'\|'N'` | Obrigatório no formulário |
-| `colsHelper` | `string\|null` | Helper legacy de formatação — veja [Helpers](#helpers-de-formatação-de-célula) |
+| `colsNomeFisico` | `string` | Actual field name in the table |
+| `colsNomeLogico` | `string` | Label displayed to the user. For `id`, `created_at` and `updated_at` fields, the default is automatically localised via `trans('ptah::ui.col_id')` etc. — use the `surname=`/`label=` modifier in `ptah:forge` to override |
+| `colsTipo` | `string` | Column type — see [Column Types](#column-types) |
+| `colsGravar` | `'S'\|'N'` | Field included when saving |
+| `colsRequired` | `'S'\|'N'` | Required in the form |
+| `colsHelper` | `string\|null` | Legacy formatting helper — see [Helpers](#cell-formatting-helpers) |
 | `colsRenderer` | `string\|null` | Renderer DSL — `badge`, `pill`, `boolean`, `money`, `link`, `image`, `truncate` |
-| `colsRendererBadges` | `array\|null` | Mapa `["valor" => "cor"]` para `badge`/`pill` |
-| `colsCellStyle` | `string\|null` | CSS inline no `<span>` da célula |
-| `colsCellClass` | `string\|null` | Classes Tailwind adicionais da célula |
-| `colsCellIcon` | `string\|null` | Classe de ícone prefixada ao conteúdo da célula **e ao cabeçalho** `<th>`. Suporta Boxicons (`bx bx-*`) e FontAwesome (`fas fa-*`) 
-| `colsMinWidth` | `string\|null` | Largura mínima do th (ex: `"120px"`) |
-| `colsMask` | `string\|null` | Máscara: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
-| `colsMaskTransform` | `string\|null` | Transformação salva no servidor antes de persistir: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsRelacao` | `string\|null` | Nome da relação Eloquent |
-| `colsRelacaoExibe` | `string\|null` | Campo da relação a exibir |
-| `colsRelacaoNested` | `string\|null` | Notação dot para relações aninhadas: `category.parent.name` |
-| `colsOrderBy` | `string\|null` | Coluna real para ORDER BY |
-| `colsMetodoCustom` | `string\|null` | Padrão `Namespace\Classe\método(%campo%)` |
-| `colsSelect` | `array\|null` | Opções de select: `[valor => label]` |
-| `colsSDModel` | `string\|null` | Model do SearchDropdown (ex: `BusinessPartner` ou FQCN) |
-| `colsSDLabel` | `string\|null` | Campo da tabela usado como label (ex: `name`) |
-| `colsSDValor` | `string\|null` | Campo da tabela usado como value (ex: `id`) |
-| `colsSDOrder` | `string\|null` | Ordenação: `"name ASC"` (padrão: `{sdLabel} ASC`) |
-| `colsSDTipo` | `'model'\|'service'` | Origem dos dados (`model` = Eloquent direto, `service` = método de serviço) |
-| `colsSDLimit` | `int` | Limite de itens retornados (padrão: `15`) |
-| `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SD aparece |
-| `colsValidations` | `array\|null` | Regras do FormValidatorService: `["required","email","min:3"]` |
-| `colsSource` | `string\|null` | **JOIN** — qualified name SQL usado em `WHERE` e `ORDER BY` (ex: `suppliers.name`). Obrigatório para filtros e sort funcionarem em colunas vindas de JOIN. O `colsNomeFisico` deve ser o alias (ex: `supplier_name`) |
-| `colsHelpText` | `string\|null` | Texto de ajuda exibido abaixo do campo no formulário de criação/edição |
-| `colsEditableForm` | `bool` | Se `false`, o campo NÃO aparece no formulário de criação/edição (padrão: `true`) |
-| `colsVisibleList` | `bool` | Se `false`, a coluna começa oculta na listagem por padrão (padrão: `true`) |
-| `colsAlign` | `string\|null` | Alinhamento da coluna na tabela: `text-start`, `text-center`, `text-end` (padrão: `text-start`) |
-| `colsReverse` | `bool\|'S'\|'N'\|int` | Se `true`, `'S'`, `1` ou `'1'`, aplica `font-medium` na célula para destacar o valor (padrão: `false`) |
+| `colsRendererBadges` | `array\|null` | Map `["value" => "color"]` for `badge`/`pill` |
+| `colsCellStyle` | `string\|null` | Inline CSS on the cell `<span>` |
+| `colsCellClass` | `string\|null` | Additional Tailwind classes on the cell |
+| `colsCellIcon` | `string\|null` | Icon class prefixed to the cell content **and the `<th>` header**. Supports Boxicons (`bx bx-*`) and FontAwesome (`fas fa-*`) |
+| `colsMinWidth` | `string\|null` | Minimum th width (e.g. `"120px"`) |
+| `colsMask` | `string\|null` | Mask: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
+| `colsMaskTransform` | `string\|null` | Server-side transform applied before persisting: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
+| `colsRelacao` | `string\|null` | Eloquent relation name |
+| `colsRelacaoExibe` | `string\|null` | Relation field to display |
+| `colsRelacaoNested` | `string\|null` | Dot notation for nested relations: `category.parent.name` |
+| `colsOrderBy` | `string\|null` | Actual column for ORDER BY |
+| `colsMetodoCustom` | `string\|null` | Pattern `Namespace\Class\method(%field%)` |
+| `colsSelect` | `array\|null` | Select options: `[value => label]` |
+| `colsSDModel` | `string\|null` | SearchDropdown model (e.g. `BusinessPartner` or FQCN) |
+| `colsSDLabel` | `string\|null` | Table field used as label (e.g. `name`) |
+| `colsSDValor` | `string\|null` | Table field used as value (e.g. `id`) |
+| `colsSDOrder` | `string\|null` | Ordering: `"name ASC"` (default: `{sdLabel} ASC`) |
+| `colsSDTipo` | `'model'\|'service'` | Data source (`model` = direct Eloquent, `service` = service method) |
+| `colsSDLimit` | `int` | Maximum items returned (default: `15`) |
+| `colsSDMode` | `'create'\|'edit'\|'both'` | Which modal mode the SD field appears in |
+| `colsValidations` | `array\|null` | FormValidatorService rules: `["required","email","min:3"]` |
+| `colsSource` | `string\|null` | **JOIN** — qualified SQL name used in `WHERE` and `ORDER BY` (e.g. `suppliers.name`). Required for filters and sort to work on JOIN columns. `colsNomeFisico` must be the alias (e.g. `supplier_name`) |
+| `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
+| `colsEditableForm` | `bool` | If `false`, the field does NOT appear in the create/edit form (default: `true`) |
+| `colsVisibleList` | `bool` | If `false`, the column starts hidden in the list by default (default: `true`) |
+| `colsAlign` | `string\|null` | Column alignment in the table: `text-start`, `text-center`, `text-end` (default: `text-start`) |
+| `colsReverse` | `bool\|'S'\|'N'\|int` | If `true`, `'S'`, `1` or `'1'`, applies `font-medium` on the cell to highlight the value (default: `false`) |
 
 ---
 
-## Tipos de Coluna
+## Column Types
 
-Valor de `colsTipo`:
+Value of `colsTipo`:
 
-| Tipo | Descrição |
+| Type | Description |
 |---|---|
-| `text` | Campo de texto livre |
-| `number` / `numeric` | Campo numérico |
-| `date` | Data sem hora |
-| `datetime` / `timestamp` | Data com hora |
-| `boolean` | Verdadeiro/falso |
-| `select` | Select com opções fixas (`colsSelect`) |
-| `searchdropdown` | Campo com busca dinâmica (SD) |
-| `array` | Lista de valores |
-| `relation` | Filtro via `whereHas` |
-| `image` | Imagem com preview ao vivo (URL ou arquivo local) |
+| `text` | Free-text field |
+| `number` / `numeric` | Numeric field |
+| `date` | Date without time |
+| `datetime` / `timestamp` | Date with time |
+| `boolean` | True/false |
+| `select` | Select with fixed options (`colsSelect`) |
+| `searchdropdown` | Field with dynamic search (SD) |
+| `array` | List of values |
+| `relation` | Filter via `whereHas` |
+| `image` | Image with live preview (URL or local file) |
 
 ---
 
-## Helpers de Formatação de Célula
+## Cell Formatting Helpers
 
-Configurado em `colsHelper` da coluna (helpers legacy).
+Configured in `colsHelper` of the column (legacy helpers).
 
-| Helper | Resultado |
+| Helper | Result |
 |---|---|
-| `dateFormat` | `01/12/2025` |
-| `dateTimeFormat` | `01/12/2025 14:30` |
-| `currencyFormat` | `R$ 1.234,56` |
-| `yesOrNot` | `Sim` / `Não` |
-| `flagChannel` | Badge colorido: **G** verde, **Y** amarelo, **R** vermelho |
+| `dateFormat` | `12/01/2025` |
+| `dateTimeFormat` | `12/01/2025 14:30` |
+| `currencyFormat` | `R$ 1,234.56` |
+| `yesOrNot` | `Yes` / `No` |
+| `flagChannel` | Coloured badge: **G** green, **Y** yellow, **R** red |
 
-### Método customizado (`colsMetodoCustom`)
+### Custom method (`colsMetodoCustom`)
 
 ```
 "App\\Services\\ProductService\\getStatus(%id%)"
 "Branch\\CompaniesService\\getLabel(%id%, %status%, 'active')"
 ```
 
-- O padrão é `Namespace\Classe\metodo(arg1, arg2, ...)`.
-- O prefixo `App\Services\` é adicionado automaticamente se o caminho não contiver `\\`.
-- Cada token separado por vírgula torna-se um argumento PHP separado:
-  - `%campo%` → substituído pelo valor do campo no registro
-  - `'literal'` ou `"literal"` → string passada diretamente
-  - Valor numérico → passado como número
-- O retorno é sempre escapado via `e()`. Para HTML bruto, use `colsMetodoRaw: true`.
+- The pattern is `Namespace\Class\method(arg1, arg2, ...)`.
+- The prefix `App\Services\` is added automatically if the path does not contain `\\`.
+- Each comma-separated token becomes a separate PHP argument:
+  - `%field%` → replaced by the field value in the record
+  - `'literal'` or `"literal"` → string passed directly
+  - Numeric value → passed as a number
+- The return is always escaped via `e()`. For raw HTML, use `colsMetodoRaw: true`.
 
 #### `colsMetodoRaw`
 
-| Chave | Tipo | Padrão | Descrição |
+| Key | Type | Default | Description |
 |---|---|---|---|
-| `colsMetodoRaw` | `bool` | `false` | Se `true`, o HTML retornado pelo método é inserido sem `e()` |
+| `colsMetodoRaw` | `bool` | `false` | If `true`, the HTML returned by the method is inserted without `e()` |
 
 ```json
 {
@@ -485,36 +485,36 @@ Configurado em `colsHelper` da coluna (helpers legacy).
 }
 ```
 
-> **Atenção:** use `colsMetodoRaw: true` apenas quando confiar 100% no retorno. Valores de usuário jamais devem ser inseridos sem sanitização.
+> **Warning:** use `colsMetodoRaw: true` only when you fully trust the return value. User-supplied values must never be inserted without sanitisation.
 
 ---
 
 ## Renderer DSL
 
-O `colsRenderer` é a forma moderna e recomendada de formatar células.
+`colsRenderer` is the modern and recommended way to format cells.
 
-| Renderer | Descrição | Config Keys |
+| Renderer | Description | Config Keys |
 |---|---|---|
-| `badge` | `<span>` com fundo colorido (padded, bordas leves) | `colsRendererBadges` |
-| `pill` | Igual ao `badge` mas com bordas completamente arredondadas | `colsRendererBadges` |
-| `boolean` | `✅` (verde) / `❌` (vermelho) baseado em truthy | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
-| `money` | Formata como `R$ X.XXX,XX` | `colsRendererCurrency`, `colsRendererDecimals` |
-| `link` | `<a href="[valor]" target="_blank">` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
-| `image` | `<img src="[valor]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
-| `truncate` | Texto cortado com `title` completo no hover | `colsRendererMaxChars` |
-| `number` | Número formatado com separadores locais (`1.234,56`) | `colsRendererDecimals` (padrão: 2), `colsRendererLocale` (padrão: pt-BR) |
-| `progress` | Barra de progresso visual com percentual | `colsRendererMax` (padrão: 100), `colsRendererColor` (padrão: indigo) |
-| `rating` | Estrelas SVG; suporta meias estrelas | `colsRendererMax` (padrão: 5) |
-| `color` | Swatch colorido + código hex | — |
-| `code` | `<code>` monospace com fundo cinza | — |
-| `filesize` | Bytes → B / KB / MB / GB humanizado | — |
-| `duration` | Minutos ou segundos → "1h 35min" | `colsRendererDurationUnit` (`minutes` \| `seconds`) |
-| `qrcode` | QR Code via qrcode.js CDN (Alpine `x-init`) | `colsRendererQrSize` (padrão: 64px) |
+| `badge` | `<span>` with coloured background (padded, soft borders) | `colsRendererBadges` |
+| `pill` | Same as `badge` but with fully rounded borders | `colsRendererBadges` |
+| `boolean` | `✅` (green) / `❌` (red) based on truthy | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
+| `money` | Formats as `$ X,XXX.XX` | `colsRendererCurrency`, `colsRendererDecimals` |
+| `link` | `<a href="[value]" target="_blank">` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
+| `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
+| `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
+| `number` | Number formatted with locale separators (`1,234.56`) | `colsRendererDecimals` (default: 2), `colsRendererLocale` (default: pt-BR) |
+| `progress` | Visual progress bar with percentage | `colsRendererMax` (default: 100), `colsRendererColor` (default: indigo) |
+| `rating` | SVG stars; supports half stars | `colsRendererMax` (default: 5) |
+| `color` | Colour swatch + hex code | — |
+| `code` | Monospace `<code>` with grey background | — |
+| `filesize` | Bytes → B / KB / MB / GB humanised | — |
+| `duration` | Minutes or seconds → "1h 35min" | `colsRendererDurationUnit` (`minutes` \| `seconds`) |
+| `qrcode` | QR Code via qrcode.js CDN (Alpine `x-init`) | `colsRendererQrSize` (default: 64px) |
 
 ### Badge / Pill
 
-Cores nomeadas: `green`, `red`, `yellow`, `blue`, `indigo`, `purple`, `pink`, `gray`.  
-Cores hex (`#RRGGBB`): geram `background-color` inline com 13% de opacidade e `color` correspondente.
+Named colours: `green`, `red`, `yellow`, `blue`, `indigo`, `purple`, `pink`, `gray`.  
+Hex colours (`#RRGGBB`): generate inline `background-color` with 13% opacity and a corresponding `color`.
 
 ```json
 {
@@ -528,9 +528,9 @@ Cores hex (`#RRGGBB`): geram `background-color` inline com 13% de opacidade e `c
 }
 ```
 
-### Estilo, classe e ícone por célula
+### Cell style, class and icon
 
-O `colsCellIcon` aceita qualquer classe de ícone e é renderizado **tanto no cabeçalho `<th>` quanto na célula `<td>`**:
+`colsCellIcon` accepts any icon class and is rendered **both in the `<th>` header and in the `<td>` cell**:
 
 ```json
 { "colsCellIcon": "bx bxs-user" }
@@ -544,14 +544,14 @@ O `colsCellIcon` aceita qualquer classe de ícone e é renderizado **tanto no ca
 { "colsCellIcon": "heroicon-o-star" }
 ```
 
-O layout padrão (`forge-dashboard-layout`) já inclui os CDNs necessários:
+The default layout (`forge-dashboard-layout`) already includes the necessary CDNs:
 
 ```html
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
 ```
 
-Exemplo completo de coluna com estilo:
+Full column styling example:
 
 ```json
 {
@@ -562,58 +562,58 @@ Exemplo completo de coluna com estilo:
 }
 ```
 
-### Máscaras (`colsMask`)
+### Masks (`colsMask`)
 
-| Máscara | Formato visual | Grupo |
+| Mask | Visual format | Group |
 |---|---|---|
-| `cpf` | `000.000.000-00` | Documentos |
-| `cnpj` | `00.000.000/0000-00` | Documentos |
-| `rg` | `00.000.000-0` | Documentos |
-| `pis` | `000.00000.00-0` | Documentos |
-| `ncm` | `0000.00.00` | Documentos |
-| `ean13` | `0000000000000` (13 dígitos) | Documentos |
-| `phone` | `(00) 0 0000-0000` | Contato |
-| `cep` | `00000-000` | Contato |
-| `plate` | `ABC-1234` / Mercosul `ABC1A23` | Veículos |
-| `credit_card` | `0000 0000 0000 0000` | Pagamento |
-| `date` | `00/00/0000` | Data/Hora |
-| `datetime` | `00/00/0000 00:00` | Data/Hora |
-| `time` | `00:00` | Data/Hora |
-| `money_brl` | `R$ 1.253,08` | Monetário |
-| `money_usd` | `$ 1,253.08` | Monetário |
-| `percent` | `99,99%` | Monetário |
-| `integer` | Somente inteiros | Texto |
-| `uppercase` | MAIÚSCULAS automático | Texto |
-| `custom_regex` | Padrão IMask custom (`colsMaskRegex`) | Texto |
+| `cpf` | `000.000.000-00` | Documents |
+| `cnpj` | `00.000.000/0000-00` | Documents |
+| `rg` | `00.000.000-0` | Documents |
+| `pis` | `000.00000.00-0` | Documents |
+| `ncm` | `0000.00.00` | Documents |
+| `ean13` | `0000000000000` (13 digits) | Documents |
+| `phone` | `(00) 0 0000-0000` | Contact |
+| `cep` | `00000-000` | Contact |
+| `plate` | `ABC-1234` / Mercosul `ABC1A23` | Vehicles |
+| `credit_card` | `0000 0000 0000 0000` | Payment |
+| `date` | `00/00/0000` | Date/Time |
+| `datetime` | `00/00/0000 00:00` | Date/Time |
+| `time` | `00:00` | Date/Time |
+| `money_brl` | `R$ 1,253.08` | Monetary |
+| `money_usd` | `$ 1,253.08` | Monetary |
+| `percent` | `99.99%` | Monetary |
+| `integer` | Integers only | Text |
+| `uppercase` | Automatic UPPERCASE | Text |
+| `custom_regex` | Custom IMask pattern (`colsMaskRegex`) | Text |
 
-### Transformações antes de Salvar (`colsMaskTransform`)
+### Save Transforms (`colsMaskTransform`)
 
-| Transform | Descrição |
+| Transform | Description |
 |---|---|
-| `money_to_float` | `"R$ 1.253,08"` → `1253.08` |
+| `money_to_float` | `"R$ 1,253.08"` → `1253.08` |
 | `digits_only` | `"055.465.309-52"` → `"05546530952"` |
-| `plate_clean` | `"ABC-1234"` → `"ABC1234"` (maiúsculas + alfanumérico) |
+| `plate_clean` | `"ABC-1234"` → `"ABC1234"` (uppercase + alphanumeric) |
 | `date_br_to_iso` | `"01/12/2024"` → `"2024-12-01"` |
 | `date_iso_to_br` | `"2024-12-01"` → `"01/12/2024"` |
-| `uppercase` | `"texto"` → `"TEXTO"` |
-| `lowercase` | `"TEXTO"` → `"texto"` |
-| `trim` | Remove espaços das bordas |
+| `uppercase` | `"text"` → `"TEXT"` |
+| `lowercase` | `"TEXT"` → `"text"` |
+| `trim` | Removes leading/trailing spaces |
 
-### Relações aninhadas (`colsRelacaoNested`)
+### Nested relations (`colsRelacaoNested`)
 
-Notação dot para relações em cadeia, sem `colsMetodoCustom`:
+Dot notation for chained relations, without `colsMetodoCustom`:
 
 ```json
 { "colsRelacaoNested": "category.parent.name" }
 ```
 
-Resolvido via `resolveNestedValue()` em qualquer profundidade.
+Resolved via `resolveNestedValue()` at any depth.
 
 ---
 
-## Estilos Condicionais de Linha
+## Conditional Row Styles
 
-Configurado em `contitionStyles` do CrudConfig. Aplica CSS inline na `<tr>` quando a condição for satisfeita.
+Configured in `contitionStyles` of CrudConfig. Applies inline CSS to the `<tr>` when the condition is met.
 
 ```json
 "contitionStyles": [
@@ -632,59 +632,59 @@ Configurado em `contitionStyles` do CrudConfig. Aplica CSS inline na `<tr>` quan
 ]
 ```
 
-> **Nota:** a chave do campo é `field`. O alias legado `colsNomeFisico` ainda é aceito como fallback para retrocompatibilidade, mas use `field` em configs novas.
+> **Note:** the field key is `field`. The legacy alias `colsNomeFisico` is still accepted as a fallback for backwards compatibility, but use `field` in new configs.
 
-| Operador | Descrição |
+| Operator | Description |
 |---|---|
-| `==` | Igual (comparação por string) |
-| `!=` | Diferente (comparação por string) |
-| `>` | Maior (cast para float) |
-| `<` | Menor (cast para float) |
-| `>=` | Maior ou igual (cast para float) |
-| `<=` | Menor ou igual (cast para float) |
+| `==` | Equal (string comparison) |
+| `!=` | Not equal (string comparison) |
+| `>` | Greater than (cast to float) |
+| `<` | Less than (cast to float) |
+| `>=` | Greater than or equal (cast to float) |
+| `<=` | Less than or equal (cast to float) |
 
-### Comportamento de segurança
+### Security behaviour
 
-Se o campo informado em `field` **não existir** nos atributos do model (`getAttributes()`), a regra é **ignorada silenciosamente** — sem erro, sem match falso. Isso evita que um typo no nome do campo cause estilos indevidos em toda a tabela.
+If the field in `field` **does not exist** in the model attributes (`getAttributes()`), the rule is **silently ignored** — no error, no false match. This prevents a typo in the field name from causing incorrect styles across the entire table.
 
-Retornado por `getRowStyle($row)`, aplicado via `style="{{ $this->getRowStyle($row) }}"`.
+Returned by `getRowStyle($row)`, applied via `style="{{ $this->getRowStyle($row) }}"`.
 
 ---
 
-## Filtros
+## Filters
 
-### Filtros do formulário (`$filters`)
+### Form filters (`$filters`)
 
-Aplicados automaticamente quando `$filters[campo]` tem valor.
+Applied automatically when `$filters[field]` has a value.
 
 ```php
 $this->filters['status'] = 'active';
-$this->filters['name']   = 'João';
+$this->filters['name']   = 'John';
 ```
 
-Os operadores são inferidos automaticamente:
-- String com mais de 1 caractere → `LIKE %valor%`
-- Valor exato → `=`
+Operators are inferred automatically:
+- String longer than 1 character → `LIKE %value%`
+- Exact value → `=`
 
 ### Date ranges (`$dateRanges`)
 
-Suporta dois padrões:
+Supports two patterns:
 
 ```php
-// Padrão Ptah
+// Ptah pattern
 $this->dateRanges['created_at_start'] = '2025-01-01';
 $this->dateRanges['created_at_end']   = '2025-12-31';
 
-// Padrão legado ERP
+// Legacy ERP pattern
 $this->dateRanges['created_at_from'] = '2025-01-01';
 $this->dateRanges['created_at_to']   = '2025-12-31';
 ```
 
-### Filtros customizados (`customFilters`)
+### Custom filters (`customFilters`)
 
-Definidos no CrudConfig, processados separadamente via `FilterService::processCustomFilters()`.
+Defined in CrudConfig, processed separately via `FilterService::processCustomFilters()`.
 
-#### Filtro direto em campo da tabela
+#### Direct filter on a table field
 
 ```json
 "customFilters": [
@@ -696,7 +696,7 @@ Definidos no CrudConfig, processados separadamente via `FilterService::processCu
 ]
 ```
 
-#### Filtro via `whereHas` (relação)
+#### Filter via `whereHas` (relation)
 
 ```json
 "customFilters": [
@@ -709,7 +709,7 @@ Definidos no CrudConfig, processados separadamente via `FilterService::processCu
 ]
 ```
 
-#### Filtro via `whereHas` com aggregate
+#### Filter via `whereHas` with aggregate
 
 ```json
 "customFilters": [
@@ -723,98 +723,98 @@ Definidos no CrudConfig, processados separadamente via `FilterService::processCu
 ]
 ```
 
-#### Chaves aceitas por campo
+#### Accepted keys per field
 
-| Chave | Alias legado aceito | Descrição |
+| Key | Accepted legacy alias | Description |
 |---|---|---|
-| `field` | — | Nome do campo na tabela ou chave do filtro |
-| `operator` | `defaultOperator` | Operador: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
-| `type` | `colsFilterType` | Tipo: `text`, `select`, `date`, `number`, `relation` |
-| `colRelation` | `field_relation` | Nome da relação Eloquent (obrigatório para `type: relation`) |
-| `aggregate` | — | Função de agregação para o whereHas: `count`, `sum`, `avg`, `min`, `max` |
+| `field` | — | Field name in the table or filter key |
+| `operator` | `defaultOperator` | Operator: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
+| `type` | `colsFilterType` | Type: `text`, `select`, `date`, `number`, `relation` |
+| `colRelation` | `field_relation` | Eloquent relation name (required for `type: relation`) |
+| `aggregate` | — | Aggregation function for whereHas: `count`, `sum`, `avg`, `min`, `max` |
 
-> Os aliases legados (`defaultOperator`, `colsFilterType`, `field_relation`) são aceitos para retrocompatibilidade, mas use as chaves novas em configs novas.
+> Legacy aliases (`defaultOperator`, `colsFilterType`, `field_relation`) are accepted for backwards compatibility, but use the new keys in new configs.
 
-Para ativar no template, use `wire:model="filters.{field}"`.
+To activate in the template, use `wire:model="filters.{field}"`.
 
 ---
 
-## Filtros Rápidos de Data
+## Quick Date Filters
 
-Períodos disponíveis:
+Available periods:
 
-| Valor | Descrição |
+| Value | Description |
 |---|---|
-| `today` | Hoje (00:00 → 23:59) |
-| `yesterday` | Ontem (00:00 → 23:59) |
-| `week` | Esta semana (seg → dom) |
-| `last7` | Últimos 7 dias |
-| `last30` | Últimos 30 dias |
-| `month` | Este mês (dia 1 → último) |
-| `lastMonth` | Mês passado |
-| `quarter` | Este trimestre |
-| `year` | Este ano |
+| `today` | Today (00:00 → 23:59) |
+| `yesterday` | Yesterday (00:00 → 23:59) |
+| `week` | This week (Mon → Sun) |
+| `last7` | Last 7 days |
+| `last30` | Last 30 days |
+| `month` | This month (1st → last day) |
+| `lastMonth` | Last month |
+| `quarter` | This quarter |
+| `year` | This year |
 
 ```blade
-<button wire:click="applyQuickDateFilter('today')">Hoje</button>
-<button wire:click="applyQuickDateFilter('month')">Este mês</button>
+<button wire:click="applyQuickDateFilter('today')">Today</button>
+<button wire:click="applyQuickDateFilter('month')">This month</button>
 ```
 
-A coluna usada é `$quickDateColumn` (padrão `created_at`, configurável em `crudConfig['quickDateColumn']`).
+The column used is `$quickDateColumn` (default `created_at`, configurable via `crudConfig['quickDateColumn']`).
 
 ---
 
-## Busca Avançada
+## Advanced Search
 
 ```blade
-<button wire:click="toggleAdvancedSearch()">Busca Avançada</button>
+<button wire:click="toggleAdvancedSearch()">Advanced Search</button>
 
 @if ($advancedSearchActive)
-    {{-- Adiciona critério --}}
+    {{-- Add criterion --}}
     <button wire:click="addAdvancedSearchField('price', '>=', 100, 'AND')">
-        Preço >= 100
+        Price >= 100
     </button>
 
-    {{-- Remove critério --}}
+    {{-- Remove criterion --}}
     @foreach ($advancedSearchFields as $i => $asf)
         <button wire:click="removeAdvancedSearchField({{ $i }})">✕</button>
     @endforeach
 @endif
 ```
 
-### Estrutura de um critério
+### Criterion structure
 
 ```php
 [
-    'field'    => 'price',      // Campo da tabela
-    'operator' => '>=',         // Operador: =, !=, >, <, >=, <=, LIKE, IN, NOT IN
-    'value'    => 100,          // Valor
-    'logic'    => 'AND',        // 'AND' ou 'OR'
+    'field'    => 'price',      // Table field
+    'operator' => '>=',         // Operator: =, !=, >, <, >=, <=, LIKE, IN, NOT IN
+    'value'    => 100,          // Value
+    'logic'    => 'AND',        // 'AND' or 'OR'
 ]
 ```
 
-Os campos com `logic = 'OR'` são agrupados em um `WHERE (... OR ...)` separado.
+Fields with `logic = 'OR'` are grouped into a separate `WHERE (... OR ...)`.
 
 ---
 
-## Visibilidade de Colunas
+## Column Visibility
 
 ```blade
-{{-- Toggle individual --}}
+{{-- Individual toggle --}}
 <input type="checkbox" wire:model.live="formDataColumns.name" wire:change="updateColumns()">
 
-{{-- Ações em lote --}}
-<button wire:click="showAllColumns()">Mostrar Todas</button>
-<button wire:click="hideAllColumns()">Ocultar Todas</button>
-<button wire:click="resetColumnsToDefault()">Resetar</button>
+{{-- Batch actions --}}
+<button wire:click="showAllColumns()">Show All</button>
+<button wire:click="hideAllColumns()">Hide All</button>
+<button wire:click="resetColumnsToDefault()">Reset</button>
 
-{{-- Contador --}}
+{{-- Counter --}}
 @if ($hiddenColumnsCount > 0)
-    {{ $hiddenColumnsCount }} colunas ocultas
+    {{ $hiddenColumnsCount }} hidden columns
 @endif
 ```
 
-Na view da tabela, use o computed `visibleCols` passado pelo `render()`:
+In the table view, use the computed `visibleCols` passed by `render()`:
 
 ```blade
 @foreach ($visibleCols as $col)
@@ -826,24 +826,24 @@ Na view da tabela, use o computed `visibleCols` passado pelo `render()`:
 
 ## Bulk Actions
 
-### Configuração no CrudConfig
+### Configuration in CrudConfig
 
 ```json
 "bulkActions": [
   {
-    "label": "Aprovar Selecionados",
-    "action": "aprovar",
-    "method": "App\\Services\\ProductService@bulkAprovar"
+    "label": "Approve Selected",
+    "action": "approve",
+    "method": "App\\Services\\ProductService@bulkApprove"
   }
 ]
 ```
 
-O método `bulkAprovar` receberá `(array $ids, string $model)`.
+The `bulkApprove` method will receive `(array $ids, string $model)`.
 
 ### Template
 
 ```blade
-{{-- Checkbox de cada linha --}}
+{{-- Row checkbox --}}
 <input type="checkbox"
     wire:click="toggleSelectRow({{ $row->id }})"
     @checked(in_array((string) $row->id, $selectedRows))>
@@ -851,10 +851,10 @@ O método `bulkAprovar` receberá `(array $ids, string $model)`.
 {{-- Select all --}}
 <input type="checkbox" wire:click="toggleSelectAll()" @checked($selectAll)>
 
-{{-- Painel de ações --}}
+{{-- Actions panel --}}
 @if (count($selectedRows) > 0)
-    <button wire:click="bulkDelete()">Excluir Selecionados</button>
-    <button wire:click="bulkExport('excel')">Exportar</button>
+    <button wire:click="bulkDelete()">Delete Selected</button>
+    <button wire:click="bulkExport('excel')">Export</button>
 
     @foreach ($bulkActions as $ba)
         <button wire:click="executeBulkAction('{{ $ba['action'] }}')">
@@ -864,16 +864,16 @@ O método `bulkAprovar` receberá `(array $ids, string $model)`.
 @endif
 ```
 
-### Exclusão em lote (bulkDelete)
+### Batch deletion (bulkDelete)
 
-O método `bulkDelete()` é executado dentro de um `DB::transaction()` e usa `.each()` para iterar os registros um a um, garantindo que:
-- **Transação atômica** — se um delete falhar, todos são revertidos
-- **Eventos Eloquent disparados** — `deleting`/`deleted` + `HasAuditFields` preenchem `deleted_by` corretamente em cada registro
-- **SoftDelete respeitado** — cada model passa pelo ciclo Eloquent normal
+The `bulkDelete()` method runs inside a `DB::transaction()` and uses `.each()` to iterate records one by one, ensuring that:
+- **Atomic transaction** — if a delete fails, all are rolled back
+- **Eloquent events fired** — `deleting`/`deleted` + `HasAuditFields` fill `deleted_by` correctly on each record
+- **SoftDelete respected** — each model goes through the normal Eloquent cycle
 
-### Eventos disparados pelo bulk
+### Events fired by bulk
 
-| Evento | Payload |
+| Event | Payload |
 |---|---|
 | `crud-bulk-deleted` | `model, count` |
 | `crud-bulk-action` | `model, action, ids` |
@@ -881,24 +881,24 @@ O método `bulkDelete()` é executado dentro de um `DB::transaction()` e usa `.e
 
 ---
 
-## SearchDropdown em Formulários
+## SearchDropdown in Forms
 
-> 📄 **Documentação completa:** [SearchDropdown.md](SearchDropdown.md) — cobre o componente standalone, service personalizado, evento de retorno, DTO, exemplos completos e uso como filtro.
+> 📄 **Full documentation:** [SearchDropdown.md](SearchDropdown.md) — covers the standalone component, custom service, return event, DTO, complete examples and use as a filter.
 
-Campos do tipo `searchdropdown` oferecem UX similar ao Select2 dentro do modal de criação/edição:
+Fields of type `searchdropdown` offer Select2-like UX inside the create/edit modal:
 
-- **Foco no campo** → carrega os primeiros registros automaticamente (sem precisar digitar)
-- **Digitação** → filtra em tempo real com debounce de 300ms, case-insensitive
-- **Seleção** → o label selecionado persiste no input; o `id` vai para `formData`
-- **Seta** → botão chevron abre/fecha o dropdown
-- **Vazio** → exibe "Nenhum resultado encontrado" se a busca não retornar itens
+- **Focus on the field** → loads the first records automatically (no typing required)
+- **Typing** → real-time filtering with 300ms debounce, case-insensitive
+- **Selection** → the selected label persists in the input; the `id` goes to `formData`
+- **Arrow** → chevron button opens/closes the dropdown
+- **Empty** → displays "No results found" if the search returns no items
 
-### Configuração da coluna
+### Column configuration
 
 ```json
 {
   "colsNomeFisico": "business_partner_id",
-  "colsNomeLogico": "Parceiro",
+  "colsNomeLogico": "Partner",
   "colsTipo": "searchdropdown",
   "colsGravar": true,
   "colsSDModel": "BusinessPartner",
@@ -912,17 +912,17 @@ Campos do tipo `searchdropdown` oferecem UX similar ao Select2 dentro do modal d
 }
 ```
 
-> **`colsRelacao` + `colsRelacaoExibe`** são usados para pré-preencher o label no modo **edição**: o ptah busca `$record->businessPartner->name` e exibe no input.
+> **`colsRelacao` + `colsRelacaoExibe`** are used to pre-fill the label in **edit** mode: ptah looks up `$record->businessPartner->name` and displays it in the input.
 
-### Filtro case-insensitive
+### Case-insensitive search
 
-A busca usa `LOWER(campo) LIKE ?` compatível com MySQL e SQLite:
+The search uses `LOWER(field) LIKE ?` compatible with MySQL and SQLite:
 
 ```php
 $q->whereRaw('LOWER(' . $sdLabel . ') LIKE ?', ['%' . mb_strtolower($query) . '%']);
 ```
 
-Assim digitar `"CHOC"`, `"choc"` ou `"Choc"` retorna os mesmos resultados.
+So typing `"CHOC"`, `"choc"` or `"Choc"` returns the same results.
 
 ### Via Service (`colsSDTipo = 'service'`)
 
@@ -933,23 +933,23 @@ Assim digitar `"CHOC"`, `"choc"` ou `"Choc"` retorna os mesmos resultados.
 }
 ```
 
-O método receberá `string $query` e deve retornar `array<array{value: mixed, label: string}>`.
+The method will receive `string $query` and must return `array<array{value: mixed, label: string}>`.
 
-### Fluxo interno
+### Internal flow
 
 ```
-Foco no input  →  openDropdown($field)      →  sdResults[$field] = primeiros N itens
-Digitação      →  searchDropdown($field, q) →  sdResults[$field] = itens filtrados
-Seleção        →  selectDropdownOption()    →  formData[$field] = value
-                                              sdLabels[$field] = label
-                                              sdResults[$field] = [] (fecha)
+Focus on input  →  openDropdown($field)      →  sdResults[$field] = first N items
+Typing          →  searchDropdown($field, q) →  sdResults[$field] = filtered items
+Selection       →  selectDropdownOption()    →  formData[$field] = value
+                                               sdLabels[$field] = label
+                                               sdResults[$field] = [] (closes)
 ```
 
 ---
 
-## WhereHas — Filtro por Entidade Pai
+## WhereHas — Parent Entity Filter
 
-Permite abrir o CRUD já filtrado por uma entidade pai (ex: produtos de uma categoria específica).
+Allows opening the CRUD already filtered by a parent entity (e.g. products of a specific category).
 
 ```blade
 @livewire('ptah::base-crud', [
@@ -959,7 +959,7 @@ Permite abrir o CRUD já filtrado por uma entidade pai (ex: produtos de uma cate
 ])
 ```
 
-Internamente gera:
+Internally generates:
 
 ```php
 $query->whereHas('category', fn($q) => $q->where('id', '=', 5));
@@ -969,9 +969,9 @@ $query->whereHas('category', fn($q) => $q->where('id', '=', 5));
 
 ## Multi-tenant (companyFilter)
 
-Quando `$companyFilter > 0`, aplica automaticamente `WHERE {tabela}.{companyField} = $companyFilter`.
+When `$companyFilter > 0`, automatically applies `WHERE {table}.{companyField} = $companyFilter`.
 
-A coluna da empresa é configurada em `crudConfig['companyField']` (padrão: `company_id`).
+The company column is configured in `crudConfig['companyField']` (default: `company_id`).
 
 ```blade
 @livewire('ptah::base-crud', [
@@ -980,11 +980,11 @@ A coluna da empresa é configurada em `crudConfig['companyField']` (padrão: `co
 ])
 ```
 
-Se não passado, tenta `session('company_id', 0)`.
+If not passed, falls back to `session('company_id', 0)`.
 
 ---
 
-## Totalizadores
+## Totalisers
 
 ```json
 "totalizadores": {
@@ -997,40 +997,40 @@ Se não passado, tenta `session('company_id', 0)`.
 }
 ```
 
-| Agregado | Descrição |
+| Aggregate | Description |
 |---|---|
-| `sum` | Soma |
-| `count` | Contagem |
-| `avg` | Média (2 decimais) |
-| `max` | Máximo |
-| `min` | Mínimo |
+| `sum` | Sum |
+| `count` | Count |
+| `avg` | Average (2 decimals) |
+| `max` | Maximum |
+| `min` | Minimum |
 
-Acessível na view via `$totData`:
+Accessible in the view via `$totData`:
 
 ```blade
-Total: R$ {{ number_format($totData['total_value'] ?? 0, 2, ',', '.') }}
+Total: $ {{ number_format($totData['total_value'] ?? 0, 2, '.', ',') }}
 ```
 
 ---
 
-## Exportação
+## Export
 
-### Visão Geral
+### Overview
 
-O BaseCrud inclui sistema completo de exportação para **Excel** (.xlsx) e **PDF** com as seguintes características:
+BaseCrud includes a complete export system for **Excel** (.xlsx) and **PDF** with the following features:
 
-- ✅ **Apenas colunas visíveis** — exporta somente as colunas atualmente visíveis na tabela (exclui colunas action)
-- ✅ **Formatação automática** — datas, booleanos, valores monetários e longos formatados
-- ✅ **Respeita filtros** — aplica os mesmos filtros ativos na tabela
-- ✅ **Bulk export** — exporta apenas registros selecionados
-- ✅ **Sync/Async** — exportação síncrona para poucos registros, assíncrona para grandes volumes
-- ✅ **Labels customizados** — usa os labels (surnames) configurados no CrudConfig
-- ✅ **Totalizadores no PDF** — inclui automaticamente agregações (soma, média, etc.) se configuradas
-- ✅ **Multilíngue** — textos da interface traduzidos via `__('ptah::ui.*')`
+- ✅ **Visible columns only** — exports only the columns currently visible in the table (excludes action columns)
+- ✅ **Automatic formatting** — dates, booleans, monetary values and long text formatted
+- ✅ **Respects filters** — applies the same active filters as the table
+- ✅ **Bulk export** — exports only selected records
+- ✅ **Sync/Async** — synchronous export for few records, asynchronous for large volumes
+- ✅ **Custom labels** — uses the labels (surnames) configured in CrudConfig
+- ✅ **PDF totalisers** — automatically includes aggregations (sum, avg, etc.) if configured
+- ✅ **Multilingual** — UI strings translated via `__('ptah::ui.*')`
 
-### Dependências Necessárias
+### Required Dependencies
 
-O sistema de exportação requer dois pacotes no seu `composer.json`:
+The export system requires two packages in your `composer.json`:
 
 ```json
 {
@@ -1041,11 +1041,11 @@ O sistema de exportação requer dois pacotes no seu `composer.json`:
 }
 ```
 
-> **Nota:** Se você instalou o Ptah via `composer require jonytonet/ptah`, essas dependências já foram instaladas automaticamente.
+> **Note:** If you installed Ptah via `composer require jonytonet/ptah`, these dependencies were already installed automatically.
 > 
-> **Por que DOMPDF?** O `barryvdh/laravel-dompdf` funciona out-of-the-box em qualquer sistema operacional (Windows, Linux, macOS) sem necessidade de instalar Chrome/Chromium, tornando a instalação mais simples e portável.
+> **Why DOMPDF?** `barryvdh/laravel-dompdf` works out-of-the-box on any operating system (Windows, Linux, macOS) without needing to install Chrome/Chromium, making installation simpler and more portable.
 
-### Configuração
+### Configuration
 
 ```json
 "exportConfig": {
@@ -1055,39 +1055,39 @@ O sistema de exportação requer dois pacotes no seu `composer.json`:
 }
 ```
 
-- **`enabled`**: Habilita/desabilita exportação (default: `true`)
-- **`asyncThreshold`**: Número de registros para mudar de sync para async (default: `1000`)
-- **`formats`**: Formatos disponíveis — `["excel", "pdf"]` (CSV removido na V2.2)
+- **`enabled`**: Enables/disables export (default: `true`)
+- **`asyncThreshold`**: Number of records to switch from sync to async (default: `1000`)
+- **`formats`**: Available formats — `["excel", "pdf"]` (CSV removed in V2.2)
 
-**Comportamento:**
-- Se `count ≤ asyncThreshold` → exportação **síncrona** via evento `ptah:export-sync`
-- Se `count > asyncThreshold` → dispara **Job** `Ptah\Jobs\BaseCrudExportJob` na fila
+**Behaviour:**
+- If `count ≤ asyncThreshold` → **synchronous** export via `ptah:export-sync` event
+- If `count > asyncThreshold` → dispatches **Job** `Ptah\Jobs\BaseCrudExportJob` on the queue
 
-### Arquitetura
+### Architecture
 
 ```
-HasCrudExport.php         → Trait do Livewire, dispara eventos
+HasCrudExport.php         → Livewire trait, fires events
      ↓
-_scripts.blade.php        → Listeners JS capturam eventos
+_scripts.blade.php        → JS listeners capture events
      ↓
-routes/ptah.php           → Rotas /ptah/export e /ptah/export/bulk
+routes/ptah.php           → Routes /ptah/export and /ptah/export/bulk
      ↓
-ExportController.php      → Processa request e retorna arquivo
+ExportController.php      → Processes request and returns file
      ↓
-CrudExport.php (Excel)    → Classe maatwebsite/excel
-pdf.blade.php (PDF)       → Template Blade para PDF
+CrudExport.php (Excel)    → maatwebsite/excel class
+pdf.blade.php (PDF)       → Blade template for PDF
 ```
 
-### Colunas Visíveis
+### Visible Columns
 
-O sistema exporta **apenas as colunas atualmente visíveis** na tabela do BaseCrud:
+The system exports **only the columns currently visible** in the BaseCrud table:
 
-- ✅ Respeita a visibilidade configurada pelo usuário (ícone 👁️)
-- ✅ Respeita a ordem das colunas (drag & drop)
-- ❌ Exclui automaticamente colunas tipo `action`
-- ✅ Usa os `labels` configurados no CrudConfig como cabeçalhos
+- ✅ Respects the visibility configured by the user (👁️ icon)
+- ✅ Respects column order (drag & drop)
+- ❌ Automatically excludes columns of type `action`
+- ✅ Uses `labels` configured in CrudConfig as headers
 
-**Método interno:**
+**Internal method:**
 ```php
 protected function getVisibleColumnsForExport(): array
 {
@@ -1099,25 +1099,25 @@ protected function getVisibleColumnsForExport(): array
 }
 ```
 
-### Formatação Automática
+### Automatic Formatting
 
 **Excel (via CrudExport):**
-- Datas: `d/m/Y H:i:s`
-- Booleanos: `Sim` / `Não`
-- Cabeçalho: Negrito com fundo cinza claro
-- Auto-size de colunas
+- Dates: `Y-m-d H:i:s`
+- Booleans: `Yes` / `No`
+- Header: Bold with light grey background
+- Auto-size columns
 
-**PDF (via template Blade):**
-- Layout A4
-- Tabela estilizada com alternância de cores
-- Cabeçalho com nome do model e data de exportação
-- Textos longos truncados em 100 caracteres
-- **Totalizadores (automáticos)** — se configurados no CrudConfig e visíveis (`showTotalizador: true`)
-- Textos traduzidos via `__('ptah::ui.*')` para suporte multilíngue
+**PDF (via Blade template):**
+- A4 layout
+- Styled table with alternating row colours
+- Header with model name and export date
+- Long text truncated at 100 characters
+- **Totalisers (automatic)** — if configured in CrudConfig and visible (`showTotalizador: true`)
+- Translated strings via `__('ptah::ui.*')` for multilingual support
 
-### Totalizadores no PDF
+### PDF Totalisers
 
-Se você tem totalizadores configurados no seu CrudConfig, eles serão automaticamente incluídos no PDF exportado:
+If you have totalisers configured in your CrudConfig, they will be automatically included in the exported PDF:
 
 ```json
 {
@@ -1129,12 +1129,12 @@ Se você tem totalizadores configurados no seu CrudConfig, eles serão automatic
     "columns": [
       {
         "field": "total",
-        "label": "Total Geral",
+        "label": "Grand Total",
         "aggregate": "sum"
       },
       {
         "field": "quantity",
-        "label": "Quantidade",
+        "label": "Count",
         "aggregate": "count"
       }
     ]
@@ -1142,27 +1142,27 @@ Se você tem totalizadores configurados no seu CrudConfig, eles serão automatic
 }
 ```
 
-**Agregações suportadas:**
-- `sum` — Soma
-- `avg` — Média
-- `count` — Contagem
-- `max` — Máximo
-- `min` — Mínimo
+**Supported aggregations:**
+- `sum` — Sum
+- `avg` — Average
+- `count` — Count
+- `max` — Maximum
+- `min` — Minimum
 
-Os totalizadores aparecem em uma seção dedicada no rodapé do PDF, com os valores formatados (números com separadores de milhares e decimais).
+Totalisers appear in a dedicated section in the PDF footer, with formatted values (numbers with thousand and decimal separators).
 
-> **Nota:** Totalizadores só aparecem no PDF se `ui.showTotalizador` for `true`. Excel não inclui totalizadores atualmente (apenas dados tabulares).
+> **Note:** Totalisers only appear in the PDF if `ui.showTotalizador` is `true`. Excel does not currently include totalisers (tabular data only).
 
-### Template Blade
+### Blade Template
 
 ```blade
-{{-- Botão de exportação --}}
+{{-- Export button --}}
 <button wire:click="$toggle('showExportMenu')" 
         class="ptah-btn-secondary">
-    <i class="fas fa-download"></i> Exportar
+    <i class="fas fa-download"></i> Export
 </button>
 
-{{-- Menu de formatos --}}
+{{-- Format menu --}}
 @if ($showExportMenu)
     <div class="ptah-export-menu">
         <button wire:click="export('excel')" class="ptah-menu-item">
@@ -1174,7 +1174,7 @@ Os totalizadores aparecem em uma seção dedicada no rodapé do PDF, com os valo
     </div>
 @endif
 
-{{-- Status de processamento --}}
+{{-- Processing status --}}
 @if ($exportStatus)
     <div class="ptah-alert ptah-alert-info">
         <i class="fas fa-spinner fa-spin"></i>
@@ -1183,82 +1183,81 @@ Os totalizadores aparecem em uma seção dedicada no rodapé do PDF, com os valo
 @endif
 ```
 
-### Bulk Export (Exportar Selecionados)
+### Bulk Export
 
-Para exportar apenas os registros selecionados, use `bulkExport()`:
+To export only selected records, use `bulkExport()`:
 
 ```blade
-{{-- Painel de ações em massa --}}
+{{-- Bulk action panel --}}
 @if (count($selectedRows) > 0)
     <div class="ptah-bulk-panel">
-        <span>{{ count($selectedRows) }} selecionado(s)</span>
+        <span>{{ count($selectedRows) }} selected</span>
         
-        {{-- Botões de exportação --}}
+        {{-- Export buttons --}}
         <button wire:click="bulkExport('excel')" class="ptah-btn-sm">
-            <i class="fas fa-file-excel"></i> Exportar Excel
+            <i class="fas fa-file-excel"></i> Export Excel
         </button>
         
         <button wire:click="bulkExport('pdf')" class="ptah-btn-sm">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
+            <i class="fas fa-file-pdf"></i> Export PDF
         </button>
     </div>
 @endif
 ```
 
-**Fluxo:**
-1. Usuário seleciona registros via checkboxes
-2. Clica em "Exportar Excel" ou "Exportar PDF"
-3. Evento `ptah:bulk-export` é disparado com os IDs selecionados
-4. JavaScript abre nova aba com URL de download
-5. `ExportController::bulkExport()` gera o arquivo apenas com os IDs fornecidos
+**Flow:**
+1. User selects records via checkboxes
+2. Clicks "Export Excel" or "Export PDF"
+3. `ptah:bulk-export` event is fired with the selected IDs
+4. JavaScript opens a new tab with the download URL
+5. `ExportController::bulkExport()` generates the file with only the provided IDs
 
-### Personalização de Colunas
+### Column Customisation
 
-As colunas exportadas são **automaticamente** as mesmas visíveis na tabela. Para controlar quais colunas aparecerão:
+Exported columns are **automatically** the same as those visible in the table. To control which columns appear:
 
-**1. Via interface visual (ícone 👁️)**
-- Clique no ícone de olho na toolbar
-- Marque/desmarque as colunas desejadas
-- A exportação usará apenas as marcadas
+**1. Via visual interface (👁️ icon)**
+- Click the eye icon in the toolbar
+- Check/uncheck the desired columns
+- The export will use only the checked ones
 
-**2. Via código (ocultar por padrão)**
+**2. Via code (hidden by default)**
 ```json
 {
   "colsNomeFisico": "internal_notes",
-  "colsNomeLogico": "Notas Internas",
-  "colsVisible": false  // Oculta por padrão
+  "colsNomeLogico": "Internal Notes",
+  "colsVisible": false
 }
 ```
 
-**3. Via ordem de colunas**
-- Use drag & drop para reordenar
-- A exportação respeita a nova ordem
+**3. Via column order**
+- Use drag & drop to reorder
+- The export respects the new order
 
-### Formatação Customizada
+### Custom Formatting
 
-Para personalizar a formatação dos valores exportados, edite o método `formatValue()` em [CrudExport.php](../src/Exports/CrudExport.php):
+To customise the formatting of exported values, edit the `formatValue()` method in [CrudExport.php](../src/Exports/CrudExport.php):
 
 ```php
 protected function formatValue($value, string $type = '')
 {
-    // Formatar datas
+    // Format dates
     if ($value instanceof \DateTimeInterface) {
-        return $value->format('d/m/Y H:i:s');
+        return $value->format('Y-m-d H:i:s');
     }
     
-    // Formatar booleanos
+    // Format booleans
     if (is_bool($value)) {
-        return $value ? 'Sim' : 'Não';
+        return $value ? 'Yes' : 'No';
     }
     
-    // EXEMPLO: Formatar valores monetários
+    // EXAMPLE: Format monetary values
     if ($type === 'money') {
-        return 'R$ ' . number_format((float)$value, 2, ',', '.');
+        return '$ ' . number_format((float)$value, 2, '.', ',');
     }
     
-    // EXEMPLO: Formatar enums/selects
+    // EXAMPLE: Format enums/selects
     if ($type === 'select' && is_numeric($value)) {
-        // Aqui você pode buscar o label do select
         return $this->getSelectLabel($value);
     }
     
@@ -1268,65 +1267,63 @@ protected function formatValue($value, string $type = '')
 
 ### Troubleshooting
 
-#### Excel não mostra headers
+#### Excel shows no headers
 
-**Causa:** Labels das colunas estão vazios no CrudConfig.
+**Cause:** Column labels are empty in CrudConfig.
 
-**Solução:** O sistema agora usa fallback automático. Se `colsNomeLogico` (label) estiver vazio, formata o `colsNomeFisico` (field):
+**Solution:** The system now uses automatic fallback. If `colsNomeLogico` (label) is empty, it formats `colsNomeFisico` (field):
 - `created_at` → `Created At`
 - `category_id` → `Category Id`
 
-Para texto customizado, preencha `colsNomeLogico` na aba **Colunas** do CrudConfig Modal.
+For custom text, fill in `colsNomeLogico` in the **Columns** tab of the CrudConfig Modal.
 
-#### PDF retorna erro 500
+#### PDF returns 500 error
 
-**Causa comum:** Template Blade com erro de sintaxe ou dados inválidos.
+**Common cause:** Blade template with a syntax error or invalid data.
 
-**Solução:**
-1. Verifique o log do Laravel: `storage/logs/laravel.log`
-2. Teste o template isoladamente:
+**Solution:**
+1. Check the Laravel log: `storage/logs/laravel.log`
+2. Test the template in isolation:
    ```bash
    php artisan tinker
-   >>> Barryvdh\DomPDF\Facade\Pdf::loadView('ptah::exports.pdf', ['data' => collect([]), 'columns' => [], 'modelName' => 'Test', 'date' => now()->format('d/m/Y H:i:s')])->download('test.pdf');
+   >>> Barryvdh\DomPDF\Facade\Pdf::loadView('ptah::exports.pdf', ['data' => collect([]), 'columns' => [], 'modelName' => 'Test', 'date' => now()->format('Y-m-d H:i:s')])->download('test.pdf');
    ```
 
-#### Exportação não respeita filtros
+#### Export does not respect filters
 
-**Causa:** Os filtros são passados via `$this->filters` do Livewire.
+**Cause:** Filters are passed via `$this->filters` from Livewire.
 
-**Verificação:** Certifique-se de que os filtros estão sendo aplicados na listagem antes de exportar.
+**Check:** Make sure filters are being applied in the listing before exporting.
 
-#### Timeout em exportações grandes
+#### Timeout on large exports
 
-**Causa:** Mais de 1000 registros sendo exportados sincronamente.
+**Cause:** More than 1000 records being exported synchronously.
 
-**Solução:** 
-1. Ajuste `asyncThreshold` no CrudConfig:
+**Solution:** 
+1. Adjust `asyncThreshold` in CrudConfig:
    ```json
    "exportConfig": {
-     "asyncThreshold": 500  // Menor = vai para Job mais cedo
+     "asyncThreshold": 500
    }
    ```
 
-2. Configure fila no Laravel:
+2. Configure the queue in Laravel:
    ```bash
    php artisan queue:work
    ```
 
-3. Implemente `BaseCrudExportJob` (futuro) para processar em background e notificar usuário quando pronto.
+### Best Practices
 
-### Boas Práticas
-
-#### 1. Limite de registros
+#### 1. Record limit
 ```json
 "exportConfig": {
   "asyncThreshold": 500,
-  "maxRecords": 10000  // Futuro: limite máximo de registros
+  "maxRecords": 10000
 }
 ```
 
-#### 2. Cache de queries pesadas
-Se sua tabela tem milhões de registros, considere adicionar índices nas colunas filtradas:
+#### 2. Cache heavy queries
+If your table has millions of records, consider adding indexes on filtered columns:
 
 ```php
 // migration
@@ -1334,8 +1331,8 @@ $table->index(['status', 'created_at']);
 $table->index('company_id');
 ```
 
-#### 3. Colunas computadas
-Se você tem colunas com `colsRenderer` complexo, considere criar um accessor no Model para facilitar a exportação:
+#### 3. Computed columns
+If you have columns with complex `colsRenderer`, consider creating an accessor in the Model to ease export:
 
 ```php
 // Model
@@ -1347,8 +1344,8 @@ protected function totalValue(): Attribute
 }
 ```
 
-#### 4. Labels multilíngue
-Use chaves de tradução nos labels:
+#### 4. Multilingual labels
+Use translation keys in labels:
 
 ```json
 {
@@ -1356,29 +1353,29 @@ Use chaves de tradução nos labels:
 }
 ```
 
-### Exemplo Completo
+### Full Example
 
 ```blade
-{{-- Toolbar com exportação --}}
+{{-- Toolbar with export --}}
 <div class="ptah-toolbar">
-    {{-- Esquerda: Busca e filtros --}}
+    {{-- Left: Search and filters --}}
     <div class="flex gap-2">
         <input type="text" 
                wire:model.live.debounce.300ms="search" 
-               placeholder="Buscar...">
+               placeholder="Search...">
         
         <button wire:click="$toggle('showFilters')">
-            <i class="fas fa-filter"></i> Filtros
+            <i class="fas fa-filter"></i> Filters
         </button>
     </div>
     
-    {{-- Direita: Ações --}}
+    {{-- Right: Actions --}}
     <div class="flex gap-2">
-        {{-- Exportação --}}
+        {{-- Export --}}
         @if ($permissions['export'] ?? false)
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="ptah-btn-secondary">
-                    <i class="fas fa-download"></i> Exportar
+                    <i class="fas fa-download"></i> Export
                 </button>
                 
                 <div x-show="open" 
@@ -1399,21 +1396,21 @@ Use chaves de tradução nos labels:
             </div>
         @endif
         
-        {{-- Criar novo --}}
+        {{-- Create new --}}
         @if ($permissions['create'] ?? false)
             <button wire:click="openCreate()" class="ptah-btn-primary">
-                <i class="fas fa-plus"></i> Novo
+                <i class="fas fa-plus"></i> New
             </button>
         @endif
     </div>
 </div>
 
-{{-- Painel de seleção em massa --}}
+{{-- Bulk selection panel --}}
 @if (count($selectedRows) > 0)
     <div class="ptah-bulk-panel">
         <div class="flex items-center gap-4">
             <span class="font-medium">
-                {{ count($selectedRows) }} registro(s) selecionado(s)
+                {{ count($selectedRows) }} record(s) selected
             </span>
             
             <div class="flex gap-2">
@@ -1427,19 +1424,19 @@ Use chaves de tradução nos labels:
                 
                 <button wire:click="bulkDelete()" 
                         class="ptah-btn-sm ptah-btn-danger"
-                        onclick="return confirm('Excluir {{ count($selectedRows) }} registro(s)?')">
-                    <i class="fas fa-trash"></i> Excluir
+                        onclick="return confirm('Delete {{ count($selectedRows) }} record(s)?')">
+                    <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
             
             <button wire:click="clearSelection()" class="ptah-link">
-                Limpar seleção
+                Clear selection
             </button>
         </div>
     </div>
 @endif
 
-{{-- Status de exportação (processamento assíncrono) --}}
+{{-- Export status (async processing) --}}
 @if ($exportStatus)
     <div class="ptah-alert ptah-alert-info">
         <i class="fas fa-spinner fa-spin"></i>
@@ -1450,11 +1447,11 @@ Use chaves de tradução nos labels:
 
 ---
 
-## Preferências de Usuário (V2.1)
+## User Preferences (V2.1)
 
-Salvas em `user_preferences` com chave `crud.{Model}`, grupo `crud`.
+Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
 
-### Esquema completo
+### Full Schema
 
 ```json
 {
@@ -1494,21 +1491,21 @@ Salvas em `user_preferences` com chave `crud.{Model}`, grupo `crud`.
 
 ---
 
-## Eventos Livewire
+## Livewire Events
 
-### Disparados pelo BaseCrud (`dispatch()`)
+### Dispatched by BaseCrud (`dispatch()`)
 
-| Evento | Payload | Quando |
+| Event | Payload | When |
 |---|---|---|
-| `crud-saved` | `model` | Após save com sucesso |
-| `crud-deleted` | `model` | Após exclusão |
-| `crud-restored` | `model` | Após restauração |
-| `crud-bulk-deleted` | `model, count` | Após bulk delete |
-| `crud-bulk-action` | `model, action, ids` | Após bulk action |
-| `ptah:export-sync` | `model, format, filters` | Exportação síncrona |
-| `ptah:bulk-export` | `model, ids, format` | Exportação de selecionados |
+| `crud-saved` | `model` | After successful save |
+| `crud-deleted` | `model` | After deletion |
+| `crud-restored` | `model` | After restoration |
+| `crud-bulk-deleted` | `model, count` | After bulk delete |
+| `crud-bulk-action` | `model, action, ids` | After bulk action |
+| `ptah:export-sync` | `model, format, filters` | Synchronous export |
+| `ptah:bulk-export` | `model, ids, format` | Selected records export |
 
-### Como ouvir no componente pai
+### How to listen in the parent component
 
 ```php
 use Livewire\Attributes\On;
@@ -1522,9 +1519,9 @@ public function onProductSaved(string $model): void
 
 ---
 
-## Permissões
+## Permissions
 
-Configuradas em `crudConfig['permissions']`:
+Configured in `crudConfig['permissions']`:
 
 ```json
 "permissions": {
@@ -1535,15 +1532,15 @@ Configuradas em `crudConfig['permissions']`:
 }
 ```
 
-Acessíveis na view via `$permissions`:
+Accessible in the view via `$permissions`:
 
 ```blade
 @if ($permissions['create'] ?? false)
-    <button wire:click="openCreate()">Novo</button>
+    <button wire:click="openCreate()">New</button>
 @endif
 ```
 
-O identificador padrão de permissão é retornado por `getDefaultPermissionIdentifier()`:
+The default permission identifier is returned by `getDefaultPermissionIdentifier()`:
 
 ```php
 // Model "Product"          → "product.index"
@@ -1554,12 +1551,12 @@ O identificador padrão de permissão é retornado por `getDefaultPermissionIden
 
 ## Error Recovery
 
-Se `getRowsProperty()` lançar qualquer exceção:
+If `getRowsProperty()` throws any exception:
 
-1. As preferências do usuário são limpas (`UserPreference::remove()` + `CacheService::forgetPreferences()`).
-2. O erro é registrado em `Log::error()` com o stack trace.
-3. Uma `session()->flash('error', ...)` é definida.
-4. Um `LengthAwarePaginator` vazio é retornado (tela não quebra).
+1. User preferences are cleared (`UserPreference::remove()` + `CacheService::forgetPreferences()`).
+2. The error is logged via `Log::error()` with the stack trace.
+3. A `session()->flash('error', ...)` is set.
+4. An empty `LengthAwarePaginator` is returned (screen does not break).
 
 ```blade
 @if (session('error'))
@@ -1571,40 +1568,40 @@ Se `getRowsProperty()` lançar qualquer exceção:
 
 ## FormValidatorService
 
-O `FormValidatorService` (é injetado no `BaseCrud`) valida os campos do formulário usando as regras definidas em `colsValidations` de cada coluna.
+The `FormValidatorService` (injected into `BaseCrud`) validates form fields using the rules defined in `colsValidations` for each column.
 
-### Regras suportadas
+### Supported Rules
 
-| Regra | Exemplo | Descrição |
+| Rule | Example | Description |
 |---|---|---|
-| `required` | `"required"` | Campo obrigatório |
-| `email` | `"email"` | Formato de e-mail |
-| `url` | `"url"` | Formato de URL |
-| `integer` | `"integer"` | Número inteiro |
-| `numeric` | `"numeric"` | Número (decimal incluso) |
-| `alpha` | `"alpha"` | Apenas letras Unicode |
-| `alphanum` | `"alphanum"` | Letras e dígitos |
-| `ncm` | `"ncm"` | NCM válido (8 dígitos; aceita `0000.00.00` ou `00000000`) |
-| `cpf` | `"cpf"` | Valida CPF brasileiro |
-| `cnpj` | `"cnpj"` | Valida CNPJ brasileiro |
-| `phone` | `"phone"` | Valida telefone (8–11 dígitos) |
-| `min:X` | `"min:0"` | Valor mínimo |
-| `max:X` | `"max:9999"` | Valor máximo |
-| `minLength:X` | `"minLength:3"` | Mínimo de caracteres |
-| `maxLength:X` | `"maxLength:255"` | Máximo de caracteres |
-| `between:X,Y` | `"between:1,100"` | Valor entre X e Y |
-| `regex:pattern` | `"regex:^[A-Z]+$"` | Expressão regular |
-| `digits:N` | `"digits:8"` | Exatamente N dígitos |
-| `digitsBetween:N,M` | `"digitsBetween:8,11"` | Entre N e M dígitos |
-| `in:a,b,c` | `"in:ativo,inativo"` | Valor deve ser uma das opções |
-| `notIn:a,b,c` | `"notIn:deletado"` | Valor não pode ser nenhuma das opções |
-| `after:ref` | `"after:today"` | Data posterior a referência (`today` ou `YYYY-MM-DD`) |
-| `before:ref` | `"before:2030-01-01"` | Data anterior a referência |
-| `dateFormat:fmt` | `"dateFormat:d/m/Y"` | Formato de data específico (PHP `DateTime::createFromFormat`) |
-| `confirmed:campo` | `"confirmed:password_confirmation"` | Campo igual a outro campo do formulário |
-| `unique:Model,col` | `"unique:Product,email"` | Unicidade via Eloquent; ignora registro em edição via `id` |
+| `required` | `"required"` | Required field |
+| `email` | `"email"` | Email format |
+| `url` | `"url"` | URL format |
+| `integer` | `"integer"` | Integer number |
+| `numeric` | `"numeric"` | Number (decimal included) |
+| `alpha` | `"alpha"` | Unicode letters only |
+| `alphanum` | `"alphanum"` | Letters and digits |
+| `ncm` | `"ncm"` | Valid NCM (8 digits; accepts `0000.00.00` or `00000000`) |
+| `cpf` | `"cpf"` | Validates Brazilian CPF |
+| `cnpj` | `"cnpj"` | Validates Brazilian CNPJ |
+| `phone` | `"phone"` | Validates phone number (8–11 digits) |
+| `min:X` | `"min:0"` | Minimum value |
+| `max:X` | `"max:9999"` | Maximum value |
+| `minLength:X` | `"minLength:3"` | Minimum characters |
+| `maxLength:X` | `"maxLength:255"` | Maximum characters |
+| `between:X,Y` | `"between:1,100"` | Value between X and Y |
+| `regex:pattern` | `"regex:^[A-Z]+$"` | Regular expression |
+| `digits:N` | `"digits:8"` | Exactly N digits |
+| `digitsBetween:N,M` | `"digitsBetween:8,11"` | Between N and M digits |
+| `in:a,b,c` | `"in:active,inactive"` | Value must be one of the options |
+| `notIn:a,b,c` | `"notIn:deleted"` | Value must not be any of the options |
+| `after:ref` | `"after:today"` | Date after reference (`today` or `YYYY-MM-DD`) |
+| `before:ref` | `"before:2030-01-01"` | Date before reference |
+| `dateFormat:fmt` | `"dateFormat:Y-m-d"` | Specific date format (PHP `DateTime::createFromFormat`) |
+| `confirmed:field` | `"confirmed:password_confirmation"` | Field must match another form field |
+| `unique:Model,col` | `"unique:Product,email"` | Uniqueness via Eloquent; ignores record on edit via `id` |
 
-### Configuração na coluna
+### Column configuration
 
 ```json
 {
@@ -1620,58 +1617,58 @@ O `FormValidatorService` (é injetado no `BaseCrud`) valida os campos do formul�
 }
 ```
 
-Erros são populados em `$formErrors[campo]` e exibidos no modal de formulário.
+Errors are populated in `$formErrors[field]` and displayed in the form modal.
 
 ---
 
 ## Display Name
 
-Por padrão, o BaseCrud exibe o **nome da classe do model** no cabeçalho do modal e na toolbar. A propriedade `displayName` permite sobrescrever esse nome com um rótulo fácil de ler.
+By default, BaseCrud displays the **model class name** in the modal header and toolbar. The `displayName` property allows overriding this name with a user-friendly label.
 
-### Onde configurar
+### Where to configure
 
-Tab **Geral** do CrudConfig modal, campo **"Nome de Exibição"**.
+**General** tab of the CrudConfig modal, **"Display Name"** field.
 
-### Chave no JSON salvo
+### JSON key
 
 ```json
 {
-  "displayName": "Parceiros de Negócio"
+  "displayName": "Business Partners"
 }
 ```
 
-### Comportamento
+### Behaviour
 
-A variável `$crudTitle` na view usa a seguinte cadeia de fallback:
+The `$crudTitle` variable in the view uses the following fallback chain:
 
 ```php
 $this->crudConfig['displayName']
-    ?? $this->crudConfig['crud']            // chave legada
-    ?? class_basename(str_replace('/', '\\', $this->model)) // nome da classe
+    ?? $this->crudConfig['crud']            // legacy key
+    ?? class_basename(str_replace('/', '\\', $this->model)) // class name
 ```
 
-Deixando `displayName` vazio, o nome da classe é usado (comportamento anterior inalterado).
+Leaving `displayName` empty uses the class name (unchanged previous behaviour).
 
 ---
 
-## Broadcast / Tempo Real
+## Broadcast / Real-time
 
-O BaseCrud pode atualizar a tabela silenciosamente via **Laravel Echo** ao receber um evento de broadcast, sem nenhum código extra no componente pai.
+BaseCrud can silently update the table via **Laravel Echo** when receiving a broadcast event, without any extra code in the parent component.
 
-### Ativar
+### Activate
 
-Tab **Geral** do CrudConfig modal, card **"Tempo Real (Broadcast)"**, toggle **Habilitado**.
+**General** tab of the CrudConfig modal, **"Real-time (Broadcast)"** card, **Enabled** toggle.
 
-### Configuração
+### Configuration
 
-| Campo | Padrão auto-gerado | Exemplo para `Product` |
+| Field | Auto-generated default | Example for `Product` |
 |---|---|---|
-| Canal | `page-{kebab-model}-observer` | `page-product-observer` |
-| Evento | `.page{Model}Observer` | `.pageProductObserver` |
+| Channel | `page-{kebab-model}-observer` | `page-product-observer` |
+| Event | `.page{Model}Observer` | `.pageProductObserver` |
 
-Ambos os campos podem ser deixados vazios para usar o padrão, ou preenchidos quando o Observer do backend usa nomes diferentes.
+Both fields can be left empty to use the default, or filled when the backend Observer uses different names.
 
-### Chave no JSON salvo
+### JSON key
 
 ```json
 {
@@ -1683,21 +1680,21 @@ Ambos os campos podem ser deixados vazios para usar o padrão, ou preenchidos qu
 }
 ```
 
-`channel` e `event` `null` = usar o nome auto-gerado baseado no model.
+`channel` and `event` `null` = use the auto-generated name based on the model.
 
-### Métodos gerados automaticamente
+### Auto-generated methods
 
 ```php
-// Registrado via getListeners() quando broadcast.enabled = true:
+// Registered via getListeners() when broadcast.enabled = true:
 "echo:{channel},{event}" => 'handleBaseCrudUpdate'
 
-// Sempre registrado (Livewire 4 built-in):
+// Always registered (Livewire 4 built-in):
 "refreshData" => '$refresh'
 ```
 
-`handleBaseCrudUpdate()` é um stub vazio — o Livewire re-renderiza o componente automaticamente após o listener disparar.
+`handleBaseCrudUpdate()` is an empty stub — Livewire re-renders the component automatically after the listener fires.
 
-### Observer no backend
+### Backend Observer
 
 ```php
 // app/Observers/ProductObserver.php
@@ -1722,37 +1719,37 @@ class PageProductObserver implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return 'pageProductObserver'; // sem o ponto; Echo adiciona
+        return 'pageProductObserver'; // without the dot; Echo adds it
     }
 }
 ```
 
 ---
 
-## Tema Visual (Light / Dark)
+## Visual Theme (Light / Dark)
 
-O BaseCrud suporta dois temas: **light** (padrão) e **dark**.
+BaseCrud supports two themes: **light** (default) and **dark**.
 
-### Ativar
+### Activate
 
-Tab **Geral** do CrudConfig modal, card **"Tema Visual"**, selecione `Light` ou `Dark`.
+**General** tab of the CrudConfig modal, **"Visual Theme"** card, select `Light` or `Dark`.
 
-### Chave no JSON salvo
+### JSON key
 
 ```json
 { "theme": "dark" }
 ```
 
-### Comportamento técnico
+### Technical behaviour
 
-- Quando `theme = 'dark'`, o div raiz do componente recebe a classe `ptah-dark`.
-- Dentro do blade, um array `$T` (theme tokens) define duas paletas de cores: para cada elemento estrutural existe uma chave como `$T['toolbar']`, `$T['thead']`, `$T['modal_card']` etc.
-- Um bloco `<style>` embutido no componente define overrides CSS para `.ptah-base-crud.ptah-dark` nos elementos do painel de filtros (inputs, selects, labels) via especificidade de seletor.
-- Toda a lógica de tema vive no blade — **não** depende de Tailwind `dark:` ou classes dinâmicas compiladas.
+- When `theme = 'dark'`, the component root div receives the `ptah-dark` class.
+- Within the blade, a `$T` array (theme tokens) defines two colour palettes: for each structural element there is a key such as `$T['toolbar']`, `$T['thead']`, `$T['modal_card']`, etc.
+- An inline `<style>` block in the component defines CSS overrides for `.ptah-base-crud.ptah-dark` on filter panel elements (inputs, selects, labels) via selector specificity.
+- All theme logic lives in the blade — it does **not** depend on Tailwind `dark:` or compiled dynamic classes.
 
-> **⚠️ Independência do tema do layout:** o tema do BaseCrud é **separado e independente** do dark mode automático do `forge-dashboard-layout`. O layout detecta o SO do usuário e aplica `.ptah-dark` globalmente na sidebar e navbar. O BaseCrud ignora essa classe global — ele tem sua própria configuração por componente salva no banco via `CrudConfig`. Isso permite, por exemplo, ter o layout em dark mode enquanto um BaseCrud específico permanece em light mode (ou vice-versa).
+> **⚠️ Independence from the layout theme:** the BaseCrud theme is **separate and independent** from the automatic dark mode of `forge-dashboard-layout`. The layout detects the user's OS and applies `.ptah-dark` globally to the sidebar and navbar. BaseCrud ignores this global class — it has its own per-component configuration saved to the database via `CrudConfig`. This allows, for example, having the layout in dark mode while a specific BaseCrud stays in light mode (or vice versa).
 
-### Paletas
+### Palettes
 
 | Token | Light | Dark |
 |---|---|---|
@@ -1771,11 +1768,11 @@ Tab **Geral** do CrudConfig modal, card **"Tema Visual"**, selecione `Light` ou 
 @livewire('ptah::base-crud', ['model' => 'Product'])
         │
         ▼
-    boot()          ← Injeta serviços; se $model já definido, recarrega crudConfig
-        │             do banco (garante config atualizada após salvar CrudConfig Modal)
+    boot()          ← Injects services; if $model already defined, reloads crudConfig
+        │             from DB (ensures updated config after saving CrudConfig Modal)
         ▼
-    mount()         ← Define $model, whereHas, companyFilter; carrega CrudConfig
-                      (se não carregada no boot), inicia colunas, preferências, trashedCount
+    mount()         ← Sets $model, whereHas, companyFilter; loads CrudConfig
+                      (if not loaded in boot), initialises columns, preferences, trashedCount
         │
         ▼
     render()        ─────────────────────────────────────────────────────┐
@@ -1789,29 +1786,29 @@ getRowsProperty()                                             view(ptah::livewir
         ├─ eager load relations
         ├─ companyFilter (WHERE)
         ├─ whereHasFilter (whereHas)
-        ├─ search → buildGlobalSearchFilters() (OR em relações)
+        ├─ search → buildGlobalSearchFilters() (OR on relations)
         ├─ buildActiveFilters() → FilterService::applyFilters()
         ├─ processDateRangeFilters(dateRanges)
         ├─ quickDateFilter → getQuickDateRange()
         ├─ processCustomFilters()
-        ├─ applyJoins() → aplica JOIN[] do crudConfig, retorna tabelas joined
-        ├─ getOrderByRelationInfo() → LEFT JOIN (pulado se tabela já joined) ou orderBy simples
+        ├─ applyJoins() → applies JOIN[] from crudConfig, returns joined tables
+        ├─ getOrderByRelationInfo() → LEFT JOIN (skipped if table already joined) or simple orderBy
         └─ paginate($perPage)
 ```
 ---
 
-## JOINs Configuráveis
+## Configurable JOINs
 
-O BaseCrud suporta JOINs declarativos no `CrudConfig` sem nenhum relacionamento Eloquent. Útil para trazer colunas de tabelas externas, legadas ou sem `Model` definido.
+BaseCrud supports declarative JOINs in `CrudConfig` without any Eloquent relationships. Useful for bringing in columns from external, legacy tables or tables without a defined `Model`.
 
-### Como funciona
+### How it works
 
-1. O `applyJoins()` é chamado logo após `newQuery()` em **todas as queries** (listagem, totalizadores, export)
-2. Ele itera `crudConfig['joins']`, aplica cada JOIN e constrói o `SELECT` como `mainTable.* + aliases`
-3. Colunas vindas do JOIN ficam acessíveis via o **alias** em `$row->supplier_name`
-4. O filtro e o `ORDER BY` usam `colsSource` (qualified name) — não o alias, pois alias não funciona em `WHERE` no MySQL
+1. `applyJoins()` is called right after `newQuery()` in **all queries** (listing, totalisers, export)
+2. It iterates `crudConfig['joins']`, applies each JOIN and builds the `SELECT` as `mainTable.* + aliases`
+3. Columns coming from the JOIN are accessible via the **alias** in `$row->supplier_name`
+4. Filters and `ORDER BY` use `colsSource` (qualified name) — not the alias, as aliases don't work in `WHERE` in MySQL
 
-### Schema de um JOIN
+### JOIN Schema
 
 ```json
 "joins": [
@@ -1829,57 +1826,57 @@ O BaseCrud suporta JOINs declarativos no `CrudConfig` sem nenhum relacionamento 
 ]
 ```
 
-| Campo | Tipo | Obrigatório | Descrição |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `type` | `"left"\|"inner"` | Não (padrão `"left"`) | `LEFT JOIN` ou `INNER JOIN` |
-| `table` | `string` | Sim | Nome exato da tabela no banco |
-| `first` | `string` | Sim | Coluna esquerda da cláusula `ON` (ex: `products.supplier_id`) |
-| `second` | `string` | Sim | Coluna direita da cláusula `ON` (ex: `suppliers.id`) |
-| `distinct` | `bool` | Não (padrão `false`) | Aplica `SELECT DISTINCT` — recomendado em JOINs 1-para-muitos |
-| `select` | `{column, alias}[]` | Não | Colunas extras no `SELECT`. Se vazio o JOIN é aplicado mas não adiciona colunas |
+| `type` | `"left"\|"inner"` | No (default `"left"`) | `LEFT JOIN` or `INNER JOIN` |
+| `table` | `string` | Yes | Exact table name in the database |
+| `first` | `string` | Yes | Left column of the `ON` clause (e.g. `products.supplier_id`) |
+| `second` | `string` | Yes | Right column of the `ON` clause (e.g. `suppliers.id`) |
+| `distinct` | `bool` | No (default `false`) | Applies `SELECT DISTINCT` — recommended in 1-to-many JOINs |
+| `select` | `{column, alias}[]` | No | Extra columns in `SELECT`. If empty, the JOIN is applied but adds no columns |
 
-> **LEFT vs INNER:** use `left` quando o dado pode não existir (ex: `supplier_id` nullable). Use `inner` quando a correspondência é obrigatória e você quer filtrar registros sem par.
+> **LEFT vs INNER:** use `left` when the data may not exist (e.g. nullable `supplier_id`). Use `inner` when the match is mandatory and you want to filter records without a pair.
 
-### Configurando a coluna correspondente
+### Configuring the corresponding column
 
-Para cada alias do JOIN, crie uma `ColDef` na aba **Colunas** do CrudConfig Modal:
+For each JOIN alias, create a `ColDef` in the **Columns** tab of the CrudConfig Modal:
 
 ```json
 {
   "colsNomeFisico": "supplier_name",
   "colsSource":     "suppliers.name",
-  "colsNomeLogico": "Fornecedor",
+  "colsNomeLogico": "Supplier",
   "colsTipo":       "text",
   "colsGravar":     "N",
   "colsIsFilterable": "S"
 }
 ```
 
-- **`colsNomeFisico`** = alias (como o campo chega no Blade via `$row->supplier_name`)
-- **`colsSource`** = qualified name SQL (`suppliers.name`) — usado em `WHERE` e `ORDER BY`
-- **`colsGravar: "N"`** = coluna apenas na listagem, não no formulário de criação/edição
+- **`colsNomeFisico`** = alias (how the field arrives in Blade via `$row->supplier_name`)
+- **`colsSource`** = qualified SQL name (`suppliers.name`) — used in `WHERE` and `ORDER BY`
+- **`colsGravar: "N"`** = listing-only column, not in the create/edit form
 
-> O campo `colsSource` pode ser preenchido na sub-aba **Básico** do editor de colunas — identificado pelo badge azul "JOIN".
+> The `colsSource` field can be filled in the **Basic** sub-tab of the column editor — identified by the blue "JOIN" badge.
 
-### Proteção contra duplicata
+### Duplicate protection
 
-O CrudConfig Modal exibe um **warning inline em tempo real** ao digitar o nome da tabela: se já existir um JOIN com aquela tabela, o input muda para borda vermelha, o botão fica desabilitado e uma mensagem explica o conflito.
+The CrudConfig Modal displays a **real-time inline warning** when typing the table name: if a JOIN with that table already exists, the input changes to a red border, the button is disabled and a message explains the conflict.
 
-O método `addJoin()` também valida no servidor antes de adicionar.
+The `addJoin()` method also validates server-side before adding.
 
-### Suporte em queries secundárias
+### Support in secondary queries
 
-`applyJoins()` é chamado automaticamente em:
+`applyJoins()` is called automatically in:
 
-| Query | Onde |
+| Query | Where |
 |---|---|
-| Listagem principal | `getRowsProperty()` |
-| Totalizadores | `getTotalizadoresDataProperty()` |
+| Main listing | `getRowsProperty()` |
+| Totalisers | `getTotalizadoresDataProperty()` |
 | Export | `export()` |
 
-### Exemplo completo: Produtos + Fornecedor
+### Full Example: Products + Supplier
 
-**1. Definir o JOIN no CrudConfig:**
+**1. Define the JOIN in CrudConfig:**
 
 ```json
 "joins": [
@@ -1896,17 +1893,17 @@ O método `addJoin()` também valida no servidor antes de adicionar.
 ]
 ```
 
-**2. Adicionar as colunas:**
+**2. Add the columns:**
 
 ```json
 { "colsNomeFisico": "supplier_name", "colsSource": "suppliers.name",
-  "colsNomeLogico": "Fornecedor", "colsTipo": "text", "colsGravar": "N" },
+  "colsNomeLogico": "Supplier", "colsTipo": "text", "colsGravar": "N" },
 { "colsNomeFisico": "supplier_cnpj", "colsSource": "suppliers.cnpj",
-  "colsNomeLogico": "CNPJ Forn.", "colsTipo": "text", "colsGravar": "N",
+  "colsNomeLogico": "Supplier CNPJ", "colsTipo": "text", "colsGravar": "N",
   "colsMask": "cnpj" }
 ```
 
-**3. Resultado na query:**
+**3. Resulting query:**
 
 ```sql
 SELECT products.*, suppliers.name AS supplier_name, suppliers.cnpj AS supplier_cnpj
@@ -1920,25 +1917,25 @@ ORDER BY suppliers.name ASC
 
 ## Lifecycle Hooks
 
-O `HasCrudForm` expõe quatro hooks que podem ser sobrescritos no componente filho para executar lógica antes ou depois de persistir um registro.
+`HasCrudForm` exposes four hooks that can be overridden in the child component to execute logic before or after persisting a record.
 
-### Assinaturas
+### Signatures
 
 ```php
-// Antes de INSERT — mutação do $data por referência
+// Before INSERT — mutate $data by reference
 protected function beforeCreate(array &$data): void {}
 
-// Antes de UPDATE — mutação do $data por referência; acesso ao $record original
+// Before UPDATE — mutate $data by reference; access to the original $record
 protected function beforeUpdate(array &$data, \Illuminate\Database\Eloquent\Model $record): void {}
 
-// Após INSERT — retorne RedirectResponse para redirecionar; null = comportamento padrão
+// After INSERT — return RedirectResponse to redirect; null = default behaviour
 protected function afterCreate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
 
-// Após UPDATE — retorne RedirectResponse para redirecionar; null = comportamento padrão
+// After UPDATE — return RedirectResponse to redirect; null = default behaviour
 protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
 ```
 
-### Ordem de execução no `save()`
+### Execution order in `save()`
 
 ```
 validate()
@@ -1947,77 +1944,77 @@ buildData()
   ↓
 applyMaskTransforms()
   ↓
-beforeCreate(&$data)   ← ou beforeUpdate(&$data, $record)
+beforeCreate(&$data)   ← or beforeUpdate(&$data, $record)
   ↓
 created_by / updated_by
   ↓
 create() / update()
   ↓
-afterCreate($record)   ← ou afterUpdate($record)
+afterCreate($record)   ← or afterUpdate($record)
   ↓
-se retornou RedirectResponse → redirect
+if RedirectResponse returned → redirect
   ↓
 closeModal() + dispatch('crud-saved')
 ```
 
-### Exemplo — beforeCreate
+### Example — beforeCreate
 
 ```php
 protected function beforeCreate(array &$data): void
 {
-    // Gera slug automaticamente antes de inserir
+    // Auto-generate slug before inserting
     $data['slug'] = \Str::slug($data['name']);
 
-    // Força empresa do usuário logado
+    // Force logged-in user's company
     $data['company_id'] = auth()->user()->company_id;
 }
 ```
 
-### Exemplo — beforeUpdate
+### Example — beforeUpdate
 
 ```php
 protected function beforeUpdate(array &$data, Model $record): void
 {
-    // Só recalcula o hash se a senha mudou
+    // Only recalculate hash if password changed
     if (!empty($data['password']) && $data['password'] !== $record->password) {
         $data['password'] = bcrypt($data['password']);
     }
 }
 ```
 
-### Exemplo — afterCreate (com redirecionamento)
+### Example — afterCreate (with redirect)
 
 ```php
 protected function afterCreate(Model $record): mixed
 {
-    // Após criar uma ordem, redireciona para a página de detalhes
+    // After creating an order, redirect to the details page
     return redirect()->route('orders.show', $record->id);
 }
 ```
 
-### Exemplo — afterUpdate
+### Example — afterUpdate
 
 ```php
 protected function afterUpdate(Model $record): mixed
 {
-    // Dispara notificação sem redirecionar
+    // Send notification without redirecting
     $record->notify(new StatusChangedNotification());
 
-    return null; // mantém o modal fechado
+    return null; // keeps the modal closed
 }
 ```
 
-> **Nota:** os hooks `before*` recebem `$data` por referência — qualquer alteração ao array dentro do hook reflete na gravação. Os hooks `after*` recebem o `Model` já persistido e com `id` preenchido.
+> **Note:** the `before*` hooks receive `$data` by reference — any changes to the array inside the hook are reflected in the persisted data. The `after*` hooks receive the already-persisted `Model` with `id` filled in.
 
 ---
 
-## configGroupBy — Agrupamento de Registros
+## configGroupBy — Record Grouping
 
-Permite agrupar os registros da listagem via `GROUP BY` declarativo no `CrudConfig`, sem nenhum ajuste no Eloquent Model.
+Allows grouping listing records via a declarative `GROUP BY` in `CrudConfig`, without any adjustments to the Eloquent Model.
 
-### Como configurar
+### How to configure
 
-Na aba **Geral** do CrudConfig Modal (ou editando o JSON diretamente), adicione a chave `groupBy`:
+In the **General** tab of the CrudConfig Modal (or by editing the JSON directly), add the `groupBy` key:
 
 ```json
 {
@@ -2025,26 +2022,26 @@ Na aba **Geral** do CrudConfig Modal (ou editando o JSON diretamente), adicione 
 }
 ```
 
-### Comportamento interno
+### Internal behaviour
 
-Quando `groupBy` está presente, o ptah:
+When `groupBy` is present, ptah:
 
-1. Aplica `SELECT MIN({tabela}.id) AS id, {tabela}.{campo}` — garante um `id` representativo por grupo.
-2. Aplica `GROUP BY {tabela}.{campo}`.
-3. Aplica `ORDER BY {tabela}.{campo} {direction}` — usa a direção da preferência do usuário.
-4. Retorna paginado (`.paginate($perPage)`).
-5. **Ignora** a lógica de sort/order posterior — o bloco `groupBy` retorna cedo.
+1. Applies `SELECT MIN({table}.id) AS id, {table}.{field}` — guarantees a representative `id` per group.
+2. Applies `GROUP BY {table}.{field}`.
+3. Applies `ORDER BY {table}.{field} {direction}` — uses the direction from user preferences.
+4. Returns paginated (`.paginate($perPage)`).
+5. **Ignores** subsequent sort/order logic — the `groupBy` block returns early.
 
-> O SELECT reduzido significa que apenas o campo agrupado e o `id` mínimo chegam ao blade. Colunas de outras relações provavelmente estarão ausentes. Use `configGroupBy` quando a intenção for listar grupos distintos (ex: uma linha por empresa, uma linha por categoria).
+> The reduced SELECT means only the grouped field and the minimum `id` arrive in the blade. Columns from other relations will likely be absent. Use `configGroupBy` when the intent is to list distinct groups (e.g. one row per company, one row per category).
 
-### Exemplo de uso real
+### Real-world usage example
 
 ```json
 "groupBy": "company_id"
 ```
 
 ```sql
--- Query gerada internamente
+-- Internally generated query
 SELECT MIN(products.id) AS id, products.company_id
 FROM products
 GROUP BY products.company_id
@@ -2052,9 +2049,9 @@ ORDER BY products.company_id ASC
 LIMIT 25 OFFSET 0
 ```
 
-### Rótulo de agrupamento na view (opcional)
+### Grouping label in the view (optional)
 
-O pacote inclui a chave de tradução `ptah::ui.groupby_label`:
+The package includes the translation key `ptah::ui.groupby_label`:
 
 ```php
 // en
@@ -2064,49 +2061,49 @@ O pacote inclui a chave de tradução `ptah::ui.groupby_label`:
 'groupby_label' => 'Agrupado por :field'
 ```
 
-Use-a na view customizada quando quiser exibir um indicador visual do agrupamento ativo.
+Use it in the custom view when you want to show a visual indicator of the active grouping.
 
 ---
 
-## Input Tipo Image
+## Image Input
 
-O tipo `image` exibe um campo de imagem no formulário modal com preview ao vivo.
+The `image` type displays an image field in the modal form with live preview.
 
-### Configuração da coluna
+### Column configuration
 
 ```json
 {
   "colsNomeFisico": "photo_url",
-  "colsNomeLogico": "Foto",
+  "colsNomeLogico": "Photo",
   "colsTipo": "image",
   "colsGravar": "S"
 }
 ```
 
-### Comportamento no formulário
+### Form behaviour
 
-O campo renderiza **dois controles** e um **preview**:
+The field renders **two controls** and a **preview**:
 
-| Controle | Descrição |
+| Control | Description |
 |---|---|
-| Campo de texto (URL) | Permite colar uma URL diretamente; o preview atualiza ao digitar (debounce via Alpine) |
-| Botão "Escolher arquivo" | Abre o seletor de arquivos; o arquivo é lido via `FileReader.readAsDataURL()` e exibido como preview; a URL `data:` é armazenada em `formData` |
-| Preview `<img>` | Visível quando há URL ou arquivo selecionado; renderiza abaixo dos controles |
+| Text field (URL) | Allows pasting a URL directly; the preview updates on typing (debounce via Alpine) |
+| "Pick a file" button | Opens the file picker; the file is read via `FileReader.readAsDataURL()` and displayed as preview; the `data:` URL is stored in `formData` |
+| `<img>` preview | Visible when there is a URL or selected file; renders below the controls |
 
-### O que é gravado
+### What is saved
 
-O `formData[campo]` recebe:
+`formData[field]` receives:
 
-- **URL externa** (string): ex. `https://cdn.example.com/foto.jpg`
-- **Data URL** (string): ex. `data:image/png;base64,...` (quando um arquivo local é escolhido)
+- **External URL** (string): e.g. `https://cdn.example.com/photo.jpg`
+- **Data URL** (string): e.g. `data:image/png;base64,...` (when a local file is chosen)
 
-Em ambos os casos é uma `string`, compatível com colunas `string`/`text` no banco.
+In both cases it is a `string`, compatible with `string`/`text` columns in the database.
 
-> Para armazenar o arquivo em disco, sobrescreva o hook `beforeCreate` ou `beforeUpdate` para mover o conteúdo de `data:` para o storage e substituir o valor pelo caminho final antes da gravação.
+> To store the file on disk, override the `beforeCreate` or `beforeUpdate` hook to move the `data:` content to storage and replace the value with the final path before saving.
 
-### Chaves de tradução
+### Translation keys
 
-| Chave | en | pt_BR |
+| Key | en | pt_BR |
 |---|---|---|
 | `cfg_col_type_image` | `image — Image with Preview` | `image — Imagem com Preview` |
 | `image_pick_file` | `Pick a file…` | `Escolher arquivo…` |
@@ -2114,13 +2111,13 @@ Em ambos os casos é uma `string`, compatível com colunas `string`/`text` no ba
 
 ---
 
-## Estrutura de Partials (Blade)
+## Partial Structure (Blade)
 
-O view principal `ptah::livewire.base-crud` é um esqueleto de ~40 linhas que inclui 7 partials independentes:
+The main view `ptah::livewire.base-crud` is a ~40-line skeleton that includes 7 independent partials:
 
 ```blade
 <div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}">
-    {{-- Flash de sucesso / status de export --}}
+    {{-- Success flash / export status --}}
 
     @if (!empty($crudConfig))
         @include('ptah::livewire.partials._toolbar')
@@ -2128,7 +2125,7 @@ O view principal `ptah::livewire.base-crud` é um esqueleto de ~40 linhas que in
         @include('ptah::livewire.partials._table')
         @include('ptah::livewire.partials._pagination')
     @else
-        {{-- Estado vazio: sem CrudConfig --}}
+        {{-- Empty state: no CrudConfig --}}
     @endif
 
     @include('ptah::livewire.partials._modal-form')
@@ -2138,16 +2135,16 @@ O view principal `ptah::livewire.base-crud` é um esqueleto de ~40 linhas que in
 </div>
 ```
 
-### Arquivo → responsabilidade
+### File → Responsibility
 
-| Arquivo | Responsabilidade |
+| File | Responsibility |
 |---|---|
-| `_toolbar.blade.php` | Barra superior: botão Novo, busca global, filtros, lixeira, export, colunas, densidade, config, refresh, clear, per-page |
-| `_filter-panel.blade.php` | Painel de filtros (`@if ($showFilters)`): atalhos de data, campos filtráveis, filtros salvos, rodapé do painel |
-| `_table.blade.php` | Tabela: `<thead>` com drag/sort/resize, `<tbody>` com linhas/ações/estado vazio, `<tfoot>` com totalizadores |
-| `_pagination.blade.php` | Div de paginação: links first/last/next/prev, contador de registros |
-| `_modal-form.blade.php` | Modal de criação/edição: `@teleport('body')` + Alpine, campos por tipo (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
-| `_modal-delete.blade.php` | Modal de confirmação de exclusão: `@teleport('body')` + Alpine |
-| `_scripts.blade.php` | Bloco `@once` com estilos e JS de drag-and-drop de colunas e resize |
+| `_toolbar.blade.php` | Top bar: New button, global search, filters, trash, export, columns, density, config, refresh, clear, per-page |
+| `_filter-panel.blade.php` | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
+| `_table.blade.php` | Table: `<thead>` with drag/sort/resize, `<tbody>` with rows/actions/empty state, `<tfoot>` with totalisers |
+| `_pagination.blade.php` | Pagination div: first/last/next/prev links, record counter |
+| `_modal-form.blade.php` | Create/edit modal: `@teleport('body')` + Alpine, fields by type (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
+| `_modal-delete.blade.php` | Delete confirmation modal: `@teleport('body')` + Alpine |
+| `_scripts.blade.php` | `@once` block with styles and JS for column drag-and-drop and resize |
 
-> **Publicar somente o partial que precisa customizar** — como os partials usam `ptah::livewire.partials.*`, basta publicar o arquivo específico via `php artisan vendor:publish --tag=ptah-views` e editar o arquivo publicado em `resources/views/vendor/ptah/livewire/partials/`.
+> **Publish only the partial you need to customise** — as the partials use `ptah::livewire.partials.*`, simply publish the specific file via `php artisan vendor:publish --tag=ptah-views` and edit the published file in `resources/views/vendor/ptah/livewire/partials/`.

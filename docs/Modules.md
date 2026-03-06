@@ -1,105 +1,105 @@
-# Módulos Opcionais — Auth, Menu, Company & Permissions
+﻿# Optional Modules — Auth, Menu, Company & Permissions
 
 **Pacote:** `jonytonet/ptah`  
-**Versão mínima:** ver tags no repositório  
+**Minimum version:** see tags in the repository  
 **Laravel:** 11+ | **Livewire:** 3.x
 
 ---
 
-## Sumário
+## Summary
 
-1. [Visão Geral](#visão-geral)
-2. [Ativando os Módulos](#ativando-os-módulos)
-3. [Módulo Auth](#módulo-auth)
-   - [Configuração](#configuração-auth)
-   - [Rotas](#rotas)
-   - [Componentes Livewire](#componentes-livewire)
+1. [Overview](#overview)
+2. [Activating the Modules](#activating-the-modules)
+3. [Auth Module](#auth-module)
+   - [Configuration](#configuration-auth)
+   - [Routes](#routes)
+   - [Livewire Components](#livewire-components)
    - [LoginPage](#loginpage)
    - [ForgotPasswordPage](#forgotpasswordpage)
    - [ResetPasswordPage](#resetpasswordpage)
    - [TwoFactorChallengePage](#twofactorchallengepage)
    - [ProfilePage](#profilepage)
    - [Dashboard](#dashboard)
-4. [Autenticação 2FA](#autenticação-2fa)
-   - [TOTP (App Autenticador)](#totp-app-autenticador)
+4. [2FA Authentication](#2fa-authentication)
+   - [TOTP (Authenticator App)](#totp-authenticator-app)
    - [E-mail OTP](#e-mail-otp)
-   - [Códigos de Recuperação](#códigos-de-recuperação)
+   - [Recovery Codes](#recovery-codes)
    - [TwoFactorService](#twofactorservice)
-5. [Gerenciamento de Sessões](#gerenciamento-de-sessões)
+5. [Session Management](#session-management)
    - [SessionService](#sessionservice)
-6. [Módulo Menu](#módulo-menu)
-   - [Configuração](#configuração-menu)
+6. [Menu Module](#menu-module)
+   - [Configuration](#configuration-menu)
    - [Driver `config`](#driver-config)
    - [Driver `database`](#driver-database)
    - [Model Menu](#model-menu)
    - [MenuService](#menuservice)
-   - [Tela de Gestão de Menus](#tela-de-gestão-de-menus)
-   - [Sidebar — Ícones e Grupos Accordion](#sidebar--ícones-e-grupos-accordion)
-7. [Módulo Company](#módulo-company)
-8. [Módulo Permissions](#módulo-permissions)
-9. [Comando ptah:module](#comando-ptahmodule)
-10. [Dependências Opcionais](#dependências-opcionais)
-11. [Referência de Configuração](#referência-de-configuração)
-12. [Customizando Views](#customizando-views)
+   - [Menu Management Screen](#menu-management-screen)
+   - [Sidebar — Icons and Accordion Groups](#sidebar--icons-and-accordion-groups)
+7. [Company Module](#company-module)
+8. [Permissions Module](#permissions-module)
+9. [ptah:module Command](#ptahmodule-command)
+10. [Optional Dependencies](#optional-dependencies)
+11. [Configuration Reference](#configuration-reference)
+12. [Customizing Views](#customizing-views)
 
 ---
 
-## Visão Geral
+## Overview
 
-Os módulos **Auth** e **Menu** são subsistemas opcionais do Ptah que podem ser ativados de forma independente em qualquer projeto.
+The **Auth** and **Menu** modules are optional Ptah subsystems that can be activated independently in any project.
 
-| Módulo | Funcionalidades |
+| Module | Features |
 |---|---|
-| **auth** | Login com rate limit, recuperação de senha, 2FA (TOTP + e-mail), sessões ativas, perfil com foto |
-| **menu** | Menu lateral dinâmico carregado do banco, com cache e estrutura em árvore |
-| **company** | Gestão de empresas e departamentos, contexto multi-tenant por sessão |
-| **permissions** | ACL hierárquica: roles, objetos de página, permissões CRUD, middleware, Blade directives, auditoria |
+| **auth** | Login with rate limit, password recovery, 2FA (TOTP + email), active sessions, profile with photo |
+| **menu** | Dynamic sidebar menu loaded from database, with cache and tree structure |
+| **company** | Company and department management, multi-tenant context per session |
+| **permissions** | Hierarchical ACL: roles, page objects, CRUD permissions, middleware, Blade directives, auditing |
 
-**Princípio de não-ruptura:** todos os módulos são `false` por padrão. Um projeto que usa apenas o scaffolding `ptah:forge` e o `BaseCrud` continua 100% funcional sem nenhuma mudança.
+**Non-breaking principle:** all modules are `false` by default. A project using only the `ptah:forge` scaffolding and `BaseCrud` remains 100% functional without any changes.
 
-**Dependências entre módulos:**
+**Module dependencies:**
 
 ```
 permissions → requer company
 company     → independente
 auth        → independente
-menu        → independente (opcional: requer auth para a tela de gestão)
+menu        → independent (optional: requires auth for the management screen)
 ```
 
 ---
 
-## Ativando os Módulos
+## Activating the Modules
 
-### Via comando (recomendado)
+### Via command (recommended)
 
 ```bash
-# Ativar autenticação
+# Activate authentication
 php artisan ptah:module auth
 
-# Ativar menu dinâmico
+# Activate dynamic menu
 php artisan ptah:module menu
 
-# Ativar gestão de empresas
+# Activate company management
 php artisan ptah:module company
 
-# Ativar ACL / permissões (ativa company automaticamente se necessário)
+# Activate ACL / permissions (activates company automatically if needed)
 php artisan ptah:module permissions
 
-# Ver estado de todos os módulos
+# View state of all modules
 php artisan ptah:module --list
 ```
 
 O comando:
-1. Publica as migrations necessárias
-2. Executa `php artisan migrate`
-3. Define automaticamente a variável de ambiente no `.env`
+1. Publishes the required migrations
+2. Runs `php artisan migrate`
+3. Automatically sets the environment variable in `.env`
 
 ### Via `.env` (manual)
 
 ```dotenv
 PTAH_MODULE_AUTH=true
 PTAH_MODULE_MENU=true
-PTAH_MENU_DRIVER=database   # 'config' (padrão) ou 'database'
+PTAH_MENU_DRIVER=database   # 'config' (default) or 'database'
 PTAH_MODULE_COMPANY=true
 PTAH_MODULE_PERMISSIONS=true
 ```
@@ -117,46 +117,46 @@ PTAH_MODULE_PERMISSIONS=true
 
 ---
 
-## Módulo Auth
+## Auth Module
 
-### Configuração Auth
+### Auth Configuration
 
-Em `config/ptah.php`, seção `auth`:
+In `config/ptah.php`, section `auth`:
 
 ```php
 'auth' => [
     'guard'              => 'web',
-    'home'               => '/dashboard',    // redireciona após login
-    'register_enabled'   => false,           // sem registro público
-    'two_factor'         => true,            // habilita 2FA
-    'remember_me'        => true,            // exibe "lembrar-me" no login
-    'session_protection' => true,            // gerencia sessões ativas
-    'route_prefix'       => '',              // prefixo de URL (ex: 'admin')
+    'home'               => '/dashboard',    // redirect after login
+    'register_enabled'   => false,           // no public registration
+    'two_factor'         => true,            // enables 2FA
+    'remember_me'        => true,            // shows "remember me" in login
+    'session_protection' => true,            // manage active sessions
+    'route_prefix'       => '',              // URL prefix (e.g. 'admin')
     'middleware'         => ['web'],
 ],
 ```
 
-### Rotas
+### Routes
 
-Registradas automaticamente quando `ptah.modules.auth = true`:
+Registered automatically when `ptah.modules.auth = true`:
 
-| Método | URI | Nome | Proteção |
+| Method | URI | Name | Protection |
 |---|---|---|---|
-| `GET` | `/login` | `ptah.auth.login` | pública |
-| `POST` | `/logout` | `ptah.auth.logout` | pública |
-| `GET` | `/forgot-password` | `ptah.auth.forgot-password` | pública |
-| `GET` | `/reset-password/{token}` | `password.reset` | pública |
-| `GET` | `/two-factor-challenge` | `ptah.auth.two-factor` | pública |
+| `GET` | `/login` | `ptah.auth.login` | public |
+| `POST` | `/logout` | `ptah.auth.logout` | public |
+| `GET` | `/forgot-password` | `ptah.auth.forgot-password` | public |
+| `GET` | `/reset-password/{token}` | `password.reset` | public |
+| `GET` | `/two-factor-challenge` | `ptah.auth.two-factor` | public |
 | `GET` | `/dashboard` | `ptah.dashboard` | `auth` |
 | `GET` | `/profile` | `ptah.profile` | `auth` |
 
-> Use `route_prefix` para montar todas as rotas sob um prefixo. Ex: `'route_prefix' => 'admin'` gera `/admin/login`, `/admin/dashboard`, etc.
+> Use `route_prefix` to mount all routes under a prefix. E.g.: `'route_prefix' => 'admin'` generates `/admin/login`, `/admin/dashboard`, etc.
 
-### Componentes Livewire
+### Livewire Components
 
-Registrados sob o namespace `Ptah\Livewire\Auth`:
+Registered under the namespace `Ptah\Livewire\Auth`:
 
-| Tag | Classe | Layout |
+| Tag | Class | Layout |
 |---|---|---|
 | `ptah::auth.login` | `LoginPage` | `ptah::layouts.forge-auth` |
 | `ptah::auth.forgot-password` | `ForgotPasswordPage` | `ptah::layouts.forge-auth` |
@@ -172,20 +172,20 @@ Registrados sob o namespace `Ptah\Livewire\Auth`:
 **View:** `resources/views/livewire/auth/login.blade.php`
 
 Funcionalidades:
-- Autenticação via `Auth::attempt()`
+- Authentication via `Auth::attempt()`
 - **Rate Limit:** 5 tentativas por `email|ip`, bloqueio por 60 segundos
-- Campo "lembrar-me" (configurável via `ptah.auth.remember_me`)
-- Detecção de 2FA ativo: em vez de fazer login, salva `ptah.2fa.user_id` na sessão e redireciona para `/two-factor-challenge`
-- Sem 2FA: `Session::regenerate()` + redirect para `ptah.auth.home`
+- "Remember me" field (configurable via `ptah.auth.remember_me`)
+- Active 2FA detection: instead of logging in, saves `ptah.2fa.user_id` in session and redirects to `/two-factor-challenge`
+- Without 2FA: `Session::regenerate()` + redirect to `ptah.auth.home`
 
-**Propriedades Livewire:**
+**Livewire Properties:**
 
-| Propriedade | Tipo | Descrição |
+| Property | Type | Description |
 |---|---|---|
-| `email` | string | Campo e-mail |
-| `password` | string | Campo senha |
-| `remember` | bool | Marcar "lembrar-me" |
-| `errorMessage` | string | Mensagem de erro exibida no alerta |
+| `email` | string | Email field |
+| `password` | string | Password field |
+| `remember` | bool | Check "remember me" |
+| `errorMessage` | string | Error message displayed in the alert |
 
 ---
 
@@ -194,7 +194,7 @@ Funcionalidades:
 **Arquivo:** `src/Livewire/Auth/ForgotPasswordPage.php`  
 **View:** `resources/views/livewire/auth/forgot-password.blade.php`
 
-Usa o broker padrão do Laravel (`Password::sendResetLink()`). Exibe feedback de sucesso/erro sem revelar se o e-mail existe no banco.
+Uses the default Laravel broker (`Password::sendResetLink()`). Displays success/error feedback without revealing whether the email exists in the database.
 
 ---
 
@@ -213,33 +213,33 @@ Usa o broker padrão do Laravel (`Password::sendResetLink()`). Exibe feedback de
 **Arquivo:** `src/Livewire/Auth/TwoFactorChallengePage.php`  
 **View:** `resources/views/livewire/auth/two-factor-challenge.blade.php`
 
-Fluxo de verificação 2FA pós-login:
+2FA verification flow post-login:
 
 ```
-LoginPage salva ptah.2fa.user_id na sessão
+LoginPage saves ptah.2fa.user_id in session
   ↓
 TwoFactorChallengePage::mount() verifica session
   ↓
-Usuário digita código
+User enters code
   ↓
 verify() → TwoFactorService::verify*()
   ↓
 Sucesso → Auth::loginUsingId() + Session::regenerate() + evento Login
 ```
 
-**Propriedades:**
+**Properties:**
 
-| Propriedade | Tipo | Descrição |
+| Property | Type | Description |
 |---|---|---|
-| `code` | string | Código digitado |
-| `usingRecovery` | bool | Toggle para usar código de recuperação |
+| `code` | string | Entered code |
+| `usingRecovery` | bool | Toggle to use recovery code |
 
-**Métodos:**
+**Methods:**
 
-| Método | Descrição |
+| Method | Description |
 |---|---|
-| `verify()` | Verifica o código (recovery / email OTP / TOTP) |
-| `sendEmailCode()` | Re-envia código OTP por e-mail |
+| `verify()` | Verifies the code (recovery / email OTP / TOTP) |
+| `sendEmailCode()` | Re-sends OTP code by email |
 
 ---
 
@@ -248,32 +248,32 @@ Sucesso → Auth::loginUsingId() + Session::regenerate() + evento Login
 **Arquivo:** `src/Livewire/Auth/ProfilePage.php`  
 **View:** `resources/views/livewire/auth/profile.blade.php`
 
-Página de perfil com 5 abas:
+Profile page with 5 tabs:
 
-| Aba (`activeTab`) | Funcionalidade |
+| Tab (`activeTab`) | Functionality |
 |---|---|
-| `profile` | Editar nome e e-mail |
-| `password` | Alterar senha (valida senha atual) |
-| `two_factor` | Configurar / desativar 2FA (TOTP + e-mail) |
-| `sessions` | Ver e revogar sessões ativas |
-| `photo` | Upload de foto de perfil (`WithFileUploads`) |
+| `profile` | Edit name and email |
+| `password` | Change password (validates current password) |
+| `two_factor` | Configure / disable 2FA (TOTP + email) |
+| `sessions` | View and revoke active sessions |
+| `photo` | Upload profile photo (`WithFileUploads`) |
 
-**Métodos principais:**
+**Main methods:**
 
-| Método | Descrição |
+| Method | Description |
 |---|---|
-| `saveProfile()` | Persiste nome e e-mail |
-| `savePassword()` | Valida atual + salva nova senha |
-| `initTotp()` | Gera secret TOTP + QR code SVG, exibe formulário de confirmação |
-| `confirmTotp()` | Verifica código e ativa 2FA TOTP |
-| `enableEmailTwoFactor()` | Ativa 2FA por e-mail imediatamente |
-| `disableTwoFactor()` | Desativa e apaga dados de 2FA |
-| `regenerateRecoveryCodes()` | Gera novos 8 códigos de recuperação |
-| `loadSessions()` | Carrega sessões ativas via `SessionService` |
-| `revokeSession($id)` | Revoga sessão específica |
-| `revokeOtherSessions()` | Revoga todas exceto a atual |
-| `savePhoto()` | Salva foto no disco `profile-photos` |
-| `removePhoto()` | Remove foto e limpa o campo no banco |
+| `saveProfile()` | Persists name and email |
+| `savePassword()` | Validates current + saves new password |
+| `initTotp()` | Generates TOTP secret + QR code SVG, shows confirmation form |
+| `confirmTotp()` | Verifies code and activates TOTP 2FA |
+| `enableEmailTwoFactor()` | Activates email 2FA immediately |
+| `disableTwoFactor()` | Deactivates and removes 2FA data |
+| `regenerateRecoveryCodes()` | Generates 8 new recovery codes |
+| `loadSessions()` | Loads active sessions via `SessionService` |
+| `revokeSession($id)` | Revokes specific session |
+| `revokeOtherSessions()` | Revokes all except the current one |
+| `savePhoto()` | Saves photo to `profile-photos` disk |
+| `removePhoto()` | Removes photo and clears field in database |
 
 ---
 
@@ -281,9 +281,9 @@ Página de perfil com 5 abas:
 
 **View:** `resources/views/livewire/auth/dashboard.blade.php`
 
-View estática servida pela rota `ptah.dashboard`. Usa o layout `forge-dashboard` e exibe 4 `<x-forge-stat-card>` de exemplo com informações do sistema (nome do usuário, app, ambiente, versão Laravel).
+Static view served by the `ptah.dashboard` route. Uses the `forge-dashboard` layout and displays 4 example `<x-forge-stat-card>` components with system information (user name, app, environment, Laravel version).
 
-Para personalizar, publique as views:
+To customize, publish the views:
 
 ```bash
 php artisan vendor:publish --tag=ptah-views --force
@@ -295,55 +295,55 @@ Depois edite `resources/views/vendor/ptah/livewire/auth/dashboard.blade.php`.
 
 ---
 
-## Autenticação 2FA
+## 2FA Authentication
 
-O sistema suporta dois métodos simultâneos que o usuário escolhe na aba `two_factor` do perfil.
+The system supports two simultaneous methods that the user chooses in the `two_factor` tab of the profile.
 
-### TOTP (App Autenticador)
+### TOTP (Authenticator App)
 
-Usa a biblioteca `pragmarx/google2fa-laravel` (instalação opcional — ver [Dependências Opcionais](#dependências-opcionais)).
+Uses the `pragmarx/google2fa-laravel` library (optional installation — see [Optional Dependencies](#optional-dependencies)).
 
-**Fluxo de ativação:**
+**Activation flow:**
 
 ```
 ProfilePage::initTotp()
   → TwoFactorService::enableTotp()
-      → Gera secret (Google2FA::generateSecretKey())
-      → Salva criptografado em two_factor_secret
-      → Retorna [secret, qrCodeSvg, recoveryCodes]
-  → Exibe QR Code + campo de confirmação
+      → Generates secret (Google2FA::generateSecretKey())
+      → Saves encrypted in two_factor_secret
+      → Returns [secret, qrCodeSvg, recoveryCodes]
+  → Displays QR Code + confirmation field
 
-Usuário escaneia e digita código → ProfilePage::confirmTotp()
+User scans and enters code → ProfilePage::confirmTotp()
   → TwoFactorService::confirmTotp()
-      → Verifica código com Google2FA::verifyKey()
-      → Seta two_factor_confirmed_at = now()
-      → Seta two_factor_type = 'totp'
+      → Verifies code with Google2FA::verifyKey()
+      → Sets two_factor_confirmed_at = now()
+      → Sets two_factor_type = 'totp'
 ```
 
-**QR Code:** gerado via `bacon/bacon-qr-code` em SVG. Se a biblioteca não estiver instalada, usa a API do Google Charts como fallback.
+**QR Code:** generated via `bacon/bacon-qr-code` in SVG. If the library is not installed, uses the Google Charts API as fallback.
 
-**Colunas adicionadas à tabela `users`:**
+**Columns added to the `users` table:**
 
-| Coluna | Tipo | Descrição |
+| Column | Type | Description |
 |---|---|---|
 | `two_factor_secret` | text nullable | Secret TOTP (criptografado) |
-| `two_factor_recovery_codes` | text nullable | JSON com 8 códigos |
-| `two_factor_confirmed_at` | timestamp nullable | Data de confirmação; `null` = não ativo |
+| `two_factor_recovery_codes` | text nullable | JSON with 8 codes |
+| `two_factor_confirmed_at` | timestamp nullable | Confirmation date; `null` = not active |
 | `two_factor_type` | string nullable | `'totp'` ou `'email'` |
-| `profile_photo_path` | string(2048) nullable | Caminho da foto de perfil |
+| `profile_photo_path` | string(2048) nullable | Profile photo path |
 
-### E-mail OTP
+### Email OTP
 
-Não requer biblioteca adicional. Usa o `Cache` do Laravel.
+Does not require an additional library. Uses the Laravel `Cache`.
 
 **Fluxo:**
 
 ```
 TwoFactorService::sendEmailCode($user)
-  → Gera código de 6 dígitos
+  → Generates a 6-digit code
   → Cache::put("ptah_2fa_email_{userId}", $code, 600)
   → Envia TwoFactorCodeMail
-  → Retorna o código (para testes)
+  → Returns the code (for testing)
 
 TwoFactorService::verifyEmailCode($user, $code)
   → Cache::get("ptah_2fa_email_{userId}")
@@ -353,58 +353,58 @@ TwoFactorService::verifyEmailCode($user, $code)
 
 **TTL:** 600 segundos (10 minutos).
 
-### Códigos de Recuperação
+### Recovery Codes
 
-8 códigos no formato `xxxxx-xxxxx`, gerados com `Str::random()`.
+8 codes in the format `xxxxx-xxxxx`, generated with `Str::random()`.
 
-- Armazenados em `two_factor_recovery_codes` como JSON criptografado
-- **Cada código é de uso único** — ao ser verificado, é removido do array
-- O usuário pode regenerar na aba `two_factor` do perfil
+- Stored in `two_factor_recovery_codes` as encrypted JSON
+- **Each code is single-use** — once verified, it is removed from the array
+- The user can regenerate them in the `two_factor` tab of the profile
 
 ### TwoFactorService
 
 **Namespace:** `Ptah\Services\Auth\TwoFactorService`  
 **Singleton** registrado no `PtahServiceProvider`.
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `enableTotp(User $user)` | array | Gera secret + QR + recovery codes |
-| `confirmTotp(User $user, string $code)` | bool | Confirma e ativa TOTP |
-| `verifyTotp(User $user, string $code)` | bool | Verifica código no login |
-| `sendEmailCode(User $user)` | string | Envia e-mail OTP; retorna código |
-| `verifyEmailCode(User $user, string $code)` | bool | Verifica OTP do e-mail |
-| `verifyRecoveryCode(User $user, string $code)` | bool | Usa e consome código de recuperação |
-| `isEnabled(User $user)` | bool | `true` se `two_factor_confirmed_at` não é `null` |
-| `disable(User $user)` | void | Limpa todos os campos 2FA |
+| `enableTotp(User $user)` | array | Generates secret + QR + recovery codes |
+| `confirmTotp(User $user, string $code)` | bool | Confirms and activates TOTP |
+| `verifyTotp(User $user, string $code)` | bool | Verifies code at login |
+| `sendEmailCode(User $user)` | string | Sends email OTP; returns code |
+| `verifyEmailCode(User $user, string $code)` | bool | Verifies email OTP |
+| `verifyRecoveryCode(User $user, string $code)` | bool | Uses and consumes recovery code |
+| `isEnabled(User $user)` | bool | `true` if `two_factor_confirmed_at` is not `null` |
+| `disable(User $user)` | void | Clears all 2FA fields |
 
 ---
 
-## Gerenciamento de Sessões
+## Session Management
 
-Requer driver de sessão `database` (`SESSION_DRIVER=database`). O `SessionService` verifica silenciosamente se a tabela `sessions` existe antes de qualquer consulta.
+Requires session driver `database` (`SESSION_DRIVER=database`). The `SessionService` silently checks if the `sessions` table exists before any query.
 
 ### SessionService
 
 **Namespace:** `Ptah\Services\Auth\SessionService`  
 **Singleton** registrado no `PtahServiceProvider`.
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `getActiveSessions(User $user)` | array | Lista sessões ativas com detalhes de dispositivo |
-| `revokeSession(string $sessionId)` | void | Remove sessão pelo ID |
-| `revokeOtherSessions(User $user, string $currentId)` | void | Remove todas exceto a atual |
+| `getActiveSessions(User $user)` | array | Lists active sessions with device details |
+| `revokeSession(string $sessionId)` | void | Removes session by ID |
+| `revokeOtherSessions(User $user, string $currentId)` | void | Removes all except the current one |
 
-**Estrutura de cada sessão retornada:**
+**Structure of each returned session:**
 
 ```php
 [
     'id'                  => 'abc123...',
     'ip_address'          => '192.168.0.1',
     'user_agent'          => 'Mozilla/5.0...',
-    'browser'             => 'Chrome',        // detectado via parseAgent()
-    'platform'            => 'Windows',       // detectado via parseAgent()
+    'browser'             => 'Chrome',        // detected via parseAgent()
+    'platform'            => 'Windows',       // detected via parseAgent()
     'last_activity'       => 1709000000,
-    'last_activity_human' => 'há 3 minutos',  // Carbon::diffForHumans()
+    'last_activity_human' => '3 minutes ago', // Carbon::diffForHumans()
     'is_current'          => true,
 ]
 ```
@@ -414,48 +414,48 @@ Requer driver de sessão `database` (`SESSION_DRIVER=database`). O `SessionServi
 
 ---
 
-## Módulo Menu
+## Menu Module
 
-### Configuração Menu
+### Menu Configuration
 
-Em `config/ptah.php`, seção `menu`:
+In `config/ptah.php`, section `menu`:
 
 ```php
 'menu' => [
-    'driver'    => env('PTAH_MENU_DRIVER', 'config'),   // 'config' ou 'database'
+    'driver'    => env('PTAH_MENU_DRIVER', 'config'),   // 'config' or 'database'
     'cache'     => true,
-    'cache_ttl' => 300,    // segundos
-    'max_depth' => 4,      // profundidade máxima da árvore
+    'cache_ttl' => 300,    // seconds
+    'max_depth' => 4,      // maximum tree depth
 ],
 ```
 
 ### Driver `config`
 
-**Padrão — nenhuma migration necessária.** Os itens do menu são lidos de `ptah.forge.sidebar_items`, exatamente como antes. Projetos existentes continuam funcionando sem nenhuma mudança.
+**Default — no migration required.** Menu items are read from `ptah.forge.sidebar_items`, exactly as before. Existing projects continue working without any changes.
 
 ```php
 // config/ptah.php
 'forge' => [
     'sidebar_items' => [
         ['icon' => 'home',  'label' => 'Dashboard', 'url' => '/dashboard', 'match' => 'dashboard'],
-        ['icon' => 'users', 'label' => 'Usuários',  'url' => '/users',     'match' => 'users*'],
+        ['icon' => 'users', 'label' => 'Users',    'url' => '/users',     'match' => 'users*'],
     ],
 ],
 ```
 
 ### Driver `database`
 
-Ativado com `PTAH_MENU_DRIVER=database`. Os itens são lidos da tabela `menus` com cache automático.
+Activated with `PTAH_MENU_DRIVER=database`. Items are read from the `menus` table with automatic cache.
 
-**Prioridade de resolução no `forge-sidebar`:**
+**Resolution priority in `forge-sidebar`:**
 
 ```
-prop :items (explícito)
-  ↓ (se null)
-MenuService::getTree()  ← quando driver = 'database'
-  ↓ (se driver = 'config' ou módulo menu inativo)
+prop :items (explicit)
+  ↓ (if null)
+MenuService::getTree()  ← when driver = 'database'
+  ↓ (if driver = 'config' or menu module inactive)
 config('ptah.forge.sidebar_items')
-  ↓ (se vazio)
+  ↓ (if empty)
 itens de demo hardcoded
 ```
 
@@ -467,18 +467,18 @@ itens de demo hardcoded
 
 **Schema da tabela:**
 
-| Coluna | Tipo | Descrição |
+| Column | Type | Description |
 |---|---|---|
 | `id` | bigint PK | — |
-| `parent_id` | bigint FK nullable | Auto-referência (grupos) |
+| `parent_id` | bigint FK nullable | Self-reference (groups) |
 | `text` | string | Texto interno/legado |
-| `label` | virtual (alias de `text`) | Rótulo exibido — a sidebar lê `label` com fallback para `text` |
+| `label` | virtual (alias of `text`) | Displayed label — the sidebar reads `label` with fallback to `text` |
 | `url` | string(2048) | URL do link |
 | `icon` | string nullable | Classe CSS (`bx bx-home`, `fas fa-user`) ou nome SVG legado (`home`) |
 | `type` | enum | `menuLink` ou `menuGroup` |
 | `target` | enum | `_self` ou `_blank` |
-| `link_order` | integer | Ordem de exibição |
-| `is_active` | boolean | Visibilidade |
+| `link_order` | integer | Display order |
+| `is_active` | boolean | Visibility |
 | `deleted_at` | timestamp | SoftDelete |
 
 **Relacionamentos:**
@@ -488,34 +488,34 @@ $menu->parent   // BelongsTo(Menu)
 $menu->children // HasMany(Menu)
 ```
 
-**Métodos estáticos:**
+**Static methods:**
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `Menu::getTreeForSidebar()` | array | Árvore cacheada pronta para o sidebar |
-| `Menu::clearCache()` | void | Invalida o cache manualmente |
-| `Menu::buildTree()` | array | Constrói árvore sem cache |
+| `Menu::getTreeForSidebar()` | array | Cached tree ready for the sidebar |
+| `Menu::clearCache()` | void | Manually invalidates the cache |
+| `Menu::buildTree()` | array | Builds tree without cache |
 
-**Formato de saída** (compatível com `forge-sidebar`):
+**Output format** (compatible with `forge-sidebar`):
 
 ```php
 [
     [
         'label'    => 'Dashboard',
         'url'      => '/dashboard',
-        'icon'     => 'bx bx-home-alt',   // classe CSS Boxicons
+        'icon'     => 'bx bx-home-alt',   // CSS class Boxicons
         'type'     => 'menuLink',
         'target'   => '_self',
         'match'    => 'dashboard',
         'children' => [],
     ],
     [
-        'label'    => 'Cadastros',
+        'label'    => 'Records',
         'icon'     => 'bx bx-folder',
-        'type'     => 'menuGroup',         // grupo → accordion na sidebar
+        'type'     => 'menuGroup',         // group -> accordion in sidebar
         'children' => [
             [
-                'label'  => 'Produtos',
+                'label'  => 'Products',
                 'url'    => '/products',
                 'icon'   => 'bx bx-cube',
                 'type'   => 'menuLink',
@@ -530,209 +530,209 @@ $menu->children // HasMany(Menu)
 ### MenuService
 
 **Namespace:** `Ptah\Services\Menu\MenuService`  
-**Singleton** registrado no `PtahServiceProvider`.
+**Singleton** registered in `PtahServiceProvider`.
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `getTree()` | array | Items do menu conforme o driver configurado |
-| `getFromConfig()` | array | Lê e normaliza `ptah.forge.sidebar_items` |
-| `clearCache()` | void | Invalida o cache (`ptah_menu_tree`) |
-| `allForAdmin()` | Collection | Todos os itens (incluindo inativos) para tela de gestão |
-| `listForSelect()` | array | Grupos para campo `parent_id` no formulário |
+| `getTree()` | array | Menu items according to the configured driver |
+| `getFromConfig()` | array | Reads and normalizes `ptah.forge.sidebar_items` |
+| `clearCache()` | void | Invalidates the cache (`ptah_menu_tree`) |
+| `allForAdmin()` | Collection | All items (including inactive) for the management screen |
+| `listForSelect()` | array | Groups for the `parent_id` field in the form |
 
 **Cache:**
 
-- Chave: `ptah_menu_tree`  
-- TTL: `config('ptah.menu.cache_ttl', 300)` segundos  
-- Invalidação automática: o Observer do model `Menu` chama `Menu::clearCache()` nos eventos `saved`, `deleted` e `restored`
+- Key: `ptah_menu_tree`  
+- TTL: `config('ptah.menu.cache_ttl', 300)` seconds  
+- Automatic invalidation: the `Menu` model Observer calls `Menu::clearCache()` on `saved`, `deleted` and `restored` events
 
 ---
 
-### Tela de Gestão de Menus
+### Menu Management Screen
 
-Quando o módulo menu está ativo, o Ptah registra automaticamente a tela Livewire de CRUD de itens:
+When the menu module is active, Ptah automatically registers the Livewire CRUD screen for items:
 
-| Rota | Componente | Acesso |
+| Route | Component | Access |
 |---|---|---|
 | `/ptah-menu` | `Ptah\Livewire\Menu\MenuList` | `ptah.menu.manage` |
 
-A tela aparece automaticamente no **dropdown de Administração** da navbar (`forge-navbar`) assim que a rota existir.
+The screen appears automatically in the **Administration dropdown** of the navbar (`forge-navbar`) as soon as the route exists.
 
-**Funcionalidades:**
-- Criação e edição de **links** (`menuLink`) e **grupos** (`menuGroup`)
-- Campo **pai** — permite aninhar links dentro de um grupo
-- Preview em tempo real do ícone no formulário
-- **Ordem** de exibição (`link_order`)
+**Features:**
+- Creation and editing of **links** (`menuLink`) and **groups** (`menuGroup`)
+- **Parent** field — allows nesting links inside a group
+- Real-time icon preview in the form
+- Display **Order** (`link_order`)
 - Toggle de status (ativo/inativo) diretamente na tabela
-- Exclusão de grupo desvincula automaticamente os filhos (evita órfãos)
-- **Busca** e filtro por tipo na toolbar
-- Invalida o cache `ptah_menu_tree` após cada operação
+- Group deletion automatically detaches children (prevents orphans)
+- **Search** and filter by type in the toolbar
+- Invalidates `ptah_menu_tree` cache after each operation
 
-**Ícones suportados:**
+**Supported icons:**
 
 | Formato | Exemplo | Resultado |
 |---|---|---|
-| Classe CSS com espaço | `bx bx-home-alt` | `<i class="bx bx-home-alt">` (Boxicons) |
-| Classe CSS com espaço | `fas fa-user` | `<i class="fas fa-user">` (Font Awesome) |
-| Nome simples (legado) | `home` | SVG inline do mapa legado |
+| CSS class with space | `bx bx-home-alt` | `<i class="bx bx-home-alt">` (Boxicons) |
+| CSS class with space | `fas fa-user` | `<i class="fas fa-user">` (Font Awesome) |
+| Simple name (legacy) | `home` | Inline SVG from legacy map |
 
-> As bibliotecas Boxicons 2.1.4 e Font Awesome 6.7.2 já são carregadas via CDN pelo `forge-dashboard-layout`.
+> The Boxicons 2.1.4 and Font Awesome 6.7.2 libraries are already loaded via CDN by `forge-dashboard-layout`.
 
 ---
 
-### Sidebar — Ícones e Grupos Accordion
+### Sidebar — Icons and Accordion Groups
 
-O `forge-sidebar` foi atualizado para suportar três comportamentos dependendo do `type` de cada item:
+The `forge-sidebar` was updated to support three behaviors depending on the `type` of each item:
 
 | `type` | Comportamento |
 |---|---|
 | `menuLink` | Link direto — `<a href>` com highlight de rota ativa |
-| `menuGroup` + filhos | Cabeçalho de grupo com **accordion Alpine.js** (`x-collapse`) — seta animada indica aberto/fechado |
-| `menuGroup` sem filhos | Label desabilitado (div, sem clique) |
+| `menuGroup` + children | Group header with **Alpine.js accordion** (`x-collapse`) — animated arrow indicates open/closed |
+| `menuGroup` without children | Disabled label (div, no click) |
 
-**Driver `database` — Dashboard fixo:**
+**`database` Driver — Fixed Dashboard:**
 
-Quando `PTAH_MENU_DRIVER=database`, o item **Dashboard** é injetado automaticamente no topo do menu (antes dos itens do banco) com ícone `bx bx-home-alt`. Os demais itens vêm do banco.
+When `PTAH_MENU_DRIVER=database`, the **Dashboard** item is automatically injected at the top of the menu (before database items) with icon `bx bx-home-alt`. Other items come from the database.
 
-**Renderização de ícones:**
+**Icon rendering:**
 
 ```php
-// Lógica em forge-sidebar.blade.php
+// Logic in forge-sidebar.blade.php
 if (str_contains($icon, ' ')) {
     // Boxicons / Font Awesome → <i class>
     return '<i class="' . $icon . '">';
 }
-// Nome sem espaço → SVG inline (legado)
+// Name without space -> inline SVG (legacy)
 return $svgIcons[$icon] ?? $svgIcons['cube'];
 ```
 
 **Logout:**  
-O botão de saída usa `<i class="bx bx-log-out">` em vez de SVG inline.
+The logout button uses `<i class="bx bx-log-out">` instead of inline SVG.
 
 **Estado accordion:**  
-Grupos que contêm a rota ativa iniciam **abertos** automaticamente (`x-data="{ open: true }"`). O estado não é persistido entre sessões.
+Groups containing the active route start **open** automatically (`x-data="{ open: true }"`). The state is not persisted between sessions.
 
 ---
 
-## Módulo Company
+## Company Module
 
-O módulo **company** adiciona gestão completa de empresas e departamentos ao Ptah.
+The **company** module adds complete company and department management to Ptah.
 
-**Recursos:**
-- CRUD de empresas com logo, dados fiscais (CNPJ/CPF/EIN/VAT), endereço em JSON e configurações arbitrárias
-- CRUD de departamentos (agrupadores de roles)
-- `CompanyService` com contexto por sessão, cache e suporte multi-empresa
-- Tela `/ptah-companies` com Livewire 4
-- `DefaultCompanySeeder` idempotente
-- Todos os models (`Company`, `Department`) usam a trait `HasAuditFields` — `created_by`, `updated_by` e `deleted_by` preenchidos automaticamente via Eloquent events
+**Features:**
+- Company CRUD with logo, tax data (CNPJ/CPF/EIN/VAT), address in JSON and arbitrary settings
+- Department CRUD (role groupers)
+- `CompanyService` with session context, cache and multi-company support
+- `/ptah-companies` screen with Livewire 4
+- Idempotent `DefaultCompanySeeder`
+- All models (`Company`, `Department`) use the `HasAuditFields` trait — `created_by`, `updated_by` and `deleted_by` filled automatically via Eloquent events
 
-**Ativação rápida:**
+**Quick activation:**
 
 ```bash
 php artisan ptah:module company
 ```
 
-> Consulte a **documentação completa** em [Company.md](Company.md).
+> See the **complete documentation** in [Company.md](Company.md).
 
 ---
 
-## Módulo Permissions
+## Permissions Module
 
-O módulo **permissions** implementa ACL hierárquica granular baseada em roles.
+The **permissions** module implements granular hierarchical ACL based on roles.
 
-**Recursos:**
-- Roles/Perfis com departamento e cor identificadora
-- Role MASTER — bypass total de verificações
-- Páginas e Objetos de Página (button, field, section, api, report, tab, link, page)
-- Permissões por objeto: `can_create`, `can_read`, `can_update`, `can_delete` + JSON `extra`
-- `PermissionService` com cache (suporte a tags Redis), auditoria e resolução automática de usuário
-- `RoleService` com proteção de MASTER e sincronização de permissões em lote
-- Helpers globais: `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`
-- Facade `Permission::check()`
-- Diretivas Blade: `@ptahCan` / `@ptahMaster`
-- Middleware: `ptah.can:objeto,acao`
-- 5 telas admin Livewire: Departamentos, Roles, Páginas/Objetos, Usuários ACL, Auditoria
-- `DefaultAdminSeeder` idempotente que cria toda a cadeia admin
-- Todos os models (`Role`, `PtahPage`, `PageObject`, `UserRole`, `RolePermission`) usam a trait `HasAuditFields` — rastreamento automático de quem criou, editou e excluiu cada registro
+**Features:**
+- Roles/Profiles with department and identifier color
+- MASTER role — total bypass of all checks
+- Pages and Page Objects (button, field, section, api, report, tab, link, page)
+- Per-object permissions: `can_create`, `can_read`, `can_update`, `can_delete` + JSON `extra`
+- `PermissionService` with cache (Redis tag support), auditing and automatic user resolution
+- `RoleService` with MASTER protection and batch permission synchronization
+- Global helpers: `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`
+- `Permission::check()` Facade
+- Blade directives: `@ptahCan` / `@ptahMaster`
+- Middleware: `ptah.can:object,action`
+- 5 Livewire admin screens: Departments, Roles, Pages/Objects, Users ACL, Audit
+- Idempotent `DefaultAdminSeeder` that creates the entire admin chain
+- All models (`Role`, `PtahPage`, `PageObject`, `UserRole`, `RolePermission`) use the `HasAuditFields` trait — automatic tracking of who created, edited and deleted each record
 
-**Ativação rápida:**
+**Quick activation:**
 
 ```bash
 php artisan ptah:module permissions
-# Ativa company automaticamente se necessário
+# Activates company automatically if needed
 ```
 
-> Consulte a **documentação completa** em [Permissions.md](Permissions.md).
+> See the **complete documentation** in [Permissions.md](Permissions.md).
 
 ---
 
-## Comando ptah:module
+## ptah:module Command
 
 ```
 php artisan ptah:module {module?} {--list} {--force}
 ```
 
-| Argumento/Opção | Descrição |
+| Argument/Option | Description |
 |---|---|
 | `module` | `auth`, `menu`, `company` ou `permissions`. Se omitido, exibe seletor interativo |
-| `--list` | Exibe tabela com o estado de cada módulo |
-| `--force` | Sobrescreve arquivos publicados existentes |
+| `--list` | Displays a table with the state of each module |
+| `--force` | Overwrites existing published files |
 
-**Exemplo de saída do `--list`:**
+**Example output of `--list`:**
 
 ```
-  Módulos disponíveis no Ptah:
+  Available modules in Ptah:
 
   ┌─────────────┬────────────────────────────┬───────────┐
-  │ Módulo      │ Variável .env              │ Estado    │
+  | Module      | .env Variable              | State     |
   ├─────────────┼────────────────────────────┼───────────┤
-  │ auth        │ PTAH_MODULE_AUTH           │ ✔ ativo   │
-  │ menu        │ PTAH_MODULE_MENU           │ ✘ inativo │
-  │ company     │ PTAH_MODULE_COMPANY        │ ✔ ativo   │
-  │ permissions │ PTAH_MODULE_PERMISSIONS    │ ✔ ativo   │
+  | auth        | PTAH_MODULE_AUTH           | ✔ active  |
+  | menu        | PTAH_MODULE_MENU           | ✘ inactive|
+  | company     | PTAH_MODULE_COMPANY        | ✔ active  |
+  | permissions | PTAH_MODULE_PERMISSIONS    | ✔ active  |
   └─────────────┴────────────────────────────┴───────────┘
 
-  Para ativar: php artisan ptah:module {módulo}
+  To activate: php artisan ptah:module {module}
 ```
 
-**O que `ptah:module auth` faz:**
+**What `ptah:module auth` does:**
 
-1. Publica a migration `add_two_factor_columns_to_users_table`
-2. Executa `php artisan migrate`
-3. Adiciona `PTAH_MODULE_AUTH=true` ao `.env`
-4. Exibe próximos passos
+1. Publishes the `add_two_factor_columns_to_users_table` migration
+2. Runs `php artisan migrate`
+3. Adds `PTAH_MODULE_AUTH=true` to `.env`
+4. Displays next steps
 
-**O que `ptah:module menu` faz:**
+**What `ptah:module menu` does:**
 
-1. Publica a migration `create_menus_table`
-2. Executa `php artisan migrate`
-3. Adiciona `PTAH_MODULE_MENU=true` ao `.env`
-4. Exibe próximos passos
+1. Publishes the `create_menus_table` migration
+2. Runs `php artisan migrate`
+3. Adds `PTAH_MODULE_MENU=true` to `.env`
+4. Displays next steps
 
-**O que `ptah:module company` faz:**
+**What `ptah:module company` does:**
 
-1. Publica as migrations `ptah_companies` e `ptah_departments`
-2. Executa `php artisan migrate`
-3. Executa `DefaultCompanySeeder` (empresa padrão idempotente)
-4. Adiciona `PTAH_MODULE_COMPANY=true` ao `.env`
-5. Exibe próximos passos
+1. Publishes the `ptah_companies` and `ptah_departments` migrations
+2. Runs `php artisan migrate`
+3. Runs `DefaultCompanySeeder` (idempotent default company)
+4. Adds `PTAH_MODULE_COMPANY=true` to `.env`
+5. Displays next steps
 
-**O que `ptah:module permissions` faz:**
+**What `ptah:module permissions` does:**
 
-1. Ativa `company` se ainda não estiver ativo
-2. Publica as 6 migrations de permissões
+1. Activates `company` if not yet active
+2. Publishes the 6 permissions migrations
 3. Executa `php artisan migrate`
-4. Executa `DefaultAdminSeeder` (empresa → departamento → MASTER role → admin → vínculo)
-5. Adiciona `PTAH_MODULE_PERMISSIONS=true` ao `.env`
-6. Exibe caixa com credenciais do admin criado
+4. Runs `DefaultAdminSeeder` (company → department → MASTER role → admin → association)
+5. Adds `PTAH_MODULE_PERMISSIONS=true` to `.env`
+6. Displays box with credentials of the created admin
 
 ---
 
-## Dependências Opcionais
+## Optional Dependencies
 
-Por padrão, o pacote não instala nenhuma dependência extra para os módulos. A 2FA TOTP usa fallback automático.
+By default, the package does not install any extra dependencies for the modules. 2FA TOTP uses automatic fallback.
 
-### Para 2FA TOTP completo
+### For full 2FA TOTP
 
 ```bash
 composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
@@ -740,14 +740,14 @@ composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
 
 | Pacote | Finalidade |
 |---|---|
-| `pragmarx/google2fa-laravel` | Geração e verificação de códigos TOTP |
-| `bacon/bacon-qr-code` | Geração de QR Code em SVG (setup TOTP) |
+| `pragmarx/google2fa-laravel` | Generation and verification of TOTP codes |
+| `bacon/bacon-qr-code` | QR Code generation in SVG (TOTP setup) |
 
-**Sem esses pacotes:**
-- TOTP **não funciona** — a opção não será exibida no perfil (verifique com `class_exists(\PragmaRX\Google2FA\Google2FA::class)`)
-- QR Code usa a API do Google Charts como fallback visual
+**Without these packages:**
+- TOTP **does not work** — the option will not be shown in the profile (check with `class_exists(\PragmaRX\Google2FA\Google2FA::class)`)
+- QR Code uses the Google Charts API as a visual fallback
 
-### Para sessões ativas
+### For active sessions
 
 ```bash
 php artisan session:table
@@ -760,18 +760,18 @@ E no `.env`:
 SESSION_DRIVER=database
 ```
 
-O `SessionService` verifica silenciosamente se a tabela existe — sem essa configuração, a aba Sessões exibirá uma lista vazia sem erro.
+The `SessionService` silently checks if the table exists — without this configuration, the Sessions tab will display an empty list with no error.
 
 ---
 
-## Referência de Configuração
+## Configuration Reference
 
-Seção completa adicionada ao `config/ptah.php`:
+Full section added to `config/ptah.php`:
 
 ```php
 /*
 |--------------------------------------------------------------------------
-| Módulos Opcionais
+| Optional Modules
 |--------------------------------------------------------------------------
 */
 'modules' => [
@@ -783,7 +783,7 @@ Seção completa adicionada ao `config/ptah.php`:
 
 /*
 |--------------------------------------------------------------------------
-| Configurações de Autenticação
+| Authentication Settings
 |--------------------------------------------------------------------------
 */
 'auth' => [
@@ -799,7 +799,7 @@ Seção completa adicionada ao `config/ptah.php`:
 
 /*
 |--------------------------------------------------------------------------
-| Configurações de Menu
+| Menu Settings
 |--------------------------------------------------------------------------
 */
 'menu' => [
@@ -811,13 +811,13 @@ Seção completa adicionada ao `config/ptah.php`:
 
 /*
 |--------------------------------------------------------------------------
-| Configurações de Company
+| Company Settings
 |--------------------------------------------------------------------------
 */
 'company' => [
     'table_prefix'       => 'ptah_',
-    'default_name'       => env('PTAH_COMPANY_NAME', 'Minha Empresa'),
-    'default_slug'       => env('PTAH_COMPANY_SLUG', 'minha-empresa'),
+    'default_name'       => env('PTAH_COMPANY_NAME', 'My Company'),
+    'default_slug'       => env('PTAH_COMPANY_SLUG', 'my-company'),
     'allow_multiple'     => env('PTAH_COMPANY_MULTIPLE', false),
     'require_department' => env('PTAH_COMPANY_REQUIRE_DEPT', false),
     'route_prefix'       => 'ptah-companies',
@@ -826,7 +826,7 @@ Seção completa adicionada ao `config/ptah.php`:
 
 /*
 |--------------------------------------------------------------------------
-| Configurações de Permissions
+| Permissions Settings
 |--------------------------------------------------------------------------
 */
 'permissions' => [
@@ -844,16 +844,16 @@ Seção completa adicionada ao `config/ptah.php`:
 
 ---
 
-## Customizando Views
+## Customizing Views
 
-As views dos módulos fazem parte do namespace `ptah::`. Para customizar, publique e edite localmente:
+Module views are part of the `ptah::` namespace. To customize, publish and edit locally:
 
 ```bash
-# Publica TODAS as views (inclui auth + componentes Forge)
+# Publishes ALL views (includes auth + Forge components)
 php artisan vendor:publish --tag=ptah-views --force
 ```
 
-As views serão copiadas para:
+The views will be copied to:
 
 ```
 resources/views/vendor/ptah/
@@ -871,9 +871,9 @@ resources/views/vendor/ptah/
 ├── mail/
 │   └── two-factor-code.blade.php
 └── components/
-    └── ...componentes Forge...
+    └── ...Forge components...
 ```
 
-O Laravel carrega automaticamente views do diretório `vendor/ptah` com precedência sobre as do pacote.
+Laravel automatically loads views from the `vendor/ptah` directory with precedence over those in the package.
 
-> **Atenção:** após publicar, atualizações futuras do pacote não afetarão as views publicadas. Re-publique com `--force` quando quiser receber as atualizações visuais.
+> **Note:** after publishing, future package updates will not affect the published views. Re-publish with `--force` when you want to receive visual updates.

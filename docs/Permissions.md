@@ -1,18 +1,18 @@
-# Módulo Permissions — Documentação Completa
+# Permissions Module — Complete Documentation
 
-**Pacote:** `jonytonet/ptah`  
+**Package:** `jonytonet/ptah`  
 **Namespace:** `Ptah\Services\Permission`, `Ptah\Livewire\Permission`  
 **Livewire:** 3.x | **Laravel:** 11+
 
 ---
 
-## Sumário
+## Table of Contents
 
-1. [Visão Geral](#visão-geral)
-2. [Conceitos Fundamentais](#conceitos-fundamentais)
-3. [Ativação](#ativação)
-4. [Configuração](#configuração)
-5. [Banco de Dados](#banco-de-dados)
+1. [Overview](#overview)
+2. [Core Concepts](#core-concepts)
+3. [Activation](#activation)
+4. [Configuration](#configuration)
+5. [Database](#database)
 6. [Models](#models)
    - [Role](#role)
    - [PtahPage](#ptahpage)
@@ -22,111 +22,111 @@
    - [PermissionAudit](#permissionaudit)
 7. [PermissionService](#permissionservice)
 8. [RoleService](#roleservice)
-9. [Helpers Globais](#helpers-globais)
-10. [Facade Permission](#facade-permission)
-11. [Diretivas Blade](#diretivas-blade)
+9. [Global Helpers](#global-helpers)
+10. [Permission Facade](#permission-facade)
+11. [Blade Directives](#blade-directives)
 12. [Middleware ptah.can](#middleware-ptahcan)
-13. [Telas de Administração](#telas-de-administração)
+13. [Administration Screens](#administration-screens)
     - [DepartmentList](#departmentlist)
     - [RoleList](#rolelist)
     - [PageList](#pagelist)
     - [UserPermissionList](#userpermissionlist)
     - [AuditList](#auditlist)
     - [PermissionGuide](#permissionguide)
-14. [Rotas](#rotas)
+14. [Routes](#routes)
 15. [Seeders](#seeders)
-16. [Fluxo de Verificação](#fluxo-de-verificação)
-17. [Auditoria](#auditoria)
+16. [Verification Flow](#verification-flow)
+17. [Audit](#audit)
 18. [Cache](#cache)
-19. [Integração com Auth e BaseCrud](#integração-com-auth-e-basecrud)
-20. [Exemplos Práticos](#exemplos-práticos)
-21. [Referência de Configuração](#referência-de-configuração)
+19. [Integration with Auth and BaseCrud](#integration-with-auth-and-basecrud)
+20. [Practical Examples](#practical-examples)
+21. [Configuration Reference](#configuration-reference)
 
 ---
 
-## Visão Geral
+## Overview
 
-O módulo **permissions** implementa um sistema de controle de acesso hierárquico e granular baseado nos conceitos **RBAC** (Role-Based Access Control) com suporte opcional a multi-empresa.
+The **permissions** module implements a hierarchical and granular access control system based on **RBAC** (Role-Based Access Control) concepts with optional multi-company support.
 
-**O que o módulo oferece:**
+**What the module provides:**
 
-| Recurso | Descrição |
+| Feature | Description |
 |---|---|
-| Roles/Perfis | Agrupamentos de permissões, podendo ter departamento associado |
-| Role MASTER | Bypass completo de todas as verificações de permissão |
-| Páginas e Objetos | Cadastro de recursos do sistema (botões, campos, seções, APIs…) |
-| Permissões CRUD | Por objeto: `can_create`, `can_read`, `can_update`, `can_delete` |
-| Permissões extras | Campo JSON `extra` para ações além do CRUD padrão |
-| Atribuição por empresa | Usuário pode ter roles diferentes em cada empresa |
-| Roles globais | Atribuição sem empresa específica — válida em todas as empresas |
-| Cache | Permissões cacheadas por usuário+empresa+objeto+ação |
-| Auditoria | Log de acessos concedidos e negados com contexto JSON |
-| Middleware | `ptah.can:objeto,acao` para proteção de rotas |
-| Blade directives | `@ptahCan('chave', 'acao')` e `@ptahMaster` |
-| Helpers globais | `ptah_can()`, `ptah_is_master()`, `ptah_permissions()` |
-| 5 telas admin | Departamentos, Roles, Páginas/Objetos, Usuários, Auditoria |
+| Roles/Profiles | Permission groupings, optionally associated with a department |
+| MASTER Role | Complete bypass of all permission checks |
+| Pages and Objects | Registration of system resources (buttons, fields, sections, APIs…) |
+| CRUD Permissions | Per object: `can_create`, `can_read`, `can_update`, `can_delete` |
+| Extra permissions | JSON `extra` field for actions beyond standard CRUD |
+| Company assignment | User can have different roles in each company |
+| Global roles | Assignment without a specific company — valid across all companies |
+| Cache | Permissions cached per user+company+object+action |
+| Audit | Log of granted and denied accesses with JSON context |
+| Middleware | `ptah.can:object,action` for route protection |
+| Blade directives | `@ptahCan('key', 'action')` and `@ptahMaster` |
+| Global helpers | `ptah_can()`, `ptah_is_master()`, `ptah_permissions()` |
+| 5 admin screens | Departments, Roles, Pages/Objects, Users, Audit |
 
 ---
 
-## Conceitos Fundamentais
+## Core Concepts
 
-### Hierarquia de acesso
-
-```
-Sistema
-└── Empresa (opcional — quando multi_company = true)
-    └── Role (perfil de acesso)
-        └── RolePermission (objeto + ações can_*)
-            └── UserRole (usuário ↔ role ↔ empresa)
-```
-
-### Página vs Objeto de Página
-
-- **Página (`PtahPage`):** representa uma tela ou contexto do sistema (ex: `admin.users`, `financeiro.contas-pagar`)
-- **Objeto de Página (`PageObject`):** recurso controlável dentro de uma página (ex: botão "Criar usuário", campo "Salário", aba "Histórico financeiro")
-- **Permissão:** uma `Role` tem permissão para determinadas ações em um `PageObject` específico
-
-### Chave de objeto (`obj_key`)
-
-A `obj_key` é o identificador usado em verificações. Recomenda-se o padrão `pagina.acao` ou `modulo.recurso`:
+### Access hierarchy
 
 ```
-users.store        → botão "Novo Usuário"
-users.salary_field → campo Salário
-financeiro.relatorio_margem → relatório de margem
-api.produtos.exportar → endpoint de exportação
+System
+└── Company (optional — when multi_company = true)
+    └── Role (access profile)
+        └── RolePermission (object + can_* actions)
+            └── UserRole (user ↔ role ↔ company)
 ```
 
-### Role MASTER
+### Page vs Page Object
 
-O sistema permite exatamente **1 role** com `is_master = true`. Usuários com esta role têm acesso irrestrito a todos os recursos sem passar pela verificação de permissões. Ideal para administradores do sistema.
+- **Page (`PtahPage`):** represents a screen or system context (e.g.: `admin.users`, `finance.accounts-payable`)
+- **Page Object (`PageObject`):** controllable resource within a page (e.g.: "Create user" button, "Salary" field, "Financial history" tab)
+- **Permission:** a `Role` has permission for certain actions on a specific `PageObject`
+
+### Object key (`obj_key`)
+
+The `obj_key` is the identifier used in checks. The `page.action` or `module.resource` pattern is recommended:
+
+```
+users.store        → "New User" button
+users.salary_field → Salary field
+finance.margin_report → margin report
+api.products.export → export endpoint
+```
+
+### MASTER Role
+
+The system allows exactly **1 role** with `is_master = true`. Users with this role have unrestricted access to all resources without going through the permission check. Ideal for system administrators.
 
 ---
 
-## Ativação
+## Activation
 
-### Via comando (recomendado)
+### Via command (recommended)
 
 ```bash
 php artisan ptah:module permissions
 ```
 
-O comando:
-1. Ativa o módulo `company` se ainda não estiver ativo (dependência obrigatória)
-2. Publica as 6 migrations de permissões
-3. Executa `php artisan migrate`
-4. Executa `DefaultAdminSeeder` (cria empresa padrão → departamento → role MASTER → usuário admin → vínculo)
-5. Exibe as credenciais do admin criado
-6. Define `PTAH_MODULE_PERMISSIONS=true` no `.env`
+The command:
+1. Activates the `company` module if not yet active (required dependency)
+2. Publishes the 6 permission migrations
+3. Runs `php artisan migrate`
+4. Runs `DefaultAdminSeeder` (creates default company → department → MASTER role → admin user → link)
+5. Displays the created admin credentials
+6. Sets `PTAH_MODULE_PERMISSIONS=true` in `.env`
 
-**Saída no terminal:**
+**Terminal output:**
 
 ```
   ╔══════════════════════════════════════════╗
-  ║  Admin criado com sucesso!               ║
+  ║  Admin created successfully!             ║
   ║  E-mail  : admin@admin.com               ║
-  ║  Senha   : admin@123                     ║
-  ║  ⚠ Troque a senha no primeiro acesso!   ║
+  ║  Password: admin@123                     ║
+  ║  ⚠ Change the password on first access! ║
   ╚══════════════════════════════════════════╝
 ```
 
@@ -139,42 +139,42 @@ PTAH_MODULE_PERMISSIONS=true
 
 ---
 
-## Configuração
+## Configuration
 
-Em `config/ptah.php`, seção `permissions`:
+In `config/ptah.php`, `permissions` section:
 
 ```php
 'permissions' => [
-    // Cache de permissões ligado/desligado
+    // Permission cache on/off
     'cache'     => env('PTAH_PERMISSION_CACHE', true),
-    'cache_ttl' => env('PTAH_PERMISSION_CACHE_TTL', 300),   // segundos
+    'cache_ttl' => env('PTAH_PERMISSION_CACHE_TTL', 300),   // seconds
 
-    // Model de usuários da aplicação host
-    // Não precisa estender nenhuma classe do Ptah
+    // User model of the host application
+    // Does not need to extend any Ptah class
     'user_model'       => env('PTAH_USER_MODEL', \App\Models\User::class),
 
-    // Campo PK do usuário (padrão: 'id')
+    // User PK field (default: 'id')
     'user_id_field'    => 'id',
 
-    // Chave de sessão para identificar usuário (quando não usa Auth::)
+    // Session key to identify user (when not using Auth::)
     'user_session_key' => 'ptah_user_id',
 
-    // Chave de sessão para empresa corrente
+    // Session key for current company
     'company_session_key' => 'ptah_company_id',
 
-    // Auditoria: gravar logs de verificação
+    // Audit: record verification logs
     'audit'         => env('PTAH_PERMISSION_AUDIT', false),
-    'audit_denied'  => env('PTAH_PERMISSION_AUDIT_DENIED', true),   // sempre audita negados
-    'audit_master'  => env('PTAH_PERMISSION_AUDIT_MASTER', false),  // audita bypass MASTER
+    'audit_denied'  => env('PTAH_PERMISSION_AUDIT_DENIED', true),   // always audits denied
+    'audit_master'  => env('PTAH_PERMISSION_AUDIT_MASTER', false),  // audits MASTER bypass
 
-    // Multi-empresa: usa company_session_key para filtrar permissões
+    // Multi-company: uses company_session_key to filter permissions
     'multi_company' => env('PTAH_MULTI_COMPANY', false),
 
-    // Permitir acesso a guests (não-autenticados)
+    // Allow guest access (unauthenticated)
     'allow_guest'   => false,
 
-    // Credenciais do admin para DefaultAdminSeeder
-    'admin_name'     => env('PTAH_ADMIN_NAME', 'Administrador'),
+    // Admin credentials for DefaultAdminSeeder
+    'admin_name'     => env('PTAH_ADMIN_NAME', 'Administrator'),
     'admin_email'    => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
     'admin_password' => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
 ],
@@ -182,94 +182,94 @@ Em `config/ptah.php`, seção `permissions`:
 
 ---
 
-## Banco de Dados
+## Database
 
 ### ptah_roles
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
-| `department_id` | bigint FK | ✓ | Departamento associado |
-| `name` | string | — | Nome do perfil |
-| `description` | text | ✓ | Descrição livre |
-| `color` | string | ✓ | Cor hex para identificação visual |
-| `is_master` | boolean | — | Bypass total de permissões (máx. 1) |
-| `is_active` | boolean | — | Ativo/inativo |
+| `department_id` | bigint FK | ✓ | Associated department |
+| `name` | string | — | Profile name |
+| `description` | text | ✓ | Free description |
+| `color` | string | ✓ | Hex color for visual identification |
+| `is_master` | boolean | — | Total permission bypass (max. 1) |
+| `is_active` | boolean | — | Active/inactive |
 | `deleted_at` | timestamp | ✓ | SoftDelete |
 
 ### ptah_pages
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
-| `slug` | string unique | — | Identificador da página (ex: `admin.users`) |
-| `name` | string | — | Nome legível |
+| `slug` | string unique | — | Page identifier (e.g.: `admin.users`) |
+| `name` | string | — | Human-readable name |
 | `description` | text | ✓ | — |
-| `route` | string | ✓ | Nome da rota Laravel |
-| `icon` | string | ✓ | Ícone (emoji ou classe) |
+| `route` | string | ✓ | Laravel route name |
+| `icon` | string | ✓ | Icon (emoji or class) |
 | `is_active` | boolean | — | — |
-| `sort_order` | integer | — | Ordem de exibição |
+| `sort_order` | integer | — | Display order |
 
-> `ptah_pages` **não** tem `deleted_at` — páginas são excluídas permanentemente.
+> `ptah_pages` does **not** have `deleted_at` — pages are permanently deleted.
 
 ### ptah_page_objects
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
-| `page_id` | bigint FK | — | Página pai |
-| `section` | string | — | Seção dentro da página (ex: `toolbar`, `form`, `tabs`) |
-| `obj_key` | string | — | Chave única de verificação (ex: `users.store`) |
-| `obj_label` | string | — | Label legível (ex: `Criar usuário`) |
+| `page_id` | bigint FK | — | Parent page |
+| `section` | string | — | Section within the page (e.g.: `toolbar`, `form`, `tabs`) |
+| `obj_key` | string | — | Unique verification key (e.g.: `users.store`) |
+| `obj_label` | string | — | Human-readable label (e.g.: `Create user`) |
 | `obj_type` | enum | — | `page` `button` `field` `link` `section` `api` `report` `tab` |
 | `is_active` | boolean | — | — |
-| `obj_order` | integer | — | Ordem dentro da seção |
+| `obj_order` | integer | — | Order within the section |
 
-**Índice único:** `(page_id, section, obj_key)` — impede objetos duplicados por seção.
+**Unique index:** `(page_id, section, obj_key)` — prevents duplicate objects per section.
 
 ### ptah_role_permissions
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
 | `role_id` | bigint FK | — | Role |
-| `page_object_id` | bigint FK | — | Objeto de página |
-| `can_create` | boolean | — | Permissão de criação |
-| `can_read` | boolean | — | Permissão de leitura |
-| `can_update` | boolean | — | Permissão de edição |
-| `can_delete` | boolean | — | Permissão de exclusão |
-| `extra` | json | ✓ | Permissões personalizadas além do CRUD |
+| `page_object_id` | bigint FK | — | Page object |
+| `can_create` | boolean | — | Create permission |
+| `can_read` | boolean | — | Read permission |
+| `can_update` | boolean | — | Edit permission |
+| `can_delete` | boolean | — | Delete permission |
+| `extra` | json | ✓ | Custom permissions beyond CRUD |
 | `deleted_at` | timestamp | ✓ | SoftDelete |
 
 ### ptah_user_roles
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
-| `user_id` | bigint | — | ID do usuário (sem FK — model agnóstico) |
+| `user_id` | bigint | — | User ID (no FK — model agnostic) |
 | `role_id` | bigint FK | — | Role |
-| `company_id` | bigint | ✓ | Empresa (null = role global) |
+| `company_id` | bigint | ✓ | Company (null = global role) |
 | `is_active` | boolean | — | — |
 | `deleted_at` | timestamp | ✓ | SoftDelete |
 
-**Índice único:** `(user_id, role_id, company_id)`.
+**Unique index:** `(user_id, role_id, company_id)`.
 
-> `company_id = null` significa **role global** — válido em qualquer empresa. Um usuário com `company_id = 5` em um role só tem aquele role na empresa 5.
+> `company_id = null` means **global role** — valid in any company. A user with `company_id = 5` on a role only has that role in company 5.
 
 ### ptah_permission_audits
 
-| Coluna | Tipo | Nullable | Descrição |
+| Column | Type | Nullable | Description |
 |---|---|---|---|
 | `id` | bigint PK | — | — |
-| `user_id` | bigint | ✓ | ID do usuário |
-| `company_id` | bigint | ✓ | Empresa no contexto |
-| `resource_key` | string | — | `obj_key` verificado |
+| `user_id` | bigint | ✓ | User ID |
+| `company_id` | bigint | ✓ | Company in context |
+| `resource_key` | string | — | `obj_key` checked |
 | `action` | string | — | `create` `read` `update` `delete` |
-| `result` | enum | — | `granted` ou `denied` |
-| `ip_address` | string | ✓ | IP da requisição |
+| `result` | enum | — | `granted` or `denied` |
+| `ip_address` | string | ✓ | Request IP |
 | `user_agent` | string | ✓ | User-Agent |
-| `context` | json | ✓ | Dados extras de contexto |
-| `created_at` | timestamp | — | Sem `updated_at` |
+| `context` | json | ✓ | Extra context data |
+| `created_at` | timestamp | — | No `updated_at` |
 
 ---
 
@@ -281,20 +281,20 @@ Em `config/ptah.php`, seção `permissions`:
 **Traits:** `SoftDeletes`
 
 ```php
-// Relacionamentos
+// Relationships
 $role->department;   // BelongsTo(Department)
 $role->permissions;  // HasMany(RolePermission)
 $role->userRoles;    // HasMany(UserRole)
 ```
 
-**Métodos de instância:**
+**Instance methods:**
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `getBadgeLabel(): string` | string | `'👑 MASTER'` se `is_master`, caso contrário o nome |
-| `getDisplayColor(): string` | string | Cor hex definida ou `'#6b7280'` (cinza padrão) |
+| `getBadgeLabel(): string` | string | `'👑 MASTER'` if `is_master`, otherwise the name |
+| `getDisplayColor(): string` | string | Defined hex color or `'#6b7280'` (default gray) |
 
-**Escopos:**
+**Scopes:**
 
 ```php
 Role::active()->get();   // WHERE is_active = 1
@@ -306,13 +306,13 @@ Role::master()->first(); // WHERE is_master = 1
 ### PtahPage
 
 **Namespace:** `Ptah\Models\PtahPage`  
-**Sem SoftDeletes**
+**No SoftDeletes**
 
 ```php
 $page->pageObjects; // HasMany(PageObject)
 ```
 
-**Escopos:**
+**Scopes:**
 
 ```php
 PtahPage::active()->get();   // WHERE is_active = 1
@@ -326,13 +326,13 @@ PtahPage::ordered()->get();  // ORDER BY sort_order ASC
 **Namespace:** `Ptah\Models\PageObject`
 
 ```php
-// Tipos disponíveis
+// Available types
 PageObject::TYPES; // ['page','button','field','link','section','api','report','tab']
 
 $obj->page; // BelongsTo(PtahPage)
 ```
 
-**Escopos:**
+**Scopes:**
 
 ```php
 PageObject::active()->get();
@@ -347,12 +347,12 @@ PageObject::byType('button')->get();
 **Namespace:** `Ptah\Models\RolePermission`  
 **Traits:** `SoftDeletes`
 
-**Métodos:**
+**Methods:**
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `allows(string $action): bool` | bool | Verifica se `can_{action}` é `true`. Ação aceita: `create`, `read`, `update`, `delete` |
-| `toCrudArray(): array` | array | Retorna `['can_create'=>bool, 'can_read'=>bool, 'can_update'=>bool, 'can_delete'=>bool]` |
+| `allows(string $action): bool` | bool | Checks if `can_{action}` is `true`. Accepted actions: `create`, `read`, `update`, `delete` |
+| `toCrudArray(): array` | array | Returns `['can_create'=>bool, 'can_read'=>bool, 'can_update'=>bool, 'can_delete'=>bool]` |
 
 ---
 
@@ -366,13 +366,13 @@ $userRole->role;    // BelongsTo(Role)
 $userRole->company; // BelongsTo(Company)
 ```
 
-**Escopo `forCompany`:**
+**`forCompany` scope:**
 
 ```php
-// roles globais (company_id IS NULL)
+// global roles (company_id IS NULL)
 UserRole::forCompany(null)->get();
 
-// roles da empresa 5 + roles globais
+// roles for company 5 + global roles
 UserRole::forCompany(5)->get();
 // WHERE (company_id = 5 OR company_id IS NULL)
 ```
@@ -382,16 +382,16 @@ UserRole::forCompany(5)->get();
 ### PermissionAudit
 
 **Namespace:** `Ptah\Models\PermissionAudit`  
-**Sem updated_at** (`UPDATED_AT = null`)
+**No updated_at** (`UPDATED_AT = null`)
 
-**Escopos:**
+**Scopes:**
 
 ```php
 PermissionAudit::granted()->get();
 PermissionAudit::denied()->get();
 PermissionAudit::forUser($userId)->get();
 PermissionAudit::forResource('users.store')->get();
-PermissionAudit::recent(50)->get();  // últimos 50 registros
+PermissionAudit::recent(50)->get();  // last 50 records
 ```
 
 ---
@@ -399,7 +399,7 @@ PermissionAudit::recent(50)->get();  // últimos 50 registros
 ## PermissionService
 
 **Namespace:** `Ptah\Services\Permission\PermissionService`  
-**Contrato:** `Ptah\Contracts\PermissionServiceContract`  
+**Contract:** `Ptah\Contracts\PermissionServiceContract`  
 **Binding:** singleton
 
 ### Interface
@@ -416,52 +416,52 @@ interface PermissionServiceContract
 }
 ```
 
-### Métodos
+### Methods
 
 #### `check(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool`
 
-Verifica se o usuário tem permissão para executar `$action` no objeto `$objectKey`.
+Checks whether the user has permission to perform `$action` on the `$objectKey` object.
 
-**Fluxo interno:**
+**Internal flow:**
 
 ```
-1. Resolver userId (Auth::id() / sessão / $user passado)
-2. Se allow_guest = false e userId = null → return false
-3. isMaster(user)? → return true (sem auditoria, salvo audit_master = true)
-4. Verificar cache: ptah_perm:{userId}:{companyId}:{objectKey}:{action}
+1. Resolve userId (Auth::id() / session / passed $user)
+2. If allow_guest = false and userId = null → return false
+3. isMaster(user)? → return true (no audit, unless audit_master = true)
+4. Check cache: ptah_perm:{userId}:{companyId}:{objectKey}:{action}
 5. Cache hit? → return cached value
 6. DB: UserRole → RolePermission → can_{action}
-   (OR entre todos os roles: basta 1 role ter a permissão)
-7. Gravar no cache
-8. Gravar auditoria (se configurado)
+   (OR across all roles: only 1 role needs to have the permission)
+7. Write to cache
+8. Write audit (if configured)
 9. return $result
 ```
 
 ```php
-// Verificação simples (usa Auth::id() e CompanyService::getCurrentCompanyId())
+// Simple check (uses Auth::id() and CompanyService::getCurrentCompanyId())
 $ok = app(PermissionServiceContract::class)->check('users.store', 'create');
 
-// Com usuário e empresa explícitos
-$ok = app(PermissionServiceContract::class)->check('financeiro.exportar', 'read', $user, 3);
+// With explicit user and company
+$ok = app(PermissionServiceContract::class)->check('finance.export', 'read', $user, 3);
 ```
 
-**Parâmetro `$user` aceita:**
+**`$user` parameter accepts:**
 
-| Tipo | Comportamento |
+| Type | Behavior |
 |---|---|
-| `null` | Usa `Auth::id()` → fallback para `Session::get(user_session_key)` |
-| `int` / `string` | Trata como ID do usuário |
-| `Authenticatable` / Model | Usa `$user->{user_id_field}` |
+| `null` | Uses `Auth::id()` → fallback to `Session::get(user_session_key)` |
+| `int` / `string` | Treated as user ID |
+| `Authenticatable` / Model | Uses `$user->{user_id_field}` |
 
 ---
 
 #### `isMaster(mixed $user = null): bool`
 
-Verifica se o usuário tem um role com `is_master = true`. Cacheado em `ptah_is_master:{userId}`.
+Checks whether the user has a role with `is_master = true`. Cached at `ptah_is_master:{userId}`.
 
 ```php
 if (ptah_is_master()) {
-    // acesso total
+    // full access
 }
 ```
 
@@ -469,7 +469,7 @@ if (ptah_is_master()) {
 
 #### `getPermissions(mixed $user = null, ?int $companyId = null): array`
 
-Retorna mapa completo de permissões do usuário. Útil para carregar permissões no frontend.
+Returns the user's complete permissions map. Useful for loading permissions in the frontend.
 
 ```php
 $perms = ptah_permissions();
@@ -480,19 +480,19 @@ $perms = ptah_permissions();
 // ]
 ```
 
-Para usuários MASTER, todos os objetos retornam todas as flags como `true`.
+For MASTER users, all objects return all flags as `true`.
 
 ---
 
 #### `syncRole(int $userId, int $roleId, ?int $companyId = null): UserRole`
 
-Atribui um role ao usuário. Usa `firstOrCreate` com `withTrashed()` — seguro para re-ativar vínculos deletados.
+Assigns a role to the user. Uses `firstOrCreate` with `withTrashed()` — safe for reactivating deleted links.
 
 ```php
 $userRole = app(PermissionServiceContract::class)->syncRole(
     userId: $user->id,
     roleId: $role->id,
-    companyId: 5  // null para role global
+    companyId: 5  // null for global role
 );
 ```
 
@@ -500,13 +500,13 @@ $userRole = app(PermissionServiceContract::class)->syncRole(
 
 #### `detachRole(int $userRoleId): void`
 
-Remove um vínculo usuário-role (soft-delete). Invalida o cache do usuário automaticamente.
+Removes a user-role link (soft-delete). Automatically invalidates the user's cache.
 
 ---
 
 #### `clearCache(mixed $user = null, ?int $companyId = null): void`
 
-Invalida o cache de permissões. Tenta usar `Cache::tags(['ptah_permissions'])` quando disponível (Redis/Memcached); faz fallback para remoção individual de chaves em drivers sem suporte a tags.
+Invalidates the permissions cache. Tries to use `Cache::tags(['ptah_permissions'])` when available (Redis/Memcached); falls back to individual key removal on drivers without tag support.
 
 ---
 
@@ -515,18 +515,18 @@ Invalida o cache de permissões. Tenta usar `Cache::tags(['ptah_permissions'])` 
 **Namespace:** `Ptah\Services\Permission\RoleService`  
 **Binding:** singleton
 
-### Métodos
+### Methods
 
-| Método | Descrição |
+| Method | Description |
 |---|---|
-| `create(array $data): Role` | Cria role. Valida que não existe outro MASTER se `is_master = true` |
-| `update(Role $role, array $data): Role` | Atualiza role. Bloqueia mudança de `is_master` se já existe outro |
-| `delete(Role $role): void` | Soft-delete. Lança `ValidationException` para role MASTER |
-| `bindPageObject(Role $role, int $pageObjectId, array $perms): RolePermission` | Upsert de permissão para um objeto (usa `withTrashed`) |
-| `syncPageBindings(Role $role, array $bindings): void` | Substitui todas as permissões da role. Remove objetos não presentes no array; cria/atualiza os presentes |
-| `getWithPermissions(Role $role): Role` | Carrega eager: `permissions.pageObject.page` + `department` |
+| `create(array $data): Role` | Creates role. Validates no other MASTER exists if `is_master = true` |
+| `update(Role $role, array $data): Role` | Updates role. Blocks `is_master` change if another already exists |
+| `delete(Role $role): void` | Soft-delete. Throws `ValidationException` for MASTER role |
+| `bindPageObject(Role $role, int $pageObjectId, array $perms): RolePermission` | Upsert permission for an object (uses `withTrashed`) |
+| `syncPageBindings(Role $role, array $bindings): void` | Replaces all role permissions. Removes objects not present in the array; creates/updates those present |
+| `getWithPermissions(Role $role): Role` | Eager loads: `permissions.pageObject.page` + `department` |
 
-### `syncPageBindings` — formato do array
+### `syncPageBindings` — array format
 
 ```php
 $bindings = [
@@ -543,47 +543,47 @@ $bindings = [
 app(RoleService::class)->syncPageBindings($role, $bindings);
 ```
 
-Objetos com todas as flags `false` são ignorados (não criam permissão).
+Objects with all flags set to `false` are ignored (no permission is created).
 
 ---
 
-## Helpers Globais
+## Global Helpers
 
-Definidos em `src/helpers.php` — disponíveis globalmente via `autoload.files` no `composer.json`.
+Defined in `src/helpers.php` — available globally via `autoload.files` in `composer.json`.
 
 ### `ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool`
 
-Verifica uma permissão. Atalho para `PermissionService::check()`.
+Checks a permission. Shorthand for `PermissionService::check()`.
 
 ```php
 if (ptah_can('users.store', 'create')) {
-    // renderiza botão "Novo usuário"
+    // render "New user" button
 }
 ```
 
 ### `ptah_is_master(mixed $user = null): bool`
 
-Verifica se o usuário é MASTER.
+Checks whether the user is MASTER.
 
 ```php
 if (ptah_is_master()) {
-    // mostra painel de administração total
+    // show full administration panel
 }
 ```
 
 ### `ptah_permissions(mixed $user = null, ?int $companyId = null): array`
 
-Retorna o mapa completo de permissões do usuário.
+Returns the user's complete permissions map.
 
 ```php
 $perms = ptah_permissions();
-// Passar para o frontend via JavaScript:
+// Pass to frontend via JavaScript:
 // window.userPermissions = @json(ptah_permissions())
 ```
 
 ---
 
-## Facade Permission
+## Permission Facade
 
 **Namespace:** `Ptah\Facades\Permission`
 
@@ -600,23 +600,23 @@ Permission::clearCache();
 
 ---
 
-## Diretivas Blade
+## Blade Directives
 
-Registradas automaticamente no `PtahServiceProvider`:
+Registered automatically in `PtahServiceProvider`:
 
 ### `@ptahCan / @endPtahCan`
 
 ```blade
 @ptahCan('users.store', 'create')
-    <x-forge-button wire:click="create" color="primary">Novo usuário</x-forge-button>
+    <x-forge-button wire:click="create" color="primary">New user</x-forge-button>
 @endPtahCan
 ```
 
-Com usuário e empresa explícitos:
+With explicit user and company:
 
 ```blade
-@ptahCan('financeiro.exportar', 'read', $user, $companyId)
-    <a href="/exportar">Exportar</a>
+@ptahCan('finance.export', 'read', $user, $companyId)
+    <a href="/export">Export</a>
 @endPtahCan
 ```
 
@@ -633,9 +633,9 @@ Com usuário e empresa explícitos:
 ## Middleware ptah.can
 
 **Namespace:** `Ptah\Http\Middleware\PtahPermission`  
-**Alias:** `ptah.can` (registrado automaticamente)
+**Alias:** `ptah.can` (registered automatically)
 
-### Uso em rotas
+### Usage in routes
 
 ```php
 // routes/web.php
@@ -645,97 +645,97 @@ Route::get('/users/create', UserController::class . '@create')
 Route::delete('/users/{id}', UserController::class . '@destroy')
     ->middleware('ptah.can:users.store,delete');
 
-// Com empresa explícita (opcional — normalmente resolve da sessão)
-Route::get('/financeiro/exportar', FinanceiroController::class . '@exportar')
-    ->middleware('ptah.can:financeiro.exportar,read');
+// With explicit company (optional — normally resolved from session)
+Route::get('/finance/export', FinanceController::class . '@export')
+    ->middleware('ptah.can:finance.export,read');
 ```
 
-### Comportamento
+### Behavior
 
-| Contexto | Resposta ao negar |
+| Context | Response on denial |
 |---|---|
-| Request aceita JSON (`Accept: application/json`) | `HTTP 403` com `{"message":"Acesso negado.","object":"...","action":"..."}` |
-| Request web | `abort(403)` — página padrão de erro do Laravel |
+| Request accepts JSON (`Accept: application/json`) | `HTTP 403` with `{"message":"Access denied.","object":"...","action":"..."}` |
+| Web request | `abort(403)` — Laravel's default error page |
 
-### Sintaxe dos parâmetros
+### Parameter syntax
 
 ```
 ptah.can:{objectKey},{action}[,{companyId}]
 ```
 
-| Parâmetro | Obrigatório | Descrição |
+| Parameter | Required | Description |
 |---|---|---|
-| `objectKey` | ✓ | Chave do objeto (ex: `users.store`) |
-| `action` | ✓ | `create`, `read`, `update` ou `delete` |
-| `companyId` | — | Se omitido, resolve da sessão |
+| `objectKey` | ✓ | Object key (e.g.: `users.store`) |
+| `action` | ✓ | `create`, `read`, `update` or `delete` |
+| `companyId` | — | If omitted, resolved from session |
 
 ---
 
-## Telas de Administração
+## Administration Screens
 
 ### DepartmentList
 
 **URL:** `/ptah-departments`  
-**Componente:** `Ptah\Livewire\Permission\DepartmentList`
+**Component:** `Ptah\Livewire\Permission\DepartmentList`
 
-CRUD simples de departamentos. Exibe contador de roles vinculados.
+Simple department CRUD. Displays linked roles count.
 
-| Coluna | Descrição |
+| Column | Description |
 |---|---|
-| Nome | Nome do departamento |
-| Descrição | Texto livre |
-| Roles | Quantidade de roles vinculados |
-| Status | Ativo/Inativo |
+| Name | Department name |
+| Description | Free text |
+| Roles | Number of linked roles |
+| Status | Active/Inactive |
 
 ---
 
 ### RoleList
 
 **URL:** `/ptah-roles`  
-**Componente:** `Ptah\Livewire\Permission\RoleList`
+**Component:** `Ptah\Livewire\Permission\RoleList`
 
-CRUD de roles + **modal de permissões por objeto**.
+Role CRUD + **object permissions modal**.
 
-**Modal de Permissões (Bind):**
+**Permissions Modal (Bind):**
 
-Exibe todos os `PageObject` agrupados por página/seção. Para cada objeto, checkboxes independentes para `can_read`, `can_create`, `can_update`, `can_delete`. Ao salvar, chama `RoleService::syncPageBindings()`.
+Displays all `PageObject` items grouped by page/section. For each object, independent checkboxes for `can_read`, `can_create`, `can_update`, `can_delete`. On save, calls `RoleService::syncPageBindings()`.
 
 ```
-┌─ Página: admin.users — Seção: toolbar ────────────────────────────┐
-│ Novo usuário (users.store) [button]   Ler ✓ | Criar ✓ | Edit ✗ | Excluir ✗ │
-│ Exportar (users.export)    [button]   Ler ✓ | Criar ✗ | Edit ✗ | Excluir ✗ │
-├─ Página: admin.users — Seção: form ───────────────────────────────┤
-│ Campo Salário (users.salary_field) [field]   Ler ✓ | Criar ✓ | Edit ✗ | Excluir ✗ │
+┌─ Page: admin.users — Section: toolbar ────────────────────────────┐
+│ New user (users.store) [button]   Read ✓ | Create ✓ | Edit ✗ | Delete ✗ │
+│ Export (users.export)  [button]   Read ✓ | Create ✗ | Edit ✗ | Delete ✗ │
+├─ Page: admin.users — Section: form ───────────────────────────────┤
+│ Salary field (users.salary_field) [field]   Read ✓ | Create ✓ | Edit ✗ | Delete ✗ │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-**Proteções:**
-- Role MASTER não pode ser excluído
-- Botão Excluir não aparece para roles MASTER
+**Protections:**
+- MASTER role cannot be deleted
+- Delete button does not appear for MASTER roles
 
 ---
 
 ### PageList
 
 **URL:** `/ptah-pages`  
-**Componente:** `Ptah\Livewire\Permission\PageList`
+**Component:** `Ptah\Livewire\Permission\PageList`
 
-Interface em duas colunas:
-- **Esquerda:** lista de páginas (`PtahPage`) com contador de objetos
-- **Direita:** objetos da página selecionada
+Two-column interface:
+- **Left:** list of pages (`PtahPage`) with object counter
+- **Right:** objects of the selected page
 
-**Fluxo de cadastro recomendado:**
+**Recommended registration flow:**
 
 ```
-1. Identifique as telas do seu sistema
-2. Cadastre cada tela com um slug único (ex: admin.usuarios, financeiro.contas)
-3. Para cada tela, cadastre os objetos controláveisos:
-   - Botões de ação (criar, exportar, aprovar)
-   - Campos sensíveis (salário, margem, desconto máximo)
-   - Abas (histórico financeiro, dados pessoais)
-   - Relatórios (DRE, balanço)
-   - Endpoints de API (/api/exportar)
-4. Vá para /ptah-roles e configure as permissões de cada role
+1. Identify the screens in your system
+2. Register each screen with a unique slug (e.g.: admin.users, finance.accounts)
+3. For each screen, register the controllable objects:
+   - Action buttons (create, export, approve)
+   - Sensitive fields (salary, margin, maximum discount)
+   - Tabs (financial history, personal data)
+   - Reports (P&L, balance sheet)
+   - API endpoints (/api/export)
+4. Go to /ptah-roles and configure permissions for each role
 ```
 
 ---
@@ -743,71 +743,71 @@ Interface em duas colunas:
 ### UserPermissionList
 
 **URL:** `/ptah-users-acl`  
-**Componente:** `Ptah\Livewire\Permission\UserPermissionList`
+**Component:** `Ptah\Livewire\Permission\UserPermissionList`
 
-Lista todos os usuários do model configurado (`config('ptah.permissions.user_model')`). Para cada usuário, exibe os roles atribuídos como badges.
+Lists all users from the configured model (`config('ptah.permissions.user_model')`). For each user, displays assigned roles as badges.
 
-**Modal de gestão de acesso:**
-- Lista roles atribuídos com botão "Remover" (exceto roles MASTER)
-- Formulário para adicionar novo role (select de role + select de empresa)
-- Empresa "Global" = `company_id = null` (role válido em todas as empresas)
+**Access management modal:**
+- Lists assigned roles with a "Remove" button (except MASTER roles)
+- Form to add a new role (role select + company select)
+- "Global" company = `company_id = null` (role valid in all companies)
 
-**Filtro por role:** select de todos os roles para filtrar a lista de usuários.
+**Filter by role:** select of all roles to filter the user list.
 
 ---
 
 ### AuditList
 
 **URL:** `/ptah-audit`  
-**Componente:** `Ptah\Livewire\Permission\AuditList`
+**Component:** `Ptah\Livewire\Permission\AuditList`
 
-Read-only. Filtros disponíveis:
+Read-only. Available filters:
 
-| Filtro | Opções |
+| Filter | Options |
 |---|---|
-| Busca textual | resource_key, ip_address, user_id |
-| Resultado | Todos / Concedido / Negado |
-| Ação | Todas / Criar / Ler / Editar / Excluir |
-| Data inicial | Date picker |
-| Data final | Date picker |
+| Text search | resource_key, ip_address, user_id |
+| Result | All / Granted / Denied |
+| Action | All / Create / Read / Edit / Delete |
+| Start date | Date picker |
+| End date | Date picker |
 
 ---
 
 ### PermissionGuide
 
 **URL:** `/ptah-permission-guide`  
-**Componente:** `Ptah\Livewire\Permission\PermissionGuide`  
-**Rota:** `ptah.acl.guide`
+**Component:** `Ptah\Livewire\Permission\PermissionGuide`  
+**Route:** `ptah.acl.guide`
 
-Tela de documentação interativa do sistema de permissões. Exibida no navbar (link "Guia de permissões") quando `config('ptah.modules.permissions')` está ativo e a rota existe.
+Interactive documentation screen for the permissions system. Displayed in the navbar (link "Permissions guide") when `config('ptah.modules.permissions')` is active and the route exists.
 
-**Abas disponíveis:**
+**Available tabs:**
 
-| Aba | `$activeTab` | Conteúdo |
+| Tab | `$activeTab` | Content |
 |---|---|---|
-| Visão Geral | `overview` | Diagrama de arquitetura, conceitos fundamentais (Role, Página, Objeto, MASTER, Empresa, Auditoria) e fluxo de decisão visual |
-| Passo a Passo | `setup` | 5 passos guiados com links diretos para cada tela do módulo ACL |
-| Exemplos de Código | `code` | Snippets destacados: `ptah_can()` no Blade, middleware `ptah.can`, `PermissionService`, `HasPermission` no Livewire e variáveis `.env` |
-| FAQ | `faq` | 8 acordeons Alpine com perguntas frequentes |
+| Overview | `overview` | Architecture diagram, core concepts (Role, Page, Object, MASTER, Company, Audit) and visual decision flow |
+| Step by Step | `setup` | 5 guided steps with direct links to each ACL module screen |
+| Code Examples | `code` | Highlighted snippets: `ptah_can()` in Blade, `ptah.can` middleware, `PermissionService`, `HasPermission` in Livewire and `.env` variables |
+| FAQ | `faq` | 8 Alpine accordions with frequently asked questions |
 
-**Propriedade Livewire:**
+**Livewire property:**
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `$activeTab` | string | `'overview'` | Aba atualmente selecionada |
+| `$activeTab` | string | `'overview'` | Currently selected tab |
 
-**Arquivo:** `src/Livewire/Permission/PermissionGuide.php`  
+**File:** `src/Livewire/Permission/PermissionGuide.php`  
 **View:** `resources/views/livewire/permission/permission-guide.blade.php`
 
-> **Blade escaping em exemplos de código:** quando incluir diretivas Blade ou expressões `{{ }}` como texto literal dentro de spans/exemplos de código, use `&#64;if(...)` para escapar `@` e `@{{ $var }}` para escapar `{{ }}` — caso contrário o Blade avalia as expressões normalmente, gerando ParseError ou ErrorException.
+> **Blade escaping in code examples:** when including Blade directives or `{{ }}` expressions as literal text inside spans/code examples, use `&#64;if(...)` to escape `@` and `@{{ $var }}` to escape `{{ }}` — otherwise Blade evaluates the expressions normally, generating ParseError or ErrorException.
 
 ---
 
-## Rotas
+## Routes
 
-Registradas automaticamente quando `ptah.modules.permissions = true`:
+Registered automatically when `ptah.modules.permissions = true`:
 
-| Método | URI | Nome | Proteção |
+| Method | URI | Name | Protection |
 |---|---|---|---|
 | `GET` | `/ptah-departments` | `ptah.acl.departments` | `web`, `auth` |
 | `GET` | `/ptah-roles` | `ptah.acl.roles` | `web`, `auth` |
@@ -822,38 +822,38 @@ Registradas automaticamente quando `ptah.modules.permissions = true`:
 
 ### DefaultCompanySeeder
 
-Cria a empresa padrão (idempotente). Ver [Company.md](Company.md) para detalhes.
+Creates the default company (idempotent). See [Company.md](Company.md) for details.
 
 ### DefaultAdminSeeder
 
 **Namespace:** `Ptah\Seeders\DefaultAdminSeeder`
 
-Cria toda a cadeia de forma idempotente:
+Creates the entire chain idempotently:
 
 ```
-1. Empresa padrão (via DefaultCompanySeeder)
-2. Departamento "Administração" (firstOrCreate)
-3. Role MASTER (firstOrCreate via department + name)
-4. User admin (firstOrCreate via email, lê de config('ptah.permissions.admin_*'))
-5. UserRole: admin → MASTER → empresa padrão
+1. Default company (via DefaultCompanySeeder)
+2. "Administration" department (firstOrCreate)
+3. MASTER role (firstOrCreate via department + name)
+4. Admin user (firstOrCreate via email, reads from config('ptah.permissions.admin_*'))
+5. UserRole: admin → MASTER → default company
 ```
 
 ```php
-// Execução manual
+// Manual execution
 php artisan db:seed --class="Ptah\Seeders\DefaultAdminSeeder"
 ```
 
-**Configuração das credenciais** (`.env`):
+**Credentials configuration** (`.env`):
 
 ```dotenv
-PTAH_ADMIN_NAME="Administrador"
-PTAH_ADMIN_EMAIL="admin@meuapp.com"
-PTAH_ADMIN_PASSWORD="senha-segura-aqui"
+PTAH_ADMIN_NAME="Administrator"
+PTAH_ADMIN_EMAIL="admin@myapp.com"
+PTAH_ADMIN_PASSWORD="secure-password-here"
 ```
 
 ---
 
-## Fluxo de Verificação
+## Verification Flow
 
 ```
 ptah_can('users.store', 'create')
@@ -867,7 +867,7 @@ ptah_can('users.store', 'create')
   ├─ isMaster(userId)?
   │     Cache: ptah_is_master:{userId}
   │     DB: UserRole join Role WHERE is_master=1
-  │     true → return true  (+ auditoria se audit_master)
+  │     true → return true  (+ audit if audit_master)
   │
   ├─ Cache hit?
   │     ptah_perm:{userId}:{companyId}:users.store:create
@@ -876,82 +876,82 @@ ptah_can('users.store', 'create')
   ├─ DB query
   │     UserRole (forCompany)
   │       → RolePermission (page_object.obj_key = 'users.store')
-  │           → OR entre todos os roles: can_create
+  │           → OR across all roles: can_create
   │
-  ├─ Cache write (TTL: cache_ttl segundos)
+  ├─ Cache write (TTL: cache_ttl seconds)
   │
-  ├─ Auditoria (se audit=true ou audit_denied=true e result=false)
+  ├─ Audit (if audit=true or audit_denied=true and result=false)
   │
   └─ return bool
 ```
 
 ---
 
-## Auditoria
+## Audit
 
-Ativada via `.env`:
+Enabled via `.env`:
 
 ```dotenv
-PTAH_PERMISSION_AUDIT=true           # audita TODOS (concedidos + negados)
-PTAH_PERMISSION_AUDIT_DENIED=true    # audita apenas negados (padrão: true)
-PTAH_PERMISSION_AUDIT_MASTER=false   # audita bypass MASTER (padrão: false)
+PTAH_PERMISSION_AUDIT=true           # audits ALL (granted + denied)
+PTAH_PERMISSION_AUDIT_DENIED=true    # audits only denied (default: true)
+PTAH_PERMISSION_AUDIT_MASTER=false   # audits MASTER bypass (default: false)
 ```
 
-**Recomendações:**
-- Em produção com alto volume, use `PTAH_PERMISSION_AUDIT=false` + `PTAH_PERMISSION_AUDIT_DENIED=true` — só loga o que foi negado (tentativas não autorizadas)
-- Para compliance total, use `PTAH_PERMISSION_AUDIT=true`
-- Para debug, adicione contexto customizado via `PermissionAudit::create([..., 'context' => ['request_id' => ...]])`
+**Recommendations:**
+- In production with high volume, use `PTAH_PERMISSION_AUDIT=false` + `PTAH_PERMISSION_AUDIT_DENIED=true` — only logs what was denied (unauthorized attempts)
+- For full compliance, use `PTAH_PERMISSION_AUDIT=true`
+- For debugging, add custom context via `PermissionAudit::create([..., 'context' => ['request_id' => ...]])`
 
-A tela de auditoria (`/ptah-audit`) exibe os registros com filtros e paginação.
+The audit screen (`/ptah-audit`) displays records with filters and pagination.
 
 ---
 
 ## Cache
 
-### Chaves de cache
+### Cache keys
 
-| Chave | Conteúdo | TTL |
+| Key | Content | TTL |
 |---|---|---|
-| `ptah_perm:{userId}:{companyId}:{objectKey}:{action}` | `bool` | `cache_ttl` (padrão 300s) |
+| `ptah_perm:{userId}:{companyId}:{objectKey}:{action}` | `bool` | `cache_ttl` (default 300s) |
 | `ptah_is_master:{userId}` | `bool` | `cache_ttl` |
 | `ptah_company_default` | `Company` | `cache_ttl` |
 | `ptah_user_companies:{userId}` | `Collection` | `cache_ttl` |
 
-### Invalidação
+### Invalidation
 
-O cache é invalidado automaticamente quando:
-- `detachRole()` é chamado (invalida o usuário)
-- `syncRole()` é chamado (invalida o usuário)  
-- `syncPageBindings()` é chamado (invalida todos os usuários com aquela role)
+Cache is automatically invalidated when:
+- `detachRole()` is called (invalidates the user)
+- `syncRole()` is called (invalidates the user)  
+- `syncPageBindings()` is called (invalidates all users with that role)
 
-**Invalidação manual:**
+**Manual invalidation:**
 
 ```php
-// Invalidar cache de um usuário
+// Invalidate cache for a user
 Permission::clearCache($user);
 
-// Invalidar cache de um usuário em uma empresa específica
+// Invalidate cache for a user in a specific company
 Permission::clearCache($user, $companyId);
 
-// Invalidar tudo (tags — requer driver Redis/Memcached)
+// Invalidate everything (tags — requires Redis/Memcached driver)
 Cache::tags(['ptah_permissions'])->flush();
 ```
 
-### Tags de cache
+### Cache tags
 
-Quando o driver de cache suporta tags (Redis, Memcached), todas as chaves são gravadas com a tag `ptah_permissions`. Isso permite `flush()` atômico de todo o módulo. Em drivers sem suporte a tags (file, database), o `clearCache()` remove as chaves individualmente.
+When the cache driver supports tags (Redis, Memcached), all keys are stored with the `ptah_permissions` tag. This allows atomic `flush()` of the entire module. On drivers without tag support (file, database), `clearCache()` removes keys individually.
 
 ---
 
-## Integração com Auth e BaseCrud
+## Integration with Auth and BaseCrud
 
-### Integração com o módulo Auth
+### Integration with the Auth module
 
-Quando ambos `auth` e `permissions` estão ativos, o `PermissionService` resolve o usuário via `Auth::id()` automaticamente — sem configuração adicional.
+When both `auth` and `permissions` are active, `PermissionService` resolves the user via `Auth::id()` automatically — no additional configuration needed.
 
-### Integração com o BaseCrud
+### Integration with BaseCrud
 
-Para adicionar controle de permissões em uma tela BaseCrud, use o parâmetro `readOnly` combinado com verificação na view:
+To add permission control to a BaseCrud screen, use the `readOnly` parameter combined with view-level checks:
 
 ```blade
 @livewire('ptah::base-crud', [
@@ -963,7 +963,7 @@ Para adicionar controle de permissões em uma tela BaseCrud, use o parâmetro `r
 ])
 ```
 
-Ou controle total via `readOnly` para telas de apenas leitura:
+Or full control via `readOnly` for read-only screens:
 
 ```blade
 @livewire('ptah::base-crud', [
@@ -974,14 +974,14 @@ Ou controle total via `readOnly` para telas de apenas leitura:
 
 ---
 
-## Exemplos Práticos
+## Practical Examples
 
-### Exemplo 1 — Botão condicional na view
+### Example 1 — Conditional button in view
 
 ```blade
 {{-- resources/views/users/index.blade.php --}}
 @ptahCan('users.store', 'create')
-    <x-forge-button wire:click="create">Novo Usuário</x-forge-button>
+    <x-forge-button wire:click="create">New User</x-forge-button>
 @endPtahCan
 
 @ptahCan('users.salary_field', 'read')
@@ -991,20 +991,20 @@ Ou controle total via `readOnly` para telas de apenas leitura:
 @endPtahCan
 ```
 
-### Exemplo 2 — Rota protegida
+### Example 2 — Protected route
 
 ```php
 // routes/web.php
-Route::get('/admin/usuarios', UserController::class . '@index')
+Route::get('/admin/users', UserController::class . '@index')
     ->middleware(['auth', 'ptah.can:users.index,read'])
     ->name('admin.users.index');
 
-Route::post('/admin/usuarios', UserController::class . '@store')
+Route::post('/admin/users', UserController::class . '@store')
     ->middleware(['auth', 'ptah.can:users.store,create'])
     ->name('admin.users.store');
 ```
 
-### Exemplo 3 — Verificação no Service
+### Example 3 — Check in Service
 
 ```php
 // app/Services/UserService.php
@@ -1027,10 +1027,10 @@ class UserService
 }
 ```
 
-### Exemplo 4 — Passar para o frontend via JavaScript
+### Example 4 — Pass to frontend via JavaScript
 
 ```blade
-{{-- No layout --}}
+{{-- In the layout --}}
 <script>
     window.PtahUser = {
         isMaster: @json(ptah_is_master()),
@@ -1040,13 +1040,13 @@ class UserService
 ```
 
 ```js
-// No JavaScript
+// In JavaScript
 if (window.PtahUser.permissions['users.store']?.can_create) {
     showCreateButton();
 }
 ```
 
-### Exemplo 5 — Seletor de empresa na navbar
+### Example 5 — Company selector in navbar
 
 ```php
 // app/Livewire/CompanySwitcher.php
@@ -1063,7 +1063,7 @@ class CompanySwitcher extends Component
 
 ---
 
-## Referência de Configuração
+## Configuration Reference
 
 ```php
 // config/ptah.php
@@ -1085,24 +1085,24 @@ class CompanySwitcher extends Component
     'audit_master'       => env('PTAH_PERMISSION_AUDIT_MASTER', false),
     'multi_company'      => env('PTAH_MULTI_COMPANY', false),
     'allow_guest'        => false,
-    'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrador'),
+    'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrator'),
     'admin_email'        => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
     'admin_password'     => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
 ],
 ```
 
-### Variáveis de ambiente
+### Environment variables
 
-| Variável | Padrão | Descrição |
+| Variable | Default | Description |
 |---|---|---|
-| `PTAH_MODULE_COMPANY` | `false` | Ativa o módulo company |
-| `PTAH_MODULE_PERMISSIONS` | `false` | Ativa o módulo permissions |
-| `PTAH_USER_MODEL` | `App\Models\User` | FQCN do model de usuários |
-| `PTAH_PERMISSION_CACHE` | `true` | Habilita cache de permissões |
-| `PTAH_PERMISSION_CACHE_TTL` | `300` | TTL do cache em segundos |
-| `PTAH_PERMISSION_AUDIT` | `false` | Audita todos os acessos |
-| `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Audita somente acessos negados |
-| `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audita bypass MASTER |
-| `PTAH_MULTI_COMPANY` | `false` | Permissões filtradas por empresa |
-| `PTAH_ADMIN_EMAIL` | `admin@admin.com` | E-mail do admin padrão |
-| `PTAH_ADMIN_PASSWORD` | `admin@123` | Senha do admin padrão |
+| `PTAH_MODULE_COMPANY` | `false` | Activates the company module |
+| `PTAH_MODULE_PERMISSIONS` | `false` | Activates the permissions module |
+| `PTAH_USER_MODEL` | `App\Models\User` | FQCN of the users model |
+| `PTAH_PERMISSION_CACHE` | `true` | Enables permissions cache |
+| `PTAH_PERMISSION_CACHE_TTL` | `300` | Cache TTL in seconds |
+| `PTAH_PERMISSION_AUDIT` | `false` | Audits all accesses |
+| `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Audits only denied accesses |
+| `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audits MASTER bypass |
+| `PTAH_MULTI_COMPANY` | `false` | Permissions filtered by company |
+| `PTAH_ADMIN_EMAIL` | `admin@admin.com` | Default admin e-mail |
+| `PTAH_ADMIN_PASSWORD` | `admin@123` | Default admin password |

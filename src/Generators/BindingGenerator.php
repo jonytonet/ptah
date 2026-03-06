@@ -26,8 +26,10 @@ class BindingGenerator extends AbstractGenerator
             return GeneratorResult::error($label, $providerPath, 'AppServiceProvider.php not found.');
         }
 
-        $content    = $this->files->get($providerPath);
-        $entity     = $context->entity;
+        // Backup before any modification — restored on failure
+        $backup  = $this->files->get($providerPath);
+        $content = $backup;
+        $entity  = $context->entity;
         $ns         = rtrim($context->rootNamespace, '\\');
         $interface  = $context->subNs("{$ns}\\Repositories\\Contracts") . "\\{$entity}RepositoryInterface";
         $repository = $context->subNs("{$ns}\\Repositories") . "\\{$entity}Repository";
@@ -54,7 +56,28 @@ class BindingGenerator extends AbstractGenerator
 
         $this->files->put($providerPath, $content);
 
+        // Lint check — restore backup if PHP syntax is broken
+        if (! $this->isValidPhp($providerPath)) {
+            $this->files->put($providerPath, $backup);
+            return GeneratorResult::error(
+                $label,
+                $providerPath,
+                'PHP syntax error detected after modifying AppServiceProvider.php. File restored to original.'
+            );
+        }
+
         return GeneratorResult::done($label, $providerPath);
+    }
+
+    /**
+     * Returns true when the file passes `php -l` (no parse errors).
+     */
+    private function isValidPhp(string $path): bool
+    {
+        $cmd      = escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($path);
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        return $exitCode === 0;
     }
 
     protected function label(): string

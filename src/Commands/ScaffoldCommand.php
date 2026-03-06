@@ -72,8 +72,14 @@ class ScaffoldCommand extends Command
 
     public function handle(): int
     {
+        // ── Validate entity syntax before touching any file ─────────────────────
+        $rawEntity = (string) $this->argument('entity');
+
+        if (! $this->validateEntitySyntax($rawEntity)) {
+            return self::FAILURE;
+        }
+
         // ── Subfolder support: accepts Product/ProductStock or Product\ProductStock ──
-        $rawEntity = $this->argument('entity');
         $parts     = array_values(array_filter(
             array_map('trim', preg_split('/[\\\\\\/]/', $rawEntity))
         ));
@@ -138,7 +144,38 @@ class ScaffoldCommand extends Command
         }
         return $hasError ? self::FAILURE : self::SUCCESS;
     }
+    // ── Entity syntax validation ────────────────────────────────────────────────
 
+    /**
+     * Validates that the entity argument contains no option tokens glued to it.
+     *
+     * Common mistake: ptah:forge Clients/Client-fields="name:string"
+     * instead of:     ptah:forge Clients/Client --fields="name:string"
+     *
+     * Each segment (split by / or \) must be a plain PascalCase identifier.
+     * Returns false and prints a clear error message when it fails.
+     */
+    private function validateEntitySyntax(string $rawEntity): bool
+    {
+        $segments = array_values(array_filter(
+            array_map('trim', preg_split('/[\\\\\/]/', $rawEntity))
+        ));
+
+        foreach ($segments as $segment) {
+            if (! preg_match('/^[A-Za-z][A-Za-z0-9]*$/', $segment)) {
+                $this->newLine();
+                $this->components->error(
+                    "Invalid 'entity' argument: <fg=yellow>{$rawEntity}</>\n" .
+                    "  Each segment must be a plain PascalCase name (letters and digits only).\n" .
+                    "  It looks like an option was written without a space.\n" .
+                    "  Example: <fg=green>php artisan ptah:forge Clients/Client --fields=\"...\"</>"
+                );
+                return false;
+            }
+        }
+
+        return true;
+    }
     // ── Orchestration ──────────────────────────────────────────────────────
 
     /**

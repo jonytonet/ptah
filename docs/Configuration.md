@@ -1,98 +1,98 @@
-# CRUD Configuration Guide
+﻿# CRUD Configuration Guide
 
-**Pacote:** `jonytonet/ptah`  
-**Componente:** BaseCrud Configuration  
+**Package:** `jonytonet/ptah`  
+**Component:** BaseCrud Configuration  
 **Laravel:** 11+
 
 > 🎯 **Quick Start: Lifecycle Hooks**  
-> Copie o template completo: [`ProductHooks.example.php`](ProductHooks.example.php) → `app/CrudHooks/ProductHooks.php`  
-> Configure no modal: `@ProductHooks` → Pronto!
+> Copy the complete template: [`ProductHooks.example.php`](ProductHooks.example.php) → `app/CrudHooks/ProductHooks.php`  
+> Configure in the modal: `@ProductHooks` → Done!
 
 ---
 
-## Índice
+## Table of Contents
 
-1. [Visão Geral](#visão-geral)
-2. [Métodos de Configuração](#métodos-de-configuração)
-3. [Modal de Configuração Visual](#modal-de-configuração-visual)
-4. [Comando CLI (ptah:config)](#comando-cli-ptahconfig)
-5. [Comparação: Modal vs CLI](#comparação-modal-vs-cli)
-6. [Estrutura do CrudConfig (JSON)](#estrutura-do-crudconfig-json)
-7. [Configuração de Colunas](#configuração-de-colunas)
-8. [Configuração de Ações](#configuração-de-ações)
-9. [Configuração de Filtros](#configuração-de-filtros)
-10. [Configuração de Estilos](#configuração-de-estilos)
-11. [Configuração de JOINs](#configuração-de-joins)
-12. [Configurações Gerais](#configurações-gerais)
-13. [Configuração de Permissões](#configuração-de-permissões)
-14. [Lifecycle Hooks (Código Dinâmico)](#lifecycle-hooks-código-dinâmico)
-15. [Exemplos Práticos Completos](#exemplos-práticos-completos)
-16. [Workflow Recomendado](#workflow-recomendado)
-17. [Import/Export de Configurações](#importexport-de-configurações)
+1. [Overview](#overview)
+2. [Configuration Methods](#configuration-methods)
+3. [Visual Configuration Modal](#visual-configuration-modal)
+4. [CLI Command (ptah:config)](#cli-command-ptahconfig)
+5. [Comparison: Modal vs CLI](#comparison-modal-vs-cli)
+6. [CrudConfig Structure (JSON)](#crudconfig-structure-json)
+7. [Column Configuration](#column-configuration)
+8. [Action Configuration](#action-configuration)
+9. [Filter Configuration](#filter-configuration)
+10. [Style Configuration](#style-configuration)
+11. [JOIN Configuration](#join-configuration)
+12. [General Settings](#general-settings)
+13. [Permissions Configuration](#permissions-configuration)
+14. [Lifecycle Hooks (Dynamic Code)](#lifecycle-hooks-dynamic-code)
+15. [Complete Practical Examples](#complete-practical-examples)
+16. [Recommended Workflow](#recommended-workflow)
+17. [Import/Export of Configurations](#importexport-of-configurations)
 18. [Troubleshooting](#troubleshooting)
 
 ---
 
-## Visão Geral
+## Overview
 
-O sistema CRUD do Ptah oferece **dois métodos complementares** para configurar colunas, filtros, ações, estilos e outras opções:
+The Ptah CRUD system offers **two complementary methods** for configuring columns, filters, actions, styles and other options:
 
-| Método | Interface | Melhor Para | Requer |
-|--------|-----------|-------------|--------|
-| **Modal Visual** | Interface gráfica com drag-and-drop | Configuração inicial, ajustes visuais, exploração | Navegador web, autenticação |
-| **Comando CLI** | Terminal via `ptah:config` | Automação, CI/CD, versionamento, batch operations | Terminal, acesso ao servidor |
+| Method | Interface | Best For | Requires |
+|--------|-----------|----------|---------|
+| **Visual Modal** | GUI with drag-and-drop | Initial setup, visual adjustments, exploration | Web browser, authentication |
+| **CLI Command** | Terminal via `ptah:config` | Automation, CI/CD, versioning, batch operations | Terminal, server access |
 
-Ambos os métodos **salvam na mesma tabela** (`crud_configs`) e **produzem o mesmo resultado final**.
+Both methods **save to the same table** (`crud_configs`) and **produce the same final result**.
 
-### Onde as Configurações São Armazenadas
+### Where Configurations Are Stored
 
 ```sql
 SELECT * FROM crud_configs WHERE model = 'Product';
 ```
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
+| Column | Type | Description |
+|--------|------|-------------|
 | `id` | `int` | Primary key |
-| `model` | `string` | Identificador da model (ex: `Product`, `Product/ProductStock`) |
-| `config` | `json` | Configuração completa em JSON |
-| `created_at` | `timestamp` | Data de criação |
-| `updated_at` | `timestamp` | Última modificação |
+| `model` | `string` | Model identifier (e.g. `Product`, `Product/ProductStock`) |
+| `config` | `json` | Complete configuration in JSON |
+| `created_at` | `timestamp` | Creation date |
+| `updated_at` | `timestamp` | Last modification |
 
-### Cache e Invalidação
+### Cache and Invalidation
 
-As configurações são cacheadas automaticamente:
+Configurations are cached automatically:
 - Cache key: `crud_config_{model}`
-- TTL: Configurável em `crud_configs.cacheTtl` (padrão: 3600s)
-- Invalidação automática ao salvar via modal ou CLI
+- TTL: Configurable in `crud_configs.cacheTtl` (default: 3600s)
+- Automatic invalidation when saving via modal or CLI
 
 ---
 
-## Métodos de Configuração
+## Configuration Methods
 
-### 1. Via Modal Visual (Interface Gráfica)
+### 1. Via Visual Modal (Graphical Interface)
 
-Acesse o botão de configuração (⚙️) no topo da tela do CRUD:
+Access the configuration button (⚙️) at the top of the CRUD screen:
 
 ```blade
-{{-- O botão é renderizado automaticamente no BaseCrud --}}
+{{-- The button is rendered automatically by BaseCrud --}}
 <button wire:click="$dispatch('openConfig', { model: '{{ $model }}' })">
     ⚙️ Config
 </button>
 ```
 
-**Vantagens:**
-✅ Interface visual intuitiva  
-✅ Drag-and-drop para reordenar colunas  
-✅ Preview em tempo real  
-✅ Color picker integrado para badges  
-✅ Não requer conhecimento técnico  
-✅ Detecta relações automaticamente  
+**Advantages:**
+✅ Intuitive visual interface  
+✅ Drag-and-drop to reorder columns  
+✅ Real-time preview  
+✅ Integrated color picker for badges  
+✅ No technical knowledge required  
+✅ Automatically detects relations  
 
-**Desvantagens:**
-❌ Não versionável via Git  
-❌ Não automatizável  
-❌ Requer autenticação no browser  
-❌ Uma configuração por vez  
+**Disadvantages:**
+❌ Not versionable via Git  
+❌ Not automatable  
+❌ Requires browser authentication  
+❌ One configuration at a time  
 
 ### 2. Via Comando CLI (Terminal)
 
@@ -108,86 +108,86 @@ php artisan ptah:config "App\Models\Product" \
   --column="price:number:mask=money_brl:renderer=money"
 ```
 
-**Vantagens:**
-✅ Automatizável via scripts  
-✅ Versionável (export JSON → commit)  
-✅ Batch operations (configure múltiplas models)  
+**Advantages:**
+✅ Automatable via scripts  
+✅ Versionable (export JSON → commit)  
+✅ Batch operations (configure multiple models)  
 ✅ CI/CD friendly  
-✅ Reproduzível entre ambientes  
-✅ Smart suggestions baseadas na model  
+✅ Reproducible across environments  
+✅ Smart suggestions based on the model  
 
-**Desvantagens:**
-❌ Curva de aprendizado (sintaxe)  
-❌ Sem preview visual  
-❌ Requer acesso ao terminal  
+**Disadvantages:**
+❌ Learning curve (syntax)  
+❌ No visual preview  
+❌ Requires terminal access  
 
 ---
 
-## Modal de Configuração Visual
+## Visual Configuration Modal
 
-### Como Acessar
+### How to Access
 
-O modal é aberto automaticamente ao clicar no botão **⚙️ Config** no topo do BaseCrud (geralmente restrito a administradores via `@can('admin')` ou similar).
+The modal is opened automatically when clicking the **⚙️ Config** button at the top of the BaseCrud (usually restricted to administrators via `@can('admin')` or similar).
 
-### Estrutura em Abas
+### Tab Structure
 
-O modal possui **7 abas principais**:
+The modal has **7 main tabs**:
 
-#### 1️⃣ Colunas
+#### 1️⃣ Columns
 
-**O que faz:** Gerencia todas as colunas do CRUD (listagem + formulário)
+**What it does:** Manages all CRUD columns (listing + form)
 
 **Interface:**
-- **Sidebar esquerda:** Lista drag-and-drop de todas as colunas
-- **Painel direito:** 6 sub-abas para editar a coluna selecionada
+- **Left sidebar:** Drag-and-drop list of all columns
+- **Right panel:** 6 sub-tabs to edit the selected column
 
-**Ações disponíveis:**
-- 🔄 Reordenar via drag-and-drop
-- ➕ Adicionar nova coluna
-- ✏️ Editar coluna existente
-- 🗑️ Excluir coluna
-- 👁️ Toggle visibilidade
+**Available actions:**
+- 🔄 Reorder via drag-and-drop
+- ➕ Add new column
+- ✏️ Edit existing column
+- 🗑️ Delete column
+- 👁️ Toggle visibility
 
-**Sub-abas por coluna:**
+**Sub-tabs per column:**
 
-| Sub-aba | Campos Editados | Descrição |
-|---------|-----------------|-----------|
-| **Básico** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, `colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`, `colsSource` | Informações principais da coluna + estilo de célula + fonte SQL (JOIN badge) |
-| **Exibição** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` | Como a coluna é renderizada na tabela e formatada no formulário |
-| **Badges** | `colsRendererBadges` | Mapa valor→cor para renderer `badge`/`pill` com seletor hex + 8 swatches rápidos |
-| **Relação** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` | Configuração de relacionamentos Eloquent e SearchDropdown |
-| **Validação** | `colsValidations`, `colsRequired` | Regras de validação do formulário |
-| **Avançado** | `colsOrderBy`, `colsReverse`, `colsMetodoCustom`, `colsAlign` | Ordenação customizada, métodos de acesso e alinhamento |
+| Sub-tab | Fields Edited | Description |
+|---------|---------------|-------------|
+| **Basic** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, `colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`, `colsSource` | Main column info + cell style + SQL source (JOIN badge) |
+| **Display** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` | How the column is rendered in the table and formatted in the form |
+| **Badges** | `colsRendererBadges` | Value→colour map for `badge`/`pill` renderer with hex picker + 8 quick swatches |
+| **Relation** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` | Eloquent relationship and SearchDropdown configuration |
+| **Validation** | `colsValidations`, `colsRequired` | Form validation rules |
+| **Advanced** | `colsOrderBy`, `colsReverse`, `colsMetodoCustom`, `colsAlign` | Custom ordering, accessor methods and alignment |
 
-**Exemplo de fluxo:**
+**Example flow:**
 
-1. Clique em uma coluna na sidebar (ex: `status`)
-2. Vá para sub-aba **"Exibição"**
-3. Altere `colsRenderer` para `badge`
-4. Vá para sub-aba **"Badges"**
-5. Configure cores:
-   - `active` → verde (`#10B981`)
-   - `inactive` → vermelho (`#EF4444`)
-   - `pending` → amarelo (`#F59E0B`)
-6. Clique **"Salvar"** (canto superior direito)
+1. Click a column in the sidebar (e.g. `status`)
+2. Go to the **"Display"** sub-tab
+3. Change `colsRenderer` to `badge`
+4. Go to the **"Badges"** sub-tab
+5. Configure colours:
+   - `active` → green (`#10B981`)
+   - `inactive` → red (`#EF4444`)
+   - `pending` → yellow (`#F59E0B`)
+6. Click **"Save"** (top right corner)
 
-#### 2️⃣ Ações
+#### 2️⃣ Actions
 
-**O que faz:** Configura permissões e ações customizadas no CRUD
+**What it does:** Configures permissions and custom actions in the CRUD
 
-**Seções:**
+**Sections:**
 
-1. **Permissões de Ações Padrão:**
-   - ✅ Create (criar novo registro)
-   - ✅ Edit (editar registro)
-   - ✅ Delete (excluir registro)
-   - ✅ Export (exportar dados)
+1. **Default Action Permissions:**
+   - ✅ Create (create new record)
+   - ✅ Edit (edit record)
+   - ✅ Delete (delete record)
+   - ✅ Export (export data)
 
-2. **Ações Customizadas:**
-   - Lista de ações extras (ex: "Approve", "Reject", "Send Email")
-   - Cada ação tem: nome, tipo (livewire/link/javascript), valor, ícone, cor, confirmação
+2. **Custom Actions:**
+   - List of extra actions (e.g. "Approve", "Reject", "Send Email")
+   - Each action has: name, type (livewire/link/javascript), value, icon, colour, confirmation
 
-**Exemplo de ação customizada:**
+**Example of custom action:**
 
 ```json
 {
@@ -204,19 +204,19 @@ O modal possui **7 abas principais**:
 
 #### 3️⃣ Filtros
 
-**O que faz:** Configura filtros customizados e coluna de filtro rápido de data
+**What it does:** Configures custom filters and the quick date filter column
 
-**Seções:**
+**Sections:**
 
-1. **Coluna de Data para Filtro Rápido:**
-   - Seleciona qual coluna de data usar para "Hoje/Semana/Mês/Trimestre/Ano"
-   - Padrão: `created_at`
+1. **Date Column for Quick Filter:**
+   - Selects which date column to use for "Today/Week/Month/Quarter/Year"
+   - Default: `created_at`
 
-2. **Filtros Customizados:**
-   - Lista de filtros adicionais para a toolbar
-   - Cada filtro tem: campo, label, tipo (text/number/date/select/searchdropdown), operador (=, !=, >, <, >=, <=, LIKE)
+2. **Custom Filters:**
+   - List of additional filters for the toolbar
+   - Each filter has: field, label, type (text/number/date/select/searchdropdown), operator (=, !=, >, <, >=, <=, LIKE)
 
-**Exemplo de filtro customizado:**
+**Example of custom filter:**
 
 ```json
 {
@@ -234,13 +234,13 @@ O modal possui **7 abas principais**:
 
 #### 4️⃣ Estilos
 
-**O que faz:** Define estilos condicionais de linha (row styles)
+**What it does:** Defines conditional row styles
 
 **Interface:**
-- Card por regra de estilo
-- Cada regra: campo, operador, valor, CSS (background, color, fontWeight, custom)
+- Card per style rule
+- Each rule: field, operator, value, CSS (background, color, fontWeight, custom)
 
-**Exemplo de regra:**
+**Example rule:**
 
 ```json
 {
@@ -253,19 +253,19 @@ O modal possui **7 abas principais**:
 }
 ```
 
-**Resultado:** Linhas com `status = cancelled` ficam com fundo vermelho claro e texto vermelho escuro.
+**Result:** Rows with `status = cancelled` get a light red background and dark red text.
 
 #### 5️⃣ JOINs
 
-**O que faz:** Gerencia JOINs de tabelas (LEFT/INNER)
+**What it does:** Manages table JOINs (LEFT/INNER)
 
 **Interface:**
-- Cards visuais dos JOINs ativos
-- Detecção de duplicata de tabela
-- Formulário de criação/edição
-- Toggle `DISTINCT` opcional
+- Visual cards of active JOINs
+- Duplicate table detection
+- Create/edit form
+- Optional `DISTINCT` toggle
 
-**Exemplo de JOIN:**
+**Example JOIN:**
 
 ```json
 {
@@ -279,7 +279,7 @@ O modal possui **7 abas principais**:
 }
 ```
 
-**Visual no modal:**
+**Visual in the modal:**
 ```
 ┌─────────────────────────────────────┐
 │ LEFT JOIN categories               │
@@ -293,43 +293,43 @@ O modal possui **7 abas principais**:
 
 #### 6️⃣ Geral
 
-**O que faz:** Configurações globais do CRUD
+**What it does:** Global CRUD settings
 
-**Seções:**
+**Sections:**
 
-1. **Identificação:**
-   - `displayName` — Nome de exibição (ex: "Products" → "Produtos")
+1. **Identification:**
+   - `displayName` — Display name (e.g. "Products")
 
-2. **Aparência:**
-   - `companyField` — Campo de multi-tenancy
-   - `tableClass` — Classes CSS extras para a tabela
+2. **Appearance:**
+   - `companyField` — Multi-tenancy field
+   - `tableClass` — Extra CSS classes for the table
 
 3. **Cache:**
-   - `cacheEnabled` — Habilitar cache (true/false)
-   - `cacheTtl` — Tempo de vida do cache (segundos)
+   - `cacheEnabled` — Enable cache (true/false)
+   - `cacheTtl` — Cache time-to-live (seconds)
 
-4. **Exportação:**
-   - `exportMaxRows` — Máximo de linhas exportáveis
-   - `pdfOrientation` — Orientação do PDF (landscape/portrait)
-   - `pdfPaperSize` — Tamanho do papel (A4, Letter, etc)
+4. **Export:**
+   - `exportMaxRows` — Maximum exportable rows
+   - `pdfOrientation` — PDF orientation (landscape/portrait)
+   - `pdfPaperSize` — Paper size (A4, Letter, etc)
 
-5. **Broadcast (Tempo Real):**
-   - `broadcastEnabled` — Habilitar Echo listener
-   - `broadcastChannel` — Nome do canal (padrão: `page-{model}-observer`)
-   - `broadcastEvent` — Nome do evento (padrão: `.page{Model}Observer`)
+5. **Broadcast (Real-time):**
+   - `broadcastEnabled` — Enable Echo listener
+   - `broadcastChannel` — Channel name (default: `page-{model}-observer`)
+   - `broadcastEvent` — Event name (default: `.page{Model}Observer`)
 
-6. **Tema Visual:**
+6. **Visual Theme:**
    - `theme` — light/dark
 
-#### 7️⃣ Permissões
+#### 7️⃣ Permissions
 
-**O que faz:** Mapeia gates/abilities Laravel por ação
+**What it does:** Maps Laravel gates/abilities per action
 
 **Interface:**
-- Lista de ações (list, view, create, edit, delete, export, import, restore, forceDelete)
-- Campo de texto para cada ação (ex: `product.create`, `view-products`)
+- List of actions (list, view, create, edit, delete, export, import, restore, forceDelete)
+- Text field for each action (e.g. `product.create`, `view-products`)
 
-**Exemplo:**
+**Example:**
 
 ```json
 {
@@ -343,7 +343,7 @@ O modal possui **7 abas principais**:
 }
 ```
 
-**Uso no código:**
+**Usage in code:**
 
 ```php
 // BaseCrud verifica automaticamente:
@@ -354,60 +354,60 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 
 #### 8️⃣ Lifecycle Hooks
 
-**O que faz:** Permite executar código PHP customizado em momentos específicos do ciclo de vida do registro
+**What it does:** Allows running custom PHP code at specific points in the record lifecycle
 
-> 📁 **Exemplo completo:** Veja [ProductHooks.example.php](ProductHooks.example.php) — Template com +300 linhas de exemplos práticos e comentados.
+> 📁 **Full example:** See [ProductHooks.example.php](ProductHooks.example.php) — Template with 300+ lines of practical, documented examples.
 
-**Sistema Híbrido:** Suporta **duas sintaxes**:
+**Hybrid System:** Supports **two syntaxes**:
 
-1. **Código Inline (eval):** Para lógica simples e rápida
+1. **Inline Code (eval):** For simple, fast logic
    ```php
    $data['status'] = 'pending';
    Log::info('Creating product');
    ```
 
-2. **Classes PHP (recomendado):** Para lógica complexa, testável e com autocomplete
+2. **PHP Classes (recommended):** For complex, testable logic with autocomplete
    ```php
    @ProductHooks::beforeCreate
    @App\CrudHooks\ProductHooks
    ```
 
 **Interface:**
-- 4 textareas com editor de código
-- Exemplos práticos de ambas as sintaxes
-- Info box explicando variáveis disponíveis
-- Warning sobre segurança
+- 4 textareas with code editor
+- Practical examples of both syntaxes
+- Info box explaining available variables
+- Security warning
 
-**Hooks disponíveis:**
+**Available hooks:**
 
-| Hook | Quando Executa | Variáveis Disponíveis | Pode Modificar |
-|------|----------------|----------------------|----------------|
-| **beforeCreate** | Antes de INSERT | `$data` (array) | ✅ Sim (`$data` por referência) |
-| **afterCreate** | Após INSERT | `$record` (Model), `$data` (array) | ❌ Não |
-| **beforeUpdate** | Antes de UPDATE | `$data` (array), `$record` (Model) | ✅ Sim (`$data` por referência) |
-| **afterUpdate** | Após UPDATE | `$record` (Model), `$data` (array) | ❌ Não |
+| Hook | When it Runs | Available Variables | Can Modify |
+|------|--------------|---------------------|------------|
+| **beforeCreate** | Before INSERT | `$data` (array) | ✅ Yes (`$data` by reference) |
+| **afterCreate** | After INSERT | `$record` (Model), `$data` (array) | ❌ No |
+| **beforeUpdate** | Before UPDATE | `$data` (array), `$record` (Model) | ✅ Yes (`$data` by reference) |
+| **afterUpdate** | After UPDATE | `$record` (Model), `$data` (array) | ❌ No |
 
 ---
 
-### 📝 **Sintaxe 1: Código Inline (eval)**
+### 📝 **Syntax 1: Inline Code (eval)**
 
-Escreva código PHP diretamente no modal. Ideal para lógica simples.
+Write PHP code directly in the modal. Ideal for simple logic.
 
-**beforeCreate** — Definir valores padrão:
+**beforeCreate** — Set default values:
 ```php
 $data['status'] = 'pending';
 $data['uuid'] = \Illuminate\Support\Str::uuid();
 Log::info('Creating new product');
 ```
 
-**afterCreate** — Disparar eventos:
+**afterCreate** — Dispatch events:
 ```php
 Log::info('Product created: ' . $record->id);
 event(new \App\Events\ProductCreated($record));
 cache()->put('latest_product', $record->id, 3600);
 ```
 
-**beforeUpdate** — Validação customizada:
+**beforeUpdate** — Custom validation:
 ```php
 if ($record->status === 'draft' && isset($data['status']) && $data['status'] === 'published') {
     $data['published_at'] = now();
@@ -415,7 +415,7 @@ if ($record->status === 'draft' && isset($data['status']) && $data['status'] ===
 }
 ```
 
-**afterUpdate** — Invalidar cache:
+**afterUpdate** — Invalidate cache:
 ```php
 cache()->forget('product_' . $record->id);
 cache()->tags(['products'])->flush();
@@ -424,33 +424,33 @@ $record->load('category', 'tags');
 
 ---
 
-### 🏗️ **Sintaxe 2: Classes PHP (Recomendado)**
+### 🏗️ **Syntax 2: PHP Classes (Recommended)**
 
-Para lógica complexa, crie classes PHP reais em `app/CrudHooks/`.
+For complex logic, create real PHP classes in `app/CrudHooks/`.
 
-**Vantagens:**
-✅ Autocomplete e análise estática (PHPStan/Psalm)  
-✅ Testável com PHPUnit  
-✅ Git-friendly e versionável  
-✅ Reutilizável entre CRUDs  
-✅ Sem risco de sintaxe eval()  
+**Advantages:**
+✅ Autocomplete and static analysis (PHPStan/Psalm)  
+✅ Testable with PHPUnit  
+✅ Git-friendly and versionable  
+✅ Reusable across CRUDs  
+✅ No eval() syntax risk  
 
-**Sintaxes suportadas:**
+**Supported syntaxes:**
 
-| Sintaxe no Modal | Resultado |
-|------------------|-----------|
-| `@ProductHooks::beforeCreate` | Chama `App\CrudHooks\ProductHooks::beforeCreate()` |
-| `@ProductHooks` | Usa nome do hook como método (ex: `beforeCreate()`) |
-| `@App\Services\MyHooks::customMethod` | Usa namespace completo |
-| `@App\Services\MyHooks@customMethod` | Separador @ também funciona |
+| Syntax in Modal | Result |
+|-----------------|--------|
+| `@ProductHooks::beforeCreate` | Calls `App\CrudHooks\ProductHooks::beforeCreate()` |
+| `@ProductHooks` | Uses hook name as method (e.g. `beforeCreate()`) |
+| `@App\Services\MyHooks::customMethod` | Uses full namespace |
+| `@App\Services\MyHooks@customMethod` | `@` separator also works |
 
-**Exemplo completo:**
+**Full example:**
 
-**1. Criar classe de hooks:**
+**1. Create the hooks class:**
 
-> 📋 **Template completo disponível:** Copie [ProductHooks.example.php](ProductHooks.example.php) para `app/CrudHooks/ProductHooks.php` e customize conforme necessário.
+> 📋 **Full template available:** Copy [ProductHooks.example.php](ProductHooks.example.php) to `app/CrudHooks/ProductHooks.php` and customise as needed.
 
-**Exemplo simplificado:**
+**Simplified example:**
 
 ```php
 <?php
@@ -465,9 +465,9 @@ class ProductHooks
     /**
      * Hook executado antes de criar um produto.
      * 
-     * @param array &$data Dados do formulário (mutável por referência)
-     * @param Model|null $record Sempre null neste hook
-     * @param mixed $component Componente Livewire (HasCrudForm trait)
+     * @param array &$data Form data (mutable by reference)
+     * @param Model|null $record Always null in this hook
+     * @param mixed $component Livewire component (HasCrudForm trait)
      */
     public function beforeCreate(array &$data, ?Model $record, $component): void
     {
@@ -497,60 +497,60 @@ class ProductHooks
 }
 ```
 
-> 💡 **Veja mais exemplos em [ProductHooks.example.php](ProductHooks.example.php):**
-> - Gerar códigos únicos
-> - Transições de status com validação
-> - Sincronização com APIs externas
-> - Notificações complexas
-> - Histórico de alterações
-> - +20 casos de uso documentados
+> 💡 **See more examples in [ProductHooks.example.php](ProductHooks.example.php):**
+> - Generate unique codes
+> - Status transitions with validation
+> - Synchronisation with external APIs
+> - Complex notifications
+> - Change history
+> - 20+ documented use cases
 
-**2. Configurar no modal:**
+**2. Configure in the modal:**
 
-No campo "Before Create", escreva apenas:
+In the "Before Create" field, simply write:
 ```
 @ProductHooks
 ```
 
-Ou especifique o método:
+Or specify the method:
 ```
 @ProductHooks::beforeCreate
 ```
 
-Ou com namespace completo:
+Or with full namespace:
 ```
 @App\CrudHooks\ProductHooks::beforeCreate
 ```
 
-**3. Resultado:**
+**3. Result:**
 
-✅ BaseCrud detecta a sintaxe `@` e instancia a classe  
-✅ Chama o método com os parâmetros corretos  
-✅ Erros são logados sem quebrar o save()  
+✅ BaseCrud detects the `@` syntax and instantiates the class  
+✅ Calls the method with the correct parameters  
+✅ Errors are logged without breaking the save()  
 
 ---
 
-### 🔒 **Segurança e Tratamento de Erro**
+### 🔒 **Security and Error Handling**
 
-**Código Inline (eval):**
+**Inline Code (eval):**
 
-⚠️ **IMPORTANTE:** O código é executado com `eval()` em uma closure isolada.
+⚠️ **IMPORTANT:** The code is executed with `eval()` in an isolated closure.
 
-✅ **Proteções implementadas:**
-- Try-catch automático — erros não quebram o save()
-- Log detalhado de erros no `storage/logs/laravel.log`
-- Acesso restrito ao modal via `@ptahCan('configCrud', 'read')`
-- Contexto isolado — variáveis limitadas ao escopo do hook
+✅ **Implemented protections:**
+- Automatic try-catch — errors do not break the save()
+- Detailed error logging in `storage/logs/laravel.log`
+- Modal access restricted via `@ptahCan('configCrud', 'read')`
+- Isolated context — variables limited to the hook scope
 
-**Classes PHP:**
+**PHP Classes:**
 
-✅ **Mais seguro:**
-- Sem eval() — código compilado pelo PHP
-- Validação de sintaxe pelo IDE e CI/CD
-- Erros detectados em tempo de desenvolvimento
-- Class-not-found e method-not-found tratados automaticamente
+✅ **More secure:**
+- No eval() — code compiled by PHP
+- Syntax validation by IDE and CI/CD
+- Errors detected at development time
+- class-not-found and method-not-found handled automatically
 
-**Exemplo de log de erro (inline):**
+**Example error log (inline):**
 
 ```
 [2026-03-04 15:30:45] local.ERROR: [BaseCrud] Lifecycle hook 'beforeCreate' failed for model App\Models\Product
@@ -565,7 +565,7 @@ Ou com namespace completo:
 }
 ```
 
-**Exemplo de log de erro (classe):**
+**Example error log (class):**
 
 ```
 [2026-03-04 15:35:10] local.ERROR: [BaseCrud] Lifecycle hook 'beforeCreate' failed for model App\Models\Product
@@ -579,25 +579,25 @@ Ou com namespace completo:
 }
 ```
 
-**Restrições (código inline):**
+**Restrictions (inline code):**
 
-❌ **Não funciona:**
-- `return` para interromper execução (use exceptions se necessário)
-- Acesso a variáveis externas não documentadas
-- Declaração de classes ou funções
+❌ **Does not work:**
+- `return` to interrupt execution (use exceptions if needed)
+- Access to undocumented external variables
+- Declaration of classes or functions
 
-✅ **Funciona:**
-- Modificar `$data` por referência nos hooks `before*`
-- Acessar `$record` para ler dados do registro
-- Usar facades Laravel (`Log`, `Cache`, `DB`, etc)
-- Disparar eventos, jobs, notificações
-- Executar queries SQL adicionais
+✅ **Works:**
+- Modify `$data` by reference in `before*` hooks
+- Access `$record` to read record data
+- Use Laravel facades (`Log`, `Cache`, `DB`, etc)
+- Dispatch events, jobs, notifications
+- Execute additional SQL queries
 
 ---
 
-### 💾 **JSON salvo**
+### 💾 **Saved JSON**
 
-**Código inline:**
+**Inline code:**
 
 ```json
 {
@@ -610,7 +610,7 @@ Ou com namespace completo:
 }
 ```
 
-**Classes PHP:**
+**PHP classes:**
 
 ```json
 {
@@ -623,7 +623,7 @@ Ou com namespace completo:
 }
 ```
 
-**Híbrido (misturado):**
+**Hybrid (mixed):**
 
 ```json
 {
@@ -638,28 +638,28 @@ Ou com namespace completo:
 
 ---
 
-### 🚀 **Quick Start: Criando sua primeira classe de hooks**
+### 🚀 **Quick Start: Creating your first hooks class**
 
-**Opção A — Artisan (recomendado):**
+**Option A — Artisan (recommended):**
 
 ```bash
 php artisan ptah:hooks ProductHooks
 ```
 
-Cria `app/CrudHooks/ProductHooks.php` com os 4 métodos pré-preenchidos, pronto para editar.
+Creates `app/CrudHooks/ProductHooks.php` with the 4 pre-filled methods, ready to edit.
 
-Com subpasta:
+With subfolder:
 ```bash
 php artisan ptah:hooks Inventory/StockHooks
 ```
 
-**Opção B — Copiar o template de exemplo:**
+**Option B — Copy the example template:**
 
 ```bash
 cp vendor/ptah/ptah/docs/ProductHooks.example.php app/CrudHooks/ProductHooks.php
 ```
 
-**Estrutura gerada:**
+**Generated structure:**
 
 ```php
 <?php
@@ -693,49 +693,49 @@ class ProductHooks implements CrudHooksInterface
 }
 ```
 
-> 💡 Implementar `Ptah\Contracts\CrudHooksInterface` garante autocomplete e validação pelo PHPStan/Psalm.
+> 💡 Implementing `Ptah\Contracts\CrudHooksInterface` ensures autocomplete and validation by PHPStan/Psalm.
 
-> ⚠️ **Sobre `$component`:** É a instância completa do componente Livewire. Prefira modificar apenas `$data` (nos hooks `before*`) e disparar eventos nos hooks `after*` — evite alterar estado interno do componente diretamente.
+> ⚠️ **About `$component`:** It is the full instance of the Livewire component. Prefer to only modify `$data` (in `before*` hooks) and dispatch events in `after*` hooks — avoid directly changing the component's internal state.
 
-**2. Configure no modal:**
+**2. Configure in the modal:**
 
-No campo "Before Create", escreva apenas:
+In the "Before Create" field, write only:
 ```
 @ProductHooks
 ```
 
-Ou especificando o método:
+Or specifying the method:
 ```
 @ProductHooks::beforeCreate
 ```
 
-**3. Pronto!** Os hooks serão executados automaticamente em create/update.
+**3. Done!** The hooks will be executed automatically on create/update.
 
-> 📁 **Arquivo de referência:** [ProductHooks.example.php](ProductHooks.example.php)  
-> - 300+ linhas de código documentado  
-> - 20+ casos de uso práticos  
-> - Métodos auxiliares reutilizáveis  
-> - Pronto para copiar e adaptar  
+> 📁 **Reference file:** [ProductHooks.example.php](ProductHooks.example.php)  
+> - 300+ lines of documented code  
+> - 20+ practical use cases  
+> - Reusable helper methods  
+> - Ready to copy and adapt  
 
 ---
 
-### Salvando a Configuração
+### Saving the Configuration
 
-1. Clique no botão **"Salvar"** (canto superior direito do modal)
-2. O sistema:
-   - Valida os dados
-   - Salva na tabela `crud_configs`
-   - Invalida o cache
-   - Dispara evento `ptah:crud-config-updated`
-3. O BaseCrud recarrega automaticamente a config
+1. Click the **"Save"** button (top right corner of the modal)
+2. The system:
+   - Validates the data
+   - Saves to the `crud_configs` table
+   - Invalidates the cache
+   - Dispatches the event `ptah:crud-config-updated`
+3. BaseCrud automatically reloads the config
 
-### Eventos Disparados
+### Dispatched Events
 
-| Evento | Quando | Payload |
+| Event | When | Payload |
 |--------|--------|---------|
-| `ptah:crud-config-updated` | Após salvar o modal | `{ model: 'Product' }` |
+| `ptah:crud-config-updated` | After saving the modal | `{ model: 'Product' }` |
 
-**Escutando no BaseCrud:**
+**Listening in BaseCrud:**
 
 ```php
 protected $listeners = [
@@ -758,51 +758,51 @@ public function reloadConfig($data)
 
 ## Comando CLI (ptah:config)
 
-### Visão Geral
+### Overview
 
-O comando `ptah:config` permite configurar CRUDs via terminal, oferecendo dois modos:
+The `ptah:config` command allows you to configure CRUDs via terminal, offering two modes:
 
-| Modo | Sintaxe | Melhor Para |
+| Mode | Syntax | Best For |
 |------|---------|-------------|
-| **Interactive** | `ptah:config "App\Models\Product"` | Primeira configuração, exploração |
-| **Declarative** | `ptah:config "App\Models\Product" --column="..." --action="..."` | Automação, scripts, CI/CD |
+| **Interactive** | `ptah:config "App\Models\Product"` | First configuration, exploration |
+| **Declarative** | `ptah:config "App\Models\Product" --column="..." --action="..."` | Automation, scripts, CI/CD |
 
-### Sintaxe Básica
+### Basic Syntax
 
 ```bash
 php artisan ptah:config {model} [options]
 ```
 
-### Opções Disponíveis
+### Available Options
 
-| Opção | Tipo | Descrição |
-|-------|------|-----------|
-| `--column=*` | Array | Adiciona/atualiza coluna |
-| `--action=*` | Array | Adiciona ação customizada |
-| `--filter=*` | Array | Adiciona filtro customizado |
-| `--style=*` | Array | Adiciona regra de estilo |
-| `--join=*` | Array | Adiciona JOIN |
-| `--set=*` | Array | Define configuração geral |
-| `--permission=*` | Array | Define permissão |
-| `--list` | Flag | Lista configuração atual |
-| `--reset` | Flag | Reseta para padrão |
-| `--import=` | String | Importa de JSON |
-| `--export=` | String | Exporta para JSON |
-| `--non-interactive` | Flag | Pula wizard |
-| `--force` | Flag | Sobrescreve sem confirmar |
-| `--dry-run` | Flag | Simula sem salvar |
-| `--only=*` | Array | Processa apenas seções específicas |
-| `--skip=*` | Array | Pula seções específicas |
+| Option | Type | Description |
+|-------|------|-------------|
+| `--column=*` | Array | Add/update column |
+| `--action=*` | Array | Add custom action |
+| `--filter=*` | Array | Add custom filter |
+| `--style=*` | Array | Add style rule |
+| `--join=*` | Array | Add JOIN |
+| `--set=*` | Array | Define general setting |
+| `--permission=*` | Array | Define permission |
+| `--list` | Flag | List current configuration |
+| `--reset` | Flag | Reset to default |
+| `--import=` | String | Import from JSON |
+| `--export=` | String | Export to JSON |
+| `--non-interactive` | Flag | Skip wizard |
+| `--force` | Flag | Overwrite without confirmation |
+| `--dry-run` | Flag | Simulate without saving |
+| `--only=*` | Array | Process only specific sections |
+| `--skip=*` | Array | Skip specific sections |
 
-### Modo Interactive (Wizard)
+### Interactive Mode (Wizard)
 
-Execute sem opções para iniciar o wizard:
+Run without options to start the wizard:
 
 ```bash
 php artisan ptah:config "App\Models\Product"
 ```
 
-**Fluxo do wizard:**
+**Wizard flow:**
 
 ```
 === Column Configuration Wizard ===
@@ -871,16 +871,16 @@ Save this column configuration? [yes]
 Configure a column? [yes] (no)
 ```
 
-**Vantagens do wizard:**
-- ✅ Guia passo-a-passo
-- ✅ Sugestões inteligentes baseadas na model
-- ✅ Preview antes de salvar
-- ✅ Validação em tempo real
-- ✅ Opção de refazer antes de confirmar
+**Wizard advantages:**
+- ✅ Step-by-step guide
+- ✅ Intelligent suggestions based on the model
+- ✅ Preview before saving
+- ✅ Real-time validation
+- ✅ Option to redo before confirming
 
-### Modo Declarative (Inline)
+### Declarative Mode (Inline)
 
-Execute com opções para configurar diretamente:
+Run with options to configure directly:
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
@@ -895,36 +895,36 @@ php artisan ptah:config "App\Models\Product" \
   --set="cacheTtl=3600"
 ```
 
-### Sintaxe das Opções
+### Option Syntax
 
-#### --column (Colunas)
+#### --column (Columns)
 
-**Formato:**
+**Format:**
 ```
 field:type:modifier:option=value:option=value...
 ```
 
-**Partes:**
-1. `field` — Nome físico da coluna (obrigatório)
-2. `type` — Tipo da coluna (obrigatório): `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`
-3. `modifier` — Modificador opcional (shorthand): `required`, `optional`, `readonly`, `hidden`, `noFilter`, `noSave`, `total`
-4. `option=value` — Pares chave=valor para configurações adicionais
+**Parts:**
+1. `field` — Physical column name (required)
+2. `type` — Column type (required): `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`
+3. `modifier` — Optional modifier (shorthand): `required`, `optional`, `readonly`, `hidden`, `noFilter`, `noSave`, `total`
+4. `option=value` — Key=value pairs for additional settings
 
 **Modifiers (shorthands):**
 
-| Modifier | Equivale a | Descrição |
-|----------|------------|-----------|
-| `required` | `colsRequired = true` | Campo obrigatório |
-| `optional` | `colsRequired = false` | Campo opcional |
-| `readonly` | `colsEditableForm = false` | Somente leitura no formulário |
-| `hidden` | `colsVisibleList = false` | Não exibir na listagem |
-| `noFilter` | `colsIsFilterable = false` | Não filtrável |
-| `noSave` | `colsGravar = false` | Não salvar no banco |
-| `total` | `colsTotal = true` | Adicionar ao totalizador |
+| Modifier | Equivalent to | Description |
+|----------|--------------|-------------|
+| `required` | `colsRequired = true` | Required field |
+| `optional` | `colsRequired = false` | Optional field |
+| `readonly` | `colsEditableForm = false` | Read-only in form |
+| `hidden` | `colsVisibleList = false` | Not shown in list |
+| `noFilter` | `colsIsFilterable = false` | Not filterable |
+| `noSave` | `colsGravar = false` | Not saved to database |
+| `total` | `colsTotal = true` | Add to totalizer |
 
-**Options (chave=valor):**
+**Options (key=value):**
 
-| Option | Mapeamento | Tipo | Exemplo |
+| Option | Mapping | Type | Example |
 |--------|------------|------|---------|
 | `label` | `colsNomeLogico` | string | `label=Product Name` |
 | `help` | `colsHelpText` | string | `help=Enter product name` |
@@ -955,137 +955,137 @@ field:type:modifier:option=value:option=value...
 | `totalizer` | `colsTotal` | bool | `totalizer=true` |
 | `totalizadorType` | `totalizadorType` | string | `totalizadorType=sum` |
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# Texto simples obrigatório
+# Simple required text
 --column="name:text:required:label=Product Name"
 
-# Email com validação
+# Email with validation
 --column="email:text:required:validation=required|email|max:255"
 
-# Preço com máscara e renderer
+# Price with mask and renderer
 --column="price:number:required:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2"
 
-# Status com select e badges
+# Status with select and badges
 --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red,pending:yellow"
 
-# SearchDropdown para categoria
+# SearchDropdown for category
 --column="category_id:searchdropdown:relation=category:sdSelectColumn=name:sdValueColumn=id"
 
-# Data readonly
+# Readonly date
 --column="created_at:datetime:readonly:renderer=datetime:rendererFormat=d/m/Y H:i:s"
 
-# Booleano
+# Boolean
 --column="active:boolean:default=true"
 
-# Descrição com textarea
+# Description with textarea
 --column="description:textarea:optional:placeholder=Enter description"
 
-# Imagem com upload
+# Image with upload
 --column="image:image:uploadPath=products:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp"
 
-# Número com totalizador
+# Number with totalizer
 --column="quantity:number:total:totalizadorType=sum:totalizadorFormat=number"
 ```
 
-#### --action (Ações)
+#### --action (Actions)
 
-**Formato:**
+**Format:**
 ```
 name:type:value:icon=icon:color=color:confirm=bool
 ```
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# Livewire action com confirmação
+# Livewire action with confirmation
 --action="approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true"
 
-# Link externo
+# External link
 --action="view:link:https://example.com/products/%id%:icon=bx-show:color=primary"
 
 # JavaScript action
 --action="export:javascript:exportData():icon=bx-download:color=info"
 
-#Ação com confirmação customizada
+# Action with custom confirmation
 --action="delete:livewire:deleteCustom(%id%):icon=bx-trash:color=danger:confirm=true:confirmMessage=Are you sure?"
 ```
 
-#### --filter (Filtros)
+#### --filter (Filters)
 
-**Formato:**
+**Format:**
 ```
 field:type:operator:label=Label:options=opt1,opt2
 ```
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# Select simples
+# Simple select
 --filter="status:select:=:label=Status:options=active,inactive,pending"
 
-# Número com mínimo
+# Number with minimum
 --filter="price:number:>=:label=Minimum Price"
 
-# Data
+# Date
 --filter="created_at:date:>=:label=From Date"
 
 # SearchDropdown
 --filter="user_id:searchdropdown:=:label=User:sdTable=users:sdSelectColumn=name:sdValueColumn=id"
 
-# Texto com LIKE
+# Text with LIKE
 --filter="name:text:LIKE:label=Search Name"
 ```
 
-#### --style (Estilos)
+#### --style (Styles)
 
-**Formato:**
+**Format:**
 ```
 field:operator:value:background=color:color=textColor:fontWeight=weight
 ```
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# Status cancelado em vermelho
+# Cancelled status in red
 --style="status:==:cancelled:background=#FEE2E2:color=#991B1B:fontWeight=bold"
 
-# Prioridade alta em amarelo
+# High priority in yellow
 --style="priority:>:5:background=#FEF3C7:color=#92400E"
 
-# Estoque baixo
+# Low stock
 --style="stock:<:10:background=#DBEAFE:color=#1E40AF:fontWeight=normal"
 ```
 
 #### --join (JOINs)
 
-**Formato:**
+**Format:**
 ```
 type:table:leftCol=rightCol:select=field1,field2:where=condition
 ```
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# LEFT JOIN com users
+# LEFT JOIN with users
 --join="left:users:products.user_id=users.id:select=name,email"
 
-# INNER JOIN com categories
+# INNER JOIN with categories
 --join="inner:categories:products.category_id=categories.id:select=name as category_name:where=categories.active=1"
 
-# JOIN com DISTINCT
+# JOIN with DISTINCT
 --join="left:suppliers:products.supplier_id=suppliers.id:select=name:distinct=true"
 ```
 
-#### --set (Configurações Gerais)
+#### --set (General Settings)
 
-**Formato:**
+**Format:**
 ```
 key=value
 ```
 
-**Exemplos:**
+**Examples:**
 
 ```bash
 --set="cacheEnabled=true"
@@ -1101,7 +1101,7 @@ key=value
 --set="displayName=Products"
 ```
 
-#### --permission (Permissões)
+#### --permission (Permissions)
 
 **Formato:**
 ```
@@ -1118,11 +1118,11 @@ action=permission_string
 --permission="export=product.export"
 ```
 
-### Comandos Especiais
+### Special Commands
 
-#### --list (Listar Configuração)
+#### --list (List Configuration)
 
-Exibe a configuração atual em formato de tabela:
+Displays the current configuration in table format:
 
 ```bash
 php artisan ptah:config "App\Models\Product" --list
@@ -1183,9 +1183,9 @@ php artisan ptah:config "App\Models\Product" --list
 +--------------------+-------+
 ```
 
-#### --reset (Resetar Configuração)
+#### --reset (Reset Configuration)
 
-Remove toda a configuração e volta ao padrão:
+Removes all configuration and returns to default:
 
 ```bash
 php artisan ptah:config "App\Models\Product" --reset
@@ -1198,15 +1198,15 @@ Are you sure you want to reset all configuration for App\Models\Product? [yes/no
 ✓ Configuration reset successfully!
 ```
 
-#### --import (Importar de JSON)
+#### --import (Import from JSON)
 
-Importa configuração de um arquivo JSON:
+Imports configuration from a JSON file:
 
 ```bash
 php artisan ptah:config "App\Models\Product" --import=product-config.json
 ```
 
-**Formato do JSON:**
+**JSON format:**
 
 ```json
 {
@@ -1222,23 +1222,23 @@ php artisan ptah:config "App\Models\Product" --import=product-config.json
 }
 ```
 
-#### --export (Exportar para JSON)
+#### --export (Export to JSON)
 
-Exporta configuração atual para arquivo JSON:
+Exports current configuration to a JSON file:
 
 ```bash
 php artisan ptah:config "App\Models\Product" --export=product-config.json
 ```
 
-**Resultado:**
+**Result:**
 ```
 ✓ Configuration exported successfully to product-config.json
 ```
 
-**Uso típico:**
+**Typical use:**
 
 ```bash
-# 1. Exportar config de produção
+# 1. Export production config
 php artisan ptah:config "App\Models\Product" --export=product-config.json
 
 # 2. Commit no Git
@@ -1251,9 +1251,9 @@ git pull
 php artisan ptah:config "App\Models\Product" --import=product-config.json
 ```
 
-#### --dry-run (Simular sem Salvar)
+#### --dry-run (Simulate without Saving)
 
-Mostra as mudanças que seriam aplicadas sem salvar:
+Shows the changes that would be applied without saving:
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
@@ -1276,12 +1276,12 @@ Configuration Summary:
 ⚠️  Dry-run mode: No changes were saved.
 ```
 
-#### --only / --skip (Processar Seções Específicas)
+#### --only / --skip (Process Specific Sections)
 
-Limita ou exclui seções da configuração:
+Limits or excludes sections from the configuration:
 
 ```bash
-# Configurar apenas colunas e ações
+# Configure only columns and actions
 php artisan ptah:config "App\Models\Product" \
   --only=columns,actions \
   --column="name:text:required"
@@ -1292,7 +1292,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="price:number"
 ```
 
-**Seções disponíveis:**
+**Available sections:**
 - `columns`
 - `actions`
 - `filters`
@@ -1303,46 +1303,46 @@ php artisan ptah:config "App\Models\Product" \
 
 ---
 
-## Comparação: Modal vs CLI
+## Comparison: Modal vs CLI
 
-| Critério | Modal Visual | Comando CLI |
+| Criteria | Visual Modal | CLI Command |
 |----------|--------------|-------------|
-| **Interface** | Gráfica, intuitiva | Terminal, texto |
-| **Curva de Aprendizado** | Baixa | Média |
-| **Velocidade (1ª vez)** | Lenta | Média |
-| **Velocidade (repetido)** | Média | Rápida |
-| **Versionamento** | ❌ Não | ✅ Sim (export JSON) |
-| **Automação** | ❌ Não | ✅ Sim (scripts) |
-| **CI/CD** | ❌ Não | ✅ Sim |
-| **Batch Operations** | ❌ Uma por vez | ✅ Loop múltiplas models |
-| **Preview Visual** | ✅ Sim | ❌ Não |
-| **Drag-and-Drop** | ✅ Sim | ❌ Não |
-| **Color Picker** | ✅ Sim | ❌ Hex manual |
-| **Smart Suggestions** | ⚠️ Limitado | ✅ Sim (AI-based) |
-| **Requer Auth** | ✅ Sim | ❌ Não |
-| **Requer Browser** | ✅ Sim | ❌ Não |
-| **Offline** | ❌ Não | ✅ Sim |
+| **Interface** | Graphical, intuitive | Terminal, text |
+| **Learning Curve** | Low | Medium |
+| **Speed (first time)** | Slow | Medium |
+| **Speed (repeated)** | Medium | Fast |
+| **Versioning** | ❌ No | ✅ Yes (export JSON) |
+| **Automation** | ❌ No | ✅ Yes (scripts) |
+| **CI/CD** | ❌ No | ✅ Yes |
+| **Batch Operations** | ❌ One at a time | ✅ Loop multiple models |
+| **Visual Preview** | ✅ Yes | ❌ No |
+| **Drag-and-Drop** | ✅ Yes | ❌ No |
+| **Color Picker** | ✅ Yes | ❌ Manual hex |
+| **Smart Suggestions** | ⚠️ Limited | ✅ Yes (AI-based) |
+| **Requires Auth** | ✅ Yes | ❌ No |
+| **Requires Browser** | ✅ Yes | ❌ No |
+| **Offline** | ❌ No | ✅ Yes |
 | **Undo/Redo** | ⚠️ Manual | ✅ Git revert |
-| **Documentação** | ⚠️ Tooltips | ✅ `--help` |
+| **Documentation** | ⚠️ Tooltips | ✅ `--help` |
 
-**Recomendação:**
+**Recommendation:**
 
-- 🎨 **Modal Visual:** Melhor para primeira configuração, ajustes pontuais, exploração de opções
-- 💻 **Comando CLI:** Melhor para automação, múltiplas models, versionamento, CI/CD, reprodutibilidade
+- 🎨 **Visual Modal:** Best for first configuration, one-off adjustments, exploring options
+- 💻 **CLI Command:** Best for automation, multiple models, versioning, CI/CD, reproducibility
 
-**Workflow Ideal:**
+**Ideal Workflow:**
 
-1. Configure a primeira model via **Modal Visual** (exploração)
-2. Exporte para JSON: `php artisan ptah:config "App\Models\Product" --export=product.json`
-3. Versione o JSON no Git
-4. Crie script para outras models baseado no JSON
-5. Use CLI para ajustes em lote
+1. Configure the first model via **Visual Modal** (exploration)
+2. Export to JSON: `php artisan ptah:config "App\Models\Product" --export=product.json`
+3. Version the JSON in Git
+4. Create a script for other models based on the JSON
+5. Use CLI for batch adjustments
 
 ---
 
-## Estrutura do CrudConfig (JSON)
+## CrudConfig Structure (JSON)
 
-Configuração completa salva na tabela `crud_configs.config`:
+Full configuration saved in the `crud_configs.config` table:
 
 ```json
 {
@@ -1549,144 +1549,144 @@ Configuração completa salva na tabela `crud_configs.config`:
 
 ---
 
-## Configuração de Colunas
+## Column Configuration
 
-Propriedades de cada coluna em `cols[]`:
+Properties of each column in `cols[]`:
 
-### Propriedades Básicas
+### Basic Properties
 
-| Propriedade | Tipo | Padrão | Descrição |
+| Property | Type | Default | Description |
 |-------------|------|--------|-----------|
-| `colsNomeFisico` | string | — | Nome físico da coluna no banco (obrigatório) |
-| `colsNomeLogico` | string | `ucfirst(colsNomeFisico)` | Label de exibição |
-| `colsTipo` | string | `'text'` | Tipo do input: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image` |
-| `colsGravar` | bool | `true` | Salvar valor no banco |
-| `colsRequired` | bool | `false` | Campo obrigatório |
-| `colsIsFilterable` | bool | `true` | Permite filtrar por esta coluna |
-| `colsVisibleList` | bool | `true` | Exibir na listagem |
-| `colsEditableForm` | bool | `true` | Editável no formulário |
-| `colsAlign` | string | `'text-start'` | Alinhamento: `text-start`, `text-center`, `text-end` |
-| `colsWidth` | string | `'auto'` | Largura da coluna: `120px`, `20%`, `auto` |
-| `colsSource` | string | `''` | Badge indicando fonte SQL (ex: `JOIN categories`) |
+| `colsNomeFisico` | string | — | Physical column name in the database (required) |
+| `colsNomeLogico` | string | `ucfirst(colsNomeFisico)` | Display label |
+| `colsTipo` | string | `'text'` | Input type: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image` |
+| `colsGravar` | bool | `true` | Save value to database |
+| `colsRequired` | bool | `false` | Required field |
+| `colsIsFilterable` | bool | `true` | Allows filtering by this column |
+| `colsVisibleList` | bool | `true` | Show in list |
+| `colsEditableForm` | bool | `true` | Editable in form |
+| `colsAlign` | string | `'text-start'` | Alignment: `text-start`, `text-center`, `text-end` |
+| `colsWidth` | string | `'auto'` | Column width: `120px`, `20%`, `auto` |
+| `colsSource` | string | `''` | Badge indicating SQL source (e.g.: `JOIN categories`) |
 
-### Estilo de Célula
+### Cell Style
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsCellStyle` | string | `''` | CSS inline para a célula (ex: `background: #FEE;`) |
-| `colsCellClass` | string | `''` | Classes CSS para a célula |
-| `colsCellIcon` | string | `''` | Ícone no cabeçalho (ex: `bx-user`, `fa-user`) |
-| `colsMinWidth` | string | `''` | Largura mínima (ex: `100px`) |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsCellStyle` | string | `''` | Inline CSS for the cell (e.g.: `background: #FEE;`) |
+| `colsCellClass` | string | `''` | CSS classes for the cell |
+| `colsCellIcon` | string | `''` | Icon in the header (e.g.: `bx-user`, `fa-user`) |
+| `colsMinWidth` | string | `''` | Minimum width (e.g.: `100px`) |
 
-### Exibição e Renderização
+### Display and Rendering
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsHelper` | string | `''` | Texto de ajuda abaixo do campo |
-| `colsRenderer` | string | `'text'` | Tipo de renderer: `text`, `badge`, `pill`, `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`, `filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode` |
-| `colsRendererLink` | string | `''` | URL pattern para renderer `link` (ex: `/products/%id%`) |
-| `colsRendererTarget` | string | `'_self'` | Target do link: `_self`, `_blank` |
-| `colsRendererCurrency` | string | `'BRL'` | Moeda para renderer `money`: `BRL`, `USD`, `EUR` |
-| `colsRendererDecimals` | int | `2` | Casas decimais para renderer `money` ou `number` |
-| `colsRendererPrefix` | string | `''` | Prefixo para renderer `number` |
-| `colsRendererSuffix` | string | `''` | Sufixo para renderer `number` |
-| `colsRendererFormat` | string | `''` | Formato para renderer `date`/`datetime` (ex: `d/m/Y H:i:s`) |
-| `colsRendererMaxChars` | int | `50` | Máximo de caracteres para renderer `truncate` |
-| `colsRendererBadges` | array | `[]` | Mapa valor→cor para renderers `badge`/`pill` |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsHelper` | string | `''` | Help text below the field |
+| `colsRenderer` | string | `'text'` | Renderer type: `text`, `badge`, `pill`, `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`, `filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode` |
+| `colsRendererLink` | string | `''` | URL pattern for `link` renderer (e.g.: `/products/%id%`) |
+| `colsRendererTarget` | string | `'_self'` | Link target: `_self`, `_blank` |
+| `colsRendererCurrency` | string | `'BRL'` | Currency for `money` renderer: `BRL`, `USD`, `EUR` |
+| `colsRendererDecimals` | int | `2` | Decimal places for `money` or `number` renderer |
+| `colsRendererPrefix` | string | `''` | Prefix for `number` renderer |
+| `colsRendererSuffix` | string | `''` | Suffix for `number` renderer |
+| `colsRendererFormat` | string | `''` | Format for `date`/`datetime` renderer (e.g.: `d/m/Y H:i:s`) |
+| `colsRendererMaxChars` | int | `50` | Maximum characters for `truncate` renderer |
+| `colsRendererBadges` | array | `[]` | Value→color map for `badge`/`pill` renderers |
 
-### Relação
+### Relation
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsRelacao` | string | `''` | Nome do método de relação Eloquent |
-| `colsRelacaoExibe` | string | `'name'` | Campo a exibir da relação |
-| `colsRelacaoNested` | string | `''` | Relação aninhada (ex: `category.parent.name`) |
-| `colsSDModel` | string | `''` | Model completa para SearchDropdown (ex: `App\Models\Category`) |
-| `colsSDLabel` | string | `'name'` | Campo de exibição no SearchDropdown |
-| `colsSDValor` | string | `'id'` | Campo de valor no SearchDropdown |
-| `colsSDOrder` | string | `'name ASC'` | Ordenação do SearchDropdown |
-| `colsSDTipo` | string | `'searchdropdown'` | Tipo do SearchDropdown |
-| `colsSDMode` | string | `'single'` | Modo: `single`, `multiple` |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsRelacao` | string | `''` | Eloquent relation method name |
+| `colsRelacaoExibe` | string | `'name'` | Field to display from the relation |
+| `colsRelacaoNested` | string | `''` | Nested relation (e.g.: `category.parent.name`) |
+| `colsSDModel` | string | `''` | Full model for SearchDropdown (e.g.: `App\Models\Category`) |
+| `colsSDLabel` | string | `'name'` | Display field in SearchDropdown |
+| `colsSDValor` | string | `'id'` | Value field in SearchDropdown |
+| `colsSDOrder` | string | `'name ASC'` | SearchDropdown sort order |
+| `colsSDTipo` | string | `'searchdropdown'` | SearchDropdown type |
+| `colsSDMode` | string | `'single'` | Mode: `single`, `multiple` |
 
-### Máscara de Input
+### Input Mask
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsMask` | string | `''` | Máscara de input: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase`, `custom_regex` |
-| `colsMaskTransform` | string | `''` | Transformação ao salvar: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsMaskDecimalPlaces` | int | `2` | Casas decimais para máscaras de dinheiro |
-| `colsMaskEmptyValue` | string | `''` | Valor salvo quando campo vazio |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsMask` | string | `''` | Input mask: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase`, `custom_regex` |
+| `colsMaskTransform` | string | `''` | Transform on save: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
+| `colsMaskDecimalPlaces` | int | `2` | Decimal places for currency masks |
+| `colsMaskEmptyValue` | string | `''` | Value saved when field is empty |
 
-### Validação
+### Validation
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsValidations` | array | `[]` | Array de regras de validação: `["required", "email", "max:255"]` |
-| `colsValidationMessage` | string | `''` | Mensagem de erro customizada |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsValidations` | array | `[]` | Array of validation rules: `["required", "email", "max:255"]` |
+| `colsValidationMessage` | string | `''` | Custom error message |
 
 ### Select Options
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsOptions` | array | `[]` | Opções para `<select>`: `{"value": "Label"}` |
-| `colsOptionsFrom` | string | `''` | Método que retorna as opções dinamicamente |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsOptions` | array | `[]` | Options for `<select>`: `{"value": "Label"}` |
+| `colsOptionsFrom` | string | `''` | Method that returns options dynamically |
 
-### Upload de Arquivo
+### File Upload
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsUploadPath` | string | `''` | Caminho de upload (ex: `products/images`) |
-| `colsUploadDisk` | string | `'public'` | Disco de storage: `public`, `s3`, etc |
-| `colsUploadMaxSize` | int | `2048` | Tamanho máximo em KB |
-| `colsUploadAllowedTypes` | array | `[]` | Extensões permitidas: `["jpg", "png", "webp"]` |
-| `colsUploadMultiple` | bool | `false` | Upload múltiplo |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsUploadPath` | string | `''` | Upload path (e.g.: `products/images`) |
+| `colsUploadDisk` | string | `'public'` | Storage disk: `public`, `s3`, etc |
+| `colsUploadMaxSize` | int | `2048` | Maximum size in KB |
+| `colsUploadAllowedTypes` | array | `[]` | Allowed extensions: `["jpg", "png", "webp"]` |
+| `colsUploadMultiple` | bool | `false` | Multiple upload |
 
-### Totalizador
+### Totalizer
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsTotal` | bool | `false` | Adicionar ao totalizador |
-| `totalizadorType` | string | `'sum'` | Tipo: `sum`, `count`, `avg`, `max`, `min` |
-| `totalizadorFormat` | string | `'number'` | Formato: `currency`, `number`, `integer` |
-| `totalizadorCurrency` | string | `'BRL'` | Moeda para formato currency |
-| `totalizadorDecimals` | int | `2` | Casas decimais |
-| `totalizadorPrefix` | string | `''` | Prefixo (ex: `$`) |
-| `totalizadorSuffix` | string | `''` | Sufixo (ex: `un`) |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsTotal` | bool | `false` | Add to totalizer |
+| `totalizadorType` | string | `'sum'` | Type: `sum`, `count`, `avg`, `max`, `min` |
+| `totalizadorFormat` | string | `'number'` | Format: `currency`, `number`, `integer` |
+| `totalizadorCurrency` | string | `'BRL'` | Currency for currency format |
+| `totalizadorDecimals` | int | `2` | Decimal places |
+| `totalizadorPrefix` | string | `''` | Prefix (e.g.: `$`) |
+| `totalizadorSuffix` | string | `''` | Suffix (e.g.: `un`) |
 
-### Avançado
+### Advanced
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsOrderBy` | string | `''` | Ordenação customizada (ex: `FIELD(status, 'pending', 'active', 'inactive')`) |
-| `colsReverse` | bool | `false` | Inverter ordem de valores (para arrays) |
-| `colsMetodoCustom` | string | `''` | Método accessor customizado na model |
-| `colsPlaceholder` | string | `''` | Placeholder do input |
-| `colsDefaultValue` | mixed | `null` | Valor padrão ao criar |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsOrderBy` | string | `''` | Custom sort order (e.g.: `FIELD(status, 'pending', 'active', 'inactive')`) |
+| `colsReverse` | bool | `false` | Reverse value order (for arrays) |
+| `colsMetodoCustom` | string | `''` | Custom accessor method in the model |
+| `colsPlaceholder` | string | `''` | Input placeholder |
+| `colsDefaultValue` | mixed | `null` | Default value on create |
 
 ---
 
-## Configuração de Ações
+## Action Configuration
 
-Propriedades de cada ação em `actions[]`:
+Properties of each action in `actions[]`:
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `actionName` | string | — | Nome único da ação (obrigatório) |
-| `actionLabel` | string | `ucfirst(actionName)` | Label de exibição no botão |
-| `actionType` | string | `'livewire'` | Tipo: `livewire`, `link`, `javascript` |
-| `actionValue` | string | — | Valor/comando da ação (obrigatório) |
-| `actionIcon` | string | `''` | Ícone do botão (ex: `bx-check`, `fa-check`) |
-| `actionColor` | string | `'primary'` | Cor do botão: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
-| `actionPosition` | string | `'row'` | Posição: `row` (por linha), `bulk` (bulk action), `both` |
-| `actionConfirm` | bool | `false` | Exigir confirmação |
-| `actionConfirmMessage` | string | `''` | Mensagem de confirmação |
-| `actionPermission` | string | `''` | Gate/ability necessária |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `actionName` | string | — | Unique action name (required) |
+| `actionLabel` | string | `ucfirst(actionName)` | Display label on the button |
+| `actionType` | string | `'livewire'` | Type: `livewire`, `link`, `javascript` |
+| `actionValue` | string | — | Action value/command (required) |
+| `actionIcon` | string | `''` | Button icon (e.g.: `bx-check`, `fa-check`) |
+| `actionColor` | string | `'primary'` | Button color: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
+| `actionPosition` | string | `'row'` | Position: `row` (per row), `bulk` (bulk action), `both` |
+| `actionConfirm` | bool | `false` | Require confirmation |
+| `actionConfirmMessage` | string | `''` | Confirmation message |
+| `actionPermission` | string | `''` | Required gate/ability |
 
-**Placeholders suportados em `actionValue`:**
-- `%id%` → ID do registro
-- `%field%` → Valor de qualquer campo (ex: `%email%`, `%name%`)
+**Supported placeholders in `actionValue`:**
+- `%id%` → Record ID
+- `%field%` → Value of any field (e.g.: `%email%`, `%name%`)
 
-**Exemplos:**
+**Examples:**
 
 ```json
 {
@@ -1726,26 +1726,26 @@ Propriedades de cada ação em `actions[]`:
 
 ---
 
-## Configuração de Filtros
+## Filter Configuration
 
-Propriedades de cada filtro em `filters[]`:
+Properties of each filter in `filters[]`:
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `colsFilterField` | string | — | Campo a filtrar (obrigatório) |
-| `colsFilterLabel` | string | `ucfirst(field)` | Label do filtro |
-| `colsFilterType` | string | `'text'` | Tipo: `text`, `number`, `date`, `select`, `searchdropdown` |
-| `colsFilterOperator` | string | `'='` | Operador: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
-| `colsFilterPlaceholder` | string | `''` | Placeholder do input |
-| `colsFilterOptions` | array | `[]` | Opções para tipo `select`: `{"value": "Label"}` |
-| `colsFilterWhereHas` | string | `''` | Nome da relação para `whereHas` |
-| `colsFilterRelationField` | string | `''` | Campo na relação para `whereHas` |
-| `colsFilterAggregate` | string | `''` | Função de agregação: `SUM`, `COUNT`, `AVG`, `MAX`, `MIN` |
-| `colsFilterSdTable` | string | `''` | Tabela para SearchDropdown |
-| `colsFilterSdSelectColumn` | string | `'name'` | Coluna de exibição para SearchDropdown |
-| `colsFilterSdValueColumn` | string | `'id'` | Coluna de valor para SearchDropdown |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `colsFilterField` | string | — | Field to filter (required) |
+| `colsFilterLabel` | string | `ucfirst(field)` | Filter label |
+| `colsFilterType` | string | `'text'` | Type: `text`, `number`, `date`, `select`, `searchdropdown` |
+| `colsFilterOperator` | string | `'='` | Operator: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
+| `colsFilterPlaceholder` | string | `''` | Input placeholder |
+| `colsFilterOptions` | array | `[]` | Options for `select` type: `{"value": "Label"}` |
+| `colsFilterWhereHas` | string | `''` | Relation name for `whereHas` |
+| `colsFilterRelationField` | string | `''` | Field in relation for `whereHas` |
+| `colsFilterAggregate` | string | `''` | Aggregate function: `SUM`, `COUNT`, `AVG`, `MAX`, `MIN` |
+| `colsFilterSdTable` | string | `''` | Table for SearchDropdown |
+| `colsFilterSdSelectColumn` | string | `'name'` | Display column for SearchDropdown |
+| `colsFilterSdValueColumn` | string | `'id'` | Value column for SearchDropdown |
 
-**Exemplos:**
+**Examples:**
 
 ```json
 {
@@ -1796,21 +1796,21 @@ Propriedades de cada filtro em `filters[]`:
 
 ---
 
-## Configuração de Estilos
+## Style Configuration
 
-Propriedades de cada regra de estilo em `styles[]`:
+Properties of each style rule in `styles[]`:
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `styleField` | string | — | Campo a verificar (obrigatório) |
-| `styleOperator` | string | `'=='` | Operador: `==`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
-| `styleValue` | mixed | — | Valor de comparação (obrigatório) |
-| `styleBackgroundColor` | string | `''` | Cor de fundo (ex: `#FEE2E2`) |
-| `styleColor` | string | `''` | Cor do texto (ex: `#991B1B`) |
-| `styleFontWeight` | string | `'normal'` | Peso da fonte: `normal`, `bold`, `lighter`, `bolder` |
-| `styleCustom` | string | `''` | CSS customizado (ex: `border: 2px solid red;`) |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `styleField` | string | — | Field to check (required) |
+| `styleOperator` | string | `'=='` | Operator: `==`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
+| `styleValue` | mixed | — | Comparison value (required) |
+| `styleBackgroundColor` | string | `''` | Background color (e.g.: `#FEE2E2`) |
+| `styleColor` | string | `''` | Text color (e.g.: `#991B1B`) |
+| `styleFontWeight` | string | `'normal'` | Font weight: `normal`, `bold`, `lighter`, `bolder` |
+| `styleCustom` | string | `''` | Custom CSS (e.g.: `border: 2px solid red;`) |
 
-**Exemplo:**
+**Example:**
 
 ```json
 {
@@ -1823,28 +1823,28 @@ Propriedades de cada regra de estilo em `styles[]`:
 }
 ```
 
-**Resultado:** Linhas onde `status === 'cancelled'` terão:
-- Background vermelho claro
-- Texto vermelho escuro
-- Fonte em negrito
+**Result:** Rows where `status === 'cancelled'` will have:
+- Light red background
+- Dark red text
+- Bold font
 
 ---
 
-## Configuração de JOINs
+## JOIN Configuration
 
-Propriedades de cada JOIN em `joins[]`:
+Properties of each JOIN in `joins[]`:
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `joinTable` | string | — | Tabela a juntar (obrigatório) |
-| `joinType` | string | `'left'` | Tipo de JOIN: `left`, `inner` |
-| `joinLeftColumn` | string | — | Coluna da tabela principal (obrigatório) |
-| `joinRightColumn` | string | — | Coluna da tabela juntada (obrigatório) |
-| `joinSelect` | array | `[]` | Campos a selecionar: `["table.field as alias"]` |
-| `joinDistinct` | bool | `false` | Usar `DISTINCT` |
-| `joinWhere` | string | `''` | Condição `WHERE` adicional (ex: `table.active = 1`) |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `joinTable` | string | — | Table to join (required) |
+| `joinType` | string | `'left'` | JOIN type: `left`, `inner` |
+| `joinLeftColumn` | string | — | Column from the main table (required) |
+| `joinRightColumn` | string | — | Column from the joined table (required) |
+| `joinSelect` | array | `[]` | Fields to select: `["table.field as alias"]` |
+| `joinDistinct` | bool | `false` | Use `DISTINCT` |
+| `joinWhere` | string | `''` | Additional `WHERE` condition (e.g.: `table.active = 1`) |
 
-**Exemplo:**
+**Example:**
 
 ```json
 {
@@ -1858,7 +1858,7 @@ Propriedades de cada JOIN em `joins[]`:
 }
 ```
 
-**SQL Resultante:**
+**Resulting SQL:**
 
 ```sql
 LEFT JOIN categories 
@@ -1869,87 +1869,87 @@ SELECT categories.name as category_name, categories.slug as category_slug
 
 ---
 
-## Configurações Gerais
+## General Settings
 
-Propriedades no nível raiz do config:
+Properties at the root level of the config:
 
-### Identificação
+### Identification
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `displayName` | string | `class_basename($model)` | Nome de exibição do CRUD |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `displayName` | string | `class_basename($model)` | CRUD display name |
 
 ### Cache
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `cacheEnabled` | bool | `true` | Habilitar cache |
-| `cacheTtl` | int | `3600` | Tempo de vida do cache (segundos) |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `cacheEnabled` | bool | `true` | Enable cache |
+| `cacheTtl` | int | `3600` | Cache lifetime (seconds) |
 
-### Paginação
+### Pagination
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `paginationEnabled` | bool | `true` | Habilitar paginação |
-| `itemsPerPage` | int | `25` | Itens por página |
-| `paginationOptions` | array | `[10, 25, 50, 100]` | Opções de itens por página |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `paginationEnabled` | bool | `true` | Enable pagination |
+| `itemsPerPage` | int | `25` | Items per page |
+| `paginationOptions` | array | `[10, 25, 50, 100]` | Items per page options |
 
-### Busca
+### Search
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `searchEnabled` | bool | `true` | Habilitar busca global |
-| `searchPlaceholder` | string | `'Search...'` | Placeholder do campo de busca |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `searchEnabled` | bool | `true` | Enable global search |
+| `searchPlaceholder` | string | `'Search...'` | Search field placeholder |
 
-### Exportação
+### Export
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `exportEnabled` | bool | `true` | Habilitar exportação |
-| `exportMaxRows` | int | `10000` | Máximo de linhas exportáveis |
-| `exportFormats` | array | `['pdf', 'excel', 'csv']` | Formatos habilitados |
-| `pdfOrientation` | string | `'landscape'` | Orientação do PDF: `landscape`, `portrait` |
-| `pdfPaperSize` | string | `'A4'` | Tamanho do papel: `A4`, `Letter`, etc |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `exportEnabled` | bool | `true` | Enable export |
+| `exportMaxRows` | int | `10000` | Maximum exportable rows |
+| `exportFormats` | array | `['pdf', 'excel', 'csv']` | Enabled formats |
+| `pdfOrientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
+| `pdfPaperSize` | string | `'A4'` | Paper size: `A4`, `Letter`, etc |
 
-### Aparência
+### Appearance
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `theme` | string | `'light'` | Tema visual: `light`, `dark` |
-| `compactMode` | bool | `false` | Modo compacto |
-| `striped` | bool | `true` | Linhas zebradas |
-| `hover` | bool | `true` | Efeito hover nas linhas |
-| `showRowNumbers` | bool | `true` | Exibir número da linha |
-| `tableClass` | string | `''` | Classes CSS extras para a tabela |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `theme` | string | `'light'` | Visual theme: `light`, `dark` |
+| `compactMode` | bool | `false` | Compact mode |
+| `striped` | bool | `true` | Striped rows |
+| `hover` | bool | `true` | Hover effect on rows |
+| `showRowNumbers` | bool | `true` | Show row number |
+| `tableClass` | string | `''` | Extra CSS classes for the table |
 
 ### Multi-tenant
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `companyField` | string | `'company_id'` | Campo de empresa para filtro multi-tenant |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `companyField` | string | `'company_id'` | Company field for multi-tenant filter |
 
 ### Soft Deletes
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `softDeletes` | bool | `false` | Usar soft deletes |
-| `showTrashed` | bool | `false` | Exibir deletados por padrão |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `softDeletes` | bool | `false` | Use soft deletes |
+| `showTrashed` | bool | `false` | Show deleted records by default |
 
-### Filtro Rápido de Data
+### Quick Date Filter
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `quickDateColumn` | string | `'created_at'` | Coluna para filtro rápido de data |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `quickDateColumn` | string | `'created_at'` | Column for quick date filter |
 
-### Broadcast (Tempo Real)
+### Broadcast (Real-time)
 
-| Propriedade | Tipo | Padrão | Descrição |
-|-------------|------|--------|-----------|
-| `broadcastEnabled` | bool | `false` | Habilitar Echo listener |
-| `broadcastChannel` | string | `'page-{model}-observer'` | Nome do canal |
-| `broadcastEvent` | string | `'.page{Model}Observer'` | Nome do evento |
+| Property | Type | Default | Description |
+|-------------|------|--------|----------|
+| `broadcastEnabled` | bool | `false` | Enable Echo listener |
+| `broadcastChannel` | string | `'page-{model}-observer'` | Channel name |
+| `broadcastEvent` | string | `'.page{Model}Observer'` | Event name |
 
-**Exemplo de uso:**
+**Usage example:**
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
@@ -1965,23 +1965,23 @@ php artisan ptah:config "App\Models\Product" \
 
 ---
 
-## Configuração de Permissões
+## Permissions Configuration
 
-Propriedades em `permissions`:
+Properties in `permissions`:
 
-| Chave | Tipo | Padrão | Descrição |
-|-------|------|--------|-----------|
-| `list` | string | `''` | Gate para listar registros |
-| `view` | string | `''` | Gate para visualizar um registro |
-| `create` | string | `''` | Gate para criar registro |
-| `edit` | string | `''` | Gate para editar registro |
-| `delete` | string | `''` | Gate para deletar registro |
-| `export` | string | `''` | Gate para exportar |
-| `import` | string | `''` | Gate para importar |
-| `restore` | string | `''` | Gate para restaurar soft-deleted |
-| `forceDelete` | string | `''` | Gate para deletar permanentemente |
+| Key | Type | Default | Description |
+|-------|------|--------|----------|
+| `list` | string | `''` | Gate to list records |
+| `view` | string | `''` | Gate to view a record |
+| `create` | string | `''` | Gate to create record |
+| `edit` | string | `''` | Gate to edit record |
+| `delete` | string | `''` | Gate to delete record |
+| `export` | string | `''` | Gate to export |
+| `import` | string | `''` | Gate to import |
+| `restore` | string | `''` | Gate to restore soft-deleted |
+| `forceDelete` | string | `''` | Gate to permanently delete |
 
-**Exemplo:**
+**Example:**
 
 ```json
 {
@@ -1997,7 +1997,7 @@ Propriedades em `permissions`:
 }
 ```
 
-**Uso no BaseCrud:**
+**Usage in BaseCrud:**
 
 ```php
 if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
@@ -2007,13 +2007,13 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 
 ---
 
-## Exemplos Práticos Completos
+## Complete Practical Examples
 
-### Exemplo 1: E-commerce Product
+### Example 1: E-commerce Product
 
 **Via Modal:**
-1. Abra o modal de configuração
-2. Configure colunas:
+1. Open the configuration modal
+2. Configure columns:
    - `name` → text, required
    - `sku` → text, required, unique
    - `price` → number, money renderer, mask money_brl
@@ -2021,11 +2021,11 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
    - `stock` → number, number renderer
    - `status` → select (active/inactive), badge renderer
    - `category_id` → searchdropdown
-3. Adicione ação customizada "Duplicate"
-4. Configure filtros de status e categoria
-5. Adicione estilo condicional para baixo estoque
-6. Configure totalizador para preço e custo
-7. Salve
+3. Add custom action "Duplicate"
+4. Configure status and category filters
+5. Add conditional style for low stock
+6. Configure totalizer for price and cost
+7. Save
 
 **Via CLI:**
 
@@ -2048,7 +2048,7 @@ php artisan ptah:config "App\Models\Product" \
   --set="exportEnabled=true"
 ```
 
-### Exemplo 2: CRM Contacts
+### Example 2: CRM Contacts
 
 **Via CLI:**
 
@@ -2074,7 +2074,7 @@ php artisan ptah:config "App\Models\Contact" \
   --set="quickDateColumn=last_contact_at"
 ```
 
-### Exemplo 3: Blog Posts
+### Example 3: Blog Posts
 
 **Via CLI:**
 
@@ -2103,46 +2103,46 @@ php artisan ptah:config "App\Models\Post" \
 
 ---
 
-## Workflow Recomendado
+## Recommended Workflow
 
-### Workflow 1: Desenvolvimento Inicial
+### Workflow 1: Initial Development
 
 ```bash
-# 1. Gerar CRUD com ptah:forge
+# 1. Generate CRUD with ptah:forge
 php artisan ptah:forge Post --fields="title:string,content:text,status:enum(draft|published)"
 php artisan migrate
 
-# 2. Configurar via Modal Visual (primeira vez)
-# - Abra o navegador → /posts
-# - Clique no botão ⚙️ Config
-# - Configure colunas, ações, filtros visualmente
-# - Salve
+# 2. Configure via Visual Modal (first time)
+# - Open the browser → /posts
+# - Click the ⚙️ Config button
+# - Configure columns, actions, filters visually
+# - Save
 
-# 3. Exportar configuração para versionamento
+# 3. Export configuration for versioning
 php artisan ptah:config "App\Models\Post" --export=config/cruds/post.json
 
-# 4. Commit no Git
+# 4. Commit to Git
 git add config/cruds/post.json
 git commit -m "feat: add Post CRUD config"
 ```
 
-### Workflow 2: Replicar em Outros Ambientes
+### Workflow 2: Replicate to Other Environments
 
 ```bash
-# 1. Pull do Git
+# 1. Pull from Git
 git pull origin main
 
-# 2. Importar configuração
+# 2. Import configuration
 php artisan ptah:config "App\Models\Post" --import=config/cruds/post.json
 
-# 3. Verificar se funcionou
+# 3. Verify it worked
 php artisan ptah:config "App\Models\Post" --list
 ```
 
-### Workflow 3: Configurar Múltiplas Models
+### Workflow 3: Configure Multiple Models
 
 ```bash
-# 1. Criar script de configuração
+# 1. Create configuration script
 cat > config-all-cruds.sh << 'EOF'
 #!/bin/bash
 
@@ -2163,7 +2163,7 @@ EOF
 
 chmod +x config-all-cruds.sh
 
-# 2. Executar
+# 2. Run
 ./config-all-cruds.sh
 ```
 
@@ -2204,17 +2204,17 @@ jobs:
         run: php artisan cache:clear
 ```
 
-### Workflow 5: Backup e Restore
+### Workflow 5: Backup and Restore
 
 ```bash
-# Backup de todas as configurações
+# Backup all configurations
 mkdir -p backups/cruds/$(date +%Y-%m-%d)
 
 php artisan ptah:config "App\Models\Product" --export=backups/cruds/$(date +%Y-%m-%d)/product.json
 php artisan ptah:config "App\Models\Category" --export=backups/cruds/$(date +%Y-%m-%d)/category.json
 php artisan ptah:config "App\Models\User" --export=backups/cruds/$(date +%Y-%m-%d)/user.json
 
-# Restore de backup
+# Restore from backup
 BACKUP_DATE="2026-03-01"
 php artisan ptah:config "App\Models\Product" --import=backups/cruds/${BACKUP_DATE}/product.json
 php artisan ptah:config "App\Models\Category" --import=backups/cruds/${BACKUP_DATE}/category.json
@@ -2223,9 +2223,9 @@ php artisan ptah:config "App\Models\User" --import=backups/cruds/${BACKUP_DATE}/
 
 ---
 
-## Import/Export de Configurações
+## Import/Export of Configurations
 
-### Estrutura de Diretório Recomendada
+### Recommended Directory Structure
 
 ```
 project/
@@ -2244,7 +2244,7 @@ project/
 │           └── product.json
 ```
 
-### Export Completo
+### Full Export
 
 ```bash
 #!/bin/bash
@@ -2272,7 +2272,7 @@ echo "✓ All configurations exported!"
 echo "Commit with: git add $EXPORT_DIR && git commit -m 'chore: export CRUD configs'"
 ```
 
-### Import Completo
+### Full Import
 
 ```bash
 #!/bin/bash
@@ -2301,77 +2301,77 @@ echo "✓ All configurations imported!"
 
 ## Troubleshooting
 
-### Problema 1: Config não aparece no CRUD
+### Problem 1: Config does not appear in the CRUD
 
-**Sintomas:**
-- Modal salvo mas CRUD não reflete mudanças
-- Comando executado mas tabela não muda
+**Symptoms:**
+- Modal saved but CRUD does not reflect changes
+- Command executed but table does not change
 
-**Causa:** Cache não invalidado
+**Cause:** Cache not invalidated
 
-**Solução:**
+**Solution:**
 
 ```bash
-# Limpar cache manualmente
+# Clear cache manually
 php artisan cache:forget "crud_config_Product"
 
-# Ou limpar todo o cache
+# Or clear all cache
 php artisan cache:clear
 
-# Verificar se config está no banco
+# Verify if config is in the database
 php artisan ptah:config "App\Models\Product" --list
 ```
 
-### Problema 2: Comando não encontrado
+### Problem 2: Command not found
 
-**Sintomas:**
+**Symptoms:**
 ```
 Command "ptah:config" is not defined.
 ```
 
-**Causa:** Comando não registrado no ServiceProvider
+**Cause:** Command not registered in ServiceProvider
 
-**Solução:**
+**Solution:**
 
 ```bash
-# 1. Verificar se comando está registrado
+# 1. Verify if command is registered
 grep -r "ConfigCommand" vendor/jonytonet/ptah/src/
 
-# 2. Limpar cache de comandos
+# 2. Clear command cache
 php artisan optimize:clear
 
-# 3. Re-executar
+# 3. Re-run
 php artisan ptah:config "App\Models\Product"
 ```
 
-### Problema 3: Import falha com erro de JSON
+### Problem 3: Import fails with JSON error
 
-**Sintomas:**
+**Symptoms:**
 ```
 Invalid JSON file: Syntax error
 ```
 
-**Causa:** JSON malformado
+**Cause:** Malformed JSON
 
-**Solução:**
+**Solution:**
 
 ```bash
-# Validar JSON
+# Validate JSON
 cat config/cruds/product.json | jq .
 
-# Se erro, corrigir manualmente ou:
+# If error, fix manually or:
 php artisan ptah:config "App\Models\Product" --reset
 php artisan ptah:config "App\Models\Product" --export=config/cruds/product.json
 ```
 
-### Problema 4: Permissões não funcionam
+### Problem 4: Permissions not working
 
-**Sintomas:**
-- Gates configurados mas usuário consegue acessar
+**Symptoms:**
+- Gates configured but user can still access
 
-**Causa:** Gates não definidos no AuthServiceProvider
+**Cause:** Gates not defined in AuthServiceProvider
 
-**Solução:**
+**Solution:**
 
 ```php
 // app/Providers/AuthServiceProvider.php
@@ -2392,61 +2392,61 @@ public function boot()
 }
 ```
 
-### Problema 5: Syntax error no comando CLI
+### Problem 5: Syntax error in CLI command
 
-**Sintomas:**
+**Symptoms:**
 ```
 Parse error in column syntax
 ```
 
-**Causa:** Sintaxe incorreta na opção `--column`
+**Cause:** Incorrect syntax in the `--column` option
 
-**Solução:**
+**Solution:**
 
 ```bash
-# ❌ Errado (faltam aspas)
+# ❌ Wrong (missing quotes)
 php artisan ptah:config App\Models\Product --column=name:text
 
-# ✅ Correto
+# ✅ Correct
 php artisan ptah:config "App\Models\Product" --column="name:text"
 
-# ❌ Errado (pipe sem escapar)
+# ❌ Wrong (pipe not escaped)
 --column="email:text:validation=required|email"
 
-# ✅ Correto (pipe escapado ou entre aspas)
+# ✅ Correct (escaped pipe or single quotes)
 --column="email:text:validation=required\|email"
 --column='email:text:validation=required|email'
 ```
 
-### Problema 6: Modal não salva alterações
+### Problem 6: Modal does not save changes
 
-**Sintomas:**
-- Clica em "Salvar" mas mudanças não persistem
+**Symptoms:**
+- Clicking "Save" but changes do not persist
 
-**Causa:** JavaScript error ou validação falhando
+**Cause:** JavaScript error or validation failing
 
-**Solução:**
+**Solution:**
 
 ```bash
-# 1. Verificar console do navegador (F12)
-# Procurar erros JavaScript
+# 1. Check browser console (F12)
+# Look for JavaScript errors
 
-# 2. Verificar logs do Laravel
+# 2. Check Laravel logs
 tail -f storage/logs/laravel.log
 
-# 3. Verificar permissões da tabela crud_configs
+# 3. Check crud_configs table permissions
 php artisan tinker
 >>> DB::table('crud_configs')->where('model', 'Product')->first()
 ```
 
-### Problema 7: Import não sobrescreve config existente
+### Problem 7: Import does not overwrite existing config
 
-**Sintomas:**
-- Import executado mas config antiga permanece
+**Symptoms:**
+- Import executed but old config remains
 
-**Causa:** Precisa usar `--force`
+**Cause:** Need to use `--force`
 
-**Solução:**
+**Solution:**
 
 ```bash
 php artisan ptah:config "App\Models\Product" --import=config/cruds/product.json --force
@@ -2454,13 +2454,13 @@ php artisan ptah:config "App\Models\Product" --import=config/cruds/product.json 
 
 ---
 
-## Links Relacionados
+## Related Links
 
-- [BaseCrud Documentation](BaseCrud.md) — Documentação completa do componente BaseCrud
-- [Commands Documentation](Commands.md) — Todos os comandos Artisan do Ptah
-- [Migration Guide](MigrationGuide.md) — Guia de migração entre versões
+- [BaseCrud Documentation](BaseCrud.md) — Complete documentation for the BaseCrud component
+- [Commands Documentation](Commands.md) — All Artisan commands for Ptah
+- [Migration Guide](MigrationGuide.md) — Migration guide between versions
 
 ---
 
-**Última atualização:** 4 de março de 2026  
-**Versão:** 2.2.0
+**Last updated:** March 4, 2026  
+**Version:** 2.2.0

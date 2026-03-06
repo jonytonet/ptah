@@ -4,8 +4,8 @@
   <h3>Enterprise Structure. Startup Speed.</h3>
 
   <p>
-    Desenvolva um sistema pequeno ou médio, do zero à produção, em minutos.<br>
-    Com IA, ainda mais rápido — e gastando muito menos tokens.
+    Build a small or medium system from zero to production in minutes.<br>
+    With AI, even faster — and spending far fewer tokens.
   </p>
 </div>
 
@@ -17,31 +17,31 @@
 
 ---
 
-## O que é o Ptah?
+## What is Ptah?
 
-**Ptah** é um pacote Laravel que combina scaffolding SOLID, componentes visuais prontos e um sistema de CRUD dinâmico em uma única instalação. Com um comando você gera toda a estrutura de uma entidade — model, migration, DTO, repositório, service, controller, requests, resource, view Livewire e rotas — pronta para uso desde o primeiro `php artisan serve`.
+**Ptah** is a Laravel package that combines SOLID scaffolding, ready-made visual components and a dynamic CRUD system in a single installation. With one command you generate the entire structure of an entity — model, migration, DTO, repository, service, controller, requests, resource, Livewire view and routes — ready to use from the very first `php artisan serve`.
 
-| Pilar | O que entrega |
+| Pillar | What it delivers |
 |---|---|
-| **Ptah Forge** | 26 componentes Blade (`<x-forge-*>`) com Tailwind v4 + Alpine.js — layout, sidebar, navbar, modal, tabela, formulários e muito mais |
-| **ptah:forge** | Gerador de scaffolding SOLID: uma entidade inteira em segundos, com arquitetura em camadas e stubs customizáveis |
-| **BaseCrud** | Tela Livewire completa gerada automaticamente — filtros, modal create/edit, soft delete, exportação e preferências por usuário, tudo configurável via banco de dados |
+| **Ptah Forge** | 26 Blade components (`<x-forge-*>`) with Tailwind v4 + Alpine.js — layout, sidebar, navbar, modal, table, forms and much more |
+| **ptah:forge** | SOLID scaffolding generator: an entire entity in seconds, with layered architecture and customisable stubs |
+| **BaseCrud** | Fully generated Livewire screen — filters, create/edit modal, soft delete, export and per-user preferences, all configurable via the database |
 
 ---
 
-## ⚡ Do zero à produção em minutos
+## ⚡ From zero to production in minutes
 
-> Com **ptah + IA** (GitHub Copilot, Claude, Cursor) você gasta uma fração dos tokens necessários para construir o mesmo sistema do zero — porque o pacote já entrega a estrutura, e a IA só precisa preencher as regras de negócio específicas.
+> With **ptah + AI** (GitHub Copilot, Claude, Cursor) you spend a fraction of the tokens needed to build the same system from scratch — because the package already delivers the structure, and AI only needs to fill in the specific business logic.
 
-### Exemplo: Helpdesk de TI — sistema completo em ~3 minutos
+### Example: IT Helpdesk — complete system in ~3 minutes
 
 ```bash
-# 1. Projeto Laravel + ptah instalado (ptah:install já rodou)
+# 1. Laravel project + ptah installed (ptah:install already ran)
 php artisan ptah:module auth
 php artisan ptah:module permissions
 php artisan ptah:module menu
 
-# 2. Gerar as 3 entidades do sistema
+# 2. Generate the 3 system entities
 php artisan ptah:forge Category \
   --fields="name:string,color:string:nullable,description:text:nullable"
 
@@ -51,118 +51,118 @@ php artisan ptah:forge Agent \
 php artisan ptah:forge Ticket \
   --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
 
-# 3. Rodar migrations e servir
+# 3. Run migrations and serve
 php artisan migrate
 php artisan serve
 ```
 
-**O que você tem ao final:**
+**What you get at the end:**
 
-- ✅ Login com proteção de sessão e 2FA
-- ✅ CRUD completo de Categorias, Agentes e Chamados — tabela, filtros, modal, soft delete, exportação
-- ✅ Controle de acesso por role (MASTER + roles customizáveis)
-- ✅ Menu lateral dinâmico
-- ✅ Arquitetura SOLID: Controller → Service → Repository → DTO
-- ✅ Validações, Resources e rotas RESTful geradas
-- ✅ 14 artefatos criados por entidade, zero boilerplate manual
+- ✅ Login with session protection and 2FA
+- ✅ Full CRUD for Categories, Agents and Tickets — table, filters, modal, soft delete, export
+- ✅ Role-based access control (MASTER + custom roles)
+- ✅ Dynamic sidebar menu
+- ✅ SOLID architecture: Controller → Service → Repository → DTO
+- ✅ Generated validations, Resources and RESTful routes
+- ✅ 14 artefacts created per entity, zero manual boilerplate
 
-**Com IA:** em vez de a IA gerar centenas de arquivos — consumindo milhares de tokens e com alta chance de inconsistência arquitetural —, ela executa os comandos acima e preenche apenas a lógica específica do negócio: escalation de chamados, notificações por prioridade, integrações externas. O ptah resolve a estrutura; a IA resolve o diferencial.
+**With AI:** instead of generating hundreds of files — consuming thousands of tokens with a high risk of architectural inconsistency —, it runs the commands above and fills in only the specific business logic: ticket escalation, priority notifications, external integrations. Ptah handles the structure; AI handles the differentiator.
 
 ---
 
-## 🚀 Instalação
+## 🚀 Installation
 
 ```bash
-# 1. Instalar o pacote
+# 1. Install the package
 composer require jonytonet/ptah
 
-# 2. Rodar o instalador
+# 2. Run the installer
 php artisan ptah:install
 
-# 3. (Opcional) Instalar Laravel Boost para integração com agentes de IA
+# 3. (Optional) Install Laravel Boost for AI agent integration
 php artisan ptah:install --boost
 ```
 
-> Consulte o **[guia de instalação completo →](docs/InstallationGuide.md)** para configuração do banco de dados, módulos opcionais e solução de problemas.
+> See the **[full installation guide →](docs/InstallationGuide.md)** for database setup, optional modules and troubleshooting.
 
 ---
 
-## 🧩 Módulos opcionais
+## 🧩 Optional modules
 
-Ative apenas o que precisar. Cada módulo atualiza o `.env` e roda suas próprias migrations.
+Enable only what you need. Each module updates `.env` and runs its own migrations.
 
-| Módulo | Comando | O que ativa |
+| Module | Command | What it enables |
 |---|---|---|
-| **auth** | `php artisan ptah:module auth` | Login, logout, recuperação de senha, 2FA (TOTP + e-mail), perfil, sessões ativas |
-| **menu** | `php artisan ptah:module menu` | Menu lateral dinâmico via banco de dados com cache, grupos accordion |
-| **company** | `php artisan ptah:module company` | Gestão de empresas e departamentos, company switcher, suporte multi-tenant |
-| **permissions** | `php artisan ptah:module permissions` | RBAC completo — roles, páginas, objetos, middleware, Blade directives, auditoria |
-| **api** | `php artisan ptah:module api` | REST API com Swagger/OpenAPI via `darkaonline/l5-swagger`, `BaseResponse` padronizada |
+| **auth** | `php artisan ptah:module auth` | Login, logout, password recovery, 2FA (TOTP + email), profile, active sessions |
+| **menu** | `php artisan ptah:module menu` | Dynamic sidebar menu via database with cache, accordion groups |
+| **company** | `php artisan ptah:module company` | Company and department management, company switcher, multi-tenant support |
+| **permissions** | `php artisan ptah:module permissions` | Full RBAC — roles, pages, objects, middleware, Blade directives, audit log |
+| **api** | `php artisan ptah:module api` | REST API with Swagger/OpenAPI via `darkaonline/l5-swagger`, standardised `BaseResponse` |
 
 ```bash
-# Ver estado atual de todos os módulos
+# Check current state of all modules
 php artisan ptah:module --list
 ```
 
 ---
 
-## 🤖 Ptah + IA
+## 🤖 Ptah + AI
 
-Ptah foi projetado para trabalhar com agentes de IA. Ao instalar com `--boost`, o pacote registra automaticamente suas guidelines nos agentes configurados (GitHub Copilot, Claude, Cursor, Gemini, etc.), dando ao agente conhecimento profundo sobre convenções, comandos e arquitetura do ptah.
+Ptah is designed to work with AI agents. When installed with `--boost`, the package automatically registers its guidelines in the configured agents (GitHub Copilot, Claude, Cursor, Gemini, etc.), giving the agent deep knowledge of Ptah conventions, commands and architecture.
 
-**Por que isso importa:**
+**Why this matters:**
 
-- **Sem ptah:** a IA precisa gerar model + migration + repository + service + controller + requests + resource + view + rotas para cada entidade — dezenas de arquivos, milhares de tokens, alta chance de inconsistência
-- **Com ptah:** a IA executa `ptah:forge MinhaEntidade --fields="..."` e o sistema está pronto — poucos tokens, arquitetura garantida pelo pacote
+- **Without Ptah:** AI needs to generate model + migration + repository + service + controller + requests + resource + view + routes for each entity — dozens of files, thousands of tokens, high risk of inconsistency
+- **With Ptah:** AI runs `ptah:forge MyEntity --fields="..."` and the system is ready — fewer tokens, architecture guaranteed by the package
 
-> Para prompts, templates e fluxo de trabalho com IA, veja o **[Guia de IA →](docs/AI_Guide.md)**
+> For prompts, templates and AI workflow, see the **[AI Guide →](docs/AI_Guide.md)**
 
 ---
 
-## 📟 Comandos
+## 📟 Commands
 
-| Comando | Descrição |
+| Command | Description |
 |---|---|
-| `php artisan ptah:install` | Instala o pacote (config, stubs, migrations, dados padrão). Flags: `--demo`, `--boost`, `--force`, `--skip-npm` |
-| `php artisan ptah:forge {Entity}` | **Gera a estrutura completa de uma entidade** ⭐ |
-| `php artisan ptah:module {módulo}` | Ativa módulo opcional |
-| `php artisan ptah:module --list` | Lista módulos e estados |
-| `php artisan ptah:docs {Entity}` | Gera anotações Swagger/OpenAPI |
+| `php artisan ptah:install` | Installs the package (config, stubs, migrations, default data). Flags: `--demo`, `--boost`, `--force`, `--skip-npm` |
+| `php artisan ptah:forge {Entity}` | **Generates the complete structure for an entity** ⭐ |
+| `php artisan ptah:module {module}` | Enables an optional module |
+| `php artisan ptah:module --list` | Lists modules and their states |
+| `php artisan ptah:docs {Entity}` | Generates Swagger/OpenAPI annotations |
 
 ---
 
-## 📚 Documentação
+## 📚 Documentation
 
-| Documento | Conteúdo |
+| Document | Contents |
 |---|---|
-| **[Installation Guide](docs/InstallationGuide.md)** | Passo a passo completo com output real do terminal — Laravel 11/12, todos os módulos e Boost |
-| **[BaseCrud](docs/BaseCrud.md)** | Referência completa — schema de colunas, tipos, filtros, renderers, exportação, preferências e configuração via UI |
-| **[Modules](docs/Modules.md)** | Documentação detalhada dos módulos Auth, Menu, Company, Permissions e API |
-| **[Company](docs/Company.md)** | Módulo Company — empresas, departamentos, company switcher e multi-empresa |
-| **[Permissions](docs/Permissions.md)** | Módulo Permissions — RBAC, roles, middleware, helpers, Blade directives e auditoria |
-| **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — todos os métodos, assinaturas, exemplos e parâmetros de query da API REST |
-| **[AI Guide](docs/AI_Guide.md)** | Integração com agentes de IA — prompts, templates e workflow com Copilot, Claude e Cursor |
+| **[Installation Guide](docs/InstallationGuide.md)** | Step-by-step guide with real terminal output — Laravel 11/12, all modules and Boost |
+| **[BaseCrud](docs/BaseCrud.md)** | Complete reference — column schema, types, filters, renderers, export, preferences and UI configuration |
+| **[Modules](docs/Modules.md)** | Detailed documentation for Auth, Menu, Company, Permissions and API modules |
+| **[Company](docs/Company.md)** | Company module — companies, departments, company switcher and multi-company |
+| **[Permissions](docs/Permissions.md)** | Permissions module — RBAC, roles, middleware, helpers, Blade directives and audit log |
+| **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |
+| **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
 
 ---
 
-## 📋 Requisitos
+## 📋 Requirements
 
-| Requisito | Versão mínima |
+| Requirement | Minimum version |
 |---|---|
 | PHP | 8.2 |
-| Laravel | 11 ou 12 |
+| Laravel | 11 or 12 |
 | Node.js + npm | 18+ |
-| Livewire | v4 (incluso como dependência) |
+| Livewire | v4 (included as dependency) |
 
 ---
 
-## 📄 Licença
+## 📄 License
 
-Open source sob a [Licença MIT](LICENSE).
+Open source under the [MIT License](LICENSE).
 
 ---
 
 <div align="center">
-  <p>Feito por <a href="https://github.com/jonytonet">jonytonet</a></p>
+  <p>Made by <a href="https://github.com/jonytonet">jonytonet</a></p>
   <p><em>Ptah — Enterprise Structure. Startup Speed.</em></p>
 </div>

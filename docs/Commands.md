@@ -1,10 +1,10 @@
-﻿# Comandos do Ptah
+﻿# Ptah Commands
 
-Este documento lista todos os comandos Artisan disponíveis no pacote Ptah.
+This document lists all Artisan commands available in the Ptah package.
 
 ---
 
-## Índice
+## Table of Contents
 
 1. [ptah:install](#ptahinstall)
 2. [ptah:forge](#ptahforge)
@@ -17,9 +17,9 @@ Este documento lista todos os comandos Artisan disponíveis no pacote Ptah.
 
 ## ptah:install
 
-**Descrição:** Instala o pacote Ptah no projeto Laravel.
+**Description:** Installs the Ptah package in the Laravel project.
 
-**Uso:**
+**Usage:**
 ```bash
 php artisan ptah:install
 php artisan ptah:install --force
@@ -28,42 +28,42 @@ php artisan ptah:install --demo
 php artisan ptah:install --boost
 ```
 
-**Opções:**
-- ``--force`` — Sobrescreve arquivos existentes sem perguntar
-- ``--skip-npm`` — Não executa ``npm install`` e ``npm run build``
-- ``--demo`` — Instala dados de demonstração (companies, departments, roles, menu)
-- ``--boost`` — Instala Laravel Boost para integração com agentes de IA (Copilot, Claude, Cursor)
+**Options:**
+- ``--force`` — Overwrites existing files without asking
+- ``--skip-npm`` — Does not run ``npm install`` and ``npm run build``
+- ``--demo`` — Installs demo data (companies, departments, roles, menu)
+- ``--boost`` — Installs Laravel Boost for AI agent integration (Copilot, Claude, Cursor)
 
-**O que faz:**
+**What it does:**
 
-1. **Publica configurações** → ``config/ptah.php``
-2. **Publica stubs** → ``stubs/ptah/`` (para customização)
-3. **Publica migrations** → ``database/migrations/``
-4. **Publica traduções** → ``lang/vendor/ptah/``
-5. **Configura Tailwind CSS** → Injeta design tokens no ``resources/css/app.css``
-6. **Executa migrations** → Cria tabelas ``ptah_*``
-7. **Cria symlink de storage** → ``php artisan storage:link``
-8. **Seed admin padrão** → Cria empresa e usuário admin (se migrations executadas)
-9. **Seed de demo** → Cria dados de exemplo (se ``--demo``)
-10. **Instala Boost** → ``composer require laravel/boost --dev`` + ``boost:install`` (se ``--boost``)
-11. **Instala dependências Node** → ``npm install && npm run build`` (exceto se ``--skip-npm``)
+1. **Publishes configurations** → ``config/ptah.php``
+2. **Publishes stubs** → ``stubs/ptah/`` (for customization)
+3. **Publishes migrations** → ``database/migrations/``
+4. **Publishes translations** → ``lang/vendor/ptah/``
+5. **Configures Tailwind CSS** → Injects design tokens into ``resources/css/app.css``
+6. **Runs migrations** → Creates ``ptah_*`` tables
+7. **Creates storage symlink** → ``php artisan storage:link``
+8. **Default admin seed** → Creates company and admin user (if migrations ran)
+9. **Demo seed** → Creates sample data (if ``--demo``)
+10. **Installs Boost** → ``composer require laravel/boost --dev`` + ``boost:install`` (if ``--boost``)
+11. **Installs Node dependencies** → ``npm install && npm run build`` (except with ``--skip-npm``)
 
-**Credenciais padrão:** (configuráveis em ``config/ptah.php``)
+**Default credentials:** (configurable in ``config/ptah.php``)
 - E-mail: ``admin@admin.com``
-- Senha: ``admin@123``
+- Password: ``admin@123``
 
-**Próximos passos após instalação:**
+**Next steps after installation:**
 
-1. Revisar ``config/ptah.php``
-2. Adicionar trait ``HasUserPreferences`` no User model
-3. Habilitar módulos necessários:
+1. Review ``config/ptah.php``
+2. Add the ``HasUserPreferences`` trait to the User model
+3. Enable required modules:
    - ``php artisan ptah:module auth`` — Login, 2FA, profile
-   - ``php artisan ptah:module menu`` — Sidebar dinâmico
-   - ``php artisan ptah:module company`` — Multi-empresa
+   - ``php artisan ptah:module menu`` — Dynamic sidebar
+   - ``php artisan ptah:module company`` — Multi-company
    - ``php artisan ptah:module permissions`` — RBAC
-4. Fazer login com credenciais padrão
-5. Scaffoldar entidades com ``php artisan ptah:forge {Entity}``
-6. *(Opcional)* Publicar ambiente Docker:
+4. Log in with default credentials
+5. Scaffold entities with ``php artisan ptah:forge {Entity}``
+6. *(Optional)* Publish Docker environment:
    ```bash
    php artisan vendor:publish --tag=ptah-docker
    ```
@@ -72,318 +72,318 @@ php artisan ptah:install --boost
 
 ## ptah:forge
 
-**Descrição:** Gera estrutura completa para uma entidade (scaffolding SOLID).
+**Description:** Generates complete structure for an entity (SOLID scaffolding).
 
-**Uso:**
+**Usage:**
 ```bash
-# Básico
+# Basic
 php artisan ptah:forge Product
 
 # Com subdirectory (Product/ProductStock)
 php artisan ptah:forge Product/ProductStock
 
-# Especificar tabela customizada
+# Specify custom table
 php artisan ptah:forge Product --table=custom_products
 
-# Definir campos manualmente
+# Define fields manually
 php artisan ptah:forge Product --fields="name:string,price:decimal(10,2):nullable,status:enum(active|inactive)"
 
-# Ler campos do banco de dados
+# Read fields from database
 php artisan ptah:forge Product --db
 
-# Gerar Web + API juntos
+# Generate Web + API together
 php artisan ptah:forge Product --api
 
-# Gerar APENAS API (sem views web)
+# Generate ONLY API (without web views)
 php artisan ptah:forge Product --api-only
 
-# Sem soft deletes
+# Without soft deletes
 php artisan ptah:forge Product --no-soft-deletes
 
-# Sobrescrever arquivos existentes
+# Overwrite existing files
 php artisan ptah:forge Product --force
 ```
 
-**Opções:**
-- ``--table=`` — Nome da tabela no banco (padrão: plural snake_case da entidade)
-- ``--fields=`` — Definição de campos: ``"campo:tipo:modificadores"``
-- ``--db`` — Ler campos diretamente do banco (via INFORMATION_SCHEMA)
-- ``--api`` — Gera web + API juntos (Controller API, Requests API, Swagger, rotas v1)
-- ``--api-only`` — Gera APENAS API, sem views web (Livewire não criado)
-- ``--no-soft-deletes`` — Não adiciona SoftDeletes ao model
-- ``--force`` — Sobrescreve arquivos existentes sem confirmação
+**Options:**
+- ``--table=`` — Table name in the database (default: plural snake_case of entity)
+- ``--fields=`` — Field definition: ``"field:type:modifiers"``
+- ``--db`` — Read fields directly from the database (via INFORMATION_SCHEMA)
+- ``--api`` — Generates web + API together (API Controller, API Requests, Swagger, v1 routes)
+- ``--api-only`` — Generates ONLY API, without web views (Livewire not created)
+- ``--no-soft-deletes`` — Does not add SoftDeletes to the model
+- ``--force`` — Overwrites existing files without confirmation
 
 **Arquivos gerados:**
 
-### Modo Web (padrão)
-| Tipo | Caminho | Descrição |
+### Web Mode (default)
+| Type | Path | Description |
 |------|---------|-----------|
-| Model | ``app/Models/{Entity}.php`` | Eloquent model com SoftDeletes |
-| Migration | ``database/migrations/{timestamp}_create_{entities}_table.php`` | Schema da tabela |
+| Model | ``app/Models/{Entity}.php`` | Eloquent model with SoftDeletes |
+| Migration | ``database/migrations/{timestamp}_create_{entities}_table.php`` | Table schema |
 | DTO | ``app/DTOs/{Entity}DTO.php`` | Data Transfer Object |
-| Repository Interface | ``app/Repositories/Contracts/{Entity}RepositoryInterface.php`` | Contrato do repositório |
-| Repository | ``app/Repositories/{Entity}Repository.php`` | Implementação do repositório |
-| Service | ``app/Services/{Entity}Service.php`` | Lógica de negócio |
-| Controller | ``app/Http/Controllers/{Entity}Controller.php`` | Controller web (BaseCrud Livewire) |
-| Request Store | ``app/Http/Requests/Store{Entity}Request.php`` | Validação de criação |
-| Request Update | ``app/Http/Requests/Update{Entity}Request.php`` | Validação de atualização |
-| Resource | ``app/Http/Resources/{Entity}Resource.php`` | API Resource (usado também no web) |
-| View | ``resources/views/{entity}/index.blade.php`` | View index com BaseCrud |
-| Route | ``routes/web.php`` | Rota web para o CRUD |
-| CrudConfig | ``crud_configs`` table | Configuração JSON do BaseCrud |
-| Binding | ``app/Providers/AppServiceProvider.php`` | Repository binding injetado |
+| Repository Interface | ``app/Repositories/Contracts/{Entity}RepositoryInterface.php`` | Repository contract |
+| Repository | ``app/Repositories/{Entity}Repository.php`` | Repository implementation |
+| Service | ``app/Services/{Entity}Service.php`` | Business logic |
+| Controller | ``app/Http/Controllers/{Entity}Controller.php`` | Web controller (BaseCrud Livewire) |
+| Request Store | ``app/Http/Requests/Store{Entity}Request.php`` | Create validation |
+| Request Update | ``app/Http/Requests/Update{Entity}Request.php`` | Update validation |
+| Resource | ``app/Http/Resources/{Entity}Resource.php`` | API Resource (also used in web) |
+| View | ``resources/views/{entity}/index.blade.php`` | Index view with BaseCrud |
+| Route | ``routes/web.php`` | Web route for CRUD |
+| CrudConfig | ``crud_configs`` table | BaseCrud JSON configuration |
+| Binding | ``app/Providers/AppServiceProvider.php`` | Injected repository binding |
 
-### Modo API (--api ou --api-only)
-| Tipo | Caminho | Descrição |
+### API Mode (--api or --api-only)
+| Type | Path | Description |
 |------|---------|-----------|
-| Controller API | ``app/Http/Controllers/API/{Entity}Controller.php`` | Controller API com Swagger annotations |
-| Request Create API | ``app/Http/Requests/Create{Entity}Request.php`` | Validação API de criação |
-| Request Update API | ``app/Http/Requests/Update{Entity}Request.php`` | Validação API de atualização |
-| Route API | ``routes/api.php`` | Rotas v1 API |
+| Controller API | ``app/Http/Controllers/API/{Entity}Controller.php`` | API Controller with Swagger annotations |
+| Request Create API | ``app/Http/Requests/Create{Entity}Request.php`` | API create validation |
+| Request Update API | ``app/Http/Requests/Update{Entity}Request.php`` | API update validation |
+| Route API | ``routes/api.php`` | API v1 routes |
 
-> **Nota:** Com ``--api``, gera **web + API**. Com ``--api-only``, gera **apenas API** (sem views, sem Livewire).
+> **Note:** With ``--api``, generates **web + API**. With ``--api-only``, generates **only API** (no views, no Livewire).
 
-**Sintaxe de fields:**
+**Fields syntax:**
 
 ```bash
 --fields="campo1:tipo:modificador1:modificador2,campo2:tipo"
 ```
 
-**Tipos disponíveis:**
+**Available types:**
 - ``string``, ``text``, ``integer``, ``bigInteger``, ``unsignedBigInteger``
 - ``decimal(10,2)``, ``float``, ``double``
 - ``boolean``, ``date``, ``datetime``, ``timestamp``
 - ``enum(value1|value2|value3)``
 - ``json``, ``jsonb``
 
-**Modificadores:**
-- ``nullable`` — Permite NULL
-- ``unique`` — Índice único
-- ``index`` — Índice simples
-- ``default(valor)`` — Valor padrão
+**Modifiers:**
+- ``nullable`` — Allows NULL
+- ``unique`` — Unique index
+- ``index`` — Simple index
+- ``default(value)`` — Default value
 
-**Exemplos:**
+**Examples:**
 
 ```bash
-# E-commerce básico
+# Basic e-commerce
 php artisan ptah:forge Product --fields="name:string,description:text:nullable,price:decimal(10,2),stock:integer:default(0),is_active:boolean:default(true)"
 
 # Foreign key
 php artisan ptah:forge ProductStock --fields="product_id:unsignedBigInteger:index,quantity:decimal(12,3),location:string:nullable"
 
-# Enum com nullable
+# Enum with nullable
 php artisan ptah:forge Order --fields="status:enum(pending|processing|shipped|delivered):default(pending),total:decimal(10,2)"
 
-# Ler do banco existente
+# Read from existing database
 php artisan ptah:forge Customer --db --table=customers
 
-# Gerar API completa sem web
+# Generate complete API without web
 php artisan ptah:forge Product --api-only --fields="name:string,price:decimal(10,2)"
 ```
 
-**Próximos passos após scaffold:**
+**Next steps after scaffold:**
 
-1. Executar migration: ``php artisan migrate``
-2. Ajustar configuração JSON do CRUD na tabela ``crud_configs``
-3. Implementar regras de negócio no ``{Entity}Service.php``
-4. Adicionar validações customizadas nos Requests
-5. Escrever testes em ``tests/Feature/{Entity}Test.php``
+1. Run migration: ``php artisan migrate``
+2. Adjust the CRUD JSON configuration in the ``crud_configs`` table
+3. Implement business rules in ``{Entity}Service.php``
+4. Add custom validations in Requests
+5. Write tests in ``tests/Feature/{Entity}Test.php``
 
 ---
 
 ## ptah:module
 
-**Descrição:** Habilita módulos opcionais do Ptah.
+**Description:** Enables optional Ptah modules.
 
-**Uso:**
+**Usage:**
 ```bash
-# Interativo (menu de escolha)
+# Interactive (selection menu)
 php artisan ptah:module
 
-# Direto
+# Direct
 php artisan ptah:module auth
 php artisan ptah:module menu
 php artisan ptah:module company
 php artisan ptah:module permissions
 php artisan ptah:module api
 
-# Listar módulos disponíveis e estados
+# List available modules and states
 php artisan ptah:module --list
 
-# Forçar sobrescrita
+# Force overwrite
 php artisan ptah:module auth --force
 ```
 
-**Opções:**
-- ``--list`` — Lista módulos disponíveis e seus estados (habilitado/desabilitado)
-- ``--force`` — Sobrescreve arquivos existentes ao publicar
+**Options:**
+- ``--list`` — Lists available modules and their states (enabled/disabled)
+- ``--force`` — Overwrites existing files when publishing
 
-**Módulos disponíveis:**
+**Available modules:**
 
 ### 1. auth
-**O que faz:**
-- Publica migration de 2FA
-- Executa migrations
-- Ativa autenticação com login, recuperação de senha, 2FA (TOTP e E-mail)
+**What it does:**
+- Publishes the 2FA migration
+- Runs migrations
+- Activates authentication with login, password recovery, 2FA (TOTP and Email)
 
 **ENV:**
 ```env
 PTAH_MODULE_AUTH=true
 ```
 
-**Rotas criadas:**
+**Created routes:**
 - ``/auth/login`` — Login
-- ``/auth/forgot-password`` — Recuperação de senha
-- ``/auth/reset-password/{token}`` — Redefinir senha
-- ``/auth/two-factor-challenge`` — Verificação 2FA
-- ``/auth/profile`` — Perfil do usuário
+- ``/auth/forgot-password`` — Password recovery
+- ``/auth/reset-password/{token}`` — Reset password
+- ``/auth/two-factor-challenge`` — 2FA verification
+- ``/auth/profile`` — User profile
 
-**Arquivos publicados:**
+**Published files:**
 - ``database/migrations/*_add_two_factor_fields_to_users_table.php``
 
 ---
 
 ### 2. menu
-**O que faz:**
-- Publica migration de menus
-- Executa migrations
-- Ativa sidebar dinâmico (menu configurável via banco)
+**What it does:**
+- Publishes the menus migration
+- Runs migrations
+- Activates dynamic sidebar (menu configurable via database)
 
 **ENV:**
 ```env
 PTAH_MODULE_MENU=true
 ```
 
-**Tabela criada:**
-- ``ptah_menu_items`` — Itens do menu hierárquico
+**Created table:**
+- ``ptah_menu_items`` — Hierarchical menu items
 
-**Componentes:**
-- Livewire: ``MenuList`` — Gerenciamento de itens do menu
-- Blade component: ``<x-ptah::menu />`` — Renderiza o menu na sidebar
+**Components:**
+- Livewire: ``MenuList`` — Menu item management
+- Blade component: ``<x-ptah::menu />`` — Renders the menu in the sidebar
 
 ---
 
 ### 3. company
-**O que faz:**
-- Publica migrations de empresas
-- Executa migrations
-- Seeders empresa padrão
-- Ativa sistema multi-empresa (multi-tenancy)
+**What it does:**
+- Publishes company migrations
+- Runs migrations
+- Default company seeders
+- Activates multi-company system (multi-tenancy)
 
 **ENV:**
 ```env
 PTAH_MODULE_COMPANY=true
 ```
 
-**Tabelas criadas:**
-- ``ptah_companies`` — Empresas
-- ``ptah_company_user`` — Pivot usuário-empresa
+**Created tables:**
+- ``ptah_companies`` — Companies
+- ``ptah_company_user`` — User-company pivot
 
-**Componentes:**
-- Livewire: ``CompanyList`` — Gerenciamento de empresas
-- Livewire: ``CompanySwitcher`` — Troca de empresa ativa (dropdown no header)
+**Components:**
+- Livewire: ``CompanyList`` — Company management
+- Livewire: ``CompanySwitcher`` — Active company switcher (header dropdown)
 
-**Arquivos publicados:**
+**Published files:**
 - ``database/migrations/*_create_ptah_companies_table.php``
 - ``database/migrations/*_create_ptah_company_user_table.php``
 
 ---
 
 ### 4. permissions
-**O que faz:**
-- Publica migrations de permissões
-- Executa migrations
-- Seed admin padrão com role MASTER
-- Ativa RBAC (Role-Based Access Control)
+**What it does:**
+- Publishes permissions migrations
+- Runs migrations
+- Default admin seed with MASTER role
+- Activates RBAC (Role-Based Access Control)
 
-**Dependência:** Requer módulo ``company`` habilitado (ativa automaticamente se não estiver)
+**Dependency:** Requires the ``company`` module enabled (activates automatically if not)
 
 **ENV:**
 ```env
 PTAH_MODULE_PERMISSIONS=true
 ```
 
-**Tabelas criadas:**
-- ``ptah_roles`` — Perfis de acesso
-- ``ptah_role_user`` — Pivot usuário-role
-- ``ptah_departments`` — Departamentos
-- ``ptah_pages`` — Páginas/objetos do sistema
-- ``ptah_page_role`` — Permissões (CRUD por página e role)
-- ``ptah_user_permissions`` — Permissões específicas de usuário
-- ``ptah_audit_logs`` — Logs de auditoria
+**Created tables:**
+- ``ptah_roles`` — Access profiles
+- ``ptah_role_user`` — User-role pivot
+- ``ptah_departments`` — Departments
+- ``ptah_pages`` — System pages/objects
+- ``ptah_page_role`` — Permissions (CRUD per page and role)
+- ``ptah_user_permissions`` — User-specific permissions
+- ``ptah_audit_logs`` — Audit logs
 
-**Credenciais admin:**
-- E-mail: ``admin@admin.com`` (configurável em ``config/ptah.php``)
-- Senha: ``admin@123`` (configurável em ``config/ptah.php``)
-- Role: MASTER (todas as permissões)
+**Admin credentials:**
+- E-mail: ``admin@admin.com`` (configurable in ``config/ptah.php``)
+- Password: ``admin@123`` (configurable in ``config/ptah.php``)
+- Role: MASTER (all permissions)
 
-**Componentes:**
-- Livewire: ``RoleList`` — Gerenciamento de roles
-- Livewire: ``DepartmentList`` — Gerenciamento de departamentos
-- Livewire: ``PageList`` — Gerenciamento de páginas
-- Livewire: ``UserPermissionList`` — Permissões por usuário
-- Livewire: ``AuditList`` — Logs de auditoria
-- Livewire: ``PermissionGuide`` — Guia interativo de permissões
+**Components:**
+- Livewire: ``RoleList`` — Role management
+- Livewire: ``DepartmentList`` — Department management
+- Livewire: ``PageList`` — Page management
+- Livewire: ``UserPermissionList`` — User permissions
+- Livewire: ``AuditList`` — Audit logs
+- Livewire: ``PermissionGuide`` — Interactive permissions guide
 
 **Helpers:**
-- ``ptah_can($page, $action, $user, $companyId)`` — Verifica permissão
-- ``ptah_is_master($user)`` — Verifica se é MASTER
+- ``ptah_can($page, $action, $user, $companyId)`` — Checks permission
+- ``ptah_is_master($user)`` — Checks if user is MASTER
 - ``@ptahCan('sales', 'create')`` — Blade directive
 - ``@ptahMaster`` — Blade directive
 
-**Arquivos publicados:**
+**Published files:**
 - ``database/migrations/*_create_ptah_permissions_tables.php``
 
 ---
 
 ### 5. api
-**O que faz:**
-- Instala ``darkaonline/l5-swagger`` via Composer
-- Publica classes base da API
-- Publica configuração do L5-Swagger
-- Configura Swagger UI em ``/api/documentation``
+**What it does:**
+- Installs ``darkaonline/l5-swagger`` via Composer
+- Publishes API base classes
+- Publishes the L5-Swagger configuration
+- Configures Swagger UI at ``/api/documentation``
 
 **ENV:**
 ```env
 PTAH_MODULE_API=true
 ```
 
-**Arquivos publicados:**
-- ``app/Responses/BaseResponse.php`` — Resposta padronizada da API
-- ``app/Http/Controllers/API/BaseApiController.php`` — Controller base com helpers
-- ``app/Http/Controllers/API/SwaggerInfo.php`` — Anotações ``@OA\Info`` do Swagger
-- ``config/l5-swagger.php`` — Configuração do L5-Swagger
+**Published files:**
+- ``app/Responses/BaseResponse.php`` — Standardized API response
+- ``app/Http/Controllers/API/BaseApiController.php`` — Base controller with helpers
+- ``app/Http/Controllers/API/SwaggerInfo.php`` — Swagger ``@OA\Info`` annotations
+- ``config/l5-swagger.php`` — L5-Swagger configuration
 
-**Rotas criadas:**
-- ``GET /api/documentation`` — Swagger UI interativo
-- ``GET /api/documentation.json`` — Especificação OpenAPI
+**Created routes:**
+- ``GET /api/documentation`` — Interactive Swagger UI
+- ``GET /api/documentation.json`` — OpenAPI specification
 
-**Uso após instalação:**
+**Usage after installation:**
 
 ```bash
-# Gerar documentação Swagger
+# Generate Swagger documentation
 php artisan l5-swagger:generate
 
-# Acessar UI
+# Access UI
 http://localhost/api/documentation
 ```
 
 **Next steps:**
-1. Visite ``/api/documentation`` para ver a UI do Swagger
-2. Regenere docs após criar APIs: ``php artisan l5-swagger:generate``
-3. Ajuste scan path em ``config/l5-swagger.php`` se necessário
+1. Visit ``/api/documentation`` to see the Swagger UI
+2. Regenerate docs after creating APIs: ``php artisan l5-swagger:generate``
+3. Adjust scan path in ``config/l5-swagger.php`` if needed
 
 ---
 
 ## ptah:config
 
-**Descrição:** Configura CRUD settings de uma model via linha de comando (alternativa ao modal visual).
+**Description:** Configures CRUD settings for a model via command line (alternative to the visual modal).
 
-> 📘 **Documentação Completa:** Para guia detalhado de configuração (modal visual + CLI), exemplos práticos, comparações e troubleshooting, consulte [**Configuration.md**](Configuration.md).
+> 📘 **Full Documentation:** For a detailed configuration guide (visual modal + CLI), practical examples, comparisons and troubleshooting, see [**Configuration.md**](Configuration.md).
 
-**Uso:**
+**Usage:**
 ```bash
-# Interactive mode (wizard com perguntas)
+# Interactive mode (wizard with questions)
 php artisan ptah:config "App\Models\Product"
 
 # Declarative mode (inline syntax)
@@ -433,7 +433,7 @@ php artisan ptah:config "App\Models\Product" \
   --force
 ```
 
-**Opções:**
+**Options:**
 - ``{model}`` — Full model class name (e.g., ``App\Models\Product``)
 - ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
 - ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
@@ -644,72 +644,72 @@ Cache is automatically cleared after saving.
 
 ## vendor:publish (tags ptah)
 
-O Ptah expõe vários grupos de arquivos publicáveis via ``vendor:publish``. Cada tag é independente e opcional — publique apenas o que precisar.
+Ptah exposes several groups of publishable files via ``vendor:publish``. Each tag is independent and optional — publish only what you need.
 
-| Tag | O que publica | Destino |
+| Tag | What it publishes | Destination |
 |-----|--------------|--------|
-| ``ptah-config`` | Arquivo de configuração | ``config/ptah.php`` |
-| ``ptah-stubs`` | Stubs customizáveis de scaffold | ``stubs/ptah/`` |
-| ``ptah-migrations`` | Todas as migrations do pacote | ``database/migrations/`` |
-| ``ptah-lang`` | Traduções (pt_BR e en) | ``lang/vendor/ptah/`` |
-| ``ptah-views`` | Views Blade (para personalização) | ``resources/views/vendor/ptah/`` |
-| ``ptah-assets`` | CSS do Forge | ``resources/css/vendor/ptah/`` |
+| ``ptah-config`` | Configuration file | ``config/ptah.php`` |
+| ``ptah-stubs`` | Customizable scaffold stubs | ``stubs/ptah/`` |
+| ``ptah-migrations`` | All package migrations | ``database/migrations/`` |
+| ``ptah-lang`` | Translations (pt_BR and en) | ``lang/vendor/ptah/`` |
+| ``ptah-views`` | Blade views (for customization) | ``resources/views/vendor/ptah/`` |
+| ``ptah-assets`` | Forge CSS | ``resources/css/vendor/ptah/`` |
 | ``ptah-menu-registry`` | MenuRegistry.php (auto-menu) | ``database/seeders/MenuRegistry.php`` |
 | ``ptah-api`` | BaseResponse, BaseApiController, SwaggerInfo | ``app/Responses/``, ``app/Http/Controllers/API/`` |
-| ``ptah-auth`` | Migration de 2FA | ``database/migrations/`` |
-| ``ptah-menu`` | Migration de menus | ``database/migrations/`` |
-| ``ptah-company`` | Migrations de empresas | ``database/migrations/`` |
-| ``ptah-permissions`` | Migrations de permissões | ``database/migrations/`` |
-| ``ptah-docker`` | Ambiente Docker completo | raiz do projeto |
+| ``ptah-auth`` | 2FA migration | ``database/migrations/`` |
+| ``ptah-menu`` | Menus migration | ``database/migrations/`` |
+| ``ptah-company`` | Company migrations | ``database/migrations/`` |
+| ``ptah-permissions`` | Permissions migrations | ``database/migrations/`` |
+| ``ptah-docker`` | Complete Docker environment | project root |
 
-**Uso:**
+**Usage:**
 
 ```bash
-# Publicar grupo específico
+# Publish specific group
 php artisan vendor:publish --tag=ptah-config
 php artisan vendor:publish --tag=ptah-stubs
 php artisan vendor:publish --tag=ptah-docker
 
-# Forçar sobrescrita de arquivos existentes
+# Force overwrite de arquivos existentes
 php artisan vendor:publish --tag=ptah-config --force
 
-# Ver todos os publicáveis do pacote
+# View all package publishables
 php artisan vendor:publish --list | grep ptah
 ```
 
-### ptah-docker — Detalhes
+### ptah-docker — Details
 
-Publica uma estrutura Docker pronta para uso com PHP 8.3, Nginx, MySQL 8, Redis e Mailpit:
+Publishes a ready-to-use Docker structure with PHP 8.3, Nginx, MySQL 8, Redis and Mailpit:
 
 ```bash
 php artisan vendor:publish --tag=ptah-docker
 ```
 
-**Arquivos publicados:**
+**Published files:**
 
 ```
-├── docker-compose.yml           # 5 serviços orquestrados
-├── .env.docker                  # .env pré-configurado para Docker
-├── .dockerignore                # Build context otimizado
+├── docker-compose.yml           # 5 orchestrated services
+├── .env.docker                  # pre-configured .env for Docker
+├── .dockerignore                # Optimized build context
 └── docker/
     ├── php/
     │   ├── Dockerfile           # PHP 8.3-FPM Alpine + Node.js + Redis ext
-    │   └── php.ini              # Configurações (timezone BR, limites, opcache)
+    │   └── php.ini              # Settings (timezone BR, limits, opcache)
     └── nginx/
-        └── default.conf         # Virtual host com gzip + PHP-FPM
+        └── default.conf         # Virtual host with gzip + PHP-FPM
 ```
 
-**Serviços disponíveis após `docker compose up`:**
+**Services available after `docker compose up`:**
 
-| Serviço | Acesso padrão | Descrição |
+| Service | Default access | Description |
 |---------|-------------|----------|
 | App (PHP-FPM) | — | PHP 8.3 + Node.js |
 | Nginx | ``http://localhost:8080`` | Web server |
-| MySQL 8 | ``localhost:3307`` | Banco de dados |
-| Redis 7 | ``localhost:6380`` | Cache / filas / sessões |
-| Mailpit | ``http://localhost:8025`` | Captura de e-mails de dev |
+| MySQL 8 | ``localhost:3307`` | Database |
+| Redis 7 | ``localhost:6380`` | Cache / queues / sessions |
+| Mailpit | ``http://localhost:8025`` | Dev email capture |
 
-**Portas customizáveis via variáveis no `.env.docker`:**
+**Customizable ports via variables in `.env.docker`:**
 
 ```env
 NGINX_PORT=8080
@@ -719,58 +719,58 @@ MAIL_UI_PORT=8025
 MAIL_SMTP_PORT=1025
 ```
 
-> **Nota:** O Docker é completamente opcional. O Ptah funciona normalmente sem ele — em Herd, Valet, Sail ou qualquer servidor PHP 8.2+.
+> **Note:** Docker is entirely optional. Ptah works normally without it — on Herd, Valet, Sail or any PHP 8.2+ server.
 
 ---
 
-## Ordem recomendada de instalação
+## Recommended Installation Order
 
-### Sem Docker (Herd, Valet, XAMPP)
+### Without Docker (Herd, Valet, XAMPP)
 
 ```bash
-# 1. Instalar pacote básico
+# 1. Install basic package
 composer require jonytonet/ptah
 php artisan ptah:install
 
-# 2. Habilitar módulos necessários
+# 2. Enable required modules
 php artisan ptah:module company
 php artisan ptah:module permissions
 php artisan ptah:module auth
 php artisan ptah:module menu
 
-# 3. (Opcional) Habilitar módulo API
+# 3. (Optional) Enable API module
 php artisan ptah:module api
 
-# 4. (Opcional) Demo data para explorar
+# 4. (Optional) Demo data to explore
 php artisan ptah:install --demo
 
-# 5. Scaffoldar primeira entidade
+# 5. Scaffold first entity
 php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 
-# 6. Executar migration
+# 6. Run migration
 php artisan migrate
 
-# 7. Acessar sistema
+# 7. Access system
 # http://localhost/products
 ```
 
-### Com Docker
+### With Docker
 
 ```bash
-# 1. Instalar pacote
+# 1. Install package
 composer require jonytonet/ptah
-php artisan ptah:install --skip-npm  # pula npm pois será rodado no container
+php artisan ptah:install --skip-npm  # skip npm since it will be run inside the container
 
-# 2. Publicar ambiente Docker
+# 2. Publish Docker environment
 php artisan vendor:publish --tag=ptah-docker
 
-# 3. Copiar .env.docker como .env e ajustar se necessário
+# 3. Copy .env.docker as .env and adjust if needed
 cp .env.docker .env
 
-# 4. Subir containers
+# 4. Start containers
 docker compose up -d
 
-# 5. Instalar dependências e configurar app dentro do container
+# 5. Install dependencies and configure app inside container
 docker compose exec app composer install
 docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --force
@@ -778,61 +778,61 @@ docker compose exec app php artisan ptah:install --force --skip-npm
 docker compose exec app npm install
 docker compose exec app npm run build
 
-# 6. Habilitar módulos
+# 6. Enable modules
 docker compose exec app php artisan ptah:module company
 docker compose exec app php artisan ptah:module permissions
 docker compose exec app php artisan ptah:module auth
 docker compose exec app php artisan ptah:module menu
 
-# 7. Acessar sistema
+# 7. Access system
 # http://localhost:8080
 # Mailpit: http://localhost:8025
 ```
 
 ---
 
-## Dicas de uso
+## Usage Tips
 
-### Scaffolding incremental
+### Incremental Scaffolding
 
 ```bash
-# Web primeiro
+# Web first
 php artisan ptah:forge Product
 
-# Depois adicionar API (não sobrescreve arquivos existentes)
+# Then add API (does not overwrite existing files)
 php artisan ptah:forge Product --api --force
 ```
 
-### Subpastas (organização)
+### Subfolders (organization)
 
 ```bash
-# Estrutura: Purchase/Order, Purchase/OrderItem
+# Structure: Purchase/Order, Purchase/OrderItem
 php artisan ptah:forge Purchase/Order
 php artisan ptah:forge Purchase/OrderItem
 
-# Resultado:
+# Result:
 # app/Models/Purchase/Order.php
 # app/Services/Purchase/OrderService.php
 # resources/views/purchase/order/index.blade.php
 ```
 
-### Leitura do banco existente
+### Reading from existing database
 
 ```bash
-# Se a tabela já existe no banco
+# If the table already exists in the database
 php artisan ptah:forge Customer --db --table=customers
 ```
 
-Isso inspeciona a estrutura via ``INFORMATION_SCHEMA`` e gera Models/DTOs/Migrations compatíveis.
+This inspects the structure via ``INFORMATION_SCHEMA`` and generates compatible Models/DTOs/Migrations.
 
 ---
 
 ## Troubleshooting
 
-### Erro: "Model not found"
-**Causa:** Binding do repositório não registrado.
+### Error: "Model not found"
+**Cause:** Repository binding not registered.
 
-**Solução:** Adicione no ``AppServiceProvider::boot()``:
+**Solution:** Add to ``AppServiceProvider::boot()``:
 ```php
 $this->app->bind(
     \App\Repositories\Contracts\ProductRepositoryInterface::class,
@@ -840,71 +840,71 @@ $this->app->bind(
 );
 ```
 
-### Erro: "Class not found" após scaffold
-**Causa:** Autoload não atualizado.
+### Error: "Class not found" after scaffold
+**Cause:** Autoload not updated.
 
-**Solução:**
+**Solution:**
 ```bash
 composer dump-autoload
 ```
 
-### Erro: npm/yarn não encontrado
-**Causa:** Node.js não instalado ou não no PATH.
+### Error: npm/yarn not found
+**Cause:** Node.js not installed or not in PATH.
 
-**Solução:**
-1. Instale Node.js: https://nodejs.org
-2. Ou use ``--skip-npm`` e rode manualmente depois:
+**Solution:**
+1. Install Node.js: https://nodejs.org
+2. Or use ``--skip-npm`` and run manually afterwards:
 ```bash
 npm install
 npm run build
 ```
 
-### Migrations duplicadas
-**Causa:** Re-execução do ``ptah:install`` ou ``ptah:forge``.
+### Duplicate Migrations
+**Cause:** Re-running ``ptah:install`` or ``ptah:forge``.
 
-**Solução:** Use ``--force`` apenas quando realmente quiser sobrescrever. Para módulos, verifique com ``ptah:module --list`` antes.
+**Solution:** Use ``--force`` only when you really want to overwrite. For modules, check with ``ptah:module --list`` first.
 
 ---
 
-## Histórico de comandos
+## Command History
 
-### Comandos removidos (V2.2+)
+### Removed Commands (V2.2+)
 
-Estes comandos foram descontinuados e substituídos por ``ptah:forge``:
+These commands were discontinued and replaced by ``ptah:forge``:
 
-| Comando removido | Substituição |
+| Removed command | Replacement |
 |------------------|--------------|
 | ``ptah:make-api {Entity}`` | ``ptah:forge {Entity} --api-only`` |
 | ``ptah:docs {Entity}`` | Swagger gerado automaticamente via ``ptah:forge --api`` |
 
-**Migração:**
+**Migration:**
 
 ```bash
-# ❌ Antes (V2.1)
+# ❌ Before (V2.1)
 php artisan ptah:make Product        # Web
 php artisan ptah:make-api Product    # API
-php artisan ptah:docs Product        # Swagger manual
+php artisan ptah:docs Product        # Manual Swagger
 
-# ✅ Agora (V2.2+)
+# ✅ Now (V2.2+)
 php artisan ptah:forge Product              # Web
 php artisan ptah:forge Product --api        # Web + API
-php artisan ptah:forge Product --api-only   # Só API
-# Swagger gerado automaticamente
+php artisan ptah:forge Product --api-only   # Only API
+# Swagger generated automatically
 ```
 
 ---
 
 ## Performance
 
-### Comando lento: ptah:install --boost
-**Causa:** ``composer require laravel/boost`` pode demorar 1-2 minutos.
+### Slow command: ptah:install --boost
+**Cause:** ``composer require laravel/boost`` can take 1-2 minutes.
 
-**Solução:** Isso é normal. Laravel Boost instala dependências pesadas (AST parsers). Use ``--skip-npm`` para pular Node se já tiver assets buildados.
+**Solution:** This is normal. Laravel Boost installs heavy dependencies (AST parsers). Use ``--skip-npm`` to skip Node if you already have built assets.
 
-### Comando lento: ptah:forge --db
-**Causa:** Consulta INFORMATION_SCHEMA pode ser lenta em bancos grandes.
+### Slow command: ptah:forge --db
+**Cause:** INFORMATION_SCHEMA query can be slow on large databases.
 
-**Solução:** Use ``--fields`` manual para tabelas conhecidas:
+**Solution:** Use manual ``--fields`` for known tables:
 ```bash
 php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 ```
@@ -913,26 +913,26 @@ php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 
 ## ptah:hooks
 
-**Descrição:** Gera uma classe de Lifecycle Hooks para o BaseCrud.
+**Description:** Generates a Lifecycle Hooks class for the BaseCrud.
 
-**Uso:**
+**Usage:**
 ```bash
-# Básico
+# Basic
 php artisan ptah:hooks ProductHooks
 
-# Com subdiretório
+# With subdirectory
 php artisan ptah:hooks Inventory/StockHooks
 
-# Sobrescrever arquivo existente
+# Overwrite existing file
 php artisan ptah:hooks ProductHooks --force
 ```
 
-**Opções:**
-- `--force` — Sobrescreve o arquivo existente sem pedir confirmação
+**Options:**
+- `--force` — Overwrites the existing file without asking for confirmation
 
-**O que faz:**
+**What it does:**
 
-Cria `app/CrudHooks/{Name}.php` implementando `Ptah\Contracts\CrudHooksInterface` com os 4 métodos de ciclo de vida pré-preenchidos:
+Creates `app/CrudHooks/{Name}.php` implementing `Ptah\Contracts\CrudHooksInterface` with the 4 pre-filled lifecycle methods:
 
 ```php
 namespace App\CrudHooks;
@@ -944,40 +944,40 @@ class ProductHooks implements CrudHooksInterface
 {
     public function beforeCreate(array &$data, ?Model $record, object $component): void
     {
-        // Executado antes de criar o registro
+        // Executed before creating the record
     }
 
     public function afterCreate(array &$data, Model $record, object $component): void
     {
-        // Executado após criar o registro
+        // Executed after creating the record
     }
 
     public function beforeUpdate(array &$data, Model $record, object $component): void
     {
-        // Executado antes de atualizar o registro
+        // Executed before updating the record
     }
 
     public function afterUpdate(array &$data, Model $record, object $component): void
     {
-        // Executado após atualizar o registro
+        // Executed after updating the record
     }
 }
 ```
 
-**Próximos passos:**
+**Next steps:**
 
-1. Implemente a lógica desejada nos métodos em `app/CrudHooks/{Name}.php`
-2. No CrudConfig, associe o hook a um campo usando a sintaxe `@ProductHooks`
-3. Consulte [Configuration.md](Configuration.md) para detalhes sobre Lifecycle Hooks
+1. Implement the desired logic in the methods in `app/CrudHooks/{Name}.php`
+2. In CrudConfig, associate the hook to a field using the `@ProductHooks` syntax
+3. See [Configuration.md](Configuration.md) for details on Lifecycle Hooks
 
-> ⚠️ **Atenção:** O parâmetro `$component` expõe o componente Livewire completo. Use-o somente para leitura de propriedades, nunca para despachar ações arbitrárias a partir de dados externos.
+> ⚠️ **Warning:** The `$component` parameter exposes the full Livewire component. Use it only for reading properties, never for dispatching arbitrary actions from external data.
 
 ---
 
-## Referências
+## References
 
-- [InstallationGuide.md](InstallationGuide.md) — Guia completo de instalação
-- [BaseCrud.md](BaseCrud.md) — Referência do BaseCrud
-- [Modules.md](Modules.md) — Detalhes dos módulos
-- [AI_Guide.md](AI_Guide.md) — Prompts para agentes de IA
-- [Permissions.md](Permissions.md) — Sistema RBAC detalhado
+- [InstallationGuide.md](InstallationGuide.md) — Complete installation guide
+- [BaseCrud.md](BaseCrud.md) — BaseCrud reference
+- [Modules.md](Modules.md) — Module details
+- [AI_Guide.md](AI_Guide.md) — Prompts for AI agents
+- [Permissions.md](Permissions.md) — Detailed RBAC system

@@ -1,11 +1,11 @@
-# 🚀 Installation Guide — jonytonet/ptah
+﻿# 🚀 Installation Guide — jonytonet/ptah
 
 > **Laravel 11 / 12 · PHP 8.2+**  
 > This guide documents every step to install ptah in a **fresh Laravel project** — including real terminal output collected during the process.
 
 ---
 
-## Sumário
+## Summary
 
 - [Prerequisites](#prerequisites)
 - [Step 1 — Create the Laravel project](#step-1--create-the-laravel-project)

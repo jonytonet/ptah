@@ -1,35 +1,35 @@
-# Base Layer — Documentação Completa
+# Base Layer — Complete Documentation
 
 **Namespace:** `Ptah\Base`  
-**Arquivos:** `BaseDTO`, `BaseRepository`, `BaseRepositoryInterface`, `BaseService`  
-**Geração via CLI:** `php artisan ptah:forge {Entity} --api`
+**Files:** `BaseDTO`, `BaseRepository`, `BaseRepositoryInterface`, `BaseService`  
+**CLI Generation:** `php artisan ptah:forge {Entity} --api`
 
 ---
 
-## Sumário
+## Table of Contents
 
-1. [Visão Geral da Arquitetura](#visão-geral-da-arquitetura)
+1. [Architecture Overview](#architecture-overview)
 2. [BaseDTO](#basedto)
 3. [BaseRepository](#baserepository)
-   - [CRUD Básico](#crud-básico)
-   - [Busca Avançada](#busca-avançada)
-   - [Utilitários de Busca](#utilitários-de-busca)
-   - [Utilitários de Escrita](#utilitários-de-escrita)
+   - [Basic CRUD](#basic-crud)
+   - [Advanced Search](#advanced-search)
+   - [Read Utilities](#read-utilities)
+   - [Write Utilities](#write-utilities)
 4. [BaseRepositoryInterface](#baserepositoryinterface)
 5. [BaseService](#baseservice)
    - [CRUD via Service](#crud-via-service)
-   - [getData — ponto de entrada da listagem](#getdata--ponto-de-entrada-da-listagem)
-   - [Delegações para o Repository](#delegações-para-o-repository)
-6. [Camada de API](#camada-de-api)
+   - [getData — listing entry point](#getdata--listing-entry-point)
+   - [Repository Delegations](#repository-delegations)
+6. [API Layer](#api-layer)
    - [BaseApiController](#baseapicontroller)
-   - [Controller gerado (ptah:forge --api)](#controller-gerado-ptahforge---api)
-   - [Parâmetros de query da API](#parâmetros-de-query-da-api)
-7. [Fluxo completo — exemplo ponta a ponta](#fluxo-completo--exemplo-ponta-a-ponta)
-8. [Segurança](#segurança)
+   - [Generated Controller (ptah:forge --api)](#generated-controller-ptahforge---api)
+   - [API Query Parameters](#api-query-parameters)
+7. [Full Flow — end-to-end example](#full-flow--end-to-end-example)
+8. [Security](#security)
 
 ---
 
-## Visão Geral da Arquitetura
+## Architecture Overview
 
 ```
 Request HTTP
@@ -47,14 +47,14 @@ Repository             (estende BaseRepository, implementa Interface)
 Eloquent Model         (App\Models\*)
 ```
 
-Cada camada tem responsabilidade única:
+Each layer has a single responsibility:
 
-| Camada | Responsabilidade |
+| Layer | Responsibility |
 |---|---|
-| **Controller** | Receber HTTP, devolver JSON — sem lógica de negócio |
-| **Service** | Orquestrar regras de negócio, validar, transformar dados |
-| **Repository** | Única camada que faz queries ao banco |
-| **DTO** | Transportar dados estruturados entre camadas |
+| **Controller** | Receive HTTP, return JSON — no business logic |
+| **Service** | Orchestrate business rules, validate, transform data |
+| **Repository** | The only layer that queries the database |
+| **DTO** | Transport structured data between layers |
 
 ---
 
@@ -62,17 +62,17 @@ Cada camada tem responsabilidade única:
 
 `Ptah\Base\BaseDTO`
 
-Classe abstrata base para todos os DTOs do projeto. Define o contrato mínimo para criação, conversão e transporte de dados.
+Abstract base class for all project DTOs. Defines the minimum contract for creating, converting and transporting data.
 
-### Métodos abstratos
+### Abstract Methods
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `fromArray(array $data)` | `static` | Cria uma instância DTO a partir de um array associativo |
-| `fromRequest(Request $request)` | `static` | Cria uma instância DTO a partir de um `Request` Laravel |
-| `toArray()` | `array<string, mixed>` | Converte o DTO para array associativo |
+| `fromArray(array $data)` | `static` | Creates a DTO instance from an associative array |
+| `fromRequest(Request $request)` | `static` | Creates a DTO instance from a Laravel `Request` |
+| `toArray()` | `array<string, mixed>` | Converts the DTO to an associative array |
 
-### Exemplo de implementação
+### Implementation Example
 
 ```php
 namespace App\DTOs;
@@ -116,15 +116,15 @@ class ProductDTO extends BaseDTO
 }
 ```
 
-### Uso
+### Usage
 
 ```php
-// No Service — criar a partir do request validado
+// In the Service — create from the validated request
 $dto = ProductDTO::fromRequest($request);
 $this->repository->create($dto->toArray());
 
-// Criar a partir de array (ex: seed, testes)
-$dto = ProductDTO::fromArray(['name' => 'Ração Premium', 'price' => 49.90]);
+// Create from array (e.g. seeds, tests)
+$dto = ProductDTO::fromArray(['name' => 'Premium Feed', 'price' => 49.90]);
 ```
 
 ---
@@ -133,8 +133,8 @@ $dto = ProductDTO::fromArray(['name' => 'Ração Premium', 'price' => 49.90]);
 
 `Ptah\Base\BaseRepository`
 
-Implementação abstrata do repositório. Todas as queries ao banco ficam aqui.
-Extende `BaseRepositoryInterface` e recebe o Model via construtor.
+Abstract repository implementation. All database queries live here.
+Extends `BaseRepositoryInterface` and receives the Model via constructor.
 
 ```php
 namespace App\Repositories;
@@ -153,10 +153,10 @@ class ProductRepository extends BaseRepository
 
 ---
 
-### CRUD Básico
+### Basic CRUD
 
 #### `all(): Collection`
-Retorna todos os registros da tabela.
+Returns all records in the table.
 
 ```php
 $products = $this->productRepository->all();
@@ -165,7 +165,7 @@ $products = $this->productRepository->all();
 ---
 
 #### `paginate(int $perPage = 15): LengthAwarePaginator`
-Retorna registros paginados.
+Returns paginated records.
 
 ```php
 $products = $this->productRepository->paginate(25);
@@ -174,56 +174,56 @@ $products = $this->productRepository->paginate(25);
 ---
 
 #### `find(int|string $id): ?Model`
-Busca um registro pelo ID. Retorna `null` se não encontrado.
+Finds a record by ID. Returns `null` if not found.
 
 ```php
 $product = $this->productRepository->find(42);
 
 if ($product === null) {
-    // não encontrado
+    // not found
 }
 ```
 
 ---
 
 #### `findOrFail(int|string $id): Model`
-Busca por ID. Lança `ModelNotFoundException` se não encontrado.
+Finds by ID. Throws `ModelNotFoundException` if not found.
 
 ```php
 $product = $this->productRepository->findOrFail(42);
-// Lança ModelNotFoundException se id 42 não existir
+// Throws ModelNotFoundException if id 42 does not exist
 ```
 
 ---
 
 #### `create(array $data): Model`
-Cria um novo registro e retorna o model persistido.
+Creates a new record and returns the persisted model.
 
 ```php
 $product = $this->productRepository->create([
-    'name'   => 'Ração Premium',
+    'name'   => 'Premium Feed',
     'price'  => 49.90,
     'active' => true,
 ]);
-// $product->id está preenchido
+// $product->id is filled
 ```
 
 ---
 
 #### `update(int|string $id, array $data): Model`
-Atualiza um registro e retorna o model com `fresh()` (recarregado do banco).  
-Lança `ModelNotFoundException` se o ID não existir.
+Updates a record and returns the model with `fresh()` (reloaded from the database).  
+Throws `ModelNotFoundException` if the ID does not exist.
 
 ```php
 $product = $this->productRepository->update(42, ['price' => 59.90]);
-// $product reflete o estado atual do banco
+// $product reflects the current state from the database
 ```
 
 ---
 
 #### `delete(int|string $id): bool`
-Remove um registro. Respeita `SoftDelete` se o model usar a trait.  
-Lança `ModelNotFoundException` se o ID não existir.
+Removes a record. Respects `SoftDelete` if the model uses the trait.  
+Throws `ModelNotFoundException` if the ID does not exist.
 
 ```php
 $deleted = $this->productRepository->delete(42); // true
@@ -231,19 +231,19 @@ $deleted = $this->productRepository->delete(42); // true
 
 ---
 
-### Busca Avançada
+### Advanced Search
 
-Todos os métodos abaixo retornam um `Builder` chainável — o chamador decide se faz `.get()`, `.paginate()`, `.first()`, etc.
+All methods below return a chainable `Builder` — the caller decides whether to call `.get()`, `.paginate()`, `.first()`, etc.
 
 ---
 
 #### `allQuery(array $search = [], ?int $skip = null, ?int $limit = null): Builder`
 
-Constrói uma query base com filtros de igualdade opcionais, skip e limit.  
-Útil como ponto de partida para queries customizadas.
+Builds a base query with optional equality filters, skip and limit.  
+Useful as a starting point for custom queries.
 
 ```php
-// Retorna todos ativos, pulando 10, limitando a 5
+// Returns all active records, skipping 10, limiting to 5
 $builder = $this->productRepository->allQuery(
     search: ['active' => true],
     skip: 10,
@@ -252,7 +252,7 @@ $builder = $this->productRepository->allQuery(
 
 $products = $builder->get();
 
-// Encadeável com mais condições
+// Chainable with more conditions
 $products = $this->productRepository
     ->allQuery(['active' => true])
     ->where('price', '>', 100)
@@ -264,13 +264,13 @@ $products = $this->productRepository
 
 #### `advancedSearch(Request $request, array $relations = []): Builder`
 
-Busca OR via param `search` (termos separados por vírgula).  
-Aplica `LIKE %term%` em **todas** as colunas da tabela para cada termo.  
-Ignorado quando `search == 'Busca'` (sentinela de UI).
+OR search via `search` param (comma-separated terms).  
+Applies `LIKE %term%` on **all** table columns for each term.  
+Ignored when `search == 'Search'` (UI sentinel).
 
 ```
-GET /api/v1/products?search=ração,premium
-→ WHERE (name LIKE '%ração%' OR price LIKE '%ração%' OR ...) AND (name LIKE '%premium%' OR ...)
+GET /api/v1/products?search=premium,feed
+→ WHERE (name LIKE '%premium%' OR price LIKE '%premium%' OR ...) AND (name LIKE '%feed%' OR ...)
 ```
 
 ```php
@@ -282,26 +282,26 @@ $products = $builder->orderBy('name')->paginate(15);
 
 #### `searchLike(Request $request, array $relations = []): Builder`
 
-Busca incremental via param `searchLike` (termos separados por vírgula).  
-Suporta **operadores customizados** via tokens especiais:
+Incremental search via `searchLike` param (comma-separated terms).  
+Supports **custom operators** via special tokens:
 
-| Token | Operador SQL |
+| Token | SQL operator |
 |---|---|
 | `col}val` | `col >= val` |
 | `col{val` | `col <= val` |
 | `col>val` | `col > val` |
 | `col<val` | `col < val` |
-| `termo` (sem token) | `LIKE %termo%` em todas as colunas |
+| `term` (no token) | `LIKE %term%` on all columns |
 
-O tipo de combinação entre termos é controlado por `searchLikeType`:
-- `AND` (padrão) — todos os termos devem ser satisfeitos
-- `OR` — qualquer um dos termos
+The combination type between terms is controlled by `searchLikeType`:
+- `AND` (default) — all terms must be satisfied
+- `OR` — any of the terms
 
-Suporta também `whereIn` e `additionalQueries` (ver [Parâmetros de query da API](#parâmetros-de-query-da-api)).
+Also supports `whereIn` and `additionalQueries` (see [API Query Parameters](#api-query-parameters)).
 
 ```
-GET /api/v1/products?searchLike=ração,price}50
-→ WHERE (nome LIKE '%ração%' OR ...) AND (price >= 50)
+GET /api/v1/products?searchLike=feed,price}50
+→ WHERE (name LIKE '%feed%' OR ...) AND (price >= 50)
 ```
 
 ```php
@@ -312,8 +312,8 @@ $builder = $this->productRepository->searchLike($request);
 
 #### `findAllFieldsAnd(Request $request, array $relations = []): Builder`
 
-Filtra usando AND para cada param de request não reservado como `coluna=valor`.  
-Colunas são validadas contra o schema real antes de aplicar o filtro (prevenção de injeção).
+Filters using AND for each non-reserved request param as `column=value`.  
+Columns are validated against the real schema before applying the filter (injection prevention).
 
 ```
 GET /api/v1/products?active=1&category_id=3
@@ -328,7 +328,7 @@ $builder = $this->productRepository->findAllFieldsAnd($request, ['category']);
 
 #### `autocompleteSearch(Request $request, array $select, array $conditions): Builder`
 
-Busca para autocomplete: SELECT específico + condições + LIMIT 10.
+Autocomplete search: specific SELECT + conditions + LIMIT 10.
 
 ```php
 $builder = $this->productRepository->autocompleteSearch(
@@ -342,31 +342,31 @@ return $builder->get();
 
 ---
 
-### Utilitários de Busca
+### Read Utilities
 
 #### `findBy(string|array|Closure $reference, mixed $value = null, string $operator = '='): Builder`
 
-Três assinaturas:
+Three signatures:
 
 ```php
-// 1. Coluna + valor (igualdade)
+// 1. Column + value (equality)
 $builder = $this->productRepository->findBy('status', 'active');
 
-// 2. Coluna + valor + operador
+// 2. Column + value + operator
 $builder = $this->productRepository->findBy('price', 50, '>=');
 
-// 3. Array de condições AND
+// 3. Array of AND conditions
 $builder = $this->productRepository->findBy([
     'status'      => 'active',
     'category_id' => 3,
 ]);
 
-// 4. Closure para lógica complexa
+// 4. Closure for complex logic
 $builder = $this->productRepository->findBy(
     fn ($q) => $q->where('price', '>', 50)->orWhere('featured', true)
 );
 
-// Todos retornam Builder — fazer get()/first() depois
+// All return Builder — call get()/first() afterwards
 $products = $builder->orderBy('name')->get();
 ```
 
@@ -374,7 +374,7 @@ $products = $builder->orderBy('name')->get();
 
 #### `findByBuilder(Builder $query, string $column, string $operator = '=', mixed $value = null): Builder`
 
-Aplica um WHERE em um Builder existente. Útil quando combinado com `useIndex()`.
+Applies a WHERE to an existing Builder. Useful when combined with `useIndex()`.
 
 ```php
 $products = $this->productRepository
@@ -389,7 +389,7 @@ $products = $this->productRepository
 
 #### `findByIn(string $column, array $values, array $with = []): Collection`
 
-Retorna registros cujo `$column` está na lista `$values`. Aceita eager-load.
+Returns records whose `$column` is in the `$values` list. Accepts eager-loading.
 
 ```php
 $products = $this->productRepository->findByIn(
@@ -403,8 +403,8 @@ $products = $this->productRepository->findByIn(
 
 #### `buildSelectFields(Request $request): array`
 
-Extrai as colunas do param `fields` (csv), validadas contra o schema real.  
-Retorna `['*']` quando nenhuma coluna válida é especificada.
+Extracts columns from the `fields` param (csv), validated against the real schema.  
+Returns `['*']` when no valid column is specified.
 
 ```
 GET /api/v1/products?fields=id,name,price
@@ -420,8 +420,8 @@ $select = $this->productRepository->buildSelectFields($request);
 
 #### `getTableColumns(): array`
 
-Retorna a lista de colunas da tabela do model. Resultado memoizado por nome de tabela.  
-Exposto publicamente para validação de input em services/controllers.
+Returns the list of columns for the model's table. Result is memoised by table name.  
+Exposed publicly for input validation in services/controllers.
 
 ```php
 $columns = $this->productRepository->getTableColumns();
@@ -432,7 +432,7 @@ $columns = $this->productRepository->getTableColumns();
 
 #### `getKeyName(): string`
 
-Retorna o nome da chave primária do model.
+Returns the primary key name of the model.
 
 ```php
 $key = $this->productRepository->getKeyName(); // 'id'
@@ -442,7 +442,7 @@ $key = $this->productRepository->getKeyName(); // 'id'
 
 #### `useIndex(string $indexName): Builder`
 
-Hint `USE INDEX` para MySQL/MariaDB. Em outros drivers (PostgreSQL, SQLite) é ignorado silenciosamente.
+`USE INDEX` hint for MySQL/MariaDB. On other drivers (PostgreSQL, SQLite) it is silently ignored.
 
 ```php
 // MySQL: SELECT * FROM `products` USE INDEX (`idx_status`) WHERE status = ?
@@ -450,23 +450,23 @@ $builder = $this->productRepository
     ->useIndex('idx_status')
     ->where('status', 'active');
 
-// Combinando com findByBuilder
+// Combined with findByBuilder
 $products = $this->productRepository
     ->findByBuilder(
         $this->productRepository->useIndex('idx_name'),
-        'name', 'LIKE', '%ração%'
+        'name', 'LIKE', '%feed%'
     )
     ->get();
 ```
 
 ---
 
-### Utilitários de Escrita
+### Write Utilities
 
 #### `updateBatch(array $ids, array $data): int`
 
-Atualiza múltiplos registros por ID em uma única query. Retorna o número de linhas afetadas.  
-**Atenção:** não dispara eventos Eloquent (`updating`/`updated`).
+Updates multiple records by ID in a single query. Returns the number of affected rows.  
+**Note:** does not fire Eloquent events (`updating`/`updated`).
 
 ```php
 $affected = $this->productRepository->updateBatch(
@@ -480,7 +480,7 @@ $affected = $this->productRepository->updateBatch(
 
 #### `updateQuietly(array $data, int|string $id): bool`
 
-Atualiza sem disparar eventos ou observers. Útil para campos de auditoria interna.
+Updates without firing events or observers. Useful for internal audit fields.
 
 ```php
 $this->productRepository->updateQuietly(['synced_at' => now()], 42);
@@ -490,11 +490,11 @@ $this->productRepository->updateQuietly(['synced_at' => now()], 42);
 
 #### `createQuietly(array $data): Model`
 
-Cria um registro sem disparar eventos ou observers.
+Creates a record without firing events or observers.
 
 ```php
 $product = $this->productRepository->createQuietly([
-    'name'  => 'Import produto',
+    'name'  => 'Import product',
     'price' => 0,
 ]);
 ```
@@ -503,11 +503,11 @@ $product = $this->productRepository->createQuietly([
 
 #### `replicate(): Model`
 
-Retorna uma cópia não-salva do último registro. Útil para duplicar entidades.
+Returns an unsaved copy of the last record. Useful for duplicating entities.
 
 ```php
 $copy = $this->productRepository->replicate();
-$copy->name = 'Cópia de ' . $copy->name;
+$copy->name = 'Copy of ' . $copy->name;
 $copy->save();
 ```
 
@@ -515,16 +515,16 @@ $copy->save();
 
 #### `truncate(): void`
 
-Trunca a tabela com ciência do driver:
+Truncates the table with driver awareness:
 
-| Driver | Comportamento |
+| Driver | Behaviour |
 |---|---|
 | MySQL/MariaDB | `SET FOREIGN_KEY_CHECKS=0` → TRUNCATE → `=1` |
 | PostgreSQL | `TRUNCATE ... RESTART IDENTITY CASCADE` |
-| SQLite e outros | TRUNCATE simples |
+| SQLite and others | Simple TRUNCATE |
 
 ```php
-// Cuidado: irreversível
+// Caution: irreversible
 $this->productRepository->truncate();
 ```
 
@@ -534,9 +534,9 @@ $this->productRepository->truncate();
 
 `Ptah\Base\BaseRepositoryInterface`
 
-Define o contrato completo do repositório. Toda classe de repositório concreta deve implementar esta interface (diretamente ou via `BaseRepository`).
+Defines the complete repository contract. Every concrete repository class must implement this interface (directly or via `BaseRepository`).
 
-O benefício de usar a interface é o **bind no container**:
+The benefit of using the interface is **container binding**:
 
 ```php
 // app/Providers/AppServiceProvider.php
@@ -546,7 +546,7 @@ $this->app->bind(
 );
 ```
 
-Com isso o Service recebe a interface via injeção — não depende da implementação concreta:
+This way the Service receives the interface via injection — it does not depend on the concrete implementation:
 
 ```php
 class ProductService extends BaseService
@@ -564,8 +564,8 @@ class ProductService extends BaseService
 
 `Ptah\Base\BaseService`
 
-Camada de orquestração. Delega persistência ao repository e concentra regras de negócio.  
-Todos os methods do `BaseRepository` estão disponíveis via delegação.
+Orchestration layer. Delegates persistence to the repository and centralises business rules.  
+All `BaseRepository` methods are available via delegation.
 
 ```php
 namespace App\Services;
@@ -580,62 +580,62 @@ class ProductService extends BaseService
         parent::__construct($repository);
     }
 
-    // Métodos customizados de negócio ficam aqui
+    // Custom business methods go here
     public function activate(int $id): bool
     {
-        $product = $this->findOrFail($id); // delegado ao repository
+        $product = $this->findOrFail($id); // delegated to repository
         return (bool) $product->update(['active' => true]);
     }
 }
 ```
 
-### Propriedade `$allowedRelations`
+### `$allowedRelations` Property
 
-Controla quais relações podem ser carregadas via param `relations` da request.  
-Quando vazio (padrão), todas as relações solicitadas são permitidas.
+Controls which relations can be loaded via the `relations` request param.  
+When empty (default), all requested relations are allowed.
 
 ```php
 class ProductService extends BaseService
 {
-    // Somente estas relações podem ser eager-loaded via ?relations=
+    // Only these relations can be eager-loaded via ?relations=
     protected array $allowedRelations = ['category', 'images'];
 }
 ```
 
 ```
 GET /api/v1/products?relations=category,images,secret_relation
-→ carrega apenas category e images (secret_relation é filtrada)
+→ loads only category and images (secret_relation is filtered out)
 ```
 
 ---
 
 ### CRUD via Service
 
-Os métodos de CRUD são delegados diretamente ao repository:
+CRUD methods are delegated directly to the repository:
 
-| Método | Retorno | Descrição |
+| Method | Return | Description |
 |---|---|---|
-| `all()` | `Collection` | Todos os registros |
-| `paginate(int $perPage)` | `LengthAwarePaginator` | Registros paginados |
-| `find(int\|string $id)` | `?Model` | Por ID, null se não encontrado |
-| `show(int\|string $id)` | `?Model` | Alias de `find()` para controllers |
-| `findOrFail(int\|string $id)` | `Model` | Por ID, exceção se não encontrado |
-| `create(array $data)` | `Model` | Cria e retorna o model |
-| `update(int\|string $id, array $data)` | `Model` | Atualiza e retorna `fresh()` |
-| `delete(int\|string $id)` | `bool` | Remove, lança exceção se não encontrado |
-| `destroy(int\|string $id)` | `bool` | Remove, retorna `false` se não encontrado |
+| `all()` | `Collection` | All records |
+| `paginate(int $perPage)` | `LengthAwarePaginator` | Paginated records |
+| `find(int\|string $id)` | `?Model` | By ID, null if not found |
+| `show(int\|string $id)` | `?Model` | Alias of `find()` for controllers |
+| `findOrFail(int\|string $id)` | `Model` | By ID, exception if not found |
+| `create(array $data)` | `Model` | Creates and returns the model |
+| `update(int\|string $id, array $data)` | `Model` | Updates and returns `fresh()` |
+| `delete(int\|string $id)` | `bool` | Removes, throws exception if not found |
+| `destroy(int\|string $id)` | `bool` | Removes, returns `false` if not found |
 
 #### `delete()` vs `destroy()`
 
 ```php
-// delete() — lança ModelNotFoundException se não existir
+// delete() — throws ModelNotFoundException if not found
 try {
     $this->productService->delete(999); 
 } catch (ModelNotFoundException $e) {
     // ...
 }
 
-// destroy() — retorna false se não existir (padrão para controllers de API)
+// destroy() — returns false if not found (default for API controllers)
 $deleted = $this->productService->destroy(999);
 if (! $deleted) {
     return BaseResponse::notFound('Product not found');
@@ -644,92 +644,92 @@ if (! $deleted) {
 
 ---
 
-### `getData` — ponto de entrada da listagem
+### `getData` — listing entry point
 
 `getData(Request $request): LengthAwarePaginator`
 
-Ponto de entrada único para a listagem paginada da API. Roteia automaticamente para o método de busca correto:
+Single entry point for the paginated API listing. Automatically routes to the correct search method:
 
 ```
-request tem ?search=    → advancedSearch()
-request tem ?searchLike= → searchLike()
-caso contrário           → findAllFieldsAnd()
+request has ?search=     → advancedSearch()
+request has ?searchLike= → searchLike()
+otherwise                → findAllFieldsAnd()
 ```
 
-Validações internas:
-- `order` é validado contra as colunas reais da tabela (prevenção de SQL injection)
-- `direction` aceita apenas `ASC` ou `DESC`
-- `relations` é filtrado por `$allowedRelations` quando definido
+Internal validations:
+- `order` is validated against real table columns (SQL injection prevention)
+- `direction` accepts only `ASC` or `DESC`
+- `relations` is filtered by `$allowedRelations` when defined
 
 ```php
-// No controller — chamada única
+// In the controller — single call
 public function index(Request $request): JsonResponse
 {
     $products = $this->service->getData($request);
     return BaseResponse::paginated($products, 'OK');
 }
 
-// Exemplos de requests atendidos:
-// GET /api/v1/products                          → AND filter por campos
-// GET /api/v1/products?search=ração             → OR LIKE em todas as colunas
-// GET /api/v1/products?searchLike=ração,price}50 → LIKE + price >= 50
-// GET /api/v1/products?active=1&category_id=3   → AND exato
-// GET /api/v1/products?order=name&direction=ASC → ordenação
-// GET /api/v1/products?limit=50&page=2          → paginação
-// GET /api/v1/products?relations=category       → eager-load
-// GET /api/v1/products?fields=id,name,price     → SELECT parcial
+// Examples of handled requests:
+// GET /api/v1/products                           → AND filter by fields
+// GET /api/v1/products?search=feed               → OR LIKE on all columns
+// GET /api/v1/products?searchLike=feed,price}50  → LIKE + price >= 50
+// GET /api/v1/products?active=1&category_id=3    → exact AND
+// GET /api/v1/products?order=name&direction=ASC  → ordering
+// GET /api/v1/products?limit=50&page=2           → pagination
+// GET /api/v1/products?relations=category        → eager-load
+// GET /api/v1/products?fields=id,name,price      → partial SELECT
 ```
 
 ---
 
-### Delegações para o Repository
+### Repository Delegations
 
-Todos os métodos avançados do repository estão disponíveis no service com a mesma assinatura:
+All advanced repository methods are available in the service with the same signature:
 
 ```php
-// Busca por coluna/valor
+// Search by column/value
 $this->productService->findBy('status', 'active')->get();
 
-// Busca com whereIn
+// Search with whereIn
 $this->productService->findByIn('status', ['active', 'featured'], ['category']);
 
-// Update em lote
+// Batch update
 $this->productService->updateBatch([1, 2, 3], ['active' => false]);
 
-// Sem eventos
+// Without events
 $this->productService->updateQuietly(['synced_at' => now()], 42);
 $this->productService->createQuietly($data);
 
-// Hint de índice MySQL
+// MySQL index hint
 $this->productService->useIndex('idx_status')->where('status', 'active')->get();
 ```
 
 ---
 
-## Camada de API
+## API Layer
 
 ### BaseApiController
 
 `App\Http\Controllers\API\BaseApiController`
 
-Gerado por `ptah:forge --api` em `app/Http/Controllers/API/`. Centraliza o uso de `BaseResponse` e fornece helpers de resposta para todos os controllers de API.
+Generated by `ptah:forge --api` in `app/Http/Controllers/API/`. Centralises the use of `BaseResponse` and provides response helpers for all API controllers.
 
 ```php
-// Os controllers gerados estendem esta classe
+// Generated controllers extend this class
 class ProductApiController extends BaseApiController { ... }
 ```
 
-| Método protegido | Descrição |
+| Protected method | Description |
 |---|---|
-| `successResponse($data, $message, $status)` | Resposta genérica de sucesso |
-| `paginatedResponse($paginator, $message)` | Resposta paginada com meta |
-| `errorResponse($message, $status, $errors)` | Resposta de erro com código HTTP |
+| `successResponse($data, $message, $status)` | Generic success response |
+| `paginatedResponse($paginator, $message)` | Paginated response with meta |
+| `errorResponse($message, $status, $errors)` | Error response with HTTP code |
 
 ---
 
-### Controller gerado (`ptah:forge --api`)
+### Generated Controller (`ptah:forge --api`)
 
-O comando `php artisan ptah:forge Product --api` gera um `ProductApiController` com os 5 endpoints padrão REST. Todos usam `BaseResponse` para formato consistente de resposta.
+The command `php artisan ptah:forge Product --api` generates a `ProductApiController` with the 5 standard REST endpoints. All use `BaseResponse` for a consistent response format.
 
 #### `index(Request $request): JsonResponse`
 
@@ -737,7 +737,7 @@ O comando `php artisan ptah:forge Product --api` gera um `ProductApiController` 
 GET /api/v1/products
 ```
 
-Delega para `$service->getData($request)` — suporta todos os params de query (ver tabela abaixo).
+Delegates to `$service->getData($request)` — supports all query params (see table below).
 
 ```json
 {
@@ -756,12 +756,12 @@ POST /api/v1/products
 Content-Type: application/json
 ```
 
-Valida via `CreateProductApiRequest`, cria via service e retorna HTTP 201.
+Validates via `CreateProductApiRequest`, creates via service and returns HTTP 201.
 
 ```json
 {
   "message": "Product created successfully",
-  "data": { "id": 1, "name": "Ração Premium", "price": 49.90 }
+  "data": { "id": 1, "name": "Premium Feed", "price": 49.90 }
 }
 ```
 
@@ -773,12 +773,12 @@ Valida via `CreateProductApiRequest`, cria via service e retorna HTTP 201.
 GET /api/v1/products/{id}
 ```
 
-Retorna HTTP 200 com o resource ou HTTP 404 se não encontrado.
+Returns HTTP 200 with the resource or HTTP 404 if not found.
 
 ```json
 {
   "message": "Product returned successfully",
-  "data": { "id": 1, "name": "Ração Premium" }
+  "data": { "id": 1, "name": "Premium Feed" }
 }
 ```
 
@@ -791,12 +791,12 @@ PUT /api/v1/products/{id}
 Content-Type: application/json
 ```
 
-Valida, verifica existência (HTTP 404 se não encontrado), atualiza e retorna HTTP 200.
+Validates, checks existence (HTTP 404 if not found), updates and returns HTTP 200.
 
 ```json
 {
   "message": "Product updated successfully",
-  "data": { "id": 1, "name": "Ração Premium Plus", "price": 59.90 }
+  "data": { "id": 1, "name": "Premium Feed Plus", "price": 59.90 }
 }
 ```
 
@@ -808,65 +808,65 @@ Valida, verifica existência (HTTP 404 se não encontrado), atualiza e retorna H
 DELETE /api/v1/products/{id}
 ```
 
-Retorna HTTP 204 (sem corpo) em caso de sucesso, HTTP 404 se não encontrado.
+Returns HTTP 204 (no body) on success, HTTP 404 if not found.
 
 ---
 
-### Parâmetros de query da API
+### API Query Parameters
 
-Todos disponíveis em `GET /api/v1/{resource}`:
+All available on `GET /api/v1/{resource}`:
 
-| Parâmetro | Tipo | Exemplo | Descrição |
+| Parameter | Type | Example | Description |
 |---|---|---|---|
-| `limit` | `int` | `?limit=25` | Itens por página (padrão: 15) |
-| `page` | `int` | `?page=2` | Página atual |
-| `order` | `string` | `?order=name` | Coluna de ordenação (validada contra schema) |
-| `direction` | `ASC\|DESC` | `?direction=ASC` | Direção de ordenação (padrão: DESC) |
-| `fields` | `string` (csv) | `?fields=id,name,price` | Colunas a retornar — SELECT parcial (validadas) |
-| `relations` | `string` (csv) | `?relations=category,images` | Relações para eager-load |
-| `search` | `string` (csv) | `?search=ração,premium` | OR LIKE em todas as colunas para cada termo |
-| `searchLike` | `string` (csv) | `?searchLike=ração,price}50` | LIKE incremental com suporte a operadores |
-| `searchLikeType` | `AND\|OR` | `?searchLikeType=OR` | Combinação entre termos do searchLike (padrão: AND) |
+| `limit` | `int` | `?limit=25` | Items per page (default: 15) |
+| `page` | `int` | `?page=2` | Current page |
+| `order` | `string` | `?order=name` | Sort column (validated against schema) |
+| `direction` | `ASC\|DESC` | `?direction=ASC` | Sort direction (default: DESC) |
+| `fields` | `string` (csv) | `?fields=id,name,price` | Columns to return — partial SELECT (validated) |
+| `relations` | `string` (csv) | `?relations=category,images` | Relations for eager-loading |
+| `search` | `string` (csv) | `?search=feed,premium` | OR LIKE on all columns for each term |
+| `searchLike` | `string` (csv) | `?searchLike=feed,price}50` | Incremental LIKE with operator support |
+| `searchLikeType` | `AND\|OR` | `?searchLikeType=OR` | Combination between searchLike terms (default: AND) |
 | `whereIn` | `string` | `?whereIn=status:active,featured` | `WHERE status IN ('active','featured')` |
-| `additionalQueries` | `string` | `?additionalQueries=price:>=:50;active:=:1` | Condições adicionais com operador explícito |
+| `additionalQueries` | `string` | `?additionalQueries=price:>=:50;active:=:1` | Additional conditions with explicit operator |
 
-#### `searchLike` — tokens de operador
+#### `searchLike` — operator tokens
 
-| Token | SQL gerado | Exemplo |
+| Token | Generated SQL | Example |
 |---|---|---|
 | `col}val` | `col >= val` | `price}50` → `price >= 50` |
 | `col{val` | `col <= val` | `price{100` → `price <= 100` |
 | `col>val` | `col > val` | `quantity>0` → `quantity > 0` |
 | `col<val` | `col < val` | `stock<5` → `stock < 5` |
-| `termo` | `LIKE %termo%` em todas as colunas | `ração` → busca em todos os campos |
+| `term` | `LIKE %term%` on all columns | `feed` → searches all fields |
 
-#### `whereIn` — formato
+#### `whereIn` — format
 
 ```
 ?whereIn=status:active,featured;category_id:1,2,3
-         └── col : valores csv  └── segundo filtro separado por ;
+         └── col : csv values   └── second filter separated by ;
 ```
 
-#### `additionalQueries` — formato
+#### `additionalQueries` — format
 
 ```
-?additionalQueries=price:>=:50;active:=:1;name:LIKE:%ração%
-                   └── col:op:val separados por ;
+?additionalQueries=price:>=:50;active:=:1;name:LIKE:%feed%
+                   └── col:op:val separated by ;
 ```
 
-Operadores aceitos: `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, `NOT LIKE`
+Accepted operators: `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, `NOT LIKE`
 
 ---
 
-## Fluxo completo — exemplo ponta a ponta
+## Full Flow — end-to-end example
 
-### 1. Gerar os arquivos
+### 1. Generate the files
 
 ```bash
 php artisan ptah:forge Product --api
 ```
 
-Gera:
+Generates:
 - `app/Models/Product.php`
 - `app/Repositories/ProductRepository.php`
 - `app/Contracts/ProductRepositoryInterface.php`
@@ -876,7 +876,7 @@ Gera:
 - `app/Http/Requests/API/UpdateProductApiRequest.php`
 - `app/Http/Resources/ProductResource.php`
 
-### 2. Registrar o bind no `AppServiceProvider`
+### 2. Register the binding in `AppServiceProvider`
 
 ```php
 $this->app->bind(
@@ -885,38 +885,38 @@ $this->app->bind(
 );
 ```
 
-### 3. Registrar a rota
+### 3. Register the route
 
 ```php
 // routes/api.php
 Route::apiResource('products', ProductApiController::class);
 ```
 
-### 4. Usar — requests de exemplo
+### 4. Use — example requests
 
 ```bash
-# Listar com busca e paginação
-GET /api/v1/products?search=ração&limit=20&order=name&direction=ASC
+# List with search and pagination
+GET /api/v1/products?search=feed&limit=20&order=name&direction=ASC
 
-# Listar apenas produtos ativos da categoria 3
+# List only active products in category 3
 GET /api/v1/products?active=1&category_id=3&relations=category
 
-# Busca incremental: nome contém 'ração' E preço >= 50
-GET /api/v1/products?searchLike=ração,price}50
+# Incremental search: name contains 'feed' AND price >= 50
+GET /api/v1/products?searchLike=feed,price}50
 
-# Criar
+# Create
 POST /api/v1/products
-{ "name": "Ração Premium", "price": 49.90, "active": true }
+{ "name": "Premium Feed", "price": 49.90, "active": true }
 
-# Atualizar
+# Update
 PUT /api/v1/products/1
 { "price": 59.90 }
 
-# Remover
+# Delete
 DELETE /api/v1/products/1
 ```
 
-### 5. Adicionar lógica de negócio no service
+### 5. Add business logic in the service
 
 ```php
 class ProductService extends BaseService
@@ -928,7 +928,7 @@ class ProductService extends BaseService
         parent::__construct($repository);
     }
 
-    // Método customizado — usa apenas métodos do repository
+    // Custom method — uses only repository methods
     public function deactivateByCategory(int $categoryId): int
     {
         return $this->repository->updateBatch(
@@ -941,16 +941,16 @@ class ProductService extends BaseService
 
 ---
 
-## Segurança
+## Security
 
-| Risco | Mitigação implementada |
+| Risk | Mitigation implemented |
 |---|---|
-| SQL Injection via `order` | Coluna validada contra `getTableColumns()` antes de aplicar |
-| SQL Injection via `fields` | Colunas validadas contra `getTableColumns()` — desconhecidas são descartadas |
-| SQL Injection via `findAllFieldsAnd` | Params de request validados contra `getTableColumns()` |
-| SQL Injection via `additionalQueries` | Coluna validada contra schema; operador validado contra `ALLOWED_OPERATORS` whitelist |
-| SQL Injection via `whereIn` | Coluna validada contra `getTableColumns()` |
-| Eager-load arbitrário | `$allowedRelations` no service filtra relações não permitidas |
-| Operadores arbitrários | Apenas `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, `NOT LIKE` são aceitos |
+| SQL Injection via `order` | Column validated against `getTableColumns()` before applying |
+| SQL Injection via `fields` | Columns validated against `getTableColumns()` — unknown ones are discarded |
+| SQL Injection via `findAllFieldsAnd` | Request params validated against `getTableColumns()` |
+| SQL Injection via `additionalQueries` | Column validated against schema; operator validated against `ALLOWED_OPERATORS` whitelist |
+| SQL Injection via `whereIn` | Column validated against `getTableColumns()` |
+| Arbitrary eager-load | `$allowedRelations` in the service filters out disallowed relations |
+| Arbitrary operators | Only `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, `NOT LIKE` are accepted |
 
-> 📄 Ver também: [BaseCrud.md](BaseCrud.md) · [SearchDropdown.md](SearchDropdown.md) · [Commands.md](Commands.md)
+> 📄 See also: [BaseCrud.md](BaseCrud.md) · [SearchDropdown.md](SearchDropdown.md) · [Commands.md](Commands.md)

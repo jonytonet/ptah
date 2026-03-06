@@ -1,39 +1,39 @@
-# SearchDropdown — Documentação Completa
+# SearchDropdown — Complete Documentation
 
-O Ptah oferece **dois sabores** de SearchDropdown:
+Ptah offers **two flavours** of SearchDropdown:
 
-| Sabor | Quando usar |
+| Flavour | When to use |
 |---|---|
-| [Componente standalone](#componente-standalone) | Em qualquer view, fora do BaseCrud |
-| [Inline no BaseCrud](#inline-no-basecrud) | Campo em formulário ou filtro gerenciado pelo BaseCrud |
+| [Standalone component](#standalone-component) | In any view, outside BaseCrud |
+| [Inline in BaseCrud](#inline-in-basecrud) | Form field or filter managed by BaseCrud |
 
 ---
 
-## Índice
+## Table of Contents
 
-1. [Componente Standalone](#componente-standalone)
-   - [Props disponíveis](#props-disponíveis)
-   - [Evento de retorno](#evento-de-retorno)
-   - [Via model direto](#via-model-direto)
-   - [Via service personalizado](#via-service-personalizado-standalone)
-   - [Máscaras de formatação](#máscaras-de-formatação)
-   - [Múltiplos labels](#múltiplos-labels)
+1. [Standalone Component](#standalone-component)
+   - [Available props](#available-props)
+   - [Return event](#return-event)
+   - [Via direct model](#via-direct-model)
+   - [Via custom service](#via-custom-service-standalone)
+   - [Format masks](#format-masks)
+   - [Multiple labels](#multiple-labels)
    - [SearchDropdownDTO](#searchdropdowndto)
-2. [Inline no BaseCrud](#inline-no-basecrud)
-   - [Chaves de configuração](#chaves-de-configuração)
+2. [Inline in BaseCrud](#inline-in-basecrud)
+   - [Configuration keys](#configuration-keys)
    - [Via model](#via-model)
-   - [Via service personalizado](#via-service-personalizado-basecrud)
-   - [Filtro no painel lateral](#filtro-no-painel-lateral)
-   - [Fluxo interno](#fluxo-interno)
-   - [Estado interno (propriedades)](#estado-interno-propriedades)
-3. [Contrato de retorno do service](#contrato-de-retorno-do-service)
-4. [Exemplos completos](#exemplos-completos)
+   - [Via custom service](#via-custom-service-basecrud)
+   - [Filter in the side panel](#filter-in-the-side-panel)
+   - [Internal flow](#internal-flow)
+   - [Internal state (properties)](#internal-state-properties)
+3. [Service return contract](#service-return-contract)
+4. [Full examples](#full-examples)
 
 ---
 
-## Componente Standalone
+## Standalone Component
 
-O componente `ptah-search-dropdown` é um Livewire component independente que pode ser usado **em qualquer parte do projeto** — dashboards, formulários customizados, sidebars, etc.
+The `ptah-search-dropdown` component is an independent Livewire component that can be used **anywhere in the project** — dashboards, custom forms, sidebars, etc.
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -43,62 +43,62 @@ O componente `ptah-search-dropdown` é um Livewire component independente que po
 ])
 ```
 
-### Props disponíveis
+### Available props
 
-#### Configuração do campo
+#### Field configuration
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `model` | `string` | `''` | Nome do model (ex: `Product`) ou subdiretório (`Purchase/Order`) |
-| `value` | `string` | `'id'` | Coluna cujo valor é retornado no evento |
-| `label` | `string` | `'name'` | Coluna exibida como label principal |
-| `labelTwo` | `string\|null` | `null` | Coluna exibida como segundo label |
-| `labelThree` | `string\|null` | `null` | Coluna exibida como terceiro label |
-| `arraySearch` | `array` | `[]` | Colunas extras incluídas no LIKE além dos labels |
+| `model` | `string` | `''` | Model name (e.g. `Product`) or sub-directory (`Purchase/Order`) |
+| `value` | `string` | `'id'` | Column whose value is returned in the event |
+| `label` | `string` | `'name'` | Column displayed as the main label |
+| `labelTwo` | `string\|null` | `null` | Column displayed as the second label |
+| `labelThree` | `string\|null` | `null` | Column displayed as the third label |
+| `arraySearch` | `array` | `[]` | Extra columns included in the LIKE besides the labels |
 
-#### Dados e filtros
+#### Data and filters
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `dataFilter` | `array` | `[]` | Filtros WHERE extras: `[['col', 'op', 'val']]` ou `['col' => 'val']` |
-| `limit` | `int` | `10` | Limite de resultados retornados |
-| `orderByRaw` | `string` | `'id asc'` | Cláusula ORDER BY raw |
+| `dataFilter` | `array` | `[]` | Extra WHERE filters: `[['col', 'op', 'val']]` or `['col' => 'val']` |
+| `limit` | `int` | `10` | Limit of returned results |
+| `orderByRaw` | `string` | `'id asc'` | Raw ORDER BY clause |
 
-#### Service personalizado
+#### Custom service
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `useService` | `string\|null` | `null` | Nome do método no service a ser chamado. Quando definido, usa service em vez de model direto |
+| `useService` | `string\|null` | `null` | Name of the method in the service to call. When set, uses service instead of direct model |
 
 #### UI
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `key` | `string` | `''` | Chave única do componente para `wire:key` |
-| `placeholder` | `string` | `'Select'` | Texto placeholder do input |
-| `startList` | `string` | `'bottom'` | Posição da lista: `'top'` ou `'bottom'` |
-| `initWithData` | `bool` | `true` | Se `true`, carrega itens sem precisar digitar |
+| `key` | `string` | `''` | Unique component key for `wire:key` |
+| `placeholder` | `string` | `'Select'` | Input placeholder text |
+| `startList` | `string` | `'bottom'` | List position: `'top'` or `'bottom'` |
+| `initWithData` | `bool` | `true` | If `true`, loads items without needing to type |
 
-#### Evento
+#### Event
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `listens` | `string` | `'searchDropdownResult'` | Nome do evento Livewire 4 disparado ao selecionar um item |
-| `coringa` | `string` | `''` | Valor extra passado no payload do evento (útil para identificar qual SD disparou) |
+| `listens` | `string` | `'searchDropdownResult'` | Name of the Livewire 4 event dispatched when an item is selected |
+| `coringa` | `string` | `''` | Extra value passed in the event payload (useful to identify which SD fired) |
 
-#### Máscaras
+#### Masks
 
-| Prop | Tipo | Padrão | Descrição |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `maskOne` | `string` | `'defaultMask'` | Máscara aplicada ao `label` |
-| `maskTwo` | `string` | `'defaultMask'` | Máscara aplicada ao `labelTwo` |
-| `maskThree` | `string` | `'defaultMask'` | Máscara aplicada ao `labelThree` |
+| `maskOne` | `string` | `'defaultMask'` | Mask applied to `label` |
+| `maskTwo` | `string` | `'defaultMask'` | Mask applied to `labelTwo` |
+| `maskThree` | `string` | `'defaultMask'` | Mask applied to `labelThree` |
 
 ---
 
-### Evento de retorno
+### Return event
 
-Quando o usuário seleciona um item, o componente dispara:
+When the user selects an item, the component dispatches:
 
 ```php
 $this->dispatch($this->listens, [
@@ -110,7 +110,7 @@ $this->dispatch($this->listens, [
 ]);
 ```
 
-Para capturar no componente pai:
+To capture in the parent component:
 
 ```php
 use Livewire\Attributes\On;
@@ -123,7 +123,7 @@ public function onProductSelected(array $data): void
 }
 ```
 
-Ou em JavaScript/Alpine:
+Or in JavaScript/Alpine:
 
 ```js
 window.addEventListener('onProductSelected', (event) => {
@@ -133,9 +133,9 @@ window.addEventListener('onProductSelected', (event) => {
 
 ---
 
-### Via model direto
+### Via direct model
 
-O modo padrão. O componente consulta `App\Models\{model}` com `LOWER(label) LIKE ?`:
+The default mode. The component queries `App\Models\{model}` with `LOWER(label) LIKE ?`:
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -148,7 +148,7 @@ O modo padrão. O componente consulta `App\Models\{model}` com `LOWER(label) LIK
 ])
 ```
 
-**Subdiretório:**
+**Sub-directory:**
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -158,7 +158,7 @@ O modo padrão. O componente consulta `App\Models\{model}` com `LOWER(label) LIK
 ])
 ```
 
-**Com filtro extra (ex: apenas ativos):**
+**With extra filter (e.g. active only):**
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -171,15 +171,15 @@ O modo padrão. O componente consulta `App\Models\{model}` com `LOWER(label) LIK
 
 ---
 
-### Via service personalizado (standalone)
+### Via custom service (standalone)
 
-Quando a lógica de busca é mais complexa (JOINs, escopos, multi-tenant, regras de negócio), use a arquitetura **Interface → Repository → Service** que separa as responsabilidades corretamente:
+When the search logic is more complex (JOINs, scopes, multi-tenant, business rules), use the **Interface → Repository → Service** architecture, which correctly separates responsibilities:
 
-- **Repository** — única camada que faz queries ao banco;
-- **Service** — recebe o Repository via injeção, chama a query e trata/transforma os dados;
-- **SearchDropdown** — chama o Service via `useService`, sem saber nada sobre persistência.
+- **Repository** — the only layer that queries the database;
+- **Service** — receives the Repository via injection, calls the query and processes/transforms the data;
+- **SearchDropdown** — calls the Service via `useService`, without knowing anything about persistence.
 
-#### 1. Interface (Contrato)
+#### 1. Interface (Contract)
 
 ```php
 // app/Contracts/BusinessPartnerRepositoryInterface.php
@@ -194,7 +194,7 @@ interface BusinessPartnerRepositoryInterface
 }
 ```
 
-#### 2. Repository (acesso ao banco)
+#### 2. Repository (database access)
 
 ```php
 // app/Repositories/BusinessPartnerRepository.php
@@ -243,7 +243,7 @@ class BusinessPartnerRepository implements BusinessPartnerRepositoryInterface
 }
 ```
 
-#### 3. Service (lógica de negócio e transformação de dados)
+#### 3. Service (business logic and data transformation)
 
 ```php
 // app/Services/BusinessPartnerService.php
@@ -260,9 +260,9 @@ class BusinessPartnerService
     ) {}
 
     /**
-     * O service é responsável por transformar os dados antes de entregar
-     * ao componente — aqui remove a máscara do CNPJ (deixa só dígitos)
-     * para que a prop maskTwo='cnpj' formate visualmente no dropdown.
+     * The service is responsible for transforming data before delivering
+     * it to the component — here it strips the CNPJ mask (leaves only digits)
+     * so the maskTwo='cnpj' prop formats it visually in the dropdown.
      */
     public function searchDropDown(SearchDropdownDTO $dto): Collection
     {
@@ -280,12 +280,12 @@ class BusinessPartnerService
 
 ```blade
 @livewire('ptah-search-dropdown', [
-    'model'      => 'BusinessPartner',   // resolve App\Services\BusinessPartnerService
+    'model'      => 'BusinessPartner',   // resolves App\Services\BusinessPartnerService
     'useService' => 'searchDropDown',
     'value'      => 'id',
     'label'      => 'name',
     'labelTwo'   => 'cnpj',
-    'maskTwo'    => 'cnpj',              // formata os dígitos do CNPJ na exibição
+    'maskTwo'    => 'cnpj',              // formats CNPJ digits on display
     'listens'    => 'onPartnerSelected',
 ])
 ```
@@ -300,30 +300,30 @@ $this->app->bind(
 );
 ```
 
-> O Service é resolvido via IoC com `app()->make('App\Services\BusinessPartnerService')`, portanto a injeção do Repository acontece automaticamente.
+> The Service is resolved via IoC with `app()->make('App\Services\BusinessPartnerService')`, so Repository injection happens automatically.
 
 ---
 
-### Máscaras de formatação
+### Format masks
 
-Aplicadas ao exibir os labels na lista de resultados:
+Applied when displaying labels in the results list:
 
-| Máscara | Formato |
+| Mask | Format |
 |---|---|
-| `defaultMask` | Sem transformação |
+| `defaultMask` | No transformation |
 | `cnpj` | `00.000.000/0000-00` |
 | `cpf` | `000.000.000-00` |
 | `money` | `R$ 1.234,56` |
-| `phone` | `(11) 9 9999-9999` ou `(11) 9999-9999` |
+| `phone` | `(11) 9 9999-9999` or `(11) 9999-9999` |
 | `date` | `dd/mm/yyyy` (via `Carbon::parse`) |
-| `App\Helpers\Masks::format` | Chamada estática — `Class::method($value)` |
-| `App\Services\MaskService@format` | Instância via IoC — `app(Class)->method($value)` |
-| `nomeMetodo` | Método público do próprio componente |
+| `App\Helpers\Masks::format` | Static call — `Class::method($value)` |
+| `App\Services\MaskService@format` | IoC instance — `app(Class)->method($value)` |
+| `nomeMetodo` | Public method on the component itself |
 
-**Máscaras dinâmicas** permitem usar qualquer helper ou service de formatação sem depender dos built-ins:
+**Dynamic masks** allow using any formatting helper or service without relying on built-ins:
 
 ```blade
-{{-- Máscara estática --}}
+{{-- Static mask --}}
 @livewire('ptah-search-dropdown', [
     'model'   => 'Supplier',
     'label'   => 'trade_name',
@@ -332,7 +332,7 @@ Aplicadas ao exibir os labels na lista de resultados:
     'listens' => 'onSupplierSelected',
 ])
 
-{{-- Máscara via IoC --}}
+{{-- IoC mask --}}
 @livewire('ptah-search-dropdown', [
     'model'   => 'Product',
     'label'   => 'name',
@@ -344,9 +344,9 @@ Aplicadas ao exibir os labels na lista de resultados:
 
 ---
 
-### Múltiplos labels
+### Multiple labels
 
-Exibe até 3 colunas no item da lista — `value` sempre em negrito, seguido pelos labels:
+Displays up to 3 columns in the list item — `value` always in bold, followed by the labels:
 
 ```
 [id em negrito] - [label] - [labelTwo] - [labelThree]
@@ -368,7 +368,7 @@ Exibe até 3 colunas no item da lista — `value` sempre em negrito, seguido pel
 
 ### SearchDropdownDTO
 
-Estrutura passada ao service quando `useService` está definido:
+Structure passed to the service when `useService` is defined:
 
 ```php
 namespace Ptah\DTO;
@@ -376,11 +376,11 @@ namespace Ptah\DTO;
 readonly class SearchDropdownDTO
 {
     public function __construct(
-        public ?string $searchTerm,   // Termo digitado (null = sem filtro)
-        public string  $value,        // Coluna do valor (ex: 'id')
-        public string  $label,        // Coluna do label principal (ex: 'name')
-        public ?string $labelTwo   = null, // Segunda coluna de label (opcional)
-        public ?string $labelThree = null, // Terceira coluna de label (opcional)
+        public ?string $searchTerm,   // Typed term (null = no filter)
+        public string  $value,        // Value column (e.g. 'id')
+        public string  $label,        // Main label column (e.g. 'name')
+        public ?string $labelTwo   = null, // Second label column (optional)
+        public ?string $labelThree = null, // Third label column (optional)
         public string  $orderByRaw = 'id asc',
         public int     $limit      = 10,
         public array   $arraySearch = [],
@@ -391,32 +391,32 @@ readonly class SearchDropdownDTO
 
 ---
 
-## Inline no BaseCrud
+## Inline in BaseCrud
 
-O SearchDropdown também funciona embutido nos formulários e no painel de filtros do BaseCrud, gerenciado pelo trait `HasCrudSearchDropdown`.
+SearchDropdown also works embedded in BaseCrud forms and the filter panel, managed by the `HasCrudSearchDropdown` trait.
 
-Não é necessário instanciar nenhum componente — basta configurar a coluna com `colsTipo: searchdropdown`.
+No component instantiation is needed — just configure the column with `colsTipo: searchdropdown`.
 
-### Chaves de configuração
+### Configuration keys
 
-#### Coluna de formulário
+#### Form column
 
-| Chave | Tipo | Padrão | Descrição |
+| Key | Type | Default | Description |
 |---|---|---|---|
-| `colsSDModel` | `string` | — | Model ou service class (ex: `BusinessPartner`, `Product/ProductService/search`) |
-| `colsSDLabel` | `string` | `'name'` | Coluna exibida como label |
-| `colsSDValor` | `string` | `'id'` | Coluna usada como valor (salvo em `formData`) |
-| `colsSDOrder` | `string` | `'{label} ASC'` | ORDER BY raw |
-| `colsSDTipo` | `'model'\|'service'` | `'model'` | Modo de busca |
-| `colsSDLimit` | `int` | `15` | Limite de resultados |
-| `colsSDMode` | `'create'\|'edit'\|'both'` | `'both'` | Em qual modo do modal o campo aparece |
-| `colsSDLabelTwo` | `string\|null` | `null` | Segunda coluna de label no item da lista |
-| `colsRelacao` | `string\|null` | `null` | Nome da relação Eloquent usada para pré-preencher o label no modo edição |
-| `colsRelacaoExibe` | `string\|null` | `null` | Atributo da relação exibido no input no modo edição |
+| `colsSDModel` | `string` | — | Model or service class (e.g. `BusinessPartner`, `Product/ProductService/search`) |
+| `colsSDLabel` | `string` | `'name'` | Column displayed as the label |
+| `colsSDValor` | `string` | `'id'` | Column used as the value (saved in `formData`) |
+| `colsSDOrder` | `string` | `'{label} ASC'` | Raw ORDER BY |
+| `colsSDTipo` | `'model'\|'service'` | `'model'` | Search mode |
+| `colsSDLimit` | `int` | `15` | Results limit |
+| `colsSDMode` | `'create'\|'edit'\|'both'` | `'both'` | Which modal mode the field appears in |
+| `colsSDLabelTwo` | `string\|null` | `null` | Second label column in the list item |
+| `colsRelacao` | `string\|null` | `null` | Eloquent relation name used to pre-fill the label in edit mode |
+| `colsRelacaoExibe` | `string\|null` | `null` | Relation attribute displayed in the input in edit mode |
 
-#### Chaves de filtro (painel lateral)
+#### Filter keys (side panel)
 
-Para usar SD como filtro, defina no `customFilters` do CrudConfig:
+To use SD as a filter, define in the `customFilters` of CrudConfig:
 
 ```json
 "customFilters": [
@@ -437,7 +437,7 @@ Para usar SD como filtro, defina no `customFilters` do CrudConfig:
 ```json
 {
   "colsNomeFisico": "business_partner_id",
-  "colsNomeLogico": "Parceiro",
+  "colsNomeLogico": "Business Partner",
   "colsTipo": "searchdropdown",
   "colsGravar": true,
   "colsSDModel": "BusinessPartner",
@@ -451,16 +451,16 @@ Para usar SD como filtro, defina no `customFilters` do CrudConfig:
 }
 ```
 
-**`colsRelacao` + `colsRelacaoExibe`** fazem o label ser pré-preenchido no modo **edição**: o Ptah lê `$record->businessPartner->name` e exibe no input sem precisar de nova consulta.
+**`colsRelacao` + `colsRelacaoExibe`** cause the label to be pre-filled in **edit** mode: Ptah reads `$record->businessPartner->name` and displays it in the input without a new query.
 
 ---
 
-### Via service personalizado (BaseCrud)
+### Via custom service (BaseCrud)
 
 ```json
 {
   "colsNomeFisico": "product_id",
-  "colsNomeLogico": "Produto",
+  "colsNomeLogico": "Product",
   "colsTipo": "searchdropdown",
   "colsGravar": true,
   "colsSDModel": "Product\\ProductService\\searchActive",
@@ -468,21 +468,21 @@ Para usar SD como filtro, defina no `customFilters` do CrudConfig:
 }
 ```
 
-**Formato do `colsSDModel` para service:**
+**Format of `colsSDModel` for service:**
 
 ```
 {Namespace}\\{ClassName}\\{methodName}
 ```
 
-O Ptah extrai a última parte como método e o restante como classe:
+Ptah extracts the last segment as the method and the rest as the class:
 
 ```
 Product\\ProductService\\searchActive
 → class:  App\Services\Product\ProductService
-→ método: searchActive($query)
+→ method: searchActive($query)
 ```
 
-O método recebe `string $query` e **deve retornar** `array<int, array{value: mixed, label: string}>`:
+The method receives `string $query` and **must return** `array<int, array{value: mixed, label: string}>`:
 
 ```php
 namespace App\Services\Product;
@@ -501,131 +501,131 @@ class ProductService
 }
 ```
 
-> **Nota:** O Ptah resolve o service via `app($class)`, então injeção de dependência funciona.
+> **Note:** Ptah resolves the service via `app($class)`, so dependency injection works.
 
 ---
 
-### Filtro no painel lateral
+### Filter in the side panel
 
-Quando `colsFilterType: searchdropdown` está configurado, o campo de filtro usa o mesmo mecanismo:
+When `colsFilterType: searchdropdown` is configured, the filter field uses the same mechanism:
 
-- **Foco no input** → `openFilterDropdown($field)` → carrega os N primeiros itens
-- **Digitação** → `filterSearchDropdown($field, $query)` → filtra em tempo real
-- **Seleção** → `selectFilterDropdownOption($field, $value, $label)` → armazena em `$filters[$field]` com operador `=`
-- **Limpar** → `clearFilterDropdownSelection($field)` → remove de `$filters` e reseta a paginação
+- **Input focus** → `openFilterDropdown($field)` → loads the first N items
+- **Typing** → `filterSearchDropdown($field, $query)` → filters in real time
+- **Selection** → `selectFilterDropdownOption($field, $value, $label)` → stores in `$filters[$field]` with operator `=`
+- **Clear** → `clearFilterDropdownSelection($field)` → removes from `$filters` and resets pagination
 
 ---
 
-### Fluxo interno
+### Internal flow
 
-#### Formulário (modal create/edit)
+#### Form (create/edit modal)
 
 ```
-Foco no input
+Input focus
   → openDropdown($field)
-  → sdResults[$field] = primeiros N itens (sem filtro)
+  → sdResults[$field] = first N items (no filter)
 
-Digitação (debounce 300ms)
+Typing (debounce 300ms)
   → searchDropdown($field, $query)
-  → sdResults[$field] = itens filtrados por LOWER(label) LIKE ?
+  → sdResults[$field] = items filtered by LOWER(label) LIKE ?
 
-Seleção de item
+Item selection
   → selectDropdownOption($field, $value, $label)
-  → formData[$field]   = value       ← salvo no formData
-  → sdLabels[$field]   = label       ← label exibido no input
-  → sdResults[$field]  = []          ← fecha o dropdown
+  → formData[$field]   = value       ← saved in formData
+  → sdLabels[$field]   = label       ← label displayed in the input
+  → sdResults[$field]  = []          ← closes the dropdown
   → sdSearches[$field] = ''
 ```
 
-#### Filtro no painel lateral
+#### Filter in the side panel
 
 ```
-Foco no input
+Input focus
   → openFilterDropdown($field)
-  → sdResults['filter_' . $field] = primeiros N itens
+  → sdResults['filter_' . $field] = first N items
 
-Digitação
+Typing
   → filterSearchDropdown($field, $query)
-  → sdResults['filter_' . $field] = itens filtrados
+  → sdResults['filter_' . $field] = filtered items
 
-Seleção de item
+Item selection
   → selectFilterDropdownOption($field, $value, $label)
-  → filters[$field]              = value   ← ativa o filtro na query
+  → filters[$field]              = value   ← activates the filter in the query
   → filterOperators[$field]      = '='
   → sdFilterLabels[$field]       = label
   → sdResults['filter_' . $field] = []
 
-Limpar
+Clear
   → clearFilterDropdownSelection($field)
-  → remove filters[$field], filterOperators[$field], sdFilterLabels[$field]
+  → removes filters[$field], filterOperators[$field], sdFilterLabels[$field]
   → sdResults['filter_' . $field] = []
 ```
 
 ---
 
-### Estado interno (propriedades)
+### Internal state (properties)
 
-Propriedades mantidas no componente BaseCrud pelo trait `HasCrudSearchDropdown`:
+Properties maintained in the BaseCrud component by the `HasCrudSearchDropdown` trait:
 
-| Propriedade | Tipo | Descrição |
+| Property | Type | Description |
 |---|---|---|
-| `$sdResults` | `array` | Resultados indexados por `$field` (formulário) ou `'filter_' . $field` (filtro) |
-| `$sdLabels` | `array` | Label selecionado por campo no formulário — exibido no input após seleção |
-| `$sdSearches` | `array` | Termo digitado por campo (preservado ao reabrir o dropdown) |
-| `$sdFilterLabels` | `array` | Label selecionado por campo no painel de filtros |
+| `$sdResults` | `array` | Results indexed by `$field` (form) or `'filter_' . $field` (filter) |
+| `$sdLabels` | `array` | Selected label per field in the form — displayed in the input after selection |
+| `$sdSearches` | `array` | Typed term per field (preserved when the dropdown is reopened) |
+| `$sdFilterLabels` | `array` | Selected label per field in the filter panel |
 
 ---
 
-## Contrato de retorno do service
+## Service return contract
 
-O service pode retornar `array` **ou** um `Illuminate\Support\Collection` — o componente normaliza automaticamente:
+The service can return an `array` **or** an `Illuminate\Support\Collection` — the component normalises automatically:
 
 ```php
-// Retorno como array (sempre aceito)
+// Return as array (always accepted)
 return [
-    ['value' => 1, 'label' => 'Produto A'],
-    ['value' => 2, 'label' => 'Produto B'],
+    ['value' => 1, 'label' => 'Product A'],
+    ['value' => 2, 'label' => 'Product B'],
 ];
 
-// Retorno como Collection (também aceito)
-return $this->repository->searchDropDown($dto); // Collection de models ou arrays
+// Return as Collection (also accepted)
+return $this->repository->searchDropDown($dto); // Collection of models or arrays
 ```
 
-As chaves mínimas obrigatórias no cada item:
+Minimum required keys per item:
 
-| Chave | Tipo | Descrição |
+| Key | Type | Description |
 |---|---|---|
-| `value` | `mixed` | Valor gravado no `formData` / payload do evento (normalmente o `id`) |
-| `label` | `string` | Texto exibido no input após seleção |
+| `value` | `mixed` | Value saved in `formData` / event payload (usually the `id`) |
+| `label` | `string` | Text displayed in the input after selection |
 
-Colunas adicionais para `labelTwo`/`labelThree` devem estar presentes no retorno pelo nome real da coluna:
+Additional columns for `labelTwo`/`labelThree` must be present in the return by their real column name:
 
 ```php
-// Item com labelTwo='cnpj' precisa da chave 'cnpj' no array
+// Item with labelTwo='cnpj' needs the 'cnpj' key in the array
 ['value' => 1, 'label' => 'Acme Ltda', 'cnpj' => '12345678000190']
 ```
 
-> Se o retorno não contiver a chave esperada por `labelTwo`/`labelThree`, o componente exibe string vazia naquele slot — sem erro.
+> If the return does not contain the key expected by `labelTwo`/`labelThree`, the component displays an empty string in that slot — no error.
 
 ---
 
-## Exemplos completos
+## Full examples
 
-### 1. Standalone simples — buscar cliente
+### 1. Standalone simple — search client
 
 ```blade
 {{-- View --}}
 @livewire('ptah-search-dropdown', [
-    'key'      => 'client-sd',
-    'model'    => 'Client',
-    'label'    => 'name',
-    'listens'  => 'onClientSelected',
-    'placeholder' => 'Buscar cliente...',
+    'key'         => 'client-sd',
+    'model'       => 'Client',
+    'label'       => 'name',
+    'listens'     => 'onClientSelected',
+    'placeholder' => 'Search client...',
 ])
 ```
 
 ```php
-// Componente Livewire pai
+// Parent Livewire component
 use Livewire\Attributes\On;
 
 #[On('onClientSelected')]
@@ -638,11 +638,11 @@ public function onClientSelected(array $data): void
 
 ---
 
-### 2. Standalone com serviço e múltiplos labels
+### 2. Standalone with service and multiple labels
 
-Veja o exemplo SOLID completo na seção [Via service personalizado](#via-service-personalizado-standalone) — ele usa `BusinessPartner` com `labelTwo='cnpj'` e `maskTwo='cnpj'`.
+See the full SOLID example in the [Via custom service](#via-custom-service-standalone) section — it uses `BusinessPartner` with `labelTwo='cnpj'` and `maskTwo='cnpj'`.
 
-Exemplo resumido de como usar no Blade após configurar Interface + Repository + Service:
+Abbreviated example of how to use it in Blade after configuring Interface + Repository + Service:
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -658,16 +658,16 @@ Exemplo resumido de como usar no Blade após configurar Interface + Repository +
 ])
 ```
 
-> **Nota:** Para exibir `cnpj` via `labelTwo`, o array/Collection retornado pelo Service deve incluir a chave `cnpj` em cada item.
+> **Note:** To display `cnpj` via `labelTwo`, the array/Collection returned by the Service must include the `cnpj` key in each item.
 
 ---
 
-### 3. BaseCrud — campo de formulário via model
+### 3. BaseCrud — form field via model
 
 ```json
 {
   "colsNomeFisico":    "category_id",
-  "colsNomeLogico":    "Categoria",
+  "colsNomeLogico":    "Category",
   "colsTipo":          "searchdropdown",
   "colsGravar":        true,
   "colsSDModel":       "Category",
@@ -683,12 +683,12 @@ Exemplo resumido de como usar no Blade após configurar Interface + Repository +
 
 ---
 
-### 4. BaseCrud — campo de formulário via service
+### 4. BaseCrud — form field via service
 
 ```json
 {
   "colsNomeFisico": "product_id",
-  "colsNomeLogico": "Produto",
+  "colsNomeLogico": "Product",
   "colsTipo":       "searchdropdown",
   "colsGravar":     true,
   "colsSDModel":    "Inventory\\ProductService\\searchAvailable",
@@ -714,13 +714,13 @@ public function searchAvailable(string $query): array
 
 ---
 
-### 5. BaseCrud — filtro no painel lateral via service
+### 5. BaseCrud — filter in the side panel via service
 
 ```json
 "customFilters": [
   {
     "field":           "supplier_id",
-    "colsNomeLogico":  "Fornecedor",
+    "colsNomeLogico":  "Supplier",
     "colsFilterType":  "searchdropdown",
     "colsSDModel":     "Supplier\\SupplierService\\searchActive",
     "colsSDTipo":      "service",
@@ -732,4 +732,4 @@ public function searchAvailable(string $query): array
 
 ---
 
-> 📄 Ver também: [BaseCrud.md](BaseCrud.md) · [Configuration.md](Configuration.md) · [Commands.md](Commands.md)
+> 📄 See also: [BaseCrud.md](BaseCrud.md) · [Configuration.md](Configuration.md) · [Commands.md](Commands.md)

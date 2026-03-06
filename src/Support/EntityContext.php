@@ -256,9 +256,15 @@ readonly class EntityContext
         $rootNs = rtrim($this->rootNamespace, '\\') . '\\Models';
 
         $lines = array_unique(array_map(
-            fn(FieldDefinition $f) =>
-                "// TODO: use {$rootNs}\\{$f->relatedModel()};" .
-                " // check the real namespace — adjust if {$f->relatedModel()} is in a sub-folder",
+            function (FieldDefinition $f) use ($rootNs): string {
+                // company_id → Ptah\Models\Company (well-known package model)
+                if ($f->relatedModel() === 'Company') {
+                    return 'use Ptah\\Models\\Company;';
+                }
+
+                return "// TODO: use {$rootNs}\\{$f->relatedModel()};" .
+                    " // check the real namespace — adjust if {$f->relatedModel()} is in a sub-folder";
+            },
             $fkFields
         ));
 
