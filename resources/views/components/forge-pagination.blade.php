@@ -11,19 +11,19 @@
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
         @if ($paginator->onFirstPage())
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">← Previous</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_previous') }}</span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">← Previous</button>
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_previous') }}</button>
         @endif
 
         <span class="text-sm text-gray-500 dark:text-slate-400">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
 
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Next →</button>
+                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_next') }}</button>
         @else
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">Next →</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_next') }}</span>
         @endif
     </div>
 
@@ -86,7 +86,7 @@
     </div>
 
     <p class="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
-        Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}
+        {{ __('ptah::ui.pagination_page_of', ['current' => $paginator->currentPage(), 'last' => $paginator->lastPage()]) }}
     </p>
 </div>
 @endif

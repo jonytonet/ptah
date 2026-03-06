@@ -15,13 +15,14 @@
                     </span>
                 @endif
             </div>
-            <button wire:click="clearFilters"
-                class="flex items-center gap-1 text-xs transition-colors text-slate-400 hover:text-red-500">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+            <x-forge-button wire:click="clearFilters" flat color="danger" size="sm">
+                <x-slot name="icon">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </x-slot>
                 {{ __('ptah::ui.filters_clear_all') }}
-            </button>
+            </x-forge-button>
         </div>
 
         <div class="p-4 space-y-4">
@@ -116,16 +117,19 @@
 
                         {{-- Select / Enum --}}
                         @elseif ($cfTipo === 'select' && !empty($col['colsSelect']))
-                            <div>
-                                <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
-                                <select wire:model.live="filters.{{ $cfField }}"
-                                    class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input">
-                                    <option value="">{{ __('ptah::ui.filters_all') }}</option>
-                                    @foreach ($col['colsSelect'] as $optLabel => $optVal)
-                                        <option value="{{ $optVal }}">{{ $optLabel }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            @php
+                                $fFilterOpts = array_map(
+                                    fn($l, $v) => ['value' => $v, 'label' => $l],
+                                    array_keys($col['colsSelect']),
+                                    array_values($col['colsSelect'])
+                                );
+                            @endphp
+                            <x-forge-select
+                                wire:model.live="filters.{{ $cfField }}"
+                                :label="$cfLabel"
+                                :placeholder="__('ptah::ui.filters_all')"
+                                :options="$fFilterOpts"
+                            />
 
                         {{-- SearchDropdown no filtro (select2-like) --}}
                         @elseif ($cfTipo === 'searchdropdown')
@@ -261,27 +265,35 @@
                                         @endif
                                     </div>
                                 @elseif ($cfType === 'date')
-                                    <input type="date"
+                                    <x-forge-input
+                                        type="date"
                                         wire:model.live="filters.{{ $cfField }}"
-                                        class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
+                                    />
                                 @elseif ($cfType === 'number')
-                                    <input type="number"
+                                    <x-forge-input
+                                        type="number"
                                         wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                        placeholder="{{ $cfLabel }}..."
-                                        class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
+                                        :placeholder="$cfLabel . '...'"
+                                        step="any"
+                                    />
                                 @elseif ($cfType === 'select' && !empty($cf['colsSelect']))
-                                    <select wire:model.live="filters.{{ $cfField }}"
-                                        class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input">
-                                        <option value="">{{ __('ptah::ui.filters_all') }}</option>
-                                        @foreach ($cf['colsSelect'] as $optLabel => $optVal)
-                                            <option value="{{ $optVal }}">{{ $optLabel }}</option>
-                                        @endforeach
-                                    </select>
+                                    @php
+                                        $cfSelectOpts = array_map(
+                                            fn($l, $v) => ['value' => $v, 'label' => $l],
+                                            array_keys($cf['colsSelect']),
+                                            array_values($cf['colsSelect'])
+                                        );
+                                    @endphp
+                                    <x-forge-select
+                                        wire:model.live="filters.{{ $cfField }}"
+                                        :placeholder="__('ptah::ui.filters_all')"
+                                        :options="$cfSelectOpts"
+                                    />
                                 @else
-                                    <input type="text"
+                                    <x-forge-input
                                         wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                        placeholder="{{ $cfLabel }}..."
-                                        class="w-full text-sm rounded-lg px-2.5 py-2 ptah-c-fp_input" />
+                                        :placeholder="$cfLabel . '...'"
+                                    />
                                 @endif
                             </div>
                         @endif

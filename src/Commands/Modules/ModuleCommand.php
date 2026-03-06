@@ -140,7 +140,7 @@ class ModuleCommand extends Command
         });
 
         $email    = config('ptah.permissions.admin_email', 'admin@admin.com');
-        $password = config('ptah.permissions.admin_password', 'admin@123');
+        $password = config('ptah.permissions.admin_password') ?: 'admin@123';
 
         $this->newLine();
         $this->line('  ╔══════════════════════════════════════════╗');

@@ -46,7 +46,7 @@ trait HasCrudColumns
         foreach ($this->crudConfig['cols'] ?? [] as $col) {
             $field = $col['colsNomeFisico'] ?? null;
             if ($field) {
-                $defaults[$field] = true; // visible by default
+                $defaults[$field] = $this->ptahBool($col['colsVisibleList'] ?? true);
             }
         }
 

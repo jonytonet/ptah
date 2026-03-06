@@ -1,30 +1,31 @@
 {{-- ptah::livewire.permission.user-permission-list --}}
 <div>
-    <div class="mb-5">
-        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.user_perm_title') }}</h1>
-        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.user_perm_subtitle') }}</p>
-    </div>
+    <x-forge-page-header
+        :title="__('ptah::ui.user_perm_title')"
+        :subtitle="__('ptah::ui.user_perm_subtitle')"
+    />
 
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
     @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
 
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl bg-white border-slate-200">
         <div class="flex-1 min-w-[180px] max-w-xs">
-            <div class="relative">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
-                </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.user_perm_search_ph')"
-                    class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
+            <x-forge-input
+                wire:model.live.debounce.300ms="search"
+                type="search"
+                :placeholder="__('ptah::ui.user_perm_search_ph')"
+                iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
+            />
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs font-medium text-slate-500 whitespace-nowrap">{{ __('ptah::ui.user_perm_filter_role') }}</span>
+            <div class="w-44">
+                <x-forge-select
+                    wire:model.live="filterRole"
+                    :options="collect([['value' => 0, 'label' => __('ptah::ui.user_perm_all_roles')]])->concat($roles->map(fn($r) => ['value' => $r->id, 'label' => ($r->is_master ? '👑 ' : '') . $r->name]))->toArray()"
+                />
             </div>
         </div>
-        <select wire:model.live="filterRole"
-            class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all">
-            <option value="0">{{ __('ptah::ui.user_perm_all_roles') }}</option>
-            @foreach ($roles as $r)
-                <option value="{{ $r->id }}">{{ $r->is_master ? '👑 ' : '' }}{{ $r->name }}</option>
-            @endforeach
-        </select>
     </div>
 
     <div class="ptah-module-table overflow-x-auto border shadow-sm border-slate-200 rounded-xl">

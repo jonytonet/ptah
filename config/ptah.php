@@ -215,9 +215,9 @@ return [
         'allow_guest'         => env('PTAH_PERMISSION_ALLOW_GUEST', false),
         'admin_name'          => env('PTAH_ADMIN_NAME', 'Administrador'),
         'admin_email'         => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
-        // No default password — must be set via PTAH_ADMIN_PASSWORD in .env.
-        // The seeder will throw a RuntimeException if this is not configured.
-        'admin_password'      => env('PTAH_ADMIN_PASSWORD'),
+        // Default password used when PTAH_ADMIN_PASSWORD is not set in .env.
+        // Always change this after the first login.
+        'admin_password'      => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
     ],
 
 ];

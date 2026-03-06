@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * ptah UI translations — Português do Brasil
@@ -99,6 +99,9 @@ return [
     'col_created_at'     => 'Criado em',
     'col_updated_at'     => 'Atualizado em',
     'pagination'         => 'Exibindo :first–:last de :total registros',
+    'pagination_previous' => '← Anterior',
+    'pagination_next'     => 'Próxima →',
+    'pagination_page_of'  => 'Página :current de :last',
 
     /*
     |--------------------------------------------------------------------------
@@ -347,7 +350,7 @@ return [
     'profile_confirm_pw'          => 'Confirmar nova senha',
     'profile_change_pw_btn'       => 'Alterar senha',
     'profile_2fa_intro'           => 'A autenticação em dois fatores adiciona uma camada extra de segurança à sua conta. Escolha seu método preferido:',
-    'profile_totp_apps'           => 'Google Authenticator, Authy, Bitwarden\u2026',
+    'profile_totp_apps'           => 'Google Authenticator, Authy, Bitwarden…',
     'profile_scan_qr'             => 'Escaneie o QR code com seu aplicativo autenticador:',
     'profile_enter_key'           => 'Ou insira a chave manualmente:',
     'profile_confirm_btn'         => 'Confirmar',
@@ -357,7 +360,7 @@ return [
     'profile_2fa_active_label'    => '2FA está ativo',
     'profile_2fa_authenticator'   => 'Aplicativo Autenticador',
     'profile_recovery_codes_title'=> 'Códigos de recuperação',
-    'profile_recovery_codes_hint' => 'Guarde esses códigos em local seguro \u2014 cada um pode ser usado apenas uma vez.',
+    'profile_recovery_codes_hint' => 'Guarde esses códigos em local seguro cada um pode ser usado apenas uma vez.',
     'profile_regenerate_btn'      => 'Regenerar códigos',
     'profile_view_recovery_btn'   => 'Ver códigos de recuperação',
     'profile_disable_2fa_btn'     => 'Desativar 2FA',
@@ -401,7 +404,7 @@ return [
     'company_col_default'     => 'Padrão',
     'company_col_status'      => 'Status',
     'company_col_actions'     => 'Ações',
-    'company_pagination'      => ':first\u2013:last de :total',
+    'company_pagination'      => ':first–:last de :total',
 
     /*
     |--------------------------------------------------------------------------
@@ -413,6 +416,7 @@ return [
     'menu_new_item_btn'    => 'Novo Item',
     'menu_search_ph'       => 'Buscar item de menu...',
     'menu_all_types'       => 'Todos os tipos',
+    'menu_filter_by_type'  => 'Filtrar por tipo:',
     'menu_col_icon'        => 'Ícone',
     'menu_col_text'        => 'Texto',
     'menu_col_type'        => 'Tipo',
@@ -438,7 +442,7 @@ return [
     'role_col_status'         => 'Status',
     'role_col_actions'        => 'Ações',
     'role_objects_count'      => ':count objetos',
-    'role_manage_perms_btn'       => '\uD83D\uDD11 Permissões',
+    'role_manage_perms_btn'       => '🔑 Permissões',
     'role_manage_perms_title'     => 'Gerenciar permissões',
     'role_form_title_edit'        => 'Editar Role',
     'role_form_name'              => 'Nome *',
@@ -448,11 +452,11 @@ return [
     'role_form_active'            => 'Role ativo',
     'role_form_no_dept'           => 'Sem departamento',
     'role_form_master'            => 'Role MASTER (bypass total)',
-    'role_form_is_master_badge'   => '\uD83D\uDC51 Este é o role MASTER',
-    'role_form_master_warn'       => '\u26A0\uFE0F Roles MASTER têm acesso irrestrito. Apenas 1 role pode ser MASTER.',
+    'role_form_is_master_badge'   => '👑 Este é o role MASTER',
+    'role_form_master_warn'       => '⚠️ Roles MASTER têm acesso irrestrito. Apenas 1 role pode ser MASTER.',
     'role_empty_found'            => 'Nenhum role encontrado',
     'role_empty_hint'             => 'Adicione o primeiro perfil de acesso',
-    'role_bind_modal_prefix'      => 'Gerenciar Permissões \u2014',
+    'role_bind_modal_prefix'      => 'Gerenciar Permissões',
     'role_bind_perm_read'         => 'Ler',
     'role_bind_perm_create'       => 'Criar',
     'role_bind_perm_edit'         => 'Editar',
@@ -555,8 +559,8 @@ return [
     'audit_subtitle'          => 'Log de acessos concedidos e negados. Somente leitura.',
     'audit_search_ph'         => 'Buscar recurso, IP, usuário...',
     'audit_all_results'       => 'Todos os resultados',
-    'audit_result_granted'    => '\u2705 Concedido',
-    'audit_result_denied'     => '\u274C Negado',
+    'audit_result_granted'    => '✅ Concedido',
+    'audit_result_denied'     => '❌ Negado',
     'audit_all_actions'       => 'Todas as ações',
     'audit_action_create'     => 'Criar',
     'audit_action_read'       => 'Ler',
@@ -587,7 +591,7 @@ return [
     'page_search_ph'          => 'Buscar página...',
     'page_empty_found'        => 'Nenhuma página cadastrada',
     'page_empty_hint'         => 'Crie a primeira página para começar.',
-    'page_objects_header'     => 'Objetos \u2014 :page',
+    'page_objects_header'     => 'Objetos :page',
     'page_new_obj_btn'        => 'Objeto',
     'page_obj_search_ph'      => 'Buscar objeto...',
     'page_obj_col_key_label'  => 'Chave / Label',
@@ -622,18 +626,19 @@ return [
     | Módulo — Ajuste de Acesso de Usuários
     |--------------------------------------------------------------------------
     */
-    'user_perm_title'         => 'Usuários \u2014 Controle de Acesso',
+    'user_perm_title'         => 'Usuários — Controle de Acesso',
     'user_perm_subtitle'      => 'Atribua roles e empresas aos usuários do sistema.',
     'user_perm_search_ph'     => 'Buscar por nome ou e-mail...',
     'user_perm_all_roles'     => 'Todos os roles',
+    'user_perm_filter_role'   => 'Filtrar por role:',
     'user_perm_col_user'      => 'Usuário',
     'user_perm_col_roles'     => 'Roles atribuídos',
     'user_perm_col_actions'   => 'Ações',
     'user_perm_no_roles'      => 'Sem roles',
-    'user_perm_manage_btn'    => '\uD83D\uDD11 Gerenciar Acesso',
+    'user_perm_manage_btn'    => '🔑 Gerenciar Acesso',
     'user_perm_empty'         => 'Nenhum usuário encontrado',
     'user_perm_empty_hint'    => 'Tente ajustar os filtros de busca.',
-    'user_perm_modal_prefix'  => 'Acesso \u2014',
+    'user_perm_modal_prefix'  => 'Acesso',
     'user_perm_assigned_roles'=> 'Roles atribuídos',
     'user_perm_remove_btn'    => 'Remover',
     'user_perm_protected'     => 'Protegido',
@@ -651,7 +656,7 @@ return [
     */
     'guide_title'    => 'Guia do Sistema de Permissões',
     'guide_subtitle' => 'Como funciona o ACL do Ptah e como configurar acessos passo a passo.',
-    'guide_badge'    => '\uD83D\uDCD6 Documentação',
+    'guide_badge'    => 'Documentação',
 
     // Abas
     'guide_tab_overview' => '🗺️ Visão Geral',

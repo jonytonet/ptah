@@ -25,7 +25,7 @@
 14. [Busca Avançada](#busca-avançada)
 15. [Visibilidade de Colunas](#visibilidade-de-colunas)
 16. [Bulk Actions](#bulk-actions)
-17. [SearchDropdown em Formulários](#searchdropdown-em-formulários)
+17. [SearchDropdown em Formulários](#searchdropdown-em-formulários) — ver também [SearchDropdown.md](SearchDropdown.md)
 18. [WhereHas — Filtro por Entidade Pai](#wherehas--filtro-por-entidade-pai)
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
 20. [Totalizadores](#totalizadores)
@@ -402,7 +402,7 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsCellIcon` | `string\|null` | Classe de ícone prefixada ao conteúdo da célula **e ao cabeçalho** `<th>`. Suporta Boxicons (`bx bx-*`) e FontAwesome (`fas fa-*`) 
 | `colsMinWidth` | `string\|null` | Largura mínima do th (ex: `"120px"`) |
 | `colsMask` | `string\|null` | Máscara: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
-| `colsMaskTransform` | `string\|null` | Transformação pós-máscara: `upper`, `lower`, `ucfirst` |
+| `colsMaskTransform` | `string\|null` | Transformação salva no servidor antes de persistir: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
 | `colsRelacao` | `string\|null` | Nome da relação Eloquent |
 | `colsRelacaoExibe` | `string\|null` | Campo da relação a exibir |
 | `colsRelacaoNested` | `string\|null` | Notação dot para relações aninhadas: `category.parent.name` |
@@ -418,6 +418,11 @@ O `CrudConfig` é recuperado do banco de dados (tabela `crud_configs`) pelo `Cru
 | `colsSDMode` | `'create'\|'edit'\|'both'` | Em qual modo do modal o campo SD aparece |
 | `colsValidations` | `array\|null` | Regras do FormValidatorService: `["required","email","min:3"]` |
 | `colsSource` | `string\|null` | **JOIN** — qualified name SQL usado em `WHERE` e `ORDER BY` (ex: `suppliers.name`). Obrigatório para filtros e sort funcionarem em colunas vindas de JOIN. O `colsNomeFisico` deve ser o alias (ex: `supplier_name`) |
+| `colsHelpText` | `string\|null` | Texto de ajuda exibido abaixo do campo no formulário de criação/edição |
+| `colsEditableForm` | `bool` | Se `false`, o campo NÃO aparece no formulário de criação/edição (padrão: `true`) |
+| `colsVisibleList` | `bool` | Se `false`, a coluna começa oculta na listagem por padrão (padrão: `true`) |
+| `colsAlign` | `string\|null` | Alinhamento da coluna na tabela: `text-start`, `text-center`, `text-end` (padrão: `text-start`) |
+| `colsReverse` | `bool\|'S'\|'N'\|int` | Se `true`, `'S'`, `1` ou `'1'`, aplica `font-medium` na célula para destacar o valor (padrão: `false`) |
 
 ---
 
@@ -741,8 +746,12 @@ Períodos disponíveis:
 | Valor | Descrição |
 |---|---|
 | `today` | Hoje (00:00 → 23:59) |
+| `yesterday` | Ontem (00:00 → 23:59) |
 | `week` | Esta semana (seg → dom) |
+| `last7` | Últimos 7 dias |
+| `last30` | Últimos 30 dias |
 | `month` | Este mês (dia 1 → último) |
+| `lastMonth` | Mês passado |
 | `quarter` | Este trimestre |
 | `year` | Este ano |
 
@@ -855,6 +864,13 @@ O método `bulkAprovar` receberá `(array $ids, string $model)`.
 @endif
 ```
 
+### Exclusão em lote (bulkDelete)
+
+O método `bulkDelete()` é executado dentro de um `DB::transaction()` e usa `.each()` para iterar os registros um a um, garantindo que:
+- **Transação atômica** — se um delete falhar, todos são revertidos
+- **Eventos Eloquent disparados** — `deleting`/`deleted` + `HasAuditFields` preenchem `deleted_by` corretamente em cada registro
+- **SoftDelete respeitado** — cada model passa pelo ciclo Eloquent normal
+
 ### Eventos disparados pelo bulk
 
 | Evento | Payload |
@@ -866,6 +882,8 @@ O método `bulkAprovar` receberá `(array $ids, string $model)`.
 ---
 
 ## SearchDropdown em Formulários
+
+> 📄 **Documentação completa:** [SearchDropdown.md](SearchDropdown.md) — cobre o componente standalone, service personalizado, evento de retorno, DTO, exemplos completos e uso como filtro.
 
 Campos do tipo `searchdropdown` oferecem UX similar ao Select2 dentro do modal de criação/edição:
 

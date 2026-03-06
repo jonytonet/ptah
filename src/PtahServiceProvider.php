@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\InstallCommand;
+use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\ScaffoldCommand;
@@ -128,6 +129,7 @@ class PtahServiceProvider extends ServiceProvider
                 MenuSyncCommand::class,      // ptah:menu-sync
                 ModuleCommand::class,        // ptah:module
                 ConfigCommand::class,        // ptah:config
+                MakeHooksCommand::class,     // ptah:hooks
             ]);
         }
     }

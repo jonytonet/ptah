@@ -1,10 +1,10 @@
 {{-- ptah::livewire.menu.menu-list --}}
 <div>
     {{-- Título --}}
-    <div class="mb-5">
-        <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.menu_title') }}</h1>
-        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.menu_subtitle') }}</p>
-    </div>
+    <x-forge-page-header
+        :title="__('ptah::ui.menu_title')"
+        :subtitle="__('ptah::ui.menu_subtitle')"
+    />
 
     {{-- Alertas --}}
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
@@ -12,30 +12,37 @@
 
     {{-- Toolbar --}}
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl bg-white border-slate-200">
-        <button wire:click="create"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none select-none">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <x-forge-button wire:click="create" color="primary" size="sm">
+            <x-slot name="icon">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </x-slot>
             {{ __('ptah::ui.menu_new_item_btn') }}
-        </button>
+        </x-forge-button>
 
         {{-- Busca --}}
         <div class="flex-1 min-w-[180px] max-w-xs">
-            <div class="relative">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
-                </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.menu_search_ph')"
-                    class="w-full py-2 pl-9 pr-4 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
-            </div>
+            <x-forge-input
+                wire:model.live.debounce.300ms="search"
+                type="search"
+                :placeholder="__('ptah::ui.menu_search_ph')"
+                iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
+            />
         </div>
 
         {{-- Filtro tipo --}}
-        <select wire:model.live="typeFilter"
-            class="py-2 px-3 text-sm rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all">
-            <option value="">{{ __('ptah::ui.menu_all_types') }}</option>
-            <option value="menuLink">Link</option>
-            <option value="menuGroup">Grupo</option>
-        </select>
+        <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs font-medium text-slate-500 whitespace-nowrap">{{ __('ptah::ui.menu_filter_by_type') }}</span>
+            <div class="w-36">
+                <x-forge-select
+                    wire:model.live="typeFilter"
+                    :placeholder="__('ptah::ui.menu_all_types')"
+                    :options="[
+                        ['value' => 'menuLink',  'label' => 'Link'],
+                        ['value' => 'menuGroup', 'label' => 'Grupo'],
+                    ]"
+                />
+            </div>
+        </div>
     </div>
 
     {{-- Tabela --}}
@@ -147,34 +154,30 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_type') }} <span class="text-danger">*</span></label>
                     <div class="flex gap-3">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" wire:model.live="type" value="menuLink" class="text-indigo-600">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_direct_link') }}</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" wire:model.live="type" value="menuGroup" class="text-indigo-600">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_group_type') }}</span>
-                        </label>
+                        <x-forge-radio wire:model.live="type" value="menuLink" :label="__('ptah::ui.menu_form_direct_link')" />
+                        <x-forge-radio wire:model.live="type" value="menuGroup" :label="__('ptah::ui.menu_form_group_type')" />
                     </div>
                     @error('type') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Texto --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_text_label') }} <span class="text-danger">*</span></label>
-                    <input wire:model="text" type="text" :placeholder="__('ptah::ui.menu_form_text_ph')"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
-                    @error('text') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
-                </div>
+                <x-forge-input
+                    wire:model="text"
+                    :label="__('ptah::ui.menu_form_text_label')"
+                    :placeholder="__('ptah::ui.menu_form_text_ph')"
+                    required
+                    :error="$errors->first('text')"
+                />
 
                 {{-- URL (só para menuLink) --}}
                 @if ($type === 'menuLink')
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">URL</label>
-                    <input wire:model="url" type="text" :placeholder="__('ptah::ui.menu_form_url_ph')"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
-                    @error('url') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
-                </div>
+                <x-forge-input
+                    wire:model="url"
+                    label="URL"
+                    :placeholder="__('ptah::ui.menu_form_url_ph')"
+                    class="font-mono"
+                    :error="$errors->first('url')"
+                />
                 @endif
 
                 {{-- Ícone --}}
@@ -199,39 +202,46 @@
                 </div>
 
                 {{-- Grupo pai --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_parent_group') }}</label>
-                    <select wire:model="parent_id"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white dark:bg-slate-700">
-                        <option value="">{{ __('ptah::ui.menu_form_root') }}</option>
-                        @foreach ($this->groups as $group)
-                            <option value="{{ $group->id }}">{{ $group->text }}</option>
-                        @endforeach
-                    </select>
-                    @error('parent_id') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
-                </div>
+                @php
+                    $menuGroups = $this->groups
+                        ->map(fn($g) => ['value' => (string)$g->id, 'label' => $g->text])
+                        ->prepend(['value' => '', 'label' => __('ptah::ui.menu_form_root')])
+                        ->toArray();
+                @endphp
+                <x-forge-select
+                    wire:model="parent_id"
+                    :label="__('ptah::ui.menu_form_parent_group')"
+                    :options="$menuGroups"
+                    :selected="(string)($parent_id ?? '')"
+                    :error="$errors->first('parent_id')"
+                />
 
                 {{-- Linha: Ordem + Abertura + Status --}}
                 <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_order') }}</label>
-                        <input wire:model="link_order" type="number" min="0"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"/>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_opening') }}</label>
-                        <select wire:model="target"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all bg-white dark:bg-slate-700">
-                            <option value="_self">{{ __('ptah::ui.menu_form_same_tab') }}</option>
-                            <option value="_blank">{{ __('ptah::ui.menu_form_new_tab') }}</option>
-                        </select>
-                    </div>
+                    <x-forge-input
+                        type="number"
+                        wire:model="link_order"
+                        :label="__('ptah::ui.menu_form_order')"
+                        min="0"
+                    />
+                    <x-forge-select
+                        wire:model="target"
+                        :label="__('ptah::ui.menu_form_opening')"
+                        :selected="$target ?? '_self'"
+                        :options="[
+                            ['value' => '_self',  'label' => __('ptah::ui.menu_form_same_tab')],
+                            ['value' => '_blank', 'label' => __('ptah::ui.menu_form_new_tab')],
+                        ]"
+                    />
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_col_status') }}</label>
-                        <label class="flex items-center gap-2 cursor-pointer mt-2 select-none">
-                            <input type="checkbox" wire:model="is_active" class="rounded text-indigo-600">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('ptah::ui.menu_form_active') }}</span>
-                        </label>
+                        <div class="mt-2">
+                            <x-forge-checkbox
+                                wire:model="is_active"
+                                :label="__('ptah::ui.menu_form_active')"
+                                :checked="$is_active"
+                            />
+                        </div>
                     </div>
                 </div>
 

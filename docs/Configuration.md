@@ -638,31 +638,78 @@ Ou com namespace completo:
 
 ---
 
-### 🚀 **Quick Start: Usando o Template**
+### 🚀 **Quick Start: Criando sua primeira classe de hooks**
 
-**1. Copie o arquivo exemplo:**
+**Opção A — Artisan (recomendado):**
 
 ```bash
-# Na raiz do projeto ptah
-cp docs/ProductHooks.example.php ../app/CrudHooks/ProductHooks.php
+php artisan ptah:hooks ProductHooks
+```
 
-# Ou crie o diretório manualmente
-mkdir -p app/CrudHooks
+Cria `app/CrudHooks/ProductHooks.php` com os 4 métodos pré-preenchidos, pronto para editar.
+
+Com subpasta:
+```bash
+php artisan ptah:hooks Inventory/StockHooks
+```
+
+**Opção B — Copiar o template de exemplo:**
+
+```bash
 cp vendor/ptah/ptah/docs/ProductHooks.example.php app/CrudHooks/ProductHooks.php
 ```
 
-**2. Customize a classe:**
-- Ajuste o namespace se necessário
-- Remova métodos que não precisa
-- Adicione lógica específica do seu domínio
+**Estrutura gerada:**
 
-**3. Configure no modal:**
-- Abra o CRUD do seu model
-- Vá na aba "Lifecycle Hooks"
-- Digite: `@ProductHooks`
-- Salve
+```php
+<?php
 
-**4. Pronto!** Os hooks serão executados automaticamente em create/update.
+namespace App\CrudHooks;
+
+use Illuminate\Database\Eloquent\Model;
+use Ptah\Contracts\CrudHooksInterface;
+
+class ProductHooks implements CrudHooksInterface
+{
+    public function beforeCreate(array &$data, ?Model $record, object $component): void
+    {
+        // $data['status'] = 'pending';
+    }
+
+    public function afterCreate(array &$data, Model $record, object $component): void
+    {
+        // event(new \App\Events\ProductCreated($record));
+    }
+
+    public function beforeUpdate(array &$data, Model $record, object $component): void
+    {
+        // $data['updated_by'] = auth()->id();
+    }
+
+    public function afterUpdate(array &$data, Model $record, object $component): void
+    {
+        // cache()->forget('product_' . $record->getKey());
+    }
+}
+```
+
+> 💡 Implementar `Ptah\Contracts\CrudHooksInterface` garante autocomplete e validação pelo PHPStan/Psalm.
+
+> ⚠️ **Sobre `$component`:** É a instância completa do componente Livewire. Prefira modificar apenas `$data` (nos hooks `before*`) e disparar eventos nos hooks `after*` — evite alterar estado interno do componente diretamente.
+
+**2. Configure no modal:**
+
+No campo "Before Create", escreva apenas:
+```
+@ProductHooks
+```
+
+Ou especificando o método:
+```
+@ProductHooks::beforeCreate
+```
+
+**3. Pronto!** Os hooks serão executados automaticamente em create/update.
 
 > 📁 **Arquivo de referência:** [ProductHooks.example.php](ProductHooks.example.php)  
 > - 300+ linhas de código documentado  

@@ -95,7 +95,7 @@
                             @php
                                 $cellField    = $col['colsNomeFisico'];
                                 $cellAlign    = $col['colsAlign'] ?? 'text-start';
-                                $reverse      = ($col['colsReverse'] ?? 'N') === 'S';
+                                $reverse      = in_array($col['colsReverse'] ?? false, [true, 'S', 1, '1'], true);
                                 $cellSavedW   = $columnWidths[$cellField] ?? null;
                                 $cellMinWidth = $cellSavedW
                                     ? "width:{$cellSavedW}px;min-width:60px;"

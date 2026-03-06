@@ -306,6 +306,7 @@ trait HasCrudForm
             array_filter(
                 $this->crudConfig['cols'] ?? [],
                 fn($c) => $this->ptahBool($c['colsGravar'] ?? false)
+                       && $this->ptahBool($c['colsEditableForm'] ?? true)
             )
         );
     }

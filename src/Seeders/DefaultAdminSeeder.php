@@ -76,7 +76,7 @@ class DefaultAdminSeeder extends Seeder
         // ── 4. Admin User ────────────────────────────────────────────────
         $adminEmail    = config('ptah.permissions.admin_email', 'admin@admin.com');
         $adminName     = config('ptah.permissions.admin_name', 'Administrator');
-        $adminPassword = config('ptah.permissions.admin_password', 'admin@123');
+        $adminPassword = config('ptah.permissions.admin_password') ?: 'admin@123';
 
         /** @var class-string<\Illuminate\Database\Eloquent\Model> $userModel */
         $userModel = config('ptah.permissions.user_model', 'App\Models\User');

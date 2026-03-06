@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Concerns;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -51,11 +52,13 @@ trait HasCrudBulkActions
         $modelInstance = $this->resolveEloquentModel();
 
         if ($modelInstance) {
-            // Use each() + delete() individually to fire Eloquent events
-            // and allow HasAuditFields trait to record deleted_by per record.
-            $modelInstance->newQuery()->whereIn('id', $this->selectedRows)->each(
-                fn ($record) => $record->delete()
-            );
+            DB::transaction(function () use ($modelInstance) {
+                // Use each() + delete() individually to fire Eloquent events
+                // and allow HasAuditFields trait to record deleted_by per record.
+                $modelInstance->newQuery()->whereIn('id', $this->selectedRows)->each(
+                    fn ($record) => $record->delete()
+                );
+            });
             $this->cacheService->invalidateModel($this->model);
             $this->updateTrashedCount();
         }

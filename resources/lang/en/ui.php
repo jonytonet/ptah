@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * ptah UI translations — English (default)
@@ -98,6 +98,9 @@ return [
     'col_created_at'     => 'Created at',
     'col_updated_at'     => 'Updated at',
     'pagination'         => 'Showing :first–:last of :total records',
+    'pagination_previous' => '← Previous',
+    'pagination_next'     => 'Next →',
+    'pagination_page_of'  => 'Page :current of :last',
 
     /*
     |--------------------------------------------------------------------------
@@ -346,7 +349,7 @@ return [
     'profile_confirm_pw'          => 'Confirm new password',
     'profile_change_pw_btn'       => 'Change password',
     'profile_2fa_intro'           => 'Two-factor authentication adds an extra layer of security to your account. Choose your preferred method:',
-    'profile_totp_apps'           => 'Google Authenticator, Authy, Bitwarden\u2026',
+    'profile_totp_apps'           => 'Google Authenticator, Authy, Bitwarden…',
     'profile_scan_qr'             => 'Scan the QR code with your authenticator app:',
     'profile_enter_key'           => 'Or enter the key manually:',
     'profile_confirm_btn'         => 'Confirm',
@@ -356,7 +359,7 @@ return [
     'profile_2fa_active_label'    => '2FA is active',
     'profile_2fa_authenticator'   => 'Authenticator App',
     'profile_recovery_codes_title'=> 'Recovery codes',
-    'profile_recovery_codes_hint' => 'Store these codes in a safe place \u2014 each one can only be used once.',
+    'profile_recovery_codes_hint' => 'Store these codes in a safe place each one can only be used once.',
     'profile_regenerate_btn'      => 'Regenerate codes',
     'profile_view_recovery_btn'   => 'View recovery codes',
     'profile_disable_2fa_btn'     => 'Disable 2FA',
@@ -400,7 +403,7 @@ return [
     'company_col_default'     => 'Default',
     'company_col_status'      => 'Status',
     'company_col_actions'     => 'Actions',
-    'company_pagination'      => ':first\u2013:last of :total',
+    'company_pagination'      => ':first–:last of :total',
 
     /*
     |--------------------------------------------------------------------------
@@ -412,6 +415,7 @@ return [
     'menu_new_item_btn'    => 'New Item',
     'menu_search_ph'       => 'Search menu item...',
     'menu_all_types'       => 'All types',
+    'menu_filter_by_type'  => 'Filter by type:',
     'menu_col_icon'        => 'Icon',
     'menu_col_text'        => 'Text',
     'menu_col_type'        => 'Type',
@@ -437,7 +441,7 @@ return [
     'role_col_status'         => 'Status',
     'role_col_actions'        => 'Actions',
     'role_objects_count'      => ':count objects',
-    'role_manage_perms_btn'       => '\uD83D\uDD11 Permissions',
+    'role_manage_perms_btn'       => '🔑 Permissions',
     'role_manage_perms_title'     => 'Manage permissions',
     'role_form_title_edit'        => 'Edit Role',
     'role_form_name'              => 'Name *',
@@ -447,11 +451,11 @@ return [
     'role_form_active'            => 'Active role',
     'role_form_no_dept'           => 'No department',
     'role_form_master'            => 'MASTER Role (total bypass)',
-    'role_form_is_master_badge'   => '\uD83D\uDC51 This is the MASTER role',
-    'role_form_master_warn'       => '\u26A0\uFE0F MASTER roles have unrestricted access. Only 1 role can be MASTER.',
+    'role_form_is_master_badge'   => '👑 This is the MASTER role',
+    'role_form_master_warn'       => '⚠️ MASTER roles have unrestricted access. Only 1 role can be MASTER.',
     'role_empty_found'            => 'No roles found',
     'role_empty_hint'             => 'Add the first access profile',
-    'role_bind_modal_prefix'      => 'Manage Permissions \u2014',
+    'role_bind_modal_prefix'      => 'Manage Permissions ',
     'role_bind_perm_read'         => 'Read',
     'role_bind_perm_create'       => 'Create',
     'role_bind_perm_edit'         => 'Edit',
@@ -491,13 +495,13 @@ return [
     'menu_form_direct_link'       => 'Direct link',
     'menu_form_group_type'        => 'Group (with sub-items)',
     'menu_form_text_label'        => 'Displayed text',
-    'menu_form_text_ph'           => 'e.g.: Products, Reports\u2026',
-    'menu_form_url_ph'            => '/dashboard, /products, https://\u2026',
+    'menu_form_text_ph'           => 'e.g.: Products, Reports...',
+    'menu_form_url_ph'            => '/dashboard, /products, https://...',
     'menu_form_icon_label'        => 'Icon',
-    'menu_form_icon_hint'         => '(CSS class \u2014 Boxicons or FontAwesome)',
+    'menu_form_icon_hint'         => '(CSS class Boxicons or FontAwesome)',
     'menu_form_icon_ph'           => 'bx bx-home  /  fas fa-user',
     'menu_form_parent_group'      => 'Parent group',
-    'menu_form_root'              => '\u2014 Root (top level) \u2014',
+    'menu_form_root'              => 'Root (top level) ',
     'menu_form_order'             => 'Order',
     'menu_form_opening'           => 'Opening target',
     'menu_form_same_tab'          => 'Same tab',
@@ -554,8 +558,8 @@ return [
     'audit_subtitle'          => 'Log of granted and denied accesses. Read-only.',
     'audit_search_ph'         => 'Search resource, IP, user...',
     'audit_all_results'       => 'All results',
-    'audit_result_granted'    => '\u2705 Granted',
-    'audit_result_denied'     => '\u274C Denied',
+    'audit_result_granted'    => '✅ Granted',
+    'audit_result_denied'     => '❌ Denied',
     'audit_all_actions'       => 'All actions',
     'audit_action_create'     => 'Create',
     'audit_action_read'       => 'Read',
@@ -586,7 +590,7 @@ return [
     'page_search_ph'          => 'Search page...',
     'page_empty_found'        => 'No pages registered',
     'page_empty_hint'         => 'Create the first page to get started.',
-    'page_objects_header'     => 'Objects \u2014 :page',
+    'page_objects_header'     => 'Objects :page',
     'page_new_obj_btn'        => 'Object',
     'page_obj_search_ph'      => 'Search object...',
     'page_obj_col_key_label'  => 'Key / Label',
@@ -621,18 +625,19 @@ return [
     | Module pages — User Permission
     |--------------------------------------------------------------------------
     */
-    'user_perm_title'         => 'Users \u2014 Access Control',
+    'user_perm_title'         => 'Users Access Control',
     'user_perm_subtitle'      => 'Assign roles and companies to system users.',
     'user_perm_search_ph'     => 'Search by name or e-mail...',
     'user_perm_all_roles'     => 'All roles',
+    'user_perm_filter_role'   => 'Filter by role:',
     'user_perm_col_user'      => 'User',
     'user_perm_col_roles'     => 'Assigned roles',
     'user_perm_col_actions'   => 'Actions',
     'user_perm_no_roles'      => 'No roles',
-    'user_perm_manage_btn'    => '\uD83D\uDD11 Manage Access',
+    'user_perm_manage_btn'    => '🔑 Manage Access',
     'user_perm_empty'         => 'No users found',
     'user_perm_empty_hint'    => 'Try adjusting the search filters.',
-    'user_perm_modal_prefix'  => 'Access \u2014',
+    'user_perm_modal_prefix'  => 'Access ',
     'user_perm_assigned_roles'=> 'Assigned roles',
     'user_perm_remove_btn'    => 'Remove',
     'user_perm_protected'     => 'Protected',
@@ -650,7 +655,7 @@ return [
     */
     'guide_title'    => 'Permission System Guide',
     'guide_subtitle' => 'How the Ptah ACL works and how to configure access step by step.',
-    'guide_badge'    => '\uD83D\uDCD6 Documentation',
+    'guide_badge'    => '📖 Documentation',
 
     // Tabs
     'guide_tab_overview' => '🗺️ Overview',

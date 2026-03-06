@@ -69,7 +69,7 @@
                     </p>
 
                     {{-- Método TOTP --}}
-                    <div class="border border-gray-200 dark:border-dark-3 rounded-xl p-4 mb-4">
+                    <x-forge-card flat class="mb-4">
                         <div class="flex items-start gap-3 mb-3">
                             <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,10 +102,10 @@
                         @else
                             <x-forge-button wire:click="initTotp" color="secondary" size="sm">{{ __('ptah::ui.profile_setup_btn') }}</x-forge-button>
                         @endif
-                    </div>
+                    </x-forge-card>
 
                     {{-- Método E-mail --}}
-                    <div class="border border-gray-200 dark:border-dark-3 rounded-xl p-4">
+                    <x-forge-card flat>
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-start gap-3">
                                 <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0">
@@ -121,7 +121,7 @@
                             </div>
                             <x-forge-button wire:click="enableEmailTwoFactor" color="secondary" size="sm">{{ __('ptah::ui.profile_enable_btn') }}</x-forge-button>
                         </div>
-                    </div>
+                    </x-forge-card>
                 </div>
             @else
                 {{-- 2FA já ativo --}}

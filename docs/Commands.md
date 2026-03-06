@@ -10,6 +10,7 @@ Este documento lista todos os comandos Artisan disponíveis no pacote Ptah.
 2. [ptah:forge](#ptahforge)
 3. [ptah:module](#ptahmodule)
 4. [ptah:config](#ptahconfig)
+5. [ptah:hooks](#ptahhooks)
 
 ---
 
@@ -784,6 +785,69 @@ php artisan ptah:forge Product --api-only   # Só API
 ```bash
 php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 ```
+
+---
+
+## ptah:hooks
+
+**Descrição:** Gera uma classe de Lifecycle Hooks para o BaseCrud.
+
+**Uso:**
+```bash
+# Básico
+php artisan ptah:hooks ProductHooks
+
+# Com subdiretório
+php artisan ptah:hooks Inventory/StockHooks
+
+# Sobrescrever arquivo existente
+php artisan ptah:hooks ProductHooks --force
+```
+
+**Opções:**
+- `--force` — Sobrescreve o arquivo existente sem pedir confirmação
+
+**O que faz:**
+
+Cria `app/CrudHooks/{Name}.php` implementando `Ptah\Contracts\CrudHooksInterface` com os 4 métodos de ciclo de vida pré-preenchidos:
+
+```php
+namespace App\CrudHooks;
+
+use Ptah\Contracts\CrudHooksInterface;
+use Illuminate\Database\Eloquent\Model;
+
+class ProductHooks implements CrudHooksInterface
+{
+    public function beforeCreate(array &$data, ?Model $record, object $component): void
+    {
+        // Executado antes de criar o registro
+    }
+
+    public function afterCreate(array &$data, Model $record, object $component): void
+    {
+        // Executado após criar o registro
+    }
+
+    public function beforeUpdate(array &$data, Model $record, object $component): void
+    {
+        // Executado antes de atualizar o registro
+    }
+
+    public function afterUpdate(array &$data, Model $record, object $component): void
+    {
+        // Executado após atualizar o registro
+    }
+}
+```
+
+**Próximos passos:**
+
+1. Implemente a lógica desejada nos métodos em `app/CrudHooks/{Name}.php`
+2. No CrudConfig, associe o hook a um campo usando a sintaxe `@ProductHooks`
+3. Consulte [Configuration.md](Configuration.md) para detalhes sobre Lifecycle Hooks
+
+> ⚠️ **Atenção:** O parâmetro `$component` expõe o componente Livewire completo. Use-o somente para leitura de propriedades, nunca para despachar ações arbitrárias a partir de dados externos.
 
 ---
 

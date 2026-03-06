@@ -168,6 +168,19 @@ class InstallCommand extends Command
                     // Insert after @import 'tailwindcss'
                     $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$ptahSource}", $content);
                 }
+            }
+
+            // Add @custom-variant dark for class-based dark mode (Tailwind v4 requires this)
+            // Without it, dark: utilities respond to prefers-color-scheme (OS), not the .dark class.
+            $darkVariant = "@custom-variant dark (&:where(.dark, .dark *));";
+            if (! str_contains($content, '@custom-variant dark')) {
+                // Insert after @source block or after @import if no @source
+                if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
+                    $insertPos = $m[0][1] + strlen($m[0][0]);
+                    $content   = substr_replace($content, $darkVariant . "\n", $insertPos, 0);
+                } else {
+                    $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$darkVariant}", $content);
+                }
                 file_put_contents($appCss, $content);
             }
 
