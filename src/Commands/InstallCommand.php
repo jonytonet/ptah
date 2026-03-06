@@ -71,6 +71,8 @@ class InstallCommand extends Command
         $this->line('  5. Scaffold entities with: <fg=green>php artisan ptah:forge {Entity}</>');
         $this->line('  6. For AI agent integration:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
+        $this->line('  7. For Docker environment (Dockerfile, Nginx, docker-compose):');
+        $this->line('     <fg=green>php artisan vendor:publish --tag=ptah-docker</>');
         $this->newLine();
 
         return self::SUCCESS;

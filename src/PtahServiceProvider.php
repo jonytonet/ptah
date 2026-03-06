@@ -257,6 +257,14 @@ class PtahServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../stubs/seeders/MenuRegistry.stub.php' => database_path('seeders/MenuRegistry.php'),
             ], 'ptah-menu-registry');
+
+            // Publish Docker base environment (Dockerfile, Nginx, php.ini, docker-compose, .env.docker)
+            $this->publishes([
+                __DIR__ . '/../stubs/docker/docker-compose.yml'     => base_path('docker-compose.yml'),
+                __DIR__ . '/../stubs/docker/.env.docker'            => base_path('.env.docker'),
+                __DIR__ . '/../stubs/docker/.dockerignore'          => base_path('.dockerignore'),
+                __DIR__ . '/../stubs/docker/docker'                 => base_path('docker'),
+            ], 'ptah-docker');
         }
     }
 

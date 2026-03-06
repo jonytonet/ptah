@@ -11,6 +11,7 @@ Este documento lista todos os comandos Artisan disponíveis no pacote Ptah.
 3. [ptah:module](#ptahmodule)
 4. [ptah:config](#ptahconfig)
 5. [ptah:hooks](#ptahhooks)
+6. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -62,6 +63,10 @@ php artisan ptah:install --boost
    - ``php artisan ptah:module permissions`` — RBAC
 4. Fazer login com credenciais padrão
 5. Scaffoldar entidades com ``php artisan ptah:forge {Entity}``
+6. *(Opcional)* Publicar ambiente Docker:
+   ```bash
+   php artisan vendor:publish --tag=ptah-docker
+   ```
 
 ---
 
@@ -637,7 +642,90 @@ Cache is automatically cleared after saving.
 
 ---
 
+## vendor:publish (tags ptah)
+
+O Ptah expõe vários grupos de arquivos publicáveis via ``vendor:publish``. Cada tag é independente e opcional — publique apenas o que precisar.
+
+| Tag | O que publica | Destino |
+|-----|--------------|--------|
+| ``ptah-config`` | Arquivo de configuração | ``config/ptah.php`` |
+| ``ptah-stubs`` | Stubs customizáveis de scaffold | ``stubs/ptah/`` |
+| ``ptah-migrations`` | Todas as migrations do pacote | ``database/migrations/`` |
+| ``ptah-lang`` | Traduções (pt_BR e en) | ``lang/vendor/ptah/`` |
+| ``ptah-views`` | Views Blade (para personalização) | ``resources/views/vendor/ptah/`` |
+| ``ptah-assets`` | CSS do Forge | ``resources/css/vendor/ptah/`` |
+| ``ptah-menu-registry`` | MenuRegistry.php (auto-menu) | ``database/seeders/MenuRegistry.php`` |
+| ``ptah-api`` | BaseResponse, BaseApiController, SwaggerInfo | ``app/Responses/``, ``app/Http/Controllers/API/`` |
+| ``ptah-auth`` | Migration de 2FA | ``database/migrations/`` |
+| ``ptah-menu`` | Migration de menus | ``database/migrations/`` |
+| ``ptah-company`` | Migrations de empresas | ``database/migrations/`` |
+| ``ptah-permissions`` | Migrations de permissões | ``database/migrations/`` |
+| ``ptah-docker`` | Ambiente Docker completo | raiz do projeto |
+
+**Uso:**
+
+```bash
+# Publicar grupo específico
+php artisan vendor:publish --tag=ptah-config
+php artisan vendor:publish --tag=ptah-stubs
+php artisan vendor:publish --tag=ptah-docker
+
+# Forçar sobrescrita de arquivos existentes
+php artisan vendor:publish --tag=ptah-config --force
+
+# Ver todos os publicáveis do pacote
+php artisan vendor:publish --list | grep ptah
+```
+
+### ptah-docker — Detalhes
+
+Publica uma estrutura Docker pronta para uso com PHP 8.3, Nginx, MySQL 8, Redis e Mailpit:
+
+```bash
+php artisan vendor:publish --tag=ptah-docker
+```
+
+**Arquivos publicados:**
+
+```
+├── docker-compose.yml           # 5 serviços orquestrados
+├── .env.docker                  # .env pré-configurado para Docker
+├── .dockerignore                # Build context otimizado
+└── docker/
+    ├── php/
+    │   ├── Dockerfile           # PHP 8.3-FPM Alpine + Node.js + Redis ext
+    │   └── php.ini              # Configurações (timezone BR, limites, opcache)
+    └── nginx/
+        └── default.conf         # Virtual host com gzip + PHP-FPM
+```
+
+**Serviços disponíveis após `docker compose up`:**
+
+| Serviço | Acesso padrão | Descrição |
+|---------|-------------|----------|
+| App (PHP-FPM) | — | PHP 8.3 + Node.js |
+| Nginx | ``http://localhost:8080`` | Web server |
+| MySQL 8 | ``localhost:3307`` | Banco de dados |
+| Redis 7 | ``localhost:6380`` | Cache / filas / sessões |
+| Mailpit | ``http://localhost:8025`` | Captura de e-mails de dev |
+
+**Portas customizáveis via variáveis no `.env.docker`:**
+
+```env
+NGINX_PORT=8080
+DB_PORT_HOST=3307
+REDIS_PORT_HOST=6380
+MAIL_UI_PORT=8025
+MAIL_SMTP_PORT=1025
+```
+
+> **Nota:** O Docker é completamente opcional. O Ptah funciona normalmente sem ele — em Herd, Valet, Sail ou qualquer servidor PHP 8.2+.
+
+---
+
 ## Ordem recomendada de instalação
+
+### Sem Docker (Herd, Valet, XAMPP)
 
 ```bash
 # 1. Instalar pacote básico
@@ -664,6 +752,41 @@ php artisan migrate
 
 # 7. Acessar sistema
 # http://localhost/products
+```
+
+### Com Docker
+
+```bash
+# 1. Instalar pacote
+composer require jonytonet/ptah
+php artisan ptah:install --skip-npm  # pula npm pois será rodado no container
+
+# 2. Publicar ambiente Docker
+php artisan vendor:publish --tag=ptah-docker
+
+# 3. Copiar .env.docker como .env e ajustar se necessário
+cp .env.docker .env
+
+# 4. Subir containers
+docker compose up -d
+
+# 5. Instalar dependências e configurar app dentro do container
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan ptah:install --force --skip-npm
+docker compose exec app npm install
+docker compose exec app npm run build
+
+# 6. Habilitar módulos
+docker compose exec app php artisan ptah:module company
+docker compose exec app php artisan ptah:module permissions
+docker compose exec app php artisan ptah:module auth
+docker compose exec app php artisan ptah:module menu
+
+# 7. Acessar sistema
+# http://localhost:8080
+# Mailpit: http://localhost:8025
 ```
 
 ---

@@ -1,0 +1,32 @@
+# vendor/
+node_modules/
+
+# Build assets
+public/build/
+
+# Cache e logs
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+bootstrap/cache/
+
+# Ambiente (o .env.docker é copiado como .env dentro do container)
+.env
+.env.*
+!.env.docker
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE e OS
+.idea/
+.vscode/
+**/*.swp
+**/.DS_Store
+**/Thumbs.db
+
+# Testes e CI
+tests/
