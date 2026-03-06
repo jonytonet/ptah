@@ -9,13 +9,13 @@
 
     @if (!empty($crudConfig))
 
-        @include('ptah::livewire.partials._toolbar')
+        @include('ptah::livewire.base-crud.partials._toolbar')
 
-        @include('ptah::livewire.partials._filter-panel')
+        @include('ptah::livewire.base-crud.partials._filter-panel')
 
-        @include('ptah::livewire.partials._table')
+        @include('ptah::livewire.base-crud.partials._table')
 
-        @include('ptah::livewire.partials._pagination')
+        @include('ptah::livewire.base-crud.partials._pagination')
 
     @else
         <x-forge-alert type="warning">
@@ -24,9 +24,9 @@
         </x-forge-alert>
     @endif
 
-    @include('ptah::livewire.partials._modal-form')
+    @include('ptah::livewire.base-crud.partials._modal-form')
 
-    @include('ptah::livewire.partials._modal-delete')
+    @include('ptah::livewire.base-crud.partials._modal-delete')
 
     {{-- Loading overlay global --}}
     <div wire:loading.delay.long wire:target="save,deleteRecord,sortBy,export"
@@ -34,6 +34,6 @@
         <x-forge-spinner color="primary" size="lg" />
     </div>
 
-    @include('ptah::livewire.partials._scripts')
+    @include('ptah::livewire.base-crud.partials._scripts')
 
 </div>

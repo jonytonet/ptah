@@ -107,7 +107,7 @@
     @endif
 
     {{-- Modal de gestão de roles do usuário --}}
-    <div x-data="{ open: @entangle('showModal').live }">
+    <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="__('ptah::ui.user_perm_modal_prefix') . ' ' . $bindingUserName" size="lg">
             <div class="space-y-5">
                 {{-- Roles atuais --}}

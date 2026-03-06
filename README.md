@@ -11,7 +11,7 @@
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-11%2B%20%7C%2012%2B-red)](https://laravel.com)
-[![Livewire Version](https://img.shields.io/badge/Livewire-3%20%7C%204-purple)](https://livewire.laravel.com)
+[![Livewire Version](https://img.shields.io/badge/Livewire-4-purple)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -140,6 +140,7 @@ Ptah foi projetado para trabalhar com agentes de IA. Ao instalar com `--boost`, 
 | **[Modules](docs/Modules.md)** | Documentação detalhada dos módulos Auth, Menu, Company, Permissions e API |
 | **[Company](docs/Company.md)** | Módulo Company — empresas, departamentos, company switcher e multi-empresa |
 | **[Permissions](docs/Permissions.md)** | Módulo Permissions — RBAC, roles, middleware, helpers, Blade directives e auditoria |
+| **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — todos os métodos, assinaturas, exemplos e parâmetros de query da API REST |
 | **[AI Guide](docs/AI_Guide.md)** | Integração com agentes de IA — prompts, templates e workflow com Copilot, Claude e Cursor |
 
 ---
@@ -151,7 +152,7 @@ Ptah foi projetado para trabalhar com agentes de IA. Ao instalar com `--boost`, 
 | PHP | 8.2 |
 | Laravel | 11 ou 12 |
 | Node.js + npm | 18+ |
-| Livewire | v3 ou v4 (incluso como dependência) |
+| Livewire | v4 (incluso como dependência) |
 
 ---
 

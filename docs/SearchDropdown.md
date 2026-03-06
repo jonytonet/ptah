@@ -52,8 +52,8 @@ O componente `ptah-search-dropdown` é um Livewire component independente que po
 | `model` | `string` | `''` | Nome do model (ex: `Product`) ou subdiretório (`Purchase/Order`) |
 | `value` | `string` | `'id'` | Coluna cujo valor é retornado no evento |
 | `label` | `string` | `'name'` | Coluna exibida como label principal |
-| `labelSecondary` | `string\|null` | `null` | Coluna exibida como segundo label |
-| `labelLast` | `string\|null` | `null` | Coluna exibida como terceiro label |
+| `labelTwo` | `string\|null` | `null` | Coluna exibida como segundo label |
+| `labelThree` | `string\|null` | `null` | Coluna exibida como terceiro label |
 | `arraySearch` | `array` | `[]` | Colunas extras incluídas no LIKE além dos labels |
 
 #### Dados e filtros
@@ -83,16 +83,16 @@ O componente `ptah-search-dropdown` é um Livewire component independente que po
 
 | Prop | Tipo | Padrão | Descrição |
 |---|---|---|---|
-| `listens` | `string` | `'searchDropdownResult'` | Nome do evento Livewire 3 disparado ao selecionar um item |
+| `listens` | `string` | `'searchDropdownResult'` | Nome do evento Livewire 4 disparado ao selecionar um item |
 | `coringa` | `string` | `''` | Valor extra passado no payload do evento (útil para identificar qual SD disparou) |
 
 #### Máscaras
 
 | Prop | Tipo | Padrão | Descrição |
 |---|---|---|---|
-| `maskLabel` | `string` | `'defaultMask'` | Máscara aplicada ao `label` |
-| `maskSecondary` | `string` | `'defaultMask'` | Máscara aplicada ao `labelSecondary` |
-| `maskLast` | `string` | `'defaultMask'` | Máscara aplicada ao `labelLast` |
+| `maskOne` | `string` | `'defaultMask'` | Máscara aplicada ao `label` |
+| `maskTwo` | `string` | `'defaultMask'` | Máscara aplicada ao `labelTwo` |
+| `maskThree` | `string` | `'defaultMask'` | Máscara aplicada ao `labelThree` |
 
 ---
 
@@ -173,45 +173,134 @@ O modo padrão. O componente consulta `App\Models\{model}` com `LOWER(label) LIK
 
 ### Via service personalizado (standalone)
 
-Quando a lógica de busca é mais complexa (JOINs, escopos, multi-tenant), crie um service e passe `useService`:
+Quando a lógica de busca é mais complexa (JOINs, escopos, multi-tenant, regras de negócio), use a arquitetura **Interface → Repository → Service** que separa as responsabilidades corretamente:
 
-```blade
-@livewire('ptah-search-dropdown', [
-    'model'      => 'Product',        // define qual service resolver (App\Services\ProductService)
-    'useService' => 'searchActive',   // método a ser chamado no service
-    'label'      => 'name',
-    'listens'    => 'onProductSelected',
-])
-```
+- **Repository** — única camada que faz queries ao banco;
+- **Service** — recebe o Repository via injeção, chama a query e trata/transforma os dados;
+- **SearchDropdown** — chama o Service via `useService`, sem saber nada sobre persistência.
 
-O service recebe um `SearchDropdownDTO` e deve retornar `array`:
+#### 1. Interface (Contrato)
 
 ```php
-namespace App\Services;
+// app/Contracts/BusinessPartnerRepositoryInterface.php
+namespace App\Contracts;
 
+use Illuminate\Support\Collection;
 use Ptah\DTO\SearchDropdownDTO;
 
-class ProductService
+interface BusinessPartnerRepositoryInterface
 {
-    public function searchActive(SearchDropdownDTO $dto): array
+    public function searchDropDown(SearchDropdownDTO $dto): Collection;
+}
+```
+
+#### 2. Repository (acesso ao banco)
+
+```php
+// app/Repositories/BusinessPartnerRepository.php
+namespace App\Repositories;
+
+use App\Contracts\BusinessPartnerRepositoryInterface;
+use App\Models\BusinessPartner;
+use Illuminate\Support\Collection;
+use Ptah\DTO\SearchDropdownDTO;
+
+class BusinessPartnerRepository implements BusinessPartnerRepositoryInterface
+{
+    public function __construct(private readonly BusinessPartner $model) {}
+
+    public function searchDropDown(SearchDropdownDTO $dto): Collection
     {
-        return Product::query()
-            ->where('status', 'active')
-            ->where('company_id', session('company_id'))
-            ->when($dto->searchTerm, fn($q) => $q->where('name', 'LIKE', "%{$dto->searchTerm}%"))
+        $cols = array_filter([$dto->value, $dto->label, $dto->labelTwo]);
+
+        $query = $this->model
+            ->select(array_values($cols))
+            ->where('active', true)
+            ->whereHas('businessPartnerParams', function ($q) {
+                $q->where('flag_purchase_trade', '!=', true);
+            });
+
+        if (!empty($dto->searchTerm)) {
+            if (is_numeric($dto->searchTerm) && strlen($dto->searchTerm) <= 5) {
+                $query->where($dto->value, $dto->searchTerm);
+            } else {
+                $query->where(function ($q) use ($dto) {
+                    $q->where($dto->label, 'LIKE', "%{$dto->searchTerm}%")
+                      ->orWhere($dto->value, $dto->searchTerm);
+
+                    if ($dto->labelTwo) {
+                        $q->orWhere($dto->labelTwo, 'LIKE', "%{$dto->searchTerm}%");
+                    }
+                });
+            }
+        }
+
+        return $query
             ->orderByRaw($dto->orderByRaw)
             ->limit($dto->limit)
-            ->get()
-            ->map(fn($p) => [
-                'value' => $p->{$dto->value},
-                'label' => $p->{$dto->label},
-            ])
-            ->toArray();
+            ->get();
     }
 }
 ```
 
-> O service é resolvido via IoC com `app()->make('App\Services\ProductService')`, então injeção de dependência funciona normalmente.
+#### 3. Service (lógica de negócio e transformação de dados)
+
+```php
+// app/Services/BusinessPartnerService.php
+namespace App\Services;
+
+use App\Contracts\BusinessPartnerRepositoryInterface;
+use Illuminate\Support\Collection;
+use Ptah\DTO\SearchDropdownDTO;
+
+class BusinessPartnerService
+{
+    public function __construct(
+        private readonly BusinessPartnerRepositoryInterface $repository
+    ) {}
+
+    /**
+     * O service é responsável por transformar os dados antes de entregar
+     * ao componente — aqui remove a máscara do CNPJ (deixa só dígitos)
+     * para que a prop maskTwo='cnpj' formate visualmente no dropdown.
+     */
+    public function searchDropDown(SearchDropdownDTO $dto): Collection
+    {
+        return $this->repository
+            ->searchDropDown($dto)
+            ->map(fn ($partner) => [
+                ...$partner->toArray(),
+                'cnpj' => preg_replace('/\D/', '', (string) ($partner['cnpj'] ?? '')),
+            ]);
+    }
+}
+```
+
+#### 4. Blade
+
+```blade
+@livewire('ptah-search-dropdown', [
+    'model'      => 'BusinessPartner',   // resolve App\Services\BusinessPartnerService
+    'useService' => 'searchDropDown',
+    'value'      => 'id',
+    'label'      => 'name',
+    'labelTwo'   => 'cnpj',
+    'maskTwo'    => 'cnpj',              // formata os dígitos do CNPJ na exibição
+    'listens'    => 'onPartnerSelected',
+])
+```
+
+#### 5. Bind no AppServiceProvider
+
+```php
+// app/Providers/AppServiceProvider.php
+$this->app->bind(
+    \App\Contracts\BusinessPartnerRepositoryInterface::class,
+    \App\Repositories\BusinessPartnerRepository::class,
+);
+```
+
+> O Service é resolvido via IoC com `app()->make('App\Services\BusinessPartnerService')`, portanto a injeção do Repository acontece automaticamente.
 
 ---
 
@@ -227,15 +316,29 @@ Aplicadas ao exibir os labels na lista de resultados:
 | `money` | `R$ 1.234,56` |
 | `phone` | `(11) 9 9999-9999` ou `(11) 9999-9999` |
 | `date` | `dd/mm/yyyy` (via `Carbon::parse`) |
+| `App\Helpers\Masks::format` | Chamada estática — `Class::method($value)` |
+| `App\Services\MaskService@format` | Instância via IoC — `app(Class)->method($value)` |
+| `nomeMetodo` | Método público do próprio componente |
+
+**Máscaras dinâmicas** permitem usar qualquer helper ou service de formatação sem depender dos built-ins:
 
 ```blade
+{{-- Máscara estática --}}
 @livewire('ptah-search-dropdown', [
-    'model'          => 'Supplier',
-    'value'          => 'id',
-    'label'          => 'trade_name',
-    'labelSecondary' => 'cnpj_number',
-    'maskSecondary'  => 'cnpj',
-    'listens'        => 'onSupplierSelected',
+    'model'   => 'Supplier',
+    'label'   => 'trade_name',
+    'labelTwo' => 'cnpj_number',
+    'maskTwo' => 'App\Helpers\DocumentMasks::cnpj',
+    'listens' => 'onSupplierSelected',
+])
+
+{{-- Máscara via IoC --}}
+@livewire('ptah-search-dropdown', [
+    'model'   => 'Product',
+    'label'   => 'name',
+    'labelTwo' => 'price',
+    'maskTwo' => 'App\Services\CurrencyService@formatBrl',
+    'listens' => 'onProductSelected',
 ])
 ```
 
@@ -246,18 +349,18 @@ Aplicadas ao exibir os labels na lista de resultados:
 Exibe até 3 colunas no item da lista — `value` sempre em negrito, seguido pelos labels:
 
 ```
-[id em negrito] - [label] - [labelSecondary] - [labelLast]
+[id em negrito] - [label] - [labelTwo] - [labelThree]
 ```
 
 ```blade
 @livewire('ptah-search-dropdown', [
-    'model'          => 'Product',
-    'value'          => 'id',
-    'label'          => 'name',
-    'labelSecondary' => 'sku',
-    'labelLast'      => 'sale_price',
-    'maskLast'       => 'money',
-    'listens'        => 'onProductSelected',
+    'model'      => 'Product',
+    'value'      => 'id',
+    'label'      => 'name',
+    'labelTwo'   => 'sku',
+    'labelThree' => 'sale_price',
+    'maskThree'  => 'money',
+    'listens'    => 'onProductSelected',
 ])
 ```
 
@@ -273,15 +376,15 @@ namespace Ptah\DTO;
 readonly class SearchDropdownDTO
 {
     public function __construct(
-        public ?string $searchTerm,      // Termo digitado (null = sem filtro)
-        public string  $value,           // Coluna do valor (ex: 'id')
-        public string  $label,           // Coluna do label principal (ex: 'name')
-        public ?string $labelSecondary,  // Segunda coluna de label
-        public ?string $labelLast,       // Terceira coluna de label
-        public string  $orderByRaw,      // ORDER BY raw (ex: 'name ASC')
-        public int     $limit,           // Máximo de resultados
-        public array   $arraySearch,     // Colunas extras para LIKE
-        public array   $dataFilter,      // Filtros WHERE adicionais
+        public ?string $searchTerm,   // Termo digitado (null = sem filtro)
+        public string  $value,        // Coluna do valor (ex: 'id')
+        public string  $label,        // Coluna do label principal (ex: 'name')
+        public ?string $labelTwo   = null, // Segunda coluna de label (opcional)
+        public ?string $labelThree = null, // Terceira coluna de label (opcional)
+        public string  $orderByRaw = 'id asc',
+        public int     $limit      = 10,
+        public array   $arraySearch = [],
+        public array   $dataFilter  = [],
     ) {}
 }
 ```
@@ -307,7 +410,7 @@ Não é necessário instanciar nenhum componente — basta configurar a coluna c
 | `colsSDTipo` | `'model'\|'service'` | `'model'` | Modo de busca |
 | `colsSDLimit` | `int` | `15` | Limite de resultados |
 | `colsSDMode` | `'create'\|'edit'\|'both'` | `'both'` | Em qual modo do modal o campo aparece |
-| `colsSDLabelSecondary` | `string\|null` | `null` | Segunda coluna de label no item da lista |
+| `colsSDLabelTwo` | `string\|null` | `null` | Segunda coluna de label no item da lista |
 | `colsRelacao` | `string\|null` | `null` | Nome da relação Eloquent usada para pré-preencher o label no modo edição |
 | `colsRelacaoExibe` | `string\|null` | `null` | Atributo da relação exibido no input no modo edição |
 
@@ -475,22 +578,34 @@ Propriedades mantidas no componente BaseCrud pelo trait `HasCrudSearchDropdown`:
 
 ## Contrato de retorno do service
 
-Independente de qual sabor você usa, qualquer **service** deve retornar um array no formato:
+O service pode retornar `array` **ou** um `Illuminate\Support\Collection` — o componente normaliza automaticamente:
 
 ```php
+// Retorno como array (sempre aceito)
 return [
     ['value' => 1, 'label' => 'Produto A'],
     ['value' => 2, 'label' => 'Produto B'],
-    // ...
 ];
+
+// Retorno como Collection (também aceito)
+return $this->repository->searchDropDown($dto); // Collection de models ou arrays
 ```
+
+As chaves mínimas obrigatórias no cada item:
 
 | Chave | Tipo | Descrição |
 |---|---|---|
-| `value` | `mixed` | Valor salvo no formData / event (normalmente o `id`) |
+| `value` | `mixed` | Valor gravado no `formData` / payload do evento (normalmente o `id`) |
 | `label` | `string` | Texto exibido no input após seleção |
 
-> Se o retorno não for um array ou contiver estrutura diferente, o SD silencionamente exibe a lista vazia.
+Colunas adicionais para `labelTwo`/`labelThree` devem estar presentes no retorno pelo nome real da coluna:
+
+```php
+// Item com labelTwo='cnpj' precisa da chave 'cnpj' no array
+['value' => 1, 'label' => 'Acme Ltda', 'cnpj' => '12345678000190']
+```
+
+> Se o retorno não contiver a chave esperada por `labelTwo`/`labelThree`, o componente exibe string vazia naquele slot — sem erro.
 
 ---
 
@@ -525,37 +640,25 @@ public function onClientSelected(array $data): void
 
 ### 2. Standalone com serviço e múltiplos labels
 
+Veja o exemplo SOLID completo na seção [Via service personalizado](#via-service-personalizado-standalone) — ele usa `BusinessPartner` com `labelTwo='cnpj'` e `maskTwo='cnpj'`.
+
+Exemplo resumido de como usar no Blade após configurar Interface + Repository + Service:
+
 ```blade
 @livewire('ptah-search-dropdown', [
-    'key'            => 'supplier-sd',
-    'model'          => 'Supplier',
-    'useService'     => 'searchWithCnpj',
-    'value'          => 'id',
-    'label'          => 'trade_name',
-    'labelSecondary' => 'cnpj',
-    'maskSecondary'  => 'cnpj',
-    'listens'        => 'onSupplierSelected',
-    'coringa'        => 'purchase-form',
+    'key'        => 'supplier-sd',
+    'model'      => 'BusinessPartner',
+    'useService' => 'searchDropDown',
+    'value'      => 'id',
+    'label'      => 'name',
+    'labelTwo'   => 'cnpj',
+    'maskTwo'    => 'cnpj',
+    'listens'    => 'onSupplierSelected',
+    'coringa'    => 'purchase-form',
 ])
 ```
 
-```php
-// App\Services\SupplierService
-public function searchWithCnpj(SearchDropdownDTO $dto): array
-{
-    return Supplier::active()
-        ->when($dto->searchTerm, fn($q) => $q->where(function ($inner) use ($dto) {
-            $inner->where('trade_name', 'LIKE', "%{$dto->searchTerm}%")
-                  ->orWhere('cnpj', 'LIKE', "%{$dto->searchTerm}%");
-        }))
-        ->limit($dto->limit)
-        ->get()
-        ->map(fn($s) => ['value' => $s->id, 'label' => $s->trade_name, 'cnpj' => $s->cnpj])
-        ->toArray();
-}
-```
-
-> **Nota:** Para exibir `cnpj` via `labelSecondary`, inclua o campo no array retornado além de `value` e `label`.
+> **Nota:** Para exibir `cnpj` via `labelTwo`, o array/Collection retornado pelo Service deve incluir a chave `cnpj` em cada item.
 
 ---
 

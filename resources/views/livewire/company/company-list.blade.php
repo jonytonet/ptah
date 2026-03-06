@@ -120,7 +120,7 @@
     @endif
 
     {{-- Modal criar / editar --}}
-    <div x-data="{ open: @entangle('showModal').live }">
+    <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="$isEditing ? __('ptah::ui.company_modal_edit') : __('ptah::ui.company_modal_new')" size="lg">
             <form wire:submit="save" class="space-y-4">
                 <div class="grid grid-cols-3 gap-3">
@@ -157,7 +157,7 @@
     </div>
 
     {{-- Modal confirmar exclusão --}}
-    <div x-data="{ open: @entangle('showDeleteModal').live }">
+    <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
             <p class="text-slate-600">{{ __('ptah::ui.company_delete_text') }}</p>
             <x-slot name="footer">

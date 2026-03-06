@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Permission;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -32,7 +33,8 @@ class AuditList extends Component
         $this->resetPage();
     }
 
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         return PermissionAudit::query()
             ->when($this->search, fn ($q) => $q->where(function ($q2) {

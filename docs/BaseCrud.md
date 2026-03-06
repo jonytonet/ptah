@@ -49,7 +49,7 @@
 
 ## Visão Geral
 
-`BaseCrud` é um componente Livewire 3 que gera uma tela completa de CRUD com:
+`BaseCrud` é um componente Livewire 4 que gera uma tela completa de CRUD com:
 
 - Tabela dinâmica com sort, paginação e filtros
 - Modal de criação/edição com validação
@@ -1691,7 +1691,7 @@ Ambos os campos podem ser deixados vazios para usar o padrão, ou preenchidos qu
 // Registrado via getListeners() quando broadcast.enabled = true:
 "echo:{channel},{event}" => 'handleBaseCrudUpdate'
 
-// Sempre registrado (Livewire 3 built-in):
+// Sempre registrado (Livewire 4 built-in):
 "refreshData" => '$refresh'
 ```
 

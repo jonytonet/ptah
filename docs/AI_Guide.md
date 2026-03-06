@@ -28,7 +28,7 @@ Antes de qualquer prompt, forneça ao agente o contexto necessário. O Ptah tem 
 
 ```
 Pacote:    jonytonet/ptah
-Laravel:   12.x  |  PHP 8.3  |  Livewire 3  |  Tailwind v4  |  Alpine.js 3
+Laravel:   12.x  |  PHP 8.3  |  Livewire 4  |  Tailwind v4  |  Alpine.js 3
 Ícones:    Boxicons 2.1.4 + FontAwesome 6.7.2 (via CDN — nunca SVG inline)
 Dark mode: classe `.ptah-dark` no elemento raiz — CSS centralizado no forge-dashboard-layout
 Locale:    PTAH_LOCALE=en (padrão) | pt_BR — textos da UI via `__('ptah::ui.*')`
@@ -82,7 +82,7 @@ Um prompt eficaz para geração de código com o Ptah deve conter:
 Use este template quando quiser criar uma entidade do zero com scaffolding Ptah.
 
 ```
-Você está trabalhando no pacote jonytonet/ptah (Laravel 12, Livewire 3,
+Você está trabalhando no pacote jonytonet/ptah (Laravel 12, Livewire 4,
 Tailwind v4). Use o comando ptah:forge para gerar a entidade.
 
 ENTIDADE: Product (Produto)

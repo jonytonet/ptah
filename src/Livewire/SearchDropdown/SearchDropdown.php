@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire;
+namespace Ptah\Livewire\SearchDropdown;
 
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
@@ -14,12 +14,12 @@ use Ptah\DTO\SearchDropdownDTO;
  *
  * Dynamic search dropdown with support for:
  *  - Direct-model search or via custom service
- *  - Multiple display fields (label, labelSecondary, labelLast)
+ *  - Multiple display fields (label, labelTwo, labelThree)
  *  - Additional query filters (dataFilter)
  *  - Per-field format masks (formatValue)
  *  - Configurable selection event via $listens
  *
- * Livewire 3 — uses dispatch() and #[On(...)].
+ * Livewire 4 — uses dispatch() and #[On(...)].
  *
  * Basic usage:
  *   @livewire('ptah-search-dropdown', [
@@ -50,11 +50,11 @@ class SearchDropdown extends Component
     /** Column displayed as the main label */
     public string $label = 'name';
 
-    /** Column displayed as secondary label (optional) */
-    public ?string $labelSecondary = null;
+    /** Column displayed as second label (optional) */
+    public ?string $labelTwo = null;
 
     /** Column displayed as third label (optional) */
-    public ?string $labelLast = null;
+    public ?string $labelThree = null;
 
     /** Extra columns included in the LIKE search */
     public array $arraySearch = [];
@@ -112,7 +112,7 @@ class SearchDropdown extends Component
 
     // ── Event ─────────────────────────────────────────────────────────────
 
-    /** Livewire 3 event name fired when an item is selected */
+    /** Livewire 4 event name fired when an item is selected */
     public string $listens = 'searchDropdownResult';
 
     /** Extra value passed in the event payload */
@@ -123,17 +123,19 @@ class SearchDropdown extends Component
     /**
      * Format masks per slot.
      * Each mask can be:
-     *   - "defaultMask"         → displays the value without transformation
-     *   - "cnpj"                → formats as CNPJ
-     *   - "cpf"                 → formats as CPF
-     *   - "money"               → R$ 1.234,56
-     *   - "phone"               → (11) 9 9999-9999
-     *   - "date"                → dd/mm/yyyy
-     *   - name of a public method of the child component
+     *   - "defaultMask"               → displays the value without transformation
+     *   - "cnpj"                      → formats as CNPJ
+     *   - "cpf"                       → formats as CPF
+     *   - "money"                     → R$ 1.234,56
+     *   - "phone"                     → (11) 9 9999-9999
+     *   - "date"                      → dd/mm/yyyy
+     *   - "App\Helpers\Masks::format" → static call (Class::method)
+     *   - "App\Services\Mask@format"  → IoC call (Class@method)
+     *   - name of a public method of the component itself
      */
-    public string $maskLabel     = 'defaultMask';
-    public string $maskSecondary = 'defaultMask';
-    public string $maskLast      = 'defaultMask';
+    public string $maskOne   = 'defaultMask';
+    public string $maskTwo   = 'defaultMask';
+    public string $maskThree = 'defaultMask';
 
     // ── Initialisation ─────────────────────────────────────────────────────
 
@@ -150,7 +152,7 @@ class SearchDropdown extends Component
 
         $data = $this->initWithData ? $this->dataModel : [];
 
-        return view('ptah::livewire.search-dropdown', compact('data'));
+        return view('ptah::livewire.search-dropdown.search-dropdown', compact('data'));
     }
 
     // ── Data ───────────────────────────────────────────────────────────────
@@ -170,18 +172,22 @@ class SearchDropdown extends Component
     private function loadDataViaService(): void
     {
         $dto = new SearchDropdownDTO(
-            searchTerm:     $this->searchTerm,
-            value:          $this->value,
-            label:          $this->label,
-            labelSecondary: $this->labelSecondary,
-            labelLast:      $this->labelLast,
-            orderByRaw:     $this->orderByRaw,
-            limit:          $this->limit,
-            arraySearch:    $this->arraySearch,
-            dataFilter:     $this->dataFilter,
+            searchTerm: $this->searchTerm,
+            value:      $this->value,
+            label:      $this->label,
+            labelTwo:   $this->labelTwo,
+            labelThree: $this->labelThree,
+            orderByRaw: $this->orderByRaw,
+            limit:      $this->limit,
+            arraySearch: $this->arraySearch,
+            dataFilter:  $this->dataFilter,
         );
 
-        $this->dataModel = app()->make($this->serviceClass)->{$this->useService}($dto);
+        $result = app()->make($this->serviceClass)->{$this->useService}($dto);
+
+        $this->dataModel = $result instanceof \Illuminate\Support\Collection
+            ? $result->toArray()
+            : (array) $result;
     }
 
     /**
@@ -194,7 +200,7 @@ class SearchDropdown extends Component
             $this->initWithData = true;
         }
 
-        $cols = array_filter([$this->value, $this->label, $this->labelSecondary, $this->labelLast]);
+        $cols = array_filter([$this->value, $this->label, $this->labelTwo, $this->labelThree]);
 
         /** @var \Illuminate\Database\Eloquent\Model $query */
         $query = app()->make($this->modelClass)->select(array_values($cols));
@@ -202,7 +208,7 @@ class SearchDropdown extends Component
         // Apply LIKE on the configured fields
         if (!empty($this->searchTerm)) {
             $searchCols = array_merge(
-                array_filter([$this->label, $this->labelSecondary, $this->labelLast, $this->value]),
+                array_filter([$this->label, $this->labelTwo, $this->labelThree, $this->value]),
                 $this->arraySearch
             );
 
@@ -289,13 +295,13 @@ class SearchDropdown extends Component
     /**
      * Applies a format mask to a value.
      *
-     * Supported masks:
-     *   defaultMask → no transformation
-     *   cnpj        → 00.000.000/0000-00
-     *   cpf         → 000.000.000-00
-     *   money       → R$ 1.234,56
-     *   phone       → (11) 9 9999-9999
-     *   date        → dd/mm/yyyy
+     * Resolution order:
+     *   1. 'defaultMask'          → returns value as-is
+     *   2. built-in names         → cnpj | cpf | money | phone | date
+     *   3. 'App\Helpers\Cls::m'   → static method call (contains '::')
+     *   4. 'App\Services\Cls@m'   → IoC instance method call (contains '@')
+     *   5. public method name     → $this->{$mask}($v)
+     *   6. fallback               → returns value as-is
      */
     public function formatValue(mixed $value, string $mask): string
     {
@@ -305,14 +311,48 @@ class SearchDropdown extends Component
 
         $v = (string) $value;
 
-        return match ($mask) {
+        if ($mask === 'defaultMask') {
+            return $v;
+        }
+
+        // Built-in masks
+        $builtin = match ($mask) {
             'cnpj'  => $this->applyMaskCnpj($v),
             'cpf'   => $this->applyMaskCpf($v),
             'money' => $this->applyMaskMoney($v),
             'phone' => $this->applyMaskPhone($v),
             'date'  => $this->applyMaskDate($v),
-            default => $v,
+            default => null,
         };
+
+        if ($builtin !== null) {
+            return $builtin;
+        }
+
+        // Dynamic: static call — 'App\Helpers\Masks::format'
+        if (str_contains($mask, '::')) {
+            [$class, $method] = explode('::', $mask, 2);
+            if (class_exists($class) && method_exists($class, $method)) {
+                return (string) $class::$method($v);
+            }
+            return $v;
+        }
+
+        // Dynamic: IoC instance call — 'App\Services\MaskService@format'
+        if (str_contains($mask, '@')) {
+            [$class, $method] = explode('@', $mask, 2);
+            if (class_exists($class)) {
+                return (string) app($class)->{$method}($v);
+            }
+            return $v;
+        }
+
+        // Component method
+        if (method_exists($this, $mask)) {
+            return (string) $this->{$mask}($v);
+        }
+
+        return $v;
     }
 
     // ── Internal helpers ───────────────────────────────────────────────────────────

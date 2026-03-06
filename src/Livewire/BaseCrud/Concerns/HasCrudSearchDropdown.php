@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire\Concerns;
+namespace Ptah\Livewire\BaseCrud\Concerns;
 
 /**
  * Handles searchable-dropdown logic: inline modal search &

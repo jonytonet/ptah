@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire;
+namespace Ptah\Livewire\BaseCrud;
 
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -123,7 +123,7 @@ class CrudConfig extends Component
 
     public function render(): \Illuminate\View\View
     {
-        return view('ptah::livewire.crud-config');
+        return view('ptah::livewire.base-crud.crud-config');
     }
 
     // ── Modal ────────────────────────────────────────────────────────────────

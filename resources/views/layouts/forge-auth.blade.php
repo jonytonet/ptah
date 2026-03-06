@@ -44,7 +44,7 @@
     <style>[x-cloak] { display: none !important; }</style>
 
     {{-- Alpine via CDN apenas se Livewire não estiver presente.
-         Livewire 3 já embute o Alpine internamente — carregar dois causa conflito. --}}
+         Livewire 4 já embute o Alpine internamente — carregar dois causa conflito. --}}
     @if(!class_exists(\Livewire\Livewire::class))
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @endif

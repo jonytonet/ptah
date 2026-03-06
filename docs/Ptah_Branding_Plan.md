@@ -98,7 +98,7 @@ development in small and medium-sized projects.
 
 ### 3️⃣ BaseCrud (Dynamic CRUD System)
 
--   Livewire 3
+-   Livewire 4
 -   Filters
 -   Modals
 -   Export

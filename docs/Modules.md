@@ -622,7 +622,7 @@ O módulo **company** adiciona gestão completa de empresas e departamentos ao P
 - CRUD de empresas com logo, dados fiscais (CNPJ/CPF/EIN/VAT), endereço em JSON e configurações arbitrárias
 - CRUD de departamentos (agrupadores de roles)
 - `CompanyService` com contexto por sessão, cache e suporte multi-empresa
-- Tela `/ptah-companies` com Livewire 3
+- Tela `/ptah-companies` com Livewire 4
 - `DefaultCompanySeeder` idempotente
 - Todos os models (`Company`, `Department`) usam a trait `HasAuditFields` — `created_by`, `updated_by` e `deleted_by` preenchidos automaticamente via Eloquent events
 

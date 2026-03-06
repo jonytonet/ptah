@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Permission;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -115,7 +116,8 @@ class DepartmentList extends Component
         $this->deleteId = null;
     }
 
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         return Department::query()
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))

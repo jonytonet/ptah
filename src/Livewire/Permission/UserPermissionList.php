@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Permission;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -116,7 +117,8 @@ class UserPermissionList extends Component
 
     // ── Render ─────────────────────────────────────────────────────────
 
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         /** @var class-string<\Illuminate\Database\Eloquent\Model> $userModel */
         $userModel = config('ptah.permissions.user_model', 'App\Models\User');
@@ -137,12 +139,14 @@ class UserPermissionList extends Component
             ->paginate(25);
     }
 
-    public function getRolesProperty()
+    #[Computed]
+    public function roles()
     {
         return Role::active()->orderByRaw('is_master DESC')->orderBy('name')->get();
     }
 
-    public function getCompaniesProperty()
+    #[Computed]
+    public function companies()
     {
         return Company::active()->orderBy('name')->get();
     }

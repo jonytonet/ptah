@@ -6,6 +6,7 @@ namespace Ptah\Livewire\Company;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -197,7 +198,8 @@ class CompanyList extends Component
 
     // ── Render ─────────────────────────────────────────────────────────
 
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         return Company::query()
             ->when($this->search, fn ($q) => $q->where(function ($q2) {

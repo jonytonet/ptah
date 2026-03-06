@@ -19,7 +19,7 @@
 - **Marketplace**: catálogo público, carrinho, checkout, portal do tutor
 
 **Stack:**
-- Laravel 12, PHP 8.3, Livewire 3/4, Tailwind CSS v4, Alpine.js 3
+- Laravel 12, PHP 8.3, Livewire 4, Tailwind CSS v4, Alpine.js 3
 - Pacote: `jonytonet/ptah` (scaffolding SOLID + BaseCrud dinâmico)
 
 ---

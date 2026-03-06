@@ -1,7 +1,7 @@
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
 {{-- ── Modal Confirmar Exclusão ─────────────────────────────────────── --}}
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
-<div x-data="{ open: @entangle('showDeleteConfirm').live }" @close="$wire.cancelDelete()">
+<div x-data="{ open: @entangle('showDeleteConfirm') }" @close="$wire.cancelDelete()">
     <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
 
         <div class="flex items-center gap-4">

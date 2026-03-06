@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Permission;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -245,7 +246,8 @@ class PageList extends Component
 
     // ── Render ─────────────────────────────────────────────────────────
 
-    public function getPageRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function pageRows(): LengthAwarePaginator
     {
         return PtahPage::query()
             ->when($this->search, fn ($q) => $q->where(function ($q2) {
@@ -257,7 +259,8 @@ class PageList extends Component
             ->paginate(20);
     }
 
-    public function getObjRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function objRows(): LengthAwarePaginator
     {
         return PageObject::query()
             ->where('page_id', $this->selectedPageId)

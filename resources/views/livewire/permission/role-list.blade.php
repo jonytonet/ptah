@@ -104,7 +104,7 @@
     @endif
 
     {{-- Modal criar/editar role --}}
-    <div x-data="{ open: @entangle('showModal').live }">
+    <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="$isEditing ? __('ptah::ui.role_form_title_edit') : __('ptah::ui.role_new_btn')" size="md">
             <div class="space-y-4">
                 <x-forge-input :label="__('ptah::ui.role_form_name')" wire:model="name" :error="$errors->first('name')" required />
@@ -134,7 +134,7 @@
     </div>
 
     {{-- Modal de bind de permissões --}}
-    <div x-data="{ open: @entangle('showBindModal').live }">
+    <div x-data="{ open: @entangle('showBindModal') }">
         <x-forge-modal :title="__('ptah::ui.role_bind_modal_prefix') . ' ' . $bindingRoleName" size="xl">
             <div class="space-y-2 max-h-[60vh] overflow-y-auto">
                 @php $currentPage = null; @endphp
@@ -182,7 +182,7 @@
     </div>
 
     {{-- Modal exclusão --}}
-    <div x-data="{ open: @entangle('showDeleteModal').live }">
+    <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
             <p class="text-slate-600">{{ __('ptah::ui.role_delete_text') }}</p>
             <x-slot name="footer">

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /**
  * ptah UI translations — Português do Brasil
@@ -1014,7 +1014,7 @@ return [
     'cfg_col_sd_method'            => 'Método do Service',
     'cfg_col_sd_value_field'       => 'Campo Valor (value)',
     'cfg_col_sd_label_field'       => 'Campo Label (label)',
-    'cfg_col_sd_label_secondary'   => 'Label Secundário (opcional)',
+    'cfg_col_sd_label_two'          => 'Label Dois (opcional)',
     'cfg_col_sd_order_by'          => 'Ordenação (orderByRaw)',
     'cfg_col_sd_limit'             => 'Limite de Resultados',
     'cfg_col_sd_filters'           => 'Filtros Estáticos (JSON)',

@@ -1,4 +1,4 @@
-﻿{{--
+{{--
     company-switcher — Ptah Forge
     ──────────────────────────────────────────────────────────────────
     • 1 empresa  → componente não renderiza nada

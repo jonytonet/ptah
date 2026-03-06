@@ -1,6 +1,6 @@
 ## Ptah — Laravel Scaffolding, SOLID Architecture & Component Library
 
-`jonytonet/ptah` is a Laravel package (Laravel 12, PHP 8.3, Livewire 3, Tailwind v4, Alpine.js 3) that enforces a **strict SOLID layered architecture** through scaffolding automation and runtime components.
+`jonytonet/ptah` is a Laravel package (Laravel 12, PHP 8.3, Livewire 4, Tailwind v4, Alpine.js 3) that enforces a **strict SOLID layered architecture** through scaffolding automation and runtime components.
 
 ---
 

@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire;
+namespace Ptah\Livewire\BaseCrud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Ptah\Livewire\Concerns\HasCrudBulkActions;
-use Ptah\Livewire\Concerns\HasCrudColumns;
-use Ptah\Livewire\Concerns\HasCrudDeletion;
-use Ptah\Livewire\Concerns\HasCrudExport;
-use Ptah\Livewire\Concerns\HasCrudFilters;
-use Ptah\Livewire\Concerns\HasCrudForm;
-use Ptah\Livewire\Concerns\HasCrudLifecycle;
-use Ptah\Livewire\Concerns\HasCrudPreferences;
-use Ptah\Livewire\Concerns\HasCrudQuery;
-use Ptah\Livewire\Concerns\HasCrudRenderers;
-use Ptah\Livewire\Concerns\HasCrudSearchDropdown;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudBulkActions;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudColumns;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudDeletion;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudExport;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudFilters;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudForm;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudLifecycle;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudPreferences;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudQuery;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudRenderers;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudSearchDropdown;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
@@ -234,7 +234,7 @@ class BaseCrud extends Component
 
     /**
      * Called via Echo/broadcast when the Observer fires the event.
-     * Livewire automatically re-executes getRowsProperty() on re-render.
+     * Livewire automatically re-executes the #[Computed] rows() on re-render.
      */
     public function handleBaseCrudUpdate(): void
     {
@@ -245,7 +245,7 @@ class BaseCrud extends Component
 
     public function render()
     {
-        return view('ptah::livewire.base-crud', [
+        return view('ptah::livewire.base-crud.base-crud', [
             'rows'             => $this->rows,
             'visibleCols'      => $this->getVisibleColumns(),
             'formCols'         => $this->getFormCols(),

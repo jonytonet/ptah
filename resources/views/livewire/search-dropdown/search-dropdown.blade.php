@@ -40,18 +40,18 @@
                                 style="font-size: 11px !important; font-weight: normal;"
                                 wire:key="sd-item-{{ $item[$value] }}-{{ $i }}"
                             >
-                                @if ($labelLast)
+                                @if ($labelThree)
                                     <strong>{{ $item[$value] }}</strong> -
-                                    {{ $this->formatValue($item[$label], $maskLabel) }} -
-                                    {{ $this->formatValue($item[$labelSecondary], $maskSecondary) }} -
-                                    {{ $this->formatValue($item[$labelLast], $maskLast) }}
-                                @elseif ($labelSecondary)
+                                    {{ $this->formatValue($item[$label], $maskOne) }} -
+                                    {{ $this->formatValue($item[$labelTwo], $maskTwo) }} -
+                                    {{ $this->formatValue($item[$labelThree], $maskThree) }}
+                                @elseif ($labelTwo)
                                     <strong>{{ $item[$value] }}</strong> -
-                                    {{ $this->formatValue($item[$label], $maskLabel) }} -
-                                    {{ $this->formatValue($item[$labelSecondary], $maskSecondary) }}
+                                    {{ $this->formatValue($item[$label], $maskOne) }} -
+                                    {{ $this->formatValue($item[$labelTwo], $maskTwo) }}
                                 @else
                                     <strong>{{ $item[$value] }}</strong> -
-                                    {{ $this->formatValue($item[$label], $maskLabel) }}
+                                    {{ $this->formatValue($item[$label], $maskOne) }}
                                 @endif
                             </span>
                         @endforeach

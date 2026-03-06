@@ -6,6 +6,7 @@ namespace Ptah\Livewire\Permission;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -226,12 +227,14 @@ class RoleList extends Component
 
     // ── Render ─────────────────────────────────────────────────────────
 
-    public function getDepartmentsProperty()
+    #[Computed]
+    public function departments()
     {
         return Department::active()->orderBy('name')->get();
     }
 
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         return Role::query()
             ->with('department')

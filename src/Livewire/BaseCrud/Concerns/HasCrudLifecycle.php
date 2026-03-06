@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire\Concerns;
+namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Livewire\Attributes\On;
 use Ptah\Services\Cache\CacheService;

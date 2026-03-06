@@ -13,7 +13,7 @@ use Ptah\PtahServiceProvider;
  * Classe base para todos os testes do pacote Ptah.
  *
  * Usa Orchestra Testbench para simular uma aplicação Laravel completa,
- * com banco de dados SQLite em memória e Livewire 3 registrado.
+ * com banco de dados SQLite em memória e Livewire 4 registrado.
  */
 abstract class TestCase extends OrchestraTestCase
 {

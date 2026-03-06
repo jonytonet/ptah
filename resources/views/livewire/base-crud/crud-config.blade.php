@@ -1235,9 +1235,9 @@
                                                 placeholder="name" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_secondary')
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_two')
                                                 }}</label>
-                                            <input type="text" wire:model="formDataField.colsSDLabelSecondary"
+                                            <input type="text" wire:model="formDataField.colsSDLabelTwo"
                                                 placeholder="cnpj" class="font-mono cfg-input" />
                                         </div>
                                         <div>

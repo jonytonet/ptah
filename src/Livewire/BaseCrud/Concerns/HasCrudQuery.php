@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire\Concerns;
+namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 
@@ -26,7 +27,8 @@ trait HasCrudQuery
      * Returns paginated data applying all active filters.
      * Includes error recovery: clears corrupted preferences and returns an empty list.
      */
-    public function getRowsProperty(): LengthAwarePaginator
+    #[Computed]
+    public function rows(): LengthAwarePaginator
     {
         $modelInstance = $this->resolveEloquentModel();
 
@@ -184,7 +186,8 @@ trait HasCrudQuery
      * Column totals (sums / counts / averages).
      * Each aggregate clones the query to avoid mutual interference.
      */
-    public function getTotalizadoresDataProperty(): array
+    #[Computed]
+    public function totalizadoresData(): array
     {
         $totConfig = $this->crudConfig['totalizadores'] ?? [];
 

@@ -1,7 +1,7 @@
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
 {{-- ── Modal Criar / Editar ─────────────────────────────────────────── --}}
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
-<div x-data="{ open: @entangle('showModal').live }" @close="$wire.closeModal()">
+<div x-data="{ open: @entangle('showModal') }" @close="$wire.closeModal()">
     <x-forge-modal
         :title="($editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix')) . ' ' . $crudTitle"
         :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
@@ -285,8 +285,8 @@
                                                 this.display = f;
                                                 const h = this.$refs.moneyHidden;
                                                 h.value = f;
-                                                // Livewire 3 wire:model (deferred) collects on action;
-                                                // dispatch 'input' so Livewire also gets it on .live if ever used
+                                                // wire:model (deferred) syncs on save action in Livewire 4;
+                                                // dispatch 'input' to keep hidden input in sync during interaction
                                                 h.dispatchEvent(new Event('input', { bubbles: true }));
                                             }
                                         }"

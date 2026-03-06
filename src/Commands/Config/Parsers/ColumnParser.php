@@ -90,7 +90,7 @@ class ColumnParser
             'sd_service_method' => 'colsSDServiceMethod',
             'sd_value' => 'colsSDValueField',
             'sd_label' => 'colsSDLabelField',
-            'sd_label_secondary' => 'colsSDLabelSecondary',
+            'sd_label_two' => 'colsSDLabelTwo',
             'sd_order_by' => 'colsSDOrderBy',
             'sd_limit' => 'colsSDLimit',
             'sd_placeholder' => 'colsSDPlaceholder',

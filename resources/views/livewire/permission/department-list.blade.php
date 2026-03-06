@@ -89,7 +89,7 @@
     @endif
 
     {{-- Modal criar/editar --}}
-    <div x-data="{ open: @entangle('showModal').live }">
+    <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="$isEditing ? __('ptah::ui.dept_modal_edit') : __('ptah::ui.dept_modal_new')" size="md">
             <div class="space-y-4">
                 <x-forge-input :label="__('ptah::ui.dept_form_name')" wire:model="name" :error="$errors->first('name')" required />
@@ -104,7 +104,7 @@
     </div>
 
     {{-- Modal exclusão --}}
-    <div x-data="{ open: @entangle('showDeleteModal').live }">
+    <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
             <p class="text-slate-600">{{ __('ptah::ui.dept_delete_text') }}</p>
             <x-slot name="footer">

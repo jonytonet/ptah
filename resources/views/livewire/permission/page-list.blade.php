@@ -172,7 +172,7 @@
     </div>
 
     {{-- Modal Página --}}
-    <div x-data="{ open: @entangle('showPageModal').live }">
+    <div x-data="{ open: @entangle('showPageModal') }">
         <x-forge-modal :title="$isEditingPage ? __('ptah::ui.page_modal_edit') : __('ptah::ui.page_modal_new')" size="md">
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
@@ -197,7 +197,7 @@
     </div>
 
     {{-- Modal Objeto --}}
-    <div x-data="{ open: @entangle('showObjModal').live }">
+    <div x-data="{ open: @entangle('showObjModal') }">
         <x-forge-modal :title="$isEditingObj ? __('ptah::ui.page_obj_modal_edit') : __('ptah::ui.page_obj_modal_new')" size="md">
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
@@ -223,7 +223,7 @@
     </div>
 
     {{-- Modal exclusão --}}
-    <div x-data="{ open: @entangle('showDeleteModal').live }">
+    <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal :title="__('ptah::ui.delete_title')" size="sm">
             <p class="text-slate-600">
                 @if ($deleteTarget === 'page')

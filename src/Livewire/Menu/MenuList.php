@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Menu;
 
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -181,7 +182,8 @@ class MenuList extends Component
     }
 
     // ── Select de grupos (para parent_id) ─────────────────────────────
-    public function getGroupsProperty(): Collection
+    #[Computed]
+    public function groups(): Collection
     {
         $query = Menu::where('type', 'menuGroup')->orderBy('link_order')->orderBy('text');
 

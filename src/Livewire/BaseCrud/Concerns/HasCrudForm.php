@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ptah\Livewire\Concerns;
+namespace Ptah\Livewire\BaseCrud\Concerns;
 
 /**
  * Handles CRUD form modal: open, edit, close and save.
