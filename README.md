@@ -36,12 +36,18 @@
 ### Example: IT Helpdesk — complete system in ~3 minutes
 
 ```bash
-# 1. Laravel project + ptah installed (ptah:install already ran)
+# 1. Create the Laravel project and install ptah
+composer create-project laravel/laravel ptah-app
+cd ptah-app
+composer require jonytonet/ptah
+php artisan ptah:install
+
+# 2. Enable the required modules
 php artisan ptah:module auth
 php artisan ptah:module permissions
 php artisan ptah:module menu
 
-# 2. Generate the 3 system entities
+# 3. Generate the 3 system entities
 php artisan ptah:forge Category \
   --fields="name:string,color:string:nullable,description:text:nullable"
 
@@ -51,7 +57,7 @@ php artisan ptah:forge Agent \
 php artisan ptah:forge Ticket \
   --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
 
-# 3. Run migrations and serve
+# 4. Run migrations and serve
 php artisan migrate
 php artisan serve
 ```
@@ -72,6 +78,8 @@ php artisan serve
 
 ## 🚀 Installation
 
+### From Packagist (stable — recommended)
+
 ```bash
 # 1. Install the package
 composer require jonytonet/ptah
@@ -81,6 +89,30 @@ php artisan ptah:install
 
 # 3. (Optional) Install Laravel Boost for AI agent integration
 php artisan ptah:install --boost
+```
+
+### From GitHub (latest dev version)
+
+Add to your `composer.json` before requiring:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jonytonet/ptah"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
+```
+
+Then:
+
+```bash
+composer require jonytonet/ptah:dev-main
+php artisan ptah:install
 ```
 
 > See the **[full installation guide →](docs/InstallationGuide.md)** for database setup, optional modules and troubleshooting.
