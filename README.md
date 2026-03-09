@@ -42,6 +42,17 @@ cd ptah-app
 
 
 composer require jonytonet/ptah:@dev # GitHub
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jonytonet/ptah"
+        }
+    ],
+    "require": {
+        "jonytonet/ptah": "dev-main"
+    }
+}
 composer require jonytonet/ptah # packagist.org -- EM DESENVOLVIMENTO
 php artisan ptah:install
 
