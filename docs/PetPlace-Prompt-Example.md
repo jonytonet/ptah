@@ -1,9 +1,5 @@
-# 🐾 PetPlace — Exemplo de Prompt para IA (Ptah)
+﻿# 🐾 PetPlace — Exemplo de Prompt para IA (Ptah)
 
-> **Exemplo prático para IA agents** — Versão enxuta focada em scaffolding + validação
-> 
-> **Atualizado:** 5 de março de 2026  
-> **Changelog:** Refatorado para formato minimalista (regras avançadas movidas para Boost)
 
 > 📊 **Documentação complementar:**  
 > - [`Configuration.md`](Configuration.md) — Guia completo de configuração do BaseCrud  
@@ -38,9 +34,7 @@ APP_TIMEZONE=America/Sao_Paulo
 PTAH_LOCALE=pt_BR
 DB_CONNECTION=mysql  # ou sqlite para testes
 
-# 3. Instalar ptah (local ou GitHub)
-# Adicionar ao composer.json:
-# "repositories": [{"type": "path", "url": "../composer_project/ptah", "options": {"symlink": true}}]
+# 3. Instalar ptah (GitHub)
 composer require jonytonet/ptah:@dev
 
 # 4. Executar instalador
@@ -219,310 +213,7 @@ Após gerar todas as entidades, os Models contêm TODOs marcando relacionamentos
 
 ---
 
-## 🎨 Configuração Visual do BaseCrud (CLI)
-
-Após scaffolding, configure os CRUDs via linha de comando usando `ptah:config`:
-
-### Sintaxe Básica
-
-```bash
-php artisan ptah:config "App\Models\Product" \
-  --column="name:text:label=Nome:sortable=true" \
-  --column="status:badge:label=Status:badgeMap=active:success:Ativo,inactive:danger:Inativo" \
-  --column="price:money:label=Preço:sortable=true" \
-  --column="created_at:date:label=Criado em:sortable=true"
-```
-
-### Exemplos Práticos por Entidade
-
-#### 1. Product (Catálogo)
-
-```bash
-php artisan ptah:config "App\Models\Product" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="sku:text:label=SKU:sortable=true:searchable=true" \
-  --column="name:text:label=Nome:sortable=true:searchable=true" \
-  --column="category_id:relation:label=Categoria:relation=category.name:searchable=true" \
-  --column="brand_id:relation:label=Marca:relation=brand.name:searchable=true" \
-  --column="price:money:label=Preço:sortable=true" \
-  --column="stock:numeric:label=Estoque:sortable=true" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
-  --column="is_featured:boolean:label=Destaque" \
-  --style="is_active:eq:0:bg-red-50 text-red-700" \
-  --style="stock:lt:5:bg-yellow-50 text-yellow-700" \
-  --style="is_featured:eq:1:bg-purple-50 font-semibold" \
-  --filter="is_active:boolean:eq:Ativos" \
-  --filter="is_featured:boolean:eq:Em Destaque" \
-  --filter="stock:numeric:lt:Estoque Baixo" \
-  --action="duplicate:wire:duplicate:bx bx-copy:info:Duplicar este produto?" \
-  --set="itemsPerPage=15" \
-  --set="cacheEnabled=true" \
-  --set="cacheTime=30"
-```
-
-#### 2. Order (Pedidos)
-
-```bash
-php artisan ptah:config "App\Models\Order" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="client_id:relation:label=Cliente:relation=client.user.name:searchable=true" \
-  --column="status:badge:label=Status:badgeMap=pending:warning:Pendente,paid:info:Pago,shipped:primary:Enviado,delivered:success:Entregue,cancelled:danger:Cancelado" \
-  --column="total:money:label=Total:sortable=true" \
-  --column="created_at:date:label=Data:sortable=true" \
-  --style="status:eq:pending:bg-yellow-50 text-yellow-700" \
-  --style="status:eq:cancelled:bg-red-50 text-red-700" \
-  --style="status:eq:delivered:bg-green-50 text-green-700" \
-  --filter="status:select:eq:Pendentes:pending" \
-  --filter="status:select:eq:Pagos:paid" \
-  --filter="status:select:eq:Entregues:delivered" \
-  --action="print:wire:printInvoice:bx bx-printer:primary" \
-  --action="cancel:wire:cancel:bx bx-x:danger:Deseja cancelar este pedido?" \
-  --set="itemsPerPage=20"
-```
-
-#### 3. Appointment (Agendamentos)
-
-```bash
-php artisan ptah:config "App\Models\Appointment" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="scheduled_at:datetime:label=Data/Hora:sortable=true" \
-  --column="client_id:relation:label=Cliente:relation=client.user.name:searchable=true" \
-  --column="pet_id:relation:label=Pet:relation=pet.name:searchable=true" \
-  --column="service_id:relation:label=Serviço:relation=service.name:searchable=true" \
-  --column="employee_id:relation:label=Profissional:relation=employee.user.name" \
-  --column="status:badge:label=Status:badgeMap=pending:warning:Pendente,confirmed:info:Confirmado,in_progress:primary:Em Andamento,done:success:Concluído,cancelled:danger:Cancelado" \
-  --style="status:eq:cancelled:bg-red-50 text-red-700 line-through" \
-  --style="status:eq:done:bg-green-50 text-green-700" \
-  --filter="status:select:eq:Hoje" \
-  --filter="status:select:eq:Esta Semana" \
-  --filter="status:select:eq:Pendentes:pending" \
-  --action="confirm:wire:confirm:bx bx-check:success:Confirmar agendamento?" \
-  --action="cancel:wire:cancel:bx bx-x:danger:Cancelar agendamento?" \
-  --set="itemsPerPage=25"
-```
-
-#### 4. Pet (Clientes)
-
-```bash
-php artisan ptah:config "App\Models\Pet" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="name:text:label=Nome:sortable=true:searchable=true" \
-  --column="client_id:relation:label=Tutor:relation=client.user.name:searchable=true" \
-  --column="species_id:relation:label=Espécie:relation=species.name" \
-  --column="breed_id:relation:label=Raça:relation=breed.name" \
-  --column="gender:badge:label=Sexo:badgeMap=male:info:Macho,female:primary:Fêmea" \
-  --column="birth_date:date:label=Nascimento:sortable=true" \
-  --column="is_neutered:boolean:label=Castrado" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
-  --style="is_active:eq:0:bg-red-50 text-red-700" \
-  --filter="is_active:boolean:eq:Ativos" \
-  --filter="is_neutered:boolean:eq:Castrados" \
-  --action="medical_history:wire:viewMedicalHistory:bx bx-file-find:info" \
-  --action="vaccinations:wire:viewVaccinations:bx bx-injection:primary" \
-  --set="itemsPerPage=15"
-```
-
-#### 5. Client (Clientes)
-
-```bash
-php artisan ptah:config "App\Models\Client" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="user_id:relation:label=Nome:relation=user.name:searchable=true" \
-  --column="phone:text:label=Telefone:searchable=true" \
-  --column="cpf:text:label=CPF:searchable=true" \
-  --column="birth_date:date:label=Nascimento:sortable=true" \
-  --column="accepts_promotions:boolean:label=Promoções" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
-  --style="is_active:eq:0:bg-red-50 text-red-700" \
-  --filter="is_active:boolean:eq:Ativos" \
-  --filter="accepts_promotions:boolean:eq:Aceita Promoções" \
-  --action="view_pets:wire:viewPets:bx bx-happy-heart:primary" \
-  --action="view_orders:wire:viewOrders:bx bx-shopping-bag:info" \
-  --set="itemsPerPage=20"
-```
-
-### Comandos Adicionais Úteis
-
-```bash
-# Listar configuração atual
-php artisan ptah:config "App\Models\Product" --list
-
-# Exportar configuração para JSON
-php artisan ptah:config "App\Models\Product" --export=product-config.json
-
-# Importar configuração de JSON
-php artisan ptah:config "App\Models\Product" --import=product-config.json
-
-# Resetar configuração (volta ao padrão)
-php artisan ptah:config "App\Models\Product" --reset
-
-# Dry-run (mostra o que seria alterado sem salvar)
-php artisan ptah:config "App\Models\Product" --column="name:text:label=Nome" --dry-run
-
-# Configurar apenas colunas (pula outras seções)
-php artisan ptah:config "App\Models\Product" --only=columns --non-interactive
-
-# Configurar tudo exceto estilos
-php artisan ptah:config "App\Models\Product" --skip=styles
-```
-
-### Formato das Opções
-
-#### --column
-
-Formato: `campo:tipo:modificador1:modificador2:option1=value1:option2=value2`
-
-**Tipos disponíveis:**
-- `text` — Texto simples
-- `badge` — Badge colorido (requer `badgeMap`)
-- `boolean` — Ícone ✓/✗
-- `date` — Data formatada (DD/MM/YYYY)
-- `datetime` — Data + hora
-- `money` — Valor monetário (R$ 1.234,56)
-- `numeric` — Número formatado
-- `relation` — Relacionamento (requer `relation=model.field`)
-
-**Modificadores:**
-- `sortable=true` — Habilita ordenação
-- `searchable=true` — Habilita busca
-- `label=Texto` — Label da coluna
-- `width=80` — Largura em pixels
-- `badgeMap=value1:color1:text1,value2:color2:text2` — Mapeamento de badges
-- `relation=model.field` — Caminho do relacionamento
-
-#### --style
-
-Formato: `campo:operador:valor:classes_css`
-
-**Operadores:**
-- `eq` — Igual (==)
-- `ne` — Diferente (!=)
-- `lt` — Menor que (<)
-- `gt` — Maior que (>)
-- `lte` — Menor ou igual (<=)
-- `gte` — Maior ou igual (>=)
-
-**Exemplo:** `is_active:eq:0:bg-red-50 text-red-700`
-
-#### --filter
-
-Formato: `campo:tipo:operador:label[:valor_padrao]`
-
-**Tipos:**
-- `boolean` — Checkbox
-- `select` — Dropdown
-- `numeric` — Input numérico
-- `date` — Date picker
-
-**Exemplo:** `status:select:eq:Pendentes:pending`
-
-#### --action
-
-Formato: `nome:tipo:metodo:icone:cor[:mensagem_confirmacao]`
-
-**Tipos:**
-- `wire` — Chama método Livewire
-- `route` — Redireciona para rota
-- `url` — Abre URL externa
-
-**Cores:** `primary`, `success`, `danger`, `warning`, `info`
-
-**Exemplo:** `duplicate:wire:duplicate:bx bx-copy:info:Deseja duplicar?`
-
-#### --set
-
-Formato: `chave=valor`
-
-**Configurações gerais:**
-- `itemsPerPage=15` — Itens por página
-- `cacheEnabled=true` — Habilitar cache
-- `cacheTime=30` — Tempo de cache (minutos)
-- `paginationEnabled=true` — Habilitar paginação
-- `exportEnabled=true` — Habilitar exportação
-
----
-
-## 🎨 Configuração Visual Alternativa (Modal Web)
-
-Se preferir configurar pela interface web, acesse cada CRUD e clique no ícone ⚙️:
-
-### 1. Colunas da Listagem
-
-```json
-{
-  "columns": [
-    {"key": "id", "label": "ID", "sortable": true},
-    {"key": "name", "label": "Nome", "sortable": true},
-    {"key": "status", "label": "Status", "type": "badge", "badgeMap": {
-      "active": {"text": "Ativo", "color": "success"},
-      "inactive": {"text": "Inativo", "color": "danger"}
-    }},
-    {"key": "price", "label": "Preço", "type": "money"},
-    {"key": "created_at", "label": "Criado em", "type": "date"}
-  ]
-}
-```
-
-### 2. Row Styles (Destaque Visual)
-
-```json
-{
-  "rowStyles": [
-    {"condition": "is_active == false", "classes": "bg-red-50 text-red-700"},
-    {"condition": "status == 'overdue'", "classes": "bg-yellow-50 text-yellow-700"},
-    {"condition": "is_featured == true", "classes": "bg-purple-50 font-semibold"}
-  ]
-}
-```
-
-### 3. Quick Filters (Filtros Rápidos)
-
-```json
-{
-  "quickFilters": [
-    {"label": "Ativos", "field": "is_active", "value": true},
-    {"label": "Inativos", "field": "is_active", "value": false},
-    {"label": "Em Destaque", "field": "is_featured", "value": true}
-  ]
-}
-```
-
-### 4. Search Dropdown (Busca por FK)
-
-```json
-{
-  "searchDropdown": {
-    "category_id": {
-      "label": "Categoria",
-      "model": "App\\Models\\Category",
-      "displayField": "name",
-      "searchFields": ["name"],
-      "placeholder": "Buscar categoria..."
-    },
-    "brand_id": {
-      "label": "Marca",
-      "model": "App\\Models\\Brand",
-      "displayField": "name"
-    }
-  }
-}
-```
-
-### 5. Custom Actions (Ações Personalizadas)
-
-```json
-{
-  "customActions": [
-    {
-      "label": "Duplicar",
-      "icon": "bx bx-copy",
-      "wire": "duplicate",
-      "color": "info",
-      "confirm": "Deseja duplicar este registro?"
-    }
-  ]
-}
-```
+> 💡 **Configuração visual do BaseCrud** (colunas, badges, filtros, estilos e ações customizadas): consulte [Configuration.md](Configuration.md).
 
 ---
 
@@ -533,7 +224,6 @@ Se preferir configurar pela interface web, acesse cada CRUD e clique no ícone �
 - [ ] Todas as migrations rodaram sem erro
 - [ ] Menu da sidebar exibe todos os módulos e links (`ptah:menu-sync --fresh`)
 - [ ] Todos os relacionamentos nos Models foram descomentados (TODOs resolvidos)
-- [ ] **CRUDs configurados via `ptah:config`** com colunas, badges, filtros e ações
 - [ ] Todos os CRUDs abrem sem erro (teste criar/editar/deletar)
 - [ ] Relacionamentos funcionam (ex: dropdown de categoria no Product)
 - [ ] Login funciona (`admin@admin.com` / `admin@123`)
@@ -559,48 +249,6 @@ php artisan tinker
 
 ---
 
-## 🔧 Sugestões de Melhorias Visuais
-
-Após a validação básica, implemente:
-
-### 1. Badges Coloridos (Status)
-
-Configure `badgeMap` em todos os CRUDs com status/enum:
-- `active/inactive` → success/danger
-- `pending/confirmed/done/cancelled` → warn/info/success/danger
-- `open/paid/overdue` → info/success/danger
-
-### 2. Ícones nas Actions
-
-Use ícones Boxicons nas ações customizadas:
-- `bx bx-copy` → Duplicar
-- `bx bx-download` → Exportar PDF
-- `bx bx-send` → Enviar Email
-- `bx bx-printer` → Imprimir
-
-### 3. Formatação de Valores
-
-Configure `type` correto nas colunas:
-- `money` → Mostra R$ 1.234,56
-- `date` → Mostra 05/03/2026
-- `boolean` → Mostra ✓ / ✗
-
-### 4. Destaque de Registros Importantes
-
-Use `rowStyles` para destacar:
-- Produtos em falta (stock < 5) → amarelo
-- Pedidos atrasados (due_date < hoje) → vermelho
-- Clientes VIP → roxo
-
-### 5. Filtros Contextuais
-
-Configure `quickFilters` relevantes para cada contexto:
-- **Products**: "Em Destaque", "Sem Estoque", "Promoção"
-- **Orders**: "Pendentes", "Pagos", "Atrasados"
-- **Appointments**: "Hoje", "Esta Semana", "Cancelados"
-
----
-
 ## 📖 Documentação Completa
 
 - **Lifecycle Hooks**: `ProductHooks.example.php` (na mesma pasta)
@@ -616,9 +264,8 @@ Este prompt deve resultar em:
 1. ✅ Instalar ptah sem erros (~2 minutos)
 2. ✅ Gerar 23 entidades completas (~5 minutos)
 3. ✅ Popular menu automaticamente com `ptah:menu-sync --fresh`
-4. ✅ **Configurar 5+ CRUDs via `ptah:config` CLI** (Product, Order, Appointment, Pet, Client)
-5. ✅ Resolver TODOs dos relacionamentos nos Models
-6. ✅ Resultar em sistema funcional com CRUDs estilizados
+4. ✅ Resolver TODOs dos relacionamentos nos Models
+5. ✅ Resultar em sistema funcional e operacional
 
 ### Fluxo Completo de Validação
 
@@ -639,32 +286,21 @@ php artisan ptah:menu-sync --fresh
 # - app/Models/Appointment.php
 # - (demais models conforme tabela de relacionamentos)
 
-# 4. Configurar CRUDs via CLI (3 min) ⭐ ESTE É O TESTE!
-php artisan ptah:config "App\Models\Product" --column="..." --style="..." --filter="..." --action="..."
-php artisan ptah:config "App\Models\Order" --column="..." --style="..." --filter="..." --action="..."
-php artisan ptah:config "App\Models\Appointment" --column="..." --style="..." --filter="..." --action="..."
-php artisan ptah:config "App\Models\Pet" --column="..." --style="..." --filter="..." --action="..."
-php artisan ptah:config "App\Models\Client" --column="..." --style="..." --filter="..." --action="..."
-
-# 5. Validação (2 min)
+# 4. Validação (2 min)
 php artisan serve
 # Acessar http://localhost:8000
 # Testar login (admin@admin.com / admin@123)
-# Navegar pelos CRUDs configurados
-# Validar badges coloridos, filtros rápidos, ações customizadas
+# Navegar pelos CRUDs e validar que CRUD abre, cria, edita e exclui
+# Confirmar que o menu está populado na sidebar
 ```
 
 **Teste bem-sucedido:**
 - ✅ Menu completo na sidebar (23 links)
-- ✅ CRUDs visuais com badges coloridos (status, gênero, etc.)
-- ✅ Row styles aplicados (registros inativos em vermelho, etc.)
-- ✅ Filtros rápidos funcionando (Ativos, Pendentes, etc.)
-- ✅ Ações customizadas visíveis (Duplicar, Imprimir, etc.)
 - ✅ Relacionamentos carregando (dropdown de Categoria funciona no Product)
 
-**Total:** ~15 minutos para projeto completo funcional e estilizado! 🚀
+**Total:** ~10 minutos para projeto completo funcional! 🚀
 
 ---
 
-**Última atualização:** 5 de março de 2026  
+**Última atualização:** 9 de março de 2026  
 **Versão:** 2.1 (Menu Automático + TODOs + Config via CLI + Validação Completa)

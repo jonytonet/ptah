@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -160,7 +161,7 @@ trait HasCrudQuery
 
             return $query->paginate($this->perPage);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
             // Clear potentially corrupted preferences
             $userId = Auth::id();
             if ($userId) {

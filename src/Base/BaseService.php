@@ -340,7 +340,7 @@ abstract class BaseService
 
     /**
      * Resolves the relations array from the request.
-     * Returns [] when the param is absent or the UI sentinel 'Relacao'.
+     * Returns [] when the param is absent or empty.
      * When $allowedRelations is non-empty, the list is filtered against it
      * so callers cannot trigger arbitrary relation eager-loads.
      *
@@ -348,9 +348,9 @@ abstract class BaseService
      */
     private function resolveRelations(Request $request): array
     {
-        $raw = $request->get('relations', 'Relacao');
+        $raw = $request->get('relations', '');
 
-        if ($raw === 'Relacao' || empty($raw)) {
+        if (empty($raw)) {
             return [];
         }
 

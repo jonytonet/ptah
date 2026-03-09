@@ -222,7 +222,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
             $query->select($this->buildSelectFields($request));
         }
 
-        if (! empty($input) && trim($input) !== 'Busca') {
+        if (! empty($input)) {
             $terms   = explode(',', $input);
             $columns = Schema::getColumnListing($this->model->getTable());
 
@@ -266,17 +266,16 @@ abstract class BaseRepository implements BaseRepositoryInterface
             $query->select($this->buildSelectFields($request));
         }
 
-        $type    = strtoupper($request->get('searchLikeType', 'AND')) === 'OR' ? 'orWhere' : 'where';
-        $filters = [];
+        $type         = strtoupper($request->get('searchLikeType', 'AND')) === 'OR' ? 'orWhere' : 'where';
+        $validColumns = $this->getTableColumns();
+        $filters      = [];
 
-        if (! empty($input) && trim($input) !== 'Incremental') {
+        if (! empty($input)) {
             $filters = explode(',', $input);
         }
 
         if (! empty($filters)) {
-            $columns = Schema::getColumnListing($this->model->getTable());
-
-            $query->where(function (Builder $q) use ($filters, $columns, $type): void {
+            $query->where(function (Builder $q) use ($filters, $validColumns, $type): void {
                 foreach ($filters as $term) {
                     $term = trim($term);
                     if ($term === '') {
@@ -288,7 +287,13 @@ abstract class BaseRepository implements BaseRepositoryInterface
                         $col = trim($m[1]);
                         $raw = trim($m[2]);
                         $val = trim($m[3]);
-                        $op  = match ($raw) {
+
+                        // Validate column against schema to prevent injection.
+                        if (! in_array($col, $validColumns, true)) {
+                            continue;
+                        }
+
+                        $op = match ($raw) {
                             '}'  => '>=',
                             '{'  => '<=',
                             '>'  => '>',
@@ -300,8 +305,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
                         $q->{$type}($col, $op, $val);
                     } else {
                         // Full-text LIKE across all table columns
-                        $q->where(function (Builder $inner) use ($term, $columns): void {
-                            foreach ($columns as $col) {
+                        $q->where(function (Builder $inner) use ($term, $validColumns): void {
+                            foreach ($validColumns as $col) {
                                 $inner->orWhere($col, 'LIKE', "%{$term}%");
                             }
                         });
@@ -311,8 +316,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         // whereIn — column name is validated against the table schema to prevent injection.
-        $whereInRaw   = $request->get('whereIn', '');
-        $validColumns = $this->getTableColumns();
+        $whereInRaw = $request->get('whereIn', '');
 
         if (! empty($whereInRaw) && $whereInRaw !== 'whereIn') {
             foreach (explode(';', $whereInRaw) as $segment) {

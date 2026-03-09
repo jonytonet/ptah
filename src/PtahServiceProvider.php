@@ -325,7 +325,7 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra rotas internas do pacote.
+     * Registers the package's internal routes.
      */
     protected function registerRoutes(): void
     {
@@ -337,7 +337,7 @@ class PtahServiceProvider extends ServiceProvider
                    ->name('ptah.forge.demo');
         }
 
-        // Rotas principais do Ptah (exportação, etc.)
+        // Main Ptah routes (export, etc.)
         $this->loadRoutesFrom(__DIR__ . '/../routes/ptah.php');
 
         if (config('ptah.modules.auth')) {

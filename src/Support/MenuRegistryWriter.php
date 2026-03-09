@@ -43,6 +43,59 @@ class MenuRegistryWriter
      * @return bool True se adicionado, false se já existia
      * @throws \RuntimeException Se o arquivo não existir ou for inválido
      */
+    /**
+     * Adds a flat (ungrouped) link directly at the root level of MenuRegistry.php.
+     * Use this when the entity has no module prefix.
+     *
+     * @param string $entity  Entity name (e.g. Category)
+     * @param string $url     URL (e.g. /category)
+     * @param string $registryPath
+     * @param string|null $icon
+     * @param string|null $label
+     * @return bool True if added, false if already exists
+     */
+    public function addFlatEntry(
+        string $entity,
+        string $url,
+        string $registryPath,
+        ?string $icon = null,
+        ?string $label = null
+    ): bool {
+        if (! $this->files->exists($registryPath)) {
+            throw new \RuntimeException("MenuRegistry not found: {$registryPath}");
+        }
+
+        $registry = require $registryPath;
+
+        if (! is_array($registry)) {
+            throw new \RuntimeException('MenuRegistry.php must return an array');
+        }
+
+        $urlNormalized = Str::start($url, '/');
+
+        // Duplicate check in flat links
+        foreach ($registry['links'] ?? [] as $link) {
+            if (($link['url'] ?? '') === $urlNormalized) {
+                return false;
+            }
+        }
+
+        $linkIcon  = $icon  ?? MenuIconMapper::getLinkIcon($entity);
+        $linkLabel = $label ?? MenuIconMapper::translateEntity($entity);
+        $linkOrder = count($registry['links'] ?? []) + 1;
+
+        $registry['links'][] = [
+            'text'  => $linkLabel,
+            'url'   => $urlNormalized,
+            'icon'  => $linkIcon,
+            'order' => $linkOrder,
+        ];
+
+        $this->writeRegistry($registryPath, $registry);
+
+        return true;
+    }
+
     public function addEntry(
         string $module,
         string $entity,
@@ -99,6 +152,13 @@ class MenuRegistryWriter
      */
     private function entryExists(array $registry, string $groupKey, string $url): bool
     {
+        // Check flat links first
+        foreach ($registry['links'] ?? [] as $link) {
+            if (($link['url'] ?? '') === $url) {
+                return true;
+            }
+        }
+
         if (! isset($registry['groups'][$groupKey]['links'])) {
             return false;
         }
@@ -200,6 +260,22 @@ class MenuRegistryWriter
             $content .= "    ],\n\n";
         }
 
+        // Flat root links (no group)
+        if (! empty($registry['links'])) {
+            $content .= "    'links' => [\n";
+            $flatLinks = $registry['links'];
+            usort($flatLinks, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+            foreach ($flatLinks as $link) {
+                $content .= "        [\n";
+                $content .= "            'text' => " . $this->exportValue($link['text']) . ",\n";
+                $content .= "            'url' => " . $this->exportValue($link['url']) . ",\n";
+                $content .= "            'icon' => " . $this->exportValue($link['icon']) . ",\n";
+                $content .= "            'order' => " . $link['order'] . ",\n";
+                $content .= "        ],\n";
+            }
+            $content .= "    ],\n\n";
+        }
+
         // Groups
         $content .= "    'groups' => [\n";
 
@@ -277,6 +353,16 @@ class MenuRegistryWriter
         $registry = require $registryPath;
         $urlNormalized = Str::start($url, '/');
         $found = false;
+
+        // Remove from flat links
+        $filteredFlat = array_filter($registry['links'] ?? [], function ($link) use ($urlNormalized, &$found) {
+            if (($link['url'] ?? '') === $urlNormalized) {
+                $found = true;
+                return false;
+            }
+            return true;
+        });
+        $registry['links'] = array_values($filteredFlat);
 
         foreach ($registry['groups'] ?? [] as $groupKey => &$group) {
             $links = $group['links'] ?? [];

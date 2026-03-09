@@ -57,9 +57,16 @@ class MenuSyncCommand extends Command
         // Skip dashboard sync — sidebar injects it hardcoded
         // $dashboardId = $this->syncDashboard($registry);
 
+        // Sync flat root links (no group)
+        $flatCount = 0;
+        foreach ($registry['links'] ?? [] as $link) {
+            $this->syncFlatLink($link);
+            $flatCount++;
+        }
+
         // Sync groups
         $groupCount = 0;
-        $linkCount = 0;
+        $linkCount  = 0;
 
         foreach ($registry['groups'] ?? [] as $groupKey => $group) {
             $groupId = $this->syncGroup($groupKey, $group);
@@ -75,7 +82,7 @@ class MenuSyncCommand extends Command
         // Summary
         $this->newLine();
         $this->components->info("✔ Menu synced successfully!");
-        $this->line("  <fg=gray>Groups: {$groupCount} | Links: {$linkCount}</>");
+        $this->line("  <fg=gray>Groups: {$groupCount} | Links: {$linkCount} | Flat links: {$flatCount}</>");
         $this->line("  <fg=gray>(Dashboard is hardcoded in sidebar)</>");
         $this->newLine();
         $this->line("  <fg=blue>→ Refresh your browser to see the updated menu.</>");
@@ -137,6 +144,46 @@ class MenuSyncCommand extends Command
             'target' => '_self',
             'link_order' => $dashboard['order'],
             'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Syncs a flat root link (menuLink, parent_id = null).
+     *
+     * @param array $link Link data
+     * @return int ID of the created/updated record
+     */
+    private function syncFlatLink(array $link): int
+    {
+        $existing = DB::table('menus')
+            ->where('type', 'menuLink')
+            ->where('url', $link['url'])
+            ->whereNull('parent_id')
+            ->first();
+
+        if ($existing) {
+            DB::table('menus')->where('id', $existing->id)->update([
+                'text'       => $link['text'],
+                'icon'       => $link['icon'],
+                'link_order' => $link['order'],
+                'is_active'  => true,
+                'updated_at' => now(),
+            ]);
+
+            return (int) $existing->id;
+        }
+
+        return (int) DB::table('menus')->insertGetId([
+            'parent_id'  => null,
+            'text'       => $link['text'],
+            'url'        => $link['url'],
+            'icon'       => $link['icon'],
+            'type'       => 'menuLink',
+            'target'     => '_self',
+            'link_order' => $link['order'],
+            'is_active'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

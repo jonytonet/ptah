@@ -27,6 +27,13 @@ class LoginPage extends Component
 
     public string $errorMessage = '';
 
+    public function mount(): void
+    {
+        if (Auth::check()) {
+            $this->redirect(config('ptah.auth.home', '/dashboard'), navigate: true);
+        }
+    }
+
     public function login(TwoFactorService $twoFactor): void
     {
         $this->validate();

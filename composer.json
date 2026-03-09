@@ -23,8 +23,8 @@
         "phpunit/phpunit": "^11.0"
     },
     "suggest": {
-        "pragmarx/google2fa-laravel": "Requerido para 2FA via app autenticador (TOTP) — módulo auth",
-        "bacon/bacon-qr-code": "Requerido para gerar QR code no setup TOTP — módulo auth"
+        "pragmarx/google2fa-laravel": "Required for 2FA via authenticator app (TOTP) — auth module",
+        "bacon/bacon-qr-code": "Required for generating QR codes in TOTP setup — auth module"
     },
     "autoload": {
         "psr-4": {

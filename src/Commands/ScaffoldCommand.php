@@ -367,11 +367,6 @@ class ScaffoldCommand extends Command
      */
     private function registerMenuEntry(string $entity, string $subFolder, string $entityLower): void
     {
-        if (empty($subFolder)) {
-            // No module folder → skip menu registration
-            return;
-        }
-
         $registryPath = database_path('seeders/MenuRegistry.php');
 
         if (! file_exists($registryPath)) {
@@ -379,22 +374,40 @@ class ScaffoldCommand extends Command
             return;
         }
 
-        try {
-            $url = '/' . $entityLower;
-            $added = $this->menuWriter->addEntry(
-                module: $subFolder,
-                entity: $entity,
-                url: $url,
-                registryPath: $registryPath
-            );
+        $url = '/' . $entityLower;
 
-            if ($added) {
-                $groupLabel = \Ptah\Support\MenuIconMapper::getGroupLabel($subFolder);
+        try {
+            if (empty($subFolder)) {
+                // No module prefix → add as flat root link
+                $added     = $this->menuWriter->addFlatEntry(
+                    entity:       $entity,
+                    url:          $url,
+                    registryPath: $registryPath
+                );
                 $linkLabel = \Ptah\Support\MenuIconMapper::translateEntity($entity);
 
-                $this->newLine();
-                $this->components->info("Menu entry added: <fg=yellow>{$groupLabel}</> → <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
-                $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+                if ($added) {
+                    $this->newLine();
+                    $this->components->info("Menu entry added (flat): <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
+                    $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+                }
+            } else {
+                // Has module prefix → add under group
+                $added = $this->menuWriter->addEntry(
+                    module:       $subFolder,
+                    entity:       $entity,
+                    url:          $url,
+                    registryPath: $registryPath
+                );
+
+                if ($added) {
+                    $groupLabel = \Ptah\Support\MenuIconMapper::getGroupLabel($subFolder);
+                    $linkLabel  = \Ptah\Support\MenuIconMapper::translateEntity($entity);
+
+                    $this->newLine();
+                    $this->components->info("Menu entry added: <fg=yellow>{$groupLabel}</> → <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
+                    $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+                }
             }
         } catch (\Exception $e) {
             $this->components->warn("Could not register menu entry: {$e->getMessage()}");

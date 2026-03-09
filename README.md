@@ -39,7 +39,10 @@
 # 1. Create the Laravel project and install ptah
 composer create-project laravel/laravel ptah-app
 cd ptah-app
-composer require jonytonet/ptah
+
+
+composer require jonytonet/ptah:@dev # GitHub
+composer require jonytonet/ptah # packagist.org -- EM DESENVOLVIMENTO
 php artisan ptah:install
 
 # 2. Enable the required modules
@@ -57,8 +60,9 @@ php artisan ptah:forge Agent \
 php artisan ptah:forge Ticket \
   --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
 
-# 4. Run migrations and serve
+# 4. Run migrations, sync menu and serve
 php artisan migrate
+php artisan ptah:menu-sync --fresh
 php artisan serve
 ```
 
