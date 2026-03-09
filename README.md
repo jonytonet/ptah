@@ -71,7 +71,13 @@ cd ptah-app
 
 Choose **one** of the two options below:
 
-**Option A — From GitHub (latest dev version):**
+**Option A — From Packagist (stable — recommended):**
+
+```bash
+composer require jonytonet/ptah
+```
+
+**Option B — From GitHub (latest dev version):**
 
 Add the VCS repository to your `composer.json` before requiring the package:
 
@@ -92,12 +98,6 @@ Then run:
 
 ```bash
 composer require jonytonet/ptah:dev-main
-```
-
-**Option B — From Packagist (stable):**
-
-```bash
-composer require jonytonet/ptah
 ```
 
 **Both options — finish the installation:**
