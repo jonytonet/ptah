@@ -31,6 +31,37 @@
 
 > **Note:** ptah ships Livewire v4 as a dependency. No additional installation is required.
 
+### Verify your environment
+
+Before starting, confirm all tools meet the minimum versions:
+
+```bash
+php -v
+```
+```bash
+composer -V
+```
+```bash
+node -v
+```
+```bash
+npm -v
+```
+
+Expected output (example):
+```
+PHP 8.2.x (cli) ...
+Composer version 2.x.x ...
+v20.x.x
+10.x.x
+```
+
+> If any version is below the minimum, update it before proceeding.
+>
+> - **PHP:** [php.net/downloads](https://www.php.net/downloads)
+> - **Composer:** [getcomposer.org](https://getcomposer.org)
+> - **Node.js / npm:** [nodejs.org](https://nodejs.org)
+
 ---
 
 ## Step 1 — Create the Laravel project

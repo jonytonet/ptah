@@ -35,13 +35,47 @@
 
 ### Example: IT Helpdesk — complete system in ~3 minutes
 
+#### Step 0 — Check system requirements
+
+Before you start, confirm your environment meets the minimum versions:
+
 ```bash
-# 1. Create the Laravel project and install ptah
+php -v        # Required: PHP 8.2+
+composer -V   # Required: Composer 2+
+node -v       # Required: Node.js 18+
+npm -v        # Required: npm 9+
+```
+
+Expected output (example):
+```
+PHP 8.2.x ...
+Composer version 2.x.x ...
+v20.x.x
+10.x.x
+```
+
+> If any version is below the minimum, update it before proceeding. See the [full requirements →](docs/InstallationGuide.md#requirements) for database and extension requirements.
+
+---
+
+#### Step 1 — Create the Laravel project
+
+```bash
 composer create-project laravel/laravel ptah-app
 cd ptah-app
+```
 
+---
 
-composer require jonytonet/ptah:@dev # GitHub
+#### Step 2 — Install Ptah
+
+Choose **one** of the two options below:
+
+**Option A — From GitHub (latest dev version):**
+
+Add the VCS repository to your `composer.json` before requiring the package:
+
+```json
 {
     "repositories": [
         {
@@ -49,26 +83,63 @@ composer require jonytonet/ptah:@dev # GitHub
             "url": "https://github.com/jonytonet/ptah"
         }
     ],
-    "require": {
-        "jonytonet/ptah": "dev-main"
-    }
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
-composer require jonytonet/ptah # packagist.org -- EM DESENVOLVIMENTO
-php artisan ptah:install
+```
 
-# 2. Enable the required modules
+Then run:
+
+```bash
+composer require jonytonet/ptah:dev-main
+```
+
+**Option B — From Packagist (stable):**
+
+```bash
+composer require jonytonet/ptah
+```
+
+**Both options — finish the installation:**
+
+```bash
+php artisan ptah:install
+```
+
+---
+
+#### Step 3 — Enable the required modules
+
+```bash
 php artisan ptah:module auth
 php artisan ptah:module permissions
 php artisan ptah:module menu
+```
 
-# 3. Generate the 3 system entities
+---
+
+#### Step 4 — Generate the 3 system entities
+
+**Category:**
+```bash
 php artisan ptah:forge Category --fields="name:string,color:string:nullable,description:text:nullable"
+```
 
+**Agent:**
+```bash
 php artisan ptah:forge Agent --fields="name:string,email:string,department_id:unsignedBigInteger:nullable"
+```
 
+**Ticket:**
+```bash
 php artisan ptah:forge Ticket --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
+```
 
-# 4. Run migrations, sync menu and serve
+---
+
+#### Step 5 — Run migrations, sync menu and serve
+
+```bash
 php artisan migrate
 php artisan ptah:menu-sync --fresh
 php artisan serve
