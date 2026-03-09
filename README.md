@@ -62,14 +62,11 @@ php artisan ptah:module permissions
 php artisan ptah:module menu
 
 # 3. Generate the 3 system entities
-php artisan ptah:forge Category \
-  --fields="name:string,color:string:nullable,description:text:nullable"
+php artisan ptah:forge Category --fields="name:string,color:string:nullable,description:text:nullable"
 
-php artisan ptah:forge Agent \
-  --fields="name:string,email:string,department_id:unsignedBigInteger:nullable"
+php artisan ptah:forge Agent --fields="name:string,email:string,department_id:unsignedBigInteger:nullable"
 
-php artisan ptah:forge Ticket \
-  --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
+php artisan ptah:forge Ticket --fields="title:string,description:text,status:string,priority:string,category_id:unsignedBigInteger,agent_id:unsignedBigInteger:nullable,resolved_at:datetime:nullable"
 
 # 4. Run migrations, sync menu and serve
 php artisan migrate
