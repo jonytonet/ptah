@@ -24,7 +24,7 @@
             {{-- Mobile: abre/fecha sidebar via overlay --}}
             <button
                 @click="$dispatch('toggle-sidebar')"
-                class="ptah-mobile-toggle ptah-navbar-icon-btn lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                class="ptah-mobile-toggle ptah-navbar-icon-btn lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
                 aria-label="Toggle sidebar"
             >
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,7 +36,7 @@
             <button
                 @click="toggleSidebarCollapse()"
                 :title="sidebarCollapsed ? 'Expand menu' : 'Collapse menu'"
-                class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
             >
                 {{-- Sidebar aberta → painel esquerdo preenchido (clica para recolher) --}}
                 <svg x-show="!sidebarCollapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
@@ -59,7 +59,7 @@
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-8 w-auto" />
                     @else
-                        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
                             <span class="text-white font-bold text-sm">
                                 {{ mb_strtoupper(mb_substr($appName, 0, 1)) }}
                             </span>
@@ -83,7 +83,7 @@
                 {{-- Dark Mode toggle button --}}
                 <button
                     @click="toggleDark()"
-                    class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                    class="ptah-navbar-icon-btn relative p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
                     :title="darkMode ? '{{ __('ptah::ui.navbar_light_title') }}' : '{{ __('ptah::ui.navbar_dark_title') }}'"
                 >
                     {{-- Sun icon (light mode active) --}}
@@ -104,7 +104,7 @@
                     <button
                         @click="openAdmin = !openAdmin"
                         :class="openAdmin ? 'bg-gray-100 text-primary' : 'text-gray-500 hover:bg-gray-100 hover:text-primary'"
-                        class="ptah-navbar-icon-btn relative p-2 rounded-xl transition-colors"
+                        class="ptah-navbar-icon-btn relative p-2 rounded-md transition-colors"
                         title="{{ __('ptah::ui.navbar_admin_title') }}"
                     >
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +121,7 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="ptah-admin-dropdown absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                        class="ptah-admin-dropdown absolute right-0 mt-2 w-56 bg-white rounded-md border border-gray-200 py-1 z-50"
                         @click="openAdmin = false"
                     >
                         {{-- Company --}}
@@ -226,7 +226,7 @@
                 @endif
 
                 {{-- Notifications --}}
-                <button class="ptah-navbar-icon-btn relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors">
+                <button class="ptah-navbar-icon-btn relative p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
@@ -235,7 +235,7 @@
 
                 {{-- User Dropdown --}}
                 <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
+                    <button @click="open = !open" class="flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 transition-colors">
                         @php
                             $__photoPath = auth()->user()->profile_photo_path ?? null;
                             $__photoUrl  = $__photoPath ? \Illuminate\Support\Facades\Storage::url($__photoPath) : null;
@@ -266,7 +266,7 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="ptah-user-dropdown absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                        class="ptah-user-dropdown absolute right-0 mt-2 w-48 bg-white rounded-md border border-gray-200 py-1 z-50"
                     >
                         @php
                             $profileHref = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile')

@@ -1,5 +1,5 @@
-{{-- ── Tabela ──────────────────────────────────────────────────────── --}}
-<div class="overflow-x-auto border shadow-sm border-slate-200 rounded-xl" id="ptah-table-wrap-{{ $crudTitle }}">
+﻿{{-- ── Tabela ──────────────────────────────────────────────────────── --}}
+<div class="overflow-x-auto border border-slate-200 rounded-md" id="ptah-table-wrap-{{ $crudTitle }}">
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
         @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
@@ -35,16 +35,8 @@
                                     </svg>
                                 </span>
                                 {{-- Label (sort) --}}
-                                <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-indigo-600' : '' }}"
+                                <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-blue-600' : '' }}"
                                       @if($isSortable) wire:click.stop="sortBy('{{ $colSortBy }}')" @endif>
-                                    @if (!empty($col['colsCellIcon']))
-                                        <i class="{{ $col['colsCellIcon'] }}"></i>
-                                    @endif
-                                    {{ $colLabel }}
-                                    @if ($sort === $colSortBy)
-                                        <span class="text-indigo-500">{{ $direction === 'ASC' ? '↑' : '↓' }}</span>
-                                    @endif
-                                </span>
                             </div>
                             {{-- Resize handle --}}
                             <div class="ptah-resize-handle absolute top-0 right-0 h-full w-1.5 cursor-col-resize z-10 hover:bg-primary/30 transition-colors"
@@ -210,7 +202,7 @@
                 <tr>
                     <td colspan="99" class="px-6 py-16 text-center">
                         <div class="flex flex-col items-center gap-3">
-                            <div class="flex items-center justify-center w-16 h-16 rounded-2xl ptah-c-empty_box">
+                            <div class="flex items-center justify-center w-16 h-16 rounded-md ptah-c-empty_box">
                                 <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                 </svg>
@@ -250,3 +242,4 @@
 
     </table>
 </div>
+

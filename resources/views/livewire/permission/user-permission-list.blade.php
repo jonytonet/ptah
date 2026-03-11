@@ -1,4 +1,4 @@
-{{-- ptah::livewire.permission.user-permission-list --}}
+﻿{{-- ptah::livewire.permission.user-permission-list --}}
 <div>
     <x-forge-page-header
         :title="__('ptah::ui.user_perm_title')"
@@ -8,7 +8,7 @@
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
     @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
 
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
         <div class="flex-1 min-w-[180px] max-w-xs">
             <x-forge-input
                 wire:model.live.debounce.300ms="search"
@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <div class="ptah-module-table overflow-x-auto border shadow-sm border-slate-200 rounded-xl">
+    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
@@ -73,7 +73,7 @@
                         </td>
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <button wire:click="openUserModal({{ $user->id }}, '{{ addslashes($user->name) }}')"
-                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors">
+                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
                                 {{ __('ptah::ui.user_perm_manage_btn') }}
                             </button>
                         </td>
@@ -82,7 +82,7 @@
                     <tr>
                         <td colspan="3" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-md bg-slate-100">
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     </svg>
@@ -116,7 +116,7 @@
                     @if ($assignedRoles)
                         <div class="space-y-1">
                             @foreach ($assignedRoles as $ar)
-                                <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
+                                <div class="flex items-center justify-between px-3 py-2 rounded-md bg-slate-50 border border-slate-200">
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm font-medium {{ $ar['role_master'] ? 'text-amber-600' : 'text-slate-800' }}">
                                             {{ $ar['role_master'] ? '👑 ' : '' }}{{ $ar['role_name'] }}
@@ -165,3 +165,5 @@
         </x-forge-modal>
     </div>
 </div>
+
+

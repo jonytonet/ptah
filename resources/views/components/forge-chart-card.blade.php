@@ -12,7 +12,7 @@
     'color'    => 'primary',
 ])
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-2xl shadow-sm overflow-hidden']) }}>
+<div {{ $attributes->merge(['class' => 'bg-white rounded-md border border-gray-200 overflow-hidden']) }}>
     @if($title || isset($header))
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             @isset($header)

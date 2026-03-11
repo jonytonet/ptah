@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
@@ -8,7 +8,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f4f4f5; margin: 0; padding: 0; }
         .wrapper { max-width: 560px; margin: 40px auto; padding: 0 16px; }
         .card { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.06); }
-        .header { background: #6366f1; padding: 32px 40px; text-align: center; }
+        .header { background: #2563eb; padding: 32px 40px; text-align: center; }
         .header h1 { color: #fff; font-size: 22px; font-weight: 700; margin: 0; }
         .body { padding: 36px 40px; }
         .body p { color: #52525b; font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
@@ -44,3 +44,4 @@
 </div>
 </body>
 </html>
+

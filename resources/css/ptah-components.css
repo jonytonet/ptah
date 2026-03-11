@@ -15,10 +15,10 @@
 /* ── Search input ── */
 .ptah-c-search { background-color: rgba(248,250,252,0.6); border-color: #e2e8f0; color: #1e293b; }
 .ptah-c-search::placeholder                { color: #94a3b8; }
-.ptah-c-search:focus                       { background-color: #ffffff; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.12); outline: none; }
+.ptah-c-search:focus                       { background-color: #ffffff; border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.12); outline: none; }
 .ptah-dark .ptah-c-search                  { background-color: rgba(30,41,59,0.6); border-color: #475569; color: #e2e8f0; }
 .ptah-dark .ptah-c-search::placeholder     { color: #64748b; }
-.ptah-dark .ptah-c-search:focus            { background-color: #1e293b; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.15); }
+.ptah-dark .ptah-c-search:focus            { background-color: #1e293b; border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
 
 /* ── Icon/action buttons na toolbar ── */
 .ptah-c-btn               { background-color: #ffffff; border-color: #e2e8f0; color: #475569; }
@@ -27,10 +27,12 @@
 .ptah-dark .ptah-c-btn:hover { background-color: #334155; }
 
 /* ── Per-page select ── */
-.ptah-c-perpage            { background-color: #ffffff; border-color: #e2e8f0; color: #475569; }
-.ptah-c-perpage:focus      { border-color: #818cf8; outline: none; }
-.ptah-dark .ptah-c-perpage { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-perpage:focus { border-color: #818cf8; }
+.ptah-c-perpage            { background-color: #f8fafc; border: 1px solid #94a3b8; color: #475569; transition: border-color 150ms ease; }
+.ptah-c-perpage:hover      { border-color: #64748b; }
+.ptah-c-perpage:focus      { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,.12); outline: none; }
+.ptah-dark .ptah-c-perpage { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
+.ptah-dark .ptah-c-perpage:hover { border-color: #64748b; }
+.ptah-dark .ptah-c-perpage:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.2); outline: none; }
 
 /* ── Filter panel card ── */
 .ptah-c-fp_card            { background-color: #ffffff; border-color: #e2e8f0; }
@@ -55,16 +57,20 @@
 .ptah-dark .ptah-c-fp_label { color: #94a3b8; }
 
 /* ── Filter panel inputs ── */
-.ptah-c-fp_input           { background-color: #ffffff; border-color: #9ca3af; color: #1e293b; }
-.ptah-c-fp_input:focus     { box-shadow: 0 0 0 1px rgba(99,102,241,.3); border-color: #818cf8; outline: none; }
-.ptah-dark .ptah-c-fp_input { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-fp_input:focus { border-color: #818cf8; box-shadow: 0 0 0 1px rgba(129,140,248,.3); }
+.ptah-c-fp_input           { background-color: #f8fafc; border: 1px solid #94a3b8; color: #1e293b; transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease; }
+.ptah-c-fp_input:hover     { border-color: #64748b; background-color: #ffffff; }
+.ptah-c-fp_input:focus     { background-color: #ffffff; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,.12); outline: none; }
+.ptah-dark .ptah-c-fp_input { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
+.ptah-dark .ptah-c-fp_input:hover { border-color: #64748b; background-color: #0f172a; }
+.ptah-dark .ptah-c-fp_input:focus { background-color: #0f172a; border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.2); outline: none; }
 
 /* ── Filter panel save-filter input ── */
-.ptah-c-fp_save_in         { border-color: #e2e8f0; background-color: #fff; }
-.ptah-c-fp_save_in:focus   { box-shadow: 0 0 0 1px rgba(99,102,241,.4); border-color: #818cf8; outline: none; }
-.ptah-dark .ptah-c-fp_save_in { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-fp_save_in:focus { border-color: #818cf8; outline: none; }
+.ptah-c-fp_save_in         { border: 1px solid #cbd5e1; background-color: #f8fafc; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.ptah-c-fp_save_in:hover   { border-color: #94a3b8; }
+.ptah-c-fp_save_in:focus   { background-color: #ffffff; box-shadow: 0 0 0 3px rgba(30,64,175,.12); border-color: #1e40af; outline: none; }
+.ptah-dark .ptah-c-fp_save_in { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
+.ptah-dark .ptah-c-fp_save_in:hover { border-color: #64748b; }
+.ptah-dark .ptah-c-fp_save_in:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.2); outline: none; }
 
 /* ── Table wrapper border ── */
 .ptah-c-tbl_wrap           { border-color: #e2e8f0; }
@@ -79,7 +85,7 @@
 
 /* ── Table row ── */
 .ptah-c-tr                 { background-color: #ffffff; border-bottom: 1px solid #f1f5f9; }
-.ptah-c-tr:hover           { background-color: #faf5ff; }
+.ptah-c-tr:hover           { background-color: #eff6ff; }
 .ptah-dark .ptah-c-tr      { background-color: transparent; border-bottom: 1px solid rgba(51,65,85,0.4); }
 .ptah-dark .ptah-c-tr:hover { background-color: rgba(51,65,85,0.3); }
 
@@ -123,8 +129,8 @@
 .ptah-c-modal_hd           { background-color: #ffffff; border-color: #f1f5f9; }
 .ptah-dark .ptah-c-modal_hd { background-color: #1e293b; border-color: #334155; }
 
-.ptah-c-modal_icon         { background-color: #eef2ff; }
-.ptah-dark .ptah-c-modal_icon { background-color: rgba(49,46,129,0.5); }
+.ptah-c-modal_icon         { background-color: #dbeafe; }
+.ptah-dark .ptah-c-modal_icon { background-color: rgba(30,58,138,0.5); }
 
 .ptah-c-modal_ttl          { color: #1e293b; }
 .ptah-dark .ptah-c-modal_ttl { color: #f1f5f9; }
@@ -143,9 +149,9 @@
 .ptah-dark .ptah-c-form_lbl { color: #94a3b8; }
 
 .ptah-c-form_in            { background-color: #ffffff; border-color: #94a3b8; color: #1f2937; }
-.ptah-c-form_in:focus      { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); outline: none; }
+.ptah-c-form_in:focus      { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(59,130,246,.1); outline: none; }
 .ptah-dark .ptah-c-form_in { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
-.ptah-dark .ptah-c-form_in:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(129,140,248,.2); outline: none; }
+.ptah-dark .ptah-c-form_in:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(59,130,246,.2); outline: none; }
 
 .ptah-c-form_sel           { background-color: #ffffff; border-color: #cbd5e1; color: #1f2937; padding: .625rem .75rem; cursor: pointer; }
 .ptah-dark .ptah-c-form_sel { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
@@ -159,9 +165,9 @@
 
 /* ── Quick-date filter buttons ── */
 .ptah-c-ql_btn             { background-color: #ffffff; color: #475569; border-color: #e2e8f0; }
-.ptah-c-ql_btn:hover       { border-color: #818cf8; color: #4f46e5; }
+.ptah-c-ql_btn:hover       { border-color: #60a5fa; color: #2563eb; }
 .ptah-dark .ptah-c-ql_btn  { background-color: #1e293b; color: #cbd5e1; border-color: #475569; }
-.ptah-dark .ptah-c-ql_btn:hover { border-color: #818cf8; color: #a5b4fc; }
+.ptah-dark .ptah-c-ql_btn:hover { border-color: #60a5fa; color: #93c5fd; }
 
 /* ── Clear-filters icon button ── */
 .ptah-c-clear_btn            { background-color: #ffffff; color: #94a3b8; border-color: #e2e8f0; }
@@ -182,19 +188,19 @@
 
 /* ── Dropdown option button (search-dropdown results) ── */
 .ptah-c-dd_opt             { color: inherit; }
-.ptah-c-dd_opt:hover       { background-color: #f5f3ff; color: #6d28d9; }
+.ptah-c-dd_opt:hover       { background-color: #eff6ff; color: #1d4ed8; }
 .ptah-dark .ptah-c-dd_opt  { color: #cbd5e1; }
 .ptah-dark .ptah-c-dd_opt:hover { background-color: rgba(51,65,85,0.6); color: #cbd5e1; }
 
 /* ── Selected item inside Alpine inline-select list ── */
-.ptah-c-dd_item_sel            { background-color: #f5f3ff; color: #6d28d9; }
-.ptah-dark .ptah-c-dd_item_sel { background-color: rgba(49,46,129,0.4); color: #a5b4fc; }
+.ptah-c-dd_item_sel            { background-color: #eff6ff; color: #1d4ed8; }
+.ptah-dark .ptah-c-dd_item_sel { background-color: rgba(30,58,138,0.4); color: #93c5fd; }
 
 /* ── Botão "active" na toolbar (filtros ativos) ── */
-.ptah-c-btn_on             { background-color: #ede9fe; border-color: #c4b5fd; color: #5b21b6; }
-.ptah-c-btn_on:hover       { background-color: #ddd6fe; }
-.ptah-dark .ptah-c-btn_on  { background-color: rgba(91,33,182,0.3); border-color: #7c3aed; color: #c4b5fd; }
-.ptah-dark .ptah-c-btn_on:hover { background-color: rgba(91,33,182,0.4); }
+.ptah-c-btn_on             { background-color: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+.ptah-c-btn_on:hover       { background-color: #bfdbfe; }
+.ptah-dark .ptah-c-btn_on  { background-color: rgba(30,64,175,0.3); border-color: #2563eb; color: #93c5fd; }
+.ptah-dark .ptah-c-btn_on:hover { background-color: rgba(30,64,175,0.4); }
 
 /* ── forge-button color="dark" flat — override no dark mode ── */
 .ptah-dark .ptah-btn.ptah-btn-dark           { color: #94a3b8; }

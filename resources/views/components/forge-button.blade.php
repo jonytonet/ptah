@@ -29,7 +29,7 @@
             'hover'     => 'hover:bg-primary-dark',
             'text'      => 'text-primary',
             'textSolid' => 'text-white',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(91,33,182,0.45)]',
+            'shadow'    => '',
             'relief'    => 'bg-primary-dark',
             'flatHover' => 'hover:bg-primary-light',
         ],
@@ -38,7 +38,7 @@
             'hover'     => 'hover:bg-success-dark',
             'text'      => 'text-success',
             'textSolid' => 'text-white',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(16,185,129,0.45)]',
+            'shadow'    => '',
             'relief'    => 'bg-success-dark',
             'flatHover' => 'hover:bg-success-light',
         ],
@@ -47,7 +47,7 @@
             'hover'     => 'hover:bg-danger-dark',
             'text'      => 'text-danger',
             'textSolid' => 'text-white',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(239,68,68,0.45)]',
+            'shadow'    => '',
             'relief'    => 'bg-danger-dark',
             'flatHover' => 'hover:bg-danger-light',
         ],
@@ -56,7 +56,7 @@
             'hover'     => 'hover:bg-warn-dark',
             'text'      => 'text-warn',
             'textSolid' => 'text-white',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(245,158,11,0.45)]',
+            'shadow'    => '',
             'relief'    => 'bg-warn-dark',
             'flatHover' => 'hover:bg-warn-light',
         ],
@@ -65,7 +65,7 @@
             'hover'     => 'hover:bg-dark-dark dark:hover:bg-slate-500',
             'text'      => 'text-dark dark:text-slate-300',
             'textSolid' => 'text-white',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(30,41,59,0.45)]',
+            'shadow'    => '',
             'relief'    => 'bg-dark-dark dark:bg-slate-700',
             'flatHover' => 'hover:bg-dark-light dark:hover:bg-slate-700',
         ],
@@ -74,7 +74,7 @@
             'hover'     => 'hover:bg-gray-200 dark:hover:bg-slate-600',
             'text'      => 'text-gray-700 dark:text-slate-300',
             'textSolid' => 'text-gray-700 dark:text-slate-200',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(0,0,0,0.12)]',
+            'shadow'    => '',
             'relief'    => 'bg-gray-300 dark:bg-slate-600',
             'flatHover' => 'hover:bg-gray-50 dark:hover:bg-slate-700',
         ],
@@ -83,7 +83,7 @@
             'hover'     => 'hover:bg-gray-200 dark:hover:bg-slate-600',
             'text'      => 'text-gray-700 dark:text-slate-300',
             'textSolid' => 'text-gray-700 dark:text-slate-200',
-            'shadow'    => 'shadow-[0_8px_20px_rgba(0,0,0,0.12)]',
+            'shadow'    => '',
             'relief'    => 'bg-gray-300 dark:bg-slate-600',
             'flatHover' => 'hover:bg-gray-50 dark:hover:bg-slate-700',
         ],
@@ -107,9 +107,9 @@
         $variantClass = "{$c['bg']} {$c['hover']} {$c['textSolid']} {$c['shadow']}";
     }
 
-    $radiusClass    = $rounded ? 'rounded-full' : 'rounded-xl';
+    $radiusClass    = $rounded ? 'rounded-full' : 'rounded-md';
     $disabledClass  = $disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
-    $baseTransition = 'transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none';
+    $baseTransition = 'transition-colors duration-150 active:opacity-80';
 @endphp
 
 <button

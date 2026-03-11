@@ -17,7 +17,7 @@
         <div class="flex items-center gap-3">
             @if($back)
                 <a href="{{ $back }}"
-                   class="inline-flex items-center justify-center text-gray-600 transition-colors duration-150 bg-gray-100 w-9 h-9 rounded-xl hover:bg-gray-200">
+                   class="inline-flex items-center justify-center text-gray-600 transition-colors duration-150 bg-gray-100 w-9 h-9 rounded-md hover:bg-gray-200">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>

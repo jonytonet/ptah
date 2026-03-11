@@ -1,11 +1,11 @@
-{{-- ptah::livewire.permission.permission-guide --}}
+﻿{{-- ptah::livewire.permission.permission-guide --}}
 <div>
     <div class="mb-5 flex items-start justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.guide_title') }}</h1>
             <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.guide_subtitle') }}</p>
         </div>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full shrink-0">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full shrink-0">
             {{ __('ptah::ui.guide_badge') }}
         </span>
     </div>
@@ -22,7 +22,7 @@
                 wire:click="$set('activeTab', '{{ $tab['key'] }}')"
                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap
                     {{ $activeTab === $tab['key']
-                        ? 'border-indigo-600 text-indigo-600'
+                        ? 'border-blue-600 text-blue-600'
                         : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
                 {{ $tab['label'] }}
             </button>
@@ -36,9 +36,9 @@
     <div class="space-y-8">
 
         {{-- Intro --}}
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-6">
-            <h2 class="text-lg font-bold text-indigo-900 mb-2">{{ __('ptah::ui.guide_ov_title') }}</h2>
-            <p class="text-sm text-indigo-800 leading-relaxed">
+        <div class="bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-md p-6">
+            <h2 class="text-lg font-bold text-blue-900 mb-2">{{ __('ptah::ui.guide_ov_title') }}</h2>
+            <p class="text-sm text-blue-700 leading-relaxed">
                 {!! __('ptah::ui.guide_ov_body') !!}
             </p>
         </div>
@@ -46,7 +46,7 @@
         {{-- Diagrama de arquitetura --}}
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">1</span>
                 {{ __('ptah::ui.guide_ov_arch_title') }}
             </h2>
             <div class="overflow-x-auto">
@@ -54,7 +54,7 @@
 
                     {{-- Departamentos --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-amber-50 border-2 border-amber-200 rounded-xl p-3 text-center">
+                        <div class="w-36 bg-amber-50 border-2 border-amber-200 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🏢</div>
                             <p class="text-xs font-bold text-amber-800">{{ __('ptah::ui.guide_ov_dept_title') }}</p>
                             <p class="text-xs text-amber-600 mt-0.5">{{ __('ptah::ui.guide_ov_dept_desc') }}</p>
@@ -67,7 +67,7 @@
 
                     {{-- Roles --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-purple-50 border-2 border-purple-300 rounded-xl p-3 text-center">
+                        <div class="w-36 bg-purple-50 border-2 border-purple-300 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🎭</div>
                             <p class="text-xs font-bold text-purple-800">{{ __('ptah::ui.guide_ov_roles_title') }}</p>
                             <p class="text-xs text-purple-600 mt-0.5">{{ __('ptah::ui.guide_ov_roles_desc') }}</p>
@@ -80,7 +80,7 @@
 
                     {{-- Páginas/Objetos --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-40 bg-blue-50 border-2 border-blue-300 rounded-xl p-3 text-center">
+                        <div class="w-40 bg-blue-50 border-2 border-blue-300 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">📄</div>
                             <p class="text-xs font-bold text-blue-800">{{ __('ptah::ui.guide_ov_pages_title') }}</p>
                             <p class="text-xs text-blue-600 mt-0.5">{{ __('ptah::ui.guide_ov_pages_desc') }}</p>
@@ -93,7 +93,7 @@
 
                     {{-- Usuários --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-green-50 border-2 border-green-300 rounded-xl p-3 text-center">
+                        <div class="w-36 bg-green-50 border-2 border-green-300 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">👤</div>
                             <p class="text-xs font-bold text-green-800">{{ __('ptah::ui.guide_ov_users_title') }}</p>
                             <p class="text-xs text-green-600 mt-0.5">{{ __('ptah::ui.guide_ov_users_desc') }}</p>
@@ -106,7 +106,7 @@
 
                     {{-- Empresas --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-center">
+                        <div class="w-36 bg-slate-50 border-2 border-slate-300 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🏭</div>
                             <p class="text-xs font-bold text-slate-700">{{ __('ptah::ui.guide_ov_co_title') }}</p>
                             <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_ov_co_desc') }}</p>
@@ -121,12 +121,12 @@
         {{-- Conceitos-chave em cards --}}
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">2</span>
                 {{ __('ptah::ui.guide_ov_concepts_title') }}
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🎭</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_role_title') }}</h3>
@@ -141,7 +141,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📄</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_page_title') }}</h3>
@@ -155,7 +155,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🔑</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_obj_title') }}</h3>
@@ -166,14 +166,14 @@
                     <div class="mt-3 grid grid-cols-4 gap-1">
                         @foreach ([__('ptah::ui.guide_con_perms_read'), __('ptah::ui.guide_con_perms_create'), __('ptah::ui.guide_con_perms_edit'), __('ptah::ui.guide_con_perms_delete')] as $perm)
                         <div class="text-center">
-                            <div class="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center mx-auto"><span class="text-green-600 text-xs font-bold">✓</span></div>
+                            <div class="w-7 h-7 rounded-md bg-green-100 flex items-center justify-center mx-auto"><span class="text-green-600 text-xs font-bold">✓</span></div>
                             <p class="text-xs text-slate-500 mt-0.5">{{ $perm }}</p>
                         </div>
                         @endforeach
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">👑</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_master_title') }}</h3>
@@ -181,12 +181,12 @@
                     <p class="text-xs text-slate-500 leading-relaxed">
                         {!! __('ptah::ui.guide_con_master_body') !!}
                     </p>
-                    <div class="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                    <div class="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-2">
                         {{ __('ptah::ui.guide_con_master_warn') }}
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🏭</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_scope_title') }}</h3>
@@ -196,7 +196,7 @@
                     </p>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-md p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📋</span>
                         <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_audit_title') }}</h3>
@@ -212,48 +212,48 @@
         {{-- Fluxo de decisão --}}
         <div>
             <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">3</span>
+                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">3</span>
                 {{ __('ptah::ui.guide_ov_flow_title') }}
             </h2>
-            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm overflow-x-auto">
+            <div class="bg-white border border-slate-200 rounded-md p-5 overflow-x-auto">
                 <div class="min-w-[500px] flex flex-col items-center gap-0">
                     {{-- Início --}}
                     <div class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-full">{{ __('ptah::ui.guide_flow_start') }}</div>
                     <div class="w-px h-5 bg-slate-300"></div>
                     {{-- Passo 1 --}}
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-64">{{ __('ptah::ui.guide_flow_q1') }}</div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-64">{{ __('ptah::ui.guide_flow_q1') }}</div>
                     <div class="flex gap-8 items-start">
                         <div class="flex flex-col items-center">
                             <div class="w-px h-4 bg-slate-300"></div>
                             <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                             <div class="w-px h-4 bg-slate-300"></div>
                             {{-- Passo 2 --}}
-                            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q2') }}</div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q2') }}</div>
                             <div class="flex gap-8 items-start">
                                 <div class="flex flex-col items-center">
                                     <div class="w-px h-4 bg-slate-300"></div>
                                     <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                                     <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
+                                    <div class="bg-green-100 border border-green-300 rounded-md px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
                                 </div>
                                 <div class="flex flex-col items-center">
                                     <div class="w-px h-4 bg-slate-300"></div>
                                     <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                                     <div class="w-px h-4 bg-slate-300"></div>
                                     {{-- Passo 3 --}}
-                                    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q3') }}</div>
+                                    <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q3') }}</div>
                                     <div class="flex gap-6 items-start mt-0">
                                         <div class="flex flex-col items-center">
                                             <div class="w-px h-4 bg-slate-300"></div>
                                             <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-green-100 border border-green-300 rounded-lg px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
+                                            <div class="bg-green-100 border border-green-300 rounded-md px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
                                         </div>
                                         <div class="flex flex-col items-center">
                                             <div class="w-px h-4 bg-slate-300"></div>
                                             <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                                             <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_denied') }}</div>
+                                            <div class="bg-red-100 border border-red-300 rounded-md px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_denied') }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -262,7 +262,7 @@
                         <div class="flex flex-col items-center mt-4">
                             <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
                             <div class="w-px h-4 bg-slate-300"></div>
-                            <div class="bg-red-100 border border-red-300 rounded-lg px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_login') }}</div>
+                            <div class="bg-red-100 border border-red-300 rounded-md px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_login') }}</div>
                         </div>
                     </div>
                 </div>
@@ -283,14 +283,14 @@
         </x-forge-alert>
 
         {{-- Passo 1 --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
+                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
                 <div>
                     <h3 class="text-sm font-bold text-slate-800">{!! __('ptah::ui.guide_s1_title') !!}</h3>
                     <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
                 </div>
-                <a href="{{ route('ptah.acl.departments') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                <a href="{{ route('ptah.acl.departments') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
                     {{ __('ptah::ui.guide_s1_btn') }}
                 </a>
             </div>
@@ -298,26 +298,26 @@
                 <p class="text-sm text-slate-600 leading-relaxed">
                     {{ __('ptah::ui.guide_s1_body') }}
                 </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-600">
+                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm text-slate-600">
                     <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
                     <ul class="mt-2 space-y-1 list-none">
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_it') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_it') !!}</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         {{-- Passo 2 --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
+                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
                 <div>
                     <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s2_title') }}</h3>
                     <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
                 </div>
-                <a href="{{ route('ptah.acl.pages') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                <a href="{{ route('ptah.acl.pages') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
                     {{ __('ptah::ui.guide_s2_btn') }}
                 </a>
             </div>
@@ -326,7 +326,7 @@
                     {!! __('ptah::ui.guide_s2_body') !!}
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                         <h4 class="text-xs font-bold text-blue-800 mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
                         <table class="w-full text-xs">
                             <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono text-blue-700">admin.vendas</td></tr>
@@ -334,7 +334,7 @@
                             <tr><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1 text-blue-700">🛒</td></tr>
                         </table>
                     </div>
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="bg-green-50 border border-green-200 rounded-md p-4">
                         <h4 class="text-xs font-bold text-green-800 mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between text-xs">
@@ -356,14 +356,14 @@
         </div>
 
         {{-- Passo 3 --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
+                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
                 <div>
                     <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s3_title') }}</h3>
                     <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
                 </div>
-                <a href="{{ route('ptah.acl.roles') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                <a href="{{ route('ptah.acl.roles') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
                     {{ __('ptah::ui.guide_s3_btn') }}
                 </a>
             </div>
@@ -371,7 +371,7 @@
                 <p class="text-sm text-slate-600 leading-relaxed">
                     {!! __('ptah::ui.guide_s3_body') !!}
                 </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
                     <h4 class="text-xs font-bold text-slate-700 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs border-collapse">
@@ -412,14 +412,14 @@
         </div>
 
         {{-- Passo 4 --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center shrink-0">4</span>
+                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">4</span>
                 <div>
                     <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s4_title') }}</h3>
                     <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
                 </div>
-                <a href="{{ route('ptah.acl.users') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                <a href="{{ route('ptah.acl.users') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
                     {{ __('ptah::ui.guide_s4_btn') }}
                 </a>
             </div>
@@ -427,7 +427,7 @@
                 <p class="text-sm text-slate-600 leading-relaxed">
                     {!! __('ptah::ui.guide_s4_body') !!}
                 </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm">
+                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm">
                     <h4 class="text-xs font-bold text-slate-700 mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
                     <div class="space-y-2">
                         <div class="flex items-center gap-2 text-xs">
@@ -444,7 +444,7 @@
         </div>
 
         {{-- Passo 5 --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
                 <span class="w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold flex items-center justify-center shrink-0">5</span>
                 <div>
@@ -452,7 +452,7 @@
                     <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
                 </div>
                 <button wire:click="$set('activeTab', 'code')"
-                    class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200">
+                    class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200">
                     {{ __('ptah::ui.guide_s5_btn') }}
                 </button>
             </div>
@@ -473,7 +473,7 @@
     <div class="space-y-6">
 
         {{-- Helper Blade --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -502,7 +502,7 @@
         </div>
 
         {{-- Middleware em rotas --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -530,7 +530,7 @@
         </div>
 
         {{-- PHP direto --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -561,7 +561,7 @@
         </div>
 
         {{-- Livewire --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -595,7 +595,7 @@
         </div>
 
         {{-- .env --}}
-        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="border border-slate-200 rounded-md overflow-hidden">
             <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -656,10 +656,10 @@
             ],
             [
                 'q' => 'Como auditar quem acessou o que?',
-                'a' => 'Habilite <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env. Cada verificação (concedida ou negada) será registrada na tabela <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code>. Acesse o log em <a href="' . route('ptah.acl.audit') . '" class="text-indigo-600 underline">Auditoria</a>.',
+                'a' => 'Habilite <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env. Cada verificação (concedida ou negada) será registrada na tabela <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code>. Acesse o log em <a href="' . route('ptah.acl.audit') . '" class="text-blue-600 underline">Auditoria</a>.',
             ],
         ] as $item)
-        <div x-data="{ open: false }" class="border border-slate-200 rounded-xl overflow-hidden">
+        <div x-data="{ open: false }" class="border border-slate-200 rounded-md overflow-hidden">
             <button
                 @click="open = !open"
                 class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
@@ -687,11 +687,11 @@
         @endforeach
 
         {{-- Precisa de mais ajuda? --}}
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-5 flex items-center gap-4">
+        <div class="bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-md p-5 flex items-center gap-4">
             <div class="text-4xl">🙋</div>
             <div>
-                <h3 class="text-sm font-bold text-indigo-900 mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
-                <p class="text-xs text-indigo-700">
+                <h3 class="text-sm font-bold text-blue-900 mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
+                <p class="text-xs text-blue-700">
                     {!! __('ptah::ui.guide_faq_help_body') !!}
                 </p>
             </div>
@@ -701,3 +701,4 @@
     @endif
 
 </div>
+

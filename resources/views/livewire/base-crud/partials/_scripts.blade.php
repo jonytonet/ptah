@@ -1,15 +1,15 @@
-{{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
+﻿{{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
 @once
 <style>
     /* Drag feedback */
     .ptah-sortable-col.ptah-dragging   { opacity: .45; }
-    .ptah-sortable-col.ptah-drag-over  { outline: 2px solid #6366f1; outline-offset: -2px; }
+    .ptah-sortable-col.ptah-drag-over  { outline: 2px solid #2563eb; outline-offset: -2px; }
     .ptah-drag-grip                    { touch-action: none; }
 
     /* Resize indicator */
     #ptah-resize-indicator {
         position: fixed; top: 0; bottom: 0; width: 2px;
-        background: #6366f1; z-index: 9999; pointer-events: none; display: none;
+        background: #2563eb; z-index: 9999; pointer-events: none; display: none;
     }
     #ptah-resize-indicator.active { display: block; }
 
@@ -26,7 +26,7 @@
         color: #64748B;
     }
 
-    /* All filter inputs/selects: slate borders + indigo focus */
+    /* All filter inputs/selects: slate borders + blue focus */
     .ptah-base-crud .p-4 input:not([type="checkbox"]),
     .ptah-base-crud .p-4 select {
         border-color: #E2E8F0;
@@ -35,8 +35,8 @@
     }
     .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
     .ptah-base-crud .p-4 select:focus {
-        border-color: #818CF8;
-        box-shadow: 0 0 0 3px rgba(129, 140, 248, .15);
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
         outline: none;
     }
 
@@ -53,8 +53,8 @@
     }
     .ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]):focus,
     .ptah-base-crud.ptah-dark .p-4 select:focus {
-        border-color: #818CF8;
-        box-shadow: 0 0 0 3px rgba(129, 140, 248, .15);
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
     }
 
     /* Table header sticky shadow line */
@@ -70,11 +70,11 @@
         transition: background-color .12s ease, box-shadow .12s ease;
     }
     .ptah-base-crud tbody tr.ptah-tr:hover {
-        box-shadow: inset 3px 0 0 #5b21b6;
+        box-shadow: inset 3px 0 0 #1e40af;
     }
     /* Em dark mode: accent mais suave */
     .ptah-base-crud.ptah-dark tbody tr.ptah-tr:hover {
-        box-shadow: inset 3px 0 0 #7c3aed;
+        box-shadow: inset 3px 0 0 #1d4ed8;
     }
     /* Botões de ação ficam opacos no hover da linha */
     .ptah-base-crud tbody tr.ptah-tr .ptah-row-btns {
@@ -272,3 +272,4 @@ document.addEventListener('livewire:init', () => {
 });
 </script>
 @endonce
+

@@ -28,8 +28,8 @@
     $uniqueId        = 'forge-select-' . uniqid();
     $disabledClass   = $disabled ? 'opacity-50 pointer-events-none' : '';
     $borderNormal    = $error ? 'border-red-400' : 'border-gray-300';
-    $borderOpen      = $error ? 'border-red-500' : 'border-violet-500';
-    $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-violet-100';
+    $borderOpen      = $error ? 'border-red-500' : 'border-blue-600';
+    $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-blue-100';
     $initialSelected = $multiple ? '[]' : ($selected !== null ? json_encode($selected) : 'null');
 @endphp
 
@@ -93,7 +93,7 @@
         <div
             @click="open = !open"
             :class="open ? '{{ $borderOpen }} {{ $ringOpen }}' : '{{ $borderNormal }}'"
-            class="ptah-select-trigger relative flex items-center justify-between rounded-lg border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
+            class="ptah-select-trigger relative flex items-center justify-between rounded-md border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
         >
             <span
                 :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'text-gray-800' : 'text-gray-400'"
@@ -118,17 +118,17 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-auto max-h-48"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md overflow-auto max-h-48"
         >
             <ul class="py-1">
                 <template x-for="option in options" :key="option.value">
                     <li
                         @click="toggle(option.value)"
-                        :class="isSelected(option.value) ? 'bg-violet-50 text-violet-700' : 'text-gray-700 hover:bg-gray-50'"
+                        :class="isSelected(option.value) ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'"
                         class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors duration-100"
                     >
                         <span x-text="option.label"></span>
-                        <svg x-show="isSelected(option.value)" class="h-4 w-4 text-violet-600 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <svg x-show="isSelected(option.value)" class="h-4 w-4 text-blue-600 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                         </svg>
                     </li>

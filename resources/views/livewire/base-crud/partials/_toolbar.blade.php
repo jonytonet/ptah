@@ -1,5 +1,5 @@
-{{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl ptah-c-toolbar">
+﻿{{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
+<div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md ptah-c-toolbar">
 
     {{-- Botão Novo --}}
     @if ($permissions['showCreateButton'] ?? true)
@@ -37,7 +37,7 @@
         @endphp
         @if ($hasFilterable)
             <button wire:click="toggleFilters"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
                        {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                 title="{{ __('ptah::ui.btn_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,7 +56,7 @@
         {{-- Lixeira --}}
         @if ($permissions['showTrashButton'] ?? true)
             <button wire:click="toggleTrashed"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
                        {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : 'ptah-c-btn' }}"
                 title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                 @if ($showTrashed)
@@ -78,7 +78,7 @@
         @if (!empty($exportCfg['enabled']))
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none ptah-c-btn"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn"
                     title="{{ __('ptah::ui.btn_export') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -90,7 +90,7 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[160px] py-1.5 ptah-c-dd">
+                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[160px] py-1.5 ptah-c-dd">
                     @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                         <button wire:click="export('{{ $fmt }}')" @click="open = false"
                             class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
@@ -123,7 +123,7 @@
         @if (!empty($formDataColumns))
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
                            {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'ptah-c-btn' }}"
                     title="{{ __('ptah::ui.btn_columns') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -141,7 +141,7 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
+                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
                     {{-- Ações rápidas --}}
                     <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
                         <button wire:click="showAllColumns" @click="open = false"
@@ -180,7 +180,7 @@
         @endphp
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 focus:outline-none ptah-c-btn"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn"
                 title="{{ __('ptah::ui.btn_density') }}">
                 <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                 <span class="hidden sm:inline">{{ __('ptah::ui.btn_density') }}</span>
@@ -189,14 +189,14 @@
                 </svg>
             </button>
             <div x-show="open" x-cloak @click.outside="open = false"
-                 class="absolute right-0 mt-1 border rounded-xl shadow-lg z-20 min-w-[180px] py-1 ptah-c-dd">
+                 class="absolute right-0 mt-1 border rounded-md z-20 min-w-[180px] py-1 ptah-c-dd">
                 @foreach ($densityMap as $d => $info)
                     <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
-                               {{ $viewDensity === $d ? 'font-semibold text-indigo-600' : '' }}">
+                               {{ $viewDensity === $d ? 'font-semibold text-blue-600' : '' }}">
                         <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
                         @if ($viewDensity === $d)
-                            <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         @endif
@@ -210,7 +210,7 @@
 
         {{-- Atualizar --}}
         <button wire:click="$refresh"
-            class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none ptah-c-btn"
+            class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn"
             title="{{ __('ptah::ui.btn_refresh') }}">
             <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,7 +222,7 @@
         {{-- Limpar filtros (visível quando houver algo ativo) --}}
         @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
             <button wire:click="clearFilters"
-                class="inline-flex items-center justify-center p-2 transition-colors border rounded-lg focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn"
+                class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn"
                 title="{{ __('ptah::ui.btn_clear_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -232,7 +232,7 @@
 
         {{-- Per page --}}
         <select wire:model.live="perPage"
-            class="text-sm border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage">
+            class="text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage">
             @foreach ([10, 15, 25, 50, 100] as $n)
                 <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>
             @endforeach
@@ -240,3 +240,6 @@
 
     </div>
 </div>
+
+
+

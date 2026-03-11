@@ -1,4 +1,4 @@
-{{-- ptah::livewire.menu.menu-list --}}
+﻿{{-- ptah::livewire.menu.menu-list --}}
 <div>
     {{-- Título --}}
     <x-forge-page-header
@@ -11,7 +11,7 @@
     @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
 
     {{-- Toolbar --}}
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
         <x-forge-button wire:click="create" color="primary" size="sm">
             <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -46,19 +46,19 @@
     </div>
 
     {{-- Tabela --}}
-    <div class="ptah-module-table overflow-x-auto border shadow-sm border-slate-200 rounded-xl">
+    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-10">{{ __('ptah::ui.menu_col_icon') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('text')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.menu_col_text') }} @if($sort==='text')<span class="text-indigo-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.menu_col_text') }} @if($sort==='text')<span class="text-blue-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_type') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_url') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_parent') }}</th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('link_order')">
-                        <span class="flex items-center justify-center gap-1">{{ __('ptah::ui.menu_col_order') }} @if($sort==='link_order')<span class="text-indigo-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
+                        <span class="flex items-center justify-center gap-1">{{ __('ptah::ui.menu_col_order') }} @if($sort==='link_order')<span class="text-blue-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_status') }}</th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_actions') }}</th>
@@ -124,7 +124,7 @@
                     <tr>
                         <td colspan="8" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-md bg-slate-100">
                                     <i class="bx bx-menu text-4xl text-slate-400"></i>
                                 </div>
                                 <div>
@@ -188,8 +188,8 @@
                     </label>
                     <div class="flex gap-2 items-center">
                         <input wire:model.live="icon" type="text" :placeholder="__('ptah::ui.menu_form_icon_ph')"
-                            class="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all font-mono"/>
-                        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl flex-shrink-0" title="Preview">
+                            class="flex-1 px-3 py-2 text-sm rounded border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all font-mono"/>
+                        <span class="flex items-center justify-center w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl flex-shrink-0" title="Preview">
                             <i class="{{ $icon ?: 'bx bx-circle' }}"></i>
                         </span>
                     </div>
@@ -270,3 +270,5 @@
         </x-forge-modal>
     </div>
 </div>
+
+

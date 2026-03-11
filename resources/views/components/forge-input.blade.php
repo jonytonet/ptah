@@ -39,7 +39,7 @@
         'success' => 'border-green-400 focus:border-green-500 focus:ring-green-200',
         'danger'  => 'border-red-400 focus:border-red-500 focus:ring-red-200',
         'warn'    => 'border-yellow-400 focus:border-yellow-500 focus:ring-yellow-200',
-        default   => 'border-gray-300 focus:border-violet-500 focus:ring-violet-100',
+        default   => 'border-gray-300 focus:border-blue-600 focus:ring-blue-100',
     };
     $messageColor = match($resolvedState) {
         'success' => 'text-green-600',
@@ -75,7 +75,7 @@
                 'placeholder' => $placeholder,
                 'name'        => $name,
                 'required'    => $required ?: null,
-                'class'       => "block w-full rounded-lg border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm text-gray-800 {$disabledClass} transition-colors duration-150 focus:ring-2",
+                'class'       => "block w-full rounded border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm text-gray-800 {$disabledClass} transition-colors duration-150 focus:ring-2",
                 'disabled'    => $disabled,
             ]) }}
             @if($isPassword) :type="_show ? 'text' : 'password'" @endif

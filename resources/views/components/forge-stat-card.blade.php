@@ -31,7 +31,7 @@
     $trendNegative = $trend && str_starts_with(ltrim($trend), '-');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'ptah-stat-card bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-stat-card bg-white rounded-md p-5 border border-gray-200 hover:border-primary/40 transition-colors duration-150']) }}>
     <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-500 font-medium">{{ $title }}</p>
@@ -60,7 +60,7 @@
         </div>
 
         <div class="flex-shrink-0 ml-4">
-            <div class="w-12 h-12 rounded-2xl {{ $cc['bg'] }} flex items-center justify-center">
+            <div class="w-12 h-12 rounded-md {{ $cc['bg'] }} flex items-center justify-center">
                 @if($icon)
                     <span class="{{ $cc['text'] }}">{!! $icon !!}</span>
                 @else

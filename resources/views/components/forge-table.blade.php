@@ -63,8 +63,8 @@
                     type="search"
                     x-model="search"
                     placeholder="Buscar..."
-                    class="w-full max-w-xs pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl
-                           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                    class="w-full max-w-xs pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-md
+                           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 />
             </div>
         </div>
@@ -73,7 +73,7 @@
     {{-- Mobile: Cards --}}
     <div class="block md:hidden space-y-3">
         <template x-for="(row, rowIndex) in filteredRows" :key="rowIndex">
-            <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm space-y-2">
+            <div class="bg-white rounded-md border border-gray-200 p-4 space-y-2">
                 @foreach($headers as $header)
                     <div class="flex items-start justify-between gap-2">
                         <span class="text-xs font-medium text-gray-500 flex-shrink-0">{{ $header['label'] }}:</span>
@@ -91,7 +91,7 @@
     </div>
 
     {{-- Desktop: Tabela --}}
-    <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-100">
+    <div class="hidden md:block overflow-x-auto rounded-md border border-gray-200">
         <table class="w-full">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
@@ -119,9 +119,9 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-50">
                 <template x-for="(row, rowIndex) in filteredRows" :key="rowIndex">
-                    <tr class="ptah-tbl-tr hover:bg-violet-50/60 transition-colors"
+                    <tr class="ptah-tbl-tr hover:bg-blue-50/60 transition-colors"
                         style="position:relative"
-                        @mouseenter="$el.style.boxShadow='inset 3px 0 0 #5b21b6'"
+                        @mouseenter="$el.style.boxShadow='inset 3px 0 0 #1e40af'"
                         @mouseleave="$el.style.boxShadow='none'">
                         @foreach($headers as $header)
                             <td class="px-4 py-3 text-sm text-dark" x-text="row['{{ $header['key'] }}'] ?? '-'"></td>

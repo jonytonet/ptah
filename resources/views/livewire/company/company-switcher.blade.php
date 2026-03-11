@@ -1,4 +1,4 @@
-{{--
+﻿{{--
     company-switcher — Ptah Forge
     ──────────────────────────────────────────────────────────────────
     • 1 empresa  → componente não renderiza nada
@@ -25,7 +25,7 @@
 
         {{-- Labels (tabs) de todas as empresas ───────────────────── --}}
         <nav
-            class="ptah-switcher-bar inline-flex items-center gap-0.5 rounded-xl px-1.5 py-1"
+            class="ptah-switcher-bar inline-flex items-center gap-0.5 rounded-md px-1.5 py-1"
             role="tablist"
             :aria-label="__('ptah::ui.switcher_select_company')"
         >
@@ -43,7 +43,7 @@
                     aria-selected="{{ $isActive ? 'true' : 'false' }}"
                     class="ptah-switcher-tab {{ $isActive ? 'ptah-switcher-tab--active' : '' }}
                            inline-flex items-center px-2.5 py-1 whitespace-nowrap
-                           font-bold text-[11px] tracking-wide uppercase rounded-lg
+                           font-bold text-[11px] tracking-wide uppercase rounded-md
                            transition-all duration-150 focus:outline-none"
                 >
                     {{ $tabLabel }}

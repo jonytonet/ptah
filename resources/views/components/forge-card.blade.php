@@ -22,12 +22,12 @@
         'dark'    => 'bg-dark border-dark-dark text-white',
     ];
     $typeClass   = $typeMap[$type] ?? $typeMap['default'];
-    $shadowClass = $flat ? 'shadow-none border border-gray-200' : 'shadow-md border';
-    $hoverClass  = $hoverable ? 'transition-shadow duration-200 hover:shadow-xl cursor-pointer' : '';
+    $shadowClass = 'border border-gray-200';
+    $hoverClass  = $hoverable ? 'transition-colors duration-150 hover:border-primary/40 cursor-pointer' : '';
     $ptahCardClass = 'ptah-card ptah-card-' . $type;
 @endphp
 
-<div {{ $attributes->merge(['class' => "rounded-2xl overflow-hidden {$ptahCardClass} {$typeClass} {$shadowClass} {$hoverClass}"]) }}>
+<div {{ $attributes->merge(['class' => "rounded-md overflow-hidden {$ptahCardClass} {$typeClass} {$shadowClass} {$hoverClass}"]) }}>
 
     @if (isset($img))
         <div class="w-full">{{ $img }}</div>

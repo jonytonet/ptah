@@ -194,9 +194,9 @@ class InstallCommand extends Command
             $themeTokens = <<<'CSS'
 
     /* ── Ptah Forge design tokens ── */
-    --color-primary:       #5b21b6;
-    --color-primary-light: #ede9fe;
-    --color-primary-dark:  #4c1d95;
+    --color-primary:       #1e40af;
+    --color-primary-light: #dbeafe;
+    --color-primary-dark:  #1e3a8a;
     --color-success:       #10b981;
     --color-success-light: #d1fae5;
     --color-success-dark:  #059669;

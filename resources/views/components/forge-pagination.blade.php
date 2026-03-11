@@ -11,19 +11,19 @@
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
         @if ($paginator->onFirstPage())
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_previous') }}</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_previous') }}</span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_previous') }}</button>
+                    class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_previous') }}</button>
         @endif
 
         <span class="text-sm text-gray-500 dark:text-slate-400">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
 
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_next') }}</button>
+                    class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_next') }}</button>
         @else
-            <span class="px-3 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_next') }}</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_next') }}</span>
         @endif
     </div>
 
@@ -32,14 +32,14 @@
 
         {{-- Botão < --}}
         @if ($paginator->onFirstPage())
-            <span class="p-2 rounded-xl text-gray-300 dark:text-slate-600 cursor-not-allowed">
+            <span class="p-2 rounded-md text-gray-300 dark:text-slate-600 cursor-not-allowed">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="p-2 rounded-xl text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                    class="p-2 rounded-md text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -54,12 +54,12 @@
                 @foreach ($element as $page => $url)
                     @if ($page == $paginator->currentPage())
                         <button wire:click="$set('page', {{ $page }})"
-                                class="w-9 h-9 rounded-xl text-sm font-medium bg-primary text-white shadow-md shadow-primary/30 transition-all duration-200">
+                                class="w-9 h-9 rounded-md text-sm font-medium bg-primary text-white transition-colors duration-150">
                             {{ $page }}
                         </button>
                     @else
                         <button wire:click="$set('page', {{ $page }})"
-                                class="w-9 h-9 rounded-xl text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all duration-200">
+                                class="w-9 h-9 rounded-md text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150">
                             {{ $page }}
                         </button>
                     @endif
@@ -70,13 +70,13 @@
         {{-- Botão > --}}
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="p-2 rounded-xl text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                    class="p-2 rounded-md text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </button>
         @else
-            <span class="p-2 rounded-xl text-gray-300 dark:text-slate-600 cursor-not-allowed">
+            <span class="p-2 rounded-md text-gray-300 dark:text-slate-600 cursor-not-allowed">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>

@@ -1,4 +1,4 @@
-{{--
+﻿{{--
     Layout: forge-auth
     Uso:
       @extends('ptah::layouts.forge-auth')
@@ -31,7 +31,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { DEFAULT: '#5b21b6', light: '#ede9fe', dark: '#4c1d95' },
+                        primary: { DEFAULT: '#1e40af', light: '#eff6ff', dark: '#1e3a8a' },
                         success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
                         danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
                         warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
@@ -59,7 +59,7 @@
 
     {{-- Branding --}}
     <div class="mb-8 text-center">
-        <div class="w-14 h-14 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-lg mb-3">
+        <div class="w-14 h-14 rounded-md bg-primary mx-auto flex items-center justify-center mb-3">
             <span class="text-white text-2xl font-bold">
                 {{ mb_strtoupper(mb_substr(config('app.name', 'P'), 0, 1)) }}
             </span>
@@ -68,7 +68,7 @@
     </div>
 
     {{-- Card --}}
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+    <div class="w-full max-w-md bg-white rounded-md p-8 border border-gray-200">
         @isset($title)
             <h2 class="text-xl font-semibold text-dark mb-6">{{ $title }}</h2>
         @endisset
@@ -93,3 +93,4 @@
     @stack('scripts')
 </body>
 </html>
+

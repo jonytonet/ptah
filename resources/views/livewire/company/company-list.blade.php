@@ -1,4 +1,4 @@
-{{-- ptah::livewire.company.company-list --}}
+﻿{{-- ptah::livewire.company.company-list --}}
 <div>
     {{-- Header --}}
     <x-forge-page-header
@@ -15,7 +15,7 @@
     @endif
 
     {{-- Toolbar --}}
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border shadow-sm rounded-xl bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
         <x-forge-button wire:click="create" color="primary" size="sm">
             <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,13 +35,13 @@
     </div>
 
     {{-- Tabela --}}
-    <div class="ptah-module-table overflow-x-auto border shadow-sm border-slate-200 rounded-xl">
+    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-12">{{ __('ptah::ui.company_col_abbr') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('name')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="text-indigo-500">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="text-blue-500">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">E-mail</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">CNPJ / Tax</th>
@@ -53,12 +53,12 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
                     @php
-                        $badgeColors = ['bg-indigo-600','bg-amber-500','bg-emerald-600','bg-rose-600','bg-violet-600','bg-sky-600'];
+                        $badgeColors = ['bg-blue-700','bg-amber-500','bg-emerald-600','bg-rose-600','bg-purple-700','bg-sky-600'];
                         $badgeColor  = $badgeColors[$row->id % count($badgeColors)];
                     @endphp
                     <tr class="transition-colors hover:bg-slate-50/70">
                         <td class="px-3 py-2.5 text-center">
-                            <div class="w-8 h-8 rounded-lg {{ $badgeColor }} flex items-center justify-center mx-auto shadow-sm">
+                            <div class="w-8 h-8 rounded-md {{ $badgeColor }} flex items-center justify-center mx-auto">
                                 <span class="text-white font-bold text-[10px] tracking-wide leading-none">
                                     {{ $row->getLabelDisplay() }}
                                 </span>
@@ -96,7 +96,7 @@
                     <tr>
                         <td colspan="7" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
-                                <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-md bg-slate-100">
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h6"/></svg>
                                 </div>
                                 <div>
@@ -167,3 +167,6 @@
         </x-forge-modal>
     </div>
 </div>
+
+
+

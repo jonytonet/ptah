@@ -1,4 +1,4 @@
-{{-- resources/views/livewire/auth/profile.blade.php --}}
+﻿{{-- resources/views/livewire/auth/profile.blade.php --}}
 <div>
     <x-forge-page-header :title="__('ptah::ui.profile_title')" :subtitle="__('ptah::ui.profile_subtitle')" />
 
@@ -71,8 +71,8 @@
                     {{-- Método TOTP --}}
                     <x-forge-card flat class="mb-4">
                         <div class="flex items-start gap-3 mb-3">
-                            <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
-                                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="w-9 h-9 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                 </svg>
@@ -87,7 +87,7 @@
                             {{-- QR Code setup --}}
                             <div class="space-y-4">
                                 <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_scan_qr') }}</p>
-                                <div class="flex justify-center p-3 bg-white rounded-lg border border-gray-200 w-fit mx-auto">
+                                <div class="flex justify-center p-3 bg-white rounded-md border border-gray-200 w-fit mx-auto">
                                     <img src="{{ $qrCodeSvg }}" alt="QR Code 2FA" class="w-[200px] h-[200px]">
                                 </div>
                                 <p class="text-xs text-gray-500 text-center">
@@ -108,7 +108,7 @@
                     <x-forge-card flat>
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-start gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0">
+                                <div class="w-9 h-9 rounded-md bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center shrink-0">
                                     <svg class="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -136,7 +136,7 @@
                     <div>
                         <p class="font-semibold text-sm text-dark mb-2">{{ __('ptah::ui.profile_recovery_codes_title') }}</p>
                         <p class="text-xs text-gray-500 mb-3">{{ __('ptah::ui.profile_recovery_codes_hint') }}</p>
-                        <div class="grid grid-cols-2 gap-1 font-mono text-sm bg-gray-50 dark:bg-dark-3 p-3 rounded-lg">
+                        <div class="grid grid-cols-2 gap-1 font-mono text-sm bg-gray-50 dark:bg-dark-3 p-3 rounded-md">
                             @foreach ($recoveryCodes as $rc)
                                 <span>{{ $rc }}</span>
                             @endforeach
@@ -246,7 +246,7 @@
                     <div>
                         <label class="block text-sm font-medium text-dark mb-1">{{ __('ptah::ui.profile_select_image') }}</label>
                         <input type="file" wire:model="photo" accept="image/*"
-                               class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
+                               class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
                         @error('photo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
@@ -271,3 +271,4 @@
         @endif
     </x-forge-tabs>
 </div>
+

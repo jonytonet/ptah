@@ -39,7 +39,7 @@
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100 translate-y-0"
     x-transition:leave-end="opacity-0 -translate-y-2"
-    {{ $attributes->merge(['class' => "ptah-alert {$ptahAlertClass} flex items-start gap-3 p-4 rounded-xl {$c['bg']} {$c['border']}"]) }}
+    {{ $attributes->merge(['class' => "ptah-alert {$ptahAlertClass} flex items-start gap-3 p-4 rounded-md {$c['bg']} {$c['border']}"]) }}
 >
     <span class="shrink-0 mt-0.5 {{ $c['icon'] }}">{!! $icon !!}</span>
 

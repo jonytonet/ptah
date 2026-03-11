@@ -1,4 +1,4 @@
-{{--
+﻿{{--
     forge-demo — Ptah Forge Component Showcase
     Rota sugerida: Route::get('/ptah-forge-demo', fn() => view('ptah::forge-demo'));
 --}}
@@ -16,7 +16,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { DEFAULT: '#5b21b6', light: '#ede9fe', dark: '#4c1d95' },
+                        primary: { DEFAULT: '#1e40af', light: '#eff6ff', dark: '#1e3a8a' },
                         success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
                         danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
                         warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
@@ -336,7 +336,7 @@
             Abaixo um exemplo estático:
         </p>
         <div class="flex justify-center">
-            <nav class="inline-flex overflow-hidden border border-gray-200 shadow-sm rounded-xl">
+            <nav class="inline-flex overflow-hidden border border-gray-200 rounded-md">
                 @foreach(range(1, 7) as $p)
                     <a href="#" class="px-4 py-2 text-sm border-r border-gray-200 last:border-0
                         {{ $p === 3 ? 'bg-primary text-white font-semibold' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
@@ -357,7 +357,7 @@
                         <span class="inline-block w-3 h-3 rounded-full bg-primary"></span> 2024
                     </span>
                 </x-slot:legend>
-                <div class="flex items-end justify-around h-48 px-4 pb-4 bg-gradient-to-t from-primary/10 to-transparent rounded-xl">
+                <div class="flex items-end justify-around h-48 px-4 pb-4 bg-gradient-to-t from-primary/10 to-transparent rounded-md">
                     @foreach([40, 65, 55, 80, 70, 90, 75, 95, 60, 85, 100, 88] as $h)
                         <div class="w-4 transition-all duration-500 rounded-t bg-primary"
                              style="height: {{ $h }}%"></div>
@@ -384,3 +384,4 @@
 
 </body>
 </html>
+

@@ -147,7 +147,7 @@
                             type="button"
                             @click="open = !open"
                             title="{{ $itemLabel }}"
-                            class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                            class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150
                                 {{ $groupActive ? 'text-primary font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-primary' }}"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
@@ -205,7 +205,7 @@
                     <li>
                         <div
                             title="{{ $itemLabel }}"
-                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 cursor-default"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-md text-gray-400 cursor-default"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                 {!! $renderIcon($itemIcon) !!}
@@ -225,7 +225,7 @@
                             href="{{ $itemUrl }}"
                             target="{{ $itemTarget }}"
                             title="{{ $itemLabel }}"
-                            class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative
+                            class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150 relative
                                 {{ $isActive
                                     ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
                                     : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
@@ -258,7 +258,7 @@
             <button
                 type="submit"
                 title="{{ __('ptah::ui.navbar_user_logout') }}"
-                class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-danger hover:bg-danger-light transition-all duration-200"
+                class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-danger hover:bg-danger-light transition-colors duration-150"
             >
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                     <i class="bx bx-log-out text-xl leading-none"></i>

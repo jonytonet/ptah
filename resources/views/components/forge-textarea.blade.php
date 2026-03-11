@@ -51,7 +51,7 @@
         @if($maxlength) maxlength="{{ $maxlength }}" @endif
         @if($counter) @input="chars = $event.target.value.length" @endif
         {{ $attributes->merge([
-            'class' => "w-full rounded-xl border bg-white px-4 py-2.5 text-sm transition-all duration-200
+            'class' => "w-full rounded-md border bg-white px-4 py-2.5 text-sm transition-colors duration-150
                         focus:outline-none focus:ring-2 focus:ring-offset-0
                         disabled:bg-gray-50 disabled:cursor-not-allowed resize-y {$stateClasses}"
         ]) }}

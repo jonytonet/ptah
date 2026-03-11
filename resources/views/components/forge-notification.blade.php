@@ -77,7 +77,7 @@
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="opacity-100 translate-x-0"
     x-transition:leave-end="{{ $enterStart }}"
-    class="fixed {{ $posClass }} z-50 w-80 rounded-2xl overflow-hidden shadow-2xl"
+    class="fixed {{ $posClass }} z-50 w-80 rounded-md border border-gray-200 overflow-hidden"
 >
     <div class="{{ $bgClass }} text-white flex items-start gap-3 p-4">
         <span class="shrink-0 mt-0.5">{!! $icon !!}</span>

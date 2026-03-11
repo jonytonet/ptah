@@ -107,9 +107,6 @@ class SearchDropdown extends Component
     /** If true, loads data even without a search term. */
     public bool $initWithData = true;
 
-    /** Controls dropdown visibility */
-    public bool $show = false;
-
     // ── Event ─────────────────────────────────────────────────────────────
 
     /** Livewire 4 event name fired when an item is selected */
@@ -148,11 +145,34 @@ class SearchDropdown extends Component
 
     public function render(): \Illuminate\View\View
     {
+        return view('ptah::livewire.search-dropdown.search-dropdown');
+    }
+
+    // ── Search (called by Alpine via $wire.search()) ─────────────────────────
+
+    /**
+     * Executes the search and returns formatted results as a JSON-ready array.
+     * Called by Alpine with $wire.search(term) — no full re-render triggered.
+     * Each item contains: _value, _label, _labelTwo, _labelThree, _raw.
+     */
+    public function search(?string $term): array
+    {
+        $this->searchTerm = $term;
         $this->loadData();
 
-        $data = $this->initWithData ? $this->dataModel : [];
-
-        return view('ptah::livewire.search-dropdown.search-dropdown', compact('data'));
+        return array_map(function (array $item): array {
+            return [
+                '_value'      => $item[$this->value] ?? '',
+                '_label'      => $this->formatValue($item[$this->label] ?? '', $this->maskOne),
+                '_labelTwo'   => $this->labelTwo !== null
+                    ? $this->formatValue($item[$this->labelTwo] ?? '', $this->maskTwo)
+                    : null,
+                '_labelThree' => $this->labelThree !== null
+                    ? $this->formatValue($item[$this->labelThree] ?? '', $this->maskThree)
+                    : null,
+                '_raw'        => $item,
+            ];
+        }, $this->dataModel);
     }
 
     // ── Data ───────────────────────────────────────────────────────────────
@@ -205,16 +225,29 @@ class SearchDropdown extends Component
         /** @var \Illuminate\Database\Eloquent\Model $query */
         $query = app()->make($this->modelClass)->select(array_values($cols));
 
-        // Apply LIKE on the configured fields
+        // Apply LIKE on the configured fields.
+        // The term is split into individual words so that "joão silva" matches
+        // "João da Silva" regardless of word order — all words must appear in
+        // the same column (AND), but any column can satisfy the rule (OR).
+        // This is database-agnostic and has no extra performance cost over a
+        // single LIKE, since both require a full scan when % leads the pattern.
         if (!empty($this->searchTerm)) {
             $searchCols = array_merge(
                 array_filter([$this->label, $this->labelTwo, $this->labelThree, $this->value]),
                 $this->arraySearch
             );
 
-            $query->where(function ($q) use ($searchCols) {
+            $words = preg_split('/\s+/', trim($this->searchTerm), -1, PREG_SPLIT_NO_EMPTY);
+
+            $query->where(function ($q) use ($searchCols, $words) {
                 foreach ($searchCols as $col) {
-                    $q->orWhere($col, 'LIKE', '%' . $this->searchTerm . '%');
+                    // Each column: ALL words must be present (AND), but any
+                    // column match counts (OR between columns).
+                    $q->orWhere(function ($sub) use ($col, $words) {
+                        foreach ($words as $word) {
+                            $sub->where($col, 'LIKE', '%' . $word . '%');
+                        }
+                    });
                 }
             });
         }
@@ -233,48 +266,54 @@ class SearchDropdown extends Component
 
     // ── UI events ────────────────────────────────────────────────────────────
 
-    /** Opens/closes the dropdown */
+    /**
+     * Toggles the dropdown visibility via a browser event caught by Alpine.
+     * Kept for backward compatibility.
+     */
     public function toggleShow(): void
     {
-        $this->show = !$this->show;
+        $this->dispatch('ptah-sd-change-show-' . $this->key);
     }
 
-    /** Receives external event to close/open */
+    /** Receives external Livewire event to toggle the dropdown. */
     #[On('changeShow')]
     public function changeShow(): void
     {
         $this->toggleShow();
     }
 
-    /** Clears the search term via external event */
+    /**
+     * Receives external Livewire event to reset the dropdown.
+     * Dispatches a browser event that Alpine handles to clear term/results/show.
+     */
     #[On('clearSearchDropdown')]
     public function clearSearchDropdown(): void
     {
-        $this->searchTerm = '';
+        $this->dispatch('ptah-sd-clear-' . $this->key);
     }
 
     // ── Selection ────────────────────────────────────────────────────────────
 
     /**
-     * Processes the selection of an item and fires the configured event.
+     * Processes the selection of an item and fires the configured Livewire event.
+     * show/term state is managed by Alpine — not touched here.
      */
     public function selectedItem(array $item): void
     {
-        $this->searchTerm = $item[$this->value] . ' - ' . $item[$this->label];
+        $displayTerm = $item[$this->value] . ' - ' . $item[$this->label];
 
         $this->dispatch($this->listens, [
             'useService' => $this->useService,
             'value'      => $item[$this->value],
             'label'      => $item[$this->label],
-            'searchTerm' => $this->searchTerm,
+            'searchTerm' => $displayTerm,
             'coringa'    => $this->coringa,
         ]);
-
-        $this->show = false;
     }
 
     /**
-     * Clears the selection and fires the event with empty values.
+     * Clears the selection and fires the configured Livewire event.
+     * Alpine resets term/results/show on its own before calling this method.
      */
     public function clearData(): void
     {
@@ -285,9 +324,6 @@ class SearchDropdown extends Component
             'searchTerm' => '',
             'coringa'    => $this->coringa,
         ]);
-
-        $this->searchTerm = '';
-        $this->show       = false;
     }
 
     // ── Formatting ────────────────────────────────────────────────────────────
