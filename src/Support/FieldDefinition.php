@@ -87,10 +87,22 @@ readonly class FieldDefinition
 
     /**
      * Related table in snake_case plural (e.g. business_partner → business_partners).
+     *
+     * If the inferred table name matches a known ptah-prefixed table, the prefix
+     * is added automatically so the FK points to the right table.
+     * e.g.: department_id → departments → ptah_departments
      */
     public function relatedTable(): string
     {
-        return Str::plural($this->relatedName());
+        $table = Str::plural($this->relatedName());
+
+        // Tables that ptah creates with the ptah_ prefix
+        $ptahTables = [
+            'companies', 'departments', 'roles', 'pages',
+            'page_objects', 'role_permissions', 'user_roles', 'permission_audits',
+        ];
+
+        return in_array($table, $ptahTables, true) ? 'ptah_' . $table : $table;
     }
 
     /**
