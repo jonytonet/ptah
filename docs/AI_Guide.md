@@ -151,7 +151,7 @@ QUICK FILTERS:
 RULES:
   - Use Ptah standard: Boxicons (bx bx-*) or FontAwesome (fas fa-*) icons
   - Dark mode must work — use ptah-dark classes in conditional CSS
-  - Preserve colour tokens: primary=#5b21b6, success=#10b981, danger=#ef4444
+  - Preserve colour tokens: primary=#1e40af, success=#10b981, danger=#ef4444
 ```
 
 ---

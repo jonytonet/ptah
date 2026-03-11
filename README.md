@@ -108,7 +108,43 @@ php artisan ptah:install
 
 ---
 
-#### Step 3 — Enable the required modules
+#### Step 3 — Configure your database
+
+Edit `.env` to point to your database of choice before running migrations.
+
+**SQLite** *(quick start)*:
+```env
+DB_CONNECTION=sqlite
+```
+```bash
+touch database/database.sqlite
+```
+
+**MySQL**:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ptah_app
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
+
+**PostgreSQL**:
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=ptah_app
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+```
+
+> See the [full database guide →](docs/InstallationGuide.md#step-3--configure-the-environment) for more options.
+
+---
+
+#### Step 4 — Enable the required modules
 
 ```bash
 php artisan ptah:module auth
@@ -118,7 +154,7 @@ php artisan ptah:module menu
 
 ---
 
-#### Step 4 — Generate the 3 system entities
+#### Step 5 — Generate the 3 system entities
 
 **Category:**
 ```bash
@@ -137,7 +173,7 @@ php artisan ptah:forge Ticket --fields="title:string,description:text,status:str
 
 ---
 
-#### Step 5 — Run migrations, sync menu and serve
+#### Step 6 — Run migrations, sync menu and serve
 
 ```bash
 php artisan migrate

@@ -35,27 +35,35 @@ class CacheService
      * Cached-remember for entity configurations (CrudConfig).
      *
      * @param string   $model    e.g. "Product"
+     * @param string   $route    e.g. "categories" (empty = global config)
      * @param callable $callback Returns the value to cache
      * @param int      $ttl
      */
-    public function rememberConfig(string $model, callable $callback, int $ttl = self::CONFIG_TTL): mixed
+    public function rememberConfig(string $model, string $route, callable $callback, int $ttl = self::CONFIG_TTL): mixed
     {
-        $key = $this->configKey($model);
+        $key = $this->configKey($model, $route);
 
         if ($this->supportsTagging()) {
-            return Cache::tags([self::TAG_CONFIG, "ptah_model_{$model}"])
-                ->remember($key, $ttl, $callback);
+            $tags = [self::TAG_CONFIG, "ptah_model_{$model}"];
+            if ($route !== '') {
+                $tags[] = "ptah_route_{$route}";
+            }
+            return Cache::tags($tags)->remember($key, $ttl, $callback);
         }
 
         return Cache::remember($key, $ttl, $callback);
     }
 
-    public function forgetConfig(string $model): void
+    public function forgetConfig(string $model, string $route = ''): void
     {
-        $key = $this->configKey($model);
+        $key = $this->configKey($model, $route);
 
         if ($this->supportsTagging()) {
-            Cache::tags([self::TAG_CONFIG, "ptah_model_{$model}"])->forget($key);
+            $tags = [self::TAG_CONFIG, "ptah_model_{$model}"];
+            if ($route !== '') {
+                $tags[] = "ptah_route_{$route}";
+            }
+            Cache::tags($tags)->forget($key);
             return;
         }
 
@@ -200,9 +208,10 @@ class CacheService
         return in_array($driver, ['redis', 'memcached', 'dynamodb'], true);
     }
 
-    protected function configKey(string $model): string
+    protected function configKey(string $model, string $route = ''): string
     {
-        return "ptah.crud.{$model}";
+        $base = 'ptah.crud.' . str_replace(['/', '\\'], '.', $model);
+        return $route !== '' ? "{$base}.{$route}" : $base;
     }
 
     protected function preferencesKey(int $userId, string $route): string

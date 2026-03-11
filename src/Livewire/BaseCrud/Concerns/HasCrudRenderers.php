@@ -368,14 +368,14 @@ trait HasCrudRenderers
         if ($value === null || $value === '') return '';
         $max      = (float) ($col['colsRendererMax'] ?? 100);
         $pct      = $max > 0 ? min(100, round((float) $value * 100 / $max)) : 0;
-        $colorKey = $col['colsRendererColor'] ?? 'indigo';
+        $colorKey = $col['colsRendererColor'] ?? 'blue';
         $bgBar    = match ($colorKey) {
             'green'  => 'bg-green-500',
             'red'    => 'bg-red-500',
             'yellow' => 'bg-yellow-500',
             'purple' => 'bg-purple-500',
-            'blue'   => 'bg-blue-500',
-            default  => 'bg-indigo-500',
+            'indigo' => 'bg-indigo-500',
+            default  => 'bg-blue-600',
         };
 
         return "<div class=\"flex items-center gap-2\">"

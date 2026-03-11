@@ -25,8 +25,9 @@ class CrudConfig extends Component
 {
     // ── Identification ────────────────────────────────────────────────────────────
 
-    public string $model = '';
-    public bool   $showModal = false;
+    public string $model       = '';
+    public string $configRoute = ''; // request()->path() no mount, read-only na view
+    public bool   $showModal   = false;
 
     // ── Columns ──────────────────────────────────────────────────────────────
 
@@ -117,7 +118,8 @@ class CrudConfig extends Component
 
     public function mount(string $model): void
     {
-        $this->model = $model;
+        $this->model       = $model;
+        $this->configRoute = ltrim(request()->path(), '/');
         $this->loadFromDb();
     }
 
@@ -130,7 +132,7 @@ class CrudConfig extends Component
 
     /**
      * Recarrega config do DB e reseta formulários sem abrir o modal.
-     * Chamado via Alpine: @click="$wire.showModal = true; $wire.prepareModal()"
+     * Usado internamente por openModal().
      */
     public function prepareModal(): void
     {
@@ -145,7 +147,12 @@ class CrudConfig extends Component
         $this->editingJoinIndex   = -1;
     }
 
-    /** @deprecated Use Alpine: @click="$wire.showModal = true; $wire.prepareModal()" */
+    /**
+     * Abre o modal: recarrega config e exibe.
+     * Chamado via: wire:click="openModal"
+     * (Usar wire:click em vez de @click="$wire." evita problemas de escopo
+     * com componentes Livewire aninhados em @teleport.)
+     */
     public function openModal(): void
     {
         $this->prepareModal();
@@ -169,7 +176,7 @@ class CrudConfig extends Component
 
     protected function loadFromDb(): void
     {
-        $record = $this->configService->find($this->model);
+        $record = $this->configService->find($this->model, $this->configRoute);
         if (! $record) {
             return;
         }
@@ -680,10 +687,10 @@ class CrudConfig extends Component
 
     public function save(): void
     {
-        $record   = $this->configService->find($this->model);
+        $record   = $this->configService->find($this->model, $this->configRoute);
         $existing = $record ? ($record->config ?? []) : [];
 
-        $this->configService->save($this->model, $this->buildConfigArray($existing));
+        $this->configService->save($this->model, $this->buildConfigArray($existing), $this->configRoute);
 
         $this->showModal = false;
         $this->dispatch('ptah:crud-config-updated');

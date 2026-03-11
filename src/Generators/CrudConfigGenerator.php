@@ -54,13 +54,13 @@ class CrudConfigGenerator extends AbstractGenerator
             $service = app(CrudConfigService::class);
 
             // If it already exists and --force is not set, skip
-            $existing = $service->find($crudIdentifier);
+            $existing = $service->find($crudIdentifier, '');
             if ($existing && ! $context->force) {
                 return GeneratorResult::skipped($label, 'crud_configs');
             }
 
             $config = $this->buildConfig($context);
-            $service->save($crudIdentifier, $config);
+            $service->save($crudIdentifier, $config, '');
 
             return GeneratorResult::done($label, 'crud_configs');
         } catch (\Throwable $e) {

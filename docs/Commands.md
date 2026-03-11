@@ -442,6 +442,7 @@ php artisan ptah:config "App\Models\Product" \
 - ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
 - ``--set=*`` — Set general config: ``key=value``
 - ``--permission=*`` — Set permission: ``action=permission``
+- ``--route=`` — Route path to scope this config (empty = global/default). When provided, the config is saved for that specific URL path only. `CrudConfigService` falls back to the global config if no route-specific entry is found. See [Multi-Config per Route](BaseCrud.md#multi-config-per-route)
 - ``--list`` — List current configuration (beautiful table format)
 - ``--reset`` — Reset configuration to defaults
 - ``--import=`` — Import configuration from JSON file
@@ -612,6 +613,19 @@ php artisan ptah:config "App\Models\Product" --import=product-config.json
 
 # 7. Reset to defaults
 php artisan ptah:config "App\Models\Product" --reset
+
+# 8. Create a route-specific config (same model, different columns per URL path)
+php artisan ptah:config "App\Models\Product" \
+  --route="admin/products" \
+  --column="name:text:required" \
+  --column="price:number:required" \
+  --column="status:select:options=active,inactive:renderer=badge"
+
+# 9. Read-only variant for another route
+php artisan ptah:config "App\Models\Product" \
+  --route="sales/products" \
+  --column="name:text:readonly" \
+  --column="price:number:readonly"
 ```
 
 **Benefits of CLI Configuration:**

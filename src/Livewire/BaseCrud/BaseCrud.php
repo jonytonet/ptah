@@ -82,7 +82,10 @@ class BaseCrud extends Component
     // ── Configuration ──────────────────────────────────────────────────────────
 
     /** Model identifier (e.g. "Product", "Purchase/Order/PurchaseOrders") */
-    public string $model = '';
+    public string $model       = '';
+
+    /** Route path captured from request (e.g. 'categories') — used to load screen-specific config */
+    public string $configRoute = '';
 
     /** Full CrudConfig configuration array */
     public array $crudConfig = [];

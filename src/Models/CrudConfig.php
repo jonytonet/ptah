@@ -23,10 +23,11 @@ class CrudConfig extends Model
 
     protected $table = 'crud_configs';
 
-    protected $fillable = ['model', 'config', 'created_by', 'updated_by'];
+    protected $fillable = ['model', 'route', 'config', 'created_by', 'updated_by'];
 
     protected $casts = [
         'config'     => 'array',
+        'route'      => 'string',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];

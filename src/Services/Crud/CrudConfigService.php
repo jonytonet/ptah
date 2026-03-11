@@ -29,11 +29,35 @@ class CrudConfigService
     /**
      * Fetches the configuration of a model (with automatic cache).
      *
+     * Lookup order when $route != '':
+     *  1. (model, route) — screen-specific config
+     *  2. (model, '')    — fallback to global config
+     *
      * @param string $model  Model identifier, e.g. "Product" or "Purchase/Order/PurchaseOrders"
+     * @param string $route  Route path, e.g. "categories" (empty = global only)
      */
-    public function find(string $model): ?CrudConfig
+    public function find(string $model, string $route = ''): ?CrudConfig
     {
-        $config = CrudConfig::where('model', $model)->first();
+        // Try screen-specific first, then fall back to global
+        $config = CrudConfig::where('model', $model)
+            ->where('route', $route)
+            ->first();
+
+        if (! $config && $route !== '') {
+            $config = CrudConfig::where('model', $model)
+                ->where('route', '')
+                ->first();
+
+            // Found only the global fallback — return it without caching under the specific route key
+            if ($config) {
+                if (! $this->isCacheEnabled($config)) {
+                    return $config;
+                }
+                return $this->cache->rememberConfig($model, '', fn() => $config->fresh(), $this->ttlFor($config));
+            }
+
+            return null;
+        }
 
         if (! $config) {
             return null;
@@ -45,7 +69,7 @@ class CrudConfigService
 
         $ttl = $this->ttlFor($config);
 
-        return $this->cache->rememberConfig($model, fn() => $config->fresh(), $ttl);
+        return $this->cache->rememberConfig($model, $route, fn() => $config->fresh(), $ttl);
     }
 
     /**
@@ -53,9 +77,9 @@ class CrudConfigService
      *
      * @throws \RuntimeException
      */
-    public function findOrFail(string $model): CrudConfig
+    public function findOrFail(string $model, string $route = ''): CrudConfig
     {
-        $config = $this->find($model);
+        $config = $this->find($model, $route);
 
         if (! $config) {
             throw new \RuntimeException("CrudConfig for model [{$model}] not found.");
@@ -69,19 +93,20 @@ class CrudConfigService
      *
      * @param string $model  Model identifier
      * @param array  $config Full JSON configuration
+     * @param string $route  Route path (empty = global config)
      * @throws \Ptah\Exceptions\ConfigValidationException
      */
-    public function save(string $model, array $config): CrudConfig
+    public function save(string $model, array $config, string $route = ''): CrudConfig
     {
         // Validate configuration before persisting
         $this->validator->validate($config, $model);
 
         $record = CrudConfig::updateOrCreate(
-            ['model' => $model],
+            ['model' => $model, 'route' => $route],
             ['config' => $config],
         );
 
-        $this->forget($model);
+        $this->forget($model, $route);
 
         return $record;
     }
@@ -92,11 +117,12 @@ class CrudConfigService
      * @param string $model   Identifier
      * @param string $section First-level key, e.g. "permissions", "exportConfig"
      * @param array  $data    Data to merge
+     * @param string $route   Route path (empty = global config)
      * @throws \Ptah\Exceptions\ConfigValidationException
      */
-    public function updateSection(string $model, string $section, array $data): CrudConfig
+    public function updateSection(string $model, string $section, array $data, string $route = ''): CrudConfig
     {
-        $record = $this->findOrFail($model);
+        $record = $this->findOrFail($model, $route);
 
         $config              = $record->config;
         $config[$section]    = array_merge($config[$section] ?? [], $data);
@@ -107,7 +133,7 @@ class CrudConfigService
         $record->config      = $config;
         $record->save();
 
-        $this->forget($model);
+        $this->forget($model, $route);
 
         return $record->refresh();
     }
@@ -115,18 +141,20 @@ class CrudConfigService
     /**
      * Removes from cache.
      */
-    public function forget(string $model): void
+    public function forget(string $model, string $route = ''): void
     {
-        $this->cache->forgetConfig($model);
+        $this->cache->forgetConfig($model, $route);
     }
 
     /**
      * Removes from the database and from cache.
      */
-    public function delete(string $model): bool
+    public function delete(string $model, string $route = ''): bool
     {
-        $deleted = CrudConfig::where('model', $model)->delete();
-        $this->forget($model);
+        $deleted = CrudConfig::where('model', $model)
+            ->where('route', $route)
+            ->delete();
+        $this->forget($model, $route);
 
         return $deleted > 0;
     }

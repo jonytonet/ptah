@@ -44,6 +44,7 @@
 33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
 34. [Image Input](#image-input)
 35. [Partial Structure (Blade)](#partial-structure-blade)
+36. [Multi-Config per Route](#multi-config-per-route)
 
 ---
 
@@ -75,6 +76,7 @@
 - **configGroupBy** — declarative `GROUP BY` record grouping in CrudConfig, without Eloquent
 - **`image` input** — image field in the form with live preview (URL or local file via FileReader)
 - **Partitioned Blade** — base view split into 7 independent partials to ease maintenance
+- **Multi-Config per Route** — same model can have a different CrudConfig for each URL path; a global (route-less) config acts as fallback for all routes
 
 > 📝 **Configuration:** To configure columns, filters, actions and other CRUD options, see [**Configuration.md**](Configuration.md) — complete documentation of the **Visual Modal** and the **CLI Command** (`ptah:config`).
 
@@ -503,7 +505,7 @@ Configured in `colsHelper` of the column (legacy helpers).
 | `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
 | `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
 | `number` | Number formatted with locale separators (`1,234.56`) | `colsRendererDecimals` (default: 2), `colsRendererLocale` (default: pt-BR) |
-| `progress` | Visual progress bar with percentage | `colsRendererMax` (default: 100), `colsRendererColor` (default: indigo) |
+| `progress` | Visual progress bar with percentage | `colsRendererMax` (default: 100), `colsRendererColor` (default: blue) |
 | `rating` | SVG stars; supports half stars | `colsRendererMax` (default: 5) |
 | `color` | Colour swatch + hex code | — |
 | `code` | Monospace `<code>` with grey background | — |
@@ -2148,3 +2150,82 @@ The main view `ptah::livewire.base-crud` is a ~40-line skeleton that includes 7 
 | `_scripts.blade.php` | `@once` block with styles and JS for column drag-and-drop and resize |
 
 > **Publish only the partial you need to customise** — as the partials use `ptah::livewire.partials.*`, simply publish the specific file via `php artisan vendor:publish --tag=ptah-views` and edit the published file in `resources/views/vendor/ptah/livewire/partials/`.
+
+---
+
+## Multi-Config per Route
+
+The same model can have **different CrudConfig settings for each URL path**. This is useful when the same entity needs to be displayed differently in distinct contexts — for example, a full admin view versus a read-only staff view.
+
+### How it works
+
+At `mount()`, BaseCrud captures the current URL path in `$configRoute` (e.g. `admin/products`). `CrudConfigService::find()` then resolves the configuration using this priority:
+
+```
+1. crud_configs WHERE model = 'Product' AND route = 'admin/products'   ← screen-specific
+2. crud_configs WHERE model = 'Product' AND route = ''                 ← global fallback
+```
+
+If a route-specific config exists, it is used. Otherwise, the global (route-less) config is the fallback. No manual parameter is needed — the lookup is fully automatic.
+
+### crud_configs table structure
+
+| `model`     | `route`          | Purpose                              |
+|-------------|------------------|--------------------------------------|
+| `Product`   | `''`             | Global config — applies to all routes without a specific entry |
+| `Product`   | `admin/products` | Specific config for `/admin/products` |
+| `Product`   | `sales/products` | Specific config for `/sales/products` |
+
+### Creating a route-specific config
+
+**Via CLI (`ptah:config`):**
+
+```bash
+# Create/update config scoped to a specific route
+php artisan ptah:config "App\Models\Product" \
+  --route="admin/products" \
+  --column="name:text:required" \
+  --column="price:number:required"
+
+# Different columns for the sales route
+php artisan ptah:config "App\Models\Product" \
+  --route="sales/products" \
+  --column="name:text:readonly" \
+  --column="status:select:readonly"
+
+# List config for a specific route
+php artisan ptah:config "App\Models\Product" --route="admin/products" --list
+```
+
+**Via Visual Modal:** open the config modal from the toolbar — it automatically saves the config for the current URL path.
+
+### Practical example: Helpdesk Tickets
+
+```bash
+# Full config for the admin panel (/admin/tickets)
+php artisan ptah:config "App\Models\Ticket" \
+  --route="admin/tickets" \
+  --column="title:text:required" \
+  --column="status:select:options=open,in_progress,resolved:renderer=badge" \
+  --column="priority:select:options=low,medium,high,urgent:renderer=badge" \
+  --column="agent_id:searchdropdown:relation=agent:sdSelectColumn=name"
+
+# Read-only view for agents (/helpdesk/tickets) — no agent assignment column
+php artisan ptah:config "App\Models\Ticket" \
+  --route="helpdesk/tickets" \
+  --column="title:text:readonly" \
+  --column="status:select:readonly" \
+  --column="priority:select:readonly"
+```
+
+### Blade usage
+
+No special parameter is needed in the Blade view. The `configRoute` is captured automatically from `request()->path()`:
+
+```blade
+{{-- /admin/tickets → loads route-specific config for 'admin/tickets' --}}
+{{-- Falls back to global config if no route-specific entry exists --}}
+@livewire('ptah::base-crud', ['model' => 'Ticket'])
+```
+
+> **Tip:** Always create a global config first (`--route=''` or omit `--route`). It acts as the base for all routes and ensures the component works even on paths that don't have a specific entry.

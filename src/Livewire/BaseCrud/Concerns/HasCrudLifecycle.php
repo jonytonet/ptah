@@ -17,6 +17,15 @@ trait HasCrudLifecycle
 {
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
+    /**
+     * Returns the current URL path without leading slash.
+     * Used as the screen-specific config key, e.g. 'categories'.
+     */
+    private function resolveCurrentRoute(): string
+    {
+        return ltrim(request()->path(), '/');
+    }
+
     public function boot(
         CrudConfigService    $configService,
         FilterService        $filterService,
@@ -30,7 +39,8 @@ trait HasCrudLifecycle
 
         // Reload crudConfig on every request to guarantee fresh data from DB
         if ($this->model) {
-            $config = $this->configService->find($this->model);
+            $route  = $this->configRoute ?: $this->resolveCurrentRoute();
+            $config = $this->configService->find($this->model, $route);
             $this->crudConfig = $config?->config ?? [];
         }
     }
@@ -43,12 +53,13 @@ trait HasCrudLifecycle
         int    $companyFilter        = 0,
     ): void {
         $this->model             = $model;
+        $this->configRoute       = $this->resolveCurrentRoute();
         $this->whereHasFilter    = $whereHasFilter;
         $this->whereHasCondition = $whereHasCondition;
         $this->companyFilter     = $companyFilter ?: ptah_company_id();
 
-        // Load the configuration
-        $config = $this->configService->find($model);
+        // Load the configuration (screen-specific, with fallback to global)
+        $config = $this->configService->find($model, $this->configRoute);
 
         if (! $config) {
             $this->crudConfig = [];
@@ -89,10 +100,10 @@ trait HasCrudLifecycle
     public function reloadCrudConfig(): void
     {
         // Invalidate cache to force re-read from DB
-        $this->configService->forget($this->model);
+        $this->configService->forget($this->model, $this->configRoute);
 
-        // Reload the updated config
-        $config = $this->configService->find($this->model);
+        // Reload the updated config (screen-specific with fallback)
+        $config = $this->configService->find($this->model, $this->configRoute);
 
         if ($config) {
             $this->crudConfig = $config->config;

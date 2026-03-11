@@ -391,7 +391,7 @@ Displays a horizontal bar in the navbar with the active company and other availa
 Active name   Label of each company (clickable button)
 ```
 
-- The active company tab has a primary color background (`#5b21b6`)
+- The active company tab has a primary color background (`#1e40af`)
 - Clicking another label switches the active company and reloads the current page
 - In dark mode, colors adapt via `.ptah-dark` on the ancestor element
 

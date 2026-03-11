@@ -43,6 +43,7 @@ class ConfigCommand extends Command
                             {--import= : Import configuration from JSON file}
                             {--export= : Export configuration to JSON file}
                             {--non-interactive : Skip wizard questions, use only provided options}
+                            {--route= : Route path to scope this config (empty = global/default)}
                             {--force : Force overwrite existing configuration}
                             {--dry-run : Show what would be changed without saving}
                             {--only=* : Process only specific sections (columns,actions,filters,styles,joins,general,permissions)}
@@ -110,8 +111,10 @@ class ConfigCommand extends Command
             return $this->exportConfiguration($modelClass, $export);
         }
 
+        $route = (string) ($this->option('route') ?? '');
+
         // Load existing configuration
-        $this->config = $this->loadConfiguration($modelClass);
+        $this->config = $this->loadConfiguration($modelClass, $route);
 
         // Determine mode: interactive or declarative
         $hasOptions = $this->option('column') 
@@ -134,7 +137,7 @@ class ConfigCommand extends Command
 
         // Save if not dry-run
         if (!$this->option('dry-run')) {
-            $this->saveConfiguration($modelClass, $this->config);
+            $this->saveConfiguration($modelClass, $this->config, $route ?? '');
             $this->info("✓ Configuration saved successfully!");
         } else {
             $this->warn("Dry-run mode: No changes were saved.");
@@ -386,11 +389,20 @@ class ConfigCommand extends Command
     /**
      * Load existing configuration from database
      */
-    protected function loadConfiguration(string $modelClass): array
+    protected function loadConfiguration(string $modelClass, string $route = ''): array
     {
         $config = DB::table('crud_configs')
             ->where('model', $modelClass)
+            ->where('route', $route)
             ->first();
+
+        if (! $config) {
+            // Fallback to global when a route-specific one doesn't exist yet
+            $config = DB::table('crud_configs')
+                ->where('model', $modelClass)
+                ->where('route', '')
+                ->first();
+        }
 
         if ($config) {
             return json_decode($config->config, true);
@@ -421,29 +433,29 @@ class ConfigCommand extends Command
     /**
      * Save configuration to database
      */
-    protected function saveConfiguration(string $modelClass, array $config): void
+    protected function saveConfiguration(string $modelClass, array $config, string $route = ''): void
     {
         try {
             // Validate configuration before saving
             $this->validator->validate($config, $modelClass);
 
             DB::table('crud_configs')->updateOrInsert(
-                ['model' => $modelClass],
+                ['model' => $modelClass, 'route' => $route],
                 [
-                    'config' => json_encode($config),
+                    'config'     => json_encode($config),
                     'updated_at' => now(),
                 ]
             );
 
             // Clear cache
-            cache()->forget("crud_config_{$modelClass}");
+            $cacheKey = $route !== ''
+                ? "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass) . ".{$route}"
+                : "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass);
+            cache()->forget($cacheKey);
         } catch (ConfigValidationException $e) {
-            // Format error with CLI box drawing
             $this->newLine();
             $this->line($this->errorFormatter->format($e));
             $this->newLine();
-            
-            // Exit with error code
             exit(1);
         }
     }
@@ -453,7 +465,8 @@ class ConfigCommand extends Command
      */
     protected function listConfiguration(string $modelClass): int
     {
-        $config = $this->loadConfiguration($modelClass);
+        $route  = (string) ($this->option('route') ?? '');
+        $config = $this->loadConfiguration($modelClass, $route);
 
         $formatter = new TableFormatter($this->output);
         $formatter->format($config, $modelClass);
@@ -466,13 +479,23 @@ class ConfigCommand extends Command
      */
     protected function resetConfiguration(string $modelClass): int
     {
-        if (!$this->confirm("Are you sure you want to reset all configuration for {$modelClass}?")) {
+        $route = (string) ($this->option('route') ?? '');
+        $scope = $route !== '' ? "route '{$route}'" : 'global config';
+
+        if (!$this->confirm("Are you sure you want to reset configuration for {$modelClass} ({$scope})?")) {
             $this->info("Reset cancelled.");
             return 0;
         }
 
-        DB::table('crud_configs')->where('model', $modelClass)->delete();
-        cache()->forget("crud_config_{$modelClass}");
+        DB::table('crud_configs')
+            ->where('model', $modelClass)
+            ->where('route', $route)
+            ->delete();
+
+        $cacheKey = $route !== ''
+            ? "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass) . ".{$route}"
+            : "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass);
+        cache()->forget($cacheKey);
 
         $this->info("✓ Configuration reset successfully!");
         return 0;
@@ -495,7 +518,8 @@ class ConfigCommand extends Command
             return 1;
         }
 
-        $this->saveConfiguration($modelClass, $config);
+        $route = (string) ($this->option('route') ?? '');
+        $this->saveConfiguration($modelClass, $config, $route);
         $this->info("✓ Configuration imported successfully from {$file}");
 
         return 0;
@@ -506,7 +530,8 @@ class ConfigCommand extends Command
      */
     protected function exportConfiguration(string $modelClass, string $file): int
     {
-        $config = $this->loadConfiguration($modelClass);
+        $route  = (string) ($this->option('route') ?? '');
+        $config = $this->loadConfiguration($modelClass, $route);
 
         file_put_contents($file, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         

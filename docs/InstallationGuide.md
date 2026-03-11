@@ -27,7 +27,7 @@
 | Composer | 2.x |
 | Node.js + npm | 18+ |
 | Laravel | 11 or 12 |
-| Database | SQLite *(default)*, MySQL 8+, PostgreSQL 15+ |
+| Database | SQLite, MySQL 8+, PostgreSQL 15+ |
 
 > **Note:** ptah ships Livewire v4 as a dependency. No additional installation is required.
 
@@ -140,17 +140,21 @@ After this step the following packages are added to your project:
 
 ## Step 3 — Configure the environment
 
-Laravel 12 uses **SQLite by default**. The `.env` already contains:
+ptah works with any database supported by Laravel. Set `DB_CONNECTION` in your `.env` to the driver of your choice before running migrations.
+
+### SQLite *(quick start / local development)*
+
+Laravel 12 ships with SQLite pre-configured. If you want to use it, no changes are needed — just make sure `database/database.sqlite` exists:
+
+```bash
+touch database/database.sqlite
+```
 
 ```env
 DB_CONNECTION=sqlite
 ```
 
-And `database/database.sqlite` is created automatically. **No further database configuration is needed for a quick start.**
-
-### If you prefer MySQL
-
-Change `.env` to:
+### MySQL
 
 ```env
 DB_CONNECTION=mysql
@@ -161,10 +165,27 @@ DB_USERNAME=root
 DB_PASSWORD=your_password
 ```
 
-Create the database:
+Create the database first:
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE ptah_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
+
+### PostgreSQL
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=ptah_app
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+```
+
+Create the database first:
+
+```bash
+psql -U postgres -c "CREATE DATABASE ptah_app ENCODING 'UTF8';"
 ```
 
 ### Language / locale
