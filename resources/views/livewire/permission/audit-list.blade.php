@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.permission.audit-list --}}
+{{-- ptah::livewire.permission.audit-list --}}
 <div>
     <div class="mb-5">
         <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.audit_title') }}</h1>

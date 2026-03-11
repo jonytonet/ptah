@@ -1,4 +1,4 @@
-﻿{{-- ── Tabela ──────────────────────────────────────────────────────── --}}
+{{-- ── Tabela ──────────────────────────────────────────────────────── --}}
 <div class="overflow-x-auto border border-slate-200 rounded-md" id="ptah-table-wrap-{{ $crudTitle }}">
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
         @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
@@ -37,6 +37,19 @@
                                 {{-- Label (sort) --}}
                                 <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-blue-600' : '' }}"
                                       @if($isSortable) wire:click.stop="sortBy('{{ $colSortBy }}')" @endif>
+                                    {{ $colLabel }}
+                                    @if ($isSortable)
+                                        @if ($sort === $colSortBy)
+                                            @if ($direction === 'ASC')
+                                                <svg class="w-3 h-3 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                                            @else
+                                                <svg class="w-3 h-3 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                            @endif
+                                        @else
+                                            <svg class="w-3 h-3 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4M16 15l-4 4-4-4"/></svg>
+                                        @endif
+                                    @endif
+                                </span>
                             </div>
                             {{-- Resize handle --}}
                             <div class="ptah-resize-handle absolute top-0 right-0 h-full w-1.5 cursor-col-resize z-10 hover:bg-primary/30 transition-colors"

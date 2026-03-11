@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.menu.menu-list --}}
+{{-- ptah::livewire.menu.menu-list --}}
 <div>
     {{-- Título --}}
     <x-forge-page-header

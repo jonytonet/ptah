@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.company.company-list --}}
+{{-- ptah::livewire.company.company-list --}}
 <div>
     {{-- Header --}}
     <x-forge-page-header

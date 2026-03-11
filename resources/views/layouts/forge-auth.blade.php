@@ -1,4 +1,4 @@
-﻿{{--
+{{--
     Layout: forge-auth
     Uso:
       @extends('ptah::layouts.forge-auth')

@@ -1,4 +1,4 @@
-﻿{{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
+{{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
 @once
 <style>
     /* Drag feedback */

@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.permission.user-permission-list --}}
+{{-- ptah::livewire.permission.user-permission-list --}}
 <div>
     <x-forge-page-header
         :title="__('ptah::ui.user_perm_title')"

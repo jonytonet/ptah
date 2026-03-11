@@ -1,4 +1,4 @@
-﻿{{--
+{{--
     forge-demo — Ptah Forge Component Showcase
     Rota sugerida: Route::get('/ptah-forge-demo', fn() => view('ptah::forge-demo'));
 --}}

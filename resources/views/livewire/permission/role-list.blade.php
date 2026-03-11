@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.permission.role-list --}}
+{{-- ptah::livewire.permission.role-list --}}
 <div>
     <x-forge-page-header
         :title="__('ptah::ui.role_title')"

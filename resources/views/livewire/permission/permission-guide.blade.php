@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.permission.permission-guide --}}
+{{-- ptah::livewire.permission.permission-guide --}}
 <div>
     <div class="mb-5 flex items-start justify-between gap-4">
         <div>

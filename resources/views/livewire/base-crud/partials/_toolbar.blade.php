@@ -1,4 +1,4 @@
-﻿{{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
+{{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md ptah-c-toolbar">
 
     {{-- Botão Novo --}}

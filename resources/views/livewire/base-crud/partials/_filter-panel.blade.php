@@ -1,4 +1,4 @@
-﻿{{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
+{{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
 @if ($showFilters)
     <div class="mb-4 overflow-hidden border rounded-md ptah-c-fp_card">
 

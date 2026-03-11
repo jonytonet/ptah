@@ -1,4 +1,4 @@
-﻿{{-- resources/views/livewire/auth/profile.blade.php --}}
+{{-- resources/views/livewire/auth/profile.blade.php --}}
 <div>
     <x-forge-page-header :title="__('ptah::ui.profile_title')" :subtitle="__('ptah::ui.profile_subtitle')" />
 
