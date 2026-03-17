@@ -10,29 +10,33 @@ use Illuminate\Support\Str;
  * Value object representing the definition of a single field.
  *
  * Input string format (--fields option):
- *   name:type[(params)][:nullable][:unique][:surname=Label]
+ *   name:type[(params)][:nullable][:unique][:surname=Label][:default(val)]
  *
  * Examples:
  *   name:string
  *   price:decimal(10,2):nullable
  *   status:enum(active|inactive|pending)
- *   is_active:boolean
+ *   is_active:boolean:default(true)
+ *   qty:integer:default(0)
  *   email:string:unique
- *   user_id:unsignedBigInteger
+ *   user_id:unsignedBigInteger        ← raw column + auto index, NO constrained()
+ *   user_id:foreignId                 ← constrained FK with cascade (convention-based)
  *   city:string:surname=City
  *   price:decimal(10,2):nullable:surname=Price
  */
 readonly class FieldDefinition
 {
     public function __construct(
-        public string $name,
-        public string $type,
-        public bool   $nullable,
-        public bool   $unique,
-        public int    $precision,   // decimal: total digits
-        public int    $scale,       // decimal: decimal places
-        public array  $enumValues,  // enum: ['active', 'inactive']
-        public string $label = '',  // display label in BaseCrud (surname)
+        public string  $name,
+        public string  $type,
+        public bool    $nullable,
+        public bool    $unique,
+        public int     $precision,    // decimal: total digits
+        public int     $scale,        // decimal: decimal places
+        public array   $enumValues,   // enum: ['active', 'inactive']
+        public string  $label        = '',    // display label in BaseCrud (surname)
+        public bool    $hasDefault   = false, // whether a ->default() should be emitted
+        public ?string $defaultValue = null,  // default value literal: 'true', '0', 'active'
     ) {}
 
     /**
@@ -61,7 +65,13 @@ readonly class FieldDefinition
     }
 
     /**
-     * If the field ends in _id and the type is a large integer, it is treated as an FK.
+     * Returns true when the field should generate a belongsTo relationship in the Model.
+     *
+     * Includes both `foreignId` (constrained FK in migration) and
+     * `unsignedBigInteger`/`bigInteger` ending in `_id` (raw column + auto index,
+     * no constrained — the FK constraint is the developer's responsibility).
+     *
+     * NOTE: in migrationLine(), only `foreignId` generates constrained() automatically.
      */
     public function isForeignKey(): bool
     {
@@ -107,11 +117,17 @@ readonly class FieldDefinition
 
     /**
      * Blueprint definition line for migration.
+     *
+     * FK rules:
+     *  - `foreignId` ending in `_id`  → constrained() + cascade/nullOnDelete (automatic)
+     *  - `unsignedBigInteger`/`bigInteger` ending in `_id`  → raw column + ->index() only.
+     *    The FK constraint is the developer's responsibility: the referenced table
+     *    may not yet exist, or its name may differ from the field-name convention.
      */
     public function migrationLine(string $indent = '            '): string
     {
-        // FK: auto-generates foreignId()->constrained()->cascadeOnDelete()
-        if ($this->isForeignKey()) {
+        // Only foreignId triggers constrained() automatically.
+        if ($this->type === 'foreignId' && str_ends_with($this->name, '_id')) {
             $line = "\$table->foreignId('{$this->name}')->constrained('{$this->relatedTable()}')->cascadeOnDelete()";
             if ($this->nullable) {
                 $line = "\$table->foreignId('{$this->name}')->nullable()->constrained('{$this->relatedTable()}')->nullOnDelete()";
@@ -146,6 +162,24 @@ readonly class FieldDefinition
 
         if ($this->unique) {
             $line .= '->unique()';
+        }
+
+        // Auto-index FK-like columns (unsignedBigInteger/bigInteger ending in _id).
+        // Skipped when already ->unique() since unique creates its own index.
+        if (! $this->unique
+            && str_ends_with($this->name, '_id')
+            && in_array($this->type, ['unsignedBigInteger', 'bigInteger'], true)) {
+            $line .= '->index()';
+        }
+
+        // Emit ->default() when a default value was declared via :default(val) or :default=val.
+        if ($this->hasDefault && $this->defaultValue !== null) {
+            $val  = $this->defaultValue;
+            $line .= match (true) {
+                in_array(strtolower($val), ['true', 'false', 'null'], true) => "->default({$val})",
+                is_numeric($val)                                            => "->default({$val})",
+                default                                                     => "->default('{$val}')",
+            };
         }
 
         return $indent . $line . ';';

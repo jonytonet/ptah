@@ -25,6 +25,15 @@ class MigrationGenerator extends AbstractGenerator
         //   2. ptah:forge Product --api --force → must NOT recreate the migration
         $existing = glob(database_path("migrations/*_create_{$context->table}_table.php")) ?: [];
         if (! empty($existing)) {
+            // When --no-soft-deletes is set but the file was already created (e.g. from a
+            // previous interrupted run), the existing migration may still contain softDeletes().
+            // The developer must verify and remove it manually — ptah never overwrites migrations.
+            if (! $context->withSoftDeletes) {
+                return GeneratorResult::skipped(
+                    $label . ' [⚠ verify: softDeletes() may still be present]',
+                    $existing[0]
+                );
+            }
             return GeneratorResult::skipped($label, $existing[0]);
         }
 

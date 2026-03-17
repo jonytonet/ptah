@@ -97,7 +97,10 @@ class MenuSyncCommand extends Command
     {
         $this->components->warn('Clearing menus table...');
         DB::table('menus')->delete();
-        DB::statement('DELETE FROM sqlite_sequence WHERE name="menus"'); // Reset auto-increment (SQLite)
+        // Reset auto-increment only on SQLite — other drivers don't have sqlite_sequence.
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('DELETE FROM sqlite_sequence WHERE name="menus"');
+        }
     }
 
     /**

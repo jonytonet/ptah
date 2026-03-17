@@ -293,6 +293,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | **[Permissions](docs/Permissions.md)** | Permissions module — RBAC, roles, middleware, helpers, Blade directives and audit log |
 | **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |
 | **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
+| **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |
 
 ---
 

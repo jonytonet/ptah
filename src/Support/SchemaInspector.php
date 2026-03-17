@@ -88,9 +88,24 @@ class SchemaInspector
      */
     private function parseFieldString(string $fieldStr): FieldDefinition
     {
-        $precision  = 10;
-        $scale      = 2;
-        $enumValues = [];
+        $precision    = 10;
+        $scale        = 2;
+        $enumValues   = [];
+        $hasDefault   = false;
+        $defaultValue = null;
+
+        // Extract :default(val) BEFORE the general parenthesis stripping so it
+        // does not interfere with decimal(p,s) or enum(a|b) parameter parsing.
+        // Supports: :default(true)  :default(0)  :default(active)
+        $fieldStr = preg_replace_callback(
+            '/:default\(([^)]*)\)/',
+            function (array $m) use (&$hasDefault, &$defaultValue): string {
+                $hasDefault   = true;
+                $defaultValue = $m[1];
+                return '';
+            },
+            $fieldStr
+        );
 
         // Extracts parameters within parentheses before exploding by ':'
         $params = null;
@@ -109,16 +124,18 @@ class SchemaInspector
         $nullable = in_array('nullable', $segments, true);
         $unique   = in_array('unique',   $segments, true);
 
-        // Detects surname=X or label=X as the display label in BaseCrud
+        // Detects surname=, label= and default= modifiers in segments.
+        // No break — scan all segments to collect every modifier.
         $label = '';
         foreach ($segments as $segment) {
             if (str_starts_with($segment, 'surname=')) {
                 $label = substr($segment, 8);
-                break;
-            }
-            if (str_starts_with($segment, 'label=')) {
+            } elseif (str_starts_with($segment, 'label=')) {
                 $label = substr($segment, 6);
-                break;
+            } elseif (! $hasDefault && str_starts_with($segment, 'default=')) {
+                // Alternative syntax without parens: :default=true  :default=0
+                $hasDefault   = true;
+                $defaultValue = substr($segment, 8);
             }
         }
 
@@ -135,14 +152,16 @@ class SchemaInspector
         }
 
         return new FieldDefinition(
-            name:       $name,
-            type:       $type,
-            nullable:   $nullable,
-            unique:     $unique,
-            precision:  $precision,
-            scale:      $scale,
-            enumValues: array_values($enumValues),
-            label:      $label,
+            name:         $name,
+            type:         $type,
+            nullable:     $nullable,
+            unique:       $unique,
+            precision:    $precision,
+            scale:        $scale,
+            enumValues:   array_values($enumValues),
+            label:        $label,
+            hasDefault:   $hasDefault,
+            defaultValue: $defaultValue,
         );
     }
 

@@ -995,3 +995,4 @@ class ProductHooks implements CrudHooksInterface
 - [Modules.md](Modules.md) — Module details
 - [AI_Guide.md](AI_Guide.md) — Prompts for AI agents
 - [Permissions.md](Permissions.md) — Detailed RBAC system
+- [KnownLimitations.md](KnownLimitations.md) — Developer checklist: decimal precision, FK constraints, composite indexes, post-forge responsibilities
