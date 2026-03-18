@@ -25,12 +25,14 @@ class MigrationGenerator extends AbstractGenerator
         //   2. ptah:forge Product --api --force → must NOT recreate the migration
         $existing = glob(database_path("migrations/*_create_{$context->table}_table.php")) ?: [];
         if (! empty($existing)) {
-            // When --no-soft-deletes is set but the file was already created (e.g. from a
-            // previous interrupted run), the existing migration may still contain softDeletes().
-            // The developer must verify and remove it manually — ptah never overwrites migrations.
             if (! $context->withSoftDeletes) {
+                // --force: actively strip softDeletes() from the existing file
+                if ($context->force) {
+                    return $this->removeSoftDeletesFromMigration($existing[0], $label);
+                }
+                // Without --force: warn but never mutate a migration that may already be executed
                 return GeneratorResult::skipped(
-                    $label . ' [⚠ verify: softDeletes() may still be present]',
+                    $label . ' [⚠ use --force to remove softDeletes() automatically]',
                     $existing[0]
                 );
             }
@@ -58,6 +60,36 @@ class MigrationGenerator extends AbstractGenerator
             ],
             force: $context->force,
             labelOverride: $label,
+        );
+    }
+
+    /**
+     * Removes softDeletes() and the deleted_by audit column from an existing migration.
+     * Only called when --no-soft-deletes + --force are both active.
+     */
+    private function removeSoftDeletesFromMigration(string $path, string $label): GeneratorResult
+    {
+        $content = $this->files->get($path);
+
+        $patched = preg_replace('/[ \t]*\$table->softDeletes\(\);\n?/', '', $content);
+        $patched = preg_replace(
+            '/[ \t]*\$table->unsignedBigInteger\(\'deleted_by\'\)->nullable\(\)->index\(\);\n?/',
+            '',
+            (string) $patched
+        );
+
+        if ($patched === $content) {
+            return GeneratorResult::skipped(
+                $label . ' [softDeletes() not present — already clean]',
+                $path
+            );
+        }
+
+        $this->files->put($path, (string) $patched);
+
+        return GeneratorResult::done(
+            $label . ' [softDeletes() removed by --force]',
+            $path
         );
     }
 

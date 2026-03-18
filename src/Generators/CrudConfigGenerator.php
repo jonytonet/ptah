@@ -127,18 +127,6 @@ class CrudConfigGenerator extends AbstractGenerator
             $cols[] = $this->buildColFromField($field);
         }
 
-        // created_at
-        $cols[] = [
-            'colsNomeFisico'  => 'created_at',
-            'colsNomeLogico'  => trans('ptah::ui.col_created_at'),
-            'colsTipo'        => 'date',
-            'colsGravar'      => false,
-            'colsRequired'    => false,
-            'colsAlign'       => 'text-center',
-            'colsHelper'      => 'dateFormat',
-            'colsIsFilterable'=> true,
-        ];
-
         return $cols;
     }
 

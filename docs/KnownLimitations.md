@@ -14,7 +14,7 @@
 1. [Decimal Precision](#1-decimal-precision)
 2. [Composite Indexes](#2-composite-indexes)
 3. [Namespace Imports in Generated Models](#3-namespace-imports-in-generated-models)
-4. [PowerShell Backtick in `--fields`](#4-powershell-backtick-in---fields)
+4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
 5. [Post-Forge Checklist](#post-forge-checklist)
 
 ---
@@ -36,15 +36,11 @@ $table->decimal('price', 10, 2);
 
 ### How to specify a custom precision
 
-Pass the full precision in parentheses:
+Pass the full precision in parentheses — works in both terminal and `.ps1` scripts:
 
 ```bash
 ptah:forge Product --fields="price:decimal(10,2)"
 ```
-
-> **PowerShell users:** Do not use parentheses inside a `--fields` string in
-> `.ps1` scripts with backtick-escaped characters (see [section 4](#4-powershell-backtick-in---fields)).
-> Pass `decimal` without precision and correct the migration manually.
 
 ### Developer responsibility
 
@@ -152,47 +148,54 @@ use App\Models\Scheduling\ServiceCategory;
 
 ---
 
-## 4. PowerShell Backtick in `--fields`
+## 4. FK Fields With Non-Standard Table Names
 
-### The problem
+### What ptah generates
 
-PowerShell uses the backtick (`` ` ``) as an escape character inside strings.
-When writing `--fields` in a `.ps1` script, `decimal(10` `` ` `` `2)` is
-interpreted as `decimal(10` followed by `2)` as a separate token — ptah receives
-`decimal` with no parameters and falls back to `decimal(0,2)`, which is **invalid
-on MySQL** (total precision cannot be zero).
+ptah offers two FK types with different behaviour:
 
-```powershell
-# WRONG — backtick inside PowerShell string corrupts the decimal param:
-php artisan ptah:forge Product --fields="price:decimal(10`2):nullable"
-# ptah receives: "decimal" → generates decimal(0,2) → MySQL error
-```
+| Type | Migration output | When to use |
+|---|---|---|
+| `foreignId` | `->constrained('{inferred_table}')->cascadeOnDelete()` | Field name exactly matches `{singular_of_table}_id` |
+| `unsignedBigInteger` | `->index()` only — **no FK constraint** | Any other case |
+
+The `foreignId` type derives the target table from the field name:
+`service_category_id` → `service_categories`. This works for standard naming
+but **fails** for contextual fields like `applied_by_user_id`, `veterinarian_id`,
+or `fiscal_cfop_sale_id`.
 
 ### Developer responsibility
 
-**Never pass decimal precision inside a `.ps1` script using parentheses.**
-Use one of these safe alternatives:
+**Use `unsignedBigInteger` for any FK field whose name does not directly map
+to the target table.** Then add the constraint manually in the migration:
 
-**Option A — pass `decimal` without precision, fix migration manually (recommended):**
+```php
+// In --fields:
+// applied_by_user_id:unsignedBigInteger:nullable
+// veterinarian_id:unsignedBigInteger:nullable
 
-```powershell
-# In the .ps1 script:
-php artisan ptah:forge Product --fields="price:decimal:nullable"
-
-# Then in the generated migration, correct manually:
-$table->decimal('price', 10, 2)->nullable();
+// In the generated migration, add FK manually:
+$table->foreign('applied_by_user_id')->references('id')->on('users')->nullOnDelete();
+$table->foreign('veterinarian_id')->references('id')->on('employees')->nullOnDelete();
 ```
 
-**Option B — run the forge command directly in the terminal (not a .ps1 script):**
+**For FK targets that do not yet exist** (table created in a future phase):
 
-```bash
-# In cmd or bash (no backtick issue):
-php artisan ptah:forge Product --fields="price:decimal(10,2):nullable"
+```php
+// Leave as raw column — no foreign() call:
+$table->unsignedBigInteger('order_id')->nullable();
+// Add a separate migration when the target table is ready.
 ```
 
-> **Rule of thumb:** If you are writing `ptah:forge` commands in `.ps1` automation
-> scripts, avoid parentheses inside `--fields` for any type other than `enum`.
-> Pass the type bare (`decimal`, `string`) and adjust precision/length manually.
+**Common patterns that require manual FK:**
+
+| Field | Inferred (wrong) | Correct target |
+|---|---|---|
+| `applied_by_user_id` | `applied_by_users` | `users` |
+| `veterinarian_id` | `veterinarians` | `employees` |
+| `fiscal_cfop_sale_id` | `fiscal_cfop_sales` | `fiscal_cfops` |
+| `referred_by_client_id` | `referred_by_clients` | `clients` (self-ref) |
+| `parent_record_id` | `parent_records` | self-ref on current table |
 
 ---
 
@@ -213,10 +216,12 @@ Apply this checklist **immediately after each `ptah:forge`**, before running
 [ ] integer defaults       — add ->default(0) for counters/sort fields
                              or use :default(0) in --fields
 [ ] status/enum defaults   — add ->default('pending') or similar where applicable
-[ ] softDeletes in ledgers — if migration pre-existed and --no-soft-deletes was passed,
-                             check for softDeletes() and remove it manually
-                             (also remove `use SoftDeletes` from the Model)
+[ ] softDeletes in ledgers — if migration pre-existed and --no-soft-deletes was passed:
+                             use --force to strip softDeletes() automatically, OR remove manually.
+                             Also remove `use SoftDeletes` from the Model.
 [ ] TODO namespaces        — replace all `// TODO: use ...` in Models with correct imports
+[ ] FK non-standard names  — fields like applied_by_user_id, veterinarian_id, parent_record_id:
+                             use unsignedBigInteger type + add ->foreign() manually
 [ ] unique constraints     — add ->unique() for natural keys (email, slug, code, etc.)
 ```
 
@@ -226,13 +231,16 @@ Apply this checklist **immediately after each `ptah:forge`**, before running
 
 | Concern | ptah | Developer |
 |---|---|---|
-| `foreignId` → constrained FK | ✅ automatic | — |
+| `foreignId` → constrained FK (standard name) | ✅ automatic | — |
+| `foreignId` → FK with non-standard name | ⚠ infers wrong table | use `unsignedBigInteger` + manual `->foreign()` |
 | `unsignedBigInteger/_id` → FK constraint | ✅ adds `->index()` only | add `->foreign()` manually when ready |
 | `decimal` default precision | ✅ `(10,2)` fallback | correct to domain precision |
-| `decimal` custom precision via `--fields` | ✅ parses `decimal(10,2)` | use terminal (not `.ps1`) |
+| `decimal` custom precision via `--fields` | ✅ parses `decimal(10,2)` | specify `decimal(N,D)` in `--fields` |
 | `boolean`/`integer` default via `--fields` | ✅ parses `:default(true)` | use `:default(val)` or add manually |
 | Single-column `_id` index | ✅ auto-added | — |
 | Composite indexes | ❌ not generated | always manual |
 | Index name length (MySQL) | ❌ not enforced | keep names < 60 chars |
 | `belongsTo` relationships | ✅ generated with TODO | fix `use` namespace |
-| PS1 backtick decimal corruption | ❌ not preventable | avoid parens in `.ps1` |
+| Acronym table names (POS, NF…) | ✅ fixed — `POSSale` → `pos_sales` | — |
+| `--no-soft-deletes` on existing migration | ✅ fixed — use `--force` to auto-strip | remove `use SoftDeletes` from Model manually |
+| `created_at` auto-added to CrudConfig | ✅ fixed — not added anymore | add via config modal when needed |

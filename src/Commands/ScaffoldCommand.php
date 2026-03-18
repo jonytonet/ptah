@@ -86,7 +86,7 @@ class ScaffoldCommand extends Command
         $entity    = Str::studly((string) array_pop($parts));
         $subFolder = implode('/', array_map(fn(string $p) => Str::studly($p), $parts)); // e.g.: 'Product'
 
-        $entityLower        = Str::snake($entity);
+        $entityLower        = $this->toSnakeWithAcronyms($entity);
         $entityPlural       = Str::plural($entityLower);
         $entityPluralStudly = Str::studly($entityPlural);
         $table              = $this->option('table') ?: $entityPlural;
@@ -155,6 +155,30 @@ class ScaffoldCommand extends Command
      * Each segment (split by / or \) must be a plain PascalCase identifier.
      * Returns false and prints a clear error message when it fails.
      */
+    /**
+     * Converts a PascalCase entity name to snake_case while treating contiguous
+     * uppercase sequences (acronyms) as a single word.
+     *
+     * Examples:
+     *   POSSale      → pos_sale       (not p_o_s_sale)
+     *   NFItem       → nf_item
+     *   PDVSale      → pdv_sale
+     *   Product       → product
+     *   ProductStock  → product_stock
+     *   BusinessPartner → business_partner
+     */
+    private function toSnakeWithAcronyms(string $value): string
+    {
+        // 1. Split an uppercase run from the start of a following CamelCase word
+        //    e.g. POSSale → POS_Sale,  NFItem → NF_Item
+        $value = (string) preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1_$2', $value);
+        // 2. Standard CamelCase split
+        //    e.g. Product_Stock → Product_Stock (already correct)
+        $value = (string) preg_replace('/([a-z\d])([A-Z])/', '$1_$2', $value);
+
+        return strtolower($value);
+    }
+
     private function validateEntitySyntax(string $rawEntity): bool
     {
         $segments = array_values(array_filter(
