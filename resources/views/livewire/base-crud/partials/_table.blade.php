@@ -106,7 +106,7 @@
                                     ? "width:{$cellSavedW}px;min-width:60px;"
                                     : (! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '');
                             @endphp
-                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
+                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} whitespace-nowrap {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
                                 @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif>
                                 {!! $this->formatCell($col, $row) !!}
                             </td>
@@ -116,7 +116,7 @@
                     {{-- Colunas action --}}
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center">
+                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap">
                                 @php
                                     $actionType  = $col['actionType']  ?? 'javascript';
                                     $actionValue = $col['actionValue'] ?? ($col['actionCall'] ?? '');
@@ -237,7 +237,7 @@
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
                             @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
-                            <td class="px-3 py-2.5 ptah-c-tfoot_td {{ $col['colsAlign'] ?? 'text-start' }}">
+                                <td class="px-3 py-2.5 whitespace-nowrap ptah-c-tfoot_td {{ $col['colsAlign'] ?? 'text-start' }}">
                                 @if ($totVal !== null)
                                     @if (($col['colsHelper'] ?? '') === 'currencyFormat')
                                     {{ __('ptah::ui.currency_prefix') }}{{ number_format((float)$totVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
