@@ -106,6 +106,9 @@ class ColumnParser
             'link_new_tab' => 'colsRendererLinkNewTab',
             'image_width' => 'colsRendererImageWidth',
             'image_height' => 'colsRendererImageHeight',
+            'upload_path' => 'colsUploadPath',
+            'upload_max_size' => 'colsUploadMaxSize',
+            'upload_allowed_types' => 'colsUploadAllowedTypes',
             'max_chars' => 'colsRendererMaxChars',
             'locale' => 'colsRendererLocale',
             'progress_max' => 'colsRendererMax',
@@ -134,6 +137,9 @@ class ColumnParser
             $config['colsSelect'] = $this->parseOptions($value);
         } elseif ($key === 'badges') {
             $config['colsRendererBadges'] = $this->parseBadges($value);
+        } elseif ($key === 'upload_allowed_types') {
+            // Split comma-separated extension list into an array
+            $config['colsUploadAllowedTypes'] = array_map('trim', explode(',', $value));
         } elseif ($mappedKey === 'totalizadorType') {
             $config['totalizadorEnabled'] = true;
             $config['totalizadorType'] = $value;
@@ -164,13 +170,15 @@ class ColumnParser
 
     /**
      * Parse badge configurations
-     * Format: active:green:Ativo,inactive:gray:Inativo,pending:yellow:Pendente
+     * Format: active|green|Ativo,inactive|gray|Inativo,pending|yellow|Pendente
+     * Note: use '|' as separator within each badge entry (not ':') to avoid
+     * collision with the field:type:modifier definition syntax.
      */
     protected function parseBadges(string $value): array
     {
         $badges = [];
         foreach (explode(',', $value) as $badge) {
-            $parts = explode(':', $badge, 3);
+            $parts = explode('|', $badge, 3);
             if (count($parts) >= 2) {
                 $badges[] = [
                     'value' => $parts[0],

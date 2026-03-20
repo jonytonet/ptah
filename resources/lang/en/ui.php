@@ -898,6 +898,11 @@ return [
     // Image input
     'image_pick_file'              => 'Pick a file…',
     'image_preview_label'          => 'preview',
+    'image_uploading'              => 'Uploading…',
+    'image_remove_file'            => 'Remove file',
+    'image_or_url'                 => 'or paste a URL',
+    'image_error_size'             => 'The file must not exceed :max KB.',
+    'image_error_type'             => 'Allowed file types: :types.',
 
     // Cell style
     'cfg_col_cell_style_title'     => 'Cell Style',

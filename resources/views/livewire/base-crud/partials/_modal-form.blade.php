@@ -202,39 +202,102 @@
                                 </div>
 
                             @elseif ($fTipo === 'image')
-                                {{-- ── Image input com preview ── --}}
+                                {{-- ── Image input com upload real + preview ── --}}
+                                @php
+                                    // Resolve preview URL for existing stored images
+                                    $fPreviewUrl = '';
+                                    if ($fValue) {
+                                        $v = (string) $fValue;
+                                        if (str_starts_with($v, 'http') || str_starts_with($v, 'data:') || str_starts_with($v, '/')) {
+                                            $fPreviewUrl = $v;
+                                        } else {
+                                            $fPreviewUrl = asset('storage/' . ltrim($v, '/'));
+                                        }
+                                    }
+                                    // Build accept attribute from colsUploadAllowedTypes
+                                    $fAllowedTypes = $col['colsUploadAllowedTypes'] ?? null;
+                                    $fAccept = 'image/*';
+                                    if ($fAllowedTypes) {
+                                        $fTypes  = is_array($fAllowedTypes) ? $fAllowedTypes : array_map('trim', explode(',', $fAllowedTypes));
+                                        $fAccept = implode(',', array_map(fn($t) => '.' . $t, $fTypes));
+                                    }
+                                @endphp
                                 <div class="w-full"
+                                    wire:key="ptah-image-{{ $fField }}-{{ $editingId ?? 'new' }}"
                                     x-data="{
-                                        previewUrl: {{ json_encode($fValue ?: '') }},
-                                        updateFromUrl(val) { this.previewUrl = val; },
+                                        previewUrl: {{ json_encode($fPreviewUrl) }},
+                                        savedUrl:   {{ json_encode($fPreviewUrl) }},
+                                        hasFile: false,
+                                        updateFromUrl(val) {
+                                            this.previewUrl = val;
+                                            this.hasFile = false;
+                                        },
                                         handleFile(e) {
                                             const file = e.target.files[0];
                                             if (!file) return;
+                                            this.hasFile = true;
                                             const reader = new FileReader();
                                             reader.onload = (ev) => { this.previewUrl = ev.target.result; };
                                             reader.readAsDataURL(file);
+                                        },
+                                        clearFile() {
+                                            this.$refs.fileInput.value = '';
+                                            this.hasFile = false;
+                                            this.previewUrl = this.savedUrl;
                                         }
                                     }">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
-                                    <input type="text"
-                                        wire:model.live="formData.{{ $fField }}"
-                                        @input="updateFromUrl($event.target.value)"
-                                        placeholder="https://..."
-                                        class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
-                                    />
-                                    <div class="mt-2">
-                                        <label class="cursor-pointer text-xs text-blue-600 hover:text-blue-800 transition-colors">
+
+                                    {{-- File upload button --}}
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                            </svg>
                                             {{ __('ptah::ui.image_pick_file') }}
-                                            <input type="file" accept="image/*" class="hidden" @change="handleFile($event)" />
+                                            <input
+                                                type="file"
+                                                x-ref="fileInput"
+                                                accept="{{ $fAccept }}"
+                                                class="hidden"
+                                                wire:model="imageUploads.{{ $fField }}"
+                                                @change="handleFile($event)"
+                                            />
                                         </label>
+                                        <span
+                                            wire:loading
+                                            wire:target="imageUploads.{{ $fField }}"
+                                            class="text-xs text-slate-500 dark:text-slate-400 animate-pulse">
+                                            {{ __('ptah::ui.image_uploading') }}
+                                        </span>
+                                        <button x-show="hasFile" x-cloak
+                                            type="button"
+                                            @click="clearFile()"
+                                            class="text-xs text-red-500 hover:text-red-700 transition-colors">
+                                            {{ __('ptah::ui.image_remove_file') }}
+                                        </button>
                                     </div>
+
+                                    {{-- URL fallback --}}
+                                    <div class="mt-2">
+                                        <p class="mb-1 text-xs text-slate-400 dark:text-slate-500">{{ __('ptah::ui.image_or_url') }}</p>
+                                        <input type="text"
+                                            wire:model.live="formData.{{ $fField }}"
+                                            @input="updateFromUrl($event.target.value)"
+                                            placeholder="https://..."
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
+                                        />
+                                    </div>
+
+                                    {{-- Preview --}}
                                     <div x-show="previewUrl" x-cloak class="mt-3">
                                         <img :src="previewUrl" alt="{{ __('ptah::ui.image_preview_label') }}"
-                                             class="max-h-48 rounded-md border border-slate-200 object-contain bg-slate-50"
+                                             class="max-h-48 rounded-md border border-slate-200 dark:border-slate-600 object-contain bg-slate-50 dark:bg-slate-800"
                                              @@error="previewUrl = ''" />
                                     </div>
+
                                     @if ($fError)<p class="mt-1 text-xs text-red-500">{{ $fError }}</p>@endif
                                 </div>
 

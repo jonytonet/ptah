@@ -153,7 +153,7 @@ class ConfigSchemaValidator
         }
 
         // SearchDropdown requires colsSDModel or colsSDService
-        if ($type === 'searchDropdown') {
+        if ($type === 'searchdropdown') {
             if (empty($column['colsSDModel']) && empty($column['colsSDService'])) {
                 throw ConfigValidationException::missingDependency(
                     $field,
@@ -187,13 +187,12 @@ class ConfigSchemaValidator
     protected function validateRenderer(array $column, int $index, string $model): void
     {
         $renderer = $column['colsRenderer'];
-        $validRenderers = ['badge', 'pill', 'icon', 'html', 'custom'];
 
-        if (!in_array($renderer, $validRenderers, true)) {
+        if (!in_array($renderer, CrudConfigEnums::RENDERERS, true)) {
             throw ConfigValidationException::invalidColumnType(
                 $column['colsNomeFisico'],
                 $renderer,
-                $validRenderers,
+                CrudConfigEnums::RENDERERS,
                 'cols'
             )->withJsonPath("$.cols[{$index}].colsRenderer")
                 ->withModel($model);
@@ -226,15 +225,15 @@ class ConfigSchemaValidator
             }
 
             // Validate action type
-            if (isset($action['colsTipo'])) {
+            if (isset($action['actionType'])) {
                 $validTypes = ['wire', 'route', 'url', 'modal'];
-                if (!in_array($action['colsTipo'], $validTypes, true)) {
+                if (!in_array($action['actionType'], $validTypes, true)) {
                     throw ConfigValidationException::invalidColumnType(
                         $action['colsNomeLogico'],
-                        $action['colsTipo'],
+                        $action['actionType'],
                         $validTypes,
                         'actions'
-                    )->withJsonPath("$.actions[{$index}].colsTipo");
+                    )->withJsonPath("$.actions[{$index}].actionType");
                 }
             }
         }

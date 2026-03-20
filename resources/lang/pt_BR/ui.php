@@ -899,6 +899,11 @@ return [
     // Input de imagem
     'image_pick_file'              => 'Escolher arquivo…',
     'image_preview_label'          => 'visualização',
+    'image_uploading'              => 'Enviando…',
+    'image_remove_file'            => 'Remover arquivo',
+    'image_or_url'                 => 'ou cole uma URL',
+    'image_error_size'             => 'O arquivo não pode exceder :max KB.',
+    'image_error_type'             => 'Tipos permitidos: :types.',
 
     // Estilo da célula
     'cfg_col_cell_style_title'     => 'Estilo da Célula',

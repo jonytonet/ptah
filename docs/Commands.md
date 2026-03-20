@@ -390,7 +390,7 @@ php artisan ptah:config "App\Models\Product"
 php artisan ptah:config "App\Models\Product" \
   --column="name:text:required:label=Product Name:validation=required|max:255" \
   --column="price:number:required:label=Price:mask=money_brl:renderer=money" \
-  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --action="approve:livewire:approve(%id%):icon=bx-check:color=success" \
   --filter="status:select:=:options=active,inactive" \
   --set="cacheEnabled=true" \
@@ -463,7 +463,7 @@ field:type:modifier:option=value
 name:text:required:label=Name
 email:text:required:validation=email|max:255
 price:number:label=Price:mask=money_brl:renderer=money:rendererDecimals=2
-status:select:options=active,inactive:renderer=badge:badges=active:green,inactive:red
+status:select:options=active,inactive:renderer=badge:badges=active|green,inactive|red
 user_id:searchdropdown:relation=user:sdSelectColumn=name:sdValueColumn=id
 description:textarea:optional:placeholder=Enter description
 active:boolean:default=true
@@ -501,7 +501,11 @@ relation        → colsRelation (relation method name)
 sdTable         → colsSdTable (table for searchdropdown)
 sdSelectColumn  → colsSdSelectColumn (display column for searchdropdown)
 sdValueColumn   → colsSdValueColumn (value column for searchdropdown)
-uploadPath      → colsUploadPath (path for file uploads)
+uploadPath           → colsUploadPath (storage path for uploads; default: images/{kebab-model})
+uploadMaxSize        → colsUploadMaxSize (max file size in KB; default: 2048)
+uploadAllowedTypes   → colsUploadAllowedTypes (comma-separated extensions; default: jpg,png,webp,gif)
+rendererImageWidth   → colsRendererImageWidth (thumbnail width in px for renderer=image)
+rendererImageHeight  → colsRendererImageHeight (thumbnail height in px for renderer=image)
 totalizer       → colsTotal (add to totalizer)
 totalizadorType → totalizadorType (sum, avg, count, min, max)
 ```
@@ -592,7 +596,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="sku:text:required:label=SKU:validation=required|unique:products,sku" \
   --column="price:number:required:mask=money_brl:renderer=money" \
   --column="stock:number:label=Stock:renderer=number:rendererDecimals=0" \
-  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:relation=category:sdSelectColumn=name" \
   --set="itemsPerPage=25" \
   --set="cacheEnabled=true"
@@ -603,7 +607,7 @@ php artisan ptah:config "App\Models\Product" --list
 # 4. Add more columns later
 php artisan ptah:config "App\Models\Product" \
   --column="description:textarea:optional" \
-  --column="image:file:uploadPath=products"
+  --column="image:image:upload_path=products/photos:upload_max_size=2048:upload_allowed_types=jpg,png,webp"
 
 # 5. Export for backup or sharing
 php artisan ptah:config "App\Models\Product" --export=product-config.json

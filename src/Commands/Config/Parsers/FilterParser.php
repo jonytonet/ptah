@@ -19,7 +19,7 @@ class FilterParser
         $type = array_shift($parts) ?? 'text';
 
         $config = [
-            'field' => $field,
+            'colsNomeFisico' => $field,
             'label' => Str::title(str_replace('_', ' ', $field)),
             'colsFilterType' => $type,
             'defaultOperator' => '=',

@@ -888,7 +888,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="sku:text:required:validation=required|unique:products,sku" \
   --column="price:number:required:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2" \
   --column="stock:number:label=Stock:renderer=number:rendererDecimals=0" \
-  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:relation=category:sdSelectColumn=name:sdValueColumn=id" \
   --set="itemsPerPage=25" \
   --set="cacheEnabled=true" \
@@ -941,7 +941,7 @@ field:type:modifier:option=value:option=value...
 | `rendererSuffix` | `colsRendererSuffix` | string | `rendererSuffix=%` |
 | `rendererFormat` | `colsRendererFormat` | string | `rendererFormat=d/m/Y` |
 | `rendererMaxChars` | `colsRendererMaxChars` | int | `rendererMaxChars=50` |
-| `badges` | `colsRendererBadges` | array | `badges=active:green,inactive:red` |
+| `badges` | `colsRendererBadges` | array | `badges=active|green,inactive|red` |
 | `mask` | `colsMask` | string | `mask=money_brl` |
 | `maskTransform` | `colsMaskTransform` | string | `maskTransform=money_to_float` |
 | `maskDecimalPlaces` | `colsMaskDecimalPlaces` | int | `maskDecimalPlaces=2` |
@@ -951,7 +951,9 @@ field:type:modifier:option=value:option=value...
 | `sdTable` | `colsSdTable` | string | `sdTable=categories` |
 | `sdSelectColumn` | `colsSdSelectColumn` | string | `sdSelectColumn=name` |
 | `sdValueColumn` | `colsSdValueColumn` | string | `sdValueColumn=id` |
-| `uploadPath` | `colsUploadPath` | string | `uploadPath=products/images` |
+| `uploadPath` | `colsUploadPath` | string | `uploadPath=products/images` — overrides the auto-derived path |
+| `uploadMaxSize` | `colsUploadMaxSize` | int | `uploadMaxSize=2048` — max size in KB (default: 2048) |
+| `uploadAllowedTypes` | `colsUploadAllowedTypes` | string | `uploadAllowedTypes=jpg,png,webp` — comma-separated extensions |
 | `totalizer` | `colsTotal` | bool | `totalizer=true` |
 | `totalizadorType` | `totalizadorType` | string | `totalizadorType=sum` |
 
@@ -968,7 +970,7 @@ field:type:modifier:option=value:option=value...
 --column="price:number:required:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2"
 
 # Status with select and badges
---column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red,pending:yellow"
+--column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red,pending|yellow"
 
 # SearchDropdown for category
 --column="category_id:searchdropdown:relation=category:sdSelectColumn=name:sdValueColumn=id"
@@ -982,8 +984,11 @@ field:type:modifier:option=value:option=value...
 # Description with textarea
 --column="description:textarea:optional:placeholder=Enter description"
 
-# Image with upload
+# Image with upload — auto path: storage/app/public/images/product/
 --column="image:image:uploadPath=products:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp"
+
+# Image with custom path and strict types
+--column="photo:image:upload_path=avatars:upload_max_size=1024:upload_allowed_types=jpg,png"
 
 # Number with totalizer
 --column="quantity:number:total:totalizadorType=sum:totalizadorFormat=number"
@@ -1641,6 +1646,42 @@ Properties of each column in `cols[]`:
 | `colsUploadAllowedTypes` | array | `[]` | Allowed extensions: `["jpg", "png", "webp"]` |
 | `colsUploadMultiple` | bool | `false` | Multiple upload |
 
+#### Image field — how upload works
+
+The `image` column type uses `Livewire\WithFileUploads` to transfer the file from the browser to the server. Understanding the full flow helps avoid common mistakes.
+
+**Flow:**
+
+1. The user selects a file — `FileReader.readAsDataURL()` generates an instant client-side preview.
+2. Livewire sends the file in chunks to `livewire/upload-file`, storing it as a `TemporaryUploadedFile` on the `local` disk (`livewire-tmp/`).
+3. On `save()`, `BaseCrud` calls `$upload->store($path, 'public')`, moving the file to `storage/app/public/{path}/` and returning the relative path (e.g. `images/product/AbCdEf123.jpg`).
+4. That relative path is saved to the database column.
+5. The renderer (`renderer=image`) resolves the relative path with `asset('storage/{path}')` for display.
+
+**Prerequisites:**
+
+```bash
+php artisan storage:link   # creates public/storage → storage/app/public symlink
+```
+
+**Auto-derived path (when `colsUploadPath` is empty):**
+
+| Model | Auto path |
+|---|---|
+| `App\Models\Product` | `images/product` |
+| `App\Models\Product\ProductSupplier` | `images/product/product-supplier` |
+| `App\Models\Nfe\NfeItem` | `images/nfe/nfe-item` |
+
+Strip `App\Models\`, split by `\`/`/`, apply `Str::kebab()` to each segment, prefix with `images/`.
+
+**Validation errors:**
+
+If `colsUploadMaxSize` or `colsUploadAllowedTypes` is violated, the error is injected into `$formErrors[field]` before the record is persisted — the save is aborted and the user sees the error inline.
+
+**Edit behaviour:** when editing, the existing value is displayed as the initial preview. If the user does not select a new file, the existing value is preserved. Old files are **not** deleted automatically when replaced.
+
+**URL fallback:** the user can also paste an external URL in the text input instead of uploading a file. In that case the URL string is saved directly and no file is stored.
+
 ### Totalizer
 
 | Property | Type | Default | Description |
@@ -2036,7 +2077,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="price:number:required:label=Price:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2:validation=required|numeric|min:0:totalizer=true:totalizadorType=sum" \
   --column="cost:number:label=Cost:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2:validation=numeric|min:0:totalizer=true:totalizadorType=sum" \
   --column="stock:number:label=Stock:renderer=number:rendererDecimals=0:validation=integer|min:0" \
-  --column="status:select:required:options=active:Active,inactive:Inactive:renderer=badge:badges=active:green,inactive:red" \
+  --column="status:select:required:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:label=Category:relation=category:sdSelectColumn=name:sdValueColumn=id" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info" \
   --filter="status:select:=:options=active,inactive" \
@@ -2059,7 +2100,7 @@ php artisan ptah:config "App\Models\Contact" \
   --column="phone:text:label=Phone:mask=phone:validation=phone" \
   --column="company:text:label=Company" \
   --column="position:text:label=Position" \
-  --column="lead_status:select:required:options=new:New,contacted:Contacted,qualified:Qualified,lost:Lost:renderer=badge:badges=new:blue,contacted:yellow,qualified:green,lost:red" \
+  --column="lead_status:select:required:options=new:New,contacted:Contacted,qualified:Qualified,lost:Lost:renderer=badge:badges=new|blue,contacted|yellow,qualified|green,lost|red" \
   --column="lead_score:number:label=Lead Score:renderer=number:rendererDecimals=0:validation=integer|min:0|max:100" \
   --column="last_contact_at:datetime:label=Last Contact:renderer=datetime:rendererFormat=d/m/Y H:i:s" \
   --column="notes:textarea:label=Notes" \
@@ -2087,7 +2128,7 @@ php artisan ptah:config "App\Models\Post" \
   --column="featured_image:image:label=Featured Image:uploadPath=posts:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp" \
   --column="author_id:searchdropdown:required:label=Author:relation=author:sdSelectColumn=name:sdValueColumn=id" \
   --column="category_id:searchdropdown:label=Category:relation=category:sdSelectColumn=name:sdValueColumn=id" \
-  --column="status:select:required:options=draft:Draft,published:Published,scheduled:Scheduled:renderer=badge:badges=draft:gray,published:green,scheduled:blue" \
+  --column="status:select:required:options=draft:Draft,published:Published,scheduled:Scheduled:renderer=badge:badges=draft|gray,published|green,scheduled|blue" \
   --column="published_at:datetime:label=Publish Date:renderer=datetime:rendererFormat=d/m/Y H:i:s" \
   --column="views:number:readonly:label=Views:renderer=number:rendererDecimals=0" \
   --action="preview:link:https://blog.com/posts/%slug%:icon=bx-show:color=info" \

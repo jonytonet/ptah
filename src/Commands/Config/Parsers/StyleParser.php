@@ -21,10 +21,10 @@ class StyleParser
         [$field, $condition, $value, $style] = $parts;
 
         return [
-            'field' => $field,
-            'condition' => $condition,
-            'value' => $value,
-            'style' => $style,
+            'colsNomeFisico' => $field,
+            'colsOperator'   => $condition,
+            'colsValue'      => $value,
+            'colsCss'        => $style,
         ];
     }
 }

@@ -15,7 +15,8 @@
 2. [Composite Indexes](#2-composite-indexes)
 3. [Namespace Imports in Generated Models](#3-namespace-imports-in-generated-models)
 4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
-5. [Post-Forge Checklist](#post-forge-checklist)
+5. [`ptah:config` CLI — Column Types and Renderers](#5-ptahconfig-cli--column-types-and-renderers)
+6. [Post-Forge Checklist](#post-forge-checklist)
 
 ---
 
@@ -199,7 +200,44 @@ $table->unsignedBigInteger('order_id')->nullable();
 
 ---
 
-## Post-Forge Checklist
+## 5. `ptah:config` CLI — Column Types and Renderers
+
+### `colsTipo` vs `renderer` — two separate concepts
+
+`colsTipo` is the **form input type** for the create/edit modal.  
+`renderer` (via `renderer=`) is **how the value is displayed in the listing table**.  
+They are independent and both can be set on the same column.
+
+```bash
+# WRONG — badge and money are renderers, not input types:
+php artisan ptah:config "App\Models\Product" --column="status:badge"
+php artisan ptah:config "App\Models\Product" --column="price:money"
+
+# CORRECT — use a valid colsTipo and set the renderer separately:
+php artisan ptah:config "App\Models\Product" \
+  --column="status:select:renderer=badge:badges=active|green|Ativo,inactive|gray|Inativo"
+php artisan ptah:config "App\Models\Product" \
+  --column="price:number:renderer=money"
+```
+
+**Valid `colsTipo` values:** `text`, `textarea`, `number`, `date`, `datetime`,
+`select`, `searchdropdown`, `boolean`, `file`, `image`
+
+### Badge entries use `|` as internal separator
+
+The `badges=` option uses `|` to separate `value|color|label` within each entry,
+and `,` to separate multiple badge definitions. Do **not** use `:` inside badge entries
+— it conflicts with the `field:type:modifier` definition syntax.
+
+```bash
+# Correct badge format (use | within each entry):
+--column="status:select:renderer=badge:badges=active|green|Ativo,inactive|gray|Inativo,pending|yellow|Pendente"
+
+# Also valid — omitting the label defaults to title-cased value:
+--column="status:select:renderer=badge:badges=active|green,inactive|gray"
+```
+
+---
 
 Apply this checklist **immediately after each `ptah:forge`**, before running
 `php artisan migrate`:

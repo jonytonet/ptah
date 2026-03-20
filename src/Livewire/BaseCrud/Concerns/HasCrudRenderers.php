@@ -322,7 +322,13 @@ trait HasCrudRenderers
         $width  = (int) ($col['colsRendererImageWidth']  ?? 40);
         $height = (int) ($col['colsRendererImageHeight'] ?? $width);
 
-        return "<img src=\"" . e((string) $value) . "\" width=\"{$width}\" height=\"{$height}\" class=\"rounded object-cover inline-block\" loading=\"lazy\" />";
+        $v = (string) $value;
+        // Resolve storage-relative paths to public URLs (requires `php artisan storage:link`)
+        if (! str_starts_with($v, 'http') && ! str_starts_with($v, 'data:') && ! str_starts_with($v, '/')) {
+            $v = asset('storage/' . ltrim($v, '/'));
+        }
+
+        return "<img src=\"" . e($v) . "\" width=\"{$width}\" height=\"{$height}\" class=\"rounded object-cover inline-block\" loading=\"lazy\" />";
     }
 
     /**

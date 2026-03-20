@@ -17,12 +17,13 @@ trait HasCrudForm
      */
     public function prepareCreate(): void
     {
-        $this->formData   = [];
-        $this->formErrors = [];
-        $this->editingId  = null;
-        $this->sdSearches = [];
-        $this->sdResults  = [];
-        $this->sdLabels   = [];
+        $this->formData     = [];
+        $this->formErrors   = [];
+        $this->editingId    = null;
+        $this->sdSearches   = [];
+        $this->sdResults    = [];
+        $this->sdLabels     = [];
+        $this->imageUploads = [];
     }
 
     /**
@@ -49,11 +50,12 @@ trait HasCrudForm
             return;
         }
 
-        $this->editingId  = $id;
-        $this->formData   = $record->toArray();
-        $this->formErrors = [];
-        $this->sdSearches = [];
-        $this->sdResults  = [];
+        $this->editingId    = $id;
+        $this->formData     = $record->toArray();
+        $this->formErrors   = [];
+        $this->sdSearches   = [];
+        $this->sdResults    = [];
+        $this->imageUploads = [];
 
         // Pre-populate searchdropdown labels
         $this->preloadSdLabels($record);
@@ -63,10 +65,11 @@ trait HasCrudForm
 
     public function closeModal(): void
     {
-        $this->showModal  = false;
-        $this->editingId  = null;
-        $this->formData   = [];
-        $this->formErrors = [];
+        $this->showModal    = false;
+        $this->editingId    = null;
+        $this->formData     = [];
+        $this->formErrors   = [];
+        $this->imageUploads = [];
     }
 
     public function save(): void
@@ -80,7 +83,28 @@ trait HasCrudForm
 
         // Rich validation via FormValidatorService (required, email, min, max, regex, CPF, etc.)
         $formCols = $this->getFormCols();
-        $this->formErrors = $this->formValidator->validate($this->formData, $formCols);
+
+        // Build a validation copy where pending file-uploads satisfy the required check
+        $formDataForValidation = $this->formData;
+        foreach ($formCols as $col) {
+            if (($col['colsTipo'] ?? '') !== 'image') {
+                continue;
+            }
+            $imgField  = $col['colsNomeFisico'] ?? null;
+            $imgUpload = $imgField ? ($this->imageUploads[$imgField] ?? null) : null;
+            if ($imgField && $imgUpload && is_object($imgUpload) && method_exists($imgUpload, 'store')
+                && empty($this->formData[$imgField])) {
+                $formDataForValidation[$imgField] = '__upload_pending__';
+            }
+        }
+
+        $this->formErrors = $this->formValidator->validate($formDataForValidation, $formCols);
+
+        // Validate file size / type for each uploaded image
+        $uploadErrors     = $this->validateImageUploads($formCols);
+        if (! empty($uploadErrors)) {
+            $this->formErrors = array_merge($this->formErrors, $uploadErrors);
+        }
 
         if (! empty($this->formErrors)) {
             $this->creating = false;
@@ -93,6 +117,9 @@ trait HasCrudForm
 
         // Apply mask transforms before persisting (money→float, CPF→digits, etc.)
         $data = $this->applyMaskTransforms($data, $formCols);
+
+        // Process file uploads — stores files and injects paths into $data
+        $this->processImageUploads($data, $formCols);
 
         try {
             $modelInstance = $this->resolveEloquentModel();
@@ -415,5 +442,106 @@ trait HasCrudForm
         }
 
         return $data;
+    }
+
+    // ── Image upload helpers ───────────────────────────────────────────────────
+
+    /**
+     * Validates file size and allowed types for every pending image upload.
+     * Returns an array of field => error-message pairs (empty = no errors).
+     */
+    protected function validateImageUploads(array $formCols): array
+    {
+        $errors = [];
+
+        foreach ($formCols as $col) {
+            if (($col['colsTipo'] ?? '') !== 'image') {
+                continue;
+            }
+
+            $field  = $col['colsNomeFisico'] ?? null;
+            $upload = $field ? ($this->imageUploads[$field] ?? null) : null;
+
+            if (! $field || ! $upload || ! is_object($upload) || ! method_exists($upload, 'store')) {
+                continue;
+            }
+
+            // File size in KB
+            $maxKb = (int) ($col['colsUploadMaxSize'] ?? 2048);
+            if (method_exists($upload, 'getSize') && $upload->getSize() > $maxKb * 1024) {
+                $errors[$field] = trans('ptah::ui.image_error_size', ['max' => $maxKb]);
+                continue;
+            }
+
+            // Allowed extensions
+            $allowedRaw = $col['colsUploadAllowedTypes'] ?? null;
+            if ($allowedRaw) {
+                $allowed = is_array($allowedRaw) ? $allowedRaw : array_map('trim', explode(',', $allowedRaw));
+                $ext     = method_exists($upload, 'getClientOriginalExtension')
+                    ? strtolower($upload->getClientOriginalExtension())
+                    : '';
+                if ($ext && ! in_array($ext, $allowed, true)) {
+                    $errors[$field] = trans('ptah::ui.image_error_type', ['types' => implode(', ', $allowed)]);
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Stores every pending TemporaryUploadedFile and injects the stored path
+     * into $data, overwriting any URL value the user may have typed.
+     */
+    protected function processImageUploads(array &$data, array $formCols): void
+    {
+        foreach ($formCols as $col) {
+            if (($col['colsTipo'] ?? '') !== 'image') {
+                continue;
+            }
+
+            $field  = $col['colsNomeFisico'] ?? null;
+            $upload = $field ? ($this->imageUploads[$field] ?? null) : null;
+
+            if (! $field || ! $upload || ! is_object($upload) || ! method_exists($upload, 'store')) {
+                continue;
+            }
+
+            $path   = $this->resolveUploadPath($col);
+            $stored = $upload->store($path, 'public');
+
+            if ($stored !== false) {
+                $data[$field]                  = $stored;
+                $this->imageUploads[$field]    = null;
+            }
+        }
+    }
+
+    /**
+     * Derives the storage path for an image column.
+     * Priority: colsUploadPath config → auto-derived from model name.
+     *
+     * Examples (auto-derived):
+     *   App\Models\Product             → images/product
+     *   App\Models\Product\ProductStock → images/product/product-stock
+     */
+    protected function resolveUploadPath(array $col): string
+    {
+        if (! empty($col['colsUploadPath'])) {
+            return (string) $col['colsUploadPath'];
+        }
+
+        $modelStr = $this->model ?? '';
+        // Strip namespace prefixes
+        $modelStr = str_replace(['App\\Models\\', 'App/Models/'], '', $modelStr);
+        // Split on \ or /
+        $segments = preg_split('/[\\\\\/]/', $modelStr) ?: [$modelStr];
+        // Convert each segment to kebab-case
+        $segments = array_map(
+            fn($s) => \Illuminate\Support\Str::kebab($s),
+            array_filter($segments)
+        );
+
+        return 'images/' . implode('/', $segments);
     }
 }

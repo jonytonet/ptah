@@ -2069,39 +2069,115 @@ Use it in the custom view when you want to show a visual indicator of the active
 
 ## Image Input
 
-The `image` type displays an image field in the modal form with live preview.
+The `image` type renders a real file upload field in the modal form, powered by `Livewire\WithFileUploads`. It supports both uploading a local file (stored on disk) and pasting an external URL as a fallback.
+
+### Prerequisites
+
+Run `php artisan storage:link` once to expose `storage/app/public` under `public/storage/`. Without this step, stored images will not be served by the browser.
 
 ### Column configuration
 
+Minimal (auto-derived path):
+
 ```json
 {
-  "colsNomeFisico": "photo_url",
+  "colsNomeFisico": "photo",
   "colsNomeLogico": "Photo",
   "colsTipo": "image",
   "colsGravar": "S"
 }
 ```
 
+Full configuration with explicit upload options:
+
+```json
+{
+  "colsNomeFisico": "photo",
+  "colsNomeLogico": "Product Photo",
+  "colsTipo": "image",
+  "colsGravar": "S",
+  "colsRequired": "S",
+  "colsUploadPath": "products/photos",
+  "colsUploadMaxSize": 1024,
+  "colsUploadAllowedTypes": ["jpg", "png", "webp"],
+  "colsRenderer": "image",
+  "colsRendererImageWidth": 60
+}
+```
+
 ### Form behaviour
 
-The field renders **two controls** and a **preview**:
+The field renders **two controls** and a **live preview**:
 
 | Control | Description |
 |---|---|
-| Text field (URL) | Allows pasting a URL directly; the preview updates on typing (debounce via Alpine) |
-| "Pick a file" button | Opens the file picker; the file is read via `FileReader.readAsDataURL()` and displayed as preview; the `data:` URL is stored in `formData` |
-| `<img>` preview | Visible when there is a URL or selected file; renders below the controls |
+| File input | Opens the native file picker. The selected file is immediately displayed as a preview via `FileReader.readAsDataURL()` (client-side, instant). The actual file is transferred to the server via `Livewire\WithFileUploads` as a `TemporaryUploadedFile` held in `$imageUploads[field]`. |
+| URL text field | Allows pasting an external URL directly (e.g. `https://cdn.example.com/photo.jpg`); the preview updates immediately on each keystroke. Used as a fallback when no file is selected. |
+| `<img>` preview | Visible whenever a file is selected or a URL is present. Relative paths stored in the DB are resolved to `asset('storage/{path}')`. |
+| "Uploading…" indicator | Shown via `wire:loading` while Livewire is transferring the file. |
+| "Remove file" button | Shown when a file has been selected; resets the upload, preview and `formData[field]`. |
 
 ### What is saved
 
-`formData[field]` receives:
+When the user selects a **local file**, `BaseCrud` calls `$upload->store($path, 'public')` and saves the returned relative path in the database column.
 
-- **External URL** (string): e.g. `https://cdn.example.com/photo.jpg`
-- **Data URL** (string): e.g. `data:image/png;base64,...` (when a local file is chosen)
+When the user pastes a **URL**, the URL string is saved directly (no file is downloaded to the server).
 
-In both cases it is a `string`, compatible with `string`/`text` columns in the database.
+| Scenario | DB value stored |
+|---|---|
+| File uploaded | Relative path: `images/product/AbCdEf123.jpg` |
+| External URL | Full URL: `https://cdn.example.com/photo.jpg` |
+| No change (edit) | Previous value untouched |
+| Field cleared | Empty string |
 
-> To store the file on disk, override the `beforeCreate` or `beforeUpdate` hook to move the `data:` content to storage and replace the value with the final path before saving.
+> The storage disk is always `public`. Files are placed inside `storage/app/public/{path}/`.
+
+### Auto-derived upload path
+
+When `colsUploadPath` is empty, the path is automatically derived from the model class name:
+
+| Model | Auto path |
+|---|---|
+| `App\Models\Product` | `images/product` |
+| `App\Models\Product\ProductSupplier` | `images/product/product-supplier` |
+| `App\Models\Nfe\NfeItem` | `images/nfe/nfe-item` |
+
+**Logic:** strip `App\Models\`, split by `\` or `/`, apply `Str::kebab()` to each segment, join with `/`, prefix with `images/`.
+
+### Upload options
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `colsUploadPath` | string | `''` | Storage folder, relative to `storage/app/public/`. When empty, the path is auto-derived from the model name (see table above). |
+| `colsUploadMaxSize` | int | `2048` | Maximum file size in **KB**. |
+| `colsUploadAllowedTypes` | array | `['jpg','png','webp','gif']` | Allowed file extensions. |
+
+### Edit behaviour
+
+When editing a record that already has an image, the existing image is shown as the initial preview. If the user does not select a new file, the existing value in `formData[field]` is left untouched (the record is not changed).
+
+> **Old file not deleted:** when a new file replaces the existing one, the old file remains on disk. Cleaning up orphaned files is the developer's responsibility (e.g. in the `beforeUpdate` lifecycle hook).
+
+### Displaying in the table listing
+
+Use `renderer=image` on the column to show a thumbnail in the table cell. Optional size settings:
+
+```json
+{
+  "colsRenderer": "image",
+  "colsRendererImageWidth": 60,
+  "colsRendererImageHeight": 60
+}
+```
+
+The renderer resolves relative paths via `asset('storage/{path}')`, and passes HTTP URLs and `data:` strings through unchanged.
+
+### Full CLI example
+
+```bash
+php artisan ptah:config "App\Models\Product" \
+  --column="photo:image:required:label=Product Photo:upload_path=products/photos:upload_max_size=1024:upload_allowed_types=jpg,png,webp:renderer=image:rendererImageWidth=60"
+```
 
 ### Translation keys
 
@@ -2110,6 +2186,11 @@ In both cases it is a `string`, compatible with `string`/`text` columns in the d
 | `cfg_col_type_image` | `image — Image with Preview` | `image — Imagem com Preview` |
 | `image_pick_file` | `Pick a file…` | `Escolher arquivo…` |
 | `image_preview_label` | `preview` | `visualização` |
+| `image_uploading` | `Uploading…` | `Enviando…` |
+| `image_remove_file` | `Remove file` | `Remover arquivo` |
+| `image_or_url` | `or paste a URL` | `ou cole uma URL` |
+| `image_error_size` | `File too large. Max: :max KB` | `Arquivo muito grande. Máximo: :max KB` |
+| `image_error_type` | `Invalid file type. Allowed: :types` | `Tipo de arquivo inválido. Permitidos: :types` |
 
 ---
 

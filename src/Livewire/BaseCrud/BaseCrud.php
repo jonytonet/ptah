@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudBulkActions;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudColumns;
@@ -45,6 +46,7 @@ use Ptah\Services\Crud\FormValidatorService;
 class BaseCrud extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     // Lifecycle, configuration reload
     use HasCrudLifecycle;
@@ -166,10 +168,11 @@ class BaseCrud extends Component
 
     // ── Create / edit modal ───────────────────────────────────────────────────
 
-    public array  $formData  = [];
-    public ?int   $editingId = null;
-    public bool   $showModal = false;
-    public bool   $creating  = false;
+    public array  $formData     = [];
+    public array  $imageUploads = [];
+    public ?int   $editingId    = null;
+    public bool   $showModal    = false;
+    public bool   $creating     = false;
 
     /** Form validation errors */
     public array $formErrors = [];
