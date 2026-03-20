@@ -15,14 +15,21 @@ class ActionParser
     public function parse(string $definition): array
     {
         $parts = explode(':', $definition);
-        
+
         if (count($parts) < 3) {
             throw new \InvalidArgumentException("Action syntax requires at least: name:type:value");
         }
 
         $name = array_shift($parts);
         $type = array_shift($parts);
-        $value = array_shift($parts);
+
+        // Collect value parts: everything before the first key=value option.
+        // This lets URL values like 'https://...' be preserved intact.
+        $valueParts = [];
+        while (!empty($parts) && !preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*=/', $parts[0])) {
+            $valueParts[] = array_shift($parts);
+        }
+        $value = implode(':', $valueParts);
 
         $config = [
             'colsNomeLogico' => $name,
@@ -34,7 +41,7 @@ class ActionParser
             'actionPermission' => '',
         ];
 
-        // Process remaining options
+        // Process remaining key=value options
         foreach ($parts as $opt) {
             if (str_contains($opt, '=')) {
                 [$k, $v] = explode('=', $opt, 2);

@@ -14,7 +14,7 @@ class ColumnParser
      */
     public function parse(string $definition): array
     {
-        $parts = explode(':', $definition);
+        $parts = $this->tokenize($definition);
         $field = array_shift($parts);
         $type = array_shift($parts) ?? 'text';
 
@@ -199,5 +199,48 @@ class ColumnParser
         if ($value === 'false') return false;
         if (is_numeric($value)) return is_float($value + 0) ? (float)$value : (int)$value;
         return $value;
+    }
+
+    /**
+     * Smart tokenizer: splits field:type:modifier:key=value:key=value
+     * preserving ':' that appear inside the VALUE side of key=value pairs.
+     *
+     * Example: "status:select:options=active:Active,inactive:Inactive:renderer=badge"
+     * → ['status', 'select', 'options=active:Active,inactive:Inactive', 'renderer=badge']
+     */
+    protected function tokenize(string $definition): array
+    {
+        $raw    = explode(':', $definition);
+        $result = [];
+        $buffer = null;
+
+        foreach ($raw as $i => $part) {
+            // First two tokens (field, type) are always standalone
+            if ($i < 2) {
+                $result[] = $part;
+                continue;
+            }
+
+            if (str_contains($part, '=')) {
+                // A new key=value pair — flush any buffered value first
+                if ($buffer !== null) {
+                    $result[] = $buffer;
+                }
+                $buffer = $part;
+            } elseif ($buffer !== null) {
+                // No '=' and we have an open buffer → this fragment is a
+                // continuation of the previous value (value contained ':')
+                $buffer .= ':' . $part;
+            } else {
+                // Standalone modifier (e.g. 'required', 'hidden')
+                $result[] = $part;
+            }
+        }
+
+        if ($buffer !== null) {
+            $result[] = $buffer;
+        }
+
+        return $result;
     }
 }

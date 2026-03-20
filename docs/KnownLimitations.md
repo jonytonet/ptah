@@ -223,6 +223,10 @@ php artisan ptah:config "App\Models\Product" \
 **Valid `colsTipo` values:** `text`, `textarea`, `number`, `date`, `datetime`,
 `select`, `searchdropdown`, `boolean`, `file`, `image`
 
+**Valid `renderer` values (all 19 supported via CLI):** `text`, `badge`, `pill`,
+`boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`,
+`filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode`
+
 ### Badge entries use `|` as internal separator
 
 The `badges=` option uses `|` to separate `value|color|label` within each entry,
@@ -236,6 +240,62 @@ and `,` to separate multiple badge definitions. Do **not** use `:` inside badge 
 # Also valid — omitting the label defaults to title-cased value:
 --column="status:select:renderer=badge:badges=active|green,inactive|gray"
 ```
+
+### `options=` values support `:` as separator
+
+`ColumnParser` uses a smart tokenizer, so option values that contain `:` are
+preserved correctly:
+
+```bash
+# Both separators work for options:
+--column="status:select:options=active:Active,inactive:Inactive"
+--column="status:select:options=active|Active,inactive|Inactive"
+```
+
+### `--filter` and `--style` via CLI
+
+These flags now work correctly via CLI:
+
+```bash
+# Filter
+php artisan ptah:config "App\Models\Product" --filter="is_active:boolean:label=Active"
+php artisan ptah:config "App\Models\Product" --filter="status:select:options=active,inactive:operator=="
+
+# Style
+php artisan ptah:config "App\Models\Product" --style="status:==:inactive:background:#FEE2E2;color:#991B1B;"
+```
+
+### `--action` via CLI — valid action types
+
+Valid `actionType` values are: **`link`**, **`livewire`**, **`javascript`**
+
+```bash
+# Row action — navigate to detail page (link type):
+php artisan ptah:config "App\Models\Product" \
+  --action="view:link:https://app.example.com/products/%id%:icon=bx-show:color=info"
+
+# Livewire method call:
+php artisan ptah:config "App\Models\Product" \
+  --action="approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true"
+
+# For whole-row clickable navigation, --set is simpler:
+php artisan ptah:config "App\Models\Product" --set="configLinkLinha=/products/%id%"
+```
+
+> **Note:** type aliases `url`, `wire`, `route`, `modal` are **not** valid —
+> use `link`, `livewire`, or `javascript`.
+
+### CLI parity status
+
+| Feature | CLI flag | Status |
+|---|---|---|
+| columns | `--column` | ✅ full support |
+| filters | `--filter` | ✅ fixed (2026-03-20) |
+| conditional styles | `--style` | ✅ fixed (2026-03-20) |
+| actions | `--action` | ✅ fixed (2026-03-20) |
+| joins | `--join` | ✅ supported |
+| general settings | `--set` | ✅ supported |
+| option values with `:` | `options=k:v` | ✅ fixed (2026-03-20) |
 
 ---
 
@@ -282,3 +342,7 @@ Apply this checklist **immediately after each `ptah:forge`**, before running
 | Acronym table names (POS, NF…) | ✅ fixed — `POSSale` → `pos_sales` | — |
 | `--no-soft-deletes` on existing migration | ✅ fixed — use `--force` to auto-strip | remove `use SoftDeletes` from Model manually |
 | `created_at` auto-added to CrudConfig | ✅ fixed — not added anymore | add via config modal when needed |
+| `--filter` CLI flag | ✅ fixed (2026-03-20) | works directly via CLI |
+| `--style` CLI flag | ✅ fixed (2026-03-20) | works directly via CLI |
+| `--action` CLI flag (URL values) | ✅ fixed (2026-03-20) | use `link`/`livewire`/`javascript` as type |
+| `options=k:v` with `:` in values | ✅ fixed (2026-03-20) | smart tokenizer preserves value |
