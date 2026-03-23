@@ -163,15 +163,20 @@ class PtahServiceProvider extends ServiceProvider
      */
     protected function registerViews(): void
     {
-        $viewsPath = __DIR__ . '/../resources/views';
+        $packagePath = __DIR__ . '/../resources/views';
+        $vendorPath  = resource_path('views/vendor/ptah/components');
 
         // Loads views with namespace 'ptah'
-        $this->loadViewsFrom($viewsPath, 'ptah');
+        $this->loadViewsFrom($packagePath, 'ptah');
 
-        // Registers anonymous Blade components forge-* without additional prefix:
-        // forge-button.blade.php  → <x-forge-button>
-        // forge-breadcrumb.blade.php → <x-forge-breadcrumb>
-        Blade::anonymousComponentPath($viewsPath . '/components');
+        // Registers anonymous Blade components forge-* without additional prefix.
+        // Published path (resources/views/vendor/ptah/components/) takes precedence
+        // over the package path so that vendor:publish overrides work correctly.
+        if (is_dir($vendorPath)) {
+            Blade::anonymousComponentPath($vendorPath);
+        }
+
+        Blade::anonymousComponentPath($packagePath . '/components');
     }
 
     /**

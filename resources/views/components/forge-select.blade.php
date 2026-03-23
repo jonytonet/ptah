@@ -96,7 +96,7 @@
             class="ptah-select-trigger relative flex items-center justify-between rounded-md border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
         >
             <span
-                :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'text-gray-800' : 'text-gray-400'"
+                :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'ptah-c-sel_val' : 'text-gray-400'"
                 class="text-sm truncate pr-4"
                 x-text="displayLabel"
             ></span>
@@ -124,7 +124,7 @@
                 <template x-for="option in options" :key="option.value">
                     <li
                         @click="toggle(option.value)"
-                        :class="isSelected(option.value) ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'"
+                        :class="isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
                         class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors duration-100"
                     >
                         <span x-text="option.label"></span>
