@@ -31,6 +31,15 @@ trait HasCrudDeletion
             return;
         }
 
+        // Ptah permission check
+        if (config('ptah.modules.permissions') && \Illuminate\Support\Facades\Auth::check()) {
+            $key = $this->crudConfig['permissions']['permissionIdentifier'] ?? null;
+            if ($key && ! ptah_can($key, 'delete')) {
+                $this->cancelDelete();
+                return;
+            }
+        }
+
         $modelInstance = $this->resolveEloquentModel();
         $record        = $modelInstance->newQuery()->find($this->deletingId);
 
@@ -55,6 +64,14 @@ trait HasCrudDeletion
 
     public function restoreRecord(int $id): void
     {
+        // Ptah permission check (restore requires update permission)
+        if (config('ptah.modules.permissions') && \Illuminate\Support\Facades\Auth::check()) {
+            $key = $this->crudConfig['permissions']['permissionIdentifier'] ?? null;
+            if ($key && ! ptah_can($key, 'update')) {
+                return;
+            }
+        }
+
         $modelInstance = $this->resolveEloquentModel();
         $record        = $modelInstance->newQuery()->withTrashed()->find($id);
 

@@ -122,7 +122,7 @@ return [
     |--------------------------------------------------------------------------
     | Optional Modules
     |--------------------------------------------------------------------------
-    | Use `php artisan ptah:module {auth|menu|company|permissions|api}` to install each module.
+    | Use `php artisan ptah:module {auth|menu|company|permissions|api|ai_agent}` to install each module.
     */
     'modules' => [
         'auth'        => env('PTAH_MODULE_AUTH', false),
@@ -130,6 +130,7 @@ return [
         'company'     => env('PTAH_MODULE_COMPANY', false),
         'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
         'api'         => env('PTAH_MODULE_API', false),
+        'ai_agent'    => env('PTAH_MODULE_AI_AGENT', false),
     ],
 
     /*
@@ -190,6 +191,8 @@ return [
     | cache_ttl           : TTL in seconds
     | user_model          : host application's User model (no hard-coded FK)
     | user_id_field       : User model primary key field
+    | user_query_scope    : optional Scope class to filter users shown in the
+    |                       Permissions screen (e.g. only admin users)
     | company_session_key : session key for active company/branch
     | user_session_key    : session key for user id (apps without standard auth)
     | audit               : log accesses to the ptah_permission_audits table
@@ -206,6 +209,12 @@ return [
         'cache_ttl'           => (int) env('PTAH_PERMISSION_CACHE_TTL', 3600),
         'user_model'          => env('PTAH_USER_MODEL', 'App\Models\User'),
         'user_id_field'       => env('PTAH_USER_ID_FIELD', 'id'),
+        // Optional Eloquent scope class applied to the user query in the
+        // Permissions screen. Use this to restrict which users appear
+        // (e.g. show only admin users in a project that has multiple user types).
+        // Must implement \Illuminate\Database\Eloquent\Scope.
+        // Example: 'user_query_scope' => App\Scopes\AdminUsersScope::class
+        'user_query_scope'    => env('PTAH_USER_QUERY_SCOPE', null),
         'company_session_key' => env('PTAH_COMPANY_SESSION_KEY', 'ptah_company_id'),
         'user_session_key'    => env('PTAH_USER_SESSION_KEY', null),
         'audit'               => env('PTAH_PERMISSION_AUDIT', false),
@@ -218,6 +227,28 @@ return [
         // Default password used when PTAH_ADMIN_PASSWORD is not set in .env.
         // Always change this after the first login.
         'admin_password'      => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Agent Module
+    |--------------------------------------------------------------------------
+    | Conversational AI widget powered by prism-php/prism.
+    |
+    | system_prompt : default prompt injected into every conversation.
+    | max_history   : max number of messages kept per session (older ones are dropped).
+    | rate_limit    : max requests per minute per session.
+    | tools         : array of AiToolInterface instances to register globally.
+    |                 Example: [\App\AI\Tools\MyCustomTool::class]
+    |
+    | Requires: composer require prism-php/prism
+    | Enable  : php artisan ptah:module ai_agent
+    */
+    'ai_agent' => [
+        'system_prompt' => env('PTAH_AI_SYSTEM_PROMPT', 'You are a helpful assistant.'),
+        'max_history'   => (int) env('PTAH_AI_MAX_HISTORY', 20),
+        'rate_limit'    => (int) env('PTAH_AI_RATE_LIMIT', 30),
+        'tools'         => [],
     ],
 
 ];

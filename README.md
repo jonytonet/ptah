@@ -249,6 +249,7 @@ Enable only what you need. Each module updates `.env` and runs its own migration
 | **company** | `php artisan ptah:module company` | Company and department management, company switcher, multi-tenant support |
 | **permissions** | `php artisan ptah:module permissions` | Full RBAC — roles, pages, objects, middleware, Blade directives, audit log |
 | **api** | `php artisan ptah:module api` | REST API with Swagger/OpenAPI via `darkaonline/l5-swagger`, standardised `BaseResponse` |
+| **ai_agent** | `php artisan ptah:module ai_agent` | Floating AI chat widget (JivoChat-style) + provider config admin — powered by `prism-php/prism` |
 
 ```bash
 # Check current state of all modules

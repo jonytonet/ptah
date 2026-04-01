@@ -428,6 +428,9 @@
 
             sidebarCollapsed: localStorage.getItem('ptah_sidebar_collapsed') === 'true',
 
+            isMd: window.innerWidth >= 768,
+            isLg: window.innerWidth >= 1024,
+
             darkMode: (function() {
                 var serverTheme = @js($theme);
                 if (serverTheme === 'dark' || serverTheme === 'light') {
@@ -449,6 +452,13 @@
             init() {
                 /* Aplica ptah-dark + dark no body/html para cobrir elementos @@teleport('body') */
                 this.applyTheme(this.darkMode);
+                /* Atualiza breakpoints reativamente */
+                this._onResize = () => { this.isMd = window.innerWidth >= 768; this.isLg = window.innerWidth >= 1024; };
+                window.addEventListener('resize', this._onResize);
+            },
+
+            destroy() {
+                window.removeEventListener('resize', this._onResize);
             },
 
             toggleDark() {
@@ -471,7 +481,7 @@
 
         {{-- Main content — margem reage ao estado da sidebar --}}
         <div
-            :class="sidebarCollapsed ? 'md:ml-16' : 'md:ml-16 lg:ml-64'"
+            :style="isLg ? { marginLeft: sidebarCollapsed ? '4rem' : '16rem' } : (isMd ? { marginLeft: '4rem' } : {})"
             class="transition-all duration-300 ml-0"
         >
 
@@ -489,6 +499,12 @@
 
     {{-- Notification area --}}
     <x-forge-notification />
+
+    @auth
+        @if(config('ptah.modules.ai_agent') && class_exists(\Livewire\Livewire::class))
+            <livewire:ptah-ai-chat-widget />
+        @endif
+    @endauth
 
     @if(class_exists(\Livewire\Livewire::class))
         @livewireScripts

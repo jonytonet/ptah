@@ -28,6 +28,8 @@ use Ptah\Livewire\Auth\TwoFactorChallengePage;
 use Ptah\Livewire\Company\CompanyList;
 use Ptah\Livewire\Company\CompanySwitcher;
 use Ptah\Livewire\Menu\MenuList;
+use Ptah\Livewire\AI\AiChatWidget;
+use Ptah\Livewire\AI\AiModelConfigList;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
 use Ptah\Livewire\Permission\PageList;
@@ -41,6 +43,11 @@ use Ptah\Services\Company\CompanyService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
+use Ptah\Services\AI\AiChatService;
+use Ptah\Services\AI\AiProviderConfigService;
+use Ptah\Services\AI\AiToolRegistry;
+use Ptah\Services\AI\Tools\GetCurrentDateTimeTool;
+use Ptah\Services\AI\Tools\GetSystemInfoTool;
 use Ptah\Services\Menu\MenuService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
@@ -79,6 +86,28 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(PermissionService::class);
         $this->app->singleton(RoleService::class);
         $this->app->bind(PermissionServiceContract::class, PermissionService::class);
+
+        // AI Agent module
+        if (config('ptah.modules.ai_agent')) {
+            $this->app->singleton(AiToolRegistry::class, function () {
+                $registry = new AiToolRegistry();
+                $registry->register(new GetSystemInfoTool());
+                $registry->register(new GetCurrentDateTimeTool());
+                foreach (config('ptah.ai_agent.tools', []) as $tool) {
+                    if (is_string($tool) && class_exists($tool)) {
+                        $instance = app($tool);
+                        if ($instance instanceof \Ptah\Contracts\AiToolInterface) {
+                            $registry->register($instance);
+                        }
+                    } elseif ($tool instanceof \Ptah\Contracts\AiToolInterface) {
+                        $registry->register($tool);
+                    }
+                }
+                return $registry;
+            });
+            $this->app->singleton(AiProviderConfigService::class);
+            $this->app->singleton(AiChatService::class);
+        }
     }
 
     /**
@@ -105,6 +134,24 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->loadMigrations();
         $this->registerLivewire();
+
+        // Render a friendly 403 page when the host app has no custom one.
+        // Only activates when the permissions module is enabled; falls back to
+        // Laravel's default handler otherwise.
+        if (config('ptah.modules.permissions')) {
+            $exceptionHandler = $this->app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class);
+            if (method_exists($exceptionHandler, 'renderable')) {
+                $exceptionHandler->renderable(
+                    function (\Symfony\Component\HttpKernel\Exception\HttpException $e, \Illuminate\Http\Request $request) {
+                        if ($e->getStatusCode() === 403
+                            && ! $request->expectsJson()
+                            && ! file_exists(resource_path('views/errors/403.blade.php'))) {
+                            return response()->view('ptah::errors.403', ['exception' => $e], 403);
+                        }
+                    }
+                );
+            }
+        }
 
         // Informs Laravel's Authenticate middleware where to redirect
         // unauthenticated users when the Ptah auth module is active.
@@ -235,6 +282,16 @@ class PtahServiceProvider extends ServiceProvider
                     => database_path('migrations/2024_01_04_000001_create_ptah_departments_table.php'),
             ], 'ptah-company');
 
+            // Publish AI Agent module (migrations)
+            $this->publishes([
+                __DIR__ . '/Migrations/2026_03_23_000001_create_ptah_ai_model_configs_table.php'
+                    => database_path('migrations/2026_03_23_000001_create_ptah_ai_model_configs_table.php'),
+                __DIR__ . '/Migrations/2026_03_23_000002_create_ptah_ai_conversations_table.php'
+                    => database_path('migrations/2026_03_23_000002_create_ptah_ai_conversations_table.php'),
+                __DIR__ . '/Migrations/ai/2026_03_31_000003_add_user_to_ptah_ai_conversations_table.php'
+                    => database_path('migrations/2026_03_31_000003_add_user_to_ptah_ai_conversations_table.php'),
+            ], 'ptah-ai-agent');
+
             // Publish permissions module (migrations)
             $this->publishes([
                 __DIR__ . '/Migrations/2024_01_04_000002_create_ptah_roles_table.php'
@@ -263,6 +320,12 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs/seeders/MenuRegistry.stub.php' => database_path('seeders/MenuRegistry.php'),
             ], 'ptah-menu-registry');
 
+            // Publish 403 error view (allows per-project customisation)
+            $this->publishes([
+                __DIR__ . '/../resources/views/errors/403.blade.php'
+                    => resource_path('views/errors/403.blade.php'),
+            ], 'ptah-errors');
+
             // Publish Docker base environment (Dockerfile, Nginx, php.ini, docker-compose, .env.docker)
             $this->publishes([
                 __DIR__ . '/../stubs/docker/docker-compose.yml'     => base_path('docker-compose.yml'),
@@ -285,8 +348,15 @@ class PtahServiceProvider extends ServiceProvider
     {
         $modulesEnabled = array_filter(config('ptah.modules', []));
 
-        if (! empty($modulesEnabled)) {
-            $this->loadMigrationsFrom(__DIR__ . '/Migrations');
+        if (empty($modulesEnabled)) {
+            return;
+        }
+
+        $this->loadMigrationsFrom(__DIR__ . '/Migrations');
+
+        // AI-specific alter-migrations only when the ai_agent module is enabled
+        if (! empty($modulesEnabled['ai_agent'])) {
+            $this->loadMigrationsFrom(__DIR__ . '/Migrations/ai');
         }
     }
 
@@ -326,6 +396,11 @@ class PtahServiceProvider extends ServiceProvider
                 Livewire::component('ptah-permission-audit-list',      AuditList::class);
                 Livewire::component('ptah-permission-guide',           PermissionGuide::class);
             }
+
+            if (config('ptah.modules.ai_agent')) {
+                Livewire::component('ptah-ai-model-config-list', AiModelConfigList::class);
+                Livewire::component('ptah-ai-chat-widget',       AiChatWidget::class);
+            }
         }
     }
 
@@ -359,6 +434,10 @@ class PtahServiceProvider extends ServiceProvider
 
         if (config('ptah.modules.permissions')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-permissions.php');
+        }
+
+        if (config('ptah.modules.ai_agent')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/ptah-ai.php');
         }
     }
 }

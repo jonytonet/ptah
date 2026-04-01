@@ -78,6 +78,16 @@ trait HasCrudForm
             return;
         }
 
+        // Ptah permission check (only when module is active and permissionIdentifier configured)
+        if (config('ptah.modules.permissions') && \Illuminate\Support\Facades\Auth::check()) {
+            $key    = $this->crudConfig['permissions']['permissionIdentifier'] ?? null;
+            $action = $this->editingId ? 'update' : 'create';
+            if ($key && ! ptah_can($key, $action)) {
+                $this->formErrors['_general'] = trans('ptah::ui.crud_permission_denied');
+                return;
+            }
+        }
+
         $this->creating   = true;
         $this->formErrors = [];
 

@@ -86,15 +86,15 @@
 
 {{-- Sidebar --}}
 <aside
-    x-data="{ hovered: false }"
+    x-data="{ hovered: false, isMd: window.innerWidth >= 768, isLg: window.innerWidth >= 1024 }"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
+    @resize.window="isMd = window.innerWidth >= 768; isLg = window.innerWidth >= 1024"
     :class="{
         'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
-        'lg:w-16':  sidebarCollapsed && !hovered,
-        'lg:w-64':  !sidebarCollapsed || hovered,
     }"
+    :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : {}"
     class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col overflow-hidden
            transition-all duration-300 ease-in-out
            md:translate-x-0 md:w-16 md:hover:w-64 lg:translate-x-0"
@@ -112,7 +112,7 @@
             @endif
         </div>
         <span
-            :style="(sidebarCollapsed && !hovered) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
+            :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
             class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap transition-all duration-300">
             {{ $appName }}
         </span>
@@ -154,14 +154,14 @@
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                                 class="flex-1 text-left whitespace-nowrap text-sm transition-all duration-300">
                                 {{ $itemLabel }}
                             </span>
                             {{-- Seta --}}
                             <svg
                                 :class="open ? 'rotate-180' : ''"
-                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
+                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                 class="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -211,7 +211,7 @@
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                                 class="whitespace-nowrap text-sm italic transition-all duration-300">
                                 {{ $itemLabel }}
                             </span>
@@ -235,7 +235,7 @@
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                                 class="whitespace-nowrap text-sm transition-all duration-300">
                                 {{ $itemLabel }}
                             </span>
@@ -264,7 +264,7 @@
                     <i class="bx bx-log-out text-xl leading-none"></i>
                 </span>
                 <span
-                    :style="(sidebarCollapsed && !hovered) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
+                    :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
                     class="whitespace-nowrap text-sm font-medium transition-all duration-300">
                     {{ __('ptah::ui.navbar_user_logout') }}
                 </span>

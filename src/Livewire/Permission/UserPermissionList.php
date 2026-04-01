@@ -127,7 +127,15 @@ class UserPermissionList extends Component
             return new LengthAwarePaginator([], 0, 20);
         }
 
-        return $userModel::query()
+        $query = $userModel::query();
+
+        if ($scopeClass = config('ptah.permissions.user_query_scope')) {
+            if (class_exists($scopeClass)) {
+                $query->withGlobalScope('ptah_user_scope', new $scopeClass);
+            }
+        }
+
+        return $query
             ->when($this->search, fn ($q) => $q->where(function ($q2) {
                 $q2->where('name', 'like', "%{$this->search}%")
                    ->orWhere('email', 'like', "%{$this->search}%");

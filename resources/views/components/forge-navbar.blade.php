@@ -98,8 +98,8 @@
                     </svg>
                 </button>
 
-                {{-- Admin Dropdown (company + permissions + menu) --}}
-                @if(auth()->check() && (config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu')))
+                {{-- Admin Dropdown (company + permissions + menu + ai_agent) --}}
+                @if(auth()->check() && (config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu') || config('ptah.modules.ai_agent')))
                 <div x-data="{ openAdmin: false }" class="relative">
                     <button
                         @click="openAdmin = !openAdmin"
@@ -219,6 +219,18 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
                             </svg>
                             {{ __('ptah::ui.navbar_admin_menu') }}
+                        </a>
+                        @endif
+
+                        {{-- AI Agent --}}
+                        @if(config('ptah.modules.ai_agent') && \Illuminate\Support\Facades\Route::has('ptah.ai.models'))
+                        @if(config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu'))
+                        <hr class="my-1 border-gray-100">
+                        @endif
+                        <a href="{{ route('ptah.ai.models') }}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <i class="bx bx-bot h-4 w-4 text-gray-400 shrink-0 text-base leading-none"></i>
+                            {{ __('ptah::ui.navbar_admin_ai_models') }}
                         </a>
                         @endif
                     </div>

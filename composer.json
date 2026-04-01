@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "laravel/framework": "^11.0|^12.0",
+        "laravel/framework": "^11.0|^12.0|^13.0",
         "livewire/livewire": "^4.0",
         "maatwebsite/excel": "^3.1",
         "barryvdh/laravel-dompdf": "^3.0"
@@ -24,7 +24,8 @@
     },
     "suggest": {
         "pragmarx/google2fa-laravel": "Required for 2FA via authenticator app (TOTP) — auth module",
-        "bacon/bacon-qr-code": "Required for generating QR codes in TOTP setup — auth module"
+        "bacon/bacon-qr-code": "Required for generating QR codes in TOTP setup — auth module",
+        "prism-php/prism": "Required for the AI Agent module (conversational AI widget) — ai_agent module"
     },
     "autoload": {
         "psr-4": {

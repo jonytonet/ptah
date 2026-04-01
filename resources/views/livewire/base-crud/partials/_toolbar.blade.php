@@ -2,17 +2,15 @@
 <div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md ptah-c-toolbar">
 
     {{-- Botão Novo --}}
-    @if ($permissions['showCreateButton'] ?? true)
-        @if (!($permissions['create'] ?? null) || (auth()->check() && auth()->user()->can($permissions['create'])))
-            <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm">
-                <x-slot name="icon">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </x-slot>
-                {{ __('ptah::ui.btn_new') }}
-            </x-forge-button>
-        @endif
+    @if ($effectivePerms['canCreate'])
+        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm">
+            <x-slot name="icon">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </x-slot>
+            {{ __('ptah::ui.btn_new') }}
+        </x-forge-button>
     @endif
 
     {{-- Busca Global --}}

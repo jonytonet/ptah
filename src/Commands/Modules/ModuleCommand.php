@@ -34,6 +34,7 @@ class ModuleCommand extends Command
         'company'     => 'PTAH_MODULE_COMPANY',
         'permissions' => 'PTAH_MODULE_PERMISSIONS',
         'api'         => 'PTAH_MODULE_API',
+        'ai_agent'    => 'PTAH_MODULE_AI_AGENT',
     ];
 
     public function handle(): int
@@ -58,6 +59,7 @@ class ModuleCommand extends Command
             'company'     => $this->activateCompany(),
             'permissions' => $this->activatePermissions(),
             'api'         => $this->activateApi(),
+            'ai_agent'    => $this->activateAiAgent(),
         };
 
         $this->setEnvValue($this->modules[$module], 'true');
@@ -150,6 +152,31 @@ class ModuleCommand extends Command
         $this->line('  ║  <fg=red>⚠ Change your password on first login!</>  ║');
         $this->line('  ╚══════════════════════════════════════════╝');
         $this->newLine();
+    }
+
+    protected function activateAiAgent(): void
+    {
+        $this->components->task('Installing prism-php/prism', function () {
+            $process = new \Symfony\Component\Process\Process(
+                ['composer', 'require', 'prism-php/prism'],
+                base_path()
+            );
+            $process->setTimeout(300);
+            $process->run();
+
+            return $process->isSuccessful();
+        });
+
+        $this->components->task('Publishing AI Agent migrations', function () {
+            $this->call('vendor:publish', [
+                '--tag'   => 'ptah-ai-agent',
+                '--force' => $this->option('force'),
+            ]);
+        });
+
+        $this->components->task('Running migrations', function () {
+            $this->call('migrate');
+        });
     }
 
     protected function activateApi(): void
@@ -270,6 +297,16 @@ class ModuleCommand extends Command
             $this->line('  4. Use <fg=yellow>@ptahCan(\'key\', \'action\')</> in Blade views');
             $this->line('  5. Use <fg=yellow>Route::middleware(\'ptah.can:resource,action\')</> on routes');
             $this->line('  6. For audit logging set <fg=yellow>PTAH_PERMISSION_AUDIT=true</> in .env');
+        }
+
+        if ($module === 'ai_agent') {
+            $this->line('  1. Visit <fg=green>/ptah-ai/models</> to configure your AI provider');
+            $this->line('  2. Choose a provider: OpenAI, Anthropic, Google Gemini, or Ollama');
+            $this->line('  3. Enter your API key and select a model (e.g. <fg=yellow>gpt-4o</>)');
+            $this->line('  4. Set the config as default — the chat widget activates automatically');
+            $this->line('  5. Optionally set <fg=yellow>PTAH_AI_SYSTEM_PROMPT</> in .env');
+            $this->line('  6. Register custom tools in <fg=yellow>config/ptah.php</> under <fg=yellow>ai_agent.tools</>');
+            $this->line('  7. See full docs: <fg=green>vendor/jonytonet/ptah/docs/AiAgent.md</>');
         }
 
         $this->newLine();

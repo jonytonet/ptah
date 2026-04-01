@@ -53,7 +53,9 @@ class CrudConfigService
                 if (! $this->isCacheEnabled($config)) {
                     return $config;
                 }
-                return $this->cache->rememberConfig($model, '', fn() => $config->fresh(), $this->ttlFor($config));
+                $id = $config->id;
+                $this->cache->rememberConfig($model, '', fn() => $id, $this->ttlFor($config));
+                return CrudConfig::find($id);
             }
 
             return null;
@@ -68,8 +70,11 @@ class CrudConfigService
         }
 
         $ttl = $this->ttlFor($config);
+        $id  = $config->id;
 
-        return $this->cache->rememberConfig($model, $route, fn() => $config->fresh(), $ttl);
+        $cachedId = $this->cache->rememberConfig($model, $route, fn() => $id, $ttl);
+
+        return CrudConfig::find($cachedId);
     }
 
     /**

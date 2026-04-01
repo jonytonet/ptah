@@ -31,6 +31,7 @@
     - [RoleList](#rolelist)
     - [PageList](#pagelist)
     - [UserPermissionList](#userpermissionlist)
+    - [Filtering Users in the Permissions Screen](#filtering-users-in-the-permissions-screen)
     - [AuditList](#auditlist)
     - [PermissionGuide](#permissionguide)
 14. [Routes](#routes)
@@ -756,6 +757,51 @@ Lists all users from the configured model (`config('ptah.permissions.user_model'
 
 ---
 
+### Filtering Users in the Permissions Screen
+
+By default, `UserPermissionList` queries **all records** from the configured `user_model`. In projects with multiple user types (e.g. an e-commerce with both customers and admin users), you may want to restrict which users appear on this screen.
+
+Use `user_query_scope` to apply an [Eloquent Scope](https://laravel.com/docs/eloquent#global-scopes) to that query — without touching vendor files or creating model inheritance chains.
+
+**1. Create the scope** in `app/Scopes/AdminUsersScope.php`:
+
+```php
+namespace App\Scopes;
+
+use Illuminate\Database\Eloquent\{Builder, Model, Scope};
+
+class AdminUsersScope implements Scope
+{
+    public function apply(Builder $builder, Model $model): void
+    {
+        // Example: restrict to users with type = 'admin'
+        $builder->where('type', 'admin');
+    }
+}
+```
+
+**2. Register it in `config/ptah.php`** (or via `.env`):
+
+```php
+// config/ptah.php
+'permissions' => [
+    'user_query_scope' => App\Scopes\AdminUsersScope::class,
+    // ... other keys
+],
+```
+
+or in `.env`:
+
+```env
+PTAH_USER_QUERY_SCOPE=App\Scopes\AdminUsersScope
+```
+
+**How it works:** the scope is applied via `withGlobalScope('ptah_user_scope', new $scopeClass)` — only for the permissions screen query. It does **not** affect any other part of the application. If the class does not exist, the key is silently ignored.
+
+> **Note:** the scope must implement `\Illuminate\Database\Eloquent\Scope`. Any `where`, `join`, `orderBy` or other Eloquent constraint is valid.
+
+---
+
 ### AuditList
 
 **URL:** `/ptah-audit`  
@@ -1078,6 +1124,9 @@ class CompanySwitcher extends Component
     'cache_ttl'          => env('PTAH_PERMISSION_CACHE_TTL', 300),
     'user_model'         => env('PTAH_USER_MODEL', \App\Models\User::class),
     'user_id_field'      => 'id',
+    // Optional: Eloquent Scope class to filter users shown in the
+    // Permissions screen (e.g. only admin users in a multi-type project).
+    'user_query_scope'   => env('PTAH_USER_QUERY_SCOPE', null),
     'user_session_key'   => 'ptah_user_id',
     'company_session_key'=> 'ptah_company_id',
     'audit'              => env('PTAH_PERMISSION_AUDIT', false),
@@ -1098,6 +1147,7 @@ class CompanySwitcher extends Component
 | `PTAH_MODULE_COMPANY` | `false` | Activates the company module |
 | `PTAH_MODULE_PERMISSIONS` | `false` | Activates the permissions module |
 | `PTAH_USER_MODEL` | `App\Models\User` | FQCN of the users model |
+| `PTAH_USER_QUERY_SCOPE` | `null` | FQCN of an Eloquent Scope to filter users shown in the Permissions screen |
 | `PTAH_PERMISSION_CACHE` | `true` | Enables permissions cache |
 | `PTAH_PERMISSION_CACHE_TTL` | `300` | Cache TTL in seconds |
 | `PTAH_PERMISSION_AUDIT` | `false` | Audits all accesses |

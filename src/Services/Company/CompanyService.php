@@ -133,13 +133,25 @@ class CompanyService implements CompanyServiceContract
      */
     public function getAll(): \Illuminate\Support\Collection
     {
-        return Cache::remember('ptah_companies_all', 300, function () {
+        $result = Cache::remember('ptah_companies_all', 300, function () {
             return Company::query()
                 ->where('is_active', true)
                 ->orderByDesc('is_default')
                 ->orderBy('name')
                 ->get();
         });
+
+        // Guard against stale/corrupt deserialized cache (e.g. __PHP_Incomplete_Class).
+        if (! ($result instanceof \Illuminate\Support\Collection)) {
+            Cache::forget('ptah_companies_all');
+            return Company::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get();
+        }
+
+        return $result;
     }
 
     /**

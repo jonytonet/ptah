@@ -70,7 +70,7 @@
                 @endforeach
 
                 {{-- Coluna de ações padrão --}}
-                @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
+                @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
                     <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase ptah-c-th_text">{{ __('ptah::ui.col_actions') }}</th>
                 @endif
             </tr>
@@ -168,42 +168,40 @@
                     @endforeach
 
                     {{-- Botões de ação padrão --}}
-                    @if (($permissions['showEditButton'] ?? true) || ($permissions['showDeleteButton'] ?? true))
+                    @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
                         <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap">
                             <div class="ptah-row-btns flex items-center justify-center gap-2">
 
                                 {{-- Editar --}}
-                                @if ($permissions['showEditButton'] ?? true)
-                                    @if (!($permissions['edit'] ?? null) || (auth()->check() && auth()->user()->can($permissions['edit'])))
-                                        <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
-                                            @click.stop
-                                            class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-                                        </button>
-                                    @endif
+                                @if ($effectivePerms['canUpdate'])
+                                    <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
+                                        @click.stop
+                                        class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
                                 @endif
 
                                 {{-- Excluir / Restaurar --}}
                                 @if ($showTrashed && method_exists($row, 'trashed') && $row->trashed())
-                                    <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
-                                        @click.stop
-                                        class="transition-colors text-success hover:text-success/80" title="{{ __('ptah::ui.btn_restore_title') }}">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                        </svg>
-                                    </button>
-                                @elseif ($permissions['showDeleteButton'] ?? true)
-                                    @if (!($permissions['delete'] ?? null) || (auth()->check() && auth()->user()->can($permissions['delete'])))
-                                        <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
+                                    @if ($effectivePerms['canRestore'])
+                                        <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
                                             @click.stop
-                                            class="transition-colors text-danger hover:text-danger/80" title="{{ __('ptah::ui.btn_delete_title') }}">
+                                            class="transition-colors text-success hover:text-success/80" title="{{ __('ptah::ui.btn_restore_title') }}">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                             </svg>
                                         </button>
                                     @endif
+                                @elseif ($effectivePerms['canDelete'])
+                                    <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
+                                        @click.stop
+                                        class="transition-colors text-danger hover:text-danger/80" title="{{ __('ptah::ui.btn_delete_title') }}">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
                                 @endif
 
                             </div>

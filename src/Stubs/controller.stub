@@ -18,6 +18,8 @@ class {{ entity }}Controller extends Controller
      */
     public function index(): View
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'read'), 403);
+
         return view('{{ entity_lower }}.index');
     }
 
@@ -26,6 +28,8 @@ class {{ entity }}Controller extends Controller
      */
     public function create(): View
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'create'), 403);
+
         return view('{{ entity_lower }}.create');
     }
 
@@ -34,6 +38,8 @@ class {{ entity }}Controller extends Controller
      */
     public function store(Store{{ entity }}Request $request): RedirectResponse
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'create'), 403);
+
         $this->service->create($request->validated());
 
         return redirect()->route('{{ entity_lower }}.index')
@@ -45,6 +51,8 @@ class {{ entity }}Controller extends Controller
      */
     public function show(int|string $id): View
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'read'), 403);
+
         ${{ entity_lower }} = $this->service->findOrFail($id);
 
         return view('{{ entity_lower }}.show', compact('{{ entity_lower }}'));
@@ -55,6 +63,8 @@ class {{ entity }}Controller extends Controller
      */
     public function edit(int|string $id): View
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'update'), 403);
+
         ${{ entity_lower }} = $this->service->findOrFail($id);
 
         return view('{{ entity_lower }}.edit', compact('{{ entity_lower }}'));
@@ -65,6 +75,8 @@ class {{ entity }}Controller extends Controller
      */
     public function update(Update{{ entity }}Request $request, int|string $id): RedirectResponse
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'update'), 403);
+
         $this->service->update($id, $request->validated());
 
         return redirect()->route('{{ entity_lower }}.index')
@@ -76,6 +88,8 @@ class {{ entity }}Controller extends Controller
      */
     public function destroy(int|string $id): RedirectResponse
     {
+        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'delete'), 403);
+
         $this->service->delete($id);
 
         return redirect()->route('{{ entity_lower }}.index')

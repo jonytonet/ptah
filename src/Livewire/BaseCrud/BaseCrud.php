@@ -256,6 +256,7 @@ class BaseCrud extends Component
             'visibleCols'      => $this->getVisibleColumns(),
             'formCols'         => $this->getFormCols(),
             'permissions'      => $this->crudConfig['permissions']  ?? [],
+            'effectivePerms'   => $this->getEffectivePermissions(),
             'exportCfg'        => $this->crudConfig['exportConfig'] ?? [],
             'totData'          => $this->totalizadoresData,
             'crudTitle'        => $this->crudConfig['displayName']
@@ -266,5 +267,43 @@ class BaseCrud extends Component
                                     || $this->search !== ''
                                     || $this->quickDateFilter !== '',
         ]);
+    }
+
+    /**
+     * Computes effective permission booleans combining:
+     *   1. show*Button flags (CrudConfig)
+     *   2. Laravel Gate checks (permissions['create'/'edit'/'delete'])
+     *   3. Ptah RBAC checks via ptah_can() (when module is active + permissionIdentifier configured)
+     *
+     * Cached per render to avoid redundant ptah_can() calls.
+     */
+    protected function getEffectivePermissions(): array
+    {
+        $p   = $this->crudConfig['permissions'] ?? [];
+        $key = $p['permissionIdentifier'] ?? null;
+
+        // Only enforce ptah checks when module is active, a key is configured and user is authenticated
+        $ptahActive = config('ptah.modules.permissions') && $key && Auth::check();
+
+        $gateCheck = function (?string $gate): bool {
+            if (! $gate) {
+                return true;
+            }
+            return Auth::check() && Auth::user()->can($gate);
+        };
+
+        $ptahCheck = function (string $action) use ($ptahActive, $key): bool {
+            if (! $ptahActive) {
+                return true;
+            }
+            return ptah_can($key, $action);
+        };
+
+        return [
+            'canCreate'  => ($p['showCreateButton'] ?? true) && $gateCheck($p['create'] ?? null) && $ptahCheck('create'),
+            'canUpdate'  => ($p['showEditButton']   ?? true) && $gateCheck($p['edit']   ?? null) && $ptahCheck('update'),
+            'canDelete'  => ($p['showDeleteButton'] ?? true) && $gateCheck($p['delete'] ?? null) && $ptahCheck('delete'),
+            'canRestore' => ($p['showTrashButton']  ?? true) && $ptahCheck('update'),
+        ];
     }
 }
