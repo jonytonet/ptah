@@ -1,5 +1,12 @@
 {{-- ── Tabela ──────────────────────────────────────────────────────── --}}
-<div class="overflow-x-auto border border-slate-200 rounded-md" id="ptah-table-wrap-{{ $crudTitle }}">
+{{-- Loading indicator (filter/search/sort) --}}
+<div wire:loading.delay class="h-0.5 mb-2 overflow-hidden rounded-full bg-primary/10">
+    <div class="h-full w-full ptah-loading-bar"></div>
+</div>
+
+<div class="overflow-x-auto border rounded-md ptah-c-tbl_wrap transition-opacity duration-300"
+     wire:loading.class="opacity-60"
+     id="ptah-table-wrap-{{ $crudTitle }}">
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
         @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 

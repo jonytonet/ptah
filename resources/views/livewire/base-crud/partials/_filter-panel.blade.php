@@ -10,7 +10,7 @@
                 </svg>
                 <span class="text-sm font-semibold ptah-c-fp_text">{{ __('ptah::ui.filters_title') }}</span>
                 @if (count($textFilter ?? []) > 0)
-                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-100">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium border ptah-c-active_badge">
                         {{ count($textFilter) }} ativo{{ count($textFilter) > 1 ? 's' : '' }}
                     </span>
                 @endif
@@ -52,9 +52,7 @@
                         @foreach ($quickLabels as $period => $qlabel)
                             <button wire:click="applyQuickDateFilter('{{ $period }}')"
                                 class="px-2.5 py-1 text-xs rounded-md border transition-colors duration-150
-                                    {{ $quickDateFilter === $period
-                                        ? 'bg-blue-700 text-white border-blue-700'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600' }}">
+                                    {{ $quickDateFilter === $period ? 'ptah-c-ql_btn_on' : 'ptah-c-ql_btn' }}">
                                 {{ $qlabel }}
                             </button>
                         @endforeach
@@ -177,7 +175,7 @@
                                         <button type="button"
                                             tabindex="-1"
                                             @mousedown.prevent="open = !open; if (open) $wire.openFilterDropdown('{{ $cfField }}')"
-                                            class="absolute text-gray-400 transition-transform duration-200 right-2 hover:text-gray-600"
+                                        class="absolute transition-transform duration-200 right-2 ptah-c-fp_chevron"
                                             :class="open ? 'rotate-180' : ''">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -309,11 +307,11 @@
                     @foreach (array_keys($savedFilters) as $sfName)
                         <div class="flex items-center">
                             <button wire:click="loadNamedFilter('{{ $sfName }}')"
-                                class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-l-md hover:bg-blue-100 transition-colors border border-blue-100 border-r-0">
+                                class="text-xs px-2.5 py-1 rounded-l-md transition-colors border border-r-0 ptah-c-saved_filter_btn">
                                 {{ $sfName }}
                             </button>
                             <button wire:click="deleteNamedFilter('{{ $sfName }}')"
-                                class="text-xs bg-red-50 text-red-500 px-1.5 py-1 rounded-r-lg hover:bg-red-100 transition-colors border border-red-100">
+                                class="text-xs px-1.5 py-1 rounded-r-lg transition-colors border ptah-c-saved_filter_del">
                                 &times;
                             </button>
                         </div>
@@ -328,7 +326,7 @@
              x-data="{ saving: false, name: '' }">
             <template x-if="!saving">
                 <button @click="saving = true"
-                    class="flex items-center gap-1 text-xs transition-colors text-slate-500 hover:text-blue-600">
+                    class="flex items-center gap-1 text-xs transition-colors ptah-c-fp_save_btn">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
@@ -349,7 +347,7 @@
                         {{ __('ptah::ui.filters_btn_save') }}
                     </button>
                     <button @click="saving = false; name = '';"
-                        class="text-xs text-gray-400 transition-colors hover:text-gray-600">
+                        class="text-xs transition-colors ptah-c-fp_cancel_btn">
                         {{ __('ptah::ui.filters_btn_cancel') }}
                     </button>
                 </div>

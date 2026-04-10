@@ -41,20 +41,31 @@
     }
 
     /* ── Dark Mode (ptah-dark) ────────────────────────────────────── */
+    /* Cobre ambos os casos: tema do componente (.ptah-base-crud.ptah-dark)
+       e layout em dark mode (.ptah-dark .ptah-base-crud) */
     .ptah-base-crud.ptah-dark .p-4 label,
-    .ptah-base-crud.ptah-dark .space-y-4 label:not(.flex) {
+    .ptah-dark .ptah-base-crud .p-4 label,
+    .ptah-base-crud.ptah-dark .space-y-4 label:not(.flex),
+    .ptah-dark .ptah-base-crud .space-y-4 label:not(.flex) {
         color: #94a3b8; /* slate-400 */
     }
     .ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]),
-    .ptah-base-crud.ptah-dark .p-4 select {
+    .ptah-dark .ptah-base-crud .p-4 input:not([type="checkbox"]),
+    .ptah-base-crud.ptah-dark .p-4 select,
+    .ptah-dark .ptah-base-crud .p-4 select {
         border-color: #475569;
         background-color: #1e293b;
         color: #e2e8f0;
+        color-scheme: dark;
     }
     .ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]):focus,
-    .ptah-base-crud.ptah-dark .p-4 select:focus {
+    .ptah-dark .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
+    .ptah-base-crud.ptah-dark .p-4 select:focus,
+    .ptah-dark .ptah-base-crud .p-4 select:focus {
         border-color: #60a5fa;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+        background-color: #0f172a;
+        outline: none;
     }
 
     /* Table header sticky shadow line */
@@ -73,7 +84,8 @@
         box-shadow: inset 3px 0 0 #1e40af;
     }
     /* Em dark mode: accent mais suave */
-    .ptah-base-crud.ptah-dark tbody tr.ptah-tr:hover {
+    .ptah-base-crud.ptah-dark tbody tr.ptah-tr:hover,
+    .ptah-dark .ptah-base-crud tbody tr.ptah-tr:hover {
         box-shadow: inset 3px 0 0 #1d4ed8;
     }
     /* Botões de ação ficam opacos no hover da linha */
@@ -97,6 +109,20 @@
     }
     .ptah-base-crud .ptah-row-action:hover {
         background-color: #F1F5F9;
+    }
+
+    /* ── Loading shimmer bar ── */
+    @keyframes ptah-shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
+    .ptah-loading-bar {
+        background: linear-gradient(90deg,
+            transparent 0%,
+            var(--color-primary, #1e40af) 50%,
+            transparent 100%);
+        background-size: 200% 100%;
+        animation: ptah-shimmer 1.4s ease-in-out infinite;
     }
 </style>
 

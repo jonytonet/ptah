@@ -55,7 +55,7 @@
         @if ($permissions['showTrashButton'] ?? true)
             <button wire:click="toggleTrashed"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
-                       {{ $showTrashed ? 'bg-red-50 text-red-600 border-red-200' : 'ptah-c-btn' }}"
+                       {{ $showTrashed ? 'ptah-c-btn_trash_on' : 'ptah-c-btn' }}"
                 title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                 @if ($showTrashed)
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,7 +122,7 @@
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
-                           {{ $hiddenColumnsCount > 0 ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'ptah-c-btn' }}"
+                           {{ $hiddenColumnsCount > 0 ? 'ptah-c-btn_col_on' : 'ptah-c-btn' }}"
                     title="{{ __('ptah::ui.btn_columns') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -141,13 +141,13 @@
                 <div x-show="open" x-cloak @click.outside="open = false"
                      class="absolute right-0 mt-1 border rounded-md z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
                     {{-- Ações rápidas --}}
-                    <div class="flex gap-2 px-3 pb-2 mb-1 border-b border-gray-100">
+                    <div class="flex gap-2 px-3 pb-2 mb-1 border-b ptah-c-dd_sep">
                         <button wire:click="showAllColumns" @click="open = false"
-                            class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
+                            class="flex-1 py-1 text-xs text-center transition-colors rounded ptah-c-col_dd_btn">
                             {{ __('ptah::ui.col_show_all') }}
                         </button>
                         <button wire:click="hideAllColumns" @click="open = false"
-                            class="flex-1 py-1 text-xs text-center text-gray-700 transition-colors bg-gray-100 rounded hover:bg-gray-200">
+                            class="flex-1 py-1 text-xs text-center transition-colors rounded ptah-c-col_dd_btn">
                             {{ __('ptah::ui.col_hide_all') }}
                         </button>
                     </div>
@@ -155,12 +155,12 @@
                     @foreach ($crudConfig['cols'] ?? [] as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action' && ($col['colsNomeFisico'] ?? '') !== 'id')
                             @php $colField = $col['colsNomeFisico']; @endphp
-                            <label class="flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+                            <label class="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer ptah-c-col_dd_item">
                                 <input type="checkbox"
                                     wire:model.live="formDataColumns.{{ $colField }}"
                                     wire:change="updateColumns"
                                     class="rounded cursor-pointer text-primary focus:ring-primary/30">
-                                <span class="text-sm text-gray-700 select-none">{{ $col['colsNomeLogico'] ?? $colField }}</span>
+                                <span class="text-sm select-none ptah-c-dd_item">{{ $col['colsNomeLogico'] ?? $colField }}</span>
                             </label>
                         @endif
                     @endforeach
@@ -191,10 +191,10 @@
                 @foreach ($densityMap as $d => $info)
                     <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
-                               {{ $viewDensity === $d ? 'font-semibold text-blue-600' : '' }}">
+                               {{ $viewDensity === $d ? 'font-semibold ptah-c-dd_active' : '' }}">
                         <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
                         @if ($viewDensity === $d)
-                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-4 h-4 shrink-0 ptah-c-dd_active" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         @endif
