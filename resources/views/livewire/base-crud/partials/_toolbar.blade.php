@@ -1,5 +1,6 @@
 {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md ptah-c-toolbar">
+<div class="mb-4 border rounded-md ptah-c-toolbar">
+<div class="flex flex-wrap items-center gap-2 px-4 py-3">
 
     {{-- Botão Novo --}}
     @if ($effectivePerms['canCreate'])
@@ -14,7 +15,7 @@
     @endif
 
     {{-- Busca Global --}}
-    <div class="flex-1 min-w-[200px] max-w-xs">
+    <div class="flex-1 min-w-[200px] max-w-xs relative">
         <x-forge-input
             wire:model.live.debounce.400ms="search"
             type="text"
@@ -22,6 +23,16 @@
             iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
             class="ptah-c-search"
         />
+        @if ($search !== '')
+            <button type="button"
+                wire:click="$set('search', '')"
+                class="absolute inset-y-0 right-2 flex items-center ptah-c-search_x"
+                title="{{ __('ptah::ui.btn_clear_filters') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        @endif
     </div>
 
     {{-- Grupo de ações à direita --}}
@@ -237,7 +248,33 @@
         </select>
 
     </div>
-</div>
+</div>{{-- end main flex row --}}
+
+{{-- Filter chips (busca ativa + filtros ativos) --}}
+@if ($search !== '' || count($textFilter) > 0)
+    <div class="flex flex-wrap items-center gap-1.5 px-4 pb-2.5 -mt-1">
+        @if ($search !== '')
+            <span class="ptah-c-chip">
+                <svg class="w-3 h-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
+                {{ \Illuminate\Support\Str::limit($search, 30) }}
+                <button type="button" wire:click="$set('search', '')" title="{{ __('ptah::ui.btn_clear_filters') }}">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </span>
+        @endif
+        @foreach ($textFilter as $badge)
+            <span class="ptah-c-chip">
+                <span class="opacity-60 mr-0.5">{{ $badge['label'] }}:</span>
+                {{ \Illuminate\Support\Str::limit((string) $badge['value'], 20) }}
+                <button type="button" wire:click="removeTextFilterBadge('{{ $badge['field'] }}')" title="{{ __('ptah::ui.btn_clear_filters') }}">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </span>
+        @endforeach
+    </div>
+@endif
+
+</div>{{-- end toolbar wrapper --}}
 
 
 

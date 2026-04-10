@@ -17,13 +17,15 @@ trait HasCrudForm
      */
     public function prepareCreate(): void
     {
-        $this->formData     = [];
-        $this->formErrors   = [];
-        $this->editingId    = null;
-        $this->sdSearches   = [];
-        $this->sdResults    = [];
-        $this->sdLabels     = [];
-        $this->imageUploads = [];
+        $this->formData        = [];
+        $this->formErrors      = [];
+        $this->editingId       = null;
+        $this->sdSearches      = [];
+        $this->sdResults       = [];
+        $this->sdLabels        = [];
+        $this->imageUploads    = [];
+        $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
+        $this->dispatch('ptah:form-ready');
     }
 
     /**
@@ -50,17 +52,19 @@ trait HasCrudForm
             return;
         }
 
-        $this->editingId    = $id;
-        $this->formData     = $record->toArray();
-        $this->formErrors   = [];
-        $this->sdSearches   = [];
-        $this->sdResults    = [];
-        $this->imageUploads = [];
+        $this->editingId       = $id;
+        $this->formData        = $record->toArray();
+        $this->formErrors      = [];
+        $this->sdSearches      = [];
+        $this->sdResults       = [];
+        $this->imageUploads    = [];
+        $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
 
         // Pre-populate searchdropdown labels
         $this->preloadSdLabels($record);
 
         $this->showModal = true;
+        $this->dispatch('ptah:form-ready');
     }
 
     public function closeModal(): void
@@ -175,6 +179,7 @@ trait HasCrudForm
 
             $this->closeModal();
             $this->dispatch('crud-saved', model: $this->model);
+            $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_saved'), color: 'success');
 
             // Se o hook retornou um RedirectResponse, executa o redirect
             if (isset($redirect) && $redirect instanceof \Illuminate\Http\RedirectResponse) {

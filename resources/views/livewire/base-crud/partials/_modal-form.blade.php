@@ -1,7 +1,40 @@
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
 {{-- ── Modal Criar / Editar ─────────────────────────────────────────── --}}
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
-<div x-data="{ open: @entangle('showModal') }" @close="$wire.closeModal()">
+<div
+    x-data="{
+        open: @entangle('showModal'),
+        _dirty: false,
+        _markDirty() { this._dirty = true; },
+        closeModal() { this._tryClose(); },
+        _tryClose() {
+            if (this._dirty) {
+                if (!confirm('{{ addslashes(__('ptah::ui.modal_unsaved_confirm')) }}')) return;
+            }
+            this._dirty = false;
+            this.open = false;
+            $wire.closeModal();
+        },
+        _focusFirst() {
+            $nextTick(() => {
+                const f = $el.querySelector(
+                    'input:not([type=hidden]):not([type=checkbox]):not([readonly]), textarea, select'
+                );
+                if (f) f.focus();
+            });
+        }
+    }"
+    x-effect="
+        if (open) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            _dirty = false;
+        }
+    "
+    @ptah:form-ready.window="_focusFirst()"
+    @keydown.escape.window="open && _tryClose()"
+>
     <x-forge-modal
         :title="($editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix')) . ' ' . $crudTitle"
         :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
@@ -14,7 +47,7 @@
             </div>
         @endif
 
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4" wire:key="crud-form-fields-{{ $formInstanceKey }}" @input="_markDirty()" @change="_markDirty()">
 
                     @foreach ($formCols as $col)
                         @php
@@ -26,6 +59,7 @@
                             $fMask     = $col['colsMask'] ?? null;
                             $fValue    = $formData[$fField] ?? '';
                             $fHelpText = $col['colsHelpText'] ?? null;
+                            $tabIdx    = $loop->index + 1;
 
             $fBorderClass  = $fError
                                 ? 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-300'
@@ -90,6 +124,8 @@
                                             wire:model.live="formData.{{ $fField }}"
                                         >
                                         <div
+                                            tabindex="{{ $tabIdx }}"
+                                            @keydown.space.prevent @keydown.enter.prevent="open = !open"
                                             @click="open = !open"
                                             :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
                                             class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 bg-white dark:bg-slate-700 dark:text-white ptah-c-form_sel"
@@ -169,6 +205,7 @@
                                                 @focus="$wire.openDropdown('{{ $fField }}')"
                                                 placeholder="{{ __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
                                                 autocomplete="off"
+                                                tabindex="{{ $tabIdx }}"
                                                 class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                             />
                                             <button type="button"
@@ -287,6 +324,7 @@
                                             wire:model.live="formData.{{ $fField }}"
                                             @input="updateFromUrl($event.target.value)"
                                             placeholder="https://..."
+                                            tabindex="{{ $tabIdx }}"
                                             class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
                                     </div>
@@ -363,6 +401,7 @@
                                             @input="onInput($event)"
                                             @focus="$event.target.setSelectionRange($event.target.value.length, $event.target.value.length)"
                                             @if($fRequired) required @endif
+                                            tabindex="{{ $tabIdx }}"
                                             placeholder="R$ 0,00"
                                             class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
@@ -399,6 +438,7 @@
                                                 @input="onInput($event)"
                                                 style="text-transform: uppercase"
                                                 @if($fRequired) required @endif
+                                                tabindex="{{ $tabIdx }}"
                                                 placeholder=""
                                                 class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                             />
@@ -418,6 +458,7 @@
                                         :required="$fRequired"
                                         :error="$fError"
                                         :step="($fTipo === 'number' && !$fMask) ? 'any' : null"
+                                        :tabindex="$tabIdx"
                                     />
                                 @endif
                             @endif
@@ -432,7 +473,7 @@
         </div>
 
         <x-slot name="footer">
-            <x-forge-button @click="open = false; $wire.closeModal()" color="dark" flat :disabled="$creating">
+            <x-forge-button @click="_tryClose()" color="dark" flat :disabled="$creating">
                 {{ __('ptah::ui.btn_cancel') }}
             </x-forge-button>
             <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">

@@ -52,7 +52,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        @click="open = false; $dispatch('close')"
+        @click="typeof closeModal === 'function' ? closeModal() : (open = false)"
     ></div>
 
     {{-- Painel --}}
@@ -76,7 +76,7 @@
             </div>
             <button
                 type="button"
-                @click="open = false; $dispatch('close')"
+                @click="typeof closeModal === 'function' ? closeModal() : (open = false)"
                 class="ml-4 shrink-0 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-150 focus:outline-none"
                 aria-label="Fechar modal"
             >

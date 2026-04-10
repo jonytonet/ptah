@@ -173,6 +173,7 @@ class BaseCrud extends Component
     public ?int   $editingId    = null;
     public bool   $showModal    = false;
     public bool   $creating     = false;
+    public int    $formInstanceKey = 0;
 
     /** Form validation errors */
     public array $formErrors = [];
@@ -181,6 +182,14 @@ class BaseCrud extends Component
 
     public bool $showDeleteConfirm = false;
     public ?int $deletingId        = null;
+
+    // ── Lifecycle: clear bulk selection on page change ────────────────────────
+
+    public function updatingPage(): void
+    {
+        $this->selectedRows = [];
+        $this->selectAll    = false;
+    }
 
     // ── SearchDropdown ────────────────────────────────────────────────────────
 

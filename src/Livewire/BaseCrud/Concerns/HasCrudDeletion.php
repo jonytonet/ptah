@@ -60,6 +60,7 @@ trait HasCrudDeletion
 
         $this->cancelDelete();
         $this->dispatch('crud-deleted', model: $this->model);
+        $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_deleted'), color: 'warn');
     }
 
     public function restoreRecord(int $id): void

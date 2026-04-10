@@ -40,6 +40,12 @@ trait HasCrudBulkActions
         }
     }
 
+    public function clearSelection(): void
+    {
+        $this->selectedRows = [];
+        $this->selectAll    = false;
+    }
+
     // ── Bulk delete ────────────────────────────────────────────────────────────
 
     public function bulkDelete(): void
@@ -69,6 +75,63 @@ trait HasCrudBulkActions
         $this->bulkActionInProgress = false;
 
         $this->dispatch('crud-bulk-deleted', model: $this->model, count: $deletedCount);
+        $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_deleted', ['n' => $deletedCount]), color: 'warn');
+    }
+
+    public function bulkRestore(): void
+    {
+        if (empty($this->selectedRows) || $this->bulkActionInProgress) {
+            return;
+        }
+
+        $this->bulkActionInProgress = true;
+        $modelInstance = $this->resolveEloquentModel();
+
+        if ($modelInstance) {
+            DB::transaction(function () use ($modelInstance) {
+                $modelInstance->newQuery()
+                    ->withTrashed()
+                    ->whereIn('id', $this->selectedRows)
+                    ->each(fn ($record) => $record->restore());
+            });
+            $this->cacheService->invalidateModel($this->model);
+            $this->updateTrashedCount();
+        }
+
+        $restoredCount              = count($this->selectedRows);
+        $this->selectedRows         = [];
+        $this->selectAll            = false;
+        $this->bulkActionInProgress = false;
+
+        $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_restored', ['n' => $restoredCount]), color: 'success');
+    }
+
+    public function bulkForceDelete(): void
+    {
+        if (empty($this->selectedRows) || $this->bulkActionInProgress) {
+            return;
+        }
+
+        $this->bulkActionInProgress = true;
+        $modelInstance = $this->resolveEloquentModel();
+
+        if ($modelInstance) {
+            DB::transaction(function () use ($modelInstance) {
+                $modelInstance->newQuery()
+                    ->withTrashed()
+                    ->whereIn('id', $this->selectedRows)
+                    ->each(fn ($record) => $record->forceDelete());
+            });
+            $this->cacheService->invalidateModel($this->model);
+            $this->updateTrashedCount();
+        }
+
+        $deletedCount               = count($this->selectedRows);
+        $this->selectedRows         = [];
+        $this->selectAll            = false;
+        $this->bulkActionInProgress = false;
+
+        $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_force_deleted', ['n' => $deletedCount]), color: 'danger');
     }
 
     // ── Custom bulk actions ────────────────────────────────────────────────────

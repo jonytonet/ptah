@@ -1,6 +1,9 @@
 {{-- ── Drag-and-drop + Resize de colunas ────────────────────────────── --}}
 @once
 <style>
+    /* Reserva espaço da scrollbar permanentemente: evita layout shift ao abrir/fechar modais */
+    html { scrollbar-gutter: stable; }
+
     /* Drag feedback */
     .ptah-sortable-col.ptah-dragging   { opacity: .45; }
     .ptah-sortable-col.ptah-drag-over  { outline: 2px solid #2563eb; outline-offset: -2px; }
@@ -76,25 +79,31 @@
     }
 
     /* Row hover highlight */
-    .ptah-base-crud tbody tr.ptah-tr {
+    .ptah-base-crud tbody tr.ptah-c-tr {
         position: relative;
         transition: background-color .12s ease, box-shadow .12s ease;
     }
-    .ptah-base-crud tbody tr.ptah-tr:hover {
+    .ptah-base-crud tbody tr.ptah-c-tr:hover {
         box-shadow: inset 3px 0 0 #1e40af;
     }
     /* Em dark mode: accent mais suave */
-    .ptah-base-crud.ptah-dark tbody tr.ptah-tr:hover,
-    .ptah-dark .ptah-base-crud tbody tr.ptah-tr:hover {
+    .ptah-base-crud.ptah-dark tbody tr.ptah-c-tr:hover,
+    .ptah-dark .ptah-base-crud tbody tr.ptah-c-tr:hover {
         box-shadow: inset 3px 0 0 #1d4ed8;
     }
     /* Botões de ação ficam opacos no hover da linha */
-    .ptah-base-crud tbody tr.ptah-tr .ptah-row-btns {
+    .ptah-base-crud tbody tr.ptah-c-tr .ptah-row-btns {
         opacity: 0.35;
         transition: opacity .12s ease;
     }
-    .ptah-base-crud tbody tr.ptah-tr:hover .ptah-row-btns {
+    .ptah-base-crud tbody tr.ptah-c-tr:hover .ptah-row-btns {
         opacity: 1;
+    }
+    /* Telas tácteis (sem hover): botões sempre visíveis */
+    @media (hover: none) {
+        .ptah-base-crud tbody tr.ptah-c-tr .ptah-row-btns {
+            opacity: 1;
+        }
     }
 
     /* Row action buttons */
@@ -117,12 +126,14 @@
         100% { background-position:  200% center; }
     }
     .ptah-loading-bar {
+        height: 2px;
         background: linear-gradient(90deg,
             transparent 0%,
             var(--color-primary, #1e40af) 50%,
             transparent 100%);
         background-size: 200% 100%;
         animation: ptah-shimmer 1.4s ease-in-out infinite;
+        border-radius: 1px;
     }
 </style>
 
@@ -253,6 +264,92 @@
         _resizeTh = null; _resizeField = null; _resizeCrud = null;
     });
 
+    /* ═══════════════════════════════════════════════════════
+       DOUBLE-CLICK AUTO-FIT COLUNA
+    ══════════════════════════════════════════════════════════ */
+    document.addEventListener('dblclick', function (e) {
+        const handle = e.target.closest('.ptah-resize-handle');
+        if (!handle) return;
+        e.preventDefault(); e.stopPropagation();
+        const th = handle.closest('th');
+        if (!th) return;
+        const crudId  = th.closest('tr')?.id?.replace('ptah-thead-row-', '');
+        const field   = th.dataset?.column;
+        if (!th || !crudId || !field) return;
+
+        // Reset: limpa width inline e salva null no servidor
+        th.style.width    = '';
+        th.style.minWidth = '60px';
+        const wire = findWire(crudId);
+        if (wire) wire.call('saveColumnWidth', field, null);
+    });
+
+})();
+</script>
+
+{{-- ═══════════════════════════════════════════════════════
+     HIGHLIGHT DE BUSCA NAS CÉLULAS
+    ══════════════════════════════════════════════════════════ --}}
+<script>
+(function () {
+    if (window.__ptahHighlightInit) return;
+    window.__ptahHighlightInit = true;
+
+    function escapeRegex(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function ptahHighlight(wrap, term) {
+        // Limpa marks anteriores
+        wrap.querySelectorAll('mark.ptah-hl').forEach(m => {
+            const parent = m.parentNode;
+            parent.replaceChild(document.createTextNode(m.textContent), m);
+            parent.normalize();
+        });
+        if (!term || term.length < 2) return;
+        const regex = new RegExp('(' + escapeRegex(term) + ')', 'gi');
+        wrap.querySelectorAll('td').forEach(td => {
+            // Só atua em nós de texto diretos e simples (evita quebrar HTML complexo)
+            Array.from(td.childNodes).forEach(node => {
+                if (node.nodeType !== Node.TEXT_NODE) return;
+                const text = node.nodeValue;
+                if (!regex.test(text)) return;
+                regex.lastIndex = 0;
+                const frag = document.createDocumentFragment();
+                let last = 0, match;
+                while ((match = regex.exec(text)) !== null) {
+                    frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+                    const mark = document.createElement('mark');
+                    mark.className = 'ptah-hl';
+                    mark.textContent = match[0];
+                    frag.appendChild(mark);
+                    last = match.index + match[0].length;
+                }
+                frag.appendChild(document.createTextNode(text.slice(last)));
+                td.replaceChild(frag, node);
+            });
+        });
+    }
+
+    function runHighlight() {
+        document.querySelectorAll('[id^="ptah-table-wrap-"]').forEach(wrap => {
+            const wireEl = wrap.closest('[wire\\:id]');
+            if (!wireEl) return;
+            // Lê o termo direto do input de busca no DOM (mais confiável que wire.search)
+            const searchEl = wireEl.querySelector('[wire\\:model\\.live\\.debounce\\.400ms="search"]');
+            const term = (searchEl?.value ?? '').trim();
+            ptahHighlight(wrap, term);
+        });
+    }
+
+    document.addEventListener('livewire:navigated', runHighlight);
+
+    // Livewire 4: hook no commit para rodar após cada atualização de componente
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => { queueMicrotask(runHighlight); });
+        });
+    });
 })();
 </script>
 

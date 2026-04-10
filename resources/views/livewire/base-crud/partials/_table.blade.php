@@ -12,6 +12,12 @@
 
         <thead class="{{ $crudConfig['theadClass'] ?? 'ptah-c-thead' }}">
             <tr id="ptah-thead-row-{{ $crudTitle }}">
+                @if ($effectivePerms['canDelete'])
+                    <th class="px-3 py-3 w-8 ptah-c-th_text">
+                        <input type="checkbox" wire:click="toggleSelectAll" @checked($selectAll)
+                               class="rounded cursor-pointer text-primary focus:ring-primary/30">
+                    </th>
+                @endif
                 @foreach ($visibleCols as $col)
                     @if (($col['colsTipo'] ?? '') !== 'action')
                         @php
@@ -42,18 +48,18 @@
                                     </svg>
                                 </span>
                                 {{-- Label (sort) --}}
-                                <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none hover:text-blue-600' : '' }}"
+                                <span class="flex-1 inline-flex items-center gap-1 {{ $isSortable ? 'cursor-pointer select-none ptah-c-sort_hover' : '' }}"
                                       @if($isSortable) wire:click.stop="sortBy('{{ $colSortBy }}')" @endif>
                                     {{ $colLabel }}
                                     @if ($isSortable)
                                         @if ($sort === $colSortBy)
                                             @if ($direction === 'ASC')
-                                                <svg class="w-3 h-3 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                                                <svg class="w-3 h-3 shrink-0 ptah-c-sort_active" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
                                             @else
-                                                <svg class="w-3 h-3 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                                <svg class="w-3 h-3 shrink-0 ptah-c-sort_active" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                                             @endif
                                         @else
-                                            <svg class="w-3 h-3 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4M16 15l-4 4-4-4"/></svg>
+                                            <svg class="w-3 h-3 shrink-0 ptah-c-sort_idle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4M16 15l-4 4-4-4"/></svg>
                                         @endif
                                     @endif
                                 </span>
@@ -95,11 +101,20 @@
                 @endphp
 
                 <tr style="{{ $rowStyle }}"
-                    class="transition-colors ptah-c-tr
+                    class="transition-colors ptah-c-tr ptah-tr
                         @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
                         {{ $rowLink ? 'cursor-pointer' : '' }}"
                     @if($rowLink) @click="window.location='{{ $rowLink }}'" @endif
                     wire:key="row-{{ $row->id ?? $loop->index }}">
+
+                    {{-- Checkbox de seleção em bulk --}}
+                    @if ($effectivePerms['canDelete'])
+                        <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }}" onclick="event.stopPropagation()">
+                            <input type="checkbox" wire:model.live="selectedRows" value="{{ $row->id ?? 0 }}"
+                                   onclick="event.stopPropagation()"
+                                   class="rounded cursor-pointer text-primary focus:ring-primary/30">
+                        </td>
+                    @endif
 
                     {{-- Células de dados --}}
                     @foreach ($visibleCols as $col)
@@ -180,7 +195,7 @@
                             <div class="ptah-row-btns flex items-center justify-center gap-2">
 
                                 {{-- Editar --}}
-                                @if ($effectivePerms['canUpdate'])
+                                @if ($effectivePerms['canUpdate'] && !$showTrashed)
                                     <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
                                         @click.stop
                                         class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}">
@@ -219,16 +234,41 @@
             @empty
                 <tr>
                     <td colspan="99" class="px-6 py-16 text-center">
+                        @php
+                            $emptyIsFiltered = $search !== ''
+                                || count(array_filter($filters)) > 0
+                                || count(array_filter($dateRanges)) > 0
+                                || $quickDateFilter !== '';
+                        @endphp
                         <div class="flex flex-col items-center gap-3">
                             <div class="flex items-center justify-center w-16 h-16 rounded-md ptah-c-empty_box">
-                                <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                                </svg>
+                                @if ($emptyIsFiltered)
+                                    <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                                    </svg>
+                                @else
+                                    <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                    </svg>
+                                @endif
                             </div>
                             <div>
-                                <p class="text-sm font-semibold ptah-c-empty_ttl">{{ __('ptah::ui.empty_title') }}</p>
-                                <p class="text-xs mt-0.5 ptah-c-empty_sub">{{ __('ptah::ui.empty_subtitle') }}</p>
+                                <p class="text-sm font-semibold ptah-c-empty_ttl">
+                                    {{ $emptyIsFiltered ? __('ptah::ui.empty_filtered_title') : __('ptah::ui.empty_title') }}
+                                </p>
+                                <p class="text-xs mt-0.5 ptah-c-empty_sub">
+                                    {{ $emptyIsFiltered ? __('ptah::ui.empty_filtered_subtitle') : __('ptah::ui.empty_subtitle') }}
+                                </p>
                             </div>
+                            @if ($emptyIsFiltered)
+                                <button wire:click="clearFilters"
+                                    class="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all ptah-c-btn">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    {{ __('ptah::ui.btn_clear_filters') }}
+                                </button>
+                            @endif
                         </div>
                     </td>
                 </tr>
