@@ -26,6 +26,19 @@ class AiModelConfigList extends Component
 
     public function mount(): void
     {
+        $this->authorizeAiConfig();
+    }
+
+    /**
+     * Fail-closed authorization for managing AI provider credentials.
+     *
+     * Must be called on EVERY mutating action, not only on mount(): in Livewire
+     * mount() runs once, so without re-checking, a user whose permission was
+     * revoked mid-session (or a crafted request on an already-mounted component)
+     * could still create/update/delete API-key records.
+     */
+    protected function authorizeAiConfig(): void
+    {
         abort_unless(
             ptah_can('ai.config', 'manage') || ptah_is_master(),
             403,
@@ -34,44 +47,60 @@ class AiModelConfigList extends Component
     }
 
     // ── List ───────────────────────────────────────────────────────────
-    public string $search    = '';
-    public string $sort      = 'name';
+    public string $search = '';
+
+    public string $sort = 'name';
+
     public string $direction = 'asc';
 
     // ── Modal ──────────────────────────────────────────────────────────
-    public bool  $showModal = false;
-    public bool  $isEditing = false;
-    public ?int  $editingId = null;
+    public bool $showModal = false;
+
+    public bool $isEditing = false;
+
+    public ?int $editingId = null;
 
     // ── Form fields ────────────────────────────────────────────────────
-    public string  $name          = '';
-    public string  $provider      = 'openai';
-    public string  $model         = 'gpt-4o-mini';
-    public string  $api_key       = '';
-    public string  $api_endpoint  = '';
-    public int     $max_tokens    = 1024;
-    public string  $temperature   = '0.70';
-    public string  $system_prompt = '';
-    public string  $notes         = '';
-    public bool    $is_active     = true;
-    public bool    $is_default    = false;
+    public string $name = '';
+
+    public string $provider = 'openai';
+
+    public string $model = 'gpt-4o-mini';
+
+    public string $api_key = '';
+
+    public string $api_endpoint = '';
+
+    public int $max_tokens = 1024;
+
+    public string $temperature = '0.70';
+
+    public string $system_prompt = '';
+
+    public string $notes = '';
+
+    public bool $is_active = true;
+
+    public bool $is_default = false;
 
     // ── Delete ─────────────────────────────────────────────────────────
-    public ?int  $deleteId        = null;
-    public bool  $showDeleteModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showDeleteModal = false;
 
     // ── Feedback ───────────────────────────────────────────────────────
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     /** Supported providers (value => label) */
     public const PROVIDERS = [
-        'openai'    => 'OpenAI',
+        'openai' => 'OpenAI',
         'anthropic' => 'Anthropic (Claude)',
-        'gemini'    => 'Google Gemini',
-        'ollama'    => 'Ollama (Local)',
-        'groq'      => 'Groq',
-        'mistral'   => 'Mistral',
+        'gemini' => 'Google Gemini',
+        'ollama' => 'Ollama (Local)',
+        'groq' => 'Groq',
+        'mistral' => 'Mistral',
     ];
 
     // ── Rules ──────────────────────────────────────────────────────────
@@ -79,34 +108,38 @@ class AiModelConfigList extends Component
     protected function rules(): array
     {
         return [
-            'name'          => 'required|string|max:255',
-            'provider'      => 'required|in:' . implode(',', array_keys(self::PROVIDERS)),
-            'model'         => 'required|string|max:100',
-            'api_key'       => ($this->isEditing || $this->provider === 'ollama') ? 'nullable|string' : 'required|string',
-            'api_endpoint'  => 'nullable|url|max:500',
-            'max_tokens'    => 'required|integer|min:1|max:128000',
-            'temperature'   => 'required|numeric|min:0|max:2',
+            'name' => 'required|string|max:255',
+            'provider' => 'required|in:'.implode(',', array_keys(self::PROVIDERS)),
+            'model' => 'required|string|max:100',
+            'api_key' => ($this->isEditing || $this->provider === 'ollama') ? 'nullable|string' : 'required|string',
+            'api_endpoint' => 'nullable|url|max:500',
+            'max_tokens' => 'required|integer|min:1|max:128000',
+            'temperature' => 'required|numeric|min:0|max:2',
             'system_prompt' => 'nullable|string|max:5000',
-            'notes'         => 'nullable|string|max:1000',
-            'is_active'     => 'boolean',
-            'is_default'    => 'boolean',
+            'notes' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
+            'is_default' => 'boolean',
         ];
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────────
 
-    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function sort(string $column): void
     {
         $this->direction = ($this->sort === $column && $this->direction === 'asc') ? 'desc' : 'asc';
-        $this->sort      = $column;
+        $this->sort = $column;
     }
 
     // ── CRUD ───────────────────────────────────────────────────────────
 
     public function create(): void
     {
+        $this->authorizeAiConfig();
         $this->resetForm();
         $this->isEditing = false;
         $this->showModal = true;
@@ -115,20 +148,21 @@ class AiModelConfigList extends Component
 
     public function edit(int $id): void
     {
+        $this->authorizeAiConfig();
         $config = AiModelConfig::findOrFail($id);
 
-        $this->editingId     = $id;
-        $this->name          = $config->name;
-        $this->provider      = $config->provider;
-        $this->model         = $config->model;
-        $this->api_key       = '';   // never pre-fill the encrypted key
-        $this->api_endpoint  = $config->api_endpoint ?? '';
-        $this->max_tokens    = $config->max_tokens;
-        $this->temperature   = number_format((float) $config->temperature, 2);
+        $this->editingId = $id;
+        $this->name = $config->name;
+        $this->provider = $config->provider;
+        $this->model = $config->model;
+        $this->api_key = '';   // never pre-fill the encrypted key
+        $this->api_endpoint = $config->api_endpoint ?? '';
+        $this->max_tokens = $config->max_tokens;
+        $this->temperature = number_format((float) $config->temperature, 2);
         $this->system_prompt = $config->system_prompt ?? '';
-        $this->notes         = $config->notes ?? '';
-        $this->is_active     = $config->is_active;
-        $this->is_default    = $config->is_default;
+        $this->notes = $config->notes ?? '';
+        $this->is_active = $config->is_active;
+        $this->is_default = $config->is_default;
 
         $this->isEditing = true;
         $this->showModal = true;
@@ -137,6 +171,7 @@ class AiModelConfigList extends Component
 
     public function save(): void
     {
+        $this->authorizeAiConfig();
         $data = $this->validate();
 
         try {
@@ -166,22 +201,25 @@ class AiModelConfigList extends Component
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId        = $id;
+        $this->authorizeAiConfig();
+        $this->deleteId = $id;
         $this->showDeleteModal = true;
     }
 
     public function delete(): void
     {
-        if (!$this->deleteId) {
+        $this->authorizeAiConfig();
+
+        if (! $this->deleteId) {
             return;
         }
 
         try {
             $config = AiModelConfig::findOrFail($this->deleteId);
             $this->configService->delete($config);
-            $this->successMsg     = __('ptah::ui.ai_config_deleted');
+            $this->successMsg = __('ptah::ui.ai_config_deleted');
             $this->showDeleteModal = false;
-            $this->deleteId       = null;
+            $this->deleteId = null;
         } catch (\Throwable $e) {
             $this->errorMsg = $e->getMessage();
         }
@@ -189,6 +227,8 @@ class AiModelConfigList extends Component
 
     public function setDefault(int $id): void
     {
+        $this->authorizeAiConfig();
+
         try {
             $this->configService->setDefault($id);
             $this->successMsg = __('ptah::ui.ai_config_set_default_ok');
@@ -199,7 +239,7 @@ class AiModelConfigList extends Component
 
     public function closeModal(): void
     {
-        $this->showModal  = false;
+        $this->showModal = false;
         $this->resetForm();
         $this->resetValidation();
     }
@@ -212,8 +252,8 @@ class AiModelConfigList extends Component
         return AiModelConfig::query()
             ->when($this->search, fn ($q) => $q->where(function ($q2) {
                 $q2->where('name', 'like', "%{$this->search}%")
-                   ->orWhere('provider', 'like', "%{$this->search}%")
-                   ->orWhere('model', 'like', "%{$this->search}%");
+                    ->orWhere('provider', 'like', "%{$this->search}%")
+                    ->orWhere('model', 'like', "%{$this->search}%");
             }))
             ->orderBy($this->sort, $this->direction)
             ->paginate(20);
@@ -224,7 +264,7 @@ class AiModelConfigList extends Component
     public function render()
     {
         return view('ptah::livewire.ai.ai-model-config-list', [
-            'rows'      => $this->rows,
+            'rows' => $this->rows,
             'providers' => self::PROVIDERS,
         ])->title(__('ptah::ui.ai_config_title'));
     }
@@ -238,11 +278,11 @@ class AiModelConfigList extends Component
             'max_tokens', 'temperature', 'system_prompt', 'notes',
             'is_active', 'is_default', 'errorMsg',
         ]);
-        $this->provider    = 'openai';
-        $this->model       = 'gpt-4o-mini';
-        $this->max_tokens  = 1024;
+        $this->provider = 'openai';
+        $this->model = 'gpt-4o-mini';
+        $this->max_tokens = 1024;
         $this->temperature = '0.70';
-        $this->is_active   = true;
-        $this->is_default  = false;
+        $this->is_active = true;
+        $this->is_default = false;
     }
 }

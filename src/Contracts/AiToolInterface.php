@@ -46,8 +46,8 @@ interface AiToolInterface
     /**
      * Execute the tool with the provided arguments.
      *
-     * @param  array<string, mixed> $arguments  Named arguments from the LLM tool call
-     * @return array<mixed>                     Data to return to the LLM (will be JSON-encoded)
+     * @param  array<string, mixed>  $arguments  Named arguments from the LLM tool call
+     * @return array<mixed> Data to return to the LLM (will be JSON-encoded)
      */
     public function execute(array $arguments): array;
 }

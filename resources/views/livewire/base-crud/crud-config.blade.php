@@ -2572,7 +2572,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_create_desc') }}</p>
                                 <textarea wire:model="hookBeforeCreate" rows="6"
-                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;$data['status'] = 'pending';&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeCreate&#10;@App\CrudHooks\ProductHooks"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;merge(data, {'status': 'pending', 'uuid': uuid()})&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeCreate&#10;@App\CrudHooks\ProductHooks"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 
@@ -2584,7 +2584,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_create_desc') }}</p>
                                 <textarea wire:model="hookAfterCreate" rows="6"
-                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;Log::info('Created: ' . $record->id);&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterCreate&#10;@App\CrudHooks\ProductHooks@afterCreate"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterCreate&#10;@App\CrudHooks\ProductHooks@afterCreate&#10;&#10;// {{ __('ptah::ui.cfg_hooks_after_create_desc') }}"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 
@@ -2596,7 +2596,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_update_desc') }}</p>
                                 <textarea wire:model="hookBeforeUpdate" rows="6"
-                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;if ($record->status === 'published') {&#10;    $data['published_at'] = now();&#10;}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;merge(data, {'published_at': now()})&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeUpdate&#10;@App\CrudHooks\ProductHooks"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 
@@ -2608,7 +2608,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_update_desc') }}</p>
                                 <textarea wire:model="hookAfterUpdate" rows="6"
-                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;cache()->forget('product_' . $record->id);&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterUpdate"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterUpdate&#10;@App\CrudHooks\ProductHooks@afterUpdate&#10;&#10;// {{ __('ptah::ui.cfg_hooks_after_update_desc') }}"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 

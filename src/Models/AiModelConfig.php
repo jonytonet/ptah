@@ -15,22 +15,22 @@ use Ptah\Traits\HasAuditFields;
  * The api_key is ALWAYS stored encrypted via the 'encrypted' cast.
  * It requires a valid APP_KEY in the host application.
  *
- * @property int         $id
- * @property string      $name
- * @property string      $provider       openai|anthropic|gemini|ollama|groq|mistral
- * @property string      $model
- * @property string      $api_key        Encrypted at rest
+ * @property int $id
+ * @property string $name
+ * @property string $provider openai|anthropic|gemini|ollama|groq|mistral
+ * @property string $model
+ * @property string $api_key Encrypted at rest
  * @property string|null $api_endpoint
- * @property int         $max_tokens
- * @property float       $temperature
+ * @property int $max_tokens
+ * @property float $temperature
  * @property string|null $system_prompt
  * @property string|null $notes
- * @property bool        $is_active
- * @property bool        $is_default
+ * @property bool $is_active
+ * @property bool $is_default
  */
 class AiModelConfig extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'ptah_ai_model_configs';
 
@@ -52,14 +52,14 @@ class AiModelConfig extends Model
     ];
 
     protected $casts = [
-        'api_key'     => 'encrypted',
-        'max_tokens'  => 'integer',
+        'api_key' => 'encrypted',
+        'max_tokens' => 'integer',
         'temperature' => 'float',
-        'is_active'   => 'boolean',
-        'is_default'  => 'boolean',
-        'created_by'  => 'integer',
-        'updated_by'  => 'integer',
-        'deleted_by'  => 'integer',
+        'is_active' => 'boolean',
+        'is_default' => 'boolean',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'deleted_by' => 'integer',
     ];
 
     /** Hide encrypted key from JSON serialisation */

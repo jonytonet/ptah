@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Ptah\Services\AI;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
+use Prism\Prism\Streaming\Events\TextDeltaEvent;
+use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Ptah\Exceptions\AiProviderException;
@@ -30,7 +33,7 @@ class AiChatService
 
     public function __construct(
         private readonly AiProviderConfigService $configService,
-        private readonly AiToolRegistry          $toolRegistry,
+        private readonly AiToolRegistry $toolRegistry,
     ) {}
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -53,16 +56,16 @@ class AiChatService
             }
 
             return AiConversation::create([
-                'user_id'     => $userId,
-                'session_id'  => $sessionId,
-                'messages'    => [],
+                'user_id' => $userId,
+                'session_id' => $sessionId,
+                'messages' => [],
                 'tokens_used' => 0,
             ]);
         }
 
         return AiConversation::bySession($sessionId)->firstOrCreate(
             ['session_id' => $sessionId],
-            ['messages'   => [], 'tokens_used' => 0]
+            ['messages' => [], 'tokens_used' => 0]
         );
     }
 
@@ -96,7 +99,7 @@ class AiChatService
     /**
      * Loads a specific conversation that belongs to the given user.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function loadConversation(int $conversationId, int $userId): AiConversation
     {
@@ -108,113 +111,253 @@ class AiChatService
     /**
      * Sends a user message to the AI provider and returns the assistant's response.
      *
-     * @throws AiRateLimitException  When the session exceeds the configured rate limit
-     * @throws AiProviderException   When no active provider is configured or the API call fails
+     * @throws AiRateLimitException When the session exceeds the configured rate limit
+     * @throws AiProviderException When no active provider is configured or the API call fails
      */
     public function send(
-        string   $message,
-        string   $sessionId,
-        ?int     $userId         = null,
-        ?int     $conversationId = null,
+        string $message,
+        string $sessionId,
+        ?int $userId = null,
+        ?int $conversationId = null,
     ): array {
-        // â”€â”€ Rate limiting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        $rateKey = "ptah:ai:{$sessionId}";
-        $limit   = (int) config('ptah.ai_agent.rate_limit', 30);
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId);
+
+        try {
+            $response = $this->buildRequest($ctx)->asText();
+        } catch (\Throwable $e) {
+            $this->logProviderFailure($ctx['config'], $e);
+            throw new AiProviderException(
+                trans('ptah::ui.ai_widget_error').' '.$e->getMessage(),
+                previous: $e
+            );
+        } finally {
+            // Always restore the shared config (Octane / long-lived workers).
+            $this->restoreConfig($ctx['restoreConfig']);
+        }
+
+        return $this->persistTurn(
+            $ctx,
+            $message,
+            $response->text ?? '',
+            $response->usage->promptTokens ?? 0,
+            $response->usage->completionTokens ?? 0,
+        );
+    }
+
+    /**
+     * Streaming variant of send(): yields the assistant's text incrementally via
+     * the $onDelta callback, then persists the full conversation like send() does.
+     *
+     * @param  callable(string $delta, string $accumulated): void|null  $onDelta
+     * @return array{text: string, conversationId: int}
+     *
+     * @throws AiRateLimitException|AiProviderException
+     */
+    public function stream(
+        string $message,
+        string $sessionId,
+        ?int $userId = null,
+        ?int $conversationId = null,
+        ?callable $onDelta = null,
+    ): array {
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId);
+
+        $full = '';
+        $inputTokens = 0;
+        $outputTokens = 0;
+
+        try {
+            foreach ($this->buildRequest($ctx)->asStream() as $event) {
+                $delta = $this->extractDelta($event);
+                if ($delta !== '') {
+                    $full .= $delta;
+                    if ($onDelta) {
+                        $onDelta($delta, $full);
+                    }
+                }
+
+                // Usage is delivered on terminal events (StepFinish/StreamEnd).
+                $usage = is_object($event) && isset($event->usage) ? $event->usage : null;
+                if ($usage) {
+                    $inputTokens = $usage->promptTokens ?? $inputTokens;
+                    $outputTokens = $usage->completionTokens ?? $outputTokens;
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logProviderFailure($ctx['config'], $e);
+            throw new AiProviderException(
+                trans('ptah::ui.ai_widget_error').' '.$e->getMessage(),
+                previous: $e
+            );
+        } finally {
+            $this->restoreConfig($ctx['restoreConfig']);
+        }
+
+        return $this->persistTurn($ctx, $message, $full, $inputTokens, $outputTokens);
+    }
+
+    /**
+     * Extracts the text delta from a Prism stream item, tolerating both the real
+     * event-based API (TextDeltaEvent->delta) and the testing fake (stdClass->text).
+     * Non-text events (tool calls, thinking, etc.) yield an empty string.
+     */
+    private function extractDelta(mixed $event): string
+    {
+        if ($event instanceof TextDeltaEvent) {
+            return $event->delta;
+        }
+
+        if (is_object($event) && isset($event->text)) {
+            return (string) $event->text;
+        }
+
+        if (is_string($event)) {
+            return $event;
+        }
+
+        return '';
+    }
+
+    /**
+     * Runs all guards, resolves the conversation, applies provider credentials and
+     * builds the Prism message list. Shared by send() and stream().
+     *
+     * @return array{config: AiModelConfig, conversation: AiConversation, history: array<int, array<string, mixed>>, prismMessages: array<int, mixed>, systemPrompt: string, tools: array<int, mixed>, restoreConfig: array<string, mixed>}
+     *
+     * @throws AiRateLimitException|AiProviderException
+     */
+    private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId): array
+    {
+        // Guests may only use the chat when explicitly allowed.
+        if (! $userId && ! config('ptah.ai_agent.allow_guests', false)) {
+            throw new AiProviderException(trans('ptah::ui.ai_widget_no_provider'));
+        }
+
+        // Key by user when authenticated so it can't be bypassed by dropping the
+        // session cookie; fall back to session_id for guests.
+        $rateKey = $userId ? "ptah:ai:user:{$userId}" : "ptah:ai:sess:{$sessionId}";
+        $limit = (int) config('ptah.ai_agent.rate_limit', 30);
 
         if (RateLimiter::tooManyAttempts($rateKey, $limit)) {
             throw new AiRateLimitException(trans('ptah::ui.ai_widget_rate_limit'));
         }
         RateLimiter::hit($rateKey, 60);
 
-        // â”€â”€ Provider config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Optional per-user daily token budget.
+        $this->assertWithinDailyTokenBudget($userId);
+
         $config = $this->configService->findDefault();
-        if (!$config) {
+        if (! $config) {
             throw new AiProviderException(trans('ptah::ui.ai_widget_no_provider'));
         }
 
-        // â”€â”€ Resolve conversation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Resolve conversation
         if ($conversationId && $userId) {
             $conversation = $this->loadConversation($conversationId, $userId);
         } elseif ($userId) {
             // Authenticated without an explicit conversation ID → always create a new record
             $conversation = AiConversation::create([
-                'user_id'     => $userId,
-                'session_id'  => $sessionId,
-                'messages'    => [],
+                'user_id' => $userId,
+                'session_id' => $sessionId,
+                'messages' => [],
                 'tokens_used' => 0,
             ]);
         } else {
             $conversation = $this->getOrCreateConversation($sessionId);
         }
 
-        // â”€â”€ Set title from first message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        if (!$conversation->title) {
+        // Set title from first message
+        if (! $conversation->title) {
             $conversation->update(['title' => Str::limit($message, 60)]);
         }
 
         $maxHistory = (int) config('ptah.ai_agent.max_history', 20);
-        $history    = array_slice($conversation->messages ?? [], -$maxHistory);
+        $history = array_slice($conversation->messages ?? [], -$maxHistory);
 
-        // â”€â”€ Apply provider credentials â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        $this->applyConfig($config);
+        // Apply provider credentials (restored by the caller after the request)
+        $restoreConfig = $this->applyConfig($config);
 
-        // â”€â”€ Extend execution time for local/slow AI providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Extend execution time for local/slow AI providers
         set_time_limit(300);
 
-        // â”€â”€ Build message array â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        $prismMessages   = $this->buildPrismMessages($history);
+        $prismMessages = $this->buildPrismMessages($history);
         $prismMessages[] = new UserMessage($message);
 
         $systemPrompt = $config->system_prompt
             ?: config('ptah.ai_agent.system_prompt', 'You are a helpful assistant.');
 
-        $tools = $this->toolRegistry->getPrismTools();
+        return [
+            'config' => $config,
+            'conversation' => $conversation,
+            'history' => $history,
+            'prismMessages' => $prismMessages,
+            'systemPrompt' => $systemPrompt,
+            'tools' => $this->toolRegistry->getPrismTools(),
+            'restoreConfig' => $restoreConfig,
+        ];
+    }
 
-        // â”€â”€ Call Prism â€” Prism manages the agentic loop internally â”€â”€â”€â”€â”€â”€â”€â”€
-        try {
-            $request = Prism::text()
-                ->using($this->resolveProvider($config->provider), $config->model)
-                ->withSystemPrompt($systemPrompt)
-                ->withMessages($prismMessages)
-                ->withMaxTokens($config->max_tokens)
-                ->withMaxSteps(self::MAX_TOOL_ITERATIONS);
+    /**
+     * Builds the Prism text request from a prepared turn context.
+     *
+     * @param  array{config: AiModelConfig, prismMessages: array<int, mixed>, systemPrompt: string, tools: array<int, mixed>}  $ctx
+     */
+    private function buildRequest(array $ctx): PendingRequest
+    {
+        /** @var AiModelConfig $config */
+        $config = $ctx['config'];
 
-            if (!empty($tools)) {
-                $request = $request->withTools($tools);
-            }
+        $request = Prism::text()
+            ->using($this->resolveProvider($config->provider), $config->model)
+            ->withSystemPrompt($ctx['systemPrompt'])
+            ->withMessages($ctx['prismMessages'])
+            ->withMaxTokens($config->max_tokens)
+            ->usingTemperature((float) $config->temperature)
+            ->withMaxSteps(self::MAX_TOOL_ITERATIONS);
 
-            $response = $request->generate();
-        } catch (\Throwable $e) {
-            Log::error('[Ptah AI] Provider call failed', [
-                'provider'  => $config->provider,
-                'model'     => $config->model,
-                'exception' => $e::class,
-                'message'   => $e->getMessage(),
-            ]);
-            throw new AiProviderException(
-                trans('ptah::ui.ai_widget_error') . ' ' . $e->getMessage(),
-                previous: $e
-            );
+        if (! empty($ctx['tools'])) {
+            $request = $request->withTools($ctx['tools']);
         }
 
-        $finalText         = $response->text ?? '';
-        $totalInputTokens  = $response->usage->inputTokens ?? 0;
-        $totalOutputTokens = $response->usage->outputTokens ?? 0;
+        return $request;
+    }
 
-        // â”€â”€ Persist conversation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        $newMessages = array_merge($history, [
+    /**
+     * Persists the user + assistant turn and returns the result payload.
+     *
+     * @param  array{config: AiModelConfig, conversation: AiConversation, history: array<int, mixed>}  $ctx
+     * @return array{text: string, conversationId: int}
+     */
+    private function persistTurn(array $ctx, string $message, string $finalText, int $inputTokens, int $outputTokens): array
+    {
+        /** @var AiConversation $conversation */
+        $conversation = $ctx['conversation'];
+        /** @var AiModelConfig $config */
+        $config = $ctx['config'];
+
+        $newMessages = array_merge($ctx['history'], [
             ['role' => 'user',      'content' => $message],
             ['role' => 'assistant', 'content' => $finalText],
         ]);
 
         $conversation->update([
-            'messages'      => $newMessages,
+            'messages' => $newMessages,
             'provider_used' => $config->provider,
-            'model_used'    => $config->model,
-            'tokens_used'   => $conversation->tokens_used + $totalInputTokens + $totalOutputTokens,
+            'model_used' => $config->model,
+            'tokens_used' => $conversation->tokens_used + $inputTokens + $outputTokens,
         ]);
 
         return ['text' => $finalText, 'conversationId' => $conversation->id];
+    }
+
+    private function logProviderFailure(AiModelConfig $config, \Throwable $e): void
+    {
+        Log::error('[Ptah AI] Provider call failed', [
+            'provider' => $config->provider,
+            'model' => $config->model,
+            'exception' => $e::class,
+            'message' => $e->getMessage(),
+        ]);
     }
 
     /**
@@ -226,9 +369,9 @@ class AiChatService
     {
         if ($userId) {
             return AiConversation::create([
-                'user_id'     => $userId,
-                'session_id'  => $sessionId,
-                'messages'    => [],
+                'user_id' => $userId,
+                'session_id' => $sessionId,
+                'messages' => [],
                 'tokens_used' => 0,
             ]);
         }
@@ -247,34 +390,79 @@ class AiChatService
      * Applies the provider's API key and optional custom endpoint to the
      * application config so Prism can pick them up for this request.
      */
-    private function applyConfig(AiModelConfig $config): void
+    private function applyConfig(AiModelConfig $config): array
     {
         $provider = strtolower($config->provider);
+        $applied = [];
 
         $keyMap = [
-            'openai'    => 'prism.providers.openai.api_key',
+            'openai' => 'prism.providers.openai.api_key',
             'anthropic' => 'prism.providers.anthropic.api_key',
-            'gemini'    => 'prism.providers.gemini.api_key',
-            'groq'      => 'prism.providers.groq.api_key',
-            'mistral'   => 'prism.providers.mistral.api_key',
+            'gemini' => 'prism.providers.gemini.api_key',
+            'groq' => 'prism.providers.groq.api_key',
+            'mistral' => 'prism.providers.mistral.api_key',
         ];
 
         if (isset($keyMap[$provider])) {
+            $applied[$keyMap[$provider]] = config($keyMap[$provider]);
             config([$keyMap[$provider] => $config->api_key]);
         }
 
         if ($config->api_endpoint) {
             $endpointMap = [
-                'openai'    => 'prism.providers.openai.base_url',
+                'openai' => 'prism.providers.openai.base_url',
                 'anthropic' => 'prism.providers.anthropic.base_url',
-                'ollama'    => 'prism.providers.ollama.url',
+                'ollama' => 'prism.providers.ollama.url',
             ];
 
             if (isset($endpointMap[$provider])) {
+                $applied[$endpointMap[$provider]] = config($endpointMap[$provider]);
                 config([$endpointMap[$provider] => $config->api_endpoint]);
             }
         } elseif ($provider === 'ollama') {
+            $applied['prism.providers.ollama.url'] = config('prism.providers.ollama.url');
             config(['prism.providers.ollama.url' => env('OLLAMA_URL', 'http://localhost:11434/api')]);
+        }
+
+        // Original values, so the caller can restore them after the request.
+        // Without this, on long-lived workers (Octane) the API key would persist
+        // in the shared config between requests.
+        return $applied;
+    }
+
+    /**
+     * Restores config keys to their pre-request values (Octane safety).
+     *
+     * @param  array<string, mixed>  $original
+     */
+    private function restoreConfig(array $original): void
+    {
+        foreach ($original as $key => $value) {
+            config([$key => $value]);
+        }
+    }
+
+    /**
+     * Enforces the optional per-user daily token budget.
+     * `ptah.ai_agent.daily_token_limit` = 0 (default) disables the cap.
+     * Guests are not subject to the budget (they are already rate-limited).
+     *
+     * @throws AiRateLimitException
+     */
+    private function assertWithinDailyTokenBudget(?int $userId): void
+    {
+        $limit = (int) config('ptah.ai_agent.daily_token_limit', 0);
+
+        if ($limit <= 0 || ! $userId) {
+            return;
+        }
+
+        $usedToday = (int) AiConversation::byUser($userId)
+            ->whereDate('updated_at', now()->toDateString())
+            ->sum('tokens_used');
+
+        if ($usedToday >= $limit) {
+            throw new AiRateLimitException(trans('ptah::ui.ai_widget_rate_limit'));
         }
     }
 
@@ -283,18 +471,18 @@ class AiChatService
     {
         return match (strtolower($provider)) {
             'anthropic' => Provider::Anthropic,
-            'gemini'    => Provider::Gemini,
-            'ollama'    => Provider::Ollama,
-            'groq'      => Provider::Groq,
-            'mistral'   => Provider::Mistral,
-            default     => Provider::OpenAI,
+            'gemini' => Provider::Gemini,
+            'ollama' => Provider::Ollama,
+            'groq' => Provider::Groq,
+            'mistral' => Provider::Mistral,
+            default => Provider::OpenAI,
         };
     }
 
     /**
      * Converts our simple DB message format to Prism ValueObject messages.
      *
-     * @param  array<array{role: string, content: string}> $history
+     * @param  array<array{role: string, content: string}>  $history
      * @return array<UserMessage|AssistantMessage>
      */
     private function buildPrismMessages(array $history): array
@@ -302,10 +490,9 @@ class AiChatService
         return array_map(
             fn (array $msg) => match ($msg['role']) {
                 'assistant' => new AssistantMessage($msg['content'] ?? ''),
-                default     => new UserMessage($msg['content'] ?? ''),
+                default => new UserMessage($msg['content'] ?? ''),
             },
             $history
         );
     }
 }
-
