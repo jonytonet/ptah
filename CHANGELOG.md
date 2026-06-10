@@ -9,6 +9,104 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### AI Agent module — streaming & token accounting
+- **Streaming responses** — the chat widget now streams the answer token-by-token
+  via a new `AiChatService::stream()` and Livewire `wire:stream`. Toggle with
+  `ptah.ai_agent.stream` (default `true`). `send()` (blocking) remains for the
+  toggle-off path. Shared guards/persistence were extracted so both paths behave
+  identically. Note: the browser-side incremental render is verified manually; the
+  PHP emission of stream directives is covered by tests.
+- **Fixed token accounting** — `AiChatService` read `usage->inputTokens`/`outputTokens`
+  which don't exist on Prism's `Usage` object, so `tokens_used` always recorded 0.
+  Now reads `promptTokens`/`completionTokens`.
+- Switched the Prism call from the deprecated `generate()` to `asText()`.
+- `prism-php/prism` added to `require-dev` so the module is covered by the package
+  test suite.
+- Added tests: `AiChatServiceTest` (send + stream against `Prism::fake()`, token
+  accounting, temperature forwarding, rate-limit/no-provider/guest guards, delta
+  extraction for both the real `TextDeltaEvent` and the testing fake),
+  `AiToolRegistryTest` (Prism Tool conversion) and `AiChatWidgetTest` (widget wiring
+  + guest gating).
+
+### Fixed
+- **Base layer UI sentinels were not honored in `searchLike()`/`advancedSearch()`**
+  — the methods filtered by the literal default value instead of skipping it, so a
+  request with the default `searchLike`/`search`/`relations` returned no rows (or
+  threw `RelationNotFoundException` for `relations`). The guards now match the
+  documented contract.
+- Renamed the base-layer sentinel values to English to match the documentation
+  (`BaseLayer.md`) and the rest of the API surface: `search`/`searchLike` default
+  sentinel is `Search` (was `Busca`), and the `relations` sentinel is `Relation`
+  (was `Relacao`). `Incremental` is unchanged. **Breaking** only for REST clients
+  that explicitly sent the old Portuguese magic words as no-op defaults.
+
+### AI Agent module
+- **Fixed: `temperature` was ignored** — `AiChatService` now passes the configured
+  temperature to Prism (`->usingTemperature()`). Previously the column was stored
+  and validated but never applied.
+- **Fail-closed authorization on `AiModelConfigList`** — the `ai.config` permission
+  is now re-checked on every mutating action (create/edit/save/delete/setDefault),
+  not only on `mount()`. These records hold provider API keys.
+- **Rate limit keyed by user** when authenticated (was session-only, bypassable by
+  dropping the session cookie); the public `processAiMessage` listener re-checks
+  provider availability.
+- **Octane safety** — provider credentials applied at runtime are now restored after
+  each request, so API keys don't bleed across requests on long-lived workers.
+- **`getSystemInfo` tool** no longer leaks framework/PHP versions or the environment
+  name unless `ptah.ai_agent.expose_system_details` is enabled.
+- **Optional per-user daily token budget** via `ptah.ai_agent.daily_token_limit`.
+- **`ptah.ai_agent.allow_guests`** (default `false`) — the chat widget and service
+  are restricted to authenticated users unless explicitly enabled.
+- Removed dead code from `AiToolRegistry` (`execute()`, `hasTools()`); clarified the
+  `max_history` config docs (message count, not tokens).
+- Added tests: `AiProviderConfigServiceTest` (config service, encrypted-at-rest API
+  key, scopes) and `AiModelConfigListAuthTest` (fail-closed authorization).
+
+### Security
+- **Removed `eval()` from inline lifecycle hooks** (`HasCrudForm::executeInlineHook`).
+  Inline hooks are now sandboxed Symfony ExpressionLanguage expressions — no
+  arbitrary PHP execution, eliminating the RCE risk if a `crud_configs` row were
+  tampered with. Adds `symfony/expression-language` as a dependency. **Breaking:**
+  inline hooks that contained PHP statements must be migrated to a hook class;
+  inline now only reshapes `data` (helpers: `merge`, `now`, `upper`, `lower`,
+  `slug`, `uuid`). Class-based hooks are unchanged.
+- **SQL injection hardening in dynamic filters** — column/identifier names are now
+  validated by `Ptah\Support\SqlIdentifier` before being interpolated into raw SQL
+  in `TextFilterStrategy`, `RelationFilterStrategy` (whereHas + aggregate/HAVING)
+  and `HasCrudSearchDropdown`. Unsafe identifiers are rejected.
+- **No insecure default admin password** — removed the hardcoded `admin@123`
+  fallback from `config/ptah.php`, `ModuleCommand` and `DefaultAdminSeeder`. When
+  `PTAH_ADMIN_PASSWORD` is unset, a strong random password is generated and shown
+  once during installation.
+- **XSS hardening in table actions** — `javascript:`/`data:`/`vbscript:` schemes are
+  now blocked on `link`-type action columns in `_table.blade.php`.
+- **Mass-assignment guard** — `save()` now strips `id`, timestamps and audit/`*_by`
+  columns from submitted data regardless of the CRUD config.
+- **Fail-closed authorization** — create/update/delete/restore now deny anonymous
+  users when a `permissionIdentifier` is configured (previously the whole check was
+  skipped for unauthenticated requests). Centralised in `authorizeCrudAction()`.
+- **Rate limiting added** to password-reset requests (`ForgotPasswordPage`) and to
+  the **2FA code challenge** (`TwoFactorChallengePage`), preventing brute-force of
+  the verification code.
+
+### Changed
+- `ptah:forge --force` now asks for confirmation in interactive sessions before
+  overwriting existing files.
+- Generated migrations add an index on `deleted_at` when soft deletes are enabled,
+  and `--no-soft-deletes` on a fresh migration no longer emits `softDeletes()`
+  (the stub now uses a `{{ soft_deletes }}` placeholder controlled by the generator).
+- Forge component docs (`forge-input`, `forge-button`) warn that icon props/slots
+  render raw HTML and must never receive user-controlled data.
+
+### Docs
+- Standardised Livewire version to 4 across `BaseCrud.md` and `Modules.md`.
+- Aligned admin-password documentation (no fixed default) across `Commands.md`,
+  `Permissions.md`, `Modules.md` and `PetPlace-Prompt-Example.md`.
+- Documented the `surname=`/`label=` field modifiers and added a `ptah:menu-sync`
+  reference section in `Commands.md`.
+- Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
+  sandboxed expression syntax.
+
 ### Added
 - **Unit tests — `BaseRepository`** (`tests/Unit/Base/BaseRepositoryTest.php`)
   - 28 test cases: full CRUD contracts (`find` → null, `findOrFail` → exception, `update` →
