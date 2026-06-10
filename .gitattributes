@@ -1,0 +1,20 @@
+# Normalize line endings to LF on checkout/commit so Pint/CI are consistent
+# across Windows and Linux. Prevents the CRLF↔LF churn Pint would otherwise flag.
+* text=auto eol=lf
+
+*.php   text eol=lf
+*.blade.php text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.neon  text eol=lf
+*.stub  text eol=lf
+
+# Binary assets — never normalize
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
