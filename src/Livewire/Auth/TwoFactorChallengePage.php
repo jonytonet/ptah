@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
@@ -35,7 +37,18 @@ class TwoFactorChallengePage extends Component
         $this->errorMsg = '';
 
         $userId = Session::get('ptah.2fa.user_id');
-        $userModel = config('auth.providers.users.model', \App\Models\User::class);
+
+        // Throttle code attempts to prevent brute-forcing the 6-digit code.
+        $throttleKey = 'ptah-2fa|'.$userId.'|'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->errorMsg = trans('ptah::ui.auth_too_many_attempts', ['seconds' => $seconds]);
+
+            return;
+        }
+
+        $userModel = config('auth.providers.users.model', User::class);
         $user = $userModel::findOrFail($userId);
 
         $valid = false;
@@ -49,11 +62,14 @@ class TwoFactorChallengePage extends Component
         }
 
         if (! $valid) {
+            RateLimiter::hit($throttleKey);
             $this->errorMsg = trans('ptah::ui.two_fa_code_invalid');
             $this->reset('code');
+
             return;
         }
 
+        RateLimiter::clear($throttleKey);
         Session::forget('ptah.2fa.user_id');
         Auth::loginUsingId($userId);
         event(new Login('web', $user, false));
@@ -65,7 +81,7 @@ class TwoFactorChallengePage extends Component
     public function sendEmailCode(TwoFactorService $twoFactor): void
     {
         $userId = Session::get('ptah.2fa.user_id');
-        $userModel = config('auth.providers.users.model', \App\Models\User::class);
+        $userModel = config('auth.providers.users.model', User::class);
         $user = $userModel::findOrFail($userId);
         $twoFactor->sendEmailCode($user);
         session()->flash('code_sent', trans('ptah::ui.two_fa_email_sent', ['email' => $user->email]));

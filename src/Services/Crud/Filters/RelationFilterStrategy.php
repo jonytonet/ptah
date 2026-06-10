@@ -7,6 +7,7 @@ namespace Ptah\Services\Crud\Filters;
 use Illuminate\Database\Eloquent\Builder;
 use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Filter strategy for Eloquent relationship fields.
@@ -22,7 +23,8 @@ use Ptah\DTO\FilterDTO;
 class RelationFilterStrategy implements FilterStrategyInterface
 {
     protected const ALLOWED_AGGREGATES = ['sum', 'count', 'avg', 'max', 'min'];
-    protected const ALLOWED_OPERATORS  = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'];
+
+    protected const ALLOWED_OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'];
 
     public function normalize(FilterDTO $filter): ?FilterDTO
     {
@@ -48,11 +50,11 @@ class RelationFilterStrategy implements FilterStrategyInterface
             return $query;
         }
 
-        $options   = $normalized->options;
-        $whereHas  = $options['whereHas'] ?? null;
-        $column    = $options['column'] ?? $options['colRelation'] ?? null;
-        $operator  = $normalized->operator;
-        $value     = $normalized->value;
+        $options = $normalized->options;
+        $whereHas = $options['whereHas'] ?? null;
+        $column = $options['column'] ?? $options['colRelation'] ?? null;
+        $operator = $normalized->operator;
+        $value = $normalized->value;
         $aggregate = strtolower($options['aggregate'] ?? '');
         $aggColumn = $options['aggregateColumn'] ?? $column;
 
@@ -73,7 +75,7 @@ class RelationFilterStrategy implements FilterStrategyInterface
 
         // Standard whereHas
         return $query->whereHas($whereHas, function (Builder $q) use ($column, $operator, $value) {
-            if (! $column) {
+            if (! $column || ! SqlIdentifier::isSafe($column)) {
                 return;
             }
 
@@ -85,34 +87,34 @@ class RelationFilterStrategy implements FilterStrategyInterface
             $op = strtoupper($operator);
 
             match (true) {
-                $op === 'LIKE'     => $q->whereRaw('LOWER(' . $column . ') LIKE ?', ['%' . mb_strtolower($value) . '%']),
-                $op === 'NOT LIKE' => $q->whereRaw('LOWER(' . $column . ') NOT LIKE ?', ['%' . mb_strtolower($value) . '%']),
-                $op === 'IN'       => $q->whereIn($column, (array) $value),
-                $op === 'NOT IN'   => $q->whereNotIn($column, (array) $value),
-                default            => $q->where($column, $operator, $value),
+                $op === 'LIKE' => $q->whereRaw('LOWER('.$column.') LIKE ?', ['%'.mb_strtolower($value).'%']),
+                $op === 'NOT LIKE' => $q->whereRaw('LOWER('.$column.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
+                $op === 'IN' => $q->whereIn($column, (array) $value),
+                $op === 'NOT IN' => $q->whereNotIn($column, (array) $value),
+                default => $q->where($column, $operator, $value),
             };
         });
     }
 
     protected function applyAggregateFilter(
         Builder $query,
-        string  $relation,
+        string $relation,
         ?string $column,
-        string  $aggregate,
-        string  $operator,
-        mixed   $value
+        string $aggregate,
+        string $operator,
+        mixed $value
     ): Builder {
         return $query->whereHas($relation, function (Builder $q) use ($column, $aggregate, $operator, $value) {
-            if (! $column) {
+            if (! $column || ! SqlIdentifier::isSafe($column)) {
                 return;
             }
 
-            $q->selectRaw("1")
-              ->groupBy($q->getModel()->getKeyName())
-              ->havingRaw(
-                  strtoupper($aggregate) . '(' . $column . ') ' . $operator . ' ?',
-                  [(float) $value]
-              );
+            $q->selectRaw('1')
+                ->groupBy($q->getModel()->getKeyName())
+                ->havingRaw(
+                    strtoupper($aggregate).'('.$column.') '.$operator.' ?',
+                    [(float) $value]
+                );
         });
     }
 }

@@ -10,7 +10,9 @@
       - loading : boolean - shows inline spinner
     Slots:
       - default : button text
-      - icon    : optional icon
+      - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only
+                  trusted, developer-authored markup (e.g. an <svg>). Never feed it
+                  user-controlled data, which would enable XSS.
 --}}
 @props([
     'color'    => 'primary',

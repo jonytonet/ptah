@@ -8,9 +8,9 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Ptah\Generators\BindingGenerator;
+use Ptah\Generators\Contracts\GeneratorInterface;
 use Ptah\Generators\ControllerApiGenerator;
 use Ptah\Generators\ControllerGenerator;
-use Ptah\Generators\Contracts\GeneratorInterface;
 use Ptah\Generators\CrudConfigGenerator;
 use Ptah\Generators\DtoGenerator;
 use Ptah\Generators\GeneratorResult;
@@ -24,6 +24,8 @@ use Ptah\Generators\RouteGenerator;
 use Ptah\Generators\ServiceGenerator;
 use Ptah\Generators\ViewGenerator;
 use Ptah\Support\EntityContext;
+use Ptah\Support\FieldDefinition;
+use Ptah\Support\MenuIconMapper;
 use Ptah\Support\MenuRegistryWriter;
 use Ptah\Support\SchemaInspector;
 
@@ -63,9 +65,9 @@ class ScaffoldCommand extends Command
     protected $description = 'Forge — generates the complete structure for an entity (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
 
     public function __construct(
-        protected Filesystem          $files,
-        protected SchemaInspector     $inspector,
-        protected MenuRegistryWriter  $menuWriter,
+        protected Filesystem $files,
+        protected SchemaInspector $inspector,
+        protected MenuRegistryWriter $menuWriter,
     ) {
         parent::__construct();
     }
@@ -80,51 +82,64 @@ class ScaffoldCommand extends Command
         }
 
         // ── Subfolder support: accepts Product/ProductStock or Product\ProductStock ──
-        $parts     = array_values(array_filter(
+        $parts = array_values(array_filter(
             array_map('trim', preg_split('/[\\\\\\/]/', $rawEntity))
         ));
-        $entity    = Str::studly((string) array_pop($parts));
-        $subFolder = implode('/', array_map(fn(string $p) => Str::studly($p), $parts)); // e.g.: 'Product'
+        $entity = Str::studly((string) array_pop($parts));
+        $subFolder = implode('/', array_map(fn (string $p) => Str::studly($p), $parts)); // e.g.: 'Product'
 
-        $entityLower        = $this->toSnakeWithAcronyms($entity);
-        $entityPlural       = Str::plural($entityLower);
+        $entityLower = $this->toSnakeWithAcronyms($entity);
+        $entityPlural = Str::plural($entityLower);
         $entityPluralStudly = Str::studly($entityPlural);
-        $table              = $this->option('table') ?: $entityPlural;
-        $withViews          = ! $this->option('api-only'); // false only with --api-only
-        $withApi            = $this->option('api') || $this->option('api-only');
-        $withSoftDeletes    = ! $this->option('no-soft-deletes');
-        $force              = (bool) $this->option('force');
+        $table = $this->option('table') ?: $entityPlural;
+        $withViews = ! $this->option('api-only'); // false only with --api-only
+        $withApi = $this->option('api') || $this->option('api-only');
+        $withSoftDeletes = ! $this->option('no-soft-deletes');
+        $force = (bool) $this->option('force');
+
+        // ── Confirm destructive overwrite ───────────────────────────────
+        // Without --force, existing files are skipped (never overwritten). With
+        // --force they are overwritten in place; require an explicit confirmation
+        // in interactive sessions so generated work isn't lost by accident.
+        if ($force && $this->input->isInteractive()) {
+            $this->components->warn('--force will OVERWRITE existing files for this entity (no backup).');
+            if (! $this->confirm('Continue?', false)) {
+                $this->components->warn('Aborted.');
+
+                return self::FAILURE;
+            }
+        }
 
         // ── Resolve fields ──────────────────────────────────────────────
         $fields = $this->resolveFields($table);
 
         // ── Build context (immutable, passed to all generators) ─────────
         $context = new EntityContext(
-            entity:             $entity,
-            entityLower:        $entityLower,
-            entityPlural:       $entityPlural,
+            entity: $entity,
+            entityLower: $entityLower,
+            entityPlural: $entityPlural,
             entityPluralStudly: $entityPluralStudly,
-            table:              $table,
-            rootNamespace:      $this->laravel->getNamespace(),
-            timestamp:          date('Y_m_d_His'),
-            withViews:          $withViews,
-            withSoftDeletes:    $withSoftDeletes,
-            force:              $force,
-            fields:             $fields,
-            subFolder:          $subFolder,
-            withApi:            $withApi,
+            table: $table,
+            rootNamespace: $this->laravel->getNamespace(),
+            timestamp: date('Y_m_d_His'),
+            withViews: $withViews,
+            withSoftDeletes: $withSoftDeletes,
+            force: $force,
+            fields: $fields,
+            subFolder: $subFolder,
+            withApi: $withApi,
         );
 
         // ── Header ──────────────────────────────────────────────────────
         $this->newLine();
         $displayName = $subFolder ? "{$subFolder}/{$entity}" : $entity;
         $this->components->info("Ptah Forge — Generating: <fg=yellow>{$displayName}</>");
-        $modeLabel = match(true) {
+        $modeLabel = match (true) {
             $withViews && $withApi => 'Web + API',
-            $withApi              => 'API only',
-            default               => 'Web',
+            $withApi => 'API only',
+            default => 'Web',
         };
-        $this->line("  <fg=gray>Table: {$table} | Fields: " . count($fields) .
+        $this->line("  <fg=gray>Table: {$table} | Fields: ".count($fields).
             " | Modo: {$modeLabel}</>");
         $this->newLine();
 
@@ -137,11 +152,12 @@ class ScaffoldCommand extends Command
         // ── Post-generation hints ────────────────────────────────────────
         $this->printNextSteps($context);
 
-        $hasError = collect($results)->some(fn(GeneratorResult $r) => $r->isError());
+        $hasError = collect($results)->some(fn (GeneratorResult $r) => $r->isError());
         // ── Auto-register menu entry ─────────────────────────────────────────
         if (! $hasError && ! $this->option('no-menu') && $withViews) {
             $this->registerMenuEntry($entity, $subFolder, $entityLower);
         }
+
         return $hasError ? self::FAILURE : self::SUCCESS;
     }
     // ── Entity syntax validation ────────────────────────────────────────────────
@@ -189,11 +205,12 @@ class ScaffoldCommand extends Command
             if (! preg_match('/^[A-Za-z][A-Za-z0-9]*$/', $segment)) {
                 $this->newLine();
                 $this->components->error(
-                    "Invalid 'entity' argument: <fg=yellow>{$rawEntity}</>\n" .
-                    "  Each segment must be a plain PascalCase name (letters and digits only).\n" .
-                    "  It looks like an option was written without a space.\n" .
-                    "  Example: <fg=green>php artisan ptah:forge Clients/Client --fields=\"...\"</>"
+                    "Invalid 'entity' argument: <fg=yellow>{$rawEntity}</>\n".
+                    "  Each segment must be a plain PascalCase name (letters and digits only).\n".
+                    "  It looks like an option was written without a space.\n".
+                    '  Example: <fg=green>php artisan ptah:forge Clients/Client --fields="..."</>'
                 );
+
                 return false;
             }
         }
@@ -231,6 +248,7 @@ class ScaffoldCommand extends Command
                     $results[] = $generator->generateCreateApi($context);
                     $results[] = $generator->generateUpdateApi($context);
                 }
+
                 continue;
             }
 
@@ -241,11 +259,13 @@ class ScaffoldCommand extends Command
                 if ($context->withApi) {
                     $results[] = $generator->generateApiRoute($context);
                 }
+
                 continue;
             }
 
             if ($generator instanceof ViewGenerator) {
                 $results[] = $generator->generateView($context, 'index');
+
                 continue;
             }
 
@@ -288,7 +308,7 @@ class ScaffoldCommand extends Command
      *
      * Priority: --db > --fields > none (no fields defined)
      *
-     * @return \Ptah\Support\FieldDefinition[]
+     * @return FieldDefinition[]
      */
     private function resolveFields(string $table): array
     {
@@ -298,7 +318,7 @@ class ScaffoldCommand extends Command
             if (empty($fields)) {
                 $this->components->warn("Table [{$table}] not found or has no columns. No fields will be pre-filled.");
             } else {
-                $this->components->info(count($fields) . " field(s) read from table [{$table}].");
+                $this->components->info(count($fields)." field(s) read from table [{$table}].");
             }
 
             return $fields;
@@ -316,11 +336,11 @@ class ScaffoldCommand extends Command
     /**
      * Displays the results summary table.
      *
-     * @param GeneratorResult[] $results
+     * @param  GeneratorResult[]  $results
      */
     private function printSummary(array $results): void
     {
-        $rows = array_map(fn(GeneratorResult $r) => [
+        $rows = array_map(fn (GeneratorResult $r) => [
             $r->label,
             $r->formattedStatus(),
         ], $results);
@@ -328,19 +348,19 @@ class ScaffoldCommand extends Command
         $this->table(['Artifact', 'Status'], $rows);
         $this->newLine();
 
-        $done    = count(array_filter($results, fn($r) => $r->isDone()));
-        $skipped = count(array_filter($results, fn($r) => $r->isSkipped()));
-        $errors  = count(array_filter($results, fn($r) => $r->isError()));
+        $done = count(array_filter($results, fn ($r) => $r->isDone()));
+        $skipped = count(array_filter($results, fn ($r) => $r->isSkipped()));
+        $errors = count(array_filter($results, fn ($r) => $r->isError()));
 
         $this->line(
-            "  <fg=green>{$done} created</> · " .
-            "<fg=yellow>{$skipped} skipped</> · " .
+            "  <fg=green>{$done} created</> · ".
+            "<fg=yellow>{$skipped} skipped</> · ".
             "<fg=red>{$errors} error(s)</>"
         );
 
         if ($errors > 0) {
             $this->newLine();
-            foreach (array_filter($results, fn($r) => $r->isError()) as $r) {
+            foreach (array_filter($results, fn ($r) => $r->isError()) as $r) {
                 $this->components->error("{$r->label}: {$r->message}");
             }
         }
@@ -357,22 +377,22 @@ class ScaffoldCommand extends Command
         $this->line('  <fg=blue;options=bold>Next steps:</> ');
         $this->newLine();
 
-        $this->line("  <fg=green>✔ Binding automatically registered in AppServiceProvider.</>");
+        $this->line('  <fg=green>✔ Binding automatically registered in AppServiceProvider.</>');
         $this->newLine();
 
-        $this->line("  <fg=yellow>1. Run the migration:</>");
-        $this->line("     <fg=gray>php artisan migrate</>");
+        $this->line('  <fg=yellow>1. Run the migration:</>');
+        $this->line('     <fg=gray>php artisan migrate</>');
         $this->newLine();
 
         if (! empty($context->fields)) {
-            $this->line("  <fg=yellow>2. Review the validation rules in the generated Requests.</>");
+            $this->line('  <fg=yellow>2. Review the validation rules in the generated Requests.</>');
             $this->newLine();
         }
 
         if ($context->withViews) {
             $this->line("  <fg=yellow>Access:</> <fg=gray>/{$context->entityLower}</>");
             $this->newLine();
-            $this->line("  <fg=blue>→ The screen uses Livewire BaseCrud. Configuration saved in <fg=gray>crud_configs</> and can be adjusted directly in the database.</>");
+            $this->line('  <fg=blue>→ The screen uses Livewire BaseCrud. Configuration saved in <fg=gray>crud_configs</> and can be adjusted directly in the database.</>');
         } else {
             $this->line("  <fg=yellow>API Endpoint:</> <fg=gray>/api/{$context->entityPlural}</>");
         }
@@ -384,10 +404,9 @@ class ScaffoldCommand extends Command
      * Registers the entity in MenuRegistry.php for automatic menu generation.
      * Called after successful scaffolding if --no-menu flag is not present.
      *
-     * @param string $entity Entity name (ex: VaccinationType)
-     * @param string $subFolder Module path (ex: Health)
-     * @param string $entityLower URL slug (ex: vaccination_type)
-     * @return void
+     * @param  string  $entity  Entity name (ex: VaccinationType)
+     * @param  string  $subFolder  Module path (ex: Health)
+     * @param  string  $entityLower  URL slug (ex: vaccination_type)
      */
     private function registerMenuEntry(string $entity, string $subFolder, string $entityLower): void
     {
@@ -395,42 +414,43 @@ class ScaffoldCommand extends Command
 
         if (! file_exists($registryPath)) {
             $this->components->warn('MenuRegistry.php not found — run ptah:install to create it.');
+
             return;
         }
 
-        $url = '/' . $entityLower;
+        $url = '/'.$entityLower;
 
         try {
             if (empty($subFolder)) {
                 // No module prefix → add as flat root link
-                $added     = $this->menuWriter->addFlatEntry(
-                    entity:       $entity,
-                    url:          $url,
+                $added = $this->menuWriter->addFlatEntry(
+                    entity: $entity,
+                    url: $url,
                     registryPath: $registryPath
                 );
-                $linkLabel = \Ptah\Support\MenuIconMapper::translateEntity($entity);
+                $linkLabel = MenuIconMapper::translateEntity($entity);
 
                 if ($added) {
                     $this->newLine();
                     $this->components->info("Menu entry added (flat): <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
-                    $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>');
                 }
             } else {
                 // Has module prefix → add under group
                 $added = $this->menuWriter->addEntry(
-                    module:       $subFolder,
-                    entity:       $entity,
-                    url:          $url,
+                    module: $subFolder,
+                    entity: $entity,
+                    url: $url,
                     registryPath: $registryPath
                 );
 
                 if ($added) {
-                    $groupLabel = \Ptah\Support\MenuIconMapper::getGroupLabel($subFolder);
-                    $linkLabel  = \Ptah\Support\MenuIconMapper::translateEntity($entity);
+                    $groupLabel = MenuIconMapper::getGroupLabel($subFolder);
+                    $linkLabel = MenuIconMapper::translateEntity($entity);
 
                     $this->newLine();
                     $this->components->info("Menu entry added: <fg=yellow>{$groupLabel}</> → <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
-                    $this->line("  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>");
+                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>');
                 }
             }
         } catch (\Exception $e) {

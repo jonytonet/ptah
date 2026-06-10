@@ -17,8 +17,7 @@ return new class extends Migration
             $table->id();
 {{ columns }}
             $table->timestamps();
-{{ audit_columns }}            $table->softDeletes();
-        });
+{{ audit_columns }}{{ soft_deletes }}        });
     }
 
     /**

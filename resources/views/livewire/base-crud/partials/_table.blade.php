@@ -146,6 +146,13 @@
                                     $actionColor = $col['actionColor'] ?? 'primary';
                                     $rowId       = $row->id ?? 0;
                                     $actionStr   = str_replace(['%id%', '"id%'], [$rowId, $rowId], $actionValue);
+                                    // Block dangerous URL schemes on link actions (HTML escaping
+                                    // does NOT neutralise javascript:/data:/vbscript: in href).
+                                    $isUnsafeHref = ($actionType === 'link')
+                                        && preg_match('/^\s*(javascript|data|vbscript):/i', $actionStr);
+                                    if ($isUnsafeHref) {
+                                        $actionStr = '#';
+                                    }
                                 @endphp
 
                                 @if ($actionStr)

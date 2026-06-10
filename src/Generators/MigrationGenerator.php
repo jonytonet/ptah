@@ -30,33 +30,41 @@ class MigrationGenerator extends AbstractGenerator
                 if ($context->force) {
                     return $this->removeSoftDeletesFromMigration($existing[0], $label);
                 }
+
                 // Without --force: warn but never mutate a migration that may already be executed
                 return GeneratorResult::skipped(
-                    $label . ' [⚠ use --force to remove softDeletes() automatically]',
+                    $label.' [⚠ use --force to remove softDeletes() automatically]',
                     $existing[0]
                 );
             }
+
             return GeneratorResult::skipped($label, $existing[0]);
         }
 
         $filename = "{$context->timestamp}_create_{$context->table}_table.php";
-        $path     = database_path("migrations/{$filename}");
+        $path = database_path("migrations/{$filename}");
 
         // Audit columns: created_by / updated_by always; deleted_by only with softDeletes
-        $auditCols  = "            \$table->unsignedBigInteger('created_by')->nullable()->index();\n";
+        $auditCols = "            \$table->unsignedBigInteger('created_by')->nullable()->index();\n";
         $auditCols .= "            \$table->unsignedBigInteger('updated_by')->nullable()->index();\n";
 
+        // Soft deletes: emit deleted_at + an index on it (listings always filter
+        // by `deleted_at IS NULL`, so an unindexed column means a full scan).
+        $softDeletes = '';
         if ($context->withSoftDeletes) {
             $auditCols .= "            \$table->unsignedBigInteger('deleted_by')->nullable()->index();\n";
+            $softDeletes = "            \$table->softDeletes();\n"
+                         ."            \$table->index('deleted_at');\n";
         }
 
         return $this->writeFile(
             path: $path,
             stub: 'migration',
             replacements: [
-                'table'         => $context->table,
-                'columns'       => $context->migrationColumns(),
+                'table' => $context->table,
+                'columns' => $context->migrationColumns(),
                 'audit_columns' => $auditCols,
+                'soft_deletes' => $softDeletes,
             ],
             force: $context->force,
             labelOverride: $label,
@@ -72,6 +80,7 @@ class MigrationGenerator extends AbstractGenerator
         $content = $this->files->get($path);
 
         $patched = preg_replace('/[ \t]*\$table->softDeletes\(\);\n?/', '', $content);
+        $patched = preg_replace('/[ \t]*\$table->index\(\'deleted_at\'\);\n?/', '', (string) $patched);
         $patched = preg_replace(
             '/[ \t]*\$table->unsignedBigInteger\(\'deleted_by\'\)->nullable\(\)->index\(\);\n?/',
             '',
@@ -80,7 +89,7 @@ class MigrationGenerator extends AbstractGenerator
 
         if ($patched === $content) {
             return GeneratorResult::skipped(
-                $label . ' [softDeletes() not present — already clean]',
+                $label.' [softDeletes() not present — already clean]',
                 $path
             );
         }
@@ -88,7 +97,7 @@ class MigrationGenerator extends AbstractGenerator
         $this->files->put($path, (string) $patched);
 
         return GeneratorResult::done(
-            $label . ' [softDeletes() removed by --force]',
+            $label.' [softDeletes() removed by --force]',
             $path
         );
     }
