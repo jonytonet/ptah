@@ -39,7 +39,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     protected const ALLOWED_OPERATORS = ['=', '!=', '<>', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE'];
 
     /**
-     * @param Model $model Eloquent model instance bound to this repository.
+     * @param  Model  $model  Eloquent model instance bound to this repository.
      */
     public function __construct(protected Model $model) {}
 
@@ -108,7 +108,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Creates a new record and returns the persisted model.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Model
     {
@@ -118,7 +118,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Updates an existing record by ID and returns the fresh model.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
+     *
      * @throws ModelNotFoundException
      */
     public function update(int|string $id, array $data): Model
@@ -174,7 +175,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * Filters records using AND on every non-reserved request param as a column=value condition.
      * Column names are validated against the real schema to prevent arbitrary injection.
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function findAllFieldsAnd(Request $request, array $relations = []): Builder
     {
@@ -204,9 +205,9 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     /**
      * OR search via the `search` request param (comma-separated terms).
-     * Skipped when `search == 'Busca'` (UI sentinel value).
+     * Skipped when `search == 'Search'` (UI sentinel value).
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function advancedSearch(Request $request, array $relations = []): Builder
     {
@@ -222,8 +223,9 @@ abstract class BaseRepository implements BaseRepositoryInterface
             $query->select($this->buildSelectFields($request));
         }
 
-        if (! empty($input)) {
-            $terms   = explode(',', $input);
+        // 'Search' is the UI sentinel/default — it must not apply any filter.
+        if (! empty($input) && $input !== 'Search') {
+            $terms = explode(',', $input);
             $columns = Schema::getColumnListing($this->model->getTable());
 
             $query->where(function (Builder $q) use ($terms, $columns): void {
@@ -250,7 +252,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * Also handles `whereIn` and `additionalQueries` params.
      * Column names and operators are validated against a whitelist to prevent injection.
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function searchLike(Request $request, array $relations = []): Builder
     {
@@ -266,11 +268,13 @@ abstract class BaseRepository implements BaseRepositoryInterface
             $query->select($this->buildSelectFields($request));
         }
 
-        $type         = strtoupper($request->get('searchLikeType', 'AND')) === 'OR' ? 'orWhere' : 'where';
+        $type = strtoupper($request->get('searchLikeType', 'AND')) === 'OR' ? 'orWhere' : 'where';
         $validColumns = $this->getTableColumns();
-        $filters      = [];
+        $filters = [];
 
-        if (! empty($input)) {
+        // 'Incremental' is the UI sentinel/default — it must not apply any filter
+        // (other params like whereIn/additionalQueries below still apply).
+        if (! empty($input) && $input !== 'Incremental') {
             $filters = explode(',', $input);
         }
 
@@ -294,10 +298,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
                         }
 
                         $op = match ($raw) {
-                            '}'  => '>=',
-                            '{'  => '<=',
-                            '>'  => '>',
-                            '<'  => '<',
+                            '}' => '>=',
+                            '{' => '<=',
+                            '>' => '>',
+                            '<' => '<',
                             '>>' => '>',
                             '<<' => '<',
                             default => '=',
@@ -339,7 +343,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
                 if (count($parts) === 3) {
                     [$col, $op, $val] = $parts;
                     $col = trim($col);
-                    $op  = strtoupper(trim($op));
+                    $op = strtoupper(trim($op));
 
                     if (
                         in_array($col, $validColumns, true)
@@ -357,8 +361,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Autocomplete search: specific SELECT columns + conditions + LIMIT 10.
      *
-     * @param array<int, string>        $select
-     * @param array<int, array<string>> $conditions  e.g. [['name', 'LIKE', '%foo%']]
+     * @param  array<int, string>  $select
+     * @param  array<int, array<string>>  $conditions  e.g. [['name', 'LIKE', '%foo%']]
      */
     public function autocompleteSearch(Request $request, array $select, array $conditions): Builder
     {
@@ -428,8 +432,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Returns records whose $column value is in the given $values array.
      *
-     * @param array<int, mixed>  $values
-     * @param array<int, string> $with    Relations to eager-load
+     * @param  array<int, mixed>  $values
+     * @param  array<int, string>  $with  Relations to eager-load
      */
     public function findByIn(string $column, array $values, array $with = []): Collection
     {
@@ -460,7 +464,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         $requested = array_map('trim', explode(',', $fields));
-        $valid     = array_values(
+        $valid = array_values(
             array_intersect($requested, $this->getTableColumns())
         );
 
@@ -481,11 +485,11 @@ abstract class BaseRepository implements BaseRepositoryInterface
             return $baseModel;
         }
 
-        $search     = $request->get('search', '');
+        $search = $request->get('search', '');
         $searchLike = $request->get('searchLike', '');
-        $term       = $searchLike !== 'Incremental' && ! empty($searchLike)
+        $term = $searchLike !== 'Incremental' && ! empty($searchLike)
             ? $searchLike
-            : ($search !== 'Busca' && ! empty($search) ? $search : null);
+            : ($search !== 'Search' && ! empty($search) ? $search : null);
 
         if ($term === null) {
             return $baseModel;
@@ -516,8 +520,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * Updates multiple records by ID in a single batch query.
      * Returns the number of affected rows.
      *
-     * @param array<int, int|string> $ids
-     * @param array<string, mixed>   $data
+     * @param  array<int, int|string>  $ids
+     * @param  array<string, mixed>  $data
      */
     public function updateBatch(array $ids, array $data): int
     {
@@ -527,7 +531,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Updates a record without firing model events or observers.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateQuietly(array $data, int|string $id): bool
     {
@@ -537,7 +541,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Creates a record without firing model events or observers.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createQuietly(array $data): Model
     {
@@ -594,7 +598,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function useIndex(string $indexName): Builder
     {
-        $query  = $this->model->newQuery();
+        $query = $this->model->newQuery();
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'mysql' || $driver === 'mariadb') {

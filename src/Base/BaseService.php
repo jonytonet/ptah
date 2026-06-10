@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -39,7 +40,7 @@ abstract class BaseService
     public function __construct(BaseRepositoryInterface $repository)
     {
         $this->repository = $repository;
-        $this->keyName    = $this->repository->getKeyName();
+        $this->keyName = $this->repository->getKeyName();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ abstract class BaseService
     /**
      * Creates a new record and returns the persisted model.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Model
     {
@@ -99,7 +100,7 @@ abstract class BaseService
     /**
      * Updates an existing record and returns the fresh model.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(int|string $id, array $data): Model
     {
@@ -125,7 +126,7 @@ abstract class BaseService
     {
         try {
             $record = $this->repository->findOrFail($id);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return false;
         }
 
@@ -156,16 +157,16 @@ abstract class BaseService
     public function getData(Request $request): LengthAwarePaginator
     {
         $relations = $this->resolveRelations($request);
-        $limit     = (int) ($request->get('limit', 15) ?: 15);
+        $limit = (int) ($request->get('limit', 15) ?: 15);
 
         // Validate order column against the table schema to prevent SQL injection.
-        $rawOrder    = $request->get('order', $this->keyName);
-        $rawDir      = strtoupper($request->get('direction', 'DESC'));
-        $validCols   = $this->repository->getTableColumns();
+        $rawOrder = $request->get('order', $this->keyName);
+        $rawDir = strtoupper($request->get('direction', 'DESC'));
+        $validCols = $this->repository->getTableColumns();
         $orderColumn = in_array($rawOrder, $validCols, true) ? $rawOrder : $this->keyName;
-        $direction   = in_array($rawDir, ['ASC', 'DESC'], true) ? $rawDir : 'DESC';
+        $direction = in_array($rawDir, ['ASC', 'DESC'], true) ? $rawDir : 'DESC';
 
-        if ($request->get('search', 'Busca') !== 'Busca') {
+        if ($request->get('search', 'Search') !== 'Search') {
             $query = $this->repository->advancedSearch($request, $relations);
         } elseif ($request->get('searchLike', 'Incremental') !== 'Incremental') {
             $query = $this->repository->searchLike($request, $relations);
@@ -185,7 +186,7 @@ abstract class BaseService
     /**
      * OR search across all columns.
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function advancedSearch(Request $request, array $relations = []): Builder
     {
@@ -195,7 +196,7 @@ abstract class BaseService
     /**
      * Incremental LIKE search with operator support.
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function searchLike(Request $request, array $relations = []): Builder
     {
@@ -205,7 +206,7 @@ abstract class BaseService
     /**
      * AND filter on all request params as column=value conditions.
      *
-     * @param array<int, string> $relations
+     * @param  array<int, string>  $relations
      */
     public function findAllFieldsAnd(Request $request, array $relations = []): Builder
     {
@@ -215,8 +216,8 @@ abstract class BaseService
     /**
      * Autocomplete: select + conditions + limit(10).
      *
-     * @param array<int, string>        $select
-     * @param array<int, array<string>> $conditions
+     * @param  array<int, string>  $select
+     * @param  array<int, array<string>>  $conditions
      */
     public function autocompleteSearch(Request $request, array $select, array $conditions): Builder
     {
@@ -252,8 +253,8 @@ abstract class BaseService
     /**
      * Returns records whose $column value is in the given $values array.
      *
-     * @param array<int, mixed>  $values
-     * @param array<int, string> $with
+     * @param  array<int, mixed>  $values
+     * @param  array<int, string>  $with
      */
     public function findByIn(string $column, array $values, array $with = []): Collection
     {
@@ -264,8 +265,8 @@ abstract class BaseService
      * Updates multiple records by ID in a single batch query.
      * Returns the number of affected rows.
      *
-     * @param array<int, int|string> $ids
-     * @param array<string, mixed>   $data
+     * @param  array<int, int|string>  $ids
+     * @param  array<string, mixed>  $data
      */
     public function updateBatch(array $ids, array $data): int
     {
@@ -275,7 +276,7 @@ abstract class BaseService
     /**
      * Updates without firing model events or observers.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateQuietly(array $data, int|string $id): bool
     {
@@ -285,7 +286,7 @@ abstract class BaseService
     /**
      * Creates without firing model events or observers.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createQuietly(array $data): Model
     {
@@ -350,7 +351,8 @@ abstract class BaseService
     {
         $raw = $request->get('relations', '');
 
-        if (empty($raw)) {
+        // 'Relation' is the UI sentinel/default — treat it as "no relations".
+        if (empty($raw) || $raw === 'Relation') {
             return [];
         }
 

@@ -20,9 +20,11 @@ use Ptah\Tests\TestCase;
  */
 class RepoStubModel extends Model
 {
-    protected $table    = 'items';
+    protected $table = 'items';
+
     protected $fillable = ['name', 'status', 'amount'];
-    protected $casts    = ['amount' => 'integer'];
+
+    protected $casts = ['amount' => 'integer'];
 }
 
 // ─── Stub Repository ─────────────────────────────────────────────────────────
@@ -65,7 +67,7 @@ class RepoStubRepository extends BaseRepository {}
  *    - param additionalQueries aplica where extra
  *
  *  advancedSearch:
- *    - sentinel 'Busca' não aplica filtros
+ *    - sentinel 'Search' não aplica filtros
  *    - termo real faz OR LIKE em todas as colunas
  *
  *  Utilitários de escrita:
@@ -94,9 +96,9 @@ class BaseRepositoryTest extends TestCase
     {
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
     }
 
@@ -106,14 +108,14 @@ class BaseRepositoryTest extends TestCase
      */
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../migrations');
     }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->repo = new RepoStubRepository(new RepoStubModel());
+        $this->repo = new RepoStubRepository(new RepoStubModel);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -176,7 +178,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function findOrFail_lanca_ModelNotFoundException_para_id_inexistente(): void
+    public function find_or_fail_lanca_model_not_found_exception_para_id_inexistente(): void
     {
         $this->expectException(ModelNotFoundException::class);
 
@@ -184,7 +186,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function findOrFail_retorna_model_existente(): void
+    public function find_or_fail_retorna_model_existente(): void
     {
         $item = $this->createItem('Achar');
 
@@ -214,7 +216,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function update_lanca_ModelNotFoundException_para_id_inexistente(): void
+    public function update_lanca_model_not_found_exception_para_id_inexistente(): void
     {
         $this->expectException(ModelNotFoundException::class);
 
@@ -233,7 +235,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function delete_lanca_ModelNotFoundException_para_id_inexistente(): void
+    public function delete_lanca_model_not_found_exception_para_id_inexistente(): void
     {
         $this->expectException(ModelNotFoundException::class);
 
@@ -243,7 +245,7 @@ class BaseRepositoryTest extends TestCase
     // ── findBy multi-assinatura ───────────────────────────────────────────────
 
     #[Test]
-    public function findBy_string_simples_filtra_por_coluna_e_valor(): void
+    public function find_by_string_simples_filtra_por_coluna_e_valor(): void
     {
         $this->createItem('Ativo', 'active');
         $this->createItem('Inativo', 'inactive');
@@ -255,7 +257,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function findBy_array_filtra_multiplas_colunas_com_and(): void
+    public function find_by_array_filtra_multiplas_colunas_com_and(): void
     {
         $this->createItem('A', 'active', 10);
         $this->createItem('B', 'active', 20);
@@ -268,7 +270,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function findBy_closure_aplica_where_customizado(): void
+    public function find_by_closure_aplica_where_customizado(): void
     {
         $this->createItem('Alpha', 'active', 50);
         $this->createItem('Beta', 'active', 5);
@@ -284,7 +286,7 @@ class BaseRepositoryTest extends TestCase
     // ── findByIn ──────────────────────────────────────────────────────────────
 
     #[Test]
-    public function findByIn_retorna_apenas_registros_cujo_campo_esta_no_array(): void
+    public function find_by_in_retorna_apenas_registros_cujo_campo_esta_no_array(): void
     {
         $this->createItem('A1', 'active');
         $this->createItem('B1', 'inactive');
@@ -302,7 +304,7 @@ class BaseRepositoryTest extends TestCase
     // ── allQuery ──────────────────────────────────────────────────────────────
 
     #[Test]
-    public function allQuery_com_skip_e_limit_respeita_offset(): void
+    public function all_query_com_skip_e_limit_respeita_offset(): void
     {
         foreach (range(1, 5) as $i) {
             $this->createItem("Item {$i}", 'active', $i * 10);
@@ -322,7 +324,7 @@ class BaseRepositoryTest extends TestCase
     // ── searchLike parsers ────────────────────────────────────────────────────
 
     #[Test]
-    public function searchLike_operador_maior_igual_filtra_corretamente(): void
+    public function search_like_operador_maior_igual_filtra_corretamente(): void
     {
         $this->createItem('Barato', 'active', 5);
         $this->createItem('Caro', 'active', 100);
@@ -336,7 +338,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function searchLike_operador_menor_igual_filtra_corretamente(): void
+    public function search_like_operador_menor_igual_filtra_corretamente(): void
     {
         $this->createItem('Barato', 'active', 5);
         $this->createItem('Caro', 'active', 100);
@@ -350,7 +352,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function searchLike_sentinel_incremental_nao_aplica_filtros(): void
+    public function search_like_sentinel_incremental_nao_aplica_filtros(): void
     {
         $this->createItem('X');
         $this->createItem('Y');
@@ -363,7 +365,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function searchLike_param_whereIn_filtra_por_lista_de_valores(): void
+    public function search_like_param_where_in_filtra_por_lista_de_valores(): void
     {
         $this->createItem('A', 'active');
         $this->createItem('B', 'inactive');
@@ -372,7 +374,7 @@ class BaseRepositoryTest extends TestCase
         // whereIn=status:active,inactive filters status IN ('active', 'inactive')
         $request = Request::create('/', 'GET', [
             'searchLike' => 'Incremental',
-            'whereIn'    => 'status:active,inactive',
+            'whereIn' => 'status:active,inactive',
         ]);
         $results = $this->repo->searchLike($request)->get();
 
@@ -382,7 +384,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function searchLike_param_additionalQueries_aplica_where_extra(): void
+    public function search_like_param_additional_queries_aplica_where_extra(): void
     {
         $this->createItem('P', 'active', 10);
         $this->createItem('Q', 'inactive', 10);
@@ -390,7 +392,7 @@ class BaseRepositoryTest extends TestCase
 
         // additionalQueries=status:=:active;amount:>:5  → active AND amount > 5
         $request = Request::create('/', 'GET', [
-            'searchLike'        => 'Incremental',
+            'searchLike' => 'Incremental',
             'additionalQueries' => 'status:=:active;amount:>:5',
         ]);
         $results = $this->repo->searchLike($request)->get();
@@ -402,20 +404,20 @@ class BaseRepositoryTest extends TestCase
     // ── advancedSearch ────────────────────────────────────────────────────────
 
     #[Test]
-    public function advancedSearch_sentinel_busca_nao_aplica_filtros(): void
+    public function advanced_search_sentinel_busca_nao_aplica_filtros(): void
     {
         $this->createItem('X');
         $this->createItem('Y');
 
-        // 'Busca' is the UI default — must return all records without WHERE
-        $request = Request::create('/', 'GET', ['search' => 'Busca']);
+        // 'Search' is the UI default — must return all records without WHERE
+        $request = Request::create('/', 'GET', ['search' => 'Search']);
         $results = $this->repo->advancedSearch($request)->get();
 
         $this->assertCount(2, $results);
     }
 
     #[Test]
-    public function advancedSearch_termo_real_filtra_com_or_like_em_colunas(): void
+    public function advanced_search_termo_real_filtra_com_or_like_em_colunas(): void
     {
         $this->createItem('Alpha', 'active');
         $this->createItem('Beta', 'active');
@@ -432,7 +434,7 @@ class BaseRepositoryTest extends TestCase
     // ── Utilitários de escrita ────────────────────────────────────────────────
 
     #[Test]
-    public function updateBatch_atualiza_multiplos_registros_em_lote(): void
+    public function update_batch_atualiza_multiplos_registros_em_lote(): void
     {
         $a = $this->createItem('A', 'active');
         $b = $this->createItem('B', 'active');
@@ -447,7 +449,7 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function createQuietly_cria_registro_sem_disparar_evento_creating(): void
+    public function create_quietly_cria_registro_sem_disparar_evento_creating(): void
     {
         $eventFired = false;
 
@@ -462,9 +464,9 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function updateQuietly_atualiza_registro_sem_disparar_evento_updating(): void
+    public function update_quietly_atualiza_registro_sem_disparar_evento_updating(): void
     {
-        $item       = $this->createItem('Antes');
+        $item = $this->createItem('Antes');
         $eventFired = false;
 
         RepoStubModel::updating(static function () use (&$eventFired): void {
