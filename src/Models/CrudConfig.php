@@ -13,9 +13,9 @@ use Ptah\Traits\HasAuditFields;
  * Each row represents the complete configuration of an entity.
  * The `config` column stores the full JSON (cols, customFilters, permissions, etc.).
  *
- * @property int    $id
+ * @property int $id
  * @property string $model
- * @property array  $config
+ * @property array $config
  */
 class CrudConfig extends Model
 {
@@ -26,8 +26,8 @@ class CrudConfig extends Model
     protected $fillable = ['model', 'route', 'config', 'created_by', 'updated_by'];
 
     protected $casts = [
-        'config'     => 'array',
-        'route'      => 'string',
+        'config' => 'array',
+        'route' => 'string',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -56,16 +56,16 @@ class CrudConfig extends Model
     public function permissions(): array
     {
         return array_merge([
-            'create'           => null,
-            'edit'             => null,
-            'delete'           => null,
-            'export'           => null,
-            'restore'          => null,
+            'create' => null,
+            'edit' => null,
+            'delete' => null,
+            'export' => null,
+            'restore' => null,
             'showCreateButton' => true,
-            'showEditButton'   => true,
+            'showEditButton' => true,
             'showDeleteButton' => true,
-            'showTrashButton'  => true,
-            'identifier'       => '',
+            'showTrashButton' => true,
+            'identifier' => '',
         ], $this->config['permissions'] ?? []);
     }
 
@@ -75,12 +75,12 @@ class CrudConfig extends Model
     public function exportConfig(): array
     {
         return array_merge([
-            'enabled'             => false,
-            'asyncThreshold'      => 1000,
-            'maxRows'             => 10000,
-            'orientation'         => 'landscape',
-            'formats'             => ['excel'],
-            'chunkSize'           => 500,
+            'enabled' => false,
+            'asyncThreshold' => 1000,
+            'maxRows' => 10000,
+            'orientation' => 'landscape',
+            'formats' => ['excel'],
+            'chunkSize' => 500,
             'notificationChannel' => 'database',
         ], $this->config['exportConfig'] ?? []);
     }
@@ -92,8 +92,8 @@ class CrudConfig extends Model
     {
         return array_merge([
             'enabled' => true,
-            'ttl'     => 3600,
-            'tags'    => [],
+            'ttl' => 3600,
+            'tags' => [],
         ], $this->config['cacheStrategy'] ?? []);
     }
 
@@ -119,10 +119,10 @@ class CrudConfig extends Model
     public function uiPreferences(): array
     {
         return array_merge([
-            'theme'            => 'light',
-            'compactMode'      => false,
-            'stickyHeader'     => true,
-            'showTotalizador'  => true,
+            'theme' => 'light',
+            'compactMode' => false,
+            'stickyHeader' => true,
+            'showTotalizador' => true,
             'highlightOnHover' => true,
         ], $this->config['uiPreferences'] ?? []);
     }
@@ -143,7 +143,7 @@ class CrudConfig extends Model
      */
     public function filterableCols(): array
     {
-        return array_values(array_filter($this->cols(), fn($c) => $this->ptahBool($c['colsIsFilterable'] ?? false)));
+        return array_values(array_filter($this->cols(), fn ($c) => $this->ptahBool($c['colsIsFilterable'] ?? false)));
     }
 
     /**
@@ -151,7 +151,7 @@ class CrudConfig extends Model
      */
     public function formCols(): array
     {
-        return array_values(array_filter($this->cols(), fn($c) => $this->ptahBool($c['colsGravar'] ?? false)));
+        return array_values(array_filter($this->cols(), fn ($c) => $this->ptahBool($c['colsGravar'] ?? false)));
     }
 
     /**

@@ -19,54 +19,55 @@ class ActionWizard
      */
     public function run(?array $existingAction = null): ?array
     {
-        $this->command->info("=== Action Configuration Wizard ===");
+        $this->command->info('=== Action Configuration Wizard ===');
         $this->command->newLine();
 
-        $name = $this->command->ask("Action name (e.g., approve, reject)", $existingAction['actionName'] ?? null);
-        
-        if (!$name) {
-            $this->command->warn("Action name is required.");
+        $name = $this->command->ask('Action name (e.g., approve, reject)', $existingAction['actionName'] ?? null);
+
+        if (! $name) {
+            $this->command->warn('Action name is required.');
+
             return null;
         }
 
-        $label = $this->command->ask("Action label", $existingAction['actionLabel'] ?? ucfirst($name));
-        
+        $label = $this->command->ask('Action label', $existingAction['actionLabel'] ?? ucfirst($name));
+
         $type = $this->command->choice(
-            "Action type",
+            'Action type',
             CrudConfigEnums::ACTION_TYPES,
             $existingAction['actionType'] ?? 'livewire'
         );
 
         $value = $this->command->ask(
-            "Action value (method name, URL, or JavaScript)",
+            'Action value (method name, URL, or JavaScript)',
             $existingAction['actionValue'] ?? $name
         );
 
-        $icon = $this->command->ask("Icon class (e.g., bx-check, fa-check)", $existingAction['actionIcon'] ?? '');
-        
+        $icon = $this->command->ask('Icon class (e.g., bx-check, fa-check)', $existingAction['actionIcon'] ?? '');
+
         $color = $this->command->choice(
-            "Button color",
+            'Button color',
             CrudConfigEnums::ACTION_COLORS,
             $existingAction['actionColor'] ?? 'primary'
         );
 
         $position = $this->command->choice(
-            "Action position",
+            'Action position',
             ['row', 'bulk', 'both'],
             $existingAction['actionPosition'] ?? 'row'
         );
 
-        $confirm = $this->command->confirm("Require confirmation?", $existingAction['actionConfirm'] ?? false);
+        $confirm = $this->command->confirm('Require confirmation?', $existingAction['actionConfirm'] ?? false);
         $confirmMessage = '';
-        
+
         if ($confirm) {
             $confirmMessage = $this->command->ask(
-                "Confirmation message",
+                'Confirmation message',
                 $existingAction['actionConfirmMessage'] ?? "Are you sure you want to {$name}?"
             );
         }
 
-        $permission = $this->command->ask("Required permission (optional)", $existingAction['actionPermission'] ?? '');
+        $permission = $this->command->ask('Required permission (optional)', $existingAction['actionPermission'] ?? '');
 
         $action = [
             'actionName' => $name,
@@ -83,7 +84,7 @@ class ActionWizard
 
         $this->previewAction($action);
 
-        if (!$this->command->confirm("Save this action?", true)) {
+        if (! $this->command->confirm('Save this action?', true)) {
             return $this->run($action);
         }
 
@@ -96,12 +97,12 @@ class ActionWizard
     protected function previewAction(array $action): void
     {
         $this->command->newLine();
-        $this->command->info("=== Action Preview ===");
+        $this->command->info('=== Action Preview ===');
         $this->command->table(
             ['Property', 'Value'],
-            collect($action)->map(fn($value, $key) => [
+            collect($action)->map(fn ($value, $key) => [
                 $key,
-                is_bool($value) ? ($value ? 'true' : 'false') : $value
+                is_bool($value) ? ($value ? 'true' : 'false') : $value,
             ])->toArray()
         );
         $this->command->newLine();

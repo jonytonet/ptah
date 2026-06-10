@@ -26,9 +26,9 @@ class ViewGenerator extends AbstractGenerator
 
     public function generateView(EntityContext $context, string $view): GeneratorResult
     {
-        $viewDir = config('ptah.paths.views') . "/{$context->entityLower}";
-        $path    = "{$viewDir}/{$view}.blade.php";
-        $label   = "View [{$context->entityLower}/{$view}]";
+        $viewDir = config('ptah.paths.views')."/{$context->entityLower}";
+        $path = "{$viewDir}/{$view}.blade.php";
+        $label = "View [{$context->entityLower}/{$view}]";
 
         if ($this->files->exists($path) && ! $context->force) {
             return GeneratorResult::skipped($label, $path);
@@ -42,11 +42,11 @@ class ViewGenerator extends AbstractGenerator
         try {
             $content = $this->resolveStub("view.{$view}");
             $content = $this->replaceVars($content, [
-                'entity'          => $context->entity,
-                'entity_lower'    => $context->entityLower,
-                'entities'        => $context->entityPlural,
+                'entity' => $context->entity,
+                'entity_lower' => $context->entityLower,
+                'entities' => $context->entityPlural,
                 'crud_identifier' => $context->subFolder
-                    ? $context->subFolder . '/' . $context->entity
+                    ? $context->subFolder.'/'.$context->entity
                     : $context->entity,
             ]);
 

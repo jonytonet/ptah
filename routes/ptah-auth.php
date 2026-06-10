@@ -18,7 +18,7 @@ use Ptah\Livewire\Auth\TwoFactorChallengePage;
 */
 
 $prefix = config('ptah.auth.route_prefix', '');
-$guard  = config('ptah.auth.guard', 'web');
+$guard = config('ptah.auth.guard', 'web');
 $middleware = config('ptah.auth.middleware', ['web']);
 
 Route::middleware($middleware)->group(function () use ($prefix) {
@@ -27,22 +27,23 @@ Route::middleware($middleware)->group(function () use ($prefix) {
     Route::prefix($prefix)->group(function () {
 
         Route::get('/login', LoginPage::class)
-             ->name('ptah.auth.login');
+            ->name('ptah.auth.login');
 
         Route::get('/forgot-password', ForgotPasswordPage::class)
-             ->name('ptah.auth.forgot-password');
+            ->name('ptah.auth.forgot-password');
 
         Route::get('/reset-password/{token}', ResetPasswordPage::class)
-             ->name('password.reset');
+            ->name('password.reset');
 
         Route::get('/two-factor-challenge', TwoFactorChallengePage::class)
-             ->name('ptah.auth.two-factor');
+            ->name('ptah.auth.two-factor');
 
         Route::post('/logout', function () {
             $guard = config('ptah.auth.guard', 'web');
             auth($guard)->logout();
             request()->session()->invalidate();
             request()->session()->regenerateToken();
+
             return redirect()->route('ptah.auth.login');
         })->name('ptah.auth.logout');
 
@@ -52,10 +53,10 @@ Route::middleware($middleware)->group(function () use ($prefix) {
     Route::prefix($prefix)->middleware('auth')->group(function () {
 
         Route::get('/dashboard', fn () => view('ptah::livewire.auth.dashboard'))
-             ->name('ptah.dashboard');
+            ->name('ptah.dashboard');
 
         Route::get('/profile', ProfilePage::class)
-             ->name('ptah.profile');
+            ->name('ptah.profile');
 
     });
 

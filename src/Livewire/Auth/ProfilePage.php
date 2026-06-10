@@ -22,21 +22,29 @@ class ProfilePage extends Component
     public string $activeTab = 'profile';
 
     // ── Tab: Profile ───────────────────────────────────────────────────
-    public string $name  = '';
+    public string $name = '';
+
     public string $email = '';
 
     // ── Tab: Password ──────────────────────────────────────────────────
-    public string $current_password      = '';
-    public string $password              = '';
+    public string $current_password = '';
+
+    public string $password = '';
+
     public string $password_confirmation = '';
 
     // ── Tab: 2FA ────────────────────────────────────────────────────────
-    public string $totpType      = '';   // totp | email
-    public string $totpSecret    = '';
-    public string $qrCodeSvg     = '';
-    public array  $recoveryCodes = [];
-    public string $totp_code     = '';
-    public bool   $showSetup2fa  = false;
+    public string $totpType = '';   // totp | email
+
+    public string $totpSecret = '';
+
+    public string $qrCodeSvg = '';
+
+    public array $recoveryCodes = [];
+
+    public string $totp_code = '';
+
+    public bool $showSetup2fa = false;
 
     // ── Tab: Sessions ──────────────────────────────────────────────────
     public array $sessions = [];
@@ -46,13 +54,14 @@ class ProfilePage extends Component
 
     // ── Feedback ───────────────────────────────────────────────────────
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     public function mount(): void
     {
-        $user           = Auth::user();
-        $this->name     = $user->name  ?? '';
-        $this->email    = $user->email ?? '';
+        $user = Auth::user();
+        $this->name = $user->name ?? '';
+        $this->email = $user->email ?? '';
         $this->totpType = $user->two_factor_type ?? '';
     }
 
@@ -61,12 +70,12 @@ class ProfilePage extends Component
     public function saveProfile(): void
     {
         $this->validate([
-            'name'  => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
         ]);
 
         Auth::user()->forceFill([
-            'name'  => $this->name,
+            'name' => $this->name,
             'email' => $this->email,
         ])->save();
 
@@ -79,13 +88,14 @@ class ProfilePage extends Component
     {
         $this->validate([
             'current_password' => 'required|string',
-            'password'         => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = Auth::user();
 
         if (! Hash::check($this->current_password, $user->password)) {
             $this->errorMsg = trans('ptah::ui.profile_password_wrong');
+
             return;
         }
 
@@ -100,11 +110,11 @@ class ProfilePage extends Component
     {
         $data = $twoFactor->enableTotp(Auth::user());
 
-        $this->totpSecret    = $data['secret'];
-        $this->qrCodeSvg     = $data['qr_image_uri'];
+        $this->totpSecret = $data['secret'];
+        $this->qrCodeSvg = $data['qr_image_uri'];
         $this->recoveryCodes = $data['recovery_codes'];
-        $this->totpType      = 'totp';
-        $this->showSetup2fa  = true;
+        $this->totpType = 'totp';
+        $this->showSetup2fa = true;
     }
 
     public function confirmTotp(TwoFactorService $twoFactor): void
@@ -112,7 +122,7 @@ class ProfilePage extends Component
         $this->validate(['totp_code' => 'required|string|size:6']);
 
         if ($twoFactor->confirmTotp(Auth::user(), $this->totp_code, $this->recoveryCodes)) {
-            $this->showSetup2fa  = false;
+            $this->showSetup2fa = false;
             $this->recoveryCodes = [];
             $this->flash(trans('ptah::ui.profile_totp_enabled'));
         } else {
@@ -143,7 +153,7 @@ class ProfilePage extends Component
     public function disableTwoFactor(TwoFactorService $twoFactor): void
     {
         $twoFactor->disable(Auth::user());
-        $this->totpType     = '';
+        $this->totpType = '';
         $this->showSetup2fa = false;
         $this->flash(trans('ptah::ui.profile_2fa_disabled'));
     }
@@ -178,7 +188,7 @@ class ProfilePage extends Component
     {
         $this->validate(['photo' => 'required|image|max:2048']);
 
-        $old  = Auth::user()->profile_photo_path;
+        $old = Auth::user()->profile_photo_path;
         $path = $this->photo->store('profile-photos', 'public');
 
         Auth::user()->forceFill(['profile_photo_path' => $path])->save();
@@ -208,7 +218,7 @@ class ProfilePage extends Component
     private function flash(string $msg): void
     {
         $this->successMsg = $msg;
-        $this->errorMsg   = '';
+        $this->errorMsg = '';
     }
 
     public function render()

@@ -11,6 +11,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Ptah\Models\Company;
+use Ptah\Services\Company\CompanyService;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class CompanyList extends Component
@@ -18,50 +19,66 @@ class CompanyList extends Component
     use WithPagination;
 
     // ── Lista ──────────────────────────────────────────────────────────
-    public string $search     = '';
-    public string $sort       = 'name';
-    public string $direction  = 'asc';
-    public int    $perPage    = 20;
+    public string $search = '';
+
+    public string $sort = 'name';
+
+    public string $direction = 'asc';
+
+    public int $perPage = 20;
 
     // ── Modal ──────────────────────────────────────────────────────────
-    public bool $showModal  = false;
-    public bool $isEditing  = false;
-    public ?int $editingId  = null;
+    public bool $showModal = false;
+
+    public bool $isEditing = false;
+
+    public ?int $editingId = null;
 
     // ── Form fields ─────────────────────────────────────────────────────────
-    public string $name       = '';
-    public string $label      = '';
-    public string $email      = '';
-    public string $phone      = '';
-    public string $tax_id     = '';
-    public string $tax_type   = 'cnpj';
-    public bool   $is_default = false;
-    public bool   $is_active  = true;
-    public array  $address    = [];
-    public array  $settings   = [];
+    public string $name = '';
+
+    public string $label = '';
+
+    public string $email = '';
+
+    public string $phone = '';
+
+    public string $tax_id = '';
+
+    public string $tax_type = 'cnpj';
+
+    public bool $is_default = false;
+
+    public bool $is_active = true;
+
+    public array $address = [];
+
+    public array $settings = [];
 
     // ── Delete confirmation ────────────────────────────────────────────
-    public ?int  $deleteId        = null;
-    public bool  $showDeleteModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showDeleteModal = false;
 
     // ── Feedback ──────────────────────────────────────────────────────
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     protected function rules(): array
     {
         return [
-            'name'      => 'required|string|max:255',
-            'label'     => [
+            'name' => 'required|string|max:255',
+            'label' => [
                 'nullable',
                 'string',
                 'max:4',
                 Rule::unique('ptah_companies', 'label')->ignore($this->editingId),
             ],
-            'email'     => 'nullable|email|max:255',
-            'phone'     => 'nullable|string|max:30',
-            'tax_id'    => 'nullable|string|max:50',
-            'tax_type'  => 'nullable|in:cnpj,cpf,ein,vat,other',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:30',
+            'tax_id' => 'nullable|string|max:50',
+            'tax_type' => 'nullable|in:cnpj,cpf,ein,vat,other',
             'is_active' => 'boolean',
         ];
     }
@@ -78,7 +95,7 @@ class CompanyList extends Component
         if ($this->sort === $column) {
             $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
         } else {
-            $this->sort      = $column;
+            $this->sort = $column;
             $this->direction = 'asc';
         }
     }
@@ -96,17 +113,17 @@ class CompanyList extends Component
     {
         $company = Company::findOrFail($id);
 
-        $this->editingId  = $id;
-        $this->name       = $company->name;
-        $this->label      = $company->label ?? '';
-        $this->email      = $company->email ?? '';
-        $this->phone      = $company->phone ?? '';
-        $this->tax_id     = $company->tax_id ?? '';
-        $this->tax_type   = $company->tax_type ?? 'cnpj';
+        $this->editingId = $id;
+        $this->name = $company->name;
+        $this->label = $company->label ?? '';
+        $this->email = $company->email ?? '';
+        $this->phone = $company->phone ?? '';
+        $this->tax_id = $company->tax_id ?? '';
+        $this->tax_type = $company->tax_type ?? 'cnpj';
         $this->is_default = $company->is_default;
-        $this->is_active  = $company->is_active;
-        $this->address    = $company->address ?? [];
-        $this->settings   = $company->settings ?? [];
+        $this->is_active = $company->is_active;
+        $this->address = $company->address ?? [];
+        $this->settings = $company->settings ?? [];
 
         $this->isEditing = true;
         $this->showModal = true;
@@ -118,14 +135,14 @@ class CompanyList extends Component
 
         try {
             $data = [
-                'name'       => $this->name,
-                'label'      => strtoupper(trim($this->label)) ?: null,
-                'email'      => $this->email ?: null,
-                'phone'      => $this->phone ?: null,
-                'tax_id'     => $this->tax_id ?: null,
-                'tax_type'   => $this->tax_type ?: null,
+                'name' => $this->name,
+                'label' => strtoupper(trim($this->label)) ?: null,
+                'email' => $this->email ?: null,
+                'phone' => $this->phone ?: null,
+                'tax_id' => $this->tax_id ?: null,
+                'tax_type' => $this->tax_type ?: null,
                 'is_default' => $this->is_default,
-                'is_active'  => $this->is_active,
+                'is_active' => $this->is_active,
             ];
 
             if ($this->isEditing) {
@@ -137,18 +154,18 @@ class CompanyList extends Component
             }
 
             // Invalidate companies cache
-            app(\Ptah\Services\Company\CompanyService::class)->forgetListCache();
+            app(CompanyService::class)->forgetListCache();
 
             $this->showModal = false;
             $this->resetForm();
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error saving: ' . $e->getMessage();
+            $this->errorMsg = 'Error saving: '.$e->getMessage();
         }
     }
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId        = $id;
+        $this->deleteId = $id;
         $this->showDeleteModal = true;
     }
 
@@ -160,13 +177,14 @@ class CompanyList extends Component
             if ($company->is_default) {
                 $this->errorMsg = 'The default company cannot be deleted.';
                 $this->showDeleteModal = false;
+
                 return;
             }
 
             $company->delete();
             $this->flash('Company deleted.');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error deleting: ' . $e->getMessage();
+            $this->errorMsg = 'Error deleting: '.$e->getMessage();
         }
 
         $this->showDeleteModal = false;
@@ -177,17 +195,17 @@ class CompanyList extends Component
 
     protected function resetForm(): void
     {
-        $this->editingId  = null;
-        $this->name       = '';
-        $this->label      = '';
-        $this->email      = '';
-        $this->phone      = '';
-        $this->tax_id     = '';
-        $this->tax_type   = 'cnpj';
+        $this->editingId = null;
+        $this->name = '';
+        $this->label = '';
+        $this->email = '';
+        $this->phone = '';
+        $this->tax_id = '';
+        $this->tax_type = 'cnpj';
         $this->is_default = false;
-        $this->is_active  = true;
-        $this->address    = [];
-        $this->settings   = [];
+        $this->is_active = true;
+        $this->address = [];
+        $this->settings = [];
         $this->resetValidation();
     }
 
@@ -204,8 +222,8 @@ class CompanyList extends Component
         return Company::query()
             ->when($this->search, fn ($q) => $q->where(function ($q2) {
                 $q2->where('name', 'like', "%{$this->search}%")
-                   ->orWhere('email', 'like', "%{$this->search}%")
-                   ->orWhere('tax_id', 'like', "%{$this->search}%");
+                    ->orWhere('email', 'like', "%{$this->search}%")
+                    ->orWhere('tax_id', 'like', "%{$this->search}%");
             }))
             ->orderBy($this->sort, $this->direction)
             ->paginate($this->perPage);

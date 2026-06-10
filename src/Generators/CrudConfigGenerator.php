@@ -45,7 +45,7 @@ class CrudConfigGenerator extends AbstractGenerator
     {
         // Include subfolder in identifier: Product/ProductStock
         $crudIdentifier = $context->subFolder
-            ? $context->subFolder . '/' . $context->entity
+            ? $context->subFolder.'/'.$context->entity
             : $context->entity;
 
         $label = "CrudConfig [{$crudIdentifier}]";
@@ -74,29 +74,29 @@ class CrudConfigGenerator extends AbstractGenerator
     {
         // Include subfolder in identifier for BaseCrud to resolve correctly (e.g. Product/ProductStock)
         $crudIdentifier = $context->subFolder
-            ? $context->subFolder . '/' . $context->entity
+            ? $context->subFolder.'/'.$context->entity
             : $context->entity;
 
         return [
-            'crud'              => $crudIdentifier,
-            'totalizador'       => false,
-            'configEsconderId'  => false,
-            'configLinkLinha'   => '/' . $context->entityPlural . '/%id%',
-            'tableClass'        => 'table table-hover table-condensed table-sm table-bordered table-nowrap align-middle',
-            'theadClass'        => '',
-            'cols'              => $this->buildCols($context),
-            'customFilters'     => [],
-            'contitionStyles'   => [],
-            'totalizadores'     => ['enabled' => false, 'columns' => []],
-            'permissions'       => $this->defaultPermissions($context),
-            'cacheStrategy'     => ['enabled' => true, 'ttl' => 300, 'tags' => []],
-            'exportConfig'      => $this->defaultExportConfig(),
-            'dateRangeFilters'  => $this->buildDateRangeFilters($context),
-            'uiPreferences'     => [
-                'theme'            => 'light',
-                'compactMode'      => false,
-                'stickyHeader'     => true,
-                'showTotalizador'  => false,
+            'crud' => $crudIdentifier,
+            'totalizador' => false,
+            'configEsconderId' => false,
+            'configLinkLinha' => '/'.$context->entityPlural.'/%id%',
+            'tableClass' => 'table table-hover table-condensed table-sm table-bordered table-nowrap align-middle',
+            'theadClass' => '',
+            'cols' => $this->buildCols($context),
+            'customFilters' => [],
+            'contitionStyles' => [],
+            'totalizadores' => ['enabled' => false, 'columns' => []],
+            'permissions' => $this->defaultPermissions($context),
+            'cacheStrategy' => ['enabled' => true, 'ttl' => 300, 'tags' => []],
+            'exportConfig' => $this->defaultExportConfig(),
+            'dateRangeFilters' => $this->buildDateRangeFilters($context),
+            'uiPreferences' => [
+                'theme' => 'light',
+                'compactMode' => false,
+                'stickyHeader' => true,
+                'showTotalizador' => false,
                 'highlightOnHover' => true,
             ],
         ];
@@ -113,13 +113,13 @@ class CrudConfigGenerator extends AbstractGenerator
 
         // ID column always present
         $cols[] = [
-            'colsNomeFisico'  => 'id',
-            'colsNomeLogico'  => trans('ptah::ui.col_id'),
-            'colsTipo'        => 'number',
-            'colsGravar'      => false,
-            'colsRequired'    => false,
-            'colsAlign'       => 'text-center',
-            'colsIsFilterable'=> true,
+            'colsNomeFisico' => 'id',
+            'colsNomeLogico' => trans('ptah::ui.col_id'),
+            'colsTipo' => 'number',
+            'colsGravar' => false,
+            'colsRequired' => false,
+            'colsAlign' => 'text-center',
+            'colsIsFilterable' => true,
         ];
 
         // Entity fields
@@ -135,22 +135,22 @@ class CrudConfigGenerator extends AbstractGenerator
      */
     private function buildColFromField(FieldDefinition $field): array
     {
-        $tipo    = $this->mapTipo($field);
-        $gravar  = true;
-        $align   = $this->mapAlign($field);
+        $tipo = $this->mapTipo($field);
+        $gravar = true;
+        $align = $this->mapAlign($field);
         $col = [
-            'colsNomeFisico'  => $field->name,
-            'colsNomeLogico'  => $field->label !== '' ? $field->label : $this->humanLabel($field->name),
-            'colsTipo'        => $tipo,
-            'colsGravar'      => $gravar,
-            'colsRequired'    => false,
-            'colsAlign'       => $align,
-            'colsIsFilterable'=> true,
+            'colsNomeFisico' => $field->name,
+            'colsNomeLogico' => $field->label !== '' ? $field->label : $this->humanLabel($field->name),
+            'colsTipo' => $tipo,
+            'colsGravar' => $gravar,
+            'colsRequired' => false,
+            'colsAlign' => $align,
+            'colsIsFilterable' => true,
         ];
 
         // FK fields → relation
         if (str_ends_with($field->name, '_id')) {
-            $col['colsRelacao']      = '';
+            $col['colsRelacao'] = '';
             $col['colsRelacaoExibe'] = '';
         }
 
@@ -169,7 +169,7 @@ class CrudConfigGenerator extends AbstractGenerator
         if (in_array($field->type, ['decimal', 'float', 'double'])) {
             if ($this->isCurrencyField($field->name)) {
                 $col['colsHelper'] = 'currencyFormat';
-                $col['colsAlign']  = 'text-end';
+                $col['colsAlign'] = 'text-end';
                 $col['colsReverse'] = true;
             }
         }
@@ -188,13 +188,13 @@ class CrudConfigGenerator extends AbstractGenerator
     private function mapTipo(FieldDefinition $field): string
     {
         return match (true) {
-            $field->type === 'boolean'                                         => 'select',
-            $field->type === 'enum'                                            => 'select',
+            $field->type === 'boolean' => 'select',
+            $field->type === 'enum' => 'select',
             in_array($field->type, ['integer', 'bigInteger', 'unsignedBigInteger',
-                                    'unsignedInteger', 'tinyInteger', 'smallInteger',
-                                    'decimal', 'float', 'double'])             => 'number',
-            in_array($field->type, ['date', 'datetime', 'timestamp'])          => 'date',
-            default                                                             => 'text',
+                'unsignedInteger', 'tinyInteger', 'smallInteger',
+                'decimal', 'float', 'double']) => 'number',
+            in_array($field->type, ['date', 'datetime', 'timestamp']) => 'date',
+            default => 'text',
         };
     }
 
@@ -202,10 +202,10 @@ class CrudConfigGenerator extends AbstractGenerator
     {
         return match (true) {
             in_array($field->type, ['integer', 'bigInteger', 'unsignedBigInteger',
-                                    'decimal', 'float', 'double'])             => 'text-end',
-            $field->type === 'boolean'                                         => 'text-center',
-            in_array($field->type, ['date', 'datetime', 'timestamp'])          => 'text-center',
-            default                                                             => 'text-start',
+                'decimal', 'float', 'double']) => 'text-end',
+            $field->type === 'boolean' => 'text-center',
+            in_array($field->type, ['date', 'datetime', 'timestamp']) => 'text-center',
+            default => 'text-start',
         };
     }
 
@@ -215,6 +215,7 @@ class CrudConfigGenerator extends AbstractGenerator
         foreach ($values as $v) {
             $select[ucfirst((string) $v)] = (string) $v;
         }
+
         return $select;
     }
 
@@ -225,6 +226,7 @@ class CrudConfigGenerator extends AbstractGenerator
                 return true;
             }
         }
+
         return false;
     }
 
@@ -240,9 +242,9 @@ class CrudConfigGenerator extends AbstractGenerator
         foreach ($context->fields as $field) {
             if (in_array($field->type, ['date', 'datetime', 'timestamp'])) {
                 $filters[$field->name] = [
-                    'enableRange'              => true,
-                    'defaultOperator'          => 'BETWEEN',
-                    'quickFilters'             => [],
+                    'enableRange' => true,
+                    'defaultOperator' => 'BETWEEN',
+                    'quickFilters' => [],
                     'disableEndDateWhenEquals' => true,
                 ];
             }
@@ -250,9 +252,9 @@ class CrudConfigGenerator extends AbstractGenerator
 
         // created_at sempre
         $filters['created_at'] = [
-            'enableRange'              => true,
-            'defaultOperator'          => 'BETWEEN',
-            'quickFilters'             => [],
+            'enableRange' => true,
+            'defaultOperator' => 'BETWEEN',
+            'quickFilters' => [],
             'disableEndDateWhenEquals' => true,
         ];
 
@@ -262,28 +264,28 @@ class CrudConfigGenerator extends AbstractGenerator
     private function defaultPermissions(EntityContext $context): array
     {
         return [
-            'create'           => null,
-            'edit'             => null,
-            'delete'           => null,
-            'export'           => null,
-            'restore'          => null,
+            'create' => null,
+            'edit' => null,
+            'delete' => null,
+            'export' => null,
+            'restore' => null,
             'showCreateButton' => true,
-            'showEditButton'   => true,
+            'showEditButton' => true,
             'showDeleteButton' => true,
-            'showTrashButton'  => true,
-            'identifier'       => 'page' . $context->entity,
+            'showTrashButton' => true,
+            'identifier' => 'page'.$context->entity,
         ];
     }
 
     private function defaultExportConfig(): array
     {
         return [
-            'enabled'             => true,
-            'asyncThreshold'      => 1000,
-            'maxRows'             => 10000,
-            'orientation'         => 'landscape',
-            'formats'             => ['excel', 'pdf'],
-            'chunkSize'           => 500,
+            'enabled' => true,
+            'asyncThreshold' => 1000,
+            'maxRows' => 10000,
+            'orientation' => 'landscape',
+            'formats' => ['excel', 'pdf'],
+            'chunkSize' => 500,
             'notificationChannel' => 'database',
         ];
     }

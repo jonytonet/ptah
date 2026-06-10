@@ -8,7 +8,7 @@ class FilterParser
 {
     /**
      * Parse filter definition string
-     * 
+     *
      * Format: field:type:option1=value1:option2=value2
      * Example: supplier_name:text:label=Fornecedor:whereHas=supplier:field=name:operator=LIKE
      */
@@ -31,7 +31,7 @@ class FilterParser
         foreach ($parts as $part) {
             if (str_contains($part, '=')) {
                 [$k, $v] = explode('=', $part, 2);
-                
+
                 // Handle options key
                 if ($k === 'options') {
                     $config['options'] = $v;

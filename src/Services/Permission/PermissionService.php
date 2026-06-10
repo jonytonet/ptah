@@ -41,7 +41,7 @@ class PermissionService implements PermissionServiceContract
             return $companyId;
         }
 
-        if (!config('ptah.permissions.multi_company', true)) {
+        if (! config('ptah.permissions.multi_company', true)) {
             return null;
         }
 
@@ -96,21 +96,22 @@ class PermissionService implements PermissionServiceContract
             if (config('ptah.permissions.audit') && config('ptah.permissions.audit_master')) {
                 $this->writeAudit($userId, $companyId, $objectKey, strtolower($action), 'granted');
             }
+
             return true;
         }
 
         $resolvedCompanyId = $this->resolveCompanyId($companyId);
-        $action            = strtolower($action);
+        $action = strtolower($action);
 
         // 2. Look up in the full map (single source of truth, already cached)
         //    Ensures consistency: clearCache() invalidates the map and this read
         //    immediately reflects any role/permission changes.
-        $map    = $this->getPermissions($user, $resolvedCompanyId);
+        $map = $this->getPermissions($user, $resolvedCompanyId);
         $result = (bool) ($map[$objectKey][$action] ?? false);
 
         // 3. Auditoria
         if (config('ptah.permissions.audit')) {
-            if (!$result || config('ptah.permissions.audit_denied')) {
+            if (! $result || config('ptah.permissions.audit_denied')) {
                 $this->writeAudit($userId, $resolvedCompanyId, $objectKey, $action, $result ? 'granted' : 'denied');
             }
         }
@@ -175,6 +176,7 @@ class PermissionService implements PermissionServiceContract
 
         if ($this->cacheEnabled()) {
             $key = $this->cacheKey('perms_map', $userId, $resolvedCompanyId);
+
             return Cache::remember($key, $this->ttl(), fn () => $this->buildPermissionMap($userId, $resolvedCompanyId));
         }
 
@@ -272,6 +274,7 @@ class PermissionService implements PermissionServiceContract
             } catch (\Throwable) {
                 // Driver without tag support — nothing to do here
             }
+
             return;
         }
 
@@ -337,17 +340,17 @@ class PermissionService implements PermissionServiceContract
 
         foreach ($rows as $perm) {
             $key = $perm->pageObject?->obj_key ?? null;
-            if (!$key) {
+            if (! $key) {
                 continue;
             }
 
-            if (!isset($map[$key])) {
+            if (! isset($map[$key])) {
                 $map[$key] = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
             }
 
             // OR logic: if any role grants, consider it granted
             $map[$key]['create'] = $map[$key]['create'] || $perm->can_create;
-            $map[$key]['read']   = $map[$key]['read']   || $perm->can_read;
+            $map[$key]['read'] = $map[$key]['read'] || $perm->can_read;
             $map[$key]['update'] = $map[$key]['update'] || $perm->can_update;
             $map[$key]['delete'] = $map[$key]['delete'] || $perm->can_delete;
         }
@@ -378,15 +381,15 @@ class PermissionService implements PermissionServiceContract
     {
         try {
             PermissionAudit::create([
-                'user_id'      => $userId,
-                'company_id'   => $companyId,
+                'user_id' => $userId,
+                'company_id' => $companyId,
                 'resource_key' => $resourceKey,
-                'action'       => $action,
-                'result'       => $result,
-                'ip_address'   => Request::ip(),
-                'user_agent'   => Request::userAgent(),
-                'context'      => [
-                    'uri'    => Request::getRequestUri(),
+                'action' => $action,
+                'result' => $result,
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+                'context' => [
+                    'uri' => Request::getRequestUri(),
                     'method' => Request::method(),
                 ],
             ]);

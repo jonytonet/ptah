@@ -19,28 +19,28 @@ class GeneralWizard
      */
     public function runGeneralSettings(?array $existingConfig = null): array
     {
-        $this->command->info("=== General Settings Configuration ===");
+        $this->command->info('=== General Settings Configuration ===');
         $this->command->newLine();
 
         $config = [];
 
         // Cache settings
-        $this->command->info("--- Cache Settings ---");
-        $config['cacheEnabled'] = $this->command->confirm("Enable cache?", $existingConfig['cacheEnabled'] ?? true);
-        
+        $this->command->info('--- Cache Settings ---');
+        $config['cacheEnabled'] = $this->command->confirm('Enable cache?', $existingConfig['cacheEnabled'] ?? true);
+
         if ($config['cacheEnabled']) {
-            $config['cacheTime'] = (int) $this->command->ask("Cache time (minutes)", $existingConfig['cacheTime'] ?? 60);
+            $config['cacheTime'] = (int) $this->command->ask('Cache time (minutes)', $existingConfig['cacheTime'] ?? 60);
         }
 
         // Pagination settings
         $this->command->newLine();
-        $this->command->info("--- Pagination Settings ---");
-        $config['paginationEnabled'] = $this->command->confirm("Enable pagination?", $existingConfig['paginationEnabled'] ?? true);
-        
+        $this->command->info('--- Pagination Settings ---');
+        $config['paginationEnabled'] = $this->command->confirm('Enable pagination?', $existingConfig['paginationEnabled'] ?? true);
+
         if ($config['paginationEnabled']) {
-            $config['itemsPerPage'] = (int) $this->command->ask("Items per page", $existingConfig['itemsPerPage'] ?? 10);
+            $config['itemsPerPage'] = (int) $this->command->ask('Items per page', $existingConfig['itemsPerPage'] ?? 10);
             $config['paginationOptions'] = $this->command->ask(
-                "Page size options (comma-separated)",
+                'Page size options (comma-separated)',
                 $existingConfig['paginationOptions'] ?? '10,25,50,100'
             );
             $config['paginationOptions'] = array_map('intval', explode(',', str_replace(' ', '', $config['paginationOptions'])));
@@ -48,32 +48,32 @@ class GeneralWizard
 
         // Search settings
         $this->command->newLine();
-        $this->command->info("--- Search Settings ---");
-        $config['searchEnabled'] = $this->command->confirm("Enable global search?", $existingConfig['searchEnabled'] ?? true);
-        
+        $this->command->info('--- Search Settings ---');
+        $config['searchEnabled'] = $this->command->confirm('Enable global search?', $existingConfig['searchEnabled'] ?? true);
+
         if ($config['searchEnabled']) {
-            $config['searchPlaceholder'] = $this->command->ask("Search placeholder", $existingConfig['searchPlaceholder'] ?? 'Search...');
+            $config['searchPlaceholder'] = $this->command->ask('Search placeholder', $existingConfig['searchPlaceholder'] ?? 'Search...');
         }
 
         // Export settings
         $this->command->newLine();
-        $this->command->info("--- Export Settings ---");
-        $config['exportEnabled'] = $this->command->confirm("Enable export?", $existingConfig['exportEnabled'] ?? true);
-        
+        $this->command->info('--- Export Settings ---');
+        $config['exportEnabled'] = $this->command->confirm('Enable export?', $existingConfig['exportEnabled'] ?? true);
+
         if ($config['exportEnabled']) {
             $formats = ['pdf', 'excel', 'csv'];
             $selectedFormats = [];
-            
+
             foreach ($formats as $format) {
                 if ($this->command->confirm("  Enable {$format} export?", true)) {
                     $selectedFormats[] = $format;
                 }
             }
-            
+
             $config['exportFormats'] = $selectedFormats;
-            
+
             $config['exportOrientation'] = $this->command->choice(
-                "PDF orientation",
+                'PDF orientation',
                 CrudConfigEnums::ORIENTATIONS,
                 $existingConfig['exportOrientation'] ?? 'landscape'
             );
@@ -81,24 +81,24 @@ class GeneralWizard
 
         // UI Settings
         $this->command->newLine();
-        $this->command->info("--- UI Settings ---");
+        $this->command->info('--- UI Settings ---');
         $config['theme'] = $this->command->choice(
-            "Theme",
+            'Theme',
             CrudConfigEnums::THEMES,
             $existingConfig['theme'] ?? 'light'
         );
 
-        $config['showRowNumbers'] = $this->command->confirm("Show row numbers?", $existingConfig['showRowNumbers'] ?? true);
-        $config['compactMode'] = $this->command->confirm("Compact mode?", $existingConfig['compactMode'] ?? false);
-        $config['striped'] = $this->command->confirm("Striped rows?", $existingConfig['striped'] ?? true);
-        $config['hover'] = $this->command->confirm("Hover effect?", $existingConfig['hover'] ?? true);
+        $config['showRowNumbers'] = $this->command->confirm('Show row numbers?', $existingConfig['showRowNumbers'] ?? true);
+        $config['compactMode'] = $this->command->confirm('Compact mode?', $existingConfig['compactMode'] ?? false);
+        $config['striped'] = $this->command->confirm('Striped rows?', $existingConfig['striped'] ?? true);
+        $config['hover'] = $this->command->confirm('Hover effect?', $existingConfig['hover'] ?? true);
 
         // Soft deletes
         $this->command->newLine();
-        $config['softDeletes'] = $this->command->confirm("Use soft deletes?", $existingConfig['softDeletes'] ?? false);
-        
+        $config['softDeletes'] = $this->command->confirm('Use soft deletes?', $existingConfig['softDeletes'] ?? false);
+
         if ($config['softDeletes']) {
-            $config['showTrashed'] = $this->command->confirm("Show trashed items by default?", $existingConfig['showTrashed'] ?? false);
+            $config['showTrashed'] = $this->command->confirm('Show trashed items by default?', $existingConfig['showTrashed'] ?? false);
         }
 
         $this->previewGeneralSettings($config);
@@ -111,7 +111,7 @@ class GeneralWizard
      */
     public function runPermissions(?array $existingPermissions = null): array
     {
-        $this->command->info("=== Permissions Configuration ===");
+        $this->command->info('=== Permissions Configuration ===');
         $this->command->newLine();
 
         $permissions = [];
@@ -119,20 +119,20 @@ class GeneralWizard
 
         foreach ($actions as $action) {
             if ($this->command->confirm("Set permission for '{$action}' action?", false)) {
-                $permissions[$action] = $this->command->ask("Permission string", $existingPermissions[$action] ?? "{$action}.resource");
+                $permissions[$action] = $this->command->ask('Permission string', $existingPermissions[$action] ?? "{$action}.resource");
             }
         }
 
         // Custom permissions
-        if ($this->command->confirm("Add custom permission?", false)) {
+        if ($this->command->confirm('Add custom permission?', false)) {
             while (true) {
-                $key = $this->command->ask("Permission key (or empty to finish)");
-                
-                if (!$key) {
+                $key = $this->command->ask('Permission key (or empty to finish)');
+
+                if (! $key) {
                     break;
                 }
-                
-                $value = $this->command->ask("Permission string");
+
+                $value = $this->command->ask('Permission string');
                 $permissions[$key] = $value;
             }
         }
@@ -148,12 +148,12 @@ class GeneralWizard
     protected function previewGeneralSettings(array $config): void
     {
         $this->command->newLine();
-        $this->command->info("=== General Settings Preview ===");
+        $this->command->info('=== General Settings Preview ===');
         $this->command->table(
             ['Setting', 'Value'],
-            collect($config)->map(fn($value, $key) => [
+            collect($config)->map(fn ($value, $key) => [
                 $key,
-                is_array($value) ? implode(', ', $value) : (is_bool($value) ? ($value ? 'enabled' : 'disabled') : $value)
+                is_array($value) ? implode(', ', $value) : (is_bool($value) ? ($value ? 'enabled' : 'disabled') : $value),
             ])->toArray()
         );
         $this->command->newLine();
@@ -165,17 +165,17 @@ class GeneralWizard
     protected function previewPermissions(array $permissions): void
     {
         $this->command->newLine();
-        $this->command->info("=== Permissions Preview ===");
-        
+        $this->command->info('=== Permissions Preview ===');
+
         if (empty($permissions)) {
-            $this->command->warn("No permissions configured.");
+            $this->command->warn('No permissions configured.');
         } else {
             $this->command->table(
                 ['Action', 'Permission'],
-                collect($permissions)->map(fn($value, $key) => [$key, $value])->toArray()
+                collect($permissions)->map(fn ($value, $key) => [$key, $value])->toArray()
             );
         }
-        
+
         $this->command->newLine();
     }
 }

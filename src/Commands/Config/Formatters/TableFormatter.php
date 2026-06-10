@@ -45,7 +45,7 @@ class TableFormatter
         $settings = [
             'Display Name' => $config['displayName'] ?? 'N/A',
             'Cache Enabled' => $config['cacheEnabled'] ? 'Yes' : 'No',
-            'Cache TTL' => $config['cacheTtl'] ? $config['cacheTtl'] . 's' : 'N/A',
+            'Cache TTL' => $config['cacheTtl'] ? $config['cacheTtl'].'s' : 'N/A',
             'Export Max Rows' => $config['exportMaxRows'] ?? 'N/A',
             'Theme' => $config['theme'] ?? 'N/A',
             'Orientation' => $config['pdfOrientation'] ?? 'N/A',
@@ -64,13 +64,13 @@ class TableFormatter
      */
     protected function formatColumns(array $fields): void
     {
-        $displayColumns = array_filter($fields, fn($f) => ($f['colsVisivel'] ?? true));
+        $displayColumns = array_filter($fields, fn ($f) => ($f['colsVisivel'] ?? true));
 
         if (empty($displayColumns)) {
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== COLUMNS (" . count($displayColumns) . ") ===</>");
+        $this->output->writeln("\n<fg=green;options=bold>=== COLUMNS (".count($displayColumns).') ===</>');
 
         $table = new Table($this->output);
         $table->setHeaders(['Field', 'Type', 'Label', 'Required', 'Sortable', 'Filterable', 'Renderer', 'Mask']);
@@ -100,7 +100,7 @@ class TableFormatter
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== CUSTOM ACTIONS (" . count($actions) . ") ===</>");
+        $this->output->writeln("\n<fg=green;options=bold>=== CUSTOM ACTIONS (".count($actions).') ===</>');
 
         $table = new Table($this->output);
         $table->setHeaders(['Name', 'Type', 'Value', 'Icon', 'Color', 'Permission']);
@@ -124,13 +124,13 @@ class TableFormatter
      */
     protected function formatFilters(array $fields): void
     {
-        $filterableFields = array_filter($fields, fn($f) => ($f['colsFilterable'] ?? false));
+        $filterableFields = array_filter($fields, fn ($f) => ($f['colsFilterable'] ?? false));
 
         if (empty($filterableFields)) {
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== FILTERS (" . count($filterableFields) . ") ===</>");
+        $this->output->writeln("\n<fg=green;options=bold>=== FILTERS (".count($filterableFields).') ===</>');
 
         $table = new Table($this->output);
         $table->setHeaders(['Field', 'Type', 'Label', 'Operator', 'Relation']);
@@ -157,7 +157,7 @@ class TableFormatter
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== CONDITIONAL STYLES (" . count($styles) . ") ===</>");
+        $this->output->writeln("\n<fg=green;options=bold>=== CONDITIONAL STYLES (".count($styles).') ===</>');
 
         $table = new Table($this->output);
         $table->setHeaders(['Field', 'Condition', 'Value', 'Style']);
@@ -188,13 +188,13 @@ class TableFormatter
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== JOINS (" . count($joins) . ") ===</>");
+        $this->output->writeln("\n<fg=green;options=bold>=== JOINS (".count($joins).') ===</>');
 
         $table = new Table($this->output);
         $table->setHeaders(['Type', 'Table', 'ON Clause', 'Select', 'Distinct']);
 
         foreach ($joins as $join) {
-            $onClause = ($join['first'] ?? '') . ' = ' . ($join['second'] ?? '');
+            $onClause = ($join['first'] ?? '').' = '.($join['second'] ?? '');
 
             $table->addRow([
                 strtoupper($join['type'] ?? 'left'),

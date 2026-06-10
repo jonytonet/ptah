@@ -13,22 +13,22 @@ use Illuminate\Support\Str;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * @property int         $id
- * @property string      $name
- * @property string      $slug
+ * @property int $id
+ * @property string $name
+ * @property string $slug
  * @property string|null $logo_path
  * @property string|null $email
  * @property string|null $phone
  * @property string|null $tax_id
  * @property string|null $tax_type
- * @property array|null  $address
- * @property array|null  $settings
- * @property bool        $is_default
- * @property bool        $is_active
+ * @property array|null $address
+ * @property array|null $settings
+ * @property bool $is_default
+ * @property bool $is_active
  */
 class Company extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'ptah_companies';
 
@@ -51,10 +51,10 @@ class Company extends Model
     ];
 
     protected $casts = [
-        'address'    => 'array',
-        'settings'   => 'array',
+        'address' => 'array',
+        'settings' => 'array',
         'is_default' => 'boolean',
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -101,7 +101,9 @@ class Company extends Model
         $words = preg_split('/\s+/', trim($this->name));
         $initials = '';
         foreach ($words as $word) {
-            if (strlen($initials) >= 4) break;
+            if (strlen($initials) >= 4) {
+                break;
+            }
             $initials .= strtoupper(mb_substr($word, 0, 1));
         }
 
@@ -115,10 +117,11 @@ class Company extends Model
     {
         if ($this->logo_path) {
             $disk = config('ptah.company.logo_disk', 'public');
+
             return Storage::disk($disk)->url($this->logo_path);
         }
 
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=0d6efd&color=fff&size=64';
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=0d6efd&color=fff&size=64';
     }
 
     /**

@@ -16,15 +16,15 @@ class DtoGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path = $context->subPath(config('ptah.paths.dtos')) . "/{$context->entity}DTO.php";
-        $ns   = $context->subNs($context->rootNamespace . 'DTOs');
+        $path = $context->subPath(config('ptah.paths.dtos'))."/{$context->entity}DTO.php";
+        $ns = $context->subNs($context->rootNamespace.'DTOs');
 
         return $this->writeFile(
             path: $path,
             stub: 'dto',
             replacements: [
-                'namespace'      => $ns,
-                'entity'         => $context->entity,
+                'namespace' => $ns,
+                'entity' => $context->entity,
                 'dto_properties' => $context->dtoProperties(),
                 'dto_from_array' => $context->dtoFromArray(),
             ],

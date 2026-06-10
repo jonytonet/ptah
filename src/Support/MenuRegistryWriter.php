@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
  *   );
  *
  * @author Ptah Team
+ *
  * @since 1.0.0
  */
 class MenuRegistryWriter
@@ -34,24 +35,22 @@ class MenuRegistryWriter
      * Adiciona uma entrada de menu ao MenuRegistry.php.
      * Cria o grupo (módulo) se não existir, adiciona o link com ordem automática.
      *
-     * @param string $module Nome do módulo (ex: Health, Catalog)
-     * @param string $entity Nome da entidade (ex: VaccinationType)
-     * @param string $url URL da entidade (ex: /vaccination_type)
-     * @param string $registryPath Caminho completo para MenuRegistry.php
-     * @param string|null $icon Ícone customizado (opcional, senão usa mapper)
-     * @param string|null $label Label customizado (opcional, senão usa mapper)
+     * @param  string  $module  Nome do módulo (ex: Health, Catalog)
+     * @param  string  $entity  Nome da entidade (ex: VaccinationType)
+     * @param  string  $url  URL da entidade (ex: /vaccination_type)
+     * @param  string  $registryPath  Caminho completo para MenuRegistry.php
+     * @param  string|null  $icon  Ícone customizado (opcional, senão usa mapper)
+     * @param  string|null  $label  Label customizado (opcional, senão usa mapper)
      * @return bool True se adicionado, false se já existia
+     *
      * @throws \RuntimeException Se o arquivo não existir ou for inválido
      */
     /**
      * Adds a flat (ungrouped) link directly at the root level of MenuRegistry.php.
      * Use this when the entity has no module prefix.
      *
-     * @param string $entity  Entity name (e.g. Category)
-     * @param string $url     URL (e.g. /category)
-     * @param string $registryPath
-     * @param string|null $icon
-     * @param string|null $label
+     * @param  string  $entity  Entity name (e.g. Category)
+     * @param  string  $url  URL (e.g. /category)
      * @return bool True if added, false if already exists
      */
     public function addFlatEntry(
@@ -80,14 +79,14 @@ class MenuRegistryWriter
             }
         }
 
-        $linkIcon  = $icon  ?? MenuIconMapper::getLinkIcon($entity);
+        $linkIcon = $icon ?? MenuIconMapper::getLinkIcon($entity);
         $linkLabel = $label ?? MenuIconMapper::translateEntity($entity);
         $linkOrder = count($registry['links'] ?? []) + 1;
 
         $registry['links'][] = [
-            'text'  => $linkLabel,
-            'url'   => $urlNormalized,
-            'icon'  => $linkIcon,
+            'text' => $linkLabel,
+            'url' => $urlNormalized,
+            'icon' => $linkIcon,
             'order' => $linkOrder,
         ];
 
@@ -145,9 +144,9 @@ class MenuRegistryWriter
     /**
      * Verifica se a entrada já existe no registry.
      *
-     * @param array $registry Array do registry
-     * @param string $groupKey Chave do grupo (ex: 'health')
-     * @param string $url URL do link (ex: '/vaccination_type')
+     * @param  array  $registry  Array do registry
+     * @param  string  $groupKey  Chave do grupo (ex: 'health')
+     * @param  string  $url  URL do link (ex: '/vaccination_type')
      * @return bool True se já existe
      */
     private function entryExists(array $registry, string $groupKey, string $url): bool
@@ -175,9 +174,9 @@ class MenuRegistryWriter
     /**
      * Cria um novo grupo no registry.
      *
-     * @param array $registry Array do registry
-     * @param string $groupKey Chave do grupo (ex: 'health')
-     * @param string $registryPath Caminho do registry (para calcular ordem)
+     * @param  array  $registry  Array do registry
+     * @param  string  $groupKey  Chave do grupo (ex: 'health')
+     * @param  string  $registryPath  Caminho do registry (para calcular ordem)
      * @return array Registry atualizado
      */
     private function createGroup(array $registry, string $groupKey, string $registryPath): array
@@ -199,12 +198,12 @@ class MenuRegistryWriter
     /**
      * Adiciona um link ao grupo existente.
      *
-     * @param array $registry Array do registry
-     * @param string $groupKey Chave do grupo
-     * @param string $label Label do link
-     * @param string $url URL do link
-     * @param string $icon Ícone do link
-     * @param string $registryPath Caminho do registry (para calcular ordem)
+     * @param  array  $registry  Array do registry
+     * @param  string  $groupKey  Chave do grupo
+     * @param  string  $label  Label do link
+     * @param  string  $url  URL do link
+     * @param  string  $icon  Ícone do link
+     * @param  string  $registryPath  Caminho do registry (para calcular ordem)
      * @return array Registry atualizado
      */
     private function addLink(
@@ -231,9 +230,8 @@ class MenuRegistryWriter
      * Escreve o registry atualizado no arquivo PHP.
      * Mantém formatação legível com indentação de 4 espaços.
      *
-     * @param string $registryPath Caminho do arquivo
-     * @param array $registry Array do registry
-     * @return void
+     * @param  string  $registryPath  Caminho do arquivo
+     * @param  array  $registry  Array do registry
      */
     private function writeRegistry(string $registryPath, array $registry): void
     {
@@ -246,17 +244,17 @@ class MenuRegistryWriter
         $content .= " * \n";
         $content .= " * Sincronize com o banco usando: php artisan ptah:menu-sync --fresh\n";
         $content .= " * \n";
-        $content .= " * @generated " . now()->toDateTimeString() . "\n";
+        $content .= ' * @generated '.now()->toDateTimeString()."\n";
         $content .= " */\n\n";
         $content .= "return [\n";
 
         // Dashboard
         if (isset($registry['dashboard'])) {
             $content .= "    'dashboard' => [\n";
-            $content .= "        'text' => " . $this->exportValue($registry['dashboard']['text']) . ",\n";
-            $content .= "        'url' => " . $this->exportValue($registry['dashboard']['url']) . ",\n";
-            $content .= "        'icon' => " . $this->exportValue($registry['dashboard']['icon']) . ",\n";
-            $content .= "        'order' => " . $registry['dashboard']['order'] . ",\n";
+            $content .= "        'text' => ".$this->exportValue($registry['dashboard']['text']).",\n";
+            $content .= "        'url' => ".$this->exportValue($registry['dashboard']['url']).",\n";
+            $content .= "        'icon' => ".$this->exportValue($registry['dashboard']['icon']).",\n";
+            $content .= "        'order' => ".$registry['dashboard']['order'].",\n";
             $content .= "    ],\n\n";
         }
 
@@ -264,13 +262,13 @@ class MenuRegistryWriter
         if (! empty($registry['links'])) {
             $content .= "    'links' => [\n";
             $flatLinks = $registry['links'];
-            usort($flatLinks, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+            usort($flatLinks, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
             foreach ($flatLinks as $link) {
                 $content .= "        [\n";
-                $content .= "            'text' => " . $this->exportValue($link['text']) . ",\n";
-                $content .= "            'url' => " . $this->exportValue($link['url']) . ",\n";
-                $content .= "            'icon' => " . $this->exportValue($link['icon']) . ",\n";
-                $content .= "            'order' => " . $link['order'] . ",\n";
+                $content .= "            'text' => ".$this->exportValue($link['text']).",\n";
+                $content .= "            'url' => ".$this->exportValue($link['url']).",\n";
+                $content .= "            'icon' => ".$this->exportValue($link['icon']).",\n";
+                $content .= "            'order' => ".$link['order'].",\n";
                 $content .= "        ],\n";
             }
             $content .= "    ],\n\n";
@@ -281,25 +279,25 @@ class MenuRegistryWriter
 
         // Ordenar grupos por 'order'
         $groups = $registry['groups'] ?? [];
-        uasort($groups, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+        uasort($groups, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
 
         foreach ($groups as $groupKey => $group) {
             $content .= "        '{$groupKey}' => [\n";
-            $content .= "            'text' => " . $this->exportValue($group['text']) . ",\n";
-            $content .= "            'icon' => " . $this->exportValue($group['icon']) . ",\n";
-            $content .= "            'order' => " . $group['order'] . ",\n";
+            $content .= "            'text' => ".$this->exportValue($group['text']).",\n";
+            $content .= "            'icon' => ".$this->exportValue($group['icon']).",\n";
+            $content .= "            'order' => ".$group['order'].",\n";
             $content .= "            'links' => [\n";
 
             // Ordenar links por 'order'
             $links = $group['links'] ?? [];
-            usort($links, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+            usort($links, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
 
             foreach ($links as $link) {
                 $content .= "                [\n";
-                $content .= "                    'text' => " . $this->exportValue($link['text']) . ",\n";
-                $content .= "                    'url' => " . $this->exportValue($link['url']) . ",\n";
-                $content .= "                    'icon' => " . $this->exportValue($link['icon']) . ",\n";
-                $content .= "                    'order' => " . $link['order'] . ",\n";
+                $content .= "                    'text' => ".$this->exportValue($link['text']).",\n";
+                $content .= "                    'url' => ".$this->exportValue($link['url']).",\n";
+                $content .= "                    'icon' => ".$this->exportValue($link['icon']).",\n";
+                $content .= "                    'order' => ".$link['order'].",\n";
                 $content .= "                ],\n";
             }
 
@@ -317,13 +315,13 @@ class MenuRegistryWriter
      * Exporta um valor para string PHP formatada.
      * Ex: 'Dashboard' → "'Dashboard'"
      *
-     * @param mixed $value Valor a exportar
+     * @param  mixed  $value  Valor a exportar
      * @return string Representação PHP
      */
     private function exportValue(mixed $value): string
     {
         if (is_string($value)) {
-            return "'" . addslashes($value) . "'";
+            return "'".addslashes($value)."'";
         }
 
         if (is_bool($value)) {
@@ -340,8 +338,8 @@ class MenuRegistryWriter
     /**
      * Remove uma entrada do registry (útil para rollback/testes).
      *
-     * @param string $url URL do link a remover
-     * @param string $registryPath Caminho do registry
+     * @param  string  $url  URL do link a remover
+     * @param  string  $registryPath  Caminho do registry
      * @return bool True se removido, false se não encontrado
      */
     public function removeEntry(string $url, string $registryPath): bool
@@ -358,19 +356,23 @@ class MenuRegistryWriter
         $filteredFlat = array_filter($registry['links'] ?? [], function ($link) use ($urlNormalized, &$found) {
             if (($link['url'] ?? '') === $urlNormalized) {
                 $found = true;
+
                 return false;
             }
+
             return true;
         });
         $registry['links'] = array_values($filteredFlat);
 
         foreach ($registry['groups'] ?? [] as $groupKey => &$group) {
             $links = $group['links'] ?? [];
-            $filteredLinks = array_filter($links, function($link) use ($urlNormalized, &$found) {
+            $filteredLinks = array_filter($links, function ($link) use ($urlNormalized, &$found) {
                 if (($link['url'] ?? '') === $urlNormalized) {
                     $found = true;
+
                     return false;
                 }
+
                 return true;
             });
 

@@ -4,22 +4,16 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Validation\Formatters;
 
-use Ptah\Exceptions\PtahException;
 use Illuminate\Support\Str;
+use Ptah\Exceptions\PtahException;
 
 /**
  * Formats exceptions for CLI output with box drawing characters.
- *
- * @package Ptah\Services\Validation\Formatters
  */
 class CliErrorFormatter
 {
     /**
      * Format an exception for CLI display.
-     *
-     * @param PtahException $exception
-     * @param int $maxWidth
-     * @return string
      */
     public function format(PtahException $exception, int $maxWidth = 70): string
     {
@@ -32,56 +26,49 @@ class CliErrorFormatter
 
     /**
      * Default formatting for exceptions without custom formatter.
-     *
-     * @param PtahException $exception
-     * @param int $maxWidth
-     * @return string
      */
     protected function defaultFormat(PtahException $exception, int $maxWidth): string
     {
         $lines = [];
 
         // Top border
-        $lines[] = '╔' . str_repeat('═', $maxWidth - 2) . '╗';
+        $lines[] = '╔'.str_repeat('═', $maxWidth - 2).'╗';
 
         // Title with error emoji
-        $title = '❌ ' . $this->getErrorTitle($exception);
-        $lines[] = '║ ' . str_pad($title, $maxWidth - 4) . ' ║';
+        $title = '❌ '.$this->getErrorTitle($exception);
+        $lines[] = '║ '.str_pad($title, $maxWidth - 4).' ║';
 
         // Message
         if ($exception->getMessage()) {
-            $lines[] = '╠' . str_repeat('═', $maxWidth - 2) . '╣';
+            $lines[] = '╠'.str_repeat('═', $maxWidth - 2).'╣';
             $messageLines = $this->wrapText($exception->getMessage(), $maxWidth - 4);
             foreach ($messageLines as $line) {
-                $lines[] = '║ ' . str_pad($line, $maxWidth - 4) . ' ║';
+                $lines[] = '║ '.str_pad($line, $maxWidth - 4).' ║';
             }
         }
 
         // Context
         $context = $exception->getContext();
-        if (!empty($context)) {
-            $lines[] = '╠' . str_repeat('═', $maxWidth - 2) . '╣';
+        if (! empty($context)) {
+            $lines[] = '╠'.str_repeat('═', $maxWidth - 2).'╣';
 
             foreach ($this->formatContext($context) as $key => $value) {
                 $contextLine = sprintf('%s: %s', $key, $value);
                 $wrappedLines = $this->wrapText($contextLine, $maxWidth - 4);
                 foreach ($wrappedLines as $line) {
-                    $lines[] = '║ ' . str_pad($line, $maxWidth - 4) . ' ║';
+                    $lines[] = '║ '.str_pad($line, $maxWidth - 4).' ║';
                 }
             }
         }
 
         // Bottom border
-        $lines[] = '╚' . str_repeat('═', $maxWidth - 2) . '╝';
+        $lines[] = '╚'.str_repeat('═', $maxWidth - 2).'╝';
 
-        return "\n" . implode("\n", $lines) . "\n";
+        return "\n".implode("\n", $lines)."\n";
     }
 
     /**
      * Get a human-readable error title from the exception class name.
-     *
-     * @param PtahException $exception
-     * @return string
      */
     protected function getErrorTitle(PtahException $exception): string
     {
@@ -93,7 +80,7 @@ class CliErrorFormatter
     /**
      * Format context array with localized labels.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array<string, string>
      */
     protected function formatContext(array $context): array
@@ -126,14 +113,11 @@ class CliErrorFormatter
 
     /**
      * Format a value for display.
-     *
-     * @param mixed $value
-     * @return string
      */
     protected function formatValue(mixed $value): string
     {
         if (is_array($value)) {
-            return implode(', ', array_map(fn($v) => $this->formatValue($v), $value));
+            return implode(', ', array_map(fn ($v) => $this->formatValue($v), $value));
         }
 
         if (is_bool($value)) {
@@ -156,8 +140,6 @@ class CliErrorFormatter
     /**
      * Wrap text to fit within specified width.
      *
-     * @param string $text
-     * @param int $width
      * @return array<int, string>
      */
     protected function wrapText(string $text, int $width): array
@@ -171,7 +153,7 @@ class CliErrorFormatter
         $currentLine = '';
 
         foreach ($words as $word) {
-            $testLine = $currentLine ? $currentLine . ' ' . $word : $word;
+            $testLine = $currentLine ? $currentLine.' '.$word : $word;
 
             if (mb_strlen($testLine) <= $width) {
                 $currentLine = $testLine;
@@ -199,17 +181,15 @@ class CliErrorFormatter
     /**
      * Format multiple exceptions as a list.
      *
-     * @param array<int, PtahException> $exceptions
-     * @param int $maxWidth
-     * @return string
+     * @param  array<int, PtahException>  $exceptions
      */
     public function formatMultiple(array $exceptions, int $maxWidth = 70): string
     {
         $output = [];
 
-        $output[] = '╔' . str_repeat('═', $maxWidth - 2) . '╗';
-        $output[] = '║ ' . str_pad('⚠️  Multiple Errors Detected', $maxWidth - 4) . ' ║';
-        $output[] = '╚' . str_repeat('═', $maxWidth - 2) . '╝';
+        $output[] = '╔'.str_repeat('═', $maxWidth - 2).'╗';
+        $output[] = '║ '.str_pad('⚠️  Multiple Errors Detected', $maxWidth - 4).' ║';
+        $output[] = '╚'.str_repeat('═', $maxWidth - 2).'╝';
         $output[] = '';
 
         foreach ($exceptions as $index => $exception) {

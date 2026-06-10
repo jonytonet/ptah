@@ -4,22 +4,16 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Validation\Formatters;
 
-use Ptah\Exceptions\PtahException;
 use Illuminate\Support\Str;
+use Ptah\Exceptions\PtahException;
 
 /**
  * Formats exceptions for flash messages (HTML output).
- *
- * @package Ptah\Services\Validation\Formatters
  */
 class FlashMessageFormatter
 {
     /**
      * Format an exception for flash message display.
-     *
-     * @param PtahException $exception
-     * @param string $alertClass
-     * @return string
      */
     public function format(PtahException $exception, string $alertClass = 'alert-danger'): string
     {
@@ -32,10 +26,6 @@ class FlashMessageFormatter
 
     /**
      * Default formatting for exceptions without custom formatter.
-     *
-     * @param PtahException $exception
-     * @param string $alertClass
-     * @return string
      */
     protected function defaultFormat(PtahException $exception, string $alertClass): string
     {
@@ -43,16 +33,16 @@ class FlashMessageFormatter
 
         // Title
         $title = $this->getErrorTitle($exception);
-        $html .= '<strong>' . htmlspecialchars($title) . '</strong>';
+        $html .= '<strong>'.htmlspecialchars($title).'</strong>';
 
         // Message
         if ($exception->getMessage()) {
-            $html .= '<p class="mt-2 mb-0">' . htmlspecialchars($exception->getMessage()) . '</p>';
+            $html .= '<p class="mt-2 mb-0">'.htmlspecialchars($exception->getMessage()).'</p>';
         }
 
         // Context
         $context = $exception->getContext();
-        if (!empty($context)) {
+        if (! empty($context)) {
             $html .= '<ul class="mt-2 mb-0 list-unstyled small">';
             foreach ($this->formatContext($context) as $key => $value) {
                 $html .= sprintf(
@@ -74,7 +64,6 @@ class FlashMessageFormatter
      *
      * Returns an array suitable for session()->flash().
      *
-     * @param PtahException $exception
      * @return array<string, string>
      */
     public function formatForLivewire(PtahException $exception): array
@@ -89,9 +78,6 @@ class FlashMessageFormatter
 
     /**
      * Format exception as Tailwind alert component.
-     *
-     * @param PtahException $exception
-     * @return string
      */
     public function formatTailwind(PtahException $exception): string
     {
@@ -110,7 +96,7 @@ class FlashMessageFormatter
         }
 
         $context = $exception->getContext();
-        if (!empty($context)) {
+        if (! empty($context)) {
             $html .= '<div class="mt-2 text-sm text-red-700"><ul class="list-disc pl-5 space-y-1">';
             foreach ($this->formatContext($context) as $key => $value) {
                 $html .= sprintf(
@@ -129,9 +115,6 @@ class FlashMessageFormatter
 
     /**
      * Get a human-readable error title.
-     *
-     * @param PtahException $exception
-     * @return string
      */
     protected function getErrorTitle(PtahException $exception): string
     {
@@ -143,7 +126,7 @@ class FlashMessageFormatter
     /**
      * Format context array with localized labels.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array<string, string>
      */
     protected function formatContext(array $context): array
@@ -173,14 +156,11 @@ class FlashMessageFormatter
 
     /**
      * Format a value for display.
-     *
-     * @param mixed $value
-     * @return string
      */
     protected function formatValue(mixed $value): string
     {
         if (is_array($value)) {
-            return implode(', ', array_map(fn($v) => $this->formatValue($v), $value));
+            return implode(', ', array_map(fn ($v) => $this->formatValue($v), $value));
         }
 
         if (is_bool($value)) {
@@ -203,9 +183,7 @@ class FlashMessageFormatter
     /**
      * Format multiple exceptions as a single alert.
      *
-     * @param array<int, PtahException> $exceptions
-     * @param string $alertClass
-     * @return string
+     * @param  array<int, PtahException>  $exceptions
      */
     public function formatMultiple(array $exceptions, string $alertClass = 'alert-danger'): string
     {

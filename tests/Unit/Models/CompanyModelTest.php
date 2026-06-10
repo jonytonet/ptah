@@ -52,7 +52,7 @@ class CompanyModelTest extends TestCase
     public function label_display_retorna_maximo_de_4_chars(): void
     {
         $company = CompanyFactory::new()->make([
-            'name'  => 'Alpha Beta Gamma Delta Epsilon',
+            'name' => 'Alpha Beta Gamma Delta Epsilon',
             'label' => null,
         ]);
 
@@ -107,9 +107,9 @@ class CompanyModelTest extends TestCase
     public function nao_sobrescreve_slug_se_ja_definido(): void
     {
         $company = CompanyFactory::new()->create([
-            'name'  => 'Ptah Empresa',
+            'name' => 'Ptah Empresa',
             'label' => 'PTAH',
-            'slug'  => 'meu-slug-custom',
+            'slug' => 'meu-slug-custom',
         ]);
 
         $this->assertSame('meu-slug-custom', $company->fresh()->slug);

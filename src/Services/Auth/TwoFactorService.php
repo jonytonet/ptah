@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Auth;
 
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use PragmaRX\Google2FALaravel\Google2FA;
+use Ptah\Mail\TwoFactorCodeMail;
 
 class TwoFactorService
 {
     private const EMAIL_PREFIX = 'ptah_2fa_email_';
-    private const EMAIL_TTL    = 600; // 10 minutes
+
+    private const EMAIL_TTL = 600; // 10 minutes
 
     // ── TOTP ───────────────────────────────────────────────────────────────
 
@@ -23,17 +30,17 @@ class TwoFactorService
      */
     public function enableTotp(Authenticatable $user): array
     {
-        if (! class_exists(\PragmaRX\Google2FALaravel\Google2FA::class)) {
+        if (! class_exists(Google2FA::class)) {
             throw new \RuntimeException('Install pragmarx/google2fa-laravel to use TOTP.');
         }
 
         /** @var \PragmaRX\Google2FA\Google2FA $google2fa */
         $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
 
-        $secret        = $google2fa->generateSecretKey();
+        $secret = $google2fa->generateSecretKey();
         $recoveryCodes = $this->generateRecoveryCodes();
-        $appName       = config('app.name', 'Ptah');
-        $email         = $user->email ?? (string) $user->getKey();
+        $appName = config('app.name', 'Ptah');
+        $email = $user->email ?? (string) $user->getKey();
 
         $qrUrl = $google2fa->getQRCodeUrl($appName, $email, $secret);
 
@@ -43,8 +50,8 @@ class TwoFactorService
         $qrImageUri = $this->qrCodeUri($qrUrl);
 
         return [
-            'secret'         => $secret,
-            'qr_image_uri'   => $qrImageUri,
+            'secret' => $secret,
+            'qr_image_uri' => $qrImageUri,
             'recovery_codes' => $recoveryCodes,
         ];
     }
@@ -59,8 +66,8 @@ class TwoFactorService
         }
 
         $user->forceFill([
-            'two_factor_type'           => 'totp',
-            'two_factor_confirmed_at'   => now(),
+            'two_factor_type' => 'totp',
+            'two_factor_confirmed_at' => now(),
             'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
         ])->save();
 
@@ -93,14 +100,14 @@ class TwoFactorService
     {
         $code = (string) random_int(100000, 999999);
 
-        Cache::put(self::EMAIL_PREFIX . $user->getKey(), $code, self::EMAIL_TTL);
+        Cache::put(self::EMAIL_PREFIX.$user->getKey(), $code, self::EMAIL_TTL);
 
-        Mail::to($user->email)->send(new \Ptah\Mail\TwoFactorCodeMail($code));
+        Mail::to($user->email)->send(new TwoFactorCodeMail($code));
 
         // Activates the email type if no 2FA was previously configured
         if (is_null($user->two_factor_type)) {
             $user->forceFill([
-                'two_factor_type'         => 'email',
+                'two_factor_type' => 'email',
                 'two_factor_confirmed_at' => now(),
             ])->save();
         }
@@ -111,10 +118,11 @@ class TwoFactorService
      */
     public function verifyEmailCode(Authenticatable $user, string $code): bool
     {
-        $stored = Cache::get(self::EMAIL_PREFIX . $user->getKey());
+        $stored = Cache::get(self::EMAIL_PREFIX.$user->getKey());
 
         if ($stored && hash_equals($stored, $code)) {
-            Cache::forget(self::EMAIL_PREFIX . $user->getKey());
+            Cache::forget(self::EMAIL_PREFIX.$user->getKey());
+
             return true;
         }
 
@@ -130,7 +138,7 @@ class TwoFactorService
     {
         $codes = json_decode(decrypt($user->two_factor_recovery_codes ?? encrypt('[]')), true) ?? [];
 
-        $index = array_search(hash('sha256', $code), array_map(fn($c) => hash('sha256', $c), $codes));
+        $index = array_search(hash('sha256', $code), array_map(fn ($c) => hash('sha256', $c), $codes));
 
         if ($index === false) {
             return false;
@@ -176,10 +184,10 @@ class TwoFactorService
     public function disable(Authenticatable $user): void
     {
         $user->forceFill([
-            'two_factor_secret'         => null,
+            'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at'   => null,
-            'two_factor_type'           => null,
+            'two_factor_confirmed_at' => null,
+            'two_factor_type' => null,
         ])->save();
     }
 
@@ -195,21 +203,22 @@ class TwoFactorService
 
     private function generateRecoveryCodes(int $count = 8): array
     {
-        return Collection::times($count, fn() => Str::random(10) . '-' . Str::random(10))->all();
+        return Collection::times($count, fn () => Str::random(10).'-'.Str::random(10))->all();
     }
 
     private function qrCodeUri(string $url): string
     {
-        if (class_exists(\BaconQrCode\Renderer\ImageRenderer::class)) {
-            $renderer = new \BaconQrCode\Renderer\ImageRenderer(
-                new \BaconQrCode\Renderer\RendererStyle\RendererStyle(200),
-                new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+        if (class_exists(ImageRenderer::class)) {
+            $renderer = new ImageRenderer(
+                new RendererStyle(200),
+                new SvgImageBackEnd
             );
-            $writer = new \BaconQrCode\Writer($renderer);
-            return 'data:image/svg+xml;base64,' . base64_encode($writer->writeString($url));
+            $writer = new Writer($renderer);
+
+            return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($url));
         }
 
         // Fallback: Google Charts API
-        return 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=' . urlencode($url);
+        return 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl='.urlencode($url);
     }
 }

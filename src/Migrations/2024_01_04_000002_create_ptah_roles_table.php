@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('color', 20)->nullable()->comment('Display color in the UI (e.g. #ff6b35)');
             // Nullable FK: roles can exist without a department in simple systems
             $table->foreignId('department_id')
-                  ->nullable()
-                  ->constrained('ptah_departments')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('ptah_departments')
+                ->nullOnDelete();
             // MASTER role: bypasses all permission checks entirely
             $table->boolean('is_master')->default(false)->index();
             $table->boolean('is_active')->default(true)->index();

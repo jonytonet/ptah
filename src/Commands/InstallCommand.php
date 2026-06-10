@@ -7,6 +7,9 @@ namespace Ptah\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Seeders\DefaultAdminSeeder;
+use Ptah\Seeders\PtahDemoSeeder;
+use Symfony\Component\Process\Process;
 
 /**
  * Ptah package installation command.
@@ -67,7 +70,7 @@ class InstallCommand extends Command
         $this->line('     <fg=green>php artisan ptah:module menu</>  <fg=gray>(dynamic sidebar)</>');
         $this->line('     <fg=green>php artisan ptah:module company</>  <fg=gray>(multi-company)</>');
         $this->line('     <fg=green>php artisan ptah:module permissions</>  <fg=gray>(RBAC)</>');
-        $this->line('  4. Sign in with: <fg=yellow>' . $adminEmail . '</>');
+        $this->line('  4. Sign in with: <fg=yellow>'.$adminEmail.'</>');
         $this->line('  5. Scaffold entities with: <fg=green>php artisan ptah:forge {Entity}</>');
         $this->line('  6. For AI agent integration:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
@@ -85,7 +88,7 @@ class InstallCommand extends Command
     {
         $this->components->task('Publishing configuration', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-config',
+                '--tag' => 'ptah-config',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -98,7 +101,7 @@ class InstallCommand extends Command
     {
         $this->components->task('Publishing stubs', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-stubs',
+                '--tag' => 'ptah-stubs',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -111,7 +114,7 @@ class InstallCommand extends Command
     {
         $this->components->task('Publishing migrations', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-migrations',
+                '--tag' => 'ptah-migrations',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -124,7 +127,7 @@ class InstallCommand extends Command
     {
         $this->components->task('Publishing translations', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-lang',
+                '--tag' => 'ptah-lang',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -137,7 +140,7 @@ class InstallCommand extends Command
     {
         $this->components->task('Publishing MenuRegistry', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-menu-registry',
+                '--tag' => 'ptah-menu-registry',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -154,6 +157,7 @@ class InstallCommand extends Command
 
             if (! file_exists($appCss)) {
                 $this->components->warn('resources/css/app.css not found — configure Tailwind tokens manually.');
+
                 return;
             }
 
@@ -165,7 +169,7 @@ class InstallCommand extends Command
                 // Insert after the last existing @source directive
                 if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
                     $insertPos = $m[0][1] + strlen($m[0][0]);
-                    $content   = substr_replace($content, $ptahSource . "\n", $insertPos, 0);
+                    $content = substr_replace($content, $ptahSource."\n", $insertPos, 0);
                 } else {
                     // Insert after @import 'tailwindcss'
                     $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$ptahSource}", $content);
@@ -174,12 +178,12 @@ class InstallCommand extends Command
 
             // Add @custom-variant dark for class-based dark mode (Tailwind v4 requires this)
             // Without it, dark: utilities respond to prefers-color-scheme (OS), not the .dark class.
-            $darkVariant = "@custom-variant dark (&:where(.dark, .dark *));";
+            $darkVariant = '@custom-variant dark (&:where(.dark, .dark *));';
             if (! str_contains($content, '@custom-variant dark')) {
                 // Insert after @source block or after @import if no @source
                 if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
                     $insertPos = $m[0][1] + strlen($m[0][0]);
-                    $content   = substr_replace($content, $darkVariant . "\n", $insertPos, 0);
+                    $content = substr_replace($content, $darkVariant."\n", $insertPos, 0);
                 } else {
                     $content = str_replace("@import 'tailwindcss';", "@import 'tailwindcss';\n{$darkVariant}", $content);
                 }
@@ -213,7 +217,7 @@ CSS;
 
             // Insere os tokens dentro do @theme existente ou cria um novo
             if (str_contains($content, '@theme {')) {
-                $content = str_replace('@theme {', '@theme {' . $themeTokens, $content);
+                $content = str_replace('@theme {', '@theme {'.$themeTokens, $content);
             } else {
                 $content .= "\n@theme {{$themeTokens}\n}\n";
             }
@@ -233,6 +237,7 @@ CSS;
         // Detect re-execution (--boost, --force etc.) without re-creation
         if (Schema::hasTable('ptah_companies') && Schema::hasTable('users')) {
             $this->components->info('Migrations already run — skipping.');
+
             return;
         }
 
@@ -252,6 +257,7 @@ CSS;
         $this->components->task('Creating public/storage link', function () {
             if (file_exists(public_path('storage'))) {
                 $this->components->warn('Link public/storage already exists, skipping.');
+
                 return;
             }
             $this->call('storage:link');
@@ -266,11 +272,12 @@ CSS;
     {
         if (! Schema::hasTable('ptah_companies')) {
             $this->components->warn('Ptah tables not found — run `php artisan migrate` and then `php artisan db:seed --class=\\Ptah\\Seeders\\DefaultAdminSeeder`.');
+
             return;
         }
 
         $this->components->task('Creating default company and admin user', function () {
-            $this->call('db:seed', ['--class' => \Ptah\Seeders\DefaultAdminSeeder::class]);
+            $this->call('db:seed', ['--class' => DefaultAdminSeeder::class]);
         });
     }
 
@@ -285,11 +292,12 @@ CSS;
 
         if (! Schema::hasTable('ptah_companies')) {
             $this->components->warn('Ptah tables not found — run `php artisan migrate` before running the demo seeder.');
+
             return;
         }
 
         $this->components->task('Installing demo data', function () {
-            $this->call('db:seed', ['--class' => \Ptah\Seeders\PtahDemoSeeder::class]);
+            $this->call('db:seed', ['--class' => PtahDemoSeeder::class]);
         });
 
         $this->components->info('Demo data installed — sign in to explore it.');
@@ -325,6 +333,7 @@ CSS;
                 'Could not install laravel/boost automatically. '.PHP_EOL.
                 'Run manually: <fg=green>composer require laravel/boost --dev</>'
             );
+
             return;
         }
 
@@ -338,6 +347,7 @@ CSS;
                     'The boost:install command is not available in this session.'.PHP_EOL.
                     'Run manually: <fg=green>php artisan boost:install</>'
                 );
+
                 return;
             }
 
@@ -389,16 +399,19 @@ CSS;
 
         if (! $npm) {
             $this->components->warn('npm/yarn not found — install dependencies manually: npm install && npm run build');
+
             return;
         }
 
         $this->components->task('Installing Node dependencies (npm install)', function () use ($npm) {
             $exitCode = $this->runProcess([$npm, 'install'], base_path());
+
             return $exitCode === 0;
         });
 
         $this->components->task('Building assets (npm run build)', function () use ($npm) {
             $exitCode = $this->runProcess([$npm, 'run', 'build'], base_path());
+
             return $exitCode === 0;
         });
     }
@@ -408,7 +421,7 @@ CSS;
      */
     protected function runProcess(array $command, string $cwd): int
     {
-        $process = new \Symfony\Component\Process\Process($command, $cwd);
+        $process = new Process($command, $cwd);
         $process->setTimeout(300);
         $process->run(function ($type, $buffer) {
             $this->getOutput()->write($buffer);
@@ -423,7 +436,7 @@ CSS;
     protected function findNodePackageManager(): ?string
     {
         foreach (['npm', 'yarn'] as $manager) {
-            $check = new \Symfony\Component\Process\Process(
+            $check = new Process(
                 PHP_OS_FAMILY === 'Windows' ? ['cmd', '/c', 'where', $manager] : ['which', $manager]
             );
             $check->run();
@@ -431,6 +444,7 @@ CSS;
                 return $manager;
             }
         }
+
         return null;
     }
 }

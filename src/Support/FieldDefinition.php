@@ -27,15 +27,15 @@ use Illuminate\Support\Str;
 readonly class FieldDefinition
 {
     public function __construct(
-        public string  $name,
-        public string  $type,
-        public bool    $nullable,
-        public bool    $unique,
-        public int     $precision,    // decimal: total digits
-        public int     $scale,        // decimal: decimal places
-        public array   $enumValues,   // enum: ['active', 'inactive']
-        public string  $label        = '',    // display label in BaseCrud (surname)
-        public bool    $hasDefault   = false, // whether a ->default() should be emitted
+        public string $name,
+        public string $type,
+        public bool $nullable,
+        public bool $unique,
+        public int $precision,    // decimal: total digits
+        public int $scale,        // decimal: decimal places
+        public array $enumValues,   // enum: ['active', 'inactive']
+        public string $label = '',    // display label in BaseCrud (surname)
+        public bool $hasDefault = false, // whether a ->default() should be emitted
         public ?string $defaultValue = null,  // default value literal: 'true', '0', 'active'
     ) {}
 
@@ -45,22 +45,14 @@ readonly class FieldDefinition
     public function castType(): string
     {
         return match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger'])
-                => 'integer',
-            $this->type === 'decimal'
-                => "decimal:{$this->scale}",
-            in_array($this->type, ['float', 'double'])
-                => 'float',
-            $this->type === 'boolean'
-                => 'boolean',
-            $this->type === 'date'
-                => 'date',
-            in_array($this->type, ['datetime', 'timestamp'])
-                => 'datetime',
-            $this->type === 'json'
-                => 'array',
-            default
-                => 'string',
+            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'integer',
+            $this->type === 'decimal' => "decimal:{$this->scale}",
+            in_array($this->type, ['float', 'double']) => 'float',
+            $this->type === 'boolean' => 'boolean',
+            $this->type === 'date' => 'date',
+            in_array($this->type, ['datetime', 'timestamp']) => 'datetime',
+            $this->type === 'json' => 'array',
+            default => 'string',
         };
     }
 
@@ -112,7 +104,7 @@ readonly class FieldDefinition
             'page_objects', 'role_permissions', 'user_roles', 'permission_audits',
         ];
 
-        return in_array($table, $ptahTables, true) ? 'ptah_' . $table : $table;
+        return in_array($table, $ptahTables, true) ? 'ptah_'.$table : $table;
     }
 
     /**
@@ -132,28 +124,29 @@ readonly class FieldDefinition
             if ($this->nullable) {
                 $line = "\$table->foreignId('{$this->name}')->nullable()->constrained('{$this->relatedTable()}')->nullOnDelete()";
             }
-            return $indent . $line . ';';
+
+            return $indent.$line.';';
         }
 
         $line = match ($this->type) {
-            'string'             => "\$table->string('{$this->name}')",
-            'text'               => "\$table->text('{$this->name}')",
-            'longText'           => "\$table->longText('{$this->name}')",
-            'integer'            => "\$table->integer('{$this->name}')",
-            'bigInteger'         => "\$table->bigInteger('{$this->name}')",
+            'string' => "\$table->string('{$this->name}')",
+            'text' => "\$table->text('{$this->name}')",
+            'longText' => "\$table->longText('{$this->name}')",
+            'integer' => "\$table->integer('{$this->name}')",
+            'bigInteger' => "\$table->bigInteger('{$this->name}')",
             'unsignedBigInteger' => "\$table->unsignedBigInteger('{$this->name}')",
-            'unsignedInteger'    => "\$table->unsignedInteger('{$this->name}')",
-            'tinyInteger'        => "\$table->tinyInteger('{$this->name}')",
-            'smallInteger'       => "\$table->smallInteger('{$this->name}')",
-            'decimal'            => "\$table->decimal('{$this->name}', {$this->precision}, {$this->scale})",
-            'float'              => "\$table->float('{$this->name}')",
-            'double'             => "\$table->double('{$this->name}')",
-            'boolean'            => "\$table->boolean('{$this->name}')",
-            'date'               => "\$table->date('{$this->name}')",
+            'unsignedInteger' => "\$table->unsignedInteger('{$this->name}')",
+            'tinyInteger' => "\$table->tinyInteger('{$this->name}')",
+            'smallInteger' => "\$table->smallInteger('{$this->name}')",
+            'decimal' => "\$table->decimal('{$this->name}', {$this->precision}, {$this->scale})",
+            'float' => "\$table->float('{$this->name}')",
+            'double' => "\$table->double('{$this->name}')",
+            'boolean' => "\$table->boolean('{$this->name}')",
+            'date' => "\$table->date('{$this->name}')",
             'datetime', 'timestamp' => "\$table->timestamp('{$this->name}')",
-            'json'               => "\$table->json('{$this->name}')",
-            'enum'               => $this->enumMigrationCall(),
-            default              => "\$table->string('{$this->name}')",
+            'json' => "\$table->json('{$this->name}')",
+            'enum' => $this->enumMigrationCall(),
+            default => "\$table->string('{$this->name}')",
         };
 
         if ($this->nullable) {
@@ -174,15 +167,15 @@ readonly class FieldDefinition
 
         // Emit ->default() when a default value was declared via :default(val) or :default=val.
         if ($this->hasDefault && $this->defaultValue !== null) {
-            $val  = $this->defaultValue;
+            $val = $this->defaultValue;
             $line .= match (true) {
                 in_array(strtolower($val), ['true', 'false', 'null'], true) => "->default({$val})",
-                is_numeric($val)                                            => "->default({$val})",
-                default                                                     => "->default('{$val}')",
+                is_numeric($val) => "->default({$val})",
+                default => "->default('{$val}')",
             };
         }
 
-        return $indent . $line . ';';
+        return $indent.$line.';';
     }
 
     /**
@@ -207,18 +200,12 @@ readonly class FieldDefinition
     public function phpType(): string
     {
         $base = match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger'])
-                => 'int',
-            in_array($this->type, ['decimal', 'float', 'double'])
-                => 'float',
-            $this->type === 'boolean'
-                => 'bool',
-            in_array($this->type, ['date', 'datetime', 'timestamp'])
-                => '\Carbon\Carbon',
-            $this->type === 'json'
-                => 'array',
-            default
-                => 'string',
+            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'int',
+            in_array($this->type, ['decimal', 'float', 'double']) => 'float',
+            $this->type === 'boolean' => 'bool',
+            in_array($this->type, ['date', 'datetime', 'timestamp']) => '\Carbon\Carbon',
+            $this->type === 'json' => 'array',
+            default => 'string',
         };
 
         return $this->nullable ? "?{$base}" : $base;
@@ -228,7 +215,8 @@ readonly class FieldDefinition
 
     private function enumMigrationCall(): string
     {
-        $values = implode(', ', array_map(fn($v) => "'{$v}'", $this->enumValues));
+        $values = implode(', ', array_map(fn ($v) => "'{$v}'", $this->enumValues));
+
         return "\$table->enum('{$this->name}', [{$values}])";
     }
 
@@ -243,20 +231,13 @@ readonly class FieldDefinition
         $rules[] = $this->nullable ? 'nullable' : 'required';
 
         $rules[] = match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger'])
-                => 'integer',
-            in_array($this->type, ['decimal', 'float', 'double'])
-                => 'numeric',
-            $this->type === 'boolean'
-                => 'boolean',
-            in_array($this->type, ['date', 'datetime', 'timestamp'])
-                => 'date',
-            $this->type === 'json'
-                => 'array',
-            $this->type === 'enum'
-                => 'in:' . implode(',', $this->enumValues),
-            default
-                => 'string',
+            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'integer',
+            in_array($this->type, ['decimal', 'float', 'double']) => 'numeric',
+            $this->type === 'boolean' => 'boolean',
+            in_array($this->type, ['date', 'datetime', 'timestamp']) => 'date',
+            $this->type === 'json' => 'array',
+            $this->type === 'enum' => 'in:'.implode(',', $this->enumValues),
+            default => 'string',
         };
 
         if ($this->unique) {

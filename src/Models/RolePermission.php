@@ -10,18 +10,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * @property int        $id
- * @property int        $role_id
- * @property int        $page_object_id
- * @property bool       $can_create
- * @property bool       $can_read
- * @property bool       $can_update
- * @property bool       $can_delete
+ * @property int $id
+ * @property int $role_id
+ * @property int $page_object_id
+ * @property bool $can_create
+ * @property bool $can_read
+ * @property bool $can_update
+ * @property bool $can_delete
  * @property array|null $extra
  */
 class RolePermission extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'ptah_role_permissions';
 
@@ -40,10 +40,10 @@ class RolePermission extends Model
 
     protected $casts = [
         'can_create' => 'boolean',
-        'can_read'   => 'boolean',
+        'can_read' => 'boolean',
         'can_update' => 'boolean',
         'can_delete' => 'boolean',
-        'extra'      => 'array',
+        'extra' => 'array',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -70,16 +70,16 @@ class RolePermission extends Model
     /**
      * Checks whether the action is allowed in this record.
      *
-     * @param  string $action  create|read|update|delete
+     * @param  string  $action  create|read|update|delete
      */
     public function allows(string $action): bool
     {
         return match (strtolower($action)) {
             'create' => $this->can_create,
-            'read'   => $this->can_read,
+            'read' => $this->can_read,
             'update' => $this->can_update,
             'delete' => $this->can_delete,
-            default  => false,
+            default => false,
         };
     }
 
@@ -92,7 +92,7 @@ class RolePermission extends Model
     {
         return [
             'create' => $this->can_create,
-            'read'   => $this->can_read,
+            'read' => $this->can_read,
             'update' => $this->can_update,
             'delete' => $this->can_delete,
         ];

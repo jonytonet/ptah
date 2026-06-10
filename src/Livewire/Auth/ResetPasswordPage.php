@@ -41,14 +41,14 @@ class ResetPasswordPage extends Component
 
         $status = Password::reset(
             [
-                'email'                 => $this->email,
-                'password'              => $this->password,
+                'email' => $this->email,
+                'password' => $this->password,
                 'password_confirmation' => $this->password_confirmation,
-                'token'                 => $this->token,
+                'token' => $this->token,
             ],
             function ($user, string $password) {
                 $user->forceFill([
-                    'password'       => Hash::make($password),
+                    'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 

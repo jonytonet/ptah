@@ -13,7 +13,7 @@ use Ptah\Traits\HasAuditFields;
 
 class Menu extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     public $table = 'menus';
 
@@ -32,9 +32,9 @@ class Menu extends Model
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'link_order' => 'integer',
-        'parent_id'  => 'integer',
+        'parent_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -77,10 +77,10 @@ class Menu extends Model
      */
     public static function getTreeForSidebar(): array
     {
-        $ttl      = config('ptah.menu.cache_ttl', 300);
+        $ttl = config('ptah.menu.cache_ttl', 300);
         $useCache = config('ptah.menu.cache', true);
 
-        $builder = fn() => static::buildTree();
+        $builder = fn () => static::buildTree();
 
         return $useCache
             ? Cache::remember('ptah_menu_tree', $ttl, $builder)
@@ -112,7 +112,7 @@ class Menu extends Model
             return [];
         }
 
-        $items = array_filter($all, fn($item) => $item['parent_id'] === $parentId);
+        $items = array_filter($all, fn ($item) => $item['parent_id'] === $parentId);
 
         return array_map(function (array $item) use ($all, $maxDepth, $depth) {
             $item['children'] = static::nestItems($all, $item['id'], $maxDepth, $depth + 1);
@@ -120,6 +120,7 @@ class Menu extends Model
             $item['label'] = $item['text'];
             // Uses the exact path without wildcard — the sidebar tests exact + sub-routes (url/*)
             $item['match'] = $item['url'] ? ltrim(rtrim($item['url'], '/'), '/') : null;
+
             return $item;
         }, array_values($items));
     }

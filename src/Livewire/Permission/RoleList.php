@@ -29,52 +29,71 @@ class RoleList extends Component
     }
 
     // ── Lista ──────────────────────────────────────────────────────────
-    public string $search    = '';
-    public string $sort      = 'name';
+    public string $search = '';
+
+    public string $sort = 'name';
+
     public string $direction = 'asc';
 
     // ── Create/edit modal ─────────────────────────────────────────────
-    public bool  $showModal  = false;
-    public bool  $isEditing  = false;
-    public ?int  $editingId  = null;
-    public string $name         = '';
-    public string $description  = '';
-    public string $color        = '';
-    public ?int  $department_id = null;
-    public bool  $is_master     = false;
-    public bool  $is_active     = true;
+    public bool $showModal = false;
+
+    public bool $isEditing = false;
+
+    public ?int $editingId = null;
+
+    public string $name = '';
+
+    public string $description = '';
+
+    public string $color = '';
+
+    public ?int $department_id = null;
+
+    public bool $is_master = false;
+
+    public bool $is_active = true;
 
     // ── Permission bind modal ─────────────────────────────────────────
-    public bool  $showBindModal  = false;
-    public ?int  $bindingRoleId  = null;
+    public bool $showBindModal = false;
+
+    public ?int $bindingRoleId = null;
+
     public string $bindingRoleName = '';
+
     /** @var array<int, array{obj_key, obj_label, obj_type, section, can_create, can_read, can_update, can_delete}> */
-    public array $bindObjects     = [];
-    public int   $bindFilterPageId = 0;
+    public array $bindObjects = [];
+
+    public int $bindFilterPageId = 0;
 
     // ── Delete confirmation ────────────────────────────────────────────
-    public ?int  $deleteId        = null;
-    public bool  $showDeleteModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showDeleteModal = false;
 
     // ── Feedback ──────────────────────────────────────────────────────
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     // ── Rules ──────────────────────────────────────────────────────────
 
     protected function rules(): array
     {
         return [
-            'name'          => 'required|string|max:255',
-            'description'   => 'nullable|string|max:500',
-            'color'         => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'color' => 'nullable|string|max:20',
             'department_id' => 'nullable|exists:ptah_departments,id',
-            'is_master'     => 'boolean',
-            'is_active'     => 'boolean',
+            'is_master' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
 
     // ── Modal Criar/Editar ─────────────────────────────────────────────
 
@@ -91,15 +110,15 @@ class RoleList extends Component
     public function edit(int $id): void
     {
         $role = Role::findOrFail($id);
-        $this->editingId     = $id;
-        $this->name          = $role->name;
-        $this->description   = $role->description ?? '';
-        $this->color         = $role->color ?? '';
+        $this->editingId = $id;
+        $this->name = $role->name;
+        $this->description = $role->description ?? '';
+        $this->color = $role->color ?? '';
         $this->department_id = $role->department_id;
-        $this->is_master     = $role->is_master;
-        $this->is_active     = $role->is_active;
-        $this->isEditing     = true;
-        $this->showModal     = true;
+        $this->is_master = $role->is_master;
+        $this->is_active = $role->is_active;
+        $this->isEditing = true;
+        $this->showModal = true;
         $this->resetValidation();
     }
 
@@ -109,12 +128,12 @@ class RoleList extends Component
 
         try {
             $data = [
-                'name'          => $this->name,
-                'description'   => $this->description ?: null,
-                'color'         => $this->color ?: null,
+                'name' => $this->name,
+                'description' => $this->description ?: null,
+                'color' => $this->color ?: null,
                 'department_id' => $this->department_id,
-                'is_master'     => $this->is_master,
-                'is_active'     => $this->is_active,
+                'is_master' => $this->is_master,
+                'is_active' => $this->is_active,
             ];
 
             if ($this->isEditing) {
@@ -130,7 +149,7 @@ class RoleList extends Component
         } catch (ValidationException $e) {
             $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Validation error.';
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Erro: '.$e->getMessage();
         }
     }
 
@@ -140,7 +159,7 @@ class RoleList extends Component
     {
         $role = $this->roleService->getWithPermissions($roleId);
 
-        $this->bindingRoleId   = $roleId;
+        $this->bindingRoleId = $roleId;
         $this->bindingRoleName = $role->name;
 
         // Build list of all objects with existing permissions of the role
@@ -153,15 +172,15 @@ class RoleList extends Component
             ->orderBy('obj_order')
             ->get()
             ->map(fn (PageObject $obj) => [
-                'id'         => $obj->id,
-                'page_id'    => $obj->page_id,
-                'page_name'  => $obj->page?->name ?? '—',
-                'section'    => $obj->section,
-                'obj_key'    => $obj->obj_key,
-                'obj_label'  => $obj->obj_label,
-                'obj_type'   => $obj->obj_type,
+                'id' => $obj->id,
+                'page_id' => $obj->page_id,
+                'page_name' => $obj->page?->name ?? '—',
+                'section' => $obj->section,
+                'obj_key' => $obj->obj_key,
+                'obj_label' => $obj->obj_label,
+                'obj_type' => $obj->obj_type,
                 'can_create' => $existingMap[$obj->id]['create'] ?? false,
-                'can_read'   => $existingMap[$obj->id]['read']   ?? false,
+                'can_read' => $existingMap[$obj->id]['read'] ?? false,
                 'can_update' => $existingMap[$obj->id]['update'] ?? false,
                 'can_delete' => $existingMap[$obj->id]['delete'] ?? false,
             ])
@@ -172,11 +191,11 @@ class RoleList extends Component
 
     public function saveBind(): void
     {
-        if (!$this->bindingRoleId) {
+        if (! $this->bindingRoleId) {
             return;
         }
 
-        $role     = Role::findOrFail($this->bindingRoleId);
+        $role = Role::findOrFail($this->bindingRoleId);
         $bindings = [];
 
         foreach ($this->bindObjects as $obj) {
@@ -185,7 +204,7 @@ class RoleList extends Component
             if ($hasAny) {
                 $bindings[(int) $obj['id']] = [
                     'can_create' => $obj['can_create'],
-                    'can_read'   => $obj['can_read'],
+                    'can_read' => $obj['can_read'],
                     'can_update' => $obj['can_update'],
                     'can_delete' => $obj['can_delete'],
                 ];
@@ -194,10 +213,10 @@ class RoleList extends Component
 
         try {
             $this->roleService->syncPageBindings($role, $bindings);
-            $this->successMsg    = "Permissions for '{$role->name}' updated.";
+            $this->successMsg = "Permissions for '{$role->name}' updated.";
             $this->showBindModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Erro: '.$e->getMessage();
         }
     }
 
@@ -205,7 +224,7 @@ class RoleList extends Component
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId        = $id;
+        $this->deleteId = $id;
         $this->showDeleteModal = true;
     }
 
@@ -218,7 +237,7 @@ class RoleList extends Component
         } catch (ValidationException $e) {
             $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Error.';
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Erro: '.$e->getMessage();
         }
 
         $this->showDeleteModal = false;
@@ -248,7 +267,7 @@ class RoleList extends Component
     public function render()
     {
         return view('ptah::livewire.permission.role-list', [
-            'rows'        => $this->rows,
+            'rows' => $this->rows,
             'departments' => $this->departments,
         ]);
     }

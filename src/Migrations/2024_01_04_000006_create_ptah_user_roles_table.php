@@ -16,8 +16,8 @@ return new class extends Migration
             // Compatible with UUID or BIGINT.
             $table->unsignedBigInteger('user_id')->index();
             $table->foreignId('role_id')
-                  ->constrained('ptah_roles')
-                  ->cascadeOnDelete();
+                ->constrained('ptah_roles')
+                ->cascadeOnDelete();
             // company_id without FK: can point to ptah_companies or any other table
             // null = global association (no specific company — single-tenant systems)
             $table->unsignedBigInteger('company_id')->nullable()->index();

@@ -17,8 +17,8 @@ class ConfigValidator
         }
 
         // 2. Valid column type
-        if (!in_array($config['colsTipo'], CrudConfigEnums::COLUMN_TYPES)) {
-            throw new \InvalidArgumentException("Invalid colsTipo: {$config['colsTipo']}. Valid types: " . implode(', ', CrudConfigEnums::COLUMN_TYPES));
+        if (! in_array($config['colsTipo'], CrudConfigEnums::COLUMN_TYPES)) {
+            throw new \InvalidArgumentException("Invalid colsTipo: {$config['colsTipo']}. Valid types: ".implode(', ', CrudConfigEnums::COLUMN_TYPES));
         }
 
         // 3. If select, needs options
@@ -41,13 +41,13 @@ class ConfigValidator
         }
 
         // 6. Validate renderer if present
-        if (!empty($config['colsRenderer']) && !in_array($config['colsRenderer'], CrudConfigEnums::RENDERERS)) {
-            throw new \InvalidArgumentException("Invalid renderer: {$config['colsRenderer']}. Valid renderers: " . implode(', ', CrudConfigEnums::RENDERERS));
+        if (! empty($config['colsRenderer']) && ! in_array($config['colsRenderer'], CrudConfigEnums::RENDERERS)) {
+            throw new \InvalidArgumentException("Invalid renderer: {$config['colsRenderer']}. Valid renderers: ".implode(', ', CrudConfigEnums::RENDERERS));
         }
 
         // 7. Validate mask if present
-        if (!empty($config['colsMask']) && !in_array($config['colsMask'], CrudConfigEnums::MASKS)) {
-            throw new \InvalidArgumentException("Invalid mask: {$config['colsMask']}. Valid masks: " . implode(', ', CrudConfigEnums::MASKS));
+        if (! empty($config['colsMask']) && ! in_array($config['colsMask'], CrudConfigEnums::MASKS)) {
+            throw new \InvalidArgumentException("Invalid mask: {$config['colsMask']}. Valid masks: ".implode(', ', CrudConfigEnums::MASKS));
         }
     }
 
@@ -65,8 +65,8 @@ class ConfigValidator
         }
 
         // 2. Valid type
-        if (!in_array($config['type'], CrudConfigEnums::JOIN_TYPES)) {
-            throw new \InvalidArgumentException("Invalid JOIN type: {$config['type']}. Valid types: " . implode(', ', CrudConfigEnums::JOIN_TYPES));
+        if (! in_array($config['type'], CrudConfigEnums::JOIN_TYPES)) {
+            throw new \InvalidArgumentException("Invalid JOIN type: {$config['type']}. Valid types: ".implode(', ', CrudConfigEnums::JOIN_TYPES));
         }
 
         // 3. Check for duplicate table
@@ -90,16 +90,16 @@ class ConfigValidator
             throw new \InvalidArgumentException('Action type is required');
         }
 
-        if (!in_array($config['actionType'], CrudConfigEnums::ACTION_TYPES)) {
-            throw new \InvalidArgumentException("Invalid action type: {$config['actionType']}. Valid types: " . implode(', ', CrudConfigEnums::ACTION_TYPES));
+        if (! in_array($config['actionType'], CrudConfigEnums::ACTION_TYPES)) {
+            throw new \InvalidArgumentException("Invalid action type: {$config['actionType']}. Valid types: ".implode(', ', CrudConfigEnums::ACTION_TYPES));
         }
 
         if (empty($config['actionValue'])) {
             throw new \InvalidArgumentException('Action value is required');
         }
 
-        if (!empty($config['actionColor']) && !in_array($config['actionColor'], CrudConfigEnums::ACTION_COLORS)) {
-            throw new \InvalidArgumentException("Invalid action color: {$config['actionColor']}. Valid colors: " . implode(', ', CrudConfigEnums::ACTION_COLORS));
+        if (! empty($config['actionColor']) && ! in_array($config['actionColor'], CrudConfigEnums::ACTION_COLORS)) {
+            throw new \InvalidArgumentException("Invalid action color: {$config['actionColor']}. Valid colors: ".implode(', ', CrudConfigEnums::ACTION_COLORS));
         }
     }
 
@@ -112,16 +112,16 @@ class ConfigValidator
             throw new \InvalidArgumentException('Filter field is required');
         }
 
-        if (!empty($config['colsFilterType']) && !in_array($config['colsFilterType'], CrudConfigEnums::FILTER_TYPES)) {
-            throw new \InvalidArgumentException("Invalid filter type: {$config['colsFilterType']}. Valid types: " . implode(', ', CrudConfigEnums::FILTER_TYPES));
+        if (! empty($config['colsFilterType']) && ! in_array($config['colsFilterType'], CrudConfigEnums::FILTER_TYPES)) {
+            throw new \InvalidArgumentException("Invalid filter type: {$config['colsFilterType']}. Valid types: ".implode(', ', CrudConfigEnums::FILTER_TYPES));
         }
 
-        if (!empty($config['defaultOperator']) && !in_array($config['defaultOperator'], CrudConfigEnums::OPERATORS)) {
-            throw new \InvalidArgumentException("Invalid operator: {$config['defaultOperator']}. Valid operators: " . implode(', ', CrudConfigEnums::OPERATORS));
+        if (! empty($config['defaultOperator']) && ! in_array($config['defaultOperator'], CrudConfigEnums::OPERATORS)) {
+            throw new \InvalidArgumentException("Invalid operator: {$config['defaultOperator']}. Valid operators: ".implode(', ', CrudConfigEnums::OPERATORS));
         }
 
-        if (!empty($config['aggregate']) && !in_array($config['aggregate'], CrudConfigEnums::AGGREGATES)) {
-            throw new \InvalidArgumentException("Invalid aggregate: {$config['aggregate']}. Valid aggregates: " . implode(', ', CrudConfigEnums::AGGREGATES));
+        if (! empty($config['aggregate']) && ! in_array($config['aggregate'], CrudConfigEnums::AGGREGATES)) {
+            throw new \InvalidArgumentException("Invalid aggregate: {$config['aggregate']}. Valid aggregates: ".implode(', ', CrudConfigEnums::AGGREGATES));
         }
     }
 
@@ -132,13 +132,13 @@ class ConfigValidator
     {
         $required = ['field', 'condition', 'value', 'style'];
         foreach ($required as $field) {
-            if (!isset($config[$field])) {
+            if (! isset($config[$field])) {
                 throw new \InvalidArgumentException("Style: field '{$field}' is required");
             }
         }
 
-        if (!in_array($config['condition'], CrudConfigEnums::OPERATORS)) {
-            throw new \InvalidArgumentException("Invalid style condition: {$config['condition']}. Valid operators: " . implode(', ', CrudConfigEnums::OPERATORS));
+        if (! in_array($config['condition'], CrudConfigEnums::OPERATORS)) {
+            throw new \InvalidArgumentException("Invalid style condition: {$config['condition']}. Valid operators: ".implode(', ', CrudConfigEnums::OPERATORS));
         }
     }
 
@@ -149,12 +149,12 @@ class ConfigValidator
     {
         $required = ['formEditFields'];
         foreach ($required as $field) {
-            if (!isset($config[$field])) {
+            if (! isset($config[$field])) {
                 throw new \InvalidArgumentException("Configuration must have '{$field}' key");
             }
         }
 
-        if (!is_array($config['formEditFields'])) {
+        if (! is_array($config['formEditFields'])) {
             throw new \InvalidArgumentException("'formEditFields' must be an array");
         }
     }

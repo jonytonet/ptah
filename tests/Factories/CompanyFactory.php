@@ -21,17 +21,17 @@ class CompanyFactory
     private function __construct(array $attributes = [])
     {
         $this->attributes = array_merge([
-            'name'       => 'Empresa Teste ' . Str::random(4),
-            'label'      => strtoupper(Str::random(3)),
-            'slug'       => null,
-            'email'      => null,
-            'phone'      => null,
-            'tax_id'     => null,
-            'tax_type'   => 'cnpj',
-            'address'    => null,
-            'settings'   => null,
+            'name' => 'Empresa Teste '.Str::random(4),
+            'label' => strtoupper(Str::random(3)),
+            'slug' => null,
+            'email' => null,
+            'phone' => null,
+            'tax_id' => null,
+            'tax_type' => 'cnpj',
+            'address' => null,
+            'settings' => null,
             'is_default' => false,
-            'is_active'  => true,
+            'is_active' => true,
         ], $attributes);
     }
 

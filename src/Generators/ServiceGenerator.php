@@ -16,17 +16,17 @@ class ServiceGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $path         = $context->subPath(config('ptah.paths.services')) . "/{$context->entity}Service.php";
-        $ns           = $context->subNs($context->rootNamespace . 'Services');
-        $interfaceFqn = $context->subNs($context->rootNamespace . 'Repositories\\Contracts') . '\\' . $context->entity . 'RepositoryInterface';
+        $path = $context->subPath(config('ptah.paths.services'))."/{$context->entity}Service.php";
+        $ns = $context->subNs($context->rootNamespace.'Services');
+        $interfaceFqn = $context->subNs($context->rootNamespace.'Repositories\\Contracts').'\\'.$context->entity.'RepositoryInterface';
 
         return $this->writeFile(
             path: $path,
             stub: 'service',
             replacements: [
-                'namespace'     => $ns,
+                'namespace' => $ns,
                 'interface_fqn' => $interfaceFqn,
-                'entity'        => $context->entity,
+                'entity' => $context->entity,
                 'rootNamespace' => $context->rootNamespace,
             ],
             force: $context->force,

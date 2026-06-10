@@ -11,8 +11,6 @@ use Ptah\Exceptions\Concerns\FormatsError;
  *
  * This exception is thrown during scaffolding when the forge command
  * encounters errors generating models, repositories, services, or other files.
- *
- * @package Ptah\Exceptions
  */
 class GenerationException extends PtahException
 {
@@ -20,10 +18,6 @@ class GenerationException extends PtahException
 
     /**
      * Create a new GenerationException for file already exists.
-     *
-     * @param string $filePath
-     * @param bool $canForce
-     * @return static
      */
     public static function fileAlreadyExists(string $filePath, bool $canForce = false): static
     {
@@ -43,9 +37,7 @@ class GenerationException extends PtahException
     /**
      * Create a new GenerationException for stub not found.
      *
-     * @param string $stubName
-     * @param array<int, string> $searchedPaths
-     * @return static
+     * @param  array<int, string>  $searchedPaths
      */
     public static function stubNotFound(string $stubName, array $searchedPaths): static
     {
@@ -59,10 +51,6 @@ class GenerationException extends PtahException
 
     /**
      * Create a new GenerationException for invalid template.
-     *
-     * @param string $template
-     * @param string $error
-     * @return static
      */
     public static function invalidTemplate(string $template, string $error): static
     {
@@ -76,10 +64,6 @@ class GenerationException extends PtahException
 
     /**
      * Create a new GenerationException for failed write operation.
-     *
-     * @param string $filePath
-     * @param string $error
-     * @return static
      */
     public static function failedToWrite(string $filePath, string $error): static
     {
@@ -93,10 +77,6 @@ class GenerationException extends PtahException
 
     /**
      * Create a new GenerationException for directory creation failure.
-     *
-     * @param string $directory
-     * @param string $error
-     * @return static
      */
     public static function failedToCreateDirectory(string $directory, string $error): static
     {
@@ -110,10 +90,6 @@ class GenerationException extends PtahException
 
     /**
      * Create a new GenerationException for invalid field definition.
-     *
-     * @param string $field
-     * @param string $error
-     * @return static
      */
     public static function invalidFieldDefinition(string $field, string $error): static
     {
@@ -128,8 +104,6 @@ class GenerationException extends PtahException
 
     /**
      * Get HTTP status code for API responses.
-     *
-     * @return int
      */
     protected function getHttpStatusCode(): int
     {

@@ -30,12 +30,12 @@ class RoleService
      */
     public function create(array $data): Role
     {
-        if (!empty($data['is_master']) && $data['is_master']) {
+        if (! empty($data['is_master']) && $data['is_master']) {
             $this->assertNoMasterExists();
         }
 
         // Ensures default colour for MASTER
-        if (!empty($data['is_master']) && empty($data['color'])) {
+        if (! empty($data['is_master']) && empty($data['color'])) {
             $data['color'] = '#fbbf24';
         }
 
@@ -50,18 +50,19 @@ class RoleService
     public function update(Role $role, array $data): Role
     {
         // Trying to make it MASTER when it currently is not
-        if (!empty($data['is_master']) && !$role->is_master) {
+        if (! empty($data['is_master']) && ! $role->is_master) {
             $this->assertNoMasterExists();
         }
 
         // Prevent deactivating the MASTER role
-        if ($role->is_master && isset($data['is_active']) && !$data['is_active']) {
+        if ($role->is_master && isset($data['is_active']) && ! $data['is_active']) {
             throw ValidationException::withMessages([
                 'is_active' => trans('ptah::ui.role_master_cannot_deactivate'),
             ]);
         }
 
         $role->update($data);
+
         return $role->fresh();
     }
 
@@ -88,7 +89,7 @@ class RoleService
     /**
      * Associates or updates the permission of an object in a role.
      *
-     * @param  array{can_create?: bool, can_read?: bool, can_update?: bool, can_delete?: bool, extra?: array} $permissions
+     * @param  array{can_create?: bool, can_read?: bool, can_update?: bool, can_delete?: bool, extra?: array}  $permissions
      */
     public function bindPageObject(Role $role, int $pageObjectId, array $permissions = []): RolePermission
     {
@@ -97,10 +98,10 @@ class RoleService
 
         $defaults = [
             'can_create' => false,
-            'can_read'   => true,
+            'can_read' => true,
             'can_update' => false,
             'can_delete' => false,
-            'extra'      => null,
+            'extra' => null,
         ];
 
         $data = array_merge($defaults, $permissions);
@@ -125,7 +126,7 @@ class RoleService
      * Synchronises ALL objects of a page for the role.
      * Objects not included in $bindings are removed.
      *
-     * @param  array<int, array> $bindings  [pageObjectId => [can_create, can_read, ...]]
+     * @param  array<int, array>  $bindings  [pageObjectId => [can_create, can_read, ...]]
      */
     public function syncPageBindings(Role $role, array $bindings): void
     {

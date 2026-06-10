@@ -99,7 +99,7 @@ trait HasCrudColumns
     protected function updateHiddenColumnsCount(): void
     {
         $this->hiddenColumnsCount = (int) count(
-            array_filter($this->formDataColumns, fn($v) => ! $v)
+            array_filter($this->formDataColumns, fn ($v) => ! $v)
         );
     }
 
@@ -119,14 +119,15 @@ trait HasCrudColumns
         if (! empty($this->formDataColumns)) {
             $cols = array_values(array_filter($cols, function ($col) {
                 $field = $col['colsNomeFisico'] ?? '';
+
                 return $this->formDataColumns[$field] ?? true;
             }));
         }
 
         // 2. Apply saved column order (action columns always go last)
         if (! empty($this->columnOrder)) {
-            $actionCols = array_values(array_filter($cols, fn($c) => ($c['colsTipo'] ?? '') === 'action'));
-            $dataCols   = array_values(array_filter($cols, fn($c) => ($c['colsTipo'] ?? '') !== 'action'));
+            $actionCols = array_values(array_filter($cols, fn ($c) => ($c['colsTipo'] ?? '') === 'action'));
+            $dataCols = array_values(array_filter($cols, fn ($c) => ($c['colsTipo'] ?? '') !== 'action'));
 
             $colMap = [];
             foreach ($dataCols as $col) {
@@ -142,7 +143,7 @@ trait HasCrudColumns
             }
             // Append any columns added after the saved order
             $ordered = array_merge($ordered, array_values($colMap));
-            $cols    = array_merge($ordered, $actionCols);
+            $cols = array_merge($ordered, $actionCols);
         }
 
         return $cols;

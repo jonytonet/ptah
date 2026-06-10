@@ -6,7 +6,6 @@ namespace Ptah\Tests\Feature\Livewire;
 
 use Livewire\Livewire;
 use Ptah\Livewire\Company\CompanyList;
-use Ptah\Models\Company;
 use Ptah\Tests\Factories\CompanyFactory;
 use Ptah\Tests\TestCase;
 
@@ -58,7 +57,7 @@ class CompanyListTest extends TestCase
             ->assertSet('showModal', false);
 
         $this->assertDatabaseHas('ptah_companies', [
-            'name'  => 'Nova Empresa Ltda',
+            'name' => 'Nova Empresa Ltda',
             'label' => 'NOVA',
         ]);
     }

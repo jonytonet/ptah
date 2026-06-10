@@ -20,19 +20,19 @@ class BindingGenerator extends AbstractGenerator
     public function generate(EntityContext $context): GeneratorResult
     {
         $providerPath = app_path('Providers/AppServiceProvider.php');
-        $label        = 'Binding [AppServiceProvider]';
+        $label = 'Binding [AppServiceProvider]';
 
         if (! $this->files->exists($providerPath)) {
             return GeneratorResult::error($label, $providerPath, 'AppServiceProvider.php not found.');
         }
 
         // Backup before any modification — restored on failure
-        $backup  = $this->files->get($providerPath);
+        $backup = $this->files->get($providerPath);
         $content = $backup;
-        $entity  = $context->entity;
-        $ns         = rtrim($context->rootNamespace, '\\');
-        $interface  = $context->subNs("{$ns}\\Repositories\\Contracts") . "\\{$entity}RepositoryInterface";
-        $repository = $context->subNs("{$ns}\\Repositories") . "\\{$entity}Repository";
+        $entity = $context->entity;
+        $ns = rtrim($context->rootNamespace, '\\');
+        $interface = $context->subNs("{$ns}\\Repositories\\Contracts")."\\{$entity}RepositoryInterface";
+        $repository = $context->subNs("{$ns}\\Repositories")."\\{$entity}Repository";
 
         // Idempotent — already bound?
         if (str_contains($content, "{$entity}RepositoryInterface::class")) {
@@ -40,7 +40,7 @@ class BindingGenerator extends AbstractGenerator
         }
 
         // 1. Add imports
-        $useInterface  = "use {$interface};";
+        $useInterface = "use {$interface};";
         $useRepository = "use {$repository};";
 
         if (! str_contains($content, $useInterface)) {
@@ -59,6 +59,7 @@ class BindingGenerator extends AbstractGenerator
         // Lint check — restore backup if PHP syntax is broken
         if (! $this->isValidPhp($providerPath)) {
             $this->files->put($providerPath, $backup);
+
             return GeneratorResult::error(
                 $label,
                 $providerPath,
@@ -74,9 +75,10 @@ class BindingGenerator extends AbstractGenerator
      */
     private function isValidPhp(string $path): bool
     {
-        $cmd      = escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($path);
+        $cmd = escapeshellarg(PHP_BINARY).' -l '.escapeshellarg($path);
         $exitCode = 0;
         exec($cmd, $output, $exitCode);
+
         return $exitCode === 0;
     }
 
@@ -94,17 +96,17 @@ class BindingGenerator extends AbstractGenerator
     {
         // Search all existing `use` statements
         if (preg_match_all('/^use\s+[^;]+;/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
-            $last      = end($matches[0]);
+            $last = end($matches[0]);
             $insertPos = $last[1] + strlen($last[0]);
 
-            return substr($content, 0, $insertPos) . "\n" . $useStatement . substr($content, $insertPos);
+            return substr($content, 0, $insertPos)."\n".$useStatement.substr($content, $insertPos);
         }
 
         // No `use` found — insert after namespace declaration
         if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE)) {
             $insertPos = $m[0][1] + strlen($m[0][0]);
 
-            return substr($content, 0, $insertPos) . "\n\n" . $useStatement . substr($content, $insertPos);
+            return substr($content, 0, $insertPos)."\n\n".$useStatement.substr($content, $insertPos);
         }
 
         return $content;
@@ -127,8 +129,8 @@ class BindingGenerator extends AbstractGenerator
         $openPos = $matches[0][1] + strlen($matches[0][0]);
 
         // Find the matching closing brace
-        $depth  = 1;
-        $pos    = $openPos;
+        $depth = 1;
+        $pos = $openPos;
         $length = strlen($content);
 
         while ($pos < $length && $depth > 0) {
@@ -142,16 +144,16 @@ class BindingGenerator extends AbstractGenerator
         }
 
         $closePos = $pos - 1; // position of '}'
-        $inner    = substr($content, $openPos, $closePos - $openPos);
+        $inner = substr($content, $openPos, $closePos - $openPos);
 
         // Remove the `//` placeholder but preserve real content
         $cleanedInner = preg_replace('/^\s*\/\/\s*$/m', '', $inner);
         $cleanedInner = rtrim($cleanedInner ?? $inner);
 
         $newInner = $cleanedInner !== ''
-            ? $cleanedInner . "\n        " . $binding . "\n    "
-            : "\n        " . $binding . "\n    ";
+            ? $cleanedInner."\n        ".$binding."\n    "
+            : "\n        ".$binding."\n    ";
 
-        return substr($content, 0, $openPos) . $newInner . substr($content, $closePos);
+        return substr($content, 0, $openPos).$newInner.substr($content, $closePos);
     }
 }

@@ -11,8 +11,6 @@ use Ptah\Exceptions\Concerns\FormatsError;
  *
  * This exception is thrown when command-line arguments or options
  * provided to Artisan commands are invalid or missing.
- *
- * @package Ptah\Exceptions
  */
 class CommandValidationException extends PtahException
 {
@@ -20,10 +18,6 @@ class CommandValidationException extends PtahException
 
     /**
      * Create a new CommandValidationException for missing required argument.
-     *
-     * @param string $argument
-     * @param string $command
-     * @return static
      */
     public static function missingArgument(string $argument, string $command): static
     {
@@ -37,11 +31,6 @@ class CommandValidationException extends PtahException
 
     /**
      * Create a new CommandValidationException for invalid option format.
-     *
-     * @param string $option
-     * @param string $value
-     * @param string $expectedFormat
-     * @return static
      */
     public static function invalidOptionFormat(
         string $option,
@@ -65,10 +54,7 @@ class CommandValidationException extends PtahException
     /**
      * Create a new CommandValidationException for invalid option value.
      *
-     * @param string $option
-     * @param string $value
-     * @param array<int, string> $validValues
-     * @return static
+     * @param  array<int, string>  $validValues
      */
     public static function invalidOptionValue(
         string $option,
@@ -91,10 +77,6 @@ class CommandValidationException extends PtahException
 
     /**
      * Create a new CommandValidationException for conflicting options.
-     *
-     * @param string $option1
-     * @param string $option2
-     * @return static
      */
     public static function conflictingOptions(string $option1, string $option2): static
     {
@@ -111,9 +93,6 @@ class CommandValidationException extends PtahException
 
     /**
      * Create a new CommandValidationException for model not found.
-     *
-     * @param string $model
-     * @return static
      */
     public static function modelNotFound(string $model): static
     {
@@ -127,8 +106,6 @@ class CommandValidationException extends PtahException
 
     /**
      * Get HTTP status code for API responses.
-     *
-     * @return int
      */
     protected function getHttpStatusCode(): int
     {

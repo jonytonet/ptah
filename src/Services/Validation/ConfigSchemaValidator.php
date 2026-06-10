@@ -4,26 +4,23 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Validation;
 
-use Ptah\Exceptions\ConfigValidationException;
-use Ptah\Enums\CrudConfigEnums;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Enums\CrudConfigEnums;
+use Ptah\Exceptions\ConfigValidationException;
 
 /**
  * Validator for CRUD configuration arrays.
  *
  * Validates BaseCrud JSON configurations before they are persisted to the database.
  * Ensures that all required fields are present, types are correct, and dependencies are met.
- *
- * @package Ptah\Services\Validation
  */
 class ConfigSchemaValidator
 {
     /**
      * Validate a complete CRUD configuration.
      *
-     * @param array<string, mixed> $config
-     * @param string $model
-     * @return void
+     * @param  array<string, mixed>  $config
+     *
      * @throws ConfigValidationException
      */
     public function validate(array $config, string $model): void
@@ -62,9 +59,8 @@ class ConfigSchemaValidator
     /**
      * Validate columns configuration.
      *
-     * @param array<int, array<string, mixed>> $columns
-     * @param string $model
-     * @return void
+     * @param  array<int, array<string, mixed>>  $columns
+     *
      * @throws ConfigValidationException
      */
     protected function validateColumns(array $columns, string $model): void
@@ -77,10 +73,8 @@ class ConfigSchemaValidator
     /**
      * Validate a single column configuration.
      *
-     * @param array<string, mixed> $column
-     * @param int $index
-     * @param string $model
-     * @return void
+     * @param  array<string, mixed>  $column
+     *
      * @throws ConfigValidationException
      */
     protected function validateColumn(array $column, int $index, string $model): void
@@ -94,7 +88,7 @@ class ConfigSchemaValidator
 
         // Validate colsTipo if present
         if (isset($column['colsTipo'])) {
-            if (!in_array($column['colsTipo'], CrudConfigEnums::COLUMN_TYPES, true)) {
+            if (! in_array($column['colsTipo'], CrudConfigEnums::COLUMN_TYPES, true)) {
                 throw ConfigValidationException::invalidColumnType(
                     $column['colsNomeFisico'],
                     $column['colsTipo'],
@@ -115,7 +109,7 @@ class ConfigSchemaValidator
 
         // Validate mask if present
         if (isset($column['colsMask'])) {
-            if (!is_string($column['colsMask'])) {
+            if (! is_string($column['colsMask'])) {
                 throw ConfigValidationException::invalidType(
                     'colsMask',
                     $column['colsMask'],
@@ -131,10 +125,8 @@ class ConfigSchemaValidator
     /**
      * Validate column type-specific requirements.
      *
-     * @param array<string, mixed> $column
-     * @param int $index
-     * @param string $model
-     * @return void
+     * @param  array<string, mixed>  $column
+     *
      * @throws ConfigValidationException
      */
     protected function validateColumnTypeRequirements(array $column, int $index, string $model): void
@@ -178,17 +170,15 @@ class ConfigSchemaValidator
     /**
      * Validate renderer configuration.
      *
-     * @param array<string, mixed> $column
-     * @param int $index
-     * @param string $model
-     * @return void
+     * @param  array<string, mixed>  $column
+     *
      * @throws ConfigValidationException
      */
     protected function validateRenderer(array $column, int $index, string $model): void
     {
         $renderer = $column['colsRenderer'];
 
-        if (!in_array($renderer, CrudConfigEnums::RENDERERS, true)) {
+        if (! in_array($renderer, CrudConfigEnums::RENDERERS, true)) {
             throw ConfigValidationException::invalidColumnType(
                 $column['colsNomeFisico'],
                 $renderer,
@@ -211,8 +201,8 @@ class ConfigSchemaValidator
     /**
      * Validate actions configuration.
      *
-     * @param array<int, array<string, mixed>> $actions
-     * @return void
+     * @param  array<int, array<string, mixed>>  $actions
+     *
      * @throws ConfigValidationException
      */
     protected function validateActions(array $actions): void
@@ -227,7 +217,7 @@ class ConfigSchemaValidator
             // Validate action type
             if (isset($action['actionType'])) {
                 $validTypes = ['wire', 'route', 'url', 'modal'];
-                if (!in_array($action['actionType'], $validTypes, true)) {
+                if (! in_array($action['actionType'], $validTypes, true)) {
                     throw ConfigValidationException::invalidColumnType(
                         $action['colsNomeLogico'],
                         $action['actionType'],
@@ -242,8 +232,8 @@ class ConfigSchemaValidator
     /**
      * Validate filters configuration.
      *
-     * @param array<int, array<string, mixed>> $filters
-     * @return void
+     * @param  array<int, array<string, mixed>>  $filters
+     *
      * @throws ConfigValidationException
      */
     protected function validateFilters(array $filters): void
@@ -258,7 +248,7 @@ class ConfigSchemaValidator
             // Validate filter type
             if (isset($filter['colsTipo'])) {
                 $validTypes = ['boolean', 'select', 'numeric', 'date', 'text'];
-                if (!in_array($filter['colsTipo'], $validTypes, true)) {
+                if (! in_array($filter['colsTipo'], $validTypes, true)) {
                     throw ConfigValidationException::invalidColumnType(
                         $filter['colsNomeFisico'],
                         $filter['colsTipo'],
@@ -271,7 +261,7 @@ class ConfigSchemaValidator
             // Validate operator
             if (isset($filter['colsOperator'])) {
                 $validOperators = ['eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'like', 'in'];
-                if (!in_array($filter['colsOperator'], $validOperators, true)) {
+                if (! in_array($filter['colsOperator'], $validOperators, true)) {
                     throw ConfigValidationException::invalidColumnType(
                         $filter['colsNomeFisico'],
                         $filter['colsOperator'],
@@ -286,8 +276,8 @@ class ConfigSchemaValidator
     /**
      * Validate styles configuration.
      *
-     * @param array<int, array<string, mixed>> $styles
-     * @return void
+     * @param  array<int, array<string, mixed>>  $styles
+     *
      * @throws ConfigValidationException
      */
     protected function validateStyles(array $styles): void
@@ -304,7 +294,7 @@ class ConfigSchemaValidator
                     ->withJsonPath("$.styles[{$index}].colsOperator");
             }
 
-            if (!isset($style['colsValue'])) {
+            if (! isset($style['colsValue'])) {
                 throw ConfigValidationException::missingRequiredField('colsValue', 'styles')
                     ->withJsonPath("$.styles[{$index}].colsValue");
             }
@@ -316,7 +306,7 @@ class ConfigSchemaValidator
 
             // Validate operator
             $validOperators = ['eq', 'ne', 'lt', 'gt', 'lte', 'gte'];
-            if (!in_array($style['colsOperator'], $validOperators, true)) {
+            if (! in_array($style['colsOperator'], $validOperators, true)) {
                 throw ConfigValidationException::invalidColumnType(
                     $style['colsNomeFisico'],
                     $style['colsOperator'],
@@ -330,8 +320,8 @@ class ConfigSchemaValidator
     /**
      * Validate joins configuration.
      *
-     * @param array<int, array<string, mixed>> $joins
-     * @return void
+     * @param  array<int, array<string, mixed>>  $joins
+     *
      * @throws ConfigValidationException
      */
     protected function validateJoins(array $joins): void
@@ -357,7 +347,7 @@ class ConfigSchemaValidator
 
             // Validate JOIN type
             $validTypes = ['inner', 'left', 'right'];
-            if (!in_array($join['colsTipo'], $validTypes, true)) {
+            if (! in_array($join['colsTipo'], $validTypes, true)) {
                 throw ConfigValidationException::invalidColumnType(
                     'JOIN',
                     $join['colsTipo'],
@@ -380,10 +370,10 @@ class ConfigSchemaValidator
             $usedTables[] = $table;
 
             // Validate that table exists
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 throw ConfigValidationException::invalidJoin(
                     $table,
-                    "Table does not exist in database"
+                    'Table does not exist in database'
                 )->withJsonPath("$.joins[{$index}].colsTable");
             }
         }
@@ -392,15 +382,15 @@ class ConfigSchemaValidator
     /**
      * Validate general settings.
      *
-     * @param array<string, mixed> $settings
-     * @return void
+     * @param  array<string, mixed>  $settings
+     *
      * @throws ConfigValidationException
      */
     protected function validateGeneralSettings(array $settings): void
     {
         // Validate itemsPerPage
         if (isset($settings['itemsPerPage'])) {
-            if (!is_int($settings['itemsPerPage']) || $settings['itemsPerPage'] < 1) {
+            if (! is_int($settings['itemsPerPage']) || $settings['itemsPerPage'] < 1) {
                 throw ConfigValidationException::invalidType(
                     'itemsPerPage',
                     $settings['itemsPerPage'],
@@ -412,7 +402,7 @@ class ConfigSchemaValidator
 
         // Validate cacheTime
         if (isset($settings['cacheTime'])) {
-            if (!is_int($settings['cacheTime']) || $settings['cacheTime'] < 0) {
+            if (! is_int($settings['cacheTime']) || $settings['cacheTime'] < 0) {
                 throw ConfigValidationException::invalidType(
                     'cacheTime',
                     $settings['cacheTime'],
@@ -425,7 +415,7 @@ class ConfigSchemaValidator
         // Validate boolean settings
         $booleanSettings = ['cacheEnabled', 'paginationEnabled', 'exportEnabled', 'broadcastEnabled'];
         foreach ($booleanSettings as $setting) {
-            if (isset($settings[$setting]) && !is_bool($settings[$setting])) {
+            if (isset($settings[$setting]) && ! is_bool($settings[$setting])) {
                 throw ConfigValidationException::invalidType(
                     $setting,
                     $settings[$setting],

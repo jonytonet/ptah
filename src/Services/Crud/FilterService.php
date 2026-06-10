@@ -30,15 +30,15 @@ class FilterService
     public function __construct()
     {
         $this->strategies = [
-            'text'      => new TextFilterStrategy(),
-            'number'    => new NumericFilterStrategy(),
-            'numeric'   => new NumericFilterStrategy(),
-            'date'      => new DateFilterStrategy('date'),
-            'datetime'  => new DateFilterStrategy('datetime'),
+            'text' => new TextFilterStrategy,
+            'number' => new NumericFilterStrategy,
+            'numeric' => new NumericFilterStrategy,
+            'date' => new DateFilterStrategy('date'),
+            'datetime' => new DateFilterStrategy('datetime'),
             'timestamp' => new DateFilterStrategy('datetime'),
-            'relation'  => new RelationFilterStrategy(),
-            'array'     => new ArrayFilterStrategy(),
-            'boolean'   => new TextFilterStrategy(),
+            'relation' => new RelationFilterStrategy,
+            'array' => new ArrayFilterStrategy,
+            'boolean' => new TextFilterStrategy,
         ];
     }
 
@@ -50,20 +50,18 @@ class FilterService
         $this->strategies[$type] = $strategy;
     }
 
-
     /**
      * Applies a collection of FilterDTOs to the Builder.
      *
      * Filters with `options['logic'] = 'OR'` are grouped in an OR block.
      * Others are applied with AND (default).
      *
-     * @param Builder     $query
-     * @param FilterDTO[] $filters
+     * @param  FilterDTO[]  $filters
      */
     public function applyFilters(Builder $query, array $filters): Builder
     {
         $andFilters = [];
-        $orFilters  = [];
+        $orFilters = [];
 
         foreach ($filters as $filter) {
             if (! ($filter instanceof FilterDTO)) {
@@ -112,7 +110,7 @@ class FilterService
             return $this->strategies['relation']->apply($query, $filter);
         }
 
-        $type     = $filter->type ?? 'text';
+        $type = $filter->type ?? 'text';
         $strategy = $this->strategies[$type] ?? $this->strategies['text'];
 
         return $strategy->apply($query, $filter);
@@ -126,12 +124,12 @@ class FilterService
      * Accepts ERP pattern: key `{field}_start` / `{field}_end` in formData.
      * Also accepts the legacy pattern: `{field}_from` / `{field}_to`.
      *
-     * @param array $formData  Filter form data (dateRanges)
+     * @param  array  $formData  Filter form data (dateRanges)
      * @return FilterDTO[]
      */
     public function processDateRangeFilters(array $formData, array $operators = []): array
     {
-        $filters   = [];
+        $filters = [];
         $processed = [];
 
         foreach ($formData as $key => $value) {
@@ -142,12 +140,14 @@ class FilterService
             // ERP pattern: {field}_start / {field}_end
             if (str_ends_with($key, '_start')) {
                 $field = substr($key, 0, -6);
-                if (in_array($field, $processed, true)) continue;
-                $to          = $formData[$field . '_end'] ?? null;
+                if (in_array($field, $processed, true)) {
+                    continue;
+                }
+                $to = $formData[$field.'_end'] ?? null;
                 $processed[] = $field;
 
-                $opFrom = $operators[$field . '_start'] ?? null;
-                $opTo   = $operators[$field . '_end']   ?? null;
+                $opFrom = $operators[$field.'_start'] ?? null;
+                $opTo = $operators[$field.'_end'] ?? null;
 
                 if ($opFrom || $opTo) {
                     // Explicit operators: apply individually
@@ -159,19 +159,24 @@ class FilterService
                     }
                 } else {
                     $dto = $this->buildDateRangeFilter($field, $value, $to ?: null);
-                    if ($dto) $filters[] = $dto;
+                    if ($dto) {
+                        $filters[] = $dto;
+                    }
                 }
+
                 continue;
             }
 
             if (str_ends_with($key, '_end')) {
                 $field = substr($key, 0, -4);
-                if (in_array($field, $processed, true)) continue;
-                $from        = $formData[$field . '_start'] ?? null;
+                if (in_array($field, $processed, true)) {
+                    continue;
+                }
+                $from = $formData[$field.'_start'] ?? null;
                 $processed[] = $field;
 
-                $opFrom = $operators[$field . '_start'] ?? null;
-                $opTo   = $operators[$field . '_end']   ?? null;
+                $opFrom = $operators[$field.'_start'] ?? null;
+                $opTo = $operators[$field.'_end'] ?? null;
 
                 if ($opFrom || $opTo) {
                     if ($from !== null && $from !== '') {
@@ -182,29 +187,41 @@ class FilterService
                     }
                 } else {
                     $dto = $this->buildDateRangeFilter($field, $from ?: null, $value);
-                    if ($dto) $filters[] = $dto;
+                    if ($dto) {
+                        $filters[] = $dto;
+                    }
                 }
+
                 continue;
             }
 
             // Legacy pattern: {field}_from / {field}_to
             if (str_ends_with($key, '_from')) {
                 $field = substr($key, 0, -5);
-                if (in_array($field, $processed, true)) continue;
-                $to = $formData[$field . '_to'] ?? null;
+                if (in_array($field, $processed, true)) {
+                    continue;
+                }
+                $to = $formData[$field.'_to'] ?? null;
                 $processed[] = $field;
                 $dto = $this->buildDateRangeFilter($field, $value, $to ?: null);
-                if ($dto) $filters[] = $dto;
+                if ($dto) {
+                    $filters[] = $dto;
+                }
+
                 continue;
             }
 
             if (str_ends_with($key, '_to')) {
                 $field = substr($key, 0, -3);
-                if (in_array($field, $processed, true)) continue;
-                $from = $formData[$field . '_from'] ?? null;
+                if (in_array($field, $processed, true)) {
+                    continue;
+                }
+                $from = $formData[$field.'_from'] ?? null;
                 $processed[] = $field;
                 $dto = $this->buildDateRangeFilter($field, $from ?: null, $value);
-                if ($dto) $filters[] = $dto;
+                if ($dto) {
+                    $filters[] = $dto;
+                }
             }
         }
 
@@ -215,8 +232,8 @@ class FilterService
      * Processes custom filters from CrudConfig.
      * Supports whereHas and `formData['custom'][$field]` pattern.
      *
-     * @param array $customFilterConfig  `customFilters` section of CrudConfig
-     * @param array $formData            Filter form data
+     * @param  array  $customFilterConfig  `customFilters` section of CrudConfig
+     * @param  array  $formData  Filter form data
      * @return FilterDTO[]
      */
     public function processCustomFilters(array $customFilterConfig, array $formData): array
@@ -239,21 +256,21 @@ class FilterService
                 continue;
             }
 
-            $whereHas    = $cfgFilter['whereHas']    ?? null;
+            $whereHas = $cfgFilter['whereHas'] ?? null;
             $colRelation = $cfgFilter['colRelation'] ?? $cfgFilter['field_relation'] ?? '';
-            $operator    = $cfgFilter['operator']    ?? $cfgFilter['defaultOperator'] ?? '=';
-            $type        = $cfgFilter['type']        ?? $cfgFilter['colsFilterType']  ?? ($whereHas ? 'relation' : 'text');
-            $logic       = $cfgFilter['logic']       ?? 'AND';
-            $aggregate   = $cfgFilter['aggregate']   ?? null;
+            $operator = $cfgFilter['operator'] ?? $cfgFilter['defaultOperator'] ?? '=';
+            $type = $cfgFilter['type'] ?? $cfgFilter['colsFilterType'] ?? ($whereHas ? 'relation' : 'text');
+            $logic = $cfgFilter['logic'] ?? 'AND';
+            $aggregate = $cfgFilter['aggregate'] ?? null;
 
             $options = ['logic' => $logic];
 
             if ($whereHas) {
-                $options['whereHas']    = $whereHas;
-                $options['column']      = $colRelation;
+                $options['whereHas'] = $whereHas;
+                $options['column'] = $colRelation;
                 $options['colRelation'] = $colRelation;
                 if ($aggregate) {
-                    $options['aggregate']      = $aggregate;
+                    $options['aggregate'] = $aggregate;
                     $options['aggregateColumn'] = $colRelation;
                 }
             }
@@ -261,15 +278,15 @@ class FilterService
             // If operator is IN and value is a CSV string
             if (strtoupper($operator) === 'IN' && is_string($value)) {
                 $value = array_map('trim', explode(',', $value));
-                $type  = 'array';
+                $type = 'array';
             }
 
             $filters[] = new FilterDTO(
-                field:    $whereHas ? $colRelation : $fieldKey,
-                value:    $value,
+                field: $whereHas ? $colRelation : $fieldKey,
+                value: $value,
                 operator: $operator,
-                type:     $type,
-                options:  $options,
+                type: $type,
+                options: $options,
             );
         }
 
@@ -282,8 +299,8 @@ class FilterService
      *
      * Returns FilterDTOs with logic='OR' ready for `applyFilters()`.
      *
-     * @param array  $cols  CrudConfig columns
-     * @param string $term  Search term
+     * @param  array  $cols  CrudConfig columns
+     * @param  string  $term  Search term
      * @return FilterDTO[]
      */
     public function buildGlobalSearchFilters(array $cols, string $term): array
@@ -291,11 +308,11 @@ class FilterService
         $filters = [];
 
         foreach ($cols as $col) {
-            $tipo  = $col['colsTipo']        ?? 'text';
+            $tipo = $col['colsTipo'] ?? 'text';
             // colsSource takes priority for JOIN columns (aliases don't work in WHERE)
             $field = $col['colsSource'] ?? $col['colsNomeFisico'] ?? '';
-            $rel   = $col['colsRelacao']     ?? null;
-            $exibe = $col['colsRelacaoExibe']?? null;
+            $rel = $col['colsRelacao'] ?? null;
+            $exibe = $col['colsRelacaoExibe'] ?? null;
 
             if (! $field) {
                 continue;
@@ -304,27 +321,28 @@ class FilterService
             if ($rel && $exibe) {
                 // Search inside the relation via whereHas with OR
                 $filters[] = new FilterDTO(
-                    field:    $field,
-                    value:    $term,
+                    field: $field,
+                    value: $term,
                     operator: 'LIKE',
-                    type:     'relation',
-                    options:  [
-                        'logic'    => 'OR',
+                    type: 'relation',
+                    options: [
+                        'logic' => 'OR',
                         'whereHas' => $rel,
-                        'column'   => $exibe,
+                        'column' => $exibe,
                     ],
                 );
+
                 continue;
             }
 
             // Search in direct text and select fields
             if (in_array($tipo, ['text', 'select'], true)) {
                 $filters[] = new FilterDTO(
-                    field:    $field,
-                    value:    $term,
+                    field: $field,
+                    value: $term,
                     operator: 'LIKE',
-                    type:     'text',
-                    options:  ['logic' => 'OR'],
+                    type: 'text',
+                    options: ['logic' => 'OR'],
                 );
             }
         }
@@ -339,32 +357,31 @@ class FilterService
     {
         if ($from && $to) {
             return new FilterDTO(
-                field:    $field,
-                value:    [$from, $to],
+                field: $field,
+                value: [$from, $to],
                 operator: 'BETWEEN',
-                type:     'date',
+                type: 'date',
             );
         }
 
         if ($from) {
             return new FilterDTO(
-                field:    $field,
-                value:    $from,
+                field: $field,
+                value: $from,
                 operator: '>=',
-                type:     'date',
+                type: 'date',
             );
         }
 
         if ($to) {
             return new FilterDTO(
-                field:    $field,
-                value:    $to,
+                field: $field,
+                value: $to,
                 operator: '<=',
-                type:     'date',
+                type: 'date',
             );
         }
 
         return null;
     }
 }
-

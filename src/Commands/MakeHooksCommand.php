@@ -34,7 +34,7 @@ class MakeHooksCommand extends Command
         $rawName = $this->argument('name');
 
         // Support subfolder notation: Inventory/StockHooks or Inventory\StockHooks
-        $parts     = array_values(array_filter(
+        $parts = array_values(array_filter(
             array_map('trim', preg_split('/[\\\\\\/]/', $rawName))
         ));
         $className = Str::studly((string) array_pop($parts));
@@ -42,19 +42,20 @@ class MakeHooksCommand extends Command
             ? implode(DIRECTORY_SEPARATOR, array_map([Str::class, 'studly'], $parts))
             : '';
 
-        $baseDir  = app_path('CrudHooks' . ($subFolder ? DIRECTORY_SEPARATOR . $subFolder : ''));
-        $filePath = $baseDir . DIRECTORY_SEPARATOR . $className . '.php';
+        $baseDir = app_path('CrudHooks'.($subFolder ? DIRECTORY_SEPARATOR.$subFolder : ''));
+        $filePath = $baseDir.DIRECTORY_SEPARATOR.$className.'.php';
 
         if ($this->files->exists($filePath) && ! $this->option('force')) {
             $this->components->error("File already exists: {$filePath}");
             $this->line('  Use <fg=yellow>--force</> to overwrite.');
+
             return self::FAILURE;
         }
 
         $this->files->ensureDirectoryExists($baseDir);
 
         $namespace = 'App\\CrudHooks'
-            . ($subFolder ? '\\' . str_replace(DIRECTORY_SEPARATOR, '\\', $subFolder) : '');
+            .($subFolder ? '\\'.str_replace(DIRECTORY_SEPARATOR, '\\', $subFolder) : '');
 
         $this->files->put($filePath, $this->buildStub($namespace, $className));
 

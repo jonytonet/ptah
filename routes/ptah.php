@@ -13,15 +13,15 @@ use Ptah\Http\Controllers\ExportController;
 */
 
 Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
-    
+
     // Exportação com filtros
     Route::get('/export', [ExportController::class, 'export'])
         ->name('export');
-    
+
     // Exportação em massa (itens selecionados)
     Route::get('/export/bulk', [ExportController::class, 'bulkExport'])
         ->name('export.bulk');
-        
+
 });
 
 /*
@@ -35,4 +35,3 @@ Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
 |
 | Remova em produção ou proteja com middleware de auth/admin.
 */
-

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Traits;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -36,7 +38,7 @@ trait HasAuditFields
                 return;
             }
 
-            $userId   = Auth::id();
+            $userId = Auth::id();
             $fillable = $model->getFillable();
 
             // Use === null instead of empty() to avoid false-positives on falsy IDs.
@@ -103,7 +105,7 @@ trait HasAuditFields
     /**
      * User who created the record.
      */
-    public function createdBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'created_by');
     }
@@ -111,7 +113,7 @@ trait HasAuditFields
     /**
      * User who last updated the record.
      */
-    public function updatedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'updated_by');
     }
@@ -119,7 +121,7 @@ trait HasAuditFields
     /**
      * User who soft-deleted the record.
      */
-    public function deletedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function deletedBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'deleted_by');
     }
@@ -132,6 +134,6 @@ trait HasAuditFields
      */
     protected function resolveUserModel(): string
     {
-        return config('auth.providers.users.model', \App\Models\User::class);
+        return config('auth.providers.users.model', User::class);
     }
 }

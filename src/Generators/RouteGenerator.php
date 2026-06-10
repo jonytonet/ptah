@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Generators;
 
-use Illuminate\Filesystem\Filesystem;
-use Ptah\Generators\GeneratorResult;
-use Ptah\Generators\Contracts\GeneratorInterface;
 use Ptah\Support\EntityContext;
 
 /**
@@ -48,14 +45,14 @@ class RouteGenerator extends AbstractGenerator
     private function appendWebRoute(EntityContext $context): GeneratorResult
     {
         $routesPath = base_path('routes/web.php');
-        $label      = 'Routes [web.php]';
+        $label = 'Routes [web.php]';
 
         if (! $this->files->exists($routesPath)) {
             return GeneratorResult::error($label, $routesPath, 'routes/web.php not found.');
         }
 
-        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers") . "\\{$context->entity}Controller";
-        $routeEntry    = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])->name('{$context->entityLower}.index');";
+        $controllerFQN = $context->subNs($context->rootNamespace.'Http\\Controllers')."\\{$context->entity}Controller";
+        $routeEntry = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])->name('{$context->entityLower}.index');";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityLower, $label);
     }
@@ -63,7 +60,7 @@ class RouteGenerator extends AbstractGenerator
     private function appendApiRoute(EntityContext $context): GeneratorResult
     {
         $routesPath = base_path('routes/api.php');
-        $label      = 'Routes [api.php]';
+        $label = 'Routes [api.php]';
 
         if (! $this->files->exists($routesPath)) {
             // Try web.php as fallback
@@ -73,8 +70,8 @@ class RouteGenerator extends AbstractGenerator
             }
         }
 
-        $controllerFQN = $context->subNs($context->rootNamespace . "Http\\Controllers\\API") . "\\{$context->entity}ApiController";
-        $routeEntry    = "\nRoute::prefix('v1')->group(function () {\n    Route::apiResource('{$context->entityPlural}', \\{$controllerFQN}::class);\n});";
+        $controllerFQN = $context->subNs($context->rootNamespace.'Http\\Controllers\\API')."\\{$context->entity}ApiController";
+        $routeEntry = "\nRoute::prefix('v1')->group(function () {\n    Route::apiResource('{$context->entityPlural}', \\{$controllerFQN}::class);\n});";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityPlural, $label);
     }

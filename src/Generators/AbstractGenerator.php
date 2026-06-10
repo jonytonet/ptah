@@ -35,13 +35,13 @@ abstract class AbstractGenerator implements GeneratorInterface
     /**
      * Creates the directory and writes the file generated from a stub.
      *
-     * @param array<string, string> $replacements
+     * @param  array<string, string>  $replacements
      */
     protected function writeFile(
         string $path,
         string $stub,
-        array  $replacements,
-        bool   $force,
+        array $replacements,
+        bool $force,
         ?string $labelOverride = null,
     ): GeneratorResult {
         $label = $labelOverride ?? $this->label();
@@ -85,7 +85,7 @@ abstract class AbstractGenerator implements GeneratorInterface
             return $this->files->get($published);
         }
 
-        $package = __DIR__ . "/../Stubs/{$stub}.stub";
+        $package = __DIR__."/../Stubs/{$stub}.stub";
 
         if (! $this->files->exists($package)) {
             throw new \RuntimeException("Stub [{$stub}.stub] not found.");
@@ -97,7 +97,7 @@ abstract class AbstractGenerator implements GeneratorInterface
     /**
      * Replaces all {{ variable }} placeholders in stub content.
      *
-     * @param array<string, string> $replacements
+     * @param  array<string, string>  $replacements
      */
     protected function replaceVars(string $content, array $replacements): string
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Auth;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -25,17 +26,17 @@ class SessionService
             ->orderByDesc('last_activity')
             ->get()
             ->map(function ($session) {
-                $agent   = $this->parseAgent($session->user_agent ?? '');
+                $agent = $this->parseAgent($session->user_agent ?? '');
                 $current = ($session->id === Request::session()->getId());
 
                 return [
-                    'id'                 => $session->id,
-                    'ip_address'         => $session->ip_address ?? trans('ptah::ui.unknown'),
-                    'user_agent'         => $session->user_agent ?? '',
-                    'browser'            => $agent['browser'],
-                    'platform'           => $agent['platform'],
-                    'last_activity_human'=> \Carbon\Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
-                    'is_current'         => $current,
+                    'id' => $session->id,
+                    'ip_address' => $session->ip_address ?? trans('ptah::ui.unknown'),
+                    'user_agent' => $session->user_agent ?? '',
+                    'browser' => $agent['browser'],
+                    'platform' => $agent['platform'],
+                    'last_activity_human' => Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
+                    'is_current' => $current,
                 ];
             });
     }
@@ -78,16 +79,16 @@ class SessionService
 
     private function parseAgent(string $userAgent): array
     {
-        $browser  = trans('ptah::ui.unknown');
+        $browser = trans('ptah::ui.unknown');
         $platform = trans('ptah::ui.unknown');
 
         $browsers = [
-            'Edg'     => 'Edge',
-            'OPR'     => 'Opera',
-            'Chrome'  => 'Chrome',
+            'Edg' => 'Edge',
+            'OPR' => 'Opera',
+            'Chrome' => 'Chrome',
             'Firefox' => 'Firefox',
-            'Safari'  => 'Safari',
-            'MSIE'    => 'Internet Explorer',
+            'Safari' => 'Safari',
+            'MSIE' => 'Internet Explorer',
             'Trident' => 'Internet Explorer',
         ];
 
@@ -100,11 +101,11 @@ class SessionService
 
         $platforms = [
             'Windows NT' => 'Windows',
-            'Macintosh'  => 'macOS',
-            'Linux'      => 'Linux',
-            'Android'    => 'Android',
-            'iPhone'     => 'iPhone',
-            'iPad'       => 'iPad',
+            'Macintosh' => 'macOS',
+            'Linux' => 'Linux',
+            'Android' => 'Android',
+            'iPhone' => 'iPhone',
+            'iPad' => 'iPad',
         ];
 
         foreach ($platforms as $key => $name) {

@@ -11,8 +11,6 @@ use Ptah\Enums\CrudConfigEnums;
  *
  * Generates JSON Schema documents for validating CRUD configurations.
  * This can be used for client-side validation or documentation generation.
- *
- * @package Ptah\Services\Validation
  */
 class JsonSchemaBuilder
 {
@@ -313,8 +311,6 @@ class JsonSchemaBuilder
 
     /**
      * Export schema as JSON string.
-     *
-     * @return string
      */
     public function exportAsJson(): string
     {
@@ -326,14 +322,11 @@ class JsonSchemaBuilder
 
     /**
      * Save schema to file.
-     *
-     * @param string $path
-     * @return bool
      */
     public function saveToFile(string $path): bool
     {
         $directory = dirname($path);
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             mkdir($directory, 0755, true);
         }
 

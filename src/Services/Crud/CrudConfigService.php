@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Crud;
 
+use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
@@ -33,8 +34,8 @@ class CrudConfigService
      *  1. (model, route) — screen-specific config
      *  2. (model, '')    — fallback to global config
      *
-     * @param string $model  Model identifier, e.g. "Product" or "Purchase/Order/PurchaseOrders"
-     * @param string $route  Route path, e.g. "categories" (empty = global only)
+     * @param  string  $model  Model identifier, e.g. "Product" or "Purchase/Order/PurchaseOrders"
+     * @param  string  $route  Route path, e.g. "categories" (empty = global only)
      */
     public function find(string $model, string $route = ''): ?CrudConfig
     {
@@ -54,7 +55,8 @@ class CrudConfigService
                     return $config;
                 }
                 $id = $config->id;
-                $this->cache->rememberConfig($model, '', fn() => $id, $this->ttlFor($config));
+                $this->cache->rememberConfig($model, '', fn () => $id, $this->ttlFor($config));
+
                 return CrudConfig::find($id);
             }
 
@@ -70,9 +72,9 @@ class CrudConfigService
         }
 
         $ttl = $this->ttlFor($config);
-        $id  = $config->id;
+        $id = $config->id;
 
-        $cachedId = $this->cache->rememberConfig($model, $route, fn() => $id, $ttl);
+        $cachedId = $this->cache->rememberConfig($model, $route, fn () => $id, $ttl);
 
         return CrudConfig::find($cachedId);
     }
@@ -96,10 +98,11 @@ class CrudConfigService
     /**
      * Creates or updates the configuration of a model.
      *
-     * @param string $model  Model identifier
-     * @param array  $config Full JSON configuration
-     * @param string $route  Route path (empty = global config)
-     * @throws \Ptah\Exceptions\ConfigValidationException
+     * @param  string  $model  Model identifier
+     * @param  array  $config  Full JSON configuration
+     * @param  string  $route  Route path (empty = global config)
+     *
+     * @throws ConfigValidationException
      */
     public function save(string $model, array $config, string $route = ''): CrudConfig
     {
@@ -119,23 +122,24 @@ class CrudConfigService
     /**
      * Updates only one config section (deep merge).
      *
-     * @param string $model   Identifier
-     * @param string $section First-level key, e.g. "permissions", "exportConfig"
-     * @param array  $data    Data to merge
-     * @param string $route   Route path (empty = global config)
-     * @throws \Ptah\Exceptions\ConfigValidationException
+     * @param  string  $model  Identifier
+     * @param  string  $section  First-level key, e.g. "permissions", "exportConfig"
+     * @param  array  $data  Data to merge
+     * @param  string  $route  Route path (empty = global config)
+     *
+     * @throws ConfigValidationException
      */
     public function updateSection(string $model, string $section, array $data, string $route = ''): CrudConfig
     {
         $record = $this->findOrFail($model, $route);
 
-        $config              = $record->config;
-        $config[$section]    = array_merge($config[$section] ?? [], $data);
+        $config = $record->config;
+        $config[$section] = array_merge($config[$section] ?? [], $data);
 
         // Validate the complete configuration after merging
         $this->validator->validate($config, $model);
 
-        $record->config      = $config;
+        $record->config = $config;
         $record->save();
 
         $this->forget($model, $route);
@@ -178,7 +182,7 @@ class CrudConfigService
 
     protected function cacheKey(string $model): string
     {
-        return $this->cachePrefix . str_replace(['/', '\\'], '.', $model);
+        return $this->cachePrefix.str_replace(['/', '\\'], '.', $model);
     }
 
     protected function isCacheEnabled(CrudConfig $config): bool

@@ -33,18 +33,18 @@ class MenuService
 
         return array_map(function (array $item) {
             return [
-                'id'         => null,
-                'parent_id'  => null,
-                'text'       => $item['label'] ?? '',
-                'label'      => $item['label'] ?? '',
-                'url'        => $item['url'] ?? '#',
-                'icon'       => $item['icon'] ?? 'bx bx-circle',
-                'type'       => 'menuLink',
-                'target'     => '_self',
+                'id' => null,
+                'parent_id' => null,
+                'text' => $item['label'] ?? '',
+                'label' => $item['label'] ?? '',
+                'url' => $item['url'] ?? '#',
+                'icon' => $item['icon'] ?? 'bx bx-circle',
+                'type' => 'menuLink',
+                'target' => '_self',
                 'link_order' => 0,
-                'is_active'  => true,
-                'match'      => $item['match'] ?? null,
-                'children'   => [],
+                'is_active' => true,
+                'match' => $item['match'] ?? null,
+                'children' => [],
             ];
         }, $items);
     }

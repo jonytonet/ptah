@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Company;
 
-use Livewire\Component;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
 
@@ -18,7 +19,7 @@ use Ptah\Services\Company\CompanyService;
  */
 class CompanySwitcher extends Component
 {
-    /** @var \Illuminate\Support\Collection<Company> */
+    /** @var Collection<Company> */
     public $companies = [];
 
     /** ID da empresa ativa */
@@ -43,7 +44,7 @@ class CompanySwitcher extends Component
         $this->companyService->initSession();
 
         $this->companies = $this->companyService->getAll();
-        $this->activeId  = $this->companyService->activeId();
+        $this->activeId = $this->companyService->activeId();
     }
 
     /**

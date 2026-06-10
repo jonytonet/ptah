@@ -115,13 +115,13 @@ return new class extends Migration
     public function down(): void
     {
         $drops = [
-            'ptah_departments'      => ['deleted_by'],
-            'ptah_roles'            => ['deleted_by'],
-            'menus'                 => ['created_by', 'updated_by', 'deleted_by'],
-            'crud_configs'          => ['created_by', 'updated_by'],
-            'ptah_pages'            => ['created_by', 'updated_by'],
-            'ptah_page_objects'     => ['created_by', 'updated_by'],
-            'ptah_user_roles'       => ['updated_by', 'deleted_by'],
+            'ptah_departments' => ['deleted_by'],
+            'ptah_roles' => ['deleted_by'],
+            'menus' => ['created_by', 'updated_by', 'deleted_by'],
+            'crud_configs' => ['created_by', 'updated_by'],
+            'ptah_pages' => ['created_by', 'updated_by'],
+            'ptah_page_objects' => ['created_by', 'updated_by'],
+            'ptah_user_roles' => ['updated_by', 'deleted_by'],
             'ptah_role_permissions' => ['deleted_by'],
         ];
 
