@@ -4,8 +4,8 @@
   <h3>Enterprise Structure. Startup Speed.</h3>
 
   <p>
-    Build a small or medium system from zero to production in minutes.<br>
-    With AI, even faster — and spending far fewer tokens.
+    Generate your system's entire structure in minutes — you focus only on the business logic.<br>
+    Built for AI agents: the architecture comes ready, so the agent spends a fraction of the tokens.
   </p>
 </div>
 
@@ -29,11 +29,13 @@
 
 ---
 
-## ⚡ From zero to production in minutes
+## ⚡ The full structure in minutes — far fewer tokens with AI
 
-> With **ptah + AI** (GitHub Copilot, Claude, Cursor) you spend a fraction of the tokens needed to build the same system from scratch — because the package already delivers the structure, and AI only needs to fill in the specific business logic.
+> **What Ptah generates in minutes:** the complete, layered structure of every entity (model, migration, DTO, repository, service, controller, requests, resource, Livewire screen and routes), plus auth, RBAC and a dynamic menu. **What stays with you:** the specific business logic and a short post-scaffold review (see [Known Limitations](docs/KnownLimitations.md)).
+>
+> **Why this saves tokens:** with **ptah + AI** (GitHub Copilot, Claude, Cursor) the agent doesn't waste tokens generating dozens of boilerplate files and re-deciding the architecture on every entity — that's already delivered, consistently. The agent spends its budget only on your differentiator. Fewer tokens, fewer files to review, and an architecture that doesn't drift between entities.
 
-### Example: IT Helpdesk — complete system in ~3 minutes
+### Example: IT Helpdesk — full CRUD structure in ~3 minutes
 
 #### Step 0 — Check system requirements
 
@@ -181,7 +183,7 @@ php artisan ptah:menu-sync --fresh
 php artisan serve
 ```
 
-**What you get at the end:**
+**What you get at the end (the structure):**
 
 - ✅ Login with session protection and 2FA
 - ✅ Full CRUD for Categories, Agents and Tickets — table, filters, modal, soft delete, export
@@ -191,7 +193,9 @@ php artisan serve
 - ✅ Generated validations, Resources and RESTful routes
 - ✅ 14 artefacts created per entity, zero manual boilerplate
 
-**With AI:** instead of generating hundreds of files — consuming thousands of tokens with a high risk of architectural inconsistency —, it runs the commands above and fills in only the specific business logic: ticket escalation, priority notifications, external integrations. Ptah handles the structure; AI handles the differentiator.
+**What's still yours to do** (the actual application): wire up relationships left as TODOs, review the generated validation rules, and add the business logic — ticket escalation, priority notifications, integrations. Then the usual road to production: tests, security review and deploy. See the [post-scaffold checklist](docs/KnownLimitations.md).
+
+**Why AI loves this:** instead of generating hundreds of files — thousands of tokens, with architectural drift between entities — the agent runs the commands above and spends its token budget only on your differentiator. Ptah handles the structure; AI handles the business logic.
 
 ---
 
@@ -265,7 +269,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 **Why this matters:**
 
 - **Without Ptah:** AI needs to generate model + migration + repository + service + controller + requests + resource + view + routes for each entity — dozens of files, thousands of tokens, high risk of inconsistency
-- **With Ptah:** AI runs `ptah:forge MyEntity --fields="..."` and the system is ready — fewer tokens, architecture guaranteed by the package
+- **With Ptah:** AI runs `ptah:forge MyEntity --fields="..."`, the structure is ready, and it spends its tokens only on the business logic — fewer tokens, architecture guaranteed by the package
 
 > For prompts, templates and AI workflow, see the **[AI Guide →](docs/AI_Guide.md)**
 
