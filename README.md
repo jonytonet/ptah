@@ -29,6 +29,8 @@
 
 ---
 
+> **In a hurry?** Follow the **[Quick Start →](docs/QuickStart.md)** — one entity, SQLite, working CRUD in 5 minutes.
+
 ## ⚡ The full structure in minutes — far fewer tokens with AI
 
 > **What Ptah generates in minutes:** the complete, layered structure of every entity (model, migration, DTO, repository, service, controller, requests, resource, Livewire screen and routes), plus auth, RBAC and a dynamic menu. **What stays with you:** the specific business logic and a short post-scaffold review (see [Known Limitations](docs/KnownLimitations.md)).
@@ -291,6 +293,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 
 | Document | Contents |
 |---|---|
+| **[Quick Start](docs/QuickStart.md)** | Your first CRUD in 5 minutes — one entity, SQLite, zero decisions |
 | **[Installation Guide](docs/InstallationGuide.md)** | Step-by-step guide with real terminal output — Laravel 11/12, all modules and Boost |
 | **[BaseCrud](docs/BaseCrud.md)** | Complete reference — column schema, types, filters, renderers, export, preferences and UI configuration |
 | **[Modules](docs/Modules.md)** | Detailed documentation for Auth, Menu, Company, Permissions and API modules |
