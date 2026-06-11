@@ -128,6 +128,16 @@
                             @endif
                         </button>
                     @endforeach
+                    {{-- Print-friendly view (browser print dialog; print CSS hides chrome) --}}
+                    <div class="my-1 border-t ptah-c-dd_sep"></div>
+                    <button onclick="window.print()" @click="open = false"
+                        class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
+                        <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        {{ __('ptah::ui.btn_print') }}
+                    </button>
                 </div>
             </div>
         @endif
@@ -185,6 +195,24 @@
                 </div>
             </div>
         @endif
+
+        {{-- Modo de visualização: tabela ⇄ cards --}}
+        <div class="inline-flex border rounded-md overflow-hidden ptah-c-btn" role="group" aria-label="{{ __('ptah::ui.btn_view_mode') }}">
+            <button wire:click="setViewMode('table')"
+                class="p-2 transition-colors {{ $viewMode === 'table' ? 'ptah-c-btn_on' : '' }}"
+                title="{{ __('ptah::ui.view_mode_table') }}" aria-label="{{ __('ptah::ui.view_mode_table') }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18"/>
+                </svg>
+            </button>
+            <button wire:click="setViewMode('cards')"
+                class="p-2 transition-colors {{ $viewMode === 'cards' ? 'ptah-c-btn_on' : '' }}"
+                title="{{ __('ptah::ui.view_mode_cards') }}" aria-label="{{ __('ptah::ui.view_mode_cards') }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+            </button>
+        </div>
 
         {{-- Densidade da visualização --}}
         @php

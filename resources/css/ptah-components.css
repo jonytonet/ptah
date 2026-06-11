@@ -345,3 +345,38 @@
 /* ── Highlight de busca nas células ──────────────────────────── */
 mark.ptah-hl                      { background-color: #fef08a; color: inherit; border-radius: 2px; padding: 0 2px; }
 .ptah-dark mark.ptah-hl           { background-color: #854d0e; color: #fef08a; }
+
+/* ── Group break (quebra) rows ───────────────────────────────── */
+.ptah-c-break_row td,
+.ptah-c-break_td             { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); border-bottom: 1px solid var(--ptah-primary-border); }
+.ptah-dark .ptah-c-break_row td,
+.ptah-dark .ptah-c-break_td  { background-color: var(--ptah-primary-soft-d); color: var(--ptah-primary-lite); border-bottom-color: var(--ptah-primary); }
+
+.ptah-c-break_subtotal td            { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; }
+.ptah-dark .ptah-c-break_subtotal td { background-color: rgba(30,41,59,0.6); border-bottom: 2px solid #334155; color: #cbd5e1; }
+
+/* ── Master/detail expanded row ──────────────────────────────── */
+.ptah-c-detail_td            { background-color: #f8fafc; box-shadow: inset 0 2px 4px rgba(15,23,42,.04), inset 2px 0 0 var(--ptah-primary); }
+.ptah-dark .ptah-c-detail_td { background-color: rgba(15,23,42,0.5); box-shadow: inset 2px 0 0 var(--ptah-primary-lite); }
+
+/* ── Print-friendly view ─────────────────────────────────────── */
+/* Triggered by the Print option in the export menu (window.print()). */
+@media print {
+    .ptah-c-toolbar,
+    .ptah-c-fp_card,
+    .ptah-c-pag,
+    .ptah-c-bulk_bar,
+    .ptah-row-btns,
+    .ptah-no-print,
+    .ptah-resize-handle,
+    .ptah-drag-grip { display: none !important; }
+
+    .ptah-c-tbl_wrap {
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .ptah-base-crud table { font-size: 11px; }
+    .ptah-base-crud th, .ptah-base-crud td { white-space: normal !important; position: static !important; }
+}

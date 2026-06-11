@@ -223,6 +223,27 @@ class BaseCrud extends Component
     /** Displayed labels per filter SD field: [fieldName => label] */
     public array $sdFilterLabels = [];
 
+    // ── Master / Detail ───────────────────────────────────────────────────────
+
+    /** Row IDs currently expanded to show their detail grids */
+    public array $expandedRows = [];
+
+    /**
+     * Filters enforced on every query and untouchable from the UI — used by
+     * nested detail grids (child rows locked to the parent's FK).
+     * [column => value]
+     */
+    public array $lockedFilters = [];
+
+    public function toggleDetail(int $id): void
+    {
+        if (in_array($id, $this->expandedRows, true)) {
+            $this->expandedRows = array_values(array_diff($this->expandedRows, [$id]));
+        } else {
+            $this->expandedRows[] = $id;
+        }
+    }
+
     // ── Preferences ───────────────────────────────────────────────────────────
 
     public array $columnOrder = [];

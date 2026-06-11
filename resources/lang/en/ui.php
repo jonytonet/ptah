@@ -1447,4 +1447,37 @@ return [
     'sort_by_column' => 'Sort by :column',
     'per_page_label' => 'Rows per page',
 
+    // -------------------------------------------------------------------------
+    // Cascading (dependent) search dropdowns
+    // -------------------------------------------------------------------------
+    'sd_select_parent_first' => 'Select :parent first…',
+    'cfg_col_sd_cascade_title' => '🔗 Cascading dropdown (depends on another field)',
+    'cfg_col_sd_cascade_hint' => 'Make this dropdown depend on another form field — e.g. City depends on State, State depends on Country. The child stays disabled until the parent has a value, and is cleared whenever the parent changes.',
+    'cfg_col_sd_depends_on' => 'Depends on (parent field)',
+    'cfg_col_sd_depends_on_hint' => 'Physical name of the parent form field (e.g. state_id).',
+    'cfg_col_sd_filter_column' => 'Filter column on the child model',
+    'cfg_col_sd_filter_column_hint' => 'Column used to filter the options. Default: same name as the parent field.',
+
+    // -------------------------------------------------------------------------
+    // Power features (duplicate, print, cards, group break, master/detail, formulas)
+    // -------------------------------------------------------------------------
+    'btn_duplicate_title' => 'Duplicate record',
+    'btn_print' => 'Print',
+    'btn_view_mode' => 'View mode',
+    'view_mode_table' => 'Table view',
+    'view_mode_cards' => 'Card view',
+    'break_subtotal' => 'Subtotal (:n records)',
+    'btn_detail_title' => 'Show details',
+    'cfg_gen_group_break' => 'Group break (field)',
+    'cfg_gen_group_break_hint' => 'Groups rows by this field with a header and per-group subtotals (uses the Totalizer columns). Different from GROUP BY: rows stay individual.',
+    'cfg_gen_detail_title' => 'Master/Detail',
+    'cfg_gen_detail_model' => 'Detail model',
+    'cfg_gen_detail_fk' => 'Foreign key (on the detail)',
+    'cfg_gen_detail_label' => 'Detail title',
+    'cfg_gen_detail_hint' => 'Adds an expand arrow per row that opens a nested CRUD filtered by the foreign key (e.g. Order → OrderItems via order_id).',
+    'cfg_col_on_change' => '⚡ onChange formula (calculated fields)',
+    'cfg_col_on_change_hint' => 'Sandboxed expression run when this field changes. Variables: data, value. E.g.: merge(data, {\'total\': data[\'qty\'] * data[\'price\']})',
+    'cfg_col_form_block' => 'Form block (section)',
+    'cfg_col_form_block_hint' => 'Groups this field under a section heading in the create/edit modal. Adjacent fields with the same block share the section.',
+
 ];

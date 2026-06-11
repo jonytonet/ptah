@@ -51,6 +51,29 @@ class CrudSearchDropdownExportTest extends TestCase
                         'colsSDValor' => 'id',
                         'colsSDLimit' => 2,
                     ],
+                    ['colsNomeFisico' => 'status', 'colsNomeLogico' => 'Status', 'colsTipo' => 'text', 'colsGravar' => true],
+                    [
+                        // Cascading: options filtered by the value of `status`.
+                        'colsNomeFisico' => 'cascade_child',
+                        'colsNomeLogico' => 'Child',
+                        'colsTipo' => 'searchdropdown',
+                        'colsGravar' => true,
+                        'colsSDModel' => SdStub::class,
+                        'colsSDLabel' => 'name',
+                        'colsSDValor' => 'id',
+                        'colsSDDependsOn' => 'status',
+                        'colsSDFilterColumn' => 'status',
+                    ],
+                    [
+                        // Third level: depends on cascade_child (reset recursion).
+                        'colsNomeFisico' => 'cascade_grand',
+                        'colsNomeLogico' => 'Grandchild',
+                        'colsTipo' => 'searchdropdown',
+                        'colsGravar' => true,
+                        'colsSDModel' => SdStub::class,
+                        'colsSDLabel' => 'name',
+                        'colsSDDependsOn' => 'cascade_child',
+                    ],
                 ],
                 'permissions' => [],
                 'exportConfig' => ['enabled' => true, 'asyncThreshold' => 1000],
@@ -59,8 +82,8 @@ class CrudSearchDropdownExportTest extends TestCase
 
         SdStub::create(['name' => 'Apple', 'status' => 'active', 'amount' => 0]);
         SdStub::create(['name' => 'Apricot', 'status' => 'active', 'amount' => 0]);
-        SdStub::create(['name' => 'Avocado', 'status' => 'active', 'amount' => 0]);
-        SdStub::create(['name' => 'Banana', 'status' => 'active', 'amount' => 0]);
+        SdStub::create(['name' => 'Avocado', 'status' => 'inactive', 'amount' => 0]);
+        SdStub::create(['name' => 'Banana', 'status' => 'inactive', 'amount' => 0]);
     }
 
     private function crud()
@@ -161,6 +184,81 @@ class CrudSearchDropdownExportTest extends TestCase
             ->call('filterSearchDropdown', 'amount', '');
 
         $this->assertArrayNotHasKey('amount', $component->get('filters'));
+    }
+
+    // ── Cascading (dependent) dropdowns ───────────────────────────────────────
+
+    #[Test]
+    public function cascading_child_is_gated_until_the_parent_has_a_value(): void
+    {
+        $component = $this->crud()->call('searchDropdown', 'cascade_child', 'a');
+
+        $this->assertSame(
+            [],
+            $component->get('sdResults')['cascade_child'],
+            'Child dropdown must return nothing while the parent field is empty',
+        );
+    }
+
+    #[Test]
+    public function cascading_child_options_are_filtered_by_the_parent_value(): void
+    {
+        $component = $this->crud()
+            ->set('formData.status', 'inactive')
+            ->call('searchDropdown', 'cascade_child', 'a');
+
+        $labels = array_column($component->get('sdResults')['cascade_child'], 'label');
+
+        // Only inactive rows (Avocado, Banana) — never the active Apple/Apricot.
+        $this->assertEqualsCanonicalizing(['Avocado', 'Banana'], $labels);
+    }
+
+    #[Test]
+    public function changing_the_parent_resets_child_and_grandchild(): void
+    {
+        $component = $this->crud()
+            ->set('formData.status', 'active')
+            ->set('formData.cascade_child', 10)
+            ->set('formData.cascade_grand', 20)
+            // New parent value → entire descendant chain must be cleared.
+            ->set('formData.status', 'inactive');
+
+        $formData = $component->get('formData');
+
+        $this->assertArrayNotHasKey('cascade_child', $formData, 'Child must reset when the parent changes');
+        $this->assertArrayNotHasKey('cascade_grand', $formData, 'Reset must cascade to the grandchild');
+        $this->assertSame('inactive', $formData['status']);
+    }
+
+    #[Test]
+    public function selecting_a_dropdown_option_resets_its_dependents(): void
+    {
+        $apple = SdStub::where('name', 'Apple')->first();
+
+        $component = $this->crud()
+            ->set('formData.cascade_grand', 99)
+            // cascade_child is the parent of cascade_grand; selecting it must clear the grandchild.
+            ->call('selectDropdownOption', 'cascade_child', $apple->id, 'Apple');
+
+        $this->assertArrayNotHasKey('cascade_grand', $component->get('formData'));
+        $this->assertSame($apple->id, $component->get('formData')['cascade_child']);
+    }
+
+    #[Test]
+    public function filter_panel_cascade_resets_dependent_filters(): void
+    {
+        $apple = SdStub::where('name', 'Apple')->first();
+
+        $component = $this->crud()
+            // Simulate an active child filter, then select a new parent filter value.
+            ->call('selectFilterDropdownOption', 'cascade_child', $apple->id, 'Apple')
+            ->call('selectFilterDropdownOption', 'status', 'inactive', 'Inactive');
+
+        $this->assertArrayNotHasKey(
+            'cascade_child',
+            $component->get('filters'),
+            'Child filter must reset when the parent filter changes',
+        );
     }
 
     // ── Export ────────────────────────────────────────────────────────────────

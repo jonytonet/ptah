@@ -1449,4 +1449,37 @@ return [
     'sort_by_column' => 'Ordenar por :column',
     'per_page_label' => 'Linhas por página',
 
+    // -------------------------------------------------------------------------
+    // SearchDropdowns em cascata (campos dependentes)
+    // -------------------------------------------------------------------------
+    'sd_select_parent_first' => 'Selecione :parent primeiro…',
+    'cfg_col_sd_cascade_title' => '🔗 Dropdown em cascata (depende de outro campo)',
+    'cfg_col_sd_cascade_hint' => 'Faça este dropdown depender de outro campo do formulário — ex: Cidade depende de Estado, Estado depende de País. O campo filho fica desabilitado até o pai ter valor, e é limpo sempre que o pai muda.',
+    'cfg_col_sd_depends_on' => 'Depende de (campo pai)',
+    'cfg_col_sd_depends_on_hint' => 'Nome físico do campo pai no formulário (ex: state_id).',
+    'cfg_col_sd_filter_column' => 'Coluna de filtro no model filho',
+    'cfg_col_sd_filter_column_hint' => 'Coluna usada para filtrar as opções. Padrão: mesmo nome do campo pai.',
+
+    // -------------------------------------------------------------------------
+    // Power features (duplicar, imprimir, cards, quebra, mestre/detalhe, fórmulas)
+    // -------------------------------------------------------------------------
+    'btn_duplicate_title' => 'Duplicar registro',
+    'btn_print' => 'Imprimir',
+    'btn_view_mode' => 'Modo de visualização',
+    'view_mode_table' => 'Visão em tabela',
+    'view_mode_cards' => 'Visão em cards',
+    'break_subtotal' => 'Subtotal (:n registros)',
+    'btn_detail_title' => 'Ver detalhes',
+    'cfg_gen_group_break' => 'Quebra de grupo (campo)',
+    'cfg_gen_group_break_hint' => 'Agrupa as linhas por este campo com cabeçalho e subtotais por grupo (usa as colunas do Totalizador). Diferente do GROUP BY: as linhas continuam individuais.',
+    'cfg_gen_detail_title' => 'Mestre/Detalhe',
+    'cfg_gen_detail_model' => 'Model do detalhe',
+    'cfg_gen_detail_fk' => 'Chave estrangeira (no detalhe)',
+    'cfg_gen_detail_label' => 'Título do detalhe',
+    'cfg_gen_detail_hint' => 'Adiciona uma seta de expansão por linha que abre um CRUD aninhado filtrado pela chave estrangeira (ex: Pedido → Itens via order_id).',
+    'cfg_col_on_change' => '⚡ Fórmula onChange (campos calculados)',
+    'cfg_col_on_change_hint' => 'Expressão sandboxed executada quando este campo muda. Variáveis: data, value. Ex: merge(data, {\'total\': data[\'qty\'] * data[\'price\']})',
+    'cfg_col_form_block' => 'Bloco do formulário (seção)',
+    'cfg_col_form_block_hint' => 'Agrupa este campo sob um título de seção no modal de criar/editar. Campos adjacentes com o mesmo bloco compartilham a seção.',
+
 ];

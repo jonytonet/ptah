@@ -102,6 +102,18 @@ trait HasCrudFilters
         $this->savePreferences();
     }
 
+    /**
+     * Switches between the table and the card (mosaic) listing.
+     */
+    public function setViewMode(string $mode): void
+    {
+        if (! in_array($mode, ['table', 'cards'], true)) {
+            return;
+        }
+        $this->viewMode = $mode;
+        $this->savePreferences();
+    }
+
     // ── Active filter badge summary ────────────────────────────────────────────
 
     /**

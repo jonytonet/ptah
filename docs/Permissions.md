@@ -102,6 +102,27 @@ api.products.export → export endpoint
 
 The system allows exactly **1 role** with `is_master = true`. Users with this role have unrestricted access to all resources without going through the permission check. Ideal for system administrators.
 
+> ⚠️ **MASTER is global, not company-scoped.** A user assigned the MASTER role
+> passes every check in **every** company, regardless of which `company_id` the
+> `UserRole` was bound to. There is intentionally no "master of company X only".
+> Grant it sparingly.
+
+### Cross-tenant roles (`company_id = null`)
+
+A `UserRole` with `company_id = null` is a **global assignment**: it grants the
+role's permissions in **every** company (`scopeForCompany` matches the company
+*or* `NULL`). Combined with the OR logic across roles, a single global `UserRole`
+is enough to bypass multi-company isolation for that user. Use `company_id = null`
+only for genuinely cross-tenant access (e.g. a support role); for per-company
+access, always bind the `UserRole` to a concrete `company_id`.
+
+### Action whitelist
+
+Only `create`, `read`, `update` and `delete` are valid actions. Any other string
+passed to `check()` / `getCompaniesForResource()` is rejected before it reaches a
+query — the action name is interpolated into a `can_{action}` column, so this
+guard prevents both typos and SQL-injection attempts.
+
 ---
 
 ## Activation
@@ -956,38 +977,54 @@ The audit screen (`/ptah-audit`) displays records with filters and pagination.
 
 ## Cache
 
-### Cache keys
+The permission map and MASTER flag are cached per user (and per company) for
+`cache_ttl` seconds. The check path reads a single cached map per `(user,
+company)` — the **single source of truth** — so there is no risk of an individual
+check disagreeing with the full map.
 
-| Key | Content | TTL |
+### Generation-based invalidation (works on every driver)
+
+Each cache key embeds two **generation counters**:
+
+```
+ptah_perms_map:g{global}:u{user}:{userId}:{companyId}
+ptah_is_master:g{global}:u{user}:{userId}
+ptah_master_map:g{global}
+```
+
+Invalidation just **increments a counter**, which instantly orphans every key of
+that generation — O(1), no key enumeration and **no dependency on cache tags**
+(so it behaves identically on the `file`, `database`, `redis` and `memcached`
+drivers):
+
+| Counter | Bumped when | Scope cleared |
 |---|---|---|
-| `ptah_perm:{userId}:{companyId}:{objectKey}:{action}` | `bool` | `cache_ttl` (default 300s) |
-| `ptah_is_master:{userId}` | `bool` | `cache_ttl` |
-| `ptah_company_default` | `Company` | `cache_ttl` |
-| `ptah_user_companies:{userId}` | `Collection` | `cache_ttl` |
+| `ptah_perm_gver` (global) | any **Role** or **RolePermission** changes | every user, every company |
+| `ptah_perm_uver:{userId}` | a user's **UserRole** assignments change | that user, all companies |
 
-### Invalidation
+This is wired automatically:
 
-Cache is automatically invalidated when:
-- `detachRole()` is called (invalidates the user)
-- `syncRole()` is called (invalidates the user)  
-- `syncPageBindings()` is called (invalidates all users with that role)
+- **Model observers** (registered by the service provider) bump the counters on
+  `saved` / `deleted` / `restored` of `Role`, `RolePermission` and `UserRole`.
+- **`RoleService`** also bumps the global counter explicitly after `create`,
+  `update`, `delete`, `bindPageObject`, `unbindPageObject` and
+  `syncPageBindings` — because query-builder mass deletes don't fire model
+  events. Belt and suspenders.
+- **`syncRole()` / `detachRole()`** bump the affected user's counter.
+
+The practical guarantee: **revoking a permission takes effect on the very next
+check**, never after the TTL. (Regression test:
+`PermissionServiceTest::revoking_a_permission_takes_effect_immediately`.)
 
 **Manual invalidation:**
 
 ```php
-// Invalidate cache for a user
-Permission::clearCache($user);
-
-// Invalidate cache for a user in a specific company
-Permission::clearCache($user, $companyId);
-
-// Invalidate everything (tags — requires Redis/Memcached driver)
-Cache::tags(['ptah_permissions'])->flush();
+Permission::clearCache($user);   // one user, all companies (bumps the user counter)
+Permission::clearCache();        // everyone (bumps the global counter)
 ```
 
-### Cache tags
-
-When the cache driver supports tags (Redis, Memcached), all keys are stored with the `ptah_permissions` tag. This allows atomic `flush()` of the entire module. On drivers without tag support (file, database), `clearCache()` removes keys individually.
+> The `$companyId` argument of `clearCache()` is no longer needed — a single
+> per-user bump clears every company-scoped map for that user at once.
 
 ---
 

@@ -74,6 +74,43 @@ trait HasCrudForm
         $this->dispatch('ptah:form-ready');
     }
 
+    /**
+     * Opens the create modal pre-filled with another record's savable fields
+     * ("copy record"). Guarded/audit fields are never copied; saving creates
+     * a brand-new row.
+     */
+    public function duplicateRecord(int $id): void
+    {
+        if (! $this->authorizeCrudAction('create')) {
+            return;
+        }
+
+        $modelInstance = $this->resolveEloquentModel();
+
+        if (! $modelInstance) {
+            return;
+        }
+
+        $record = $modelInstance->newQuery()->find($id);
+
+        if (! $record) {
+            return;
+        }
+
+        $this->prepareCreate();
+
+        $savable = array_column($this->getFormCols(), 'colsNomeFisico');
+        $data = array_intersect_key($record->toArray(), array_flip($savable));
+
+        foreach ($this->guardedFormFields() as $forbidden) {
+            unset($data[$forbidden]);
+        }
+
+        $this->formData = $data;
+        $this->preloadSdLabels($record);
+        $this->showModal = true;
+    }
+
     public function closeModal(): void
     {
         $this->showModal = false;
@@ -362,6 +399,47 @@ trait HasCrudForm
         // Instantiate and call method with component context
         $hookInstance = new $className;
         $hookInstance->{$methodName}($data, $record, $this);
+    }
+
+    /**
+     * Field-level onChange formula (ScriptCase-style calculated fields).
+     *
+     * When the column that just changed declares `colsOnChange`, the expression
+     * is evaluated in the same closed sandbox used by inline lifecycle hooks
+     * (variables: `data`, `value`; functions: merge/now/upper/lower/slug/uuid).
+     * An array result replaces the form data — e.g. quantity recalculating a
+     * total: merge(data, {'total': data['qty'] * data['price']}).
+     *
+     * Errors are logged and never break the form.
+     */
+    public function applyFieldOnChange(string $field): void
+    {
+        $col = $this->findColByField($field);
+        $expr = $col['colsOnChange'] ?? null;
+
+        if (empty($expr) || ! is_string($expr)) {
+            return;
+        }
+
+        try {
+            $el = new ExpressionLanguage;
+            $this->registerHookFunctions($el);
+
+            $result = $el->evaluate($expr, [
+                'data' => $this->formData,
+                'value' => $this->formData[$field] ?? null,
+            ]);
+
+            if (is_array($result)) {
+                $this->formData = $result;
+            }
+        } catch (\Throwable $e) {
+            Log::warning("[BaseCrud] onChange formula failed for field {$field}", [
+                'model' => $this->model,
+                'expression' => $expr,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

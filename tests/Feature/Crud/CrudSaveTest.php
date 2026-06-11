@@ -49,7 +49,14 @@ class CrudSaveTest extends TestCase
                         'colsMaskTransform' => 'uppercase',
                     ],
                     ['colsNomeFisico' => 'status', 'colsNomeLogico' => 'Status', 'colsTipo' => 'text', 'colsGravar' => true],
-                    ['colsNomeFisico' => 'amount', 'colsNomeLogico' => 'Amount', 'colsTipo' => 'number', 'colsGravar' => true],
+                    [
+                        'colsNomeFisico' => 'amount',
+                        'colsNomeLogico' => 'Amount',
+                        'colsTipo' => 'number',
+                        'colsGravar' => true,
+                        // Calculated field: changing amount rewrites status via sandbox.
+                        'colsOnChange' => "merge(data, {'status': 'qty-' ~ value})",
+                    ],
                     // Deliberately marked savable to prove the guard strips it anyway.
                     ['colsNomeFisico' => 'created_at', 'colsNomeLogico' => 'Created', 'colsTipo' => 'date', 'colsGravar' => true],
                 ],
@@ -68,8 +75,9 @@ class CrudSaveTest extends TestCase
     {
         $this->crud()
             ->set('formData.name', 'lower name')
-            ->set('formData.status', 'active')
+            // amount first: its onChange formula rewrites status (covered elsewhere)
             ->set('formData.amount', 7)
+            ->set('formData.status', 'active')
             ->call('save')
             ->assertSet('formErrors', [])
             ->assertDispatched('crud-saved');
@@ -182,6 +190,53 @@ class CrudSaveTest extends TestCase
             ->assertSet('showModal', false);
 
         $this->assertSame(1, SaveStub::count(), 'Editing must never chain into a new create form');
+    }
+
+    #[Test]
+    public function duplicate_record_prefills_a_create_form(): void
+    {
+        $original = SaveStub::create(['name' => 'ORIGINAL', 'status' => 'active', 'amount' => 7]);
+
+        $component = $this->crud()
+            ->call('duplicateRecord', $original->id)
+            ->assertSet('showModal', true)
+            ->assertSet('editingId', null);
+
+        $formData = $component->get('formData');
+        $this->assertSame('ORIGINAL', $formData['name']);
+        $this->assertArrayNotHasKey('id', $formData, 'Guarded fields must never be copied');
+        $this->assertArrayNotHasKey('created_at', $formData);
+
+        // Saving the duplicate creates a brand-new row.
+        $component->call('save');
+        $this->assertSame(2, SaveStub::count());
+    }
+
+    #[Test]
+    public function on_change_formula_recalculates_dependent_fields(): void
+    {
+        $component = $this->crud()->set('formData.amount', 5);
+
+        $this->assertSame(
+            'qty-5',
+            $component->get('formData')['status'],
+            'The sandboxed onChange formula must rewrite dependent fields',
+        );
+    }
+
+    #[Test]
+    public function broken_on_change_formula_never_breaks_the_form(): void
+    {
+        $cfg = CrudConfig::where('model', SaveStub::class)->first();
+        $config = $cfg->config;
+        $config['cols'][3]['colsOnChange'] = 'file_put_contents("x", "y")'; // not in sandbox
+
+        $cfg->update(['config' => $config]);
+
+        $component = $this->crud()->set('formData.amount', 5);
+
+        // Formula fails silently (logged); the typed value stays.
+        $this->assertEquals(5, $component->get('formData')['amount']);
     }
 
     #[Test]

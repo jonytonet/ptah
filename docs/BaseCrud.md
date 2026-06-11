@@ -418,6 +418,10 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsSDTipo` | `'model'\|'service'` | Data source (`model` = direct Eloquent, `service` = service method) |
 | `colsSDLimit` | `int` | Maximum items returned (default: `15`) |
 | `colsSDMode` | `'create'\|'edit'\|'both'` | Which modal mode the SD field appears in |
+| `colsSDDependsOn` | `string\|null` | **Cascading dropdown** — physical name of the parent form field. The child stays disabled until the parent has a value and is cleared (recursively, with its own descendants) whenever the parent changes |
+| `colsSDFilterColumn` | `string\|null` | Column on the child model used to filter the options by the parent value (default: same name as `colsSDDependsOn`) |
+| `colsOnChange` | `string\|null` | **Calculated fields** — sandboxed expression run when this field changes (variables `data`, `value`; helpers `merge/now/upper/lower/slug/uuid`). An array result replaces the form data: `merge(data, {'total': data['qty'] * data['price']})`. Errors are logged and never break the form |
+| `colsFormBlock` | `string\|null` | **Form section** — groups this field under a section heading in the create/edit modal. Adjacent fields with the same block share the section |
 | `colsValidations` | `array\|null` | FormValidatorService rules: `["required","email","min:3"]` |
 | `colsSource` | `string\|null` | **JOIN** — qualified SQL name used in `WHERE` and `ORDER BY` (e.g. `suppliers.name`). Required for filters and sort to work on JOIN columns. `colsNomeFisico` must be the alias (e.g. `supplier_name`) |
 | `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
@@ -915,6 +919,73 @@ Fields of type `searchdropdown` offer Select2-like UX inside the create/edit mod
 ```
 
 > **`colsRelacao` + `colsRelacaoExibe`** are used to pre-fill the label in **edit** mode: ptah looks up `$record->businessPartner->name` and displays it in the input.
+
+### Cascading (dependent) dropdowns
+
+A searchdropdown can depend on another form field — the classic Country → State → City chain. Each child declares its parent with `colsSDDependsOn`; depth is unlimited because every level only knows its own parent.
+
+```json
+[
+  { "colsNomeFisico": "country_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "Country", "colsSDLabel": "name" },
+
+  { "colsNomeFisico": "state_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "State", "colsSDLabel": "name",
+    "colsSDDependsOn": "country_id" },
+
+  { "colsNomeFisico": "city_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "City", "colsSDLabel": "name",
+    "colsSDDependsOn": "state_id" }
+]
+```
+
+Behaviour:
+
+- **Parent empty → child locked.** The input is disabled with a "Select {parent} first…" placeholder and returns no options.
+- **Options filtered by the parent value.** The child query gains `WHERE {colsSDFilterColumn} = {parent value}`. `colsSDFilterColumn` defaults to the parent field name (`states.country_id ← country_id`); set it when the column differs. The column name is validated by `SqlIdentifier` like every dynamic identifier.
+- **Parent changed → descendants cleared.** Selecting a new country clears state *and* city (value, label and cached results), recursively. Works when the parent is a searchdropdown **or** a plain `select`/input (via the Livewire `updatedFormData` hook).
+- **Edit mode works untouched** — the record loads with all levels filled, so each dropdown is already filtered by its parent.
+- **Filter panel too** — the same dependency applies between searchdropdown filters (filter the grid by state, then by city).
+
+> Cascading currently applies to `colsSDTipo: "model"`. For `service` mode, implement the dependency inside your service method.
+
+Configure it in the CrudConfig modal: column editor → **SearchDropdown** tab → *Cascading dropdown* section (`Depends on` + `Filter column`).
+
+---
+
+## Power features (ScriptCase-style)
+
+### Master/Detail
+
+Add an expand arrow per row that opens a **nested BaseCrud** filtered by the parent's key — Order → OrderItems:
+
+```json
+{
+  "masterDetail": [
+    { "model": "OrderItem", "foreignKey": "order_id", "title": "Order items" }
+  ]
+}
+```
+
+The child grid is a full BaseCrud (filters, modal, export…) mounted lazily on expansion with a **locked filter** (`order_id = {row id}`) that is enforced on every query and immune to the child's *Clear filters* — records from other parents can never leak. Multiple detail entries are supported (one grid per entry). Configure the first entry in the CrudConfig modal → General tab → *Master/Detail*.
+
+### Group break ("quebra") with subtotals
+
+```json
+{
+  "groupBreak": "status",
+  "totalizadores": { "enabled": true, "columns": [{ "field": "amount", "type": "sum" }] }
+}
+```
+
+Rows stay individual (unlike `groupBy`), but the break field becomes the primary sort and the table renders a header per group plus a subtotal row (using the Totalizer columns) and keeps the grand total in the footer. Field name is validated by `SqlIdentifier`.
+
+### Other power features
+
+- **Duplicate record** — copy icon per row opens the create modal pre-filled with the source row's savable fields (guarded/audit fields never copied).
+- **Card (mosaic) view** — toolbar toggle switches the listing between table and responsive cards (first visible column becomes the card title); persisted per user like density.
+- **Print view** — Export menu → *Print* opens the browser dialog with a print stylesheet (toolbar, filters, pagination, selection and action columns hidden).
+- **Calculated fields** (`colsOnChange`) and **form sections** (`colsFormBlock`) — see the column options table above.
 
 ### Case-insensitive search
 

@@ -28,6 +28,9 @@ class PermissionService implements PermissionServiceContract
 {
     use ResolvesUser;
 
+    /** The only valid CRUD actions — whitelisted before any query interpolation. */
+    public const ACTIONS = ['create', 'read', 'update', 'delete'];
+
     // ─────────────────────────────────────────
     // Company resolution
     // ─────────────────────────────────────────
@@ -59,7 +62,14 @@ class PermissionService implements PermissionServiceContract
 
     protected function cacheKey(string $type, int $userId, ?int $companyId, string $extra = ''): string
     {
-        return "ptah_{$type}:{$userId}:{$companyId}:{$extra}";
+        // Generation-based versioning: every key embeds the global and per-user
+        // version counters. Bumping a counter (on a role/permission change)
+        // instantly orphans every key of that generation — works on ANY cache
+        // driver (file included), O(1), no tag support or key enumeration needed.
+        $g = $this->globalVersion();
+        $uv = $this->userVersion($userId);
+
+        return "ptah_{$type}:g{$g}:u{$uv}:{$userId}:{$companyId}:{$extra}";
     }
 
     protected function ttl(): int
@@ -70,6 +80,45 @@ class PermissionService implements PermissionServiceContract
     protected function cacheEnabled(): bool
     {
         return (bool) config('ptah.permissions.cache', true);
+    }
+
+    // ─────────────────────────────────────────
+    // Cache generations (versioning)
+    // ─────────────────────────────────────────
+
+    /** Global cache generation — bumped when ANY role/permission definition changes. */
+    protected function globalVersion(): int
+    {
+        return (int) Cache::get('ptah_perm_gver', 1);
+    }
+
+    /** Per-user cache generation — bumped when that user's role assignments change. */
+    protected function userVersion(int $userId): int
+    {
+        return (int) Cache::get("ptah_perm_uver:{$userId}", 1);
+    }
+
+    /**
+     * Invalidates every cached permission map and master flag for ALL users at
+     * once. Called by the model observers when a Role or RolePermission changes,
+     * since the affected users cannot be enumerated cheaply.
+     */
+    public function bumpGlobalVersion(): void
+    {
+        if (! Cache::has('ptah_perm_gver')) {
+            Cache::forever('ptah_perm_gver', 1);
+        }
+        Cache::increment('ptah_perm_gver');
+    }
+
+    /** Invalidates every cached entry for a single user across all companies. */
+    protected function bumpUserVersion(int $userId): void
+    {
+        $key = "ptah_perm_uver:{$userId}";
+        if (! Cache::has($key)) {
+            Cache::forever($key, 1);
+        }
+        Cache::increment($key);
     }
 
     // ─────────────────────────────────────────
@@ -91,6 +140,12 @@ class PermissionService implements PermissionServiceContract
             return (bool) config('ptah.permissions.allow_guest', false);
         }
 
+        // Whitelist the action before it ever touches a query/column name.
+        $action = strtolower($action);
+        if (! in_array($action, self::ACTIONS, true)) {
+            return false;
+        }
+
         // 1. Short-circuit: MASTER roles pass everything
         if ($this->isMasterById($userId)) {
             if (config('ptah.permissions.audit') && config('ptah.permissions.audit_master')) {
@@ -101,7 +156,6 @@ class PermissionService implements PermissionServiceContract
         }
 
         $resolvedCompanyId = $this->resolveCompanyId($companyId);
-        $action = strtolower($action);
 
         // 2. Look up in the full map (single source of truth, already cached)
         //    Ensures consistency: clearCache() invalidates the map and this read
@@ -138,8 +192,10 @@ class PermissionService implements PermissionServiceContract
     protected function isMasterById(int $userId): bool
     {
         if ($this->cacheEnabled()) {
+            // Versioned key: a role becoming/ceasing to be MASTER (global bump) or
+            // the user's assignments changing (user bump) invalidates it at once.
             return (bool) Cache::remember(
-                "ptah_is_master:{$userId}",
+                $this->cacheKey('is_master', $userId, null),
                 $this->ttl(),
                 fn () => $this->queryIsMaster($userId)
             );
@@ -168,7 +224,15 @@ class PermissionService implements PermissionServiceContract
         }
 
         if ($this->isMasterById($userId)) {
-            // MASTER: devolve mapa "tudo liberado" dos objetos cadastrados
+            // MASTER: devolve mapa "tudo liberado" dos objetos cadastrados (cached)
+            if ($this->cacheEnabled()) {
+                return Cache::remember(
+                    "ptah_master_map:g{$this->globalVersion()}",
+                    $this->ttl(),
+                    fn () => $this->buildMasterPermissionMap()
+                );
+            }
+
             return $this->buildMasterPermissionMap();
         }
 
@@ -190,6 +254,12 @@ class PermissionService implements PermissionServiceContract
     {
         $userId = $this->resolveUserId($user);
         if ($userId === null) {
+            return [];
+        }
+
+        // Whitelist before interpolating into the column name.
+        $action = strtolower($action);
+        if (! in_array($action, self::ACTIONS, true)) {
             return [];
         }
 
@@ -266,14 +336,10 @@ class PermissionService implements PermissionServiceContract
      */
     public function clearCache(mixed $user = null, ?int $companyId = null): void
     {
+        // Global flush: bump the global generation. Every cached map/master flag
+        // for every user (any company) becomes unreachable at once.
         if ($user === null) {
-            // Extreme case: flush all ptah cache (use with care)
-            // Compatible with tags if the driver supports it
-            try {
-                Cache::tags(['ptah_permissions'])->flush();
-            } catch (\Throwable) {
-                // Driver without tag support — nothing to do here
-            }
+            $this->bumpGlobalVersion();
 
             return;
         }
@@ -283,11 +349,10 @@ class PermissionService implements PermissionServiceContract
             return;
         }
 
-        Cache::forget("ptah_is_master:{$userId}");
-        Cache::forget($this->cacheKey('perms_map', $userId, $companyId));
-
-        // Clears individual check cache (no pattern-delete in the file driver)
-        // In Redis, the ideal is to use Cache::tags. We do the best we can here.
+        // Per-user flush: bump this user's generation. Clears the master flag and
+        // every company-scoped map for the user in one shot — no per-company
+        // enumeration, no dependency on cache tags or the underlying driver.
+        $this->bumpUserVersion($userId);
     }
 
     // ─────────────────────────────────────────

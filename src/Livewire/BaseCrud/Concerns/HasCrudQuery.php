@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Handles data querying: paginated rows, aggregates (totals), joins,
@@ -64,6 +65,14 @@ trait HasCrudQuery
                 $companyField = $this->crudConfig['companyField'] ?? 'company_id';
                 if (Schema::hasColumn($table, $companyField)) {
                     $query->where("{$table}.{$companyField}", $this->companyFilter);
+                }
+            }
+
+            // Locked filters (master/detail): enforced on every query, immune to
+            // clearFilters. Column names are config-driven → guarded.
+            foreach ($this->lockedFilters as $lockedCol => $lockedVal) {
+                if (SqlIdentifier::isSafe((string) $lockedCol)) {
+                    $query->where($lockedCol, $lockedVal);
                 }
             }
 
@@ -131,6 +140,15 @@ trait HasCrudQuery
                     ->orderBy("{$mainTable}.{$groupBy}", $this->direction);
 
                 return $query->paginate($this->perPage);
+            }
+
+            // Group break (ScriptCase-style "quebra"): rows are kept individual,
+            // but the break field becomes the primary sort so the view can emit
+            // group headers and per-group subtotals. User sort stays secondary.
+            if ($breakField = $this->crudConfig['groupBreak'] ?? null) {
+                if (SqlIdentifier::isSafe($breakField)) {
+                    $query->orderBy($breakField, 'ASC');
+                }
             }
 
             // Sorting (supports relation via JOIN)

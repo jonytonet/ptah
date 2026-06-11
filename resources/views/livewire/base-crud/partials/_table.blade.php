@@ -10,10 +10,14 @@
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
         @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
+        @php $masterDetails = $crudConfig['masterDetail'] ?? []; @endphp
         <thead class="{{ $crudConfig['theadClass'] ?? 'ptah-c-thead' }}">
             <tr id="ptah-thead-row-{{ $crudTitle }}">
+                @if (!empty($masterDetails))
+                    <th class="w-8 px-2 py-3 ptah-no-print"></th>
+                @endif
                 @if ($effectivePerms['canDelete'])
-                    <th class="px-3 py-3 w-8 ptah-c-th_text">
+                    <th class="px-3 py-3 w-8 ptah-c-th_text ptah-no-print">
                         <input type="checkbox" wire:click="toggleSelectAll" @checked($selectAll)
                                aria-label="{{ __('ptah::ui.bulk_select_all') }}"
                                class="rounded cursor-pointer text-primary focus:ring-primary/30">
@@ -83,7 +87,7 @@
                 {{-- Colunas action --}}
                 @foreach ($visibleCols as $col)
                     @if (($col['colsTipo'] ?? '') === 'action')
-                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text">
+                        <th class="px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text" style="width:1%">
                             {{ $col['colsNomeLogico'] ?? __('ptah::ui.col_default_action') }}
                         </th>
                     @endif
@@ -91,13 +95,51 @@
 
                 {{-- Coluna de ações padrão (sticky: stays visible on horizontal scroll) --}}
                 @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
-                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase ptah-c-th_text bg-slate-50 dark:bg-slate-700">{{ __('ptah::ui.col_actions') }}</th>
+                    {{-- width:1% + nowrap = shrink-to-fit dos ícones, sem sobra --}}
+                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text bg-slate-50 dark:bg-slate-700 ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
                 @endif
             </tr>
         </thead>
 
         <tbody class="ptah-c-tbody_div">
+            @php
+                // ── Group break ("quebra"): headers + per-group subtotals ──
+                $breakField  = $crudConfig['groupBreak'] ?? null;
+                $breakCol    = $breakField ? collect($crudConfig['cols'] ?? [])->firstWhere('colsNomeFisico', $breakField) : null;
+                $breakLabel  = $breakCol['colsNomeLogico'] ?? $breakField;
+                $breakTotCols = ($breakField && !empty($totData)) ? array_keys($totData) : [];
+                $prevBreak   = '__ptah_init__';
+                $breakSums   = [];
+                $breakCount  = 0;
+            @endphp
             @forelse ($rows as $row)
+                @if ($breakField)
+                    @php $curBreak = data_get($row, $breakField); @endphp
+
+                    {{-- Subtotal do grupo anterior --}}
+                    @if ($prevBreak !== '__ptah_init__' && $curBreak !== $prevBreak)
+                        @include('ptah::livewire.base-crud.partials._break-subtotal')
+                        @php $breakSums = []; $breakCount = 0; @endphp
+                    @endif
+
+                    {{-- Cabeçalho do grupo --}}
+                    @if ($curBreak !== $prevBreak)
+                        <tr class="ptah-c-break_row" wire:key="break-{{ md5((string) $curBreak) }}-{{ $loop->index }}">
+                            <td colspan="99" class="px-4 py-2 text-xs font-semibold uppercase tracking-wide ptah-c-break_td">
+                                <span class="opacity-60">{{ $breakLabel }}:</span>
+                                {!! $breakCol ? $this->formatCell($breakCol, $row) : e((string) $curBreak) !!}
+                            </td>
+                        </tr>
+                    @endif
+
+                    @php
+                        $prevBreak = $curBreak;
+                        $breakCount++;
+                        foreach ($breakTotCols as $btc) {
+                            $breakSums[$btc] = ($breakSums[$btc] ?? 0) + (float) data_get($row, $btc);
+                        }
+                    @endphp
+                @endif
                 @php
                     $rowStyle = $this->getRowStyle($row);
                     $rowLink  = null;
@@ -118,9 +160,25 @@
                     @endif
                     wire:key="row-{{ $row->id ?? $loop->index }}">
 
+                    {{-- Mestre/detalhe: expandir linha --}}
+                    @if (!empty($masterDetails))
+                        @php $isExpanded = in_array($row->id ?? 0, $expandedRows, true); @endphp
+                        <td class="px-2 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} ptah-no-print" onclick="event.stopPropagation()">
+                            <button wire:click="toggleDetail({{ $row->id ?? 0 }})" @click.stop
+                                class="p-1.5 -m-1 rounded transition-all text-slate-400 hover:text-primary {{ $isExpanded ? 'rotate-90 text-primary' : '' }}"
+                                title="{{ __('ptah::ui.btn_detail_title') }}"
+                                aria-label="{{ __('ptah::ui.btn_detail_title') }}"
+                                aria-expanded="{{ $isExpanded ? 'true' : 'false' }}">
+                                <svg class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </td>
+                    @endif
+
                     {{-- Checkbox de seleção em bulk --}}
                     @if ($effectivePerms['canDelete'])
-                        <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }}" onclick="event.stopPropagation()">
+                        <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} ptah-no-print" onclick="event.stopPropagation()">
                             <input type="checkbox" wire:model.live="selectedRows" value="{{ $row->id ?? 0 }}"
                                    onclick="event.stopPropagation()"
                                    aria-label="{{ __('ptah::ui.bulk_select_row', ['id' => $row->id ?? 0]) }}"
@@ -210,7 +268,7 @@
 
                     {{-- Botões de ação padrão (sticky column; larger touch targets via p-2/-m-1) --}}
                     @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
-                        <td class="sticky right-0 z-[1] px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/60">
+                        <td class="sticky right-0 z-[1] px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/60 ptah-no-print" style="width:1%">
                             <div class="ptah-row-btns flex items-center justify-center gap-1">
 
                                 {{-- Editar --}}
@@ -222,6 +280,19 @@
                                         aria-label="{{ __('ptah::ui.btn_edit_title') }}">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                @endif
+
+                                {{-- Duplicar --}}
+                                @if ($effectivePerms['canCreate'] && !$showTrashed)
+                                    <button wire:click="duplicateRecord({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
+                                        @click.stop
+                                        class="p-2 -m-1 rounded transition-colors text-slate-400 hover:text-primary"
+                                        title="{{ __('ptah::ui.btn_duplicate_title') }}"
+                                        aria-label="{{ __('ptah::ui.btn_duplicate_title') }}">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                         </svg>
                                     </button>
                                 @endif
@@ -256,9 +327,32 @@
                     @endif
 
                 </tr>
+
+                {{-- Linha expandida: grids de detalhe (BaseCrud aninhado, lazy) --}}
+                @if (!empty($masterDetails) && in_array($row->id ?? 0, $expandedRows, true))
+                    <tr wire:key="detail-row-{{ $row->id }}" class="ptah-c-detail_row">
+                        <td colspan="99" class="px-6 py-4 ptah-c-detail_td">
+                            <div class="space-y-4">
+                                @foreach ($masterDetails as $dIdx => $detail)
+                                    @if (!empty($detail['model']) && !empty($detail['foreignKey']))
+                                        <div>
+                                            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {{ $detail['title'] ?? $detail['model'] }}
+                                            </p>
+                                            @livewire('ptah-base-crud', [
+                                                'model' => $detail['model'],
+                                                'lockedFilters' => [$detail['foreignKey'] => $row->id],
+                                            ], key('detail-'.$model.'-'.$row->id.'-'.$dIdx))
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </td>
+                    </tr>
+                @endif
             @empty
                 <tr>
-                    <td colspan="99" class="px-6 py-16 text-center">
+                    <td colspan="99" class="px-6 py-16 text-center ptah-empty-cell">
                         @php
                             $emptyIsFiltered = $search !== ''
                                 || count(array_filter($filters)) > 0
@@ -298,6 +392,11 @@
                     </td>
                 </tr>
             @endforelse
+
+            {{-- Subtotal do último grupo da página --}}
+            @if ($breakField && $prevBreak !== '__ptah_init__')
+                @include('ptah::livewire.base-crud.partials._break-subtotal')
+            @endif
         </tbody>
 
         {{-- Totalizadores --}}

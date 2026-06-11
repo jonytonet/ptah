@@ -51,8 +51,10 @@ trait HasCrudLifecycle
         string $whereHasFilter = '',
         array $whereHasCondition = [],
         int $companyFilter = 0,
+        array $lockedFilters = [],
     ): void {
         $this->model = $model;
+        $this->lockedFilters = $lockedFilters;
         $this->configRoute = $this->resolveCurrentRoute();
         $this->whereHasFilter = $whereHasFilter;
         $this->whereHasCondition = $whereHasCondition;

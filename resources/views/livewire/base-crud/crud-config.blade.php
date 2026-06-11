@@ -929,6 +929,23 @@
                                     </div>
                                     @endif
 
+                                    {{-- Form block (section) + onChange formula --}}
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>
+                                            <input type="text" wire:model="formDataField.colsFormBlock"
+                                                placeholder="ex: Endereço" class="cfg-input" />
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_form_block_hint') }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_on_change') }}</label>
+                                            <input type="text" wire:model="formDataField.colsOnChange"
+                                                placeholder="merge(data, {'total': data['qty'] * data['price']})"
+                                                class="cfg-input font-mono text-[11px]" />
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_on_change_hint') }}</p>
+                                        </div>
+                                    </div>
+
                                     {{-- Preview da transformaÃ§Ã£o --}}
                                     @if (!empty($formDataField['colsMaskTransform']))
                                     <div class="px-4 py-3 border rounded-md bg-amber-50 border-amber-200">
@@ -1278,6 +1295,30 @@
                                             <input type="text" wire:model="formDataField.colsSDFilters"
                                                 placeholder='[{"field":"active","value":"S"}]'
                                                 class="cfg-input font-mono text-[11px]" />
+                                        </div>
+
+                                        {{-- ── Cascading dropdown (dependent fields) ── --}}
+                                        <div class="col-span-2 px-4 py-3 mt-1 border rounded-md border-indigo-200 bg-indigo-50">
+                                            <p class="mb-2 text-xs font-semibold text-indigo-700">
+                                                {{ __('ptah::ui.cfg_col_sd_cascade_title') }}
+                                            </p>
+                                            <p class="mb-3 text-[11px] text-indigo-600">
+                                                {{ __('ptah::ui.cfg_col_sd_cascade_hint') }}
+                                            </p>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_depends_on') }}</label>
+                                                    <input type="text" wire:model="formDataField.colsSDDependsOn"
+                                                        placeholder="ex: state_id" class="font-mono cfg-input" />
+                                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_depends_on_hint') }}</p>
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filter_column') }}</label>
+                                                    <input type="text" wire:model="formDataField.colsSDFilterColumn"
+                                                        placeholder="ex: state_id" class="font-mono cfg-input" />
+                                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_filter_column_hint') }}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2349,6 +2390,37 @@
                                     <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_totalizer')
                                         }}</span>
                                 </label>
+                            </div>
+                        </div>
+
+                        {{-- Quebra de grupo + Mestre/Detalhe --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
+                            <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">
+                                {{ __('ptah::ui.cfg_gen_detail_title') }} &amp; {{ __('ptah::ui.cfg_gen_group_break') }}
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_group_break') }}</label>
+                                    <input type="text" wire:model="groupBreak" placeholder="ex: status"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_group_break_hint') }}</p>
+                                </div>
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_model') }}</label>
+                                    <input type="text" wire:model="detailModel" placeholder="ex: OrderItem"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_detail_hint') }}</p>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_fk') }}</label>
+                                    <input type="text" wire:model="detailForeignKey" placeholder="ex: order_id"
+                                        class="font-mono cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_label') }}</label>
+                                    <input type="text" wire:model="detailTitle" placeholder="ex: Itens do pedido"
+                                        class="cfg-input" />
+                                </div>
                             </div>
                         </div>
 

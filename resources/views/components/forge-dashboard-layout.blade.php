@@ -399,15 +399,25 @@
 
     @stack('styles')
 
+    {{-- Anti-FOUC: resolve the theme and paint the dark class BEFORE first paint.
+         Blocking + synchronous, runs before <body> renders. Mirrors the Alpine
+         darkMode logic exactly so there is never a light flash on F5 / navigation. --}}
     <script>
         (function () {
-            var serverTheme = @js($theme);
-            if (serverTheme === 'dark' || serverTheme === 'light') {
-                var isDark = serverTheme === 'dark';
-                localStorage.setItem('ptah_dark_mode', isDark);
-                document.documentElement.classList.toggle('ptah-dark', isDark);
-                document.documentElement.classList.toggle('dark', isDark);
-            }
+            try {
+                var serverTheme = @js($theme);
+                var isDark;
+                if (serverTheme === 'dark' || serverTheme === 'light') {
+                    isDark = serverTheme === 'dark';
+                    localStorage.setItem('ptah_dark_mode', isDark);
+                } else {
+                    var saved = localStorage.getItem('ptah_dark_mode');
+                    isDark = saved === 'true';
+                }
+                if (isDark) {
+                    document.documentElement.classList.add('ptah-dark', 'dark');
+                }
+            } catch (e) {}
         })();
     </script>
 </head>

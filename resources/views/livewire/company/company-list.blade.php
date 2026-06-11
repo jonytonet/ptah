@@ -74,6 +74,17 @@
                         <td class="px-3 py-2.5 text-slate-500">{{ $row->email ?? '—' }}</td>
                         <td class="px-3 py-2.5 text-slate-500 font-mono text-xs">{{ $row->tax_id ? strtoupper($row->tax_type ?? '') . ' ' . $row->tax_id : '—' }}</td>
 
+                        {{-- Padrão (is_default) — th exists, this td was missing --}}
+                        <td class="px-3 py-2.5 text-center">
+                            @if ($row->is_default)
+                                <svg class="inline w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            @else
+                                <span class="text-slate-300">—</span>
+                            @endif
+                        </td>
+
                         <td class="px-3 py-2.5 text-center">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $row->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
                                 {{ $row->is_active ? __('ptah::ui.lbl_active') : __('ptah::ui.lbl_inactive') }}

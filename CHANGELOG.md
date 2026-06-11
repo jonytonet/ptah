@@ -107,6 +107,75 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Permissions — cache invalidation rework (security)
+- **Fixed: revoking a permission was not immediate.** Editing a role's object
+  bindings (`RoleService::bindPageObject`/`unbindPageObject`/`syncPageBindings`)
+  never cleared the permission cache, so a revoked action stayed effective for up
+  to `cache_ttl` (default 1h). Replaced the broken tag-based invalidation (keys
+  were never stored with tags, so `Cache::tags()->flush()` was a no-op) with
+  **generation-based versioning**: every cache key embeds a global counter and a
+  per-user counter; invalidation just increments a counter — O(1), works on every
+  driver (file/database/redis/memcached), no key enumeration. Revocation now takes
+  effect on the next check.
+- Invalidation is wired via model observers (`Role`/`RolePermission` → global bump,
+  `UserRole` → per-user bump) **and** explicit bumps in `RoleService` (covers
+  query-builder mass deletes that don't fire model events).
+- **Action whitelist** — `check()` and `getCompaniesForResource()` now reject any
+  action outside `create/read/update/delete` before it is interpolated into the
+  `can_{action}` column (typo + SQL-injection guard).
+- **MASTER permission map is now cached** (per global generation) instead of
+  querying `PageObject` on every request for master users.
+- `clearCache()` no longer needs the `$companyId` argument — a per-user bump clears
+  every company-scoped map at once.
+- Docs: documented MASTER being global (not company-scoped), `company_id = null`
+  meaning cross-tenant, and the generation-based cache. 10 new tests
+  (`PermissionServiceTest`) including the immediate-revocation regression that
+  would fail on the old code.
+
+### Power features (ScriptCase-inspired)
+- **Master/Detail** — `masterDetail` config adds an expand arrow per row that
+  mounts a nested BaseCrud filtered by the parent key via the new
+  `lockedFilters` mount parameter: enforced on every query, immune to the
+  child's Clear filters, `SqlIdentifier`-guarded. Multiple detail grids per row
+  supported; first entry editable in the CrudConfig modal (General tab).
+- **Group break ("quebra") with subtotals** — `groupBreak` config keeps rows
+  individual but makes the field the primary sort and renders a header per group
+  plus per-group subtotal rows (reusing the Totalizer columns), styled with the
+  brand tint. Unsafe field names are ignored.
+- **Calculated fields** — `colsOnChange` column option runs a sandboxed
+  expression (same ExpressionLanguage engine as the lifecycle hooks; variables
+  `data`/`value`) whenever the field changes, live (`.live.debounce.600ms` on the
+  trigger input). Errors are logged and never break the form.
+- **Form sections** — `colsFormBlock` groups adjacent fields under a section
+  heading in the create/edit modal.
+- **Card (mosaic) view** — toolbar toggle (persisted per user) switches the
+  listing between the table and a responsive card grid sharing the same row
+  states, selection, actions and pagination.
+- **Duplicate record** — copy action per row opens the create modal pre-filled
+  with the source row (guarded/audit fields never copied).
+- **Print view** — Export menu → Print with a dedicated `@media print`
+  stylesheet (chrome, selection and action columns hidden, sticky columns
+  flattened).
+- Actions column now shrinks to its icons (`width:1%` + nowrap) instead of
+  absorbing leftover table width.
+- 9 new tests (duplicate, formulas incl. sandbox failure, break sort/render/
+  guard, locked filters, detail toggle, view mode); 26 new i18n keys; docs in
+  `BaseCrud.md`.
+
+### Cascading (dependent) search dropdowns
+- **New `colsSDDependsOn` / `colsSDFilterColumn` column options** — make a
+  searchdropdown depend on another form field (Country → State → City, unlimited
+  depth). The child is disabled with a "Select {parent} first…" placeholder until
+  the parent has a value; its options are filtered by `WHERE {filterColumn} =
+  {parent value}` (column guarded by `SqlIdentifier`); changing the parent clears
+  the entire descendant chain (value, label, cached results) — including when the
+  parent is a plain select, via the `updatedFormData` hook.
+- Works in the **filter panel** as well: dependent searchdropdown filters follow
+  the same gate/filter/reset rules against the active filters.
+- Configurable in the CrudConfig modal (SearchDropdown tab → Cascading section);
+  documented in `BaseCrud.md`; covered by 5 new tests (gate, parent filtering,
+  recursive reset on both scopes).
+
 ### Visual refresh — modern, brand-driven styling
 - **Single brand source** — every accent in `ptah-components.css` (focus rings, sort
   arrows, filter chips, active buttons, saved filters, quick-date buttons, bulk bar,

@@ -45,8 +45,17 @@ trait HasCrudSearchDropdown
             return;
         }
 
+        // Cascading dropdown: blocked until the parent field has a value.
+        [$gateClosed, $filterColumn, $filterValue] = $this->sdCascade($col, $this->formData);
+        if ($gateClosed) {
+            $this->sdResults[$field] = [];
+
+            return;
+        }
+
         $this->sdResults[$field] = $this->resolveSearchDropdownResults(
-            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit,
+            false, $filterColumn, $filterValue
         );
     }
 
@@ -77,11 +86,20 @@ trait HasCrudSearchDropdown
             return;
         }
 
+        // Cascading dropdown: blocked until the parent field has a value.
+        [$gateClosed, $filterColumn, $filterValue] = $this->sdCascade($col, $this->formData);
+        if ($gateClosed) {
+            $this->sdResults[$field] = [];
+
+            return;
+        }
+
         // Use the term the user already typed (if any), or load all
         $currentQuery = $this->sdSearches[$field] ?? '';
 
         $this->sdResults[$field] = $this->resolveSearchDropdownResults(
-            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $currentQuery, $sdLimit, true
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $currentQuery, $sdLimit,
+            true, $filterColumn, $filterValue
         );
     }
 
@@ -91,6 +109,106 @@ trait HasCrudSearchDropdown
         $this->sdLabels[$field] = $label;
         $this->sdResults[$field] = [];
         $this->sdSearches[$field] = '';
+
+        // Cascading dropdowns: a new parent value invalidates every descendant.
+        $this->resetSdDependents($field);
+    }
+
+    /**
+     * Livewire hook: fires when any formData entry changes through wire:model
+     * (e.g. the parent is a plain select instead of a searchdropdown).
+     */
+    public function updatedFormData(mixed $value, string $key): void
+    {
+        $this->resetSdDependents($key);
+
+        // Calculated fields: run this column's onChange formula (HasCrudForm).
+        $this->applyFieldOnChange($key);
+    }
+
+    // ── Cascading (dependent) dropdown helpers ─────────────────────────────────
+
+    /**
+     * Resolves the cascade state for a column with colsSDDependsOn.
+     *
+     * @param  array  $col  Column config
+     * @param  array  $source  Current values: formData (modal) or filters (panel)
+     * @return array{0: bool, 1: ?string, 2: mixed} [gateClosed, filterColumn, filterValue]
+     */
+    protected function sdCascade(array $col, array $source): array
+    {
+        $dependsOn = $col['colsSDDependsOn'] ?? null;
+
+        if (! $dependsOn) {
+            return [false, null, null];
+        }
+
+        $parentValue = $source[$dependsOn] ?? null;
+
+        if ($parentValue === null || $parentValue === '') {
+            return [true, null, null];
+        }
+
+        // Column on the child model used to filter by the parent value.
+        // Defaults to the parent field name (city.state_id ← state_id).
+        $filterColumn = $col['colsSDFilterColumn'] ?? $dependsOn;
+
+        return [false, $filterColumn, $parentValue];
+    }
+
+    /**
+     * Recursively clears every searchdropdown that depends on $parentField
+     * (value, label, search term and cached results) — modal form scope.
+     */
+    protected function resetSdDependents(string $parentField): void
+    {
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            if (($col['colsSDDependsOn'] ?? null) !== $parentField) {
+                continue;
+            }
+
+            $child = $col['colsNomeFisico'] ?? null;
+
+            if (! $child || ! array_key_exists($child, $this->formData)) {
+                // Still clear stale UI state even when no value was set yet.
+                if ($child) {
+                    unset($this->sdLabels[$child], $this->sdSearches[$child]);
+                    $this->sdResults[$child] = [];
+                    $this->resetSdDependents($child);
+                }
+
+                continue;
+            }
+
+            unset($this->formData[$child], $this->sdLabels[$child], $this->sdSearches[$child]);
+            $this->sdResults[$child] = [];
+
+            // Grandchildren and deeper levels follow.
+            $this->resetSdDependents($child);
+        }
+    }
+
+    /**
+     * Same cascade reset for the filter-panel scope ($filters).
+     */
+    protected function resetSdFilterDependents(string $parentField): void
+    {
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            if (($col['colsSDDependsOn'] ?? null) !== $parentField) {
+                continue;
+            }
+
+            $child = $col['colsNomeFisico'] ?? null;
+
+            if (! $child) {
+                continue;
+            }
+
+            unset($this->filters[$child], $this->filterOperators[$child], $this->sdFilterLabels[$child]);
+            $this->sdResults['filter_'.$child] = [];
+
+            $this->resetSdFilterDependents($child);
+        }
     }
 
     // ── Filter-panel searchable dropdown ──────────────────────────────────────
@@ -118,12 +236,22 @@ trait HasCrudSearchDropdown
         if ($query === '') {
             unset($this->filters[$field], $this->sdFilterLabels[$field]);
             $this->sdResults['filter_'.$field] = [];
+            $this->resetSdFilterDependents($field);
+
+            return;
+        }
+
+        // Cascading dropdown: panel scope depends on the parent FILTER value.
+        [$gateClosed, $filterColumn, $filterValue] = $this->sdCascade($col, $this->filters);
+        if ($gateClosed) {
+            $this->sdResults['filter_'.$field] = [];
 
             return;
         }
 
         $this->sdResults['filter_'.$field] = $this->resolveSearchDropdownResults(
-            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit,
+            false, $filterColumn, $filterValue
         );
     }
 
@@ -153,8 +281,17 @@ trait HasCrudSearchDropdown
             return;
         }
 
+        // Cascading dropdown: panel scope depends on the parent FILTER value.
+        [$gateClosed, $filterColumn, $filterValue] = $this->sdCascade($col, $this->filters);
+        if ($gateClosed) {
+            $this->sdResults['filter_'.$field] = [];
+
+            return;
+        }
+
         $this->sdResults['filter_'.$field] = $this->resolveSearchDropdownResults(
-            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, '', $sdLimit, true
+            $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, '', $sdLimit, true,
+            $filterColumn, $filterValue
         );
     }
 
@@ -168,6 +305,7 @@ trait HasCrudSearchDropdown
         $this->filterOperators[$field] = '=';
         $this->sdFilterLabels[$field] = $label;
         $this->sdResults['filter_'.$field] = [];
+        $this->resetSdFilterDependents($field);
         $this->resetPage();
     }
 
@@ -178,6 +316,7 @@ trait HasCrudSearchDropdown
     {
         unset($this->filters[$field], $this->filterOperators[$field], $this->sdFilterLabels[$field]);
         $this->sdResults['filter_'.$field] = [];
+        $this->resetSdFilterDependents($field);
         $this->resetPage();
     }
 
@@ -204,7 +343,9 @@ trait HasCrudSearchDropdown
         string $sdOrder,
         string $query,
         int $limit = 15,
-        bool $allowEmpty = false
+        bool $allowEmpty = false,
+        ?string $filterColumn = null,
+        mixed $filterValue = null
     ): array {
         if (! $allowEmpty && strlen($query) < 1) {
             return [];
@@ -229,6 +370,12 @@ trait HasCrudSearchDropdown
                     ->newQuery()
                     ->orderBy($orderCol, $orderDir)
                     ->limit($limit);
+
+                // Cascading dropdown: restrict the child list to the parent value.
+                // Column name is config-driven → guard it like every dynamic identifier.
+                if ($filterColumn !== null && SqlIdentifier::isSafe($filterColumn)) {
+                    $q->where($filterColumn, $filterValue);
+                }
 
                 // Case-insensitive filter via LOWER() for MySQL/SQLite compatibility.
                 // Guard the column name against SQL injection before raw interpolation.
