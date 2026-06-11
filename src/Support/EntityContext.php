@@ -173,6 +173,10 @@ readonly class EntityContext
 
     /**
      * Generates DTO properties with PHP types.
+     *
+     * Required (non-nullable) properties are emitted first: PHP 8 deprecates
+     * optional parameters declared before required ones. Reordering is safe
+     * because fromArray() instantiates the DTO with named arguments.
      */
     public function dtoProperties(): string
     {
@@ -180,10 +184,15 @@ readonly class EntityContext
             return '        // public readonly string $name,';
         }
 
+        $ordered = array_merge(
+            array_filter($this->fields, fn (FieldDefinition $f) => ! $f->nullable),
+            array_filter($this->fields, fn (FieldDefinition $f) => $f->nullable),
+        );
+
         return implode("\n", array_map(
             fn (FieldDefinition $f) => "        public readonly {$f->phpType()} \${$f->name}".
                 ($f->nullable ? ' = null,' : ','),
-            $this->fields
+            $ordered
         ));
     }
 
