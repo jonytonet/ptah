@@ -107,6 +107,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Tests — BaseCrud concerns and filter pipeline (P1, section 5)
+- **`FilterServiceTest`** (15) — AND/OR composition against real rows, plain-array
+  to DTO conversion, invalid-filter skipping, date-range form parsing (`_start/_end`,
+  explicit operators, legacy `_from/_to`), custom-filter config parsing (whereHas,
+  CSV `IN`), global search building (OR LIKE for text/select, whereHas for relations).
+- **`FilterStrategiesTest`** (12) — Numeric (array/CSV BETWEEN, partial bounds,
+  comparison operators), Date (same-day range covers startOfDay..endOfDay, out-of-window
+  exclusion, whereDate equality, null no-op), Array (whereIn, CSV normalisation,
+  NOT IN, blank CSV no-op).
+- **`CrudMaskTransformsTest`** (13) — `money_to_float` for BR/EN/comma-only formats,
+  `digits_only`, `plate_clean`, BR↔ISO dates (invalid input passes through untouched),
+  case/trim, unknown transform and skip rules.
+- **`FormValidatorServiceTest`** (13) — required (incl. legacy `'S'`), optional-empty
+  short-circuit, numeric min/max vs string lengths, digits, in/notIn, regex,
+  confirmed cross-field, email, CPF check digits, first-error-only per field.
+- **`CrudDeletionTest`** (8) — the real BaseCrud component mounted with a DB config
+  row: soft delete + `deleted_by` stamping, restore, trashed count, confirm/cancel
+  flow, fail-closed delete for anonymous users.
+- **`CrudQueryTest`** (7) — HasCrudQuery pipeline through the real component:
+  global search, sort ASC/DESC, form filters, operator filters, per-page pagination,
+  quick date filter.
+
 ### Fresh-install validation (bugs found and fixed)
 Validated the full flow on a brand-new Laravel 12 app (create-project →
 path-repository require → `ptah:install` → modules → `ptah:forge` → migrate →
