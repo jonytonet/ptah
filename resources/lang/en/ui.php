@@ -1432,4 +1432,19 @@ return [
     'ai_widget_untitled' => 'New conversation',
     'ai_widget_load_more' => 'Load more',
 
+    // -------------------------------------------------------------------------
+    // BaseCrud UX (toasts, a11y, productivity)
+    // -------------------------------------------------------------------------
+    'toast_undo' => 'Undo',
+    'filters_active_count' => '{1} :count active|[2,*] :count active',
+    'bulk_force_irreversible' => 'This action cannot be undone.',
+    'bulk_select_all' => 'Select all rows',
+    'bulk_select_row' => 'Select row :id',
+    'modal_unsaved_title' => 'Discard changes?',
+    'modal_unsaved_keep' => 'Keep editing',
+    'modal_unsaved_discard' => 'Discard',
+    'btn_save_and_new' => 'Save & add another',
+    'sort_by_column' => 'Sort by :column',
+    'per_page_label' => 'Rows per page',
+
 ];

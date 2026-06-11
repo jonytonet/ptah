@@ -197,25 +197,34 @@ trait HasCrudRenderers
                 if (str_starts_with($colorVal, '#')) {
                     $hex = e($colorVal);
 
-                    return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium\" style=\"background-color:{$hex}22;color:{$hex};border:1px solid {$hex}55\">{$icon}{$label}</span>";
+                    return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium\" style=\"background-color:{$hex}14;color:{$hex};box-shadow: inset 0 0 0 1px {$hex}40\">{$icon}{$label}</span>";
                 }
 
-                $color = match (strtolower($colorVal)) {
-                    'green', 'success' => 'bg-green-100 text-green-800',
-                    'yellow', 'warning' => 'bg-yellow-100 text-yellow-800',
-                    'red', 'danger' => 'bg-red-100 text-red-800',
-                    'blue', 'info' => 'bg-blue-100 text-blue-800',
-                    'indigo', 'primary' => 'bg-indigo-100 text-indigo-800',
-                    'purple' => 'bg-purple-100 text-purple-800',
-                    'pink' => 'bg-pink-100 text-pink-800',
-                    default => 'bg-gray-100 text-gray-700',
-                };
+                $color = $this->badgeColorClasses($colorVal);
 
                 return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$icon}{$label}</span>";
             }
         }
 
-        return '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">'.e((string) ($value ?? '')).'</span>';
+        return '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium '.$this->badgeColorClasses('gray').'">'.e((string) ($value ?? '')).'</span>';
+    }
+
+    /**
+     * Soft background + ring badge palette (current Tailwind UI idiom).
+     * Shared by badge, pill and boolean renderers.
+     */
+    protected function badgeColorClasses(string $color): string
+    {
+        return match (strtolower($color)) {
+            'green', 'success' => 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20',
+            'yellow', 'warning' => 'bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20',
+            'red', 'danger' => 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/10',
+            'blue', 'info' => 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10',
+            'indigo', 'primary' => 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-700/10',
+            'purple' => 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-700/10',
+            'pink' => 'bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-700/10',
+            default => 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10',
+        };
     }
 
     /**
@@ -238,24 +247,16 @@ trait HasCrudRenderers
                 if (str_starts_with($colorVal, '#')) {
                     $hex = e($colorVal);
 
-                    return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold\" style=\"background-color:{$hex}22;color:{$hex};border:1px solid {$hex}55\">{$icon}{$label}</span>";
+                    return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold\" style=\"background-color:{$hex}14;color:{$hex};box-shadow: inset 0 0 0 1px {$hex}40\">{$icon}{$label}</span>";
                 }
 
-                $color = match (strtolower($colorVal)) {
-                    'green', 'success' => 'bg-green-100 text-green-800',
-                    'yellow', 'warning' => 'bg-yellow-100 text-yellow-800',
-                    'red', 'danger' => 'bg-red-100 text-red-800',
-                    'blue', 'info' => 'bg-blue-100 text-blue-800',
-                    'indigo', 'primary' => 'bg-indigo-100 text-indigo-800',
-                    'purple' => 'bg-purple-100 text-purple-800',
-                    default => 'bg-gray-100 text-gray-700',
-                };
+                $color = $this->badgeColorClasses($colorVal);
 
                 return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {$color}\">{$icon}{$label}</span>";
             }
         }
 
-        return '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700">'.e((string) ($value ?? '')).'</span>';
+        return '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold '.$this->badgeColorClasses('gray').'">'.e((string) ($value ?? '')).'</span>';
     }
 
     /**
@@ -269,13 +270,15 @@ trait HasCrudRenderers
 
         if ($isTrue) {
             $label = e($col['colsRendererBoolTrue'] ?? trans('ptah::ui.bool_yes'));
+            $color = $this->badgeColorClasses('green');
 
-            return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800\">{$label}</span>";
+            return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$label}</span>";
         }
 
         $label = e($col['colsRendererBoolFalse'] ?? trans('ptah::ui.bool_no'));
+        $color = $this->badgeColorClasses('gray');
 
-        return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500\">{$label}</span>";
+        return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$label}</span>";
     }
 
     /**

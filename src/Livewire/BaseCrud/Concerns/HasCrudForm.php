@@ -205,6 +205,23 @@ trait HasCrudForm
         $this->creating = false;
     }
 
+    /**
+     * Saves the record and, on success, immediately reopens a blank create
+     * form — for users registering several records in sequence.
+     * Only meaningful on create; on edit it behaves exactly like save().
+     */
+    public function saveAndNew(): void
+    {
+        $wasEditing = (bool) $this->editingId;
+
+        $this->save();
+
+        if (empty($this->formErrors) && ! $wasEditing) {
+            $this->prepareCreate();
+            $this->showModal = true;
+        }
+    }
+
     // ── Lifecycle Hooks ────────────────────────────────────────────────────────
 
     /**

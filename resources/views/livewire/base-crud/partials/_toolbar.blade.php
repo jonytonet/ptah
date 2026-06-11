@@ -1,5 +1,5 @@
 {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-<div class="mb-4 border rounded-md ptah-c-toolbar">
+<div class="mb-4 border rounded-lg ptah-c-toolbar">
 <div class="flex flex-wrap items-center gap-2 px-4 py-3">
 
     {{-- Botão Novo --}}
@@ -27,7 +27,8 @@
             <button type="button"
                 wire:click="$set('search', '')"
                 class="absolute inset-y-0 right-2 flex items-center ptah-c-search_x"
-                title="{{ __('ptah::ui.btn_clear_filters') }}">
+                title="{{ __('ptah::ui.btn_clear_filters') }}"
+                aria-label="{{ __('ptah::ui.btn_clear_filters') }}">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -99,7 +100,10 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[160px] py-1.5 ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[160px] py-1.5 ptah-c-dd">
                     @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                         <button wire:click="export('{{ $fmt }}')" @click="open = false"
                             class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
@@ -150,7 +154,10 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
                     {{-- Ações rápidas --}}
                     <div class="flex gap-2 px-3 pb-2 mb-1 border-b ptah-c-dd_sep">
                         <button wire:click="showAllColumns" @click="open = false"
@@ -198,7 +205,10 @@
                 </svg>
             </button>
             <div x-show="open" x-cloak @click.outside="open = false"
-                 class="absolute right-0 mt-1 border rounded-md z-20 min-w-[180px] py-1 ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                 class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[180px] py-1 ptah-c-dd">
                 @foreach ($densityMap as $d => $info)
                     <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
@@ -220,7 +230,8 @@
         {{-- Atualizar --}}
         <button wire:click="$refresh"
             class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn"
-            title="{{ __('ptah::ui.btn_refresh') }}">
+            title="{{ __('ptah::ui.btn_refresh') }}"
+            aria-label="{{ __('ptah::ui.btn_refresh') }}">
             <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -232,7 +243,8 @@
         @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
             <button wire:click="clearFilters"
                 class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn"
-                title="{{ __('ptah::ui.btn_clear_filters') }}">
+                title="{{ __('ptah::ui.btn_clear_filters') }}"
+                aria-label="{{ __('ptah::ui.btn_clear_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -241,6 +253,7 @@
 
         {{-- Per page --}}
         <select wire:model.live="perPage"
+            aria-label="{{ __('ptah::ui.per_page_label') }}"
             class="text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage">
             @foreach ([10, 15, 25, 50, 100] as $n)
                 <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>

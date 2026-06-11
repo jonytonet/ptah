@@ -107,6 +107,94 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Visual refresh — modern, brand-driven styling
+- **Single brand source** — every accent in `ptah-components.css` (focus rings, sort
+  arrows, filter chips, active buttons, saved filters, quick-date buttons, bulk bar,
+  selected dropdown items, modal icon) now derives from the host's
+  `--color-primary` token via `color-mix()` tints. No more hardcoded blue clashing
+  with a purple primary: change the token once and the whole CRUD follows.
+- **Elevation** — dropdown menus gained a layered shadow + hairline ring and a
+  scale/fade open transition; toolbar, filter panel and table wrapper have a subtle
+  ambient shadow; modals are `shadow-2xl`; solid forge-buttons get `shadow-sm` and a
+  visible `focus-visible` ring.
+- **Row states** — hover is now neutral (`slate-50`); brand color is reserved for
+  the new selected-row state (soft brand background + 2px brand edge) so bulk
+  selection finally has visual feedback.
+- **Badges modernised** — badge/pill/boolean renderers moved from the old
+  `bg-*-100/text-*-800` look to the current soft + inset-ring idiom
+  (`bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20`); the duplicated
+  color map was extracted to a shared `badgeColorClasses()` helper.
+- **Radius hierarchy** — containers (toolbar, table, filter panel, dropdowns)
+  are `rounded-lg`, modals `rounded-xl`; controls keep `rounded-md`.
+- **Detailing** — column drag-grip appears only on header hover (cleans 8× visual
+  noise); thin styled scrollbar on the table wrapper; circular ringed empty-state
+  icon; modal footer separator actually visible.
+
+> After updating, rebuild the host assets (`npm run build`) so the new classes and
+> CSS variables are picked up.
+
+### BaseCrud UX overhaul (12 usability improvements)
+- **Undo on delete** — the post-delete toast now shows an inline *Undo* button for
+  soft-deletable records (calls `restoreRecord`); toasts with Undo stay visible for 6s.
+- **Toasts now stack** — multiple notifications no longer overwrite each other; each
+  has its own timer and dismiss button (`aria-live=polite`).
+- **Native `confirm()` dialogs replaced** with styled, theme-aware dialogs for bulk
+  delete / permanent delete (with an "irreversible" warning) and for the
+  unsaved-changes check when closing the form modal (Esc first closes the warning).
+- **Row links behave like real links** — Ctrl/Cmd-click and middle-click on a row
+  with `configLinkLinha` open the record in a new tab (`ptahRowNav`).
+- **"Save & add another"** button on the create modal (`saveAndNew()`): persists and
+  reopens a blank form — for batch data entry. Covered by 3 new tests.
+- **Keyboard shortcuts** — `/` focuses the global search, `n` opens the create modal
+  (ignored while typing or with a modal open).
+- **Accessibility** — column sort is now a real `<button>` with `aria-sort` on the
+  `<th>` (keyboard sortable); `aria-label` on every icon-only button (row actions,
+  refresh, clear filters, search clear), on bulk checkboxes and the per-page select.
+- **Larger touch targets** — row action buttons gained padded hitboxes and the column
+  resize handle is 2× wider without visual change.
+- **Sticky actions column** — the default actions column stays visible during
+  horizontal scroll (with row-hover background preserved via `group-hover`).
+- **Floating bulk bar no longer covers pagination** (spacer when a selection is active).
+- **i18n fix** — the "N active" filter badge was hardcoded in Portuguese; now uses
+  `trans_choice` with proper pluralisation in both locales (11 new lang keys).
+
+### Tests — BaseCrud save, renderers, search dropdown and export (P1, section 5 complete)
+- **`CrudSaveTest`** (6) — end-to-end `save()` through the real component: create with
+  mask transform applied, required-field validation blocking the insert, guarded
+  fields stripped even when marked savable, inline sandbox hook reshaping data,
+  edit-update without duplication, `prepareCreate()` state reset.
+- **`CrudRenderersTest`** (14) — XSS safety first: plain values, badge fallbacks and
+  config labels are always escaped; badge color maps (named + hex), boolean truthy
+  variants and custom labels, money per currency, BR date formatting with
+  unparseable passthrough, select label mapping, cell class/icon wrappers,
+  conditional row styles (==, >), unknown-renderer fallback.
+- **`CrudSearchDropdownExportTest`** (11) — model-backed lookups with value/label
+  pairs, `colsSDLimit` cap, empty-query reset, option selection filling
+  formData/labels, filter-panel selection + clear flows; export sync dispatch,
+  disabled gate and bulk-export selection requirement.
+
+### Tests — BaseCrud concerns and filter pipeline (P1, section 5)
+- **`FilterServiceTest`** (15) — AND/OR composition against real rows, plain-array
+  to DTO conversion, invalid-filter skipping, date-range form parsing (`_start/_end`,
+  explicit operators, legacy `_from/_to`), custom-filter config parsing (whereHas,
+  CSV `IN`), global search building (OR LIKE for text/select, whereHas for relations).
+- **`FilterStrategiesTest`** (12) — Numeric (array/CSV BETWEEN, partial bounds,
+  comparison operators), Date (same-day range covers startOfDay..endOfDay, out-of-window
+  exclusion, whereDate equality, null no-op), Array (whereIn, CSV normalisation,
+  NOT IN, blank CSV no-op).
+- **`CrudMaskTransformsTest`** (13) — `money_to_float` for BR/EN/comma-only formats,
+  `digits_only`, `plate_clean`, BR↔ISO dates (invalid input passes through untouched),
+  case/trim, unknown transform and skip rules.
+- **`FormValidatorServiceTest`** (13) — required (incl. legacy `'S'`), optional-empty
+  short-circuit, numeric min/max vs string lengths, digits, in/notIn, regex,
+  confirmed cross-field, email, CPF check digits, first-error-only per field.
+- **`CrudDeletionTest`** (8) — the real BaseCrud component mounted with a DB config
+  row: soft delete + `deleted_by` stamping, restore, trashed count, confirm/cancel
+  flow, fail-closed delete for anonymous users.
+- **`CrudQueryTest`** (7) — HasCrudQuery pipeline through the real component:
+  global search, sort ASC/DESC, form filters, operator filters, per-page pagination,
+  quick date filter.
+
 ### Fresh-install validation (bugs found and fixed)
 Validated the full flow on a brand-new Laravel 12 app (create-project →
 path-repository require → `ptah:install` → modules → `ptah:forge` → migrate →

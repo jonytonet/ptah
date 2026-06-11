@@ -6,13 +6,13 @@
 
     /* Drag feedback */
     .ptah-sortable-col.ptah-dragging   { opacity: .45; }
-    .ptah-sortable-col.ptah-drag-over  { outline: 2px solid #2563eb; outline-offset: -2px; }
+    .ptah-sortable-col.ptah-drag-over  { outline: 2px solid var(--ptah-primary, #5b21b6); outline-offset: -2px; }
     .ptah-drag-grip                    { touch-action: none; }
 
     /* Resize indicator */
     #ptah-resize-indicator {
         position: fixed; top: 0; bottom: 0; width: 2px;
-        background: #2563eb; z-index: 9999; pointer-events: none; display: none;
+        background: var(--ptah-primary, #5b21b6); z-index: 9999; pointer-events: none; display: none;
     }
     #ptah-resize-indicator.active { display: block; }
 
@@ -143,6 +143,19 @@
 (function () {
     if (window.__ptahColDragInit) return;
     window.__ptahColDragInit = true;
+
+    /* ─── row navigation: respects ctrl/cmd-click and middle-click ───── */
+    window.ptahRowNav = function (event, url) {
+        // Middle-click (auxclick) or ctrl/cmd-click → open in a new tab.
+        if (event.button === 1 || event.ctrlKey || event.metaKey) {
+            window.open(url, '_blank');
+
+            return;
+        }
+        // Plain auxclick with another button (e.g. right) → ignore.
+        if (event.type === 'auxclick') return;
+        window.location = url;
+    };
 
     /* ─── estado global ─────────────────────────────────────── */
     let _draggedTh = null, _draggedIdx = null, _dragCrudId = null;
