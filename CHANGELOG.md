@@ -107,6 +107,36 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Power features (ScriptCase-inspired)
+- **Master/Detail** — `masterDetail` config adds an expand arrow per row that
+  mounts a nested BaseCrud filtered by the parent key via the new
+  `lockedFilters` mount parameter: enforced on every query, immune to the
+  child's Clear filters, `SqlIdentifier`-guarded. Multiple detail grids per row
+  supported; first entry editable in the CrudConfig modal (General tab).
+- **Group break ("quebra") with subtotals** — `groupBreak` config keeps rows
+  individual but makes the field the primary sort and renders a header per group
+  plus per-group subtotal rows (reusing the Totalizer columns), styled with the
+  brand tint. Unsafe field names are ignored.
+- **Calculated fields** — `colsOnChange` column option runs a sandboxed
+  expression (same ExpressionLanguage engine as the lifecycle hooks; variables
+  `data`/`value`) whenever the field changes, live (`.live.debounce.600ms` on the
+  trigger input). Errors are logged and never break the form.
+- **Form sections** — `colsFormBlock` groups adjacent fields under a section
+  heading in the create/edit modal.
+- **Card (mosaic) view** — toolbar toggle (persisted per user) switches the
+  listing between the table and a responsive card grid sharing the same row
+  states, selection, actions and pagination.
+- **Duplicate record** — copy action per row opens the create modal pre-filled
+  with the source row (guarded/audit fields never copied).
+- **Print view** — Export menu → Print with a dedicated `@media print`
+  stylesheet (chrome, selection and action columns hidden, sticky columns
+  flattened).
+- Actions column now shrinks to its icons (`width:1%` + nowrap) instead of
+  absorbing leftover table width.
+- 9 new tests (duplicate, formulas incl. sandbox failure, break sort/render/
+  guard, locked filters, detail toggle, view mode); 26 new i18n keys; docs in
+  `BaseCrud.md`.
+
 ### Cascading (dependent) search dropdowns
 - **New `colsSDDependsOn` / `colsSDFilterColumn` column options** — make a
   searchdropdown depend on another form field (Country → State → City, unlimited

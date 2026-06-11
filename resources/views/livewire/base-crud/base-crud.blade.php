@@ -90,7 +90,11 @@
                  class="ptah-loading-bar absolute inset-0 hidden"></div>
         </div>
 
-        @include('ptah::livewire.base-crud.partials._table')
+        @if ($viewMode === 'cards')
+            @include('ptah::livewire.base-crud.partials._cards')
+        @else
+            @include('ptah::livewire.base-crud.partials._table')
+        @endif
 
         @include('ptah::livewire.base-crud.partials._pagination')
 

@@ -103,6 +103,16 @@ class CrudConfig extends Component
     // ── GroupBy ────────────────────────────────────────────────────────
     public string $groupBy = ''; // field name for GROUP BY, empty = disabled
 
+    // ── Group break (quebra: headers + per-group subtotals) ────────────
+    public string $groupBreak = ''; // field name, empty = disabled
+
+    // ── Master/Detail (nested CRUD per row) ────────────────────────────
+    public string $detailModel = '';
+
+    public string $detailForeignKey = '';
+
+    public string $detailTitle = '';
+
     // ── Visual Theme ────────────────────────────────────────────────────
     public string $theme = 'light'; // 'light' | 'dark'
 
@@ -263,6 +273,15 @@ class CrudConfig extends Component
 
         // GroupBy
         $this->groupBy = $cfg['groupBy'] ?? '';
+
+        // Group break
+        $this->groupBreak = $cfg['groupBreak'] ?? '';
+
+        // Master/Detail (UI edits the first entry; extra entries survive in JSON)
+        $detail = $cfg['masterDetail'][0] ?? [];
+        $this->detailModel = $detail['model'] ?? '';
+        $this->detailForeignKey = $detail['foreignKey'] ?? '';
+        $this->detailTitle = $detail['title'] ?? '';
 
         // Theme
         $this->theme = $cfg['theme'] ?? 'light';
@@ -784,6 +803,17 @@ class CrudConfig extends Component
             ],
             'theme' => $this->theme,
             'groupBy' => $this->groupBy ?: null,
+            'groupBreak' => $this->groupBreak ?: null,
+            'masterDetail' => ($this->detailModel && $this->detailForeignKey)
+                ? array_replace(
+                    $existing['masterDetail'] ?? [],
+                    [0 => [
+                        'model' => $this->detailModel,
+                        'foreignKey' => $this->detailForeignKey,
+                        'title' => $this->detailTitle ?: null,
+                    ]],
+                )
+                : null,
             'lifecycleHooks' => [
                 'beforeCreate' => $this->hookBeforeCreate ?: null,
                 'afterCreate' => $this->hookAfterCreate ?: null,

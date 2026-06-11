@@ -121,6 +121,9 @@ trait HasCrudSearchDropdown
     public function updatedFormData(mixed $value, string $key): void
     {
         $this->resetSdDependents($key);
+
+        // Calculated fields: run this column's onChange formula (HasCrudForm).
+        $this->applyFieldOnChange($key);
     }
 
     // ── Cascading (dependent) dropdown helpers ─────────────────────────────────

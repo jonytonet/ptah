@@ -929,6 +929,23 @@
                                     </div>
                                     @endif
 
+                                    {{-- Form block (section) + onChange formula --}}
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>
+                                            <input type="text" wire:model="formDataField.colsFormBlock"
+                                                placeholder="ex: Endereço" class="cfg-input" />
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_form_block_hint') }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_on_change') }}</label>
+                                            <input type="text" wire:model="formDataField.colsOnChange"
+                                                placeholder="merge(data, {'total': data['qty'] * data['price']})"
+                                                class="cfg-input font-mono text-[11px]" />
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_on_change_hint') }}</p>
+                                        </div>
+                                    </div>
+
                                     {{-- Preview da transformaÃ§Ã£o --}}
                                     @if (!empty($formDataField['colsMaskTransform']))
                                     <div class="px-4 py-3 border rounded-md bg-amber-50 border-amber-200">
@@ -2373,6 +2390,37 @@
                                     <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_totalizer')
                                         }}</span>
                                 </label>
+                            </div>
+                        </div>
+
+                        {{-- Quebra de grupo + Mestre/Detalhe --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
+                            <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">
+                                {{ __('ptah::ui.cfg_gen_detail_title') }} &amp; {{ __('ptah::ui.cfg_gen_group_break') }}
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_group_break') }}</label>
+                                    <input type="text" wire:model="groupBreak" placeholder="ex: status"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_group_break_hint') }}</p>
+                                </div>
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_model') }}</label>
+                                    <input type="text" wire:model="detailModel" placeholder="ex: OrderItem"
+                                        class="font-mono cfg-input" />
+                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_detail_hint') }}</p>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_fk') }}</label>
+                                    <input type="text" wire:model="detailForeignKey" placeholder="ex: order_id"
+                                        class="font-mono cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_label') }}</label>
+                                    <input type="text" wire:model="detailTitle" placeholder="ex: Itens do pedido"
+                                        class="cfg-input" />
+                                </div>
                             </div>
                         </div>
 
