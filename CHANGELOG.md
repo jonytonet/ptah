@@ -107,6 +107,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Cascading (dependent) search dropdowns
+- **New `colsSDDependsOn` / `colsSDFilterColumn` column options** — make a
+  searchdropdown depend on another form field (Country → State → City, unlimited
+  depth). The child is disabled with a "Select {parent} first…" placeholder until
+  the parent has a value; its options are filtered by `WHERE {filterColumn} =
+  {parent value}` (column guarded by `SqlIdentifier`); changing the parent clears
+  the entire descendant chain (value, label, cached results) — including when the
+  parent is a plain select, via the `updatedFormData` hook.
+- Works in the **filter panel** as well: dependent searchdropdown filters follow
+  the same gate/filter/reset rules against the active filters.
+- Configurable in the CrudConfig modal (SearchDropdown tab → Cascading section);
+  documented in `BaseCrud.md`; covered by 5 new tests (gate, parent filtering,
+  recursive reset on both scopes).
+
 ### Visual refresh — modern, brand-driven styling
 - **Single brand source** — every accent in `ptah-components.css` (focus rings, sort
   arrows, filter chips, active buttons, saved filters, quick-date buttons, bulk bar,

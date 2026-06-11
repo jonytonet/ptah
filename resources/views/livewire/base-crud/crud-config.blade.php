@@ -1279,6 +1279,30 @@
                                                 placeholder='[{"field":"active","value":"S"}]'
                                                 class="cfg-input font-mono text-[11px]" />
                                         </div>
+
+                                        {{-- ── Cascading dropdown (dependent fields) ── --}}
+                                        <div class="col-span-2 px-4 py-3 mt-1 border rounded-md border-indigo-200 bg-indigo-50">
+                                            <p class="mb-2 text-xs font-semibold text-indigo-700">
+                                                {{ __('ptah::ui.cfg_col_sd_cascade_title') }}
+                                            </p>
+                                            <p class="mb-3 text-[11px] text-indigo-600">
+                                                {{ __('ptah::ui.cfg_col_sd_cascade_hint') }}
+                                            </p>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_depends_on') }}</label>
+                                                    <input type="text" wire:model="formDataField.colsSDDependsOn"
+                                                        placeholder="ex: state_id" class="font-mono cfg-input" />
+                                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_depends_on_hint') }}</p>
+                                                </div>
+                                                <div>
+                                                    <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filter_column') }}</label>
+                                                    <input type="text" wire:model="formDataField.colsSDFilterColumn"
+                                                        placeholder="ex: state_id" class="font-mono cfg-input" />
+                                                    <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_filter_column_hint') }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 

@@ -1447,4 +1447,15 @@ return [
     'sort_by_column' => 'Sort by :column',
     'per_page_label' => 'Rows per page',
 
+    // -------------------------------------------------------------------------
+    // Cascading (dependent) search dropdowns
+    // -------------------------------------------------------------------------
+    'sd_select_parent_first' => 'Select :parent first…',
+    'cfg_col_sd_cascade_title' => '🔗 Cascading dropdown (depends on another field)',
+    'cfg_col_sd_cascade_hint' => 'Make this dropdown depend on another form field — e.g. City depends on State, State depends on Country. The child stays disabled until the parent has a value, and is cleared whenever the parent changes.',
+    'cfg_col_sd_depends_on' => 'Depends on (parent field)',
+    'cfg_col_sd_depends_on_hint' => 'Physical name of the parent form field (e.g. state_id).',
+    'cfg_col_sd_filter_column' => 'Filter column on the child model',
+    'cfg_col_sd_filter_column_hint' => 'Column used to filter the options. Default: same name as the parent field.',
+
 ];

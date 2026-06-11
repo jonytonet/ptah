@@ -418,6 +418,8 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsSDTipo` | `'model'\|'service'` | Data source (`model` = direct Eloquent, `service` = service method) |
 | `colsSDLimit` | `int` | Maximum items returned (default: `15`) |
 | `colsSDMode` | `'create'\|'edit'\|'both'` | Which modal mode the SD field appears in |
+| `colsSDDependsOn` | `string\|null` | **Cascading dropdown** — physical name of the parent form field. The child stays disabled until the parent has a value and is cleared (recursively, with its own descendants) whenever the parent changes |
+| `colsSDFilterColumn` | `string\|null` | Column on the child model used to filter the options by the parent value (default: same name as `colsSDDependsOn`) |
 | `colsValidations` | `array\|null` | FormValidatorService rules: `["required","email","min:3"]` |
 | `colsSource` | `string\|null` | **JOIN** — qualified SQL name used in `WHERE` and `ORDER BY` (e.g. `suppliers.name`). Required for filters and sort to work on JOIN columns. `colsNomeFisico` must be the alias (e.g. `supplier_name`) |
 | `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
@@ -915,6 +917,37 @@ Fields of type `searchdropdown` offer Select2-like UX inside the create/edit mod
 ```
 
 > **`colsRelacao` + `colsRelacaoExibe`** are used to pre-fill the label in **edit** mode: ptah looks up `$record->businessPartner->name` and displays it in the input.
+
+### Cascading (dependent) dropdowns
+
+A searchdropdown can depend on another form field — the classic Country → State → City chain. Each child declares its parent with `colsSDDependsOn`; depth is unlimited because every level only knows its own parent.
+
+```json
+[
+  { "colsNomeFisico": "country_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "Country", "colsSDLabel": "name" },
+
+  { "colsNomeFisico": "state_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "State", "colsSDLabel": "name",
+    "colsSDDependsOn": "country_id" },
+
+  { "colsNomeFisico": "city_id", "colsTipo": "searchdropdown",
+    "colsSDModel": "City", "colsSDLabel": "name",
+    "colsSDDependsOn": "state_id" }
+]
+```
+
+Behaviour:
+
+- **Parent empty → child locked.** The input is disabled with a "Select {parent} first…" placeholder and returns no options.
+- **Options filtered by the parent value.** The child query gains `WHERE {colsSDFilterColumn} = {parent value}`. `colsSDFilterColumn` defaults to the parent field name (`states.country_id ← country_id`); set it when the column differs. The column name is validated by `SqlIdentifier` like every dynamic identifier.
+- **Parent changed → descendants cleared.** Selecting a new country clears state *and* city (value, label and cached results), recursively. Works when the parent is a searchdropdown **or** a plain `select`/input (via the Livewire `updatedFormData` hook).
+- **Edit mode works untouched** — the record loads with all levels filled, so each dropdown is already filtered by its parent.
+- **Filter panel too** — the same dependency applies between searchdropdown filters (filter the grid by state, then by city).
+
+> Cascading currently applies to `colsSDTipo: "model"`. For `service` mode, implement the dependency inside your service method.
+
+Configure it in the CrudConfig modal: column editor → **SearchDropdown** tab → *Cascading dropdown* section (`Depends on` + `Filter column`).
 
 ### Case-insensitive search
 

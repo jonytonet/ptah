@@ -186,6 +186,12 @@
                                 @php
                                     $sdInitLabel  = $sdLabels[$fField] ?? '';
                                     $sdHasResults = !empty($sdResults[$fField]);
+                                    // Cascading dropdown: locked until the parent field has a value.
+                                    $sdDependsOn   = $col['colsSDDependsOn'] ?? null;
+                                    $sdParentEmpty = $sdDependsOn && (($formData[$sdDependsOn] ?? null) === null || ($formData[$sdDependsOn] ?? '') === '');
+                                    $sdParentLabel = $sdDependsOn
+                                        ? ((collect($crudConfig['cols'] ?? [])->firstWhere('colsNomeFisico', $sdDependsOn)['colsNomeLogico'] ?? null) ?: $sdDependsOn)
+                                        : null;
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
@@ -215,15 +221,19 @@
                                                 x-model="displayVal"
                                                 wire:keyup.debounce.300ms="searchDropdown('{{ $fField }}', $event.target.value)"
                                                 @focus="$wire.openDropdown('{{ $fField }}')"
-                                                placeholder="{{ __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
+                                                placeholder="{{ $sdParentEmpty
+                                                    ? __('ptah::ui.sd_select_parent_first', ['parent' => $sdParentLabel])
+                                                    : __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
                                                 autocomplete="off"
                                                 tabindex="{{ $tabIdx }}"
-                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
+                                                @if ($sdParentEmpty) disabled @endif
+                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800"
                                             />
                                             <button type="button"
                                                 tabindex="-1"
+                                                @if ($sdParentEmpty) disabled @endif
                                                 @mousedown.prevent="open = !open; if (open) $wire.openDropdown('{{ $fField }}')"
-                                                class="absolute right-2.5 text-gray-400 hover:text-gray-600 transition-transform duration-200"
+                                                class="absolute right-2.5 text-gray-400 hover:text-gray-600 transition-transform duration-200 disabled:opacity-40 disabled:pointer-events-none"
                                                 :class="open ? 'rotate-180' : ''">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>

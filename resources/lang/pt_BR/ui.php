@@ -1449,4 +1449,15 @@ return [
     'sort_by_column' => 'Ordenar por :column',
     'per_page_label' => 'Linhas por página',
 
+    // -------------------------------------------------------------------------
+    // SearchDropdowns em cascata (campos dependentes)
+    // -------------------------------------------------------------------------
+    'sd_select_parent_first' => 'Selecione :parent primeiro…',
+    'cfg_col_sd_cascade_title' => '🔗 Dropdown em cascata (depende de outro campo)',
+    'cfg_col_sd_cascade_hint' => 'Faça este dropdown depender de outro campo do formulário — ex: Cidade depende de Estado, Estado depende de País. O campo filho fica desabilitado até o pai ter valor, e é limpo sempre que o pai muda.',
+    'cfg_col_sd_depends_on' => 'Depende de (campo pai)',
+    'cfg_col_sd_depends_on_hint' => 'Nome físico do campo pai no formulário (ex: state_id).',
+    'cfg_col_sd_filter_column' => 'Coluna de filtro no model filho',
+    'cfg_col_sd_filter_column_hint' => 'Coluna usada para filtrar as opções. Padrão: mesmo nome do campo pai.',
+
 ];
