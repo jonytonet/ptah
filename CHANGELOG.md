@@ -107,6 +107,29 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Tests — generators (P1)
+- **`GeneratorTestCase`** + 9 test files (36 tests) covering Model, DTO, Repository +
+  Interface, Service, Requests (web + API), Resource, Routes, Binding, CrudConfig and
+  View generators: generated content assertions, `php -l` lint checks, idempotency of
+  route/binding injection and the `shouldRun` gates for api-only mode.
+- **Fixed: generated DTOs emitted optional constructor parameters before required ones**
+  (deprecated in PHP 8). `EntityContext::dtoProperties()` now orders required properties
+  first; safe because `fromArray()` uses named arguments.
+
+### Static analysis
+- **PHPStan baseline reduced from 208 to 140 errors** via root-cause fixes: typed
+  model-event closures in `HasAuditFields` (-40), removed compile-time `App\Models\User`
+  references in favour of config-driven strings (-12), `@property` annotations on `Menu`,
+  fixed malformed array-shape PHPDoc and declared `#[Computed]` properties in `RoleList`.
+  A single documented `ignoreErrors` rule replaces 20 identical baseline entries for the
+  package-namespace `view('ptah::…')` false positive.
+
+### Community / DX
+- Added `CONTRIBUTING.md`, YAML issue forms (bug / feature), `PULL_REQUEST_TEMPLATE.md`
+  and `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1 by reference).
+- Added `docs/QuickStart.md` — first CRUD in 5 minutes (SQLite, one entity), linked
+  from the README.
+
 ### Tests — P0 security regression suite
 - **`FilterStrategySecurityTest`** (`tests/Unit/Services/Crud/FilterStrategySecurityTest.php`)
   — 10 tests: `TextFilterStrategy` and `RelationFilterStrategy` discard every class of
