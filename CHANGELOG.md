@@ -107,6 +107,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Visual refresh — modern, brand-driven styling
+- **Single brand source** — every accent in `ptah-components.css` (focus rings, sort
+  arrows, filter chips, active buttons, saved filters, quick-date buttons, bulk bar,
+  selected dropdown items, modal icon) now derives from the host's
+  `--color-primary` token via `color-mix()` tints. No more hardcoded blue clashing
+  with a purple primary: change the token once and the whole CRUD follows.
+- **Elevation** — dropdown menus gained a layered shadow + hairline ring and a
+  scale/fade open transition; toolbar, filter panel and table wrapper have a subtle
+  ambient shadow; modals are `shadow-2xl`; solid forge-buttons get `shadow-sm` and a
+  visible `focus-visible` ring.
+- **Row states** — hover is now neutral (`slate-50`); brand color is reserved for
+  the new selected-row state (soft brand background + 2px brand edge) so bulk
+  selection finally has visual feedback.
+- **Badges modernised** — badge/pill/boolean renderers moved from the old
+  `bg-*-100/text-*-800` look to the current soft + inset-ring idiom
+  (`bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20`); the duplicated
+  color map was extracted to a shared `badgeColorClasses()` helper.
+- **Radius hierarchy** — containers (toolbar, table, filter panel, dropdowns)
+  are `rounded-lg`, modals `rounded-xl`; controls keep `rounded-md`.
+- **Detailing** — column drag-grip appears only on header hover (cleans 8× visual
+  noise); thin styled scrollbar on the table wrapper; circular ringed empty-state
+  icon; modal footer separator actually visible.
+
+> After updating, rebuild the host assets (`npm run build`) so the new classes and
+> CSS variables are picked up.
+
 ### BaseCrud UX overhaul (12 usability improvements)
 - **Undo on delete** — the post-delete toast now shows an inline *Undo* button for
   soft-deletable records (calls `restoreRecord`); toasts with Undo stay visible for 6s.

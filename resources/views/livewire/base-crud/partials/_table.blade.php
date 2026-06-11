@@ -4,7 +4,7 @@
     <div class="h-full w-full ptah-loading-bar"></div>
 </div>
 
-<div class="overflow-x-auto border rounded-md ptah-c-tbl_wrap transition-opacity duration-300"
+<div class="overflow-x-auto border rounded-lg ptah-c-tbl_wrap transition-opacity duration-300"
      wire:loading.class="opacity-60"
      id="ptah-table-wrap-{{ $crudTitle }}">
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
@@ -30,7 +30,7 @@
                             $savedWidth  = $columnWidths[$colField] ?? null;
                             $thStyle     = $savedWidth ? "width:{$savedWidth}px;min-width:60px;" : 'min-width:60px;';
                         @endphp
-                        <th class="relative px-3 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap ptah-c-th_text {{ $colAlign }} ptah-sortable-col"
+                        <th class="group/th relative px-3 py-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap ptah-c-th_text {{ $colAlign }} ptah-sortable-col"
                             data-column="{{ $colField }}"
                             style="{{ $thStyle }}"
                             @if($isSortable)
@@ -42,8 +42,8 @@
                             ondrop="ptahColDragDrop(event, '{{ $crudTitle }}')"
                             ondragend="ptahColDragEnd(event)">
                             <div class="flex items-center gap-1.5">
-                                {{-- Grip (initia o drag) --}}
-                                <span class="text-gray-300 transition-colors select-none ptah-drag-grip shrink-0 cursor-grab hover:text-gray-500"
+                                {{-- Grip (initia o drag) — visible only while hovering the header --}}
+                                <span class="text-gray-300 transition-opacity select-none ptah-drag-grip shrink-0 cursor-grab hover:text-gray-500 opacity-0 group-hover/th:opacity-100"
                                       title="{{ __('ptah::ui.col_drag_title') }}">
                                     <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                                         <circle cx="7" cy="5"  r="1.5"/><circle cx="13" cy="5"  r="1.5"/>
@@ -110,6 +110,7 @@
                 <tr style="{{ $rowStyle }}"
                     class="group transition-colors ptah-c-tr ptah-tr
                         @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
+                        {{ in_array($row->id ?? 0, $selectedRows) ? 'ptah-c-tr_selected' : '' }}
                         {{ $rowLink ? 'cursor-pointer' : '' }}"
                     @if($rowLink)
                         @click="ptahRowNav($event, '{{ $rowLink }}')"
@@ -265,7 +266,7 @@
                                 || $quickDateFilter !== '';
                         @endphp
                         <div class="flex flex-col items-center gap-3">
-                            <div class="flex items-center justify-center w-16 h-16 rounded-md ptah-c-empty_box">
+                            <div class="flex items-center justify-center w-16 h-16 rounded-full ptah-c-empty_box">
                                 @if ($emptyIsFiltered)
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>

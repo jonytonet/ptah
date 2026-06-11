@@ -87,7 +87,8 @@ class CrudRenderersTest extends TestCase
         );
 
         $this->assertStringContainsString('Ativo', $html);
-        $this->assertStringContainsString('bg-green-100', $html);
+        $this->assertStringContainsString('bg-green-50', $html);
+        $this->assertStringContainsString('ring-green-600/20', $html);
     }
 
     #[Test]
@@ -107,11 +108,11 @@ class CrudRenderersTest extends TestCase
     {
         foreach ([1, '1', 'S', 'true', true, 'Y'] as $truthy) {
             $html = $this->format(['colsRenderer' => 'boolean'], ['field' => $truthy]);
-            $this->assertStringContainsString('bg-green-100', $html, var_export($truthy, true).' must render as YES');
+            $this->assertStringContainsString('bg-green-50', $html, var_export($truthy, true).' must render as YES');
         }
 
         $html = $this->format(['colsRenderer' => 'boolean'], ['field' => 0]);
-        $this->assertStringContainsString('bg-gray-100', $html);
+        $this->assertStringContainsString('bg-gray-50', $html);
     }
 
     #[Test]

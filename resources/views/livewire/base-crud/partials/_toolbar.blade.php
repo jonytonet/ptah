@@ -1,5 +1,5 @@
 {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
-<div class="mb-4 border rounded-md ptah-c-toolbar">
+<div class="mb-4 border rounded-lg ptah-c-toolbar">
 <div class="flex flex-wrap items-center gap-2 px-4 py-3">
 
     {{-- Botão Novo --}}
@@ -100,7 +100,10 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[160px] py-1.5 ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[160px] py-1.5 ptah-c-dd">
                     @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                         <button wire:click="export('{{ $fmt }}')" @click="open = false"
                             class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
@@ -151,7 +154,10 @@
                     </svg>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 border rounded-md z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[220px] py-2 max-h-80 overflow-y-auto ptah-c-dd">
                     {{-- Ações rápidas --}}
                     <div class="flex gap-2 px-3 pb-2 mb-1 border-b ptah-c-dd_sep">
                         <button wire:click="showAllColumns" @click="open = false"
@@ -199,7 +205,10 @@
                 </svg>
             </button>
             <div x-show="open" x-cloak @click.outside="open = false"
-                 class="absolute right-0 mt-1 border rounded-md z-20 min-w-[180px] py-1 ptah-c-dd">
+                     x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                     style="transform-origin: top right"
+                 class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[180px] py-1 ptah-c-dd">
                 @foreach ($densityMap as $d => $info)
                     <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item

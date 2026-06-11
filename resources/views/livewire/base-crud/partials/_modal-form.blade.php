@@ -75,7 +75,7 @@
 
             $fBorderClass  = $fError
                                 ? 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-300'
-                                : 'border-slate-200 dark:border-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30';
+                                : 'border-slate-200 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/15 dark:focus:ring-primary/30';
                         @endphp
 
                         <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -91,8 +91,8 @@
                                     $fValSel  = is_bool($fValue) ? ($fValue ? '1' : '0') : $fValue;
                                     $fInitSel = ($fValSel !== '' && $fValSel !== null) ? json_encode((string)$fValSel) : 'null';
                                     $fBorderNormal = $fError ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600';
-                                    $fBorderOpen   = $fError ? 'border-red-500' : 'border-blue-600 dark:border-blue-400';
-                                    $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-blue-100/50 dark:ring-blue-500/30';
+                                    $fBorderOpen   = $fError ? 'border-red-500' : 'border-primary dark:border-primary';
+                                    $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-primary/15 dark:ring-primary/30';
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
@@ -168,7 +168,7 @@
                                                         class="flex items-center justify-between px-4 py-2 text-sm cursor-pointer"
                                                     >
                                                         <span x-text="option.label"></span>
-                                                        <svg x-show="isSelected(option.value)" class="w-4 h-4 ml-2 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                        <svg x-show="isSelected(option.value)" class="w-4 h-4 ml-2 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                                         </svg>
                                                     </li>

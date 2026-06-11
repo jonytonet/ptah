@@ -106,12 +106,13 @@
     } elseif ($relief) {
         $variantClass = "{$c['relief']} text-white";
     } else {
-        $variantClass = "{$c['bg']} {$c['hover']} {$c['textSolid']} {$c['shadow']}";
+        // Solid buttons get a subtle elevation; flat/relief stay flush.
+        $variantClass = "{$c['bg']} {$c['hover']} {$c['textSolid']} shadow-sm {$c['shadow']}";
     }
 
     $radiusClass    = $rounded ? 'rounded-full' : 'rounded-md';
     $disabledClass  = $disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
-    $baseTransition = 'transition-colors duration-150 active:opacity-80';
+    $baseTransition = 'transition-colors duration-150 active:opacity-80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1';
 @endphp
 
 <button
