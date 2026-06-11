@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an improvement or new capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the **problem** you are trying to solve, not only the solution —
+        it helps us evaluate alternatives. Features that fit Ptah's niche
+        (database-driven CRUD config, SOLID scaffolding, AI workflows) are the
+        most likely to be accepted.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that Ptah doesn't support today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work? Code/config examples welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you tried, other packages, etc.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - ptah:forge (scaffolding / generators)
+        - BaseCrud (Livewire CRUD)
+        - Forge components (x-forge-*)
+        - Modules (auth / permissions / menu / company / api / ai_agent)
+        - Developer experience / docs
+        - Other
+    validations:
+      required: true
