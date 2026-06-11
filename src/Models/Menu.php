@@ -11,6 +11,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Ptah\Traits\HasAuditFields;
 
+/**
+ * @property int $id
+ * @property int|null $parent_id
+ * @property string $text
+ * @property string|null $url
+ * @property string|null $icon
+ * @property string $type
+ * @property string|null $target
+ * @property int $link_order
+ * @property bool $is_active
+ */
 class Menu extends Model
 {
     use HasAuditFields, SoftDeletes;

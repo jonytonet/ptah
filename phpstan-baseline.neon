@@ -43,34 +43,10 @@ parameters:
 			path: src/Livewire/AI/AiChatWidget.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/AI/AiChatWidget.php
-
-		-
 			message: '#^Access to an undefined property Ptah\\Livewire\\AI\\AiModelConfigList\:\:\$rows\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Livewire/AI/AiModelConfigList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/AI/AiModelConfigList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Auth/ForgotPasswordPage.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Auth/LoginPage.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Foundation\\Auth\\User\:\:\$password\.$#'
@@ -83,30 +59,6 @@ parameters:
 			identifier: property.notFound
 			count: 2
 			path: src/Livewire/Auth/ProfilePage.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Auth/ProfilePage.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Auth/ResetPasswordPage.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 2
-			path: src/Livewire/Auth/TwoFactorChallengePage.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Auth/TwoFactorChallengePage.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deleted_by\.$#'
@@ -157,12 +109,6 @@ parameters:
 			path: src/Livewire/BaseCrud/BaseCrud.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/BaseCrud/BaseCrud.php
-
-		-
 			message: '#^Property Ptah\\Livewire\\BaseCrud\\BaseCrud\:\:\$model \(string\) on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.property
 			count: 1
@@ -187,28 +133,10 @@ parameters:
 			path: src/Livewire/BaseCrud/BaseCrud.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/BaseCrud/CrudConfig.php
-
-		-
 			message: '#^Access to an undefined property Ptah\\Livewire\\Company\\CompanyList\:\:\$rows\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Livewire/Company/CompanyList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Company/CompanyList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Company/CompanySwitcher.php
 
 		-
 			message: '#^Property Ptah\\Livewire\\Company\\CompanySwitcher\:\:\$companies \(Illuminate\\Support\\Collection&iterable\<Ptah\\Models\\Company\>\) does not accept default value of type array\.$#'
@@ -217,68 +145,14 @@ parameters:
 			path: src/Livewire/Company/CompanySwitcher.php
 
 		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$is_active\.$#'
-			identifier: property.notFound
-			count: 3
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$link_order\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$parent_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$target\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$text\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Models\\Menu\:\:\$type\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Livewire/Menu/MenuList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Menu/MenuList.php
-
-		-
 			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\AuditList\:\:\$rows\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Livewire/Permission/AuditList.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Permission/AuditList.php
-
-		-
 			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\DepartmentList\:\:\$rows\.$#'
 			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Permission/DepartmentList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Livewire/Permission/DepartmentList.php
 
@@ -295,62 +169,8 @@ parameters:
 			path: src/Livewire/Permission/PageList.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Permission/PageList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Permission/PermissionGuide.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\RoleList\:\:\$departments\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\RoleList\:\:\$rows\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Offset ''can_create'' does not exist on array\{Ptah\\Livewire\\Permission\\obj_key, Ptah\\Livewire\\Permission\\obj_label, Ptah\\Livewire\\Permission\\obj_type, Ptah\\Livewire\\Permission\\section, Ptah\\Livewire\\Permission\\can_create, Ptah\\Livewire\\Permission\\can_read, Ptah\\Livewire\\Permission\\can_update, Ptah\\Livewire\\Permission\\can_delete\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 2
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Offset ''can_delete'' does not exist on array\{Ptah\\Livewire\\Permission\\obj_key, Ptah\\Livewire\\Permission\\obj_label, Ptah\\Livewire\\Permission\\obj_type, Ptah\\Livewire\\Permission\\section, Ptah\\Livewire\\Permission\\can_create, Ptah\\Livewire\\Permission\\can_read, Ptah\\Livewire\\Permission\\can_update, Ptah\\Livewire\\Permission\\can_delete\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Offset ''can_read'' does not exist on array\{Ptah\\Livewire\\Permission\\obj_key, Ptah\\Livewire\\Permission\\obj_label, Ptah\\Livewire\\Permission\\obj_type, Ptah\\Livewire\\Permission\\section, Ptah\\Livewire\\Permission\\can_create, Ptah\\Livewire\\Permission\\can_read, Ptah\\Livewire\\Permission\\can_update, Ptah\\Livewire\\Permission\\can_delete\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Offset ''can_update'' does not exist on array\{Ptah\\Livewire\\Permission\\obj_key, Ptah\\Livewire\\Permission\\obj_label, Ptah\\Livewire\\Permission\\obj_type, Ptah\\Livewire\\Permission\\section, Ptah\\Livewire\\Permission\\can_create, Ptah\\Livewire\\Permission\\can_read, Ptah\\Livewire\\Permission\\can_update, Ptah\\Livewire\\Permission\\can_delete\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Offset ''id'' does not exist on array\{Ptah\\Livewire\\Permission\\obj_key, Ptah\\Livewire\\Permission\\obj_label, Ptah\\Livewire\\Permission\\obj_type, Ptah\\Livewire\\Permission\\section, Ptah\\Livewire\\Permission\\can_create, Ptah\\Livewire\\Permission\\can_read, Ptah\\Livewire\\Permission\\can_update, Ptah\\Livewire\\Permission\\can_delete\}\.$#'
-			identifier: offsetAccess.notFound
 			count: 1
 			path: src/Livewire/Permission/RoleList.php
 
@@ -363,60 +183,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Ptah\\Models\\PageObject\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\can_create as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\can_delete as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\can_read as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\can_update as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\obj_key as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\obj_label as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\obj_type as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Livewire/Permission/RoleList.php
-
-		-
-			message: '#^Property Ptah\\Livewire\\Permission\\RoleList\:\:\$bindObjects has unknown class Ptah\\Livewire\\Permission\\section as its type\.$#'
-			identifier: class.notFound
 			count: 1
 			path: src/Livewire/Permission/RoleList.php
 
@@ -469,12 +235,6 @@ parameters:
 			path: src/Livewire/Permission/UserPermissionList.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/Permission/UserPermissionList.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>is_master" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -513,159 +273,63 @@ parameters:
 			path: src/Livewire/SearchDropdown/SearchDropdown.php
 
 		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Livewire/SearchDropdown/SearchDropdown.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/AiModelConfig.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/AiModelConfig.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/AiModelConfig.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/AiModelConfig.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/AiModelConfig.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/Company.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/Company.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Company.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Company.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/Company.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/CrudConfig.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/CrudConfig.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/CrudConfig.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/CrudConfig.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/CrudConfig.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/Department.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/Department.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Department.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Department.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/Department.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/Menu.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Menu.php
-
-		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Menu.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Menu.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/Menu.php
 
 		-
@@ -681,130 +345,52 @@ parameters:
 			path: src/Models/Menu.php
 
 		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/PageObject.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/PageObject.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/PageObject.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/PageObject.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/PageObject.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/PtahPage.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/PtahPage.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/PtahPage.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/PtahPage.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/PtahPage.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/Role.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/Role.php
 
 		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Role.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/Role.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/Role.php
-
-		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/RolePermission.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/RolePermission.php
-
-		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/RolePermission.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/RolePermission.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/RolePermission.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Models/UserPreference.php
 
 		-
 			message: '#^PHPDoc type array\<int, string\> of property Ptah\\Models\\UserPreference\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
@@ -819,44 +405,20 @@ parameters:
 			path: src/Models/UserPreference.php
 
 		-
-			message: '#^Cannot call method getConnection\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
 			count: 1
 			path: src/Models/UserRole.php
 
 		-
-			message: '#^Cannot call method getKey\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/UserRole.php
-
-		-
-			message: '#^Cannot call method getKeyName\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/UserRole.php
-
-		-
-			message: '#^Cannot call method getTable\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Models/UserRole.php
-
-		-
-			message: '#^Class App\\Models\\User not found\.$#'
-			identifier: class.notFound
-			count: 1
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Models/UserRole.php
 
 		-
 			message: '#^Call to function method_exists\(\) with NunoMaduro\\Collision\\Adapters\\Laravel\\ExceptionHandler and ''renderable'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/PtahServiceProvider.php
-
-		-
-			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/PtahServiceProvider.php
 

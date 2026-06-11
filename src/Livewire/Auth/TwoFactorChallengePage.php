@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
-use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -48,7 +47,7 @@ class TwoFactorChallengePage extends Component
             return;
         }
 
-        $userModel = config('auth.providers.users.model', User::class);
+        $userModel = config('auth.providers.users.model', 'App\\Models\\User');
         $user = $userModel::findOrFail($userId);
 
         $valid = false;
@@ -81,7 +80,7 @@ class TwoFactorChallengePage extends Component
     public function sendEmailCode(TwoFactorService $twoFactor): void
     {
         $userId = Session::get('ptah.2fa.user_id');
-        $userModel = config('auth.providers.users.model', User::class);
+        $userModel = config('auth.providers.users.model', 'App\\Models\\User');
         $user = $userModel::findOrFail($userId);
         $twoFactor->sendEmailCode($user);
         session()->flash('code_sent', trans('ptah::ui.two_fa_email_sent', ['email' => $user->email]));

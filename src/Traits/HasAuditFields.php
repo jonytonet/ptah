@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Traits;
 
-use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
@@ -33,7 +33,7 @@ trait HasAuditFields
     public static function bootHasAuditFields(): void
     {
         // ── Create ────────────────────────────────────────────────────────
-        static::creating(function ($model) {
+        static::creating(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
@@ -52,7 +52,7 @@ trait HasAuditFields
         });
 
         // ── Update ────────────────────────────────────────────────────────
-        static::updating(function ($model) {
+        static::updating(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
@@ -72,7 +72,7 @@ trait HasAuditFields
         // model events (no extra `updating` / `saving` cycles).
         // Only runs when the model uses SoftDeletes and was soft-deleted
         // (not forceDelete — after forceDelete the row is gone, deleted_at is null).
-        static::deleted(function ($model) {
+        static::deleted(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
@@ -128,12 +128,13 @@ trait HasAuditFields
 
     /**
      * Resolves the User model configured for authentication.
-     * Falls back to App\Models\User when the config key is absent.
+     * Falls back to App\Models\User when the config key is absent — referenced
+     * as a string because the class only exists in the host application.
      *
      * @return class-string
      */
     protected function resolveUserModel(): string
     {
-        return config('auth.providers.users.model', User::class);
+        return config('auth.providers.users.model', 'App\\Models\\User');
     }
 }

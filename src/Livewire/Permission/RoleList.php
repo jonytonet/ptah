@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Permission;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -16,6 +17,10 @@ use Ptah\Models\Role;
 use Ptah\Models\RolePermission;
 use Ptah\Services\Permission\RoleService;
 
+/**
+ * @property-read Collection<int, Department> $departments
+ * @property-read LengthAwarePaginator $rows
+ */
 #[Layout('ptah::layouts.forge-dashboard')]
 class RoleList extends Component
 {
@@ -61,7 +66,12 @@ class RoleList extends Component
 
     public string $bindingRoleName = '';
 
-    /** @var array<int, array{obj_key, obj_label, obj_type, section, can_create, can_read, can_update, can_delete}> */
+    /**
+     * Permission matrix rows: obj_key, obj_label, obj_type, section and the
+     * four can_* flags per page object.
+     *
+     * @var array<int, array<string, mixed>>
+     */
     public array $bindObjects = [];
 
     public int $bindFilterPageId = 0;
