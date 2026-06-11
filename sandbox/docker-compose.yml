@@ -1,0 +1,19 @@
+services:
+  app:
+    image: composer:2
+    working_dir: /app
+    volumes:
+      # Package source mounted inside the container — edits on the host
+      # are reflected immediately (path repository with symlink).
+      - ..:/ptah
+      # The generated Laravel app lives in a named volume so it survives
+      # container restarts without polluting the package repo.
+      - sandbox-app:/app
+    ports:
+      - "8000:8000"
+    command: sh /ptah/sandbox/setup.sh
+    environment:
+      COMPOSER_ALLOW_SUPERUSER: 1
+
+volumes:
+  sandbox-app:

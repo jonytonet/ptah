@@ -107,6 +107,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Tests — commands (P1)
+- **`ScaffoldCommandTest`** (8 tests) — full web artefact set on disk (model, DTO,
+  repository + interface, service, requests, resource, view, migration, route,
+  binding, crud_configs row), subfolder entities, `--no-soft-deletes`, `--api-only`
+  (no views/CrudConfig, API requests + apiResource route), `--force` confirmation
+  abort, skip-without-force preserves user edits, acronym table naming
+  (`POSSale` → `pos_sales`).
+- **`MakeHooksCommandTest`** (4) — generated class implements `CrudHooksInterface`
+  with the four hook methods, subfolder namespaces, `--force` semantics.
+- **`MenuSyncCommandTest`** (4) — flat links/groups/children synced, idempotent
+  re-run, `--fresh` clears stale rows, missing registry fails.
+- **`ModuleCommandTest`** (2) — `--list` succeeds, unknown module fails.
+
+### Contribution sandbox
+- **`sandbox/docker-compose.yml` + `setup.sh`** — disposable Laravel app with the
+  local package symlinked via path repository: `cd sandbox && docker compose up`
+  and edit the package with instant feedback. No local PHP/Composer/Node required.
+  Documented in `sandbox/README.md` and linked from `CONTRIBUTING.md`.
+
 ### Tests — generators (P1)
 - **`GeneratorTestCase`** + 9 test files (36 tests) covering Model, DTO, Repository +
   Interface, Service, Requests (web + API), Resource, Routes, Binding, CrudConfig and

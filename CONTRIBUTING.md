@@ -38,7 +38,20 @@ composer install
 
 The package is self-contained for testing — Orchestra Testbench simulates a full Laravel app with SQLite in memory. You do **not** need a host application to run the suite.
 
-To test against a real app, add a path repository to a Laravel project's `composer.json`:
+### Docker sandbox (recommended for manual testing)
+
+To try your changes in a real running app with only Docker installed:
+
+```bash
+cd sandbox
+docker compose up
+```
+
+This creates a disposable Laravel app with the local package source symlinked in — edit the package and refresh the browser. See [sandbox/README.md](sandbox/README.md).
+
+### Manual path repository
+
+Alternatively, add a path repository to a Laravel project's `composer.json`:
 
 ```json
 {
