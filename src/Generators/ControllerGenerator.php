@@ -21,6 +21,7 @@ class ControllerGenerator extends AbstractGenerator
         $path = $context->subPath(config('ptah.paths.controllers'))."/{$context->entity}Controller.php";
         $ns = $context->subNs($context->rootNamespace.'Http\\Controllers');
         $serviceFqn = $context->subNs($context->rootNamespace.'Services').'\\'.$context->entity.'Service';
+        $requestsNs = $context->subNs($context->rootNamespace.'Http\\Requests');
 
         return $this->writeFile(
             path: $path,
@@ -28,6 +29,7 @@ class ControllerGenerator extends AbstractGenerator
             replacements: [
                 'namespace' => $ns,
                 'service_fqn' => $serviceFqn,
+                'requests_ns' => $requestsNs,
                 'entity' => $context->entity,
                 'entity_lower' => $context->entityLower,
                 'entities' => $context->entityPlural,

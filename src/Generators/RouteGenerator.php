@@ -52,7 +52,12 @@ class RouteGenerator extends AbstractGenerator
         }
 
         $controllerFQN = $context->subNs($context->rootNamespace.'Http\\Controllers')."\\{$context->entity}Controller";
-        $routeEntry = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])->name('{$context->entityLower}.index');";
+
+        // With the auth module active, gate the screen behind login so anonymous
+        // visitors are redirected to /login instead of hitting the permission 403.
+        $middleware = config('ptah.modules.auth') ? "->middleware('auth')" : '';
+        $routeEntry = "\nRoute::get('{$context->entityLower}', [\\{$controllerFQN}::class, 'index'])"
+            ."{$middleware}->name('{$context->entityLower}.index');";
 
         return $this->appendToRouteFile($routesPath, $routeEntry, $context->entityLower, $label);
     }

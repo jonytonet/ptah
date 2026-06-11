@@ -41,6 +41,28 @@ class RouteGeneratorTest extends GeneratorTestCase
     }
 
     #[Test]
+    public function web_route_is_gated_behind_auth_when_the_module_is_active(): void
+    {
+        config(['ptah.modules.auth' => true]);
+
+        (new RouteGenerator($this->files))->generateWebRoute($this->context());
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/web.php');
+        $this->assertStringContainsString("->middleware('auth')", $content);
+    }
+
+    #[Test]
+    public function web_route_has_no_auth_middleware_when_the_module_is_off(): void
+    {
+        config(['ptah.modules.auth' => false]);
+
+        (new RouteGenerator($this->files))->generateWebRoute($this->context());
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/web.php');
+        $this->assertStringNotContainsString('middleware', $content);
+    }
+
+    #[Test]
     public function it_appends_the_api_resource_route_in_a_v1_prefix(): void
     {
         $result = (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));

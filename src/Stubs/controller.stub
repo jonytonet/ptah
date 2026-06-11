@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use {{ rootNamespace }}Http\Controllers\Controller;
+use {{ requests_ns }}\Store{{ entity }}Request;
+use {{ requests_ns }}\Update{{ entity }}Request;
 use {{ service_fqn }};
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class {{ entity }}Controller extends Controller

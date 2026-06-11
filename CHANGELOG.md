@@ -107,6 +107,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Fresh-install validation (bugs found and fixed)
+Validated the full flow on a brand-new Laravel 12 app (create-project →
+path-repository require → `ptah:install` → modules → `ptah:forge` → migrate →
+serve). Two real bugs surfaced and were fixed:
+
+- **Generated controller was missing imports** — `controller.stub` referenced
+  `Store{Entity}Request`, `Update{Entity}Request` and `RedirectResponse` without
+  `use` statements, fataling on store/update calls (subfolder entities included:
+  requests now import from the sub-namespace). Covered by the new
+  `ControllerGeneratorTest`.
+- **Generated web route had no `auth` middleware** — anonymous visitors hit the
+  controller and received the permission 403 instead of being redirected to
+  `/login`. When `ptah.modules.auth` is active, `ptah:forge` now appends
+  `->middleware('auth')` to the generated route.
+
+> **Upgrade note:** stubs are published to `stubs/ptah/` on install and take
+> precedence over the package copies. After upgrading, re-publish to get these
+> fixes: `php artisan vendor:publish --tag=ptah-stubs --force` (or delete the
+> stubs you did not customise).
+
 ### Tests — commands (P1)
 - **`ScaffoldCommandTest`** (8 tests) — full web artefact set on disk (model, DTO,
   repository + interface, service, requests, resource, view, migration, route,
