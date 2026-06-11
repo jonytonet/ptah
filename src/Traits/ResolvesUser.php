@@ -6,6 +6,7 @@ namespace Ptah\Traits;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 
 /**
  * Resolves the numeric user ID from different input types.
@@ -21,9 +22,6 @@ trait ResolvesUser
      *  - null          → uses auth()->id() or custom session key
      *  - int|string    → converts to int
      *  - Authenticatable or Model → reads the field defined in ptah.permissions.user_id_field
-     *
-     * @param  mixed $user
-     * @return int|null
      */
     protected function resolveUserId(mixed $user): ?int
     {
@@ -35,8 +33,8 @@ trait ResolvesUser
 
             // Fallback: custom session key (legacy apps)
             $sessionKey = config('ptah.permissions.user_session_key');
-            if ($sessionKey && \Illuminate\Support\Facades\Session::has($sessionKey)) {
-                return (int) \Illuminate\Support\Facades\Session::get($sessionKey);
+            if ($sessionKey && Session::has($sessionKey)) {
+                return (int) Session::get($sessionKey);
             }
 
             return null;
@@ -48,6 +46,7 @@ trait ResolvesUser
 
         if ($user instanceof Authenticatable || $user instanceof Model) {
             $field = config('ptah.permissions.user_id_field', 'id');
+
             return (int) $user->{$field};
         }
 

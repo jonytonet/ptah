@@ -22,9 +22,11 @@ use Ptah\Tests\TestCase;
  */
 class SvcStubModel extends Model
 {
-    protected $table    = 'items';
+    protected $table = 'items';
+
     protected $fillable = ['name', 'status', 'amount'];
-    protected $casts    = ['amount' => 'integer'];
+
+    protected $casts = ['amount' => 'integer'];
 }
 
 /** Concrete repository stub. */
@@ -48,11 +50,11 @@ class SvcStubService extends BaseService {}
  *    - retorna null quando ID não existe
  *
  *  getData() routing:
- *    - usa advancedSearch quando param 'search' está preenchido (≠ 'Busca')
+ *    - usa advancedSearch quando param 'search' está preenchido (≠ 'Search')
  *    - usa searchLike quando param 'searchLike' está preenchido (≠ 'Incremental')
  *    - usa findAllFieldsAnd como fallback padrão (sem search/searchLike)
  *    - respeita os parâmetros 'limit' e 'direction'
- *    - sentinel 'Relacao' em 'relations' resulta em array vazio (sem eager load)
+ *    - sentinel 'Relation' em 'relations' resulta em array vazio (sem eager load)
  */
 class BaseServiceTest extends TestCase
 {
@@ -69,15 +71,15 @@ class BaseServiceTest extends TestCase
     {
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
     }
 
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../migrations');
     }
 
     protected function setUp(): void
@@ -85,7 +87,7 @@ class BaseServiceTest extends TestCase
         parent::setUp();
 
         $this->service = new SvcStubService(
-            new SvcStubRepository(new SvcStubModel())
+            new SvcStubRepository(new SvcStubModel)
         );
     }
 
@@ -144,35 +146,35 @@ class BaseServiceTest extends TestCase
     // ── getData() routing ─────────────────────────────────────────────────────
 
     #[Test]
-    public function getData_usa_advancedSearch_quando_param_search_preenchido(): void
+    public function get_data_usa_advanced_search_quando_param_search_preenchido(): void
     {
         $this->createItem('Alpha');
         $this->createItem('Beta');
 
         // 'ph' only appears in 'Alpha' — advancedSearch does OR LIKE on all columns
         $request = Request::create('/', 'GET', ['search' => 'ph']);
-        $result  = $this->service->getData($request);
+        $result = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Alpha', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getData_usa_searchLike_quando_param_searchLike_preenchido(): void
+    public function get_data_usa_search_like_quando_param_search_like_preenchido(): void
     {
         $this->createItem('Barato', 'active', 5);
         $this->createItem('Caro', 'active', 100);
 
         // searchLike=amount}50 → amount >= 50 → only 'Caro'
         $request = Request::create('/', 'GET', ['searchLike' => 'amount}50']);
-        $result  = $this->service->getData($request);
+        $result = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Caro', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getData_usa_findAllFieldsAnd_como_fallback_padrao(): void
+    public function get_data_usa_find_all_fields_and_como_fallback_padrao(): void
     {
         $this->createItem('Ativo', 'active');
         $this->createItem('Inativo', 'inactive');
@@ -180,14 +182,14 @@ class BaseServiceTest extends TestCase
         // No search/searchLike → falls back to findAllFieldsAnd
         // Passing status=active as a plain query param should filter
         $request = Request::create('/', 'GET', ['status' => 'active']);
-        $result  = $this->service->getData($request);
+        $result = $this->service->getData($request);
 
         $this->assertSame(1, $result->total());
         $this->assertSame('Ativo', $result->items()[0]->name);
     }
 
     #[Test]
-    public function getData_respeita_limit_e_direction(): void
+    public function get_data_respeita_limit_e_direction(): void
     {
         $this->createItem('Z', 'active', 30);
         $this->createItem('A', 'active', 10);
@@ -195,8 +197,8 @@ class BaseServiceTest extends TestCase
 
         // limit=2 direction=ASC order=name → first two alphabetically
         $request = Request::create('/', 'GET', [
-            'limit'     => '2',
-            'order'     => 'name',
+            'limit' => '2',
+            'order' => 'name',
             'direction' => 'ASC',
         ]);
         $result = $this->service->getData($request);
@@ -208,13 +210,13 @@ class BaseServiceTest extends TestCase
     }
 
     #[Test]
-    public function getData_sentinel_relacao_nao_gera_eager_load(): void
+    public function get_data_sentinel_relacao_nao_gera_eager_load(): void
     {
         $this->createItem('Foo');
 
-        // 'Relacao' is the UI sentinel — must be treated as no relations
-        $request = Request::create('/', 'GET', ['relations' => 'Relacao']);
-        $result  = $this->service->getData($request);
+        // 'Relation' is the UI sentinel — must be treated as no relations
+        $request = Request::create('/', 'GET', ['relations' => 'Relation']);
+        $result = $this->service->getData($request);
 
         // No exception should be thrown (invalid relation name would throw)
         $this->assertSame(1, $result->total());

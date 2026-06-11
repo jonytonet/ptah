@@ -22,19 +22,19 @@ class FormValidatorService
     /**
      * Validates form data according to each column's rules.
      *
-     * @param  array $formData  Submitted data (field => value)
-     * @param  array $formCols  Columns with colsGravar === true and their rules
-     * @return array            Errors per field ['field' => 'Error message']
+     * @param  array  $formData  Submitted data (field => value)
+     * @param  array  $formCols  Columns with colsGravar === true and their rules
+     * @return array Errors per field ['field' => 'Error message']
      */
     public function validate(array $formData, array $formCols): array
     {
         $errors = [];
 
         foreach ($formCols as $col) {
-            $field    = $col['colsNomeFisico'] ?? null;
-            $label    = $col['colsNomeLogico'] ?? $field;
+            $field = $col['colsNomeFisico'] ?? null;
+            $label = $col['colsNomeLogico'] ?? $field;
             $required = $this->ptahBool($col['colsRequired'] ?? false);
-            $rules    = $col['colsValidations'] ?? [];
+            $rules = $col['colsValidations'] ?? [];
 
             if (! $field) {
                 continue;
@@ -46,6 +46,7 @@ class FormValidatorService
             // ── required (via colsRequired) ────────────────────────────────
             if ($required && $empty) {
                 $errors[$field] = trans('ptah::ui.validation_required', ['label' => $label]);
+
                 continue; // Skip additional rules for an empty required field
             }
 
@@ -70,11 +71,11 @@ class FormValidatorService
     /**
      * Applies a single rule to the value and returns the error message, or null if valid.
      *
-     * @param string $rule     Rule e.g. "email", "min:3", "in:a,b,c"
-     * @param mixed  $value    Field value
-     * @param string $label    Field label for error messages
-     * @param string $field    Physical field name (for `confirmed`)
-     * @param array  $formData All form data (for `confirmed` and `unique`)
+     * @param  string  $rule  Rule e.g. "email", "min:3", "in:a,b,c"
+     * @param  mixed  $value  Field value
+     * @param  string  $label  Field label for error messages
+     * @param  string  $field  Physical field name (for `confirmed`)
+     * @param  array  $formData  All form data (for `confirmed` and `unique`)
      */
     protected function applyRule(string $rule, mixed $value, string $label, string $field = '', array $formData = []): ?string
     {
@@ -83,64 +84,64 @@ class FormValidatorService
             [$ruleName, $param] = explode(':', $rule, 2);
 
             return match (strtolower($ruleName)) {
-                'min'           => is_numeric($value) && (float) $value < (float) $param
+                'min' => is_numeric($value) && (float) $value < (float) $param
                     ? trans('ptah::ui.validation_min', ['label' => $label, 'param' => $param])
                     : null,
-                'max'           => is_numeric($value) && (float) $value > (float) $param
+                'max' => is_numeric($value) && (float) $value > (float) $param
                     ? trans('ptah::ui.validation_max', ['label' => $label, 'param' => $param])
                     : null,
-                'minlength'     => mb_strlen((string) $value) < (int) $param
+                'minlength' => mb_strlen((string) $value) < (int) $param
                     ? trans('ptah::ui.validation_minlength', ['label' => $label, 'param' => $param])
                     : null,
-                'maxlength'     => mb_strlen((string) $value) > (int) $param
+                'maxlength' => mb_strlen((string) $value) > (int) $param
                     ? trans('ptah::ui.validation_maxlength', ['label' => $label, 'param' => $param])
                     : null,
-                'between'       => $this->validateBetween($value, $param, $label),
-                'regex'         => $this->validateRegex($value, $param, $label),
+                'between' => $this->validateBetween($value, $param, $label),
+                'regex' => $this->validateRegex($value, $param, $label),
                 // digits:N — exactly N digits
-                'digits'        => (! preg_match('/^\d+$/', (string) $value) || strlen((string) $value) !== (int) $param)
+                'digits' => (! preg_match('/^\d+$/', (string) $value) || strlen((string) $value) !== (int) $param)
                     ? trans('ptah::ui.validation_digits', ['label' => $label, 'param' => $param])
                     : null,
                 // digitsBetween:N,M — between N and M digits
                 'digitsbetween' => $this->validateDigitsBetween($value, $param, $label),
                 // in:a,b,c — value must be among the options
-                'in'            => ! in_array((string) $value, array_map('trim', explode(',', $param)), true)
+                'in' => ! in_array((string) $value, array_map('trim', explode(',', $param)), true)
                     ? trans('ptah::ui.validation_in', ['label' => $label, 'param' => $param])
                     : null,
                 // notIn:a,b,c — value must NOT be among the options
-                'notin'         => in_array((string) $value, array_map('trim', explode(',', $param)), true)
+                'notin' => in_array((string) $value, array_map('trim', explode(',', $param)), true)
                     ? trans('ptah::ui.validation_not_in', ['label' => $label, 'param' => $param])
                     : null,
                 // after:YYYY-MM-DD or after:today
-                'after'         => $this->validateDateComparison($value, $param, 'after', $label),
+                'after' => $this->validateDateComparison($value, $param, 'after', $label),
                 // before:YYYY-MM-DD or before:today
-                'before'        => $this->validateDateComparison($value, $param, 'before', $label),
+                'before' => $this->validateDateComparison($value, $param, 'before', $label),
                 // confirmed:fieldName — fields must match
-                'confirmed'     => $this->validateConfirmed($value, $param, $formData, $label),
+                'confirmed' => $this->validateConfirmed($value, $param, $formData, $label),
                 // unique:Model,field — checks uniqueness via Eloquent
-                'unique'        => $this->validateUnique($value, $param, $formData, $label),
+                'unique' => $this->validateUnique($value, $param, $formData, $label),
                 // dateFormat:d/m/Y — specific date format
-                'dateformat'    => $this->validateDateFormat($value, $param, $label),
-                default         => null,
+                'dateformat' => $this->validateDateFormat($value, $param, $label),
+                default => null,
             };
         }
 
         // ── Regras simples ───────────────────────────────────────────────────────
         return match (strtolower($rule)) {
-            'email'    => ! filter_var($value, FILTER_VALIDATE_EMAIL)
+            'email' => ! filter_var($value, FILTER_VALIDATE_EMAIL)
                 ? trans('ptah::ui.validation_email', ['label' => $label])
                 : null,
-            'url'      => ! filter_var($value, FILTER_VALIDATE_URL)
+            'url' => ! filter_var($value, FILTER_VALIDATE_URL)
                 ? trans('ptah::ui.validation_url', ['label' => $label])
                 : null,
-            'integer'  => ! ctype_digit(ltrim((string) $value, '-'))
+            'integer' => ! ctype_digit(ltrim((string) $value, '-'))
                 ? trans('ptah::ui.validation_integer', ['label' => $label])
                 : null,
-            'numeric'  => ! is_numeric($value)
+            'numeric' => ! is_numeric($value)
                 ? trans('ptah::ui.validation_numeric', ['label' => $label])
                 : null,
             // alpha — letters only (Unicode)
-            'alpha'    => ! preg_match('/^\p{L}+$/u', (string) $value)
+            'alpha' => ! preg_match('/^\p{L}+$/u', (string) $value)
                 ? trans('ptah::ui.validation_alpha', ['label' => $label])
                 : null,
             // alphaNum — letters and digits
@@ -148,19 +149,19 @@ class FormValidatorService
                 ? trans('ptah::ui.validation_alpha_num', ['label' => $label])
                 : null,
             // ncm — 8 digits (may be formatted as 0000.00.00 or 00000000)
-            'ncm'      => ! preg_match('/^\d{4}\.\d{2}\.\d{2}$|^\d{8}$/', (string) $value)
+            'ncm' => ! preg_match('/^\d{4}\.\d{2}\.\d{2}$|^\d{8}$/', (string) $value)
                 ? trans('ptah::ui.validation_ncm', ['label' => $label])
                 : null,
-            'cpf'      => ! $this->validateCpf((string) $value)
+            'cpf' => ! $this->validateCpf((string) $value)
                 ? trans('ptah::ui.validation_invalid', ['label' => $label])
                 : null,
-            'cnpj'     => ! $this->validateCnpj((string) $value)
+            'cnpj' => ! $this->validateCnpj((string) $value)
                 ? trans('ptah::ui.validation_invalid', ['label' => $label])
                 : null,
-            'phone'    => ! preg_match('/^\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4}$/', preg_replace('/\D/', '', (string) $value))
+            'phone' => ! preg_match('/^\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4}$/', preg_replace('/\D/', '', (string) $value))
                 ? trans('ptah::ui.validation_phone', ['label' => $label])
                 : null,
-            default    => null,
+            default => null,
         };
     }
 
@@ -186,7 +187,7 @@ class FormValidatorService
     {
         // Wraps if there are no delimiters
         if (! preg_match('/^[\/~@#%\|!]/', $pattern)) {
-            $pattern = '/' . $pattern . '/';
+            $pattern = '/'.$pattern.'/';
         }
 
         if (! @preg_match($pattern, (string) $value)) {
@@ -227,14 +228,15 @@ class FormValidatorService
         }
 
         $calc = function (string $cnpj, int $length): int {
-            $sum    = 0;
-            $pos    = $length - 7;
+            $sum = 0;
+            $pos = $length - 7;
             for ($i = $length; $i >= 1; $i--) {
                 $sum += (int) $cnpj[$length - $i] * $pos--;
                 if ($pos < 2) {
                     $pos = 9;
                 }
             }
+
             return $sum % 11 < 2 ? 0 : 11 - ($sum % 11);
         };
 
@@ -255,7 +257,7 @@ class FormValidatorService
         }
         [$min, $max] = [(int) trim($parts[0]), (int) trim($parts[1])];
         $digits = preg_replace('/\D/', '', (string) $value);
-        $len    = strlen($digits);
+        $len = strlen($digits);
 
         return ($len < $min || $len > $max)
             ? trans('ptah::ui.validation_digits_between', ['label' => $label, 'min' => $min, 'max' => $max])
@@ -269,7 +271,7 @@ class FormValidatorService
     protected function validateDateComparison(mixed $value, string $ref, string $direction, string $label): ?string
     {
         $fieldDate = strtotime((string) $value);
-        $refDate   = strtolower($ref) === 'today' ? strtotime('today') : strtotime($ref);
+        $refDate = strtolower($ref) === 'today' ? strtotime('today') : strtotime($ref);
 
         if ($fieldDate === false || $refDate === false) {
             return trans('ptah::ui.validation_date_invalid', ['label' => $label]);
@@ -306,8 +308,8 @@ class FormValidatorService
      */
     protected function validateUnique(mixed $value, string $param, array $formData, string $label): ?string
     {
-        $parts  = array_map('trim', explode(',', $param));
-        $model  = $parts[0] ?? '';
+        $parts = array_map('trim', explode(',', $param));
+        $model = $parts[0] ?? '';
         $column = $parts[1] ?? 'id';
 
         // Auto-prefix when there is no full namespace

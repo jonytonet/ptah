@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+
 /**
  * Handles CRUD form modal: open, edit, close and save.
  */
@@ -17,13 +24,13 @@ trait HasCrudForm
      */
     public function prepareCreate(): void
     {
-        $this->formData        = [];
-        $this->formErrors      = [];
-        $this->editingId       = null;
-        $this->sdSearches      = [];
-        $this->sdResults       = [];
-        $this->sdLabels        = [];
-        $this->imageUploads    = [];
+        $this->formData = [];
+        $this->formErrors = [];
+        $this->editingId = null;
+        $this->sdSearches = [];
+        $this->sdResults = [];
+        $this->sdLabels = [];
+        $this->imageUploads = [];
         $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
         $this->dispatch('ptah:form-ready');
     }
@@ -52,12 +59,12 @@ trait HasCrudForm
             return;
         }
 
-        $this->editingId       = $id;
-        $this->formData        = $record->toArray();
-        $this->formErrors      = [];
-        $this->sdSearches      = [];
-        $this->sdResults       = [];
-        $this->imageUploads    = [];
+        $this->editingId = $id;
+        $this->formData = $record->toArray();
+        $this->formErrors = [];
+        $this->sdSearches = [];
+        $this->sdResults = [];
+        $this->imageUploads = [];
         $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
 
         // Pre-populate searchdropdown labels
@@ -69,10 +76,10 @@ trait HasCrudForm
 
     public function closeModal(): void
     {
-        $this->showModal    = false;
-        $this->editingId    = null;
-        $this->formData     = [];
-        $this->formErrors   = [];
+        $this->showModal = false;
+        $this->editingId = null;
+        $this->formData = [];
+        $this->formErrors = [];
         $this->imageUploads = [];
     }
 
@@ -82,17 +89,15 @@ trait HasCrudForm
             return;
         }
 
-        // Ptah permission check (only when module is active and permissionIdentifier configured)
-        if (config('ptah.modules.permissions') && \Illuminate\Support\Facades\Auth::check()) {
-            $key    = $this->crudConfig['permissions']['permissionIdentifier'] ?? null;
-            $action = $this->editingId ? 'update' : 'create';
-            if ($key && ! ptah_can($key, $action)) {
-                $this->formErrors['_general'] = trans('ptah::ui.crud_permission_denied');
-                return;
-            }
+        // Ptah permission check — fail-closed (anonymous users are denied when a
+        // permissionIdentifier is configured and the module is active).
+        if (! $this->authorizeCrudAction($this->editingId ? 'update' : 'create')) {
+            $this->formErrors['_general'] = trans('ptah::ui.crud_permission_denied');
+
+            return;
         }
 
-        $this->creating   = true;
+        $this->creating = true;
         $this->formErrors = [];
 
         // Rich validation via FormValidatorService (required, email, min, max, regex, CPF, etc.)
@@ -104,7 +109,7 @@ trait HasCrudForm
             if (($col['colsTipo'] ?? '') !== 'image') {
                 continue;
             }
-            $imgField  = $col['colsNomeFisico'] ?? null;
+            $imgField = $col['colsNomeFisico'] ?? null;
             $imgUpload = $imgField ? ($this->imageUploads[$imgField] ?? null) : null;
             if ($imgField && $imgUpload && is_object($imgUpload) && method_exists($imgUpload, 'store')
                 && empty($this->formData[$imgField])) {
@@ -115,19 +120,27 @@ trait HasCrudForm
         $this->formErrors = $this->formValidator->validate($formDataForValidation, $formCols);
 
         // Validate file size / type for each uploaded image
-        $uploadErrors     = $this->validateImageUploads($formCols);
+        $uploadErrors = $this->validateImageUploads($formCols);
         if (! empty($uploadErrors)) {
             $this->formErrors = array_merge($this->formErrors, $uploadErrors);
         }
 
         if (! empty($this->formErrors)) {
             $this->creating = false;
+
             return;
         }
 
         // Build data from only columns with colsGravar == 'S'
         $savableFields = array_column($formCols, 'colsNomeFisico');
-        $data          = array_intersect_key($this->formData, array_flip($savableFields));
+        $data = array_intersect_key($this->formData, array_flip($savableFields));
+
+        // Hard guard against mass assignment of sensitive/audit fields, regardless
+        // of what the CRUD config marks as savable. These are set by the framework
+        // or auditing logic, never by user-submitted form data.
+        foreach ($this->guardedFormFields() as $forbidden) {
+            unset($data[$forbidden]);
+        }
 
         // Apply mask transforms before persisting (money→float, CPF→digits, etc.)
         $data = $this->applyMaskTransforms($data, $formCols);
@@ -137,8 +150,8 @@ trait HasCrudForm
 
         try {
             $modelInstance = $this->resolveEloquentModel();
-            $fillable      = $modelInstance->getFillable();
-            $userId        = \Illuminate\Support\Facades\Auth::id();
+            $fillable = $modelInstance->getFillable();
+            $userId = Auth::id();
 
             if ($this->editingId) {
                 $record = $modelInstance->newQuery()->findOrFail($this->editingId);
@@ -182,7 +195,7 @@ trait HasCrudForm
             $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_saved'), color: 'success');
 
             // Se o hook retornou um RedirectResponse, executa o redirect
-            if (isset($redirect) && $redirect instanceof \Illuminate\Http\RedirectResponse) {
+            if (isset($redirect) && $redirect instanceof RedirectResponse) {
                 redirect($redirect->getTargetUrl());
             }
         } catch (\Throwable $e) {
@@ -198,7 +211,7 @@ trait HasCrudForm
      * Chamado antes de inserir um novo registro.
      * Sobrescreva para mutate de $data ou disparar lógica pré-criação.
      *
-     * @param array<string, mixed> $data  Dados do formulário (por referência)
+     * @param  array<string, mixed>  $data  Dados do formulário (por referência)
      */
     protected function beforeCreate(array &$data): void {}
 
@@ -206,51 +219,64 @@ trait HasCrudForm
      * Chamado antes de atualizar um registro existente.
      * Sobrescreva para mutate de $data ou disparar lógica pré-atualização.
      *
-     * @param array<string, mixed>                          $data   Dados do formulário (por referência)
-     * @param \Illuminate\Database\Eloquent\Model $record  Registro que será atualizado
+     * @param  array<string, mixed>  $data  Dados do formulário (por referência)
+     * @param  Model  $record  Registro que será atualizado
      */
-    protected function beforeUpdate(array &$data, \Illuminate\Database\Eloquent\Model $record): void {}
+    protected function beforeUpdate(array &$data, Model $record): void {}
 
     /**
      * Chamado após a criação bem-sucedida de um novo registro.
      * Retorne um RedirectResponse para redirecionar o usuário após o save.
      *
-     * @param  \Illuminate\Database\Eloquent\Model          $record  Registro recém-criado
-     * @return \Illuminate\Http\RedirectResponse|null
+     * @param  Model  $record  Registro recém-criado
+     * @return RedirectResponse|null
      */
-    protected function afterCreate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+    protected function afterCreate(Model $record): mixed
+    {
+        return null;
+    }
 
     /**
      * Chamado após a atualização bem-sucedida de um registro existente.
      * Retorne um RedirectResponse para redirecionar o usuário após o save.
      *
-     * @param  \Illuminate\Database\Eloquent\Model          $record  Registro atualizado
-     * @return \Illuminate\Http\RedirectResponse|null
+     * @param  Model  $record  Registro atualizado
+     * @return RedirectResponse|null
      */
-    protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mixed { return null; }
+    protected function afterUpdate(Model $record): mixed
+    {
+        return null;
+    }
 
     /**
-     * Executa código PHP dinâmico definido no CrudConfig (lifecycle hooks).
+     * Executa lógica dinâmica definida no CrudConfig (lifecycle hooks).
      * Suporta duas sintaxes:
-     * 1. Classe PHP: @App\CrudHooks\ProductHooks::beforeCreate ou @ProductHooks::beforeCreate
-     * 2. Código inline: Log::info("Criando produto", $data);
+     * 1. Classe PHP (recomendado): @App\CrudHooks\ProductHooks::beforeCreate ou @ProductHooks::beforeCreate
+     * 2. Expressão inline (Symfony ExpressionLanguage): merge(data, {'status': 'pending'})
+     *
+     * IMPORTANTE: hooks inline NÃO executam PHP arbitrário (sem eval()). São uma
+     * única expressão segura avaliada via symfony/expression-language. A expressão
+     * recebe as variáveis `data`, `record` e `user`, e — se retornar um array —
+     * esse array substitui os dados do formulário. Funções seguras disponíveis:
+     * merge(), now(), upper(), lower(), slug(), uuid(). Lógica complexa deve usar
+     * hooks por classe.
      *
      * Com tratamento de erro robusto para não quebrar o save().
      *
-     * @param string $hookName Nome do hook: 'beforeCreate', 'afterCreate', 'beforeUpdate', 'afterUpdate'
-     * @param array $data Dados do formulário (referência mutável)
-     * @param \Illuminate\Database\Eloquent\Model|null $record Registro (para update hooks)
+     * @param  string  $hookName  Nome do hook: 'beforeCreate', 'afterCreate', 'beforeUpdate', 'afterUpdate'
+     * @param  array  $data  Dados do formulário (referência mutável)
+     * @param  Model|null  $record  Registro (para update hooks)
      */
-    protected function executeDynamicHook(string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record = null): void
+    protected function executeDynamicHook(string $hookName, array &$data, ?Model $record = null): void
     {
         $hookCode = $this->crudConfig['lifecycleHooks'][$hookName] ?? null;
 
-        if (empty($hookCode) || !is_string($hookCode)) {
+        if (empty($hookCode) || ! is_string($hookCode)) {
             return;
         }
 
         try {
-            // Detect syntax: @Class::method or @Class@method = class-based, otherwise = inline eval
+            // Detect syntax: @Class::method or @Class@method = class-based, otherwise = inline expression
             if (str_starts_with(trim($hookCode), '@')) {
                 $this->executeClassBasedHook($hookCode, $hookName, $data, $record);
             } else {
@@ -259,7 +285,7 @@ trait HasCrudForm
 
         } catch (\Throwable $e) {
             // Log error with full context but don't break execution
-            \Illuminate\Support\Facades\Log::error(
+            Log::error(
                 "[BaseCrud] Lifecycle hook '{$hookName}' failed for model {$this->model}",
                 [
                     'hook' => $hookName,
@@ -287,7 +313,7 @@ trait HasCrudForm
      *
      * @throws \RuntimeException Se classe ou método não existir
      */
-    protected function executeClassBasedHook(string $hookCode, string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record): void
+    protected function executeClassBasedHook(string $hookCode, string $hookName, array &$data, ?Model $record): void
     {
         // Remove @ prefix and normalize separators
         $hookCode = ltrim(trim($hookCode), '@');
@@ -302,52 +328,130 @@ trait HasCrudForm
         }
 
         // Add default namespace if not fully qualified
-        if (!str_starts_with($className, '\\') && !str_contains($className, '\\')) {
-            $className = 'App\\CrudHooks\\' . $className;
+        if (! str_starts_with($className, '\\') && ! str_contains($className, '\\')) {
+            $className = 'App\\CrudHooks\\'.$className;
         }
 
         // Validate class existence
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new \RuntimeException("Hook class not found: {$className}");
         }
 
         // Validate method existence
-        if (!method_exists($className, $methodName)) {
+        if (! method_exists($className, $methodName)) {
             throw new \RuntimeException("Hook method not found: {$className}::{$methodName}");
         }
 
         // Instantiate and call method with component context
-        $hookInstance = new $className();
+        $hookInstance = new $className;
         $hookInstance->{$methodName}($data, $record, $this);
     }
 
     /**
-     * Executa hook baseado em código inline via eval().
-     * Código roda em closure isolada com variáveis disponíveis.
+     * Executa hook inline como uma expressão segura (symfony/expression-language).
+     *
+     * Diferente de eval(), NÃO executa PHP arbitrário: avalia uma única expressão
+     * num sandbox que só conhece as variáveis e funções expostas explicitamente.
+     * Isso elimina o risco de RCE caso a configuração do CRUD seja adulterada.
+     *
+     * Variáveis disponíveis: `data` (array do formulário), `record` (model|null),
+     * `user` (usuário autenticado|null). Se a expressão retornar um array, ele
+     * substitui os dados do formulário. Ex.: `merge(data, {'status': 'pending'})`.
      */
-    protected function executeInlineHook(string $hookCode, string $hookName, array &$data, ?\Illuminate\Database\Eloquent\Model $record): void
+    protected function executeInlineHook(string $hookCode, string $hookName, array &$data, ?Model $record): void
     {
-        // Create isolated closure with available variables
-        $closure = function () use ($hookCode, &$data, $record) {
-            // Available variables for hook code:
-            // - $data (by reference) - form data array
-            // - $record (read-only) - Eloquent model instance (null for beforeCreate)
-            // - $this - access to component methods (use with caution)
-            eval($hookCode);
-        };
+        $expression = new ExpressionLanguage;
+        $this->registerHookFunctions($expression);
 
-        // Execute closure in component context
-        $closure->call($this);
+        $result = $expression->evaluate($hookCode, [
+            'data' => $data,
+            'record' => $record,
+            'user' => Auth::user(),
+        ]);
+
+        // Se a expressão retornar um array, ele passa a ser o novo conjunto de dados.
+        if (is_array($result)) {
+            $data = $result;
+        }
+    }
+
+    /**
+     * Registra as funções seguras disponíveis nas expressões de hook inline.
+     * Apenas estas funções podem ser chamadas — qualquer outra resulta em erro,
+     * mantendo o sandbox fechado por padrão.
+     */
+    protected function registerHookFunctions(ExpressionLanguage $el): void
+    {
+        $el->register(
+            'merge',
+            fn (...$args) => sprintf('array_merge(%s)', implode(', ', $args)),
+            fn (array $values, ...$arrays) => array_merge(...array_map(fn ($a) => (array) $a, $arrays)),
+        );
+        $el->register('now', fn () => 'now()', fn () => now());
+        $el->register('upper', fn ($s) => "mb_strtoupper({$s})", fn (array $v, $s) => mb_strtoupper((string) $s));
+        $el->register('lower', fn ($s) => "mb_strtolower({$s})", fn (array $v, $s) => mb_strtolower((string) $s));
+        $el->register('slug', fn ($s) => "Str::slug({$s})", fn (array $v, $s) => Str::slug((string) $s));
+        $el->register('uuid', fn () => 'Str::uuid()', fn () => (string) Str::uuid());
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    /**
+     * Centralised, fail-closed authorization for CRUD write actions
+     * (create/update/delete/restore). Used by save() and the deletion concern.
+     *
+     * Rules:
+     *  - Permissions module disabled → allowed (feature is off).
+     *  - No permissionIdentifier configured → allowed (CRUD opts out of gating).
+     *  - Identifier configured but no authenticated user → DENIED (fail-closed).
+     *  - Otherwise → delegated to ptah_can().
+     */
+    protected function authorizeCrudAction(string $action): bool
+    {
+        if (! config('ptah.modules.permissions')) {
+            return true;
+        }
+
+        $key = $this->crudConfig['permissions']['permissionIdentifier'] ?? null;
+
+        if (! $key) {
+            return true;
+        }
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        return ptah_can($key, $action);
+    }
+
+    /**
+     * Fields that must never be set from user-submitted form data, even if the
+     * CRUD config marks them as savable. Primary keys, timestamps and audit
+     * columns are managed by the framework / auditing layer.
+     *
+     * @return array<int, string>
+     */
+    protected function guardedFormFields(): array
+    {
+        return [
+            'id',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'created_by',
+            'updated_by',
+            'deleted_by',
+            'remember_token',
+        ];
+    }
 
     protected function getFormCols(): array
     {
         return array_values(
             array_filter(
                 $this->crudConfig['cols'] ?? [],
-                fn($c) => $this->ptahBool($c['colsGravar'] ?? false)
+                fn ($c) => $this->ptahBool($c['colsGravar'] ?? false)
                        && $this->ptahBool($c['colsEditableForm'] ?? true)
             )
         );
@@ -368,14 +472,14 @@ trait HasCrudForm
     {
         $field = $col['colsNomeFisico'] ?? '';
 
-        if ($row instanceof \Illuminate\Database\Eloquent\Model) {
+        if ($row instanceof Model) {
             return $row->getAttribute($field);
         }
 
         return $row[$field] ?? null;
     }
 
-    protected function preloadSdLabels(\Illuminate\Database\Eloquent\Model $record): void
+    protected function preloadSdLabels(Model $record): void
     {
         foreach ($this->crudConfig['cols'] ?? [] as $col) {
             if (($col['colsTipo'] ?? '') !== 'searchdropdown') {
@@ -383,7 +487,7 @@ trait HasCrudForm
             }
 
             $field = $col['colsNomeFisico'] ?? '';
-            $rel   = $col['colsRelacao']      ?? null;
+            $rel = $col['colsRelacao'] ?? null;
             $exibe = $col['colsRelacaoExibe'] ?? null;
 
             if ($rel && $exibe && $record->{$rel}) {
@@ -399,7 +503,7 @@ trait HasCrudForm
     protected function applyMaskTransforms(array $data, array $formCols): array
     {
         foreach ($formCols as $col) {
-            $field     = $col['colsNomeFisico'] ?? null;
+            $field = $col['colsNomeFisico'] ?? null;
             $transform = $col['colsMaskTransform'] ?? null;
 
             if (! $field || ! $transform || ! array_key_exists($field, $data)) {
@@ -411,10 +515,12 @@ trait HasCrudForm
             $data[$field] = match ($transform) {
                 // "R$ 1.253,08" → 1253.08  |  "25.5" → 25.5  |  "25,50" → 25.5
                 'money_to_float' => (function () use ($val): float {
-                    $s     = trim((string) $val);
+                    $s = trim((string) $val);
                     $clean = preg_replace('/[^0-9.,]/', '', $s);
-                    if ($clean === '') return 0.0;
-                    $dotPos   = strrpos($clean, '.');
+                    if ($clean === '') {
+                        return 0.0;
+                    }
+                    $dotPos = strrpos($clean, '.');
                     $commaPos = strrpos($clean, ',');
                     // Both separators present → whichever is last is the decimal
                     if ($dotPos !== false && $commaPos !== false) {
@@ -422,16 +528,19 @@ trait HasCrudForm
                             // BR format: "1.234,56" → 1234.56
                             return (float) str_replace(['.', ','], ['', '.'], $clean);
                         }
+
                         // EN format: "1,234.56" → 1234.56
                         return (float) str_replace(',', '', $clean);
                     }
                     // Only comma: "25,50" (decimal) or "1,000" (thousands)
                     if ($commaPos !== false) {
                         $decimals = substr($clean, $commaPos + 1);
+
                         return strlen($decimals) <= 2
                             ? (float) str_replace(',', '.', $clean)
                             : (float) str_replace(',', '', $clean);
                     }
+
                     // Only dot or no separator: plain float "25.50" or integer "25550"
                     return (float) $clean;
                 })(),
@@ -442,17 +551,19 @@ trait HasCrudForm
                 // "01/12/2024" → "2024-12-01"
                 'date_br_to_iso' => (function () use ($val): string {
                     $d = \DateTime::createFromFormat('d/m/Y', (string) $val);
+
                     return $d ? $d->format('Y-m-d') : (string) $val;
                 })(),
                 // "2024-12-01" → "01/12/2024"
                 'date_iso_to_br' => (function () use ($val): string {
                     $d = \DateTime::createFromFormat('Y-m-d', (string) $val);
+
                     return $d ? $d->format('d/m/Y') : (string) $val;
                 })(),
                 'uppercase' => mb_strtoupper((string) $val),
                 'lowercase' => mb_strtolower((string) $val),
-                'trim'      => trim((string) $val),
-                default     => $val,
+                'trim' => trim((string) $val),
+                default => $val,
             };
         }
 
@@ -474,7 +585,7 @@ trait HasCrudForm
                 continue;
             }
 
-            $field  = $col['colsNomeFisico'] ?? null;
+            $field = $col['colsNomeFisico'] ?? null;
             $upload = $field ? ($this->imageUploads[$field] ?? null) : null;
 
             if (! $field || ! $upload || ! is_object($upload) || ! method_exists($upload, 'store')) {
@@ -485,6 +596,7 @@ trait HasCrudForm
             $maxKb = (int) ($col['colsUploadMaxSize'] ?? 2048);
             if (method_exists($upload, 'getSize') && $upload->getSize() > $maxKb * 1024) {
                 $errors[$field] = trans('ptah::ui.image_error_size', ['max' => $maxKb]);
+
                 continue;
             }
 
@@ -492,7 +604,7 @@ trait HasCrudForm
             $allowedRaw = $col['colsUploadAllowedTypes'] ?? null;
             if ($allowedRaw) {
                 $allowed = is_array($allowedRaw) ? $allowedRaw : array_map('trim', explode(',', $allowedRaw));
-                $ext     = method_exists($upload, 'getClientOriginalExtension')
+                $ext = method_exists($upload, 'getClientOriginalExtension')
                     ? strtolower($upload->getClientOriginalExtension())
                     : '';
                 if ($ext && ! in_array($ext, $allowed, true)) {
@@ -515,19 +627,19 @@ trait HasCrudForm
                 continue;
             }
 
-            $field  = $col['colsNomeFisico'] ?? null;
+            $field = $col['colsNomeFisico'] ?? null;
             $upload = $field ? ($this->imageUploads[$field] ?? null) : null;
 
             if (! $field || ! $upload || ! is_object($upload) || ! method_exists($upload, 'store')) {
                 continue;
             }
 
-            $path   = $this->resolveUploadPath($col);
+            $path = $this->resolveUploadPath($col);
             $stored = $upload->store($path, 'public');
 
             if ($stored !== false) {
-                $data[$field]                  = $stored;
-                $this->imageUploads[$field]    = null;
+                $data[$field] = $stored;
+                $this->imageUploads[$field] = null;
             }
         }
     }
@@ -553,10 +665,10 @@ trait HasCrudForm
         $segments = preg_split('/[\\\\\/]/', $modelStr) ?: [$modelStr];
         // Convert each segment to kebab-case
         $segments = array_map(
-            fn($s) => \Illuminate\Support\Str::kebab($s),
+            fn ($s) => Str::kebab($s),
             array_filter($segments)
         );
 
-        return 'images/' . implode('/', $segments);
+        return 'images/'.implode('/', $segments);
     }
 }

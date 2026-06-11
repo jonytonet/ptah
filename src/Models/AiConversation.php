@@ -13,14 +13,14 @@ use Illuminate\Database\Eloquent\Model;
  * When a user is authenticated, conversations are persisted across sessions via user_id.
  * Guest conversations fall back to session_id only.
  *
- * @property int         $id
- * @property int|null    $user_id
- * @property string      $session_id
- * @property string|null $title           Auto-generated from the first message
- * @property array|null  $messages        [{role: 'user'|'assistant', content: string}]
+ * @property int $id
+ * @property int|null $user_id
+ * @property string $session_id
+ * @property string|null $title Auto-generated from the first message
+ * @property array|null $messages [{role: 'user'|'assistant', content: string}]
  * @property string|null $provider_used
  * @property string|null $model_used
- * @property int         $tokens_used
+ * @property int $tokens_used
  */
 class AiConversation extends Model
 {
@@ -37,7 +37,7 @@ class AiConversation extends Model
     ];
 
     protected $casts = [
-        'messages'    => 'array',
+        'messages' => 'array',
         'tokens_used' => 'integer',
     ];
 

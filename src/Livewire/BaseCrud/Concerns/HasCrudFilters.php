@@ -19,7 +19,7 @@ trait HasCrudFilters
         if ($this->sort === $column) {
             $this->direction = $this->direction === 'ASC' ? 'DESC' : 'ASC';
         } else {
-            $this->sort      = $column;
+            $this->sort = $column;
             $this->direction = 'ASC';
         }
 
@@ -76,18 +76,18 @@ trait HasCrudFilters
 
     public function clearFilters(): void
     {
-        $this->filters              = [];
-        $this->filterOperators      = [];
-        $this->dateRanges           = [];
-        $this->dateRangeOperators   = [];
-        $this->sdSearches           = [];
-        $this->sdResults            = [];
-        $this->sdLabels             = [];
-        $this->sdFilterLabels       = [];
-        $this->quickDateFilter      = '';
-        $this->textFilter           = [];
+        $this->filters = [];
+        $this->filterOperators = [];
+        $this->dateRanges = [];
+        $this->dateRangeOperators = [];
+        $this->sdSearches = [];
+        $this->sdResults = [];
+        $this->sdLabels = [];
+        $this->sdFilterLabels = [];
+        $this->quickDateFilter = '';
+        $this->textFilter = [];
         $this->advancedSearchActive = false;
-        $this->search               = '';
+        $this->search = '';
         $this->resetPage();
         $this->savePreferences();
     }
@@ -111,7 +111,7 @@ trait HasCrudFilters
     public function buildTextFilter(): void
     {
         $badges = [];
-        $cols   = $this->crudConfig['cols'] ?? [];
+        $cols = $this->crudConfig['cols'] ?? [];
 
         // Map field → label
         $labelMap = [];
@@ -120,17 +120,21 @@ trait HasCrudFilters
         }
 
         foreach ($this->filters as $field => $value) {
-            if ($value === null || $value === '') continue;
-            $label    = $labelMap[$field] ?? $field;
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $label = $labelMap[$field] ?? $field;
             $badges[] = ['label' => $label, 'field' => $field, 'value' => $value];
         }
 
         foreach ($this->dateRanges as $key => $value) {
-            if ($value === null || $value === '') continue;
+            if ($value === null || $value === '') {
+                continue;
+            }
 
             // Determine base field (_start/_end/_from/_to)
-            $field  = preg_replace('/_(start|end|from|to)$/', '', $key);
-            $label  = $labelMap[$field] ?? $field;
+            $field = preg_replace('/_(start|end|from|to)$/', '', $key);
+            $label = $labelMap[$field] ?? $field;
             $suffix = str_ends_with($key, '_start') || str_ends_with($key, '_from')
                 ? trans('ptah::ui.date_range_from_label')
                 : trans('ptah::ui.date_range_to_label');
@@ -139,15 +143,15 @@ trait HasCrudFilters
 
         if ($this->quickDateFilter !== '') {
             $labels = [
-                'today'     => trans('ptah::ui.date_today'),
+                'today' => trans('ptah::ui.date_today'),
                 'yesterday' => trans('ptah::ui.date_yesterday'),
-                'last7'     => trans('ptah::ui.date_last7'),
-                'last30'    => trans('ptah::ui.date_last30'),
-                'week'      => trans('ptah::ui.date_week'),
-                'month'     => trans('ptah::ui.date_month'),
+                'last7' => trans('ptah::ui.date_last7'),
+                'last30' => trans('ptah::ui.date_last30'),
+                'week' => trans('ptah::ui.date_week'),
+                'month' => trans('ptah::ui.date_month'),
                 'lastMonth' => trans('ptah::ui.date_last_month'),
-                'quarter'   => trans('ptah::ui.date_quarter'),
-                'year'      => trans('ptah::ui.date_year'),
+                'quarter' => trans('ptah::ui.date_quarter'),
+                'year' => trans('ptah::ui.date_year'),
             ];
             $badges[] = [
                 'label' => trans('ptah::ui.filter_period_label'),
@@ -197,20 +201,20 @@ trait HasCrudFilters
      */
     protected function getQuickDateRange(string $period): array
     {
-        $now  = Carbon::now();
+        $now = Carbon::now();
         $copy = $now->copy();
 
         return match ($period) {
-            'today'     => [$now->startOfDay()->toDateTimeString(),             $copy->endOfDay()->toDateTimeString()],
+            'today' => [$now->startOfDay()->toDateTimeString(),             $copy->endOfDay()->toDateTimeString()],
             'yesterday' => [$now->subDay()->startOfDay()->toDateTimeString(),   $now->copy()->endOfDay()->toDateTimeString()],
-            'last7'     => [$now->subDays(7)->startOfDay()->toDateTimeString(), $copy->endOfDay()->toDateTimeString()],
-            'last30'    => [$now->subDays(30)->startOfDay()->toDateTimeString(),$copy->endOfDay()->toDateTimeString()],
-            'week'      => [$now->startOfWeek()->toDateTimeString(),            $copy->endOfWeek()->toDateTimeString()],
-            'month'     => [$now->startOfMonth()->toDateTimeString(),           $copy->endOfMonth()->toDateTimeString()],
-            'lastMonth' => [$now->subMonth()->startOfMonth()->toDateTimeString(),$now->copy()->endOfMonth()->toDateTimeString()],
-            'quarter'   => [$now->startOfQuarter()->toDateTimeString(),         $copy->endOfQuarter()->toDateTimeString()],
-            'year'      => [$now->startOfYear()->toDateTimeString(),            $copy->endOfYear()->toDateTimeString()],
-            default     => ['', ''],
+            'last7' => [$now->subDays(7)->startOfDay()->toDateTimeString(), $copy->endOfDay()->toDateTimeString()],
+            'last30' => [$now->subDays(30)->startOfDay()->toDateTimeString(), $copy->endOfDay()->toDateTimeString()],
+            'week' => [$now->startOfWeek()->toDateTimeString(),            $copy->endOfWeek()->toDateTimeString()],
+            'month' => [$now->startOfMonth()->toDateTimeString(),           $copy->endOfMonth()->toDateTimeString()],
+            'lastMonth' => [$now->subMonth()->startOfMonth()->toDateTimeString(), $now->copy()->endOfMonth()->toDateTimeString()],
+            'quarter' => [$now->startOfQuarter()->toDateTimeString(),         $copy->endOfQuarter()->toDateTimeString()],
+            'year' => [$now->startOfYear()->toDateTimeString(),            $copy->endOfYear()->toDateTimeString()],
+            default => ['', ''],
         };
     }
 
@@ -254,7 +258,7 @@ trait HasCrudFilters
         // Remove duplicates and put at beginning
         $this->searchHistory = array_values(array_filter(
             $this->searchHistory,
-            fn($t) => $t !== $term
+            fn ($t) => $t !== $term
         ));
 
         array_unshift($this->searchHistory, $term);
@@ -278,7 +282,7 @@ trait HasCrudFilters
         }
 
         $this->savedFilters[$name] = array_filter($this->filters);
-        $this->savingFilterName    = null;
+        $this->savingFilterName = null;
         $this->savePreferences();
     }
 

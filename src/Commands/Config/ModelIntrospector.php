@@ -16,6 +16,7 @@ class ModelIntrospector
     {
         try {
             $model = new $modelClass;
+
             return $model->getFillable();
         } catch (\Exception $e) {
             return [];
@@ -29,6 +30,7 @@ class ModelIntrospector
     {
         try {
             $model = new $modelClass;
+
             return $model->getCasts();
         } catch (\Exception $e) {
             return [];
@@ -54,6 +56,7 @@ class ModelIntrospector
     {
         try {
             $model = new $modelClass;
+
             return $model->getTable();
         } catch (\Exception $e) {
             return Str::snake(Str::pluralStudly(class_basename($modelClass)));
@@ -104,7 +107,7 @@ class ModelIntrospector
             str_contains($dbType, 'int') => 'number',
             str_contains($dbType, 'decimal') || str_contains($dbType, 'float') || str_contains($dbType, 'double') => 'number',
             str_contains($dbType, 'bool') => 'boolean',
-            str_contains($dbType, 'date') && !str_contains($dbType, 'time') => 'date',
+            str_contains($dbType, 'date') && ! str_contains($dbType, 'time') => 'date',
             str_contains($dbType, 'timestamp') || str_contains($dbType, 'datetime') => 'datetime',
             str_contains($dbType, 'text') => 'textarea',
             default => 'text',
@@ -187,8 +190,8 @@ class ModelIntrospector
             foreach ($methods as $method) {
                 $returnType = $method->getReturnType();
                 if ($returnType) {
-                    $returnTypeName = $returnType instanceof \ReflectionNamedType 
-                        ? $returnType->getName() 
+                    $returnTypeName = $returnType instanceof \ReflectionNamedType
+                        ? $returnType->getName()
                         : (string) $returnType;
 
                     if (in_array($returnTypeName, [
@@ -229,7 +232,7 @@ class ModelIntrospector
      */
     public function validateModelClass(string $modelClass): bool
     {
-        return class_exists($modelClass) 
+        return class_exists($modelClass)
             && is_subclass_of($modelClass, 'Illuminate\Database\Eloquent\Model');
     }
 }

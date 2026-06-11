@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
@@ -58,7 +60,7 @@ trait HasCrudQuery
 
             // Company filter (multi-tenant) — only applied when the column actually exists
             if ($this->companyFilter > 0) {
-                $table        = $modelInstance->getTable();
+                $table = $modelInstance->getTable();
                 $companyField = $this->crudConfig['companyField'] ?? 'company_id';
                 if (Schema::hasColumn($table, $companyField)) {
                     $query->where("{$table}.{$companyField}", $this->companyFilter);
@@ -112,7 +114,7 @@ trait HasCrudQuery
 
             // Custom filters
             $customFilterConfig = $this->crudConfig['customFilters'] ?? [];
-            $cfFilters          = $this->filterService->processCustomFilters($customFilterConfig, $this->filters);
+            $cfFilters = $this->filterService->processCustomFilters($customFilterConfig, $this->filters);
             if (! empty($cfFilters)) {
                 $this->filterService->applyFilters($query, $cfFilters);
             }
@@ -122,7 +124,7 @@ trait HasCrudQuery
                 $mainTable = $modelInstance->getTable();
                 $query
                     ->select([
-                        \Illuminate\Support\Facades\DB::raw("MIN({$mainTable}.id) as id"),
+                        DB::raw("MIN({$mainTable}.id) as id"),
                         "{$mainTable}.{$groupBy}",
                     ])
                     ->groupBy("{$mainTable}.{$groupBy}")
@@ -165,7 +167,7 @@ trait HasCrudQuery
             // Clear potentially corrupted preferences
             $userId = Auth::id();
             if ($userId) {
-                UserPreference::remove($userId, 'crud.' . $this->model);
+                UserPreference::remove($userId, 'crud.'.$this->model);
                 $this->cacheService->forgetPreferences($userId, $this->model);
             }
 
@@ -203,7 +205,7 @@ trait HasCrudQuery
         }
 
         // Build base query with active filters
-        $baseQuery     = $modelInstance->newQuery();
+        $baseQuery = $modelInstance->newQuery();
         $this->applyJoins($baseQuery, $modelInstance);
         $activeFilters = $this->buildActiveFilters();
 
@@ -219,7 +221,7 @@ trait HasCrudQuery
         $result = [];
 
         foreach ($totConfig['columns'] as $totCol) {
-            $field     = $totCol['field']     ?? null;
+            $field = $totCol['field'] ?? null;
             $aggregate = $totCol['aggregate'] ?? 'sum';
 
             if (! $field) {
@@ -230,11 +232,11 @@ trait HasCrudQuery
             $cloned = clone $baseQuery;
 
             $result[$field] = match ($aggregate) {
-                'sum'   => $cloned->sum($field),
+                'sum' => $cloned->sum($field),
                 'count' => $cloned->count($field),
-                'avg'   => round((float) $cloned->avg($field), 2),
-                'max'   => $cloned->max($field),
-                'min'   => $cloned->min($field),
+                'avg' => round((float) $cloned->avg($field), 2),
+                'max' => $cloned->max($field),
+                'min' => $cloned->min($field),
                 default => null,
             };
         }
@@ -268,16 +270,16 @@ trait HasCrudQuery
             return [];
         }
 
-        $mainTable    = $modelInstance->getTable();
+        $mainTable = $modelInstance->getTable();
         $joinedTables = [];
-        $selectCols   = ["{$mainTable}.*"];
-        $useDistinct  = false;
+        $selectCols = ["{$mainTable}.*"];
+        $useDistinct = false;
 
         foreach ($joins as $join) {
-            $table  = trim($join['table']  ?? '');
-            $first  = trim($join['first']  ?? '');
+            $table = trim($join['table'] ?? '');
+            $first = trim($join['first'] ?? '');
             $second = trim($join['second'] ?? '');
-            $type   = strtolower($join['type'] ?? 'left');
+            $type = strtolower($join['type'] ?? 'left');
 
             if (! $table || ! $first || ! $second) {
                 continue;
@@ -297,10 +299,10 @@ trait HasCrudQuery
             $joinedTables[] = $table;
 
             foreach ($join['select'] ?? [] as $sel) {
-                $col   = trim($sel['column'] ?? '');
-                $alias = trim($sel['alias']  ?? '');
+                $col = trim($sel['column'] ?? '');
+                $alias = trim($sel['alias'] ?? '');
                 if ($col && $alias) {
-                    $selectCols[] = \Illuminate\Support\Facades\DB::raw("{$col} AS {$alias}");
+                    $selectCols[] = DB::raw("{$col} AS {$alias}");
                 }
             }
 
@@ -326,7 +328,7 @@ trait HasCrudQuery
      * Detects whether the sort column is an FK that can be resolved via JOIN.
      *
      * @return array{0: string, 1: string, 2: string, 3: string}|null
-     *         [relationName, displayColumn, foreignKey, tableName]
+     *                                                                [relationName, displayColumn, foreignKey, tableName]
      */
     protected function getOrderByRelationInfo(string $column): ?array
     {
@@ -336,9 +338,9 @@ trait HasCrudQuery
             return null;
         }
 
-        $rel   = $col['colsRelacao']      ?? null;
+        $rel = $col['colsRelacao'] ?? null;
         $exibe = $col['colsRelacaoExibe'] ?? null;
-        $fk    = $col['colsNomeFisico']   ?? null; // e.g. category_id
+        $fk = $col['colsNomeFisico'] ?? null; // e.g. category_id
 
         if (! $rel || ! $exibe || ! $fk) {
             return null;
@@ -366,13 +368,14 @@ trait HasCrudQuery
 
             if ($modelInstance && method_exists($modelInstance, $relation)) {
                 $relInstance = $modelInstance->{$relation}();
+
                 return $relInstance->getRelated()->getTable();
             }
         } catch (\Throwable) {
             // Fallback to automatic conversion
         }
 
-        return \Illuminate\Support\Str::snake(\Illuminate\Support\Str::plural($relation));
+        return Str::snake(Str::plural($relation));
     }
 
     // ── Active filters ────────────────────────────────────────────────────────
@@ -408,10 +411,10 @@ trait HasCrudQuery
 
             if ($col && ! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
                 $domainFilters[] = new FilterDTO(
-                    field:    $col['colsNomeFisico'],
-                    value:    $value,
+                    field: $col['colsNomeFisico'],
+                    value: $value,
                     operator: $explicitOp ?? '=',
-                    type:     'text',
+                    type: 'text',
                 );
             } else {
                 // If column has colsSource (configured JOIN), use qualified name for WHERE
@@ -420,10 +423,10 @@ trait HasCrudQuery
                     ? 'LIKE'
                     : '=';
                 $domainFilters[] = new FilterDTO(
-                    field:    $filterField,
-                    value:    $value,
+                    field: $filterField,
+                    value: $value,
                     operator: $explicitOp ?? $autoOp,
-                    type:     FilterDTO::inferType($field, $value),
+                    type: FilterDTO::inferType($field, $value),
                 );
             }
         }
@@ -431,21 +434,21 @@ trait HasCrudQuery
         // Advanced search (fields added by user)
         if ($this->advancedSearchActive && ! empty($this->advancedSearchFields)) {
             foreach ($this->advancedSearchFields as $asf) {
-                $field    = $asf['field']    ?? null;
+                $field = $asf['field'] ?? null;
                 $operator = $asf['operator'] ?? '=';
-                $value    = $asf['value']    ?? null;
-                $logic    = $asf['logic']    ?? 'AND';
+                $value = $asf['value'] ?? null;
+                $logic = $asf['logic'] ?? 'AND';
 
                 if (! $field || $value === null || $value === '') {
                     continue;
                 }
 
                 $domainFilters[] = new FilterDTO(
-                    field:    $field,
-                    value:    $value,
+                    field: $field,
+                    value: $value,
                     operator: $operator,
-                    type:     FilterDTO::inferType($field, $value),
-                    options:  ['logic' => $logic],
+                    type: FilterDTO::inferType($field, $value),
+                    options: ['logic' => $logic],
                 );
             }
         }
@@ -485,13 +488,14 @@ trait HasCrudQuery
         // Try known prefixes
         $candidates = [
             $class,
-            'App\\Models\\' . $class,
-            app()->getNamespace() . 'Models\\' . $class,
+            'App\\Models\\'.$class,
+            app()->getNamespace().'Models\\'.$class,
         ];
 
         foreach ($candidates as $candidate) {
             if (class_exists($candidate)) {
                 $this->eloquentModel = app($candidate);
+
                 return $this->eloquentModel;
             }
         }

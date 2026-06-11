@@ -12,17 +12,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * @property int         $id
- * @property string      $name
+ * @property int $id
+ * @property string $name
  * @property string|null $description
  * @property string|null $color
- * @property int|null    $department_id
- * @property bool        $is_master
- * @property bool        $is_active
+ * @property int|null $department_id
+ * @property bool $is_master
+ * @property bool $is_active
  */
 class Role extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'ptah_roles';
 
@@ -39,8 +39,8 @@ class Role extends Model
     ];
 
     protected $casts = [
-        'is_master'  => 'boolean',
-        'is_active'  => 'boolean',
+        'is_master' => 'boolean',
+        'is_active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',

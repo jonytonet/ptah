@@ -27,7 +27,7 @@ trait HasCrud
     /**
      * Returns paginated records.
      *
-     * @param int $perPage Number of records per page (default: 15)
+     * @param  int  $perPage  Number of records per page (default: 15)
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -53,7 +53,7 @@ trait HasCrud
     /**
      * Creates a new record.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Model
     {
@@ -63,7 +63,7 @@ trait HasCrud
     /**
      * Updates an existing record.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(int|string $id, array $data): Model
     {

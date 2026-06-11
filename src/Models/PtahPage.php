@@ -12,18 +12,19 @@ use Ptah\Traits\HasAuditFields;
 /**
  * Uses "PtahPage" to avoid conflicts with \Page classes from other packages.
  *
- * @property int         $id
- * @property string      $slug
- * @property string      $name
+ * @property int $id
+ * @property string $slug
+ * @property string $name
  * @property string|null $description
  * @property string|null $route
  * @property string|null $icon
- * @property bool        $is_active
- * @property int         $sort_order
+ * @property bool $is_active
+ * @property int $sort_order
  */
 class PtahPage extends Model
 {
     use HasAuditFields;
+
     protected $table = 'ptah_pages';
 
     protected $fillable = [
@@ -39,7 +40,7 @@ class PtahPage extends Model
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'sort_order' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',

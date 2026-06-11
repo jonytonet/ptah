@@ -19,7 +19,7 @@ trait HasCrudBulkActions
         $this->selectAll = ! $this->selectAll;
 
         if ($this->selectAll) {
-            $this->selectedRows = $this->rows->pluck('id')->map(fn($id) => (string) $id)->toArray();
+            $this->selectedRows = $this->rows->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         } else {
             $this->selectedRows = [];
         }
@@ -32,7 +32,7 @@ trait HasCrudBulkActions
         if (in_array($idStr, $this->selectedRows, true)) {
             $this->selectedRows = array_values(array_filter(
                 $this->selectedRows,
-                fn($r) => $r !== $idStr
+                fn ($r) => $r !== $idStr
             ));
             $this->selectAll = false;
         } else {
@@ -43,7 +43,7 @@ trait HasCrudBulkActions
     public function clearSelection(): void
     {
         $this->selectedRows = [];
-        $this->selectAll    = false;
+        $this->selectAll = false;
     }
 
     // ── Bulk delete ────────────────────────────────────────────────────────────
@@ -69,9 +69,9 @@ trait HasCrudBulkActions
             $this->updateTrashedCount();
         }
 
-        $deletedCount               = count($this->selectedRows);
-        $this->selectedRows         = [];
-        $this->selectAll            = false;
+        $deletedCount = count($this->selectedRows);
+        $this->selectedRows = [];
+        $this->selectAll = false;
         $this->bulkActionInProgress = false;
 
         $this->dispatch('crud-bulk-deleted', model: $this->model, count: $deletedCount);
@@ -98,9 +98,9 @@ trait HasCrudBulkActions
             $this->updateTrashedCount();
         }
 
-        $restoredCount              = count($this->selectedRows);
-        $this->selectedRows         = [];
-        $this->selectAll            = false;
+        $restoredCount = count($this->selectedRows);
+        $this->selectedRows = [];
+        $this->selectAll = false;
         $this->bulkActionInProgress = false;
 
         $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_restored', ['n' => $restoredCount]), color: 'success');
@@ -126,9 +126,9 @@ trait HasCrudBulkActions
             $this->updateTrashedCount();
         }
 
-        $deletedCount               = count($this->selectedRows);
-        $this->selectedRows         = [];
-        $this->selectAll            = false;
+        $deletedCount = count($this->selectedRows);
+        $this->selectedRows = [];
+        $this->selectAll = false;
         $this->bulkActionInProgress = false;
 
         $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_force_deleted', ['n' => $deletedCount]), color: 'danger');
@@ -147,7 +147,7 @@ trait HasCrudBulkActions
         }
 
         $bulkActions = $this->crudConfig['bulkActions'] ?? [];
-        $config      = null;
+        $config = null;
 
         foreach ($bulkActions as $ba) {
             if (($ba['action'] ?? '') === $action) {
@@ -179,8 +179,8 @@ trait HasCrudBulkActions
 
         $this->dispatch('crud-bulk-action', model: $this->model, action: $action, ids: $this->selectedRows);
 
-        $this->selectedRows         = [];
-        $this->selectAll            = false;
+        $this->selectedRows = [];
+        $this->selectAll = false;
         $this->bulkActionInProgress = false;
         $this->cacheService->invalidateModel($this->model);
     }

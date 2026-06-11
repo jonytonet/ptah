@@ -7,6 +7,7 @@ namespace Ptah\Tests\Unit\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Livewire\LivewireServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Tests\TestCase;
 use Ptah\Traits\HasAuditFields;
@@ -25,9 +26,11 @@ class AuditableStub extends Model
     use HasAuditFields;
     use SoftDeletes;
 
-    protected $table    = 'has_audit_stubs';
+    protected $table = 'has_audit_stubs';
+
     protected $fillable = ['name', 'created_by', 'updated_by', 'deleted_by'];
-    protected $casts    = [
+
+    protected $casts = [
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -42,7 +45,8 @@ class AuditableNoFillableStub extends Model
 {
     use HasAuditFields;
 
-    protected $table    = 'has_audit_stubs';
+    protected $table = 'has_audit_stubs';
+
     protected $fillable = ['name'];
 }
 
@@ -54,9 +58,11 @@ class AuditableHardDeleteStub extends Model
 {
     use HasAuditFields;
 
-    protected $table    = 'no_soft_delete_stubs';
+    protected $table = 'no_soft_delete_stubs';
+
     protected $fillable = ['name', 'created_by', 'updated_by'];
-    protected $casts    = [
+
+    protected $casts = [
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -103,7 +109,7 @@ class HasAuditFieldsTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            \Livewire\LivewireServiceProvider::class,
+            LivewireServiceProvider::class,
         ];
     }
 
@@ -116,9 +122,9 @@ class HasAuditFieldsTest extends TestCase
     {
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
         $app['config']->set('session.driver', 'array');
     }
@@ -129,7 +135,7 @@ class HasAuditFieldsTest extends TestCase
      */
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../migrations');
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
@@ -140,12 +146,12 @@ class HasAuditFieldsTest extends TestCase
      */
     private function createAndLoginUser(string $email = 'user@test.com'): mixed
     {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $userClass */
+        /** @var class-string<Model> $userClass */
         $userClass = config('auth.providers.users.model');
 
         $user = $userClass::forceCreate([
-            'name'     => 'Tester',
-            'email'    => $email,
+            'name' => 'Tester',
+            'email' => $email,
             'password' => bcrypt('secret'),
         ]);
 
@@ -159,9 +165,9 @@ class HasAuditFieldsTest extends TestCase
     #[Test]
     public function preenche_created_by_e_updated_by_ao_criar(): void
     {
-        $user   = $this->createAndLoginUser();
+        $user = $this->createAndLoginUser();
         $record = AuditableStub::create(['name' => 'Registro A']);
-        $fresh  = $record->fresh();
+        $fresh = $record->fresh();
 
         $this->assertSame($user->id, $fresh->created_by);
         $this->assertSame($user->id, $fresh->updated_by);
@@ -172,7 +178,7 @@ class HasAuditFieldsTest extends TestCase
     {
         // No Auth::login call — guest session
         $record = AuditableStub::create(['name' => 'Anônimo']);
-        $fresh  = $record->fresh();
+        $fresh = $record->fresh();
 
         $this->assertNull($fresh->created_by);
         $this->assertNull($fresh->updated_by);
@@ -221,14 +227,14 @@ class HasAuditFieldsTest extends TestCase
     #[Test]
     public function atualiza_updated_by_ao_salvar(): void
     {
-        $userA  = $this->createAndLoginUser('a@test.com');
+        $userA = $this->createAndLoginUser('a@test.com');
         $record = AuditableStub::create(['name' => 'Original']);
 
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $userClass */
+        /** @var class-string<Model> $userClass */
         $userClass = config('auth.providers.users.model');
         $userB = $userClass::forceCreate([
-            'name'     => 'User B',
-            'email'    => 'b@test.com',
+            'name' => 'User B',
+            'email' => 'b@test.com',
             'password' => bcrypt('x'),
         ]);
         Auth::loginUsingId($userB->id);
@@ -244,7 +250,7 @@ class HasAuditFieldsTest extends TestCase
     public function nao_altera_updated_by_sem_usuario_autenticado(): void
     {
         $this->createAndLoginUser();
-        $record            = AuditableStub::create(['name' => 'Registro']);
+        $record = AuditableStub::create(['name' => 'Registro']);
         $originalUpdatedBy = $record->fresh()->updated_by;
 
         Auth::logout();
@@ -259,7 +265,7 @@ class HasAuditFieldsTest extends TestCase
     #[Test]
     public function preenche_deleted_by_apos_soft_delete(): void
     {
-        $user   = $this->createAndLoginUser();
+        $user = $this->createAndLoginUser();
         $record = AuditableStub::create(['name' => 'Para Deletar']);
 
         $record->delete();
@@ -330,27 +336,27 @@ class HasAuditFieldsTest extends TestCase
     // ── Relationships ─────────────────────────────────────────────────────────
 
     #[Test]
-    public function relacionamento_createdBy_resolve_usuario_correto(): void
+    public function relacionamento_created_by_resolve_usuario_correto(): void
     {
-        $user   = $this->createAndLoginUser();
+        $user = $this->createAndLoginUser();
         $record = AuditableStub::create(['name' => 'CreatedBy Rel']);
 
         $this->assertSame($user->id, $record->fresh()->createdBy->id);
     }
 
     #[Test]
-    public function relacionamento_updatedBy_resolve_usuario_correto(): void
+    public function relacionamento_updated_by_resolve_usuario_correto(): void
     {
-        $user   = $this->createAndLoginUser();
+        $user = $this->createAndLoginUser();
         $record = AuditableStub::create(['name' => 'UpdatedBy Rel']);
 
         $this->assertSame($user->id, $record->fresh()->updatedBy->id);
     }
 
     #[Test]
-    public function relacionamento_deletedBy_resolve_usuario_correto(): void
+    public function relacionamento_deleted_by_resolve_usuario_correto(): void
     {
-        $user   = $this->createAndLoginUser();
+        $user = $this->createAndLoginUser();
         $record = AuditableStub::create(['name' => 'DeletedBy Rel']);
 
         $record->delete();

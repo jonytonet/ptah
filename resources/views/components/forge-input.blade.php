@@ -5,8 +5,10 @@
       - placeholder: string
       - type       : text | email | password | number | date | ...  (default: text)
       - state      : normal | success | danger | warn
-      - iconAfter  : HTML string
-      - iconBefore : HTML string
+      - iconAfter  : HTML string — rendered raw (unescaped). SECURITY: pass only
+                     trusted, developer-authored markup (e.g. an <svg>). NEVER
+                     pass user-controlled data here — it would enable XSS.
+      - iconBefore : HTML string — rendered raw (unescaped). Same warning as iconAfter.
       - disabled   : boolean
       - loading    : boolean
       - message    : string

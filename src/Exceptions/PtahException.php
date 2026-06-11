@@ -12,8 +12,6 @@ use Throwable;
  *
  * Provides structured error context and formatting capabilities.
  * All custom Ptah exceptions should extend this class.
- *
- * @package Ptah\Exceptions
  */
 abstract class PtahException extends Exception
 {
@@ -27,10 +25,7 @@ abstract class PtahException extends Exception
     /**
      * Create a new Ptah exception instance.
      *
-     * @param string $message
-     * @param int $code
-     * @param Throwable|null $previous
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function __construct(
         string $message = '',
@@ -45,9 +40,7 @@ abstract class PtahException extends Exception
     /**
      * Create a new exception instance with context.
      *
-     * @param string $message
-     * @param array<string, mixed> $context
-     * @return static
+     * @param  array<string, mixed>  $context
      */
     public static function withContext(string $message, array $context = []): static
     {
@@ -67,8 +60,6 @@ abstract class PtahException extends Exception
     /**
      * Set additional context data.
      *
-     * @param string $key
-     * @param mixed $value
      * @return $this
      */
     public function setContext(string $key, mixed $value): static
@@ -81,7 +72,7 @@ abstract class PtahException extends Exception
     /**
      * Merge additional context data.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return $this
      */
     public function mergeContext(array $context): static
@@ -94,7 +85,6 @@ abstract class PtahException extends Exception
     /**
      * Add a suggestion to help fix the error.
      *
-     * @param string $suggestion
      * @return $this
      */
     public function withSuggestion(string $suggestion): static
@@ -106,8 +96,6 @@ abstract class PtahException extends Exception
 
     /**
      * Get formatted message with context for display.
-     *
-     * @return string
      */
     public function getFormattedMessage(): string
     {
@@ -122,14 +110,11 @@ abstract class PtahException extends Exception
             $contextLines[] = sprintf('%s: %s', ucfirst($key), $this->formatValue($value));
         }
 
-        return $message . "\n" . implode("\n", $contextLines);
+        return $message."\n".implode("\n", $contextLines);
     }
 
     /**
      * Format a context value for display.
-     *
-     * @param mixed $value
-     * @return string
      */
     protected function formatValue(mixed $value): string
     {
@@ -174,8 +159,6 @@ abstract class PtahException extends Exception
 
     /**
      * Convert exception to JSON format (useful for API responses).
-     *
-     * @return string
      */
     public function toJson(): string
     {

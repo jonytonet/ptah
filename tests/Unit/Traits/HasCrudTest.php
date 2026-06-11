@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Tests\Unit\Traits;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Base\BaseRepository;
 use Ptah\Base\BaseService;
@@ -21,9 +22,11 @@ use Ptah\Traits\HasCrud;
  */
 class CrudStubModel extends Model
 {
-    protected $table    = 'items';
+    protected $table = 'items';
+
     protected $fillable = ['name', 'status', 'amount'];
-    protected $casts    = ['amount' => 'integer'];
+
+    protected $casts = ['amount' => 'integer'];
 }
 
 /** Concrete repository stub for HasCrud delegation tests. */
@@ -75,15 +78,15 @@ class HasCrudTest extends TestCase
     {
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
     }
 
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../migrations');
     }
 
     protected function setUp(): void
@@ -91,7 +94,7 @@ class HasCrudTest extends TestCase
         parent::setUp();
 
         $this->service = new CrudStubService(
-            new CrudStubRepository(new CrudStubModel())
+            new CrudStubRepository(new CrudStubModel)
         );
     }
 
@@ -141,13 +144,13 @@ class HasCrudTest extends TestCase
     }
 
     #[Test]
-    public function findOrFail_delega_e_lanca_excecao_para_id_inexistente(): void
+    public function find_or_fail_delega_e_lanca_excecao_para_id_inexistente(): void
     {
         $item = $this->createItem('FailMe');
 
         $this->assertSame('FailMe', $this->service->findOrFail($item->id)->name);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
         $this->service->findOrFail(9999);
     }
 
@@ -164,7 +167,7 @@ class HasCrudTest extends TestCase
     #[Test]
     public function update_delega_e_atualiza_registro(): void
     {
-        $item    = $this->createItem('Original');
+        $item = $this->createItem('Original');
         $updated = $this->service->update($item->id, ['name' => 'Atualizado']);
 
         $this->assertSame('Atualizado', $updated->name);
@@ -174,7 +177,7 @@ class HasCrudTest extends TestCase
     #[Test]
     public function delete_delega_e_remove_registro(): void
     {
-        $item   = $this->createItem('Deletar');
+        $item = $this->createItem('Deletar');
         $result = $this->service->delete($item->id);
 
         $this->assertTrue($result);

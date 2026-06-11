@@ -16,34 +16,45 @@ class DepartmentList extends Component
 {
     use WithPagination;
 
-    public string $search    = '';
-    public string $sort      = 'name';
+    public string $search = '';
+
+    public string $sort = 'name';
+
     public string $direction = 'asc';
 
-    public bool  $showModal = false;
-    public bool  $isEditing = false;
-    public ?int  $editingId = null;
+    public bool $showModal = false;
 
-    public string $name        = '';
+    public bool $isEditing = false;
+
+    public ?int $editingId = null;
+
+    public string $name = '';
+
     public string $description = '';
-    public bool   $is_active   = true;
 
-    public ?int  $deleteId        = null;
-    public bool  $showDeleteModal = false;
+    public bool $is_active = true;
+
+    public ?int $deleteId = null;
+
+    public bool $showDeleteModal = false;
 
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     protected function rules(): array
     {
         return [
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'is_active'   => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function sort(string $column): void
     {
@@ -63,12 +74,12 @@ class DepartmentList extends Component
     public function edit(int $id): void
     {
         $dept = Department::findOrFail($id);
-        $this->editingId    = $id;
-        $this->name         = $dept->name;
-        $this->description  = $dept->description ?? '';
-        $this->is_active    = $dept->is_active;
-        $this->isEditing    = true;
-        $this->showModal    = true;
+        $this->editingId = $id;
+        $this->name = $dept->name;
+        $this->description = $dept->description ?? '';
+        $this->is_active = $dept->is_active;
+        $this->isEditing = true;
+        $this->showModal = true;
         $this->resetValidation();
     }
 
@@ -78,9 +89,9 @@ class DepartmentList extends Component
 
         try {
             $data = [
-                'name'        => $this->name,
+                'name' => $this->name,
                 'description' => $this->description ?: null,
-                'is_active'   => $this->is_active,
+                'is_active' => $this->is_active,
             ];
 
             if ($this->isEditing) {
@@ -93,13 +104,13 @@ class DepartmentList extends Component
 
             $this->showModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error: ' . $e->getMessage();
+            $this->errorMsg = 'Error: '.$e->getMessage();
         }
     }
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId        = $id;
+        $this->deleteId = $id;
         $this->showDeleteModal = true;
     }
 
@@ -109,7 +120,7 @@ class DepartmentList extends Component
             Department::findOrFail($this->deleteId)->delete();
             $this->successMsg = 'Department deleted.';
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error: ' . $e->getMessage();
+            $this->errorMsg = 'Error: '.$e->getMessage();
         }
 
         $this->showDeleteModal = false;

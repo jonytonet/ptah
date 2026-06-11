@@ -1,0 +1,19 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+    excludePaths:
+        - src/Stubs/*
+        - src/Migrations/*
+    ignoreErrors:
+        # Structural false positive for packages: larastan cannot resolve the
+        # 'ptah::' view namespace at analysis time (it is registered at runtime
+        # by PtahServiceProvider), so every literal view('ptah::...') call is
+        # reported as plain string instead of view-string.
+        -
+            message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+            reportUnmatched: false

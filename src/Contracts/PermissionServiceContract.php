@@ -9,10 +9,10 @@ interface PermissionServiceContract
     /**
      * Checks whether the user has permission to perform the action on the object.
      *
-     * @param  mixed       $user       User, user ID or null (uses current auth)
-     * @param  string      $objectKey  Object key (e.g. 'users.store')
-     * @param  string      $action     create|read|update|delete
-     * @param  int|null    $companyId  Company ID (null = session/auth context)
+     * @param  mixed  $user  User, user ID or null (uses current auth)
+     * @param  string  $objectKey  Object key (e.g. 'users.store')
+     * @param  string  $action  create|read|update|delete
+     * @param  int|null  $companyId  Company ID (null = session/auth context)
      */
     public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool;
 
@@ -38,7 +38,7 @@ interface PermissionServiceContract
     /**
      * Associates a role with the user (creates a UserRole for each company).
      *
-     * @param  int[] $companyIds  Company IDs; [] = no company (single-company)
+     * @param  int[]  $companyIds  Company IDs; [] = no company (single-company)
      */
     public function syncRole(mixed $user, int $roleId, array $companyIds = []): void;
 

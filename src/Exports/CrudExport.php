@@ -4,20 +4,22 @@ namespace Ptah\Exports;
 
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
     protected Builder $query;
+
     protected array $columns = [];
 
     public function __construct(Builder $query, array $columns = [])
     {
-        $this->query   = $query;
+        $this->query = $query;
         $this->columns = $columns;
     }
 
@@ -37,8 +39,8 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
         // Se não foram passadas colunas específicas, pegar todas do primeiro registro
         if (empty($this->columns)) {
             $first = $this->query->first();
-            
-            if (!$first) {
+
+            if (! $first) {
                 return [];
             }
 
@@ -48,15 +50,16 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
         }
 
         // Usar labels das colunas visíveis (se label vazio, usar field formatado)
-        return array_map(function($col) {
+        return array_map(function ($col) {
             $label = $col['label'] ?? '';
-            
+
             // Se label estiver vazio, usar o field formatado
             if (empty($label)) {
                 $field = $col['field'] ?? '';
+
                 return ucwords(str_replace('_', ' ', $field));
             }
-            
+
             return $label;
         }, $this->columns);
     }
@@ -67,15 +70,15 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
     public function map($row): array
     {
         $mapped = [];
-        
+
         // Se não foram passadas colunas específicas, usar todas
         if (empty($this->columns)) {
             $fields = array_keys($row->toArray());
-            
+
             foreach ($fields as $field) {
                 $mapped[] = $this->formatValue($row->{$field});
             }
-            
+
             return $mapped;
         }
 
@@ -98,18 +101,18 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
         if ($value instanceof \DateTimeInterface) {
             return $value->format('d/m/Y H:i:s');
         }
-        
+
         // Formatar booleanos
         if (is_bool($value)) {
             return $value ? 'Sim' : 'Não';
         }
-        
+
         // Formatar valores de select/enum se necessário
         if ($type === 'select' && is_numeric($value)) {
             // Aqui poderia buscar o label do select, mas por ora retorna o valor
             return $value;
         }
-        
+
         // Outros valores
         return $value ?? '';
     }
@@ -126,7 +129,7 @@ class CrudExport implements FromQuery, WithHeadings, WithMapping, WithStyles, Sh
                     'size' => 12,
                 ],
                 'fill' => [
-                    'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => 'E2E8F0'],
                 ],
             ],

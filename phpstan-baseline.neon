@@ -1,0 +1,681 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#2 \$default of method Illuminate\\Console\\Command\:\:ask\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 6
+			path: src/Commands/Config/Wizards/ColumnWizard.php
+
+		-
+			message: '#^Method Ptah\\Commands\\MenuSyncCommand\:\:syncDashboard\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Commands/MenuSyncCommand.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: src/Commands/Modules/ModuleCommand.php
+
+		-
+			message: '#^Match expression does not handle remaining values\: \(int\|string\)$#'
+			identifier: match.unhandled
+			count: 1
+			path: src/Commands/Modules/ModuleCommand.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: src/Exceptions/PtahException.php
+
+		-
+			message: '#^Right side of \|\| is always false\.$#'
+			identifier: booleanOr.rightAlwaysFalse
+			count: 1
+			path: src/Generators/ModelGenerator.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Models\\AiConversation\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/AI/AiChatWidget.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\AI\\AiModelConfigList\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/AI/AiModelConfigList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Foundation\\Auth\\User\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Auth/ProfilePage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Foundation\\Auth\\User\:\:\$profile_photo_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Livewire/Auth/ProfilePage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deleted_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\BaseCrud\\BaseCrud\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\BaseCrud\\BaseCrud\:\:\$totalizadoresData\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:onlyTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:onlyTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:withTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Http\\RedirectResponse and Illuminate\\Http\\RedirectResponse will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^PHPDoc tag @livewire has invalid value \(\(''ptah\-base\-crud'', \[''model'' \=\> ''Product''\]\)\)\: Unexpected token "''ptah\-base\-crud''", expected TOKEN_DOUBLE_QUOTED_STRING at offset 416 on line 17$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Property Ptah\\Livewire\\BaseCrud\\BaseCrud\:\:\$model \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~\(0\|0\.0\|''''\|''0''\|array\{\}\|false\|null\) and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>\(Expression\)" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>config" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Livewire/BaseCrud/BaseCrud.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Company\\CompanyList\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Company/CompanyList.php
+
+		-
+			message: '#^Property Ptah\\Livewire\\Company\\CompanySwitcher\:\:\$companies \(Illuminate\\Support\\Collection&iterable\<Ptah\\Models\\Company\>\) does not accept default value of type array\.$#'
+			identifier: property.defaultValue
+			count: 1
+			path: src/Livewire/Company/CompanySwitcher.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\AuditList\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/AuditList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\DepartmentList\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/DepartmentList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\PageList\:\:\$objRows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/PageList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\PageList\:\:\$pageRows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/PageList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/RoleList.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool\}, Closure\(Ptah\\Models\\RolePermission\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Livewire/Permission/RoleList.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Ptah\\Models\\PageObject\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: src/Livewire/Permission/RoleList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Livewire/Permission/RoleList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_master\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\UserPermissionList\:\:\$companies\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\UserPermissionList\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Access to an undefined property Ptah\\Livewire\\Permission\\UserPermissionList\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:active\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Ptah\\Models\\UserRole\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>is_master" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Livewire/Permission/UserPermissionList.php
+
+		-
+			message: '''
+				#^PHPDoc tag @livewire has invalid value \(\('ptah\-search\-dropdown', \[
+				      'model'      \=\> 'Product',
+				      'label'      \=\> 'name',
+				      'useService' \=\> 'search',
+				  \]\)\)\: Unexpected token "'ptah\-search\-dropdown'", expected TOKEN_DOUBLE_QUOTED_STRING at offset 598 on line 22$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Livewire/SearchDropdown/SearchDropdown.php
+
+		-
+			message: '''
+				#^PHPDoc tag @livewire has invalid value \(\('ptah\-search\-dropdown', \[
+				      'model'  \=\> 'Product',
+				      'label'  \=\> 'name',
+				      'listens' \=\> 'onProductSelected',
+				  \]\)
+
+				With a service\:\)\: Unexpected token "'ptah\-search\-dropdown'", expected TOKEN_DOUBLE_QUOTED_STRING at offset 423 on line 15$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Livewire/SearchDropdown/SearchDropdown.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/AiModelConfig.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/AiModelConfig.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Company.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/Company.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/CrudConfig.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/CrudConfig.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Department.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/Department.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Menu.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/Menu.php
+
+		-
+			message: '#^Unsafe call to private method Ptah\\Models\\Menu\:\:buildTree\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: src/Models/Menu.php
+
+		-
+			message: '#^Unsafe call to private method Ptah\\Models\\Menu\:\:nestItems\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: src/Models/Menu.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/PageObject.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/PageObject.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/PtahPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/PtahPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Role.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/Role.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/RolePermission.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/RolePermission.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property Ptah\\Models\\UserPreference\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: src/Models/UserPreference.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Models/UserPreference.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_by\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/UserRole.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_by\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Models/UserRole.php
+
+		-
+			message: '#^Call to function method_exists\(\) with NunoMaduro\\Collision\\Adapters\\Laravel\\ExceptionHandler and ''renderable'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/PtahServiceProvider.php
+
+		-
+			message: '#^Call to an undefined static method Illuminate\\Database\\Eloquent\\Model\:\:withTrashed\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: src/Seeders/DefaultAdminSeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Seeders/DefaultAdminSeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\OutputStyle\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Seeders/DefaultAdminSeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Seeders/DefaultCompanySeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\OutputStyle\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Seeders/DefaultCompanySeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Seeders/PtahDemoSeeder.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\OutputStyle\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Seeders/PtahDemoSeeder.php
+
+		-
+			message: '#^Call to function is_object\(\) with Prism\\Prism\\Streaming\\Events\\StreamEvent will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Offset ''content'' on array\{role\: ''assistant'', content\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Offset ''content'' on array\{role\: string, content\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Property Prism\\Prism\\Text\\Response\:\:\$text \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Property Prism\\Prism\\ValueObjects\\Usage\:\:\$completionTokens \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Property Prism\\Prism\\ValueObjects\\Usage\:\:\$promptTokens \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/AI/AiChatService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Services/AI/AiToolRegistry.php
+
+		-
+			message: '#^Offset ''properties'' on array\{type\: string, properties\: array\<string, array\<string, mixed\>\>, required\?\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/AI/AiToolRegistry.php
+
+		-
+			message: '#^Method Ptah\\Services\\AI\\Tools\\GetCurrentDateTimeTool\:\:parameters\(\) should return array\{type\: string, properties\: array\<string, array\<string, mixed\>\>, required\?\: list\<string\>\} but returns array\{type\: ''object'', properties\: stdClass, required\: array\{\}\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Services/AI/Tools/GetCurrentDateTimeTool.php
+
+		-
+			message: '#^Method Ptah\\Services\\AI\\Tools\\GetSystemInfoTool\:\:parameters\(\) should return array\{type\: string, properties\: array\<string, array\<string, mixed\>\>, required\?\: list\<string\>\} but returns array\{type\: ''object'', properties\: stdClass, required\: array\{\}\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Services/AI/Tools/GetSystemInfoTool.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$two_factor_confirmed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$two_factor_recovery_codes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$two_factor_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Call to method generateSecretKey\(\) on an unknown class PragmaRX\\Google2FA\\Google2FA\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Call to method getQRCodeUrl\(\) on an unknown class PragmaRX\\Google2FA\\Google2FA\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Call to method writeString\(\) on an unknown class BaconQrCode\\Writer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Class PragmaRX\\Google2FA\\Google2FA not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Instantiated class BaconQrCode\\Renderer\\Image\\SvgImageBackEnd not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Instantiated class BaconQrCode\\Renderer\\RendererStyle\\RendererStyle not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Instantiated class BaconQrCode\\Writer not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$google2fa contains unknown class PragmaRX\\Google2FA\\Google2FA\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Services/Auth/TwoFactorService.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Database\\Eloquent\\Collection\<int, Ptah\\Models\\Company\> and Illuminate\\Support\\Collection will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Services/Company/CompanyService.php
+
+		-
+			message: '#^Instanceof between Ptah\\DTO\\FilterDTO and Ptah\\DTO\\FilterDTO will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Services/Crud/FilterService.php
+
+		-
+			message: '#^Property Ptah\\DTO\\FilterDTO\:\:\$type \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/Crud/FilterService.php
+
+		-
+			message: '#^Result of && is always true\.$#'
+			identifier: booleanAnd.alwaysTrue
+			count: 2
+			path: src/Services/Crud/FilterService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: src/Services/Crud/FilterService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~\(''''\|null\) and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: src/Services/Crud/FilterService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/Crud/Filters/DateFilterStrategy.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/Crud/FormValidatorService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>obj_key" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Services/Permission/PermissionService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: src/Services/Permission/RoleService.php
+
+		-
+			message: '#^Method Ptah\\Services\\Validation\\Formatters\\FlashMessageFormatter\:\:formatForLivewire\(\) should return array\<string, string\> but returns array\<string, array\<string, string\>\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Services/Validation/Formatters/FlashMessageFormatter.php
+
+		-
+			message: '#^Trait Ptah\\Traits\\HasCrud is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Traits/HasCrud.php
+
+		-
+			message: '#^Trait Ptah\\Traits\\HasUserPreferences is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Traits/HasUserPreferences.php

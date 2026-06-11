@@ -46,7 +46,7 @@ class PtahDemoSeeder extends Seeder
             if (Company::where('label', $data['label'])->doesntExist()) {
                 Company::create(array_merge($data, [
                     'is_default' => false,
-                    'is_active'  => true,
+                    'is_active' => true,
                 ]));
                 $this->line("  <info>✔</info> Demo company: <comment>{$data['name']}</comment>");
             }

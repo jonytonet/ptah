@@ -13,15 +13,15 @@ use Ptah\Traits\HasAuditFields;
 /**
  * user × role × company association. No FK to host users/companies.
  *
- * @property int      $id
- * @property int      $user_id
- * @property int      $role_id
+ * @property int $id
+ * @property int $user_id
+ * @property int $role_id
  * @property int|null $company_id
- * @property bool     $is_active
+ * @property bool $is_active
  */
 class UserRole extends Model
 {
-    use SoftDeletes, HasAuditFields;
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'ptah_user_roles';
 
@@ -36,7 +36,7 @@ class UserRole extends Model
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -62,10 +62,10 @@ class UserRole extends Model
             return $query->whereNull('company_id');
         }
 
-            // Returns records for the specific company OR global records (without a company)
+        // Returns records for the specific company OR global records (without a company)
         return $query->where(function (Builder $q) use ($companyId) {
             $q->where('company_id', $companyId)
-              ->orWhereNull('company_id');
+                ->orWhereNull('company_id');
         });
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Traits;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -31,12 +33,12 @@ trait HasAuditFields
     public static function bootHasAuditFields(): void
     {
         // ── Create ────────────────────────────────────────────────────────
-        static::creating(function ($model) {
+        static::creating(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
 
-            $userId   = Auth::id();
+            $userId = Auth::id();
             $fillable = $model->getFillable();
 
             // Use === null instead of empty() to avoid false-positives on falsy IDs.
@@ -50,7 +52,7 @@ trait HasAuditFields
         });
 
         // ── Update ────────────────────────────────────────────────────────
-        static::updating(function ($model) {
+        static::updating(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
@@ -70,7 +72,7 @@ trait HasAuditFields
         // model events (no extra `updating` / `saving` cycles).
         // Only runs when the model uses SoftDeletes and was soft-deleted
         // (not forceDelete — after forceDelete the row is gone, deleted_at is null).
-        static::deleted(function ($model) {
+        static::deleted(function (Model $model) {
             if (! Auth::check()) {
                 return;
             }
@@ -103,7 +105,7 @@ trait HasAuditFields
     /**
      * User who created the record.
      */
-    public function createdBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'created_by');
     }
@@ -111,7 +113,7 @@ trait HasAuditFields
     /**
      * User who last updated the record.
      */
-    public function updatedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'updated_by');
     }
@@ -119,19 +121,20 @@ trait HasAuditFields
     /**
      * User who soft-deleted the record.
      */
-    public function deletedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function deletedBy(): BelongsTo
     {
         return $this->belongsTo($this->resolveUserModel(), 'deleted_by');
     }
 
     /**
      * Resolves the User model configured for authentication.
-     * Falls back to App\Models\User when the config key is absent.
+     * Falls back to App\Models\User when the config key is absent — referenced
+     * as a string because the class only exists in the host application.
      *
      * @return class-string
      */
     protected function resolveUserModel(): string
     {
-        return config('auth.providers.users.model', \App\Models\User::class);
+        return config('auth.providers.users.model', 'App\\Models\\User');
     }
 }

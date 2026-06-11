@@ -1,0 +1,84 @@
+name: Bug report
+description: Report something that is not working as documented
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much as you can —
+        a reproducible report gets fixed much faster.
+
+        **Security vulnerabilities:** do NOT open a public issue. Contact the maintainer
+        directly (see composer.json authors).
+
+  - type: input
+    id: ptah-version
+    attributes:
+      label: Ptah version
+      placeholder: "1.0.0-rc.5"
+    validations:
+      required: true
+
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel version
+      placeholder: "12.x"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - ptah:forge (scaffolding / generators)
+        - BaseCrud (Livewire CRUD)
+        - Forge components (x-forge-*)
+        - Auth module
+        - Permissions module
+        - Menu module
+        - Company module
+        - API module
+        - AI Agent module
+        - Installation / ptah:install
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Ideally starting from a fresh Laravel app.
+      placeholder: |
+        1. composer create-project laravel/laravel app
+        2. composer require jonytonet/ptah && php artisan ptah:install
+        3. php artisan ptah:forge Product --fields="name:string"
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include the stack trace or log excerpt if available.
+    validations:
+      required: true

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Generators\Contracts;
 
-use Ptah\Support\EntityContext;
 use Ptah\Generators\GeneratorResult;
+use Ptah\Support\EntityContext;
 
 /**
  * Contract for all Ptah artefact generators.

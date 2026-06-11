@@ -2,7 +2,7 @@
 
 **Package:** `jonytonet/ptah`  
 **Namespace:** `Ptah\Livewire\BaseCrud`  
-**Livewire:** 3.x+
+**Livewire:** 4+
 **Laravel:** 11+
 
 ---

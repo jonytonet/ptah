@@ -126,7 +126,8 @@ The command:
   ╔══════════════════════════════════════════╗
   ║  Admin created successfully!             ║
   ║  E-mail  : admin@admin.com               ║
-  ║  Password: admin@123                     ║
+  ║  Password: <from PTAH_ADMIN_PASSWORD, or  ║
+  ║            random — shown once here>      ║
   ║  ⚠ Change the password on first access! ║
   ╚══════════════════════════════════════════╝
 ```
@@ -177,7 +178,8 @@ In `config/ptah.php`, `permissions` section:
     // Admin credentials for DefaultAdminSeeder
     'admin_name'     => env('PTAH_ADMIN_NAME', 'Administrator'),
     'admin_email'    => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
-    'admin_password' => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
+    // No insecure default: when unset, a strong random password is generated and shown once at install.
+    'admin_password' => env('PTAH_ADMIN_PASSWORD'),
 ],
 ```
 
@@ -1136,7 +1138,8 @@ class CompanySwitcher extends Component
     'allow_guest'        => false,
     'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrator'),
     'admin_email'        => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
-    'admin_password'     => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
+    // No insecure default: when unset, a strong random password is generated and shown once at install.
+    'admin_password'     => env('PTAH_ADMIN_PASSWORD'),
 ],
 ```
 
@@ -1155,4 +1158,4 @@ class CompanySwitcher extends Component
 | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audits MASTER bypass |
 | `PTAH_MULTI_COMPANY` | `false` | Permissions filtered by company |
 | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | Default admin e-mail |
-| `PTAH_ADMIN_PASSWORD` | `admin@123` | Default admin password |
+| `PTAH_ADMIN_PASSWORD` | *(none)* | Admin password. If unset, a strong random one is generated and shown once at install — no fixed default |

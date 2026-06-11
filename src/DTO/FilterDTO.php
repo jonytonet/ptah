@@ -16,18 +16,18 @@ use Ptah\Base\BaseDTO;
 final class FilterDTO extends BaseDTO
 {
     /**
-     * @param string $field     Field name or relation name
-     * @param mixed  $value     Filter value (scalar, array for IN/BETWEEN)
-     * @param string $operator  Operator: =, >, <, >=, <=, LIKE, BETWEEN, IN
-     * @param string $type      Type: text, number, date, boolean, relation, array
-     * @param array  $options   Extra options: ['relation' => 'relName', 'column' => 'col', 'whereHas' => '...']
+     * @param  string  $field  Field name or relation name
+     * @param  mixed  $value  Filter value (scalar, array for IN/BETWEEN)
+     * @param  string  $operator  Operator: =, >, <, >=, <=, LIKE, BETWEEN, IN
+     * @param  string  $type  Type: text, number, date, boolean, relation, array
+     * @param  array  $options  Extra options: ['relation' => 'relName', 'column' => 'col', 'whereHas' => '...']
      */
     public function __construct(
         public readonly string $field,
-        public readonly mixed  $value,
+        public readonly mixed $value,
         public readonly string $operator = '=',
-        public readonly string $type     = 'text',
-        public readonly array  $options  = [],
+        public readonly string $type = 'text',
+        public readonly array $options = [],
     ) {}
 
     /**
@@ -36,7 +36,7 @@ final class FilterDTO extends BaseDTO
      */
     public static function fromRequest(Request $request): static
     {
-        return static::fromArray($request->all());
+        return self::fromArray($request->all());
     }
 
     /**
@@ -44,17 +44,17 @@ final class FilterDTO extends BaseDTO
      */
     public static function fromArray(array $data): static
     {
-        $field    = is_array($data['field'] ?? null) ? '' : (string) ($data['field'] ?? '');
+        $field = is_array($data['field'] ?? null) ? '' : (string) ($data['field'] ?? '');
         $operator = is_array($data['operator'] ?? null) ? '=' : (string) ($data['operator'] ?? '=');
-        $value    = $data['value'] ?? null;
-        $type     = $data['type'] ?? self::inferType($field, $value);
+        $value = $data['value'] ?? null;
+        $type = $data['type'] ?? self::inferType($field, $value);
 
         return new static(
-            field:    $field,
-            value:    $value,
+            field: $field,
+            value: $value,
             operator: $operator,
-            type:     $type,
-            options:  $data['options'] ?? [],
+            type: $type,
+            options: $data['options'] ?? [],
         );
     }
 
@@ -83,7 +83,7 @@ final class FilterDTO extends BaseDTO
         }
 
         // Numeric
-        if (is_numeric($value) && !str_contains($field, 'name') && !str_contains($field, 'description')) {
+        if (is_numeric($value) && ! str_contains($field, 'name') && ! str_contains($field, 'description')) {
             return 'number';
         }
 
@@ -93,11 +93,11 @@ final class FilterDTO extends BaseDTO
     public function toArray(): array
     {
         return [
-            'field'    => $this->field,
-            'value'    => $this->value,
+            'field' => $this->field,
+            'value' => $this->value,
             'operator' => $this->operator,
-            'type'     => $this->type,
-            'options'  => $this->options,
+            'type' => $this->type,
+            'options' => $this->options,
         ];
     }
 

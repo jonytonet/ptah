@@ -12,22 +12,16 @@ use Ptah\Exceptions\Concerns\HasJsonContext;
  *
  * This exception is thrown when the JSON configuration for BaseCrud
  * contains invalid data, missing required fields, or fails schema validation.
- *
- * @package Ptah\Exceptions
  */
 class ConfigValidationException extends PtahException
 {
-    use HasJsonContext;
     use FormatsError;
+    use HasJsonContext;
 
     /**
      * Create a new ConfigValidationException for an invalid column type.
      *
-     * @param string $field
-     * @param mixed $actualValue
-     * @param array<int, string> $validTypes
-     * @param string $section
-     * @return static
+     * @param  array<int, string>  $validTypes
      */
     public static function invalidColumnType(
         string $field,
@@ -51,10 +45,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for a missing required field.
-     *
-     * @param string $field
-     * @param string $section
-     * @return static
      */
     public static function missingRequiredField(string $field, string $section): static
     {
@@ -67,12 +57,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for an invalid type.
-     *
-     * @param string $field
-     * @param mixed $actualValue
-     * @param string $expectedType
-     * @param string $section
-     * @return static
      */
     public static function invalidType(
         string $field,
@@ -97,11 +81,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for missing dependencies.
-     *
-     * @param string $field
-     * @param string $dependency
-     * @param string $section
-     * @return static
      */
     public static function missingDependency(
         string $field,
@@ -122,10 +101,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for an invalid renderer configuration.
-     *
-     * @param string $renderer
-     * @param string $missingConfig
-     * @return static
      */
     public static function invalidRendererConfig(string $renderer, string $missingConfig): static
     {
@@ -144,10 +119,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for invalid JOIN configuration.
-     *
-     * @param string $table
-     * @param string $error
-     * @return static
      */
     public static function invalidJoin(string $table, string $error): static
     {
@@ -161,11 +132,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Create a new ConfigValidationException for duplicate configuration.
-     *
-     * @param string $field
-     * @param mixed $value
-     * @param string $section
-     * @return static
      */
     public static function duplicateConfiguration(string $field, mixed $value, string $section): static
     {
@@ -179,8 +145,6 @@ class ConfigValidationException extends PtahException
 
     /**
      * Get HTTP status code for API responses.
-     *
-     * @return int
      */
     protected function getHttpStatusCode(): int
     {

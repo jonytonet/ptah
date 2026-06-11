@@ -18,9 +18,8 @@ interface FilterStrategyInterface
     /**
      * Applies the filter to the Builder.
      *
-     * @param Builder   $query  Eloquent Query Builder
-     * @param FilterDTO $filter DTO with field, value, operator, type, options
-     * @return Builder
+     * @param  Builder  $query  Eloquent Query Builder
+     * @param  FilterDTO  $filter  DTO with field, value, operator, type, options
      */
     public function apply(Builder $query, FilterDTO $filter): Builder;
 

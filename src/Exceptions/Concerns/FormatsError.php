@@ -10,15 +10,11 @@ use Illuminate\Support\Str;
  * Trait for formatting exception messages for different outputs.
  *
  * Provides methods to format errors for CLI, flash messages, and API responses.
- *
- * @package Ptah\Exceptions\Concerns
  */
 trait FormatsError
 {
     /**
      * Format the exception for CLI output with box drawing characters.
-     *
-     * @return string
      */
     public function formatAsCliOutput(): string
     {
@@ -26,15 +22,15 @@ trait FormatsError
         $maxLength = 70;
 
         // Top border
-        $lines[] = '╔' . str_repeat('═', $maxLength - 2) . '╗';
+        $lines[] = '╔'.str_repeat('═', $maxLength - 2).'╗';
 
         // Title
-        $title = '❌ ' . $this->getErrorTitle();
-        $lines[] = '║ ' . str_pad($title, $maxLength - 4) . ' ║';
+        $title = '❌ '.$this->getErrorTitle();
+        $lines[] = '║ '.str_pad($title, $maxLength - 4).' ║';
 
         // Middle separator if there's context
-        if (!empty($this->context)) {
-            $lines[] = '╠' . str_repeat('═', $maxLength - 2) . '╣';
+        if (! empty($this->context)) {
+            $lines[] = '╠'.str_repeat('═', $maxLength - 2).'╣';
 
             // Context lines
             foreach ($this->getContextForCli() as $key => $value) {
@@ -42,28 +38,26 @@ trait FormatsError
                 // Wrap long lines
                 $wrapped = $this->wrapLine($line, $maxLength - 4);
                 foreach ($wrapped as $wrappedLine) {
-                    $lines[] = '║ ' . str_pad($wrappedLine, $maxLength - 4) . ' ║';
+                    $lines[] = '║ '.str_pad($wrappedLine, $maxLength - 4).' ║';
                 }
             }
         }
 
         // Bottom border
-        $lines[] = '╚' . str_repeat('═', $maxLength - 2) . '╝';
+        $lines[] = '╚'.str_repeat('═', $maxLength - 2).'╝';
 
-        return "\n" . implode("\n", $lines) . "\n";
+        return "\n".implode("\n", $lines)."\n";
     }
 
     /**
      * Format the exception for flash message (HTML-safe).
-     *
-     * @return string
      */
     public function formatAsFlashMessage(): string
     {
         $html = '<div class="alert alert-danger">';
-        $html .= '<strong>' . htmlspecialchars($this->getErrorTitle()) . '</strong>';
+        $html .= '<strong>'.htmlspecialchars($this->getErrorTitle()).'</strong>';
 
-        if (!empty($this->context)) {
+        if (! empty($this->context)) {
             $html .= '<ul class="mt-2 mb-0 list-unstyled">';
             foreach ($this->getContextForCli() as $key => $value) {
                 $html .= sprintf(
@@ -100,8 +94,6 @@ trait FormatsError
 
     /**
      * Get the error title (short description).
-     *
-     * @return string
      */
     protected function getErrorTitle(): string
     {
@@ -114,18 +106,14 @@ trait FormatsError
 
     /**
      * Get the error type identifier (for RFC 7807).
-     *
-     * @return string
      */
     protected function getErrorType(): string
     {
-        return 'https://ptah.dev/errors/' . Str::kebab(class_basename(static::class));
+        return 'https://ptah.dev/errors/'.Str::kebab(class_basename(static::class));
     }
 
     /**
      * Get HTTP status code for API responses.
-     *
-     * @return int
      */
     protected function getHttpStatusCode(): int
     {
@@ -166,8 +154,6 @@ trait FormatsError
     /**
      * Wrap a long line to fit within the specified width.
      *
-     * @param string $line
-     * @param int $width
      * @return array<int, string>
      */
     protected function wrapLine(string $line, int $width): array
@@ -181,8 +167,8 @@ trait FormatsError
         $currentLine = '';
 
         foreach ($words as $word) {
-            if (mb_strlen($currentLine . ' ' . $word) <= $width) {
-                $currentLine .= ($currentLine ? ' ' : '') . $word;
+            if (mb_strlen($currentLine.' '.$word) <= $width) {
+                $currentLine .= ($currentLine ? ' ' : '').$word;
             } else {
                 if ($currentLine) {
                     $lines[] = $currentLine;
@@ -200,9 +186,6 @@ trait FormatsError
 
     /**
      * Format a value for display (must be defined in the using class).
-     *
-     * @param mixed $value
-     * @return string
      */
     abstract protected function formatValue(mixed $value): string;
 }

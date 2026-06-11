@@ -27,19 +27,19 @@ trait HasCrudLifecycle
     }
 
     public function boot(
-        CrudConfigService    $configService,
-        FilterService        $filterService,
-        CacheService         $cacheService,
+        CrudConfigService $configService,
+        FilterService $filterService,
+        CacheService $cacheService,
         FormValidatorService $formValidator,
     ): void {
         $this->configService = $configService;
         $this->filterService = $filterService;
-        $this->cacheService  = $cacheService;
+        $this->cacheService = $cacheService;
         $this->formValidator = $formValidator;
 
         // Reload crudConfig on every request to guarantee fresh data from DB
         if ($this->model) {
-            $route  = $this->configRoute ?: $this->resolveCurrentRoute();
+            $route = $this->configRoute ?: $this->resolveCurrentRoute();
             $config = $this->configService->find($this->model, $route);
             $this->crudConfig = $config?->config ?? [];
         }
@@ -47,22 +47,23 @@ trait HasCrudLifecycle
 
     public function mount(
         string $model,
-        array  $initialFilter        = [],
-        string $whereHasFilter       = '',
-        array  $whereHasCondition    = [],
-        int    $companyFilter        = 0,
+        array $initialFilter = [],
+        string $whereHasFilter = '',
+        array $whereHasCondition = [],
+        int $companyFilter = 0,
     ): void {
-        $this->model             = $model;
-        $this->configRoute       = $this->resolveCurrentRoute();
-        $this->whereHasFilter    = $whereHasFilter;
+        $this->model = $model;
+        $this->configRoute = $this->resolveCurrentRoute();
+        $this->whereHasFilter = $whereHasFilter;
         $this->whereHasCondition = $whereHasCondition;
-        $this->companyFilter     = $companyFilter ?: ptah_company_id();
+        $this->companyFilter = $companyFilter ?: ptah_company_id();
 
         // Load the configuration (screen-specific, with fallback to global)
         $config = $this->configService->find($model, $this->configRoute);
 
         if (! $config) {
             $this->crudConfig = [];
+
             return;
         }
 

@@ -15,9 +15,11 @@ use Ptah\Models\AiModelConfig;
  */
 class AiProviderConfigService
 {
-    private const CACHE_KEY_DEFAULT   = 'ptah:ai:default_config';
+    private const CACHE_KEY_DEFAULT = 'ptah:ai:default_config';
+
     private const CACHE_KEY_AVAILABLE = 'ptah:ai:has_provider';
-    private const CACHE_TTL           = 60; // seconds
+
+    private const CACHE_TTL = 60; // seconds
 
     // ─────────────────────────────────────────
     // Queries
@@ -47,7 +49,7 @@ class AiProviderConfigService
 
     public function create(array $data): AiModelConfig
     {
-        if (!empty($data['is_default'])) {
+        if (! empty($data['is_default'])) {
             $this->clearDefaultFlag();
         }
 
@@ -59,7 +61,7 @@ class AiProviderConfigService
 
     public function update(AiModelConfig $config, array $data): AiModelConfig
     {
-        if (!empty($data['is_default']) && !$config->is_default) {
+        if (! empty($data['is_default']) && ! $config->is_default) {
             $this->clearDefaultFlag();
         }
 

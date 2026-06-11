@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud;
 
-use Livewire\Attributes\On;
+use Illuminate\View\View;
 use Livewire\Component;
 use Ptah\Services\Crud\CrudConfigService;
 
@@ -25,9 +25,11 @@ class CrudConfig extends Component
 {
     // ── Identification ────────────────────────────────────────────────────────────
 
-    public string $model       = '';
+    public string $model = '';
+
     public string $configRoute = ''; // request()->path() no mount, read-only na view
-    public bool   $showModal   = false;
+
+    public bool $showModal = false;
 
     // ── Columns ──────────────────────────────────────────────────────────────
 
@@ -42,43 +44,61 @@ class CrudConfig extends Component
 
     // ── Row actions ────────────────────────────────────────────────────────────
 
-    public array $formDataAction    = [];
-    public int   $editingActionIndex = -1;
+    public array $formDataAction = [];
+
+    public int $editingActionIndex = -1;
 
     // ── Custom filters ────────────────────────────────────────────────────────────
 
-    public array $customFilters  = [];
+    public array $customFilters = [];
+
     public array $formDataFilter = [];
     // ── Configured JOINs ─────────────────────────────────────────────
 
-    public array $joins          = []; // saved joins
-    public array $formDataJoin   = []; // form for new join being filled
-    public int   $editingJoinIndex = -1; // index being edited (-1 = new)
+    public array $joins = []; // saved joins
+
+    public array $formDataJoin = []; // form for new join being filled
+
+    public int $editingJoinIndex = -1; // index being edited (-1 = new)
     // ── Conditional styles ──────────────────────────────────────────────────
 
     public array $conditionStyles = [];
-    public array $formDataStyle   = [];
+
+    public array $formDataStyle = [];
 
     // ── General ────────────────────────────────────────────────────────────
 
-    public string $displayName          = '';  // name displayed in modal and toolbar
-    public string $configLinkLinha       = '';
-    public string $tableClass            = '';
-    public string $theadClass            = '';
-    public bool   $cacheEnabled          = true;
-    public int    $cacheTtl              = 300;
-    public int    $exportAsyncThreshold  = 1000;
-    public int    $exportMaxRows         = 10000;
-    public string $exportOrientation     = 'landscape';
-    public bool   $uiCompactMode         = false;
-    public bool   $uiStickyHeader        = true;
-    public bool   $showTotalizador       = false;
+    public string $displayName = '';  // name displayed in modal and toolbar
+
+    public string $configLinkLinha = '';
+
+    public string $tableClass = '';
+
+    public string $theadClass = '';
+
+    public bool $cacheEnabled = true;
+
+    public int $cacheTtl = 300;
+
+    public int $exportAsyncThreshold = 1000;
+
+    public int $exportMaxRows = 10000;
+
+    public string $exportOrientation = 'landscape';
+
+    public bool $uiCompactMode = false;
+
+    public bool $uiStickyHeader = true;
+
+    public bool $showTotalizador = false;
 
     // ── Broadcast (Echo listener) ────────────────────────────────────
 
-    public bool   $broadcastEnabled = false;
+    public bool $broadcastEnabled = false;
+
     public string $broadcastChannel = ''; // empty = auto-generated
-    public string $broadcastEvent   = ''; // empty = auto-generated
+
+    public string $broadcastEvent = ''; // empty = auto-generated
 
     // ── GroupBy ────────────────────────────────────────────────────────
     public string $groupBy = ''; // field name for GROUP BY, empty = disabled
@@ -86,23 +106,35 @@ class CrudConfig extends Component
     // ── Visual Theme ────────────────────────────────────────────────────
     public string $theme = 'light'; // 'light' | 'dark'
 
-    // ── Lifecycle Hooks (dynamic PHP code) ──────────────────────────────────────
-    public string $hookBeforeCreate = '';  // PHP code executed before INSERT
-    public string $hookAfterCreate  = '';  // PHP code executed after INSERT
-    public string $hookBeforeUpdate = '';  // PHP code executed before UPDATE
-    public string $hookAfterUpdate  = '';  // PHP code executed after UPDATE
+    // ── Lifecycle Hooks (inline sandboxed expression or @Class reference) ───────
+    public string $hookBeforeCreate = '';  // runs before INSERT
+
+    public string $hookAfterCreate = '';  // runs after INSERT
+
+    public string $hookBeforeUpdate = '';  // runs before UPDATE
+
+    public string $hookAfterUpdate = '';  // runs after UPDATE
 
     // ── Permissions ─────────────────────────────────────────────────────────────
 
-    public string $permissionCreate     = '';
-    public string $permissionEdit       = '';
-    public string $permissionDelete     = '';
-    public string $permissionExport     = '';
-    public string $permissionRestore    = '';
-    public bool   $showCreateButton     = true;
-    public bool   $showEditButton       = true;
-    public bool   $showDeleteButton     = true;
-    public bool   $showTrashButton      = true;
+    public string $permissionCreate = '';
+
+    public string $permissionEdit = '';
+
+    public string $permissionDelete = '';
+
+    public string $permissionExport = '';
+
+    public string $permissionRestore = '';
+
+    public bool $showCreateButton = true;
+
+    public bool $showEditButton = true;
+
+    public bool $showDeleteButton = true;
+
+    public bool $showTrashButton = true;
+
     public string $permissionIdentifier = '';
 
     // ── Service ───────────────────────────────────────────────────────────────────
@@ -118,12 +150,12 @@ class CrudConfig extends Component
 
     public function mount(string $model): void
     {
-        $this->model       = $model;
+        $this->model = $model;
         $this->configRoute = ltrim(request()->path(), '/');
         $this->loadFromDb();
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('ptah::livewire.base-crud.crud-config');
     }
@@ -137,14 +169,14 @@ class CrudConfig extends Component
     public function prepareModal(): void
     {
         $this->loadFromDb();
-        $this->formDataField  = [];
+        $this->formDataField = [];
         $this->formDataAction = [];
         $this->formDataFilter = [];
-        $this->formDataStyle  = [];
-        $this->formDataJoin   = [];
-        $this->editingFieldIndex  = -1;
+        $this->formDataStyle = [];
+        $this->formDataJoin = [];
+        $this->editingFieldIndex = -1;
         $this->editingActionIndex = -1;
-        $this->editingJoinIndex   = -1;
+        $this->editingJoinIndex = -1;
     }
 
     /**
@@ -161,15 +193,15 @@ class CrudConfig extends Component
 
     public function closeModal(): void
     {
-        $this->showModal         = false;
-        $this->formDataField     = [];
-        $this->formDataAction    = [];
-        $this->formDataFilter    = [];
-        $this->formDataStyle     = [];
-        $this->formDataJoin      = [];
-        $this->editingFieldIndex  = -1;
+        $this->showModal = false;
+        $this->formDataField = [];
+        $this->formDataAction = [];
+        $this->formDataFilter = [];
+        $this->formDataStyle = [];
+        $this->formDataJoin = [];
+        $this->editingFieldIndex = -1;
         $this->editingActionIndex = -1;
-        $this->editingJoinIndex   = -1;
+        $this->editingJoinIndex = -1;
     }
 
     // ── Load config ──────────────────────────────────────────────────────
@@ -189,7 +221,7 @@ class CrudConfig extends Component
             if (isset($col['colsSelect']) && is_array($col['colsSelect'])) {
                 $parts = [];
                 foreach ($col['colsSelect'] as $k => $v) {
-                    $parts[] = $k . ';' . $v;
+                    $parts[] = $k.';'.$v;
                 }
                 $col['colsSelect'] = implode(';;', $parts);
             }
@@ -197,37 +229,37 @@ class CrudConfig extends Component
         $this->formEditFields = array_values($cols);
 
         // Filters and styles
-        $this->customFilters   = $cfg['customFilters']   ?? [];
+        $this->customFilters = $cfg['customFilters'] ?? [];
         $this->conditionStyles = $cfg['contitionStyles'] ?? [];
 
         // JOINs
         $this->joins = $cfg['joins'] ?? [];
 
         // General
-        $this->displayName     = $cfg['displayName']     ?? '';
+        $this->displayName = $cfg['displayName'] ?? '';
         $this->configLinkLinha = $cfg['configLinkLinha'] ?? '';
-        $this->tableClass      = $cfg['tableClass']      ?? '';
-        $this->theadClass      = $cfg['theadClass']      ?? '';
+        $this->tableClass = $cfg['tableClass'] ?? '';
+        $this->theadClass = $cfg['theadClass'] ?? '';
 
         $cache = $cfg['cacheStrategy'] ?? [];
         $this->cacheEnabled = (bool) ($cache['enabled'] ?? true);
-        $this->cacheTtl     = (int)  ($cache['ttl']     ?? 300);
+        $this->cacheTtl = (int) ($cache['ttl'] ?? 300);
 
         $export = $cfg['exportConfig'] ?? [];
         $this->exportAsyncThreshold = (int) ($export['asyncThreshold'] ?? 1000);
-        $this->exportMaxRows        = (int) ($export['maxRows']        ?? 10000);
-        $this->exportOrientation    = $export['orientation']           ?? 'landscape';
+        $this->exportMaxRows = (int) ($export['maxRows'] ?? 10000);
+        $this->exportOrientation = $export['orientation'] ?? 'landscape';
 
         $ui = $cfg['uiPreferences'] ?? [];
-        $this->uiCompactMode   = (bool) ($ui['compactMode']    ?? false);
-        $this->uiStickyHeader  = (bool) ($ui['stickyHeader']   ?? true);
+        $this->uiCompactMode = (bool) ($ui['compactMode'] ?? false);
+        $this->uiStickyHeader = (bool) ($ui['stickyHeader'] ?? true);
         $this->showTotalizador = (bool) ($ui['showTotalizador'] ?? false);
 
         // Broadcast
         $bc = $cfg['broadcast'] ?? [];
         $this->broadcastEnabled = (bool) ($bc['enabled'] ?? false);
         $this->broadcastChannel = $bc['channel'] ?? '';
-        $this->broadcastEvent   = $bc['event']   ?? '';
+        $this->broadcastEvent = $bc['event'] ?? '';
 
         // GroupBy
         $this->groupBy = $cfg['groupBy'] ?? '';
@@ -238,21 +270,21 @@ class CrudConfig extends Component
         // Lifecycle Hooks
         $hooks = $cfg['lifecycleHooks'] ?? [];
         $this->hookBeforeCreate = $hooks['beforeCreate'] ?? '';
-        $this->hookAfterCreate  = $hooks['afterCreate']  ?? '';
+        $this->hookAfterCreate = $hooks['afterCreate'] ?? '';
         $this->hookBeforeUpdate = $hooks['beforeUpdate'] ?? '';
-        $this->hookAfterUpdate  = $hooks['afterUpdate']  ?? '';
+        $this->hookAfterUpdate = $hooks['afterUpdate'] ?? '';
 
         // Permissions
         $perms = $cfg['permissions'] ?? [];
-        $this->permissionCreate     = $perms['create']  ?? '';
-        $this->permissionEdit       = $perms['edit']    ?? '';
-        $this->permissionDelete     = $perms['delete']  ?? '';
-        $this->permissionExport     = $perms['export']  ?? '';
-        $this->permissionRestore    = $perms['restore'] ?? '';
-        $this->showCreateButton     = (bool) ($perms['showCreateButton'] ?? true);
-        $this->showEditButton       = (bool) ($perms['showEditButton']   ?? true);
-        $this->showDeleteButton     = (bool) ($perms['showDeleteButton'] ?? true);
-        $this->showTrashButton      = (bool) ($perms['showTrashButton']  ?? true);
+        $this->permissionCreate = $perms['create'] ?? '';
+        $this->permissionEdit = $perms['edit'] ?? '';
+        $this->permissionDelete = $perms['delete'] ?? '';
+        $this->permissionExport = $perms['export'] ?? '';
+        $this->permissionRestore = $perms['restore'] ?? '';
+        $this->showCreateButton = (bool) ($perms['showCreateButton'] ?? true);
+        $this->showEditButton = (bool) ($perms['showEditButton'] ?? true);
+        $this->showDeleteButton = (bool) ($perms['showDeleteButton'] ?? true);
+        $this->showTrashButton = (bool) ($perms['showTrashButton'] ?? true);
         $this->permissionIdentifier = $perms['identifier'] ?? $this->getDefaultPermissionIdentifier();
     }
 
@@ -265,45 +297,45 @@ class CrudConfig extends Component
         }
 
         $defaults = [
-            'colsTipo'              => 'text',
-            'colsGravar'            => true,
-            'colsRequired'          => false,
-            'colsAlign'             => 'text-start',
-            'colsIsFilterable'      => true,
-            'colsNomeLogico'        => ucfirst($this->formDataField['colsNomeFisico']),
+            'colsTipo' => 'text',
+            'colsGravar' => true,
+            'colsRequired' => false,
+            'colsAlign' => 'text-start',
+            'colsIsFilterable' => true,
+            'colsNomeLogico' => ucfirst($this->formDataField['colsNomeFisico']),
             // Renderer DSL
-            'colsRenderer'          => '',
-            'colsRendererBadges'    => [],
-            'colsRendererCurrency'  => 'BRL',
-            'colsRendererDecimals'  => 2,
-            'colsRendererMaxChars'  => 50,
+            'colsRenderer' => '',
+            'colsRendererBadges' => [],
+            'colsRendererCurrency' => 'BRL',
+            'colsRendererDecimals' => 2,
+            'colsRendererMaxChars' => 50,
             'colsRendererLinkTemplate' => '',
             'colsRendererLinkLabel' => '',
-            'colsRendererLinkNewTab'=> false,
-            'colsRendererBoolTrue'  => 'Yes',
+            'colsRendererLinkNewTab' => false,
+            'colsRendererBoolTrue' => 'Yes',
             'colsRendererBoolFalse' => 'No',
-            'colsRendererImageWidth'=> 40,
+            'colsRendererImageWidth' => 40,
             // Mask and cleanup
-            'colsMask'              => '',
-            'colsMaskTransform'     => '',
+            'colsMask' => '',
+            'colsMaskTransform' => '',
             // Nested relation (dot notation)
-            'colsRelacaoNested'     => '',
+            'colsRelacaoNested' => '',
             // Validations
-            'colsValidations'       => [],
+            'colsValidations' => [],
             // SearchDropdown
-            'colsSDMode'            => 'model',
+            'colsSDMode' => 'model',
             // Cell style
-            'colsCellStyle'         => '',
-            'colsCellClass'         => '',
-            'colsCellIcon'          => '',
-            'colsMinWidth'          => '',
+            'colsCellStyle' => '',
+            'colsCellClass' => '',
+            'colsCellIcon' => '',
+            'colsMinWidth' => '',
         ];
 
         $merged = array_merge($defaults, $this->formDataField);
         $merged = $this->resolveJoinDefaults($merged);
 
         $this->formEditFields[] = $merged;
-        $this->formDataField    = [];
+        $this->formDataField = [];
     }
 
     public function editField(int $index): void
@@ -313,7 +345,7 @@ class CrudConfig extends Component
         }
 
         $this->editingFieldIndex = $index;
-        $this->formDataField     = $this->formEditFields[$index];
+        $this->formDataField = $this->formEditFields[$index];
     }
 
     public function updateField(): void
@@ -323,7 +355,7 @@ class CrudConfig extends Component
         }
 
         $this->formEditFields[$this->editingFieldIndex] = $this->resolveJoinDefaults($this->formDataField);
-        $this->formDataField     = [];
+        $this->formDataField = [];
         $this->editingFieldIndex = -1;
     }
 
@@ -352,18 +384,18 @@ class CrudConfig extends Component
         }
 
         $nomeFisico = $fieldData['colsNomeFisico'] ?? '';
-        $source     = $fieldData['colsSource']     ?? '';
+        $source = $fieldData['colsSource'] ?? '';
 
         // Build map: alias → ['table' => ..., 'column' => ...]
         // Build reverse map: "table.column" → alias
-        $aliasMap    = [];  // alias → ['table', 'column']
+        $aliasMap = [];  // alias → ['table', 'column']
         $qualifiedMap = []; // "table.col" → alias
         foreach ($this->joins as $join) {
             foreach ($join['select'] ?? [] as $sel) {
-                $alias = trim($sel['alias']  ?? '');
-                $col   = trim($sel['column'] ?? '');
+                $alias = trim($sel['alias'] ?? '');
+                $col = trim($sel['column'] ?? '');
                 if ($alias && $col) {
-                    $aliasMap[$alias]  = ['table' => $join['table'] ?? '', 'column' => $col];
+                    $aliasMap[$alias] = ['table' => $join['table'] ?? '', 'column' => $col];
                     $qualifiedMap[$col] = $alias;
                 }
             }
@@ -372,22 +404,22 @@ class CrudConfig extends Component
         // Rule 3 — chained notation of 3+ parts: "a.b.column"
         // Runs before the others to normalise $source and $nomeFisico
         if (! empty($source) && substr_count($source, '.') >= 2) {
-            $segments  = explode('.', $source);
-            $lastCol   = array_pop($segments);                 // "name"
-            $lastRel   = array_pop($segments);                 // "product"
+            $segments = explode('.', $source);
+            $lastCol = array_pop($segments);                 // "name"
+            $lastRel = array_pop($segments);                 // "product"
 
             // Resolves the table of the last relation (singular → plural and vice-versa)
             $resolved = null;
             foreach ($this->joins as $join) {
                 $table = $join['table'] ?? '';
-                if ($table === $lastRel || $table === $lastRel . 's' || rtrim($table, 's') === $lastRel) {
+                if ($table === $lastRel || $table === $lastRel.'s' || rtrim($table, 's') === $lastRel) {
                     $resolved = $table;
                     break;
                 }
             }
 
             if ($resolved) {
-                $qualifiedCol            = "{$resolved}.{$lastCol}";
+                $qualifiedCol = "{$resolved}.{$lastCol}";
                 $fieldData['colsSource'] = $qualifiedCol;
                 $fieldData['colsGravar'] = false;
                 // Correct colsNomeFisico to alias if it exists in the map
@@ -395,7 +427,7 @@ class CrudConfig extends Component
                     $fieldData['colsNomeFisico'] = $qualifiedMap[$qualifiedCol];
                 }
                 // Update source to the normalised version
-                $source     = $qualifiedCol;
+                $source = $qualifiedCol;
                 $nomeFisico = $fieldData['colsNomeFisico'];
             }
         }
@@ -417,7 +449,7 @@ class CrudConfig extends Component
                 if ($table === $relation) {
                     break; // already correct — it is table.column
                 }
-                if ($table === $relation . 's' || rtrim($table, 's') === $relation) {
+                if ($table === $relation.'s' || rtrim($table, 's') === $relation) {
                     $fieldData['colsSource'] = "{$table}.{$col}";
                     $fieldData['colsGravar'] = false;
                     break;
@@ -430,7 +462,7 @@ class CrudConfig extends Component
 
     public function cancelEditField(): void
     {
-        $this->formDataField     = [];
+        $this->formDataField = [];
         $this->editingFieldIndex = -1;
     }
 
@@ -470,7 +502,7 @@ class CrudConfig extends Component
      * Reorders columns from an index array received from SortableJS.
      * Called via wire:sortable or via JS: $wire.reorderFields(newOrderArray)
      *
-     * @param array $order  Array of indices in the new order — e.g.: [2, 0, 1, 3]
+     * @param  array  $order  Array of indices in the new order — e.g.: [2, 0, 1, 3]
      */
     public function reorderFields(array $order): void
     {
@@ -498,19 +530,19 @@ class CrudConfig extends Component
         }
 
         // Remove empty fields so that defaults are not overwritten
-        $data = array_filter($this->formDataAction, fn($v) => $v !== '' && $v !== null);
+        $data = array_filter($this->formDataAction, fn ($v) => $v !== '' && $v !== null);
 
         $merged = array_merge([
-            'actionType'       => 'link',
-            'actionValue'      => '',
-            'actionIcon'       => 'bx bx-link',
-            'actionColor'      => 'primary',
+            'actionType' => 'link',
+            'actionValue' => '',
+            'actionIcon' => 'bx bx-link',
+            'actionColor' => 'primary',
             'actionPermission' => '',
         ], $data, [
-            'colsNomeFisico'   => 'id',
-            'colsTipo'         => 'action',
-            'colsGravar'       => false,
-            'colsRequired'     => false,
+            'colsNomeFisico' => 'id',
+            'colsTipo' => 'action',
+            'colsGravar' => false,
+            'colsRequired' => false,
             'colsIsFilterable' => false,
         ]);
 
@@ -520,7 +552,7 @@ class CrudConfig extends Component
             $this->formEditFields[] = $merged;
         }
 
-        $this->formDataAction    = [];
+        $this->formDataAction = [];
         $this->editingActionIndex = -1;
     }
 
@@ -530,13 +562,13 @@ class CrudConfig extends Component
             return;
         }
 
-        $this->formDataAction    = $this->formEditFields[$index];
+        $this->formDataAction = $this->formEditFields[$index];
         $this->editingActionIndex = $index;
     }
 
     public function cancelEditAction(): void
     {
-        $this->formDataAction    = [];
+        $this->formDataAction = [];
         $this->editingActionIndex = -1;
     }
 
@@ -546,7 +578,7 @@ class CrudConfig extends Component
         $this->formEditFields = array_values($this->formEditFields);
 
         if ($this->editingActionIndex === $index) {
-            $this->formDataAction    = [];
+            $this->formDataAction = [];
             $this->editingActionIndex = -1;
         }
     }
@@ -565,6 +597,7 @@ class CrudConfig extends Component
             $existingTables = array_column($this->joins, 'table');
             if (in_array($table, $existingTables)) {
                 session()->flash('joinError', "A JOIN for table '{$table}' already exists.");
+
                 return;
             }
         }
@@ -581,7 +614,7 @@ class CrudConfig extends Component
             if (str_contains($line, ':')) {
                 [$col, $alias] = array_map('trim', explode(':', $line, 2));
             } else {
-                $col   = $line;
+                $col = $line;
                 $alias = str_replace('.', '_', $line);
             }
             if ($col) {
@@ -590,12 +623,12 @@ class CrudConfig extends Component
         }
 
         $entry = [
-            'type'     => $this->formDataJoin['type']     ?? 'left',
-            'table'    => $table,
-            'first'    => trim($this->formDataJoin['first']  ?? ''),
-            'second'   => trim($this->formDataJoin['second'] ?? ''),
+            'type' => $this->formDataJoin['type'] ?? 'left',
+            'table' => $table,
+            'first' => trim($this->formDataJoin['first'] ?? ''),
+            'second' => trim($this->formDataJoin['second'] ?? ''),
             'distinct' => (bool) ($this->formDataJoin['distinct'] ?? false),
-            'select'   => $selectCols,
+            'select' => $selectCols,
         ];
 
         if ($this->editingJoinIndex >= 0 && isset($this->joins[$this->editingJoinIndex])) {
@@ -604,7 +637,7 @@ class CrudConfig extends Component
             $this->joins[] = $entry;
         }
 
-        $this->formDataJoin     = [];
+        $this->formDataJoin = [];
         $this->editingJoinIndex = -1;
     }
 
@@ -619,23 +652,23 @@ class CrudConfig extends Component
         // Rebuild selectRaw from columns array
         $lines = [];
         foreach ($join['select'] ?? [] as $sel) {
-            $lines[] = ($sel['column'] ?? '') . ':' . ($sel['alias'] ?? '');
+            $lines[] = ($sel['column'] ?? '').':'.($sel['alias'] ?? '');
         }
 
         $this->editingJoinIndex = $index;
         $this->formDataJoin = [
-            'type'      => $join['type']     ?? 'left',
-            'table'     => $join['table']    ?? '',
-            'first'     => $join['first']    ?? '',
-            'second'    => $join['second']   ?? '',
-            'distinct'  => $join['distinct'] ?? false,
+            'type' => $join['type'] ?? 'left',
+            'table' => $join['table'] ?? '',
+            'first' => $join['first'] ?? '',
+            'second' => $join['second'] ?? '',
+            'distinct' => $join['distinct'] ?? false,
             'selectRaw' => implode("\n", $lines),
         ];
     }
 
     public function cancelEditJoin(): void
     {
-        $this->formDataJoin     = [];
+        $this->formDataJoin = [];
         $this->editingJoinIndex = -1;
     }
 
@@ -645,7 +678,7 @@ class CrudConfig extends Component
         $this->joins = array_values($this->joins);
 
         if ($this->editingJoinIndex === $index) {
-            $this->formDataJoin     = [];
+            $this->formDataJoin = [];
             $this->editingJoinIndex = -1;
         }
     }
@@ -658,7 +691,7 @@ class CrudConfig extends Component
         }
 
         $this->customFilters[] = $this->formDataFilter;
-        $this->formDataFilter  = [];
+        $this->formDataFilter = [];
     }
 
     public function removeCustomFilter(int $index): void
@@ -675,7 +708,7 @@ class CrudConfig extends Component
         }
 
         $this->conditionStyles[] = $this->formDataStyle;
-        $this->formDataStyle     = [];
+        $this->formDataStyle = [];
     }
 
     public function removeConditionStyle(int $index): void
@@ -687,7 +720,7 @@ class CrudConfig extends Component
 
     public function save(): void
     {
-        $record   = $this->configService->find($this->model, $this->configRoute);
+        $record = $this->configService->find($this->model, $this->configRoute);
         $existing = $record ? ($record->config ?? []) : [];
 
         $this->configService->save($this->model, $this->buildConfigArray($existing), $this->configRoute);
@@ -701,61 +734,61 @@ class CrudConfig extends Component
     protected function buildConfigArray(array $existing = []): array
     {
         return array_merge($existing, [
-            'displayName'     => $this->displayName,
-            'crud'            => $existing['crud']            ?? $this->model,
+            'displayName' => $this->displayName,
+            'crud' => $existing['crud'] ?? $this->model,
             'configLinkLinha' => $this->configLinkLinha,
-            'configEsconderId'=> $existing['configEsconderId'] ?? false,
-            'tableClass'      => $this->tableClass,
-            'theadClass'      => $this->theadClass,
-            'cols'            => $this->formatFieldsForDb(),
-            'customFilters'   => array_values($this->customFilters),
+            'configEsconderId' => $existing['configEsconderId'] ?? false,
+            'tableClass' => $this->tableClass,
+            'theadClass' => $this->theadClass,
+            'cols' => $this->formatFieldsForDb(),
+            'customFilters' => array_values($this->customFilters),
             'contitionStyles' => array_values($this->conditionStyles),
-            'joins'           => array_values($this->joins),
-            'permissions'     => [
-                'create'            => $this->permissionCreate  ?: null,
-                'edit'              => $this->permissionEdit    ?: null,
-                'delete'            => $this->permissionDelete  ?: null,
-                'export'            => $this->permissionExport  ?: null,
-                'restore'           => $this->permissionRestore ?: null,
-                'showCreateButton'  => $this->showCreateButton,
-                'showEditButton'    => $this->showEditButton,
-                'showDeleteButton'  => $this->showDeleteButton,
-                'showTrashButton'   => $this->showTrashButton,
-                'identifier'        => $this->permissionIdentifier ?: $this->getDefaultPermissionIdentifier(),
+            'joins' => array_values($this->joins),
+            'permissions' => [
+                'create' => $this->permissionCreate ?: null,
+                'edit' => $this->permissionEdit ?: null,
+                'delete' => $this->permissionDelete ?: null,
+                'export' => $this->permissionExport ?: null,
+                'restore' => $this->permissionRestore ?: null,
+                'showCreateButton' => $this->showCreateButton,
+                'showEditButton' => $this->showEditButton,
+                'showDeleteButton' => $this->showDeleteButton,
+                'showTrashButton' => $this->showTrashButton,
+                'identifier' => $this->permissionIdentifier ?: $this->getDefaultPermissionIdentifier(),
             ],
-            'cacheStrategy'   => [
+            'cacheStrategy' => [
                 'enabled' => $this->cacheEnabled,
-                'ttl'     => $this->cacheTtl,
-                'tags'    => $existing['cacheStrategy']['tags'] ?? [],
+                'ttl' => $this->cacheTtl,
+                'tags' => $existing['cacheStrategy']['tags'] ?? [],
             ],
-            'exportConfig'    => array_merge($existing['exportConfig'] ?? [], [
-                'enabled'             => true,
-                'asyncThreshold'      => $this->exportAsyncThreshold,
-                'maxRows'             => $this->exportMaxRows,
-                'orientation'         => $this->exportOrientation,
-                'formats'             => ['excel', 'pdf'],
-                'chunkSize'           => 500,
+            'exportConfig' => array_merge($existing['exportConfig'] ?? [], [
+                'enabled' => true,
+                'asyncThreshold' => $this->exportAsyncThreshold,
+                'maxRows' => $this->exportMaxRows,
+                'orientation' => $this->exportOrientation,
+                'formats' => ['excel', 'pdf'],
+                'chunkSize' => 500,
                 'notificationChannel' => 'database',
             ]),
-            'uiPreferences'   => array_merge($existing['uiPreferences'] ?? [], [
-                'theme'             => $this->theme,
-                'compactMode'       => $this->uiCompactMode,
-                'stickyHeader'      => $this->uiStickyHeader,
-                'showTotalizador'   => $this->showTotalizador,
-                'highlightOnHover'  => $existing['uiPreferences']['highlightOnHover'] ?? true,
+            'uiPreferences' => array_merge($existing['uiPreferences'] ?? [], [
+                'theme' => $this->theme,
+                'compactMode' => $this->uiCompactMode,
+                'stickyHeader' => $this->uiStickyHeader,
+                'showTotalizador' => $this->showTotalizador,
+                'highlightOnHover' => $existing['uiPreferences']['highlightOnHover'] ?? true,
             ]),
-            'broadcast'       => [
+            'broadcast' => [
                 'enabled' => $this->broadcastEnabled,
                 'channel' => $this->broadcastChannel ?: null,
-                'event'   => $this->broadcastEvent   ?: null,
+                'event' => $this->broadcastEvent ?: null,
             ],
-            'theme'           => $this->theme,
-            'groupBy'         => $this->groupBy ?: null,
-            'lifecycleHooks'  => [
+            'theme' => $this->theme,
+            'groupBy' => $this->groupBy ?: null,
+            'lifecycleHooks' => [
                 'beforeCreate' => $this->hookBeforeCreate ?: null,
-                'afterCreate'  => $this->hookAfterCreate  ?: null,
+                'afterCreate' => $this->hookAfterCreate ?: null,
                 'beforeUpdate' => $this->hookBeforeUpdate ?: null,
-                'afterUpdate'  => $this->hookAfterUpdate  ?: null,
+                'afterUpdate' => $this->hookAfterUpdate ?: null,
             ],
         ]);
     }
@@ -789,6 +822,6 @@ class CrudConfig extends Component
     protected function getDefaultPermissionIdentifier(): string
     {
         // e.g.: 'Purchase/Order/SalesOrders' → 'pageSalesOrders'
-        return 'page' . class_basename(str_replace('/', '\\', $this->model));
+        return 'page'.class_basename(str_replace('/', '\\', $this->model));
     }
 }

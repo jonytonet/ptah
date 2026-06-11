@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -28,19 +29,20 @@ interface BaseRepositoryInterface
 
     public function find(int|string $id): ?Model;
 
-    /** @throws \Illuminate\Database\Eloquent\ModelNotFoundException */
+    /** @throws ModelNotFoundException */
     public function findOrFail(int|string $id): Model;
 
     /** @param array<string, mixed> $data */
     public function create(array $data): Model;
 
     /**
-     * @param array<string, mixed> $data
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @param  array<string, mixed>  $data
+     *
+     * @throws ModelNotFoundException
      */
     public function update(int|string $id, array $data): Model;
 
-    /** @throws \Illuminate\Database\Eloquent\ModelNotFoundException */
+    /** @throws ModelNotFoundException */
     public function delete(int|string $id): bool;
 
     // ───────────────────────────────── Advanced search ────────────────────────
@@ -55,8 +57,8 @@ interface BaseRepositoryInterface
     public function findAllFieldsAnd(Request $request, array $relations = []): Builder;
 
     /**
-     * @param array<int, string>        $select
-     * @param array<int, array<string>> $conditions
+     * @param  array<int, string>  $select
+     * @param  array<int, array<string>>  $conditions
      */
     public function autocompleteSearch(Request $request, array $select, array $conditions): Builder;
 
@@ -76,16 +78,16 @@ interface BaseRepositoryInterface
     public function findByBuilder(Builder $query, string $column, string $operator = '=', mixed $value = null): Builder;
 
     /**
-     * @param array<int, mixed>  $values
-     * @param array<int, string> $with
+     * @param  array<int, mixed>  $values
+     * @param  array<int, string>  $with
      */
     public function findByIn(string $column, array $values, array $with = []): Collection;
 
     // ───────────────────────────────── Write utilities ────────────────────────
 
     /**
-     * @param array<int, int|string> $ids
-     * @param array<string, mixed>   $data
+     * @param  array<int, int|string>  $ids
+     * @param  array<string, mixed>  $data
      */
     public function updateBatch(array $ids, array $data): int;
 
@@ -116,4 +118,3 @@ interface BaseRepositoryInterface
 
     public function getKeyName(): string;
 }
-

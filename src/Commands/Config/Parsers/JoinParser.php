@@ -6,7 +6,7 @@ class JoinParser
 {
     /**
      * Parse join definition string
-     * 
+     *
      * Format: type:table:first=second:option1=value1
      * Example: left:suppliers:products.supplier_id=suppliers.id:distinct:select=suppliers.name:supplier_name,suppliers.cnpj:supplier_cnpj
      */
@@ -15,7 +15,7 @@ class JoinParser
         $parts = explode(':', $definition);
 
         if (count($parts) < 3) {
-            throw new \InvalidArgumentException("JOIN syntax requires at least: type:table:first=second");
+            throw new \InvalidArgumentException('JOIN syntax requires at least: type:table:first=second');
         }
 
         $config = [

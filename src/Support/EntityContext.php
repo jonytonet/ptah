@@ -33,8 +33,8 @@ readonly class EntityContext
     public string $modelFqn;
 
     /**
-     * @param FieldDefinition[] $fields
-     * @param string $subFolder  Subfolder relative to Models/, e.g. 'Product'. Empty if root.
+     * @param  FieldDefinition[]  $fields
+     * @param  string  $subFolder  Subfolder relative to Models/, e.g. 'Product'. Empty if root.
      */
     public function __construct(
         public string $entity,             // ProductStock
@@ -44,18 +44,18 @@ readonly class EntityContext
         public string $table,              // product_stocks (ou valor de --table)
         public string $rootNamespace,      // App\
         public string $timestamp,          // 2026_02_25_120000
-        public bool   $withViews,          // false quando --api-only
-        public bool   $withSoftDeletes,    // true by default
-        public bool   $force,              // --force
-        public array  $fields,
+        public bool $withViews,          // false quando --api-only
+        public bool $withSoftDeletes,    // true by default
+        public bool $force,              // --force
+        public array $fields,
         public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
-        public bool   $withApi   = false,  // true quando --api ou --api-only
+        public bool $withApi = false,  // true quando --api ou --api-only
     ) {
-        $nsBase = rtrim($rootNamespace, '\\') . '\\Models';
+        $nsBase = rtrim($rootNamespace, '\\').'\\Models';
         $this->modelNamespace = $subFolder
-            ? $nsBase . '\\' . str_replace('/', '\\', $subFolder)
+            ? $nsBase.'\\'.str_replace('/', '\\', $subFolder)
             : $nsBase;
-        $this->modelFqn = $this->modelNamespace . '\\' . $entity;
+        $this->modelFqn = $this->modelNamespace.'\\'.$entity;
     }
 
     /**
@@ -68,7 +68,7 @@ readonly class EntityContext
             return rtrim($baseNamespace, '\\');
         }
 
-        return rtrim($baseNamespace, '\\') . '\\' . str_replace('/', '\\', $this->subFolder);
+        return rtrim($baseNamespace, '\\').'\\'.str_replace('/', '\\', $this->subFolder);
     }
 
     /**
@@ -81,7 +81,7 @@ readonly class EntityContext
             return rtrim($basePath, '/');
         }
 
-        return rtrim($basePath, '/') . '/' . $this->subFolder;
+        return rtrim($basePath, '/').'/'.$this->subFolder;
     }
 
     /**
@@ -92,7 +92,7 @@ readonly class EntityContext
     {
         $base = empty($this->fields)
             ? ['// Add fields here']
-            : array_map(fn(FieldDefinition $f) => "'{$f->name}'", $this->fields);
+            : array_map(fn (FieldDefinition $f) => "'{$f->name}'", $this->fields);
 
         // Audit fields — automatically populated by the HasAuditFields trait
         $base[] = "'created_by'";
@@ -113,7 +113,7 @@ readonly class EntityContext
     {
         $base = empty($this->fields)
             ? ['// \'field\' => \'type\',']
-            : array_map(fn(FieldDefinition $f) => "'{$f->name}' => '{$f->castType()}',", $this->fields);
+            : array_map(fn (FieldDefinition $f) => "'{$f->name}' => '{$f->castType()}',", $this->fields);
 
         // Casts for the audit fields
         $base[] = "'created_by' => 'integer',";
@@ -132,11 +132,11 @@ readonly class EntityContext
     public function migrationColumns(): string
     {
         if (empty($this->fields)) {
-            return "            // Add columns here";
+            return '            // Add columns here';
         }
 
         return implode("\n", array_map(
-            fn(FieldDefinition $f) => $f->migrationLine(),
+            fn (FieldDefinition $f) => $f->migrationLine(),
             $this->fields
         ));
     }
@@ -151,7 +151,7 @@ readonly class EntityContext
         }
 
         return implode("\n            ", array_map(
-            fn(FieldDefinition $f) => $f->validationRuleStore(),
+            fn (FieldDefinition $f) => $f->validationRuleStore(),
             $this->fields
         ));
     }
@@ -166,24 +166,33 @@ readonly class EntityContext
         }
 
         return implode("\n            ", array_map(
-            fn(FieldDefinition $f) => $f->validationRuleUpdate(),
+            fn (FieldDefinition $f) => $f->validationRuleUpdate(),
             $this->fields
         ));
     }
 
     /**
      * Generates DTO properties with PHP types.
+     *
+     * Required (non-nullable) properties are emitted first: PHP 8 deprecates
+     * optional parameters declared before required ones. Reordering is safe
+     * because fromArray() instantiates the DTO with named arguments.
      */
     public function dtoProperties(): string
     {
         if (empty($this->fields)) {
-            return "        // public readonly string \$name,";
+            return '        // public readonly string $name,';
         }
 
+        $ordered = array_merge(
+            array_filter($this->fields, fn (FieldDefinition $f) => ! $f->nullable),
+            array_filter($this->fields, fn (FieldDefinition $f) => $f->nullable),
+        );
+
         return implode("\n", array_map(
-            fn(FieldDefinition $f) => "        public readonly {$f->phpType()} \${$f->name}" .
-                ($f->nullable ? " = null," : ","),
-            $this->fields
+            fn (FieldDefinition $f) => "        public readonly {$f->phpType()} \${$f->name}".
+                ($f->nullable ? ' = null,' : ','),
+            $ordered
         ));
     }
 
@@ -197,8 +206,8 @@ readonly class EntityContext
         }
 
         return implode("\n", array_map(
-            fn(FieldDefinition $f) => "            {$f->name}: \$data['{$f->name}']" .
-                ($f->nullable ? " ?? null," : ","),
+            fn (FieldDefinition $f) => "            {$f->name}: \$data['{$f->name}']".
+                ($f->nullable ? ' ?? null,' : ','),
             $this->fields
         ));
     }
@@ -211,7 +220,7 @@ readonly class EntityContext
     {
         $fkFields = array_values(array_filter(
             $this->fields,
-            fn(FieldDefinition $f) => $f->isForeignKey()
+            fn (FieldDefinition $f) => $f->isForeignKey()
         ));
 
         if (empty($fkFields)) {
@@ -219,17 +228,17 @@ readonly class EntityContext
         }
 
         $methods = array_map(function (FieldDefinition $f) {
-            $methodName   = Str::camel($f->relatedName());
+            $methodName = Str::camel($f->relatedName());
             $relatedModel = $f->relatedModel();
 
             return
-                "    public function {$methodName}(): \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\n" .
-                "    {\n" .
-                "        return \$this->belongsTo({$relatedModel}::class, '{$f->name}');\n" .
-                "    }";
+                "    public function {$methodName}(): \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\n".
+                "    {\n".
+                "        return \$this->belongsTo({$relatedModel}::class, '{$f->name}');\n".
+                '    }';
         }, $fkFields);
 
-        return "\n" . implode("\n\n", $methods) . "\n";
+        return "\n".implode("\n\n", $methods)."\n";
     }
 
     /**
@@ -246,14 +255,14 @@ readonly class EntityContext
     {
         $fkFields = array_values(array_filter(
             $this->fields,
-            fn(FieldDefinition $f) => $f->isForeignKey()
+            fn (FieldDefinition $f) => $f->isForeignKey()
         ));
 
         if (empty($fkFields)) {
             return '';
         }
 
-        $rootNs = rtrim($this->rootNamespace, '\\') . '\\Models';
+        $rootNs = rtrim($this->rootNamespace, '\\').'\\Models';
 
         $lines = array_unique(array_map(
             function (FieldDefinition $f) use ($rootNs): string {
@@ -262,13 +271,13 @@ readonly class EntityContext
                     return 'use Ptah\\Models\\Company;';
                 }
 
-                return "// TODO: use {$rootNs}\\{$f->relatedModel()};" .
+                return "// TODO: use {$rootNs}\\{$f->relatedModel()};".
                     " // check the real namespace — adjust if {$f->relatedModel()} is in a sub-folder";
             },
             $fkFields
         ));
 
-        return implode("\n", $lines) . "\n";
+        return implode("\n", $lines)."\n";
     }
 
     /**

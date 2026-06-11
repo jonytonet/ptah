@@ -20,16 +20,16 @@ class ControllerApiGenerator extends AbstractGenerator
 {
     public function generate(EntityContext $context): GeneratorResult
     {
-        $dir  = $context->subPath(config('ptah.paths.controllers') . '/API');
+        $dir = $context->subPath(config('ptah.paths.controllers').'/API');
         $path = "{$dir}/{$context->entity}ApiController.php";
 
-        $ns         = $context->subNs($context->rootNamespace . 'Http\\Controllers\\API');
-        $requestNs  = $context->subNs($context->rootNamespace . 'Http\\Requests\\API');
-        $serviceFqn = $context->subNs($context->rootNamespace . 'Services') . '\\' . $context->entity . 'Service';
-        $resourceFqn = $context->subNs($context->rootNamespace . 'Http\\Resources') . '\\' . $context->entity . 'Resource';
+        $ns = $context->subNs($context->rootNamespace.'Http\\Controllers\\API');
+        $requestNs = $context->subNs($context->rootNamespace.'Http\\Requests\\API');
+        $serviceFqn = $context->subNs($context->rootNamespace.'Services').'\\'.$context->entity.'Service';
+        $resourceFqn = $context->subNs($context->rootNamespace.'Http\\Resources').'\\'.$context->entity.'Resource';
 
         // Swagger: tag = top-level folder (e.g. 'Catalog') or entity name
-        $swaggerTag  = $this->resolveSwaggerTag($context);
+        $swaggerTag = $this->resolveSwaggerTag($context);
         // Swagger: path = entity plural in kebab-case (e.g. 'products', 'animal-breeds')
         $swaggerPath = Str::kebab($context->entityPlural);
 
@@ -37,16 +37,16 @@ class ControllerApiGenerator extends AbstractGenerator
             path: $path,
             stub: 'controller.api',
             replacements: [
-                'namespace'          => $ns,
-                'service_fqn'        => $serviceFqn,
-                'request_create_fqn' => $requestNs . '\\Create' . $context->entity . 'ApiRequest',
-                'request_update_fqn' => $requestNs . '\\Update' . $context->entity . 'ApiRequest',
-                'resource_fqn'       => $resourceFqn,
-                'entity'             => $context->entity,
-                'entity_lower'       => $context->entityLower,
-                'entities'           => $context->entityPlural,
-                'swagger_tag'        => $swaggerTag,
-                'swagger_path'       => $swaggerPath,
+                'namespace' => $ns,
+                'service_fqn' => $serviceFqn,
+                'request_create_fqn' => $requestNs.'\\Create'.$context->entity.'ApiRequest',
+                'request_update_fqn' => $requestNs.'\\Update'.$context->entity.'ApiRequest',
+                'resource_fqn' => $resourceFqn,
+                'entity' => $context->entity,
+                'entity_lower' => $context->entityLower,
+                'entities' => $context->entityPlural,
+                'swagger_tag' => $swaggerTag,
+                'swagger_path' => $swaggerPath,
             ],
             force: $context->force,
             labelOverride: "Controller API [{$context->entity}ApiController]",

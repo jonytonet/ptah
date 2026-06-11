@@ -133,16 +133,22 @@
                 @endforeach
             @endif
 
-            {{-- Loading indicator --}}
+            {{-- Loading / streaming indicator.
+                 The bubble is the wire:stream target: it starts with the animated
+                 dots and is replaced by the streamed answer as tokens arrive. --}}
             @if($loading)
                 <div class="flex items-start gap-2">
-                    <div class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                    <div class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center mt-0.5">
                         <i class="bx bx-bot text-sm text-primary"></i>
                     </div>
-                    <div class="rounded-2xl rounded-tl-sm bg-gray-100 dark:bg-slate-700 px-3 py-3 flex items-center gap-1 shadow-sm">
-                        <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 0ms"></span>
-                        <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 150ms"></span>
-                        <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 300ms"></span>
+                    <div class="max-w-[85%] rounded-2xl rounded-tl-sm bg-gray-100 dark:bg-slate-700 px-3 py-2 text-sm text-gray-800 dark:text-slate-200 shadow-sm">
+                        <div wire:stream="ai-stream">
+                            <span class="inline-flex items-center gap-1 py-1">
+                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 0ms"></span>
+                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 150ms"></span>
+                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 300ms"></span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             @endif

@@ -26,7 +26,7 @@ class ArrayFilterStrategy implements FilterStrategyInterface
         // Normalise CSV string into array
         if (is_string($value)) {
             $value = array_map('trim', explode(',', $value));
-            $value = array_filter($value, fn($v) => $v !== '');
+            $value = array_filter($value, fn ($v) => $v !== '');
 
             if (empty($value)) {
                 return null;
@@ -34,11 +34,11 @@ class ArrayFilterStrategy implements FilterStrategyInterface
 
             // Returns a new DTO with the corrected value
             return new FilterDTO(
-                field:    $filter->field,
-                value:    array_values($value),
+                field: $filter->field,
+                value: array_values($value),
                 operator: $filter->operator,
-                type:     $filter->type,
-                options:  $filter->options,
+                type: $filter->type,
+                options: $filter->options,
             );
         }
 
@@ -57,13 +57,13 @@ class ArrayFilterStrategy implements FilterStrategyInterface
             return $query;
         }
 
-        $field    = $normalized->field;
-        $value    = is_array($normalized->value) ? $normalized->value : [$normalized->value];
+        $field = $normalized->field;
+        $value = is_array($normalized->value) ? $normalized->value : [$normalized->value];
         $operator = strtoupper($normalized->operator);
 
         return match (true) {
             $operator === 'NOT IN' => $query->whereNotIn($field, $value),
-            default                => $query->whereIn($field, $value),
+            default => $query->whereIn($field, $value),
         };
     }
 }

@@ -61,7 +61,7 @@ php artisan serve
 npm run dev  # outro terminal
 ```
 
-**Login padrão:** `admin@admin.com` / `admin@123`
+**Login padrão:** `admin@admin.com` / senha definida em `PTAH_ADMIN_PASSWORD` (ou senha aleatória exibida uma vez na instalação)
 
 ---
 
@@ -226,7 +226,7 @@ Após gerar todas as entidades, os Models contêm TODOs marcando relacionamentos
 - [ ] Todos os relacionamentos nos Models foram descomentados (TODOs resolvidos)
 - [ ] Todos os CRUDs abrem sem erro (teste criar/editar/deletar)
 - [ ] Relacionamentos funcionam (ex: dropdown de categoria no Product)
-- [ ] Login funciona (`admin@admin.com` / `admin@123`)
+- [ ] Login funciona (`admin@admin.com` / senha do `PTAH_ADMIN_PASSWORD` ou a gerada na instalação)
 - [ ] API Swagger disponível em `/api/documentation`
 
 ### Comandos de Verificação
@@ -289,7 +289,7 @@ php artisan ptah:menu-sync --fresh
 # 4. Validação (2 min)
 php artisan serve
 # Acessar http://localhost:8000
-# Testar login (admin@admin.com / admin@123)
+# Testar login (admin@admin.com / senha do PTAH_ADMIN_PASSWORD ou a gerada na instalação)
 # Navegar pelos CRUDs e validar que CRUD abre, cria, edita e exclui
 # Confirmar que o menu está populado na sidebar
 ```

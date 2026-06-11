@@ -2,7 +2,7 @@
 
 **Pacote:** `jonytonet/ptah`  
 **Minimum version:** see tags in the repository  
-**Laravel:** 11+ | **Livewire:** 3.x
+**Laravel:** 11+ | **Livewire:** 4
 
 ---
 
@@ -838,7 +838,8 @@ Full section added to `config/ptah.php`:
     'middleware'      => ['web', 'auth'],
     'admin_name'     => env('PTAH_ADMIN_NAME', 'Admin'),
     'admin_email'    => env('PTAH_ADMIN_EMAIL', 'admin@ptah.test'),
-    'admin_password' => env('PTAH_ADMIN_PASSWORD', 'ptah@admin'),
+    // No insecure default: when unset, a strong random password is generated and shown once at install.
+    'admin_password' => env('PTAH_ADMIN_PASSWORD'),
 ],
 ```
 

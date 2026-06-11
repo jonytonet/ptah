@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Seeders;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -27,15 +29,15 @@ class DefaultAdminSeeder extends Seeder
     {
         // ── 1. Default company ─────────────────────────────────────────────
         $companyName = config('app.name', 'Company');
-        $company     = Company::withTrashed()->where('is_default', true)->first();
+        $company = Company::withTrashed()->where('is_default', true)->first();
 
-        if (!$company) {
+        if (! $company) {
             $company = Company::create([
-                'name'       => $companyName,
-                'slug'       => Str::slug($companyName),
-                'label'      => strtoupper(Str::substr(Str::ascii($companyName), 0, 4)),
+                'name' => $companyName,
+                'slug' => Str::slug($companyName),
+                'label' => strtoupper(Str::substr(Str::ascii($companyName), 0, 4)),
                 'is_default' => true,
-                'is_active'  => true,
+                'is_active' => true,
             ]);
             $this->line("  <info>✔</info> Default company created: <comment>{$company->name}</comment>");
         } else {
@@ -49,9 +51,9 @@ class DefaultAdminSeeder extends Seeder
         );
 
         if ($department->wasRecentlyCreated) {
-            $this->line("  <info>✔</info> Department created: <comment>Administration</comment>");
+            $this->line('  <info>✔</info> Department created: <comment>Administration</comment>');
         } else {
-            $this->line("  <comment>→</comment> Department: <comment>Administration</comment>");
+            $this->line('  <comment>→</comment> Department: <comment>Administration</comment>');
         }
 
         // ── 3. MASTER Role ────────────────────────────────────────────────
@@ -59,36 +61,44 @@ class DefaultAdminSeeder extends Seeder
             ->where('is_master', true)
             ->first();
 
-        if (!$masterRole) {
+        if (! $masterRole) {
             $masterRole = Role::create([
-                'name'          => 'MASTER',
-                'description'   => 'Role with full system access. Cannot be deleted.',
-                'color'         => '#fbbf24',
+                'name' => 'MASTER',
+                'description' => 'Role with full system access. Cannot be deleted.',
+                'color' => '#fbbf24',
                 'department_id' => $department->id,
-                'is_master'     => true,
-                'is_active'     => true,
+                'is_master' => true,
+                'is_active' => true,
             ]);
-            $this->line("  <info>✔</info> MASTER role created.");
+            $this->line('  <info>✔</info> MASTER role created.');
         } else {
             $this->line("  <comment>→</comment> MASTER role: <comment>{$masterRole->name}</comment>");
         }
 
         // ── 4. Admin User ────────────────────────────────────────────────
-        $adminEmail    = config('ptah.permissions.admin_email', 'admin@admin.com');
-        $adminName     = config('ptah.permissions.admin_name', 'Administrator');
-        $adminPassword = config('ptah.permissions.admin_password') ?: 'admin@123';
+        $adminEmail = config('ptah.permissions.admin_email', 'admin@admin.com');
+        $adminName = config('ptah.permissions.admin_name', 'Administrator');
+        // No insecure hardcoded fallback: generate a strong random password when
+        // none is configured, and surface it so it isn't silently lost.
+        $adminPassword = config('ptah.permissions.admin_password');
+        $generatedPassword = false;
+        if (empty($adminPassword)) {
+            $adminPassword = Str::password(20);
+            $generatedPassword = true;
+        }
 
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $userModel */
+        /** @var class-string<Model> $userModel */
         $userModel = config('ptah.permissions.user_model', 'App\Models\User');
 
-        if (!class_exists($userModel)) {
+        if (! class_exists($userModel)) {
             $this->line("  <error>✘ User model not found: {$userModel}\n    Set PTAH_USER_MODEL in .env</error>");
+
             return;
         }
 
         // Check whether the model uses SoftDeletes before calling withTrashed()
         $usesSoftDeletes = in_array(
-            \Illuminate\Database\Eloquent\SoftDeletes::class,
+            SoftDeletes::class,
             class_uses_recursive($userModel),
             true
         );
@@ -99,13 +109,16 @@ class DefaultAdminSeeder extends Seeder
 
         $admin = $adminQuery->first()
             ?? $userModel::create([
-                'name'     => $adminName,
-                'email'    => $adminEmail,
+                'name' => $adminName,
+                'email' => $adminEmail,
                 'password' => Hash::make($adminPassword),
             ]);
 
         if ($admin->wasRecentlyCreated ?? false) {
             $this->line("  <info>✔</info> Admin user created: <comment>{$adminEmail}</comment>");
+            if ($generatedPassword) {
+                $this->line("  <comment>→</comment> Generated password (copy now, shown once): <comment>{$adminPassword}</comment>");
+            }
         } else {
             $this->line("  <comment>→</comment> Admin user: <comment>{$adminEmail}</comment>");
         }
@@ -113,8 +126,8 @@ class DefaultAdminSeeder extends Seeder
         // ── 5. UserRole: admin × MASTER × default company ─────────────────────
         $userRole = UserRole::withTrashed()->firstOrCreate(
             [
-                'user_id'    => $admin->id,
-                'role_id'    => $masterRole->id,
+                'user_id' => $admin->id,
+                'role_id' => $masterRole->id,
                 'company_id' => $company->id,
             ],
             ['is_active' => true]
@@ -123,7 +136,7 @@ class DefaultAdminSeeder extends Seeder
         if ($userRole->wasRecentlyCreated) {
             $this->line("  <info>✔</info> Binding admin × MASTER × {$company->name} created.");
         } else {
-            $this->line("  <comment>→</comment> Binding already exists.");
+            $this->line('  <comment>→</comment> Binding already exists.');
         }
 
         // Restore soft-deleted if necessary

@@ -19,26 +19,27 @@ class FilterWizard
      */
     public function run(?array $existingFilter = null): ?array
     {
-        $this->command->info("=== Filter Configuration Wizard ===");
+        $this->command->info('=== Filter Configuration Wizard ===');
         $this->command->newLine();
 
-        $field = $this->command->ask("Filter field name", $existingFilter['colsFilterField'] ?? null);
-        
-        if (!$field) {
-            $this->command->warn("Field name is required.");
+        $field = $this->command->ask('Filter field name', $existingFilter['colsFilterField'] ?? null);
+
+        if (! $field) {
+            $this->command->warn('Field name is required.');
+
             return null;
         }
 
-        $label = $this->command->ask("Filter label", $existingFilter['colsFilterLabel'] ?? ucfirst($field));
-        
+        $label = $this->command->ask('Filter label', $existingFilter['colsFilterLabel'] ?? ucfirst($field));
+
         $type = $this->command->choice(
-            "Filter type",
+            'Filter type',
             CrudConfigEnums::FILTER_TYPES,
             $existingFilter['colsFilterType'] ?? 'text'
         );
 
         $operator = $this->command->choice(
-            "Comparison operator",
+            'Comparison operator',
             CrudConfigEnums::OPERATORS,
             $existingFilter['colsFilterOperator'] ?? '='
         );
@@ -60,16 +61,16 @@ class FilterWizard
         }
 
         // Relation filter
-        if ($this->command->confirm("Filter through relation (whereHas)?", false)) {
-            $filter['colsFilterWhereHas'] = $this->command->ask("Relation name");
-            $filter['colsFilterRelationField'] = $this->command->ask("Field in related table", $field);
-            
+        if ($this->command->confirm('Filter through relation (whereHas)?', false)) {
+            $filter['colsFilterWhereHas'] = $this->command->ask('Relation name');
+            $filter['colsFilterRelationField'] = $this->command->ask('Field in related table', $field);
+
             $aggregate = $this->command->choice(
-                "Aggregate function (optional)",
+                'Aggregate function (optional)',
                 array_merge(['none'], CrudConfigEnums::AGGREGATES),
                 'none'
             );
-            
+
             if ($aggregate !== 'none') {
                 $filter['colsFilterAggregate'] = $aggregate;
             }
@@ -77,7 +78,7 @@ class FilterWizard
 
         $this->previewFilter($filter);
 
-        if (!$this->command->confirm("Save this filter?", true)) {
+        if (! $this->command->confirm('Save this filter?', true)) {
             return $this->run($filter);
         }
 
@@ -89,12 +90,12 @@ class FilterWizard
      */
     protected function askSelectOptions(): array
     {
-        $this->command->info("Enter filter options:");
+        $this->command->info('Enter filter options:');
         $options = [];
 
-        while ($this->command->confirm("Add option?", true)) {
-            $value = $this->command->ask("Value");
-            $label = $this->command->ask("Label", ucfirst($value));
+        while ($this->command->confirm('Add option?', true)) {
+            $value = $this->command->ask('Value');
+            $label = $this->command->ask('Label', ucfirst($value));
             $options[$value] = $label;
         }
 
@@ -107,9 +108,9 @@ class FilterWizard
     protected function askSearchDropdownOptions(): array
     {
         return [
-            'colsFilterSdTable' => $this->command->ask("Search table"),
-            'colsFilterSdSelectColumn' => $this->command->ask("Display column", 'name'),
-            'colsFilterSdValueColumn' => $this->command->ask("Value column", 'id'),
+            'colsFilterSdTable' => $this->command->ask('Search table'),
+            'colsFilterSdSelectColumn' => $this->command->ask('Display column', 'name'),
+            'colsFilterSdValueColumn' => $this->command->ask('Value column', 'id'),
         ];
     }
 
@@ -119,12 +120,12 @@ class FilterWizard
     protected function previewFilter(array $filter): void
     {
         $this->command->newLine();
-        $this->command->info("=== Filter Preview ===");
+        $this->command->info('=== Filter Preview ===');
         $this->command->table(
             ['Property', 'Value'],
-            collect($filter)->map(fn($value, $key) => [
+            collect($filter)->map(fn ($value, $key) => [
                 $key,
-                is_array($value) ? json_encode($value) : $value
+                is_array($value) ? json_encode($value) : $value,
             ])->toArray()
         );
         $this->command->newLine();

@@ -17,7 +17,7 @@ abstract class BaseDTO
     /**
      * Creates a DTO instance from a plain data array.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     abstract public static function fromArray(array $data): static;
 

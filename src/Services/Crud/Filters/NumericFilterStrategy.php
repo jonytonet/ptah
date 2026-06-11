@@ -43,8 +43,8 @@ class NumericFilterStrategy implements FilterStrategyInterface
         }
 
         $operator = strtoupper($normalized->operator);
-        $field    = $normalized->field;
-        $value    = $normalized->value;
+        $field = $normalized->field;
+        $value = $normalized->value;
 
         // Automatic BETWEEN if value is an array [from, to]
         if (is_array($value) && count($value) === 2) {
@@ -66,12 +66,12 @@ class NumericFilterStrategy implements FilterStrategyInterface
         }
 
         return match (true) {
-            $operator === 'IN' && is_array($value)     => $query->whereIn($field, $value),
+            $operator === 'IN' && is_array($value) => $query->whereIn($field, $value),
             $operator === 'NOT IN' && is_array($value) => $query->whereNotIn($field, $value),
             $operator === 'BETWEEN' && is_string($value) => $this->applyBetweenString($query, $field, $value),
-            $operator === 'IS NULL'                    => $query->whereNull($field),
-            $operator === 'IS NOT NULL'                => $query->whereNotNull($field),
-            default                                    => $query->where($field, $normalized->operator, (float) $value),
+            $operator === 'IS NULL' => $query->whereNull($field),
+            $operator === 'IS NOT NULL' => $query->whereNotNull($field),
+            default => $query->where($field, $normalized->operator, (float) $value),
         };
     }
 

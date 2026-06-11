@@ -18,6 +18,7 @@
  *     - links: itens dentro de cada grupo
  *
  * @generated {{ now }}
+ *
  * @see https://boxicons.com/ (ícones disponíveis)
  */
 
@@ -76,25 +77,25 @@ return [
             ],
         ],
 
-        /**
-         * Novos grupos serão adicionados automaticamente aqui pelo ptah:forge.
-         *
-         * Exemplo de estrutura após rodar:
-         *   php artisan ptah:forge Health/VaccinationType
-         *
-         * 'health' => [
-         *     'text' => 'Saúde',
-         *     'icon' => 'bx bx-plus-medical',
-         *     'order' => 40,
-         *     'links' => [
-         *         [
-         *             'text' => 'Tipos de Vacina',
-         *             'url' => '/vaccination_type',
-         *             'icon' => 'bx bx-shield-plus',
-         *             'order' => 1,
-         *         ],
-         *     ],
-         * ],
-         */
+    /**
+     * Novos grupos serão adicionados automaticamente aqui pelo ptah:forge.
+     *
+     * Exemplo de estrutura após rodar:
+     *   php artisan ptah:forge Health/VaccinationType
+     *
+     * 'health' => [
+     *     'text' => 'Saúde',
+     *     'icon' => 'bx bx-plus-medical',
+     *     'order' => 40,
+     *     'links' => [
+     *         [
+     *             'text' => 'Tipos de Vacina',
+     *             'url' => '/vaccination_type',
+     *             'icon' => 'bx bx-shield-plus',
+     *             'order' => 1,
+     *         ],
+     *     ],
+     * ],
+     */
     ],
 ];

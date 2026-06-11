@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Permission;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -27,35 +28,44 @@ class UserPermissionList extends Component
     }
 
     // ── Lista ──────────────────────────────────────────────────────────
-    public string $search    = '';
-    public int    $filterRole = 0;
-    public int    $filterCompany = 0;
+    public string $search = '';
+
+    public int $filterRole = 0;
+
+    public int $filterCompany = 0;
 
     // ── Modal de bind user-role ────────────────────────────────────────
-    public bool  $showModal    = false;
-    public ?int  $bindingUserId = null;
+    public bool $showModal = false;
+
+    public ?int $bindingUserId = null;
+
     public string $bindingUserName = '';
 
     /** @var array[] Roles already assigned to the user */
     public array $assignedRoles = [];
 
     /** Novo bind a adicionar */
-    public int   $newRoleId    = 0;
-    public int   $newCompanyId = 0;
+    public int $newRoleId = 0;
+
+    public int $newCompanyId = 0;
 
     public string $successMsg = '';
-    public string $errorMsg   = '';
 
-    public function updatingSearch(): void { $this->resetPage(); }
+    public string $errorMsg = '';
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
 
     // ── User role management modal ──────────────────────────────────────
 
     public function openUserModal(int $userId, string $userName): void
     {
-        $this->bindingUserId   = $userId;
+        $this->bindingUserId = $userId;
         $this->bindingUserName = $userName;
-        $this->newRoleId       = 0;
-        $this->newCompanyId    = 0;
+        $this->newRoleId = 0;
+        $this->newCompanyId = 0;
         $this->loadAssignedRoles();
         $this->showModal = true;
     }
@@ -67,11 +77,11 @@ class UserPermissionList extends Component
             ->active()
             ->get()
             ->map(fn (UserRole $ur) => [
-                'id'           => $ur->id,
-                'role_id'      => $ur->role_id,
-                'role_name'    => $ur->role?->name ?? '—',
-                'role_master'  => $ur->role?->is_master ?? false,
-                'company_id'   => $ur->company_id,
+                'id' => $ur->id,
+                'role_id' => $ur->role_id,
+                'role_name' => $ur->role?->name ?? '—',
+                'role_master' => $ur->role?->is_master ?? false,
+                'company_id' => $ur->company_id,
                 'company_name' => $ur->company?->name ?? 'Global',
             ])
             ->toArray();
@@ -79,8 +89,9 @@ class UserPermissionList extends Component
 
     public function addRole(): void
     {
-        if (!$this->newRoleId) {
+        if (! $this->newRoleId) {
             $this->errorMsg = 'Selecione um role.';
+
             return;
         }
 
@@ -88,11 +99,11 @@ class UserPermissionList extends Component
             $companyIds = $this->newCompanyId ? [$this->newCompanyId] : [];
             $this->permissionService->syncRole($this->bindingUserId, $this->newRoleId, $companyIds);
             $this->successMsg = 'Role adicionado.';
-            $this->newRoleId  = 0;
+            $this->newRoleId = 0;
             $this->newCompanyId = 0;
             $this->loadAssignedRoles();
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Erro: '.$e->getMessage();
         }
     }
 
@@ -103,6 +114,7 @@ class UserPermissionList extends Component
 
             if ($ur->role?->is_master) {
                 $this->errorMsg = 'Cannot remove the MASTER role from a user directly.';
+
                 return;
             }
 
@@ -111,7 +123,7 @@ class UserPermissionList extends Component
             $this->loadAssignedRoles();
             $this->permissionService->clearCache($this->bindingUserId);
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: ' . $e->getMessage();
+            $this->errorMsg = 'Erro: '.$e->getMessage();
         }
     }
 
@@ -120,10 +132,10 @@ class UserPermissionList extends Component
     #[Computed]
     public function rows(): LengthAwarePaginator
     {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $userModel */
+        /** @var class-string<Model> $userModel */
         $userModel = config('ptah.permissions.user_model', 'App\Models\User');
 
-        if (!class_exists($userModel)) {
+        if (! class_exists($userModel)) {
             return new LengthAwarePaginator([], 0, 20);
         }
 
@@ -138,10 +150,9 @@ class UserPermissionList extends Component
         return $query
             ->when($this->search, fn ($q) => $q->where(function ($q2) {
                 $q2->where('name', 'like', "%{$this->search}%")
-                   ->orWhere('email', 'like', "%{$this->search}%");
+                    ->orWhere('email', 'like', "%{$this->search}%");
             }))
-            ->when($this->filterRole, fn ($q) => $q->whereHas('ptahUserRoles', fn ($q2) =>
-                $q2->where('role_id', $this->filterRole)->active()
+            ->when($this->filterRole, fn ($q) => $q->whereHas('ptahUserRoles', fn ($q2) => $q2->where('role_id', $this->filterRole)->active()
             ))
             ->orderBy('name')
             ->paginate(25);
@@ -162,8 +173,8 @@ class UserPermissionList extends Component
     public function render()
     {
         return view('ptah::livewire.permission.user-permission-list', [
-            'rows'      => $this->rows,
-            'roles'     => $this->roles,
+            'rows' => $this->rows,
+            'roles' => $this->roles,
             'companies' => $this->companies,
         ]);
     }

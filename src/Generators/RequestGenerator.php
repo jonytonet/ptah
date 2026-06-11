@@ -21,11 +21,13 @@ class RequestGenerator extends AbstractGenerator
         // generateStore/Update and generateCreateApi/UpdateApi directly.
         if ($context->withApi && ! $context->withViews) {
             $this->generateCreateApi($context);
+
             return $this->generateUpdateApi($context);
         }
 
         // Web-only
         $this->generateStore($context);
+
         return $this->generateUpdate($context);
     }
 
@@ -33,16 +35,16 @@ class RequestGenerator extends AbstractGenerator
 
     public function generateStore(EntityContext $context): GeneratorResult
     {
-        $path = $context->subPath(config('ptah.paths.requests')) . "/Store{$context->entity}Request.php";
-        $ns   = $context->subNs($context->rootNamespace . 'Http\\Requests');
+        $path = $context->subPath(config('ptah.paths.requests'))."/Store{$context->entity}Request.php";
+        $ns = $context->subNs($context->rootNamespace.'Http\\Requests');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.store',
             replacements: [
                 'namespace' => $ns,
-                'entity'    => $context->entity,
-                'rules'     => $context->validationRulesStore(),
+                'entity' => $context->entity,
+                'rules' => $context->validationRulesStore(),
             ],
             force: $context->force,
             labelOverride: "Request [Store{$context->entity}]",
@@ -51,16 +53,16 @@ class RequestGenerator extends AbstractGenerator
 
     public function generateUpdate(EntityContext $context): GeneratorResult
     {
-        $path = $context->subPath(config('ptah.paths.requests')) . "/Update{$context->entity}Request.php";
-        $ns   = $context->subNs($context->rootNamespace . 'Http\\Requests');
+        $path = $context->subPath(config('ptah.paths.requests'))."/Update{$context->entity}Request.php";
+        $ns = $context->subNs($context->rootNamespace.'Http\\Requests');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.update',
             replacements: [
                 'namespace' => $ns,
-                'entity'    => $context->entity,
-                'rules'     => $context->validationRulesUpdate(),
+                'entity' => $context->entity,
+                'rules' => $context->validationRulesUpdate(),
             ],
             force: $context->force,
             labelOverride: "Request [Update{$context->entity}]",
@@ -72,16 +74,16 @@ class RequestGenerator extends AbstractGenerator
     public function generateCreateApi(EntityContext $context): GeneratorResult
     {
         $basePath = config('ptah.paths.requests');
-        $path     = $context->subPath("{$basePath}/API") . "/Create{$context->entity}ApiRequest.php";
-        $ns       = $context->subNs($context->rootNamespace . 'Http\\Requests\\API');
+        $path = $context->subPath("{$basePath}/API")."/Create{$context->entity}ApiRequest.php";
+        $ns = $context->subNs($context->rootNamespace.'Http\\Requests\\API');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.create.api',
             replacements: [
                 'namespace' => $ns,
-                'entity'    => $context->entity,
-                'rules'     => $context->validationRulesStore(),
+                'entity' => $context->entity,
+                'rules' => $context->validationRulesStore(),
             ],
             force: $context->force,
             labelOverride: "Request API [Create{$context->entity}ApiRequest]",
@@ -91,16 +93,16 @@ class RequestGenerator extends AbstractGenerator
     public function generateUpdateApi(EntityContext $context): GeneratorResult
     {
         $basePath = config('ptah.paths.requests');
-        $path     = $context->subPath("{$basePath}/API") . "/Update{$context->entity}ApiRequest.php";
-        $ns       = $context->subNs($context->rootNamespace . 'Http\\Requests\\API');
+        $path = $context->subPath("{$basePath}/API")."/Update{$context->entity}ApiRequest.php";
+        $ns = $context->subNs($context->rootNamespace.'Http\\Requests\\API');
 
         return $this->writeFile(
             path: $path,
             stub: 'request.update.api',
             replacements: [
                 'namespace' => $ns,
-                'entity'    => $context->entity,
-                'rules'     => $context->validationRulesUpdate(),
+                'entity' => $context->entity,
+                'rules' => $context->validationRulesUpdate(),
             ],
             force: $context->force,
             labelOverride: "Request API [Update{$context->entity}ApiRequest]",

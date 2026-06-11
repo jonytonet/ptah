@@ -360,17 +360,25 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 
 **Hybrid System:** Supports **two syntaxes**:
 
-1. **Inline Code (eval):** For simple, fast logic
-   ```php
-   $data['status'] = 'pending';
-   Log::info('Creating product');
+1. **Inline expression (sandboxed):** For simple data shaping. A single Symfony
+   ExpressionLanguage expression — **not** arbitrary PHP. It receives `data`,
+   `record` and `user`; if it returns an array, that array becomes the form data.
+   ```text
+   merge(data, {'status': 'pending', 'uuid': uuid()})
    ```
 
-2. **PHP Classes (recommended):** For complex, testable logic with autocomplete
+2. **PHP Classes (recommended):** For complex logic, side effects (events, cache,
+   logging), testable code with autocomplete.
    ```php
    @ProductHooks::beforeCreate
    @App\CrudHooks\ProductHooks
    ```
+
+> ⚠️ **Breaking change (security):** inline hooks no longer run arbitrary PHP via
+> `eval()`. They are now sandboxed expressions, eliminating the RCE risk. Inline
+> can only **reshape `data`**; anything with side effects (dispatching events,
+> writing to cache/logs, loading relations) must move to a **hook class**. Existing
+> inline PHP from older versions will fail safely and be logged — migrate it to a class.
 
 **Interface:**
 - 4 textareas with code editor
@@ -389,38 +397,34 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 
 ---
 
-### 📝 **Syntax 1: Inline Code (eval)**
+### 📝 **Syntax 1: Inline expression (sandboxed)**
 
-Write PHP code directly in the modal. Ideal for simple logic.
+Write a single expression in the modal. Ideal for setting/normalizing values on
+the `before*` hooks. The expression is evaluated with Symfony ExpressionLanguage —
+it cannot call arbitrary PHP. Available variables: `data`, `record`, `user`.
+Available functions: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`.
+If the expression returns an array, it becomes the new form data.
 
 **beforeCreate** — Set default values:
-```php
-$data['status'] = 'pending';
-$data['uuid'] = \Illuminate\Support\Str::uuid();
-Log::info('Creating new product');
+```text
+merge(data, {'status': 'pending', 'uuid': uuid()})
 ```
 
-**afterCreate** — Dispatch events:
-```php
-Log::info('Product created: ' . $record->id);
-event(new \App\Events\ProductCreated($record));
-cache()->put('latest_product', $record->id, 3600);
+**beforeCreate** — Derive a slug from another field:
+```text
+merge(data, {'slug': slug(data['name'])})
 ```
 
-**beforeUpdate** — Custom validation:
-```php
-if ($record->status === 'draft' && isset($data['status']) && $data['status'] === 'published') {
-    $data['published_at'] = now();
-    $data['published_by'] = auth()->id();
-}
+**beforeUpdate** — Conditional value (ternary + array access supported):
+```text
+record.status == 'draft' and data['status'] == 'published'
+    ? merge(data, {'published_at': now()})
+    : data
 ```
 
-**afterUpdate** — Invalidate cache:
-```php
-cache()->forget('product_' . $record->id);
-cache()->tags(['products'])->flush();
-$record->load('category', 'tags');
-```
+> **`after*` hooks and side effects:** dispatching events, writing to cache/logs or
+> loading relations cannot be done inline anymore. Use a **hook class** (Syntax 2)
+> for those — see the examples below.
 
 ---
 
@@ -532,36 +536,32 @@ Or with full namespace:
 
 ### 🔒 **Security and Error Handling**
 
-**Inline Code (eval):**
-
-⚠️ **IMPORTANT:** The code is executed with `eval()` in an isolated closure.
+**Inline expression (sandboxed):**
 
 ✅ **Implemented protections:**
+- Evaluated with Symfony ExpressionLanguage — **no `eval()`, no arbitrary PHP, no RCE**
+- Only the whitelisted variables (`data`, `record`, `user`) and functions (`merge`, `now`, `upper`, `lower`, `slug`, `uuid`) are reachable
 - Automatic try-catch — errors do not break the save()
 - Detailed error logging in `storage/logs/laravel.log`
 - Modal access restricted via `@ptahCan('configCrud', 'read')`
-- Isolated context — variables limited to the hook scope
 
 **PHP Classes:**
 
-✅ **More secure:**
-- No eval() — code compiled by PHP
+✅ **Best for anything non-trivial:**
+- Full PHP — side effects (events, cache, logging), validation, queries
 - Syntax validation by IDE and CI/CD
-- Errors detected at development time
+- Testable with PHPUnit
 - class-not-found and method-not-found handled automatically
 
-**Example error log (inline):**
+**Example error log (inline expression):**
 
 ```
 [2026-03-04 15:30:45] local.ERROR: [BaseCrud] Lifecycle hook 'beforeCreate' failed for model App\Models\Product
 {
     "hook": "beforeCreate",
     "model": "App\\Models\\Product",
-    "error": "Undefined variable $foo",
-    "file": "eval()'d code",
-    "line": 1,
-    "trace": "...",
-    "code": "$data['test'] = $foo;"
+    "error": "Variable \"foo\" is not valid around position 1 ...",
+    "code": "merge(data, {'x': foo})"
 }
 ```
 
@@ -579,36 +579,36 @@ Or with full namespace:
 }
 ```
 
-**Restrictions (inline code):**
+**Restrictions (inline expression):**
 
-❌ **Does not work:**
-- `return` to interrupt execution (use exceptions if needed)
-- Access to undocumented external variables
-- Declaration of classes or functions
+❌ **Does not work (use a hook class instead):**
+- Calling Laravel facades or any function other than the whitelisted helpers
+- Dispatching events, jobs, notifications
+- Writing to cache/logs or executing SQL queries
+- Statements, assignments, loops, `return` — it is a single expression
 
 ✅ **Works:**
-- Modify `$data` by reference in `before*` hooks
-- Access `$record` to read record data
-- Use Laravel facades (`Log`, `Cache`, `DB`, etc)
-- Dispatch events, jobs, notifications
-- Execute additional SQL queries
+- Reshape the form data on `before*` hooks: return an array (use `merge()`)
+- Read `record` and `user` properties (e.g. `record.status`, `user.id`)
+- Conditionals via the ternary operator and `and`/`or`
+- Helpers: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`
 
 ---
 
 ### 💾 **Saved JSON**
 
-**Inline code:**
+**Inline expression:**
 
 ```json
 {
   "lifecycleHooks": {
-    "beforeCreate": "$data['status'] = 'pending';",
-    "afterCreate": "Log::info('Created: ' . $record->id);",
-    "beforeUpdate": "if ($record->isDirty('price')) { $data['price_updated_at'] = now(); }",
-    "afterUpdate": "cache()->forget('product_' . $record->id);"
+    "beforeCreate": "merge(data, {'status': 'pending', 'uuid': uuid()})",
+    "beforeUpdate": "data['status'] == 'published' ? merge(data, {'published_at': now()}) : data"
   }
 }
 ```
+
+> `after*` hooks need side effects, so they belong in a hook class, not inline.
 
 **PHP classes:**
 
@@ -628,10 +628,10 @@ Or with full namespace:
 ```json
 {
   "lifecycleHooks": {
-    "beforeCreate": "@ProductHooks",
-    "afterCreate": "Log::info('Simple log');",
+    "beforeCreate": "merge(data, {'status': 'pending'})",
+    "afterCreate": "@ProductHooks::afterCreate",
     "beforeUpdate": "@App\\Services\\ComplexValidator::validate",
-    "afterUpdate": "cache()->flush();"
+    "afterUpdate": "@ProductHooks::afterUpdate"
   }
 }
 ```

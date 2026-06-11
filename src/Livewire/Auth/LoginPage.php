@@ -39,11 +39,12 @@ class LoginPage extends Component
         $this->validate();
         $this->errorMessage = '';
 
-        $throttleKey = Str::lower($this->email) . '|' . request()->ip();
+        $throttleKey = Str::lower($this->email).'|'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             $this->errorMessage = trans('ptah::ui.auth_too_many_attempts', ['seconds' => $seconds]);
+
             return;
         }
 
@@ -51,6 +52,7 @@ class LoginPage extends Component
             RateLimiter::hit($throttleKey);
             $this->errorMessage = trans('ptah::ui.auth_invalid_credentials');
             $this->reset('password');
+
             return;
         }
 
@@ -63,6 +65,7 @@ class LoginPage extends Component
             Session::put('ptah.2fa.user_id', $user->getKey());
             Auth::logout();
             $this->redirect(route('ptah.auth.two-factor'));
+
             return;
         }
 

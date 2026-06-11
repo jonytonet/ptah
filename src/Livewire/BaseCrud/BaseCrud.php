@@ -41,50 +41,50 @@ use Ptah\Services\Crud\FormValidatorService;
  *  - CustomFilters with whereHas
  *
  * Usage:
+ *
  *   @livewire('ptah-base-crud', ['model' => 'Product'])
  */
 class BaseCrud extends Component
 {
-    use WithPagination;
-    use WithFileUploads;
-
-    // Lifecycle, configuration reload
-    use HasCrudLifecycle;
-
-    // Data querying, filtering, totals
-    use HasCrudQuery;
-
-    // Create / edit modal and cell helpers
-    use HasCrudForm;
-
-    // Delete / restore / soft-delete
-    use HasCrudDeletion;
-
-    // Sort, search, date quick-filters, advanced search, named filters
-    use HasCrudFilters;
+    // Bulk actions (select-all, bulk-delete, custom actions)
+    use HasCrudBulkActions;
 
     // Column visibility and ordering
     use HasCrudColumns;
 
-    // SearchDropdown (inline + filter-panel)
-    use HasCrudSearchDropdown;
+    // Delete / restore / soft-delete
+    use HasCrudDeletion;
 
     // Export (sync / async)
     use HasCrudExport;
 
-    // Bulk actions (select-all, bulk-delete, custom actions)
-    use HasCrudBulkActions;
+    // Sort, search, date quick-filters, advanced search, named filters
+    use HasCrudFilters;
+
+    // Create / edit modal and cell helpers
+    use HasCrudForm;
+
+    // Lifecycle, configuration reload
+    use HasCrudLifecycle;
 
     // User preferences (save / load / defaults)
     use HasCrudPreferences;
 
+    // Data querying, filtering, totals
+    use HasCrudQuery;
+
     // Cell renderers, row styles, helper formatters
     use HasCrudRenderers;
+
+    // SearchDropdown (inline + filter-panel)
+    use HasCrudSearchDropdown;
+    use WithFileUploads;
+    use WithPagination;
 
     // ── Configuration ──────────────────────────────────────────────────────────
 
     /** Model identifier (e.g. "Product", "Purchase/Order/PurchaseOrders") */
-    public string $model       = '';
+    public string $model = '';
 
     /** Route path captured from request (e.g. 'categories') — used to load screen-specific config */
     public string $configRoute = '';
@@ -94,24 +94,31 @@ class BaseCrud extends Component
 
     // ── Table state ───────────────────────────────────────────────────────────
 
-    public string $sort       = 'id';
-    public string $direction  = 'DESC';
-    public int    $perPage    = 25;
-    public string $search     = '';
-    public bool   $showTrashed  = false;
-    public int    $trashedCount = 0;
+    public string $sort = 'id';
+
+    public string $direction = 'DESC';
+
+    public int $perPage = 25;
+
+    public string $search = '';
+
+    public bool $showTrashed = false;
+
+    public int $trashedCount = 0;
 
     // ── External whereHas ─────────────────────────────────────────────────────
 
     /** Pre-filter the CRUD by a parent relation */
-    public string $whereHasFilter    = '';
-    public array  $whereHasCondition = [];
+    public string $whereHasFilter = '';
+
+    public array $whereHasCondition = [];
 
     // ── Column visibility ─────────────────────────────────────────────────────
 
     /** Map [fieldName => bool] of visible columns */
-    public array $formDataColumns    = [];
-    public int   $hiddenColumnsCount = 0;
+    public array $formDataColumns = [];
+
+    public int $hiddenColumnsCount = 0;
 
     // ── Active filter badge summary ───────────────────────────────────────────
 
@@ -120,10 +127,13 @@ class BaseCrud extends Component
 
     // ── Bulk actions ──────────────────────────────────────────────────────────
 
-    public array $selectedRows         = [];
-    public bool  $selectAll            = false;
-    public bool  $bulkActionInProgress = false;
-    public bool  $showBulkActions      = false;
+    public array $selectedRows = [];
+
+    public bool $selectAll = false;
+
+    public bool $bulkActionInProgress = false;
+
+    public bool $showBulkActions = false;
 
     // ── Quick date filter ─────────────────────────────────────────────────────
 
@@ -135,9 +145,11 @@ class BaseCrud extends Component
 
     // ── Advanced search ───────────────────────────────────────────────────────
 
-    public bool  $advancedSearchActive = false;
+    public bool $advancedSearchActive = false;
+
     public array $advancedSearchFields = [];
-    public array $searchHistory        = [];
+
+    public array $searchHistory = [];
 
     // ── Multi-tenant ──────────────────────────────────────────────────────────
 
@@ -168,12 +180,17 @@ class BaseCrud extends Component
 
     // ── Create / edit modal ───────────────────────────────────────────────────
 
-    public array  $formData     = [];
-    public array  $imageUploads = [];
-    public ?int   $editingId    = null;
-    public bool   $showModal    = false;
-    public bool   $creating     = false;
-    public int    $formInstanceKey = 0;
+    public array $formData = [];
+
+    public array $imageUploads = [];
+
+    public ?int $editingId = null;
+
+    public bool $showModal = false;
+
+    public bool $creating = false;
+
+    public int $formInstanceKey = 0;
 
     /** Form validation errors */
     public array $formErrors = [];
@@ -181,14 +198,15 @@ class BaseCrud extends Component
     // ── Deletion ──────────────────────────────────────────────────────────────
 
     public bool $showDeleteConfirm = false;
-    public ?int $deletingId        = null;
+
+    public ?int $deletingId = null;
 
     // ── Lifecycle: clear bulk selection on page change ────────────────────────
 
     public function updatingPage(): void
     {
         $this->selectedRows = [];
-        $this->selectAll    = false;
+        $this->selectAll = false;
     }
 
     // ── SearchDropdown ────────────────────────────────────────────────────────
@@ -207,21 +225,28 @@ class BaseCrud extends Component
 
     // ── Preferences ───────────────────────────────────────────────────────────
 
-    public array  $columnOrder = [];
-    public array  $columnWidths = [];
+    public array $columnOrder = [];
+
+    public array $columnWidths = [];
+
     public string $viewDensity = 'comfortable'; // compact | comfortable | spacious
-    public string $viewMode    = 'table';
+
+    public string $viewMode = 'table';
 
     // ── Export ────────────────────────────────────────────────────────────────
 
-    public bool   $showExportMenu = false;
-    public string $exportStatus   = '';
+    public bool $showExportMenu = false;
+
+    public string $exportStatus = '';
 
     // ── Services (injected via boot) ──────────────────────────────────────────
 
-    protected CrudConfigService    $configService;
-    protected FilterService        $filterService;
-    protected CacheService         $cacheService;
+    protected CrudConfigService $configService;
+
+    protected FilterService $filterService;
+
+    protected CacheService $cacheService;
+
     protected FormValidatorService $formValidator;
 
     /** Resolved Eloquent model instance */
@@ -237,9 +262,9 @@ class BaseCrud extends Component
         if (! empty($bc['enabled'])) {
             $baseName = class_basename(str_replace('/', '\\', $this->model));
             // channel: page-product-observer (kebab)
-            $channel  = $bc['channel'] ?? 'page-' . Str::kebab($baseName) . '-observer';
+            $channel = $bc['channel'] ?? 'page-'.Str::kebab($baseName).'-observer';
             // event: .pageProductObserver (must start with "." for private Echo events)
-            $event    = $bc['event']   ?? '.page' . $baseName . 'Observer';
+            $event = $bc['event'] ?? '.page'.$baseName.'Observer';
 
             $base["echo:{$channel},{$event}"] = 'handleBaseCrudUpdate';
         }
@@ -261,17 +286,17 @@ class BaseCrud extends Component
     public function render()
     {
         return view('ptah::livewire.base-crud.base-crud', [
-            'rows'             => $this->rows,
-            'visibleCols'      => $this->getVisibleColumns(),
-            'formCols'         => $this->getFormCols(),
-            'permissions'      => $this->crudConfig['permissions']  ?? [],
-            'effectivePerms'   => $this->getEffectivePermissions(),
-            'exportCfg'        => $this->crudConfig['exportConfig'] ?? [],
-            'totData'          => $this->totalizadoresData,
-            'crudTitle'        => $this->crudConfig['displayName']
+            'rows' => $this->rows,
+            'visibleCols' => $this->getVisibleColumns(),
+            'formCols' => $this->getFormCols(),
+            'permissions' => $this->crudConfig['permissions'] ?? [],
+            'effectivePerms' => $this->getEffectivePermissions(),
+            'exportCfg' => $this->crudConfig['exportConfig'] ?? [],
+            'totData' => $this->totalizadoresData,
+            'crudTitle' => $this->crudConfig['displayName']
                                     ?? $this->crudConfig['crud']
                                     ?? class_basename(str_replace('/', '\\', $this->model)),
-            'bulkActions'      => $this->crudConfig['bulkActions']  ?? [],
+            'bulkActions' => $this->crudConfig['bulkActions'] ?? [],
             'hasActiveFilters' => ! empty($this->textFilter)
                                     || $this->search !== ''
                                     || $this->quickDateFilter !== '',
@@ -288,7 +313,7 @@ class BaseCrud extends Component
      */
     protected function getEffectivePermissions(): array
     {
-        $p   = $this->crudConfig['permissions'] ?? [];
+        $p = $this->crudConfig['permissions'] ?? [];
         $key = $p['permissionIdentifier'] ?? null;
 
         // Only enforce ptah checks when module is active, a key is configured and user is authenticated
@@ -298,6 +323,7 @@ class BaseCrud extends Component
             if (! $gate) {
                 return true;
             }
+
             return Auth::check() && Auth::user()->can($gate);
         };
 
@@ -305,14 +331,15 @@ class BaseCrud extends Component
             if (! $ptahActive) {
                 return true;
             }
+
             return ptah_can($key, $action);
         };
 
         return [
-            'canCreate'  => ($p['showCreateButton'] ?? true) && $gateCheck($p['create'] ?? null) && $ptahCheck('create'),
-            'canUpdate'  => ($p['showEditButton']   ?? true) && $gateCheck($p['edit']   ?? null) && $ptahCheck('update'),
-            'canDelete'  => ($p['showDeleteButton'] ?? true) && $gateCheck($p['delete'] ?? null) && $ptahCheck('delete'),
-            'canRestore' => ($p['showTrashButton']  ?? true) && $ptahCheck('update'),
+            'canCreate' => ($p['showCreateButton'] ?? true) && $gateCheck($p['create'] ?? null) && $ptahCheck('create'),
+            'canUpdate' => ($p['showEditButton'] ?? true) && $gateCheck($p['edit'] ?? null) && $ptahCheck('update'),
+            'canDelete' => ($p['showDeleteButton'] ?? true) && $gateCheck($p['delete'] ?? null) && $ptahCheck('delete'),
+            'canRestore' => ($p['showTrashButton'] ?? true) && $ptahCheck('update'),
         ];
     }
 }

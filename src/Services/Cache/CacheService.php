@@ -20,13 +20,18 @@ use Illuminate\Support\Facades\Cache;
  */
 class CacheService
 {
-    public const DEFAULT_TTL     = 3600;
-    public const CONFIG_TTL      = 86400;
-    public const PREFERENCES_TTL = 7200;
-    public const QUERY_TTL       = 60;
+    public const DEFAULT_TTL = 3600;
 
-    protected const TAG_CONFIG  = 'ptah_config';
-    protected const TAG_PREFS   = 'ptah_preferences';
+    public const CONFIG_TTL = 86400;
+
+    public const PREFERENCES_TTL = 7200;
+
+    public const QUERY_TTL = 60;
+
+    protected const TAG_CONFIG = 'ptah_config';
+
+    protected const TAG_PREFS = 'ptah_preferences';
+
     protected const TAG_QUERIES = 'ptah_queries';
 
     // ── Configuration ───────────────────────────────────────────────────────
@@ -34,10 +39,9 @@ class CacheService
     /**
      * Cached-remember for entity configurations (CrudConfig).
      *
-     * @param string   $model    e.g. "Product"
-     * @param string   $route    e.g. "categories" (empty = global config)
-     * @param callable $callback Returns the value to cache
-     * @param int      $ttl
+     * @param  string  $model  e.g. "Product"
+     * @param  string  $route  e.g. "categories" (empty = global config)
+     * @param  callable  $callback  Returns the value to cache
      */
     public function rememberConfig(string $model, string $route, callable $callback, int $ttl = self::CONFIG_TTL): mixed
     {
@@ -48,6 +52,7 @@ class CacheService
             if ($route !== '') {
                 $tags[] = "ptah_route_{$route}";
             }
+
             return Cache::tags($tags)->remember($key, $ttl, $callback);
         }
 
@@ -64,6 +69,7 @@ class CacheService
                 $tags[] = "ptah_route_{$route}";
             }
             Cache::tags($tags)->forget($key);
+
             return;
         }
 
@@ -75,10 +81,7 @@ class CacheService
     /**
      * Cached-remember for user preferences.
      *
-     * @param int      $userId
-     * @param string   $route    Screen identifier (e.g. "Product")
-     * @param callable $callback
-     * @param int      $ttl
+     * @param  string  $route  Screen identifier (e.g. "Product")
      */
     public function rememberPreferences(int $userId, string $route, callable $callback, int $ttl = self::PREFERENCES_TTL): mixed
     {
@@ -103,10 +106,12 @@ class CacheService
 
             if ($this->supportsTagging()) {
                 Cache::tags([self::TAG_PREFS, "ptah_user_{$userId}"])->forget($key);
+
                 return;
             }
 
             Cache::forget($key);
+
             return;
         }
 
@@ -121,10 +126,7 @@ class CacheService
     /**
      * Cached-remember for query results (short TTL).
      *
-     * @param string   $model
-     * @param string   $queryHash  Unique hash identifying the query (filters, page, sort)
-     * @param callable $callback
-     * @param int      $ttl
+     * @param  string  $queryHash  Unique hash identifying the query (filters, page, sort)
      */
     public function rememberQuery(string $model, string $queryHash, callable $callback, int $ttl = self::QUERY_TTL): mixed
     {
@@ -210,7 +212,8 @@ class CacheService
 
     protected function configKey(string $model, string $route = ''): string
     {
-        $base = 'ptah.crud.' . str_replace(['/', '\\'], '.', $model);
+        $base = 'ptah.crud.'.str_replace(['/', '\\'], '.', $model);
+
         return $route !== '' ? "{$base}.{$route}" : $base;
     }
 

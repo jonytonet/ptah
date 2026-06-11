@@ -27,24 +27,31 @@ use Ptah\Services\AI\AiProviderConfigService;
  */
 class AiChatWidget extends Component
 {
-    protected AiChatService           $chatService;
+    protected AiChatService $chatService;
+
     protected AiProviderConfigService $configService;
 
     public function boot(AiChatService $chatService, AiProviderConfigService $configService): void
     {
-        $this->chatService   = $chatService;
+        $this->chatService = $chatService;
         $this->configService = $configService;
     }
 
     // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    public bool   $available    = false;
-    public bool   $isOpen       = false;
-    public bool   $loading      = false;
-    public bool   $showHistory  = false;
-    public string $userInput    = '';
-    public string $errorMsg     = '';
-    public ?int   $conversationId = null;
+    public bool $available = false;
+
+    public bool $isOpen = false;
+
+    public bool $loading = false;
+
+    public bool $showHistory = false;
+
+    public string $userInput = '';
+
+    public string $errorMsg = '';
+
+    public ?int $conversationId = null;
 
     /** @var array<array{role: string, content: string}> */
     public array $messages = [];
@@ -55,19 +62,27 @@ class AiChatWidget extends Component
     public int $historyLimit = 5;
 
     private const HISTORY_MAX = 100;
+
     private const HISTORY_STEP = 5;
 
     // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function mount(): void
     {
+        $userId = auth()->id();
+
+        // Guests only get the widget when explicitly allowed.
+        if (! $userId && ! config('ptah.ai_agent.allow_guests', false)) {
+            $this->available = false;
+
+            return;
+        }
+
         $this->available = $this->configService->hasActiveProvider();
 
         if (! $this->available) {
             return;
         }
-
-        $userId = auth()->id();
 
         if ($userId) {
             $conversation = $this->chatService->findLatestConversation($userId);
@@ -98,10 +113,10 @@ class AiChatWidget extends Component
             return;
         }
 
-        $this->messages[]  = ['role' => 'user', 'content' => $message];
-        $this->userInput   = '';
-        $this->errorMsg    = '';
-        $this->loading     = true;
+        $this->messages[] = ['role' => 'user', 'content' => $message];
+        $this->userInput = '';
+        $this->errorMsg = '';
+        $this->loading = true;
         $this->showHistory = false;
 
         $this->dispatch('ai-process-message', message: $message, conversationId: $this->conversationId);
@@ -111,13 +126,40 @@ class AiChatWidget extends Component
     #[On('ai-process-message')]
     public function processAiMessage(string $message, ?int $conversationId = null): void
     {
+        // Re-check availability — this is a public Livewire listener and can be
+        // dispatched directly, bypassing the guards in send().
+        if (! $this->configService->hasActiveProvider()) {
+            $this->loading = false;
+            $this->errorMsg = trans('ptah::ui.ai_widget_no_provider');
+            $this->dispatch('ai-message-sent');
+
+            return;
+        }
+
         try {
-            $result = $this->chatService->send(
-                $message,
-                session()->getId(),
-                auth()->id(),
-                $conversationId,
-            );
+            if (config('ptah.ai_agent.stream', true)) {
+                // Stream the answer token-by-token into the wire:stream region.
+                $result = $this->chatService->stream(
+                    $message,
+                    session()->getId(),
+                    auth()->id(),
+                    $conversationId,
+                    onDelta: function (string $delta, string $accumulated): void {
+                        $this->stream(
+                            to: 'ai-stream',
+                            content: nl2br(e($accumulated)),
+                            replace: true,
+                        );
+                    },
+                );
+            } else {
+                $result = $this->chatService->send(
+                    $message,
+                    session()->getId(),
+                    auth()->id(),
+                    $conversationId,
+                );
+            }
 
             $this->conversationId = $result['conversationId'];
             $this->messages[] = ['role' => 'assistant', 'content' => $result['text']];
@@ -133,10 +175,10 @@ class AiChatWidget extends Component
         } catch (\Throwable $e) {
             Log::error('[Ptah AI] Unexpected error in AiChatWidget::processAiMessage()', [
                 'exception' => $e::class,
-                'message'   => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
             $this->errorMsg = config('app.debug')
-                ? '[' . class_basename($e) . '] ' . $e->getMessage()
+                ? '['.class_basename($e).'] '.$e->getMessage()
                 : trans('ptah::ui.ai_widget_error');
         } finally {
             $this->loading = false;
@@ -163,8 +205,8 @@ class AiChatWidget extends Component
             $conversation->messages ?? [],
             fn ($m) => in_array($m['role'] ?? '', ['user', 'assistant'], true)
         ));
-        $this->errorMsg     = '';
-        $this->showHistory  = false;
+        $this->errorMsg = '';
+        $this->showHistory = false;
 
         $this->dispatch('ai-message-sent');
     }
@@ -179,15 +221,15 @@ class AiChatWidget extends Component
             $this->conversationId = null;
         }
 
-        $this->messages    = [];
-        $this->errorMsg    = '';
-        $this->userInput   = '';
+        $this->messages = [];
+        $this->errorMsg = '';
+        $this->userInput = '';
         $this->showHistory = false;
     }
 
     public function toggleHistory(): void
     {
-        $this->showHistory  = ! $this->showHistory;
+        $this->showHistory = ! $this->showHistory;
         $this->historyLimit = 5;
         if ($this->showHistory && auth()->id()) {
             $this->refreshConversations();
@@ -204,9 +246,9 @@ class AiChatWidget extends Component
 
     public function toggleOpen(): void
     {
-        $this->isOpen       = ! $this->isOpen;
-        $this->errorMsg     = '';
-        $this->showHistory  = false;
+        $this->isOpen = ! $this->isOpen;
+        $this->errorMsg = '';
+        $this->showHistory = false;
         $this->historyLimit = 5;
     }
 
@@ -229,9 +271,9 @@ class AiChatWidget extends Component
         $this->conversations = $this->chatService
             ->getUserConversations($userId, $this->historyLimit)
             ->map(fn ($c) => [
-                'id'    => $c->id,
+                'id' => $c->id,
                 'title' => $c->title ?: trans('ptah::ui.ai_widget_untitled'),
-                'date'  => $c->updated_at?->diffForHumans() ?? '',
+                'date' => $c->updated_at?->diffForHumans() ?? '',
             ])
             ->all();
     }

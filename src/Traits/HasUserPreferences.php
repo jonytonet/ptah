@@ -25,9 +25,9 @@ trait HasUserPreferences
     /**
      * Sets a preference for this user.
      *
-     * @param string $key   Preference key
-     * @param mixed  $value Preference value
-     * @param string $group Preference group (default: 'general')
+     * @param  string  $key  Preference key
+     * @param  mixed  $value  Preference value
+     * @param  string  $group  Preference group (default: 'general')
      */
     public function setPreference(
         string $key,
@@ -40,8 +40,8 @@ trait HasUserPreferences
     /**
      * Gets a preference for this user.
      *
-     * @param string $key     Preference key
-     * @param mixed  $default Default value if not found
+     * @param  string  $key  Preference key
+     * @param  mixed  $default  Default value if not found
      */
     public function getPreference(string $key, mixed $default = null): mixed
     {
@@ -51,7 +51,7 @@ trait HasUserPreferences
     /**
      * Gets all preferences of a group for this user.
      *
-     * @param string $group Preference group
+     * @param  string  $group  Preference group
      * @return array<string, mixed>
      */
     public function getPreferenceGroup(string $group): array
@@ -62,7 +62,7 @@ trait HasUserPreferences
     /**
      * Removes a preference for this user.
      *
-     * @param string $key Preference key
+     * @param  string  $key  Preference key
      */
     public function removePreference(string $key): bool
     {

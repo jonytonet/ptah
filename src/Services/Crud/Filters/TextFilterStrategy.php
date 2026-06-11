@@ -7,6 +7,7 @@ namespace Ptah\Services\Crud\Filters;
 use Illuminate\Database\Eloquent\Builder;
 use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Filter strategy for text fields.
@@ -35,19 +36,24 @@ class TextFilterStrategy implements FilterStrategyInterface
         }
 
         $operator = strtoupper($normalized->operator);
-        $field    = $normalized->field;
-        $value    = $normalized->value;
+        $field = $normalized->field;
+        $value = $normalized->value;
+
+        // Guard against SQL injection via the column name before any raw SQL.
+        if (! SqlIdentifier::isSafe($field)) {
+            return $query;
+        }
 
         return match (true) {
-            $operator === 'IN' && is_array($value)     => $query->whereIn($field, $value),
+            $operator === 'IN' && is_array($value) => $query->whereIn($field, $value),
             $operator === 'NOT IN' && is_array($value) => $query->whereNotIn($field, $value),
-            $operator === 'LIKE'                       => $query->whereRaw('LOWER(' . $field . ') LIKE ?', ['%' . mb_strtolower($value) . '%']),
-            $operator === 'LIKE_START'                 => $query->whereRaw('LOWER(' . $field . ') LIKE ?', [mb_strtolower($value) . '%']),
-            $operator === 'LIKE_END'                   => $query->whereRaw('LOWER(' . $field . ') LIKE ?', ['%' . mb_strtolower($value)]),
-            $operator === 'NOT LIKE'                   => $query->whereRaw('LOWER(' . $field . ') NOT LIKE ?', ['%' . mb_strtolower($value) . '%']),
-            $operator === 'IS NULL'                    => $query->whereNull($field),
-            $operator === 'IS NOT NULL'                => $query->whereNotNull($field),
-            default                                    => $query->where($field, $normalized->operator, $value),
+            $operator === 'LIKE' => $query->whereRaw('LOWER('.$field.') LIKE ?', ['%'.mb_strtolower($value).'%']),
+            $operator === 'LIKE_START' => $query->whereRaw('LOWER('.$field.') LIKE ?', [mb_strtolower($value).'%']),
+            $operator === 'LIKE_END' => $query->whereRaw('LOWER('.$field.') LIKE ?', ['%'.mb_strtolower($value)]),
+            $operator === 'NOT LIKE' => $query->whereRaw('LOWER('.$field.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
+            $operator === 'IS NULL' => $query->whereNull($field),
+            $operator === 'IS NOT NULL' => $query->whereNotNull($field),
+            default => $query->where($field, $normalized->operator, $value),
         };
     }
 }

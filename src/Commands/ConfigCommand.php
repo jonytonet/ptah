@@ -4,21 +4,20 @@ namespace Ptah\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Ptah\Commands\Config\ModelIntrospector;
-use Ptah\Commands\Config\Parsers\ColumnParser;
-use Ptah\Commands\Config\Parsers\ActionParser;
-use Ptah\Commands\Config\Parsers\FilterParser;
-use Ptah\Commands\Config\Parsers\StyleParser;
-use Ptah\Commands\Config\Parsers\JoinParser;
-use Ptah\Commands\Config\Parsers\GeneralParser;
-use Ptah\Commands\Config\Wizards\ColumnWizard;
-use Ptah\Commands\Config\Wizards\ActionWizard;
-use Ptah\Commands\Config\Wizards\FilterWizard;
-use Ptah\Commands\Config\Wizards\StyleWizard;
-use Ptah\Commands\Config\Wizards\JoinWizard;
-use Ptah\Commands\Config\Wizards\GeneralWizard;
 use Ptah\Commands\Config\Formatters\TableFormatter;
-use Ptah\Enums\CrudConfigEnums;
+use Ptah\Commands\Config\ModelIntrospector;
+use Ptah\Commands\Config\Parsers\ActionParser;
+use Ptah\Commands\Config\Parsers\ColumnParser;
+use Ptah\Commands\Config\Parsers\FilterParser;
+use Ptah\Commands\Config\Parsers\GeneralParser;
+use Ptah\Commands\Config\Parsers\JoinParser;
+use Ptah\Commands\Config\Parsers\StyleParser;
+use Ptah\Commands\Config\Wizards\ActionWizard;
+use Ptah\Commands\Config\Wizards\ColumnWizard;
+use Ptah\Commands\Config\Wizards\FilterWizard;
+use Ptah\Commands\Config\Wizards\GeneralWizard;
+use Ptah\Commands\Config\Wizards\JoinWizard;
+use Ptah\Commands\Config\Wizards\StyleWizard;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Services\Validation\Formatters\CliErrorFormatter;
@@ -57,28 +56,37 @@ class ConfigCommand extends Command
     protected $description = 'Configure CRUD settings for a model via CLI';
 
     protected ModelIntrospector $introspector;
+
     protected ColumnParser $columnParser;
+
     protected ActionParser $actionParser;
+
     protected FilterParser $filterParser;
+
     protected StyleParser $styleParser;
+
     protected JoinParser $joinParser;
+
     protected GeneralParser $generalParser;
+
     protected ConfigSchemaValidator $validator;
+
     protected CliErrorFormatter $errorFormatter;
+
     protected array $config = [];
 
     public function __construct()
     {
         parent::__construct();
-        $this->introspector = new ModelIntrospector();
-        $this->columnParser = new ColumnParser();
-        $this->actionParser = new ActionParser();
-        $this->filterParser = new FilterParser();
-        $this->styleParser = new StyleParser();
-        $this->joinParser = new JoinParser();
-        $this->generalParser = new GeneralParser();
-        $this->validator = new ConfigSchemaValidator();
-        $this->errorFormatter = new CliErrorFormatter();
+        $this->introspector = new ModelIntrospector;
+        $this->columnParser = new ColumnParser;
+        $this->actionParser = new ActionParser;
+        $this->filterParser = new FilterParser;
+        $this->styleParser = new StyleParser;
+        $this->joinParser = new JoinParser;
+        $this->generalParser = new GeneralParser;
+        $this->validator = new ConfigSchemaValidator;
+        $this->errorFormatter = new CliErrorFormatter;
     }
 
     /**
@@ -89,8 +97,9 @@ class ConfigCommand extends Command
         $modelClass = $this->argument('model');
 
         // Validate model
-        if (!$this->introspector->validateModelClass($modelClass)) {
+        if (! $this->introspector->validateModelClass($modelClass)) {
             $this->error("Model class '{$modelClass}' not found or is not a valid Eloquent model.");
+
             return 1;
         }
 
@@ -117,12 +126,12 @@ class ConfigCommand extends Command
         $this->config = $this->loadConfiguration($modelClass, $route);
 
         // Determine mode: interactive or declarative
-        $hasOptions = $this->option('column') 
-            || $this->option('action') 
-            || $this->option('filter') 
-            || $this->option('style') 
-            || $this->option('join') 
-            || $this->option('set') 
+        $hasOptions = $this->option('column')
+            || $this->option('action')
+            || $this->option('filter')
+            || $this->option('style')
+            || $this->option('join')
+            || $this->option('set')
             || $this->option('permission');
 
         if ($this->option('non-interactive') || $hasOptions) {
@@ -136,11 +145,11 @@ class ConfigCommand extends Command
         }
 
         // Save if not dry-run
-        if (!$this->option('dry-run')) {
+        if (! $this->option('dry-run')) {
             $this->saveConfiguration($modelClass, $this->config, $route ?? '');
-            $this->info("✓ Configuration saved successfully!");
+            $this->info('✓ Configuration saved successfully!');
         } else {
-            $this->warn("Dry-run mode: No changes were saved.");
+            $this->warn('Dry-run mode: No changes were saved.');
         }
 
         return 0;
@@ -155,7 +164,7 @@ class ConfigCommand extends Command
 
         // Process columns
         if (in_array('columns', $sections) && $this->option('column')) {
-            $this->info("Processing columns...");
+            $this->info('Processing columns...');
             foreach ($this->option('column') as $columnConfig) {
                 $parsed = $this->parseColumnOption($columnConfig);
                 $this->config['cols'][] = $parsed;
@@ -164,7 +173,7 @@ class ConfigCommand extends Command
 
         // Process actions
         if (in_array('actions', $sections) && $this->option('action')) {
-            $this->info("Processing actions...");
+            $this->info('Processing actions...');
             foreach ($this->option('action') as $actionConfig) {
                 $parsed = $this->parseActionOption($actionConfig);
                 $this->config['actions'][] = $parsed;
@@ -173,7 +182,7 @@ class ConfigCommand extends Command
 
         // Process filters
         if (in_array('filters', $sections) && $this->option('filter')) {
-            $this->info("Processing filters...");
+            $this->info('Processing filters...');
             foreach ($this->option('filter') as $filterConfig) {
                 $parsed = $this->parseFilterOption($filterConfig);
                 $this->config['filters'][] = $parsed;
@@ -182,7 +191,7 @@ class ConfigCommand extends Command
 
         // Process styles
         if (in_array('styles', $sections) && $this->option('style')) {
-            $this->info("Processing styles...");
+            $this->info('Processing styles...');
             foreach ($this->option('style') as $styleConfig) {
                 $parsed = $this->parseStyleOption($styleConfig);
                 $this->config['styles'][] = $parsed;
@@ -191,7 +200,7 @@ class ConfigCommand extends Command
 
         // Process joins
         if (in_array('joins', $sections) && $this->option('join')) {
-            $this->info("Processing joins...");
+            $this->info('Processing joins...');
             foreach ($this->option('join') as $joinConfig) {
                 $parsed = $this->parseJoinOption($joinConfig);
                 $this->config['joins'][] = $parsed;
@@ -200,7 +209,7 @@ class ConfigCommand extends Command
 
         // Process general settings
         if (in_array('general', $sections) && $this->option('set')) {
-            $this->info("Processing general settings...");
+            $this->info('Processing general settings...');
             foreach ($this->option('set') as $setting) {
                 [$key, $value] = explode('=', $setting, 2);
                 $this->config[$key] = $this->castValue($value);
@@ -209,7 +218,7 @@ class ConfigCommand extends Command
 
         // Process permissions
         if (in_array('permissions', $sections) && $this->option('permission')) {
-            $this->info("Processing permissions...");
+            $this->info('Processing permissions...');
             foreach ($this->option('permission') as $permission) {
                 [$action, $perm] = explode('=', $permission, 2);
                 $this->config['permissions'][$action] = $perm;
@@ -231,12 +240,12 @@ class ConfigCommand extends Command
 
         // Configure columns
         if (in_array('columns', $sections)) {
-            $this->info("📋 Column Configuration");
+            $this->info('📋 Column Configuration');
             $columnWizard = new ColumnWizard($this, $this->introspector);
-            
-            while ($this->confirm("Configure a column?", true)) {
+
+            while ($this->confirm('Configure a column?', true)) {
                 $column = $columnWizard->run($modelClass);
-                
+
                 if ($column) {
                     $this->config['cols'][] = $column;
                     $this->info("✓ Column '{$column['colsNomeFisico']}' added.");
@@ -245,14 +254,14 @@ class ConfigCommand extends Command
         }
 
         // Configure actions
-        if (in_array('actions', $sections) && $this->confirm("Configure custom actions?", false)) {
+        if (in_array('actions', $sections) && $this->confirm('Configure custom actions?', false)) {
             $this->newLine();
-            $this->info("⚡ Action Configuration");
+            $this->info('⚡ Action Configuration');
             $actionWizard = new ActionWizard($this);
-            
-            while ($this->confirm("Add an action?", true)) {
+
+            while ($this->confirm('Add an action?', true)) {
                 $action = $actionWizard->run();
-                
+
                 if ($action) {
                     $this->config['actions'][] = $action;
                     $this->info("✓ Action '{$action['actionName']}' added.");
@@ -261,14 +270,14 @@ class ConfigCommand extends Command
         }
 
         // Configure filters
-        if (in_array('filters', $sections) && $this->confirm("Configure custom filters?", false)) {
+        if (in_array('filters', $sections) && $this->confirm('Configure custom filters?', false)) {
             $this->newLine();
-            $this->info("🔍 Filter Configuration");
+            $this->info('🔍 Filter Configuration');
             $filterWizard = new FilterWizard($this);
-            
-            while ($this->confirm("Add a filter?", true)) {
+
+            while ($this->confirm('Add a filter?', true)) {
                 $filter = $filterWizard->run();
-                
+
                 if ($filter) {
                     $this->config['filters'][] = $filter;
                     $this->info("✓ Filter '{$filter['colsFilterField']}' added.");
@@ -277,30 +286,30 @@ class ConfigCommand extends Command
         }
 
         // Configure styles
-        if (in_array('styles', $sections) && $this->confirm("Configure conditional styles?", false)) {
+        if (in_array('styles', $sections) && $this->confirm('Configure conditional styles?', false)) {
             $this->newLine();
-            $this->info("🎨 Style Configuration");
+            $this->info('🎨 Style Configuration');
             $styleWizard = new StyleWizard($this);
-            
-            while ($this->confirm("Add a style rule?", true)) {
+
+            while ($this->confirm('Add a style rule?', true)) {
                 $style = $styleWizard->run();
-                
+
                 if ($style) {
                     $this->config['styles'][] = $style;
-                    $this->info("✓ Style rule added.");
+                    $this->info('✓ Style rule added.');
                 }
             }
         }
 
         // Configure joins
-        if (in_array('joins', $sections) && $this->confirm("Configure table JOINs?", false)) {
+        if (in_array('joins', $sections) && $this->confirm('Configure table JOINs?', false)) {
             $this->newLine();
-            $this->info("🔗 JOIN Configuration");
+            $this->info('🔗 JOIN Configuration');
             $joinWizard = new JoinWizard($this);
-            
-            while ($this->confirm("Add a JOIN?", true)) {
+
+            while ($this->confirm('Add a JOIN?', true)) {
                 $join = $joinWizard->run();
-                
+
                 if ($join) {
                     $this->config['joins'][] = $join;
                     $this->info("✓ JOIN with '{$join['joinTable']}' added.");
@@ -309,20 +318,20 @@ class ConfigCommand extends Command
         }
 
         // Configure general settings
-        if (in_array('general', $sections) && $this->confirm("Configure general settings?", true)) {
+        if (in_array('general', $sections) && $this->confirm('Configure general settings?', true)) {
             $this->newLine();
             $generalWizard = new GeneralWizard($this);
             $generalSettings = $generalWizard->runGeneralSettings($this->config);
             $this->config = array_merge($this->config, $generalSettings);
-            $this->info("✓ General settings configured.");
+            $this->info('✓ General settings configured.');
         }
 
         // Configure permissions
-        if (in_array('permissions', $sections) && $this->confirm("Configure permissions?", false)) {
+        if (in_array('permissions', $sections) && $this->confirm('Configure permissions?', false)) {
             $this->newLine();
             $generalWizard = new GeneralWizard($this);
             $this->config['permissions'] = $generalWizard->runPermissions($this->config['permissions'] ?? []);
-            $this->info("✓ Permissions configured.");
+            $this->info('✓ Permissions configured.');
         }
 
         $this->displayConfigSummary();
@@ -442,15 +451,15 @@ class ConfigCommand extends Command
             DB::table('crud_configs')->updateOrInsert(
                 ['model' => $modelClass, 'route' => $route],
                 [
-                    'config'     => json_encode($config),
+                    'config' => json_encode($config),
                     'updated_at' => now(),
                 ]
             );
 
             // Clear cache
             $cacheKey = $route !== ''
-                ? "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass) . ".{$route}"
-                : "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass);
+                ? 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass).".{$route}"
+                : 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass);
             cache()->forget($cacheKey);
         } catch (ConfigValidationException $e) {
             $this->newLine();
@@ -465,7 +474,7 @@ class ConfigCommand extends Command
      */
     protected function listConfiguration(string $modelClass): int
     {
-        $route  = (string) ($this->option('route') ?? '');
+        $route = (string) ($this->option('route') ?? '');
         $config = $this->loadConfiguration($modelClass, $route);
 
         $formatter = new TableFormatter($this->output);
@@ -482,8 +491,9 @@ class ConfigCommand extends Command
         $route = (string) ($this->option('route') ?? '');
         $scope = $route !== '' ? "route '{$route}'" : 'global config';
 
-        if (!$this->confirm("Are you sure you want to reset configuration for {$modelClass} ({$scope})?")) {
-            $this->info("Reset cancelled.");
+        if (! $this->confirm("Are you sure you want to reset configuration for {$modelClass} ({$scope})?")) {
+            $this->info('Reset cancelled.');
+
             return 0;
         }
 
@@ -493,11 +503,12 @@ class ConfigCommand extends Command
             ->delete();
 
         $cacheKey = $route !== ''
-            ? "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass) . ".{$route}"
-            : "ptah.crud." . str_replace(['/', '\\'], '.', $modelClass);
+            ? 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass).".{$route}"
+            : 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass);
         cache()->forget($cacheKey);
 
-        $this->info("✓ Configuration reset successfully!");
+        $this->info('✓ Configuration reset successfully!');
+
         return 0;
     }
 
@@ -506,15 +517,17 @@ class ConfigCommand extends Command
      */
     protected function importConfiguration(string $modelClass, string $file): int
     {
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             $this->error("File not found: {$file}");
+
             return 1;
         }
 
         $config = json_decode(file_get_contents($file), true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->error("Invalid JSON file: " . json_last_error_msg());
+            $this->error('Invalid JSON file: '.json_last_error_msg());
+
             return 1;
         }
 
@@ -530,11 +543,11 @@ class ConfigCommand extends Command
      */
     protected function exportConfiguration(string $modelClass, string $file): int
     {
-        $route  = (string) ($this->option('route') ?? '');
+        $route = (string) ($this->option('route') ?? '');
         $config = $this->loadConfiguration($modelClass, $route);
 
         file_put_contents($file, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        
+
         $this->info("✓ Configuration exported successfully to {$file}");
 
         return 0;
@@ -546,12 +559,12 @@ class ConfigCommand extends Command
     protected function displayConfigSummary(): void
     {
         $this->newLine();
-        $this->info("Configuration Summary:");
-        $this->line("- Columns: " . count($this->config['cols'] ?? []));
-        $this->line("- Actions: " . count($this->config['actions'] ?? []));
-        $this->line("- Filters: " . count($this->config['filters'] ?? []));
-        $this->line("- Styles: " . count($this->config['styles'] ?? []));
-        $this->line("- Joins: " . count($this->config['joins'] ?? []));
+        $this->info('Configuration Summary:');
+        $this->line('- Columns: '.count($this->config['cols'] ?? []));
+        $this->line('- Actions: '.count($this->config['actions'] ?? []));
+        $this->line('- Filters: '.count($this->config['filters'] ?? []));
+        $this->line('- Styles: '.count($this->config['styles'] ?? []));
+        $this->line('- Joins: '.count($this->config['joins'] ?? []));
         $this->newLine();
     }
 
@@ -560,11 +573,19 @@ class ConfigCommand extends Command
      */
     protected function castValue(string $value): mixed
     {
-        if ($value === 'true') return true;
-        if ($value === 'false') return false;
-        if ($value === 'null') return null;
-        if (is_numeric($value)) return $value + 0;
-        
+        if ($value === 'true') {
+            return true;
+        }
+        if ($value === 'false') {
+            return false;
+        }
+        if ($value === 'null') {
+            return null;
+        }
+        if (is_numeric($value)) {
+            return $value + 0;
+        }
+
         return $value;
     }
 }

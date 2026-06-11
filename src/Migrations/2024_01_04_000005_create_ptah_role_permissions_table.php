@@ -13,11 +13,11 @@ return new class extends Migration
         Schema::create('ptah_role_permissions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('role_id')
-                  ->constrained('ptah_roles')
-                  ->cascadeOnDelete();
+                ->constrained('ptah_roles')
+                ->cascadeOnDelete();
             $table->foreignId('page_object_id')
-                  ->constrained('ptah_page_objects')
-                  ->cascadeOnDelete();
+                ->constrained('ptah_page_objects')
+                ->cascadeOnDelete();
             // Individual CRUD flags — full granularity
             $table->boolean('can_create')->default(false);
             $table->boolean('can_read')->default(true);

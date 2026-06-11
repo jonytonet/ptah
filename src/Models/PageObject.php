@@ -11,18 +11,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ptah\Traits\HasAuditFields;
 
 /**
- * @property int         $id
- * @property int         $page_id
- * @property string      $section
- * @property string      $obj_key
- * @property string      $obj_label
- * @property string      $obj_type
- * @property int         $obj_order
- * @property bool        $is_active
+ * @property int $id
+ * @property int $page_id
+ * @property string $section
+ * @property string $obj_key
+ * @property string $obj_label
+ * @property string $obj_type
+ * @property int $obj_order
+ * @property bool $is_active
  */
 class PageObject extends Model
 {
     use HasAuditFields;
+
     protected $table = 'ptah_page_objects';
 
     /** Available object types */

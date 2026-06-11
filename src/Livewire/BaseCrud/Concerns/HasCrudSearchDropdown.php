@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Ptah\Support\SqlIdentifier;
+
 /**
  * Handles searchable-dropdown logic: inline modal search &
  * filter-panel dropdown searches.
@@ -22,6 +24,7 @@ trait HasCrudSearchDropdown
 
         if (strlen($query) < 1) {
             $this->sdResults[$field] = [];
+
             return;
         }
 
@@ -35,7 +38,7 @@ trait HasCrudSearchDropdown
         $sdLabel = $col['colsSDLabel'] ?? 'name';
         $sdValue = $col['colsSDValor'] ?? 'id';
         $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
-        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdTipo = $col['colsSDTipo'] ?? 'model';
         $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
 
         if (! $sdModel) {
@@ -67,7 +70,7 @@ trait HasCrudSearchDropdown
         $sdLabel = $col['colsSDLabel'] ?? 'name';
         $sdValue = $col['colsSDValor'] ?? 'id';
         $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
-        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdTipo = $col['colsSDTipo'] ?? 'model';
         $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
 
         if (! $sdModel) {
@@ -84,9 +87,9 @@ trait HasCrudSearchDropdown
 
     public function selectDropdownOption(string $field, mixed $value, string $label): void
     {
-        $this->formData[$field]   = $value;
-        $this->sdLabels[$field]   = $label;
-        $this->sdResults[$field]  = [];
+        $this->formData[$field] = $value;
+        $this->sdLabels[$field] = $label;
+        $this->sdResults[$field] = [];
         $this->sdSearches[$field] = '';
     }
 
@@ -104,7 +107,7 @@ trait HasCrudSearchDropdown
         $sdLabel = $col['colsSDLabel'] ?? 'name';
         $sdValue = $col['colsSDValor'] ?? 'id';
         $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
-        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdTipo = $col['colsSDTipo'] ?? 'model';
         $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
 
         if (! $sdModel) {
@@ -114,11 +117,12 @@ trait HasCrudSearchDropdown
         // If the user cleared the text, reset the active filter
         if ($query === '') {
             unset($this->filters[$field], $this->sdFilterLabels[$field]);
-            $this->sdResults['filter_' . $field] = [];
+            $this->sdResults['filter_'.$field] = [];
+
             return;
         }
 
-        $this->sdResults['filter_' . $field] = $this->resolveSearchDropdownResults(
+        $this->sdResults['filter_'.$field] = $this->resolveSearchDropdownResults(
             $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, $query, $sdLimit
         );
     }
@@ -128,7 +132,7 @@ trait HasCrudSearchDropdown
      */
     public function openFilterDropdown(string $field): void
     {
-        if (! empty($this->sdResults['filter_' . $field])) {
+        if (! empty($this->sdResults['filter_'.$field])) {
             return;
         }
 
@@ -142,14 +146,14 @@ trait HasCrudSearchDropdown
         $sdLabel = $col['colsSDLabel'] ?? 'name';
         $sdValue = $col['colsSDValor'] ?? 'id';
         $sdOrder = $col['colsSDOrder'] ?? "{$sdLabel} ASC";
-        $sdTipo  = $col['colsSDTipo']  ?? 'model';
+        $sdTipo = $col['colsSDTipo'] ?? 'model';
         $sdLimit = (int) ($col['colsSDLimit'] ?? 15);
 
         if (! $sdModel) {
             return;
         }
 
-        $this->sdResults['filter_' . $field] = $this->resolveSearchDropdownResults(
+        $this->sdResults['filter_'.$field] = $this->resolveSearchDropdownResults(
             $sdTipo, $sdModel, $sdLabel, $sdValue, $sdOrder, '', $sdLimit, true
         );
     }
@@ -160,10 +164,10 @@ trait HasCrudSearchDropdown
      */
     public function selectFilterDropdownOption(string $field, mixed $value, string $label): void
     {
-        $this->filters[$field]              = $value;
-        $this->filterOperators[$field]       = '=';
-        $this->sdFilterLabels[$field]        = $label;
-        $this->sdResults['filter_' . $field] = [];
+        $this->filters[$field] = $value;
+        $this->filterOperators[$field] = '=';
+        $this->sdFilterLabels[$field] = $label;
+        $this->sdResults['filter_'.$field] = [];
         $this->resetPage();
     }
 
@@ -173,7 +177,7 @@ trait HasCrudSearchDropdown
     public function clearFilterDropdownSelection(string $field): void
     {
         unset($this->filters[$field], $this->filterOperators[$field], $this->sdFilterLabels[$field]);
-        $this->sdResults['filter_' . $field] = [];
+        $this->sdResults['filter_'.$field] = [];
         $this->resetPage();
     }
 
@@ -182,15 +186,14 @@ trait HasCrudSearchDropdown
     /**
      * Queries the model or service and returns [{value, label}] pairs.
      *
-     * @param  string $tipo       'model' | 'service'
-     * @param  string $sdModel    Model class or "Service\Class\methodName"
-     * @param  string $sdLabel    Display column name
-     * @param  string $sdValue    Value column name (usually 'id')
-     * @param  string $sdOrder    "column ASC|DESC"
-     * @param  string $query      Search term (empty = all when $allowEmpty is true)
-     * @param  int    $limit      Max rows to return
-     * @param  bool   $allowEmpty When true, returns results even with an empty query
-     *
+     * @param  string  $tipo  'model' | 'service'
+     * @param  string  $sdModel  Model class or "Service\Class\methodName"
+     * @param  string  $sdLabel  Display column name
+     * @param  string  $sdValue  Value column name (usually 'id')
+     * @param  string  $sdOrder  "column ASC|DESC"
+     * @param  string  $query  Search term (empty = all when $allowEmpty is true)
+     * @param  int  $limit  Max rows to return
+     * @param  bool  $allowEmpty  When true, returns results even with an empty query
      * @return array<int, array{value: mixed, label: string}>
      */
     protected function resolveSearchDropdownResults(
@@ -200,8 +203,8 @@ trait HasCrudSearchDropdown
         string $sdValue,
         string $sdOrder,
         string $query,
-        int    $limit      = 15,
-        bool   $allowEmpty = false
+        int $limit = 15,
+        bool $allowEmpty = false
     ): array {
         if (! $allowEmpty && strlen($query) < 1) {
             return [];
@@ -214,7 +217,7 @@ trait HasCrudSearchDropdown
             if ($tipo === 'model') {
                 $fullClass = class_exists($modelClass)
                     ? $modelClass
-                    : 'App\\Models\\' . $modelClass;
+                    : 'App\\Models\\'.$modelClass;
 
                 if (! class_exists($fullClass)) {
                     return [];
@@ -227,13 +230,14 @@ trait HasCrudSearchDropdown
                     ->orderBy($orderCol, $orderDir)
                     ->limit($limit);
 
-                // Case-insensitive filter via LOWER() for MySQL/SQLite compatibility
-                if ($query !== '') {
-                    $q->whereRaw('LOWER(' . $sdLabel . ') LIKE ?', ['%' . mb_strtolower($query) . '%']);
+                // Case-insensitive filter via LOWER() for MySQL/SQLite compatibility.
+                // Guard the column name against SQL injection before raw interpolation.
+                if ($query !== '' && SqlIdentifier::isSafe($sdLabel)) {
+                    $q->whereRaw('LOWER('.$sdLabel.') LIKE ?', ['%'.mb_strtolower($query).'%']);
                 }
 
                 return $q->get()
-                    ->map(fn($item) => [
+                    ->map(fn ($item) => [
                         'value' => $item->{$sdValue},
                         'label' => $item->{$sdLabel},
                     ])
@@ -243,16 +247,17 @@ trait HasCrudSearchDropdown
             if ($tipo === 'service') {
                 // Calls a static or instance method on a Service class
                 if (str_contains($modelClass, '\\')) {
-                    $parts      = explode('\\', $modelClass);
+                    $parts = explode('\\', $modelClass);
                     $methodName = array_pop($parts);
-                    $class      = implode('\\', $parts);
+                    $class = implode('\\', $parts);
 
                     $fullClass = class_exists($class)
                         ? $class
-                        : 'App\\Services\\' . $class;
+                        : 'App\\Services\\'.$class;
 
                     if (class_exists($fullClass) && method_exists($fullClass, $methodName)) {
                         $result = app($fullClass)->{$methodName}($query);
+
                         return is_array($result) ? $result : [];
                     }
                 }

@@ -8,7 +8,7 @@ class ColumnParser
 {
     /**
      * Parse column definition string
-     * 
+     *
      * Format: field:type:modifier1:modifier2:option1=value1:option2=value2
      * Example: name:text:required:label=Product Name:placeholder=Enter name
      */
@@ -187,6 +187,7 @@ class ColumnParser
                 ];
             }
         }
+
         return $badges;
     }
 
@@ -195,9 +196,16 @@ class ColumnParser
      */
     protected function castValue(string $value): mixed
     {
-        if ($value === 'true') return true;
-        if ($value === 'false') return false;
-        if (is_numeric($value)) return is_float($value + 0) ? (float)$value : (int)$value;
+        if ($value === 'true') {
+            return true;
+        }
+        if ($value === 'false') {
+            return false;
+        }
+        if (is_numeric($value)) {
+            return is_float($value + 0) ? (float) $value : (int) $value;
+        }
+
         return $value;
     }
 
@@ -210,7 +218,7 @@ class ColumnParser
      */
     protected function tokenize(string $definition): array
     {
-        $raw    = explode(':', $definition);
+        $raw = explode(':', $definition);
         $result = [];
         $buffer = null;
 
@@ -218,6 +226,7 @@ class ColumnParser
             // First two tokens (field, type) are always standalone
             if ($i < 2) {
                 $result[] = $part;
+
                 continue;
             }
 
@@ -230,7 +239,7 @@ class ColumnParser
             } elseif ($buffer !== null) {
                 // No '=' and we have an open buffer → this fragment is a
                 // continuation of the previous value (value contained ':')
-                $buffer .= ':' . $part;
+                $buffer .= ':'.$part;
             } else {
                 // Standalone modifier (e.g. 'required', 'hidden')
                 $result[] = $part;

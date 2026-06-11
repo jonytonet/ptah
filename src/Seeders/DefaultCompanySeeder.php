@@ -23,16 +23,16 @@ class DefaultCompanySeeder extends Seeder
             ->where('is_default', true)
             ->first();
 
-        if (!$company) {
+        if (! $company) {
             // Auto-generate label: first 4 uppercase letters of the name
             $autoLabel = strtoupper(Str::substr(Str::ascii($name), 0, 4));
 
             Company::create([
-                'name'       => $name,
-                'slug'       => Str::slug($name),
-                'label'      => $autoLabel,
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'label' => $autoLabel,
                 'is_default' => true,
-                'is_active'  => true,
+                'is_active' => true,
             ]);
 
             $this->command?->getOutput()?->writeln(

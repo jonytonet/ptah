@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\SearchDropdown;
 
-use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
@@ -22,6 +25,7 @@ use Ptah\DTO\SearchDropdownDTO;
  * Livewire 4 — uses dispatch() and #[On(...)].
  *
  * Basic usage:
+ *
  *   @livewire('ptah-search-dropdown', [
  *       'model'  => 'Product',
  *       'label'  => 'name',
@@ -130,8 +134,10 @@ class SearchDropdown extends Component
      *   - "App\Services\Mask@format"  → IoC call (Class@method)
      *   - name of a public method of the component itself
      */
-    public string $maskOne   = 'defaultMask';
-    public string $maskTwo   = 'defaultMask';
+    public string $maskOne = 'defaultMask';
+
+    public string $maskTwo = 'defaultMask';
+
     public string $maskThree = 'defaultMask';
 
     // ── Initialisation ─────────────────────────────────────────────────────
@@ -143,7 +149,7 @@ class SearchDropdown extends Component
 
     // ── Render ─────────────────────────────────────────────────────────────
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('ptah::livewire.search-dropdown.search-dropdown');
     }
@@ -162,15 +168,15 @@ class SearchDropdown extends Component
 
         return array_map(function (array $item): array {
             return [
-                '_value'      => $item[$this->value] ?? '',
-                '_label'      => $this->formatValue($item[$this->label] ?? '', $this->maskOne),
-                '_labelTwo'   => $this->labelTwo !== null
+                '_value' => $item[$this->value] ?? '',
+                '_label' => $this->formatValue($item[$this->label] ?? '', $this->maskOne),
+                '_labelTwo' => $this->labelTwo !== null
                     ? $this->formatValue($item[$this->labelTwo] ?? '', $this->maskTwo)
                     : null,
                 '_labelThree' => $this->labelThree !== null
                     ? $this->formatValue($item[$this->labelThree] ?? '', $this->maskThree)
                     : null,
-                '_raw'        => $item,
+                '_raw' => $item,
             ];
         }, $this->dataModel);
     }
@@ -193,19 +199,19 @@ class SearchDropdown extends Component
     {
         $dto = new SearchDropdownDTO(
             searchTerm: $this->searchTerm,
-            value:      $this->value,
-            label:      $this->label,
-            labelTwo:   $this->labelTwo,
+            value: $this->value,
+            label: $this->label,
+            labelTwo: $this->labelTwo,
             labelThree: $this->labelThree,
             orderByRaw: $this->orderByRaw,
-            limit:      $this->limit,
+            limit: $this->limit,
             arraySearch: $this->arraySearch,
-            dataFilter:  $this->dataFilter,
+            dataFilter: $this->dataFilter,
         );
 
         $result = app()->make($this->serviceClass)->{$this->useService}($dto);
 
-        $this->dataModel = $result instanceof \Illuminate\Support\Collection
+        $this->dataModel = $result instanceof Collection
             ? $result->toArray()
             : (array) $result;
     }
@@ -222,7 +228,7 @@ class SearchDropdown extends Component
 
         $cols = array_filter([$this->value, $this->label, $this->labelTwo, $this->labelThree]);
 
-        /** @var \Illuminate\Database\Eloquent\Model $query */
+        /** @var Model $query */
         $query = app()->make($this->modelClass)->select(array_values($cols));
 
         // Apply LIKE on the configured fields.
@@ -231,7 +237,7 @@ class SearchDropdown extends Component
         // the same column (AND), but any column can satisfy the rule (OR).
         // This is database-agnostic and has no extra performance cost over a
         // single LIKE, since both require a full scan when % leads the pattern.
-        if (!empty($this->searchTerm)) {
+        if (! empty($this->searchTerm)) {
             $searchCols = array_merge(
                 array_filter([$this->label, $this->labelTwo, $this->labelThree, $this->value]),
                 $this->arraySearch
@@ -245,7 +251,7 @@ class SearchDropdown extends Component
                     // column match counts (OR between columns).
                     $q->orWhere(function ($sub) use ($col, $words) {
                         foreach ($words as $word) {
-                            $sub->where($col, 'LIKE', '%' . $word . '%');
+                            $sub->where($col, 'LIKE', '%'.$word.'%');
                         }
                     });
                 }
@@ -253,7 +259,7 @@ class SearchDropdown extends Component
         }
 
         // Additional filters
-        if (!empty($this->dataFilter)) {
+        if (! empty($this->dataFilter)) {
             $query->where($this->dataFilter);
         }
 
@@ -272,7 +278,7 @@ class SearchDropdown extends Component
      */
     public function toggleShow(): void
     {
-        $this->dispatch('ptah-sd-change-show-' . $this->key);
+        $this->dispatch('ptah-sd-change-show-'.$this->key);
     }
 
     /** Receives external Livewire event to toggle the dropdown. */
@@ -289,7 +295,7 @@ class SearchDropdown extends Component
     #[On('clearSearchDropdown')]
     public function clearSearchDropdown(): void
     {
-        $this->dispatch('ptah-sd-clear-' . $this->key);
+        $this->dispatch('ptah-sd-clear-'.$this->key);
     }
 
     // ── Selection ────────────────────────────────────────────────────────────
@@ -300,14 +306,14 @@ class SearchDropdown extends Component
      */
     public function selectedItem(array $item): void
     {
-        $displayTerm = $item[$this->value] . ' - ' . $item[$this->label];
+        $displayTerm = $item[$this->value].' - '.$item[$this->label];
 
         $this->dispatch($this->listens, [
             'useService' => $this->useService,
-            'value'      => $item[$this->value],
-            'label'      => $item[$this->label],
+            'value' => $item[$this->value],
+            'label' => $item[$this->label],
             'searchTerm' => $displayTerm,
-            'coringa'    => $this->coringa,
+            'coringa' => $this->coringa,
         ]);
     }
 
@@ -319,10 +325,10 @@ class SearchDropdown extends Component
     {
         $this->dispatch($this->listens, [
             'useService' => $this->useService,
-            'value'      => '',
-            'label'      => '',
+            'value' => '',
+            'label' => '',
             'searchTerm' => '',
-            'coringa'    => $this->coringa,
+            'coringa' => $this->coringa,
         ]);
     }
 
@@ -353,11 +359,11 @@ class SearchDropdown extends Component
 
         // Built-in masks
         $builtin = match ($mask) {
-            'cnpj'  => $this->applyMaskCnpj($v),
-            'cpf'   => $this->applyMaskCpf($v),
+            'cnpj' => $this->applyMaskCnpj($v),
+            'cpf' => $this->applyMaskCpf($v),
             'money' => $this->applyMaskMoney($v),
             'phone' => $this->applyMaskPhone($v),
-            'date'  => $this->applyMaskDate($v),
+            'date' => $this->applyMaskDate($v),
             default => null,
         };
 
@@ -371,6 +377,7 @@ class SearchDropdown extends Component
             if (class_exists($class) && method_exists($class, $method)) {
                 return (string) $class::$method($v);
             }
+
             return $v;
         }
 
@@ -380,6 +387,7 @@ class SearchDropdown extends Component
             if (class_exists($class)) {
                 return (string) app($class)->{$method}($v);
             }
+
             return $v;
         }
 
@@ -400,10 +408,10 @@ class SearchDropdown extends Component
     protected function resolveModelClass(): void
     {
         $segments = array_map('ucfirst', explode('/', $this->model));
-        $suffix   = implode('\\', $segments);
+        $suffix = implode('\\', $segments);
 
-        $this->modelClass   = 'App\\Models\\' . $suffix;
-        $this->serviceClass = 'App\\Services\\' . $suffix . 'Service';
+        $this->modelClass = 'App\\Models\\'.$suffix;
+        $this->serviceClass = 'App\\Services\\'.$suffix.'Service';
     }
 
     private function applyMaskCnpj(string $v): string
@@ -443,13 +451,13 @@ class SearchDropdown extends Component
     {
         $num = (float) str_replace(',', '.', preg_replace('/[^\d,.]/', '', $v));
 
-        return 'R$ ' . number_format($num, 2, ',', '.');
+        return 'R$ '.number_format($num, 2, ',', '.');
     }
 
     private function applyMaskPhone(string $v): string
     {
         $digits = preg_replace('/\D/', '', $v);
-        $len    = strlen($digits);
+        $len = strlen($digits);
 
         if ($len === 11) {
             return sprintf('(%s) %s %s-%s',
@@ -474,7 +482,7 @@ class SearchDropdown extends Component
     private function applyMaskDate(string $v): string
     {
         try {
-            return \Carbon\Carbon::parse($v)->format('d/m/Y');
+            return Carbon::parse($v)->format('d/m/Y');
         } catch (\Throwable) {
             return $v;
         }

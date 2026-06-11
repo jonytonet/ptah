@@ -29,21 +29,29 @@ class GetSystemInfoTool implements AiToolInterface
     {
         // No parameters needed — returns system metadata unconditionally
         return [
-            'type'       => 'object',
-            'properties' => new \stdClass(), // empty object in JSON Schema
-            'required'   => [],
+            'type' => 'object',
+            'properties' => new \stdClass, // empty object in JSON Schema
+            'required' => [],
         ];
     }
 
     public function execute(array $arguments): array
     {
-        return [
-            'app_name'       => config('app.name', 'Unknown'),
-            'laravel_version'=> app()->version(),
-            'php_version'    => PHP_VERSION,
-            'environment'    => app()->environment(),
-            'timezone'       => config('app.timezone', 'UTC'),
-            'locale'         => app()->getLocale(),
+        $info = [
+            'app_name' => config('app.name', 'Unknown'),
+            'timezone' => config('app.timezone', 'UTC'),
+            'locale' => app()->getLocale(),
         ];
+
+        // Framework/PHP versions and environment are disclosed only when explicitly
+        // enabled — version banners help attackers fingerprint the stack, and any
+        // chat user (including guests) can trigger this tool.
+        if (config('ptah.ai_agent.expose_system_details', false)) {
+            $info['laravel_version'] = app()->version();
+            $info['php_version'] = PHP_VERSION;
+            $info['environment'] = app()->environment();
+        }
+
+        return $info;
     }
 }

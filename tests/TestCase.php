@@ -7,6 +7,7 @@ namespace Ptah\Tests;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
+use Prism\Prism\PrismServiceProvider;
 use Ptah\PtahServiceProvider;
 
 /**
@@ -23,18 +24,22 @@ abstract class TestCase extends OrchestraTestCase
     {
         return [
             LivewireServiceProvider::class,
+            PrismServiceProvider::class,
             PtahServiceProvider::class,
         ];
     }
 
     protected function getEnvironmentSetUp($app): void
     {
+        // App key — required by views/components that use the encrypter (CSRF, etc.)
+        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+
         // Banco SQLite em memória
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
 
         // Módulos Ptah habilitados
@@ -55,9 +60,9 @@ abstract class TestCase extends OrchestraTestCase
         // exists before Ptah migrations (e.g. add_two_factor_columns_to_users)
         // attempt to ALTER it. loadLaravelMigrations() is intentionally absent
         // because Testbench 10 ships an empty laravel/database/migrations dir.
-        $this->loadMigrationsFrom(__DIR__ . '/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/migrations');
 
         // Migrations do Ptah (companies, roles, etc.)
-        $this->loadMigrationsFrom(__DIR__ . '/../src/Migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../src/Migrations');
     }
 }

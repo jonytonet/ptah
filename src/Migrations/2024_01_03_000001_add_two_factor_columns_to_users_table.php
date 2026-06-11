@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('two_factor_recovery_codes')->nullable()->after('two_factor_secret');
             $table->timestamp('two_factor_confirmed_at')->nullable()->after('two_factor_recovery_codes');
             $table->string('two_factor_type', 10)->nullable()->after('two_factor_confirmed_at')
-                  ->comment('totp | email');
+                ->comment('totp | email');
             $table->string('profile_photo_path', 2048)->nullable()->after('two_factor_type');
         });
     }

@@ -9,14 +9,16 @@ namespace Ptah\Generators;
  */
 readonly class GeneratorResult
 {
-    public const DONE    = 'DONE';
+    public const DONE = 'DONE';
+
     public const SKIPPED = 'SKIPPED';
-    public const ERROR   = 'ERROR';
+
+    public const ERROR = 'ERROR';
 
     public function __construct(
-        public string  $label,
-        public string  $status,
-        public ?string $path    = null,
+        public string $label,
+        public string $status,
+        public ?string $path = null,
         public ?string $message = null,
     ) {}
 
@@ -56,10 +58,10 @@ readonly class GeneratorResult
     public function formattedStatus(): string
     {
         return match ($this->status) {
-            self::DONE    => '<fg=green;options=bold>DONE</>',
+            self::DONE => '<fg=green;options=bold>DONE</>',
             self::SKIPPED => '<fg=yellow;options=bold>SKIPPED</>',
-            self::ERROR   => '<fg=red;options=bold>ERROR</>',
-            default       => $this->status,
+            self::ERROR => '<fg=red;options=bold>ERROR</>',
+            default => $this->status,
         };
     }
 }

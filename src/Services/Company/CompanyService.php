@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Models\Company;
-use Ptah\Models\UserRole;
 use Ptah\Traits\ResolvesUser;
 
 /**
@@ -38,11 +37,10 @@ class CompanyService implements CompanyServiceContract
      */
     public function getDefault(bool $createIfMissing = false): ?Company
     {
-        $company = Cache::remember('ptah_company_default', 3600, fn () =>
-            Company::active()->default()->first()
+        $company = Cache::remember('ptah_company_default', 3600, fn () => Company::active()->default()->first()
         );
 
-        if (!$company && $createIfMissing) {
+        if (! $company && $createIfMissing) {
             $company = $this->createDefaultCompany();
             Cache::forget('ptah_company_default');
         }
@@ -55,8 +53,7 @@ class CompanyService implements CompanyServiceContract
      */
     public function getById(int $id): ?Company
     {
-        return Cache::remember("ptah_company:{$id}", 3600, fn () =>
-            Company::active()->find($id)
+        return Cache::remember("ptah_company:{$id}", 3600, fn () => Company::active()->find($id)
         );
     }
 
@@ -68,21 +65,20 @@ class CompanyService implements CompanyServiceContract
         $userId = $this->resolveUserId($user);
 
         if ($userId === null) {
-            return new Collection();
+            return new Collection;
         }
 
-        return Cache::remember("ptah_user_companies:{$userId}", 3600, fn () =>
-            Company::query()
-                ->whereIn('id', function ($query) use ($userId) {
-                    $query->select('company_id')
-                          ->from('ptah_user_roles')
-                          ->where('user_id', $userId)
-                          ->where('is_active', true)
-                          ->whereNotNull('company_id')
-                          ->whereNull('deleted_at');
-                })
-                ->active()
-                ->get()
+        return Cache::remember("ptah_user_companies:{$userId}", 3600, fn () => Company::query()
+            ->whereIn('id', function ($query) use ($userId) {
+                $query->select('company_id')
+                    ->from('ptah_user_roles')
+                    ->where('user_id', $userId)
+                    ->where('is_active', true)
+                    ->whereNotNull('company_id')
+                    ->whereNull('deleted_at');
+            })
+            ->active()
+            ->get()
         );
     }
 
@@ -97,6 +93,7 @@ class CompanyService implements CompanyServiceContract
 
         // Fallback: default company
         $default = $this->getDefault();
+
         return $default?->id;
     }
 
@@ -144,6 +141,7 @@ class CompanyService implements CompanyServiceContract
         // Guard against stale/corrupt deserialized cache (e.g. __PHP_Incomplete_Class).
         if (! ($result instanceof \Illuminate\Support\Collection)) {
             Cache::forget('ptah_companies_all');
+
             return Company::query()
                 ->where('is_active', true)
                 ->orderByDesc('is_default')
@@ -163,6 +161,7 @@ class CompanyService implements CompanyServiceContract
         if (! $id) {
             return null;
         }
+
         return $this->getAll()->firstWhere('id', $id);
     }
 
@@ -178,7 +177,7 @@ class CompanyService implements CompanyServiceContract
      * Sets the active company in the session, validating that it exists and is active.
      * Invalidates the current user's permission cache.
      *
-     * @param int $id  Company ID
+     * @param  int  $id  Company ID
      */
     public function setActive(int $id): void
     {
@@ -230,18 +229,18 @@ class CompanyService implements CompanyServiceContract
     // Internal helpers
     // ─────────────────────────────────────────
 
-
     /**
      * Creates the initial default company using the application config.
      */
     protected function createDefaultCompany(): Company
     {
         $name = config('app.name', 'Company');
+
         return Company::create([
-            'name'       => $name,
-            'slug'       => Str::slug($name),
+            'name' => $name,
+            'slug' => Str::slug($name),
             'is_default' => true,
-            'is_active'  => true,
+            'is_active' => true,
         ]);
     }
 }

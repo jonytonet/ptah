@@ -11,7 +11,8 @@ This document lists all Artisan commands available in the Ptah package.
 3. [ptah:module](#ptahmodule)
 4. [ptah:config](#ptahconfig)
 5. [ptah:hooks](#ptahhooks)
-6. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+6. [ptah:menu-sync](#ptahmenu-sync)
+7. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -50,7 +51,7 @@ php artisan ptah:install --boost
 
 **Default credentials:** (configurable in ``config/ptah.php``)
 - E-mail: ``admin@admin.com``
-- Password: ``admin@123``
+- Password: set ``PTAH_ADMIN_PASSWORD`` in ``.env``. If left unset, a strong random password is generated and printed **once** during installation — copy it then. There is no fixed default password.
 
 **Next steps after installation:**
 
@@ -161,12 +162,16 @@ php artisan ptah:forge Product --force
 - ``unique`` — Unique index
 - ``index`` — Simple index
 - ``default(value)`` — Default value
+- ``surname=Label`` (alias: ``label=Label``) — Display label shown in the BaseCrud screen for this column. Without it, the label is derived from the field name.
 
 **Examples:**
 
 ```bash
 # Basic e-commerce
 php artisan ptah:forge Product --fields="name:string,description:text:nullable,price:decimal(10,2),stock:integer:default(0),is_active:boolean:default(true)"
+
+# With custom display labels (surname=)
+php artisan ptah:forge Product --fields="name:string:surname=Product name,price:decimal(10,2):surname=Unit price"
 
 # Foreign key
 php artisan ptah:forge ProductStock --fields="product_id:unsignedBigInteger:index,quantity:decimal(12,3),location:string:nullable"
@@ -314,7 +319,7 @@ PTAH_MODULE_PERMISSIONS=true
 
 **Admin credentials:**
 - E-mail: ``admin@admin.com`` (configurable in ``config/ptah.php``)
-- Password: ``admin@123`` (configurable in ``config/ptah.php``)
+- Password: from ``PTAH_ADMIN_PASSWORD``; if unset, a strong random password is generated and shown once at install time (no fixed default)
 - Role: MASTER (all permissions)
 
 **Components:**
@@ -989,6 +994,37 @@ class ProductHooks implements CrudHooksInterface
 3. See [Configuration.md](Configuration.md) for details on Lifecycle Hooks
 
 > ⚠️ **Warning:** The `$component` parameter exposes the full Livewire component. Use it only for reading properties, never for dispatching arbitrary actions from external data.
+
+> **Inline hooks (no class):** besides class-based hooks, a CrudConfig field may hold a single inline *expression* (Symfony ExpressionLanguage). It is evaluated in a sandbox — it does **not** run arbitrary PHP (no `eval`). The expression receives `data`, `record` and `user`; if it returns an array, that array becomes the form data. Safe functions: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`. Example: `merge(data, {'status': 'pending'})`. For anything beyond a one-liner, use a hook class.
+
+---
+
+## ptah:menu-sync
+
+**Description:** Syncs `database/seeders/MenuRegistry.php` (generated/updated by `ptah:forge`) into the `menus` database table that drives the dynamic sidebar.
+
+**Usage:**
+```bash
+# Add new menu entries, preserving existing ones (idempotent)
+php artisan ptah:menu-sync
+
+# Clear the menus table and recreate everything from the registry
+php artisan ptah:menu-sync --fresh
+```
+
+**Options:**
+- `--fresh` — Truncates the `menus` table before syncing (**destructive** — current menu rows are removed and rebuilt from the registry).
+
+**Requirements:**
+- The **menu** module must be enabled (`php artisan ptah:module menu`).
+- `MenuRegistry.php` must exist — it is created by `ptah:install` and updated automatically by `ptah:forge` (unless `--no-menu` is passed).
+
+**Typical flow:** run it after scaffolding entities so the new links appear in the sidebar:
+```bash
+php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
+php artisan migrate
+php artisan ptah:menu-sync --fresh
+```
 
 ---
 

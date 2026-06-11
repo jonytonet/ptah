@@ -47,18 +47,20 @@ class DateFilterStrategy implements FilterStrategyInterface
         }
 
         $operator = strtoupper($normalized->operator);
-        $field    = $normalized->field;
-        $value    = $normalized->value;
+        $field = $normalized->field;
+        $value = $normalized->value;
 
         // Array [from, to] ⟹ BETWEEN
         if (is_array($value)) {
             [$from, $to] = array_pad($value, 2, null);
+
             return $this->applyRange($query, $field, $from, $to);
         }
 
         // String "data1,data2" ⟹ BETWEEN
         if ($operator === 'BETWEEN' && is_string($value) && str_contains($value, ',')) {
             $parts = array_map('trim', explode(',', $value, 2));
+
             return $this->applyRange($query, $field, $parts[0] ?? null, $parts[1] ?? null);
         }
 
@@ -80,6 +82,7 @@ class DateFilterStrategy implements FilterStrategyInterface
         if ($this->type === 'datetime') {
             try {
                 $dt = Carbon::parse($value);
+
                 return $query->where($field, $normalized->operator, $dt->toDateTimeString());
             } catch (\Throwable) {
                 return $query->whereDate($field, $normalized->operator, $value);
@@ -94,7 +97,8 @@ class DateFilterStrategy implements FilterStrategyInterface
         if ($from && $to) {
             try {
                 $start = Carbon::parse($from)->startOfDay();
-                $end   = Carbon::parse($to)->endOfDay();
+                $end = Carbon::parse($to)->endOfDay();
+
                 return $query->whereBetween($field, [$start->toDateTimeString(), $end->toDateTimeString()]);
             } catch (\Throwable) {
                 return $query->whereBetween($field, [$from, $to]);

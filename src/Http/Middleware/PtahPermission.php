@@ -33,15 +33,15 @@ class PtahPermission
     {
         $resolvedCompanyId = $companyId !== null ? (int) $companyId : null;
 
-        if (!$this->permission->check(null, $objectKey, $action, $resolvedCompanyId)) {
+        if (! $this->permission->check(null, $objectKey, $action, $resolvedCompanyId)) {
             $message = trans('ptah::ui.permission_denied');
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => $message,
-                    'error'   => 'permission_denied',
-                    'key'     => $objectKey,
-                    'action'  => $action,
+                    'error' => 'permission_denied',
+                    'key' => $objectKey,
+                    'action' => $action,
                 ], Response::HTTP_FORBIDDEN);
             }
 

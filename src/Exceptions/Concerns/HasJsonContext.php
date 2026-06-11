@@ -9,15 +9,12 @@ namespace Ptah\Exceptions\Concerns;
  *
  * Provides methods to attach JSON path, line number, and expected values
  * to exception context for detailed error reporting.
- *
- * @package Ptah\Exceptions\Concerns
  */
 trait HasJsonContext
 {
     /**
      * Set the JSON path where the error occurred (e.g., "$.cols[2].colsMask").
      *
-     * @param string $path
      * @return $this
      */
     public function withJsonPath(string $path): static
@@ -28,7 +25,6 @@ trait HasJsonContext
     /**
      * Set the line number in the JSON where the error occurred.
      *
-     * @param int $lineNumber
      * @return $this
      */
     public function withLineNumber(int $lineNumber): static
@@ -39,7 +35,6 @@ trait HasJsonContext
     /**
      * Set the field name that caused the error.
      *
-     * @param string $field
      * @return $this
      */
     public function withField(string $field): static
@@ -50,7 +45,6 @@ trait HasJsonContext
     /**
      * Set the actual value that was provided.
      *
-     * @param mixed $value
      * @return $this
      */
     public function withActualValue(mixed $value): static
@@ -61,7 +55,6 @@ trait HasJsonContext
     /**
      * Set the expected value or type.
      *
-     * @param mixed $value
      * @return $this
      */
     public function withExpectedValue(mixed $value): static
@@ -72,7 +65,6 @@ trait HasJsonContext
     /**
      * Set the expected type.
      *
-     * @param string $type
      * @return $this
      */
     public function withExpectedType(string $type): static
@@ -83,7 +75,6 @@ trait HasJsonContext
     /**
      * Set the section of the configuration (e.g., "cols", "actions", "filters").
      *
-     * @param string $section
      * @return $this
      */
     public function withSection(string $section): static
@@ -94,7 +85,6 @@ trait HasJsonContext
     /**
      * Set the model class name.
      *
-     * @param string $model
      * @return $this
      */
     public function withModel(string $model): static
@@ -105,7 +95,7 @@ trait HasJsonContext
     /**
      * Set available/valid options.
      *
-     * @param array<int|string, mixed> $options
+     * @param  array<int|string, mixed>  $options
      * @return $this
      */
     public function withAvailableOptions(array $options): static
@@ -116,7 +106,6 @@ trait HasJsonContext
     /**
      * Set a suggestion for how to fix the error.
      *
-     * @param string $suggestion
      * @return $this
      */
     public function withSuggestion(string $suggestion): static
@@ -126,8 +115,6 @@ trait HasJsonContext
 
     /**
      * Get the JSON path from context.
-     *
-     * @return string|null
      */
     public function getJsonPath(): ?string
     {
@@ -136,8 +123,6 @@ trait HasJsonContext
 
     /**
      * Get the line number from context.
-     *
-     * @return int|null
      */
     public function getLineNumber(): ?int
     {
@@ -146,8 +131,6 @@ trait HasJsonContext
 
     /**
      * Get the field from context.
-     *
-     * @return string|null
      */
     public function getField(): ?string
     {
@@ -156,8 +139,6 @@ trait HasJsonContext
 
     /**
      * Get the actual value from context.
-     *
-     * @return mixed
      */
     public function getActualValue(): mixed
     {
@@ -166,8 +147,6 @@ trait HasJsonContext
 
     /**
      * Get the expected value from context.
-     *
-     * @return mixed
      */
     public function getExpectedValue(): mixed
     {
@@ -176,8 +155,6 @@ trait HasJsonContext
 
     /**
      * Get the section from context.
-     *
-     * @return string|null
      */
     public function getSection(): ?string
     {
@@ -186,8 +163,6 @@ trait HasJsonContext
 
     /**
      * Get the model from context.
-     *
-     * @return string|null
      */
     public function getModel(): ?string
     {

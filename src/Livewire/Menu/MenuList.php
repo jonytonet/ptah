@@ -18,72 +18,93 @@ class MenuList extends Component
     use WithPagination;
 
     // ── Filtros ────────────────────────────────────────────────────────
-    public string $search     = '';
+    public string $search = '';
+
     public string $typeFilter = '';            // '' | 'menuLink' | 'menuGroup'
-    public string $sort       = 'link_order';
-    public string $direction  = 'asc';
+
+    public string $sort = 'link_order';
+
+    public string $direction = 'asc';
 
     // ── Modal ──────────────────────────────────────────────────────────
-    public bool  $showModal = false;
-    public bool  $isEditing = false;
-    public ?int  $editingId = null;
+    public bool $showModal = false;
+
+    public bool $isEditing = false;
+
+    public ?int $editingId = null;
 
     // ── Form fields ────────────────────────────────────────────────
-    public string $text       = '';
-    public string $url        = '';
-    public string $icon       = 'bx bx-circle';
-    public string $type       = 'menuLink';
-    public string $target     = '_self';
-    public ?int   $parent_id  = null;
-    public int    $link_order = 0;
-    public bool   $is_active  = true;
+    public string $text = '';
+
+    public string $url = '';
+
+    public string $icon = 'bx bx-circle';
+
+    public string $type = 'menuLink';
+
+    public string $target = '_self';
+
+    public ?int $parent_id = null;
+
+    public int $link_order = 0;
+
+    public bool $is_active = true;
 
     // ── Delete ─────────────────────────────────────────────────────────
-    public ?int  $deleteId        = null;
-    public bool  $showDeleteModal = false;
+    public ?int $deleteId = null;
+
+    public bool $showDeleteModal = false;
 
     // ── Feedback ───────────────────────────────────────────────────────
     public string $successMsg = '';
-    public string $errorMsg   = '';
+
+    public string $errorMsg = '';
 
     // ── Validation rules ──────────────────────────────────────────────
     protected function rules(): array
     {
         return [
-            'text'       => 'required|string|max:255',
-            'url'        => 'nullable|string|max:2048',
-            'icon'       => 'nullable|string|max:100',
-            'type'       => 'required|in:menuLink,menuGroup',
-            'target'     => 'required|in:_self,_blank',
-            'parent_id'  => 'nullable|integer|exists:menus,id',
+            'text' => 'required|string|max:255',
+            'url' => 'nullable|string|max:2048',
+            'icon' => 'nullable|string|max:100',
+            'type' => 'required|in:menuLink,menuGroup',
+            'target' => 'required|in:_self,_blank',
+            'parent_id' => 'nullable|integer|exists:menus,id',
             'link_order' => 'integer|min:0',
-            'is_active'  => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
     protected $messages = [
-        'text.required'    => 'The menu text is required.',
+        'text.required' => 'The menu text is required.',
         'parent_id.exists' => 'The selected parent group does not exist.',
     ];
 
     // ── Lifecycle ──────────────────────────────────────────────────────
-    public function updatingSearch(): void  { $this->resetPage(); }
-    public function updatingTypeFilter(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTypeFilter(): void
+    {
+        $this->resetPage();
+    }
 
     // ── Sort ───────────────────────────────────────────────────────────
     public function sort(string $column): void
     {
         $this->direction = ($this->sort === $column && $this->direction === 'asc') ? 'desc' : 'asc';
-        $this->sort      = $column;
+        $this->sort = $column;
     }
 
     // ── CRUD ───────────────────────────────────────────────────────────
     public function create(): void
     {
         $this->reset(['text', 'url', 'icon', 'type', 'target', 'parent_id', 'link_order', 'is_active', 'editingId', 'errorMsg']);
-        $this->icon      = 'bx bx-circle';
-        $this->type      = 'menuLink';
-        $this->target    = '_self';
+        $this->icon = 'bx bx-circle';
+        $this->type = 'menuLink';
+        $this->target = '_self';
         $this->is_active = true;
         $this->isEditing = false;
         $this->showModal = true;
@@ -93,17 +114,17 @@ class MenuList extends Component
     public function edit(int $id): void
     {
         $menu = Menu::findOrFail($id);
-        $this->editingId    = $id;
-        $this->text         = $menu->text;
-        $this->url          = $menu->url ?? '';
-        $this->icon         = $menu->icon ?? 'bx bx-circle';
-        $this->type         = $menu->type;
-        $this->target       = $menu->target;
-        $this->parent_id    = $menu->parent_id;
-        $this->link_order   = $menu->link_order;
-        $this->is_active    = $menu->is_active;
-        $this->isEditing    = true;
-        $this->showModal    = true;
+        $this->editingId = $id;
+        $this->text = $menu->text;
+        $this->url = $menu->url ?? '';
+        $this->icon = $menu->icon ?? 'bx bx-circle';
+        $this->type = $menu->type;
+        $this->target = $menu->target;
+        $this->parent_id = $menu->parent_id;
+        $this->link_order = $menu->link_order;
+        $this->is_active = $menu->is_active;
+        $this->isEditing = true;
+        $this->showModal = true;
         $this->resetValidation();
     }
 
@@ -113,14 +134,14 @@ class MenuList extends Component
 
         try {
             $data = [
-                'text'       => $this->text,
-                'url'        => ($this->type === 'menuGroup') ? null : ($this->url ?: null),
-                'icon'       => $this->icon ?: 'bx bx-circle',
-                'type'       => $this->type,
-                'target'     => $this->target,
-                'parent_id'  => $this->parent_id ?: null,
+                'text' => $this->text,
+                'url' => ($this->type === 'menuGroup') ? null : ($this->url ?: null),
+                'icon' => $this->icon ?: 'bx bx-circle',
+                'type' => $this->type,
+                'target' => $this->target,
+                'parent_id' => $this->parent_id ?: null,
                 'link_order' => $this->link_order,
-                'is_active'  => $this->is_active,
+                'is_active' => $this->is_active,
             ];
 
             if ($this->isEditing) {
@@ -136,27 +157,27 @@ class MenuList extends Component
             $this->resetPage();
 
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao salvar: ' . $e->getMessage();
+            $this->errorMsg = 'Erro ao salvar: '.$e->getMessage();
         }
     }
 
     public function toggleActive(int $id): void
     {
         $menu = Menu::findOrFail($id);
-        $menu->update(['is_active' => !$menu->is_active]);
+        $menu->update(['is_active' => ! $menu->is_active]);
         app(MenuService::class)->clearCache();
         $this->successMsg = $menu->is_active ? 'Item ativado.' : 'Item desativado.';
     }
 
     public function confirmDelete(int $id): void
     {
-        $this->deleteId        = $id;
+        $this->deleteId = $id;
         $this->showDeleteModal = true;
     }
 
     public function delete(): void
     {
-        if (!$this->deleteId) {
+        if (! $this->deleteId) {
             return;
         }
 
@@ -170,14 +191,14 @@ class MenuList extends Component
 
             $menu->delete();
             app(MenuService::class)->clearCache();
-            $this->successMsg = "Item deleted.";
+            $this->successMsg = 'Item deleted.';
 
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao excluir: ' . $e->getMessage();
+            $this->errorMsg = 'Erro ao excluir: '.$e->getMessage();
         }
 
         $this->showDeleteModal = false;
-        $this->deleteId        = null;
+        $this->deleteId = null;
         $this->resetPage();
     }
 
@@ -198,8 +219,8 @@ class MenuList extends Component
     public function render()
     {
         $rows = Menu::withoutTrashed()
-            ->when($this->search, fn($q) => $q->where('text', 'like', "%{$this->search}%"))
-            ->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))
+            ->when($this->search, fn ($q) => $q->where('text', 'like', "%{$this->search}%"))
+            ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter))
             ->with('parent:id,text')
             ->orderBy($this->sort, $this->direction)
             ->paginate(20);

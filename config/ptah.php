@@ -1,5 +1,7 @@
 <?php
 
+use Ptah\Models\Company;
+
 return [
 
     /*
@@ -17,7 +19,7 @@ return [
     |
     */
     'force_locale' => env('PTAH_FORCE_LOCALE', false),
-    'locale'       => env('PTAH_LOCALE', 'en'),
+    'locale' => env('PTAH_LOCALE', 'en'),
 
     /*
     |--------------------------------------------------------------------------
@@ -29,16 +31,16 @@ return [
     |
     */
     'paths' => [
-        'models'       => app_path('Models'),
-        'services'     => app_path('Services'),
+        'models' => app_path('Models'),
+        'services' => app_path('Services'),
         'repositories' => app_path('Repositories'),
-        'dtos'         => app_path('DTOs'),
-        'actions'      => app_path('Actions'),
-        'livewire'     => app_path('Livewire'),
-        'requests'     => app_path('Http/Requests'),
-        'resources'    => app_path('Http/Resources'),
-        'controllers'  => app_path('Http/Controllers'),
-        'views'        => resource_path('views'),
+        'dtos' => app_path('DTOs'),
+        'actions' => app_path('Actions'),
+        'livewire' => app_path('Livewire'),
+        'requests' => app_path('Http/Requests'),
+        'resources' => app_path('Http/Resources'),
+        'controllers' => app_path('Http/Controllers'),
+        'views' => resource_path('views'),
     ],
 
     /*
@@ -52,8 +54,8 @@ return [
     */
     'preferences' => [
         'driver' => 'database',
-        'cache'  => true,
-        'ttl'    => 3600,
+        'cache' => true,
+        'ttl' => 3600,
     ],
 
     /*
@@ -62,9 +64,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'api' => [
-        'prefix'     => 'api',
+        'prefix' => 'api',
         'middleware' => ['api', 'auth:sanctum'],
-        'docs'       => true,
+        'docs' => true,
     ],
 
     /*
@@ -80,8 +82,8 @@ return [
     |
     */
     'forge' => [
-        'prefix'        => 'forge',
-        'tailwind'      => 'v4',
+        'prefix' => 'forge',
+        'tailwind' => 'v4',
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],
@@ -97,7 +99,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'scaffold' => [
-        'layout'    => 'forge-dashboard',
+        'layout' => 'forge-dashboard',
         'auth_layout' => 'forge-auth',
     ],
 
@@ -110,12 +112,12 @@ return [
     |
     */
     'crud' => [
-        'cache_enabled'  => true,
-        'cache_ttl'      => 3600,
-        'per_page'       => 25,
-        'soft_deletes'   => true,
+        'cache_enabled' => true,
+        'cache_ttl' => 3600,
+        'per_page' => 25,
+        'soft_deletes' => true,
         'confirm_delete' => true,
-        'export_driver'  => 'excel',
+        'export_driver' => 'excel',
     ],
 
     /*
@@ -125,12 +127,12 @@ return [
     | Use `php artisan ptah:module {auth|menu|company|permissions|api|ai_agent}` to install each module.
     */
     'modules' => [
-        'auth'        => env('PTAH_MODULE_AUTH', false),
-        'menu'        => env('PTAH_MODULE_MENU', false),
-        'company'     => env('PTAH_MODULE_COMPANY', false),
+        'auth' => env('PTAH_MODULE_AUTH', false),
+        'menu' => env('PTAH_MODULE_MENU', false),
+        'company' => env('PTAH_MODULE_COMPANY', false),
         'permissions' => env('PTAH_MODULE_PERMISSIONS', false),
-        'api'         => env('PTAH_MODULE_API', false),
-        'ai_agent'    => env('PTAH_MODULE_AI_AGENT', false),
+        'api' => env('PTAH_MODULE_API', false),
+        'ai_agent' => env('PTAH_MODULE_AI_AGENT', false),
     ],
 
     /*
@@ -139,12 +141,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'auth' => [
-        'guard'               => 'web',
-        'home'                => '/dashboard',
-        'register_enabled'    => false,
-        'two_factor'          => true,
-        'remember_me'         => true,
-        'session_protection'  => true,
+        'guard' => 'web',
+        'home' => '/dashboard',
+        'register_enabled' => false,
+        'two_factor' => true,
+        'remember_me' => true,
+        'session_protection' => true,
     ],
 
     /*
@@ -155,8 +157,8 @@ return [
     | driver 'database' reads from the menus table.
     */
     'menu' => [
-        'driver'    => env('PTAH_MENU_DRIVER', 'database'),
-        'cache'     => true,
+        'driver' => env('PTAH_MENU_DRIVER', 'database'),
+        'cache' => true,
         'cache_ttl' => 300,
         'max_depth' => 4,
     ],
@@ -170,10 +172,10 @@ return [
     | address_fields: fields available in the address JSON.
     */
     'company' => [
-        'model'          => \Ptah\Models\Company::class,
-        'table'          => 'ptah_companies',
-        'logo_disk'      => env('PTAH_LOGO_DISK', 'public'),
-        'logo_path'      => env('PTAH_LOGO_PATH', 'company-logos'),
+        'model' => Company::class,
+        'table' => 'ptah_companies',
+        'logo_disk' => env('PTAH_LOGO_DISK', 'public'),
+        'logo_path' => env('PTAH_LOGO_PATH', 'company-logos'),
         'address_fields' => [
             'street', 'number', 'complement', 'district',
             'city', 'state', 'zip_code', 'country',
@@ -205,28 +207,29 @@ return [
     | admin_password      : initial admin password (change after first login!)
     */
     'permissions' => [
-        'cache'               => env('PTAH_PERMISSION_CACHE', true),
-        'cache_ttl'           => (int) env('PTAH_PERMISSION_CACHE_TTL', 3600),
-        'user_model'          => env('PTAH_USER_MODEL', 'App\Models\User'),
-        'user_id_field'       => env('PTAH_USER_ID_FIELD', 'id'),
+        'cache' => env('PTAH_PERMISSION_CACHE', true),
+        'cache_ttl' => (int) env('PTAH_PERMISSION_CACHE_TTL', 3600),
+        'user_model' => env('PTAH_USER_MODEL', 'App\Models\User'),
+        'user_id_field' => env('PTAH_USER_ID_FIELD', 'id'),
         // Optional Eloquent scope class applied to the user query in the
         // Permissions screen. Use this to restrict which users appear
         // (e.g. show only admin users in a project that has multiple user types).
         // Must implement \Illuminate\Database\Eloquent\Scope.
         // Example: 'user_query_scope' => App\Scopes\AdminUsersScope::class
-        'user_query_scope'    => env('PTAH_USER_QUERY_SCOPE', null),
+        'user_query_scope' => env('PTAH_USER_QUERY_SCOPE', null),
         'company_session_key' => env('PTAH_COMPANY_SESSION_KEY', 'ptah_company_id'),
-        'user_session_key'    => env('PTAH_USER_SESSION_KEY', null),
-        'audit'               => env('PTAH_PERMISSION_AUDIT', false),
-        'audit_denied'        => env('PTAH_PERMISSION_AUDIT_DENIED', true),
-        'audit_master'        => env('PTAH_PERMISSION_AUDIT_MASTER', false),
-        'multi_company'       => env('PTAH_MULTI_COMPANY', true),
-        'allow_guest'         => env('PTAH_PERMISSION_ALLOW_GUEST', false),
-        'admin_name'          => env('PTAH_ADMIN_NAME', 'Administrador'),
-        'admin_email'         => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
-        // Default password used when PTAH_ADMIN_PASSWORD is not set in .env.
-        // Always change this after the first login.
-        'admin_password'      => env('PTAH_ADMIN_PASSWORD', 'admin@123'),
+        'user_session_key' => env('PTAH_USER_SESSION_KEY', null),
+        'audit' => env('PTAH_PERMISSION_AUDIT', false),
+        'audit_denied' => env('PTAH_PERMISSION_AUDIT_DENIED', true),
+        'audit_master' => env('PTAH_PERMISSION_AUDIT_MASTER', false),
+        'multi_company' => env('PTAH_MULTI_COMPANY', true),
+        'allow_guest' => env('PTAH_PERMISSION_ALLOW_GUEST', false),
+        'admin_name' => env('PTAH_ADMIN_NAME', 'Administrador'),
+        'admin_email' => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
+        // Initial admin password. Leave PTAH_ADMIN_PASSWORD unset to have a strong
+        // random password generated and shown ONCE during installation. There is
+        // intentionally no insecure hardcoded fallback. Always change it on first login.
+        'admin_password' => env('PTAH_ADMIN_PASSWORD'),
     ],
 
     /*
@@ -235,20 +238,35 @@ return [
     |--------------------------------------------------------------------------
     | Conversational AI widget powered by prism-php/prism.
     |
-    | system_prompt : default prompt injected into every conversation.
-    | max_history   : max number of messages kept per session (older ones are dropped).
-    | rate_limit    : max requests per minute per session.
-    | tools         : array of AiToolInterface instances to register globally.
-    |                 Example: [\App\AI\Tools\MyCustomTool::class]
+    | system_prompt          : default prompt injected into every conversation.
+    | max_history            : max number of recent messages (per conversation) sent
+    |                          as context — older ones are dropped. NOTE: this is a
+    |                          message count, not a token count; very long messages
+    |                          can still approach the model's context window.
+    | rate_limit             : max requests per minute (per user when authenticated,
+    |                          per session for guests).
+    | stream                 : when true (default), the widget streams the answer
+    |                          token-by-token; set false to wait for the full reply.
+    | daily_token_limit      : optional per-user daily token ceiling. 0 disables it.
+    | allow_guests           : when false (default), the chat widget is only available
+    |                          to authenticated users.
+    | expose_system_details  : when false (default), the built-in getSystemInfo tool
+    |                          hides framework/PHP versions and the environment name.
+    | tools                  : array of AiToolInterface classes to register globally.
+    |                          Example: [\App\AI\Tools\MyCustomTool::class]
     |
     | Requires: composer require prism-php/prism
     | Enable  : php artisan ptah:module ai_agent
     */
     'ai_agent' => [
         'system_prompt' => env('PTAH_AI_SYSTEM_PROMPT', 'You are a helpful assistant.'),
-        'max_history'   => (int) env('PTAH_AI_MAX_HISTORY', 20),
-        'rate_limit'    => (int) env('PTAH_AI_RATE_LIMIT', 30),
-        'tools'         => [],
+        'max_history' => (int) env('PTAH_AI_MAX_HISTORY', 20),
+        'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
+        'stream' => (bool) env('PTAH_AI_STREAM', true),
+        'daily_token_limit' => (int) env('PTAH_AI_DAILY_TOKEN_LIMIT', 0),
+        'allow_guests' => (bool) env('PTAH_AI_ALLOW_GUESTS', false),
+        'expose_system_details' => (bool) env('PTAH_AI_EXPOSE_SYSTEM_DETAILS', false),
+        'tools' => [],
     ],
 
 ];

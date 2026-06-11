@@ -27,7 +27,7 @@ trait HasCrudExport
             return;
         }
 
-        $query         = $modelInstance->newQuery();
+        $query = $modelInstance->newQuery();
         $this->applyJoins($query, $modelInstance);
         $activeFilters = $this->buildActiveFilters();
 
@@ -47,8 +47,8 @@ trait HasCrudExport
         } else {
             // Basic synchronous export via download
             $this->dispatch('ptah:export-sync', [
-                'model'   => $this->model,
-                'format'  => $format,
+                'model' => $this->model,
+                'format' => $format,
                 'filters' => $this->filters,
                 'columns' => $visibleColumns,
             ]);
@@ -68,9 +68,9 @@ trait HasCrudExport
         $visibleColumns = $this->getVisibleColumnsForExport();
 
         $this->dispatch('ptah:bulk-export', [
-            'model'   => $this->model,
-            'ids'     => $this->selectedRows,
-            'format'  => $format,
+            'model' => $this->model,
+            'ids' => $this->selectedRows,
+            'format' => $format,
             'columns' => $visibleColumns,
         ]);
     }
@@ -82,11 +82,11 @@ trait HasCrudExport
 
         if (class_exists($jobClass)) {
             dispatch(new $jobClass(
-                model:   $this->model,
+                model: $this->model,
                 filters: $this->filters,
-                format:  $format,
-                userId:  Auth::id(),
-                config:  $exportConfig,
+                format: $format,
+                userId: Auth::id(),
+                config: $exportConfig,
             ));
         }
     }
@@ -97,24 +97,24 @@ trait HasCrudExport
     protected function getVisibleColumnsForExport(): array
     {
         $visibleCols = $this->getVisibleColumns();
-        
+
         $exportColumns = [];
-        
+
         foreach ($visibleCols as $col) {
             $tipo = $col['colsTipo'] ?? '';
-            
+
             // Ignorar colunas de ação
             if ($tipo === 'action') {
                 continue;
             }
-            
+
             $exportColumns[] = [
                 'field' => $col['colsNomeFisico'] ?? '',
                 'label' => $col['colsNomeLogico'] ?? '',
-                'type'  => $tipo,
+                'type' => $tipo,
             ];
         }
-        
+
         return $exportColumns;
     }
 }

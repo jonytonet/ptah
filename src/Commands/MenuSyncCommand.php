@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
  *   php artisan ptah:menu-sync --fresh   # Limpa tabela e recria tudo
  *
  * @author Ptah Team
+ *
  * @since 1.0.0
  */
 class MenuSyncCommand extends Command
@@ -34,6 +35,7 @@ class MenuSyncCommand extends Command
         if (! file_exists($registryPath)) {
             $this->components->error('MenuRegistry.php not found in database/seeders/');
             $this->line('  <fg=yellow>→ Run <fg=cyan>ptah:install</> to create the initial registry.');
+
             return self::FAILURE;
         }
 
@@ -42,6 +44,7 @@ class MenuSyncCommand extends Command
 
         if (! is_array($registry)) {
             $this->components->error('MenuRegistry.php must return an array');
+
             return self::FAILURE;
         }
 
@@ -66,7 +69,7 @@ class MenuSyncCommand extends Command
 
         // Sync groups
         $groupCount = 0;
-        $linkCount  = 0;
+        $linkCount = 0;
 
         foreach ($registry['groups'] ?? [] as $groupKey => $group) {
             $groupId = $this->syncGroup($groupKey, $group);
@@ -81,11 +84,11 @@ class MenuSyncCommand extends Command
 
         // Summary
         $this->newLine();
-        $this->components->info("✔ Menu synced successfully!");
+        $this->components->info('✔ Menu synced successfully!');
         $this->line("  <fg=gray>Groups: {$groupCount} | Links: {$linkCount} | Flat links: {$flatCount}</>");
-        $this->line("  <fg=gray>(Dashboard is hardcoded in sidebar)</>");
+        $this->line('  <fg=gray>(Dashboard is hardcoded in sidebar)</>');
         $this->newLine();
-        $this->line("  <fg=blue>→ Refresh your browser to see the updated menu.</>");
+        $this->line('  <fg=blue>→ Refresh your browser to see the updated menu.</>');
 
         return self::SUCCESS;
     }
@@ -106,7 +109,7 @@ class MenuSyncCommand extends Command
     /**
      * Sincroniza o dashboard (link único no topo).
      *
-     * @param array $registry Array do MenuRegistry
+     * @param  array  $registry  Array do MenuRegistry
      * @return int|null ID do menu dashboard criado ou null se não existir
      */
     private function syncDashboard(array $registry): ?int
@@ -155,7 +158,7 @@ class MenuSyncCommand extends Command
     /**
      * Syncs a flat root link (menuLink, parent_id = null).
      *
-     * @param array $link Link data
+     * @param  array  $link  Link data
      * @return int ID of the created/updated record
      */
     private function syncFlatLink(array $link): int
@@ -168,10 +171,10 @@ class MenuSyncCommand extends Command
 
         if ($existing) {
             DB::table('menus')->where('id', $existing->id)->update([
-                'text'       => $link['text'],
-                'icon'       => $link['icon'],
+                'text' => $link['text'],
+                'icon' => $link['icon'],
                 'link_order' => $link['order'],
-                'is_active'  => true,
+                'is_active' => true,
                 'updated_at' => now(),
             ]);
 
@@ -179,14 +182,14 @@ class MenuSyncCommand extends Command
         }
 
         return (int) DB::table('menus')->insertGetId([
-            'parent_id'  => null,
-            'text'       => $link['text'],
-            'url'        => $link['url'],
-            'icon'       => $link['icon'],
-            'type'       => 'menuLink',
-            'target'     => '_self',
+            'parent_id' => null,
+            'text' => $link['text'],
+            'url' => $link['url'],
+            'icon' => $link['icon'],
+            'type' => 'menuLink',
+            'target' => '_self',
             'link_order' => $link['order'],
-            'is_active'  => true,
+            'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -195,8 +198,8 @@ class MenuSyncCommand extends Command
     /**
      * Sincroniza um grupo (menuGroup).
      *
-     * @param string $groupKey Chave do grupo (ex: 'health')
-     * @param array $group Dados do grupo
+     * @param  string  $groupKey  Chave do grupo (ex: 'health')
+     * @param  array  $group  Dados do grupo
      * @return int ID do grupo criado/atualizado
      */
     private function syncGroup(string $groupKey, array $group): int
@@ -238,8 +241,8 @@ class MenuSyncCommand extends Command
     /**
      * Sincroniza um link (menuLink) dentro de um grupo.
      *
-     * @param int $parentId ID do grupo pai
-     * @param array $link Dados do link
+     * @param  int  $parentId  ID do grupo pai
+     * @param  array  $link  Dados do link
      * @return int ID do link criado/atualizado
      */
     private function syncLink(int $parentId, array $link): int

@@ -6,6 +6,8 @@ namespace Ptah\Commands\Modules;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use L5Swagger\L5SwaggerServiceProvider;
+use Symfony\Component\Process\Process;
 
 /**
  * Enables optional Ptah modules: auth, menu, company, permissions.
@@ -29,12 +31,12 @@ class ModuleCommand extends Command
 
     /** Available modules: name => env key */
     protected array $modules = [
-        'auth'        => 'PTAH_MODULE_AUTH',
-        'menu'        => 'PTAH_MODULE_MENU',
-        'company'     => 'PTAH_MODULE_COMPANY',
+        'auth' => 'PTAH_MODULE_AUTH',
+        'menu' => 'PTAH_MODULE_MENU',
+        'company' => 'PTAH_MODULE_COMPANY',
         'permissions' => 'PTAH_MODULE_PERMISSIONS',
-        'api'         => 'PTAH_MODULE_API',
-        'ai_agent'    => 'PTAH_MODULE_AI_AGENT',
+        'api' => 'PTAH_MODULE_API',
+        'ai_agent' => 'PTAH_MODULE_AI_AGENT',
     ];
 
     public function handle(): int
@@ -46,20 +48,21 @@ class ModuleCommand extends Command
         $module = $this->argument('module')
             ?? $this->choice('Which module would you like to enable?', array_keys($this->modules));
 
-        if (!array_key_exists($module, $this->modules)) {
-            $this->components->error("Module '{$module}' not found. Available modules: " . implode(', ', array_keys($this->modules)));
+        if (! array_key_exists($module, $this->modules)) {
+            $this->components->error("Module '{$module}' not found. Available modules: ".implode(', ', array_keys($this->modules)));
+
             return self::FAILURE;
         }
 
         $this->components->info("Enabling module: {$module}");
 
         match ($module) {
-            'auth'        => $this->activateAuth(),
-            'menu'        => $this->activateMenu(),
-            'company'     => $this->activateCompany(),
+            'auth' => $this->activateAuth(),
+            'menu' => $this->activateMenu(),
+            'company' => $this->activateCompany(),
             'permissions' => $this->activatePermissions(),
-            'api'         => $this->activateApi(),
-            'ai_agent'    => $this->activateAiAgent(),
+            'api' => $this->activateApi(),
+            'ai_agent' => $this->activateAiAgent(),
         };
 
         $this->setEnvValue($this->modules[$module], 'true');
@@ -75,7 +78,7 @@ class ModuleCommand extends Command
     {
         $this->components->task('Publishing 2FA migration', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-auth',
+                '--tag' => 'ptah-auth',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -89,7 +92,7 @@ class ModuleCommand extends Command
     {
         $this->components->task('Publishing menu migration', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-menu',
+                '--tag' => 'ptah-menu',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -103,7 +106,7 @@ class ModuleCommand extends Command
     {
         $this->components->task('Publishing company migrations', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-company',
+                '--tag' => 'ptah-company',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -120,7 +123,7 @@ class ModuleCommand extends Command
     protected function activatePermissions(): void
     {
         // Ensure the company module is also enabled
-        if (!config('ptah.modules.company')) {
+        if (! config('ptah.modules.company')) {
             $this->components->warn('Enabling dependency: company module');
             $this->activateCompany();
             $this->setEnvValue('PTAH_MODULE_COMPANY', 'true');
@@ -128,7 +131,7 @@ class ModuleCommand extends Command
 
         $this->components->task('Publishing permissions migrations', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-permissions',
+                '--tag' => 'ptah-permissions',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -137,18 +140,31 @@ class ModuleCommand extends Command
             $this->call('migrate');
         });
 
+        // Resolve the admin password once. If PTAH_ADMIN_PASSWORD is not set,
+        // generate a strong random one and inject it into the runtime config so
+        // the seeder uses the very same value. No weak hardcoded fallback.
+        $password = config('ptah.permissions.admin_password');
+        $generated = false;
+        if (empty($password)) {
+            $password = Str::password(20);
+            $generated = true;
+            config(['ptah.permissions.admin_password' => $password]);
+        }
+
         $this->components->task('Seeding default admin', function () {
             $this->call('db:seed', ['--class' => 'Ptah\\Seeders\\DefaultAdminSeeder']);
         });
 
-        $email    = config('ptah.permissions.admin_email', 'admin@admin.com');
-        $password = config('ptah.permissions.admin_password') ?: 'admin@123';
+        $email = config('ptah.permissions.admin_email', 'admin@admin.com');
 
         $this->newLine();
         $this->line('  ╔══════════════════════════════════════════╗');
         $this->line('  ║  <fg=green>Admin created successfully!</>             ║');
         $this->line("  ║  <fg=yellow>E-mail   :</>  {$email}        ");
         $this->line("  ║  <fg=yellow>Password :</>  {$password}");
+        if ($generated) {
+            $this->line('  ║  <fg=red>⚠ Random password — copy it now, shown once!</>');
+        }
         $this->line('  ║  <fg=red>⚠ Change your password on first login!</>  ║');
         $this->line('  ╚══════════════════════════════════════════╝');
         $this->newLine();
@@ -157,7 +173,7 @@ class ModuleCommand extends Command
     protected function activateAiAgent(): void
     {
         $this->components->task('Installing prism-php/prism', function () {
-            $process = new \Symfony\Component\Process\Process(
+            $process = new Process(
                 ['composer', 'require', 'prism-php/prism'],
                 base_path()
             );
@@ -169,7 +185,7 @@ class ModuleCommand extends Command
 
         $this->components->task('Publishing AI Agent migrations', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-ai-agent',
+                '--tag' => 'ptah-ai-agent',
                 '--force' => $this->option('force'),
             ]);
         });
@@ -182,7 +198,7 @@ class ModuleCommand extends Command
     protected function activateApi(): void
     {
         $this->components->task('Instalando darkaonline/l5-swagger', function () {
-            $process = new \Symfony\Component\Process\Process(
+            $process = new Process(
                 ['composer', 'require', 'darkaonline/l5-swagger'],
                 base_path()
             );
@@ -194,16 +210,16 @@ class ModuleCommand extends Command
 
         $this->components->task('Publishing API base classes', function () {
             $this->call('vendor:publish', [
-                '--tag'   => 'ptah-api',
+                '--tag' => 'ptah-api',
                 '--force' => $this->option('force'),
             ]);
         });
 
         $this->components->task('Publishing L5-Swagger config', function () {
-            if (class_exists(\L5Swagger\L5SwaggerServiceProvider::class)) {
+            if (class_exists(L5SwaggerServiceProvider::class)) {
                 $this->call('vendor:publish', [
                     '--provider' => 'L5Swagger\\L5SwaggerServiceProvider',
-                    '--force'    => false,
+                    '--force' => false,
                 ]);
             }
         });
@@ -213,9 +229,9 @@ class ModuleCommand extends Command
 
         if (file_exists($swaggerInfoPath)) {
             $content = file_get_contents($swaggerInfoPath);
-            $content = str_replace('{{ APP_NAME }}',           config('app.name', 'App'),                     $content);
-            $content = str_replace('{{ APP_URL }}',            rtrim(config('app.url', 'http://localhost'), '/'), $content);
-            $content = str_replace('{{ APP_CONTACT_EMAIL }}',  env('MAIL_FROM_ADDRESS', 'contact@example.com'), $content);
+            $content = str_replace('{{ APP_NAME }}', config('app.name', 'App'), $content);
+            $content = str_replace('{{ APP_URL }}', rtrim(config('app.url', 'http://localhost'), '/'), $content);
+            $content = str_replace('{{ APP_CONTACT_EMAIL }}', env('MAIL_FROM_ADDRESS', 'contact@example.com'), $content);
             file_put_contents($swaggerInfoPath, $content);
         }
     }
@@ -244,19 +260,19 @@ class ModuleCommand extends Command
     {
         $envPath = base_path('.env');
 
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             return;
         }
 
         $contents = file_get_contents($envPath);
 
-        if (Str::contains($contents, $key . '=')) {
+        if (Str::contains($contents, $key.'=')) {
             file_put_contents(
                 $envPath,
                 preg_replace("/^{$key}=.*/m", "{$key}={$value}", $contents)
             );
         } else {
-            file_put_contents($envPath, $contents . PHP_EOL . "{$key}={$value}" . PHP_EOL);
+            file_put_contents($envPath, $contents.PHP_EOL."{$key}={$value}".PHP_EOL);
         }
     }
 

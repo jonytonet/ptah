@@ -17,40 +17,40 @@ trait HasCrudPreferences
     public function savePreferences(): void
     {
         $prefs = [
-            '_version'      => '2.1.0',
+            '_version' => '2.1.0',
             '_lastModified' => now()->toIso8601String(),
-            'company'       => $this->companyFilter ?: ptah_company_id(),
-            'table'         => [
-                'orderBy'     => $this->sort,
-                'direction'   => $this->direction,
-                'perPage'     => $this->perPage,
-                'columns'     => $this->columnOrder,
+            'company' => $this->companyFilter ?: ptah_company_id(),
+            'table' => [
+                'orderBy' => $this->sort,
+                'direction' => $this->direction,
+                'perPage' => $this->perPage,
+                'columns' => $this->columnOrder,
                 'currentPage' => 1,
             ],
-            'filters'       => [
-                'lastUsed'           => array_filter($this->filters),
-                'operators'          => $this->filterOperators,
-                'dateRanges'         => array_filter($this->dateRanges),
+            'filters' => [
+                'lastUsed' => array_filter($this->filters),
+                'operators' => $this->filterOperators,
+                'dateRanges' => array_filter($this->dateRanges),
                 'dateRangeOperators' => $this->dateRangeOperators,
-                'saved'              => $this->savedFilters,
-                'customFilter'       => [],
-                'quickDate'          => $this->quickDateFilter,
-                'quickDateColumn'    => $this->quickDateColumn,
-                'search'             => $this->search,
-                'sdLabels'           => $this->sdLabels,
-                'sdFilterLabels'     => $this->sdFilterLabels,
+                'saved' => $this->savedFilters,
+                'customFilter' => [],
+                'quickDate' => $this->quickDateFilter,
+                'quickDateColumn' => $this->quickDateColumn,
+                'search' => $this->search,
+                'sdLabels' => $this->sdLabels,
+                'sdFilterLabels' => $this->sdFilterLabels,
             ],
-            'columns'       => $this->formDataColumns,
-            'columnWidths'  => $this->columnWidths,
-            'columnOrder'   => $this->columnOrder,
-            'viewMode'      => $this->viewMode,
-            'viewDensity'   => $this->viewDensity,
+            'columns' => $this->formDataColumns,
+            'columnWidths' => $this->columnWidths,
+            'columnOrder' => $this->columnOrder,
+            'viewMode' => $this->viewMode,
+            'viewDensity' => $this->viewDensity,
             'searchHistory' => array_slice($this->searchHistory, 0, 20),
-            'advancedSearch'=> [
+            'advancedSearch' => [
                 'active' => $this->advancedSearchActive,
                 'fields' => $this->advancedSearchFields,
             ],
-            'ui'     => null,
+            'ui' => null,
             'export' => null,
         ];
 
@@ -59,14 +59,14 @@ trait HasCrudPreferences
         if ($userId) {
             UserPreference::set(
                 userId: $userId,
-                key:    'crud.' . $this->model,
-                value:  $prefs,
-                group:  'crud',
+                key: 'crud.'.$this->model,
+                value: $prefs,
+                group: 'crud',
             );
             $this->cacheService->forgetPreferences($userId, $this->model);
         } else {
             // Fallback: persist to session when no authenticated user
-            session(['ptah.crud.' . $this->model => $prefs]);
+            session(['ptah.crud.'.$this->model => $prefs]);
         }
     }
 
@@ -75,45 +75,46 @@ trait HasCrudPreferences
         $userId = Auth::id();
 
         if ($userId) {
-            $prefs = UserPreference::get($userId, 'crud.' . $this->model, null);
+            $prefs = UserPreference::get($userId, 'crud.'.$this->model, null);
         } else {
             // Fallback: load from session when no authenticated user
-            $prefs = session('ptah.crud.' . $this->model, null);
+            $prefs = session('ptah.crud.'.$this->model, null);
         }
 
         if (! $prefs || ! is_array($prefs)) {
             $this->applyDefaultUiPreferences();
+
             return;
         }
 
         // Table
         $table = $prefs['table'] ?? [];
-        $this->sort      = $table['orderBy']  ?? 'id';
+        $this->sort = $table['orderBy'] ?? 'id';
         $this->direction = $table['direction'] ?? 'DESC';
-        $this->perPage   = (int) ($table['perPage'] ?? config('ptah.crud.per_page', 25));
+        $this->perPage = (int) ($table['perPage'] ?? config('ptah.crud.per_page', 25));
 
         // Columns
-        $this->columnOrder     = $prefs['columnOrder'] ?? [];
-        $this->columnWidths    = $prefs['columnWidths'] ?? [];
+        $this->columnOrder = $prefs['columnOrder'] ?? [];
+        $this->columnWidths = $prefs['columnWidths'] ?? [];
         $this->formDataColumns = $prefs['columns'] ?? $this->formDataColumns;
-        $this->viewMode        = $prefs['viewMode']    ?? 'table';
-        $this->viewDensity     = $prefs['viewDensity'] ?? 'comfortable';
+        $this->viewMode = $prefs['viewMode'] ?? 'table';
+        $this->viewDensity = $prefs['viewDensity'] ?? 'comfortable';
 
         // Filters
-        $filterPrefs              = $prefs['filters'] ?? [];
-        $this->filters            = $filterPrefs['lastUsed']            ?? [];
-        $this->filterOperators    = $filterPrefs['operators']           ?? [];
-        $this->dateRanges         = $filterPrefs['dateRanges']          ?? [];
-        $this->dateRangeOperators = $filterPrefs['dateRangeOperators']  ?? [];
-        $this->savedFilters       = $filterPrefs['saved']               ?? [];
-        $this->quickDateFilter    = $filterPrefs['quickDate']           ?? '';
-        $this->quickDateColumn    = $filterPrefs['quickDateColumn']     ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
-        $this->search             = $filterPrefs['search']              ?? '';
-        $this->sdLabels           = $filterPrefs['sdLabels']            ?? [];
-        $this->sdFilterLabels     = $filterPrefs['sdFilterLabels']      ?? [];
+        $filterPrefs = $prefs['filters'] ?? [];
+        $this->filters = $filterPrefs['lastUsed'] ?? [];
+        $this->filterOperators = $filterPrefs['operators'] ?? [];
+        $this->dateRanges = $filterPrefs['dateRanges'] ?? [];
+        $this->dateRangeOperators = $filterPrefs['dateRangeOperators'] ?? [];
+        $this->savedFilters = $filterPrefs['saved'] ?? [];
+        $this->quickDateFilter = $filterPrefs['quickDate'] ?? '';
+        $this->quickDateColumn = $filterPrefs['quickDateColumn'] ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
+        $this->search = $filterPrefs['search'] ?? '';
+        $this->sdLabels = $filterPrefs['sdLabels'] ?? [];
+        $this->sdFilterLabels = $filterPrefs['sdFilterLabels'] ?? [];
 
         // Advanced search
-        $advPrefs                   = $prefs['advancedSearch'] ?? [];
+        $advPrefs = $prefs['advancedSearch'] ?? [];
         $this->advancedSearchActive = (bool) ($advPrefs['active'] ?? false);
         $this->advancedSearchFields = $advPrefs['fields'] ?? [];
 
@@ -131,6 +132,6 @@ trait HasCrudPreferences
     {
         $ui = $this->crudConfig['uiPreferences'] ?? [];
         $this->viewDensity = ! empty($ui['compactMode']) ? 'compact' : 'comfortable';
-        $this->perPage     = (int) ($ui['perPage'] ?? config('ptah.crud.per_page', 25));
+        $this->perPage = (int) ($ui['perPage'] ?? config('ptah.crud.per_page', 25));
     }
 }

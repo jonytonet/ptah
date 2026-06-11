@@ -5,27 +5,22 @@ declare(strict_types=1);
 namespace Ptah\Services\Validation;
 
 use Ptah\Exceptions\CommandValidationException;
-use Illuminate\Support\Str;
 
 /**
  * Validator for command-line inputs.
  *
  * Validates arguments and options passed to Artisan commands.
- *
- * @package Ptah\Services\Validation
  */
 class CommandInputValidator
 {
     /**
      * Validate that a model class exists.
      *
-     * @param string $model
-     * @return void
      * @throws CommandValidationException
      */
     public function validateModelExists(string $model): void
     {
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             throw CommandValidationException::modelNotFound($model);
         }
     }
@@ -35,8 +30,8 @@ class CommandInputValidator
      *
      * Expected format: "field:type:modifier=value:modifier=value"
      *
-     * @param string $value
      * @return array<string, mixed>
+     *
      * @throws CommandValidationException
      */
     public function validateColumnOption(string $value): array
@@ -63,7 +58,7 @@ class CommandInputValidator
         }
 
         $validTypes = ['text', 'badge', 'boolean', 'date', 'datetime', 'money', 'numeric', 'relation'];
-        if (!in_array($type, $validTypes, true)) {
+        if (! in_array($type, $validTypes, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'column type',
                 $type,
@@ -83,8 +78,8 @@ class CommandInputValidator
      *
      * Expected format: "name:type:value:icon=icon:color=color"
      *
-     * @param string $value
      * @return array<string, mixed>
+     *
      * @throws CommandValidationException
      */
     public function validateActionOption(string $value): array
@@ -112,7 +107,7 @@ class CommandInputValidator
         }
 
         $validTypes = ['wire', 'route', 'url'];
-        if (!in_array($type, $validTypes, true)) {
+        if (! in_array($type, $validTypes, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'action type',
                 $type,
@@ -133,8 +128,8 @@ class CommandInputValidator
      *
      * Expected format: "field:type:operator:label=Label"
      *
-     * @param string $value
      * @return array<string, mixed>
+     *
      * @throws CommandValidationException
      */
     public function validateFilterOption(string $value): array
@@ -162,7 +157,7 @@ class CommandInputValidator
         }
 
         $validTypes = ['boolean', 'select', 'numeric', 'date', 'text'];
-        if (!in_array($type, $validTypes, true)) {
+        if (! in_array($type, $validTypes, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'filter type',
                 $type,
@@ -171,7 +166,7 @@ class CommandInputValidator
         }
 
         $validOperators = ['eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'like', 'in'];
-        if (!in_array($operator, $validOperators, true)) {
+        if (! in_array($operator, $validOperators, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'filter operator',
                 $operator,
@@ -192,8 +187,8 @@ class CommandInputValidator
      *
      * Expected format: "field:operator:value:css"
      *
-     * @param string $value
      * @return array<string, mixed>
+     *
      * @throws CommandValidationException
      */
     public function validateStyleOption(string $value): array
@@ -222,7 +217,7 @@ class CommandInputValidator
         }
 
         $validOperators = ['eq', 'ne', 'lt', 'gt', 'lte', 'gte'];
-        if (!in_array($operator, $validOperators, true)) {
+        if (! in_array($operator, $validOperators, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'style operator',
                 $operator,
@@ -243,8 +238,8 @@ class CommandInputValidator
      *
      * Expected format: "type:table:first=second:select=field1,field2"
      *
-     * @param string $value
      * @return array<string, mixed>
+     *
      * @throws CommandValidationException
      */
     public function validateJoinOption(string $value): array
@@ -264,7 +259,7 @@ class CommandInputValidator
         $on = $parts[2];
 
         $validTypes = ['inner', 'left', 'right'];
-        if (!in_array($type, $validTypes, true)) {
+        if (! in_array($type, $validTypes, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'join type',
                 $type,
@@ -280,7 +275,7 @@ class CommandInputValidator
             );
         }
 
-        if (!str_contains($on, '=')) {
+        if (! str_contains($on, '=')) {
             throw CommandValidationException::invalidOptionFormat(
                 'join',
                 $value,
@@ -301,13 +296,13 @@ class CommandInputValidator
      *
      * Expected format: "key=value"
      *
-     * @param string $value
      * @return array<string, string>
+     *
      * @throws CommandValidationException
      */
     public function validateSetOption(string $value): array
     {
-        if (!str_contains($value, '=')) {
+        if (! str_contains($value, '=')) {
             throw CommandValidationException::invalidOptionFormat(
                 'set',
                 $value,
@@ -326,7 +321,7 @@ class CommandInputValidator
         }
 
         $validKeys = ['itemsPerPage', 'cacheEnabled', 'cacheTime', 'paginationEnabled', 'exportEnabled'];
-        if (!in_array($key, $validKeys, true)) {
+        if (! in_array($key, $validKeys, true)) {
             throw CommandValidationException::invalidOptionValue(
                 'setting key',
                 $key,
@@ -345,7 +340,7 @@ class CommandInputValidator
      *
      * Converts ["label=Name", "sortable=true"] to ["label" => "Name", "sortable" => "true"]
      *
-     * @param array<int, string> $modifierParts
+     * @param  array<int, string>  $modifierParts
      * @return array<string, string>
      */
     public function parseModifiers(array $modifierParts): array
@@ -365,19 +360,18 @@ class CommandInputValidator
     /**
      * Validate that required modifiers are present.
      *
-     * @param array<string, string> $modifiers
-     * @param array<int, string> $required
-     * @param string $context
-     * @return void
+     * @param  array<string, string>  $modifiers
+     * @param  array<int, string>  $required
+     *
      * @throws CommandValidationException
      */
     public function validateRequiredModifiers(array $modifiers, array $required, string $context): void
     {
         foreach ($required as $requiredKey) {
-            if (!isset($modifiers[$requiredKey])) {
+            if (! isset($modifiers[$requiredKey])) {
                 throw CommandValidationException::invalidOptionFormat(
                     $context,
-                    implode(':', array_map(fn($k, $v) => "{$k}={$v}", array_keys($modifiers), $modifiers)),
+                    implode(':', array_map(fn ($k, $v) => "{$k}={$v}", array_keys($modifiers), $modifiers)),
                     "Missing required modifier: {$requiredKey}"
                 );
             }

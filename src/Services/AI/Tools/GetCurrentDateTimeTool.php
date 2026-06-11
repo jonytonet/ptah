@@ -28,9 +28,9 @@ class GetCurrentDateTimeTool implements AiToolInterface
     public function parameters(): array
     {
         return [
-            'type'       => 'object',
-            'properties' => new \stdClass(),
-            'required'   => [],
+            'type' => 'object',
+            'properties' => new \stdClass,
+            'required' => [],
         ];
     }
 
@@ -39,12 +39,12 @@ class GetCurrentDateTimeTool implements AiToolInterface
         $now = Carbon::now();
 
         return [
-            'datetime'    => $now->toDateTimeString(),
-            'date'        => $now->toDateString(),
-            'time'        => $now->toTimeString(),
+            'datetime' => $now->toDateTimeString(),
+            'date' => $now->toDateString(),
+            'time' => $now->toTimeString(),
             'day_of_week' => $now->isoFormat('dddd'),
-            'timezone'    => $now->timezoneName,
-            'unix'        => $now->timestamp,
+            'timezone' => $now->timezoneName,
+            'unix' => $now->timestamp,
         ];
     }
 }

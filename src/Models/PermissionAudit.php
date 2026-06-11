@@ -10,16 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Permission audit log. Immutable — no updated_at, no SoftDeletes.
  *
- * @property int         $id
- * @property int|null    $user_id
- * @property int|null    $company_id
+ * @property int $id
+ * @property int|null $user_id
+ * @property int|null $company_id
  * @property string|null $resource_key
- * @property string      $action
- * @property string      $result
+ * @property string $action
+ * @property string $result
  * @property string|null $ip_address
  * @property string|null $user_agent
- * @property array|null  $context
- * @property string      $created_at
+ * @property array|null $context
+ * @property string $created_at
  */
 class PermissionAudit extends Model
 {
@@ -40,7 +40,7 @@ class PermissionAudit extends Model
     ];
 
     protected $casts = [
-        'context'    => 'array',
+        'context' => 'array',
         'created_at' => 'datetime',
     ];
 

@@ -88,10 +88,10 @@ class SchemaInspector
      */
     private function parseFieldString(string $fieldStr): FieldDefinition
     {
-        $precision    = 10;
-        $scale        = 2;
-        $enumValues   = [];
-        $hasDefault   = false;
+        $precision = 10;
+        $scale = 2;
+        $enumValues = [];
+        $hasDefault = false;
         $defaultValue = null;
 
         // Extract :default(val) BEFORE the general parenthesis stripping so it
@@ -100,8 +100,9 @@ class SchemaInspector
         $fieldStr = preg_replace_callback(
             '/:default\(([^)]*)\)/',
             function (array $m) use (&$hasDefault, &$defaultValue): string {
-                $hasDefault   = true;
+                $hasDefault = true;
                 $defaultValue = $m[1];
+
                 return '';
             },
             $fieldStr
@@ -113,16 +114,17 @@ class SchemaInspector
             '/\(([^)]+)\)/',
             function (array $m) use (&$params): string {
                 $params = $m[1];
+
                 return '';
             },
             $fieldStr
         );
 
         $segments = explode(':', $fieldStr);
-        $name     = $segments[0];
-        $type     = isset($segments[1]) ? $this->normalizeType($segments[1]) : 'string';
+        $name = $segments[0];
+        $type = isset($segments[1]) ? $this->normalizeType($segments[1]) : 'string';
         $nullable = in_array('nullable', $segments, true);
-        $unique   = in_array('unique',   $segments, true);
+        $unique = in_array('unique', $segments, true);
 
         // Detects surname=, label= and default= modifiers in segments.
         // No break — scan all segments to collect every modifier.
@@ -134,7 +136,7 @@ class SchemaInspector
                 $label = substr($segment, 6);
             } elseif (! $hasDefault && str_starts_with($segment, 'default=')) {
                 // Alternative syntax without parens: :default=true  :default=0
-                $hasDefault   = true;
+                $hasDefault = true;
                 $defaultValue = substr($segment, 8);
             }
         }
@@ -152,15 +154,15 @@ class SchemaInspector
         }
 
         return new FieldDefinition(
-            name:         $name,
-            type:         $type,
-            nullable:     $nullable,
-            unique:       $unique,
-            precision:    $precision,
-            scale:        $scale,
-            enumValues:   array_values($enumValues),
-            label:        $label,
-            hasDefault:   $hasDefault,
+            name: $name,
+            type: $type,
+            nullable: $nullable,
+            unique: $unique,
+            precision: $precision,
+            scale: $scale,
+            enumValues: array_values($enumValues),
+            label: $label,
+            hasDefault: $hasDefault,
             defaultValue: $defaultValue,
         );
     }
@@ -180,37 +182,36 @@ class SchemaInspector
     private function parseDbColumn(array $col): FieldDefinition
     {
         // Uses 'type' (full) for detection; fallback to 'type_name'
-        $raw      = strtolower((string) ($col['type'] ?? $col['type_name'] ?? ''));
+        $raw = strtolower((string) ($col['type'] ?? $col['type_name'] ?? ''));
         $typeName = strtolower((string) ($col['type_name'] ?? ''));
-        $nullable   = (bool) ($col['nullable'] ?? false);
-        $unique     = false;
-        $precision  = 10;
-        $scale      = 2;
+        $nullable = (bool) ($col['nullable'] ?? false);
+        $unique = false;
+        $precision = 10;
+        $scale = 2;
         $enumValues = [];
 
         $type = match (true) {
-            str_contains($raw, 'tinyint(1)')                          => 'boolean',
+            str_contains($raw, 'tinyint(1)') => 'boolean',
             str_contains($raw, 'bigint unsigned')
-                || ($typeName === 'bigint' && str_contains($raw, 'unsigned'))
-                                                                      => 'unsignedBigInteger',
-            $typeName === 'bigint'                                    => 'bigInteger',
-            str_contains($typeName, 'int')                            => 'integer',
-            str_contains($typeName, 'decimal')                        => 'decimal',
-            in_array($typeName, ['float', 'double', 'real'], true)    => 'float',
-            in_array($typeName, ['bool', 'boolean'], true)            => 'boolean',
-            $typeName === 'enum'                                      => 'enum',
+                || ($typeName === 'bigint' && str_contains($raw, 'unsigned')) => 'unsignedBigInteger',
+            $typeName === 'bigint' => 'bigInteger',
+            str_contains($typeName, 'int') => 'integer',
+            str_contains($typeName, 'decimal') => 'decimal',
+            in_array($typeName, ['float', 'double', 'real'], true) => 'float',
+            in_array($typeName, ['bool', 'boolean'], true) => 'boolean',
+            $typeName === 'enum' => 'enum',
             in_array($typeName, ['datetime', 'timestamp', 'timestamptz'], true) => 'datetime',
-            $typeName === 'date'                                      => 'date',
-            str_contains($typeName, 'longtext')                       => 'longText',
-            str_contains($typeName, 'text')                           => 'text',
-            in_array($typeName, ['json', 'jsonb'], true)              => 'json',
-            default                                                   => 'string',
+            $typeName === 'date' => 'date',
+            str_contains($typeName, 'longtext') => 'longText',
+            str_contains($typeName, 'text') => 'text',
+            in_array($typeName, ['json', 'jsonb'], true) => 'json',
+            default => 'string',
         };
 
         if ($type === 'decimal') {
             preg_match('/decimal\((\d+),\s*(\d+)\)/', $raw, $m);
             $precision = (int) ($m[1] ?? 10);
-            $scale     = (int) ($m[2] ?? 2);
+            $scale = (int) ($m[2] ?? 2);
         }
 
         if ($type === 'enum') {
@@ -221,14 +222,14 @@ class SchemaInspector
         $label = isset($col['comment']) ? (string) $col['comment'] : '';
 
         return new FieldDefinition(
-            name:       (string) ($col['name'] ?? ''),
-            type:       $type,
-            nullable:   $nullable,
-            unique:     $unique,
-            precision:  $precision,
-            scale:      $scale,
+            name: (string) ($col['name'] ?? ''),
+            type: $type,
+            nullable: $nullable,
+            unique: $unique,
+            precision: $precision,
+            scale: $scale,
             enumValues: $enumValues,
-            label:      $label,
+            label: $label,
         );
     }
 
@@ -238,17 +239,17 @@ class SchemaInspector
     private function normalizeType(string $type): string
     {
         return match (strtolower($type)) {
-            'int'                => 'integer',
-            'bigint'             => 'bigInteger',
-            'uint', 'uint4'      => 'unsignedInteger',
-            'ubigint', 'ubigint8'=> 'unsignedBigInteger',
-            'bool'               => 'boolean',
-            'float', 'double'    => 'float',
-            'datetime'           => 'datetime',
-            'timestamp'          => 'timestamp',
-            'longtext'           => 'longText',
-            'foreign'            => 'foreignId',
-            default              => $type,
+            'int' => 'integer',
+            'bigint' => 'bigInteger',
+            'uint', 'uint4' => 'unsignedInteger',
+            'ubigint', 'ubigint8' => 'unsignedBigInteger',
+            'bool' => 'boolean',
+            'float', 'double' => 'float',
+            'datetime' => 'datetime',
+            'timestamp' => 'timestamp',
+            'longtext' => 'longText',
+            'foreign' => 'foreignId',
+            default => $type,
         };
     }
 }

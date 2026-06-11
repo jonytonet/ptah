@@ -13,8 +13,8 @@ return new class extends Migration
         Schema::create('ptah_page_objects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('page_id')
-                  ->constrained('ptah_pages')
-                  ->cascadeOnDelete();
+                ->constrained('ptah_pages')
+                ->cascadeOnDelete();
             // Section groups objects within a page (e.g. 'toolbar', 'table', 'form')
             $table->string('section')->default('main');
             // obj_key: unique business key (e.g. 'users.store', 'reports.export.excel')
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('obj_label');
             // Object type: determines the validation behaviour and the binding UI
             $table->enum('obj_type', ['page', 'button', 'field', 'link', 'section', 'api', 'report', 'tab'])
-                  ->default('button');
+                ->default('button');
             $table->integer('obj_order')->default(0);
             $table->boolean('is_active')->default(true)->index();
             $table->unsignedBigInteger('created_by')->nullable();
