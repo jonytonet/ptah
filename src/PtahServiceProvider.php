@@ -40,6 +40,9 @@ use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Livewire\SearchDropdown\SearchDropdown;
+use Ptah\Models\Role;
+use Ptah\Models\RolePermission;
+use Ptah\Models\UserRole;
 use Ptah\Services\AI\AiChatService;
 use Ptah\Services\AI\AiProviderConfigService;
 use Ptah\Services\AI\AiToolRegistry;
@@ -140,6 +143,7 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->loadMigrations();
         $this->registerLivewire();
+        $this->registerPermissionCacheInvalidation();
 
         // Render a friendly 403 page when the host app has no custom one.
         // Only activates when the permissions module is enabled; falls back to
@@ -184,6 +188,31 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigCommand::class,        // ptah:config
                 MakeHooksCommand::class,     // ptah:hooks
             ]);
+        }
+    }
+
+    /**
+     * Invalidates the permission cache the instant a role definition, a role's
+     * object bindings, or a user's role assignments change — closing the window
+     * where a revoked permission stayed effective until the TTL expired.
+     *
+     *  - Role / RolePermission change → affects many users → global generation bump.
+     *  - UserRole change              → affects one user   → that user's bump.
+     */
+    protected function registerPermissionCacheInvalidation(): void
+    {
+        if (! config('ptah.modules.permissions')) {
+            return;
+        }
+
+        $service = fn () => $this->app->make(PermissionService::class);
+
+        foreach (['saved', 'deleted', 'restored'] as $event) {
+            Role::{$event}(fn () => $service()->bumpGlobalVersion());
+            RolePermission::{$event}(fn () => $service()->bumpGlobalVersion());
+            UserRole::{$event}(
+                fn (UserRole $ur) => $service()->clearCache((int) $ur->user_id)
+            );
         }
     }
 

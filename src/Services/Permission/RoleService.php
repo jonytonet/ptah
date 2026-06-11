@@ -16,9 +16,24 @@ use Ptah\Models\RolePermission;
  *  - Only 1 role with is_master = true may exist
  *  - MASTER role cannot be deleted or deactivated
  *  - Object binding uses upsert (create or update)
+ *
+ * Every mutation that affects what a role can do flushes the permission cache
+ * (global generation bump) so revocations take effect immediately — query-builder
+ * mass deletes don't fire model events, so we invalidate explicitly here rather
+ * than relying solely on the model observers.
  */
 class RoleService
 {
+    public function __construct(
+        protected PermissionService $permission = new PermissionService,
+    ) {}
+
+    /** Global cache flush: any role-definition change can affect many users. */
+    protected function invalidate(): void
+    {
+        $this->permission->clearCache();
+    }
+
     // ─────────────────────────────────────────
     // Role CRUD
     // ─────────────────────────────────────────
@@ -39,7 +54,10 @@ class RoleService
             $data['color'] = '#fbbf24';
         }
 
-        return Role::create($data);
+        $role = Role::create($data);
+        $this->invalidate();
+
+        return $role;
     }
 
     /**
@@ -62,6 +80,7 @@ class RoleService
         }
 
         $role->update($data);
+        $this->invalidate();
 
         return $role->fresh();
     }
@@ -80,6 +99,7 @@ class RoleService
         }
 
         $role->delete();
+        $this->invalidate();
     }
 
     // ─────────────────────────────────────────
@@ -106,10 +126,14 @@ class RoleService
 
         $data = array_merge($defaults, $permissions);
 
-        return RolePermission::withTrashed()->updateOrCreate(
+        $binding = RolePermission::withTrashed()->updateOrCreate(
             ['role_id' => $role->id, 'page_object_id' => $pageObject->id],
             array_merge($data, ['deleted_at' => null])
         );
+
+        $this->invalidate();
+
+        return $binding;
     }
 
     /**
@@ -120,6 +144,8 @@ class RoleService
         RolePermission::where('role_id', $role->id)
             ->where('page_object_id', $pageObjectId)
             ->delete();
+
+        $this->invalidate();
     }
 
     /**
@@ -137,10 +163,13 @@ class RoleService
             ->whereNotIn('page_object_id', $incoming)
             ->delete();
 
-        // Upsert the ones that came in
+        // Upsert the ones that came in (bindPageObject already invalidates, but
+        // call once more to cover the case where $bindings is empty — pure delete).
         foreach ($bindings as $pageObjectId => $perms) {
             $this->bindPageObject($role, (int) $pageObjectId, $perms);
         }
+
+        $this->invalidate();
     }
 
     /**

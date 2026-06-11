@@ -107,6 +107,31 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Permissions — cache invalidation rework (security)
+- **Fixed: revoking a permission was not immediate.** Editing a role's object
+  bindings (`RoleService::bindPageObject`/`unbindPageObject`/`syncPageBindings`)
+  never cleared the permission cache, so a revoked action stayed effective for up
+  to `cache_ttl` (default 1h). Replaced the broken tag-based invalidation (keys
+  were never stored with tags, so `Cache::tags()->flush()` was a no-op) with
+  **generation-based versioning**: every cache key embeds a global counter and a
+  per-user counter; invalidation just increments a counter — O(1), works on every
+  driver (file/database/redis/memcached), no key enumeration. Revocation now takes
+  effect on the next check.
+- Invalidation is wired via model observers (`Role`/`RolePermission` → global bump,
+  `UserRole` → per-user bump) **and** explicit bumps in `RoleService` (covers
+  query-builder mass deletes that don't fire model events).
+- **Action whitelist** — `check()` and `getCompaniesForResource()` now reject any
+  action outside `create/read/update/delete` before it is interpolated into the
+  `can_{action}` column (typo + SQL-injection guard).
+- **MASTER permission map is now cached** (per global generation) instead of
+  querying `PageObject` on every request for master users.
+- `clearCache()` no longer needs the `$companyId` argument — a per-user bump clears
+  every company-scoped map at once.
+- Docs: documented MASTER being global (not company-scoped), `company_id = null`
+  meaning cross-tenant, and the generation-based cache. 10 new tests
+  (`PermissionServiceTest`) including the immediate-revocation regression that
+  would fail on the old code.
+
 ### Power features (ScriptCase-inspired)
 - **Master/Detail** — `masterDetail` config adds an expand arrow per row that
   mounts a nested BaseCrud filtered by the parent key via the new
