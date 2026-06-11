@@ -9,6 +9,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-06-11
+
+First public stable release on Packagist. Consolidates everything below: SOLID
+scaffolding (`ptah:forge`), the database-driven BaseCrud (filters, master/detail,
+group breaks, calculated fields, cascading dropdowns, card view, export, print),
+the auth/permissions/menu/company/api/ai_agent modules, a security-reviewed
+permission engine, the AI streaming chat, 339 passing tests, CI on PHP 8.2–8.4 ×
+Laravel 11/12, and a brand-driven, dark-mode-ready UI.
+
 ### AI Agent module — streaming & token accounting
 - **Streaming responses** — the chat widget now streams the answer token-by-token
   via a new `AiChatService::stream()` and Livewire `wire:stream`. Toggle with
@@ -627,7 +636,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...v1.0.0
 [1.0.0-rc.5]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.4...v1.0.0-rc.5
 [1.0.0-rc.4]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.3...v1.0.0-rc.4
 [1.0.0-rc.3]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.2...v1.0.0-rc.3
