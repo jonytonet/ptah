@@ -107,6 +107,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Tests — P0 security regression suite
+- **`FilterStrategySecurityTest`** (`tests/Unit/Services/Crud/FilterStrategySecurityTest.php`)
+  — 10 tests: `TextFilterStrategy` and `RelationFilterStrategy` discard every class of
+  malicious column name (SQL injection, semicolons, leading-digit, unquoted spaces, single
+  quotes) and still apply safe identifiers and table-qualified names.
+- **`CrudFormSecurityTest`** (`tests/Feature/Crud/CrudFormSecurityTest.php`)
+  — 8 tests: `guardedFormFields()` lists all 8 audit/PK columns that must never come from
+  form data; inline hooks with `merge(data, {...})` and `upper()` work correctly; arbitrary
+  PHP (`file_put_contents`) and invalid syntax are rejected by the ExpressionLanguage sandbox
+  without propagating exceptions; `authorizeCrudAction()` is fail-closed (anonymous users
+  denied with `permissionIdentifier` set, allowed when module is off or identifier is absent).
+- **`AuthRateLimitTest`** (`tests/Feature/Auth/AuthRateLimitTest.php`)
+  — 6 tests: `LoginPage` blocks after 5 attempts and allows under the limit;
+  `ForgotPasswordPage::sendLink()` throttles after 3 attempts; `TwoFactorChallengePage::verify()`
+  throttles after 5 failed codes and keys the counter by `userId|ip` (different users have
+  independent counters).
+- **`DefaultAdminSeederTest`** (`tests/Feature/Seeders/DefaultAdminSeederTest.php`)
+  — 4 tests: seeder never sets `admin@123`; uses `PTAH_ADMIN_PASSWORD` when provided;
+  idempotent on second run; generated random password is strong (len > 20, not a dictionary word).
+
 ### Added
 - **Unit tests — `BaseRepository`** (`tests/Unit/Base/BaseRepositoryTest.php`)
   - 28 test cases: full CRUD contracts (`find` → null, `findOrFail` → exception, `update` →
