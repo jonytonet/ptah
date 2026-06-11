@@ -107,6 +107,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### Tests — BaseCrud save, renderers, search dropdown and export (P1, section 5 complete)
+- **`CrudSaveTest`** (6) — end-to-end `save()` through the real component: create with
+  mask transform applied, required-field validation blocking the insert, guarded
+  fields stripped even when marked savable, inline sandbox hook reshaping data,
+  edit-update without duplication, `prepareCreate()` state reset.
+- **`CrudRenderersTest`** (14) — XSS safety first: plain values, badge fallbacks and
+  config labels are always escaped; badge color maps (named + hex), boolean truthy
+  variants and custom labels, money per currency, BR date formatting with
+  unparseable passthrough, select label mapping, cell class/icon wrappers,
+  conditional row styles (==, >), unknown-renderer fallback.
+- **`CrudSearchDropdownExportTest`** (11) — model-backed lookups with value/label
+  pairs, `colsSDLimit` cap, empty-query reset, option selection filling
+  formData/labels, filter-panel selection + clear flows; export sync dispatch,
+  disabled gate and bulk-export selection requirement.
+
 ### Tests — BaseCrud concerns and filter pipeline (P1, section 5)
 - **`FilterServiceTest`** (15) — AND/OR composition against real rows, plain-array
   to DTO conversion, invalid-filter skipping, date-range form parsing (`_start/_end`,
