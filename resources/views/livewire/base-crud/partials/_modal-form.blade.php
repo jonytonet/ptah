@@ -5,17 +5,25 @@
     x-data="{
         open: @entangle('showModal'),
         _dirty: false,
+        _confirmDiscard: false,
         _markDirty() { this._dirty = true; },
         closeModal() { this._tryClose(); },
         _tryClose() {
             if (this._dirty) {
-                if (!confirm('{{ addslashes(__('ptah::ui.modal_unsaved_confirm')) }}')) return;
+                this._confirmDiscard = true;
+
+                return;
             }
+            this._forceClose();
+        },
+        _forceClose() {
+            this._confirmDiscard = false;
             this._dirty = false;
             this.open = false;
             $wire.closeModal();
         },
         _focusFirst() {
+            this._dirty = false;
             $nextTick(() => {
                 const f = $el.querySelector(
                     'input:not([type=hidden]):not([type=checkbox]):not([readonly]), textarea, select'
@@ -30,10 +38,14 @@
         } else {
             document.body.style.overflow = '';
             _dirty = false;
+            _confirmDiscard = false;
         }
     "
     @ptah:form-ready.window="_focusFirst()"
-    @keydown.escape.window="open && _tryClose()"
+    @keydown.escape.window="
+        if (_confirmDiscard) { _confirmDiscard = false; }
+        else if (open) { _tryClose(); }
+    "
 >
     <x-forge-modal
         :title="($editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix')) . ' ' . $crudTitle"
@@ -476,9 +488,42 @@
             <x-forge-button @click="_tryClose()" color="dark" flat :disabled="$creating">
                 {{ __('ptah::ui.btn_cancel') }}
             </x-forge-button>
+            @if (! $editingId)
+                <x-forge-button wire:click="saveAndNew" color="primary" flat :disabled="$creating">
+                    {{ __('ptah::ui.btn_save_and_new') }}
+                </x-forge-button>
+            @endif
             <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
                 {{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}
             </x-forge-button>
         </x-slot>
     </x-forge-modal>
+
+    {{-- Unsaved-changes confirmation (replaces the native confirm() dialog) --}}
+    <div x-show="_confirmDiscard" x-cloak
+         class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40" @click="_confirmDiscard = false"></div>
+        <div x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="relative w-full max-w-sm rounded-lg shadow-2xl bg-white dark:bg-slate-800 p-5"
+             role="alertdialog" aria-modal="true">
+            <p class="text-sm font-semibold text-slate-800 dark:text-white">
+                {{ __('ptah::ui.modal_unsaved_title') }}
+            </p>
+            <p class="text-xs mt-1 text-slate-500 dark:text-slate-400">
+                {{ __('ptah::ui.modal_unsaved_confirm') }}
+            </p>
+            <div class="flex justify-end gap-2 mt-5">
+                <button @click="_confirmDiscard = false"
+                    class="px-4 py-2 text-sm font-semibold rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    {{ __('ptah::ui.modal_unsaved_keep') }}
+                </button>
+                <button @click="_forceClose()"
+                    class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger hover:opacity-90">
+                    {{ __('ptah::ui.modal_unsaved_discard') }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

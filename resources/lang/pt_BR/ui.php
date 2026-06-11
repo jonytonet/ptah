@@ -1434,4 +1434,19 @@ return [
     'ai_widget_untitled' => 'Nova conversa',
     'ai_widget_load_more' => 'Ver mais',
 
+    // -------------------------------------------------------------------------
+    // BaseCrud UX (toasts, a11y, produtividade)
+    // -------------------------------------------------------------------------
+    'toast_undo' => 'Desfazer',
+    'filters_active_count' => '{1} :count ativo|[2,*] :count ativos',
+    'bulk_force_irreversible' => 'Esta ação não pode ser desfeita.',
+    'bulk_select_all' => 'Selecionar todas as linhas',
+    'bulk_select_row' => 'Selecionar linha :id',
+    'modal_unsaved_title' => 'Descartar alterações?',
+    'modal_unsaved_keep' => 'Continuar editando',
+    'modal_unsaved_discard' => 'Descartar',
+    'btn_save_and_new' => 'Salvar e criar outro',
+    'sort_by_column' => 'Ordenar por :column',
+    'per_page_label' => 'Linhas por página',
+
 ];

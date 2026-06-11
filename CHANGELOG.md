@@ -107,6 +107,31 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the inline lifecycle-hook documentation in `Configuration.md` for the new
   sandboxed expression syntax.
 
+### BaseCrud UX overhaul (12 usability improvements)
+- **Undo on delete** — the post-delete toast now shows an inline *Undo* button for
+  soft-deletable records (calls `restoreRecord`); toasts with Undo stay visible for 6s.
+- **Toasts now stack** — multiple notifications no longer overwrite each other; each
+  has its own timer and dismiss button (`aria-live=polite`).
+- **Native `confirm()` dialogs replaced** with styled, theme-aware dialogs for bulk
+  delete / permanent delete (with an "irreversible" warning) and for the
+  unsaved-changes check when closing the form modal (Esc first closes the warning).
+- **Row links behave like real links** — Ctrl/Cmd-click and middle-click on a row
+  with `configLinkLinha` open the record in a new tab (`ptahRowNav`).
+- **"Save & add another"** button on the create modal (`saveAndNew()`): persists and
+  reopens a blank form — for batch data entry. Covered by 3 new tests.
+- **Keyboard shortcuts** — `/` focuses the global search, `n` opens the create modal
+  (ignored while typing or with a modal open).
+- **Accessibility** — column sort is now a real `<button>` with `aria-sort` on the
+  `<th>` (keyboard sortable); `aria-label` on every icon-only button (row actions,
+  refresh, clear filters, search clear), on bulk checkboxes and the per-page select.
+- **Larger touch targets** — row action buttons gained padded hitboxes and the column
+  resize handle is 2× wider without visual change.
+- **Sticky actions column** — the default actions column stays visible during
+  horizontal scroll (with row-hover background preserved via `group-hover`).
+- **Floating bulk bar no longer covers pagination** (spacer when a selection is active).
+- **i18n fix** — the "N active" filter badge was hardcoded in Portuguese; now uses
+  `trans_choice` with proper pluralisation in both locales (11 new lang keys).
+
 ### Tests — BaseCrud save, renderers, search dropdown and export (P1, section 5 complete)
 - **`CrudSaveTest`** (6) — end-to-end `save()` through the real component: create with
   mask transform applied, required-field validation blocking the insert, guarded

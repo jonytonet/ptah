@@ -144,6 +144,19 @@
     if (window.__ptahColDragInit) return;
     window.__ptahColDragInit = true;
 
+    /* ─── row navigation: respects ctrl/cmd-click and middle-click ───── */
+    window.ptahRowNav = function (event, url) {
+        // Middle-click (auxclick) or ctrl/cmd-click → open in a new tab.
+        if (event.button === 1 || event.ctrlKey || event.metaKey) {
+            window.open(url, '_blank');
+
+            return;
+        }
+        // Plain auxclick with another button (e.g. right) → ignore.
+        if (event.type === 'auxclick') return;
+        window.location = url;
+    };
+
     /* ─── estado global ─────────────────────────────────────── */
     let _draggedTh = null, _draggedIdx = null, _dragCrudId = null;
     let _resizeTh = null, _resizeStart = 0, _resizeStartW = 0, _resizeField = null, _resizeCrud = null;

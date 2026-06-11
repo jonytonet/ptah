@@ -41,25 +41,35 @@ trait HasCrudDeletion
 
         $modelInstance = $this->resolveEloquentModel();
         $record = $modelInstance->newQuery()->find($this->deletingId);
+        $deletedId = null;
+        $isSoftDelete = false;
 
         if ($record) {
             // Record who deleted (SoftDelete)
             $fillable = $record->getFillable();
+            $isSoftDelete = method_exists($record, 'getDeletedAtColumn');
             if (Auth::id()
                 && in_array('deleted_by', $fillable, true)
-                && method_exists($record, 'getDeletedAtColumn')
+                && $isSoftDelete
             ) {
                 $record->deleted_by = Auth::id();
                 $record->saveQuietly();
             }
             $record->delete();
+            $deletedId = $record->getKey();
             $this->cacheService->invalidateModel($this->model);
             $this->updateTrashedCount();
         }
 
         $this->cancelDelete();
         $this->dispatch('crud-deleted', model: $this->model);
-        $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_deleted'), color: 'warn');
+        // Soft deletes are reversible: offer an inline Undo on the toast.
+        $this->dispatch(
+            'ptah-toast',
+            title: trans('ptah::ui.toast_deleted'),
+            color: 'warn',
+            undoId: ($isSoftDelete && $deletedId) ? $deletedId : null,
+        );
     }
 
     public function restoreRecord(int $id): void

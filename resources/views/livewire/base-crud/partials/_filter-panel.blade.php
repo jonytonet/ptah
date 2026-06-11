@@ -11,7 +11,7 @@
                 <span class="text-sm font-semibold ptah-c-fp_text">{{ __('ptah::ui.filters_title') }}</span>
                 @if (count($textFilter ?? []) > 0)
                     <span class="text-xs px-2 py-0.5 rounded-full font-medium border ptah-c-active_badge">
-                        {{ count($textFilter) }} ativo{{ count($textFilter) > 1 ? 's' : '' }}
+                        {{ trans_choice('ptah::ui.filters_active_count', count($textFilter), ['count' => count($textFilter)]) }}
                     </span>
                 @endif
             </div>

@@ -145,6 +145,46 @@ class CrudSaveTest extends TestCase
     }
 
     #[Test]
+    public function save_and_new_persists_and_reopens_a_blank_form(): void
+    {
+        $this->crud()
+            ->set('formData.name', 'First item')
+            ->call('saveAndNew')
+            ->assertSet('showModal', true)
+            ->assertSet('formData', [])
+            ->assertSet('editingId', null);
+
+        $this->assertSame(1, SaveStub::count());
+        $this->assertSame('FIRST ITEM', SaveStub::first()->name);
+    }
+
+    #[Test]
+    public function save_and_new_keeps_the_form_open_with_errors_on_validation_failure(): void
+    {
+        $component = $this->crud()
+            ->set('formData.status', 'incomplete')
+            ->call('saveAndNew');
+
+        $this->assertArrayHasKey('name', $component->get('formErrors'));
+        $this->assertSame('incomplete', $component->get('formData')['status'], 'Failed data must not be reset');
+        $this->assertSame(0, SaveStub::count());
+    }
+
+    #[Test]
+    public function save_and_new_on_edit_behaves_like_a_plain_save(): void
+    {
+        $record = SaveStub::create(['name' => 'EDIT ME', 'status' => 'active', 'amount' => 1]);
+
+        $this->crud()
+            ->call('openEdit', $record->id)
+            ->set('formData.name', 'edited')
+            ->call('saveAndNew')
+            ->assertSet('showModal', false);
+
+        $this->assertSame(1, SaveStub::count(), 'Editing must never chain into a new create form');
+    }
+
+    #[Test]
     public function prepare_create_resets_the_form_state(): void
     {
         $this->crud()

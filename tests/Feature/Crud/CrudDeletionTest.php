@@ -140,6 +140,18 @@ class CrudDeletionTest extends TestCase
     }
 
     #[Test]
+    public function delete_toast_carries_the_undo_id_for_soft_deletes(): void
+    {
+        $this->actingAsUser();
+        $record = DeletionStub::create(['name' => 'Undoable']);
+
+        Livewire::test(BaseCrud::class, ['model' => DeletionStub::class])
+            ->call('confirmDelete', $record->id)
+            ->call('deleteRecord')
+            ->assertDispatched('ptah-toast', undoId: $record->id);
+    }
+
+    #[Test]
     public function restore_record_brings_a_trashed_row_back(): void
     {
         $this->actingAsUser();
