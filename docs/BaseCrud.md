@@ -980,6 +980,18 @@ The child grid is a full BaseCrud (filters, modal, export…) mounted lazily on 
 
 Rows stay individual (unlike `groupBy`), but the break field becomes the primary sort and the table renders a header per group plus a subtotal row (using the Totalizer columns) and keeps the grand total in the footer. Field name is validated by `SqlIdentifier`.
 
+### Form preview (config modal)
+
+While configuring columns in the CrudConfig modal, click **"Preview form"** (footer)
+to open an **inert** mirror of the create/edit form built from the columns you've
+marked as savable — including section headings (`colsFormBlock`), required marks,
+help text and the cascade gating hint. It's visual only: no data binding, no
+validation, no queries, no actions — just the layout the end user will see.
+
+> Where the field options live in the modal: **Basic** tab → `colsFormBlock` /
+> `colsOnChange`; **SearchDropdown** tab → cascade (`colsSDDependsOn` /
+> `colsSDFilterColumn`, shown only for searchdropdown columns).
+
 ### Other power features
 
 - **Duplicate record** — copy icon per row opens the create modal pre-filled with the source row's savable fields (guarded/audit fields never copied).

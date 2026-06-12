@@ -23,6 +23,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Theme colors
+    |--------------------------------------------------------------------------
+    |
+    | Brand palette for the whole Ptah UI (BaseCrud, Forge components, modules).
+    | Set these once and everything follows — Ptah injects them as CSS custom
+    | properties (`--color-primary`, `--ptah-primary`, …) in the layout <head>,
+    | and ptah-components.css derives every tint/ring/hover from them via
+    | color-mix(). No need to publish or edit any view, and it survives
+    | `composer update`.
+    |
+    | Accepts any CSS color (hex, rgb, hsl, oklch). Override per project via
+    | .env (PTAH_COLOR_PRIMARY=#0d9488) or here.
+    |
+    */
+    'theme' => [
+        'colors' => [
+            'primary' => env('PTAH_COLOR_PRIMARY', '#5b21b6'),
+            'success' => env('PTAH_COLOR_SUCCESS', '#10b981'),
+            'danger' => env('PTAH_COLOR_DANGER', '#ef4444'),
+            'warn' => env('PTAH_COLOR_WARN', '#f59e0b'),
+            'dark' => env('PTAH_COLOR_DARK', '#1e293b'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | File Generation Paths
     |--------------------------------------------------------------------------
     |

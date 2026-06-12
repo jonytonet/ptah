@@ -24,6 +24,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $appName }}{{ isset($title) ? ' — ' . $title : '' }}</title>
 
+    @php $ptahAuthColors = config('ptah.theme.colors', []); @endphp
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -31,16 +32,18 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { DEFAULT: '#1e40af', light: '#eff6ff', dark: '#1e3a8a' },
-                        success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
-                        danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
-                        warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
-                        dark:    { DEFAULT: '#1e293b', light: '#f1f5f9', dark: '#0f172a' },
+                        primary: { DEFAULT: '{{ $ptahAuthColors['primary'] ?? '#5b21b6' }}', light: '#eff6ff', dark: '#1e3a8a' },
+                        success: { DEFAULT: '{{ $ptahAuthColors['success'] ?? '#10b981' }}', light: '#d1fae5', dark: '#059669' },
+                        danger:  { DEFAULT: '{{ $ptahAuthColors['danger'] ?? '#ef4444' }}', light: '#fee2e2', dark: '#dc2626' },
+                        warn:    { DEFAULT: '{{ $ptahAuthColors['warn'] ?? '#f59e0b' }}', light: '#fef3c7', dark: '#d97706' },
+                        dark:    { DEFAULT: '{{ $ptahAuthColors['dark'] ?? '#1e293b' }}', light: '#f1f5f9', dark: '#0f172a' },
                     }
                 }
             }
         }
     </script>
+    {{-- Brand palette from config('ptah.theme.colors') for ptah-components.css --}}
+    @include('ptah::partials.theme-colors')
     <style>[x-cloak] { display: none !important; }</style>
 
     {{-- Alpine via CDN apenas se Livewire não estiver presente.

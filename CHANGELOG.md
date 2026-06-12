@@ -9,6 +9,45 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-06-11
+
+Developer-experience release: theme your brand colors from config, preview the
+form while configuring it, and publish views surgically.
+
+### Theming — config-driven brand colors
+- **New `config('ptah.theme.colors')`** (primary/success/danger/warn/dark, each
+  with an `.env` override like `PTAH_COLOR_PRIMARY`). Ptah injects them as CSS
+  custom properties (`--color-primary`, `--ptah-primary`, …) in the dashboard and
+  auth layout `<head>` via a shared `partials/theme-colors` view. Because
+  `ptah-components.css` derives every tint/ring/hover from `--color-primary` with
+  `color-mix()`, setting one value rebrands the whole UI — no view publishing, and
+  it survives `composer update`. The CDN-fallback Tailwind config in both layouts
+  now reads the same config values, so colors are consistent with or without a
+  Vite build.
+
+### View publishing — granular tags (footgun prevention)
+- Added **granular publish tags** so you no longer have to publish all 60+ views
+  at once: `ptah-views-components`, `ptah-views-base-crud`, `ptah-views-auth`,
+  `ptah-views-ai`. The blanket `ptah-views` remains but is documented as a last
+  resort. Publishing a view means Laravel prefers your copy and `composer update`
+  never refreshes it — the granular tags + a code comment + a README section make
+  that trade-off explicit, steering devs to publish only what they edit (or
+  nothing, since most customization is database-driven via CrudConfig).
+
+### Config modal — inert form preview
+- **"Preview form" button** in the CrudConfig modal footer opens an inert mirror
+  of the create/edit form, built from the columns currently marked as savable
+  (unsaved `formEditFields`): section headings (`colsFormBlock`), required marks,
+  help text, per-type controls and the cascade gating hint — all disabled, no
+  data binding, no validation, no queries, no actions. Lets the dev see the form
+  layout while building it.
+- **Discoverability fix:** moved `colsFormBlock` and `colsOnChange` from the
+  "Mask" sub-tab (where they were easy to miss) to the "Basic" sub-tab of the
+  column editor. Cascade fields stay in the "SearchDropdown" sub-tab.
+- New `CrudConfig::previewForm()/closePreview()/previewFormCols()`, the
+  `_config-form-preview.blade.php` partial, 7 i18n keys (en/pt_BR) and
+  `ConfigFormPreviewTest` (3 tests).
+
 ## [1.0.0] — 2026-06-11
 
 First public stable release on Packagist. Consolidates everything below: SOLID
@@ -636,7 +675,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/jonytonet/ptah/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...v1.0.0
 [1.0.0-rc.5]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.4...v1.0.0-rc.5
 [1.0.0-rc.4]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.3...v1.0.0-rc.4

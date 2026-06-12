@@ -289,6 +289,51 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 
 ---
 
+## 🎨 Theming & customizing views
+
+**Brand colors — set once, everything follows.** Define your palette in
+`config/ptah.php` (or via `.env`) and the whole UI — BaseCrud, Forge components,
+modules — picks it up. No view publishing, survives `composer update`:
+
+```php
+// config/ptah.php
+'theme' => [
+    'colors' => [
+        'primary' => env('PTAH_COLOR_PRIMARY', '#5b21b6'),
+        'success' => env('PTAH_COLOR_SUCCESS', '#10b981'),
+        'danger'  => env('PTAH_COLOR_DANGER',  '#ef4444'),
+        'warn'    => env('PTAH_COLOR_WARN',     '#f59e0b'),
+        'dark'    => env('PTAH_COLOR_DARK',     '#1e293b'),
+    ],
+],
+```
+
+```dotenv
+# .env — rebrand without touching code
+PTAH_COLOR_PRIMARY=#0d9488
+```
+
+Ptah injects these as CSS variables (`--color-primary`, `--ptah-primary`, …) in the
+layout `<head>`; every tint, focus ring and hover is derived from them via
+`color-mix()`. Accepts any CSS color (hex, rgb, hsl, oklch).
+
+**Customizing views — publish only what you edit.** Most customization is done
+through the CrudConfig modal (database-driven), so you rarely need to touch a Blade
+file. If you do, ⚠️ **publishing a view means you own it** — Laravel will prefer your
+copy and `composer update` will never refresh it again. Publish the **smallest** slice:
+
+```bash
+php artisan vendor:publish --tag=ptah-views-components   # just the <x-forge-*>
+php artisan vendor:publish --tag=ptah-views-base-crud    # just the BaseCrud screen
+php artisan vendor:publish --tag=ptah-views-auth         # just the auth pages
+php artisan vendor:publish --tag=ptah-views-ai           # just the AI widget
+# (ptah-views still publishes ALL 60+ views — avoid it unless you really mean to)
+```
+
+To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
+
+---
+
 ## 📚 Documentation
 
 | Document | Contents |
