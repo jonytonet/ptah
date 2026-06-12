@@ -45,11 +45,11 @@
                 theme: {
                     extend: {
                         colors: {
-                            primary: { DEFAULT: '#1e40af', light: '#dbeafe', dark: '#1e3a8a' },
-                            success: { DEFAULT: '#10b981', light: '#d1fae5', dark: '#059669' },
-                            danger:  { DEFAULT: '#ef4444', light: '#fee2e2', dark: '#dc2626' },
-                            warn:    { DEFAULT: '#f59e0b', light: '#fef3c7', dark: '#d97706' },
-                            dark:    { DEFAULT: '#1e293b', light: '#f1f5f9', dark: '#0f172a' },
+                            primary: { DEFAULT: '{{ config('ptah.theme.colors.primary', '#5b21b6') }}', light: '#dbeafe', dark: '#1e3a8a' },
+                            success: { DEFAULT: '{{ config('ptah.theme.colors.success', '#10b981') }}', light: '#d1fae5', dark: '#059669' },
+                            danger:  { DEFAULT: '{{ config('ptah.theme.colors.danger', '#ef4444') }}', light: '#fee2e2', dark: '#dc2626' },
+                            warn:    { DEFAULT: '{{ config('ptah.theme.colors.warn', '#f59e0b') }}', light: '#fef3c7', dark: '#d97706' },
+                            dark:    { DEFAULT: '{{ config('ptah.theme.colors.dark', '#1e293b') }}', light: '#f1f5f9', dark: '#0f172a' },
                         }
                     }
                 }
@@ -59,6 +59,9 @@
     {{-- Icon libraries: Boxicons + FontAwesome Free --}}
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+
+    {{-- Brand palette from config('ptah.theme.colors') --}}
+    @include('ptah::partials.theme-colors')
 
     <style>
         [x-cloak] { display: none !important; }

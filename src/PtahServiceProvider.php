@@ -282,10 +282,34 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/Migrations' => database_path('migrations'),
             ], 'ptah-migrations');
 
-            // Publish Forge views/components (allows local customisation)
+            // Publish Forge views/components (allows local customisation).
+            //
+            // ⚠ Publishing a view = you OWN it: Laravel's view finder then prefers
+            // your copy in resources/views/vendor/ptah/ over the package's, and
+            // `composer update` will NEVER refresh it. Publish ONLY the view you
+            // intend to edit. Prefer the granular tags below over `ptah-views`
+            // (which copies all 60+ views and freezes the whole UI).
             $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/ptah'),
             ], 'ptah-views');
+
+            // Granular view tags — publish just the area you customise.
+            $this->publishes([
+                __DIR__.'/../resources/views/components' => resource_path('views/vendor/ptah/components'),
+            ], 'ptah-views-components');
+
+            $this->publishes([
+                __DIR__.'/../resources/views/livewire/base-crud' => resource_path('views/vendor/ptah/livewire/base-crud'),
+            ], 'ptah-views-base-crud');
+
+            $this->publishes([
+                __DIR__.'/../resources/views/livewire/auth' => resource_path('views/vendor/ptah/livewire/auth'),
+                __DIR__.'/../resources/views/layouts/forge-auth.blade.php' => resource_path('views/vendor/ptah/layouts/forge-auth.blade.php'),
+            ], 'ptah-views-auth');
+
+            $this->publishes([
+                __DIR__.'/../resources/views/livewire/ai' => resource_path('views/vendor/ptah/livewire/ai'),
+            ], 'ptah-views-ai');
 
             // Publish Forge CSS assets
             $this->publishes([
