@@ -31,6 +31,9 @@ class CrudConfig extends Component
 
     public bool $showModal = false;
 
+    /** Inert "preview the form" overlay (visual only — no actions, no data). */
+    public bool $showPreview = false;
+
     // ── Columns ──────────────────────────────────────────────────────────────
 
     /** All columns (including actions) */
@@ -212,6 +215,38 @@ class CrudConfig extends Component
         $this->editingFieldIndex = -1;
         $this->editingActionIndex = -1;
         $this->editingJoinIndex = -1;
+    }
+
+    // ── Form preview (inert) ──────────────────────────────────────────────
+
+    /**
+     * Opens an inert preview of the create/edit form built from the columns
+     * currently being configured (unsaved `formEditFields`). Visual only —
+     * no data binding, no validation, no actions.
+     */
+    public function previewForm(): void
+    {
+        $this->showPreview = true;
+    }
+
+    public function closePreview(): void
+    {
+        $this->showPreview = false;
+    }
+
+    /**
+     * Savable columns of the in-progress config, in order — the fields the real
+     * create/edit form would render. Drives the preview overlay.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function previewFormCols(): array
+    {
+        return array_values(array_filter(
+            $this->formEditFields,
+            fn ($c) => in_array($c['colsGravar'] ?? false, [true, 'S', 1, '1'], true)
+                && ($c['colsTipo'] ?? '') !== 'action'
+        ));
     }
 
     // ── Load config ──────────────────────────────────────────────────────

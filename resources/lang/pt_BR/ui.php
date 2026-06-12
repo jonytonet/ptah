@@ -1482,4 +1482,15 @@ return [
     'cfg_col_form_block' => 'Bloco do formulário (seção)',
     'cfg_col_form_block_hint' => 'Agrupa este campo sob um título de seção no modal de criar/editar. Campos adjacentes com o mesmo bloco compartilham a seção.',
 
+    // -------------------------------------------------------------------------
+    // Modal de config — pré-visualização inerte do formulário
+    // -------------------------------------------------------------------------
+    'cfg_preview_btn' => 'Pré-visualizar formulário',
+    'cfg_preview_title' => 'Pré-visualização do formulário',
+    'cfg_preview_inert_notice' => 'Apenas visual — sem salvar, sem dados, sem ações.',
+    'cfg_preview_empty' => 'Nenhuma coluna gravável configurada ainda. Marque colunas como "Gravar" para vê-las aqui.',
+    'cfg_preview_calc_badge' => 'calculado',
+    'cfg_preview_depends' => 'Depende de :parent (cascata)',
+    'cfg_preview_footer_hint' => 'Botões são ilustrativos — isto é uma prévia.',
+
 ];

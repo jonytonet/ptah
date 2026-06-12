@@ -429,6 +429,21 @@
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
                                     </div>
+                                    {{-- Form block (section) + onChange formula (calculated fields) --}}
+                                    <div>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>
+                                        <input type="text" wire:model="formDataField.colsFormBlock"
+                                            placeholder="ex: Endereço" class="cfg-input" />
+                                        <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_form_block_hint') }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_on_change') }}</label>
+                                        <input type="text" wire:model="formDataField.colsOnChange"
+                                            placeholder="merge(data, {'total': data['qty'] * data['price']})"
+                                            class="cfg-input font-mono text-[11px]" />
+                                        <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_on_change_hint') }}</p>
+                                    </div>
+
                                     {{-- Select options (condicional) --}}
                                     @if (($formDataField['colsTipo'] ?? '') === 'select')
                                     <div class="col-span-2">
@@ -928,23 +943,6 @@
                                             placeholder="Ex: 000-000-A ou /^[A-Z]{3}$/" class="font-mono cfg-input" />
                                     </div>
                                     @endif
-
-                                    {{-- Form block (section) + onChange formula --}}
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>
-                                            <input type="text" wire:model="formDataField.colsFormBlock"
-                                                placeholder="ex: Endereço" class="cfg-input" />
-                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_form_block_hint') }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_on_change') }}</label>
-                                            <input type="text" wire:model="formDataField.colsOnChange"
-                                                placeholder="merge(data, {'total': data['qty'] * data['price']})"
-                                                class="cfg-input font-mono text-[11px]" />
-                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_on_change_hint') }}</p>
-                                        </div>
-                                    </div>
 
                                     {{-- Preview da transformaÃ§Ã£o --}}
                                     @if (!empty($formDataField['colsMaskTransform']))
@@ -2707,6 +2705,14 @@
                         count($conditionStyles) }} {{ __('ptah::ui.cfg_footer_unit_styles') }}
                     </p>
                     <div class="flex gap-3">
+                        <button type="button" wire:click="previewForm"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold transition-colors bg-white border rounded-md text-primary border-primary/30 hover:bg-primary/5">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            {{ __('ptah::ui.cfg_preview_btn') }}
+                        </button>
                         <button @click="$wire.showModal = false; $wire.closeModal()"
                             class="px-4 py-2 text-xs font-semibold transition-colors bg-white border rounded-md text-slate-600 border-slate-300 hover:bg-slate-50">
                             {{ __('ptah::ui.cfg_footer_cancel') }}
@@ -2725,6 +2731,9 @@
                 </div>
             </div>{{-- /content --}}
         </div>{{-- /shell --}}
+
+        {{-- Inert form preview overlay (sits above the config modal) --}}
+        @include('ptah::livewire.base-crud.partials._config-form-preview')
     </div>{{-- /fixed --}}
     @endteleport
 

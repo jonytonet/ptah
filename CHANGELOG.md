@@ -9,6 +9,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Config modal — inert form preview
+- **"Preview form" button** in the CrudConfig modal footer opens an inert mirror
+  of the create/edit form, built from the columns currently marked as savable
+  (unsaved `formEditFields`): section headings (`colsFormBlock`), required marks,
+  help text, per-type controls and the cascade gating hint — all disabled, no
+  data binding, no validation, no queries, no actions. Lets the dev see the form
+  layout while building it.
+- **Discoverability fix:** moved `colsFormBlock` and `colsOnChange` from the
+  "Mask" sub-tab (where they were easy to miss) to the "Basic" sub-tab of the
+  column editor. Cascade fields stay in the "SearchDropdown" sub-tab.
+- New `CrudConfig::previewForm()/closePreview()/previewFormCols()`, the
+  `_config-form-preview.blade.php` partial, 7 i18n keys (en/pt_BR) and
+  `ConfigFormPreviewTest` (3 tests).
+
 ## [1.0.0] — 2026-06-11
 
 First public stable release on Packagist. Consolidates everything below: SOLID

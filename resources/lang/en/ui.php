@@ -1480,4 +1480,15 @@ return [
     'cfg_col_form_block' => 'Form block (section)',
     'cfg_col_form_block_hint' => 'Groups this field under a section heading in the create/edit modal. Adjacent fields with the same block share the section.',
 
+    // -------------------------------------------------------------------------
+    // Config modal — inert form preview
+    // -------------------------------------------------------------------------
+    'cfg_preview_btn' => 'Preview form',
+    'cfg_preview_title' => 'Form preview',
+    'cfg_preview_inert_notice' => 'Visual preview only — no saving, no data, no actions.',
+    'cfg_preview_empty' => 'No savable columns configured yet. Mark columns as "Save" to see them here.',
+    'cfg_preview_calc_badge' => 'calculated',
+    'cfg_preview_depends' => 'Depends on :parent (cascading)',
+    'cfg_preview_footer_hint' => 'Buttons are illustrative — this is a preview.',
+
 ];
