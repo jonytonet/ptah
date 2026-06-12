@@ -9,6 +9,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-06-11
+
+Developer-experience release: theme your brand colors from config, preview the
+form while configuring it, and publish views surgically.
+
 ### Theming — config-driven brand colors
 - **New `config('ptah.theme.colors')`** (primary/success/danger/warn/dark, each
   with an `.env` override like `PTAH_COLOR_PRIMARY`). Ptah injects them as CSS
@@ -670,7 +675,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/jonytonet/ptah/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...v1.0.0
 [1.0.0-rc.5]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.4...v1.0.0-rc.5
 [1.0.0-rc.4]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.3...v1.0.0-rc.4
