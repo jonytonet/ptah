@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Livewire;
 
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Company\CompanyList;
 use Ptah\Tests\Factories\CompanyFactory;
 use Ptah\Tests\TestCase;
@@ -24,14 +25,14 @@ class CompanyListTest extends TestCase
 {
     // ── Listagem ───────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function componente_renderiza_sem_erros(): void
     {
         Livewire::test(CompanyList::class)
             ->assertOk();
     }
 
-    /** @test */
+    #[Test]
     public function exibe_empresas_cadastradas(): void
     {
         CompanyFactory::new()->create(['name' => 'Empresa Alpha', 'label' => 'ALPH']);
@@ -44,7 +45,7 @@ class CompanyListTest extends TestCase
 
     // ── Criação ────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function pode_criar_empresa_valida(): void
     {
         Livewire::test(CompanyList::class)
@@ -62,7 +63,7 @@ class CompanyListTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function nome_e_obrigatorio(): void
     {
         Livewire::test(CompanyList::class)
@@ -72,7 +73,7 @@ class CompanyListTest extends TestCase
             ->assertHasErrors(['name' => 'required']);
     }
 
-    /** @test */
+    #[Test]
     public function label_nao_pode_ter_mais_de_4_caracteres(): void
     {
         Livewire::test(CompanyList::class)
@@ -83,7 +84,7 @@ class CompanyListTest extends TestCase
             ->assertHasErrors(['label' => 'max']);
     }
 
-    /** @test */
+    #[Test]
     public function label_deve_ser_unico(): void
     {
         CompanyFactory::new()->create(['name' => 'Existente', 'label' => 'DUPL']);
@@ -98,7 +99,7 @@ class CompanyListTest extends TestCase
 
     // ── Edição ─────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function pode_editar_empresa_existente(): void
     {
         $company = CompanyFactory::new()->create(['name' => 'Original', 'label' => 'ORIG']);
@@ -114,7 +115,7 @@ class CompanyListTest extends TestCase
         $this->assertDatabaseHas('ptah_companies', ['id' => $company->id, 'name' => 'Atualizado']);
     }
 
-    /** @test */
+    #[Test]
     public function pode_salvar_sem_alterar_o_proprio_label(): void
     {
         $company = CompanyFactory::new()->create(['name' => 'Empresa', 'label' => 'KEPT']);
@@ -128,7 +129,7 @@ class CompanyListTest extends TestCase
         $this->assertDatabaseHas('ptah_companies', ['id' => $company->id, 'name' => 'Empresa Renomeada']);
     }
 
-    /** @test */
+    #[Test]
     public function label_duplicado_de_outra_empresa_invalida_ao_editar(): void
     {
         CompanyFactory::new()->create(['name' => 'Outra',   'label' => 'DUPL']);
@@ -143,7 +144,7 @@ class CompanyListTest extends TestCase
 
     // ── Exclusão ───────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function pode_excluir_empresa_nao_padrao(): void
     {
         $company = CompanyFactory::new()->create(['name' => 'Excluível', 'label' => 'EXCL', 'is_default' => false]);
@@ -157,7 +158,7 @@ class CompanyListTest extends TestCase
         $this->assertSoftDeleted('ptah_companies', ['id' => $company->id]);
     }
 
-    /** @test */
+    #[Test]
     public function nao_pode_excluir_empresa_padrao(): void
     {
         $default = CompanyFactory::new()->create(['name' => 'Padrão', 'label' => 'DFLT', 'is_default' => true]);
@@ -171,7 +172,7 @@ class CompanyListTest extends TestCase
 
     // ── Busca ──────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function busca_filtra_por_nome(): void
     {
         CompanyFactory::new()->create(['name' => 'Empresa Encontrada',   'label' => 'FIND']);
@@ -183,7 +184,7 @@ class CompanyListTest extends TestCase
             ->assertDontSee('Empresa Não Listada');
     }
 
-    /** @test */
+    #[Test]
     public function limpar_busca_exibe_todas(): void
     {
         CompanyFactory::new()->create(['name' => 'Primeira',  'label' => 'PRI1']);
