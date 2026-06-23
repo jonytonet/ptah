@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
+use Ptah\Services\Crud\FilterService;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -402,8 +403,27 @@ trait HasCrudQuery
     {
         $domainFilters = [];
 
-        foreach ($this->filters as $field => $value) {
-            if ($value === null || $value === '') {
+        // Iterate the union of valued filters AND fields that only carry a NULL
+        // operator (IS NULL / IS NOT NULL) — those have no value but must apply.
+        $fields = array_values(array_unique(array_merge(
+            array_keys($this->filters),
+            array_keys($this->filterOperators),
+        )));
+
+        foreach ($fields as $field) {
+            $value = $this->filters[$field] ?? null;
+
+            // Normalise the operator: empty / non-string "select…" becomes null.
+            $explicitOp = $this->filterOperators[$field] ?? null;
+            if (! is_string($explicitOp) || trim($explicitOp) === '') {
+                $explicitOp = null;
+            }
+
+            $isNull = $explicitOp !== null && FilterService::isNullOperator($explicitOp);
+
+            // Empty values are skipped UNLESS the operator is IS NULL / IS NOT NULL,
+            // which filter by the column itself and need no value.
+            if (! $isNull && ($value === null || $value === '')) {
                 continue;
             }
 
@@ -421,32 +441,69 @@ trait HasCrudQuery
                 continue;
             }
 
-            // Operator defined explicitly, or auto-detected
-            $explicitOp = $this->filterOperators[$field] ?? null;
-
-            // Check whether to filter via relation
             $col = $this->findColByField($field);
 
-            if ($col && ! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
-                $domainFilters[] = new FilterDTO(
-                    field: $col['colsNomeFisico'],
-                    value: $value,
-                    operator: $explicitOp ?? '=',
-                    type: 'text',
-                );
-            } else {
-                // If column has colsSource (configured JOIN), use qualified name for WHERE
+            // ── NULL operators: filter by the column, no value, any type ──────
+            if ($isNull) {
                 $filterField = ($col && ! empty($col['colsSource'])) ? $col['colsSource'] : $field;
-                $autoOp = (is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
-                    ? 'LIKE'
-                    : '=';
                 $domainFilters[] = new FilterDTO(
                     field: $filterField,
-                    value: $value,
-                    operator: $explicitOp ?? $autoOp,
-                    type: FilterDTO::inferType($field, $value),
+                    value: null,
+                    operator: $explicitOp,
+                    type: 'text',
                 );
+
+                continue;
             }
+
+            // ── Relationship column (colsRelacao + colsRelacaoExibe) ──────────
+            // Numeric value = the FK id → filter the FK directly.
+            // Text value     = search the related display column via whereHas.
+            if ($col && ! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
+                if (is_numeric($value)) {
+                    $fkOp = in_array($explicitOp, ['=', '!=', '<>'], true) ? $explicitOp : '=';
+
+                    // CAVEAT: `fk != id` also excludes rows with a NULL fk
+                    // (NULL != x is UNKNOWN in SQL). To include unlinked rows,
+                    // the strategy would need ->where(fn => ...->orWhereNull(fk)).
+                    $domainFilters[] = new FilterDTO(
+                        field: $col['colsNomeFisico'],
+                        value: $value,
+                        operator: $fkOp,
+                        type: 'number',
+                    );
+                } else {
+                    $relOp = in_array(strtoupper((string) $explicitOp), ['=', '!=', 'LIKE', 'NOT LIKE'], true)
+                        ? $explicitOp
+                        : 'LIKE';
+
+                    $domainFilters[] = new FilterDTO(
+                        field: $col['colsRelacao'],
+                        value: $value,
+                        operator: $relOp,
+                        type: 'relation',
+                        options: [
+                            'whereHas' => $col['colsRelacao'],
+                            'column' => $col['colsRelacaoExibe'],
+                        ],
+                    );
+                }
+
+                continue;
+            }
+
+            // ── Plain column ──────────────────────────────────────────────────
+            // If column has colsSource (configured JOIN), use qualified name for WHERE
+            $filterField = ($col && ! empty($col['colsSource'])) ? $col['colsSource'] : $field;
+            $autoOp = (is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
+                ? 'LIKE'
+                : '=';
+            $domainFilters[] = new FilterDTO(
+                field: $filterField,
+                value: $value,
+                operator: $explicitOp ?? $autoOp,
+                type: FilterDTO::inferType($field, $value),
+            );
         }
 
         // Advanced search (fields added by user)

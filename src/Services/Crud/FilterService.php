@@ -12,6 +12,7 @@ use Ptah\Services\Crud\Filters\DateFilterStrategy;
 use Ptah\Services\Crud\Filters\NumericFilterStrategy;
 use Ptah\Services\Crud\Filters\RelationFilterStrategy;
 use Ptah\Services\Crud\Filters\TextFilterStrategy;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Filter service for BaseCrud.
@@ -24,8 +25,17 @@ use Ptah\Services\Crud\Filters\TextFilterStrategy;
  */
 class FilterService
 {
+    /** Operators that filter by the column itself and take no value. */
+    public const NULL_OPERATORS = ['IS NULL', 'IS NOT NULL', 'NULL', 'NOT NULL'];
+
     /** @var array<string, FilterStrategyInterface> */
     protected array $strategies = [];
+
+    /** True when the operator is a value-less NULL check (IS NULL / IS NOT NULL). */
+    public static function isNullOperator(?string $op): bool
+    {
+        return $op !== null && in_array(strtoupper(trim($op)), self::NULL_OPERATORS, true);
+    }
 
     public function __construct()
     {
@@ -105,6 +115,17 @@ class FilterService
      */
     protected function applyFilter(Builder $query, FilterDTO $filter): Builder
     {
+        // NULL operators are handled here (before any strategy) so they work for
+        // every column type and inside both AND and OR groups. The column name is
+        // guarded against injection like every dynamic identifier.
+        $opUp = strtoupper(trim($filter->operator));
+        if (in_array($opUp, ['IS NOT NULL', 'NOT NULL'], true)) {
+            return SqlIdentifier::isSafe($filter->field) ? $query->whereNotNull($filter->field) : $query;
+        }
+        if (in_array($opUp, ['IS NULL', 'NULL'], true)) {
+            return SqlIdentifier::isSafe($filter->field) ? $query->whereNull($filter->field) : $query;
+        }
+
         // Explicit relation filter via whereHas
         if (! empty($filter->options['whereHas'])) {
             return $this->strategies['relation']->apply($query, $filter);
