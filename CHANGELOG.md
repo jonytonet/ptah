@@ -9,6 +9,43 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Compatibility — Laravel 13 / Livewire 4 / PHP 8.4
+- Production constraints already allowed `laravel/framework: ^11|^12|^13` and
+  `livewire/livewire: ^4.0`; this leg makes the **toolchain and CI actually cover
+  Laravel 13**: `require-dev` widened to `orchestra/testbench: ^9|^10|^11` and
+  `phpunit/phpunit: ^11|^12`, and the test matrix gained a Laravel 13 / Testbench 11
+  job on PHP 8.4. README badge and requirements updated to 11 · 12 · 13.
+- Bumped `guzzlehttp/guzzle` (≥7.12.1) and `guzzlehttp/psr7` (≥2.12.1) in the lock
+  to clear three medium CVEs (transitive dev deps; `composer audit` now clean).
+
+### Filters — relationship filtering fix + NULL operators + hardening
+- **Fixed: filtering a relationship column by text was broken.** A column with
+  `colsRelacao` + `colsRelacaoExibe` was filtered directly on the FK as text
+  (`where fk LIKE '%name%'`), which never matches (the FK holds ids). Now
+  `buildActiveFilters()` routes by value: a numeric value filters the FK directly
+  (`where fk = id`, `!=` supported), and a text value searches the related display
+  column via `whereHas(relation, col LIKE …)` through `RelationFilterStrategy`.
+- **New: `IS NULL` / `IS NOT NULL` operators** — filter by a column with no value
+  (e.g. "orders without an invoice"). Centralised in `FilterService::applyFilter()`
+  so they work for every column type and inside AND **and** OR groups
+  (`FilterService::NULL_OPERATORS` + `isNullOperator()`), guarded by
+  `SqlIdentifier`. `FilterDTO::isValid()` accepts a value-less NULL filter;
+  `buildActiveFilters()` keeps a filter that carries only a NULL operator;
+  the filter panel exposes the two operators and disables the value input.
+- **New: searchdropdown filters support `=` and `!=`** — the filter-panel
+  searchdropdown gained an operator select, and `selectFilterDropdownOption()` now
+  preserves a user-chosen operator instead of forcing `=` (e.g. "status different
+  from finished"). The `!=` path reuses the relation FK-id branch. (Caveat noted in
+  code: `fk != id` also excludes rows with a NULL FK.)
+- **Hardening: an empty/"select…" operator no longer becomes an invalid clause.**
+  `FilterDTO::fromArray()` and `buildActiveFilters()` normalise an empty or
+  non-string operator to `=` (Laravel silently discards `where col '' value`).
+- The `empty('0')` class of bug was already absent in ptah (strict `=== null/''`
+  comparisons throughout); a regression test now locks that in.
+- 19 new tests: NULL-operator behaviour (incl. OR groups + SQLi guard), FilterDTO
+  operator normalisation / validity / `'0'` regression, and `buildActiveFilters`
+  relation routing (numeric FK vs text whereHas) + NULL + empty-operator paths.
+
 ## [1.0.1] — 2026-06-11
 
 Developer-experience release: theme your brand colors from config, preview the

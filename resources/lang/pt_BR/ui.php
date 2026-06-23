@@ -58,6 +58,8 @@ return [
     'filters_op_not_equals' => 'diferente',
     'filters_op_starts' => 'inicia com',
     'filters_op_ends' => 'termina com',
+    'filters_op_is_null' => 'é vazio / sem valor',
+    'filters_op_is_not_null' => 'tem valor',
     'filters_saved' => 'Salvos:',
     'filters_save_action' => 'Salvar filtro atual com nome',
     'filters_save_placeholder' => 'Ex: Clientes ativos SP',

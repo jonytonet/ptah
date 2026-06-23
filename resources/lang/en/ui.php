@@ -57,6 +57,8 @@ return [
     'filters_op_not_equals' => 'not equal',
     'filters_op_starts' => 'starts with',
     'filters_op_ends' => 'ends with',
+    'filters_op_is_null' => 'is empty',
+    'filters_op_is_not_null' => 'has value',
     'filters_saved' => 'Saved:',
     'filters_save_action' => 'Save current filter with name',
     'filters_save_placeholder' => 'E.g.: Active clients SP',

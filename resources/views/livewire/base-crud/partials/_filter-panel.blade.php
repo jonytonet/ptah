@@ -139,6 +139,13 @@
                             <div>
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
 
+                                {{-- Operador: igual / diferente (item 5) --}}
+                                <select wire:model.live="filterOperators.{{ $cfField }}"
+                                    class="w-full text-xs rounded-md px-2 py-1.5 mb-1.5 ptah-c-fp_input">
+                                    <option value="=">{{ __('ptah::ui.filters_op_equals') }}</option>
+                                    <option value="!=">{{ __('ptah::ui.filters_op_not_equals') }}</option>
+                                </select>
+
                                 {{-- Badge de seleção ativa --}}
                                 @if ($cfFilterSelected)
                                     <div class="flex items-center gap-1 mb-1.5">
@@ -200,7 +207,12 @@
 
                         {{-- Text / Number com operador --}}
                         @else
-                            @php $isNum = $cfTipo === 'number'; @endphp
+                            @php
+                                $isNum = $cfTipo === 'number';
+                                // Value input is disabled for the value-less NULL operators.
+                                $cfOp = $filterOperators[$cfField] ?? null;
+                                $isNullOp = in_array(strtoupper((string) $cfOp), ['IS NULL', 'IS NOT NULL'], true);
+                            @endphp
                             <div>
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                 <div class="flex gap-1">
@@ -220,12 +232,16 @@
                                             <option value="LIKE_START">{{ __('ptah::ui.filters_op_starts') }}</option>
                                             <option value="LIKE_END">{{ __('ptah::ui.filters_op_ends') }}</option>
                                         @endif
+                                        {{-- Value-less operators (item 2) --}}
+                                        <option value="IS NULL">{{ __('ptah::ui.filters_op_is_null') }}</option>
+                                        <option value="IS NOT NULL">{{ __('ptah::ui.filters_op_is_not_null') }}</option>
                                     </select>
                                     <input type="{{ $isNum ? 'number' : 'text' }}"
                                         wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                        placeholder="{{ $cfLabel }}..."
+                                        placeholder="{{ $isNullOp ? '—' : $cfLabel.'...' }}"
                                         @if($isNum) step="any" @endif
-                                        class="flex-1 min-w-0 text-sm rounded-md px-2.5 py-2 ptah-c-fp_input" />
+                                        @disabled($isNullOp)
+                                        class="flex-1 min-w-0 text-sm rounded-md px-2.5 py-2 ptah-c-fp_input disabled:opacity-50 disabled:cursor-not-allowed" />
                                 </div>
                             </div>
                         @endif

@@ -19,6 +19,10 @@ jobs:
             testbench: '9.*'
           - laravel: '12.*'
             testbench: '10.*'
+          # Laravel 13 (Testbench 11) — runs on PHP 8.4 only.
+          - laravel: '13.*'
+            testbench: '11.*'
+            php: '8.4'
 
     name: PHP ${{ matrix.php }} · Laravel ${{ matrix.laravel }}
 
@@ -32,6 +36,11 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: mbstring, dom, fileinfo, sqlite3, pdo_sqlite, gd, zip
           coverage: none
+
+      # Authenticate Composer with the auto-provided token so the dependency
+      # downloads don't hit GitHub's 60 req/h unauthenticated rate limit.
+      - name: Configure Composer GitHub auth
+        run: composer config --global github-oauth.github.com "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Install dependencies
         run: |

@@ -6,6 +6,7 @@ namespace Ptah\DTO;
 
 use Illuminate\Http\Request;
 use Ptah\Base\BaseDTO;
+use Ptah\Services\Crud\FilterService;
 
 /**
  * DTO used by FilterService inside BaseCrud.
@@ -45,7 +46,12 @@ final class FilterDTO extends BaseDTO
     public static function fromArray(array $data): static
     {
         $field = is_array($data['field'] ?? null) ? '' : (string) ($data['field'] ?? '');
-        $operator = is_array($data['operator'] ?? null) ? '=' : (string) ($data['operator'] ?? '=');
+        // An empty / non-string operator ("select…") would become an invalid
+        // `where col '' value` that Laravel silently discards — fall back to '='.
+        $operator = $data['operator'] ?? '=';
+        if (! is_string($operator) || trim($operator) === '') {
+            $operator = '=';
+        }
         $value = $data['value'] ?? null;
         $type = $data['type'] ?? self::inferType($field, $value);
 
@@ -113,7 +119,16 @@ final class FilterDTO extends BaseDTO
 
     public function isValid(): bool
     {
-        if ($this->field === '' || $this->value === null || $this->value === '') {
+        if ($this->field === '') {
+            return false;
+        }
+
+        // IS NULL / IS NOT NULL filter by the column itself — valid with no value.
+        if (FilterService::isNullOperator($this->operator)) {
+            return true;
+        }
+
+        if ($this->value === null || $this->value === '') {
             return false;
         }
 

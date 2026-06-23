@@ -41,6 +41,65 @@ class FilterServiceTest extends TestCase
         FilterServiceItem::create(['name' => 'Gamma', 'status' => 'active', 'amount' => 30]);
     }
 
+    // ── NULL operators (item 2) ─────────────────────────────────────────────────
+
+    #[Test]
+    public function is_null_operator_helper_recognises_every_variant(): void
+    {
+        foreach (['IS NULL', 'is null', ' NOT NULL ', 'IS NOT NULL', 'null'] as $op) {
+            $this->assertTrue(FilterService::isNullOperator($op), "[$op] should be a NULL operator");
+        }
+
+        foreach (['=', '!=', 'LIKE', '', null] as $op) {
+            $this->assertFalse(FilterService::isNullOperator($op), var_export($op, true).' is not a NULL operator');
+        }
+    }
+
+    #[Test]
+    public function is_not_null_operator_filters_by_the_column_without_a_value(): void
+    {
+        // No value needed; every row has a non-null name.
+        $rows = $this->service->applyFilters(FilterServiceItem::query(), [
+            new FilterDTO(field: 'name', value: null, operator: 'IS NOT NULL', type: 'text'),
+        ])->get();
+
+        $this->assertCount(3, $rows);
+    }
+
+    #[Test]
+    public function is_null_operator_filters_by_the_column_without_a_value(): void
+    {
+        // No row has a null name → empty result, proving whereNull was applied.
+        $rows = $this->service->applyFilters(FilterServiceItem::query(), [
+            new FilterDTO(field: 'name', value: null, operator: 'IS NULL', type: 'text'),
+        ])->get();
+
+        $this->assertCount(0, $rows);
+    }
+
+    #[Test]
+    public function null_operator_works_inside_an_or_group(): void
+    {
+        // (name IS NULL) OR (name = Alpha) → just Alpha.
+        $rows = $this->service->applyFilters(FilterServiceItem::query(), [
+            new FilterDTO(field: 'name', value: null, operator: 'IS NULL', type: 'text', options: ['logic' => 'OR']),
+            new FilterDTO(field: 'name', value: 'Alpha', operator: '=', type: 'text', options: ['logic' => 'OR']),
+        ])->get();
+
+        $this->assertSame(['Alpha'], $rows->pluck('name')->all());
+    }
+
+    #[Test]
+    public function unsafe_field_on_a_null_operator_is_discarded(): void
+    {
+        $rows = $this->service->applyFilters(FilterServiceItem::query(), [
+            new FilterDTO(field: 'name) OR 1=1 --', value: null, operator: 'IS NULL', type: 'text'),
+        ])->get();
+
+        // Guard rejects the field → no clause added → all rows returned.
+        $this->assertCount(3, $rows);
+    }
+
     // ── applyFilters ──────────────────────────────────────────────────────────
 
     #[Test]

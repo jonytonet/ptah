@@ -302,7 +302,12 @@ trait HasCrudSearchDropdown
     public function selectFilterDropdownOption(string $field, mixed $value, string $label): void
     {
         $this->filters[$field] = $value;
-        $this->filterOperators[$field] = '=';
+        // Preserve a user-chosen operator (e.g. "!=" — different from); only
+        // default to "=" when none was set. Lets searchdropdown filters do
+        // "status different from finalised" via the FK-id != path.
+        if (empty($this->filterOperators[$field])) {
+            $this->filterOperators[$field] = '=';
+        }
         $this->sdFilterLabels[$field] = $label;
         $this->sdResults['filter_'.$field] = [];
         $this->resetSdFilterDependents($field);
