@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-06-11
+
+Filter engine fixes + Laravel 13 compatibility.
+
 ### Compatibility — Laravel 13 / Livewire 4 / PHP 8.4
 - Production constraints already allowed `laravel/framework: ^11|^12|^13` and
   `livewire/livewire: ^4.0`; this leg makes the **toolchain and CI actually cover
@@ -712,7 +716,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/jonytonet/ptah/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jonytonet/ptah/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...v1.0.0
 [1.0.0-rc.5]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.4...v1.0.0-rc.5
