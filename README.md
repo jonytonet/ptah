@@ -10,7 +10,7 @@
 </div>
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
-[![Laravel Version](https://img.shields.io/badge/Laravel-11%2B%20%7C%2012%2B-red)](https://laravel.com)
+[![Laravel Version](https://img.shields.io/badge/Laravel-11%20%7C%2012%20%7C%2013-red)](https://laravel.com)
 [![Livewire Version](https://img.shields.io/badge/Livewire-4-blueviolet.svg)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06b6d4)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -355,7 +355,7 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | Requirement | Minimum version |
 |---|---|
 | PHP | 8.2 |
-| Laravel | 11 or 12 |
+| Laravel | 11, 12 or 13 |
 | Node.js + npm | 18+ |
 | Livewire | v4 (included as dependency) |
 

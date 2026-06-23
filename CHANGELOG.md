@@ -9,6 +9,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Compatibility — Laravel 13 / Livewire 4 / PHP 8.4
+- Production constraints already allowed `laravel/framework: ^11|^12|^13` and
+  `livewire/livewire: ^4.0`; this leg makes the **toolchain and CI actually cover
+  Laravel 13**: `require-dev` widened to `orchestra/testbench: ^9|^10|^11` and
+  `phpunit/phpunit: ^11|^12`, and the test matrix gained a Laravel 13 / Testbench 11
+  job on PHP 8.4. README badge and requirements updated to 11 · 12 · 13.
+- Bumped `guzzlehttp/guzzle` (≥7.12.1) and `guzzlehttp/psr7` (≥2.12.1) in the lock
+  to clear three medium CVEs (transitive dev deps; `composer audit` now clean).
+
 ### Filters — relationship filtering fix + NULL operators + hardening
 - **Fixed: filtering a relationship column by text was broken.** A column with
   `colsRelacao` + `colsRelacaoExibe` was filtered directly on the FK as text
