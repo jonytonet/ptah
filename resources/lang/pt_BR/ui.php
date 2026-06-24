@@ -1467,6 +1467,20 @@ return [
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicar registro',
     'btn_print' => 'Imprimir',
+
+    // Print screen (crud/print)
+    'print_generated_at' => 'Gerado em',
+    'print_total_records' => 'Total de registros',
+    'print_filters_applied' => 'Filtros aplicados',
+    'print_no_filters' => 'Sem filtros (todos os registros)',
+    'print_truncated' => 'Exibindo os primeiros :n registros. Refine os filtros para um resultado completo.',
+    'print_totals_label' => 'TOTAIS',
+    'print_no_data' => 'Nenhum registro para imprimir.',
+    'print_btn_print' => 'Imprimir',
+    'print_btn_copy' => 'Copiar (Excel)',
+    'print_btn_close' => 'Fechar',
+    'print_copy_success' => 'Copiado!',
+    'print_copy_failed' => 'Falhou',
     'btn_view_mode' => 'Modo de visualização',
     'view_mode_table' => 'Visão em tabela',
     'view_mode_cards' => 'Visão em cards',

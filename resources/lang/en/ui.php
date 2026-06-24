@@ -1465,6 +1465,20 @@ return [
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicate record',
     'btn_print' => 'Print',
+
+    // Print screen (crud/print)
+    'print_generated_at' => 'Generated at',
+    'print_total_records' => 'Total records',
+    'print_filters_applied' => 'Filters applied',
+    'print_no_filters' => 'No filters (all records)',
+    'print_truncated' => 'Showing the first :n records. Refine the filters for a complete result.',
+    'print_totals_label' => 'TOTALS',
+    'print_no_data' => 'No records to print.',
+    'print_btn_print' => 'Print',
+    'print_btn_copy' => 'Copy (Excel)',
+    'print_btn_close' => 'Close',
+    'print_copy_success' => 'Copied!',
+    'print_copy_failed' => 'Failed',
     'btn_view_mode' => 'View mode',
     'view_mode_table' => 'Table view',
     'view_mode_cards' => 'Card view',

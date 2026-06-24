@@ -394,16 +394,24 @@ document.addEventListener('livewire:init', () => {
     Livewire.on('ptah:bulk-export', (event) => {
         const data = Array.isArray(event) ? event[0] : event;
         const { model, ids, format, columns } = data;
-        
+
         const params = new URLSearchParams({
             model: model,
             format: format || 'excel',
             ids: JSON.stringify(ids || []),
             columns: JSON.stringify(columns || [])
         });
-        
+
         const url = `/ptah/export/bulk?${params.toString()}`;
         window.open(url, '_blank');
+    });
+
+    // Listener para a tela de impressão (abre o snapshot em cache em nova aba)
+    Livewire.on('ptah:open-print', (event) => {
+        const data = Array.isArray(event) ? event[0] : event;
+        if (data && data.url) {
+            window.open(data.url, '_blank');
+        }
     });
 });
 </script>

@@ -128,9 +128,10 @@
                             @endif
                         </button>
                     @endforeach
-                    {{-- Print-friendly view (browser print dialog; print CSS hides chrome) --}}
+                    {{-- Print screen: opens crud/print in a new tab with ALL filtered
+                         records (not just the paginated page), totals and copy-to-Excel. --}}
                     <div class="my-1 border-t ptah-c-dd_sep"></div>
-                    <button onclick="window.print()" @click="open = false"
+                    <button wire:click="printView" @click="open = false"
                         class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
                         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

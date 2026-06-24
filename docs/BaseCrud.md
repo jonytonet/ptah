@@ -1163,6 +1163,53 @@ CrudExport.php (Excel)    → maatwebsite/excel class
 pdf.blade.php (PDF)       → Blade template for PDF
 ```
 
+### Print screen (`/ptah/print`)
+
+Beyond the file exports above, the export menu has a **Print** option that opens a
+dedicated, chrome-free HTML page in a new tab with **all the filtered records**
+(up to `exportConfig.maxRows`, default `5000`) — not just the current paginated
+page. The page is built for `window.print()` and for copying into a spreadsheet.
+
+**How it works (single source of truth):**
+
+```
+Toolbar "Print"  → BaseCrud::printView()        (builds the snapshot)
+     │  - reuses buildBaseQuery() + applyGroupingAndSort()  → same query as the listing
+     │  - renders every cell with formatCell()             → same look as the listing
+     │  - computes totalizadores (SQL aggregate, full set)
+     │  - caches the payload under a one-time, user-scoped token (10 min TTL)
+     ▼
+dispatch('ptah:open-print', url) → JS opens /ptah/print/{token} in a new tab
+     ▼
+CrudPrintController::print()  → reads the cached payload and returns the view
+     ▼
+ptah::livewire.base-crud.crud-print  → clean HTML + totals + Print/Copy/Close
+```
+
+Because the component (not the controller) builds the snapshot, the printout can
+**never diverge** from what the listing shows: same filters, same search, same
+company scope, same cell formatting and the same totals.
+
+**Buttons on the print page:**
+
+- **🖨 Print** — `window.print()`; a print stylesheet hides the toolbar.
+- **📋 Copy (Excel)** — copies the table as `text/html` (pastes into Excel /
+  Google Sheets as a real table, columns already split) with a `text/plain` TSV
+  fallback. Uses the Clipboard API, falling back to `execCommand('copy')`.
+- **Close** — closes the tab.
+
+**Totals footer:** if `totalizadores` is configured, the totals appear under their
+columns (computed over the **whole filtered set**, before the `maxRows` cut, so
+they can legitimately exceed the printed rows). Currency columns
+(`colsRenderer: "money"` or `colsHelper: "currencyFormat"`) are formatted as money.
+
+**Notes / limits:**
+- Gated by `exportConfig.enabled` (same toggle as the file exports).
+- The snapshot token is bound to the user who generated it; the controller returns
+  `403` for another user and `404` once the token expires.
+- Sorting by a **nested relation** column is not applied to the printout (same as
+  the listing — see *Nested relationship paths*).
+
 ### Visible Columns
 
 The system exports **only the columns currently visible** in the BaseCrud table:

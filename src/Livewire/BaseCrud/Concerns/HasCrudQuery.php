@@ -42,143 +42,15 @@ trait HasCrudQuery
         }
 
         try {
-            /** @var Builder $query */
-            $query = $modelInstance->newQuery();
+            [$query, $joinedTables] = $this->buildBaseQuery($modelInstance);
 
-            // JOINs configured via crudConfig['joins']
-            $joinedTables = $this->applyJoins($query, $modelInstance);
-
-            // Soft delete
-            $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($modelInstance));
-            if ($usesSoftDeletes && $this->showTrashed) {
-                $query->onlyTrashed();
-            }
-
-            // Eager-load relationships visible in the table
-            $relations = $this->getVisibleRelations();
-            if (! empty($relations)) {
-                $query->with($relations);
-            }
-
-            // Company filter (multi-tenant) — only applied when the column actually exists
-            if ($this->companyFilter > 0) {
-                $table = $modelInstance->getTable();
-                $companyField = $this->crudConfig['companyField'] ?? 'company_id';
-                if (Schema::hasColumn($table, $companyField)) {
-                    $query->where("{$table}.{$companyField}", $this->companyFilter);
-                }
-            }
-
-            // Locked filters (master/detail): enforced on every query, immune to
-            // clearFilters. Column names are config-driven → guarded.
-            foreach ($this->lockedFilters as $lockedCol => $lockedVal) {
-                if (SqlIdentifier::isSafe((string) $lockedCol)) {
-                    $query->where($lockedCol, $lockedVal);
-                }
-            }
-
-            // External whereHas filter (pre-filtered by parent entity)
-            if ($this->whereHasFilter !== '') {
-                [$col, $op, $val] = array_pad($this->whereHasCondition, 3, null);
-                if ($col && $val !== null) {
-                    $query->whereHas($this->whereHasFilter, function (Builder $q) use ($col, $op, $val) {
-                        $q->where($col, $op ?? '=', $val);
-                    });
-                }
-            }
-
-            // Global search with OR across text fields and relations
+            // Record the search term in history (side effect kept out of
+            // buildBaseQuery so it is not duplicated by totals/export/print).
             if ($this->search !== '') {
-                $searchFilters = $this->filterService->buildGlobalSearchFilters(
-                    $this->crudConfig['cols'] ?? [],
-                    $this->search
-                );
-
-                if (! empty($searchFilters)) {
-                    $this->filterService->applyFilters($query, $searchFilters);
-                }
-
-                // Save search history
                 $this->addToSearchHistory($this->search);
             }
 
-            // Form filters
-            $activeFilters = $this->buildActiveFilters();
-            if (! empty($activeFilters)) {
-                $this->filterService->applyFilters($query, $activeFilters);
-            }
-
-            // Date ranges (standard ERP: _start/_end, legacy: _from/_to)
-            $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
-            if (! empty($drFilters)) {
-                $this->filterService->applyFilters($query, $drFilters);
-            }
-
-            // Quick date filter
-            if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '') {
-                [$from, $to] = $this->getQuickDateRange($this->quickDateFilter);
-                if ($from && $to) {
-                    $query->whereBetween($this->quickDateColumn, [$from, $to]);
-                }
-            }
-
-            // Custom filters
-            $customFilterConfig = $this->crudConfig['customFilters'] ?? [];
-            $cfFilters = $this->filterService->processCustomFilters($customFilterConfig, $this->filters);
-            if (! empty($cfFilters)) {
-                $this->filterService->applyFilters($query, $cfFilters);
-            }
-
-            // GROUP BY support (configGroupBy)
-            if ($groupBy = $this->crudConfig['groupBy'] ?? null) {
-                $mainTable = $modelInstance->getTable();
-                $query
-                    ->select([
-                        DB::raw("MIN({$mainTable}.id) as id"),
-                        "{$mainTable}.{$groupBy}",
-                    ])
-                    ->groupBy("{$mainTable}.{$groupBy}")
-                    ->orderBy("{$mainTable}.{$groupBy}", $this->direction);
-
-                return $query->paginate($this->perPage);
-            }
-
-            // Group break (ScriptCase-style "quebra"): rows are kept individual,
-            // but the break field becomes the primary sort so the view can emit
-            // group headers and per-group subtotals. User sort stays secondary.
-            if ($breakField = $this->crudConfig['groupBreak'] ?? null) {
-                if (SqlIdentifier::isSafe($breakField)) {
-                    $query->orderBy($breakField, 'ASC');
-                }
-            }
-
-            // Sorting (supports relation via JOIN)
-            $relationInfo = $this->getOrderByRelationInfo($this->sort);
-
-            if ($relationInfo) {
-                [$rel, $displayCol, $fk, $relTable] = $relationInfo;
-                $mainTable = $modelInstance->getTable();
-
-                // Only add leftJoin if the table was not already joined via applyJoins()
-                if (! in_array($relTable, $joinedTables)) {
-                    $query->leftJoin(
-                        $relTable,
-                        "{$mainTable}.{$fk}",
-                        '=',
-                        "{$relTable}.id"
-                    );
-
-                    // If applyJoins did not set a select, define one now to avoid ambiguous columns
-                    if (empty($joinedTables)) {
-                        $query->select("{$mainTable}.*");
-                    }
-                }
-
-                $query->orderBy("{$relTable}.{$displayCol}", $this->direction);
-            } else {
-                $sortCol = $this->resolveSortColumn();
-                $query->orderBy($sortCol, $this->direction);
-            }
+            $this->applyGroupingAndSort($query, $modelInstance, $joinedTables);
 
             return $query->paginate($this->perPage);
 
@@ -223,19 +95,10 @@ trait HasCrudQuery
             return [];
         }
 
-        // Build base query with active filters
-        $baseQuery = $modelInstance->newQuery();
-        $this->applyJoins($baseQuery, $modelInstance);
-        $activeFilters = $this->buildActiveFilters();
-
-        if (! empty($activeFilters)) {
-            $this->filterService->applyFilters($baseQuery, $activeFilters);
-        }
-
-        $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
-        if (! empty($drFilters)) {
-            $this->filterService->applyFilters($baseQuery, $drFilters);
-        }
+        // Same filtered query as the listing (search, company, locked, whereHas,
+        // date ranges, custom filters all included) so the totals always match
+        // the rows the user is actually seeing. No grouping/sort needed here.
+        [$baseQuery] = $this->buildBaseQuery($modelInstance);
 
         $result = [];
 
@@ -261,6 +124,169 @@ trait HasCrudQuery
         }
 
         return $result;
+    }
+
+    // ── Shared query building ───────────────────────────────────────────────────
+
+    /**
+     * Builds the fully-filtered query (WHERE / JOIN / eager-load / soft-delete /
+     * search / form filters / date ranges / quick date / custom filters), WITHOUT
+     * grouping, sorting or pagination.
+     *
+     * This is the single source of truth shared by the listing (rows), totals,
+     * export and the print screen — so any filter fix applies everywhere and the
+     * numbers never diverge.
+     *
+     * @return array{0: Builder, 1: string[]} [query, joinedTables]
+     */
+    protected function buildBaseQuery(Model $modelInstance): array
+    {
+        /** @var Builder $query */
+        $query = $modelInstance->newQuery();
+
+        // JOINs configured via crudConfig['joins']
+        $joinedTables = $this->applyJoins($query, $modelInstance);
+
+        // Soft delete
+        $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($modelInstance));
+        if ($usesSoftDeletes && $this->showTrashed) {
+            $query->onlyTrashed();
+        }
+
+        // Eager-load relationships visible in the table
+        $relations = $this->getVisibleRelations();
+        if (! empty($relations)) {
+            $query->with($relations);
+        }
+
+        // Company filter (multi-tenant) — only applied when the column actually exists
+        if ($this->companyFilter > 0) {
+            $table = $modelInstance->getTable();
+            $companyField = $this->crudConfig['companyField'] ?? 'company_id';
+            if (Schema::hasColumn($table, $companyField)) {
+                $query->where("{$table}.{$companyField}", $this->companyFilter);
+            }
+        }
+
+        // Locked filters (master/detail): enforced on every query, immune to
+        // clearFilters. Column names are config-driven → guarded.
+        foreach ($this->lockedFilters as $lockedCol => $lockedVal) {
+            if (SqlIdentifier::isSafe((string) $lockedCol)) {
+                $query->where($lockedCol, $lockedVal);
+            }
+        }
+
+        // External whereHas filter (pre-filtered by parent entity)
+        if ($this->whereHasFilter !== '') {
+            [$col, $op, $val] = array_pad($this->whereHasCondition, 3, null);
+            if ($col && $val !== null) {
+                $query->whereHas($this->whereHasFilter, function (Builder $q) use ($col, $op, $val) {
+                    $q->where($col, $op ?? '=', $val);
+                });
+            }
+        }
+
+        // Global search with OR across text fields and relations
+        if ($this->search !== '') {
+            $searchFilters = $this->filterService->buildGlobalSearchFilters(
+                $this->crudConfig['cols'] ?? [],
+                $this->search
+            );
+
+            if (! empty($searchFilters)) {
+                $this->filterService->applyFilters($query, $searchFilters);
+            }
+        }
+
+        // Form filters
+        $activeFilters = $this->buildActiveFilters();
+        if (! empty($activeFilters)) {
+            $this->filterService->applyFilters($query, $activeFilters);
+        }
+
+        // Date ranges (standard ERP: _start/_end, legacy: _from/_to)
+        $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
+        if (! empty($drFilters)) {
+            $this->filterService->applyFilters($query, $drFilters);
+        }
+
+        // Quick date filter
+        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '') {
+            [$from, $to] = $this->getQuickDateRange($this->quickDateFilter);
+            if ($from && $to) {
+                $query->whereBetween($this->quickDateColumn, [$from, $to]);
+            }
+        }
+
+        // Custom filters
+        $customFilterConfig = $this->crudConfig['customFilters'] ?? [];
+        $cfFilters = $this->filterService->processCustomFilters($customFilterConfig, $this->filters);
+        if (! empty($cfFilters)) {
+            $this->filterService->applyFilters($query, $cfFilters);
+        }
+
+        return [$query, $joinedTables];
+    }
+
+    /**
+     * Applies grouping (configGroupBy), group-break ordering and the user sort
+     * (including sort-by-relation via JOIN) to an already-filtered query.
+     * configGroupBy short-circuits the normal sort.
+     *
+     * @param  string[]  $joinedTables  Tables already joined by buildBaseQuery()
+     */
+    protected function applyGroupingAndSort(Builder $query, Model $modelInstance, array $joinedTables): void
+    {
+        // GROUP BY support (configGroupBy) — replaces the normal sort
+        if ($groupBy = $this->crudConfig['groupBy'] ?? null) {
+            $mainTable = $modelInstance->getTable();
+            $query
+                ->select([
+                    DB::raw("MIN({$mainTable}.id) as id"),
+                    "{$mainTable}.{$groupBy}",
+                ])
+                ->groupBy("{$mainTable}.{$groupBy}")
+                ->orderBy("{$mainTable}.{$groupBy}", $this->direction);
+
+            return;
+        }
+
+        // Group break (ScriptCase-style "quebra"): rows are kept individual,
+        // but the break field becomes the primary sort so the view can emit
+        // group headers and per-group subtotals. User sort stays secondary.
+        if ($breakField = $this->crudConfig['groupBreak'] ?? null) {
+            if (SqlIdentifier::isSafe($breakField)) {
+                $query->orderBy($breakField, 'ASC');
+            }
+        }
+
+        // Sorting (supports relation via JOIN)
+        $relationInfo = $this->getOrderByRelationInfo($this->sort);
+
+        if ($relationInfo) {
+            [$rel, $displayCol, $fk, $relTable] = $relationInfo;
+            $mainTable = $modelInstance->getTable();
+
+            // Only add leftJoin if the table was not already joined via applyJoins()
+            if (! in_array($relTable, $joinedTables)) {
+                $query->leftJoin(
+                    $relTable,
+                    "{$mainTable}.{$fk}",
+                    '=',
+                    "{$relTable}.id"
+                );
+
+                // If applyJoins did not set a select, define one now to avoid ambiguous columns
+                if (empty($joinedTables)) {
+                    $query->select("{$mainTable}.*");
+                }
+            }
+
+            $query->orderBy("{$relTable}.{$displayCol}", $this->direction);
+        } else {
+            $sortCol = $this->resolveSortColumn();
+            $query->orderBy($sortCol, $this->direction);
+        }
     }
 
     // ── JOINs ─────────────────────────────────────────────────────────────────
