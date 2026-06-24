@@ -52,7 +52,12 @@ trait HasCrudRenderers
         } elseif (! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
             $rel = $col['colsRelacao'];
             $exibe = $col['colsRelacaoExibe'];
-            $value = $row->{$rel}?->{$exibe} ?? $value;
+            // A dotted colsRelacao ("a.b") is a nested relationship — descend the
+            // whole chain with data_get instead of a single magic property access
+            // (which would look up a literal "a.b" attribute and miss the value).
+            $value = str_contains((string) $rel, '.')
+                ? ($this->resolveNestedValue($row, $rel.'.'.$exibe) ?? $value)
+                : ($row->{$rel}?->{$exibe} ?? $value);
         }
 
         // Select: convert value to mapped label

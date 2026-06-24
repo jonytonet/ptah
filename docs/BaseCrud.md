@@ -405,7 +405,7 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsMinWidth` | `string\|null` | Minimum th width (e.g. `"120px"`) |
 | `colsMask` | `string\|null` | Mask: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
 | `colsMaskTransform` | `string\|null` | Server-side transform applied before persisting: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsRelacao` | `string\|null` | Eloquent relation name |
+| `colsRelacao` | `string\|null` | Eloquent relation name. A **nested dotted path** is supported (e.g. `invoice.receivingStatus` + `colsRelacaoExibe: name`): the cell descends the chain, the searchdropdown filter applies `whereHas` against the related key (numeric id) or display column (text), and sort-by-this-column is disabled (nested can't JOIN). Eager-loaded automatically |
 | `colsRelacaoExibe` | `string\|null` | Relation field to display |
 | `colsRelacaoNested` | `string\|null` | Dot notation for nested relations: `category.parent.name` |
 | `colsOrderBy` | `string\|null` | Actual column for ORDER BY |

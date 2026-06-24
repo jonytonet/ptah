@@ -365,6 +365,13 @@ trait HasCrudQuery
             return null;
         }
 
+        // Nested paths ("a.b") can't be sorted via a single leftJoin — bail out
+        // (the column is simply not sortable via relation JOIN; avoids a broken
+        // table name / invalid SQL).
+        if (str_contains((string) $rel, '.')) {
+            return null;
+        }
+
         // FK must match the column being sorted
         if ($fk !== $column) {
             return null;
@@ -460,30 +467,50 @@ trait HasCrudQuery
             // Numeric value = the FK id → filter the FK directly.
             // Text value     = search the related display column via whereHas.
             if ($col && ! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
-                if (is_numeric($value)) {
-                    $fkOp = in_array($explicitOp, ['=', '!=', '<>'], true) ? $explicitOp : '=';
+                $relation = (string) $col['colsRelacao'];
+                $isNested = str_contains($relation, '.');
 
-                    // CAVEAT: `fk != id` also excludes rows with a NULL fk
-                    // (NULL != x is UNKNOWN in SQL). To include unlinked rows,
-                    // the strategy would need ->where(fn => ...->orWhereNull(fk)).
-                    $domainFilters[] = new FilterDTO(
-                        field: $col['colsNomeFisico'],
-                        value: $value,
-                        operator: $fkOp,
-                        type: 'number',
-                    );
+                if (is_numeric($value)) {
+                    $idOp = in_array($explicitOp, ['=', '!=', '<>'], true) ? $explicitOp : '=';
+
+                    if ($isNested) {
+                        // Nested path (a.b): the root FK does NOT point at the final
+                        // related model, so match its primary key through whereHas
+                        // (Eloquent resolves the dotted path). The related key is the
+                        // searchdropdown value field (colsSDValor, default "id").
+                        $relatedKey = $col['colsSDValor'] ?? 'id';
+                        $domainFilters[] = new FilterDTO(
+                            field: $relation,
+                            value: $value,
+                            operator: $idOp,
+                            type: 'relation',
+                            options: ['whereHas' => $relation, 'column' => $relatedKey],
+                        );
+                    } else {
+                        // CAVEAT: `fk != id` also excludes rows with a NULL fk
+                        // (NULL != x is UNKNOWN in SQL). To include unlinked rows,
+                        // the strategy would need ->where(fn => ...->orWhereNull(fk)).
+                        $domainFilters[] = new FilterDTO(
+                            field: $col['colsNomeFisico'],
+                            value: $value,
+                            operator: $idOp,
+                            type: 'number',
+                        );
+                    }
                 } else {
                     $relOp = in_array(strtoupper((string) $explicitOp), ['=', '!=', 'LIKE', 'NOT LIKE'], true)
                         ? $explicitOp
                         : 'LIKE';
 
+                    // Both single-level and nested ("a.b") paths go through whereHas;
+                    // Eloquent's whereHas resolves dotted relation paths natively.
                     $domainFilters[] = new FilterDTO(
-                        field: $col['colsRelacao'],
+                        field: $relation,
                         value: $value,
                         operator: $relOp,
                         type: 'relation',
                         options: [
-                            'whereHas' => $col['colsRelacao'],
+                            'whereHas' => $relation,
                             'column' => $col['colsRelacaoExibe'],
                         ],
                     );

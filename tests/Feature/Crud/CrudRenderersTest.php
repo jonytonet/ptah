@@ -42,6 +42,23 @@ class CrudRenderersTest extends TestCase
         return $this->harness->formatCell($col + ['colsNomeFisico' => 'field'], $row);
     }
 
+    // ── Relationship columns ────────────────────────────────────────────────
+
+    #[Test]
+    public function nested_relation_column_descends_the_dotted_path(): void
+    {
+        // colsRelacao = "a.b" must be resolved with data_get, not a literal
+        // magic-property lookup of "a.b" (which would render empty).
+        $row = ['invoice' => ['receivingStatus' => ['name' => 'Received']]];
+
+        $html = $this->format(
+            ['colsNomeFisico' => 'invoice_id', 'colsRelacao' => 'invoice.receivingStatus', 'colsRelacaoExibe' => 'name'],
+            $row,
+        );
+
+        $this->assertStringContainsString('Received', $html);
+    }
+
     // ── XSS / escaping ────────────────────────────────────────────────────────
 
     #[Test]
