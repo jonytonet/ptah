@@ -7,7 +7,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.1.0] — 2026-06-24
+
+Dedicated print screen + nested relationship paths + shared query builder.
 
 ### Print screen (`/ptah/print`)
 - **New: a dedicated print view** opened from the export menu. Unlike the old
