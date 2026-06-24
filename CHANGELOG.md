@@ -9,6 +9,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Print screen (`/ptah/print`)
+- **New: a dedicated print view** opened from the export menu. Unlike the old
+  `window.print()` (which only printed the current paginated page), it renders
+  **all filtered records** (up to `exportConfig.maxRows`, default 5000) on a clean,
+  chrome-free HTML page in a new tab — ready to `Print` or `Copy (Excel)`.
+  - **Same data as the listing**: the snapshot is built by the BaseCrud component
+    itself (`printView()`), reusing the shared query and `formatCell()`, so badges,
+    money, dates, select labels and nested relations render identically and respect
+    the active search/filters/company scope. The component caches a ready payload
+    under a short-lived, user-scoped token; `CrudPrintController` only displays it
+    (no filter logic in the controller → it can never diverge).
+  - **Totals footer**: totalizadores are shown per column, computed over the full
+    filtered set (SQL aggregate, before the `maxRows` cut).
+  - **Copy (Excel)**: copies the table as `text/html` (pastes into Excel / Google
+    Sheets as a real table with split columns) plus a `text/plain` TSV fallback;
+    uses the Clipboard API with an `execCommand('copy')` fallback.
+  - A truncation note is shown when the result exceeds `maxRows`.
+
+### Shared query builder — totals & export now honor every filter
+- **Refactored**: extracted `buildBaseQuery()` + `applyGroupingAndSort()` from
+  `rows()`; the listing, totals, export and print now all build the query through
+  the **same single source of truth**.
+- **Fixed (latent bug)**: `totalizadoresData()` previously applied only the form
+  filters + date ranges, so the **footer totals could disagree with the visible
+  rows** whenever a global search or company filter was active. Totals now reflect
+  the exact same filtered query as the listing (search, company, locked, whereHas,
+  quick date and custom filters all included).
+
 ### Filters/columns — nested relationship paths (`a.b`)
 - **Fixed: a column whose `colsRelacao` is a nested path** (e.g.
   `purchaseIncomingInvoices.expeditionReceivingStatus` + `colsRelacaoExibe: name`)

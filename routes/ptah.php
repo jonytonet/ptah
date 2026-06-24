@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Ptah\Http\Controllers\CrudPrintController;
 use Ptah\Http\Controllers\ExportController;
 
 /*
@@ -21,6 +22,10 @@ Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
     // Exportação em massa (itens selecionados)
     Route::get('/export/bulk', [ExportController::class, 'bulkExport'])
         ->name('export.bulk');
+
+    // Tela de impressão (lê o snapshot em cache gerado pelo BaseCrud::printView)
+    Route::get('/print/{token}', [CrudPrintController::class, 'print'])
+        ->name('print');
 
 });
 
