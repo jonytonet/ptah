@@ -37,6 +37,17 @@ class CrudBuildFiltersTest extends TestCase
                     'colsRelacao' => 'category',
                     'colsRelacaoExibe' => 'name',
                 ],
+                // Nested relationship column (a.b): FK on the root points at the
+                // intermediate; the filter must reach the final model via whereHas.
+                [
+                    'colsNomeFisico' => 'invoice_id',
+                    'colsNomeLogico' => 'Receiving status',
+                    'colsTipo' => 'searchdropdown',
+                    'colsGravar' => true,
+                    'colsRelacao' => 'invoice.receivingStatus',
+                    'colsRelacaoExibe' => 'name',
+                    'colsSDValor' => 'id',
+                ],
             ],
             'customFilters' => [],
         ];
@@ -96,6 +107,51 @@ class CrudBuildFiltersTest extends TestCase
         $this->assertSame('name', $dtos[0]->options['column']);
         $this->assertSame('LIKE', $dtos[0]->operator);
         $this->assertSame('tools', $dtos[0]->value);
+    }
+
+    // ── Nested relationship column (a.b) ────────────────────────────────────
+
+    #[Test]
+    public function numeric_value_on_a_nested_relation_uses_where_has_on_the_related_key(): void
+    {
+        // The root FK (invoice_id) does NOT point at the final model, so a
+        // selected id must be matched via whereHas on the dotted path, not the FK.
+        $dtos = $this->build(['invoice_id' => '7'], ['invoice_id' => '=']);
+
+        $this->assertCount(1, $dtos);
+        $this->assertSame('relation', $dtos[0]->type);
+        $this->assertSame('invoice.receivingStatus', $dtos[0]->options['whereHas']);
+        $this->assertSame('id', $dtos[0]->options['column']);   // related PK (colsSDValor)
+        $this->assertSame('=', $dtos[0]->operator);
+        $this->assertSame('7', $dtos[0]->value);
+        // Must NOT fall back to the wrong "where invoice_id = 7".
+        $this->assertNotSame('invoice_id', $dtos[0]->field);
+    }
+
+    #[Test]
+    public function text_value_on_a_nested_relation_searches_the_display_column(): void
+    {
+        $dtos = $this->build(['invoice_id' => 'received'], ['invoice_id' => 'LIKE']);
+
+        $this->assertSame('relation', $dtos[0]->type);
+        $this->assertSame('invoice.receivingStatus', $dtos[0]->options['whereHas']);
+        $this->assertSame('name', $dtos[0]->options['column']);
+        $this->assertSame('LIKE', $dtos[0]->operator);
+    }
+
+    #[Test]
+    public function nested_relation_column_is_not_sortable_via_join(): void
+    {
+        $crud = new BaseCrud;
+        $crud->crudConfig = $this->config();
+
+        $method = new \ReflectionMethod($crud, 'getOrderByRelationInfo');
+        $method->setAccessible(true);
+
+        // Single-level relation → sortable (returns info).
+        $this->assertNotNull($method->invoke($crud, 'category_id'));
+        // Nested relation → null (skipped to avoid an invalid JOIN).
+        $this->assertNull($method->invoke($crud, 'invoice_id'));
     }
 
     // ── Item 2: NULL operators ───────────────────────────────────────────────

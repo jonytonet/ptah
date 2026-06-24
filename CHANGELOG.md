@@ -9,6 +9,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Filters/columns — nested relationship paths (`a.b`)
+- **Fixed: a column whose `colsRelacao` is a nested path** (e.g.
+  `purchaseIncomingInvoices.expeditionReceivingStatus` + `colsRelacaoExibe: name`)
+  was broken on three fronts; now fully supported:
+  - **Render** (`formatCell`): a dotted `colsRelacao` is resolved with `data_get`
+    down the whole chain instead of a single magic-property lookup of the literal
+    `"a.b"` key (which rendered empty).
+  - **Filter** (`buildActiveFilters`): a selected id no longer filters the root FK
+    (which points at the intermediate model, not the final one). Nested paths now
+    always go through `whereHas` — numeric id matches the related primary key
+    (`colsSDValor`, default `id`), text searches `colsRelacaoExibe` — both via
+    Eloquent's native dotted `whereHas`. Single-level columns keep the FK shortcut.
+  - **Sort**: nested relation columns are skipped by the relation-JOIN sort
+    (`getOrderByRelationInfo` bails on a dotted path) to avoid an invalid table
+    name / broken JOIN.
+  - Eager loading already handled the dotted path (`with('a.b')`).
+- 4 new tests: nested render via `data_get`, nested filter routing (numeric →
+  whereHas on the related key, text → display column) and nested-column sort skip.
+
 ## [1.0.2] — 2026-06-11
 
 Filter engine fixes + Laravel 13 compatibility.
