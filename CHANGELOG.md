@@ -7,6 +7,24 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.1] — 2026-06-24
+
+### Fixed
+- **Config form preview crashed on `select` fields (HTTP 500).** Any BaseCrud
+  screen whose `CrudConfig` had a savable `select` column returned a 500 for
+  admins, because the preview iterated `colsSelect` as an array while the edit
+  state holds it as a string (`"label;value;;…"`). The `foreach` over a string
+  threw `foreach() argument must be of type array|object, string given`, and
+  since the preview overlay is rendered (hidden via `x-show`, not `@if`), the
+  page failed to load even with the preview closed.
+  - `previewFormCols()` now returns `colsSelect` in array form (the edit-state
+    string is left untouched so the editable input keeps working).
+  - Extracted the string→array parsing into a shared `parseColsSelect()` helper
+    reused by both the save path and the preview, so the two can't diverge again.
+- 2 regression tests: `previewFormCols()` normalises the select string to an
+  array (and leaves the edit state a string); opening the preview renders the
+  `<option>`s without error.
+
 ## [1.1.0] — 2026-06-24
 
 Dedicated print screen + nested relationship paths + shared query builder.

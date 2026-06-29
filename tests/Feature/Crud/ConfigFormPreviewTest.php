@@ -71,4 +71,48 @@ class ConfigFormPreviewTest extends TestCase
         // (Exclusion of non-savable columns is asserted in previewFormCols above —
         // the config modal's column list naturally shows every column name.)
     }
+
+    // ── Regression: select field with editable string colsSelect ───────────────
+
+    /**
+     * In the edit state colsSelect is a string ("label;value;;…"). The preview
+     * renders real <option>s, so previewFormCols() must hand back the array form
+     * — otherwise the Blade foreach over a string throws and the whole BaseCrud
+     * page 500s for admins (the preview is rendered, hidden via x-show).
+     */
+    private function selectFields(): array
+    {
+        return [
+            ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number', 'colsGravar' => false],
+            ['colsNomeFisico' => 'status', 'colsNomeLogico' => 'Status', 'colsTipo' => 'select', 'colsGravar' => true, 'colsSelect' => 'Active;1;;Inactive;0'],
+        ];
+    }
+
+    #[Test]
+    public function preview_form_cols_normalises_select_string_to_array(): void
+    {
+        $component = Livewire::test(CrudConfig::class, ['model' => 'Widget'])
+            ->set('formEditFields', $this->selectFields());
+
+        $cols = $component->instance()->previewFormCols();
+        $statusCol = collect($cols)->firstWhere('colsNomeFisico', 'status');
+
+        $this->assertSame(['Active' => '1', 'Inactive' => '0'], $statusCol['colsSelect']);
+
+        // The edit state itself must stay a string (drives the editable input).
+        $editStatus = collect($component->get('formEditFields'))->firstWhere('colsNomeFisico', 'status');
+        $this->assertSame('Active;1;;Inactive;0', $editStatus['colsSelect']);
+    }
+
+    #[Test]
+    public function open_preview_renders_select_options_without_error(): void
+    {
+        Livewire::test(CrudConfig::class, ['model' => 'Widget'])
+            ->set('formEditFields', $this->selectFields())
+            ->call('previewForm')
+            ->assertSet('showPreview', true)
+            ->assertOk()
+            ->assertSee('Active')
+            ->assertSee('Inactive');
+    }
 }
