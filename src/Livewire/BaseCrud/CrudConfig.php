@@ -242,11 +242,22 @@ class CrudConfig extends Component
      */
     public function previewFormCols(): array
     {
-        return array_values(array_filter(
+        $cols = array_values(array_filter(
             $this->formEditFields,
             fn ($c) => in_array($c['colsGravar'] ?? false, [true, 'S', 1, '1'], true)
                 && ($c['colsTipo'] ?? '') !== 'action'
         ));
+
+        // colsSelect is held as an editable string ("label;value;;…") in the edit
+        // state; the preview renders real <option>s, so normalise to the array
+        // form here (on the returned copy — the edit state stays a string).
+        foreach ($cols as &$col) {
+            if (($col['colsTipo'] ?? '') === 'select' && is_string($col['colsSelect'] ?? null)) {
+                $col['colsSelect'] = $this->parseColsSelect($col['colsSelect']);
+            }
+        }
+
+        return $cols;
     }
 
     // ── Load config ──────────────────────────────────────────────────────
@@ -868,20 +879,36 @@ class CrudConfig extends Component
                 isset($field['colsSelect'])
                 && is_string($field['colsSelect'])
                 && ($field['colsTipo'] ?? '') === 'select'
-                && $field['colsSelect'] !== ''
             ) {
-                $map = [];
-                foreach (explode(';;', $field['colsSelect']) as $pair) {
-                    $parts = explode(';', $pair, 2);
-                    if (count($parts) === 2 && $parts[0] !== '') {
-                        $map[$parts[0]] = $parts[1];
-                    }
-                }
-                $field['colsSelect'] = $map;
+                $field['colsSelect'] = $this->parseColsSelect($field['colsSelect']);
             }
         }
 
         return $fields;
+    }
+
+    /**
+     * Parses the editable colsSelect string "label;value;;label2;value2" back
+     * into the associative array [label => value] used everywhere else.
+     * Shared by the save path and the form preview so the two never diverge.
+     *
+     * @return array<string, string>
+     */
+    protected function parseColsSelect(string $raw): array
+    {
+        if ($raw === '') {
+            return [];
+        }
+
+        $map = [];
+        foreach (explode(';;', $raw) as $pair) {
+            $parts = explode(';', $pair, 2);
+            if (count($parts) === 2 && $parts[0] !== '') {
+                $map[$parts[0]] = $parts[1];
+            }
+        }
+
+        return $map;
     }
 
     protected function getDefaultPermissionIdentifier(): string
