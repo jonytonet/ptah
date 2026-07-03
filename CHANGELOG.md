@@ -7,6 +7,23 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.2.1] — 2026-07-03
+
+### Fixed
+- **`ptah:config --list` crashed** with `Undefined array key "cacheTtl"` on any
+  configuration that lacked `cacheTtl`/`cacheEnabled` (e.g. one built purely via
+  declarative `--column` options). `TableFormatter::formatGeneral()` now guards
+  both keys.
+
+### Tests / docs
+- First tests for the previously-untested **`ptah:config`** subsystem:
+  `ColumnParser` (the `field:type:modifier:key=value` DSL) and `ConfigCommand`
+  declarative `--non-interactive` mode (persist, `--set` casting, `--dry-run`,
+  invalid model, `--list`).
+- Fixed the bundled **`ptah-development` skill**: scaffolding examples used the
+  non-existent `--soft-delete` flag (SoftDeletes is ON by default; disable with
+  `--no-soft-deletes`).
+
 ## [1.2.0] — 2026-07-03
 
 Security hardening from the audit + access-controlled config editor.
