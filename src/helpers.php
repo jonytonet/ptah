@@ -49,6 +49,28 @@ if (! function_exists('ptah_is_master')) {
     }
 }
 
+if (! function_exists('ptah_can_manage_config')) {
+    /**
+     * Whether the given/current user may open and save the in-app CRUD
+     * configuration editor (ptah-crud-config).
+     *
+     * The editor writes joins, lifecycle hooks, link templates, colsMetodoCustom,
+     * etc. — inputs that feed SQL/render sinks — so it must be gated:
+     *  - permissions module ACTIVE → master user OR 'crud.config' manage grant;
+     *  - module OFF               → config('ptah.crud.config_editor'), default deny.
+     *
+     * @param  mixed  $user  User (null = current auth)
+     */
+    function ptah_can_manage_config(mixed $user = null): bool
+    {
+        if (config('ptah.modules.permissions')) {
+            return ptah_is_master($user) || ptah_can('crud.config', 'manage', $user);
+        }
+
+        return (bool) config('ptah.crud.config_editor', false);
+    }
+}
+
 if (! function_exists('ptah_company_id')) {
     /**
      * Returns the active company ID from the session.

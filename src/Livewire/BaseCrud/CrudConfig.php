@@ -200,6 +200,12 @@ class CrudConfig extends Component
      */
     public function openModal(): void
     {
+        // Re-check authorization on the server — this component is reachable by
+        // name regardless of whether the toolbar rendered its trigger.
+        if (! ptah_can_manage_config()) {
+            return;
+        }
+
         $this->prepareModal();
         $this->showModal = true;
     }
@@ -226,6 +232,10 @@ class CrudConfig extends Component
      */
     public function previewForm(): void
     {
+        if (! ptah_can_manage_config()) {
+            return;
+        }
+
         $this->showPreview = true;
     }
 
@@ -785,6 +795,13 @@ class CrudConfig extends Component
 
     public function save(): void
     {
+        // Authorization gate — this is the security boundary. The component is
+        // reachable by name, so persistence must be denied here regardless of
+        // whether the trigger UI was ever rendered.
+        if (! ptah_can_manage_config()) {
+            return;
+        }
+
         $record = $this->configService->find($this->model, $this->configRoute);
         $existing = $record ? ($record->config ?? []) : [];
 

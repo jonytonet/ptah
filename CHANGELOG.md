@@ -9,6 +9,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### ⚠️ BREAKING — CRUD config editor is now access-controlled
+
+- The in-app configuration editor (`ptah-crud-config`) previously had **no
+  authorization**: it was rendered for everyone and its `save()` was reachable by
+  name, so anyone could persist joins / lifecycle hooks / link templates / custom
+  methods (the inputs that feed the SQL and render sinks). It is now gated by
+  `ptah_can_manage_config()`:
+  - **permissions module ON** → master user or a `crud.config` **manage** grant;
+  - **permissions module OFF** → the new `ptah.crud.config_editor` flag
+    (`PTAH_CONFIG_EDITOR`), which **defaults to `false` (deny)**.
+- **Upgrade note:** installs that use the editor **without** the permissions
+  module must set `PTAH_CONFIG_EDITOR=true` (or publish the updated config) to
+  restore access. The toolbar hides the trigger and both `openModal()`,
+  `previewForm()` and `save()` re-check on the server.
+
 ### Security & correctness — hardening (batch 1)
 
 - **SearchDropdown config properties are now `#[Locked]`.** `modelClass`,
