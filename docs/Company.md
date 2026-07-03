@@ -83,13 +83,6 @@ In `config/ptah.php`, section `company`:
 
 ```php
 'company' => [
-    // Model principal. Substitua por \App\Models\Company::class se quiser
-    // use a custom model that extends the application model.
-    'model'      => \Ptah\Models\Company::class,
-
-    // Database table name
-    'table'      => 'ptah_companies',
-
     // Filesystem disk for logo uploads
     'logo_disk'  => 'public',
 
@@ -101,7 +94,11 @@ In `config/ptah.php`, section `company`:
 ],
 ```
 
-> **Using a custom model:** if your application needs to add methods or relationships to `Company`, create `app/Models/Company.php` extending `Ptah\Models\Company` and point `config('ptah.company.model')` to it.
+> **Model & table are fixed.** The package references `Ptah\Models\Company` and
+> the `ptah_companies` table directly, so neither is configurable (the old
+> `config('ptah.company.model')` / `.table` keys were never read and have been
+> removed). To add methods/relationships, extend `Ptah\Models\Company` in your
+> app and use your subclass in your own code.
 
 ---
 
@@ -149,7 +146,7 @@ In `config/ptah.php`, section `company`:
 ### Company
 
 **Namespace:** `Ptah\Models\Company`  
-**Tabela:** `ptah_companies` (ou conforme `config('ptah.company.table')`)  
+**Tabela:** `ptah_companies` (fixa)  
 **Traits:** `SoftDeletes`
 
 #### Automatic Cast

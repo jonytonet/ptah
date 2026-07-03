@@ -933,6 +933,7 @@ return [
     'image_or_url' => 'ou cole uma URL',
     'image_error_size' => 'O arquivo não pode exceder :max KB.',
     'image_error_type' => 'Tipos permitidos: :types.',
+    'image_error_mime' => 'Arquivo inválido: envie uma imagem (SVG não é permitido).',
 
     // Estilo da célula
     'cfg_col_cell_style_title' => 'Estilo da Célula',

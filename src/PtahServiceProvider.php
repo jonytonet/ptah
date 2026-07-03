@@ -20,6 +20,7 @@ use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
+use Ptah\Http\Middleware\PtahMaster;
 use Ptah\Http\Middleware\PtahPermission;
 use Ptah\Livewire\AI\AiChatWidget;
 use Ptah\Livewire\AI\AiModelConfigList;
@@ -242,6 +243,7 @@ class PtahServiceProvider extends ServiceProvider
         /** @var Router $router */
         $router = $this->app->make('router');
         $router->aliasMiddleware('ptah.can', PtahPermission::class);
+        $router->aliasMiddleware('ptah.master', PtahMaster::class);
     }
 
     /**

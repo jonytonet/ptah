@@ -1,7 +1,5 @@
 <?php
 
-use Ptah\Models\Company;
-
 return [
 
     /*
@@ -143,7 +141,6 @@ return [
         'per_page' => 25,
         'soft_deletes' => true,
         'confirm_delete' => true,
-        'export_driver' => 'excel',
 
         /*
         | Who may open/save the in-app CRUD configuration editor.
@@ -154,6 +151,14 @@ return [
         | set PTAH_CONFIG_EDITOR=true to opt back in. See ptah_can_manage_config().
         */
         'config_editor' => env('PTAH_CONFIG_EDITOR', false),
+
+        /*
+        | Namespaces a class-based lifecycle hook (@Class::method in CrudConfig)
+        | may live under. A hook class outside these prefixes is refused — so a
+        | crafted config can't instantiate arbitrary classes. Short hook names
+        | resolve under the first entry.
+        */
+        'hook_namespaces' => ['App\\CrudHooks'],
     ],
 
     /*
@@ -206,10 +211,12 @@ return [
     | Company / branch management.
     | logo_disk / logo_path: where logos are stored.
     | address_fields: fields available in the address JSON.
+    |
+    | Note: the model (Ptah\Models\Company) and table (ptah_companies) are fixed —
+    | the package references them directly. To add behaviour, extend the model in
+    | your app; the table name is not configurable.
     */
     'company' => [
-        'model' => Company::class,
-        'table' => 'ptah_companies',
         'logo_disk' => env('PTAH_LOGO_DISK', 'public'),
         'logo_path' => env('PTAH_LOGO_PATH', 'company-logos'),
         'address_fields' => [

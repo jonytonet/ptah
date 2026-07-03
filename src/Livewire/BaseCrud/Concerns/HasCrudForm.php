@@ -385,9 +385,34 @@ trait HasCrudForm
             $methodName = $hookName; // Use hook name as method (beforeCreate, afterCreate, etc.)
         }
 
-        // Add default namespace if not fully qualified
+        $allowedNamespaces = array_values(array_filter(array_map(
+            fn ($ns) => trim((string) $ns, '\\'),
+            (array) config('ptah.crud.hook_namespaces', ['App\\CrudHooks'])
+        )));
+
+        // Add default namespace (first allowed) if not fully qualified
         if (! str_starts_with($className, '\\') && ! str_contains($className, '\\')) {
-            $className = 'App\\CrudHooks\\'.$className;
+            $defaultNs = $allowedNamespaces[0] ?? 'App\\CrudHooks';
+            $className = $defaultNs.'\\'.$className;
+        }
+
+        // Guard: the hook class MUST live under an allowed namespace. Config is
+        // admin-controlled, but this stops a crafted config from instantiating an
+        // arbitrary class (constructor side effects / gadget) via the hook system.
+        // $allowedNamespaces is already filtered to non-empty prefixes.
+        $normalized = ltrim($className, '\\');
+        $permitted = false;
+        foreach ($allowedNamespaces as $ns) {
+            if (str_starts_with($normalized, $ns.'\\')) {
+                $permitted = true;
+                break;
+            }
+        }
+
+        if (! $permitted) {
+            throw new \RuntimeException(
+                "Hook class not allowed: {$className} — it must live under one of: ".implode(', ', $allowedNamespaces)
+            );
         }
 
         // Validate class existence
@@ -697,6 +722,19 @@ trait HasCrudForm
                 $errors[$field] = trans('ptah::ui.image_error_size', ['max' => $maxKb]);
 
                 continue;
+            }
+
+            // Real MIME check — authoritative, since the client extension is
+            // spoofable. An image column must receive an actual raster image and
+            // NEVER an SVG (scriptable → stored XSS once served from the public
+            // disk). This runs regardless of colsUploadAllowedTypes.
+            if (method_exists($upload, 'getMimeType')) {
+                $mime = strtolower((string) $upload->getMimeType());
+                if (! str_starts_with($mime, 'image/') || $mime === 'image/svg+xml') {
+                    $errors[$field] = trans('ptah::ui.image_error_mime');
+
+                    continue;
+                }
             }
 
             // Allowed extensions

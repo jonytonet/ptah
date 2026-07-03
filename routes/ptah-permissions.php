@@ -8,7 +8,8 @@ use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 
-Route::middleware(['web', 'auth'])->group(function () {
+// These screens administer the access-control system itself — master-only.
+Route::middleware(['web', 'auth', 'ptah.master'])->group(function () {
     Route::get('/ptah-departments', DepartmentList::class)->name('ptah.acl.departments');
     Route::get('/ptah-roles', RoleList::class)->name('ptah.acl.roles');
     Route::get('/ptah-pages', PageList::class)->name('ptah.acl.pages');

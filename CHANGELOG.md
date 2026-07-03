@@ -7,6 +7,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.0] — 2026-07-03
+
+### Security — audit batch 3 (medium/low)
+- **Class-based lifecycle hooks are namespace-restricted.** A `@Class::method`
+  hook in CrudConfig may now only instantiate classes under an allowed prefix
+  (`ptah.crud.hook_namespaces`, default `App\CrudHooks`) — a crafted config can no
+  longer instantiate an arbitrary class as a gadget. Short hook names resolve
+  under the first allowed namespace.
+- **Image uploads validate the real MIME type.** The client extension is
+  spoofable, so image columns now check `getMimeType()` — the file must be an
+  actual `image/*` and **never `image/svg+xml`** (scriptable → stored XSS on the
+  public disk). Runs regardless of `colsUploadAllowedTypes`.
+- **ACL screens are master-only.** New `ptah.master` middleware guards the
+  permission-management routes (`/ptah-roles`, `/ptah-pages`, `/ptah-users-acl`,
+  `/ptah-audit`, `/ptah-departments`, `/ptah-permission-guide`), which previously
+  only required `auth`. **Breaking:** non-master authenticated users now get 403.
+
+### Cleanup
+- Removed dead/misleading config keys: `ptah.crud.export_driver` and
+  `ptah.company.model` / `ptah.company.table` (never read — the model/table are
+  fixed). `docs/Company.md` corrected to stop promising a configurable model/table.
+
 ## [1.3.0] — 2026-07-03
 
 ### Export — reworked to the print-style token model
