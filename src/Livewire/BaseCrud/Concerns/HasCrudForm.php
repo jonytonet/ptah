@@ -47,13 +47,9 @@ trait HasCrudForm
 
     public function openEdit(int $id): void
     {
-        $modelInstance = $this->resolveEloquentModel();
-
-        if (! $modelInstance) {
-            return;
-        }
-
-        $record = $modelInstance->newQuery()->find($id);
+        // Scoped by company / master-detail lock so a client-supplied id cannot
+        // open a record outside the current scope (IDOR).
+        $record = $this->scopedQuery()?->find($id);
 
         if (! $record) {
             return;
@@ -85,13 +81,8 @@ trait HasCrudForm
             return;
         }
 
-        $modelInstance = $this->resolveEloquentModel();
-
-        if (! $modelInstance) {
-            return;
-        }
-
-        $record = $modelInstance->newQuery()->find($id);
+        // Scoped find (company / master-detail lock) — see openEdit.
+        $record = $this->scopedQuery()?->find($id);
 
         if (! $record) {
             return;
@@ -191,7 +182,15 @@ trait HasCrudForm
             $userId = Auth::id();
 
             if ($this->editingId) {
-                $record = $modelInstance->newQuery()->findOrFail($this->editingId);
+                // Re-scope: editingId is a public (client-settable) property, so an
+                // update must not trust it — confine it to the tenant / lock scope.
+                $record = $this->scopedQuery()?->find($this->editingId);
+                if (! $record) {
+                    $this->formErrors['_general'] = trans('ptah::ui.crud_permission_denied');
+                    $this->creating = false;
+
+                    return;
+                }
                 // Hook: permite mutação dos dados antes de atualizar
                 $this->beforeUpdate($data, $record);
                 // Execute dynamic lifecycle hook from config
@@ -231,9 +230,14 @@ trait HasCrudForm
             $this->dispatch('crud-saved', model: $this->model);
             $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_saved'), color: 'success');
 
-            // Se o hook retornou um RedirectResponse, executa o redirect
+            // Se o hook retornou um RedirectResponse, executa o redirect.
+            // Precisa ser $this->redirect() (Livewire) — o helper global redirect()
+            // aqui era descartado e a navegação nunca acontecia.
             if (isset($redirect) && $redirect instanceof RedirectResponse) {
-                redirect($redirect->getTargetUrl());
+                $this->creating = false;
+                $this->redirect($redirect->getTargetUrl());
+
+                return;
             }
         } catch (\Throwable $e) {
             $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]);

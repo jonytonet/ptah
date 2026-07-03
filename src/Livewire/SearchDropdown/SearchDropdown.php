@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
@@ -47,20 +48,33 @@ class SearchDropdown extends Component
     public array $dataModel = [];
 
     // ── Field configuration ─────────────────────────────────────────────────
+    //
+    // Everything below is set once by the parent at mount() and defines WHAT is
+    // queried and HOW (model, service, columns, ORDER BY, filters). None of it is
+    // user input, so all of it is #[Locked]: Livewire would otherwise let the
+    // client rewrite these via the request payload, turning them into SQLi
+    // (orderByRaw), arbitrary class/method execution (serviceClass + useService)
+    // and arbitrary-model/column exfiltration (modelClass + label + _raw) vectors.
+    // The only real user input — the search term — arrives as the search() argument.
 
     /** Column whose value is returned in the event (usually "id") */
+    #[Locked]
     public string $value = 'id';
 
     /** Column displayed as the main label */
+    #[Locked]
     public string $label = 'name';
 
     /** Column displayed as second label (optional) */
+    #[Locked]
     public ?string $labelTwo = null;
 
     /** Column displayed as third label (optional) */
+    #[Locked]
     public ?string $labelThree = null;
 
     /** Extra columns included in the LIKE search */
+    #[Locked]
     public array $arraySearch = [];
 
     // ── Model / service configuration ───────────────────────────────────────
@@ -69,18 +83,22 @@ class SearchDropdown extends Component
      * Model name for searching.
      * Supports sub-directories: "Product", "Purchase/Order".
      */
+    #[Locked]
     public string $model = '';
 
     /** Resolved model FQCN class */
+    #[Locked]
     public string $modelClass = '';
 
     /** Resolved service FQCN class */
+    #[Locked]
     public string $serviceClass = '';
 
     /**
      * Service method name to be called for searching.
      * When set, uses $serviceClass->{$useService}(SearchDropdownDTO).
      */
+    #[Locked]
     public ?string $useService = null;
 
     // ── Search and filters ─────────────────────────────────────────────────
@@ -89,12 +107,15 @@ class SearchDropdown extends Component
     public ?string $searchTerm = null;
 
     /** Additional WHERE filters: [['col', 'op', 'val'], ...] or ['col' => 'val'] */
+    #[Locked]
     public array $dataFilter = [];
 
     /** Result limit */
+    #[Locked]
     public int $limit = 10;
 
     /** ORDER BY raw */
+    #[Locked]
     public string $orderByRaw = 'id asc';
 
     // ── UI ─────────────────────────────────────────────────────────────────
@@ -114,9 +135,11 @@ class SearchDropdown extends Component
     // ── Event ─────────────────────────────────────────────────────────────
 
     /** Livewire 4 event name fired when an item is selected */
+    #[Locked]
     public string $listens = 'searchDropdownResult';
 
     /** Extra value passed in the event payload */
+    #[Locked]
     public string $coringa = '';
 
     // ── Format masks ───────────────────────────────────────────────────────
@@ -134,10 +157,13 @@ class SearchDropdown extends Component
      *   - "App\Services\Mask@format"  → IoC call (Class@method)
      *   - name of a public method of the component itself
      */
+    #[Locked]
     public string $maskOne = 'defaultMask';
 
+    #[Locked]
     public string $maskTwo = 'defaultMask';
 
+    #[Locked]
     public string $maskThree = 'defaultMask';
 
     // ── Initialisation ─────────────────────────────────────────────────────

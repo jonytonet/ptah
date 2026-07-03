@@ -16,6 +16,16 @@ use Ptah\Tests\TestCase;
  */
 class ConfigFormPreviewTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // These tests exercise the editor UI, not its authorization. Run with the
+        // permissions module off and the editor opt-in enabled so the gate allows.
+        config()->set('ptah.modules.permissions', false);
+        config()->set('ptah.crud.config_editor', true);
+    }
+
     private function configWithFields(): array
     {
         return [

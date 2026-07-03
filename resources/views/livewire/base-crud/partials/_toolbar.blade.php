@@ -253,8 +253,13 @@
             </div>
         </div>
 
-        {{-- Configuração do CRUD (somente admins) --}}
-        @livewire('ptah-crud-config', ['model' => $model], key('crud-cfg-'.$model))
+        {{-- Configuração do CRUD — only for users allowed to manage config
+             (master / 'crud.config' grant when the permissions module is on, or
+             the ptah.crud.config_editor opt-in when it is off). The component
+             itself also re-checks on open/save (reachable by name). --}}
+        @ptahCanManageConfig
+            @livewire('ptah-crud-config', ['model' => $model], key('crud-cfg-'.$model))
+        @endptahCanManageConfig
 
         {{-- Atualizar --}}
         <button wire:click="$refresh"

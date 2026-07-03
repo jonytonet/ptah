@@ -17,13 +17,19 @@ class ExportController
      */
     public function export(Request $request)
     {
-        $modelClass = $request->input('model');
+        $modelParam = (string) $request->input('model');
         $format = $request->input('format', 'excel');
         $filters = json_decode($request->input('filters', '{}'), true);
         $columns = json_decode($request->input('columns', '[]'), true);
 
+        // Authorize the export BEFORE resolving/querying: only models that are
+        // actually configured as a Ptah CRUD may be exported (blocks arbitrary
+        // ?model=User dumps), and the CRUD's permission is enforced when the
+        // permissions module is active.
+        $this->authorizeExport($modelParam);
+
         // Resolver a classe do model (suporta com/sem namespace)
-        $modelClass = $this->resolveModelClass($modelClass);
+        $modelClass = $this->resolveModelClass($modelParam);
 
         if (! $modelClass) {
             abort(404, 'Model não encontrado');
@@ -51,13 +57,15 @@ class ExportController
      */
     public function bulkExport(Request $request)
     {
-        $modelClass = $request->input('model');
+        $modelParam = (string) $request->input('model');
         $format = $request->input('format', 'excel');
         $ids = json_decode($request->input('ids', '[]'), true);
         $columns = json_decode($request->input('columns', '[]'), true);
 
+        $this->authorizeExport($modelParam);
+
         // Resolver a classe do model (suporta com/sem namespace)
-        $modelClass = $this->resolveModelClass($modelClass);
+        $modelClass = $this->resolveModelClass($modelParam);
 
         if (! $modelClass) {
             abort(404, 'Model não encontrado');
@@ -74,6 +82,41 @@ class ExportController
         }
 
         return $this->exportExcel($query, $fileName, $columns);
+    }
+
+    /**
+     * Guards the export endpoint (which is otherwise reachable with only the
+     * `web` middleware):
+     *
+     *  1. Allowlist — the requested model must actually be configured as a Ptah
+     *     CRUD (has a crud_configs row). This blocks arbitrary ?model=User dumps.
+     *  2. Permission — when the permissions module is active and the CRUD declares
+     *     a permissionIdentifier, the user must pass ptah_can(..., 'read').
+     *
+     * Aborts 403 when either check fails.
+     */
+    protected function authorizeExport(string $modelParam): void
+    {
+        if ($modelParam === '') {
+            abort(403, 'Export not allowed.');
+        }
+
+        /** @var CrudConfig|null $config */
+        $config = CrudConfig::query()->where('model', $modelParam)->first();
+
+        if (! $config) {
+            abort(403, 'Export not allowed for this model.');
+        }
+
+        // Enforce the CRUD's read permission only when the module is active
+        // (default install has it off — no behavioural change there).
+        if (config('ptah.modules.permissions')) {
+            $permKey = $config->config['permissions']['permissionIdentifier'] ?? null;
+
+            if ($permKey && function_exists('ptah_can') && ! ptah_can($permKey, 'read')) {
+                abort(403, 'You are not allowed to export this data.');
+            }
+        }
     }
 
     /**

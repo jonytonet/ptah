@@ -106,7 +106,9 @@ trait HasCrudQuery
             $field = $totCol['field'] ?? null;
             $aggregate = $totCol['aggregate'] ?? 'sum';
 
-            if (! $field) {
+            // Column comes from config → guard before it reaches the aggregate
+            // (sum/avg/… interpolate it as an identifier).
+            if (! $field || ! SqlIdentifier::isSafe((string) $field)) {
                 continue;
             }
 
@@ -210,8 +212,9 @@ trait HasCrudQuery
             $this->filterService->applyFilters($query, $drFilters);
         }
 
-        // Quick date filter
-        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '') {
+        // Quick date filter — quickDateColumn is a public (client-settable) property,
+        // so guard it as an identifier before it reaches whereBetween.
+        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '' && SqlIdentifier::isSafe($this->quickDateColumn)) {
             [$from, $to] = $this->getQuickDateRange($this->quickDateFilter);
             if ($from && $to) {
                 $query->whereBetween($this->quickDateColumn, [$from, $to]);
@@ -237,8 +240,10 @@ trait HasCrudQuery
      */
     protected function applyGroupingAndSort(Builder $query, Model $modelInstance, array $joinedTables): void
     {
-        // GROUP BY support (configGroupBy) — replaces the normal sort
-        if ($groupBy = $this->crudConfig['groupBy'] ?? null) {
+        // GROUP BY support (configGroupBy) — replaces the normal sort.
+        // Guard the config-driven column; if unsafe, skip grouping and fall
+        // through to the regular sort instead of building invalid/unsafe SQL.
+        if (($groupBy = $this->crudConfig['groupBy'] ?? null) && SqlIdentifier::isSafe((string) $groupBy)) {
             $mainTable = $modelInstance->getTable();
             $query
                 ->select([
@@ -346,7 +351,9 @@ trait HasCrudQuery
             foreach ($join['select'] ?? [] as $sel) {
                 $col = trim($sel['column'] ?? '');
                 $alias = trim($sel['alias'] ?? '');
-                if ($col && $alias) {
+                // Both are interpolated into a raw SELECT expression — guard as
+                // identifiers (config-driven, so never trust them). Skip if unsafe.
+                if ($col && $alias && SqlIdentifier::isSafe($col) && SqlIdentifier::isSafe($alias)) {
                     $selectCols[] = DB::raw("{$col} AS {$alias}");
                 }
             }
@@ -629,6 +636,71 @@ trait HasCrudQuery
         }
 
         return null;
+    }
+
+    /**
+     * A single-record query scoped to the current tenant (companyFilter) and any
+     * master/detail lock (lockedFilters) — WITHOUT the listing's search/filters.
+     *
+     * Single-record actions (edit, duplicate, save-update, delete, restore) take a
+     * client-supplied id. Without this scope a crafted request could read or mutate
+     * rows belonging to another company or outside a master/detail lock (IDOR),
+     * even though the listing itself is scoped. Callers chain ->find($id) (and
+     * ->withTrashed() for restore).
+     */
+    protected function scopedQuery(): ?Builder
+    {
+        $modelInstance = $this->resolveEloquentModel();
+
+        if (! $modelInstance) {
+            return null;
+        }
+
+        $query = $modelInstance->newQuery();
+
+        // Multi-tenant scope — only when the column actually exists.
+        if ($this->companyFilter > 0) {
+            $table = $modelInstance->getTable();
+            $companyField = $this->crudConfig['companyField'] ?? 'company_id';
+            if (Schema::hasColumn($table, $companyField)) {
+                $query->where("{$table}.{$companyField}", $this->companyFilter);
+            }
+        }
+
+        // Master/detail lock — config-driven column, guarded.
+        foreach ($this->lockedFilters as $lockedCol => $lockedVal) {
+            if (SqlIdentifier::isSafe((string) $lockedCol)) {
+                $query->where($lockedCol, $lockedVal);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Post-load scope check for a single record (company / master-detail lock).
+     * Used where the query must fetch outside the normal scope first — e.g.
+     * restore(), which needs withTrashed() — so the guard is applied to the
+     * loaded model instead of the query.
+     */
+    protected function recordInScope(Model $record): bool
+    {
+        if ($this->companyFilter > 0) {
+            $companyField = $this->crudConfig['companyField'] ?? 'company_id';
+            if (array_key_exists($companyField, $record->getAttributes())
+                && (int) $record->getAttribute($companyField) !== $this->companyFilter) {
+                return false;
+            }
+        }
+
+        foreach ($this->lockedFilters as $col => $val) {
+            if (array_key_exists((string) $col, $record->getAttributes())
+                && $record->getAttribute((string) $col) != $val) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function getVisibleRelations(): array

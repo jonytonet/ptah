@@ -228,6 +228,10 @@ class PtahServiceProvider extends ServiceProvider
         Blade::if('ptahMaster', function (mixed $user = null): bool {
             return ptah_is_master($user);
         });
+
+        Blade::if('ptahCanManageConfig', function (mixed $user = null): bool {
+            return ptah_can_manage_config($user);
+        });
     }
 
     /**
