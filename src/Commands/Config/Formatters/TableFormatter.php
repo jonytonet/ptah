@@ -44,8 +44,8 @@ class TableFormatter
 
         $settings = [
             'Display Name' => $config['displayName'] ?? 'N/A',
-            'Cache Enabled' => $config['cacheEnabled'] ? 'Yes' : 'No',
-            'Cache TTL' => $config['cacheTtl'] ? $config['cacheTtl'].'s' : 'N/A',
+            'Cache Enabled' => ($config['cacheEnabled'] ?? false) ? 'Yes' : 'No',
+            'Cache TTL' => ($config['cacheTtl'] ?? null) ? $config['cacheTtl'].'s' : 'N/A',
             'Export Max Rows' => $config['exportMaxRows'] ?? 'N/A',
             'Theme' => $config['theme'] ?? 'N/A',
             'Orientation' => $config['pdfOrientation'] ?? 'N/A',
