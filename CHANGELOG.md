@@ -7,6 +7,42 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Security & correctness — hardening (batch 1)
+
+- **SearchDropdown config properties are now `#[Locked]`.** `modelClass`,
+  `serviceClass`, `useService`, `orderByRaw`, `value`, `label*`, `arraySearch`,
+  `dataFilter`, `limit`, `mask*`, `listens` and `coringa` are server-set at mount
+  and were client-mutable via the Livewire payload — turning them into SQLi
+  (`orderByRaw`), arbitrary class/method execution (`serviceClass`+`useService`)
+  and arbitrary-model/column exfiltration (`modelClass`+`label`) vectors. They are
+  now locked; only the search term (a method argument) is user input.
+- **Renderer XSS/scheme hardening.** `helperFlagChannel` now escapes its fallback
+  (was stored XSS via `{!! !!}`); `renderLink` blocks `javascript:`/`data:`/
+  `vbscript:` hrefs and escapes the URL; `renderQrcode` carries the value in a
+  `data-` attribute (read via `$el.dataset.qr`) instead of interpolating it into a
+  JS string literal.
+- **SQL-identifier guards** added to the remaining config/client-driven column
+  names: JOIN `select` aliases (raw `AS`), `configGroupBy`, totalizador columns
+  (`sum/avg/…`), the `quickDateColumn` public property and `NumericFilterStrategy`
+  (now matches `TextFilterStrategy`). Unsafe identifiers are silently discarded.
+- **IDOR guard on single-record actions.** `openEdit`, `duplicateRecord`, the
+  update path of `save()`, `deleteRecord` and `restoreRecord` now confine the
+  client-supplied id to the current tenant (`companyFilter`) and master/detail
+  lock (`lockedFilters`) via the new `scopedQuery()`/`recordInScope()` — the
+  listing was scoped but these were not, so a crafted id could reach another
+  company's rows.
+- **Export endpoint allowlist + permission gate.** `/ptah/export` (and
+  `/ptah/export/bulk`) now refuse any model that is not configured as a Ptah CRUD
+  (blocks arbitrary `?model=User` dumps) and enforce the CRUD's `read` permission
+  when the permissions module is active.
+
+### Fixed
+- **`afterCreate`/`afterUpdate` redirect was silently dropped.** `save()` called
+  the global `redirect()` helper and discarded the result, so a hook returning a
+  `RedirectResponse` never navigated. It now uses `$this->redirect()`.
+
 ## [1.1.1] — 2026-06-24
 
 ### Fixed

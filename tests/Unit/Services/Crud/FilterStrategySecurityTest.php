@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\DTO\FilterDTO;
+use Ptah\Services\Crud\Filters\NumericFilterStrategy;
 use Ptah\Services\Crud\Filters\RelationFilterStrategy;
 use Ptah\Services\Crud\Filters\TextFilterStrategy;
 use Ptah\Tests\TestCase;
@@ -88,6 +89,34 @@ class FilterStrategySecurityTest extends TestCase
         $result = $strategy->apply(FilterSecurityStub::query(), $filter);
 
         $this->assertEmpty($result->getQuery()->wheres);
+    }
+
+    // ── NumericFilterStrategy ─────────────────────────────────────────────────
+
+    #[Test]
+    #[DataProvider('maliciousFieldNames')]
+    public function numeric_strategy_discards_unsafe_field(string $field): void
+    {
+        $strategy = new NumericFilterStrategy;
+        $filter = new FilterDTO(field: $field, value: '5', operator: '>');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertEmpty(
+            $result->getQuery()->wheres,
+            "Unsafe field [{$field}] should be discarded — no WHERE clause must be added",
+        );
+    }
+
+    #[Test]
+    public function numeric_strategy_applies_with_safe_field(): void
+    {
+        $strategy = new NumericFilterStrategy;
+        $filter = new FilterDTO(field: 'amount', value: '10', operator: '>=');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertNotEmpty($result->getQuery()->wheres);
     }
 
     // ── RelationFilterStrategy ────────────────────────────────────────────────

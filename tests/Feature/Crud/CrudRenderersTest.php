@@ -224,4 +224,60 @@ class CrudRenderersTest extends TestCase
 
         $this->assertSame('&lt;x&gt;', $html);
     }
+
+    // ── Hardening: escaping / URL-scheme guards ─────────────────────────────────
+
+    #[Test]
+    public function flag_channel_fallback_escapes_unknown_values(): void
+    {
+        // A non-G/Y/R value falls to the default arm; it is row data echoed via
+        // {!! !!}, so it must be escaped (was a stored-XSS hole).
+        $html = $this->format(
+            ['colsHelper' => 'flagChannel'],
+            ['field' => '<script>alert(1)</script>'],
+        );
+
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+    }
+
+    #[Test]
+    public function link_renderer_blocks_javascript_scheme(): void
+    {
+        $html = $this->format(
+            ['colsRenderer' => 'link', 'colsRendererLinkTemplate' => 'javascript:alert(1)', 'colsRendererLinkLabel' => 'Go'],
+            ['field' => 'x'],
+        );
+
+        $this->assertStringNotContainsString('javascript:', $html);
+        $this->assertStringContainsString('href="#"', $html);
+    }
+
+    #[Test]
+    public function link_renderer_escapes_the_href_and_keeps_safe_urls(): void
+    {
+        $html = $this->format(
+            ['colsRenderer' => 'link', 'colsRendererLinkTemplate' => '/orders/%value%', 'colsRendererLinkLabel' => 'Open'],
+            ['field' => '42"><img src=x onerror=alert(1)>'],
+        );
+
+        // Safe path survives; the injected attribute-breakout is neutralised.
+        $this->assertStringContainsString('/orders/42', $html);
+        $this->assertStringNotContainsString('<img', $html);
+    }
+
+    #[Test]
+    public function qrcode_carries_the_value_in_a_data_attribute_not_a_js_string(): void
+    {
+        $html = $this->format(
+            ['colsRenderer' => 'qrcode'],
+            ['field' => "'); alert(1); ('"],
+        );
+
+        // Value lives in data-qr (attribute-escaped); JS reads $el.dataset.qr,
+        // so it is never interpolated into a JS string literal.
+        $this->assertStringContainsString('data-qr=', $html);
+        $this->assertStringContainsString('dataset.qr', $html);
+        $this->assertStringNotContainsString("text:'", $html);
+    }
 }

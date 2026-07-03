@@ -313,21 +313,30 @@ trait HasCrudRenderers
      */
     protected function renderLink(array $col, mixed $value, mixed $row): string
     {
-        $template = $col['colsRendererLinkTemplate'] ?? '#';
+        $template = (string) ($col['colsRendererLinkTemplate'] ?? '#');
         $label = $col['colsRendererLinkLabel'] ?? $value;
         $newTab = ($col['colsRendererLinkNewTab'] ?? false)
             ? ' target="_blank" rel="noopener noreferrer"'
             : '';
 
-        $url = str_replace('%value%', e((string) $value), $template);
+        // Substitute placeholders with the RAW values, then escape the whole URL
+        // once for the attribute context (avoids double-escaping and keeps the
+        // scheme check below working on the real string).
+        $url = str_replace('%value%', (string) $value, $template);
 
         if ($row instanceof Model) {
             foreach ($row->getAttributes() as $k => $v) {
-                $url = str_replace('%'.$k.'%', e((string) ($v ?? '')), $url);
+                $url = str_replace('%'.$k.'%', (string) ($v ?? ''), $url);
             }
         }
 
-        return "<a href=\"{$url}\"{$newTab} class=\"text-indigo-600 hover:text-indigo-800 hover:underline font-medium\">".e((string) $label).'</a>';
+        // Block dangerous URL schemes — HTML-escaping does NOT neutralise
+        // javascript:/data:/vbscript: in an href (same guard as link actions).
+        if (preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
+            $url = '#';
+        }
+
+        return '<a href="'.e($url).'"'.$newTab.' class="text-indigo-600 hover:text-indigo-800 hover:underline font-medium">'.e((string) $label).'</a>';
     }
 
     /**
@@ -536,9 +545,13 @@ trait HasCrudRenderers
             return '';
         }
         $size = (int) ($col['colsRendererQrSize'] ?? 64);
+        // Carry the value in a data- attribute (HTML-attribute-escaped) and read it
+        // in JS via $el.dataset.qr. Interpolating e($value) INTO a JS string literal
+        // is unsafe: the HTML parser decodes &#039; back to ' before Alpine runs,
+        // letting the value break out of the quotes → DOM XSS.
         $escaped = e((string) $value);
 
-        return "<span x-data x-init=\"\$nextTick(() => { if(window.QRCode) new QRCode(\$el.querySelector('div'), {text:'{$escaped}',width:{$size},height:{$size},colorDark:'#1a1a1a',colorLight:'#fff'}); })\">"
+        return "<span x-data x-init=\"\$nextTick(() => { if(window.QRCode) new QRCode(\$el.querySelector('div'), {text: \$el.dataset.qr, width:{$size}, height:{$size}, colorDark:'#1a1a1a', colorLight:'#fff'}); })\" data-qr=\"{$escaped}\">"
             ."<div title=\"{$escaped}\"></div>"
             .'</span>';
     }
@@ -632,7 +645,9 @@ trait HasCrudRenderers
             'G' => '<span class="badge" style="background:#28a745">'.trans('ptah::ui.flag_green').'</span>',
             'Y' => '<span class="badge" style="background:#ffc107;color:#000">'.trans('ptah::ui.flag_yellow').'</span>',
             'R' => '<span class="badge" style="background:#dc3545">'.trans('ptah::ui.flag_red').'</span>',
-            default => (string) $value,
+            // Escape the fallback — this value is row data echoed via {!! !!} in the
+            // table/cards/print views, so an unescaped return would be stored XSS.
+            default => e((string) $value),
         };
     }
 

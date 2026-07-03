@@ -7,6 +7,7 @@ namespace Ptah\Services\Crud\Filters;
 use Illuminate\Database\Eloquent\Builder;
 use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Filter strategy for numeric fields.
@@ -45,6 +46,12 @@ class NumericFilterStrategy implements FilterStrategyInterface
         $operator = strtoupper($normalized->operator);
         $field = $normalized->field;
         $value = $normalized->value;
+
+        // Guard against SQL injection via the column name before any raw SQL
+        // (matches TextFilterStrategy — the field is config-driven).
+        if (! SqlIdentifier::isSafe($field)) {
+            return $query;
+        }
 
         // Automatic BETWEEN if value is an array [from, to]
         if (is_array($value) && count($value) === 2) {

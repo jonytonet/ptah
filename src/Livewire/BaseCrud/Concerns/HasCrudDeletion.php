@@ -39,8 +39,9 @@ trait HasCrudDeletion
             return;
         }
 
-        $modelInstance = $this->resolveEloquentModel();
-        $record = $modelInstance->newQuery()->find($this->deletingId);
+        // Scoped by company / master-detail lock so a client-supplied id cannot
+        // delete a record outside the current scope (IDOR).
+        $record = $this->scopedQuery()?->find($this->deletingId);
         $deletedId = null;
         $isSoftDelete = false;
 
@@ -80,9 +81,16 @@ trait HasCrudDeletion
         }
 
         $modelInstance = $this->resolveEloquentModel();
+
+        if (! $modelInstance) {
+            return;
+        }
+
+        // Restore needs withTrashed(), so fetch first and apply the company /
+        // master-detail scope to the loaded record (IDOR guard).
         $record = $modelInstance->newQuery()->withTrashed()->find($id);
 
-        if ($record && method_exists($record, 'restore')) {
+        if ($record && $this->recordInScope($record) && method_exists($record, 'restore')) {
             $record->restore();
         }
 
