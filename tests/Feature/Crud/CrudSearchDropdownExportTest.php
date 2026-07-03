@@ -264,11 +264,11 @@ class CrudSearchDropdownExportTest extends TestCase
     // ── Export ────────────────────────────────────────────────────────────────
 
     #[Test]
-    public function export_dispatches_the_sync_event_with_visible_columns(): void
+    public function export_dispatches_the_download_event(): void
     {
         $this->crud()
             ->call('export', 'excel')
-            ->assertDispatched('ptah:export-sync');
+            ->assertDispatched('ptah:export-download');
     }
 
     #[Test]
@@ -281,7 +281,7 @@ class CrudSearchDropdownExportTest extends TestCase
 
         $this->crud()
             ->call('export', 'excel')
-            ->assertNotDispatched('ptah:export-sync');
+            ->assertNotDispatched('ptah:export-download');
     }
 
     #[Test]
@@ -289,13 +289,13 @@ class CrudSearchDropdownExportTest extends TestCase
     {
         $this->crud()
             ->call('bulkExport', 'excel')
-            ->assertNotDispatched('ptah:bulk-export');
+            ->assertNotDispatched('ptah:export-download');
 
         $ids = SdStub::pluck('id')->take(2)->all();
 
         $this->crud()
             ->set('selectedRows', $ids)
             ->call('bulkExport', 'excel')
-            ->assertDispatched('ptah:bulk-export');
+            ->assertDispatched('ptah:export-download');
     }
 }

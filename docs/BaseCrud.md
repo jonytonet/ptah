@@ -883,7 +883,7 @@ The `bulkDelete()` method runs inside a `DB::transaction()` and uses `.each()` t
 |---|---|
 | `crud-bulk-deleted` | `model, count` |
 | `crud-bulk-action` | `model, action, ids` |
-| `ptah:bulk-export` | `model, ids, format` |
+| `ptah:export-download` | `url` |
 
 ---
 
@@ -1106,12 +1106,14 @@ BaseCrud includes a complete export system for **Excel** (.xlsx) and **PDF** wit
 
 - ✅ **Visible columns only** — exports only the columns currently visible in the table (excludes action columns)
 - ✅ **Automatic formatting** — dates, booleans, monetary values and long text formatted
-- ✅ **Respects filters** — applies the same active filters as the table
+- ✅ **Respects filters** — the component builds the row set through the same
+  `buildBaseQuery()` as the listing (search / filters / company scope / sort), so
+  the export matches exactly what the table shows (as of v1.3.0)
 - ✅ **Bulk export** — exports only selected records
-- ✅ **Sync/Async** — synchronous export for few records, asynchronous for large volumes
 - ✅ **Custom labels** — uses the labels (surnames) configured in CrudConfig
 - ✅ **PDF totalisers** — automatically includes aggregations (sum, avg, etc.) if configured
 - ✅ **Multilingual** — UI strings translated via `__('ptah::ui.*')`
+- ✅ **Row cap** — bounded by `exportConfig.maxRows` (default 5000)
 
 ### Required Dependencies
 
@@ -1135,33 +1137,39 @@ The export system requires two packages in your `composer.json`:
 ```json
 "exportConfig": {
   "enabled": true,
-  "asyncThreshold": 1000,
+  "maxRows": 5000,
   "formats": ["excel", "pdf"]
 }
 ```
 
 - **`enabled`**: Enables/disables export (default: `true`)
-- **`asyncThreshold`**: Number of records to switch from sync to async (default: `1000`)
-- **`formats`**: Available formats — `["excel", "pdf"]` (CSV removed in V2.2)
+- **`maxRows`**: Safety cap on exported rows (default: `5000`)
+- **`formats`**: Available formats — `["excel", "pdf"]`
 
-**Behaviour:**
-- If `count ≤ asyncThreshold` → **synchronous** export via `ptah:export-sync` event
-- If `count > asyncThreshold` → dispatches **Job** `Ptah\Jobs\BaseCrudExportJob` on the queue
+> **v1.3.0:** export was reworked to the same token model as the print screen.
+> The old `asyncThreshold` / `Ptah\Jobs\BaseCrudExportJob` async path was removed
+> (the job never shipped); exports run synchronously, bounded by `maxRows`.
 
-### Architecture
+### Architecture (token model)
 
 ```
-HasCrudExport.php         → Livewire trait, fires events
-     ↓
-_scripts.blade.php        → JS listeners capture events
-     ↓
-routes/ptah.php           → Routes /ptah/export and /ptah/export/bulk
-     ↓
-ExportController.php      → Processes request and returns file
-     ↓
-CrudExport.php (Excel)    → maatwebsite/excel class
-pdf.blade.php (PDF)       → Blade template for PDF
+BaseCrud::export()/bulkExport()   → build the filtered query via buildBaseQuery(),
+     │                              collect ordered ids, cache a user-scoped token
+     ▼
+dispatch('ptah:export-download', url)  → JS opens /ptah/export/download/{token}
+     ▼
+ExportController::download($token)     → reads the cached ids (model resolved
+     │                                   server-side, allowlist re-checked), builds
+     │                                   whereIn(pk, ids) + primary sort
+     ▼
+CrudExport.php (Excel) / exports/pdf.blade.php (PDF)  → the file
 ```
+
+Because the component (not the controller) selects the rows, the export can
+**never diverge** from the listing, and the client never names a model or
+reapplies filters — closing the old `?model=User` dump and the "export ignores
+filters" drift. Sorting by a **relation** column degrades to primary-key order
+in the file (the download rebuilds a flat `whereIn` query).
 
 ### Print screen (`/ptah/print`)
 
@@ -1340,9 +1348,9 @@ To export only selected records, use `bulkExport()`:
 **Flow:**
 1. User selects records via checkboxes
 2. Clicks "Export Excel" or "Export PDF"
-3. `ptah:bulk-export` event is fired with the selected IDs
-4. JavaScript opens a new tab with the download URL
-5. `ExportController::bulkExport()` generates the file with only the provided IDs
+3. `bulkExport()` caches the selected IDs under a user-scoped token and fires `ptah:export-download`
+4. JavaScript opens a new tab with `/ptah/export/download/{token}`
+5. `ExportController::download()` generates the file from only the provided IDs
 
 ### Column Customisation
 
@@ -1423,34 +1431,23 @@ For custom text, fill in `colsNomeLogico` in the **Columns** tab of the CrudConf
 
 #### Export does not respect filters
 
-**Cause:** Filters are passed via `$this->filters` from Livewire.
+As of **v1.3.0** the export builds its row set from the same `buildBaseQuery()`
+as the listing (via the token model), so it always matches the visible rows.
+If you are on an older version, upgrade — the pre-1.3 controller reapplied a
+naive filter that ignored search / operators / relations / company scope.
 
-**Check:** Make sure filters are being applied in the listing before exporting.
+#### Very large exports
 
-#### Timeout on large exports
-
-**Cause:** More than 1000 records being exported synchronously.
-
-**Solution:** 
-1. Adjust `asyncThreshold` in CrudConfig:
-   ```json
-   "exportConfig": {
-     "asyncThreshold": 500
-   }
-   ```
-
-2. Configure the queue in Laravel:
-   ```bash
-   php artisan queue:work
-   ```
+Exports are synchronous and capped by `exportConfig.maxRows` (default 5000).
+For larger volumes, refine the filters before exporting or raise `maxRows`
+(mind the memory cost). There is no built-in async/queue path.
 
 ### Best Practices
 
 #### 1. Record limit
 ```json
 "exportConfig": {
-  "asyncThreshold": 500,
-  "maxRecords": 10000
+  "maxRows": 10000
 }
 ```
 
@@ -1634,8 +1631,8 @@ Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
 | `crud-restored` | `model` | After restoration |
 | `crud-bulk-deleted` | `model, count` | After bulk delete |
 | `crud-bulk-action` | `model, action, ids` | After bulk action |
-| `ptah:export-sync` | `model, format, filters` | Synchronous export |
-| `ptah:bulk-export` | `model, ids, format` | Selected records export |
+| `ptah:export-download` | `url` | Opens the export download (token) — full and bulk export |
+| `ptah:open-print` | `url` | Opens the print screen (token) |
 
 ### How to listen in the parent component
 

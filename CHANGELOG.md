@@ -7,6 +7,38 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.3.0] — 2026-07-03
+
+### Export — reworked to the print-style token model
+- **Export now matches the listing exactly.** `BaseCrud::export()` /
+  `bulkExport()` build the row set through the shared `buildBaseQuery()` /
+  `applyGroupingAndSort()` (same search / filters / company scope / sort as the
+  table), collect the ordered ids up to `exportConfig.maxRows`, and cache them
+  under a short-lived, **user-scoped token**. The new
+  `GET /ptah/export/download/{token}` (`ExportController::download`) resolves the
+  model **server-side**, re-checks the CRUD allowlist + permission, and generates
+  the file. The client no longer names a model or reapplies filters.
+- **Removed** the naive `ExportController::applyFilters()` (ignored operators /
+  relations / search / company scope), the duplicated request-based
+  `export()`/`bulkExport()` controller actions and the `/ptah/export` +
+  `/ptah/export/bulk` routes. A single `ptah:export-download` browser event
+  replaces `ptah:export-sync` + `ptah:bulk-export`.
+- **Removed** the dead async path (`asyncThreshold` / `Ptah\Jobs\BaseCrudExportJob`
+  never shipped). Exports are synchronous, bounded by `exportConfig.maxRows`
+  (default 5000). Sorting by a relation column degrades to primary-key order in
+  the file.
+- 4 tests rewritten for `download` (404 / 403-owner / allowlist / happy path).
+
+### Skills — shipped and installable
+- The package now bundles three agent skills under `resources/boost/skills`:
+  `ptah-development` (conventions), **`ptah-scaffold`** (describe an entity/table →
+  full CRUD runbook) and **`ptah-data-layer`** (BaseRepository / BaseService /
+  BaseDTO usage + the `getData()` contract).
+- New **`ptah-skills`** publish tag copies them into the app's `.claude/skills`,
+  and `ptah:install --boost` now publishes them too (Laravel Boost does **not**
+  auto-discover third-party package skills — the misleading success message was
+  corrected).
+
 ## [1.2.1] — 2026-07-03
 
 ### Fixed

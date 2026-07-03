@@ -15,6 +15,16 @@ trait HasCrudExport
 {
     // ── Export ─────────────────────────────────────────────────────────────────
 
+    /**
+     * Exports the CURRENT filtered listing. Like the print screen, the component
+     * builds the query via the shared buildBaseQuery()/applyGroupingAndSort() — so
+     * the export honours the exact same search / filters / company scope as the
+     * table — collects the ordered ids up to exportConfig.maxRows, and hands a
+     * short-lived, user-scoped token to the download controller (which resolves the
+     * model server-side and generates the file). The client never names a model or
+     * reapplies filters, which is what closed the old ?model=User hole and the
+     * "export ignores filters" drift.
+     */
     public function export(string $format = 'excel'): void
     {
         $exportConfig = $this->crudConfig['exportConfig'] ?? [];
@@ -29,68 +39,57 @@ trait HasCrudExport
             return;
         }
 
-        $query = $modelInstance->newQuery();
-        $this->applyJoins($query, $modelInstance);
-        $activeFilters = $this->buildActiveFilters();
+        [$query, $joinedTables] = $this->buildBaseQuery($modelInstance);
+        $this->applyGroupingAndSort($query, $modelInstance, $joinedTables);
 
-        if (! empty($activeFilters)) {
-            $this->filterService->applyFilters($query, $activeFilters);
-        }
+        $maxRows = (int) ($exportConfig['maxRows'] ?? 5000);
+        $pk = $modelInstance->getKeyName();
 
-        $count = $query->count();
-        $async = $count > (int) ($exportConfig['asyncThreshold'] ?? 1000);
+        // pluck on the RESULT collection (not the query) so a group-by/join SELECT
+        // is not overwritten; the maxRows cap bounds the fetch (same as print).
+        $ids = $query->limit($maxRows)->get()->pluck($pk)->all();
 
-        // Pegar apenas colunas visíveis para exportação
-        $visibleColumns = $this->getVisibleColumnsForExport();
-
-        if ($async) {
-            $this->dispatchExportJob($format, $exportConfig);
-            $this->exportStatus = trans('ptah::ui.export_processing');
-        } else {
-            // Basic synchronous export via download
-            $this->dispatch('ptah:export-sync', [
-                'model' => $this->model,
-                'format' => $format,
-                'filters' => $this->filters,
-                'columns' => $visibleColumns,
-            ]);
-            $this->exportStatus = '';
-        }
-
+        $this->dispatchExportDownload($ids, $format);
+        $this->exportStatus = '';
         $this->showExportMenu = false;
     }
 
+    /**
+     * Exports only the selected rows (bulk export) through the same token flow.
+     */
     public function bulkExport(string $format = 'excel'): void
     {
         if (empty($this->selectedRows)) {
             return;
         }
 
-        // Pegar apenas colunas visíveis para exportação
-        $visibleColumns = $this->getVisibleColumnsForExport();
-
-        $this->dispatch('ptah:bulk-export', [
-            'model' => $this->model,
-            'ids' => $this->selectedRows,
-            'format' => $format,
-            'columns' => $visibleColumns,
-        ]);
+        $this->dispatchExportDownload($this->selectedRows, $format);
     }
 
-    protected function dispatchExportJob(string $format, array $exportConfig): void
+    /**
+     * Caches a user-scoped export payload (model + ordered ids + visible columns
+     * + sort) under a one-time token and tells the browser to open the download.
+     *
+     * @param  array<int, int|string>  $ids
+     */
+    protected function dispatchExportDownload(array $ids, string $format): void
     {
-        // Dispatch via queue if the job class exists
-        $jobClass = 'Ptah\\Jobs\\BaseCrudExportJob';
+        $payload = [
+            'version' => 1,
+            'userId' => Auth::id(),
+            'model' => $this->model,
+            'ids' => array_values($ids),
+            'columns' => $this->getVisibleColumnsForExport(),
+            'order' => $this->sort,
+            'direction' => $this->direction,
+            'format' => $format,
+        ];
 
-        if (class_exists($jobClass)) {
-            dispatch(new $jobClass(
-                model: $this->model,
-                filters: $this->filters,
-                format: $format,
-                userId: Auth::id(),
-                config: $exportConfig,
-            ));
-        }
+        $token = (string) Str::uuid();
+        Cache::put('ptah:export:'.$token, $payload, now()->addMinutes(10));
+
+        $this->showExportMenu = false;
+        $this->dispatch('ptah:export-download', url: route('ptah.export.download', ['token' => $token]));
     }
 
     // ── Print screen ─────────────────────────────────────────────────────────
