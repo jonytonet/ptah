@@ -7,7 +7,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.2.0] — 2026-07-03
+
+Security hardening from the audit + access-controlled config editor.
 
 ### ⚠️ BREAKING — CRUD config editor is now access-controlled
 
