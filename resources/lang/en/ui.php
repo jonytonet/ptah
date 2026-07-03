@@ -932,6 +932,7 @@ return [
     'image_or_url' => 'or paste a URL',
     'image_error_size' => 'The file must not exceed :max KB.',
     'image_error_type' => 'Allowed file types: :types.',
+    'image_error_mime' => 'Invalid file: please upload an image (SVG is not allowed).',
 
     // Cell style
     'cfg_col_cell_style_title' => 'Cell Style',
