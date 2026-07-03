@@ -361,9 +361,26 @@ CSS;
             }
         });
 
+        // Boost only auto-discovers its own curated + roster-detected packages —
+        // it does NOT scan third-party vendor/*/resources/boost. So publish Ptah's
+        // skills into .claude/skills ourselves (that's what makes them usable).
+        $this->publishSkills();
+
         $this->components->info(
-            'Laravel Boost installed! Ptah guidelines will be automatically loaded by AI agents.'
+            'Laravel Boost installed. Ptah skills published to .claude/skills for AI agents.'
         );
+    }
+
+    /**
+     * Copies the Ptah agent skills into the app's .claude/skills directory.
+     * Idempotent — safe to re-run; pass --force to overwrite on upgrades.
+     */
+    protected function publishSkills(): void
+    {
+        $this->call('vendor:publish', array_filter([
+            '--tag' => 'ptah-skills',
+            '--force' => $this->option('force') ?: null,
+        ]));
     }
 
     /**

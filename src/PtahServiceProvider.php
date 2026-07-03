@@ -375,6 +375,14 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views/errors/403.blade.php' => resource_path('views/errors/403.blade.php'),
             ], 'ptah-errors');
 
+            // Publish agent skills into the app's .claude/skills so Claude Code
+            // (and any tool that reads .claude/skills) discovers them. The package
+            // is the single source of truth; re-run vendor:publish --tag=ptah-skills
+            // --force after upgrading ptah to refresh them.
+            $this->publishes([
+                __DIR__.'/../resources/boost/skills' => base_path('.claude/skills'),
+            ], 'ptah-skills');
+
             // Publish Docker base environment (Dockerfile, Nginx, php.ini, docker-compose, .env.docker)
             $this->publishes([
                 __DIR__.'/../stubs/docker/docker-compose.yml' => base_path('docker-compose.yml'),

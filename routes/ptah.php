@@ -15,13 +15,10 @@ use Ptah\Http\Controllers\ExportController;
 
 Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
 
-    // Exportação com filtros
-    Route::get('/export', [ExportController::class, 'export'])
-        ->name('export');
-
-    // Exportação em massa (itens selecionados)
-    Route::get('/export/bulk', [ExportController::class, 'bulkExport'])
-        ->name('export.bulk');
+    // Download do export (lê o snapshot em cache gerado pelo BaseCrud::export/bulkExport:
+    // ids já filtrados pela listagem; o model é resolvido no servidor, sem parâmetro do cliente).
+    Route::get('/export/download/{token}', [ExportController::class, 'download'])
+        ->name('export.download');
 
     // Tela de impressão (lê o snapshot em cache gerado pelo BaseCrud::printView)
     Route::get('/print/{token}', [CrudPrintController::class, 'print'])

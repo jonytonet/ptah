@@ -374,36 +374,13 @@ document.addEventListener('livewire:init', () => {
     if (window.__ptahExportInit) return;
     window.__ptahExportInit = true;
 
-    // Listener para exportação síncrona (Excel/PDF)
-    Livewire.on('ptah:export-sync', (event) => {
+    // Listener para exportação (Excel/PDF) — abre o download do snapshot em cache
+    // gerado pelo componente (token; o servidor resolve o model e os ids filtrados).
+    Livewire.on('ptah:export-download', (event) => {
         const data = Array.isArray(event) ? event[0] : event;
-        const { model, format, filters, columns } = data;
-        
-        const params = new URLSearchParams({
-            model: model,
-            format: format || 'excel',
-            filters: JSON.stringify(filters || {}),
-            columns: JSON.stringify(columns || [])
-        });
-        
-        const url = `/ptah/export?${params.toString()}`;
-        window.open(url, '_blank');
-    });
-
-    // Listener para exportação em massa (itens selecionados)
-    Livewire.on('ptah:bulk-export', (event) => {
-        const data = Array.isArray(event) ? event[0] : event;
-        const { model, ids, format, columns } = data;
-
-        const params = new URLSearchParams({
-            model: model,
-            format: format || 'excel',
-            ids: JSON.stringify(ids || []),
-            columns: JSON.stringify(columns || [])
-        });
-
-        const url = `/ptah/export/bulk?${params.toString()}`;
-        window.open(url, '_blank');
+        if (data && data.url) {
+            window.open(data.url, '_blank');
+        }
     });
 
     // Listener para a tela de impressão (abre o snapshot em cache em nova aba)

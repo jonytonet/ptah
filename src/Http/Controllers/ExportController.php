@@ -3,8 +3,10 @@
 namespace Ptah\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Ptah\Exports\CrudExport;
@@ -13,35 +15,55 @@ use Ptah\Models\CrudConfig;
 class ExportController
 {
     /**
-     * Exporta dados filtrados (Excel ou PDF)
+     * Generates the export file from a snapshot the BaseCrud component built.
+     *
+     * The component (export/bulkExport) filters the listing through the shared
+     * buildBaseQuery(), collects the ordered ids and caches them under a one-time,
+     * user-scoped token. This controller only fetches those ids — so it can never
+     * diverge from the listing and the client never names a model or reapplies
+     * filters (the old ?model=User + naive applyFilters holes are gone).
      */
-    public function export(Request $request)
+    public function download(string $token)
     {
-        $modelParam = (string) $request->input('model');
-        $format = $request->input('format', 'excel');
-        $filters = json_decode($request->input('filters', '{}'), true);
-        $columns = json_decode($request->input('columns', '[]'), true);
+        $payload = Cache::get('ptah:export:'.$token);
 
-        // Authorize the export BEFORE resolving/querying: only models that are
-        // actually configured as a Ptah CRUD may be exported (blocks arbitrary
-        // ?model=User dumps), and the CRUD's permission is enforced when the
-        // permissions module is active.
+        if (! is_array($payload)) {
+            abort(404);
+        }
+
+        // Snapshot is bound to the user who generated it (null = public listing).
+        $owner = $payload['userId'] ?? null;
+        if ($owner !== null && $owner !== Auth::id()) {
+            abort(403);
+        }
+
+        $modelParam = (string) ($payload['model'] ?? '');
+
+        // Defence in depth: still require the model to be a configured Ptah CRUD
+        // (and pass the read permission when the module is active).
         $this->authorizeExport($modelParam);
 
-        // Resolver a classe do model (suporta com/sem namespace)
         $modelClass = $this->resolveModelClass($modelParam);
-
         if (! $modelClass) {
             abort(404, 'Model não encontrado');
         }
 
         $model = App::make($modelClass);
-        $query = $model::query();
+        $pk = $model->getKeyName();
+        $ids = $payload['ids'] ?? [];
+        $columns = $payload['columns'] ?? [];
+        $format = $payload['format'] ?? 'excel';
 
-        // Aplicar filtros
-        $this->applyFilters($query, $filters);
+        $query = $model::query()->whereIn($pk, $ids);
 
-        // Nome do arquivo
+        // Re-apply the listing's primary sort when it is a real column (relation
+        // sorts degrade to primary-key order — see docs).
+        $order = (string) ($payload['order'] ?? $pk);
+        $direction = strtoupper((string) ($payload['direction'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        if (Schema::hasColumn($model->getTable(), $order)) {
+            $query->orderBy($order, $direction);
+        }
+
         $modelName = class_basename($modelClass);
         $fileName = Str::slug($modelName).'-'.now()->format('Y-m-d-His');
 
@@ -53,43 +75,10 @@ class ExportController
     }
 
     /**
-     * Exporta itens selecionados (bulk export)
-     */
-    public function bulkExport(Request $request)
-    {
-        $modelParam = (string) $request->input('model');
-        $format = $request->input('format', 'excel');
-        $ids = json_decode($request->input('ids', '[]'), true);
-        $columns = json_decode($request->input('columns', '[]'), true);
-
-        $this->authorizeExport($modelParam);
-
-        // Resolver a classe do model (suporta com/sem namespace)
-        $modelClass = $this->resolveModelClass($modelParam);
-
-        if (! $modelClass) {
-            abort(404, 'Model não encontrado');
-        }
-
-        $model = App::make($modelClass);
-        $query = $model::query()->whereIn('id', $ids);
-
-        $modelName = class_basename($modelClass);
-        $fileName = Str::slug($modelName).'-selected-'.now()->format('Y-m-d-His');
-
-        if ($format === 'pdf') {
-            return $this->exportPdf($query, $fileName, $modelName, $columns);
-        }
-
-        return $this->exportExcel($query, $fileName, $columns);
-    }
-
-    /**
-     * Guards the export endpoint (which is otherwise reachable with only the
-     * `web` middleware):
+     * Guards the export:
      *
-     *  1. Allowlist — the requested model must actually be configured as a Ptah
-     *     CRUD (has a crud_configs row). This blocks arbitrary ?model=User dumps.
+     *  1. Allowlist — the model must actually be configured as a Ptah CRUD
+     *     (has a crud_configs row). Blocks exporting arbitrary models.
      *  2. Permission — when the permissions module is active and the CRUD declares
      *     a permissionIdentifier, the user must pass ptah_can(..., 'read').
      *
@@ -153,33 +142,6 @@ class ExportController
         ])
             ->setPaper('a4', 'portrait')
             ->download($fileName.'.pdf');
-    }
-
-    /**
-     * Aplica filtros na query
-     */
-    protected function applyFilters($query, array $filters): void
-    {
-        // Aqui você pode reutilizar a lógica de FilterService
-        // Por simplicidade, vou aplicar filtros básicos
-        foreach ($filters as $field => $value) {
-            if (is_array($value)) {
-                // Filtro com operador
-                $operator = $value['operator'] ?? '=';
-                $val = $value['value'] ?? null;
-
-                if ($val !== null) {
-                    if ($operator === 'LIKE') {
-                        $query->where($field, 'LIKE', '%'.$val.'%');
-                    } else {
-                        $query->where($field, $operator, $val);
-                    }
-                }
-            } else {
-                // Filtro simples (valor direto)
-                $query->where($field, $value);
-            }
-        }
     }
 
     /**

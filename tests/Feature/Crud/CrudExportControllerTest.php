@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Crud;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\CrudConfig;
@@ -18,9 +19,10 @@ class ExportStub extends Model
 }
 
 /**
- * Covers the ExportController allowlist guard: the /ptah/export endpoint runs
- * with only the `web` middleware, so it must refuse to export a model that is
- * not configured as a Ptah CRUD (blocks arbitrary ?model=User data dumps).
+ * Covers ExportController::download — the token-based export. The BaseCrud
+ * component filters the listing and caches the ordered ids under a user-scoped
+ * token; the controller only fetches those ids (model resolved server-side, no
+ * client model param, allowlist re-checked).
  */
 class CrudExportControllerTest extends TestCase
 {
@@ -39,36 +41,54 @@ class CrudExportControllerTest extends TestCase
         ]);
     }
 
-    #[Test]
-    public function export_is_forbidden_for_a_model_without_a_crud_config(): void
+    private function putToken(string $token, array $overrides = []): void
     {
-        // App\Models\User has no crud_configs row → the classic ?model=User dump.
-        $this->get(route('ptah.export', ['model' => 'User', 'format' => 'excel']))
-            ->assertForbidden();
+        Cache::put('ptah:export:'.$token, array_merge([
+            'version' => 1,
+            'userId' => null,
+            'model' => ExportStub::class,
+            'ids' => [1, 2],
+            'columns' => [['field' => 'name', 'label' => 'Name', 'type' => 'text']],
+            'order' => 'id',
+            'direction' => 'DESC',
+            'format' => 'excel',
+        ], $overrides), now()->addMinutes(10));
     }
 
     #[Test]
-    public function export_is_forbidden_when_the_model_param_is_empty(): void
+    public function unknown_token_returns_404(): void
     {
-        $this->get(route('ptah.export', ['format' => 'excel']))
-            ->assertForbidden();
+        $this->get(route('ptah.export.download', ['token' => 'nope']))->assertNotFound();
     }
 
     #[Test]
-    public function export_is_allowed_for_a_configured_crud(): void
+    public function token_owned_by_another_user_is_forbidden(): void
+    {
+        $this->configureExportStub();
+        $this->putToken('owned', ['userId' => 999]); // current request is a guest
+
+        $this->get(route('ptah.export.download', ['token' => 'owned']))->assertForbidden();
+    }
+
+    #[Test]
+    public function model_without_a_crud_config_is_forbidden(): void
+    {
+        // Token references a model that is not a configured Ptah CRUD.
+        $this->putToken('nocfg', ['model' => 'App\\Models\\User']);
+
+        $this->get(route('ptah.export.download', ['token' => 'nocfg']))->assertForbidden();
+    }
+
+    #[Test]
+    public function valid_token_downloads_the_export(): void
     {
         Excel::fake();
         $this->configureExportStub();
-        ExportStub::create(['name' => 'Row', 'status' => 'active', 'amount' => 1]);
+        $a = ExportStub::create(['name' => 'Alpha', 'status' => 'active', 'amount' => 1]);
+        $b = ExportStub::create(['name' => 'Bravo', 'status' => 'active', 'amount' => 2]);
 
-        $this->get(route('ptah.export', ['model' => ExportStub::class, 'format' => 'excel']))
-            ->assertOk();
-    }
+        $this->putToken('good', ['ids' => [$a->id, $b->id]]);
 
-    #[Test]
-    public function bulk_export_is_forbidden_for_an_unconfigured_model(): void
-    {
-        $this->get(route('ptah.export.bulk', ['model' => 'User', 'ids' => '[1,2]', 'format' => 'excel']))
-            ->assertForbidden();
+        $this->get(route('ptah.export.download', ['token' => 'good']))->assertOk();
     }
 }
