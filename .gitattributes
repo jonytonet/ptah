@@ -18,3 +18,9 @@
 *.ico   binary
 *.woff  binary
 *.woff2 binary
+
+# Keep contributor-only tooling out of the distributed (Packagist) tarball.
+# The Claude Code subagents/commands live on GitHub for people working ON ptah,
+# but consuming apps never need them shipped inside vendor/.
+/.claude export-ignore
+/.gitattributes export-ignore
