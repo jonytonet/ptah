@@ -29,6 +29,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   assignments, `allow_guest`, `getPermissions()` shape, `getCompaniesForResource()`,
   `syncRole`/`detachRole`, cache scope), audit trail, and the `ptah.can` middleware.
 
+### Docs
+- `docs/Permissions.md` synced with reality: corrected the `PermissionServiceContract`
+  signatures (`$user`-first `check`, `syncRole(array $companyIds)`, `detachRole`), the
+  audit semantics (audit is the master switch; `audit_denied` adds denials), the
+  generation-based `clearCache` (not cache tags), the `ptah.master` middleware and the
+  master-gated ACL routes, and the real defaults (`cache_ttl=3600`, `multi_company=true`).
+
 ## [1.4.0] — 2026-07-03
 
 ### Security — audit batch 3 (medium/low)

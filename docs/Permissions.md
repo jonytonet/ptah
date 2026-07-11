@@ -2,7 +2,7 @@
 
 **Package:** `jonytonet/ptah`  
 **Namespace:** `Ptah\Services\Permission`, `Ptah\Livewire\Permission`  
-**Livewire:** 3.x | **Laravel:** 11+
+**Livewire:** 4.x | **Laravel:** 11 · 12 · 13
 
 ---
 
@@ -170,7 +170,7 @@ In `config/ptah.php`, `permissions` section:
 'permissions' => [
     // Permission cache on/off
     'cache'     => env('PTAH_PERMISSION_CACHE', true),
-    'cache_ttl' => env('PTAH_PERMISSION_CACHE_TTL', 300),   // seconds
+    'cache_ttl' => env('PTAH_PERMISSION_CACHE_TTL', 3600),   // seconds
 
     // User model of the host application
     // Does not need to extend any Ptah class
@@ -185,13 +185,14 @@ In `config/ptah.php`, `permissions` section:
     // Session key for current company
     'company_session_key' => 'ptah_company_id',
 
-    // Audit: record verification logs
+    // Audit: master switch. When false, NOTHING is logged.
     'audit'         => env('PTAH_PERMISSION_AUDIT', false),
-    'audit_denied'  => env('PTAH_PERMISSION_AUDIT_DENIED', true),   // always audits denied
-    'audit_master'  => env('PTAH_PERMISSION_AUDIT_MASTER', false),  // audits MASTER bypass
+    // When audit is on: granted accesses are logged; audit_denied ALSO logs denials.
+    'audit_denied'  => env('PTAH_PERMISSION_AUDIT_DENIED', true),
+    'audit_master'  => env('PTAH_PERMISSION_AUDIT_MASTER', false),  // also log MASTER bypass grants
 
-    // Multi-company: uses company_session_key to filter permissions
-    'multi_company' => env('PTAH_MULTI_COMPANY', false),
+    // Multi-company: uses company_session_key to filter permissions (default: true)
+    'multi_company' => env('PTAH_MULTI_COMPANY', true),
 
     // Allow guest access (unauthenticated)
     'allow_guest'   => false,
@@ -325,6 +326,11 @@ Role::active()->get();   // WHERE is_active = 1
 Role::master()->first(); // WHERE is_master = 1
 ```
 
+> **Deactivating a role revokes it.** Setting `is_active = false` immediately stops
+> the role from granting anything on the next `check()` (as of v1.4.1 the permission
+> map filters inactive roles, consistent with the master/point-query paths). Soft-deleting
+> the role or the `UserRole` assignment has the same effect.
+
 ---
 
 ### PtahPage
@@ -431,18 +437,23 @@ PermissionAudit::recent(50)->get();  // last 50 records
 ```php
 interface PermissionServiceContract
 {
-    public function check(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool;
+    public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool;
     public function isMaster(mixed $user = null): bool;
     public function getPermissions(mixed $user = null, ?int $companyId = null): array;
-    public function syncRole(int $userId, int $roleId, ?int $companyId = null): UserRole;
-    public function detachRole(int $userRoleId): void;
+    public function getCompaniesForResource(mixed $user, string $objectKey, string $action): array;
+    public function syncRole(mixed $user, int $roleId, array $companyIds = []): void;
+    public function detachRole(mixed $user, int $roleId, ?int $companyId = null): void;
     public function clearCache(mixed $user = null, ?int $companyId = null): void;
 }
 ```
 
+> **Note the argument order:** on the contract, `$user` comes **first**
+> (`check($user, $objectKey, $action)`). The global helper `ptah_can()` is the
+> ergonomic inverse — object first (`ptah_can($objectKey, $action, $user)`).
+
 ### Methods
 
-#### `check(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool`
+#### `check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool`
 
 Checks whether the user has permission to perform `$action` on the `$objectKey` object.
 
@@ -462,11 +473,15 @@ Checks whether the user has permission to perform `$action` on the `$objectKey` 
 ```
 
 ```php
-// Simple check (uses Auth::id() and CompanyService::getCurrentCompanyId())
-$ok = app(PermissionServiceContract::class)->check('users.store', 'create');
+// Contract: $user first (null = current auth / session). Prefer the ptah_can()
+// helper in app code — it reads object-first.
+$ok = app(PermissionServiceContract::class)->check(null, 'users.store', 'create');
 
 // With explicit user and company
-$ok = app(PermissionServiceContract::class)->check('finance.export', 'read', $user, 3);
+$ok = app(PermissionServiceContract::class)->check($user, 'finance.export', 'read', 3);
+
+// Ergonomic helper (object-first):
+$ok = ptah_can('users.store', 'create');
 ```
 
 **`$user` parameter accepts:**
@@ -508,29 +523,37 @@ For MASTER users, all objects return all flags as `true`.
 
 ---
 
-#### `syncRole(int $userId, int $roleId, ?int $companyId = null): UserRole`
+#### `syncRole(mixed $user, int $roleId, array $companyIds = []): void`
 
-Assigns a role to the user. Uses `firstOrCreate` with `withTrashed()` — safe for reactivating deleted links.
+Assigns a role to the user — one `UserRole` per company (or a single global one
+when `$companyIds` is empty). A previously soft-deleted assignment is **restored**
+via the SoftDeletes API. Invalidates the user's cache.
 
 ```php
-$userRole = app(PermissionServiceContract::class)->syncRole(
-    userId: $user->id,
-    roleId: $role->id,
-    companyId: 5  // null for global role
-);
+$svc = app(PermissionServiceContract::class);
+
+// Global role (valid in every company):
+$svc->syncRole($user, $role->id);
+
+// Role scoped to companies 5 and 9:
+$svc->syncRole($user, $role->id, [5, 9]);
 ```
 
 ---
 
-#### `detachRole(int $userRoleId): void`
+#### `detachRole(mixed $user, int $roleId, ?int $companyId = null): void`
 
-Removes a user-role link (soft-delete). Automatically invalidates the user's cache.
+Removes the user↔role assignment (soft-delete). With `$companyId`, only that
+company's assignment is removed; without it, every company for that role. Invalidates the user's cache.
 
 ---
 
 #### `clearCache(mixed $user = null, ?int $companyId = null): void`
 
-Invalidates the permissions cache. Tries to use `Cache::tags(['ptah_permissions'])` when available (Redis/Memcached); falls back to individual key removal on drivers without tag support.
+Invalidates the permissions cache via **generation counters** (see [Cache](#cache)):
+`clearCache($user)` bumps that user's counter (all companies at once);
+`clearCache()` bumps the global counter (every user). Works on any cache driver —
+no dependency on tag support. The `$companyId` argument is no longer needed.
 
 ---
 
@@ -692,6 +715,30 @@ ptah.can:{objectKey},{action}[,{companyId}]
 | `objectKey` | ✓ | Object key (e.g.: `users.store`) |
 | `action` | ✓ | `create`, `read`, `update` or `delete` |
 | `companyId` | — | If omitted, resolved from session |
+
+---
+
+## Middleware ptah.master
+
+**Namespace:** `Ptah\Http\Middleware\PtahMaster`
+**Alias:** `ptah.master` (registered automatically) · since **v1.4.0**
+
+Restricts a route to **MASTER** users — for screens that administer access
+control itself. A non-master (even authenticated) request is refused with `403`
+(JSON `{"error":"permission_denied"}` for API requests). No parameters.
+
+```php
+Route::get('/admin/roles', RoleController::class)
+    ->middleware(['auth', 'ptah.master']);
+```
+
+The bundled ACL screens (`/ptah-roles`, `/ptah-pages`, `/ptah-users-acl`,
+`/ptah-audit`, `/ptah-departments`, `/ptah-permission-guide`) already use it.
+
+> Related: the in-app CRUD config editor is gated by the `@ptahCanManageConfig`
+> Blade directive / `ptah_can_manage_config()` helper — master (or a `crud.config`
+> grant) when the permissions module is on; otherwise the `PTAH_CONFIG_EDITOR`
+> opt-in. See [BaseCrud.md](BaseCrud.md).
 
 ---
 
@@ -878,12 +925,16 @@ Registered automatically when `ptah.modules.permissions = true`:
 
 | Method | URI | Name | Protection |
 |---|---|---|---|
-| `GET` | `/ptah-departments` | `ptah.acl.departments` | `web`, `auth` |
-| `GET` | `/ptah-roles` | `ptah.acl.roles` | `web`, `auth` |
-| `GET` | `/ptah-pages` | `ptah.acl.pages` | `web`, `auth` |
-| `GET` | `/ptah-users-acl` | `ptah.acl.users` | `web`, `auth` |
-| `GET` | `/ptah-audit` | `ptah.acl.audit` | `web`, `auth` |
-| `GET` | `/ptah-permission-guide` | `ptah.acl.guide` | `web`, `auth` |
+| `GET` | `/ptah-departments` | `ptah.acl.departments` | `web`, `auth`, `ptah.master` |
+| `GET` | `/ptah-roles` | `ptah.acl.roles` | `web`, `auth`, `ptah.master` |
+| `GET` | `/ptah-pages` | `ptah.acl.pages` | `web`, `auth`, `ptah.master` |
+| `GET` | `/ptah-users-acl` | `ptah.acl.users` | `web`, `auth`, `ptah.master` |
+| `GET` | `/ptah-audit` | `ptah.acl.audit` | `web`, `auth`, `ptah.master` |
+| `GET` | `/ptah-permission-guide` | `ptah.acl.guide` | `web`, `auth`, `ptah.master` |
+
+> Since **v1.4.0** these screens administer the access-control system itself and
+> are therefore **master-only** — guarded by the `ptah.master` middleware (below).
+> A non-master authenticated user gets `403`.
 
 ---
 
@@ -949,7 +1000,7 @@ ptah_can('users.store', 'create')
   │
   ├─ Cache write (TTL: cache_ttl seconds)
   │
-  ├─ Audit (if audit=true or audit_denied=true and result=false)
+  ├─ Audit (if audit=true: log granted; also log denied when audit_denied)
   │
   └─ return bool
 ```
@@ -958,18 +1009,30 @@ ptah_can('users.store', 'create')
 
 ## Audit
 
-Enabled via `.env`:
+Enabled via `.env`. **`audit` is the master switch — when it is off, nothing is
+logged at all**, regardless of the other two flags.
 
 ```dotenv
-PTAH_PERMISSION_AUDIT=true           # audits ALL (granted + denied)
-PTAH_PERMISSION_AUDIT_DENIED=true    # audits only denied (default: true)
-PTAH_PERMISSION_AUDIT_MASTER=false   # audits MASTER bypass (default: false)
+PTAH_PERMISSION_AUDIT=true           # ON: log granted accesses
+PTAH_PERMISSION_AUDIT_DENIED=true    # + also log denied accesses (default: true)
+PTAH_PERMISSION_AUDIT_MASTER=false   # + also log MASTER bypass grants (default: false)
 ```
 
+Resulting behaviour:
+
+| `audit` | `audit_denied` | Logged |
+|---|---|---|
+| `false` | (any) | nothing |
+| `true` | `false` | granted only |
+| `true` | `true` | granted **and** denied |
+
+`audit_master` is independent: with `audit=true`, it additionally logs the grants
+of MASTER users (off by default, since master passes everything).
+
 **Recommendations:**
-- In production with high volume, use `PTAH_PERMISSION_AUDIT=false` + `PTAH_PERMISSION_AUDIT_DENIED=true` — only logs what was denied (unauthorized attempts)
-- For full compliance, use `PTAH_PERMISSION_AUDIT=true`
-- For debugging, add custom context via `PermissionAudit::create([..., 'context' => ['request_id' => ...]])`
+- To capture only unauthorized attempts, you still need `PTAH_PERMISSION_AUDIT=true` (the switch) — there is no denied-only-without-audit mode.
+- For full compliance, `PTAH_PERMISSION_AUDIT=true` (+ `audit_master=true` if master activity must be traceable).
+- For debugging, add custom context via `PermissionAudit::create([..., 'context' => ['request_id' => ...]])`.
 
 The audit screen (`/ptah-audit`) displays records with filters and pagination.
 
@@ -1160,7 +1223,7 @@ class CompanySwitcher extends Component
 
 'permissions' => [
     'cache'              => env('PTAH_PERMISSION_CACHE', true),
-    'cache_ttl'          => env('PTAH_PERMISSION_CACHE_TTL', 300),
+    'cache_ttl'          => env('PTAH_PERMISSION_CACHE_TTL', 3600),
     'user_model'         => env('PTAH_USER_MODEL', \App\Models\User::class),
     'user_id_field'      => 'id',
     // Optional: Eloquent Scope class to filter users shown in the
@@ -1171,8 +1234,8 @@ class CompanySwitcher extends Component
     'audit'              => env('PTAH_PERMISSION_AUDIT', false),
     'audit_denied'       => env('PTAH_PERMISSION_AUDIT_DENIED', true),
     'audit_master'       => env('PTAH_PERMISSION_AUDIT_MASTER', false),
-    'multi_company'      => env('PTAH_MULTI_COMPANY', false),
-    'allow_guest'        => false,
+    'multi_company'      => env('PTAH_MULTI_COMPANY', true),
+    'allow_guest'        => env('PTAH_PERMISSION_ALLOW_GUEST', false),
     'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrator'),
     'admin_email'        => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
     // No insecure default: when unset, a strong random password is generated and shown once at install.
@@ -1189,10 +1252,10 @@ class CompanySwitcher extends Component
 | `PTAH_USER_MODEL` | `App\Models\User` | FQCN of the users model |
 | `PTAH_USER_QUERY_SCOPE` | `null` | FQCN of an Eloquent Scope to filter users shown in the Permissions screen |
 | `PTAH_PERMISSION_CACHE` | `true` | Enables permissions cache |
-| `PTAH_PERMISSION_CACHE_TTL` | `300` | Cache TTL in seconds |
+| `PTAH_PERMISSION_CACHE_TTL` | `3600` | Cache TTL in seconds |
 | `PTAH_PERMISSION_AUDIT` | `false` | Audits all accesses |
 | `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Audits only denied accesses |
 | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audits MASTER bypass |
-| `PTAH_MULTI_COMPANY` | `false` | Permissions filtered by company |
+| `PTAH_MULTI_COMPANY` | `true` | Permissions filtered by company |
 | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | Default admin e-mail |
 | `PTAH_ADMIN_PASSWORD` | *(none)* | Admin password. If unset, a strong random one is generated and shown once at install — no fixed default |
