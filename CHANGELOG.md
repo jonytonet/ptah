@@ -7,6 +7,35 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.1] — 2026-07-09
+
+### Fixed — permission engine (found while expanding test coverage)
+- **Deactivating a role now revokes access.** `buildPermissionMap()` — the source
+  of truth for `check()` — did not filter `role.is_active`, so an inactive role
+  kept granting permissions (inconsistent with `isMaster()`/`queryPermission()`,
+  which already filtered it). Now only active roles grant.
+- **Audit logging matched its documented intent.** `check()` had the condition
+  inverted (`! $result || audit_denied`): granted accesses were logged only when
+  `audit_denied` was on, and denials were logged even when it was off. Now `audit`
+  logs granted accesses and `audit_denied` additionally logs denials, as the
+  config documents.
+- **Re-granting a removed role works again.** `syncRole()` tried to restore a
+  soft-deleted assignment via a mass-assigned `deleted_at => null`, which Eloquent
+  silently drops (not fillable), leaving the row trashed. It now restores through
+  the SoftDeletes API.
+
+### Tests
+- 21 new permission tests across three files: engine state (inactive/soft-deleted
+  assignments, `allow_guest`, `getPermissions()` shape, `getCompaniesForResource()`,
+  `syncRole`/`detachRole`, cache scope), audit trail, and the `ptah.can` middleware.
+
+### Docs
+- `docs/Permissions.md` synced with reality: corrected the `PermissionServiceContract`
+  signatures (`$user`-first `check`, `syncRole(array $companyIds)`, `detachRole`), the
+  audit semantics (audit is the master switch; `audit_denied` adds denials), the
+  generation-based `clearCache` (not cache tags), the `ptah.master` middleware and the
+  master-gated ACL routes, and the real defaults (`cache_ttl=3600`, `multi_company=true`).
+
 ## [1.4.0] — 2026-07-03
 
 ### Security — audit batch 3 (medium/low)
