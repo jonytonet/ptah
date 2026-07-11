@@ -163,9 +163,10 @@ class PermissionService implements PermissionServiceContract
         $map = $this->getPermissions($user, $resolvedCompanyId);
         $result = (bool) ($map[$objectKey][$action] ?? false);
 
-        // 3. Auditoria
+        // 3. Auditoria — grava acessos concedidos quando `audit` está ligado; os
+        //    negados só quando `audit_denied` também está (conforme documentado).
         if (config('ptah.permissions.audit')) {
-            if (! $result || config('ptah.permissions.audit_denied')) {
+            if ($result || config('ptah.permissions.audit_denied')) {
                 $this->writeAudit($userId, $resolvedCompanyId, $objectKey, $action, $result ? 'granted' : 'denied');
             }
         }
@@ -294,20 +295,36 @@ class PermissionService implements PermissionServiceContract
         }
 
         if (empty($companyIds)) {
-            UserRole::withTrashed()->updateOrCreate(
-                ['user_id' => $userId, 'role_id' => $roleId, 'company_id' => null],
-                ['is_active' => true, 'deleted_at' => null]
-            );
+            $this->upsertUserRole($userId, $roleId, null);
         } else {
             foreach ($companyIds as $companyId) {
-                UserRole::withTrashed()->updateOrCreate(
-                    ['user_id' => $userId, 'role_id' => $roleId, 'company_id' => $companyId],
-                    ['is_active' => true, 'deleted_at' => null]
-                );
+                $this->upsertUserRole($userId, $roleId, (int) $companyId);
             }
         }
 
         $this->clearCache($user);
+    }
+
+    /**
+     * Creates or (re)activates a user↔role assignment, restoring it if it was
+     * soft-deleted. Uses the SoftDeletes API (restore) rather than a mass-assigned
+     * `deleted_at => null` — the latter is silently dropped (not fillable), leaving
+     * the assignment trashed.
+     */
+    protected function upsertUserRole(int $userId, int $roleId, ?int $companyId): void
+    {
+        $ur = UserRole::withTrashed()->firstOrNew([
+            'user_id' => $userId,
+            'role_id' => $roleId,
+            'company_id' => $companyId,
+        ]);
+
+        if ($ur->trashed()) {
+            $ur->restore(); // clears deleted_at via the SoftDeletes API
+        }
+
+        $ur->is_active = true;
+        $ur->save();
     }
 
     /**
@@ -394,6 +411,9 @@ class PermissionService implements PermissionServiceContract
             ->where('user_id', $userId)
             ->where('is_active', true)
             ->forCompany($companyId)
+            // Only ACTIVE roles grant — consistent with isMaster()/queryPermission().
+            // Without this, deactivating a role would NOT revoke access via check().
+            ->whereHas('role', fn ($q) => $q->where('is_active', true))
             ->with([
                 'role.permissions' => fn ($q) => $q->whereNull('deleted_at'),
                 'role.permissions.pageObject',
