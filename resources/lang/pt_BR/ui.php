@@ -29,6 +29,9 @@ return [
     'btn_refresh' => 'Atualizar',
     'btn_clear_filters' => 'Limpar filtros',
     'per_page_suffix' => '/ pág.',
+    'url_filters_active' => 'Filtros do link',
+    'btn_clear_url_filters' => 'Limpar filtros do link',
+    'export_limit_badge' => 'Limite',
 
     /*
     |--------------------------------------------------------------------------

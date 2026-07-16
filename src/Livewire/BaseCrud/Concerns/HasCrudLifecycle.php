@@ -83,6 +83,9 @@ trait HasCrudLifecycle
         // Load user preferences
         $this->loadPreferences();
 
+        // Capture ?f[...] URL filters (override preferences while active, never persisted)
+        $this->captureUrlFilters();
+
         // Count deleted records
         $this->updateTrashedCount();
 

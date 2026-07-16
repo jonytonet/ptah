@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -173,6 +174,23 @@ class BaseCrud extends Component
     /** Named saved filters */
     public array $savedFilters = [];
 
+    /**
+     * Filters captured from the URL query string (?f[field]=value). Override
+     * saved preferences while active but are never persisted. Keyed by field:
+     * [field => ['op' => string, 'val' => mixed]].
+     *
+     * #[Locked]: captureUrlFilters() is the ONLY legitimate writer and it only
+     * runs server-side (mount()), reading from request()->query() — never from
+     * the client payload. Without this, any subsequent Livewire request could
+     * rewrite this property directly (e.g. ->set('urlFilters', [...])) and
+     * apply an arbitrary field/operator that never went through the whitelist,
+     * defeating captureUrlFilters() entirely. Locked only blocks client-side
+     * updates — server-side assignments (captureUrlFilters()/clearUrlFilters()/
+     * the precedence resets in HasCrudFilters) are unaffected.
+     */
+    #[Locked]
+    public array $urlFilters = [];
+
     /** @var string|null Name of filter currently being saved */
     public ?string $savingFilterName = null;
 
@@ -306,8 +324,17 @@ class BaseCrud extends Component
 
     public function render()
     {
+        // Computed property — memoized per request, so reusing it below (for the
+        // export-limit badge) does not trigger a second query.
+        $rows = $this->rows;
+
+        // groupBy makes total() imprecise (it counts groups, not raw rows), so the
+        // badge is only meaningful for the plain (non-grouped) listing.
+        $hasGroupBy = ! empty($this->crudConfig['groupBy']);
+        $maxExportRows = (int) ($this->crudConfig['exportConfig']['maxRows'] ?? 5000);
+
         return view('ptah::livewire.base-crud.base-crud', [
-            'rows' => $this->rows,
+            'rows' => $rows,
             'visibleCols' => $this->getVisibleColumns(),
             'formCols' => $this->getFormCols(),
             'permissions' => $this->crudConfig['permissions'] ?? [],
@@ -321,6 +348,7 @@ class BaseCrud extends Component
             'hasActiveFilters' => ! empty($this->textFilter)
                                     || $this->search !== ''
                                     || $this->quickDateFilter !== '',
+            'exportOverLimit' => ! $hasGroupBy && $rows->total() > $maxExportRows,
         ]);
     }
 

@@ -95,6 +95,12 @@
                               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="hidden sm:inline">{{ __('ptah::ui.btn_export') }}</span>
+                    @if ($exportOverLimit ?? false)
+                        <span class="inline-flex items-center justify-center px-1.5 h-4 text-[10px] font-bold leading-none rounded-full bg-warn text-dark"
+                              title="{{ __('ptah::ui.export_limit_badge') }}">
+                            {{ __('ptah::ui.export_limit_badge') }}
+                        </span>
+                    @endif
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>

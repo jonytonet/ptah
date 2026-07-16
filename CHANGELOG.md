@@ -7,6 +7,49 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.0] — 2026-07-16
+
+### BaseCrud — URL filters (`?f[...]`) + export "Limite" badge
+
+Ported from the ERP that ptah grew out of. Additive, non-breaking.
+
+- **Filters via URL (`?f[field]=value`).** Open a BaseCrud screen already
+  filtered from a link — for cross-screen navigation carrying context. Supports
+  multiple filters, explicit operators (`?f[name][op]=LIKE&f[name][val]=ACME`),
+  lists/`IN` (`?f[status][]=1&f[status][]=2`) and `BETWEEN`. Operators:
+  `=,!=,>,>=,<,<=,LIKE,NOT LIKE,IN,NOT IN,BETWEEN`.
+  - URL filters **override** saved preferences while active, are **never
+    persisted**, and are dropped the moment the user touches the filter panel.
+  - A yellow **"Filtros do link"** banner (`role="status"`) lists the active
+    link filters with a **Clear** button.
+  - **Whitelist:** only `colsIsFilterable` columns + custom-filter fields are
+    accepted; any other name is ignored.
+  - **Security:** the `urlFilters` property is `#[Locked]` (the client cannot
+    rewrite it via a Livewire payload to bypass the whitelist); the
+    company/branch scope and locked filters are applied independently, so a
+    forged `?f[company_id]=…` can only narrow within scope, never escape it.
+    Non-scalar smuggled values (`?f[x][val][][y]=1`) are discarded; `BETWEEN` on
+    a non-numeric/date column is discarded rather than silently mismatched.
+- **Export "Limite" badge.** The Export button shows a warning badge when the
+  filtered total exceeds `exportConfig.maxRows` (suppressed on grouped
+  listings, where `total()` counts groups).
+
+### Fixed
+- `ArrayFilterStrategy` / `RelationFilterStrategy` (direct-FK branch) now guard
+  the field identifier with `SqlIdentifier::isSafe()`, matching the text/numeric
+  strategies — hardening now that URL filters expose these paths to GET requests.
+- `forge-alert` gained dark-mode variants (`dark:`) for every colour scheme; the
+  warn alert is now legible on a dark background.
+
+### Tests
+- `CrudUrlFiltersTest` (19 tests: formats, whitelist, precedence, `#[Locked]`
+  client-mutation guard, non-scalar smuggling, `BETWEEN` type resolution) and
+  `CrudExportLimitBadgeTest`; `FilterStrategySecurityTest` extended.
+
+### Docs
+- `BaseCrud.md` documents URL filters (formats, behaviour, security, link
+  generation) and the export "Limite" badge.
+
 ## [1.5.0] — 2026-07-16
 
 ### Config lifecycle — export / import / doctor + canonical keys

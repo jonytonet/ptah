@@ -743,6 +743,59 @@ Defined in CrudConfig, processed separately via `FilterService::processCustomFil
 
 To activate in the template, use `wire:model="filters.{field}"`.
 
+### URL filters (`?f[...]`) — since v1.6.0
+
+Open a BaseCrud screen already filtered from a link — useful for cross-screen
+navigation that carries context (e.g. from an invoice to the quotations of that
+supplier). The `f` prefix is **required**: `?f[field]=value` (a bare `?[id]=4`
+does nothing).
+
+#### Formats
+
+```
+/route?f[status]=1                              # equals
+/route?f[business_partners_id]=123              # FK / relation column (filters the raw id)
+/route?f[status]=1&f[type]=A                    # multiple filters
+/route?f[name][op]=LIKE&f[name][val]=ACME       # explicit operator
+/route?f[status][]=1&f[status][]=2              # list → IN
+```
+
+Accepted operators: `=`, `!=`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`, `IN`,
+`NOT IN`, `BETWEEN` (as `?f[price][op]=BETWEEN&val=10,50`). Anything outside the
+list falls back to `=`. `BETWEEN` on a non-numeric/non-date column is discarded
+(never silently mismatched).
+
+#### Behaviour
+
+- URL filters **override** the saved preferences (panel / advanced search /
+  quick date) for the fields they carry, while active.
+- **Not persisted** — they never enter the user's saved preferences and vanish
+  on clear.
+- A yellow **"Filtros do link"** banner shows the active link filters with a
+  **Clear** button (`clearUrlFilters()`); clearing restores the saved prefs.
+- Applying any filter through the **panel** (or advanced search / quick date)
+  also drops the URL filters — the user decides.
+- **Whitelist:** only columns flagged `colsIsFilterable` plus custom-filter
+  fields (`field` / `colRelation`) are accepted; any other name is silently
+  ignored. You cannot filter by an arbitrary column via the URL.
+- **Tenant-safe by construction:** the company/branch scope and any locked
+  filters are applied independently of `$this->filters`/`$this->urlFilters`, so
+  a forged `?f[company_id]=…` can only *narrow* within the current scope — never
+  escape it. The `urlFilters` property is `#[Locked]`, so the client cannot
+  rewrite it via a Livewire payload to bypass the whitelist.
+
+#### Generating a link from another screen
+
+```blade
+<a href="{{ route('purchase.quotations', ['f' => ['business_partners_id' => $nfe->business_partners_id]]) }}">
+    Ver cotações deste fornecedor
+</a>
+```
+
+> The field name is the physical column (`colsNomeFisico`) or a custom-filter
+> field/`colRelation`. On screens where the supplier is a *custom relation
+> filter* (not a real column), use that filter's name.
+
 ---
 
 ## Quick Date Filters
@@ -1114,6 +1167,10 @@ BaseCrud includes a complete export system for **Excel** (.xlsx) and **PDF** wit
 - ✅ **PDF totalisers** — automatically includes aggregations (sum, avg, etc.) if configured
 - ✅ **Multilingual** — UI strings translated via `__('ptah::ui.*')`
 - ✅ **Row cap** — bounded by `exportConfig.maxRows` (default 5000)
+- ✅ **"Limite" badge** (since v1.6.0) — the Export button shows a warning badge
+  when the filtered total exceeds `exportConfig.maxRows`, so the user knows to
+  refine the filters (or use Excel). Suppressed on grouped listings, where
+  `total()` counts groups rather than rows.
 
 ### Required Dependencies
 

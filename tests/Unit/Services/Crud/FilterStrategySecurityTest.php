@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\DTO\FilterDTO;
+use Ptah\Services\Crud\Filters\ArrayFilterStrategy;
 use Ptah\Services\Crud\Filters\NumericFilterStrategy;
 use Ptah\Services\Crud\Filters\RelationFilterStrategy;
 use Ptah\Services\Crud\Filters\TextFilterStrategy;
@@ -142,6 +143,63 @@ class FilterStrategySecurityTest extends TestCase
         $result = $strategy->apply(FilterSecurityStub::query(), $filter);
 
         $this->assertNotNull($result);
+    }
+
+    #[Test]
+    #[DataProvider('maliciousFieldNames')]
+    public function relation_strategy_discards_unsafe_field_on_the_direct_fk_branch(string $field): void
+    {
+        // No 'whereHas' option → the "filtro direto na coluna FK" branch,
+        // which previously interpolated $normalized->field into where()
+        // without a SqlIdentifier guard (unlike every other strategy).
+        $strategy = new RelationFilterStrategy;
+        $filter = new FilterDTO(field: $field, value: '5', operator: '=');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertEmpty(
+            $result->getQuery()->wheres,
+            "Unsafe field [{$field}] should be discarded — no WHERE clause must be added",
+        );
+    }
+
+    #[Test]
+    public function relation_strategy_applies_the_direct_fk_branch_with_a_safe_field(): void
+    {
+        $strategy = new RelationFilterStrategy;
+        $filter = new FilterDTO(field: 'amount', value: '5', operator: '=');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertNotEmpty($result->getQuery()->wheres);
+    }
+
+    // ── ArrayFilterStrategy ───────────────────────────────────────────────────
+
+    #[Test]
+    #[DataProvider('maliciousFieldNames')]
+    public function array_strategy_discards_unsafe_field(string $field): void
+    {
+        $strategy = new ArrayFilterStrategy;
+        $filter = new FilterDTO(field: $field, value: ['1', '2'], operator: 'IN', type: 'array');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertEmpty(
+            $result->getQuery()->wheres,
+            "Unsafe field [{$field}] should be discarded — no WHERE clause must be added",
+        );
+    }
+
+    #[Test]
+    public function array_strategy_applies_where_in_with_a_safe_field(): void
+    {
+        $strategy = new ArrayFilterStrategy;
+        $filter = new FilterDTO(field: 'status', value: ['active', 'pending'], operator: 'IN', type: 'array');
+
+        $result = $strategy->apply(FilterSecurityStub::query(), $filter);
+
+        $this->assertNotEmpty($result->getQuery()->wheres);
     }
 
     // ── Shared data ───────────────────────────────────────────────────────────

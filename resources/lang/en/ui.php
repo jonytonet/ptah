@@ -28,6 +28,9 @@ return [
     'btn_refresh' => 'Refresh',
     'btn_clear_filters' => 'Clear filters',
     'per_page_suffix' => '/ page',
+    'url_filters_active' => 'Filters from link',
+    'btn_clear_url_filters' => 'Clear link filters',
+    'export_limit_badge' => 'Limit',
 
     /*
     |--------------------------------------------------------------------------
