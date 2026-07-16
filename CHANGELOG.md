@@ -35,6 +35,11 @@ in the DB), addressing the operational gaps hit while building a real ERP on pta
   marker consistently (no more "Category Id"), applies a built-in pt-BR dictionary
   (accented `Usuário`, `Observações`, `CNPJ`, …) and is extensible via
   `config('ptah.crud.label_dictionary')`.
+- **Translation overrides without freezing.** New `ptah-lang-overrides` publish tag
+  drops a minimal starter at `lang/vendor/ptah/{locale}/ui.php` where you list only
+  the `ptah::ui.*` keys you change; Laravel merges the rest (and future keys) from
+  the package. Publishing the full `ptah-lang` file (which freezes all keys) is no
+  longer the only way to customise strings.
 
 ### Tests
 - ModelKey, LabelHumanizer, ConfigDoctor, and export-all/import-all covered;

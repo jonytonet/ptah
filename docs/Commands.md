@@ -715,7 +715,8 @@ Ptah exposes several groups of publishable files via ``vendor:publish``. Each ta
 | ``ptah-config`` | Configuration file | ``config/ptah.php`` |
 | ``ptah-stubs`` | Customizable scaffold stubs | ``stubs/ptah/`` |
 | ``ptah-migrations`` | All package migrations | ``database/migrations/`` |
-| ``ptah-lang`` | Translations (pt_BR and en) | ``lang/vendor/ptah/`` |
+| ``ptah-lang`` | **Full** translations (pt_BR and en) — ⚠ freezes every key | ``lang/vendor/ptah/`` |
+| ``ptah-lang-overrides`` | Minimal override starter (change strings without freezing) | ``lang/vendor/ptah/pt_BR/ui.php`` |
 | ``ptah-views`` | Blade views (for customization) | ``resources/views/vendor/ptah/`` |
 | ``ptah-assets`` | Forge CSS | ``resources/css/vendor/ptah/`` |
 | ``ptah-menu-registry`` | MenuRegistry.php (auto-menu) | ``database/seeders/MenuRegistry.php`` |
@@ -740,6 +741,31 @@ php artisan vendor:publish --tag=ptah-config --force
 # View all package publishables
 php artisan vendor:publish --list | grep ptah
 ```
+
+### Overriding translations without freezing
+
+To change a few UI strings, **do not** publish `ptah-lang` (it copies all 1400+
+keys, pinning every one to today's wording — you stop receiving upstream fixes and
+still get new keys, but the published ones are frozen).
+
+Instead publish the minimal override and list only what you change:
+
+```bash
+php artisan vendor:publish --tag=ptah-lang-overrides
+# → lang/vendor/ptah/pt_BR/ui.php  (starts as an empty array)
+```
+
+```php
+// lang/vendor/ptah/pt_BR/ui.php
+return [
+    'btn_new'            => 'Adicionar',
+    'search_placeholder' => 'Pesquisar...',
+];
+```
+
+Laravel merges this file **over** the package's (`array_replace_recursive`), so every
+key you don't list — and every key added by future ptah versions — still comes from
+the package. For another locale, copy the file to `lang/vendor/ptah/{locale}/ui.php`.
 
 ### ptah-docker — Details
 
