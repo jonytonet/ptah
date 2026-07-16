@@ -21,6 +21,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('status')->default('active');
             $table->integer('amount')->default(0);
+            // Nullable — used by tests exercising "_id"-suffixed columns that are
+            // plain numeric fields (not an Eloquent relation), e.g. URL filters'
+            // BETWEEN type resolution. Additive; existing rows/tests are unaffected.
+            $table->integer('category_id')->nullable();
             $table->timestamps();
         });
     }

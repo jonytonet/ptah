@@ -64,7 +64,13 @@ class RelationFilterStrategy implements FilterStrategyInterface
         }
 
         if (! $whereHas) {
-            // Filtro direto na coluna FK
+            // Filtro direto na coluna FK — guard against SQL injection via the
+            // column name before it reaches where() (matches Text/Numeric/
+            // ArrayFilterStrategy; the field is config-driven, never trusted).
+            if (! SqlIdentifier::isSafe($normalized->field)) {
+                return $query;
+            }
+
             return $query->where($normalized->field, $operator, $value);
         }
 

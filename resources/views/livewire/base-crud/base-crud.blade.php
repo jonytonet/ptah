@@ -78,6 +78,11 @@
         </x-forge-alert>
     @endif
 
+    {{-- Banner: filters applied via URL (?f[...]) --}}
+    @if (!empty($urlFilters))
+        @include('ptah::livewire.base-crud.partials._url-filters-banner')
+    @endif
+
     @if (!empty($crudConfig))
 
         @include('ptah::livewire.base-crud.partials._toolbar')

@@ -7,6 +7,7 @@ namespace Ptah\Services\Crud\Filters;
 use Illuminate\Database\Eloquent\Builder;
 use Ptah\Contracts\FilterStrategyInterface;
 use Ptah\DTO\FilterDTO;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Filter strategy for array fields (whereIn / whereNotIn).
@@ -60,6 +61,13 @@ class ArrayFilterStrategy implements FilterStrategyInterface
         $field = $normalized->field;
         $value = is_array($normalized->value) ? $normalized->value : [$normalized->value];
         $operator = strtoupper($normalized->operator);
+
+        // Guard against SQL injection via the column name before it reaches
+        // whereIn()/whereNotIn() — matches Text/NumericFilterStrategy (the
+        // field is config-driven, so never trust it).
+        if (! SqlIdentifier::isSafe($field)) {
+            return $query;
+        }
 
         return match (true) {
             $operator === 'NOT IN' => $query->whereNotIn($field, $value),

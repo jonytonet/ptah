@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Carbon\Carbon;
+use Ptah\DTO\FilterDTO;
 
 /**
  * Handles all filter-related functionality: sort, search, date filters,
@@ -12,6 +13,12 @@ use Carbon\Carbon;
  */
 trait HasCrudFilters
 {
+    /**
+     * Operators accepted from the URL query string (?f[field][op]=...). Anything
+     * outside this allowlist falls back to '=' — matches what the filter
+     * strategies (src/Services/Crud/Filters/*Strategy.php) actually support.
+     */
+    private const URL_FILTER_OPERATORS = ['=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN'];
     // ── Table sorting ──────────────────────────────────────────────────────────
 
     public function sortBy(string $column): void
@@ -37,6 +44,11 @@ trait HasCrudFilters
 
     public function updatedFilters(): void
     {
+        // Touching the filter panel discards any active URL filters — the
+        // panel takes over from that point on (URL filters are not persisted).
+        if (! empty($this->urlFilters)) {
+            $this->urlFilters = [];
+        }
         $this->resetPage();
         $this->buildTextFilter();
         $this->savePreferences();
@@ -50,6 +62,9 @@ trait HasCrudFilters
 
     public function updatedDateRanges(): void
     {
+        if (! empty($this->urlFilters)) {
+            $this->urlFilters = [];
+        }
         $this->resetPage();
         $this->buildTextFilter();
         $this->savePreferences();
@@ -76,6 +91,9 @@ trait HasCrudFilters
 
     public function clearFilters(): void
     {
+        if (! empty($this->urlFilters)) {
+            $this->urlFilters = [];
+        }
         $this->filters = [];
         $this->filterOperators = [];
         $this->dateRanges = [];
@@ -194,6 +212,9 @@ trait HasCrudFilters
 
     public function applyQuickDateFilter(string $period): void
     {
+        if (! empty($this->urlFilters)) {
+            $this->urlFilters = [];
+        }
         $this->quickDateFilter = ($this->quickDateFilter === $period) ? '' : $period;
         $this->resetPage();
         $this->buildTextFilter();
@@ -310,5 +331,212 @@ trait HasCrudFilters
     {
         unset($this->savedFilters[$name]);
         $this->savePreferences();
+    }
+
+    // ── URL filters (?f[field]=value) ──────────────────────────────────────────
+
+    /**
+     * Reads `?f[...]` from the current request and normalises it into
+     * `$this->urlFilters` — a `[field => ['op' => string, 'val' => mixed]]` map.
+     *
+     * Supported query formats:
+     *   - `f[field]=value`                      → operator `=`
+     *   - `f[field][op]=LIKE&f[field][val]=x`    → explicit operator
+     *   - `f[field][]=1&f[field][]=2`            → list, operator `IN`
+     *
+     * Fields not present in `allowedFilterFields()` are silently ignored, and
+     * operators outside the allowlist fall back to `=`. Never persisted (not
+     * part of savePreferences()) and always overridden the moment the user
+     * touches the filter panel (see updatedFilters()/clearFilters()/etc.).
+     */
+    protected function captureUrlFilters(): void
+    {
+        $raw = request()->query('f', []);
+
+        if (! is_array($raw) || empty($raw)) {
+            $this->urlFilters = [];
+
+            return;
+        }
+
+        $allowed = $this->allowedFilterFields();
+        $captured = [];
+
+        foreach ($raw as $field => $spec) {
+            if (! is_string($field) || ! in_array($field, $allowed, true)) {
+                continue;
+            }
+
+            if (is_array($spec) && array_key_exists('val', $spec)) {
+                // Explicit operator: f[field][op]=...&f[field][val]=...
+                $op = is_string($spec['op'] ?? null) ? strtoupper(trim($spec['op'])) : '=';
+                $val = $spec['val'];
+
+                // val must be a scalar or a flat list of scalars. A smuggled
+                // nested structure (e.g. ?f[field][val][][sub]=1) would reach
+                // whereIn()/whereBetween() or the banner's implode() as a
+                // non-scalar and blow up the request — discard the whole
+                // filter for this field instead.
+                if (is_array($val) && array_filter($val, fn ($v) => ! is_scalar($v)) !== []) {
+                    continue;
+                }
+            } elseif (is_array($spec)) {
+                // Plain list: f[field][]=1&f[field][]=2 → IN. Non-scalar items
+                // (e.g. a smuggled ?f[field][][sub]=1) are dropped individually;
+                // the rest of the list is still usable.
+                $op = 'IN';
+                $val = array_values(array_filter($spec, 'is_scalar'));
+            } else {
+                $op = '=';
+                $val = $spec;
+            }
+
+            if (! in_array($op, self::URL_FILTER_OPERATORS, true)) {
+                $op = '=';
+            }
+
+            // BETWEEN as a CSV string ("10,50") — same convention already
+            // accepted by FilterService::processDateRangeFilters()/strategies.
+            if ($op === 'BETWEEN' && is_string($val) && str_contains($val, ',')) {
+                $val = array_map('trim', explode(',', $val, 2));
+            }
+
+            if ($val === null || $val === '' || (is_array($val) && empty($val))) {
+                continue;
+            }
+
+            $captured[$field] = ['op' => $op, 'val' => $val];
+        }
+
+        $this->urlFilters = $captured;
+    }
+
+    /**
+     * Whitelist of fields that may be driven by URL filters: CRUD columns
+     * flagged colsIsFilterable (same notion of "filterable" the panel itself
+     * uses — see _filter-panel.blade.php / CrudConfig::filterableCols()) plus
+     * custom filter fields (field / colRelation), which are always filterable
+     * by definition.
+     *
+     * @return string[]
+     */
+    protected function allowedFilterFields(): array
+    {
+        $fields = [];
+
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            if (! empty($col['colsNomeFisico']) && $this->ptahBool($col['colsIsFilterable'] ?? false)) {
+                $fields[] = $col['colsNomeFisico'];
+            }
+        }
+
+        foreach ($this->crudConfig['customFilters'] ?? [] as $cf) {
+            if (! empty($cf['field'])) {
+                $fields[] = $cf['field'];
+            }
+            if (! empty($cf['colRelation'])) {
+                $fields[] = $cf['colRelation'];
+            }
+        }
+
+        return array_values(array_unique($fields));
+    }
+
+    /**
+     * Converts the captured `$this->urlFilters` into FilterDTO[], ready for
+     * FilterService::applyFilters() — same DTO/service used by the normal
+     * filter panel flow (buildActiveFilters()).
+     *
+     * @return FilterDTO[]
+     */
+    protected function buildUrlFilterDtos(): array
+    {
+        $dtos = [];
+
+        foreach ($this->urlFilters as $field => $spec) {
+            $op = $spec['op'];
+            $val = $spec['val'];
+            $sample = is_array($val) ? ($val[0] ?? '') : $val;
+
+            // IN / NOT IN always go through the array strategy. Everything
+            // else is resolved from the real column config.
+            $type = in_array($op, ['IN', 'NOT IN'], true)
+                ? 'array'
+                : $this->resolveUrlFilterType((string) $field, $sample);
+
+            // BETWEEN only has a real implementation in Numeric/DateFilterStrategy
+            // (both explicitly whereBetween() an array value). Every other type
+            // (text, boolean, …) falls through to TextFilterStrategy's default
+            // `$query->where($field, $operator, $value)` — and 'BETWEEN' is NOT
+            // one of Laravel's recognised where() operators, so the query
+            // builder silently swaps it: `where($field, '=', 'BETWEEN')`. That
+            // is a silent wrong-result bug (0 rows, no exception), not merely an
+            // unsupported operator — discard the filter instead of risking it.
+            if ($op === 'BETWEEN' && ! in_array($type, ['number', 'date', 'datetime'], true)) {
+                continue;
+            }
+
+            $dtos[] = new FilterDTO(field: (string) $field, value: $val, operator: $op, type: $type);
+        }
+
+        return $dtos;
+    }
+
+    /**
+     * Resolves the FilterDTO type for a URL-filtered field from the REAL
+     * column config — same source of truth buildActiveFilters() uses via
+     * findColByField() — so the type is never guessed from the field's name.
+     *
+     * Relation columns (colsRelacao + colsRelacaoExibe — the same pair
+     * buildActiveFilters() checks, regardless of colsTipo: `searchdropdown`,
+     * `select`, or any future relation widget) are always resolved to
+     * 'number': the URL passes the FK id, which is filtered directly on the
+     * raw numeric column — never a whereHas() text search. This also covers
+     * the "_id" naming heuristic bug: a PLAIN numeric "_id" column
+     * (colsTipo=number, no colsRelacao) is not a relation and correctly stays
+     * 'number' via the colsTipo branch below.
+     *
+     * Falls back to FilterDTO::inferType()'s naming heuristic only when the
+     * field has no column config at all (e.g. a customFilters-only field),
+     * sampling the first element for BETWEEN's [from, to] pairs so it is not
+     * mistaken for an IN list.
+     *
+     * colsTipo values found in the package (docs/Configuration.md,
+     * CrudConfigGenerator): text, textarea, number, date, datetime, select,
+     * searchdropdown, boolean, file, image (+ 'action', never filterable).
+     * Only number/date/datetime map to a type-specific strategy; everything
+     * else (textarea, select, file, image — genuinely textual/opaque data,
+     * not a relation) falls back to 'text', which buildUrlFilterDtos() then
+     * guards against an incompatible BETWEEN.
+     */
+    protected function resolveUrlFilterType(string $field, mixed $sample): string
+    {
+        $col = $this->findColByField($field);
+
+        if (! $col) {
+            return FilterDTO::inferType($field, $sample);
+        }
+
+        if (! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe'])) {
+            return 'number';
+        }
+
+        return match ($col['colsTipo'] ?? 'text') {
+            'number' => 'number',
+            'date' => 'date',
+            'datetime' => 'datetime',
+            'boolean' => 'boolean',
+            default => 'text',
+        };
+    }
+
+    /**
+     * Discards the active URL filters (banner "Clear" button). Preferences
+     * are untouched since URL filters were never written to them.
+     */
+    public function clearUrlFilters(): void
+    {
+        $this->urlFilters = [];
+        $this->resetPage();
     }
 }

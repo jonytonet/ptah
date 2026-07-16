@@ -221,11 +221,32 @@ trait HasCrudQuery
             }
         }
 
-        // Custom filters
+        // Custom filters — skip entries whose field is overridden by a URL filter
+        // (same override contract as buildActiveFilters() below), otherwise a
+        // stale preference value would AND against the URL filter instead of
+        // being replaced by it (e.g. status='inactive' from prefs AND
+        // status='active' from ?f[status]=active → 0 rows).
         $customFilterConfig = $this->crudConfig['customFilters'] ?? [];
+        if (! empty($this->urlFilters)) {
+            $customFilterConfig = array_values(array_filter(
+                $customFilterConfig,
+                fn (array $cf) => ! array_key_exists((string) ($cf['field'] ?? ''), $this->urlFilters)
+            ));
+        }
         $cfFilters = $this->filterService->processCustomFilters($customFilterConfig, $this->filters);
         if (! empty($cfFilters)) {
             $this->filterService->applyFilters($query, $cfFilters);
+        }
+
+        // URL filters (?f[field]=value) — override the panel/preferences for the
+        // fields they carry (buildActiveFilters() already skips those fields, so
+        // this is not a duplicate AND). Company scope and locked filters above
+        // are untouched — the URL can only narrow, never escape them.
+        if (! empty($this->urlFilters)) {
+            $urlDtos = $this->buildUrlFilterDtos();
+            if (! empty($urlDtos)) {
+                $this->filterService->applyFilters($query, $urlDtos);
+            }
         }
 
         return [$query, $joinedTables];
@@ -451,6 +472,13 @@ trait HasCrudQuery
         )));
 
         foreach ($fields as $field) {
+            // A URL filter (?f[field]=...) overrides this field entirely — skip
+            // it here so buildBaseQuery() applies the URL version instead of
+            // ANDing both together.
+            if (array_key_exists($field, $this->urlFilters)) {
+                continue;
+            }
+
             $value = $this->filters[$field] ?? null;
 
             // Normalise the operator: empty / non-string "select…" becomes null.
