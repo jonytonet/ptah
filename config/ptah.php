@@ -159,6 +159,14 @@ return [
         | resolve under the first entry.
         */
         'hook_namespaces' => ['App\\CrudHooks'],
+
+        /*
+        | Overrides/extends the built-in pt-BR label dictionary used by ptah:forge
+        | and ptah:config when deriving colsNomeLogico from a column name.
+        | Keys = column name (lowercase, without a trailing _id). Example:
+        |   'observacoes' => 'Observações', 'valor_total' => 'Valor Total'
+        */
+        'label_dictionary' => [],
     ],
 
     /*

@@ -1,0 +1,25 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Ptah translation overrides (per-key, no freeze)
+|--------------------------------------------------------------------------
+|
+| Return ONLY the `ptah::ui.*` keys you want to change. Laravel merges this
+| file OVER the package's translations (array_replace_recursive), so:
+|   - every key you DON'T list here still comes from the package;
+|   - new keys added by future ptah versions appear automatically.
+|
+| This is how you customise strings WITHOUT freezing the whole file — unlike
+| publishing the full `ptah-lang` file, which pins all 1400+ keys to today's
+| wording.
+|
+| Example:
+|   'btn_new'            => 'Adicionar',
+|   'search_placeholder' => 'Pesquisar...',
+|
+*/
+
+return [
+    //
+];

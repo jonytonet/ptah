@@ -47,12 +47,12 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 translate-y-2"
-                 class="flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-semibold"
+                 class="flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-semibold"
                  :class="{
-                     'bg-success': t.color === 'success',
-                     'bg-warn':    t.color === 'warn',
-                     'bg-danger':  t.color === 'danger',
-                     'bg-primary': t.color === 'primary'
+                     'bg-success text-white': t.color === 'success',
+                     'bg-warn text-dark':     t.color === 'warn',
+                     'bg-danger text-white':  t.color === 'danger',
+                     'bg-primary text-white': t.color === 'primary'
                  }">
                 <svg x-show="t.color === 'success'" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <svg x-show="t.color === 'warn'"    class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>

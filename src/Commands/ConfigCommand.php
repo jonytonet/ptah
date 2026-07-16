@@ -21,6 +21,7 @@ use Ptah\Commands\Config\Wizards\StyleWizard;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Services\Validation\Formatters\CliErrorFormatter;
+use Ptah\Support\ModelKey;
 
 class ConfigCommand extends Command
 {
@@ -94,36 +95,44 @@ class ConfigCommand extends Command
      */
     public function handle()
     {
-        $modelClass = $this->argument('model');
+        $modelArg = (string) $this->argument('model');
 
-        // Validate model
-        if (! $this->introspector->validateModelClass($modelClass)) {
-            $this->error("Model class '{$modelClass}' not found or is not a valid Eloquent model.");
+        // Accept the FQCN ("App\Models\Catalog\Product") OR the runtime key
+        // ("Catalog/Product"); resolve to the concrete class either way.
+        $modelClass = $this->introspector->resolveClass($modelArg);
+
+        if (! $modelClass) {
+            $this->error("Model '{$modelArg}' not found or is not a valid Eloquent model.");
 
             return 1;
         }
 
+        // Always persist/read under the CANONICAL key the runtime looks up — so
+        // `ptah:config "App\Models\X"` no longer writes an orphan row the BaseCrud
+        // (invoked with "X") never reads.
+        $modelKey = ModelKey::canonical($modelClass);
+
         // Handle special actions
         if ($this->option('list')) {
-            return $this->listConfiguration($modelClass);
+            return $this->listConfiguration($modelKey);
         }
 
         if ($this->option('reset')) {
-            return $this->resetConfiguration($modelClass);
+            return $this->resetConfiguration($modelKey);
         }
 
         if ($import = $this->option('import')) {
-            return $this->importConfiguration($modelClass, $import);
+            return $this->importConfiguration($modelKey, $import);
         }
 
         if ($export = $this->option('export')) {
-            return $this->exportConfiguration($modelClass, $export);
+            return $this->exportConfiguration($modelKey, $export);
         }
 
         $route = (string) ($this->option('route') ?? '');
 
         // Load existing configuration
-        $this->config = $this->loadConfiguration($modelClass, $route);
+        $this->config = $this->loadConfiguration($modelKey, $route);
 
         // Determine mode: interactive or declarative
         $hasOptions = $this->option('column')
@@ -146,7 +155,7 @@ class ConfigCommand extends Command
 
         // Save if not dry-run
         if (! $this->option('dry-run')) {
-            $this->saveConfiguration($modelClass, $this->config, $route ?? '');
+            $this->saveConfiguration($modelKey, $this->config, $route ?? '');
             $this->info('✓ Configuration saved successfully!');
         } else {
             $this->warn('Dry-run mode: No changes were saved.');

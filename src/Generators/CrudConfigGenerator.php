@@ -8,6 +8,7 @@ use Illuminate\Filesystem\Filesystem;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Support\EntityContext;
 use Ptah\Support\FieldDefinition;
+use Ptah\Support\LabelHumanizer;
 
 /**
  * CrudConfig generator.
@@ -232,7 +233,7 @@ class CrudConfigGenerator extends AbstractGenerator
 
     private function humanLabel(string $name): string
     {
-        return ucwords(str_replace('_', ' ', preg_replace('/_id$/', '', $name) ?? $name));
+        return LabelHumanizer::make($name);
     }
 
     private function buildDateRangeFilters(EntityContext $context): array

@@ -56,7 +56,7 @@
                 </svg>
                 <span class="hidden sm:inline">{{ __('ptah::ui.btn_filters') }}</span>
                 @if ($activeFilterCount > 0)
-                    <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-danger">
+                    <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-primary">
                         {{ $activeFilterCount }}
                     </span>
                 @endif
@@ -156,7 +156,7 @@
                     </svg>
                     <span class="hidden sm:inline">{{ __('ptah::ui.btn_columns') }}</span>
                     @if ($hiddenColumnsCount > 0)
-                        <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-amber-500">
+                        <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-dark rounded-full bg-warn">
                             {{ $hiddenColumnsCount }}
                         </span>
                     @endif

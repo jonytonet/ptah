@@ -83,7 +83,7 @@
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
+                                        <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
                                         <div class="flex gap-1">
                                             <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
                                                 class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
@@ -97,7 +97,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <p class="mb-1 text-xs text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
+                                        <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
                                         <div class="flex gap-1">
                                             <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
                                                 class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
@@ -149,11 +149,11 @@
                                 {{-- Badge de seleção ativa --}}
                                 @if ($cfFilterSelected)
                                     <div class="flex items-center gap-1 mb-1.5">
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                        <span class="ptah-c-chip">
                                             {{ $cfFilterSelected }}
                                             <button type="button"
                                                 wire:click="clearFilterDropdownSelection('{{ $cfField }}')"
-                                                class="ml-0.5 hover:text-blue-900 leading-none">&times;</button>
+                                                class="leading-none" title="{{ __('ptah::ui.btn_clear_filters') }}">&times;</button>
                                         </span>
                                     </div>
                                 @endif

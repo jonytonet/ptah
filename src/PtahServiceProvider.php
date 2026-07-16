@@ -11,6 +11,9 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Ptah\Commands\Config\ConfigDoctorCommand;
+use Ptah\Commands\Config\ConfigExportAllCommand;
+use Ptah\Commands\Config\ConfigImportAllCommand;
 use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
@@ -187,6 +190,9 @@ class PtahServiceProvider extends ServiceProvider
                 MenuSyncCommand::class,      // ptah:menu-sync
                 ModuleCommand::class,        // ptah:module
                 ConfigCommand::class,        // ptah:config
+                ConfigDoctorCommand::class,     // ptah:config:doctor
+                ConfigExportAllCommand::class,  // ptah:config:export-all
+                ConfigImportAllCommand::class,  // ptah:config:import-all
                 MakeHooksCommand::class,     // ptah:hooks
             ]);
         }
@@ -322,10 +328,20 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/css' => resource_path('css/vendor/ptah'),
             ], 'ptah-assets');
 
-            // Publish translations (allows per-project customisation)
+            // Publish translations (allows per-project customisation).
+            // ⚠ This copies the WHOLE file (1400+ keys) → those keys freeze to the
+            // current wording. Prefer `ptah-lang-overrides` unless you are doing a
+            // full re-translation / adding a new language.
             $this->publishes([
                 __DIR__.'/../resources/lang' => lang_path('vendor/ptah'),
             ], 'ptah-lang');
+
+            // Minimal, non-freezing translation override. Publishes a starter file
+            // where you list ONLY the keys you change — Laravel merges the rest (and
+            // any future keys) from the package (array_replace_recursive).
+            $this->publishes([
+                __DIR__.'/Stubs/lang-override.stub' => lang_path('vendor/ptah/pt_BR/ui.php'),
+            ], 'ptah-lang-overrides');
 
             // Publish auth module (migrations + views)
             $this->publishes([

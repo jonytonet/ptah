@@ -28,8 +28,8 @@
     $uniqueId        = 'forge-select-' . uniqid();
     $disabledClass   = $disabled ? 'opacity-50 pointer-events-none' : '';
     $borderNormal    = $error ? 'border-red-400' : 'border-gray-300';
-    $borderOpen      = $error ? 'border-red-500' : 'border-blue-600';
-    $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-blue-100';
+    $borderOpen      = $error ? 'border-red-500' : 'border-primary';
+    $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-primary/20';
     $initialSelected = $multiple ? '[]' : ($selected !== null ? json_encode($selected) : 'null');
 @endphp
 
@@ -73,6 +73,27 @@
                     this.selected = String(value);
                     this.open = false;
                 }
+            },
+            activeIndex: -1,
+            openList() {
+                this.open = true;
+                if (this.activeIndex < 0) {
+                    const sel = this.options.findIndex(o => this.isSelected(o.value));
+                    this.activeIndex = sel >= 0 ? sel : 0;
+                }
+            },
+            move(delta) {
+                if (!this.open) { this.openList(); return; }
+                const n = this.options.length;
+                if (!n) return;
+                this.activeIndex = (this.activeIndex + delta + n) % n;
+            },
+            selectActive() {
+                if (this.open && this.activeIndex >= 0 && this.options[this.activeIndex]) {
+                    this.toggle(this.options[this.activeIndex].value);
+                } else {
+                    this.open = !this.open;
+                }
             }
         }"
         @click.outside="open = false"
@@ -90,10 +111,20 @@
         >
 
         {{-- Trigger --}}
-        <div
+        <button
+            type="button"
             @click="open = !open"
+            @keydown.enter.prevent="selectActive()"
+            @keydown.space.prevent="selectActive()"
+            @keydown.arrow-down.prevent="move(1)"
+            @keydown.arrow-up.prevent="move(-1)"
+            @keydown.escape.prevent="open = false"
+            role="combobox"
+            aria-haspopup="listbox"
+            :aria-expanded="open"
+            aria-controls="{{ $uniqueId }}-list"
             :class="open ? '{{ $borderOpen }} {{ $ringOpen }}' : '{{ $borderNormal }}'"
-            class="ptah-select-trigger relative flex items-center justify-between rounded-md border bg-white px-3 py-2.5 cursor-pointer select-none transition-colors duration-150"
+            class="ptah-select-trigger relative flex w-full items-center justify-between rounded-md border bg-white px-3 py-2.5 text-left cursor-pointer select-none transition-colors duration-150 focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
         >
             <span
                 :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'ptah-c-sel_val' : 'text-gray-400'"
@@ -106,7 +137,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
             </span>
-        </div>
+        </button>
 
         {{-- Dropdown --}}
         <div
@@ -120,15 +151,18 @@
             x-transition:leave-end="opacity-0"
             class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md overflow-auto max-h-48"
         >
-            <ul class="py-1">
-                <template x-for="option in options" :key="option.value">
+            <ul class="py-1" role="listbox" id="{{ $uniqueId }}-list" :aria-multiselectable="multiple">
+                <template x-for="(option, idx) in options" :key="option.value">
                     <li
                         @click="toggle(option.value)"
-                        :class="isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
+                        @mouseenter="activeIndex = idx"
+                        role="option"
+                        :aria-selected="isSelected(option.value)"
+                        :class="[ isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item', activeIndex === idx ? 'ptah-select-active' : '' ]"
                         class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors duration-100"
                     >
                         <span x-text="option.label"></span>
-                        <svg x-show="isSelected(option.value)" class="h-4 w-4 text-blue-600 shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <svg x-show="isSelected(option.value)" class="h-4 w-4 text-primary shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                         </svg>
                     </li>

@@ -5,6 +5,12 @@
 
 @import "tailwindcss";
 
+/* Make `dark:` utilities follow Ptah's `.ptah-dark` toggle (set by the layout /
+   the user's theme switch) instead of only the OS `prefers-color-scheme`. Without
+   this, modal/cards styled with `dark:` stayed light when a user on an OS-light
+   system enabled dark mode in the app. */
+@custom-variant dark (&:where(.ptah-dark, .ptah-dark *));
+
 /* ── Design Tokens ── */
 @theme {
     /* Primary — Blue (IBM / Enterprise) */

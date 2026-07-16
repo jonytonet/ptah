@@ -39,15 +39,22 @@
 
 @if ($arrayMode)
 {{-- ── Modo Array / Alpine ── --}}
-<div x-data="{ activeTab: '{{ $firstTab }}' }" {{ $attributes }}>
-    <div class="relative border-b border-gray-200 overflow-x-auto scrollbar-none">
-        <div class="flex min-w-max">
+<div x-data="{ activeTab: '{{ $firstTab }}', tabIds: {{ \Illuminate\Support\Js::from(array_column($tabs, 'id')) }}, move(d){ const i = this.tabIds.indexOf(this.activeTab); this.activeTab = this.tabIds[(i + d + this.tabIds.length) % this.tabIds.length]; } }" {{ $attributes }}>
+    <div class="relative border-b border-gray-200 dark:border-slate-700 overflow-x-auto scrollbar-none">
+        <div class="flex min-w-max" role="tablist">
             @foreach($tabs as $tab)
                 <button
                     type="button"
+                    role="tab"
+                    id="tab-{{ $tab['id'] }}"
+                    aria-controls="panel-{{ $tab['id'] }}"
+                    :aria-selected="activeTab === '{{ $tab['id'] }}' ? 'true' : 'false'"
+                    :tabindex="activeTab === '{{ $tab['id'] }}' ? 0 : -1"
                     @click="activeTab = '{{ $tab['id'] }}'"
-                    :class="activeTab === '{{ $tab['id'] }}' ? '{{ $active }}' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'"
-                    class="px-4 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap focus:outline-none"
+                    @keydown.arrow-right.prevent="move(1); $el.parentElement.querySelector('[aria-selected=true]')?.focus()"
+                    @keydown.arrow-left.prevent="move(-1); $el.parentElement.querySelector('[aria-selected=true]')?.focus()"
+                    :class="activeTab === '{{ $tab['id'] }}' ? '{{ $active }}' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 border-b-2 border-transparent'"
+                    class="px-4 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-t"
                 >
                     {{ $tab['label'] }}
                 </button>
@@ -57,6 +64,10 @@
     <div class="mt-4">
         @foreach($tabs as $tab)
             <div
+                role="tabpanel"
+                id="panel-{{ $tab['id'] }}"
+                aria-labelledby="tab-{{ $tab['id'] }}"
+                tabindex="0"
                 x-show="activeTab === '{{ $tab['id'] }}'"
                 x-transition:enter="transition ease-out duration-150"
                 x-transition:enter-start="opacity-0 translate-y-1"
@@ -73,8 +84,8 @@
 @else
 {{-- ── Modo Slot / Livewire ── --}}
 <div {{ $attributes }}>
-    <div class="relative border-b border-gray-200 overflow-x-auto scrollbar-none">
-        <div class="flex min-w-max">
+    <div class="relative border-b border-gray-200 dark:border-slate-700 overflow-x-auto scrollbar-none">
+        <div class="flex min-w-max" role="tablist">
             {{ $tabs }}
         </div>
     </div>

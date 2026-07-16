@@ -7,6 +7,81 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.0] — 2026-07-16
+
+### Config lifecycle — export / import / doctor + canonical keys
+
+First-class tooling for versioning and auditing BaseCrud configs (they live only
+in the DB), addressing the operational gaps hit while building a real ERP on ptah.
+
+- **`ptah:config:export-all [path]`** / **`ptah:config:import-all [path]`** — dump
+  every `crud_configs` row to a versionable directory (one pretty JSON per
+  model/route, default `database/ptah/crud-configs`) and rebuild them on a fresh
+  DB. `model`/`route` are read from file content, so the folder is git-diffable and
+  the import is idempotent (doubles as a seeding step).
+- **`ptah:config:doctor [--fix]`** — audits all configs and surfaces the silent
+  failures the per-model tooling can't: **orphan (non-canonical) keys**, **malformed
+  configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns), and
+  **route ambiguity** (a model with both a global and a route-specific config).
+  Non-zero exit on errors (CI-friendly); `--fix` rewrites orphan keys.
+- **Canonical model key (fixes the FQCN×slash footgun).** `ptah:config` now accepts
+  either the FQCN (`App\Models\Catalog\Product`) or the runtime key
+  (`Catalog/Product`) and always stores under the canonical key BaseCrud actually
+  reads — so it no longer writes orphan rows the runtime never loads. New
+  `Ptah\Support\ModelKey::canonical()` is the single source of truth (shared by
+  forge, config and doctor).
+- **Unified pt-BR label generation.** `ptah:forge` and `ptah:config` now derive
+  column labels through one `Ptah\Support\LabelHumanizer` — it strips the `_id`
+  marker consistently (no more "Category Id"), applies a built-in pt-BR dictionary
+  (accented `Usuário`, `Observações`, `CNPJ`, …) and is extensible via
+  `config('ptah.crud.label_dictionary')`.
+- **Translation overrides without freezing.** New `ptah-lang-overrides` publish tag
+  drops a minimal starter at `lang/vendor/ptah/{locale}/ui.php` where you list only
+  the `ptah::ui.*` keys you change; Laravel merges the rest (and future keys) from
+  the package. Publishing the full `ptah-lang` file (which freezes all keys) is no
+  longer the only way to customise strings.
+
+### UX/UI & accessibility (full interface review — sidebar → BaseCrud)
+
+A dedicated UX pass covering the Forge components, the BaseCrud screens
+(toolbar, table, cards, modal/form, filters) and the layout CSS.
+
+- **Keyboard + screen-reader support across the Forge components.**
+  `<x-forge-select>` is now a real combobox (`role`, `aria-expanded`,
+  `aria-controls`, arrow/enter/space/escape navigation, active-option highlight);
+  `<x-forge-modal>` exposes `role="dialog"` + `aria-modal` + `aria-labelledby`;
+  `<x-forge-tabs>` (array mode) implements the tablist/tab/tabpanel pattern with
+  roving `tabindex` and arrow-key navigation. Every interactive control gained a
+  visible `focus-visible` ring.
+- **Everything runs on the theme tokens.** Hardcoded blue focus states (inputs,
+  select, filter panel) now derive from the configured primary via `color-mix()`
+  tints — re-theming actually re-themes the whole UI. A `@custom-variant dark`
+  makes `dark:` follow the `.ptah-dark` toggle instead of only the OS preference.
+- **Contrast (WCAG AA).** Muted text (empty-state subtitle, card id, date-range
+  labels) darkened in light mode; warn toasts, badges and avatars switched to dark
+  text on amber (white failed); filter and count badges recolored to semantic
+  tokens (`bg-primary`/`bg-warn`) instead of raw blue/amber utilities.
+- **Focus & structure fixes.** Modal form fields no longer use a positive
+  `tabindex` (which jumped focus ahead of the footer); the sticky action column now
+  tracks row hover/selected state so the brand tint runs edge-to-edge instead of
+  leaving a seam; grid cards use a dedicated `.ptah-c-card` surface rather than the
+  table-wrapper class; `prefers-reduced-motion` disables animations.
+- **Translatable microcopy.** Component close/aria labels (alert, modal,
+  notification, spinner, password toggle) are now `ptah::ui.*` keys (pt-BR + en).
+- **Back-compat `<x-forge-alert>` aliases.** Accepts `type="warning|info|error"`
+  and `:dismissible` (mapped to `color`/`closable`), matching how the ERP screens
+  already call it — covered by a new test.
+
+### Tests
+- ModelKey, LabelHumanizer, ConfigDoctor, and export-all/import-all covered;
+  ConfigCommand tests assert the canonical-key storage. New forge-alert alias test.
+
+### Docs
+- `Commands.md` documents the three new commands + the canonical-key behaviour;
+  `Configuration.md` replaces the hand-rolled export/import bash scripts with the
+  native bulk commands; the README command table now lists `ptah:config` and the
+  config-lifecycle commands.
+
 ## [1.4.1] — 2026-07-09
 
 ### Fixed — permission engine (found while expanding test coverage)

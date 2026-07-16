@@ -18,7 +18,7 @@
         'primary' => 'bg-primary text-white',
         'success' => 'bg-success text-white',
         'danger'  => 'bg-danger text-white',
-        'warn'    => 'bg-warn text-white',
+        'warn'    => 'bg-warn text-dark',
         'dark'    => 'bg-dark text-white',
         'light'   => 'bg-gray-100 text-gray-800',
     ];

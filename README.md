@@ -283,8 +283,13 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 |---|---|
 | `php artisan ptah:install` | Installs the package (config, stubs, migrations, default data). Flags: `--demo`, `--boost`, `--force`, `--skip-npm` |
 | `php artisan ptah:forge {Entity}` | **Generates the complete structure for an entity** ⭐ |
+| `php artisan ptah:config {Model}` | Configures a BaseCrud screen (columns/filters/actions/styles) via CLI. Accepts the FQCN or the runtime key |
+| `php artisan ptah:config:doctor` | Audits all CRUD configs — orphan keys, malformed configs, empty screens, route ambiguity (`--fix` repairs orphan keys) |
+| `php artisan ptah:config:export-all` / `import-all` | Version the whole config set to a git-friendly directory and rebuild it (seeding) |
 | `php artisan ptah:module {module}` | Enables an optional module |
 | `php artisan ptah:module --list` | Lists modules and their states |
+| `php artisan ptah:menu-sync` | Syncs the sidebar menu from the MenuRegistry |
+| `php artisan ptah:hooks {Entity}` | Scaffolds a lifecycle-hooks class for an entity |
 | `php artisan ptah:docs {Entity}` | Generates Swagger/OpenAPI annotations |
 
 ---
