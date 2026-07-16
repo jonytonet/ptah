@@ -2285,58 +2285,29 @@ project/
 │           └── product.json
 ```
 
-### Full Export
+### Full Export / Import (since v1.5.0)
+
+Use the built-in bulk commands — no per-model script, no hardcoded model list, and
+keys are canonicalised automatically:
 
 ```bash
-#!/bin/bash
-# export-all-configs.sh
+# Snapshot every config to a versionable directory (one JSON per model/route)
+php artisan ptah:config:export-all              # → database/ptah/crud-configs
+git add database/ptah/crud-configs && git commit -m "chore: snapshot CRUD configs"
 
-EXPORT_DIR="config/cruds"
-mkdir -p $EXPORT_DIR
+# Rebuild them on any environment (idempotent — doubles as a seeding step)
+php artisan ptah:config:import-all
 
-MODELS=(
-  "App\Models\Product"
-  "App\Models\Category"
-  "App\Models\User"
-  "App\Models\Order"
-  "App\Models\Customer"
-)
-
-for MODEL in "${MODELS[@]}"; do
-  FILENAME=$(echo $MODEL | sed 's/.*\\//' | tr '[:upper:]' '[:lower:]')
-  php artisan ptah:config "$MODEL" --export="$EXPORT_DIR/$FILENAME.json"
-  echo "✓ Exported $MODEL → $EXPORT_DIR/$FILENAME.json"
-done
-
-echo ""
-echo "✓ All configurations exported!"
-echo "Commit with: git add $EXPORT_DIR && git commit -m 'chore: export CRUD configs'"
+# Audit the set before/after (orphan keys, malformed, empty, route ambiguity)
+php artisan ptah:config:doctor          # report
+php artisan ptah:config:doctor --fix    # repair orphan (non-canonical) keys
 ```
 
-### Full Import
+Each file carries its own `model`/`route`, so the directory is git-diffable and the
+import can't reintroduce an orphan key. See [Commands.md](Commands.md#ptahconfigexport-all--import-all).
 
-```bash
-#!/bin/bash
-# import-all-configs.sh
-
-IMPORT_DIR="config/cruds"
-
-if [ ! -d "$IMPORT_DIR" ]; then
-  echo "❌ Directory $IMPORT_DIR not found"
-  exit 1
-fi
-
-for FILE in $IMPORT_DIR/*.json; do
-  BASENAME=$(basename $FILE .json)
-  MODEL="App\Models\$(echo $BASENAME | sed 's/^./\u&/')"
-  
-  php artisan ptah:config "$MODEL" --import="$FILE"
-  echo "✓ Imported $FILE → $MODEL"
-done
-
-echo ""
-echo "✓ All configurations imported!"
-```
+> **Legacy per-model scripts** (`ptah:config "App\Models\X" --export=…`) still work,
+> but a bash loop over a hardcoded model list is no longer needed.
 
 ---
 

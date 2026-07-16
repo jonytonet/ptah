@@ -40,6 +40,12 @@ in the DB), addressing the operational gaps hit while building a real ERP on pta
 - ModelKey, LabelHumanizer, ConfigDoctor, and export-all/import-all covered;
   ConfigCommand tests assert the canonical-key storage.
 
+### Docs
+- `Commands.md` documents the three new commands + the canonical-key behaviour;
+  `Configuration.md` replaces the hand-rolled export/import bash scripts with the
+  native bulk commands; the README command table now lists `ptah:config` and the
+  config-lifecycle commands.
+
 ## [1.4.1] — 2026-07-09
 
 ### Fixed — permission engine (found while expanding test coverage)
