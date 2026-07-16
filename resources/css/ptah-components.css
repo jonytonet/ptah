@@ -26,6 +26,16 @@
 /* x-cloak — oculta elementos Alpine até hidratação */
 [x-cloak] { display: none !important; }
 
+/* Respect users who ask for less motion (spinners, loading bar, transitions). */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 /* ── Toolbar ── */
 .ptah-c-toolbar            { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
 .ptah-dark .ptah-c-toolbar { background-color: #0f172a; border-color: #334155; box-shadow: none; }
@@ -41,8 +51,15 @@
 /* ── Icon/action buttons na toolbar ── */
 .ptah-c-btn               { background-color: #ffffff; border-color: #e2e8f0; color: #475569; }
 .ptah-c-btn:hover         { background-color: #f8fafc; }
+/* Visible keyboard focus (WCAG 2.4.7) — the toolbar buttons use focus:outline-none. */
+.ptah-c-btn:focus-visible { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 .ptah-dark .ptah-c-btn    { background-color: #1e293b; border-color: #475569; color: #cbd5e1; }
 .ptah-dark .ptah-c-btn:hover { background-color: #334155; }
+.ptah-dark .ptah-c-btn:focus-visible { border-color: var(--ptah-primary-lite); }
+
+/* forge-select: keyboard-highlighted option (arrow keys) */
+.ptah-select-active            { background-color: var(--ptah-primary-soft); }
+.ptah-dark .ptah-select-active { background-color: color-mix(in srgb, var(--ptah-primary) 24%, transparent); }
 
 /* ── Per-page select ── */
 .ptah-c-perpage            { background-color: #f8fafc; border: 1px solid #94a3b8; color: #475569; transition: border-color 150ms ease; }
@@ -102,6 +119,10 @@
 .ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb       { background-color: #475569; }
 .ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover { background-color: #64748b; }
 
+/* ── Card (grid/mobile) — dedicated surface, not the table wrapper ── */
+.ptah-c-card            { border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-card { border-color: #334155; box-shadow: none; }
+
 /* ── Table thead ── */
 .ptah-c-thead              { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; }
 .ptah-dark .ptah-c-thead   { background-color: rgba(30,41,59,0.8); border-bottom: 2px solid #334155; }
@@ -125,6 +146,17 @@
 /* ── Table tbody divider ── */
 .ptah-dark .ptah-c-tbody_div > * + * { border-top-color: rgba(51,65,85,0.5); }
 
+/* Sticky action column — opaque (hides content scrolling under it) but tracks the row state
+   so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell */
+.ptah-c-sticky_cell                                              { background-color: #ffffff; }
+.ptah-dark .ptah-c-sticky_cell                                   { background-color: #1e293b; }
+.ptah-c-tbody_div > *:hover .ptah-c-sticky_cell                  { background-color: #f8fafc; }
+.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: rgba(51,65,85,0.6); }
+.ptah-c-tr_selected .ptah-c-sticky_cell,
+.ptah-c-tr_selected:hover .ptah-c-sticky_cell                    { background-color: var(--ptah-primary-softer); }
+.ptah-dark .ptah-c-tr_selected .ptah-c-sticky_cell,
+.ptah-dark .ptah-c-tr_selected:hover .ptah-c-sticky_cell         { background-color: var(--ptah-primary-soft-d); }
+
 /* ── Empty state ── */
 .ptah-c-empty_box          { background-color: #f8fafc; box-shadow: 0 0 0 6px #f8fafc66, inset 0 0 0 1px #e2e8f0; border-radius: 9999px; }
 .ptah-dark .ptah-c-empty_box { background-color: rgba(51,65,85,0.6); box-shadow: 0 0 0 6px rgba(51,65,85,0.25), inset 0 0 0 1px #475569; }
@@ -132,8 +164,8 @@
 .ptah-c-empty_ttl          { color: #374151; }
 .ptah-dark .ptah-c-empty_ttl { color: #cbd5e1; }
 
-.ptah-c-empty_sub          { color: #94a3b8; }
-.ptah-dark .ptah-c-empty_sub { color: #64748b; }
+.ptah-c-empty_sub          { color: #64748b; }
+.ptah-dark .ptah-c-empty_sub { color: #94a3b8; }
 
 /* ── Table footer / totalizadores ── */
 .ptah-c-tfoot              { border-top: 2px solid #e2e8f0; background-color: #f8fafc; }

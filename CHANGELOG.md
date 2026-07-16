@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.5.0] — 2026-07-09
+## [1.5.0] — 2026-07-16
 
 ### Config lifecycle — export / import / doctor + canonical keys
 
@@ -41,9 +41,40 @@ in the DB), addressing the operational gaps hit while building a real ERP on pta
   the package. Publishing the full `ptah-lang` file (which freezes all keys) is no
   longer the only way to customise strings.
 
+### UX/UI & accessibility (full interface review — sidebar → BaseCrud)
+
+A dedicated UX pass covering the Forge components, the BaseCrud screens
+(toolbar, table, cards, modal/form, filters) and the layout CSS.
+
+- **Keyboard + screen-reader support across the Forge components.**
+  `<x-forge-select>` is now a real combobox (`role`, `aria-expanded`,
+  `aria-controls`, arrow/enter/space/escape navigation, active-option highlight);
+  `<x-forge-modal>` exposes `role="dialog"` + `aria-modal` + `aria-labelledby`;
+  `<x-forge-tabs>` (array mode) implements the tablist/tab/tabpanel pattern with
+  roving `tabindex` and arrow-key navigation. Every interactive control gained a
+  visible `focus-visible` ring.
+- **Everything runs on the theme tokens.** Hardcoded blue focus states (inputs,
+  select, filter panel) now derive from the configured primary via `color-mix()`
+  tints — re-theming actually re-themes the whole UI. A `@custom-variant dark`
+  makes `dark:` follow the `.ptah-dark` toggle instead of only the OS preference.
+- **Contrast (WCAG AA).** Muted text (empty-state subtitle, card id, date-range
+  labels) darkened in light mode; warn toasts, badges and avatars switched to dark
+  text on amber (white failed); filter and count badges recolored to semantic
+  tokens (`bg-primary`/`bg-warn`) instead of raw blue/amber utilities.
+- **Focus & structure fixes.** Modal form fields no longer use a positive
+  `tabindex` (which jumped focus ahead of the footer); the sticky action column now
+  tracks row hover/selected state so the brand tint runs edge-to-edge instead of
+  leaving a seam; grid cards use a dedicated `.ptah-c-card` surface rather than the
+  table-wrapper class; `prefers-reduced-motion` disables animations.
+- **Translatable microcopy.** Component close/aria labels (alert, modal,
+  notification, spinner, password toggle) are now `ptah::ui.*` keys (pt-BR + en).
+- **Back-compat `<x-forge-alert>` aliases.** Accepts `type="warning|info|error"`
+  and `:dismissible` (mapped to `color`/`closable`), matching how the ERP screens
+  already call it — covered by a new test.
+
 ### Tests
 - ModelKey, LabelHumanizer, ConfigDoctor, and export-all/import-all covered;
-  ConfigCommand tests assert the canonical-key storage.
+  ConfigCommand tests assert the canonical-key storage. New forge-alert alias test.
 
 ### Docs
 - `Commands.md` documents the three new commands + the canonical-key behaviour;

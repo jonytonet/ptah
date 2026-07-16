@@ -83,7 +83,7 @@
                             $fMask     = $col['colsMask'] ?? null;
                             $fValue    = $formData[$fField] ?? '';
                             $fHelpText = $col['colsHelpText'] ?? null;
-                            $tabIdx    = $loop->index + 1;
+                            $tabIdx    = 0; // natural DOM order — a positive tabindex jumped fields ahead of the footer/close
 
             $fBorderClass  = $fError
                                 ? 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-300'

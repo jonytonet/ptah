@@ -56,7 +56,11 @@
     ></div>
 
     {{-- Painel --}}
+    @php $modalTitleId = $title ? 'forge-modal-title-'.\Illuminate\Support\Str::random(6) : null; @endphp
     <div
+        role="dialog"
+        aria-modal="true"
+        @if ($modalTitleId) aria-labelledby="{{ $modalTitleId }}" @endif
         class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-2xl overflow-hidden"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"
@@ -69,7 +73,7 @@
         {{-- Header --}}
         <div class="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
             <div>
-                <h3 class="text-base font-semibold text-gray-800 dark:text-white">{{ $title }}</h3>
+                <h3 @if ($modalTitleId) id="{{ $modalTitleId }}" @endif class="text-base font-semibold text-gray-800 dark:text-white">{{ $title }}</h3>
                 @if ($subtitle)
                     <p class="text-xs text-gray-400 dark:text-slate-400 mt-0.5">{{ $subtitle }}</p>
                 @endif
@@ -77,8 +81,8 @@
             <button
                 type="button"
                 @click="typeof closeModal === 'function' ? closeModal() : (open = false)"
-                class="ml-4 shrink-0 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-150 focus:outline-none"
-                aria-label="Fechar modal"
+                class="ml-4 shrink-0 rounded text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label="{{ __('ptah::ui.modal_close') }}"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

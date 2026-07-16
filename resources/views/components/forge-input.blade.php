@@ -41,7 +41,7 @@
         'success' => 'border-green-400 focus:border-green-500 focus:ring-green-200',
         'danger'  => 'border-red-400 focus:border-red-500 focus:ring-red-200',
         'warn'    => 'border-yellow-400 focus:border-yellow-500 focus:ring-yellow-200',
-        default   => 'border-gray-300 focus:border-blue-600 focus:ring-blue-100',
+        default   => 'border-gray-300 focus:border-primary focus:ring-primary/20',
     };
     $messageColor = match($resolvedState) {
         'success' => 'text-green-600',
@@ -93,7 +93,8 @@
         @elseif ($isPassword)
             <button type="button" @click="_show = !_show"
                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
-                :title="_show ? 'Ocultar senha' : 'Mostrar senha'"
+                :title="_show ? @js(__('ptah::ui.input_hide_password')) : @js(__('ptah::ui.input_show_password'))"
+                :aria-label="_show ? @js(__('ptah::ui.input_hide_password')) : @js(__('ptah::ui.input_show_password'))"
                 tabindex="-1">
                 {{-- Olho aberto --}}
                 <svg x-show="!_show" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

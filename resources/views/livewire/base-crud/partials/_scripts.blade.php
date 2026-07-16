@@ -29,7 +29,7 @@
         color: #64748B;
     }
 
-    /* All filter inputs/selects: slate borders + blue focus */
+    /* All filter inputs/selects: slate borders + brand-token focus */
     .ptah-base-crud .p-4 input:not([type="checkbox"]),
     .ptah-base-crud .p-4 select {
         border-color: #E2E8F0;
@@ -38,8 +38,8 @@
     }
     .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
     .ptah-base-crud .p-4 select:focus {
-        border-color: #60a5fa;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+        border-color: var(--ptah-primary);
+        box-shadow: 0 0 0 3px var(--ptah-primary-ring);
         outline: none;
     }
 
@@ -65,8 +65,8 @@
     .ptah-dark .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
     .ptah-base-crud.ptah-dark .p-4 select:focus,
     .ptah-dark .ptah-base-crud .p-4 select:focus {
-        border-color: #60a5fa;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+        border-color: var(--ptah-primary-lite);
+        box-shadow: 0 0 0 3px var(--ptah-primary-ring);
         background-color: #0f172a;
         outline: none;
     }

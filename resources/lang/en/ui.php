@@ -164,6 +164,14 @@ return [
     */
     'bool_yes' => 'Yes',
     'bool_no' => 'No',
+
+    // Forge components — a11y labels / microcopy
+    'alert_close' => 'Close alert',
+    'modal_close' => 'Close',
+    'notification_close' => 'Close notification',
+    'input_show_password' => 'Show password',
+    'input_hide_password' => 'Hide password',
+    'spinner_loading' => 'Loading',
     'flag_green' => 'Green',
     'flag_yellow' => 'Yellow',
     'flag_red' => 'Red',

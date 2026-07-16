@@ -29,7 +29,7 @@
                  @click="ptahRowNav($event, '{{ $rowLink }}')"
                  @auxclick="ptahRowNav($event, '{{ $rowLink }}')"
              @endif
-             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-tbl_wrap bg-white dark:bg-slate-800 hover:shadow-md
+             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card bg-white dark:bg-slate-800 hover:shadow-md
                     {{ $rowLink ? 'cursor-pointer' : '' }}
                     {{ $isSelected ? 'ptah-c-tr_selected' : '' }}">
 
@@ -47,7 +47,7 @@
                             {!! $this->formatCell($titleCol, $row) !!}
                         </p>
                     @endif
-                    <p class="text-[11px] text-slate-400">#{{ $row->id ?? '—' }}</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">#{{ $row->id ?? '—' }}</p>
                 </div>
             </div>
 
@@ -101,7 +101,7 @@
             @endif
         </div>
     @empty
-        <div class="col-span-full px-6 py-16 text-center border rounded-lg ptah-c-tbl_wrap">
+        <div class="col-span-full px-6 py-16 text-center border rounded-lg ptah-c-card">
             <div class="flex flex-col items-center gap-3">
                 <div class="flex items-center justify-center w-16 h-16 rounded-full ptah-c-empty_box">
                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

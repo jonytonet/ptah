@@ -97,8 +97,8 @@
         <button
             type="button"
             @click="show = false; $dispatch('close')"
-            class="shrink-0 opacity-80 hover:opacity-100 transition-opacity focus:outline-none"
-            aria-label="Close notification"
+            class="shrink-0 rounded opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-current/50"
+            aria-label="{{ __('ptah::ui.notification_close') }}"
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

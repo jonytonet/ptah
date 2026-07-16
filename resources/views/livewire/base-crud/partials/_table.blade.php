@@ -96,7 +96,7 @@
                 {{-- Coluna de ações padrão (sticky: stays visible on horizontal scroll) --}}
                 @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
                     {{-- width:1% + nowrap = shrink-to-fit dos ícones, sem sobra --}}
-                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text bg-slate-50 dark:bg-slate-700 ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
+                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text ptah-c-thead ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
                 @endif
             </tr>
         </thead>
@@ -268,7 +268,7 @@
 
                     {{-- Botões de ação padrão (sticky column; larger touch targets via p-2/-m-1) --}}
                     @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
-                        <td class="sticky right-0 z-[1] px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/60 ptah-no-print" style="width:1%">
+                        <td class="sticky right-0 z-[1] px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap ptah-c-sticky_cell ptah-no-print" style="width:1%">
                             <div class="ptah-row-btns flex items-center justify-center gap-1">
 
                                 {{-- Editar --}}

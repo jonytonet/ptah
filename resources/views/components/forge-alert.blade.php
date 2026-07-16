@@ -7,12 +7,28 @@
     Requires Alpine.js
 --}}
 @props([
-    'color'    => 'primary',
-    'closable' => false,
-    'title'    => '',
+    'color'       => 'primary',
+    'closable'    => false,
+    'title'       => '',
+    // Back-compat aliases: most screens call the alert with type=/:dismissible=.
+    'type'        => null,
+    'dismissible' => null,
 ])
 
 @php
+    // Normalise the aliases so type="warning|info|error" and :dismissible work.
+    if ($type !== null) {
+        $color = match ($type) {
+            'warning' => 'warn',
+            'info'    => 'primary',
+            'error'   => 'danger',
+            default   => $type,
+        };
+    }
+    if ($dismissible !== null) {
+        $closable = filter_var($dismissible, FILTER_VALIDATE_BOOLEAN);
+    }
+
     $colorMap = [
         'primary' => ['bg' => 'bg-primary-light', 'border' => 'border-l-4 border-primary', 'title' => 'text-primary-dark', 'text' => 'text-primary', 'icon' => 'text-primary'],
         'success' => ['bg' => 'bg-success-light', 'border' => 'border-l-4 border-success', 'title' => 'text-success-dark', 'text' => 'text-success', 'icon' => 'text-success'],
@@ -54,8 +70,8 @@
         <button
             type="button"
             @click="show = false"
-            class="shrink-0 ml-auto {{ $c['icon'] }} hover:opacity-70 transition-opacity duration-150 focus:outline-none"
-            aria-label="Fechar alerta"
+            class="shrink-0 ml-auto {{ $c['icon'] }} hover:opacity-70 transition-opacity duration-150 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-current/50"
+            aria-label="{{ __('ptah::ui.alert_close') }}"
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

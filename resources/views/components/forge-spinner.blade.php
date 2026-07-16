@@ -29,7 +29,7 @@
 @endphp
 
 @if ($type === 'circle')
-    <span {{ $attributes->merge(['class' => "inline-flex {$colorClass}", 'role' => 'status', 'aria-label' => 'Carregando']) }}>
+    <span {{ $attributes->merge(['class' => "inline-flex {$colorClass}", 'role' => 'status', 'aria-label' => __('ptah::ui.spinner_loading')]) }}>
         <svg class="animate-spin {{ $s['svg'] }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
@@ -37,14 +37,14 @@
     </span>
 
 @elseif ($type === 'dots')
-    <span {{ $attributes->merge(['class' => "inline-flex items-center gap-1 {$colorClass}", 'role' => 'status', 'aria-label' => 'Carregando']) }}>
+    <span {{ $attributes->merge(['class' => "inline-flex items-center gap-1 {$colorClass}", 'role' => 'status', 'aria-label' => __('ptah::ui.spinner_loading')]) }}>
         <span class="rounded-full bg-current {{ $s['dot'] }} animate-bounce [animation-delay:-0.3s]"></span>
         <span class="rounded-full bg-current {{ $s['dot'] }} animate-bounce [animation-delay:-0.15s]"></span>
         <span class="rounded-full bg-current {{ $s['dot'] }} animate-bounce"></span>
     </span>
 
 @elseif ($type === 'wave')
-    <span {{ $attributes->merge(['class' => "inline-flex items-end gap-0.5 {$colorClass}", 'role' => 'status', 'aria-label' => 'Carregando']) }}>
+    <span {{ $attributes->merge(['class' => "inline-flex items-end gap-0.5 {$colorClass}", 'role' => 'status', 'aria-label' => __('ptah::ui.spinner_loading')]) }}>
         <span class="rounded-sm bg-current {{ $s['bar'] }} animate-wave [animation-delay:0s]"></span>
         <span class="rounded-sm bg-current {{ $s['bar'] }} animate-wave [animation-delay:0.1s]"></span>
         <span class="rounded-sm bg-current {{ $s['bar'] }} animate-wave [animation-delay:0.2s]"></span>

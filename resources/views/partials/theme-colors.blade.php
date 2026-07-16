@@ -12,6 +12,11 @@
         @isset($ptahColors['primary'])
         --color-primary: {{ $ptahColors['primary'] }};
         --ptah-primary: {{ $ptahColors['primary'] }};
+        /* Derive the light/dark tints from the brand primary so bg-primary-light
+           (sidebar active pill, primary alert) and hover:bg-primary-dark (buttons)
+           follow the brand instead of the package's static blue defaults. */
+        --color-primary-light: color-mix(in srgb, {{ $ptahColors['primary'] }} 14%, #ffffff);
+        --color-primary-dark:  color-mix(in srgb, {{ $ptahColors['primary'] }} 82%, #000000);
         @endisset
         @isset($ptahColors['success'])
         --color-success: {{ $ptahColors['success'] }};
