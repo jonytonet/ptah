@@ -10,9 +10,11 @@ This document lists all Artisan commands available in the Ptah package.
 2. [ptah:forge](#ptahforge)
 3. [ptah:module](#ptahmodule)
 4. [ptah:config](#ptahconfig)
-5. [ptah:hooks](#ptahhooks)
-6. [ptah:menu-sync](#ptahmenu-sync)
-7. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+5. [ptah:config:doctor](#ptahconfigdoctor)
+6. [ptah:config:export-all / import-all](#ptahconfigexport-all--import-all)
+7. [ptah:hooks](#ptahhooks)
+8. [ptah:menu-sync](#ptahmenu-sync)
+9. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -457,6 +459,45 @@ php artisan ptah:config "App\Models\Product" \
 - ``--dry-run`` — Show what would be changed without saving
 - ``--only=*`` — Process only specific sections (columns,actions,filters,styles,joins,general,permissions)
 - ``--skip=*`` — Skip specific sections
+
+> **Model key (since v1.5.0):** the `{model}` argument accepts either the FQCN
+> (`App\Models\Catalog\Product`) **or** the runtime key (`Catalog/Product`). The
+> config is always stored under the **canonical** key BaseCrud reads
+> (`Catalog/Product`) — so passing the FQCN no longer creates an orphan row the
+> runtime never loads. Run `ptah:config:doctor` to detect/repair legacy orphans.
+
+## ptah:config:doctor
+
+Audits **all** `crud_configs` and reports the silent failures the per-model
+tooling can't see. Exit code is non-zero when any error is found (CI-friendly).
+
+```bash
+php artisan ptah:config:doctor          # report only
+php artisan ptah:config:doctor --fix    # also rewrite orphan (non-canonical) keys
+```
+
+Detects: **orphan keys** (stored under a non-canonical key — e.g. an FQCN — that
+the runtime never reads; `--fix` rewrites them), **unresolved models**, **malformed
+configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns), and
+**route ambiguity** (a model with both a global and a route-specific config).
+
+## ptah:config:export-all / import-all
+
+Version and rebuild the **whole** config set (the configs live only in the DB).
+
+```bash
+# Snapshot every config to a versionable directory (one JSON per model/route)
+php artisan ptah:config:export-all              # → database/ptah/crud-configs
+php artisan ptah:config:export-all storage/cfg  # custom path
+
+# Rebuild them (idempotent — doubles as a seeding step on a fresh DB)
+php artisan ptah:config:import-all
+```
+
+Each file carries its own `model` / `route` (the filename is only for git
+readability), and keys are canonicalised on import — a legacy FQCN export can't
+reintroduce an orphan. Commit `database/ptah/crud-configs/` to review config
+changes in diffs.
 
 **Column Syntax (--column):**
 

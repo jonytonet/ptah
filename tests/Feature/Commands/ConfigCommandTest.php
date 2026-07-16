@@ -7,6 +7,7 @@ namespace Ptah\Tests\Feature\Commands;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\CrudConfig;
+use Ptah\Support\ModelKey;
 use Ptah\Tests\TestCase;
 
 // Stub model on the `items` test table (has name/status/amount columns).
@@ -34,7 +35,7 @@ class ConfigCommandTest extends TestCase
             '--non-interactive' => true,
         ])->assertExitCode(0);
 
-        $cfg = CrudConfig::where('model', ConfigCmdStub::class)->first();
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first();
         $this->assertNotNull($cfg);
 
         $fields = array_column($cfg->config['cols'], 'colsNomeFisico');
@@ -56,10 +57,27 @@ class ConfigCommandTest extends TestCase
             '--non-interactive' => true,
         ])->assertExitCode(0);
 
-        $cfg = CrudConfig::where('model', ConfigCmdStub::class)->first()->config;
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first()->config;
 
         $this->assertSame(15, $cfg['itemsPerPage']); // numeric cast
         $this->assertTrue($cfg['cacheEnabled']);      // 'true' → bool
+    }
+
+    #[Test]
+    public function stores_under_the_canonical_runtime_key_not_the_fqcn(): void
+    {
+        // Pass the FQCN (with backslashes) — the old footgun that produced orphan rows.
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--column' => ['name:text:label=Nome'],
+            '--non-interactive' => true,
+        ])->assertExitCode(0);
+
+        $canonical = ModelKey::canonical(ConfigCmdStub::class); // forward-slash key
+        $this->assertDatabaseHas('crud_configs', ['model' => $canonical]);
+        // The raw FQCN key (backslashes) must NOT be what got stored.
+        $this->assertDatabaseMissing('crud_configs', ['model' => ConfigCmdStub::class]);
+        $this->assertStringContainsString('/', $canonical);
     }
 
     #[Test]
@@ -72,7 +90,7 @@ class ConfigCommandTest extends TestCase
             '--dry-run' => true,
         ])->assertExitCode(0);
 
-        $this->assertDatabaseMissing('crud_configs', ['model' => ConfigCmdStub::class]);
+        $this->assertDatabaseMissing('crud_configs', ['model' => ModelKey::canonical(ConfigCmdStub::class)]);
     }
 
     #[Test]

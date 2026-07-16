@@ -3,6 +3,7 @@
 namespace Ptah\Commands\Config\Parsers;
 
 use Illuminate\Support\Str;
+use Ptah\Support\LabelHumanizer;
 
 class ColumnParser
 {
@@ -20,7 +21,7 @@ class ColumnParser
 
         $config = [
             'colsNomeFisico' => $field,
-            'colsNomeLogico' => Str::title(str_replace('_', ' ', $field)),
+            'colsNomeLogico' => LabelHumanizer::make($field),
             'colsTipo' => $type,
             'colsAlign' => 'text-start',
             'colsGravar' => true,

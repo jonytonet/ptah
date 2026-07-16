@@ -235,4 +235,31 @@ class ModelIntrospector
         return class_exists($modelClass)
             && is_subclass_of($modelClass, 'Illuminate\Database\Eloquent\Model');
     }
+
+    /**
+     * Resolves a model reference (FQCN OR sub-folder form like "Catalog/Product")
+     * to its concrete FQCN — mirrors BaseCrud::resolveEloquentModel(). Returns null
+     * when nothing valid matches. Lets ptah:config accept the same key the runtime
+     * uses, not only the FQCN.
+     */
+    public function resolveClass(string $model): ?string
+    {
+        $class = str_replace('/', '\\', trim($model, " \t\n\r\0\x0B\\"));
+
+        $candidates = [$class, 'App\\Models\\'.$class];
+
+        try {
+            $candidates[] = app()->getNamespace().'Models\\'.$class;
+        } catch (\Throwable) {
+            // No container available — the defaults above are enough.
+        }
+
+        foreach (array_unique($candidates) as $candidate) {
+            if ($this->validateModelClass($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
 }

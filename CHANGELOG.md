@@ -7,6 +7,39 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.0] — 2026-07-09
+
+### Config lifecycle — export / import / doctor + canonical keys
+
+First-class tooling for versioning and auditing BaseCrud configs (they live only
+in the DB), addressing the operational gaps hit while building a real ERP on ptah.
+
+- **`ptah:config:export-all [path]`** / **`ptah:config:import-all [path]`** — dump
+  every `crud_configs` row to a versionable directory (one pretty JSON per
+  model/route, default `database/ptah/crud-configs`) and rebuild them on a fresh
+  DB. `model`/`route` are read from file content, so the folder is git-diffable and
+  the import is idempotent (doubles as a seeding step).
+- **`ptah:config:doctor [--fix]`** — audits all configs and surfaces the silent
+  failures the per-model tooling can't: **orphan (non-canonical) keys**, **malformed
+  configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns), and
+  **route ambiguity** (a model with both a global and a route-specific config).
+  Non-zero exit on errors (CI-friendly); `--fix` rewrites orphan keys.
+- **Canonical model key (fixes the FQCN×slash footgun).** `ptah:config` now accepts
+  either the FQCN (`App\Models\Catalog\Product`) or the runtime key
+  (`Catalog/Product`) and always stores under the canonical key BaseCrud actually
+  reads — so it no longer writes orphan rows the runtime never loads. New
+  `Ptah\Support\ModelKey::canonical()` is the single source of truth (shared by
+  forge, config and doctor).
+- **Unified pt-BR label generation.** `ptah:forge` and `ptah:config` now derive
+  column labels through one `Ptah\Support\LabelHumanizer` — it strips the `_id`
+  marker consistently (no more "Category Id"), applies a built-in pt-BR dictionary
+  (accented `Usuário`, `Observações`, `CNPJ`, …) and is extensible via
+  `config('ptah.crud.label_dictionary')`.
+
+### Tests
+- ModelKey, LabelHumanizer, ConfigDoctor, and export-all/import-all covered;
+  ConfigCommand tests assert the canonical-key storage.
+
 ## [1.4.1] — 2026-07-09
 
 ### Fixed — permission engine (found while expanding test coverage)

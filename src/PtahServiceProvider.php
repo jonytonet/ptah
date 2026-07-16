@@ -11,6 +11,9 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Ptah\Commands\Config\ConfigDoctorCommand;
+use Ptah\Commands\Config\ConfigExportAllCommand;
+use Ptah\Commands\Config\ConfigImportAllCommand;
 use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
@@ -187,6 +190,9 @@ class PtahServiceProvider extends ServiceProvider
                 MenuSyncCommand::class,      // ptah:menu-sync
                 ModuleCommand::class,        // ptah:module
                 ConfigCommand::class,        // ptah:config
+                ConfigDoctorCommand::class,     // ptah:config:doctor
+                ConfigExportAllCommand::class,  // ptah:config:export-all
+                ConfigImportAllCommand::class,  // ptah:config:import-all
                 MakeHooksCommand::class,     // ptah:hooks
             ]);
         }
