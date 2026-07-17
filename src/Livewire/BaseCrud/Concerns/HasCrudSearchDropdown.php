@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Illuminate\Database\Eloquent\Builder;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -369,12 +370,40 @@ trait HasCrudSearchDropdown
                     return [];
                 }
 
+                // colsSDLabel supports dot-notation for a relation column
+                // (e.g. "user.name"). The last segment is the column on the
+                // related model; everything before it is the relation path
+                // (nested relations such as "a.b.name" are supported too).
+                $labelIsRelation = str_contains($sdLabel, '.');
+                $relPath = null;
+                $relColumn = $sdLabel;
+
+                if ($labelIsRelation) {
+                    $lastDot = strrpos($sdLabel, '.');
+                    $relPath = substr($sdLabel, 0, $lastDot);
+                    $relColumn = substr($sdLabel, $lastDot + 1);
+                }
+
                 [$orderCol, $orderDir] = array_pad(explode(' ', $sdOrder, 2), 2, 'ASC');
+
+                // A relation column can't be ordered by directly without a JOIN.
+                // Fall back to the value column (default "{label} ASC" would
+                // otherwise become "user.name ASC" and break the query). Only
+                // applies when the label itself is a relation — a table-qualified
+                // column on the base model (e.g. "items.name") is valid and must
+                // keep ordering exactly as before.
+                if ($labelIsRelation && str_contains($orderCol, '.')) {
+                    $orderCol = $sdValue;
+                }
 
                 $q = app($fullClass)
                     ->newQuery()
                     ->orderBy($orderCol, $orderDir)
                     ->limit($limit);
+
+                if ($labelIsRelation) {
+                    $q->with($relPath);
+                }
 
                 // Cascading dropdown: restrict the child list to the parent value.
                 // Column name is config-driven → guard it like every dynamic identifier.
@@ -384,14 +413,18 @@ trait HasCrudSearchDropdown
 
                 // Case-insensitive filter via LOWER() for MySQL/SQLite compatibility.
                 // Guard the column name against SQL injection before raw interpolation.
-                if ($query !== '' && SqlIdentifier::isSafe($sdLabel)) {
+                if ($query !== '' && $labelIsRelation && SqlIdentifier::isSafe($relColumn)) {
+                    $q->whereHas($relPath, function (Builder $sub) use ($relColumn, $query) {
+                        $sub->whereRaw('LOWER('.$relColumn.') LIKE ?', ['%'.mb_strtolower($query).'%']);
+                    });
+                } elseif ($query !== '' && ! $labelIsRelation && SqlIdentifier::isSafe($sdLabel)) {
                     $q->whereRaw('LOWER('.$sdLabel.') LIKE ?', ['%'.mb_strtolower($query).'%']);
                 }
 
                 return $q->get()
                     ->map(fn ($item) => [
                         'value' => $item->{$sdValue},
-                        'label' => $item->{$sdLabel},
+                        'label' => data_get($item, $sdLabel),
                     ])
                     ->toArray();
             }
