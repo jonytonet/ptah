@@ -7,6 +7,41 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.0] — 2026-07-17
+
+### Added — SearchDropdown (standalone) label from a relation column
+
+The standalone `<x-ptah-search-dropdown>` component now accepts dot-notation for a
+relation column in `label` / `labelTwo` / `labelThree` (model-mode), matching the
+inline BaseCrud dropdown shipped in v1.8.0 — for entities whose display value lives
+on a related model (e.g. `Client → user.name`).
+
+- Label resolved via `data_get` **on the Model** (before `toArray()`), so relations
+  named in camelCase (`ownerCompany`) resolve correctly — reading from the array
+  would fail because `toArray()` snake-cases relation keys.
+- Search filters via `orWhereHas` (relation column guarded by `SqlIdentifier::isSafe`).
+- Relation is eager-loaded (`with`) to avoid N+1.
+- **Limitation:** the standalone orders by a raw `orderByRaw` independent of the
+  label, so there's no auto-fallback for a relation-column order (unlike the inline
+  one) — order by a base-model column or use service-mode. Documented.
+
+Additive/non-breaking: a plain `label` (no dot) keeps the column-limited `select`
+and behaves exactly as before.
+
+### Removed
+
+- **`Ptah\Commands\Config\ConfigAssembler`** and **`Ptah\Models\CrudConfig::permissions()`**
+  — dead code with no callers anywhere in the package (verified). `ConfigAssembler`
+  additionally emitted a flat permissions structure incompatible with the runtime
+  (which reads the nested `config['permissions']`). Neither was wired, documented, or
+  functional; no external consumers. If you referenced either directly, drop the
+  reference (the runtime never used them).
+
+### Tests
+- Standalone relation label + search, a **camelCase relation** (regression guard for
+  the `toArray()` snake-case pitfall), plain-label regression, no-match, and a
+  malicious-relation-column security case.
+
 ## [1.8.0] — 2026-07-17
 
 ### Added — SearchDropdown label from a relation column (model-mode)

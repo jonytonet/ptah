@@ -51,25 +51,6 @@ class CrudConfig extends Model
     }
 
     /**
-     * CRUD permissions.
-     */
-    public function permissions(): array
-    {
-        return array_merge([
-            'create' => null,
-            'edit' => null,
-            'delete' => null,
-            'export' => null,
-            'restore' => null,
-            'showCreateButton' => true,
-            'showEditButton' => true,
-            'showDeleteButton' => true,
-            'showTrashButton' => true,
-            'permissionIdentifier' => '',
-        ], $this->config['permissions'] ?? []);
-    }
-
-    /**
      * Export configuration.
      */
     public function exportConfig(): array

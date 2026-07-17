@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\SearchDropdown;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
+use Ptah\Support\SqlIdentifier;
 
 /**
  * Livewire SearchDropdown component.
@@ -195,16 +197,37 @@ class SearchDropdown extends Component
         return array_map(function (array $item): array {
             return [
                 '_value' => $item[$this->value] ?? '',
-                '_label' => $this->formatValue($item[$this->label] ?? '', $this->maskOne),
+                '_label' => $this->formatValue($this->readLabel($item, '_ptahLabel', $this->label) ?? '', $this->maskOne),
                 '_labelTwo' => $this->labelTwo !== null
-                    ? $this->formatValue($item[$this->labelTwo] ?? '', $this->maskTwo)
+                    ? $this->formatValue($this->readLabel($item, '_ptahLabelTwo', $this->labelTwo) ?? '', $this->maskTwo)
                     : null,
                 '_labelThree' => $this->labelThree !== null
-                    ? $this->formatValue($item[$this->labelThree] ?? '', $this->maskThree)
+                    ? $this->formatValue($this->readLabel($item, '_ptahLabelThree', $this->labelThree) ?? '', $this->maskThree)
                     : null,
                 '_raw' => $item,
             ];
         }, $this->dataModel);
+    }
+
+    /**
+     * Reads a label value from a result row.
+     *
+     * Model-mode rows carry a pre-resolved value under $resolvedKey — computed
+     * from the Eloquent model instance before toArray() in loadDataViaModel(),
+     * because Eloquent's array conversion snake-cases relation keys and a
+     * camelCase relation path (e.g. "ownerCompany.name") would otherwise
+     * silently resolve to null via data_get() on the array. Service-mode rows
+     * have no such key, so we fall back to data_get() on the plain array
+     * (equivalent to a direct key lookup for the flat, dot-free keys that
+     * service-mode responses are documented to use).
+     */
+    private function readLabel(array $item, string $resolvedKey, ?string $path): mixed
+    {
+        if ($path === null) {
+            return null;
+        }
+
+        return array_key_exists($resolvedKey, $item) ? $item[$resolvedKey] : data_get($item, $path);
     }
 
     // ── Data ───────────────────────────────────────────────────────────────
@@ -254,8 +277,26 @@ class SearchDropdown extends Component
 
         $cols = array_filter([$this->value, $this->label, $this->labelTwo, $this->labelThree]);
 
-        /** @var Model $query */
-        $query = app()->make($this->modelClass)->select(array_values($cols));
+        // label/labelTwo/labelThree support dot-notation for a relation column
+        // (e.g. "user.name"). When none of them uses one, behaviour is unchanged
+        // (column-limited select). When at least one does, the base FK column
+        // must survive, so we select everything and eager-load the relation.
+        $labelSlots = array_filter([$this->label, $this->labelTwo, $this->labelThree]);
+        $relPaths = [];
+        foreach ($labelSlots as $slot) {
+            if (str_contains($slot, '.')) {
+                $relPaths[] = substr($slot, 0, strrpos($slot, '.'));
+            }
+        }
+
+        /** @var Builder $query */
+        $query = app()->make($this->modelClass)->newQuery();
+
+        if ($relPaths === []) {
+            $query->select(array_values($cols));
+        } else {
+            $query->with(array_values(array_unique($relPaths)));
+        }
 
         // Apply LIKE on the configured fields.
         // The term is split into individual words so that "joão silva" matches
@@ -271,11 +312,32 @@ class SearchDropdown extends Component
 
             $words = preg_split('/\s+/', trim($this->searchTerm), -1, PREG_SPLIT_NO_EMPTY);
 
-            $query->where(function ($q) use ($searchCols, $words) {
+            $query->where(function (Builder $q) use ($searchCols, $words) {
                 foreach ($searchCols as $col) {
+                    if (str_contains($col, '.')) {
+                        $lastDot = strrpos($col, '.');
+                        $relPath = substr($col, 0, $lastDot);
+                        $relColumn = substr($col, $lastDot + 1);
+
+                        if (! SqlIdentifier::isSafe($relColumn)) {
+                            continue;
+                        }
+
+                        // Each column: ALL words must be present (AND), but any
+                        // column match counts (OR between columns) — same rule
+                        // as the base-model branch below, scoped to the relation.
+                        $q->orWhereHas($relPath, function (Builder $sub) use ($relColumn, $words) {
+                            foreach ($words as $word) {
+                                $sub->where($relColumn, 'LIKE', '%'.$word.'%');
+                            }
+                        });
+
+                        continue;
+                    }
+
                     // Each column: ALL words must be present (AND), but any
                     // column match counts (OR between columns).
-                    $q->orWhere(function ($sub) use ($col, $words) {
+                    $q->orWhere(function (Builder $sub) use ($col, $words) {
                         foreach ($words as $word) {
                             $sub->where($col, 'LIKE', '%'.$word.'%');
                         }
@@ -289,11 +351,30 @@ class SearchDropdown extends Component
             $query->where($this->dataFilter);
         }
 
-        $this->dataModel = $query
+        $models = $query
             ->orderByRaw($this->orderByRaw)
             ->limit($this->limit)
-            ->get()
-            ->toArray();
+            ->get();
+
+        // Resolve label/labelTwo/labelThree from the MODEL instances — not from
+        // the array produced by toArray(). Eloquent's array conversion
+        // snake-cases relation keys (HasAttributes::relationsToArray()), so a
+        // camelCase relation such as "ownerCompany" becomes "owner_company" in
+        // the array; reading the original ("ownerCompany.name") dot-path back
+        // via data_get() on that array would silently resolve to null (or, if
+        // the label were rewritten to the snake_case path, orWhereHas() above
+        // would still target the real "ownerCompany" relation and throw).
+        // data_get() on the Model itself walks relations by their real
+        // (camelCase) method name, so it is resolved here, once, before the
+        // snake-casing ever happens.
+        $this->dataModel = $models->map(function (Model $model) {
+            $row = $model->toArray();
+            $row['_ptahLabel'] = data_get($model, $this->label);
+            $row['_ptahLabelTwo'] = $this->labelTwo !== null ? data_get($model, $this->labelTwo) : null;
+            $row['_ptahLabelThree'] = $this->labelThree !== null ? data_get($model, $this->labelThree) : null;
+
+            return $row;
+        })->all();
     }
 
     // ── UI events ────────────────────────────────────────────────────────────
@@ -332,12 +413,13 @@ class SearchDropdown extends Component
      */
     public function selectedItem(array $item): void
     {
-        $displayTerm = $item[$this->value].' - '.$item[$this->label];
+        $label = $this->readLabel($item, '_ptahLabel', $this->label);
+        $displayTerm = $item[$this->value].' - '.$label;
 
         $this->dispatch($this->listens, [
             'useService' => $this->useService,
             'value' => $item[$this->value],
-            'label' => $item[$this->label],
+            'label' => $label,
             'searchTerm' => $displayTerm,
             'coringa' => $this->coringa,
         ]);
