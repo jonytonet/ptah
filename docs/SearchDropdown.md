@@ -51,9 +51,9 @@ The `ptah-search-dropdown` component is an independent Livewire component that c
 |---|---|---|---|
 | `model` | `string` | `''` | Model name (e.g. `Product`) or sub-directory (`Purchase/Order`) |
 | `value` | `string` | `'id'` | Column whose value is returned in the event |
-| `label` | `string` | `'name'` | Column displayed as the main label |
-| `labelTwo` | `string\|null` | `null` | Column displayed as the second label |
-| `labelThree` | `string\|null` | `null` | Column displayed as the third label |
+| `label` | `string` | `'name'` | Column displayed as the main label. In model-mode, accepts dot-notation for a relation column (e.g. `user.name`, or nested `a.b.name`) — see [note below](#via-direct-model) |
+| `labelTwo` | `string\|null` | `null` | Column displayed as the second label. Same dot-notation support as `label` |
+| `labelThree` | `string\|null` | `null` | Column displayed as the third label. Same dot-notation support as `label` |
 | `arraySearch` | `array` | `[]` | Extra columns included in the LIKE besides the labels |
 
 #### Data and filters
@@ -168,6 +168,26 @@ The default mode. The component queries `App\Models\{model}` with `LOWER(label) 
     'dataFilter' => [['status', '=', 'active']],
 ])
 ```
+
+#### Relation label (`label`/`labelTwo`/`labelThree` with dot-notation)
+
+In model-mode, `label`, `labelTwo` and `labelThree` may each point to a column on a related model instead of a column on `model` itself:
+
+```blade
+@livewire('ptah-search-dropdown', [
+    'model'   => 'Purchase/Order',
+    'label'   => 'supplier.trade_name',
+    'listens' => 'onOrderSelected',
+])
+```
+
+Here `model` is queried as usual, but the label comes from the `supplier` relation's `trade_name` column:
+
+- **Label** is resolved with `data_get($model, 'supplier.trade_name')` against the **Eloquent model instance** (before it is converted to an array) — so use the real relation **method name** exactly as declared on the model (camelCase, e.g. `supplierCompany`, not `supplier_company`), and any depth is supported (`a.b.name`). Resolving from the model — rather than from the array `toArray()` produces — matters because Eloquent snake-cases relation keys when converting to an array (`user->userAddress` becomes the `user_address` key); reading a camelCase path back from that array would silently return an empty label.
+- **Search** is applied via `orWhereHas('supplier', fn ($q) => $q->where('trade_name', 'LIKE', '%word%'))` — the same word-split `LIKE` filter used on the plain-column path, just scoped inside the relation instead of applied directly on `model`. This part already uses the relation's real method name, so it works regardless of the label-resolution detail above.
+- **Eager loading** (`with('supplier')`) is applied automatically to avoid N+1 queries, and the base `select()` column restriction is skipped so the underlying FK column survives.
+
+> **Ordering caveat:** `orderByRaw` does **not** order by a relation column — the standalone component always applies it as-is (default `'id asc'`), independently of `label`. There is no automatic fallback here (unlike the inline BaseCrud dropdown): if you pass a relation path in `orderByRaw`, the query will fail. Order by a column on the base `model`, or switch to [service-mode](#via-custom-service-standalone) where you control the query (JOIN, `orderBy`, etc.) directly in your Repository/Service.
 
 ---
 
