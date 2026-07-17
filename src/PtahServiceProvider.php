@@ -14,11 +14,13 @@ use Livewire\Livewire;
 use Ptah\Commands\Config\ConfigDoctorCommand;
 use Ptah\Commands\Config\ConfigExportAllCommand;
 use Ptah\Commands\Config\ConfigImportAllCommand;
+use Ptah\Commands\Config\ConfigRelabelCommand;
 use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
+use Ptah\Commands\Permission\PermissionSyncCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\CompanyServiceContract;
@@ -193,7 +195,9 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigDoctorCommand::class,     // ptah:config:doctor
                 ConfigExportAllCommand::class,  // ptah:config:export-all
                 ConfigImportAllCommand::class,  // ptah:config:import-all
+                ConfigRelabelCommand::class,    // ptah:config:relabel
                 MakeHooksCommand::class,     // ptah:hooks
+                PermissionSyncCommand::class, // ptah:permission:sync
             ]);
         }
     }

@@ -360,7 +360,7 @@ class CrudConfig extends Component
         $this->showEditButton = (bool) ($perms['showEditButton'] ?? true);
         $this->showDeleteButton = (bool) ($perms['showDeleteButton'] ?? true);
         $this->showTrashButton = (bool) ($perms['showTrashButton'] ?? true);
-        $this->permissionIdentifier = $perms['identifier'] ?? $this->getDefaultPermissionIdentifier();
+        $this->permissionIdentifier = $perms['permissionIdentifier'] ?? $perms['identifier'] ?? $this->getDefaultPermissionIdentifier();
     }
 
     // ── Colunas — CRUD ───────────────────────────────────────────────────────
@@ -836,7 +836,7 @@ class CrudConfig extends Component
                 'showEditButton' => $this->showEditButton,
                 'showDeleteButton' => $this->showDeleteButton,
                 'showTrashButton' => $this->showTrashButton,
-                'identifier' => $this->permissionIdentifier ?: $this->getDefaultPermissionIdentifier(),
+                'permissionIdentifier' => $this->permissionIdentifier ?: $this->getDefaultPermissionIdentifier(),
             ],
             'cacheStrategy' => [
                 'enabled' => $this->cacheEnabled,

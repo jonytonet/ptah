@@ -274,7 +274,7 @@ class CrudConfigGenerator extends AbstractGenerator
             'showEditButton' => true,
             'showDeleteButton' => true,
             'showTrashButton' => true,
-            'identifier' => 'page'.$context->entity,
+            'permissionIdentifier' => 'page'.$context->entity,
         ];
     }
 

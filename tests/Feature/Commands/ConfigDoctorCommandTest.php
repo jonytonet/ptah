@@ -93,4 +93,28 @@ class ConfigDoctorCommandTest extends TestCase
             ->expectsOutputToContain('route fallback')
             ->assertExitCode(0);
     }
+
+    #[Test]
+    public function legacy_rbac_key_is_reported_then_fixed(): void
+    {
+        $canonical = ModelKey::canonical(DoctorStub::class);
+        $config = $this->goodConfig();
+        $config['permissions'] = ['identifier' => 'pageDoctorStub'];
+        $this->seedConfig($canonical, '', $config);
+
+        // Without --fix: reported as an error, gate silently absent.
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('legacy RBAC key')
+            ->assertExitCode(1);
+
+        // With --fix: value migrated to the canonical key, legacy key removed.
+        $this->artisan('ptah:config:doctor --fix')->assertExitCode(0);
+
+        $row = CrudConfig::where('model', $canonical)->first();
+        $this->assertSame('pageDoctorStub', $row->config['permissions']['permissionIdentifier']);
+        $this->assertArrayNotHasKey('identifier', $row->config['permissions']);
+
+        // Re-run is clean.
+        $this->artisan('ptah:config:doctor')->assertExitCode(0);
+    }
 }

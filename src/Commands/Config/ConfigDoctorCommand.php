@@ -20,6 +20,9 @@ use Ptah\Support\ModelKey;
  *   - unresolved model → the key maps to no Eloquent class.
  *   - malformed config → fails ConfigSchemaValidator.
  *   - empty screen     → no columns (the listing would render blank).
+ *   - legacy RBAC key  → permissions.identifier is set but permissions.permissionIdentifier
+ *                        (the key the runtime actually reads) is empty — the screen is
+ *                        silently ungated. `--fix` migrates the value.
  *   - route ambiguity  → a model with both a global and a route-specific config
  *                        (the fallback is active — easy to mistake for a dup).
  *
@@ -100,15 +103,33 @@ class ConfigDoctorCommand extends Command
                 $this->line("🟡 <fg=yellow>no columns</> [{$label}]: the listing would render empty");
                 $warnings++;
             }
+
+            // 5. Legacy RBAC key — written to 'identifier', but the runtime reads
+            //    'permissionIdentifier' (HasCrudForm::authorizeCrudAction / BaseCrud::
+            //    getEffectivePermissions / ExportController). Fail-open: the screen
+            //    silently runs without a gate.
+            $perms = $config['permissions'] ?? [];
+            if (! empty($perms['identifier']) && empty($perms['permissionIdentifier'])) {
+                if ($this->option('fix')) {
+                    $config['permissions']['permissionIdentifier'] = $perms['identifier'];
+                    unset($config['permissions']['identifier']);
+                    $row->update(['config' => $config]);
+                    $this->line("🔧 <fg=green>fixed</> RBAC key [{$label}]: 'identifier' → 'permissionIdentifier'");
+                    $fixed++;
+                } else {
+                    $this->line("🔴 <fg=red>legacy RBAC key</> [{$label}]: chave RBAC gravada em 'identifier' (legado); o runtime lê 'permissionIdentifier' — esta tela NÃO é gateada. Rode --fix");
+                    $errors++;
+                }
+            }
         }
 
-        // 5. Route ambiguity (global + route-specific for the same model).
+        // 6. Route ambiguity (global + route-specific for the same model).
         foreach ($routesByModel as $canonical => $routes) {
             $hasGlobal = in_array('', $routes, true);
             $specific = array_values(array_filter($routes, fn (string $r) => $r !== ''));
 
             if ($hasGlobal && $specific !== []) {
-                $this->line("ℹ️  <fg=cyan>route fallback</> [{$canonical}]: global config + ".count($specific).' route-specific ('.implode(', ', $specific).') — global is the fallback');
+                $this->line("ℹ️  <fg=cyan>route fallback</> [{$canonical}]: global config aplica-se às rotas sem config própria; ".count($specific).' route-specific ('.implode(', ', $specific).') sobrepõe(m) a global apenas na(s) sua(s) rota(s)');
             }
         }
 
