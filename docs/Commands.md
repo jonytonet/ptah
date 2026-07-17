@@ -12,9 +12,11 @@ This document lists all Artisan commands available in the Ptah package.
 4. [ptah:config](#ptahconfig)
 5. [ptah:config:doctor](#ptahconfigdoctor)
 6. [ptah:config:export-all / import-all](#ptahconfigexport-all--import-all)
-7. [ptah:hooks](#ptahhooks)
-8. [ptah:menu-sync](#ptahmenu-sync)
-9. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+7. [ptah:permission:sync](#ptahpermissionsync)
+8. [ptah:config:relabel](#ptahconfigrelabel)
+9. [ptah:hooks](#ptahhooks)
+10. [ptah:menu-sync](#ptahmenu-sync)
+11. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -478,8 +480,11 @@ php artisan ptah:config:doctor --fix    # also rewrite orphan (non-canonical) ke
 
 Detects: **orphan keys** (stored under a non-canonical key — e.g. an FQCN — that
 the runtime never reads; `--fix` rewrites them), **unresolved models**, **malformed
-configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns), and
-**route ambiguity** (a model with both a global and a route-specific config).
+configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns),
+**route ambiguity** (a model with both a global and a route-specific config), and
+**legacy RBAC key** — a config whose gate identifier is stored under `permissions.identifier`
+while the runtime reads `permissions.permissionIdentifier`, so the screen is
+**silently ungated**; `--fix` migrates the key (see the security note below).
 
 ## ptah:config:export-all / import-all
 
@@ -498,6 +503,66 @@ Each file carries its own `model` / `route` (the filename is only for git
 readability), and keys are canonicalised on import — a legacy FQCN export can't
 reintroduce an orphan. Commit `database/ptah/crud-configs/` to review config
 changes in diffs.
+
+## ptah:permission:sync
+
+Registers the RBAC objects (`PtahPage` + `PageObject`) that the permission engine
+matches against, **derived from the existing `crud_configs`** — so delegating access
+to non-master roles no longer requires seeding `page_object` rows by hand, screen by
+screen. Idempotent (re-runs never duplicate).
+
+```bash
+# Preview what would be created (read-only)
+php artisan ptah:permission:sync --dry-run
+
+# Create the page objects for every configured screen
+php artisan ptah:permission:sync
+
+# …and grant a role access in one step
+php artisan ptah:permission:sync --role="Estoquista" --grant=read,update
+php artisan ptah:permission:sync --role="Gerente"    --grant=all
+```
+
+For each config it resolves the canonical RBAC key (`permissions.permissionIdentifier`,
+falling back to the legacy `identifier`), creates the `PageObject` whose `obj_key`
+matches that key, and — with `--role`/`--grant` — calls `RoleService::bindPageObject`
+(which invalidates the permission cache). `--grant` accepts `create,read,update,delete`
+or `all`; `--role` and `--grant` are required together. The whole batch runs in a
+single transaction.
+
+## ptah:config:relabel
+
+Re-humanises the column labels (`colsNomeLogico`) of existing configs through the same
+`LabelHumanizer` used by the scaffold — for configs generated before the humaniser (or
+by external tooling) that ended up with unaccented pt-BR labels (`Situacao`, `Descricao`).
+
+```bash
+php artisan ptah:config:relabel --dry-run   # preview before/after (default-safe)
+php artisan ptah:config:relabel             # apply (asks for confirmation)
+php artisan ptah:config:relabel --all       # ignore the guard (see below)
+```
+
+By default it only relabels when the current label is the **unaccented form** of the
+humanised label (`Str::ascii(current) === Str::ascii(new) && current !== new`) — so it
+fixes accents (`Situacao` → `Situação`) but **never overwrites a custom label**. `--all`
+bypasses that guard (still asks for confirmation). Persists via `CrudConfigService::save()`
+(re-validates + clears cache) inside a transaction; idempotent.
+
+> ⚠️ **Security note — the `permissionIdentifier` fix (v1.7.0).** The RBAC gate is read
+> from `permissions.permissionIdentifier`, but older configs (from `ptah:forge` or the
+> visual editor before v1.7.0) stored the key under `permissions.identifier` — a screen
+> with the permissions module **on** was therefore *silently ungated* (fail-open when the
+> key is absent). Upgrade sequence, **in this order, before deploying**:
+>
+> ```bash
+> php artisan ptah:config:doctor            # 1. find configs with the legacy key
+> php artisan ptah:config:doctor --fix      # 2. migrate identifier → permissionIdentifier
+> php artisan ptah:permission:sync --role="…" --grant=…   # 3. grant the roles that need each screen
+> ```
+>
+> Step 2 flips those screens from fail-open to fail-closed: non-master users **lose access
+> until** step 3 grants it. Run steps 2 and 3 together (staging first). Master users are
+> unaffected (short-circuit).
 
 **Column Syntax (--column):**
 

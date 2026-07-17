@@ -40,6 +40,11 @@ class CrudConfigGeneratorTest extends GeneratorTestCase
 
         $fk = $cols->firstWhere('colsNomeFisico', 'category_id');
         $this->assertArrayHasKey('colsRelacao', $fk);
+
+        // RBAC gate key: must be written under the canonical 'permissionIdentifier'
+        // (the runtime key), never the legacy 'identifier'.
+        $this->assertSame('pageWidget', $row->config['permissions']['permissionIdentifier']);
+        $this->assertArrayNotHasKey('identifier', $row->config['permissions']);
     }
 
     #[Test]

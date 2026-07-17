@@ -65,7 +65,7 @@ class CrudConfig extends Model
             'showEditButton' => true,
             'showDeleteButton' => true,
             'showTrashButton' => true,
-            'identifier' => '',
+            'permissionIdentifier' => '',
         ], $this->config['permissions'] ?? []);
     }
 

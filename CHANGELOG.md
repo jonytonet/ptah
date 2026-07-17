@@ -7,6 +7,51 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.7.0] — 2026-07-17
+
+### ⚠️ Security — config-driven RBAC gate was silently open by default
+
+The runtime reads the per-screen RBAC gate from `permissions.permissionIdentifier`
+(`authorizeCrudAction`, `getEffectivePermissions`, `ExportController`), but both
+config producers — `ptah:forge` and the visual config editor — wrote the key under
+`permissions.identifier`. Because `authorizeCrudAction` is **fail-open** when the key
+is absent, **every screen generated or edited before this release ran without a gate**
+whenever the permissions module was enabled. (The module is off by default, so only
+installs that turned it on were affected — e.g. real ERPs relying on the gate.)
+
+- **Producers canonicalised on `permissionIdentifier`.** `CrudConfigGenerator` and the
+  visual editor now write the canonical key; the editor reads `permissionIdentifier ??
+  identifier ?? default`, so opening and saving a legacy screen migrates it without
+  losing the value. Model default aligned. **The runtime read side did not change** —
+  no breaking change there.
+- **`ptah:config:doctor` detects the legacy key** (config with `identifier` set but
+  `permissionIdentifier` empty → error, non-zero exit) and **`--fix` migrates it**.
+
+> **Upgrade (permissions module users), in order, staging first:** `ptah:config:doctor`
+> → `ptah:config:doctor --fix` → `ptah:permission:sync --role=… --grant=…`. Step 2 flips
+> the affected screens from fail-open to fail-closed, so non-master users lose access
+> **until** step 3 grants it. Master users are unaffected. See `docs/Commands.md`.
+
+### Added — ACL & config lifecycle tooling
+
+- **`ptah:permission:sync`** — registers the RBAC objects (`PtahPage` + `PageObject`)
+  the engine matches against, derived from the existing `crud_configs`, so delegating
+  access to non-master roles no longer needs hand-seeding screen by screen. `--role`/
+  `--grant` (`create,read,update,delete` or `all`) grants in one step via
+  `RoleService::bindPageObject`; `--dry-run` previews. Idempotent, single transaction.
+- **`ptah:config:relabel`** — re-humanises existing column labels through
+  `LabelHumanizer` (fixes unaccented pt-BR labels like `Situacao` → `Situação`). Guard
+  only relabels the unaccented form of the humanised label, so **custom labels are never
+  overwritten** (`--all` bypasses the guard); `--dry-run` default, confirmation before
+  writing, single transaction.
+- **`ptah:config:doctor`** route-ambiguity message rewritten to explain the
+  global-vs-route-specific fallback model.
+
+### Tests
+- Legacy-RBAC-key detection + `--fix`; editor round-trip migration (mount+save on a
+  legacy config); `permission:sync` (creation, grant, idempotency, dry-run, mid-batch
+  rollback); `relabel` (accent heuristic, custom-label preservation, rollback).
+
 ## [1.6.0] — 2026-07-16
 
 ### BaseCrud — URL filters (`?f[...]`) + export "Limite" badge
