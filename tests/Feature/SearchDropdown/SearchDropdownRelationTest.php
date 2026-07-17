@@ -124,6 +124,45 @@ namespace Ptah\Tests\Feature\SearchDropdown {
             // ...yet the label still resolves correctly: this is the assertion
             // that fails (empty string) on the pre-fix code.
             $this->assertSame('Alice', $results[0]['_label']);
+
+            // "_raw" is the clean model row: the internal "_ptahLabel" key
+            // that loadDataViaModel() injects to resolve the camelCase
+            // relation (see readLabel()) must never leak into it — it is
+            // exposed as a sibling of "_raw" instead (consumed by
+            // selectedItem(), see the "Selection" tests below).
+            $this->assertArrayNotHasKey('_ptahLabel', $results[0]['_raw']);
+            $this->assertSame('Alice', $results[0]['_ptahLabel']);
+        }
+
+        /**
+         * Same bug class as the critical label fix, exercised on the
+         * secondary slots: labelTwo/labelThree also resolve a camelCase
+         * relation path via data_get() on the Model (readLabel()'s
+         * "_ptahLabelTwo"/"_ptahLabelThree" keys), not on the toArray()'d
+         * (and therefore snake-cased) row.
+         */
+        #[Test]
+        public function search_resolves_label_two_and_label_three_through_a_camel_case_relation(): void
+        {
+            $itemAlice = Item::where('name', 'Item Alice')->first();
+
+            $results = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'name',
+                'labelTwo' => 'ownerCompany.name',
+                'labelThree' => 'ownerCompany.email',
+                'value' => 'id',
+            ])->instance()->search('alice');
+
+            $this->assertCount(1, $results);
+            $this->assertSame($itemAlice->id, $results[0]['_value']);
+            $this->assertSame('Item Alice', $results[0]['_label']);
+            $this->assertSame('Alice', $results[0]['_labelTwo']);
+            $this->assertSame('alice@example.com', $results[0]['_labelThree']);
+
+            // "_raw" stays clean regardless of which slot used the relation.
+            $this->assertArrayNotHasKey('_ptahLabelTwo', $results[0]['_raw']);
+            $this->assertArrayNotHasKey('_ptahLabelThree', $results[0]['_raw']);
         }
 
         #[Test]
@@ -172,6 +211,182 @@ namespace Ptah\Tests\Feature\SearchDropdown {
             // label involved) is still in effect — category_id was never
             // selected, so it must be absent from the raw row.
             $this->assertArrayNotHasKey('category_id', $results[0]['_raw']);
+        }
+
+        // ── Selection: camelCase relation label + clean "_raw" ─────────────────
+
+        /**
+         * selectedItem() now receives the FULL item produced by search() (the
+         * blade passes it whole instead of just "_raw" — see the component's
+         * docblock), so it must still resolve a camelCase relation label
+         * correctly and never leak the internal "_ptahLabel" key into "_raw".
+         */
+        #[Test]
+        public function selected_item_resolves_a_camel_case_relation_label_with_a_clean_raw(): void
+        {
+            $itemAlice = Item::where('name', 'Item Alice')->first();
+
+            $component = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'ownerCompany.name',
+                'value' => 'id',
+                'listens' => 'itemSelected',
+            ]);
+
+            $results = $component->instance()->search('alice');
+            $item = $results[0];
+
+            // Proof "_raw" reaching the browser is already clean — this is
+            // exactly what the blade forwards to selectedItem() below.
+            $this->assertArrayNotHasKey('_ptahLabel', $item['_raw']);
+
+            $component->call('selectedItem', $item);
+
+            $component->assertDispatched('itemSelected', [
+                'useService' => null,
+                'value' => $itemAlice->id,
+                'label' => 'Alice',
+                'searchTerm' => $itemAlice->id.' - Alice',
+                'coringa' => '',
+            ]);
+        }
+
+        #[Test]
+        public function selected_item_dispatches_value_and_label_for_a_plain_label(): void
+        {
+            $itemAlice = Item::where('name', 'Item Alice')->first();
+
+            $component = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'name',
+                'value' => 'id',
+                'listens' => 'itemSelected',
+            ]);
+
+            $results = $component->instance()->search('alice');
+            $item = $results[0];
+
+            $component->call('selectedItem', $item);
+
+            $component->assertDispatched('itemSelected', [
+                'useService' => null,
+                'value' => $itemAlice->id,
+                'label' => 'Item Alice',
+                'searchTerm' => $itemAlice->id.' - Item Alice',
+                'coringa' => '',
+            ]);
+        }
+
+        /**
+         * Locks the event contract: the "label" dispatched by selectedItem()
+         * must be the RAW column value, never the masked "_label" shown in
+         * the dropdown UI (see selectedItem()'s docblock and
+         * docs/SearchDropdown.md). This is the very reason "_ptahLabel" is
+         * read directly instead of reusing "_label" — using the masked value
+         * here would silently change what parent components receive.
+         */
+        #[Test]
+        public function selected_item_dispatches_the_raw_label_value_not_the_masked_one(): void
+        {
+            $priced = Item::create(['name' => 'Priced Item', 'amount' => 1500]);
+
+            $component = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'amount',
+                'value' => 'id',
+                'arraySearch' => ['name'],
+                'maskOne' => 'money',
+                'listens' => 'itemSelected',
+            ]);
+
+            $results = $component->instance()->search('Priced');
+            $item = $results[0];
+
+            // The UI-facing label is masked...
+            $this->assertSame('R$ 1.500,00', $item['_label']);
+
+            $component->call('selectedItem', $item);
+
+            // ...but the dispatched one is the raw column value.
+            $component->assertDispatched('itemSelected', [
+                'useService' => null,
+                'value' => $priced->id,
+                'label' => 1500,
+                'searchTerm' => $priced->id.' - 1500',
+                'coringa' => '',
+            ]);
+        }
+
+        /**
+         * Backward-compatibility guard: a stale, already-published blade
+         * (v1.9.0 shipped `$wire.selectedItem(item._raw)`) still calls
+         * selectedItem() with the raw row alone — no "_raw"/"_ptahLabel"
+         * wrapper — after a package-only update (the view is only refreshed
+         * by re-publishing `--tag=ptah-views`). A plain (non-relation) label
+         * must keep resolving correctly, never null/crash.
+         */
+        #[Test]
+        public function selected_item_stays_backward_compatible_with_a_stale_blade_passing_the_raw_row(): void
+        {
+            $itemAlice = Item::where('name', 'Item Alice')->first();
+
+            $component = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'name',
+                'value' => 'id',
+                'listens' => 'itemSelected',
+            ]);
+
+            $results = $component->instance()->search('alice');
+            $rawRow = $results[0]['_raw'];
+
+            // The stale blade never had "_ptahLabel"/"_raw" wrapper — proof
+            // this really is the bare row, not the full item.
+            $this->assertArrayNotHasKey('_ptahLabel', $rawRow);
+            $this->assertArrayNotHasKey('_raw', $rawRow);
+
+            $component->call('selectedItem', $rawRow);
+
+            $component->assertDispatched('itemSelected', [
+                'useService' => null,
+                'value' => $itemAlice->id,
+                'label' => 'Item Alice',
+                'searchTerm' => $itemAlice->id.' - Item Alice',
+                'coringa' => '',
+            ]);
+        }
+
+        /**
+         * Same stale-blade scenario as above, but with a camelCase relation
+         * label: the raw row alone has no "_ptahLabel" sibling to resolve it
+         * from, and the row itself is already snake-cased by toArray(), so
+         * the label degrades to an empty string. "value" (a plain column)
+         * is unaffected, and nothing throws.
+         */
+        #[Test]
+        public function selected_item_degrades_the_label_gracefully_for_a_camel_case_relation_with_a_stale_blade(): void
+        {
+            $itemAlice = Item::where('name', 'Item Alice')->first();
+
+            $component = Livewire::test(SearchDropdown::class, [
+                'model' => 'Item',
+                'label' => 'ownerCompany.name',
+                'value' => 'id',
+                'listens' => 'itemSelected',
+            ]);
+
+            $results = $component->instance()->search('alice');
+            $rawRow = $results[0]['_raw'];
+
+            $component->call('selectedItem', $rawRow);
+
+            $component->assertDispatched('itemSelected', [
+                'useService' => null,
+                'value' => $itemAlice->id,
+                'label' => '',
+                'searchTerm' => $itemAlice->id.' - ',
+                'coringa' => '',
+            ]);
         }
 
         // ── Security: unsafe relation column (SqlIdentifier guard) ────────────

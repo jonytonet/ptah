@@ -187,7 +187,14 @@ class SearchDropdown extends Component
     /**
      * Executes the search and returns formatted results as a JSON-ready array.
      * Called by Alpine with $wire.search(term) — no full re-render triggered.
-     * Each item contains: _value, _label, _labelTwo, _labelThree, _raw.
+     *
+     * Each item contains: _value, _label, _labelTwo, _labelThree, _raw, plus
+     * the internal _ptahLabel/_ptahLabelTwo/_ptahLabelThree siblings that
+     * selectedItem() reads back (see its docblock). "_raw" itself is always
+     * the clean row — model columns (or the service-mode array) only, never
+     * the "_ptahLabel*" keys loadDataViaModel() injects to resolve a camelCase
+     * relation label (see readLabel()): those would otherwise leak into the
+     * consumer-facing payload alongside real model columns.
      */
     public function search(?string $term): array
     {
@@ -195,18 +202,35 @@ class SearchDropdown extends Component
         $this->loadData();
 
         return array_map(function (array $item): array {
+            $rawLabel = $this->readLabel($item, '_ptahLabel', $this->label);
+            $rawLabelTwo = $this->readLabel($item, '_ptahLabelTwo', $this->labelTwo);
+            $rawLabelThree = $this->readLabel($item, '_ptahLabelThree', $this->labelThree);
+
             return [
                 '_value' => $item[$this->value] ?? '',
-                '_label' => $this->formatValue($this->readLabel($item, '_ptahLabel', $this->label) ?? '', $this->maskOne),
-                '_labelTwo' => $this->labelTwo !== null
-                    ? $this->formatValue($this->readLabel($item, '_ptahLabelTwo', $this->labelTwo) ?? '', $this->maskTwo)
-                    : null,
-                '_labelThree' => $this->labelThree !== null
-                    ? $this->formatValue($this->readLabel($item, '_ptahLabelThree', $this->labelThree) ?? '', $this->maskThree)
-                    : null,
-                '_raw' => $item,
+                '_label' => $this->formatValue($rawLabel ?? '', $this->maskOne),
+                '_labelTwo' => $this->labelTwo !== null ? $this->formatValue($rawLabelTwo ?? '', $this->maskTwo) : null,
+                '_labelThree' => $this->labelThree !== null ? $this->formatValue($rawLabelThree ?? '', $this->maskThree) : null,
+                '_raw' => $this->stripInternalKeys($item),
+                '_ptahLabel' => $rawLabel,
+                '_ptahLabelTwo' => $rawLabelTwo,
+                '_ptahLabelThree' => $rawLabelThree,
             ];
         }, $this->dataModel);
+    }
+
+    /**
+     * Removes the internal "_ptahLabel*" keys (injected by loadDataViaModel()
+     * to resolve a camelCase relation label — see readLabel()) from a row
+     * before it is exposed as "_raw", so the consumer only ever sees plain
+     * model columns (or the plain service-mode array), never ptah-internal
+     * bookkeeping.
+     */
+    private function stripInternalKeys(array $item): array
+    {
+        unset($item['_ptahLabel'], $item['_ptahLabelTwo'], $item['_ptahLabelThree']);
+
+        return $item;
     }
 
     /**
@@ -220,6 +244,10 @@ class SearchDropdown extends Component
      * have no such key, so we fall back to data_get() on the plain array
      * (equivalent to a direct key lookup for the flat, dot-free keys that
      * service-mode responses are documented to use).
+     *
+     * Used by search() only — selectedItem() has its own (simpler) resolution
+     * because it must also tolerate a stale, already-published view still
+     * calling it with the raw row alone (see selectedItem()'s docblock).
      */
     private function readLabel(array $item, string $resolvedKey, ?string $path): mixed
     {
@@ -410,15 +438,37 @@ class SearchDropdown extends Component
     /**
      * Processes the selection of an item and fires the configured Livewire event.
      * show/term state is managed by Alpine — not touched here.
+     *
+     * $item accepts two shapes, so a stale, already-published view (the
+     * standalone blade shipped in v1.9.0 called `$wire.selectedItem(item._raw)`)
+     * keeps working after a package-only update — updating the blade too
+     * (`--tag=ptah-views`) is not required for this to keep dispatching the
+     * right value/label:
+     *   - Current blade — full item (has a "_raw" key): $raw is that "_raw".
+     *     The pre-resolved "_ptahLabel" sibling (set by search() — see its
+     *     docblock) is read straight from $item, so a camelCase relation
+     *     label still resolves correctly.
+     *   - Stale blade — raw row alone (no "_raw" key): $item IS the row, so
+     *     $raw falls back to $item itself. There is no "_ptahLabel" sibling
+     *     here, so the label is read via data_get() on the row — which, for
+     *     a camelCase relation label, is already snake-cased by toArray()
+     *     and resolves to null (degrading gracefully to an empty label, never
+     *     a crash); value and a plain (non-relation) label still resolve.
      */
     public function selectedItem(array $item): void
     {
-        $label = $this->readLabel($item, '_ptahLabel', $this->label);
-        $displayTerm = $item[$this->value].' - '.$label;
+        // $item may be the full result item (new blade → has an array "_raw")
+        // or a bare row (a stale published blade passing item._raw). Guard the
+        // type so a forged non-array "_raw" degrades cleanly instead of raising
+        // an illegal-offset error.
+        $raw = is_array($item['_raw'] ?? null) ? $item['_raw'] : $item;
+        $value = $raw[$this->value] ?? null;
+        $label = $item['_ptahLabel'] ?? data_get($raw, $this->label) ?? '';
+        $displayTerm = $value.' - '.$label;
 
         $this->dispatch($this->listens, [
             'useService' => $this->useService,
-            'value' => $item[$this->value],
+            'value' => $value,
             'label' => $label,
             'searchTerm' => $displayTerm,
             'coringa' => $this->coringa,

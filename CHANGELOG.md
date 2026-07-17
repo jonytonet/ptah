@@ -7,6 +7,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.1] — 2026-07-17
+
+### Changed — standalone SearchDropdown internals
+
+Refinement of the v1.9.0 relation-label feature.
+
+- The `_raw` row returned by `search()` is now clean — the internal
+  `_ptahLabel*` helper keys (used to carry a relation label resolved off the Model
+  past `toArray()`'s relation-key snake-casing) are no longer mixed into it; they
+  ride as siblings of `_raw`.
+- `selectedItem()` reads the full result item and is **backward-compatible**: it
+  accepts either the full item or a bare `_raw` row (`$item['_raw'] ?? $item`, type-
+  guarded), so a stale published view never dispatches null — at worst a camelCase
+  relation label degrades to an empty string for that stale-view case (value and
+  plain labels always resolve). The dispatched `label` remains the **raw**
+  (unmasked) value — now locked by a test.
+
+> **Upgrade note:** if you published the standalone dropdown view
+> (`resources/views/vendor/ptah/livewire/search-dropdown/search-dropdown.blade.php`),
+> re-publish it (`--tag=ptah-views --force`) so it passes the full item to
+> `selectedItem`. Not required if you didn't publish that view.
+
+### Tests
+- `selectedItem` now covered for plain labels, the raw-vs-masked dispatch contract,
+  camelCase relations, labelTwo/labelThree, and stale-blade backward-compat.
+
 ## [1.9.0] — 2026-07-17
 
 ### Added — SearchDropdown (standalone) label from a relation column

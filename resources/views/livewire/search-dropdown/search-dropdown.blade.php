@@ -27,7 +27,7 @@
                 select(item) {
                     this.term = String(item._value) + ' - ' + item._label;
                     this.show = false;
-                    $wire.selectedItem(item._raw);
+                    $wire.selectedItem(item);
                 },
 
                 clear() {
