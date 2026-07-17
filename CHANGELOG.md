@@ -7,6 +7,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.8.0] — 2026-07-17
+
+### Added — SearchDropdown label from a relation column (model-mode)
+
+`colsSDLabel` now accepts dot-notation for a relation column (e.g. `"user.name"`,
+nested `"a.b.name"` supported) in model-mode — for entities whose display name
+lives on a related model (a common "profile" pattern, e.g. `Client → user.name`).
+Previously this silently produced an empty dropdown: model-mode read
+`$item->{'user.name'}` (which doesn't traverse the relation) and searched/ordered
+on a non-existent column, and the resulting SQL error was swallowed.
+
+- Label resolved via `data_get` (traverses the relation; identical for plain labels).
+- Search filters via `whereHas` (`LOWER(column) LIKE ?`, case-insensitive) — the
+  relation column is guarded by `SqlIdentifier::isSafe` before interpolation and the
+  term is bound; the relation path is resolved by Eloquent, never raw SQL.
+- The relation is eager-loaded (`with`) to avoid N+1.
+- **Limitation:** ordering by a relation column isn't supported (would need a JOIN);
+  it falls back to `colsSDValor`. Use service-mode for relation ordering / complex
+  JOINs. Documented in `docs/SearchDropdown.md`.
+
+Additive and non-breaking: a plain `colsSDLabel` (no dot) behaves exactly as before.
+The standalone `SearchDropdown` component is unchanged (separate surface).
+
+### Tests
+- Relation label + search, listing, no-match, plain-label regression, a
+  table-qualified base-model order column preserved, and a security case (a
+  malicious relation column is rejected by the guard, no error).
+
 ## [1.7.0] — 2026-07-17
 
 ### ⚠️ Security — config-driven RBAC gate was silently open by default

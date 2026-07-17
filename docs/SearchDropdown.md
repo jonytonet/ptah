@@ -404,7 +404,7 @@ No component instantiation is needed — just configure the column with `colsTip
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `colsSDModel` | `string` | — | Model or service class (e.g. `BusinessPartner`, `Product/ProductService/search`) |
-| `colsSDLabel` | `string` | `'name'` | Column displayed as the label |
+| `colsSDLabel` | `string` | `'name'` | Column displayed as the label. In model-mode, accepts dot-notation for a relation column (e.g. `user.name`, or nested `a.b.name`) — see [note below](#via-model) |
 | `colsSDValor` | `string` | `'id'` | Column used as the value (saved in `formData`) |
 | `colsSDOrder` | `string` | `'{label} ASC'` | Raw ORDER BY |
 | `colsSDTipo` | `'model'\|'service'` | `'model'` | Search mode |
@@ -452,6 +452,31 @@ To use SD as a filter, define in the `customFilters` of CrudConfig:
 ```
 
 **`colsRelacao` + `colsRelacaoExibe`** cause the label to be pre-filled in **edit** mode: Ptah reads `$record->businessPartner->name` and displays it in the input without a new query.
+
+#### Relation label (`colsSDLabel` with dot-notation)
+
+In model-mode, `colsSDLabel` may point to a column on a related model instead of a column on `colsSDModel` itself:
+
+```json
+{
+  "colsNomeFisico": "supplier_id",
+  "colsNomeLogico": "Supplier",
+  "colsTipo": "searchdropdown",
+  "colsGravar": true,
+  "colsSDModel": "Purchase/Order",
+  "colsSDLabel": "supplier.trade_name",
+  "colsSDValor": "id",
+  "colsSDTipo": "model"
+}
+```
+
+Here `colsSDModel` is queried as usual, but the label comes from the `supplier` relation's `trade_name` column:
+
+- **Label** is read with `data_get($item, 'supplier.trade_name')` — works for any relation depth (`a.b.name`).
+- **Search** is applied via `whereHas('supplier', fn ($q) => $q->whereRaw('LOWER(trade_name) LIKE ?', [...]))` — the same case-insensitive `LOWER(column) LIKE ?` filter used on the plain-column path, just scoped inside the relation instead of applied directly on `colsSDModel`.
+- **Eager loading** (`with('supplier')`) is applied automatically to avoid N+1 queries on the result set.
+
+> **Ordering caveat:** `colsSDOrder` does **not** order by a relation column — the query has no JOIN, so ordering by `supplier.trade_name` would fail. When the configured (or default `"{label} ASC"`) order column contains a dot, Ptah silently falls back to ordering by `colsSDValor` (default `id`). If you need to order by a related column, use [service-mode](#via-custom-service-basecrud) instead, where you control the query (JOIN, `orderBy`, etc.) directly in your Repository/Service.
 
 ---
 
