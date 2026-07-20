@@ -7,6 +7,51 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.11.0] — 2026-07-20
+
+### Added — BaseCrud large-volume export (queued) + "Exportações" panel
+
+A background export mode for large datasets, alongside the existing synchronous
+export. The file is generated on the queue and downloaded from a per-user panel —
+so a big Excel no longer blocks the request or times out.
+
+- **`queueExport($format)`** on BaseCrud (opt-in via `exportConfig.asyncExport.enabled`).
+  It resolves the filtered/ordered **ids** through the same `buildBaseQuery()` as the
+  listing (so it respects exactly the active filters/search/company scope), snapshots
+  them into a `ptah_exports` row, and dispatches `GenerateCrudExportJob`. The job only
+  generates the file from those ids — the query is **never** rebuilt outside Livewire.
+- **Auto-degrade.** With `queue.default=sync` or no `ptah_exports` table, `queueExport`
+  falls back to the synchronous download (with a toast); the toolbar shows a "needs a
+  queue" hint. A package never assumes a worker is running.
+- **`ExportsPanel`** Livewire component (`<livewire:ptah-exports-panel />`): lists the
+  user's exports with status badges, download and remove; polls only while something is
+  queued/processing.
+- **`ptah:export-prune`** removes expired exports (and stale queued/processing/failed
+  rows past the TTL) plus their files.
+- **Config** `ptah.export` (`disk`, `path`, `ttl_hours`, `async_max_rows`) and a new
+  `exportConfig.asyncExport` block (`enabled`/`excel`/`pdf`, default off).
+- **`exportConfig` is now validated** by `ConfigSchemaValidator` when present (absent
+  section = valid, non-breaking).
+
+### Security
+- The queued export enforces the **same allowlist + read-permission gate** as the
+  synchronous download, extracted to `Ptah\Services\Export\ExportAuthorizer` and applied
+  **inside the job before any file is generated**. The export always records the
+  **resolved** model class (the one that collected the ids), never a client-supplied
+  value, and `BaseCrud::$model` / `$companyFilter` are now `#[Locked]` — closing a
+  cross-model / cross-tenant leak where a forged request could pair one screen's scoped
+  ids with another model's data. Download re-checks ownership **and** the active company.
+
+### Database
+- New migration `create_ptah_exports_table` (**prepared, not run** — execute
+  `php artisan migrate` in each environment). Consistent with the other `ptah_*` tables.
+
+### Tests
+- 40+ tests across `tests/Feature/Export/`: queue dispatch, auto-degrade (sync / no
+  table), job file generation + failure, **cross-model/allowlist refusal (no file
+  written)**, `#[Locked]` client-mutation guards, multi-tenant id scoping, gated download
+  (owner / permission / expiry / **active-company**), panel, prune, schema validation.
+
 ## [1.10.1] — 2026-07-18
 
 ### Fixed

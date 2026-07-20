@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Ptah\Tests;
 
+use Barryvdh\DomPDF\ServiceProvider as DomPdfServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\LivewireServiceProvider;
+use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Prism\Prism\PrismServiceProvider;
 use Ptah\PtahServiceProvider;
@@ -25,6 +27,8 @@ abstract class TestCase extends OrchestraTestCase
         return [
             LivewireServiceProvider::class,
             PrismServiceProvider::class,
+            ExcelServiceProvider::class,
+            DomPdfServiceProvider::class,
             PtahServiceProvider::class,
         ];
     }

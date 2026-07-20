@@ -851,6 +851,12 @@ class CrudConfig extends Component
                 'formats' => ['excel', 'pdf'],
                 'chunkSize' => 500,
                 'notificationChannel' => 'database',
+                // Fase 3 — "grande volume": no UI toggle yet, so just carry the
+                // existing value forward (default off — opt-in only).
+                'asyncExport' => array_merge(
+                    ['enabled' => false, 'excel' => true, 'pdf' => false],
+                    $existing['exportConfig']['asyncExport'] ?? []
+                ),
             ]),
             'uiPreferences' => array_merge($existing['uiPreferences'] ?? [], [
                 'theme' => $this->theme,

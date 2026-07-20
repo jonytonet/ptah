@@ -16,6 +16,7 @@ use Ptah\Commands\Config\ConfigExportAllCommand;
 use Ptah\Commands\Config\ConfigImportAllCommand;
 use Ptah\Commands\Config\ConfigRelabelCommand;
 use Ptah\Commands\ConfigCommand;
+use Ptah\Commands\ExportPruneCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MenuSyncCommand;
@@ -38,6 +39,7 @@ use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Livewire\BaseCrud\CrudConfig;
 use Ptah\Livewire\Company\CompanyList;
 use Ptah\Livewire\Company\CompanySwitcher;
+use Ptah\Livewire\Exports\ExportsPanel;
 use Ptah\Livewire\Menu\MenuList;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
@@ -198,6 +200,7 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigRelabelCommand::class,    // ptah:config:relabel
                 MakeHooksCommand::class,     // ptah:hooks
                 PermissionSyncCommand::class, // ptah:permission:sync
+                ExportPruneCommand::class,    // ptah:export-prune
             ]);
         }
     }
@@ -449,6 +452,7 @@ class PtahServiceProvider extends ServiceProvider
             Livewire::component('ptah-base-crud', BaseCrud::class);
             Livewire::component('ptah-search-dropdown', SearchDropdown::class);
             Livewire::component('ptah-crud-config', CrudConfig::class);
+            Livewire::component('ptah-exports-panel', ExportsPanel::class);
 
             if (config('ptah.modules.auth')) {
                 Livewire::component('ptah-auth-login', LoginPage::class);

@@ -216,6 +216,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Async export (Fase 3 — "grande volume") / Exports panel
+    |--------------------------------------------------------------------------
+    */
+    'btn_export_async' => 'Export in background',
+    'export_requires_queue' => 'Needs a queue',
+    'export_queued_toast' => 'Export queued — check the Exports panel',
+    'export_degraded_toast' => 'Generated directly — no queue configured',
+    'exports_panel_title' => 'Exports',
+    'export_status_queued' => 'Queued',
+    'export_status_processing' => 'Processing',
+    'export_status_done' => 'Done',
+    'export_status_failed' => 'Failed',
+    'exports_panel_col_model' => 'Model',
+    'exports_panel_col_format' => 'Format',
+    'exports_panel_col_status' => 'Status',
+    'exports_panel_col_rows' => 'Rows',
+    'exports_panel_col_created' => 'Requested at',
+    'exports_panel_col_actions' => 'Actions',
+    'exports_panel_empty' => 'No exports yet.',
+    'exports_panel_remove_confirm' => 'Remove this export? The file will be permanently deleted.',
+    'btn_download' => 'Download',
+
+    /*
+    |--------------------------------------------------------------------------
     | Permissions / Middleware
     |--------------------------------------------------------------------------
     */

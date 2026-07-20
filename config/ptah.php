@@ -171,6 +171,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Export (async / large volume)
+    |--------------------------------------------------------------------------
+    |
+    | Settings for the queued BaseCrud export (Fase 3 — "grande volume"). The
+    | component still resolves the filtered/sorted ids; the queued job only
+    | generates the file from those ids (same source of truth as the
+    | synchronous export). Opt-in per CRUD via exportConfig.asyncExport.enabled.
+    |
+    | disk           : filesystem disk where generated files are stored.
+    | path           : directory (within the disk) where files are written.
+    | ttl_hours       : how long a generated file stays downloadable before
+    |                   ptah:export-prune considers it expired.
+    | async_max_rows : caps the number of ids collected for the queued job
+    |                  (0 = unlimited; PDF still degrades to exportConfig.maxRows).
+    */
+    'export' => [
+        'disk' => env('PTAH_EXPORT_DISK', 'local'),
+        'path' => env('PTAH_EXPORT_PATH', 'ptah-exports'),
+        'ttl_hours' => (int) env('PTAH_EXPORT_TTL_HOURS', 48),
+        'async_max_rows' => (int) env('PTAH_EXPORT_ASYNC_MAX_ROWS', 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Optional Modules
     |--------------------------------------------------------------------------
     | Use `php artisan ptah:module {auth|menu|company|permissions|api|ai_agent}` to install each module.

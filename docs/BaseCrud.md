@@ -1228,6 +1228,46 @@ reapplies filters — closing the old `?model=User` dump and the "export ignores
 filters" drift. Sorting by a **relation** column degrades to primary-key order
 in the file (the download rebuilds a flat `whereIn` query).
 
+### Large-volume export (queued) — since v1.11.0
+
+For big datasets, the synchronous path can time out while generating the file.
+The **queued** mode processes it on the worker and lets the user download it later
+from a panel. Opt-in per screen:
+
+```json
+"exportConfig": {
+  "enabled": true,
+  "maxRows": 5000,
+  "formats": ["excel", "pdf"],
+  "asyncExport": { "enabled": true, "excel": true, "pdf": false }
+}
+```
+
+- **How it works.** `BaseCrud::queueExport($format)` collects the filtered/ordered
+  ids through the **same** `buildBaseQuery()` as the listing, records them in a
+  `ptah_exports` row, and dispatches `GenerateCrudExportJob`. The job generates the
+  file from those ids only (same "component selects the rows" guarantee as the sync
+  path — the query is never rebuilt outside Livewire) and stores it on the configured
+  disk. **Security:** the job runs the same allowlist + read-permission gate
+  (`ExportAuthorizer`) **before** generating anything, and records the *resolved*
+  model class — `BaseCrud::$model`/`$companyFilter` are `#[Locked]`, so a forged
+  request can't pair one screen's scoped ids with another model's data.
+- **Auto-degrade.** If `queue.default=sync` or the `ptah_exports` table is absent,
+  `queueExport` transparently falls back to the synchronous download; the toolbar
+  shows a "needs a queue" hint. **Requires a real queue connection** (`QUEUE_CONNECTION`
+  ≠ `sync`) and a running worker to actually process in the background.
+- **Panel.** Drop `<livewire:ptah-exports-panel />` on a page (e.g. an "Exports"
+  screen): it lists the current user's exports with status, download and remove, and
+  polls only while something is queued/processing.
+- **Download** is gated: owner + `ExportAuthorizer` + not expired + active company.
+- **Config** (`config/ptah.php` → `export`): `disk` (`PTAH_EXPORT_DISK`, default
+  `local`), `path` (`PTAH_EXPORT_PATH`), `ttl_hours` (`PTAH_EXPORT_TTL_HOURS`, 48),
+  `async_max_rows` (`PTAH_EXPORT_ASYNC_MAX_ROWS`, 0 = unlimited for Excel; PDF stays
+  bounded by `maxRows`). Prune expired files with `php artisan ptah:export-prune`
+  (schedule it).
+- **Migration:** run `php artisan migrate` to create `ptah_exports` (shipped with the
+  package). Without it, exports simply run synchronously (auto-degrade).
+
 ### Print screen (`/ptah/print`)
 
 Beyond the file exports above, the export menu has a **Print** option that opens a
