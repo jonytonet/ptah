@@ -9,6 +9,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.11.0] — 2026-07-20
 
+> **⬆️ Upgrade action required:** run `php artisan migrate` to create the new
+> `ptah_exports` table (ships with the package). Without it, the queued export
+> transparently degrades to the synchronous download — nothing breaks, but the
+> background/panel mode stays off until you migrate. Needs a real queue
+> (`QUEUE_CONNECTION` ≠ `sync`) + a running worker to process in the background.
+
 ### Added — BaseCrud large-volume export (queued) + "Exportações" panel
 
 A background export mode for large datasets, alongside the existing synchronous
