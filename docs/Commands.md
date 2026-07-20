@@ -14,9 +14,10 @@ This document lists all Artisan commands available in the Ptah package.
 6. [ptah:config:export-all / import-all](#ptahconfigexport-all--import-all)
 7. [ptah:permission:sync](#ptahpermissionsync)
 8. [ptah:config:relabel](#ptahconfigrelabel)
-9. [ptah:hooks](#ptahhooks)
-10. [ptah:menu-sync](#ptahmenu-sync)
-11. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+9. [ptah:export-prune](#ptahexport-prune)
+10. [ptah:hooks](#ptahhooks)
+11. [ptah:menu-sync](#ptahmenu-sync)
+12. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -1065,6 +1066,19 @@ php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 ```
 
 ---
+
+## ptah:export-prune
+
+Removes finished queued exports past their TTL — and stale `queued`/`processing`/
+`failed` rows older than the TTL — deleting both the `ptah_exports` row and its file.
+For the large-volume (queued) export mode; schedule it (e.g. daily).
+
+```bash
+php artisan ptah:export-prune
+```
+
+TTL comes from `config('ptah.export.ttl_hours')` (default 48). Safe to run repeatedly
+(only removes what is already expired/orphaned).
 
 ## ptah:hooks
 

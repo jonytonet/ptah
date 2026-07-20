@@ -217,6 +217,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exportação assíncrona (Fase 3 — "grande volume") / Painel de exportações
+    |--------------------------------------------------------------------------
+    */
+    'btn_export_async' => 'Exportar em segundo plano',
+    'export_requires_queue' => 'Requer fila',
+    'export_queued_toast' => 'Exportação em andamento — veja o painel de Exportações',
+    'export_degraded_toast' => 'Gerado direto — fila não configurada',
+    'exports_panel_title' => 'Exportações',
+    'export_status_queued' => 'Na fila',
+    'export_status_processing' => 'Processando',
+    'export_status_done' => 'Concluído',
+    'export_status_failed' => 'Falhou',
+    'exports_panel_col_model' => 'Modelo',
+    'exports_panel_col_format' => 'Formato',
+    'exports_panel_col_status' => 'Status',
+    'exports_panel_col_rows' => 'Linhas',
+    'exports_panel_col_created' => 'Solicitado em',
+    'exports_panel_col_actions' => 'Ações',
+    'exports_panel_empty' => 'Nenhuma exportação ainda.',
+    'exports_panel_remove_confirm' => 'Remover esta exportação? O arquivo será apagado definitivamente.',
+    'btn_download' => 'Baixar',
+
+    /*
+    |--------------------------------------------------------------------------
     | Permissions / Middleware
     |--------------------------------------------------------------------------
     */

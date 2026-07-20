@@ -63,6 +63,9 @@ class CrudConfig extends Model
             'formats' => ['excel'],
             'chunkSize' => 500,
             'notificationChannel' => 'database',
+            // Fase 3 — "grande volume" (queue + Exportações panel). Off by
+            // default: opt-in per CRUD, never a behaviour change on upgrade.
+            'asyncExport' => ['enabled' => false, 'excel' => true, 'pdf' => false],
         ], $this->config['exportConfig'] ?? []);
     }
 

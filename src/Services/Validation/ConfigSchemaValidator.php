@@ -54,6 +54,12 @@ class ConfigSchemaValidator
         if (isset($config['general']) && is_array($config['general'])) {
             $this->validateGeneralSettings($config['general']);
         }
+
+        // Validate export configuration (additive, non-breaking: an absent
+        // section is valid — older configs never had one).
+        if (isset($config['exportConfig']) && is_array($config['exportConfig'])) {
+            $this->validateExportConfig($config['exportConfig'], $model);
+        }
     }
 
     /**
@@ -375,6 +381,68 @@ class ConfigSchemaValidator
                     $table,
                     'Table does not exist in database'
                 )->withJsonPath("$.joins[{$index}].colsTable");
+            }
+        }
+    }
+
+    /**
+     * Validate export configuration (synchronous export + Fase 3 async export).
+     *
+     * The section itself is optional (checked by the caller); here every KEY
+     * inside it is also optional — only type/enum checks when present, so an
+     * older config (or one that only sets a couple of keys) stays valid.
+     * Unknown keys are ignored (forward-compatible, never rejected).
+     *
+     * @param  array<string, mixed>  $exportConfig
+     *
+     * @throws ConfigValidationException
+     */
+    protected function validateExportConfig(array $exportConfig, string $model): void
+    {
+        if (isset($exportConfig['enabled']) && ! is_bool($exportConfig['enabled'])) {
+            throw ConfigValidationException::invalidType('enabled', $exportConfig['enabled'], 'boolean', 'exportConfig')
+                ->withModel($model);
+        }
+
+        if (isset($exportConfig['maxRows'])) {
+            if (! is_int($exportConfig['maxRows']) || $exportConfig['maxRows'] <= 0) {
+                throw ConfigValidationException::invalidType('maxRows', $exportConfig['maxRows'], 'positive integer', 'exportConfig')
+                    ->withModel($model)
+                    ->withSuggestion('Use a positive integer, e.g. 5000');
+            }
+        }
+
+        if (isset($exportConfig['formats'])) {
+            $validFormats = ['excel', 'pdf'];
+
+            if (! is_array($exportConfig['formats'])) {
+                throw ConfigValidationException::invalidType('formats', $exportConfig['formats'], 'array', 'exportConfig')
+                    ->withModel($model);
+            }
+
+            foreach ($exportConfig['formats'] as $format) {
+                if (! in_array($format, $validFormats, true)) {
+                    throw ConfigValidationException::invalidColumnType('formats', $format, $validFormats, 'exportConfig')
+                        ->withModel($model);
+                }
+            }
+        }
+
+        if (isset($exportConfig['asyncExport'])) {
+            if (! is_array($exportConfig['asyncExport'])) {
+                throw ConfigValidationException::invalidType('asyncExport', $exportConfig['asyncExport'], 'array', 'exportConfig')
+                    ->withModel($model);
+            }
+
+            foreach (['enabled', 'excel', 'pdf'] as $flag) {
+                if (isset($exportConfig['asyncExport'][$flag]) && ! is_bool($exportConfig['asyncExport'][$flag])) {
+                    throw ConfigValidationException::invalidType(
+                        "asyncExport.{$flag}",
+                        $exportConfig['asyncExport'][$flag],
+                        'boolean',
+                        'exportConfig'
+                    )->withModel($model);
+                }
             }
         }
     }

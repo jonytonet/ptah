@@ -109,7 +109,7 @@
                      x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                      x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                      style="transform-origin: top right"
-                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[160px] py-1.5 ptah-c-dd">
+                     class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[160px] max-w-60 py-1.5 ptah-c-dd">
                     @foreach ($exportCfg['formats'] ?? ['excel'] as $fmt)
                         <button wire:click="export('{{ $fmt }}')" @click="open = false"
                             class="flex items-center gap-2.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
@@ -145,6 +145,28 @@
                         </svg>
                         {{ __('ptah::ui.btn_print') }}
                     </button>
+
+                    {{-- Async export (Fase 3 — "grande volume"): opt-in per CRUD via
+                         exportConfig.asyncExport.enabled. Degrades to the synchronous
+                         export server-side when no real queue is configured, but the
+                         button still shows a hint so the choice is not a silent no-op. --}}
+                    @if (!empty($exportCfg['asyncExport']['enabled']))
+                        <div class="my-1 border-t ptah-c-dd_sep"></div>
+                        <button wire:click="queueExport('excel')" @click="open = false"
+                            class="flex flex-wrap items-center gap-1.5 w-full px-4 py-2 text-sm ptah-c-dd_item">
+                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span class="flex-1 min-w-0 text-left wrap-break-word">{{ __('ptah::ui.btn_export_async') }}</span>
+                            @if (config('queue.default') === 'sync')
+                                <span class="shrink-0 px-1.5 py-0.5 text-[10px] font-bold leading-none rounded-full bg-warn text-dark"
+                                      title="{{ __('ptah::ui.export_requires_queue') }}">
+                                    {{ __('ptah::ui.export_requires_queue') }}
+                                </span>
+                            @endif
+                        </button>
+                    @endif
                 </div>
             </div>
         @endif

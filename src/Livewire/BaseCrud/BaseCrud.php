@@ -84,7 +84,17 @@ class BaseCrud extends Component
 
     // ── Configuration ──────────────────────────────────────────────────────────
 
-    /** Model identifier (e.g. "Product", "Purchase/Order/PurchaseOrders") */
+    /**
+     * Model identifier (e.g. "Product", "Purchase/Order/PurchaseOrders").
+     *
+     * #[Locked]: only ever assigned server-side, once, in mount() (a
+     * constructor param — never re-assigned afterwards). A client-writable
+     * $model would let a forged request point resolveEloquentModel() (and
+     * everything derived from it — queries, exports, permission checks) at an
+     * unrelated model while the rest of the component's state stays put.
+     * Locked only blocks client-side updates; mount() is unaffected.
+     */
+    #[Locked]
     public string $model = '';
 
     /** Route path captured from request (e.g. 'categories') — used to load screen-specific config */
@@ -154,7 +164,20 @@ class BaseCrud extends Component
 
     // ── Multi-tenant ──────────────────────────────────────────────────────────
 
-    /** Active company ID (0 = no filter) */
+    /**
+     * Active company ID (0 = no filter).
+     *
+     * #[Locked]: only ever assigned server-side, once, in mount() (a
+     * constructor param, defaulting to ptah_company_id() from the session —
+     * never re-assigned afterwards). Switching company is a full-page reload
+     * (CompanySwitcher::switchTo() — grep confirms no wire:model/$set/$wire.
+     * assignment targets this property anywhere), so there is no legitimate
+     * client-side setter to preserve. A client-writable companyFilter would
+     * let a forged request scope the listing — and this property's export —
+     * to a company the user was never granted. Locked only blocks client-side
+     * updates; mount() is unaffected.
+     */
+    #[Locked]
     public int $companyFilter = 0;
 
     // ── Filters ───────────────────────────────────────────────────────────────

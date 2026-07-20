@@ -20,6 +20,12 @@ Route::middleware(['web'])->prefix('ptah')->name('ptah.')->group(function () {
     Route::get('/export/download/{token}', [ExportController::class, 'download'])
         ->name('export.download');
 
+    // Download do arquivo gerado por um export em fila (Fase 3 — "grande volume").
+    // Registro persistente (não um token efêmero) — gate de dono + allowlist/permissão
+    // e status/expiração são checados no controller.
+    Route::get('/export/file/{export}', [ExportController::class, 'file'])
+        ->name('export.file');
+
     // Tela de impressão (lê o snapshot em cache gerado pelo BaseCrud::printView)
     Route::get('/print/{token}', [CrudPrintController::class, 'print'])
         ->name('print');
