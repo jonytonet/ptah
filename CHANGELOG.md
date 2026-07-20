@@ -7,6 +7,40 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.0] — 2026-07-18
+
+### Added — `<x-forge-modal>` native `wire:model` support (dual-mode)
+
+`<x-forge-modal>` now accepts `wire:model` (and modifiers, e.g. `wire:model.live`)
+and manages its own open/close state via `@entangle`, so it no longer requires a
+parent `<div x-data="{ open: @entangle('prop') }">` wrapper:
+
+```blade
+<x-forge-button wire:click="$set('showX', true)">Open</x-forge-button>
+<x-forge-modal wire:model="showX" title="…"> … </x-forge-modal>
+```
+
+- **Backward-compatible.** Without `wire:model`, the component behaves exactly as
+  before — it reads `open` from the parent Alpine scope; no `x-data` is emitted, so
+  the existing wrapper pattern (used by every built-in Ptah modal) is unchanged.
+- The two modes are mutually exclusive (don't wrap the `wire:model` form in a parent
+  `x-data` — the modal's own scope would shadow the parent's `open`); documented in
+  the component.
+- `wire:model` is kept off the root element's attribute spread; `wire:modelable` does
+  **not** trigger the self-contained mode.
+
+> **Clarification re v1.5.0:** the v1.5.0 accessibility pass did **not** remove
+> `wire:model` from `<x-forge-modal>` — git history shows the component never read
+> `wire:model`; it always required `open` from the parent scope, and the a11y pass
+> only added `role`/`aria-*`/`focus-visible` without touching the open mechanism.
+> Projects that used `<x-forge-modal wire:model="…">` were relying on unsupported
+> behavior; this release adds that support natively.
+
+### Tests
+- `ForgeModalDualModeTest`: parent-scope mode emits no `x-data`; `wire:model` mode
+  emits `@entangle` and drops `wire:model` from the root; `.live` modifier passes
+  through; `wire:modelable` does not trigger self-contained mode.
+
 ## [1.9.1] — 2026-07-17
 
 ### Changed — standalone SearchDropdown internals
