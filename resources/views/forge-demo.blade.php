@@ -240,7 +240,7 @@
         <h2 class="demo-title">forge-modal</h2>
         <div x-data="{ open: false }">
             <x-forge-button @click="open = true" color="primary">Abrir Modal</x-forge-button>
-            <x-forge-modal x-model="open" title="Título do Modal" size="md">
+            <x-forge-modal title="Título do Modal" size="md">
                 <p class="mb-4 text-gray-600">
                     Este é o conteúdo do modal. Você pode colocar qualquer elemento aqui.
                 </p>

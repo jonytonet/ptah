@@ -5,17 +5,33 @@
       - subtitle : string|null  (opcional, renderiza abaixo do título)
       - size     : sm | md | lg | xl | 2xl | full  (default: md)
     Slots: default, footer
-    Uso:
-      <div x-data="{ open: false }">
-          <x-forge-button @click="open = true">Abrir</x-forge-button>
-          <x-forge-modal title="Título" subtitle="Subtítulo opcional">
+    Modo dual (aditivo, retrocompatível):
+      (a) Escopo do pai — o pai declara o x-data e o modal apenas lê "open":
+          <div x-data="{ open: false }">
+              <x-forge-button @click="open = true">Abrir</x-forge-button>
+              <x-forge-modal title="Título" subtitle="Subtítulo opcional">
+                  Content
+                  <x-slot:footer>
+                      <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
+                      <x-forge-button>Salvar</x-forge-button>
+                  </x-slot:footer>
+              </x-forge-modal>
+          </div>
+      (b) Self-contained via wire:model — o próprio modal declara o x-data com
+          @entangle, sem exigir um wrapper no pai (suporta modificadores, ex.: .live):
+          <x-forge-button wire:click="$set('showX', true)">Abrir</x-forge-button>
+          <x-forge-modal wire:model="showX" title="Título">
               Content
               <x-slot:footer>
-                  <x-forge-button color="light" @click="open = false">Cancelar</x-forge-button>
-                  <x-forge-button>Salvar</x-forge-button>
+                  <x-forge-button color="light" wire:click="$set('showX', false)">Cancelar</x-forge-button>
+                  <x-forge-button wire:click="save">Salvar</x-forge-button>
               </x-slot:footer>
           </x-forge-modal>
-      </div>
+          (no Livewire component: public bool $showX = false;)
+      ATENÇÃO: os modos (a) e (b) são mutuamente exclusivos. NÃO envolva o modo
+      wire:model num wrapper <div x-data="{ open: ... }"> do pai — o x-data mais
+      interno (o do próprio modal) vence no Alpine, e o "open" do wrapper do pai
+      fica sem efeito, silenciosamente. Use ou (a) ou (b), nunca os dois juntos.
     Requires Alpine.js
 --}}
 @props([
@@ -34,13 +50,22 @@
         'full' => 'max-w-full mx-4',
     ];
     $sizeClass = $sizeMap[$size] ?? $sizeMap['md'];
+
+    // Exact "wire:model" or "wire:model.<modifier>" — não "wire:modelable"
+    // (Str::startsWith('wire:modelable', 'wire:model') seria falso-positivo).
+    $hasWireModel = $attributes->has('wire:model') || $attributes->whereStartsWith('wire:model.')->isNotEmpty();
+    $wireModel = $hasWireModel ? $attributes->wire('model') : null;
+    $rootAttributes = $hasWireModel
+        ? $attributes->except(['class', 'wire:model'])->whereDoesntStartWith('wire:model.')
+        : $attributes->except(['class']);
 @endphp
 
 <div
+    @if ($hasWireModel) x-data="{ open: @entangle($wireModel) }" @endif
     x-show="open"
     x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center"
-    {{ $attributes->except(['class']) }}
+    {{ $rootAttributes }}
 >
     {{-- Backdrop --}}
     <div
