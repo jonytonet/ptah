@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Ptah\Generators;
 
 use Ptah\Support\EntityContext;
+use Ptah\Support\LabelHumanizer;
 
 /**
  * Generates only the index view (BaseCrud manages create/edit/show via Livewire modals).
  *
  * Stubs: view.index.stub
- * Placeholders: entity, entity_lower, entities
+ * Placeholders: entity, entity_lower, entities, entity_title
  *
  * Only runs when --api is NOT active.
  */
@@ -45,6 +46,7 @@ class ViewGenerator extends AbstractGenerator
                 'entity' => $context->entity,
                 'entity_lower' => $context->entityLower,
                 'entities' => $context->entityPlural,
+                'entity_title' => LabelHumanizer::make($context->entityLower),
                 'crud_identifier' => $context->subFolder
                     ? $context->subFolder.'/'.$context->entity
                     : $context->entity,

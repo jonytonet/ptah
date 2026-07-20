@@ -7,6 +7,19 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.1] — 2026-07-18
+
+### Fixed
+- **`ptah:forge` — humanised index title.** The generated `index.blade.php` used the
+  raw StudlyCase entity name for the page title, `<h1>` and breadcrumb (e.g.
+  `ProductStock`). It now runs through `LabelHumanizer` (the same engine used for
+  column labels — camelCase split + pt-BR dictionary/accents), so the title reads
+  `Product Stock` / `Usuário` etc. The Livewire `model` identifier is unchanged
+  (stays canonical). Affects newly generated views only.
+
+> If you published `stubs/ptah/view.index.stub`, re-sync it (it now uses the new
+> `{{ entity_title }}` placeholder) to pick up the humanised title.
+
 ## [1.10.0] — 2026-07-18
 
 ### Added — `<x-forge-modal>` native `wire:model` support (dual-mode)
