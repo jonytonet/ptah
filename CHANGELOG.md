@@ -11,7 +11,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed — boolean columns and the visual config editor
 
-Four bugs found in real use (a 90-screen ERP), all in shared paths:
+Six bugs found in real use (a 90-screen ERP), all in shared paths. Four of them below,
+plus the focus-loss and mojibake fixes further down:
 
 - **A boolean column always rendered "Não" in the listing.** `formatCell()` applied the
   `colsSelect` value→label map (`1` → "Sim") **before** the renderer, and `renderBoolean()`
@@ -42,12 +43,42 @@ Four bugs found in real use (a 90-screen ERP), all in shared paths:
   legacy shape), so a config the runtime can execute is never rejected. Invalid joins
   (unknown type, duplicate table, missing table) are still rejected.
 
+### Fixed — a live-search input lost focus while typing
+
+`<x-forge-input>` generated its `id` with `uniqid()`, i.e. a **different id on every render**.
+Livewire's DOM-diff uses `el.id` as the morph key when there is no `wire:id`/`wire:key`, so a
+changing id made the morph **remove and re-create the input** — the focused element vanished
+mid-typing on any `wire:model.live` field. The id is now derived from the field's identity
+(stable across renders), and an input **without** a label emits no `id` at all (nothing to key
+on → the node is patched in place).
+
+This affected **9 built-in screens** — the menu, company, role and user-permission searches,
+the BaseCrud toolbar search, three filter-panel inputs and the calculated-field input — and any
+consuming app using `<x-forge-input wire:model.live>`. Fixed at the root, so no call site
+changed.
+
+> Known related issue, deliberately not changed here: `<x-forge-select>` has the same random-id
+> pattern, but its re-initialisation is load-bearing (it's what populates the select when an
+> edit modal opens). Fixing it needs a per-call-site review and is tracked separately.
+
+### Fixed — mojibake (`â€"`) in shipped sources
+
+A formatting pass back in March re-encoded three files as if they were CP1252, leaving 2,576
+double-encoded byte sequences (`—`, `─`, `═`, `→`, accented letters…) plus one UTF-8 BOM. The
+user-visible symptom was `â€"` instead of `—` in the config editor's column table. Bytes are
+repaired (pure substitution — not a single line added or removed) and a **regression guard test**
+now fails the suite if double-encoded sequences or a BOM reappear in `.php`/`.blade.php` sources.
+
 ### Tests
-- Regression tests for all four (verified failing before the fix): boolean renderer vs the
-  select map (both the explicit renderer and the legacy helper), a guard that `badge` on a
-  select column still uses the mapped label, the boolean form control + persistence in both
-  directions, empty/invalid `colsTipo`/`colsRenderer`, the editor's
-  `addField → save` round trip, and JOIN validation in both shapes.
+- Regression tests for all six (each verified failing before its fix): boolean renderer vs the
+  select map (explicit renderer and legacy helper), a guard that `badge` on a select column still
+  uses the mapped label, the boolean form control + persistence both ways, empty/invalid
+  `colsTipo`/`colsRenderer`, the editor's `addField → save` round trip, JOIN validation in both
+  shapes, source-encoding/BOM guards, and `<x-forge-input>` id stability across renders.
+
+> **If you published Ptah views**, re-publish to get these fixes:
+> `php artisan vendor:publish --tag=ptah-views-components --force` (for `<x-forge-input>`) and/or
+> `--tag=ptah-views-base-crud --force` (for the config editor and the boolean form control).
 
 ## [1.11.0] — 2026-07-20
 

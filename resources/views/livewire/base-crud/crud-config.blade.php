@@ -1,5 +1,5 @@
 <div>
-    {{-- â”€â”€ BotÃ£o de abertura â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+    {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
     @ptahCan('configCrud', 'read')
     <x-forge-button
         wire:click="openModal"
@@ -19,9 +19,9 @@
     </x-forge-button>
     @endptahCan
 
-    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-    {{-- â”€â”€ Modal Enterprise â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @teleport('body')
     <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
         x-show="$wire.showModal" x-cloak
@@ -35,7 +35,7 @@
         <div class="relative flex w-full mx-4 overflow-hidden bg-white shadow-2xl max-w-7xl rounded-2xl"
             style="height: 90vh; max-height: 900px;">
 
-            {{-- â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+            {{-- ── Sidebar ──────────────────────────────────────────────── --}}
             <aside class="flex flex-col text-white w-60 shrink-0 bg-slate-900">
                 {{-- Header --}}
                 <div class="px-5 pt-6 pb-5 border-b border-slate-700/60">
@@ -127,7 +127,7 @@
                 </div>
             </aside>
 
-            {{-- â”€â”€ ConteÃºdo Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+            {{-- ── Conteúdo Principal ────────────────────────────────────── --}}
             <div class="flex flex-col flex-1 min-w-0">
                 {{-- Top bar --}}
                 <div class="flex items-center justify-between py-4 bg-white border-b px-7 border-slate-100">
@@ -164,9 +164,9 @@
                 {{-- Scroll area --}}
                 <div class="flex-1 overflow-y-auto bg-slate-50">
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: COLUNAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: COLUNAS ────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'cols'" class="p-6 space-y-5">
 
                         {{-- Tabela de colunas --}}
@@ -214,7 +214,7 @@
                                             <code
                                                 class="text-[11px] font-mono text-primary bg-primary-light px-1.5 py-0.5 rounded">{{ $col['colsNomeFisico'] ?? '' }}</code>
                                             @if (!empty($col['colsRelacaoNested']))
-                                            <span class="text-[10px] text-slate-400 ml-1">â†’ {{ $col['colsRelacaoNested']
+                                            <span class="text-[10px] text-slate-400 ml-1">→ {{ $col['colsRelacaoNested']
                                                 }}</span>
                                             @endif
                                         </td>
@@ -234,7 +234,7 @@
                                                 class="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[11px]">{{
                                                 $col['colsHelper'] }}</span>
                                             @else
-                                            <span class="text-slate-300">â€”</span>
+                                            <span class="text-slate-300">—</span>
                                             @endif
                                         </td>
                                         <td class="px-3 py-2">
@@ -243,7 +243,7 @@
                                                 class="bg-green-50 text-green-700 px-1.5 py-0.5 rounded text-[11px]">{{
                                                 $col['colsMask'] }}</span>
                                             @else
-                                            <span class="text-slate-300">â€”</span>
+                                            <span class="text-slate-300">—</span>
                                             @endif
                                         </td>
                                         <td class="px-3 py-2 text-center">
@@ -291,7 +291,7 @@
                             </table>
                         </div>
 
-                        {{-- FormulÃ¡rio de ediÃ§Ã£o/adiÃ§Ã£o --}}
+                        {{-- Formulário de edição/adição --}}
                         <div class="overflow-hidden bg-white border shadow-sm rounded-md border-slate-200"
                             x-data="{ editTab: 'basic' }">
                             <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
@@ -306,7 +306,7 @@
                                 @endif
                             </div>
 
-                            {{-- Sub-tabs do formulÃ¡rio --}}
+                            {{-- Sub-tabs do formulário --}}
                             <div class="flex gap-0 px-5 border-b border-slate-100 bg-slate-50">
                                 @php
                                 $fTabs = [
@@ -329,7 +329,7 @@
                             </div>
 
                             <div class="p-5">
-                                {{-- â”€â”€ BÃ¡sico â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Básico ───────────────────────────────────── --}}
                                 <div x-show="editTab === 'basic'" class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_field_label') }}</label>
@@ -341,7 +341,7 @@
                                         <input type="text" wire:model="formDataField.colsNomeLogico"
                                             placeholder="ex: Fornecedor" class="cfg-input" />
                                     </div>
-                                    {{-- Fonte SQL (colsSource) â€” para colunas de JOIN --}}
+                                    {{-- Fonte SQL (colsSource) — para colunas de JOIN --}}
                                     <div class="col-span-2">
                                         <label class="cfg-label">
                                             {{ __('ptah::ui.cfg_col_sql_label') }}
@@ -378,7 +378,7 @@
                                                 </li>
                                                 <li><code
                                                         class="px-1 font-mono bg-white rounded">product_supplier.product.name</code>
-                                                    <span class="text-slate-400">â€” {{
+                                                    <span class="text-slate-400">— {{
                                                         __('ptah::ui.cfg_col_field_guide_enc') }} <code
                                                             class="px-1 bg-white rounded">products.name</code></span>
                                                 </li>
@@ -467,11 +467,11 @@
                                                 class="text-primary rounded border-slate-300" />
                                             <label for="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 class="text-[11px] text-slate-600 cursor-pointer select-none">
-                                                <strong>colsMetodoRaw</strong> â€” {{
+                                                <strong>colsMetodoRaw</strong> — {{
                                                 __('ptah::ui.cfg_col_method_raw_label') }}
                                             </label>
                                         </div>
-                                        {{-- Guia de sintaxe (colapsÃ¡vel) --}}
+                                        {{-- Guia de sintaxe (colapsável) --}}
                                         <div x-data="{ open: false }" class="mt-2">
                                             <button type="button" @click="open = !open"
                                                 class="text-[11px] text-primary hover:text-primary font-medium flex items-center gap-1">
@@ -489,11 +489,11 @@
                                                         class="px-1 font-mono bg-white rounded">Namespace\Classe\metodo(%campo1%, %campo2%, 'literal')</code>
                                                 </p>
                                                 <ul class="space-y-1 list-disc list-inside text-slate-600">
-                                                    <li><code class="px-1 font-mono bg-white rounded">%campo%</code> â†’
+                                                    <li><code class="px-1 font-mono bg-white rounded">%campo%</code> →
                                                         {{ __('ptah::ui.cfg_col_method_guide_sub') }}</li>
                                                     <li><code class="px-1 font-mono bg-white rounded">'literal'</code>
                                                         ou <code
-                                                            class="px-1 font-mono bg-white rounded">"literal"</code> â†’
+                                                            class="px-1 font-mono bg-white rounded">"literal"</code> →
                                                         string passada diretamente</li>
                                                     <li>{{ __('ptah::ui.cfg_col_method_guide_multi') }}</li>
                                                     <li>O prefixo <code
@@ -521,7 +521,7 @@
                                             placeholder="campo_db ou relation.campo" class="cfg-input" />
                                     </div>
 
-                                    {{-- â”€â”€ Estilo da CÃ©lula â”€â”€ --}}
+                                    {{-- ── Estilo da Célula ── --}}
                                     <div class="col-span-2 pt-4 mt-1 border-t border-slate-100">
                                         <p
                                             class="mb-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -586,7 +586,7 @@
                                     </div>
                                 </div>
 
-                                {{-- â”€â”€ ExibiÃ§Ã£o / Renderer DSL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Exibição / Renderer DSL ──────────────────── --}}
                                 <div x-show="editTab === 'renderer'" class="space-y-4">
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_label') }}</label>
@@ -682,7 +682,7 @@
                                                 placeholder="bx bx-check (opcional)" class="flex-1 cfg-input-sm" />
                                             <button
                                                 wire:click="$set('formDataField.colsRendererBadges', array_values(array_filter($formDataField['colsRendererBadges'] ?? [], fn($k) => $k != {{ $bi }}, ARRAY_FILTER_USE_KEY)))"
-                                                class="p-1 text-red-400 hover:text-red-600 shrink-0">âœ•</button>
+                                                class="p-1 text-red-400 hover:text-red-600 shrink-0">✕</button>
                                         </div>
                                         @endforeach
                                         <button
@@ -849,8 +849,8 @@
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_duration') }}
                                             (colsRendererDurationUnit)</label>
                                         <select wire:model="formDataField.colsRendererDurationUnit" class="cfg-input">
-                                            <option value="minutes">minutes â€” entrada em minutos</option>
-                                            <option value="seconds">seconds â€” entrada em segundos</option>
+                                            <option value="minutes">minutes — entrada em minutos</option>
+                                            <option value="seconds">seconds — entrada em segundos</option>
                                         </select>
                                     </div>
                                     @endif
@@ -868,7 +868,7 @@
                                     @endif
                                 </div>
 
-                                {{-- â”€â”€ MÃ¡scara de Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Máscara de Input ────────────────────────── --}}
                                 <div x-show="editTab === 'mask'" class="space-y-4">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -876,37 +876,37 @@
                                             <select wire:model.live="formDataField.colsMask" class="cfg-input">
                                                 <option value="">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
                                                 <optgroup label="{{ __('ptah::ui.cfg_col_mask_grp_monetary') }}">
-                                                    <option value="money_brl">money_brl â€” R$ 1.253,08</option>
-                                                    <option value="money_usd">money_usd â€” $ 1,253.08</option>
-                                                    <option value="percent">percent â€” 99,99%</option>
+                                                    <option value="money_brl">money_brl — R$ 1.253,08</option>
+                                                    <option value="money_usd">money_usd — $ 1,253.08</option>
+                                                    <option value="percent">percent — 99,99%</option>
                                                 </optgroup>
                                                 <optgroup label="Documentos">
-                                                    <option value="cpf">cpf â€” 000.000.000-00</option>
-                                                    <option value="cnpj">cnpj â€” 00.000.000/0000-00</option>
-                                                    <option value="rg">rg â€” 00.000.000-0</option>
-                                                    <option value="pis">pis â€” 000.00000.00-0</option>
-                                                    <option value="ncm">ncm â€” 0000.00.00</option>
+                                                    <option value="cpf">cpf — 000.000.000-00</option>
+                                                    <option value="cnpj">cnpj — 00.000.000/0000-00</option>
+                                                    <option value="rg">rg — 00.000.000-0</option>
+                                                    <option value="pis">pis — 000.00000.00-0</option>
+                                                    <option value="ncm">ncm — 0000.00.00</option>
                                                     <option value="ean13">{{ __('ptah::ui.cfg_col_mask_ean13') }}
                                                     </option>
                                                 </optgroup>
                                                 <optgroup label="Contato">
-                                                    <option value="phone">phone â€” (00) 0 0000-0000</option>
-                                                    <option value="cep">cep â€” 00000-000</option>
+                                                    <option value="phone">phone — (00) 0 0000-0000</option>
+                                                    <option value="cep">cep — 00000-000</option>
                                                 </optgroup>
                                                 <optgroup label="{{ __('ptah::ui.cfg_col_mask_grp_vehicle') }}">
-                                                    <option value="plate">plate â€” ABC-1234 / Mercosul ABC1A23</option>
+                                                    <option value="plate">plate — ABC-1234 / Mercosul ABC1A23</option>
                                                 </optgroup>
                                                 <optgroup label="Pagamento">
-                                                    <option value="credit_card">credit_card â€” 0000 0000 0000 0000
+                                                    <option value="credit_card">credit_card — 0000 0000 0000 0000
                                                     </option>
                                                 </optgroup>
                                                 <optgroup label="Data/Hora">
-                                                    <option value="date">date â€” 00/00/0000</option>
-                                                    <option value="datetime">datetime â€” 00/00/0000 00:00</option>
-                                                    <option value="time">time â€” 00:00</option>
+                                                    <option value="date">date — 00/00/0000</option>
+                                                    <option value="datetime">datetime — 00/00/0000 00:00</option>
+                                                    <option value="time">time — 00:00</option>
                                                 </optgroup>
                                                 <optgroup label="Texto">
-                                                    <option value="integer">integer â€” Somente inteiros</option>
+                                                    <option value="integer">integer — Somente inteiros</option>
                                                     <option value="uppercase">{{
                                                         __('ptah::ui.cfg_col_mask_uppercase_opt') }}</option>
                                                     <option value="custom_regex">{{
@@ -918,19 +918,19 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_transform') }}</label>
                                             <select wire:model="formDataField.colsMaskTransform" class="cfg-input">
-                                                <option value="">â€” Nenhuma â€”</option>
-                                                <option value="money_to_float">money_to_float â€” "R$ 1.253,08" â†’ 1253.08
+                                                <option value="">— Nenhuma —</option>
+                                                <option value="money_to_float">money_to_float — "R$ 1.253,08" → 1253.08
                                                 </option>
-                                                <option value="digits_only">digits_only â€” "055.465.309-52" â†’
+                                                <option value="digits_only">digits_only — "055.465.309-52" →
                                                     "05546530952"</option>
-                                                <option value="plate_clean">plate_clean â€” "ABC-1234" â†’ "ABC1234" {{
+                                                <option value="plate_clean">plate_clean — "ABC-1234" → "ABC1234" {{
                                                     __('ptah::ui.cfg_col_mask_plate_sfx') }}</option>
-                                                <option value="date_br_to_iso">date_br_to_iso â€” "01/12/2024" â†’
+                                                <option value="date_br_to_iso">date_br_to_iso — "01/12/2024" →
                                                     "2024-12-01"</option>
-                                                <option value="date_iso_to_br">date_iso_to_br â€” "2024-12-01" â†’
+                                                <option value="date_iso_to_br">date_iso_to_br — "2024-12-01" →
                                                     "01/12/2024"</option>
-                                                <option value="uppercase">uppercase â€” "texto" â†’ "TEXTO"</option>
-                                                <option value="lowercase">lowercase â€” "TEXTO" â†’ "texto"</option>
+                                                <option value="uppercase">uppercase — "texto" → "TEXTO"</option>
+                                                <option value="lowercase">lowercase — "TEXTO" → "texto"</option>
                                                 <option value="trim">{{ __('ptah::ui.cfg_col_mask_trim_opt') }}</option>
                                             </select>
                                         </div>
@@ -944,30 +944,30 @@
                                     </div>
                                     @endif
 
-                                    {{-- Preview da transformaÃ§Ã£o --}}
+                                    {{-- Preview da transformação --}}
                                     @if (!empty($formDataField['colsMaskTransform']))
                                     <div class="px-4 py-3 border rounded-md bg-amber-50 border-amber-200">
                                         <p class="mb-1 text-xs font-semibold text-amber-700">{{
                                             __('ptah::ui.cfg_col_mask_transform_save') }}</p>
                                         <p class="text-xs text-amber-600">
                                             @switch($formDataField['colsMaskTransform'])
-                                            @case('money_to_float') R$ 1.253,08 â†’ <strong>1253.08</strong> @break
-                                            @case('digits_only') 055.465.309-52 â†’ <strong>05546530952</strong> (remove
+                                            @case('money_to_float') R$ 1.253,08 → <strong>1253.08</strong> @break
+                                            @case('digits_only') 055.465.309-52 → <strong>05546530952</strong> (remove
                                             non-digits) @break
-                                            @case('plate_clean') "ABC-1234" â†’ <strong>ABC1234</strong> {{
+                                            @case('plate_clean') "ABC-1234" → <strong>ABC1234</strong> {{
                                             __('ptah::ui.cfg_col_mask_plate_case') }} @break
-                                            @case('date_br_to_iso') "01/12/2024" â†’ <strong>2024-12-01</strong> @break
-                                            @case('date_iso_to_br') "2024-12-01" â†’ <strong>01/12/2024</strong> @break
-                                            @case('uppercase') "texto" â†’ <strong>"TEXTO"</strong> @break
-                                            @case('lowercase') "TEXTO" â†’ <strong>"texto"</strong> @break
-                                            @case('trim') " texto " â†’ <strong>"texto"</strong> @break
+                                            @case('date_br_to_iso') "01/12/2024" → <strong>2024-12-01</strong> @break
+                                            @case('date_iso_to_br') "2024-12-01" → <strong>01/12/2024</strong> @break
+                                            @case('uppercase') "texto" → <strong>"TEXTO"</strong> @break
+                                            @case('lowercase') "TEXTO" → <strong>"texto"</strong> @break
+                                            @case('trim') " texto " → <strong>"texto"</strong> @break
                                             @endswitch
                                         </p>
                                     </div>
                                     @endif
                                 </div>
 
-                                {{-- â”€â”€ ValidaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Validações ──────────────────────────────── --}}
                                 <div x-show="editTab === 'validation'" class="space-y-4">
                                     <p class="text-xs text-slate-500">{!! __('ptah::ui.cfg_col_valid_hint') !!}</p>
                                     <div class="grid grid-cols-3 gap-3">
@@ -1048,7 +1048,7 @@
                                                     " placeholder="Ex: ^[A-Z]{2,5}$ ou /^\d{5}$/"
                                                 class="font-mono cfg-input" />
                                         </div>
-                                        {{-- â”€â”€ Novas regras paramÃ©tricas â”€â”€ --}}
+                                        {{-- ── Novas regras paramétricas ── --}}
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_digits') }}</label>
                                             <input type="number" min="1"
@@ -1161,7 +1161,7 @@
                                     @endif
                                 </div>
 
-                                {{-- â”€â”€ RelaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Relação ─────────────────────────────────── --}}
                                 <div x-show="editTab === 'relation'" class="space-y-4">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -1202,7 +1202,7 @@
                                                 class="{{ $pi === count($nestedParts) - 1 ? 'bg-green-100 text-green-700 font-semibold' : 'bg-white text-primary border border-primary' }} text-xs px-2 py-0.5 rounded font-mono">{{
                                                 $part }}</span>
                                             @if ($pi < count($nestedParts) - 1) <span class="text-sm text-slate-300">
-                                                â†’</span>
+                                                →</span>
                                                 @endif
                                                 @endforeach
                                         </div>
@@ -1213,7 +1213,7 @@
                                     </div>
                                 </div>
 
-                                {{-- â”€â”€ SearchDropdown Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── SearchDropdown Config ───────────────────── --}}
                                 <div x-show="editTab === 'sd'" class="space-y-4">
                                     <div class="px-4 py-3 border border-blue-200 rounded-md bg-blue-50">
                                         <p class="text-xs text-blue-700">{!! __('ptah::ui.cfg_col_sd_type_hint') !!}</p>
@@ -1321,7 +1321,7 @@
                                     </div>
                                 </div>
 
-                                {{-- â”€â”€ Totalizador â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                                {{-- ── Totalizador ─────────────────────────────── --}}
                                 <div x-show="editTab === 'total'" class="space-y-4">
                                     <label
                                         class="flex items-center gap-2 p-3 border rounded-md cursor-pointer select-none border-slate-200 hover:bg-slate-50">
@@ -1345,9 +1345,9 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_format') }}</label>
                                             <select wire:model="formDataField.totalizadorFormat" class="cfg-input">
-                                                <option value="currency">currency â€” R$ 1.253,08</option>
-                                                <option value="number">number â€” 1.253,08</option>
-                                                <option value="integer">integer â€” 1.253</option>
+                                                <option value="currency">currency — R$ 1.253,08</option>
+                                                <option value="number">number — 1.253,08</option>
+                                                <option value="integer">integer — 1.253</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -1359,7 +1359,7 @@
                                     @endif
                                 </div>
 
-                                {{-- BotÃ£o salvar campo --}}
+                                {{-- Botão salvar campo --}}
                                 <div class="flex justify-end pt-4 mt-4 border-t border-slate-100">
                                     @if ($editingFieldIndex >= 0)
                                     <button wire:click="updateField" wire:loading.attr="disabled"
@@ -1390,9 +1390,9 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: AÃ‡Ã•ES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: AÇÕES ──────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'actions'" class="p-6 space-y-5">
                         <div class="overflow-hidden bg-white border shadow-sm rounded-md border-slate-200">
                             <div class="px-5 py-3.5 border-b border-slate-100">
@@ -1436,7 +1436,7 @@
                                                 class="bg-{{ $col['actionColor'] ?? 'slate' }}-100 text-{{ $col['actionColor'] ?? 'slate' }}-700 px-1.5 py-0.5 rounded text-[11px]">{{
                                                 $col['actionColor'] ?? 'primary' }}</span></td>
                                         <td class="px-4 py-2 font-mono text-[11px] text-slate-400">{{
-                                            $col['actionPermission'] ?: 'â€”' }}</td>
+                                            $col['actionPermission'] ?: '—' }}</td>
                                         <td class="px-4 py-2">
                                             <div class="flex items-center gap-1">
                                                 <button wire:click="editAction({{ $i }})" title="Editar"
@@ -1449,7 +1449,7 @@
                                                 </button>
                                                 <button wire:click="removeAction({{ $i }})"
                                                     wire:confirm="{{ __('ptah::ui.cfg_act_remove_confirm') }}"
-                                                    class="p-1 transition-colors rounded text-slate-400 hover:text-red-500">âœ•</button>
+                                                    class="p-1 transition-colors rounded text-slate-400 hover:text-red-500">✕</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1510,8 +1510,8 @@
                                         @endif
                                     </div>
                                     <p class="text-[11px] text-slate-400 mt-1">Ex: <code
-                                            class="px-1 rounded bg-slate-100">bx bx-edit</code> Â· <code
-                                            class="px-1 rounded bg-slate-100">bx bx-trash</code> Â· <code
+                                            class="px-1 rounded bg-slate-100">bx bx-edit</code> · <code
+                                            class="px-1 rounded bg-slate-100">bx bx-trash</code> · <code
                                             class="px-1 rounded bg-slate-100">bx bx-show</code></p>
                                 </div>
                                 <div>
@@ -1541,12 +1541,12 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: FILTROS CUSTOM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: FILTROS CUSTOM ─────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'filters'" class="p-6 space-y-5">
 
-                        {{-- â”€â”€ Guia de uso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Guia de uso ─────────────────────────────────── --}}
                         <div x-data="{ open: false }"
                             class="overflow-hidden border border-primary rounded-md bg-primary-light/50">
                             <button @click="open = !open"
@@ -1560,7 +1560,7 @@
                             </button>
                             <div x-show="open" x-transition class="px-4 pb-4 space-y-4 text-xs text-slate-600">
 
-                                {{-- CenÃ¡rio 1 --}}
+                                {{-- Cenário 1 --}}
                                 <div class="p-3 bg-white border rounded-md border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">{{
                                         __('ptah::ui.cfg_filter_guide_s1_title') }}</p>
@@ -1575,16 +1575,16 @@
                                             class="text-primary">select</span>
                                         <span class="text-slate-400">Operador</span> <span
                                             class="text-primary">=</span>
-                                        <span class="text-slate-400">whereHas</span> <span class="text-slate-300">â€”
-                                            vazio â€”</span>
+                                        <span class="text-slate-400">whereHas</span> <span class="text-slate-300">—
+                                            vazio —</span>
                                         <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_rel_field') }}</span>
-                                        <span class="text-slate-300">â€” vazio â€”</span>
+                                        <span class="text-slate-300">— vazio —</span>
                                     </div>
-                                    <p class="mt-2 italic text-slate-400">â†’ Gera: <code
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code
                                             class="px-1 rounded bg-slate-100">WHERE status = 'ativo'</code></p>
                                 </div>
 
-                                {{-- CenÃ¡rio 2 --}}
+                                {{-- Cenário 2 --}}
                                 <div class="p-3 bg-white border rounded-md border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">{{
                                         __('ptah::ui.cfg_filter_guide_s2_title') }}</p>
@@ -1604,12 +1604,12 @@
                                         <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_rel_field') }}</span>
                                         <span class="text-primary">name</span>
                                     </div>
-                                    <p class="mt-2 italic text-slate-400">â†’ Gera: <code
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code
                                             class="px-1 rounded bg-slate-100">WHERE EXISTS (SELECT * FROM suppliers WHERE name LIKE '%...%')</code>
                                     </p>
                                 </div>
 
-                                {{-- CenÃ¡rio 3 --}}
+                                {{-- Cenário 3 --}}
                                 <div class="p-3 bg-white border rounded-md border-slate-200">
                                     <p class="font-semibold text-slate-700 mb-1.5">{{
                                         __('ptah::ui.cfg_filter_guide_s3_title') }}</p>
@@ -1631,7 +1631,7 @@
                                         <span class="text-slate-400">{{ __('ptah::ui.cfg_filter_aggregate') }}</span>
                                         <span class="text-primary">SUM</span>
                                     </div>
-                                    <p class="mt-2 italic text-slate-400">â†’ Gera: <code
+                                    <p class="mt-2 italic text-slate-400">→ Gera: <code
                                             class="px-1 rounded bg-slate-100">HAVING SUM(quantity) &gt;= 100</code></p>
                                 </div>
 
@@ -1641,7 +1641,7 @@
                             </div>
                         </div>
 
-                        {{-- â”€â”€ Filtros cadastrados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Filtros cadastrados ──────────────────────────── --}}
                         @foreach ($customFilters as $fi => $cf)
                         <div class="p-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <div class="flex items-start justify-between">
@@ -1652,7 +1652,7 @@
                                 </div>
                                 <button wire:click="removeCustomFilter({{ $fi }})"
                                     wire:confirm="{{ __('ptah::ui.cfg_filter_remove_confirm') }}"
-                                    class="text-lg leading-none text-slate-400 hover:text-red-500">âœ•</button>
+                                    class="text-lg leading-none text-slate-400 hover:text-red-500">✕</button>
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 @if (!empty($cf['whereHas'])) <span class="tag">whereHas: {{ $cf['whereHas'] }}</span>
@@ -1669,7 +1669,7 @@
                         </div>
                         @endforeach
 
-                        {{-- â”€â”€ FormulÃ¡rio: novo filtro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Formulário: novo filtro ──────────────────────── --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_filter_form_title') }}
                             </h3>
@@ -1721,7 +1721,7 @@
                                 </div>
                             </div>
 
-                            {{-- Separador relaÃ§Ã£o --}}
+                            {{-- Separador relação --}}
                             <div class="flex items-center gap-3 pt-1">
                                 <div class="flex-1 border-t border-slate-200"></div>
                                 <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{{
@@ -1742,7 +1742,7 @@
                                         __('ptah::ui.cfg_filter_rel_method_hint') !!}</p>
                                 </div>
 
-                                {{-- Campo na relaÃ§Ã£o --}}
+                                {{-- Campo na relação --}}
                                 <div>
                                     <label class="cfg-label">
                                         {{ __('ptah::ui.cfg_filter_rel_field') }}
@@ -1753,7 +1753,7 @@
                                         }}</p>
                                 </div>
 
-                                {{-- AgregaÃ§Ã£o --}}
+                                {{-- Agregação --}}
                                 <div>
                                     <label class="cfg-label">
                                         {{ __('ptah::ui.cfg_filter_aggregate') }} <span
@@ -1781,12 +1781,12 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: ESTILOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: ESTILOS ────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'styles'" class="p-6 space-y-5">
 
-                        {{-- â”€â”€ Guia de uso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Guia de uso ─────────────────────────────────── --}}
                         <div x-data="{ open: false }"
                             class="overflow-hidden border border-primary rounded-md bg-primary-light/50">
                             <button @click="open = !open"
@@ -1804,7 +1804,7 @@
                                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {{-- Exemplo 1 --}}
                                     <div class="p-3 bg-white border rounded-md border-slate-200">
-                                        <p class="mb-2 font-semibold text-slate-700">â‘  Highlight por status texto</p>
+                                        <p class="mb-2 font-semibold text-slate-700">① Highlight por status texto</p>
                                         <div
                                             class="grid grid-cols-2 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span> <span
@@ -1818,7 +1818,7 @@
                                         </div>
                                         <div class="mt-2 px-3 py-1.5 rounded text-xs font-medium"
                                             style="background:#D4EDDA;color:#155724;">
-                                            Exemplo â€” linha com status Active
+                                            Exemplo — linha com status Active
                                         </div>
                                     </div>
 
@@ -1845,7 +1845,7 @@
 
                                     {{-- Exemplo 3 --}}
                                     <div class="p-3 bg-white border rounded-md border-slate-200 sm:col-span-2">
-                                        <p class="mb-2 font-semibold text-slate-700">â‘¢ Linhas canceladas / inativas</p>
+                                        <p class="mb-2 font-semibold text-slate-700">③ Linhas canceladas / inativas</p>
                                         <div
                                             class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 font-mono bg-slate-50 rounded p-2 text-[11px]">
                                             <span class="text-slate-400">Campo</span> <span
@@ -1859,7 +1859,7 @@
                                         </div>
                                         <div class="mt-2 px-3 py-1.5 rounded text-xs"
                                             style="color:#999;text-decoration:line-through;background:#F5F5F5;">
-                                            Exemplo â€” tipo Supplier aparece riscado
+                                            Exemplo — tipo Supplier aparece riscado
                                         </div>
                                     </div>
                                 </div>
@@ -1877,7 +1877,7 @@
                             </div>
                         </div>
 
-                        {{-- â”€â”€ Estilos cadastrados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Estilos cadastrados ──────────────────────────── --}}
                         @foreach ($conditionStyles as $si => $style)
                         <div class="p-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <div class="flex items-start justify-between">
@@ -1888,7 +1888,7 @@
                                 </div>
                                 <button wire:click="removeConditionStyle({{ $si }})"
                                     wire:confirm="{{ __('ptah::ui.cfg_style_remove_confirm') }}"
-                                    class="text-slate-400 hover:text-red-500">âœ•</button>
+                                    class="text-slate-400 hover:text-red-500">✕</button>
                             </div>
                             <p class="text-[11px] font-mono text-primary bg-primary-light px-2 py-1 rounded mt-2">{{
                                 $style['style'] ?? '' }}</p>
@@ -1900,7 +1900,7 @@
                         </div>
                         @endforeach
 
-                        {{-- â”€â”€ FormulÃ¡rio: novo estilo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Formulário: novo estilo ──────────────────────── --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_style_form_title') }}
                             </h3>
@@ -1937,7 +1937,7 @@
                                 <input type="text" wire:model.live="formDataStyle.style"
                                     placeholder="background:#D4EDDA;color:#155724;" class="font-mono cfg-input" />
                                 <p class="text-[11px] text-slate-400 mt-1">Propriedades CSS separadas por <code
-                                        class="px-1 rounded bg-slate-100">;</code> â€” aplicadas no <code
+                                        class="px-1 rounded bg-slate-100">;</code> — aplicadas no <code
                                         class="px-1 rounded bg-slate-100">&lt;tr&gt;</code> da linha.</p>
                             </div>
                             {{-- Preview ao vivo --}}
@@ -1947,7 +1947,7 @@
                                 <span class="text-[11px] text-slate-400 shrink-0">{{
                                     __('ptah::ui.cfg_style_preview_label') }}</span>
                                 <div class="flex-1 px-3 py-1.5 text-xs rounded" style="{{ $formDataStyle['style'] }}">
-                                    ID &nbsp;Â·&nbsp; Nome do Registro &nbsp;Â·&nbsp; Valor &nbsp;Â·&nbsp; Status
+                                    ID &nbsp;·&nbsp; Nome do Registro &nbsp;·&nbsp; Valor &nbsp;·&nbsp; Status
                                 </div>
                             </div>
                             @endif
@@ -1989,12 +1989,12 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: JOINS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: JOINS ──────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'joins'" class="p-6 space-y-5">
 
-                        {{-- â”€â”€ Alerta: duplicata de tabela â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Alerta: duplicata de tabela ─────────────── --}}
                         @if(session('joinError'))
                         <div
                             class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-700 border border-red-200 rounded-md bg-red-50">
@@ -2003,7 +2003,7 @@
                         </div>
                         @endif
 
-                        {{-- â”€â”€ Guia de uso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Guia de uso ─────────────────────────────── --}}
                         <div x-data="{ open: true }"
                             class="overflow-hidden border border-primary rounded-md bg-primary-light/50">
                             <button @click="open = !open"
@@ -2044,7 +2044,7 @@
                                         <span class="text-primary">supplier_name</span>
                                         <span class="text-slate-400">Fonte SQL</span> <span
                                             class="text-primary">suppliers.name</span>
-                                        <span class="text-slate-400">Gravar</span> <span class="text-slate-400">â˜
+                                        <span class="text-slate-400">Gravar</span> <span class="text-slate-400">☐
                                             desativado</span>
                                     </div>
                                 </div>
@@ -2057,7 +2057,7 @@
                                         Mostrar o nome do produto em <code
                                             class="px-1 rounded bg-slate-100">product_stocks</code>, onde
                                         <code
-                                            class="px-1 rounded bg-slate-100">product_stocks â†’ product_suppliers â†’ products</code>.
+                                            class="px-1 rounded bg-slate-100">product_stocks → product_suppliers → products</code>.
                                         Configure <strong>dois JOINs</strong> na ordem correta:
                                     </p>
 
@@ -2071,8 +2071,8 @@
                                             class="text-primary">product_stocks.product_supplier_id</span>
                                         <span class="text-slate-400">ON direita</span> <span
                                             class="text-primary">product_suppliers.id</span>
-                                        <span class="text-slate-400">Colunas</span> <span class="text-slate-400">â€”
-                                            deixar vazio â€”</span>
+                                        <span class="text-slate-400">Colunas</span> <span class="text-slate-400">—
+                                            deixar vazio —</span>
                                     </div>
 
                                     <p class="text-[11px] font-semibold text-slate-600">{{
@@ -2096,7 +2096,7 @@
                                         <span class="text-primary">product_name</span>
                                         <span class="text-slate-400">Fonte SQL</span> <span
                                             class="text-primary">products.name</span>
-                                        <span class="text-slate-400">Gravar</span> <span class="text-slate-400">â˜
+                                        <span class="text-slate-400">Gravar</span> <span class="text-slate-400">☐
                                             desativado</span>
                                     </div>
                                     <p class="text-[11px] text-slate-400 mt-1.5">{{
@@ -2109,7 +2109,7 @@
                                         <li>{!! __('ptah::ui.cfg_join_guide_rule_phys') !!}</li>
                                         <li><strong>Fonte SQL</strong> = nome qualificado SQL usado em WHERE/ORDER BY
                                             (ex: <code class="px-1 rounded bg-slate-100">products.name</code>)</li>
-                                        <li><strong>Gravar</strong> deve estar <em>desativado</em> â€” nunca grave em
+                                        <li><strong>Gravar</strong> deve estar <em>desativado</em> — nunca grave em
                                             colunas de outra tabela</li>
                                         <li>{!! __('ptah::ui.cfg_join_guide_rule_left') !!}</li>
                                     </ul>
@@ -2117,7 +2117,7 @@
                             </div>
                         </div>
 
-                        {{-- â”€â”€ JOINs jÃ¡ configurados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── JOINs já configurados ───────────────────── --}}
                         @forelse ($joins as $ji => $join)
                         @php
                         $isLeft = strtolower($join['type'] ?? 'left') === 'left';
@@ -2134,7 +2134,7 @@
                                     </span>
                                     {{-- Nome da tabela --}}
                                     <span class="font-mono text-base font-bold truncate text-slate-800">{{
-                                        $join['table'] ?? 'â€”' }}</span>
+                                        $join['table'] ?? '—' }}</span>
                                     @if(!empty($join['distinct']))
                                     <span
                                         class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary text-primary">DISTINCT</span>
@@ -2173,7 +2173,7 @@
                                     <span
                                         class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono rounded-full bg-slate-100 text-slate-700">
                                         <span class="text-slate-500">{{ $sel['column'] ?? '' }}</span>
-                                        <span class="text-slate-300 mx-0.5">â†’</span>
+                                        <span class="text-slate-300 mx-0.5">→</span>
                                         <span class="font-semibold text-primary">{{ $sel['alias'] ?? '' }}</span>
                                     </span>
                                     @endforeach
@@ -2198,7 +2198,7 @@
                         </div>
                         @endforelse
 
-                        {{-- â”€â”€ FormulÃ¡rio: novo / editar JOIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                        {{-- ── Formulário: novo / editar JOIN ──────────── --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
 
                             {{-- Header do form --}}
@@ -2287,7 +2287,7 @@
                             <div>
                                 <label class="cfg-label">
                                     {{ __('ptah::ui.cfg_join_cols_label') }}
-                                    <span class="font-normal text-slate-400">(uma por linha â€” formato <code
+                                    <span class="font-normal text-slate-400">(uma por linha — formato <code
                                             class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>)</span>
                                 </label>
                                 <textarea wire:model="formDataJoin.selectRaw" rows="4"
@@ -2297,7 +2297,7 @@
                                     !!}</p>
                             </div>
 
-                            {{-- Notice pÃ³s-JOIN --}}
+                            {{-- Notice pós-JOIN --}}
                             <div
                                 class="flex gap-3 p-3.5 text-[11px] rounded-md border border-amber-200 bg-amber-50 text-amber-800">
                                 <i class="bx bx-bulb text-base shrink-0 mt-0.5 text-amber-500"></i>
@@ -2307,7 +2307,7 @@
                                     <ul class="list-disc list-inside space-y-0.5 ml-1">
                                         <li>{!! __('ptah::ui.cfg_join_notice_phys') !!}</li>
                                         <li>{!! __('ptah::ui.cfg_join_notice_sql') !!}</li>
-                                        <li><strong>Gravar</strong> = desativado â€” nunca grave em colunas de outras
+                                        <li><strong>Gravar</strong> = desativado — nunca grave em colunas de outras
                                             tabelas</li>
                                     </ul>
                                     <p class="mt-1 text-amber-700">{!! __('ptah::ui.cfg_join_notice_footer') !!}</p>
@@ -2336,11 +2336,11 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: GERAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: GERAL ──────────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'general'" class="p-6 space-y-5">
-                        {{-- AparÃªncia --}}
+                        {{-- Aparência --}}
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
                                 __('ptah::ui.cfg_gen_appearance') }}
@@ -2437,7 +2437,7 @@
                             <div class="max-w-xs">
                                 <label class="cfg-label">{{ __('ptah::ui.cfg_gen_ttl') }}</label>
                                 <input type="number" wire:model="cacheTtl" min="0" class="cfg-input" />
-                                <p class="text-[11px] text-slate-400 mt-1">300 = 5 minutos Â· 3600 = 1 hora</p>
+                                <p class="text-[11px] text-slate-400 mt-1">300 = 5 minutos · 3600 = 1 hora</p>
                             </div>
                             @endif
                         </div>
@@ -2572,9 +2572,9 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: PERMISSÃ•ES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: PERMISSÕES ─────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'permissions'" class="p-6 space-y-5">
                         <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
@@ -2619,9 +2619,9 @@
                         </div>
                     </div>
 
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
-                    {{-- TAB: LIFECYCLE HOOKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
-                    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: LIFECYCLE HOOKS ───────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
                     <div x-show="tab === 'hooks'" class="p-6 space-y-5">
                         <div class="p-5 space-y-5 bg-white border shadow-sm rounded-md border-slate-200">
                             <div class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -2696,12 +2696,12 @@
 
                 </div>{{-- /scroll area --}}
 
-                {{-- â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+                {{-- ── Footer ────────────────────────────────────────────── --}}
                 <div
                     class="flex items-center justify-between gap-3 py-4 bg-white border-t px-7 border-slate-100 shrink-0">
                     <p class="text-xs text-slate-400">
-                        {{ count($formEditFields) }} {{ __('ptah::ui.cfg_footer_unit_cols') }} Â· {{
-                        count($customFilters) }} {{ __('ptah::ui.cfg_footer_unit_filters') }} Â· {{
+                        {{ count($formEditFields) }} {{ __('ptah::ui.cfg_footer_unit_cols') }} · {{
+                        count($customFilters) }} {{ __('ptah::ui.cfg_footer_unit_filters') }} · {{
                         count($conditionStyles) }} {{ __('ptah::ui.cfg_footer_unit_styles') }}
                     </p>
                     <div class="flex gap-3">
@@ -2816,7 +2816,7 @@
                 handle: 'td:first-child',
                 ghostClass: 'bg-primary-light',
                 onEnd: (evt) => {
-                    // Monta a nova ordem de Ã­ndices com base nos data-index
+                    // Monta a nova ordem de índices com base nos data-index
                     const rows = Array.from(el.querySelectorAll('tr[data-index]'));
                     const newOrder = rows.map(r => parseInt(r.getAttribute('data-index')));
                     this.$wire.reorderFields(newOrder);

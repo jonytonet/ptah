@@ -1,4 +1,4 @@
-﻿{{-- ptah::livewire.ai.ai-model-config-list --}}
+{{-- ptah::livewire.ai.ai-model-config-list --}}
 <div class="ptah-page-header p-6">
 
     {{-- ─── Page header ──────────────────────────────────────────────────── --}}
