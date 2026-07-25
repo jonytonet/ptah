@@ -60,8 +60,15 @@ trait HasCrudRenderers
                 : ($row->{$rel}?->{$exibe} ?? $value);
         }
 
+        // O renderer boolean decide o próprio rótulo a partir do valor CRU
+        // (1/0/true/false). Aplicar o mapa colsSelect antes dele entregaria
+        // "Sim"/"Não" ao teste estrito de renderBoolean() → sempre "Não".
+        // Espelha o mapa legado de applyCellRenderer() (colsHelper 'yesOrNot').
+        $booleanRenderer = ($col['colsRenderer'] ?? '') === 'boolean'
+            || (empty($col['colsRenderer']) && ($col['colsHelper'] ?? '') === 'yesOrNot');
+
         // Select: convert value to mapped label
-        if (($col['colsTipo'] ?? '') === 'select' && ! empty($col['colsSelect'])) {
+        if (($col['colsTipo'] ?? '') === 'select' && ! empty($col['colsSelect']) && ! $booleanRenderer) {
             $flip = array_flip($col['colsSelect']);
             $value = $flip[(string) $value] ?? $value;
         }

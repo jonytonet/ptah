@@ -25,6 +25,9 @@ return new class extends Migration
             // plain numeric fields (not an Eloquent relation), e.g. URL filters'
             // BETWEEN type resolution. Additive; existing rows/tests are unaffected.
             $table->integer('category_id')->nullable();
+            // Boolean stub used by CrudBooleanFormTest — additive, default true so
+            // every other test using this shared table is unaffected.
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

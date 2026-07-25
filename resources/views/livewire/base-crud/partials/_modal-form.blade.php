@@ -78,6 +78,17 @@
                             $fField    = $col['colsNomeFisico'];
                             $fLabel    = $col['colsNomeLogico'] ?? $fField;
                             $fTipo     = $col['colsTipo'] ?? 'text';
+
+                            // colsTipo 'boolean' não tem controle próprio: reusa o select inline
+                            // (já normaliza bool PHP) com opções Sim/Não. colsSelect só é aproveitado
+                            // se for array — o editor pode tê-lo deixado como string "label;value;;…".
+                            if ($fTipo === 'boolean') {
+                                if (! is_array($col['colsSelect'] ?? null) || $col['colsSelect'] === []) {
+                                    $col['colsSelect'] = [__('ptah::ui.bool_yes') => '1', __('ptah::ui.bool_no') => '0'];
+                                }
+                                $fTipo = 'select';
+                            }
+
                             $fRequired = in_array($col['colsRequired'] ?? false, [true, 'S', 1, '1'], true);
                             $fError    = $formErrors[$fField] ?? null;
                             $fMask     = $col['colsMask'] ?? null;

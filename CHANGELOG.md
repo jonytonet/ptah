@@ -7,6 +7,48 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.11.1] — 2026-07-25
+
+### Fixed — boolean columns and the visual config editor
+
+Four bugs found in real use (a 90-screen ERP), all in shared paths:
+
+- **A boolean column always rendered "Não" in the listing.** `formatCell()` applied the
+  `colsSelect` value→label map (`1` → "Sim") **before** the renderer, and `renderBoolean()`
+  matches the raw value strictly (`1`, `'1'`, `true`, …) — so the mapped label never matched
+  and every row fell through to the false badge. The map is now skipped when the effective
+  renderer is `boolean` (explicit `colsRenderer: "boolean"` or the legacy
+  `colsHelper: "yesOrNot"` that `ptah:forge` generates), so the renderer sees the raw value.
+  This affected **every boolean column scaffolded by `ptah:forge`**, plus cards, print and
+  export (all go through `formatCell`). Columns **without** a boolean renderer keep mapping
+  labels exactly as before (`badge`/`pill`/`money`/… unchanged).
+  > If you had a boolean column with custom `colsSelect` labels, it now shows
+  > `colsRendererBoolTrue`/`colsRendererBoolFalse` (or `ptah::ui.bool_yes`/`bool_no`).
+  > Set those keys — or drop the boolean renderer — to keep custom wording.
+- **A boolean field had no control in the create/edit modal** (it fell through to a free-text
+  input, so editing it appeared to do nothing). `colsTipo: "boolean"` now renders the Yes/No
+  select — the same control the config preview already promised — and persists `1`/`0` both
+  ways. (`ptah:config` generates `colsTipo: "boolean"`; `ptah:forge` generates
+  `colsTipo: "select"` — both work now.)
+- **The visual config editor could not save at all.** `ConfigSchemaValidator` used
+  `isset($col['colsRenderer'])`, which is `true` for `""` — and the editor writes `""` as the
+  default for a new column (and for the "None" renderer option). Any column added through the
+  editor therefore threw `ConfigValidationException: Invalid column type ""`. Empty
+  `colsTipo`/`colsRenderer` are now treated as absent, matching what the runtime already did.
+  The error message also names the right key now (`renderer` vs `column type`).
+- **Saving a config with a JOIN also threw.** The validator required `colsTipo`/`colsTable`/
+  `colsOn`, but both the runtime (`applyJoins`) and the editor (`addJoin`) use
+  `type`/`table`/`first`/`second`. The validator now follows the runtime (and still accepts the
+  legacy shape), so a config the runtime can execute is never rejected. Invalid joins
+  (unknown type, duplicate table, missing table) are still rejected.
+
+### Tests
+- Regression tests for all four (verified failing before the fix): boolean renderer vs the
+  select map (both the explicit renderer and the legacy helper), a guard that `badge` on a
+  select column still uses the mapped label, the boolean form control + persistence in both
+  directions, empty/invalid `colsTipo`/`colsRenderer`, the editor's
+  `addField → save` round trip, and JOIN validation in both shapes.
+
 ## [1.11.0] — 2026-07-20
 
 > **⬆️ Upgrade action required:** run `php artisan migrate` to create the new

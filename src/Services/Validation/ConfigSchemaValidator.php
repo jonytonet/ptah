@@ -92,8 +92,10 @@ class ConfigSchemaValidator
                 ->withModel($model);
         }
 
-        // Validate colsTipo if present
-        if (isset($column['colsTipo'])) {
+        // Validate colsTipo if present. `''` (empty string) means "no type set"
+        // at runtime — the editor's addField() defaults new columns to it — so
+        // isset() alone (true for '') would wrongly reject it.
+        if (($column['colsTipo'] ?? '') !== '') {
             if (! in_array($column['colsTipo'], CrudConfigEnums::COLUMN_TYPES, true)) {
                 throw ConfigValidationException::invalidColumnType(
                     $column['colsNomeFisico'],
@@ -108,8 +110,10 @@ class ConfigSchemaValidator
             $this->validateColumnTypeRequirements($column, $index, $model);
         }
 
-        // Validate renderer if present
-        if (isset($column['colsRenderer'])) {
+        // Validate renderer if present. `''` is the editor's "Nenhum" option and
+        // already means "no renderer" at runtime (see applyCellRenderer()) —
+        // isset() alone would reject it just like colsTipo above.
+        if (($column['colsRenderer'] ?? '') !== '') {
             $this->validateRenderer($column, $index, $model);
         }
 
@@ -189,7 +193,8 @@ class ConfigSchemaValidator
                 $column['colsNomeFisico'],
                 $renderer,
                 CrudConfigEnums::RENDERERS,
-                'cols'
+                'cols',
+                'renderer'
             )->withJsonPath("$.cols[{$index}].colsRenderer")
                 ->withModel($model);
         }
@@ -335,41 +340,56 @@ class ConfigSchemaValidator
         $usedTables = [];
 
         foreach ($joins as $index => $join) {
-            // Validate required fields
-            if (empty($join['colsTipo'])) {
-                throw ConfigValidationException::missingRequiredField('colsTipo', 'joins')
-                    ->withJsonPath("$.joins[{$index}].colsTipo");
+            // O editor (CrudConfig::addJoin) grava e o runtime
+            // (HasCrudQuery::applyJoins) lê 'type'/'table'/'first'/'second' —
+            // NÃO 'colsTipo'/'colsTable'/'colsOn'. Uma config antiga pode trazer
+            // a forma legada; ela nunca é lida pelo runtime, então é aceita de
+            // forma permissiva (sem exigir first/second) só para não quebrar
+            // configs existentes.
+            $usingLegacyForm = ! isset($join['table']) && isset($join['colsTable']);
+            $table = $join['table'] ?? $join['colsTable'] ?? null;
+            $type = $join['type'] ?? $join['colsTipo'] ?? null;
+
+            if (empty($table)) {
+                throw ConfigValidationException::missingRequiredField('table', 'joins')
+                    ->withJsonPath("$.joins[{$index}].table");
             }
 
-            if (empty($join['colsTable'])) {
-                throw ConfigValidationException::missingRequiredField('colsTable', 'joins')
-                    ->withJsonPath("$.joins[{$index}].colsTable");
+            // first/second (a forma do runtime) só são exigidos quando a config
+            // não está na forma legada — que não tem correspondência granular.
+            if (! $usingLegacyForm) {
+                if (empty($join['first'])) {
+                    throw ConfigValidationException::missingRequiredField('first', 'joins')
+                        ->withJsonPath("$.joins[{$index}].first");
+                }
+
+                if (empty($join['second'])) {
+                    throw ConfigValidationException::missingRequiredField('second', 'joins')
+                        ->withJsonPath("$.joins[{$index}].second");
+                }
             }
 
-            if (empty($join['colsOn'])) {
-                throw ConfigValidationException::missingRequiredField('colsOn', 'joins')
-                    ->withJsonPath("$.joins[{$index}].colsOn");
-            }
-
-            // Validate JOIN type
-            $validTypes = ['inner', 'left', 'right'];
-            if (! in_array($join['colsTipo'], $validTypes, true)) {
-                throw ConfigValidationException::invalidColumnType(
-                    'JOIN',
-                    $join['colsTipo'],
-                    $validTypes,
-                    'joins'
-                )->withJsonPath("$.joins[{$index}].colsTipo");
+            // Validate JOIN type — 'type' tem default 'left' em applyJoins(), então
+            // só validamos o enum quando o valor está presente.
+            if ($type !== null) {
+                $validTypes = ['inner', 'left', 'right'];
+                if (! in_array(strtolower((string) $type), $validTypes, true)) {
+                    throw ConfigValidationException::invalidColumnType(
+                        'JOIN',
+                        $type,
+                        $validTypes,
+                        'joins'
+                    )->withJsonPath("$.joins[{$index}].type");
+                }
             }
 
             // Check for duplicate tables
-            $table = $join['colsTable'];
             if (in_array($table, $usedTables, true)) {
                 throw ConfigValidationException::duplicateConfiguration(
                     'table',
                     $table,
                     'joins'
-                )->withJsonPath("$.joins[{$index}].colsTable")
+                )->withJsonPath("$.joins[{$index}].table")
                     ->withSuggestion("Table '{$table}' is already used in another JOIN");
             }
 
@@ -380,7 +400,7 @@ class ConfigSchemaValidator
                 throw ConfigValidationException::invalidJoin(
                     $table,
                     'Table does not exist in database'
-                )->withJsonPath("$.joins[{$index}].colsTable");
+                )->withJsonPath("$.joins[{$index}].table");
             }
         }
     }

@@ -27,10 +27,12 @@ class ConfigValidationException extends PtahException
         string $field,
         mixed $actualValue,
         array $validTypes,
-        string $section = 'cols'
+        string $section = 'cols',
+        string $label = 'column type'
     ): static {
         $message = sprintf(
-            'Invalid column type "%s" for field "%s". Valid types: %s',
+            'Invalid %s "%s" for field "%s". Valid types: %s',
+            $label,
             (string) $actualValue,
             $field,
             implode(', ', $validTypes)
