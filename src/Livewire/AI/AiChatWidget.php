@@ -13,9 +13,9 @@ use Ptah\Services\AI\AiChatService;
 use Ptah\Services\AI\AiProviderConfigService;
 
 /**
- * Floating AI chat widget â€” injected globally into the Forge Dashboard layout.
+ * Floating AI chat widget — injected globally into the Forge Dashboard layout.
  *
- * âš   This component has NO #[Layout] attribute â€” it is embedded as a child
+ * ⚠  This component has NO #[Layout] attribute — it is embedded as a child
  *    component via <livewire:ptah-ai-chat-widget /> inside forge-dashboard-layout.
  *
  * Behaviour:
@@ -37,7 +37,7 @@ class AiChatWidget extends Component
         $this->configService = $configService;
     }
 
-    // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── State ──────────────────────────────────────────────────────────
 
     public bool $available = false;
 
@@ -65,7 +65,7 @@ class AiChatWidget extends Component
 
     private const HISTORY_STEP = 5;
 
-    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Lifecycle ──────────────────────────────────────────────────────
 
     public function mount(): void
     {
@@ -103,7 +103,7 @@ class AiChatWidget extends Component
         }
     }
 
-    // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Actions ────────────────────────────────────────────────────────
 
     public function send(): void
     {
@@ -252,14 +252,14 @@ class AiChatWidget extends Component
         $this->historyLimit = 5;
     }
 
-    // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Render ─────────────────────────────────────────────────────────
 
     public function render()
     {
         return view('ptah::livewire.ai.ai-chat-widget');
     }
 
-    // â”€â”€ Private â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Private ────────────────────────────────────────────────────────
 
     private function refreshConversations(): void
     {

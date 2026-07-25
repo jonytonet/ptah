@@ -143,6 +143,61 @@ class CrudRenderersTest extends TestCase
         $this->assertStringContainsString('Enabled', $html);
     }
 
+    #[Test]
+    public function boolean_renderer_ignores_the_select_map_via_cols_renderer(): void
+    {
+        // Same shape ptah:forge generates for a boolean column: colsTipo select
+        // + colsSelect map. If the map were applied first, renderBoolean()'s
+        // strict in_array() would never match "Sim"/"Não" → always "Não".
+        $col = ['colsTipo' => 'select', 'colsSelect' => ['Sim' => '1', 'Não' => '0'], 'colsRenderer' => 'boolean'];
+
+        foreach ([1, '1', true] as $truthy) {
+            $html = $this->format($col, ['field' => $truthy]);
+            $this->assertStringContainsString('bg-green-50', $html, var_export($truthy, true).' must render as YES');
+        }
+
+        foreach ([0, '0', false, null] as $falsy) {
+            $html = $this->format($col, ['field' => $falsy]);
+            $this->assertStringContainsString('bg-gray-50', $html, var_export($falsy, true).' must render as NO');
+        }
+    }
+
+    #[Test]
+    public function boolean_renderer_ignores_the_select_map_via_yes_or_not_helper(): void
+    {
+        // Legacy compat path: colsHelper 'yesOrNot' maps to the boolean renderer
+        // inside applyCellRenderer() — the select map must still be skipped.
+        $col = ['colsTipo' => 'select', 'colsSelect' => ['Sim' => '1', 'Não' => '0'], 'colsHelper' => 'yesOrNot'];
+
+        foreach ([1, '1', true] as $truthy) {
+            $html = $this->format($col, ['field' => $truthy]);
+            $this->assertStringContainsString('bg-green-50', $html, var_export($truthy, true).' must render as YES');
+        }
+
+        foreach ([0, '0', false, null] as $falsy) {
+            $html = $this->format($col, ['field' => $falsy]);
+            $this->assertStringContainsString('bg-gray-50', $html, var_export($falsy, true).' must render as NO');
+        }
+    }
+
+    #[Test]
+    public function badge_on_a_select_column_still_uses_the_mapped_label(): void
+    {
+        // Non-regression guard: badge/pill/money on a select column must keep
+        // receiving the label mapped by colsSelect (only boolean is excluded).
+        $html = $this->format(
+            [
+                'colsTipo' => 'select',
+                'colsSelect' => ['Yes' => '1', 'No' => '0'],
+                'colsRenderer' => 'badge',
+                'colsRendererBadges' => [['value' => 'Yes', 'label' => 'Confirmed', 'color' => 'green']],
+            ],
+            ['field' => '1'],
+        );
+
+        $this->assertStringContainsString('Confirmed', $html);
+    }
+
     // ── Money / date ──────────────────────────────────────────────────────────
 
     #[Test]

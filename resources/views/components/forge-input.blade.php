@@ -53,7 +53,17 @@
     $paddingLeft    = $iconBefore ? 'pl-9' : 'pl-3';
     $isPassword     = $type === 'password';
     $paddingRight   = ($iconAfter || $loading || $isPassword) ? 'pr-9' : 'pr-3';
-    $inputId        = $attributes->get('id', 'forge-input-' . uniqid());
+
+    // Morph-stable id: o DOM-diff do Livewire usa `el.id` como chave quando não há
+    // wire:id/wire:key, então um id aleatório por render faz o morph REMOVER e
+    // recriar o input — perdendo o foco durante a digitação com wire:model.live.
+    // Só inputs COM label precisam de id (para o <label for>), e ele é derivado da
+    // identidade do campo, portanto igual em todo render.
+    $wireModel = collect($attributes->whereStartsWith('wire:model')->getAttributes())->first() ?? '';
+    $inputId   = $attributes->get('id')
+        ?: ($label !== ''
+            ? 'forge-input-'.substr(md5($label.'|'.($name ?? '').'|'.$type.'|'.$wireModel), 0, 12)
+            : null);
 @endphp
 
 <div class="ptah-input-wrapper w-full" @if($isPassword) x-data="{ _show: false }" @endif>
@@ -71,7 +81,7 @@
         @endif
 
         <input
-            id="{{ $inputId }}"
+            @if ($inputId) id="{{ $inputId }}" @endif
             {{ $attributes->merge([
                 'type'        => $type,
                 'placeholder' => $placeholder,
