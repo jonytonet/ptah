@@ -8,8 +8,14 @@
       - disabled   : boolean
       - required   : boolean
       - error      : string|null  (overrides state to danger)
-      - selected   : mixed|null   (initial value)
+      - selected   : mixed|null   (initial value; se omitido e houver
+                     wire:model[.mod], é semeado da propriedade Livewire
+                     correspondente — dot-path suportado, ex. "filters.kind")
       - name       : consumed internally
+
+    LIMITAÇÃO CONHECIDA: `multiple` não é suportado com wire:model (a ponte
+    hidden envia string JSON, não array) — nenhum call site do pacote combina
+    os dois hoje.
     Requires Alpine.js
 --}}
 @props([
@@ -30,7 +36,23 @@
     $borderNormal    = $error ? 'border-red-400' : 'border-gray-300';
     $borderOpen      = $error ? 'border-red-500' : 'border-primary';
     $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-primary/20';
-    $initialSelected = $multiple ? '[]' : ($selected !== null ? json_encode($selected) : 'null');
+    // Exact "wire:model" ou "wire:model.<mod>" — NÃO "wire:modelable"
+    // (whereStartsWith('wire:model') casaria com 'wire:modelable'; ver forge-modal.blade.php).
+    $hasWireModel = $attributes->has('wire:model')
+        || $attributes->whereStartsWith('wire:model.')->isNotEmpty();
+
+    // A ponte hidden→Livewire é unidirecional e o morph do Livewire chaveia por
+    // `el.id` (uniqid acima), logo o x-data é reavaliado a cada render. Sem semear
+    // do estado do Livewire, `selected` volta a null e o gatilho exibe o
+    // placeholder mesmo com o valor aplicado. `:selected` continua vencendo.
+    $resolvedSelected = $selected;
+    if ($resolvedSelected === null && $hasWireModel && isset($__livewire)) {
+        $resolvedSelected = data_get($__livewire, (string) $attributes->wire('model')->value());
+    }
+
+    $initialSelected = $multiple
+        ? '[]'
+        : ($resolvedSelected !== null ? json_encode($resolvedSelected) : 'null');
 @endphp
 
 <div class="ptah-select-wrapper w-full">

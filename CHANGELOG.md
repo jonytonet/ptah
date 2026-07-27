@@ -7,6 +7,40 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.11.2] — 2026-07-25
+
+### Fixed — `<x-forge-select>` fell back to the placeholder after a re-render
+
+A select bound with `wire:model` but **without** `:selected` showed its placeholder again
+after any Livewire re-render, even though the value was still applied (display-only — the
+filter kept filtering, the form kept the value). `$initialSelected` was seeded **only** from
+the `:selected` prop, while the Alpine↔Livewire bridge is one-way (Alpine → Livewire), so
+every re-evaluation of `x-data` reset the label to nothing.
+
+It now seeds from the bound Livewire property (server-side, dot-paths supported) when
+`:selected` is omitted. `:selected` keeps absolute precedence, so existing usage is unchanged.
+
+This affected **10 of the 13 built-in call sites** — not just the BaseCrud filter panel, but
+also **edit modals** that showed "Select…" instead of the stored value (company `tax_type`,
+page-object `obj_type`, role `department_id`, and the user-permission role/company selects).
+
+> Two obvious-looking fixes were **rejected** on purpose, and are worth knowing if you plan
+> to touch this component:
+> - **`@entangle`** would break the BaseCrud filters: `Alpine.entangle` bails out entirely
+>   when the Livewire property is `undefined`, and `$filters` starts as `[]` with no
+>   pre-seeded keys — the select would stop working altogether, not just look wrong.
+> - **A stable `id` + `wire:key`** would freeze the three call sites that rely on `:selected`:
+>   the node swap caused by the random `id` is currently the *only* path that re-populates
+>   Alpine from the server, which is exactly why `:selected` works when an edit modal opens.
+>   The `uniqid()` therefore stays intentionally — replacing it requires substituting that
+>   repopulation path first.
+
+`multiple` + `wire:model` remains unsupported (the bridge sends a JSON string, not an array);
+no call site combines them. Documented in the component.
+
+> **If you published Ptah views**, re-publish to get this fix:
+> `php artisan vendor:publish --tag=ptah-views-components --force`
+
 ## [1.11.1] — 2026-07-25
 
 ### Fixed — boolean columns and the visual config editor
