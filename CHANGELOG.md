@@ -7,6 +7,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.13.2] — 2026-07-28
+
+### Changed — the generated controller no longer ships unreachable CRUD actions
+
+`ptah:forge` emitted `create()`, `show()` and `edit()` returning
+`view('{entity}.create'|'.show'|'.edit')`, but the generator only ever writes the
+**index** view (BaseCrud handles create/edit/delete in a Livewire modal) and only
+registers the **index** route — so those three actions could only ever throw
+`View [{entity}.create] not found` if someone routed them. 1.13.0 silenced the
+resulting static-analysis noise with a `@var view-string` annotation, which hid the
+defect instead of removing it; they are now simply not generated.
+
+The generated controller keeps `index`, `store`, `update` and `destroy`. If you need a
+non-BaseCrud screen, add the action together with its view and route — the stub says so.
+
+Affects newly generated controllers only; existing files are untouched (and are only
+rewritten with `--force`). A test now pins that the controller references **only** views
+the generator actually creates.
+
 ## [1.13.1] — 2026-07-28
 
 Follow-ups found while scaffolding 14 real entities on 1.13.0.

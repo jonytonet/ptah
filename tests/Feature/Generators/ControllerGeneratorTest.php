@@ -37,7 +37,8 @@ class ControllerGeneratorTest extends GeneratorTestCase
         $content = (string) file_get_contents($result->path);
 
         // index/show → read, store/create → create, update/edit → update, destroy → delete.
-        $this->assertSame(7, substr_count($content, 'abort_if('));
+        // index, store, update, destroy — create/show/edit are not generated.
+        $this->assertSame(4, substr_count($content, 'abort_if('));
         $this->assertStringContainsString("ptah_can('widget', 'read')", $content);
         $this->assertStringContainsString("ptah_can('widget', 'delete')", $content);
     }
@@ -84,5 +85,38 @@ class ControllerGeneratorTest extends GeneratorTestCase
         exec(escapeshellarg(PHP_BINARY).' -l '.escapeshellarg($result->path), $output, $exitCode);
 
         $this->assertSame(0, $exitCode, implode("\n", $output));
+    }
+
+    /**
+     * The controller may only reference views the ViewGenerator actually writes
+     * (index only — BaseCrud handles create/edit/show in a Livewire modal).
+     * create()/show()/edit() used to be generated pointing at views that were
+     * never created, which could only ever throw "View not found".
+     */
+    #[Test]
+    public function it_only_references_views_the_generator_creates(): void
+    {
+        $result = (new ControllerGenerator($this->files))->generate($this->context());
+        $content = (string) file_get_contents($result->path);
+
+        preg_match_all("/'(widget\.[a-z]+)'/", $content, $matches);
+
+        $this->assertSame(['widget.index'], array_values(array_unique($matches[1])));
+    }
+
+    #[Test]
+    public function it_does_not_generate_the_dead_crud_actions(): void
+    {
+        $result = (new ControllerGenerator($this->files))->generate($this->context());
+        $content = (string) file_get_contents($result->path);
+
+        foreach (['function create(', 'function show(', 'function edit('] as $dead) {
+            $this->assertStringNotContainsString($dead, $content);
+        }
+
+        // The actions BaseCrud does route must stay.
+        foreach (['function index(', 'function store(', 'function update(', 'function destroy('] as $kept) {
+            $this->assertStringContainsString($kept, $content);
+        }
     }
 }
