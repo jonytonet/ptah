@@ -23,7 +23,10 @@ class {{ entity }}Controller extends Controller
     {
         abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'read'), 403);
 
-        return view('{{ entity_lower }}.index');
+        /** @var view-string $view */
+        $view = '{{ entity_lower }}.index';
+
+        return view($view);
     }
 
     /**
@@ -33,7 +36,10 @@ class {{ entity }}Controller extends Controller
     {
         abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'create'), 403);
 
-        return view('{{ entity_lower }}.create');
+        /** @var view-string $view */
+        $view = '{{ entity_lower }}.create';
+
+        return view($view);
     }
 
     /**
@@ -58,7 +64,10 @@ class {{ entity }}Controller extends Controller
 
         ${{ entity_lower }} = $this->service->findOrFail($id);
 
-        return view('{{ entity_lower }}.show', compact('{{ entity_lower }}'));
+        /** @var view-string $view */
+        $view = '{{ entity_lower }}.show';
+
+        return view($view, compact('{{ entity_lower }}'));
     }
 
     /**
@@ -70,7 +79,10 @@ class {{ entity }}Controller extends Controller
 
         ${{ entity_lower }} = $this->service->findOrFail($id);
 
-        return view('{{ entity_lower }}.edit', compact('{{ entity_lower }}'));
+        /** @var view-string $view */
+        $view = '{{ entity_lower }}.edit';
+
+        return view($view, compact('{{ entity_lower }}'));
     }
 
     /**

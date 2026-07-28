@@ -7,6 +7,76 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.13.0] — 2026-07-28
+
+> **🔒 Security — if you generated API scaffolding with `ptah:forge --api` before this
+> release, audit `routes/web.php` now.** Look for `Route::prefix('v1')->group(...)` blocks with
+> `Route::apiResource(...)`: those endpoints (including `DELETE`) were registered **without any
+> authentication middleware**. Move them to `routes/api.php` under
+> `->middleware(config('ptah.api.middleware'))`, or delete and re-generate with this version.
+
+### Fixed — `ptah:forge --api` generated unauthenticated API routes (CRITICAL)
+
+The API route generator wrote `Route::apiResource(...)` inside a bare `Route::prefix('v1')`
+group with **no middleware at all**, so all five endpoints — `index`, `store`, `show`, `update`
+and **`destroy`** — were publicly reachable. Three defects compounded:
+
+- **No authentication.** The web route generated in the same run *does* get
+  `->middleware('auth')`; the API route got nothing. A `DELETE /v1/{resource}/{id}` with no
+  credentials would have deleted the record.
+- **Written to `routes/web.php`.** `routes/api.php` doesn't exist in a fresh Laravel 11+ app
+  (it comes from `php artisan install:api`), and the generator silently fell back to `web.php`.
+  Even with auth added, those routes inherit the **`web`** group: session + CSRF (so a real API
+  client gets **419** on any write) and no `api` group (no `throttle:api`, and a 500 renders an
+  HTML error page instead of JSON).
+- **`config('ptah.api.prefix')` and `config('ptah.api.middleware')` were dead config** —
+  declared, documented, and consumed nowhere in the package. Worse than absent: it looked like
+  the routes were protected.
+
+Now: the generated group applies **`config('ptah.api.middleware')`** (default
+`['api', 'auth:sanctum']`) and **`config('ptah.api.prefix')`** (so the URL is `api/v1/…`, which
+finally matches both `docs/BaseLayer.md` and the `@OA\Server` of the published `SwaggerInfo` —
+previously the Swagger UI documented a URL that 404'd). An empty/misconfigured middleware value
+falls back to the safe default rather than emitting an open route.
+
+**The `web.php` fallback was removed.** If `routes/api.php` is missing, `--api` now **fails with
+an actionable error** (`run "php artisan install:api" first`) and generates no routes, instead of
+quietly shipping unauthenticated endpoints. This also resolves the `auth:sanctum` /
+`laravel/sanctum` mismatch: `install:api` installs Sanctum, so the default guard exists by the
+time API routes can be generated. If the `sanctum` guard is later removed, the generated file
+carries an inline warning while staying protected.
+
+### Fixed — every `--api` entity 500'd on `index`
+
+`controller.api.stub` called `$this->service->getDados($request)`; the method on `BaseService`
+is **`getData()`** (a leftover from the pt→en rename — the docs already said `getData`). This
+broke the `index` of 100% of entities generated with `--api`. Swept the remaining stubs for
+other pt-named service/repository calls: none left.
+
+### Fixed — typing of generated code (PHPStan/Larastan noise)
+
+Running Larastan level 5 over a project whose `app/` was entirely generated produced 331 errors
+that the developer never wrote and can't fix without editing generated files. Fixed at the stubs:
+
+- `resource.stub` now carries `@mixin \App\Models\{Entity}` (respects sub-folders) — clears 261
+  errors at once and improves IDE autocomplete.
+- `controller.stub` annotates the view name as `view-string` (42 errors).
+- `dto.stub` documents `$request` as a `FormRequest` before calling `validated()` (14 errors) and
+  marks the class `@final` for the `new static()` diagnostic (14 errors).
+  > The obvious fix — type-hinting `fromRequest(FormRequest $request)` — was **rejected**: PHP
+  > requires parameter contravariance, and `BaseDTO::fromRequest()` is declared with `Request`,
+  > so narrowing it raises a **fatal error when the generated class loads** — strictly worse than
+  > the original issue, which only surfaced when calling it with a non-`FormRequest`.
+
+> **Stubs already published** (`stubs/ptah/`) are not updated automatically — re-publish with
+> `php artisan vendor:publish --tag=ptah-stubs --force` to pick up the stub fixes above.
+
+### Tests
+- The API route generator: middleware + prefix applied, custom prefix honoured, **no route
+  written and an error returned when `routes/api.php` is absent** (proving no open endpoint and
+  no `web.php` pollution), and the sanctum-guard warning in both directions. Plus stub-content
+  guards (`getData` not `getDados`, `@mixin` in resources incl. sub-folders, the DTO annotation).
+
 ## [1.12.0] — 2026-07-28
 
 Eight issues found while bootstrapping a brand-new project from scratch

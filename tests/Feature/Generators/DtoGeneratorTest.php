@@ -69,4 +69,54 @@ class DtoGeneratorTest extends GeneratorTestCase
 
         $this->assertSame(0, $exitCode, implode("\n", $output));
     }
+
+    /**
+     * fromRequest() needs FormRequest::validated(), which does not exist on
+     * the base Illuminate\Http\Request — regression for a bug found while
+     * hardening the stubs for static analysis.
+     */
+    #[Test]
+    public function it_types_form_request_for_the_validated_call(): void
+    {
+        $content = $this->generate();
+
+        $this->assertStringContainsString('use Illuminate\Foundation\Http\FormRequest;', $content);
+        $this->assertStringContainsString('@var FormRequest $request', $content);
+        $this->assertStringContainsString('$request->validated()', $content);
+
+        // The native parameter type must stay Request: narrowing it to
+        // FormRequest would violate BaseDTO::fromRequest(Request $request)'s
+        // signature and fatal at class-declaration time (LSP contravariance).
+        $this->assertStringContainsString('public static function fromRequest(Request $request): static', $content);
+    }
+
+    /**
+     * Loads the generated DTO together with the real Ptah\Base\BaseDTO in a
+     * fresh PHP process: proves the class declares without a "Declaration ...
+     * must be compatible with BaseDTO::fromRequest(Request $request)" fatal
+     * error, which a plain `php -l` on the isolated file would NOT catch
+     * (BaseDTO is not defined in that file, so the lint never resolves the
+     * inheritance chain).
+     */
+    #[Test]
+    public function generated_dto_declares_without_a_fatal_lsp_error_against_base_dto(): void
+    {
+        $result = (new DtoGenerator($this->files))->generate($this->context());
+        $autoload = dirname(__DIR__, 3).'/vendor/autoload.php';
+
+        // Written to a file (instead of `php -r <script>`) to avoid shell
+        // quoting pitfalls with nested double quotes on Windows.
+        $harness = $this->tmpPath.'/dto-lsp-harness.php';
+        $this->files->put($harness, sprintf(
+            "<?php\nrequire %s;\nrequire %s;\nclass_exists(%s);\necho 'OK';\n",
+            var_export($autoload, true),
+            var_export($result->path, true),
+            var_export('App\\DTOs\\WidgetDTO', true),
+        ));
+
+        exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg($harness).' 2>&1', $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+        $this->assertStringContainsString('OK', implode("\n", $output));
+    }
 }

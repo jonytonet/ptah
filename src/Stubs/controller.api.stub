@@ -39,7 +39,7 @@ class {{ entity }}ApiController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        ${{ entities }} = $this->service->getDados($request);
+        ${{ entities }} = $this->service->getData($request);
 
         return BaseResponse::paginated(${{ entities }}, '{{ entities }} listing returned successfully');
     }
