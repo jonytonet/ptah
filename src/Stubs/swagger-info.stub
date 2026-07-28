@@ -29,7 +29,7 @@ namespace App\Http\Controllers\API;
  * )
  *
  * @OA\Server(
- *     url="{{ APP_URL }}/api/v1",
+ *     url="{{ APP_URL }}",
  *     description="Main server",
  * )
  */

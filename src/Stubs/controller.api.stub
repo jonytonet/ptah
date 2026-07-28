@@ -19,7 +19,7 @@ class {{ entity }}ApiController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/api/v1/{{ swagger_path }}",
+     *     path="/{{ api_base }}/{{ swagger_path }}",
      *     summary="Returns paginated list of {{ entities }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
@@ -46,7 +46,7 @@ class {{ entity }}ApiController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/api/v1/{{ swagger_path }}",
+     *     path="/{{ api_base }}/{{ swagger_path }}",
      *     summary="Creates a new {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
@@ -68,7 +68,7 @@ class {{ entity }}ApiController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/api/v1/{{ swagger_path }}/{id}",
+     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
      *     summary="Returns a {{ entity }} by ID",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
@@ -91,7 +91,7 @@ class {{ entity }}ApiController extends BaseApiController
 
     /**
      * @OA\Put(
-     *     path="/api/v1/{{ swagger_path }}/{id}",
+     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
      *     summary="Updates an existing {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},
@@ -118,7 +118,7 @@ class {{ entity }}ApiController extends BaseApiController
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/{{ swagger_path }}/{id}",
+     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
      *     summary="Removes a {{ entity }}",
      *     tags={"{{ swagger_tag }}"},
      *     security={{"bearerAuth":{}}},

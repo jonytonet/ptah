@@ -63,7 +63,7 @@ class RouteGeneratorTest extends GeneratorTestCase
     }
 
     #[Test]
-    public function it_appends_the_api_resource_route_with_middleware_and_prefix_from_config(): void
+    public function it_appends_the_api_resource_route_with_middleware_from_config(): void
     {
         config(['ptah.api.prefix' => 'api', 'ptah.api.middleware' => ['api', 'auth:sanctum']]);
 
@@ -72,7 +72,7 @@ class RouteGeneratorTest extends GeneratorTestCase
         $this->assertTrue($result->isDone(), $result->message ?? '');
         $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
 
-        $this->assertStringContainsString("Route::prefix('api/v1')", $content);
+        $this->assertStringContainsString("Route::prefix('v1')", $content);
         $this->assertStringContainsString("->middleware(['api', 'auth:sanctum'])", $content);
         $this->assertStringContainsString(
             "Route::apiResource('widgets', \\App\\Http\\Controllers\\API\\WidgetApiController::class);",
@@ -80,15 +80,24 @@ class RouteGeneratorTest extends GeneratorTestCase
         );
     }
 
+    /**
+     * Laravel already mounts routes/api.php under the app's api prefix
+     * (withRouting(apiPrefix:)), so the generated group must add ONLY the
+     * version segment — prepending ptah.api.prefix produced api/api/v1/…
+     */
     #[Test]
-    public function it_applies_a_custom_prefix_from_config(): void
+    public function the_api_route_group_never_repeats_the_apps_api_prefix(): void
     {
-        config(['ptah.api.prefix' => 'backend']);
+        foreach (['api', 'backend', ''] as $configuredPrefix) {
+            config(['ptah.api.prefix' => $configuredPrefix]);
+            $this->files->put($this->tmpPath.'/routes/api.php', "<?php\n");
 
-        (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+            (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
 
-        $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
-        $this->assertStringContainsString("Route::prefix('backend/v1')", $content);
+            $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
+            $this->assertStringContainsString("Route::prefix('v1')", $content, "prefix [{$configuredPrefix}]");
+            $this->assertStringNotContainsString("/v1'", str_replace("Route::prefix('v1')", '', $content), "prefix [{$configuredPrefix}]");
+        }
     }
 
     #[Test]

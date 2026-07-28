@@ -587,7 +587,7 @@ Gera automaticamente **web e API juntos**:
 - `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
 - `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
 - `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
-- `routes/web/catalog/product.php` + `routes/api/catalog/product.php` — `Route::prefix('v1')`
+- `routes/web.php` (rota web, com `auth` se o módulo estiver ativo) + `routes/api.php` (grupo `Route::prefix('v1')->middleware(config('ptah.api.middleware'))`, só com `--api`; requer `routes/api.php` existente)
 
 > **Model preservado:** Se a entidade já existir, `--api` injeta apenas o bloco `@OA\Schema` na model
 > sem sobrescrever `$fillable`, `$casts` ou relacionamentos.
@@ -627,7 +627,7 @@ php artisan l5-swagger:generate
 use App\Responses\BaseResponse;
 
 // index — paginado
-return BaseResponse::paginated($this->service->getDados($request));
+return BaseResponse::paginated($this->service->getData($request));
 
 // show — individual
 $item = $this->service->show($id);
@@ -656,9 +656,9 @@ return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
 }
 ```
 
-### getDados($request) — busca inteligente
+### getData($request) — busca inteligente
 
-O método `getDados(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros da request:
+O método `getData(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros da request:
 
 | Parâmetro | Comportamento |
 |---|---|
@@ -674,7 +674,7 @@ O método `getDados(Request $request)` do `BaseService` orquestra automaticament
 // No controller, só isso:
 public function index(Request $request): JsonResponse
 {
-    return BaseResponse::paginated($this->service->getDados($request));
+    return BaseResponse::paginated($this->service->getData($request));
 }
 ```
 
@@ -685,7 +685,7 @@ public function index(Request $request): JsonResponse
 | Controller | `Http/Controllers/API/{Folder}/` | `{Entity}Controller` |
 | Request criar | `Http/Requests/API/{Folder}/` | `Create{Entity}ApiRequest` |
 | Request atualizar | `Http/Requests/API/{Folder}/` | `Update{Entity}ApiRequest` |
-| Rotas | `routes/api/{folder}/` | prefixo `v1` |
+| Rotas | `routes/api.php` | prefixo `v1` + middleware da config |
 
 ### Anti-patterns proibidos
 
@@ -706,7 +706,7 @@ public function store(Request $request) {
 // ✅ CERTO
 public function index(Request $request): JsonResponse
 {
-    return BaseResponse::paginated($this->service->getDados($request));
+    return BaseResponse::paginated($this->service->getData($request));
 }
 ```
 

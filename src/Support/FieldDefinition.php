@@ -37,6 +37,7 @@ readonly class FieldDefinition
         public string $label = '',    // display label in BaseCrud (surname)
         public bool $hasDefault = false, // whether a ->default() should be emitted
         public ?string $defaultValue = null,  // default value literal: 'true', '0', 'active'
+        public ?int $length = null,  // string/char: declared length — string(60), char(2)
     ) {}
 
     /**
@@ -129,7 +130,12 @@ readonly class FieldDefinition
         }
 
         $line = match ($this->type) {
-            'string' => "\$table->string('{$this->name}')",
+            // string(60)/char(2): the declared length is honoured, like decimal(p,s).
+            // Omitting it silently produced varchar(255) everywhere, which in
+            // InnoDB/utf8mb4 costs 1020 bytes per indexed column and overflows the
+            // 3072-byte index limit on composite indexes.
+            'string' => "\$table->string('{$this->name}'".($this->length !== null ? ", {$this->length}" : '').')',
+            'char' => "\$table->char('{$this->name}'".($this->length !== null ? ", {$this->length}" : '').')',
             'text' => "\$table->text('{$this->name}')",
             'longText' => "\$table->longText('{$this->name}')",
             'integer' => "\$table->integer('{$this->name}')",
@@ -244,8 +250,8 @@ readonly class FieldDefinition
             $rules[] = 'unique:TABELA_AQUI';
         }
 
-        if (in_array($this->type, ['string'])) {
-            $rules[] = 'max:255';
+        if (in_array($this->type, ['string', 'char'], true)) {
+            $rules[] = 'max:'.($this->length ?? 255);
         }
 
         if ($this->type === 'text') {
