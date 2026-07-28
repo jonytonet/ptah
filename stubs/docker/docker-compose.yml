@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: ${APP_NAME:-ptah}_app
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
@@ -18,12 +17,11 @@ services:
       redis:
         condition: service_started
     environment:
-      PHP_OPCACHE_ENABLE: 0
+      PHP_OPCACHE_ENABLE: ${PHP_OPCACHE_ENABLE:-1}
 
   # ─── Nginx ─────────────────────────────────────────────────────────────────
   nginx:
     image: nginx:1.27-alpine
-    container_name: ${APP_NAME:-ptah}_nginx
     ports:
       - "${NGINX_PORT:-8080}:80"
     volumes:
@@ -37,7 +35,6 @@ services:
   # ─── MySQL 8 ───────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
-    container_name: ${APP_NAME:-ptah}_mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
       MYSQL_DATABASE: ${DB_DATABASE:-laravel}
@@ -58,7 +55,6 @@ services:
   # ─── Redis ─────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: ${APP_NAME:-ptah}_redis
     command: redis-server --save 60 1 --loglevel warning
     ports:
       - "${REDIS_PORT_HOST:-6380}:6379"
@@ -70,7 +66,6 @@ services:
   # ─── Mailpit (captura e-mails de desenvolvimento) ──────────────────────────
   mailpit:
     image: axllent/mailpit:latest
-    container_name: ${APP_NAME:-ptah}_mailpit
     ports:
       - "${MAIL_UI_PORT:-8025}:8025"    # Web UI: http://localhost:8025
       - "${MAIL_SMTP_PORT:-1025}:1025"  # SMTP

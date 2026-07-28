@@ -61,7 +61,7 @@ php artisan ptah:install --boost
 **Next steps after installation:**
 
 1. Review ``config/ptah.php``
-2. Add the ``HasUserPreferences`` trait to the User model
+2. *(Optional)* Add the ``HasUserPreferences`` trait to the User model for the ``$user->getPreference()``/``setPreference()`` API — BaseCrud persists preferences without it
 3. Enable required modules:
    - ``php artisan ptah:module auth`` — Login, 2FA, profile
    - ``php artisan ptah:module menu`` — Dynamic sidebar

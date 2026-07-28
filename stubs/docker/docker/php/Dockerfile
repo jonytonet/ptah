@@ -32,8 +32,13 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         opcache
 
 # ─── Redis (via PECL) ─────────────────────────────────────────────────────────
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+# $PHPIZE_DEPS não é instalado automaticamente para extensões PECL (diferente do
+# docker-php-ext-install acima, que já cuida disso); por isso instalamos e
+# removemos manualmente as dependências de build.
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
 
 # ─── Composer ─────────────────────────────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

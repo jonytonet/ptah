@@ -218,21 +218,11 @@
         <h2 class="demo-title">forge-tabs</h2>
         <x-forge-tabs
             :tabs="[
-                ['key' => 'info',    'label' => 'Informações'],
-                ['key' => 'history', 'label' => 'Histórico'],
-                ['key' => 'logs',    'label' => 'Logs'],
+                ['id' => 'info',    'label' => 'Informações', 'slot' => '<p class=\'text-gray-600\'>Conteúdo da aba <strong>Informações</strong>.</p>'],
+                ['id' => 'history', 'label' => 'Histórico',   'slot' => '<p class=\'text-gray-600\'>Conteúdo da aba <strong>Histórico</strong>.</p>'],
+                ['id' => 'logs',    'label' => 'Logs',        'slot' => '<p class=\'text-gray-600\'>Conteúdo da aba <strong>Logs</strong>.</p>'],
             ]"
-        >
-            <x-slot:info>
-                <p class="text-gray-600">Conteúdo da aba <strong>Informações</strong>.</p>
-            </x-slot:info>
-            <x-slot:history>
-                <p class="text-gray-600">Conteúdo da aba <strong>Histórico</strong>.</p>
-            </x-slot:history>
-            <x-slot:logs>
-                <p class="text-gray-600">Conteúdo da aba <strong>Logs</strong>.</p>
-            </x-slot:logs>
-        </x-forge-tabs>
+        />
     </section>
 
     {{-- ===== MODAL ===== --}}
@@ -284,9 +274,9 @@
         <h2 class="demo-title">forge-list</h2>
         <x-forge-card class="max-w-lg">
             <x-forge-list :items="[
-                ['name' => 'João Silva',   'description' => 'Admin',    'badge' => 'Ativo',    'badge_color' => 'success'],
-                ['name' => 'Maria Santos', 'description' => 'Editor',   'badge' => 'Inativo',  'badge_color' => 'danger'],
-                ['name' => 'Pedro Lima',   'description' => 'Viewer',   'badge' => 'Pendente', 'badge_color' => 'warn'],
+                ['name' => 'João Silva',   'description' => 'Admin',  'badge' => ['label' => 'Ativo',    'color' => 'success']],
+                ['name' => 'Maria Santos', 'description' => 'Editor', 'badge' => ['label' => 'Inativo',  'color' => 'danger']],
+                ['name' => 'Pedro Lima',   'description' => 'Viewer', 'badge' => ['label' => 'Pendente', 'color' => 'warn']],
             ]" />
         </x-forge-card>
     </section>
@@ -310,7 +300,7 @@
         <h2 class="demo-title">forge-table</h2>
         <x-forge-card>
             <x-forge-table
-                :columns="[
+                :headers="[
                     ['key' => 'id',     'label' => 'ID',      'sortable' => true],
                     ['key' => 'name',   'label' => 'Nome',    'sortable' => true],
                     ['key' => 'status', 'label' => 'Status',  'sortable' => false],
@@ -323,7 +313,6 @@
                     ['id' => 4, 'name' => 'Pedido #004', 'status' => 'Aprovado',  'total' => 'R$ 540,00'],
                 ]"
                 :searchable="true"
-                :show-actions="false"
             />
         </x-forge-card>
     </section>

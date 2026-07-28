@@ -99,7 +99,7 @@ O comando:
 ```dotenv
 PTAH_MODULE_AUTH=true
 PTAH_MODULE_MENU=true
-PTAH_MENU_DRIVER=database   # 'config' (default) or 'database'
+PTAH_MENU_DRIVER=database   # 'database' (default) or 'config'
 PTAH_MODULE_COMPANY=true
 PTAH_MODULE_PERMISSIONS=true
 ```
@@ -422,7 +422,7 @@ In `config/ptah.php`, section `menu`:
 
 ```php
 'menu' => [
-    'driver'    => env('PTAH_MENU_DRIVER', 'config'),   // 'config' or 'database'
+    'driver'    => env('PTAH_MENU_DRIVER', 'database'),   // 'database' (default) or 'config'
     'cache'     => true,
     'cache_ttl' => 300,    // seconds
     'max_depth' => 4,      // maximum tree depth
@@ -431,7 +431,7 @@ In `config/ptah.php`, section `menu`:
 
 ### Driver `config`
 
-**Default — no migration required.** Menu items are read from `ptah.forge.sidebar_items`, exactly as before. Existing projects continue working without any changes.
+**No migration required.** Menu items are read from `ptah.forge.sidebar_items`, exactly as before. Existing projects continue working without any changes. Note: `PTAH_MENU_DRIVER` now defaults to `database` (see above) — set it explicitly to `config` to use this driver.
 
 ```php
 // config/ptah.php
@@ -803,7 +803,7 @@ Full section added to `config/ptah.php`:
 |--------------------------------------------------------------------------
 */
 'menu' => [
-    'driver'    => env('PTAH_MENU_DRIVER', 'config'),
+    'driver'    => env('PTAH_MENU_DRIVER', 'database'),
     'cache'     => true,
     'cache_ttl' => 300,
     'max_depth' => 4,

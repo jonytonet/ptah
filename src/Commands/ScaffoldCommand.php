@@ -54,7 +54,7 @@ class ScaffoldCommand extends Command
     protected $signature = 'ptah:forge
         {entity                  : Entity name in PascalCase, with optional subfolder (e.g.: Product, Product/ProductStock)}
         {--table=                : Table name in the database (default: plural snake_case of the entity)}
-        {--fields=               : Field definitions: "name:string,price:decimal(10,2):nullable" }
+        {--fields=               : Field definitions: "name:string,price:decimal(10,2):nullable" (bare "decimal" silently becomes decimal(10,2); always state (p,s)) }
         {--db                    : Read fields directly from the database table}
         {--api                   : Also generate the API structure in addition to web (API Controller, API Requests, Swagger and API Routes)}
         {--api-only              : Generate ONLY the API structure, without web views (legacy behaviour of --api)}

@@ -28,7 +28,8 @@
     "suggest": {
         "pragmarx/google2fa-laravel": "Required for 2FA via authenticator app (TOTP) — auth module",
         "bacon/bacon-qr-code": "Required for generating QR codes in TOTP setup — auth module",
-        "prism-php/prism": "Required for the AI Agent module (conversational AI widget) — ai_agent module"
+        "prism-php/prism": "Required for the AI Agent module (conversational AI widget) — ai_agent module",
+        "darkaonline/l5-swagger": "Required for Swagger UI / API docs — api module"
     },
     "autoload": {
         "psr-4": {

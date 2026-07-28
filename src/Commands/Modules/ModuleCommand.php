@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Ptah\Commands\Modules;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use L5Swagger\L5SwaggerServiceProvider;
 use Symfony\Component\Process\Process;
@@ -157,9 +159,21 @@ class ModuleCommand extends Command
 
         $email = config('ptah.permissions.admin_email', 'admin@admin.com');
 
+        // The seeder is idempotent (firstOrCreate-style): on a re-run against an
+        // existing admin, $password (generated above or from config) was never
+        // persisted. Only show the banner when it actually matches the stored hash.
+        if (! $this->adminPasswordApplies($password, $email)) {
+            $this->components->warn(
+                "Admin user {$email} already exists — the existing password was PRESERVED and is not shown. ".
+                'Reset it manually if lost.'
+            );
+
+            return;
+        }
+
         $this->newLine();
         $this->line('  ╔══════════════════════════════════════════╗');
-        $this->line('  ║  <fg=green>Admin created successfully!</>             ║');
+        $this->line('  ║  <fg=green>Admin access ready</>                      ║');
         $this->line("  ║  <fg=yellow>E-mail   :</>  {$email}        ");
         $this->line("  ║  <fg=yellow>Password :</>  {$password}");
         if ($generated) {
@@ -170,18 +184,52 @@ class ModuleCommand extends Command
         $this->newLine();
     }
 
+    /**
+     * Checks whether the given password is the one actually persisted for the
+     * admin account — i.e. whether it is safe to display in the banner.
+     *
+     * The seeder is idempotent: on a re-run against an already-existing admin,
+     * a freshly generated/configured password is never written to the database.
+     */
+    protected function adminPasswordApplies(string $password, string $email): bool
+    {
+        /** @var class-string<Model> $userModel */
+        $userModel = config('ptah.permissions.user_model', 'App\Models\User');
+
+        if (! class_exists($userModel)) {
+            return false;
+        }
+
+        $admin = $userModel::query()->where('email', $email)->first();
+
+        return $admin !== null && Hash::check($password, (string) $admin->getAttribute('password'));
+    }
+
     protected function activateAiAgent(): void
     {
-        $this->components->task('Installing prism-php/prism', function () {
-            $process = new Process(
-                ['composer', 'require', 'prism-php/prism'],
-                base_path()
-            );
-            $process->setTimeout(300);
-            $process->run();
+        $prismDir = base_path('vendor/prism-php/prism');
+        $installError = null;
 
-            return $process->isSuccessful();
-        });
+        if (is_dir($prismDir)) {
+            $this->components->info('prism-php/prism already installed — skipping composer require.');
+        } else {
+            $this->components->task('Installing prism-php/prism', function () use (&$installError) {
+                try {
+                    $process = new Process(
+                        ['composer', 'require', 'prism-php/prism'],
+                        base_path()
+                    );
+                    $process->setTimeout((int) config('ptah.process_timeout', 300));
+                    $process->run();
+
+                    return $process->isSuccessful();
+                } catch (\Throwable $e) {
+                    $installError = $e->getMessage();
+
+                    return false;
+                }
+            });
+        }
 
         $this->components->task('Publishing AI Agent migrations', function () {
             $this->call('vendor:publish', [
@@ -193,20 +241,40 @@ class ModuleCommand extends Command
         $this->components->task('Running migrations', function () {
             $this->call('migrate');
         });
+
+        if (! is_dir($prismDir)) {
+            $this->components->warn(
+                'prism-php/prism NOT installed ('.($installError ?? 'see command output above').'). '.
+                'Run manually: composer require prism-php/prism'
+            );
+        }
     }
 
     protected function activateApi(): void
     {
-        $this->components->task('Instalando darkaonline/l5-swagger', function () {
-            $process = new Process(
-                ['composer', 'require', 'darkaonline/l5-swagger'],
-                base_path()
-            );
-            $process->setTimeout(300);
-            $process->run();
+        $swaggerDir = base_path('vendor/darkaonline/l5-swagger');
+        $installError = null;
 
-            return $process->isSuccessful();
-        });
+        if (is_dir($swaggerDir)) {
+            $this->components->info('darkaonline/l5-swagger already installed — skipping composer require.');
+        } else {
+            $this->components->task('Instalando darkaonline/l5-swagger', function () use (&$installError) {
+                try {
+                    $process = new Process(
+                        ['composer', 'require', 'darkaonline/l5-swagger'],
+                        base_path()
+                    );
+                    $process->setTimeout((int) config('ptah.process_timeout', 300));
+                    $process->run();
+
+                    return $process->isSuccessful();
+                } catch (\Throwable $e) {
+                    $installError = $e->getMessage();
+
+                    return false;
+                }
+            });
+        }
 
         $this->components->task('Publishing API base classes', function () {
             $this->call('vendor:publish', [
@@ -215,8 +283,12 @@ class ModuleCommand extends Command
             ]);
         });
 
-        $this->components->task('Publishing L5-Swagger config', function () {
-            if (class_exists(L5SwaggerServiceProvider::class)) {
+        $this->components->task('Publishing L5-Swagger config', function () use ($swaggerDir) {
+            // class_exists() alone is not a reliable guard: right after `composer
+            // require` runs in this same PHP process the provider class is not yet
+            // autoloadable. Gate on the vendor directory too — if it is still
+            // missing the warn() at the end of this method already covers it.
+            if (is_dir($swaggerDir) && class_exists(L5SwaggerServiceProvider::class)) {
                 $this->call('vendor:publish', [
                     '--provider' => 'L5Swagger\\L5SwaggerServiceProvider',
                     '--force' => false,
@@ -233,6 +305,14 @@ class ModuleCommand extends Command
             $content = str_replace('{{ APP_URL }}', rtrim(config('app.url', 'http://localhost'), '/'), $content);
             $content = str_replace('{{ APP_CONTACT_EMAIL }}', env('MAIL_FROM_ADDRESS', 'contact@example.com'), $content);
             file_put_contents($swaggerInfoPath, $content);
+        }
+
+        if (! is_dir($swaggerDir)) {
+            $this->components->warn(
+                'darkaonline/l5-swagger NOT installed ('.($installError ?? 'see command output above').'). '.
+                'Run manually: composer require darkaonline/l5-swagger; then: '.
+                'php artisan vendor:publish --provider="L5Swagger\\L5SwaggerServiceProvider"'
+            );
         }
     }
 
@@ -281,14 +361,14 @@ class ModuleCommand extends Command
         $this->line('  <fg=blue>Next steps:</>');
 
         if ($module === 'auth') {
-            $this->line('  1. Make sure your User model uses <fg=yellow>HasUserPreferences</>');
+            $this->line('  1. Optional: add <fg=yellow>HasUserPreferences</> to your User model for the $user->getPreference()/setPreference() API — BaseCrud persists preferences without it');
             $this->line('  2. Configure <fg=yellow>config/ptah.php</> (auth section)');
             $this->line('  3. Add the authentication middleware to desired routes');
             $this->line('  4. For TOTP 2FA install: <fg=green>composer require pragmarx/google2fa-laravel bacon/bacon-qr-code</>');
         }
 
         if ($module === 'menu') {
-            $this->line('  1. Set <fg=yellow>PTAH_MENU_DRIVER=database</> in .env (default: config)');
+            $this->line('  1. <fg=yellow>PTAH_MENU_DRIVER</> defaults to <fg=yellow>database</>; set it to <fg=yellow>config</> to use the static sidebar_items instead');
             $this->line('  2. Manage menu items at <fg=green>/ptah-menu</> (requires the auth module)');
         }
 
