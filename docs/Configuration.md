@@ -13,23 +13,24 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Configuration Methods](#configuration-methods)
-3. [Visual Configuration Modal](#visual-configuration-modal)
-4. [CLI Command (ptah:config)](#cli-command-ptahconfig)
-5. [Comparison: Modal vs CLI](#comparison-modal-vs-cli)
-6. [CrudConfig Structure (JSON)](#crudconfig-structure-json)
-7. [Column Configuration](#column-configuration)
-8. [Action Configuration](#action-configuration)
-9. [Filter Configuration](#filter-configuration)
-10. [Style Configuration](#style-configuration)
-11. [JOIN Configuration](#join-configuration)
-12. [General Settings](#general-settings)
-13. [Permissions Configuration](#permissions-configuration)
-14. [Lifecycle Hooks (Dynamic Code)](#lifecycle-hooks-dynamic-code)
-15. [Complete Practical Examples](#complete-practical-examples)
-16. [Recommended Workflow](#recommended-workflow)
-17. [Import/Export of Configurations](#importexport-of-configurations)
-18. [Troubleshooting](#troubleshooting)
+2. [Package configuration (`config/ptah.php`)](#package-configuration-configptahphp)
+3. [Configuration Methods](#configuration-methods)
+4. [Visual Configuration Modal](#visual-configuration-modal)
+5. [CLI Command (ptah:config)](#cli-command-ptahconfig)
+6. [Comparison: Modal vs CLI](#comparison-modal-vs-cli)
+7. [CrudConfig Structure (JSON)](#crudconfig-structure-json)
+8. [Column Configuration](#column-configuration)
+9. [Action Configuration](#action-configuration)
+10. [Filter Configuration](#filter-configuration)
+11. [Style Configuration](#style-configuration)
+12. [JOIN Configuration](#join-configuration)
+13. [General Settings](#general-settings)
+14. [Permissions Configuration](#permissions-configuration)
+15. [Lifecycle Hooks (Dynamic Code)](#lifecycle-hooks-dynamic-code)
+16. [Complete Practical Examples](#complete-practical-examples)
+17. [Recommended Workflow](#recommended-workflow)
+18. [Import/Export of Configurations](#importexport-of-configurations)
+19. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -64,6 +65,177 @@ Configurations are cached automatically:
 - Cache key: `crud_config_{model}`
 - TTL: Configurable in `crud_configs.cacheTtl` (default: 3600s)
 - Automatic invalidation when saving via modal or CLI
+
+---
+
+## Package configuration (`config/ptah.php`)
+
+> **Scope note:** the rest of this document covers the per-entity CrudConfig
+> JSON stored in `crud_configs` (columns, actions, filters, styles, JOINs...).
+> The keys below are **package-wide** settings that live in `config/ptah.php`
+> — after `php artisan vendor:publish --tag=ptah-config` — and its `.env`
+> overrides. They configure Ptah itself, not an individual entity's CRUD.
+
+Defaults below are taken directly from `config/ptah.php` — `— ` in the ENV
+column means the key has no `.env` override (edit the published file instead).
+
+### Locale & runtime
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `force_locale` | `PTAH_FORCE_LOCALE` | `false` | [InstallationGuide.md — Language / locale](InstallationGuide.md#language--locale) |
+| `locale` | `PTAH_LOCALE` | `en` | [InstallationGuide.md — Language / locale](InstallationGuide.md#language--locale) |
+| `process_timeout` | `PTAH_PROCESS_TIMEOUT` | `300` | [Commands.md — ptah:install / ptah:module](Commands.md) (timeout for `composer require` / `npm install`/`build`) |
+
+### Theme colors (`theme.colors.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `theme.colors.primary` | `PTAH_COLOR_PRIMARY` | `#5b21b6` | `config/ptah.php` comments (injected as CSS custom properties, no view edits needed) |
+| `theme.colors.success` | `PTAH_COLOR_SUCCESS` | `#10b981` | `config/ptah.php` comments |
+| `theme.colors.danger` | `PTAH_COLOR_DANGER` | `#ef4444` | `config/ptah.php` comments |
+| `theme.colors.warn` | `PTAH_COLOR_WARN` | `#f59e0b` | `config/ptah.php` comments |
+| `theme.colors.dark` | `PTAH_COLOR_DARK` | `#1e293b` | `config/ptah.php` comments |
+
+### File generation paths (`paths.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `paths.models` | — | `app_path('Models')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.services` | — | `app_path('Services')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.repositories` | — | `app_path('Repositories')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.dtos` | — | `app_path('DTOs')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.actions` | — | `app_path('Actions')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.livewire` | — | `app_path('Livewire')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.requests` | — | `app_path('Http/Requests')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.resources` | — | `app_path('Http/Resources')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.controllers` | — | `app_path('Http/Controllers')` | [Commands.md — ptah:forge](Commands.md) |
+| `paths.views` | — | `resource_path('views')` | [Commands.md — ptah:forge](Commands.md) |
+
+### User preferences (`preferences.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `preferences.driver` | — | `database` | `config/ptah.php` comments |
+| `preferences.cache` | — | `true` | `config/ptah.php` comments |
+| `preferences.ttl` | — | `3600` | `config/ptah.php` comments |
+
+### API (`api.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `api.prefix` | — | `api` | [Modules.md — API Module](Modules.md) |
+| `api.middleware` | — | `['api', 'auth:sanctum']` | [Modules.md — API Module](Modules.md) |
+| `api.docs` | — | `true` | [Modules.md — API Module](Modules.md) |
+
+### Ptah Forge (`forge.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `forge.prefix` | — | `forge` | `config/ptah.php` comments (Blade component prefix, `<x-forge-*>`) |
+| `forge.tailwind` | — | `v4` | `config/ptah.php` comments |
+| `forge.sidebar_items` | — | `[]` | [Modules.md — Menu Module, driver `config`](Modules.md#menu-module) |
+
+### Scaffold (`scaffold.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `scaffold.layout` | — | `forge-dashboard` | `config/ptah.php` comments |
+| `scaffold.auth_layout` | — | `forge-auth` | `config/ptah.php` comments |
+
+### BaseCrud defaults (`crud.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `crud.cache_enabled` | — | `true` | This document — [General Settings](#general-settings) |
+| `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |
+| `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |
+| `crud.soft_deletes` | — | `true` | This document — [General Settings](#general-settings) |
+| `crud.confirm_delete` | — | `true` | This document — [General Settings](#general-settings) |
+| `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |
+| `crud.hook_namespaces` | — | `['App\CrudHooks']` | This document — § "Lifecycle Hooks" (PHP Classes syntax, `@Class::method`) |
+| `crud.label_dictionary` | — | `[]` | `config/ptah.php` comments (overrides the built-in pt-BR label dictionary) |
+
+### Export — async / large volume (`export.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `export.disk` | `PTAH_EXPORT_DISK` | `local` | [BaseCrud.md](BaseCrud.md) |
+| `export.path` | `PTAH_EXPORT_PATH` | `ptah-exports` | [BaseCrud.md](BaseCrud.md) |
+| `export.ttl_hours` | `PTAH_EXPORT_TTL_HOURS` | `48` | [BaseCrud.md](BaseCrud.md) |
+| `export.async_max_rows` | `PTAH_EXPORT_ASYNC_MAX_ROWS` | `0` (unlimited) | [BaseCrud.md](BaseCrud.md) |
+
+### Optional modules (`modules.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `modules.auth` | `PTAH_MODULE_AUTH` | `false` | [Modules.md](Modules.md) |
+| `modules.menu` | `PTAH_MODULE_MENU` | `false` | [Modules.md](Modules.md) |
+| `modules.company` | `PTAH_MODULE_COMPANY` | `false` | [Modules.md](Modules.md) |
+| `modules.permissions` | `PTAH_MODULE_PERMISSIONS` | `false` | [Modules.md](Modules.md) |
+| `modules.api` | `PTAH_MODULE_API` | `false` | [Modules.md](Modules.md) |
+| `modules.ai_agent` | `PTAH_MODULE_AI_AGENT` | `false` | [Modules.md](Modules.md) |
+
+### Auth module (`auth.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `auth.guard` | — | `web` | [Modules.md — Auth Module](Modules.md) |
+| `auth.home` | — | `/dashboard` | [Modules.md — Auth Module](Modules.md) |
+| `auth.register_enabled` | — | `false` | [Modules.md — Auth Module](Modules.md) |
+| `auth.two_factor` | — | `true` | [Modules.md — Auth Module](Modules.md) |
+| `auth.remember_me` | — | `true` | [Modules.md — Auth Module](Modules.md) |
+| `auth.session_protection` | — | `true` | [Modules.md — Auth Module](Modules.md) |
+
+### Menu module (`menu.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `menu.driver` | `PTAH_MENU_DRIVER` | `database` | [Modules.md — Menu Module](Modules.md#menu-module) |
+| `menu.cache` | — | `true` | [Modules.md — Menu Module](Modules.md#menu-module) |
+| `menu.cache_ttl` | — | `300` | [Modules.md — Menu Module](Modules.md#menu-module) |
+| `menu.max_depth` | — | `4` | [Modules.md — Menu Module](Modules.md#menu-module) |
+
+### Company module (`company.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `company.logo_disk` | `PTAH_LOGO_DISK` | `public` | [Company.md](Company.md) |
+| `company.logo_path` | `PTAH_LOGO_PATH` | `company-logos` | [Company.md](Company.md) |
+| `company.address_fields` | — | `['street','number','complement','district','city','state','zip_code','country']` | [Company.md](Company.md) |
+
+### Permissions module (`permissions.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `permissions.cache` | `PTAH_PERMISSION_CACHE` | `true` | [Permissions.md](Permissions.md) |
+| `permissions.cache_ttl` | `PTAH_PERMISSION_CACHE_TTL` | `3600` | [Permissions.md](Permissions.md) |
+| `permissions.user_model` | `PTAH_USER_MODEL` | `App\Models\User` | [Permissions.md](Permissions.md) |
+| `permissions.user_id_field` | `PTAH_USER_ID_FIELD` | `id` | [Permissions.md](Permissions.md) |
+| `permissions.user_query_scope` | `PTAH_USER_QUERY_SCOPE` | `null` | [Permissions.md](Permissions.md) |
+| `permissions.company_session_key` | `PTAH_COMPANY_SESSION_KEY` | `ptah_company_id` | [Permissions.md](Permissions.md) |
+| `permissions.user_session_key` | `PTAH_USER_SESSION_KEY` | `null` | [Permissions.md](Permissions.md) |
+| `permissions.audit` | `PTAH_PERMISSION_AUDIT` | `false` | [Permissions.md](Permissions.md) |
+| `permissions.audit_denied` | `PTAH_PERMISSION_AUDIT_DENIED` | `true` | [Permissions.md](Permissions.md) |
+| `permissions.audit_master` | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | [Permissions.md](Permissions.md) |
+| `permissions.multi_company` | `PTAH_MULTI_COMPANY` | `true` | [Permissions.md](Permissions.md) |
+| `permissions.allow_guest` | `PTAH_PERMISSION_ALLOW_GUEST` | `false` | [Permissions.md](Permissions.md) |
+| `permissions.admin_name` | `PTAH_ADMIN_NAME` | `Administrador` | [Permissions.md](Permissions.md) |
+| `permissions.admin_email` | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | [Permissions.md](Permissions.md) |
+| `permissions.admin_password` | `PTAH_ADMIN_PASSWORD` | `null` (a strong random password is generated and shown once if unset — no insecure hardcoded fallback) | [Permissions.md](Permissions.md) |
+
+### AI Agent module (`ai_agent.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `ai_agent.system_prompt` | `PTAH_AI_SYSTEM_PROMPT` | `You are a helpful assistant.` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.max_history` | `PTAH_AI_MAX_HISTORY` | `20` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.rate_limit` | `PTAH_AI_RATE_LIMIT` | `30` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.stream` | `PTAH_AI_STREAM` | `true` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.daily_token_limit` | `PTAH_AI_DAILY_TOKEN_LIMIT` | `0` (disabled) | [AiAgent.md](AiAgent.md) |
+| `ai_agent.allow_guests` | `PTAH_AI_ALLOW_GUESTS` | `false` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
 
 ---
 

@@ -115,13 +115,12 @@ GENERATE:
 ```bash
 # Web only (default)
 php artisan ptah:forge Product \
-  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
-  --soft-delete
+  --fields="name:string,sku:string,price:decimal(10,2),stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text"
 
 # Web + API (combined mode — recommended for marketplace/app scenarios)
 php artisan ptah:forge Product \
-  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
-  --soft-delete --api
+  --fields="name:string,sku:string,price:decimal(10,2),stock:integer,category_id:unsignedBigInteger,is_active:boolean,description:text" \
+  --api
 ```
 
 ---
@@ -303,7 +302,7 @@ The agent should:
 
 ```
 1. SCAFFOLDING
-   ↓ ptah:forge {Entity} --fields="..." --soft-delete
+   ↓ ptah:forge {Entity} --fields="..." (soft deletes on by default; use --no-soft-deletes to opt out)
    ↓ Add --api to generate web + API together (API Controller, Swagger, v1 routes)
    ↓ Use --api-only to generate API only (no web views)
    ↓ Review generated migration, model and DTO

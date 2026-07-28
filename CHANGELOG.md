@@ -7,6 +7,102 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.12.0] — 2026-07-28
+
+Eight issues found while bootstrapping a brand-new project from scratch
+(`create-project` → `ptah:install` → modules → `ptah:forge` → the published Docker setup).
+Three of them completely blocked the path they document.
+
+> **⬆️ Upgrade action — only if you published the Docker stubs:**
+> `docker compose down` (the old containers become orphans), then
+> `php artisan vendor:publish --tag=ptah-docker --force`.
+> **Container names change** from `${APP_NAME}_app` to `<directory>-app-1` — use
+> `docker compose exec app …` (which is what the docs already use). No action needed if you
+> never published `ptah-docker`.
+
+### Fixed — the published Docker environment could not build or start
+
+- **`pecl install redis` failed, so the image never built.** `php:8.3-fpm-alpine` ships no
+  build toolchain and the stub's `apk add` didn't include one, so `phpize` aborted
+  (`docker-php-ext-install` was fine — it manages its own toolchain; only the PECL step was
+  affected). The `redis` step now installs `$PHPIZE_DEPS` as a virtual package and removes it
+  afterwards, keeping the final image slim.
+- **`container_name: ${APP_NAME:-ptah}_app` produced invalid names.** `APP_NAME` is free text
+  ("B2B Engepeças"), while Docker only allows `[a-zA-Z0-9][a-zA-Z0-9_.-]` — and the failure
+  only surfaced *after* the whole build, when creating the containers. `container_name` was
+  removed from all five services; Compose now derives (and sanitises) the names from the
+  project name. A dedicated `APP_SLUG` was considered and rejected: it doesn't remove the
+  failure mode (a slug can also contain spaces) and a fixed default would collide between two
+  Ptah projects on the same machine.
+
+### Fixed — `ptah:module api` / `ai-agent` left the module half-installed
+
+`activateApi()` (and `activateAiAgent()`) ran `composer require` with a hard-coded 300 s
+timeout and no idempotency check. On slow I/O the `ProcessTimedOutException` propagated out of
+the task, so the **remaining steps never ran** (the two `vendor:publish` calls and the
+placeholder substitution in `SwaggerInfo.php`) and `PTAH_MODULE_API=true` was never written —
+leaving the module inactive even when the package was already there. Now: the require is
+skipped when the vendor directory already exists (re-running is safe), the timeout is
+configurable via **`ptah.process_timeout`** (`PTAH_PROCESS_TIMEOUT`, default 300 — also applied
+to `npm install`/`npm run build` in `ptah:install`), failures are contained so the publishing
+steps always run, and a failed install ends with an actionable warning instead of silence.
+
+### Fixed — `<x-forge-tabs>` array mode crashed the component showcase
+
+The component read `$tab['id']` while `/ptah-forge-demo` passed `key`, so the demo page — the
+reference used to build screens — returned **HTTP 500** (`Undefined array key "id"`). Each tab
+now accepts `id` (canonical) **or** `key`, falling back to `tab-{index}`, so copying either
+shape works. The demo itself was also fixed: besides the wrong key it used named
+`<x-slot:*>` blocks that array mode never renders (it expects `$tab['slot']`), so the panels
+would have been empty. Two more latent demo bugs surfaced while making it render and were
+fixed as well: `<x-forge-list>` expects `badge` as an array (`['label' => …, 'color' => …]`),
+and `<x-forge-table>` expects `headers` — the demo passed `columns`, which is not a declared
+prop and was silently ignored, rendering a table with no header row.
+
+### Fixed — `ptah:module permissions` printed an admin password that didn't work
+
+Re-running the module (e.g. after `ptah:install`, which the "Next steps" recommend) generated
+and printed a fresh password under the banner *"Admin created successfully!"*, but the existing
+user's password was preserved — so the credential shown was invalid, and a strong password was
+leaked into terminals and CI logs for nothing. The password is now only shown after
+`Hash::check` confirms it actually applies; otherwise the command says the admin already exists
+and its password was preserved. (The seeder itself was correct — it only printed on creation;
+the banner in the command was unconditional.)
+
+### Fixed — `storage:link` failure reported as success
+
+On filesystems without symlink/junction support (network shares, some mounted volumes) the OS
+error was printed but the task still reported success and `public/storage` didn't exist —
+uploads then 404'd far from the cause. The install now verifies the link and, when missing,
+prints an actionable warning (run from a local disk, or point the `public` disk at
+`public_path('storage')`). It does not fail the install.
+
+### Changed — opcache is enabled by default in the Docker stub
+
+The stub shipped `PHP_OPCACHE_ENABLE: 0` plus `opcache.revalidate_freq = 0`, which on a Docker
+Desktop bind mount meant recompiling every request (measured: 8.5 s vs 2.5-4 s per request on
+the same route). Now opcache is on with `revalidate_freq` defaulting to **2 s**
+(`validate_timestamps` stays on, so hot reload still works — changes appear within 2 s). Both
+are overridable: `PHP_OPCACHE_ENABLE=0` / `PHP_OPCACHE_REVALIDATE_FREQ=0` in `.env`.
+
+### Docs
+- Removed `--soft-delete` from `AI_Guide.md` — the flag never existed (soft deletes are the
+  default; `--no-soft-deletes` opts out). It was the only non-existent flag in the docs.
+- `Configuration.md` now documents **`config/ptah.php`** (key → env → default → reference), which
+  was previously undocumented — every `PTAH_*` variable in one table.
+- Corrected the documented default of `PTAH_MENU_DRIVER` (`database`, not `config`) — in the
+  docs **and** in the command output that the docs mirror.
+- The `HasUserPreferences` trait is now presented as **optional** (it's a convenience API on
+  your model — BaseCrud persists preferences without it; it has no call sites in the package).
+- `ptah:forge --fields` help now warns that a bare `decimal` silently becomes `decimal(10,2)`.
+- `darkaonline/l5-swagger` added to `composer.json` `suggest`.
+
+### Tests
+- New: Docker stub guards (toolchain in the PECL step, no `container_name`, opcache defaults),
+  `forge-tabs` array mode (`id`, `key`, index fallback, `defaultTab`), the whole forge-demo view
+  rendering without throwing, and a seeder test pinning that a re-run **never** overwrites an
+  existing admin's password.
+
 ## [1.11.2] — 2026-07-25
 
 ### Fixed — `<x-forge-select>` fell back to the placeholder after a re-render

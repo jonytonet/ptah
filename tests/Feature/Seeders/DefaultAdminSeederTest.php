@@ -95,6 +95,29 @@ class DefaultAdminSeederTest extends TestCase
     }
 
     #[Test]
+    public function seeder_never_overwrites_the_password_of_an_already_existing_admin(): void
+    {
+        config(['ptah.permissions.admin_password' => 'first-password']);
+        (new DefaultAdminSeeder)->run();
+
+        config(['ptah.permissions.admin_password' => 'second-password']);
+        (new DefaultAdminSeeder)->run(); // second run — admin already exists
+
+        $admin = SeederTestUser::where('email', 'admin@admin.com')->first();
+
+        $this->assertNotNull($admin);
+        $this->assertTrue(
+            Hash::check('first-password', $admin->password),
+            'The password persisted on the first run must still be valid',
+        );
+        $this->assertFalse(
+            Hash::check('second-password', $admin->password),
+            'A password supplied on a later run against an existing admin must never be applied — '.
+            'callers must not announce it as if it were valid',
+        );
+    }
+
+    #[Test]
     public function seeder_random_password_is_strong_enough(): void
     {
         config(['ptah.permissions.admin_password' => null]);

@@ -14,8 +14,13 @@
 
     Props:
       - tabs      : array [ ['id' => '', 'label' => '', 'slot' => ''], ... ]  (Modo 2)
+                    O identificador de cada item é `id` (ou `key`, como alias);
+                    se nenhum for informado, cai para "tab-{índice}".
       - color     : primary | success | danger | warn  (default: primary)
-      - defaultTab: string (initial tab id, Mode 2)
+      - defaultTab: string (initial tab id, Mode 2) — deve casar com o `id`
+                    já normalizado (o alias `key` ou o fallback "tab-{índice}");
+                    se não casar, nenhuma aba abre por padrão (comportamento
+                    pré-existente, não alterado por esta normalização).
 --}}
 @props([
     'tabs'       => [],
@@ -26,6 +31,17 @@
 @php
     $useSlotMode = isset($tabs) && $tabs instanceof \Illuminate\View\ComponentSlot;
     $arrayMode   = !$useSlotMode && is_array($tabs) && count($tabs) > 0;
+
+    if ($arrayMode) {
+        $normalized = [];
+        foreach (array_values($tabs) as $i => $tab) {
+            $tab['id']    = (string) ($tab['id'] ?? $tab['key'] ?? "tab-{$i}");
+            $tab['label'] = (string) ($tab['label'] ?? '');
+            $normalized[] = $tab;
+        }
+        $tabs = $normalized;
+    }
+
     $firstTab    = $defaultTab ?? ($arrayMode ? $tabs[0]['id'] : null);
 
     $activeClass = [

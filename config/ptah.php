@@ -21,6 +21,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Process Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Timeout (seconds) for external processes started by Ptah commands
+    | (composer require in ptah:module, npm install/build in ptah:install).
+    */
+    'process_timeout' => (int) env('PTAH_PROCESS_TIMEOUT', 300),
+
+    /*
+    |--------------------------------------------------------------------------
     | Theme colors
     |--------------------------------------------------------------------------
     |

@@ -485,7 +485,7 @@ php artisan ptah:module auth
    INFO  Module 'auth' enabled successfully!
 
   Next steps:
-  1. Make sure your User model uses HasUserPreferences
+  1. Optional: add HasUserPreferences to your User model for the $user->getPreference()/setPreference() API — BaseCrud persists preferences without it
   2. Configure config/ptah.php (auth section)
   3. Add the authentication middleware to desired routes
   4. For TOTP 2FA install: composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
@@ -512,7 +512,11 @@ PTAH_MODULE_AUTH=true
 ],
 ```
 
-**Add trait to User model** (`app/Models/User.php`):
+**Add trait to User model (optional)** (`app/Models/User.php`):
+
+> This trait only adds the `$user->getPreference()`/`setPreference()` convenience API.
+> BaseCrud itself persists UI preferences (column order, filters, etc.) without it,
+> so this step is not required for BaseCrud to work.
 
 ```php
 use Ptah\Traits\HasUserPreferences;
@@ -560,7 +564,7 @@ php artisan ptah:module menu
    INFO  Module 'menu' enabled successfully!
 
   Next steps:
-  1. Set PTAH_MENU_DRIVER=database in .env (default: config)
+  1. PTAH_MENU_DRIVER defaults to database; set it to config to use the static sidebar_items instead
   2. Manage menu items at /ptah-menu (requires the auth module)
 ```
 
@@ -573,10 +577,10 @@ PTAH_MODULE_MENU=true
 **Choose the menu driver** (add to `.env`):
 
 ```env
-# Use the database-driven menu manager (recommended for production)
+# database-driven menu manager (default, recommended for production)
 PTAH_MENU_DRIVER=database
 
-# Or keep the default static config-driven menu
+# Or use the static config-driven menu instead
 # PTAH_MENU_DRIVER=config
 ```
 
@@ -584,7 +588,7 @@ PTAH_MENU_DRIVER=database
 
 ```php
 'menu' => [
-    'driver'       => env('PTAH_MENU_DRIVER', 'config'),
+    'driver'       => env('PTAH_MENU_DRIVER', 'database'),
     'sidebar_items' => [
         // ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home'],
     ],

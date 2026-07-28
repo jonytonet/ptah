@@ -63,8 +63,8 @@ class InstallCommand extends Command
         $adminEmail = config('ptah.permissions.admin_email', 'admin@admin.com');
         $this->line('  <fg=blue>Next steps:</>');
         $this->line('  1. Review the <fg=yellow>config/ptah.php</> file');
-        $this->line('  2. Add <fg=yellow>HasUserPreferences</> to your User model:');
-        $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</>');
+        $this->line('  2. Optional: add <fg=yellow>HasUserPreferences</> to your User model for the $user->getPreference()/setPreference() API');
+        $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</> (BaseCrud persists preferences without it)');
         $this->line('  3. Enable required modules:');
         $this->line('     <fg=green>php artisan ptah:module auth</>  <fg=gray>(login, 2FA, profile)</>');
         $this->line('     <fg=green>php artisan ptah:module menu</>  <fg=gray>(dynamic sidebar)</>');
@@ -261,6 +261,15 @@ CSS;
                 return;
             }
             $this->call('storage:link');
+
+            if (! file_exists(public_path('storage'))) {
+                $this->components->warn(
+                    'public/storage was NOT created (filesystem without symlink/junction support — network share, mounted volume).'.PHP_EOL.
+                    'Uploads will 404 until this is fixed. Options:'.PHP_EOL.
+                    '  1) run the project from a local disk and re-run: php artisan storage:link'.PHP_EOL.
+                    "  2) or point the 'public' disk at public_path('storage') in config/filesystems.php and create that directory."
+                );
+            }
         });
     }
 
@@ -439,7 +448,7 @@ CSS;
     protected function runProcess(array $command, string $cwd): int
     {
         $process = new Process($command, $cwd);
-        $process->setTimeout(300);
+        $process->setTimeout((int) config('ptah.process_timeout', 300));
         $process->run(function ($type, $buffer) {
             $this->getOutput()->write($buffer);
         });
