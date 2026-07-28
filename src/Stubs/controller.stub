@@ -18,6 +18,12 @@ class {{ entity }}Controller extends Controller
     /**
      * Display the listing of {{ entities }}.
      * Creation, editing and deletion are managed by BaseCrud via Livewire modal.
+     *
+     * There is deliberately no create()/show()/edit() action: the generator only
+     * ever writes the index view (BaseCrud handles the rest in a modal) and only
+     * registers the index route, so those actions could only ever return
+     * "View [{{ entity_lower }}.create] not found". Add them yourself — together
+     * with the views and the routes — if you need a non-BaseCrud screen.
      */
     public function index(): View
     {
@@ -25,19 +31,6 @@ class {{ entity }}Controller extends Controller
 
         /** @var view-string $view */
         $view = '{{ entity_lower }}.index';
-
-        return view($view);
-    }
-
-    /**
-     * Display the creation form.
-     */
-    public function create(): View
-    {
-        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'create'), 403);
-
-        /** @var view-string $view */
-        $view = '{{ entity_lower }}.create';
 
         return view($view);
     }
@@ -53,36 +46,6 @@ class {{ entity }}Controller extends Controller
 
         return redirect()->route('{{ entity_lower }}.index')
             ->with('success', '{{ entity }} created successfully.');
-    }
-
-    /**
-     * Display the details of a {{ entity }}.
-     */
-    public function show(int|string $id): View
-    {
-        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'read'), 403);
-
-        ${{ entity_lower }} = $this->service->findOrFail($id);
-
-        /** @var view-string $view */
-        $view = '{{ entity_lower }}.show';
-
-        return view($view, compact('{{ entity_lower }}'));
-    }
-
-    /**
-     * Display the edit form.
-     */
-    public function edit(int|string $id): View
-    {
-        abort_if(config('ptah.modules.permissions') && !ptah_can('{{ entity_lower }}', 'update'), 403);
-
-        ${{ entity_lower }} = $this->service->findOrFail($id);
-
-        /** @var view-string $view */
-        $view = '{{ entity_lower }}.edit';
-
-        return view($view, compact('{{ entity_lower }}'));
     }
 
     /**
