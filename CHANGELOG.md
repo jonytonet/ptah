@@ -7,6 +7,49 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.13.1] — 2026-07-28
+
+Follow-ups found while scaffolding 14 real entities on 1.13.0.
+
+### Fixed — the generated API routes were mounted under a doubled prefix
+
+`Route::prefix()` was built from `ptah.api.prefix` **plus** `v1`, but the group is
+written into `routes/api.php`, which Laravel already mounts under the app's api prefix
+(`withRouting(apiPrefix:)`). The result was `api/api/v1/{resource}` — a 404 for every
+documented URL. The group now adds **only** the version segment; `ptah.api.prefix`
+describes the app's mount point for the Swagger URLs and the CLI messages, and is no
+longer re-applied to the route.
+
+### Fixed — the generated Swagger documented URLs that 404
+
+Two independent defects stacked: `@OA\Server` carried `{APP_URL}/api/v1` **and** every
+path carried `/api/v1/…`, and OpenAPI concatenates the two — documenting
+`/api/v1/api/v1/{resource}`. The server URL is now the host only, and the paths honour
+`ptah.api.prefix` instead of hard-coding `api`.
+
+### Fixed — `string(60)` / `char(2)` had their length silently discarded
+
+The field parser read the length and then threw it away, so every text column became
+`varchar(255)` — while `decimal(p,s)` and `enum(a|b)` honoured their parentheses, making
+the inconsistency invisible until you inspected the schema. `char` wasn't a supported type
+at all (it fell through to `string`). Both now emit the declared width
+(`$table->string('code', 20)`, `$table->char('uf', 2)`), the generated validation rule
+follows it (`max:20` instead of a blanket `max:255`), and `--db` keeps the real column
+width when reading an existing table.
+
+> This mattered beyond disk: under InnoDB/utf8mb4 an indexed `varchar(255)` costs 1020
+> bytes against a 3072-byte per-index limit, so a composite index over three such columns
+> overflowed — blocking exactly the composite indexes the post-forge checklist asks you to
+> add by hand.
+
+### Fixed — the embedded skill taught a method that doesn't exist
+
+`ptah-development` documented `$this->service->getDados($request)` in five places (the
+name was renamed to `getData` long ago) and described the generated routes as
+`routes/web/{folder}/…` + `routes/api/{folder}/…`, paths that never existed. An agent
+reading the skill would reintroduce the bug the 1.13.0 stub fix had just removed.
+Re-publish with `--tag=ptah-skills` to pick this up.
+
 ## [1.13.0] — 2026-07-28
 
 > **🔒 Security — if you generated API scaffolding with `ptah:forge --api` before this

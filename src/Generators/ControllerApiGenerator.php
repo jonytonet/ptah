@@ -32,6 +32,12 @@ class ControllerApiGenerator extends AbstractGenerator
         $swaggerTag = $this->resolveSwaggerTag($context);
         // Swagger: path = entity plural in kebab-case (e.g. 'products', 'animal-breeds')
         $swaggerPath = Str::kebab($context->entityPlural);
+        // Swagger paths are absolute (@OA\Server is just the host), so they carry
+        // the app's api mount point + the route group's version prefix. The route
+        // group itself only adds 'v1' — Laravel mounts routes/api.php under the
+        // api prefix already (see RouteGenerator::appendApiRoute).
+        $apiPrefix = trim((string) config('ptah.api.prefix', 'api'), '/');
+        $apiBase = $apiPrefix === '' ? 'v1' : "{$apiPrefix}/v1";
 
         return $this->writeFile(
             path: $path,
@@ -47,6 +53,7 @@ class ControllerApiGenerator extends AbstractGenerator
                 'entities' => $context->entityPlural,
                 'swagger_tag' => $swaggerTag,
                 'swagger_path' => $swaggerPath,
+                'api_base' => $apiBase,
             ],
             force: $context->force,
             labelOverride: "Controller API [{$context->entity}ApiController]",

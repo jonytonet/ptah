@@ -86,8 +86,12 @@ class RouteGenerator extends AbstractGenerator
 
         $controllerFQN = $context->subNs($context->rootNamespace.'Http\\Controllers\\API')."\\{$context->entity}ApiController";
 
-        $prefix = trim((string) config('ptah.api.prefix', 'api'), '/');
-        $prefix = $prefix === '' ? 'v1' : "{$prefix}/v1";
+        // Version prefix ONLY. Laravel already mounts routes/api.php under the
+        // app's api prefix (withRouting(apiPrefix:), 'api' by default), so
+        // prepending ptah.api.prefix here would double it (api/api/v1/...).
+        // ptah.api.prefix describes that mount point for the Swagger URLs and
+        // the CLI messages — it is not re-applied to the route group.
+        $prefix = 'v1';
 
         // Never generate an open route: an empty/misconfigured value falls
         // back to the safe default instead of an unauthenticated apiResource.

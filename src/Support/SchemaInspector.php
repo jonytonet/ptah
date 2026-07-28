@@ -141,6 +141,8 @@ class SchemaInspector
             }
         }
 
+        $length = null;
+
         if ($params !== null) {
             if ($type === 'enum') {
                 $enumValues = array_filter(array_map('trim', explode('|', $params)));
@@ -150,6 +152,11 @@ class SchemaInspector
                     2,
                     2
                 );
+            } elseif (in_array($type, ['string', 'char'], true) && ctype_digit(trim($params))) {
+                // string(60) / char(2) — the length used to be parsed and then
+                // silently dropped, while decimal(p,s) and enum(a|b) honoured
+                // their params. Everything became varchar(255).
+                $length = (int) trim($params);
             }
         }
 
@@ -164,6 +171,7 @@ class SchemaInspector
             label: $label,
             hasDefault: $hasDefault,
             defaultValue: $defaultValue,
+            length: $length,
         );
     }
 
@@ -205,8 +213,16 @@ class SchemaInspector
             str_contains($typeName, 'longtext') => 'longText',
             str_contains($typeName, 'text') => 'text',
             in_array($typeName, ['json', 'jsonb'], true) => 'json',
+            $typeName === 'char' => 'char',
             default => 'string',
         };
+
+        // varchar(20)/char(2) → keep the real column width instead of widening
+        // everything to the varchar(255) default.
+        $length = null;
+        if (in_array($type, ['string', 'char'], true) && preg_match('/(?:var)?char\((\d+)\)/i', $raw, $m) === 1) {
+            $length = (int) $m[1];
+        }
 
         if ($type === 'decimal') {
             preg_match('/decimal\((\d+),\s*(\d+)\)/', $raw, $m);
@@ -230,6 +246,7 @@ class SchemaInspector
             scale: $scale,
             enumValues: $enumValues,
             label: $label,
+            length: $length,
         );
     }
 
