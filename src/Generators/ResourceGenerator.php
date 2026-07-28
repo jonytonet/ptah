@@ -10,7 +10,7 @@ use Ptah\Support\EntityContext;
  * Generates the API Resource for the entity.
  *
  * Stub: resource.stub
- * Placeholders: namespace, entity, resource_fields
+ * Placeholders: namespace, entity, resource_fields, model_fqn
  */
 class ResourceGenerator extends AbstractGenerator
 {
@@ -26,6 +26,7 @@ class ResourceGenerator extends AbstractGenerator
                 'namespace' => $ns,
                 'entity' => $context->entity,
                 'resource_fields' => $context->resourceFields(),
+                'model_fqn' => $context->modelFqn,
             ],
             force: $context->force,
             labelOverride: "Resource [{$context->entity}Resource]",

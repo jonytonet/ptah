@@ -63,18 +63,84 @@ class RouteGeneratorTest extends GeneratorTestCase
     }
 
     #[Test]
-    public function it_appends_the_api_resource_route_in_a_v1_prefix(): void
+    public function it_appends_the_api_resource_route_with_middleware_and_prefix_from_config(): void
     {
+        config(['ptah.api.prefix' => 'api', 'ptah.api.middleware' => ['api', 'auth:sanctum']]);
+
         $result = (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
 
         $this->assertTrue($result->isDone(), $result->message ?? '');
         $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
 
-        $this->assertStringContainsString("Route::prefix('v1')", $content);
+        $this->assertStringContainsString("Route::prefix('api/v1')", $content);
+        $this->assertStringContainsString("->middleware(['api', 'auth:sanctum'])", $content);
         $this->assertStringContainsString(
             "Route::apiResource('widgets', \\App\\Http\\Controllers\\API\\WidgetApiController::class);",
             $content,
         );
+    }
+
+    #[Test]
+    public function it_applies_a_custom_prefix_from_config(): void
+    {
+        config(['ptah.api.prefix' => 'backend']);
+
+        (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
+        $this->assertStringContainsString("Route::prefix('backend/v1')", $content);
+    }
+
+    #[Test]
+    public function it_errors_and_does_not_fall_back_to_web_php_when_api_routes_file_is_missing(): void
+    {
+        $this->files->delete($this->tmpPath.'/routes/api.php');
+        $webContentBefore = (string) file_get_contents($this->tmpPath.'/routes/web.php');
+
+        $result = (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+
+        $this->assertTrue($result->isError());
+        $this->assertStringContainsString('routes/api.php not found', (string) $result->message);
+
+        // Never fall back to web.php: no apiResource must have leaked into it,
+        // and its content must be byte-for-byte unchanged.
+        $webContentAfter = (string) file_get_contents($this->tmpPath.'/routes/web.php');
+        $this->assertSame($webContentBefore, $webContentAfter);
+        $this->assertStringNotContainsString('apiResource', $webContentAfter);
+    }
+
+    #[Test]
+    public function it_warns_inline_when_the_sanctum_guard_is_not_configured(): void
+    {
+        config(['auth.guards.sanctum' => null, 'ptah.api.middleware' => ['api', 'auth:sanctum']]);
+
+        (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
+        $this->assertStringContainsString('WARNING', $content);
+        $this->assertStringContainsString('sanctum', $content);
+    }
+
+    #[Test]
+    public function it_does_not_warn_when_the_sanctum_guard_is_configured(): void
+    {
+        config(['auth.guards.sanctum' => ['driver' => 'sanctum'], 'ptah.api.middleware' => ['api', 'auth:sanctum']]);
+
+        (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
+        $this->assertStringNotContainsString('WARNING', $content);
+    }
+
+    #[Test]
+    public function it_never_generates_an_open_route_when_middleware_config_is_empty(): void
+    {
+        config(['ptah.api.middleware' => []]);
+
+        (new RouteGenerator($this->files))->generateApiRoute($this->context(withApi: true, withViews: false));
+
+        $content = (string) file_get_contents($this->tmpPath.'/routes/api.php');
+        $this->assertStringContainsString("->middleware(['api', 'auth:sanctum'])", $content);
     }
 
     #[Test]

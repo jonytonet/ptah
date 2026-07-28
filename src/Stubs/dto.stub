@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use Ptah\Base\BaseDTO;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
+/**
+ * @final
+ */
 class {{ entity }}DTO extends BaseDTO
 {
     public function __construct(
@@ -27,9 +31,16 @@ class {{ entity }}DTO extends BaseDTO
 
     /**
      * Cria um {{ entity }}DTO a partir de um Request do Laravel.
+     *
+     * The parameter stays typed as the base Request to remain LSP-compatible
+     * with BaseDTO::fromRequest(Request $request) — narrowing it to
+     * FormRequest here would raise a PHP fatal error ("Declaration ... must
+     * be compatible with BaseDTO::fromRequest(Request $request)"). validated()
+     * is only available on FormRequest, so it is narrowed locally via @var.
      */
     public static function fromRequest(Request $request): static
     {
+        /** @var FormRequest $request */
         return static::fromArray($request->validated());
     }
 
