@@ -717,6 +717,8 @@
     "html[data-ptah-text=\"suave\"]:not(.ptah-dark)|dark|--ptah-text-muted": "#5a5f65",
     "html[data-ptah-text=\"suave\"]:not(.ptah-dark)|dark|--ptah-text-secondary": "#55585f",
     "html[data-ptah-text=\"suave\"]:not(.ptah-dark)|dark|--ptah-text-strong": "#414348",
+    "html|light|background-color": "#ffffff",
+    "html|light|color": "#1e293b",
     "main|dark|background-color": "#0f172a",
     "main|light|background-color": "#ffffff",
     "mark.ptah-hl|dark|background-color": "#854d0e",

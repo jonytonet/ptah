@@ -702,7 +702,23 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 
 /* ── Chrome (layout, sidebar, navbar, switcher) ─────────────────────────── */
 
-/* ── Body / Root (dark) ──────────────────────────────────────────────── */
+/* ── Body / Root ──────────────────────────────────────────────────────────
+   The dark rule below has always existed; the light one had not, and that single
+   omission is why the font-colour axis appeared not to work in light mode.
+
+   Most text in this package inherits its colour rather than declaring one — the
+   BaseCrud table cells, for instance, carry no colour class at all. In dark mode
+   they inherit from .ptah-dark and therefore follow --ptah-text-strong. In light
+   mode they were inheriting the browser default (pure black), so nothing the user
+   picked could reach them. One rule fixes every inheriting element at once.
+
+   Visible in the default tone: inherited body text goes from #000000 to
+   --ptah-text-strong (#252629 on Neutra). Slightly lighter, which is also what
+   dark mode has been doing all along, and pure black body copy is not something a
+   design system should ship by accident.
+
+   `html` (0,0,1) loses to `.ptah-dark` (0,1,0), so no :not() is needed. */
+html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 
 /* ── Sidebar ──────────────────────────────────────────────────────────── */

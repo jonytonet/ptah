@@ -80,6 +80,51 @@ class ThemeSurfaceLightDarkParityTest extends TestCase
         ];
     }
 
+    /**
+     * The root rule is the one that matters most and was the last to be found missing.
+     * Most text in the package declares no colour — the BaseCrud table cells carry none
+     * at all — so it inherits. Dark had `.ptah-dark { color: ... }` and inherited the
+     * token; light had nothing and inherited the browser's pure black, which is why the
+     * font-colour axis looked inert in light mode however many other things were fixed.
+     *
+     * Kept separate from surfaceProvider because this asserts `color`, not a background,
+     * and because a missing root rule silently disables an entire axis of the feature
+     * rather than leaving one surface behind.
+     */
+    #[Test]
+    public function the_root_rule_drives_inherited_text_colour_in_both_scopes(): void
+    {
+        $css = self::read(dirname(__DIR__, 3).'/resources/css/ptah-components.css');
+
+        foreach ([
+            'light' => '/(?<![.\w-])html\s*\{([^}]*)\}/',
+            'dark' => '/(?<![\w-])\.ptah-dark\s*\{([^}]*color[^}]*)\}/',
+        ] as $scope => $pattern) {
+            $found = false;
+
+            if (preg_match_all($pattern, $css, $matches)) {
+                foreach ($matches[1] as $body) {
+                    if (preg_match('/(?<!-)color:\s*var\(--ptah-text/', $body)) {
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+
+            $this->assertTrue(
+                $found,
+                sprintf(
+                    'ptah-components.css: nao ha regra raiz no escopo %s declarando '.
+                    'color: var(--ptah-text-*). Sem ela, todo texto que HERDA a cor '.
+                    '(a maioria, incluindo as celulas da tabela do BaseCrud) ignora a '.
+                    'cor de fonte escolhida em /profile — o eixo inteiro fica inerte '.
+                    'nesse tema, sem nenhum outro teste reclamar.',
+                    $scope
+                )
+            );
+        }
+    }
+
     #[Test]
     #[DataProvider('surfaceProvider')]
     public function surface_has_a_token_driven_rule_in_both_scopes(string $selector): void
