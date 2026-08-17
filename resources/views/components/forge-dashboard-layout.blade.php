@@ -63,6 +63,9 @@
     {{-- Brand palette from config('ptah.theme.colors') --}}
     @include('ptah::partials.theme-colors')
 
+    {{-- FROZEN: this block selects Tailwind utility classes by descendant selector, not by
+         color token, so the Fase 1 neutral tokens do not apply here. Do not tokenize; see the
+         --ptah-* custom properties in resources/css/ptah-components.css instead. --}}
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }

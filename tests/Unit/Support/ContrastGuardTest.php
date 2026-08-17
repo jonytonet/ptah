@@ -7,6 +7,7 @@ namespace Ptah\Tests\Unit\Support;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Ptah\Tests\Support\CssTokenResolver;
 use RuntimeException;
 
 /**
@@ -146,6 +147,22 @@ class ContrastGuardTest extends TestCase
         return $m[1];
     }
 
+    /**
+     * The Fase 1 restyle tokenized most neutrals in ptah-components.css, so a
+     * declaration this test cares about may now read `var(--ptah-some-token)`
+     * instead of a literal hex. A single shared CssTokenResolver (built once,
+     * lazily, against the real file) resolves it down to the hex it renders
+     * as — in the scope implied by $where ("... dark" -> dark, else light) —
+     * so every existing assertion below keeps checking the ACTUAL rendered
+     * color, not the token indirection.
+     */
+    private static function cssTokenResolver(): CssTokenResolver
+    {
+        static $resolver = null;
+
+        return $resolver ??= new CssTokenResolver(self::css());
+    }
+
     /** Extracts the first `color: #hex` (or `background-color: #hex`) captured by $pattern, or fails loudly. */
     private static function extractHex(string $subject, string $pattern, string $where): string
     {
@@ -153,7 +170,14 @@ class ContrastGuardTest extends TestCase
             throw new RuntimeException("ContrastGuardTest: could not locate expected color declaration for [{$where}]. Pattern: {$pattern}");
         }
 
-        return strtolower($m[1]);
+        $value = $m[1];
+
+        if (str_starts_with($value, 'var(')) {
+            $scope = str_contains(strtolower($where), 'dark') ? 'dark' : 'light';
+            $value = self::cssTokenResolver()->resolve($value, $scope);
+        }
+
+        return strtolower($value);
     }
 
     public static function contrastPairsProvider(): array
@@ -163,28 +187,28 @@ class ContrastGuardTest extends TestCase
         $blade = self::buttonBlade();
 
         // --- 1. .ptah-c-modal_sub — modal subtitle text vs modal header bg ---
-        $modalSubLight = self::extractHex($css, '/\.ptah-c-modal_sub\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'modal_sub light');
-        $modalSubDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-modal_sub\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'modal_sub dark');
+        $modalSubLight = self::extractHex($css, '/\.ptah-c-modal_sub\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'modal_sub light');
+        $modalSubDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-modal_sub\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'modal_sub dark');
 
         // --- 2. .ptah-c-search::placeholder — search input placeholder text ---
-        $placeholderLight = self::extractHex($css, '/\.ptah-c-search::placeholder\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'search placeholder light');
-        $placeholderDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-search::placeholder\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'search placeholder dark');
+        $placeholderLight = self::extractHex($css, '/\.ptah-c-search::placeholder\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'search placeholder light');
+        $placeholderDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-search::placeholder\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'search placeholder dark');
         $placeholderBgLight = self::compositeHex('#f8fafc', 0.6, '#ffffff'); // .ptah-c-search bg over white page
         $placeholderBgDark = self::compositeHex('#1e293b', 0.6, '#0f172a'); // .ptah-dark .ptah-c-search bg over dark toolbar
 
         // --- 3. .ptah-c-sort_idle — non-active sort arrow icon vs thead bg ---
-        $sortIdleLight = self::extractHex($css, '/\.ptah-c-sort_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'sort_idle light');
-        $sortIdleDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-sort_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'sort_idle dark');
+        $sortIdleLight = self::extractHex($css, '/\.ptah-c-sort_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'sort_idle light');
+        $sortIdleDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-sort_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'sort_idle dark');
 
         // --- 4. .ptah-c-fp_muted (text), .ptah-c-fp_chevron / .ptah-c-search_x (icons) ---
-        $fpMutedLight = self::extractHex($css, '/\.ptah-c-fp_muted\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'fp_muted light');
-        $fpMutedDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-fp_muted\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'fp_muted dark');
-        $fpChevronLight = self::extractHex($css, '/\.ptah-c-fp_chevron\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'fp_chevron light');
-        $searchXLight = self::extractHex($css, '/\.ptah-c-search_x\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/', 'search_x light');
+        $fpMutedLight = self::extractHex($css, '/\.ptah-c-fp_muted\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_muted light');
+        $fpMutedDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-fp_muted\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_muted dark');
+        $fpChevronLight = self::extractHex($css, '/\.ptah-c-fp_chevron\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_chevron light');
+        $searchXLight = self::extractHex($css, '/\.ptah-c-search_x\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'search_x light');
 
         // --- 5. .ptah-c-clear_btn — icon-only clear-filters button ---
         // (?<!-) avoids matching the rule's own border-color/background-color.
-        $clearBtnLight = self::extractHex($css, '/\.ptah-c-clear_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6})/', 'clear_btn light');
+        $clearBtnLight = self::extractHex($css, '/\.ptah-c-clear_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'clear_btn light');
 
         // --- 6. .ptah-c-btn_col_on — "columns hidden" toolbar button (amber) ---
         $btnColOnLight = self::extractHex($css, '/\.ptah-c-btn_col_on\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6})/', 'btn_col_on light');
@@ -231,8 +255,8 @@ class ContrastGuardTest extends TestCase
         }
 
         // --- 12. .ptah-c-fp_cancel_btn — text button ("Cancelar" in the save-filter form) ---
-        $fpCancelLight = self::extractHex($css, '/\.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6})/', 'fp_cancel_btn light');
-        $fpCancelDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6})/', 'fp_cancel_btn dark');
+        $fpCancelLight = self::extractHex($css, '/\.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_cancel_btn light');
+        $fpCancelDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_cancel_btn dark');
 
         // --- 13. Toast notifications (base-crud.blade.php) — white/dark text on solid bg ---
         $baseCrud = self::baseCrudBlade();
