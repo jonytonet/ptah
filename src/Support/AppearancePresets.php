@@ -62,7 +62,7 @@ final class AppearancePresets
         'ciano' => '#0e7490',
         'verde' => '#047857',
         'teal' => '#0f766e',
-        'ambar' => '#b45309',
+        'ambar' => '#92400e',
         'vermelho' => '#b91c1c',
         'rosa' => '#be185d',
         'cinza' => '#475569',

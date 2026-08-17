@@ -83,6 +83,15 @@ class AppearancePresetContrastTest extends TestCase
         return ($lighter + 0.05) / ($darker + 0.05);
     }
 
+    /** Maior distância entre canais R/G/B de duas cores — usado nas asserções de separação perceptível abaixo. */
+    private static function maxChannelDelta(string $hex1, string $hex2): int
+    {
+        $a = self::hexToRgb($hex1);
+        $b = self::hexToRgb($hex2);
+
+        return max(abs($a[0] - $b[0]), abs($a[1] - $b[1]), abs($a[2] - $b[2]));
+    }
+
     /** Replicates CSS `color-mix(in srgb, $hex $pct%, white)` — see ContrastGuardTest::mixWithWhite(). */
     private static function mixWithWhite(string $hex, float $pct): string
     {
@@ -257,6 +266,61 @@ class AppearancePresetContrastTest extends TestCase
         }
     }
 
+    // ── 2b. Separação perceptível entre tons: dois tons do mesmo modo não podem
+    //    pintar --ptah-canvas e --ptah-surface — as duas maiores áreas de tela —
+    //    com a mesma cor (ou quase). Pega exatamente o defeito relatado: três
+    //    tons claros com --ptah-surface idêntico e --ptah-canvas quase idêntico
+    //    passavam em todo o resto e ainda assim eram visualmente o mesmo tom. ──
+
+    #[Test]
+    public function every_pair_of_light_tones_has_perceptible_canvas_and_surface_separation(): void
+    {
+        $this->assertTonePairsAreSeparated(self::lightTonePresets(), 'claro');
+    }
+
+    #[Test]
+    public function every_pair_of_dark_tones_has_perceptible_canvas_and_surface_separation(): void
+    {
+        $this->assertTonePairsAreSeparated(self::darkTonePresets(), 'escuro');
+    }
+
+    /**
+     * @param  array<string, array<string, string>>  $tones
+     */
+    private function assertTonePairsAreSeparated(array $tones, string $modeLabel): void
+    {
+        $names = array_keys($tones);
+
+        for ($i = 0; $i < count($names) - 1; $i++) {
+            for ($j = $i + 1; $j < count($names); $j++) {
+                $toneA = $tones[$names[$i]];
+                $toneB = $tones[$names[$j]];
+
+                $canvasDelta = self::maxChannelDelta($toneA['--ptah-canvas'], $toneB['--ptah-canvas']);
+                $surfaceDelta = self::maxChannelDelta($toneA['--ptah-surface'], $toneB['--ptah-surface']);
+                $delta = max($canvasDelta, $surfaceDelta);
+
+                $this->assertGreaterThanOrEqual(
+                    10,
+                    $delta,
+                    sprintf(
+                        '[%s] tons "%s" (canvas=%s surface=%s) e "%s" (canvas=%s surface=%s): '.
+                        'maior delta entre --ptah-canvas e --ptah-surface = %d, abaixo do minimo de 10 — '.
+                        'as duas maiores areas de tela nao mudam visivelmente entre esses tons.',
+                        $modeLabel,
+                        $names[$i],
+                        $toneA['--ptah-canvas'],
+                        $toneA['--ptah-surface'],
+                        $names[$j],
+                        $toneB['--ptah-canvas'],
+                        $toneB['--ptah-surface'],
+                        $delta
+                    )
+                );
+            }
+        }
+    }
+
     // ── 3. Accent: branco sobre o accent, e o accent (ou -lite no escuro) como
     //    tinta sobre a surface de cada tom. ──
 
@@ -371,6 +435,59 @@ class AppearancePresetContrastTest extends TestCase
                         self::TEXT_TOKEN_ORDER[$i + 1],
                         $steps[$i + 1],
                         $maxDelta
+                    )
+                );
+            }
+        }
+    }
+
+    // ── 4b. Separação perceptível entre escalas de texto consecutivas: cada um
+    //    dos 6 papeis precisa mudar pelo menos 12 em 255 de "suave" para "neutra"
+    //    e de "neutra" para "forte" — senao escolher outra escala nao muda nada
+    //    visivel no texto (o teto de contraste do modo pode encostar dois alvos
+    //    quase no mesmo valor e ainda passar em AA). ──
+
+    #[Test]
+    public function consecutive_light_text_scales_are_perceptibly_separated(): void
+    {
+        $this->assertConsecutiveTextScalesAreSeparated(self::lightTextPresets(), 'claro');
+    }
+
+    #[Test]
+    public function consecutive_dark_text_scales_are_perceptibly_separated(): void
+    {
+        $this->assertConsecutiveTextScalesAreSeparated(self::darkTextPresets(), 'escuro');
+    }
+
+    /**
+     * @param  array<string, array<string, string>>  $scalesBySlug
+     */
+    private function assertConsecutiveTextScalesAreSeparated(array $scalesBySlug, string $modeLabel): void
+    {
+        $order = ['suave', 'neutra', 'forte'];
+
+        for ($i = 0; $i < count($order) - 1; $i++) {
+            $fromSlug = $order[$i];
+            $toSlug = $order[$i + 1];
+
+            foreach (self::TEXT_TOKEN_ORDER as $textToken) {
+                $fromValue = $scalesBySlug[$fromSlug][$textToken];
+                $toValue = $scalesBySlug[$toSlug][$textToken];
+                $delta = self::maxChannelDelta($fromValue, $toValue);
+
+                $this->assertGreaterThanOrEqual(
+                    12,
+                    $delta,
+                    sprintf(
+                        '[%s] "%s" -> "%s": %s (%s vs %s) muda apenas %d em 255, abaixo do minimo de 12 — '.
+                        'a diferenca fica imperceptivel no texto.',
+                        $modeLabel,
+                        $fromSlug,
+                        $toSlug,
+                        $textToken,
+                        $fromValue,
+                        $toValue,
+                        $delta
                     )
                 );
             }

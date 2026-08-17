@@ -928,8 +928,10 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
    três eixos são escritos por extenso abaixo, nada é reaproveitado por
    omissão.
 
-   Valores verificados por busca binária contra alvos de contraste (342
-   pares, 0 falhas — ver AppearancePresetContrastTest). Não arredondar.
+   Valores verificados por busca binária contra alvos de contraste (570
+   pares, 0 falhas — ver AppearancePresetContrastTest, incluindo as asserções
+   de separação perceptível entre tons e entre escalas de texto). Não
+   arredondar.
 */
 
 /* ── Tom claro ── */
@@ -937,53 +939,53 @@ html[data-ptah-light="puro"]:not(.ptah-dark) {
     --ptah-canvas: #ffffff;
     --ptah-surface: #ffffff;
     --ptah-surface-raised: #ffffff;
-    --ptah-surface-sunken: #f8fafc;
-    --ptah-surface-hover: #f8fafc;
-    --ptah-menu-hover: #f9fafb;
-    --ptah-panel: #f8fafc;
+    --ptah-surface-sunken: #f4f6f9;
+    --ptah-surface-hover: #f1f4f8;
+    --ptah-menu-hover: #f4f6f9;
+    --ptah-panel: #f4f6f9;
     --ptah-field: #ffffff;
-    --ptah-field-muted: #f8fafc;
-    --ptah-control-ghost: #f1f5f9;
-    --ptah-control-ghost-hover: #e2e8f0;
-    --ptah-line: #f1f5f9;
-    --ptah-line-strong: #e2e8f0;
-    --ptah-line-control: #cbd5e1;
+    --ptah-field-muted: #f4f6f9;
+    --ptah-control-ghost: #e9edf3;
+    --ptah-control-ghost-hover: #dce2ea;
+    --ptah-line: #eaeef4;
+    --ptah-line-strong: #d9e0e9;
+    --ptah-line-control: #c2ccd8;
     --ptah-line-field: #8f95a0;
 }
 
 html[data-ptah-light="papel"]:not(.ptah-dark) {
-    --ptah-canvas: #fdfcfb;
-    --ptah-surface: #ffffff;
-    --ptah-surface-raised: #ffffff;
-    --ptah-surface-sunken: #f7f5f2;
-    --ptah-surface-hover: #f5f3f0;
-    --ptah-menu-hover: #f7f5f2;
-    --ptah-panel: #f7f5f2;
-    --ptah-field: #ffffff;
-    --ptah-field-muted: #f7f5f2;
-    --ptah-control-ghost: #efece7;
-    --ptah-control-ghost-hover: #e3ded6;
-    --ptah-line: #efece7;
-    --ptah-line-strong: #e3ded6;
-    --ptah-line-control: #cfc8bd;
-    --ptah-line-field: #8f95a0;
+    --ptah-canvas: #f3eee3;
+    --ptah-surface: #fffaf0;
+    --ptah-surface-raised: #fffaf0;
+    --ptah-surface-sunken: #ece5d6;
+    --ptah-surface-hover: #e8e0cf;
+    --ptah-menu-hover: #ece5d6;
+    --ptah-panel: #ece5d6;
+    --ptah-field: #fffaf0;
+    --ptah-field-muted: #f0eadd;
+    --ptah-control-ghost: #e4dcc9;
+    --ptah-control-ghost-hover: #d6ccb5;
+    --ptah-line: #e4dcc9;
+    --ptah-line-strong: #d3c9b3;
+    --ptah-line-control: #bcb098;
+    --ptah-line-field: #8c929d;
 }
 
 html[data-ptah-light="nevoa"]:not(.ptah-dark) {
-    --ptah-canvas: #ffffff;
+    --ptah-canvas: #eceef1;
     --ptah-surface: #ffffff;
     --ptah-surface-raised: #ffffff;
-    --ptah-surface-sunken: #fafafa;
-    --ptah-surface-hover: #f4f4f5;
-    --ptah-menu-hover: #f4f4f5;
-    --ptah-panel: #fafafa;
+    --ptah-surface-sunken: #e4e7eb;
+    --ptah-surface-hover: #e0e4e9;
+    --ptah-menu-hover: #e9ecf0;
+    --ptah-panel: #e7eaee;
     --ptah-field: #ffffff;
-    --ptah-field-muted: #fafafa;
-    --ptah-control-ghost: #f4f4f5;
-    --ptah-control-ghost-hover: #e4e4e7;
-    --ptah-line: #f4f4f5;
-    --ptah-line-strong: #e4e4e7;
-    --ptah-line-control: #d4d4d8;
+    --ptah-field-muted: #f2f4f6;
+    --ptah-control-ghost: #dfe3e8;
+    --ptah-control-ghost-hover: #cfd5dd;
+    --ptah-line: #dfe3e8;
+    --ptah-line-strong: #ccd3db;
+    --ptah-line-control: #b3bcc7;
     --ptah-line-field: #8f95a0;
 }
 
@@ -1047,58 +1049,58 @@ html.ptah-dark[data-ptah-dark="meianoite"] {
    modo claro (ver cabeçalho da seção), então tom e cor-da-fonte são eixos
    realmente independentes: qualquer combinação tom×escala passa >=4.5:1. */
 html[data-ptah-text="suave"]:not(.ptah-dark) {
-    --ptah-text-strong: #474a50;
-    --ptah-text-field: #4d5157;
-    --ptah-text: #55585f;
-    --ptah-text-secondary: #5d6168;
-    --ptah-text-muted: #60656c;
-    --ptah-text-faint: #686c74;
+    --ptah-text-strong: #414348;
+    --ptah-text-field: #46494f;
+    --ptah-text: #4e5157;
+    --ptah-text-secondary: #55585f;
+    --ptah-text-muted: #5a5f65;
+    --ptah-text-faint: #5e636a;
 }
 
 html[data-ptah-text="neutra"]:not(.ptah-dark) {
-    --ptah-text-strong: #2d2f33;
-    --ptah-text-field: #36383c;
-    --ptah-text: #43464b;
-    --ptah-text-secondary: #51545a;
-    --ptah-text-muted: #5d6168;
-    --ptah-text-faint: #646870;
+    --ptah-text-strong: #252629;
+    --ptah-text-field: #2e3034;
+    --ptah-text: #3b3d42;
+    --ptah-text-secondary: #45494e;
+    --ptah-text-muted: #4c4f55;
+    --ptah-text-faint: #4f5358;
 }
 
 html[data-ptah-text="forte"]:not(.ptah-dark) {
-    --ptah-text-strong: #17181a;
-    --ptah-text-field: #202124;
-    --ptah-text: #303236;
-    --ptah-text-secondary: #404247;
-    --ptah-text-muted: #51545a;
-    --ptah-text-faint: #585c63;
+    --ptah-text-strong: #141416;
+    --ptah-text-field: #1e1f22;
+    --ptah-text: #28292c;
+    --ptah-text-secondary: #323437;
+    --ptah-text-muted: #3b3d42;
+    --ptah-text-faint: #414348;
 }
 
 /* ── Cor da fonte — escuro ── */
 html.ptah-dark[data-ptah-text="suave"] {
-    --ptah-text-strong: #d9dadc;
-    --ptah-text-field: #d0d2d4;
-    --ptah-text: #c5c7c9;
-    --ptah-text-secondary: #bcbdc0;
-    --ptah-text-muted: #b6b8bb;
-    --ptah-text-faint: #adb0b3;
+    --ptah-text-strong: #d6d8d9;
+    --ptah-text-field: #cdcfd1;
+    --ptah-text: #c2c4c6;
+    --ptah-text-secondary: #b8babd;
+    --ptah-text-muted: #b0b3b6;
+    --ptah-text-faint: #abadb1;
 }
 
 html.ptah-dark[data-ptah-text="neutra"] {
-    --ptah-text-strong: #f1f2f2;
-    --ptah-text-field: #e8e9ea;
-    --ptah-text: #d7d9da;
-    --ptah-text-secondary: #c9cacc;
-    --ptah-text-muted: #babcbf;
-    --ptah-text-faint: #b4b7ba;
+    --ptah-text-strong: #e8e9ea;
+    --ptah-text-field: #e2e2e4;
+    --ptah-text: #d3d5d6;
+    --ptah-text-secondary: #c7c9cb;
+    --ptah-text-muted: #bdbfc1;
+    --ptah-text-faint: #b8babd;
 }
 
 html.ptah-dark[data-ptah-text="forte"] {
     --ptah-text-strong: #f9fafa;
     --ptah-text-field: #f6f7f7;
     --ptah-text: #eceded;
-    --ptah-text-secondary: #dadcdd;
-    --ptah-text-muted: #c7c9cb;
-    --ptah-text-faint: #c0c2c5;
+    --ptah-text-secondary: #dfe0e1;
+    --ptah-text-muted: #cfd0d2;
+    --ptah-text-faint: #c7c9cb;
 }
 
 /* ── Cor de destaque ──
@@ -1112,7 +1114,7 @@ html[data-ptah-accent="violeta"]  { --color-primary: #6d28d9; }
 html[data-ptah-accent="ciano"]    { --color-primary: #0e7490; }
 html[data-ptah-accent="verde"]    { --color-primary: #047857; }
 html[data-ptah-accent="teal"]     { --color-primary: #0f766e; }
-html[data-ptah-accent="ambar"]    { --color-primary: #b45309; }
+html[data-ptah-accent="ambar"]    { --color-primary: #92400e; }
 html[data-ptah-accent="vermelho"] { --color-primary: #b91c1c; }
 html[data-ptah-accent="rosa"]     { --color-primary: #be185d; }
 html[data-ptah-accent="cinza"]    { --color-primary: #475569; }
