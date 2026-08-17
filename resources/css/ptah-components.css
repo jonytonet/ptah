@@ -734,14 +734,49 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
     background-color: var(--ptah-surface);
     border-color: var(--ptah-line-strong);
 }
+/* Logo wrapper divider — migrated from forge-sidebar.blade.php's fixed
+   `border-gray-100` utility. --ptah-line, not --ptah-line-strong (which the
+   .ptah-dark rule below uses): #eaeef4 (tom "puro") lands 9/6/2 per channel
+   from gray-100 (#f3f4f6), while --ptah-line-strong (#d9e0e9) would jump
+   26/20/13 — the two scopes are free to pick different tokens for the same
+   seam, and this is the one that does not visibly move the hairline. */
+.ptah-sidebar .ptah-sidebar-logo-wrapper {
+    border-color: var(--ptah-line);
+}
 .ptah-dark .ptah-sidebar .ptah-sidebar-logo-wrapper {
     border-color: var(--ptah-line-strong);
+}
+/* App name — migrated from the fixed `text-dark` utility (--color-dark,
+   #1e293b). Delta vs --ptah-text-strong (tom "puro"+"neutra", #252629):
+   7/3/18 per channel. */
+.ptah-sidebar .ptah-sidebar-app-name {
+    color: var(--ptah-text-strong);
 }
 .ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
     color: var(--ptah-text-strong);
 }
+/* Base nav-item text color is INTENTIONALLY left off the neutral-token axis
+   for now: the group button (text-gray-600, #4b5563) and the child link
+   (text-gray-500, #6b7280) share this exact class but paint two different
+   grays, and no single --ptah-text-* token lands within ~20/255 of BOTH at
+   once — --ptah-text-muted is 1/6/14 off the button but 31/35/43 off the
+   child link; --ptah-icon-muted is 7/2/11 off the child link but 25/31/40
+   off the button. The .ptah-dark rule below sidesteps this by unifying both
+   to one shade already; doing the same in light would be a bigger visual
+   jump than this pass is authorized to make silently. See the documented
+   exception for `.ptah-nav-item|dark|color` in
+   ThemeChromeOrphanTokenGuardTest. */
 .ptah-dark .ptah-sidebar .ptah-nav-item {
     color: var(--ptah-text-muted);
+}
+/* Hover background only — migrated from the fixed `hover:bg-gray-100`
+   utility (delta vs --ptah-surface-hover, tom "puro": 2/0/2). Text color is
+   deliberately left to the `hover:text-primary` utility still on the
+   element (accent, not a neutral token — see forge-sidebar.blade.php); the
+   .ptah-dark rule below also overrides color to --ptah-text-strong, which is
+   a pre-existing scope asymmetry this pass does not touch. */
+.ptah-sidebar .ptah-nav-item:hover {
+    background-color: var(--ptah-surface-hover);
 }
 .ptah-dark .ptah-sidebar .ptah-nav-item:hover {
     background-color: var(--ptah-surface-hover);
@@ -758,6 +793,11 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-sidebar .ptah-nav-item.ptah-nav-active {
     background-color: var(--ptah-primary-soft-d);
     color: var(--ptah-primary-lite);
+}
+/* Footer divider — same border migration as the logo wrapper above (delta
+   vs --ptah-line, tom "puro": 9/6/2 per channel). */
+.ptah-sidebar .ptah-sidebar-footer {
+    border-color: var(--ptah-line);
 }
 .ptah-dark .ptah-sidebar .ptah-sidebar-footer {
     border-color: var(--ptah-line-strong);
@@ -795,11 +835,33 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
     border-color: var(--ptah-line-strong);
     box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
+/* Icon buttons — migrated from the fixed `text-gray-500` utility shared by
+   every icon button in the navbar (mobile toggle, collapse toggle, dark-mode
+   toggle, admin trigger, notifications). --ptah-icon-muted (invariant across
+   scope, #64748b) is 7/2/11 off gray-500 (#6b7280) — the icon-glyph token,
+   not a text-* one, since these are icon-only buttons. */
+.ptah-navbar .ptah-navbar-icon-btn {
+    color: var(--ptah-icon-muted);
+}
 .ptah-dark .ptah-navbar .ptah-navbar-icon-btn {
     color: var(--ptah-text-muted);
 }
+/* Hover background only — migrated from the fixed `hover:bg-gray-100`
+   utility (delta vs --ptah-surface-hover, tom "puro": 2/0/2). Text color is
+   deliberately left to the `hover:text-primary` utility still on each
+   button (accent, not neutral); the .ptah-dark rule below overriding color
+   to --ptah-text-strong on hover is a pre-existing scope asymmetry, not
+   something this pass touches. */
+.ptah-navbar .ptah-navbar-icon-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
 .ptah-dark .ptah-navbar .ptah-navbar-icon-btn:hover {
     background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+/* App name — same migration as the sidebar's (delta vs --ptah-text-strong,
+   tom "puro"+"neutra": 7/3/18 per channel). */
+.ptah-navbar .ptah-navbar-app-name {
     color: var(--ptah-text-strong);
 }
 .ptah-dark .ptah-navbar .ptah-navbar-app-name {
@@ -809,6 +871,15 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
    here) but diverge in light (#374151 vs #475569). "Texto secundário de chrome" is the
    correct semantic role for a navbar label, and light mode is where the choice becomes
    observable once the theme switcher lands. */
+/* Username — migrated from the fixed `text-dark` utility. --ptah-text-strong
+   (tom "puro"+"neutra", #252629) is the closest token (delta 7/3/18) — the
+   .ptah-dark rule's choice of --ptah-text-secondary over --ptah-text-strong
+   was a semantic call made when both rendered byte-identical in dark; that
+   reasoning does not carry over to light, where the two tokens diverge and
+   --ptah-text-strong is by far the closer match to what already renders. */
+.ptah-navbar .ptah-navbar-username {
+    color: var(--ptah-text-strong);
+}
 .ptah-dark .ptah-navbar .ptah-navbar-username {
     color: var(--ptah-text-secondary);
 }
@@ -816,6 +887,11 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
    counterpart, so hovering it (or opening its dropdown) painted a near-white chip in the
    middle of a dark navbar — and everything inside is deliberately light, so the label
    dropped to 1.35:1 and the avatar initial to 1.40:1. Matches the icon buttons beside it. */
+/* Light side of the same fix: `hover:bg-gray-100` was already a fixed
+   utility, not a token — delta vs --ptah-surface-hover (tom "puro"): 2/0/2. */
+.ptah-navbar .ptah-navbar-user-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
 .ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover {
     background-color: var(--ptah-surface-hover);
 }
@@ -833,39 +909,103 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-navbar .ptah-user-avatar-text {
     color: var(--ptah-primary-lite);
 }
+/* User dropdown panel — migrated from the fixed `bg-white border-gray-200`
+   utilities. --ptah-surface-raised (tom "puro") is #ffffff, an exact match;
+   --ptah-line is 5/7/9 off gray-200 (#e5e7eb), and is the same token the
+   .ptah-dark rule below already uses for this seam. */
+.ptah-navbar .ptah-user-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
 .ptah-dark .ptah-navbar .ptah-user-dropdown {
     background-color: var(--ptah-surface-raised);
     border-color: var(--ptah-line);
+}
+/* Only `a`, NOT `button`: the profile link (text-gray-700, delta vs
+   --ptah-text tom "puro"+"neutra": 4/4/15) is the only element this should
+   touch. The dropdown's other row is a <button> carrying `text-danger`
+   (semantic, accent) for the logout action — the .ptah-dark rule below
+   applies var(--ptah-text) to BOTH `a` and `button` and so already
+   overrides that button's red in dark mode (a pre-existing scope quirk,
+   left as-is); mirroring it in light would newly break the logout button's
+   danger color for every light-mode user, which is a regression this pass
+   will not introduce. */
+.ptah-navbar .ptah-user-dropdown a {
+    color: var(--ptah-text);
 }
 .ptah-dark .ptah-navbar .ptah-user-dropdown a,
 .ptah-dark .ptah-navbar .ptah-user-dropdown button {
     color: var(--ptah-text);
 }
+/* Delta vs --ptah-menu-hover (tom "puro"): 5/4/2 off gray-50. */
+.ptah-navbar .ptah-user-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
 .ptah-dark .ptah-navbar .ptah-user-dropdown a:hover {
     background-color: var(--ptah-menu-hover);
 }
+.ptah-navbar .ptah-user-dropdown hr {
+    border-color: var(--ptah-line);
+}
 .ptah-dark .ptah-navbar .ptah-user-dropdown hr {
+    border-color: var(--ptah-line);
+}
+/* Admin dropdown panel — same border/background migration as the user
+   dropdown above. */
+.ptah-navbar .ptah-admin-dropdown {
+    background-color: var(--ptah-surface-raised);
     border-color: var(--ptah-line);
 }
 .ptah-dark .ptah-navbar .ptah-admin-dropdown {
     background-color: var(--ptah-surface-raised);
     border-color: var(--ptah-line);
 }
+/* Every link inside the admin dropdown uses `text-gray-700` uniformly (no
+   danger/accent buttons in here, unlike the user dropdown above), so `a` and
+   `button` can safely share one rule exactly like the .ptah-dark rule below. */
+.ptah-navbar .ptah-admin-dropdown a,
+.ptah-navbar .ptah-admin-dropdown button {
+    color: var(--ptah-text);
+}
 .ptah-dark .ptah-navbar .ptah-admin-dropdown a,
 .ptah-dark .ptah-navbar .ptah-admin-dropdown button {
     color: var(--ptah-text);
 }
+.ptah-navbar .ptah-admin-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
 .ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
     background-color: var(--ptah-menu-hover);
 }
+/* Icons intentionally left off the token axis for now: the fixed
+   `text-gray-400` (#9ca3af) they carry today is 56/47/36 off
+   --ptah-icon-muted (#64748b) — the semantically-correct icon token, and the
+   one the .ptah-dark rule below already uses — far past the ~20/255 caution
+   line. The numerically closer candidate, --ptah-line-field (tom "puro",
+   #8f95a0, delta 13/14/15), is a form-field-border token and would be a
+   confusing pairing with the dark rule's icon-muted. See the documented
+   exception for `.ptah-admin-dropdown svg|dark|color` in
+   ThemeChromeOrphanTokenGuardTest. */
 .ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
     color: var(--ptah-icon-muted);
+}
+.ptah-navbar .ptah-admin-dropdown hr {
+    border-color: var(--ptah-line);
 }
 .ptah-dark .ptah-navbar .ptah-admin-dropdown hr {
     border-color: var(--ptah-line);
 }
+/* Same icon-glyph migration as .ptah-navbar-icon-btn above (this button also
+   carries that class, so this rule is redundant in practice — kept for
+   parity with the .ptah-dark structure below, which does the same). */
+.ptah-navbar .ptah-mobile-toggle {
+    color: var(--ptah-icon-muted);
+}
 .ptah-dark .ptah-navbar .ptah-mobile-toggle {
     color: var(--ptah-text-muted);
+}
+.ptah-navbar .ptah-mobile-toggle:hover {
+    background-color: var(--ptah-surface-hover);
 }
 .ptah-dark .ptah-navbar .ptah-mobile-toggle:hover {
     background-color: var(--ptah-surface-hover);
@@ -897,6 +1037,14 @@ main { background-color: var(--ptah-canvas); }
     border-color: var(--ptah-line-strong);
     color: var(--ptah-text-strong);
 }
+/* Header/footer divider inside a default-variant card — migrated from the
+   fixed `border-gray-100` utility in forge-card.blade.php (delta vs
+   --ptah-line, tom "puro": 9/6/2 per channel, same migration as the sidebar
+   and navbar hairlines above). Only reachable when the card's own wrapper
+   carries `ptah-card-default` (type="default"); other types keep their own
+   semantic Tailwind border color and are unaffected. */
+.ptah-card-default .border-b,
+.ptah-card-default .border-t { border-color: var(--ptah-line); }
 .ptah-dark .ptah-card-default .border-b,
 .ptah-dark .ptah-card-default .border-t { border-color: var(--ptah-line-strong); }
 

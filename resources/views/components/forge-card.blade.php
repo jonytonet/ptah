@@ -34,7 +34,7 @@
     @endif
 
     @if (isset($header))
-        <div class="px-5 pt-5 pb-3 border-b {{ $type === 'dark' ? 'border-dark-dark' : 'border-gray-100' }}">
+        <div class="px-5 pt-5 pb-3 border-b {{ $type === 'dark' ? 'border-dark-dark' : ($type === 'default' ? '' : 'border-gray-100') }}">
             {{ $header }}
         </div>
     @endif
@@ -44,7 +44,7 @@
     @endif
 
     @if (isset($footer))
-        <div class="px-5 py-3 border-t {{ $type === 'dark' ? 'border-dark-dark' : 'border-gray-100' }}">
+        <div class="px-5 py-3 border-t {{ $type === 'dark' ? 'border-dark-dark' : ($type === 'default' ? '' : 'border-gray-100') }}">
             {{ $footer }}
         </div>
     @endif

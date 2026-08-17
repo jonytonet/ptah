@@ -498,6 +498,19 @@ class ContrastGuardTest extends TestCase
         $crumbLinkLight = self::extractHex($css, '/\.ptah-c-crumb\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb link light');
         $crumbLinkDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-crumb\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb link dark');
 
+        // --- 24. Sidebar/navbar menu chrome (light) — previously fixed Tailwind utilities
+        // (text-dark, text-gray-500/600/700) with no light rule in this file at all, so the
+        // tone/font-colour axes chosen in /profile never reached the menu — the exact
+        // complaint that started this pass. Values are read straight from the new light
+        // rules (see ThemeChromeOrphanTokenGuardTest for the missing-counterpart guard).
+        $sidebarAppNameLight = self::extractHex($css, '/\.ptah-sidebar \.ptah-sidebar-app-name\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'sidebar app-name light');
+        $navbarAppNameLight = self::extractHex($css, '/\.ptah-navbar \.ptah-navbar-app-name\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar app-name light');
+        $navbarUsernameLight = self::extractHex($css, '/\.ptah-navbar \.ptah-navbar-username\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar username light');
+        $navbarIconBtnLight = self::extractHex($css, '/\.ptah-navbar \.ptah-navbar-icon-btn\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar icon-btn light');
+        $navbarMobileToggleLight = self::extractHex($css, '/\.ptah-navbar \.ptah-mobile-toggle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar mobile-toggle light');
+        $userDropdownLinkLight = self::extractHex($css, '/\.ptah-navbar \.ptah-user-dropdown a\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar user-dropdown link light');
+        $adminDropdownLinkLight = self::extractHex($css, '/\.ptah-navbar \.ptah-admin-dropdown a,\s*\.ptah-navbar \.ptah-admin-dropdown button\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar admin-dropdown link light');
+
         return [
             '1. modal_sub (light) vs modal header bg' => [$modalSubLight, '#ffffff', 4.5],
             '1. modal_sub (dark) vs modal header dark bg' => [$modalSubDark, '#1e293b', 4.5],
@@ -549,6 +562,13 @@ class ContrastGuardTest extends TestCase
             '21. breadcrumb separator (dark) vs page bg — punctuation, visibility floor' => [$crumbSepDark, '#0f172a', 3.0],
             '21. breadcrumb link (light) vs page bg — text' => [$crumbLinkLight, '#ffffff', 4.5],
             '21. breadcrumb link (dark) vs page bg — text' => [$crumbLinkDark, '#0f172a', 4.5],
+            '24. sidebar app-name (light) vs sidebar surface — text' => [$sidebarAppNameLight, '#ffffff', 4.5],
+            '24. navbar app-name (light) vs navbar surface — text' => [$navbarAppNameLight, '#ffffff', 4.5],
+            '24. navbar username (light) vs navbar surface — text' => [$navbarUsernameLight, '#ffffff', 4.5],
+            '24. navbar icon-btn (light) vs navbar surface — icon' => [$navbarIconBtnLight, '#ffffff', 3.0],
+            '24. navbar mobile-toggle (light) vs navbar surface — icon' => [$navbarMobileToggleLight, '#ffffff', 3.0],
+            '24. navbar user-dropdown link (light) vs dropdown surface — text' => [$userDropdownLinkLight, '#ffffff', 4.5],
+            '24. navbar admin-dropdown link (light) vs dropdown surface — text' => [$adminDropdownLinkLight, '#ffffff', 4.5],
         ];
     }
 

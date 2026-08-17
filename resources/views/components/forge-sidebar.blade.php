@@ -101,7 +101,7 @@
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
 >
     {{-- Logo --}}
-    <div class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b border-gray-100 flex-shrink-0">
+    <div class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b flex-shrink-0">
         <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
             @if($logoUrl)
                 <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-6 w-6 object-contain" />
@@ -113,7 +113,7 @@
         </div>
         <span
             :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
-            class="ptah-sidebar-app-name font-bold text-dark text-base whitespace-nowrap transition-all duration-300">
+            class="ptah-sidebar-app-name font-bold text-base whitespace-nowrap transition-all duration-300">
             {{ $appName }}
         </span>
     </div>
@@ -148,7 +148,7 @@
                             @click="open = !open"
                             title="{{ $itemLabel }}"
                             class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150
-                                {{ $groupActive ? 'text-primary font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-primary' }}"
+                                {{ $groupActive ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                 {!! $renderIcon($itemIcon) !!}
@@ -187,7 +187,7 @@
                                         class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
                                             {{ $childActive
                                                 ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                                : 'text-gray-500 hover:bg-gray-100 hover:text-primary'
+                                                : 'text-gray-500 hover:text-primary'
                                             }}"
                                     >
                                         <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-sm">
@@ -228,7 +228,7 @@
                             class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150 relative
                                 {{ $isActive
                                     ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                                    : 'text-gray-600 hover:text-primary'
                                 }}"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
@@ -252,7 +252,7 @@
             ? route('ptah.auth.logout')
             : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
     @endphp
-    <div class="ptah-sidebar-footer p-2 border-t border-gray-100 flex-shrink-0">
+    <div class="ptah-sidebar-footer p-2 border-t flex-shrink-0">
         <form method="POST" action="{{ $logoutAction }}">
             @csrf
             <button

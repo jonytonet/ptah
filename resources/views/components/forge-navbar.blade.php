@@ -24,7 +24,7 @@
             {{-- Mobile: abre/fecha sidebar via overlay --}}
             <button
                 @click="$dispatch('toggle-sidebar')"
-                class="ptah-mobile-toggle ptah-navbar-icon-btn lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                class="ptah-mobile-toggle ptah-navbar-icon-btn lg:hidden p-2 rounded-md hover:text-primary transition-colors"
                 aria-label="Toggle sidebar"
             >
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,7 +36,7 @@
             <button
                 @click="toggleSidebarCollapse()"
                 :title="sidebarCollapsed ? 'Expand menu' : 'Collapse menu'"
-                class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                class="ptah-navbar-icon-btn hidden lg:flex p-2 rounded-md hover:text-primary transition-colors"
             >
                 {{-- Sidebar aberta → painel esquerdo preenchido (clica para recolher) --}}
                 <svg x-show="!sidebarCollapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
@@ -65,7 +65,7 @@
                             </span>
                         </div>
                     @endif
-                    <span class="ptah-navbar-app-name font-bold text-dark text-lg hidden sm:block">{{ $appName }}</span>
+                    <span class="ptah-navbar-app-name font-bold text-lg hidden sm:block">{{ $appName }}</span>
                 </a>
             @endisset
         </div>
@@ -83,7 +83,7 @@
                 {{-- Dark Mode toggle button --}}
                 <button
                     @click="toggleDark()"
-                    class="ptah-navbar-icon-btn relative p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors"
+                    class="ptah-navbar-icon-btn relative p-2 rounded-md hover:text-primary transition-colors"
                     :title="darkMode ? '{{ __('ptah::ui.navbar_light_title') }}' : '{{ __('ptah::ui.navbar_dark_title') }}'"
                 >
                     {{-- Sun icon (light mode active) --}}
@@ -103,7 +103,7 @@
                 <div x-data="{ openAdmin: false }" class="relative">
                     <button
                         @click="openAdmin = !openAdmin"
-                        :class="openAdmin ? 'bg-gray-100 text-primary' : 'text-gray-500 hover:bg-gray-100 hover:text-primary'"
+                        :class="openAdmin ? 'bg-gray-100 text-primary' : 'hover:text-primary'"
                         class="ptah-navbar-icon-btn relative p-2 rounded-md transition-colors"
                         title="{{ __('ptah::ui.navbar_admin_title') }}"
                     >
@@ -121,13 +121,13 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="ptah-admin-dropdown absolute right-0 mt-2 w-56 bg-white rounded-md border border-gray-200 py-1 z-50"
+                        class="ptah-admin-dropdown absolute right-0 mt-2 w-56 rounded-md border py-1 z-50"
                         @click="openAdmin = false"
                     >
                         {{-- Company --}}
                         @if(config('ptah.modules.company') && \Illuminate\Support\Facades\Route::has('ptah.company.index'))
                         <a href="{{ route('ptah.company.index') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -139,7 +139,7 @@
                         {{-- Departamentos --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.departments'))
                         <a href="{{ route('ptah.acl.departments') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -151,7 +151,7 @@
                         {{-- Perfis de acesso --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.roles'))
                         <a href="{{ route('ptah.acl.roles') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
@@ -163,7 +163,7 @@
                         {{-- Pages / Objects --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
                         <a href="{{ route('ptah.acl.pages') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -175,7 +175,7 @@
                         {{-- Users & Permissions --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
                         <a href="{{ route('ptah.acl.users') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
@@ -187,7 +187,7 @@
                         {{-- Audit Log --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.audit'))
                         <a href="{{ route('ptah.acl.audit') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -199,7 +199,7 @@
                         {{-- Permissions guide --}}
                         @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.guide'))
                         <a href="{{ route('ptah.acl.guide') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -211,10 +211,10 @@
                         {{-- Menu --}}
                         @if(config('ptah.modules.menu') && \Illuminate\Support\Facades\Route::has('ptah.menu.manage'))
                         @if(config('ptah.modules.company') || config('ptah.modules.permissions'))
-                        <hr class="my-1 border-gray-100">
+                        <hr class="my-1">
                         @endif
                         <a href="{{ route('ptah.menu.manage') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
                             </svg>
@@ -225,10 +225,10 @@
                         {{-- AI Agent --}}
                         @if(config('ptah.modules.ai_agent') && \Illuminate\Support\Facades\Route::has('ptah.ai.models'))
                         @if(config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu'))
-                        <hr class="my-1 border-gray-100">
+                        <hr class="my-1">
                         @endif
                         <a href="{{ route('ptah.ai.models') }}"
-                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <i class="bx bx-bot h-4 w-4 text-gray-400 shrink-0 text-base leading-none"></i>
                             {{ __('ptah::ui.navbar_admin_ai_models') }}
                         </a>
@@ -238,7 +238,7 @@
                 @endif
 
                 {{-- Notifications --}}
-                <button class="ptah-navbar-icon-btn relative p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors">
+                <button class="ptah-navbar-icon-btn relative p-2 rounded-md hover:text-primary transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
@@ -251,7 +251,7 @@
                          hover:bg-gray-100 abaixo pintava um chip quase branco no meio da
                          navbar escura, e o nome/avatar (que sao claros de proposito) ficavam
                          em ~1.4:1. Ver .ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover. --}}
-                    <button @click="open = !open" class="ptah-navbar-user-btn flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+                    <button @click="open = !open" class="ptah-navbar-user-btn flex items-center gap-2 p-1.5 rounded-md transition-colors">
                         @php
                             $__photoPath = auth()->user()->profile_photo_path ?? null;
                             $__photoUrl  = $__photoPath ? \Illuminate\Support\Facades\Storage::url($__photoPath) : null;
@@ -267,7 +267,7 @@
                                 </span>
                             </div>
                         @endif
-                        <span class="ptah-navbar-username hidden lg:block text-sm font-medium text-dark">
+                        <span class="ptah-navbar-username hidden lg:block text-sm font-medium">
                             {{ auth()->user()->name ?? 'User' }}
                         </span>
                         <svg class="hidden lg:block h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -282,7 +282,7 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="ptah-user-dropdown absolute right-0 mt-2 w-48 bg-white rounded-md border border-gray-200 py-1 z-50"
+                        class="ptah-user-dropdown absolute right-0 mt-2 w-48 rounded-md border py-1 z-50"
                     >
                         @php
                             $profileHref = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile')
@@ -293,13 +293,13 @@
                                 : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
                         @endphp
                         <a href="{{ $profileHref }}"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                           class="flex items-center gap-2 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             {{ __('ptah::ui.navbar_user_profile') }}
                         </a>
-                        <hr class="my-1 border-gray-100">
+                        <hr class="my-1">
                         <form method="POST" action="{{ $logoutAction }}">
                             @csrf
                             <button type="submit"
