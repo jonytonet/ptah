@@ -1,0 +1,23 @@
+{
+    "_doc": [
+        "Accounting for every declaration site that leaves the layout's inline <style>.",
+        "Origin of truth is css-layout-origin.json (184 sites, frozen, never regenerated).",
+        "Each origin site must end up in exactly ONE of: still present in the layout,",
+        "migrated (moved verbatim), changed (moved with a different rendered value), or",
+        "deleted (rule removed). LayoutMigrationLedgerTest enforces that partition, so a",
+        "site cannot quietly vanish from one fixture and reappear in the other with a",
+        "different colour just because both fixtures were regenerated in the same commit.",
+        "",
+        "migrated: site => value. Must appear in css-neutral-baseline.json with EXACTLY",
+        "          the value recorded in css-layout-origin.json.",
+        "changed:  site => {from, to, reason}. 'from' must equal the origin value and 'to'",
+        "          must equal what css-neutral-baseline.json now renders. Every entry needs",
+        "          a matching case in ContrastGuardTest — a deliberate colour change is the",
+        "          one situation where the golden fixture cannot vouch for the result.",
+        "deleted:  site => reason. Dead rules (no element carries the class) and rules that",
+        "          only shadowed a dark: variant the component already declares."
+    ],
+    "migrated": {},
+    "changed": {},
+    "deleted": {}
+}

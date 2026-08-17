@@ -51,6 +51,40 @@ class NeutralTokenBaselineTest extends TestCase
         );
     }
 
+    /**
+     * CssTokenResolver::parseTokens() reads the FIRST bare `.ptah-dark { ... }`
+     * block in the file as the dark token map. The layout migration is about to
+     * add a second one — the rule that paints the page background — and if that
+     * rule lands above the token block, the resolver silently reads a two-property
+     * map and every one of the 24 tokens becomes undefined.
+     *
+     * That failure is loud in the suite but catastrophic in a browser: an
+     * undefined var() is invalid at computed-value time, so the declaration is
+     * dropped and the property falls back to inherited/unset. The UI is not
+     * degraded, it is destroyed. Cheaper to pin the order here than to debug it
+     * from a screenshot.
+     */
+    #[Test]
+    public function the_first_bare_ptah_dark_block_is_the_token_block(): void
+    {
+        $css = self::css();
+
+        $this->assertSame(
+            1,
+            preg_match('/\.ptah-dark\s*\{([^}]*)\}/', $css, $m),
+            'Nenhum bloco `.ptah-dark { ... }` nu encontrado em ptah-components.css.'
+        );
+
+        $this->assertStringContainsString(
+            '--ptah-canvas',
+            $m[1],
+            'O primeiro bloco `.ptah-dark { ... }` nu de ptah-components.css deixou de ser o bloco de tokens. '.
+            'CssTokenResolver le exatamente esse bloco como mapa dark, entao qualquer outra regra '.
+            '`.ptah-dark { ... }` (por exemplo a que pinta o fundo da pagina) precisa vir DEPOIS dele — '.
+            'senao os 24 tokens ficam indefinidos e cada var(--ptah-*) se torna declaracao invalida no browser.'
+        );
+    }
+
     private static function css(): string
     {
         $content = file_get_contents(dirname(__DIR__, 3).'/resources/css/ptah-components.css');
