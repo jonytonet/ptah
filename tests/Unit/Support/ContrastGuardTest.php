@@ -481,6 +481,39 @@ class ContrastGuardTest extends TestCase
         }
     }
 
+    /**
+     * Guards against a silent removal of the global color-scheme declarations added to
+     * ptah-components.css (Fase 1 follow-up). Without these, native controls (date
+     * picker, <select> popup, scrollbars, autofill) render with the OS light scheme on
+     * every screen except the BaseCrud filter panel (which has its own narrower,
+     * more specific rule in _scripts.blade.php and is unaffected either way).
+     */
+    #[Test]
+    public function root_and_ptah_dark_declare_the_matching_color_scheme(): void
+    {
+        $css = self::css();
+
+        if (! preg_match('/:root\s*\{([^}]*)\}/s', $css, $rootBlock)) {
+            throw new RuntimeException('ContrastGuardTest: could not locate the :root block in ptah-components.css.');
+        }
+        if (! preg_match('/\.ptah-dark\s*\{([^}]*)\}/s', $css, $darkBlock)) {
+            throw new RuntimeException('ContrastGuardTest: could not locate the .ptah-dark block in ptah-components.css.');
+        }
+
+        $this->assertMatchesRegularExpression(
+            '/color-scheme:\s*light\s*;/',
+            $rootBlock[1],
+            'ContrastGuardTest: :root no longer declares "color-scheme: light;" — native controls '.
+            '(date picker, select, scrollbars, autofill) will render with the wrong OS scheme.'
+        );
+        $this->assertMatchesRegularExpression(
+            '/color-scheme:\s*dark\s*;/',
+            $darkBlock[1],
+            'ContrastGuardTest: .ptah-dark no longer declares "color-scheme: dark;" — native controls '.
+            'will keep the light OS scheme on every screen when dark mode is active.'
+        );
+    }
+
     #[Test]
     #[DataProvider('contrastPairsProvider')]
     public function meets_the_minimum_wcag_aa_contrast_ratio(string $foreground, string $background, float $minimum): void

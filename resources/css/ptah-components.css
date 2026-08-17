@@ -10,6 +10,13 @@
    ============================================================ */
 
 :root {
+    /* Tells the browser which native UI scheme (form controls, scrollbars, date-picker
+       chrome, autofill) to render. Without this, native <input type="date">/<select>
+       always paint with the OS light scheme even inside .ptah-dark, since color-scheme
+       is not something a background-color override can fix. .ptah-dark below wins by
+       source order (see the comment on that block). */
+    color-scheme: light;
+
     /* Brand token (host overrides via @theme --color-primary) */
     --ptah-primary:        var(--color-primary, #5b21b6);
     /* Derived tints — used for rings, soft backgrounds and borders. The
@@ -90,6 +97,15 @@
    are intentionally absent here (invariant across scope, see :root comments).
    --ptah-line-field-hover is also intentionally absent (same reason). */
 .ptah-dark {
+    /* Same specificity (0,1,0) as :root's color-scheme: light — wins by source order
+       (this block is declared after :root), matching how every other token below
+       overrides its :root default. This is the fix for native controls (date picker,
+       select popup, scrollbars, autofill) rendering with the light OS scheme on any
+       screen that isn't the BaseCrud filter panel (which already special-cases this
+       locally in _scripts.blade.php — that rule is more specific and keeps working
+       unchanged; this one covers every other screen). */
+    color-scheme: dark;
+
     --ptah-canvas:              #0f172a;
     --ptah-surface:             #1e293b;
     --ptah-surface-raised:      #1e293b;
@@ -247,9 +263,17 @@
 /* Sticky action column — opaque (hides content scrolling under it) but tracks the row state
    so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell */
 .ptah-c-sticky_cell                                              { background-color: var(--ptah-surface); }
-.ptah-dark .ptah-c-sticky_cell                                   { background-color: var(--ptah-surface); }
+/* Dark rows are transparent (see .ptah-c-tr above) over the page canvas (#0f172a), not
+   --ptah-surface (#1e293b) — using --ptah-surface here made the sticky column visibly
+   lighter than the row it belongs to (a seam). --ptah-canvas matches what a dark row
+   actually renders as, so the opaque sticky cell blends in instead of floating on top. */
+.ptah-dark .ptah-c-sticky_cell                                   { background-color: var(--ptah-canvas); }
 .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell                  { background-color: var(--ptah-surface-hover); }
-.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: color-mix(in srgb, var(--ptah-surface-hover) 60%, transparent); }
+/* 30%, matching .ptah-dark .ptah-c-tr:hover exactly (both composite --ptah-surface-hover
+   over the same canvas backdrop) — now that the resting state above tracks the canvas
+   too, the hover tint must use the same mix ratio as the row or it reintroduces the
+   seam on hover instead of at rest. */
+.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, transparent); }
 .ptah-c-tr_selected .ptah-c-sticky_cell,
 .ptah-c-tr_selected:hover .ptah-c-sticky_cell                    { background-color: var(--ptah-primary-softer); }
 .ptah-dark .ptah-c-tr_selected .ptah-c-sticky_cell,
