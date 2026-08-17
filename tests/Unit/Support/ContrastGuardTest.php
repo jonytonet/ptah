@@ -109,6 +109,32 @@ class ContrastGuardTest extends TestCase
         return $forge ??= file_get_contents(dirname(__DIR__, 3).'/resources/css/forge.css');
     }
 
+    private static function ptahConfig(): string
+    {
+        static $config = null;
+
+        return $config ??= file_get_contents(dirname(__DIR__, 3).'/config/ptah.php');
+    }
+
+    /**
+     * The primary brand default as a host WITHOUT PTAH_COLOR_PRIMARY receives it —
+     * deliberately read from config/ptah.php, not forge.css's --color-primary
+     * (#1e40af), which is a design-system default never used at runtime unless a
+     * host imports forge.css directly (nothing in this repo does).
+     */
+    private static function configPrimaryDefault(): string
+    {
+        if (! preg_match(
+            "/'primary'\s*=>\s*env\('PTAH_COLOR_PRIMARY',\s*'(#[0-9a-fA-F]{6})'\)/",
+            self::ptahConfig(),
+            $m
+        )) {
+            throw new RuntimeException('ContrastGuardTest: could not locate the default primary color in config/ptah.php.');
+        }
+
+        return strtolower($m[1]);
+    }
+
     private static function baseCrudBlade(): string
     {
         static $blade = null;
@@ -292,6 +318,16 @@ class ContrastGuardTest extends TestCase
         $tabIdleDark = '#94a3b8'; // Tailwind slate-400
         $tabHoverDark = '#e2e8f0'; // Tailwind slate-200
 
+        // --- 16-17. Company switcher active tab / hover text — layout <style> dismantling (Passo 4) ---
+        // The layout's forge-dashboard-layout.blade.php no longer hardcodes the switcher's
+        // colors; .ptah-switcher-tab--active and its hover state now derive from
+        // --ptah-primary (config/ptah.php's default, since that is what a host WITHOUT
+        // PTAH_COLOR_PRIMARY renders), not the frozen navy #1e40af.
+        $configPrimary = self::configPrimaryDefault();
+        $switcherActiveText = '#ffffff'; // --ptah-text-on-accent, invariant across scope
+        $switcherHoverTextLight = self::compositeHex($configPrimary, 0.85, '#000000'); // --ptah-primary-strong
+        $switcherHoverBgLight = self::mixWithWhite($configPrimary, 0.22); // color-mix(primary 22%, --ptah-surface light)
+
         return [
             '1. modal_sub (light) vs modal header bg' => [$modalSubLight, '#ffffff', 4.5],
             '1. modal_sub (dark) vs modal header dark bg' => [$modalSubDark, '#1e293b', 4.5],
@@ -323,6 +359,8 @@ class ContrastGuardTest extends TestCase
             '14. bulk-delete/discard buttons (bg-danger-dark) vs white text' => ['#ffffff', $colorDangerDark, 4.5],
             '15. forge-tab (slot) inactive idle (dark, slate-400) vs card surface' => [$tabIdleDark, '#1e293b', 4.5],
             '15. forge-tab (slot) inactive hover (dark, slate-200) vs card surface' => [$tabHoverDark, '#1e293b', 4.5],
+            '16. switcher active tab (--ptah-text-on-accent) vs --ptah-primary (config default)' => [$switcherActiveText, $configPrimary, 4.5],
+            '17. switcher hover text (--ptah-primary-strong) vs hover bg (22% mix, light)' => [$switcherHoverTextLight, $switcherHoverBgLight, 4.5],
         ];
     }
 
@@ -392,6 +430,92 @@ class ContrastGuardTest extends TestCase
             'forge-tab.blade.php (slot mode) and forge-tabs.blade.php (array mode) must map '.
             'tab colors to the identical CSS classes, or they render differently in dark mode.'
         );
+    }
+
+    /**
+     * --ptah-primary-lite is the ink on a --ptah-primary-soft-d pill in four shipped
+     * components: .ptah-c-dd_item_sel (selected dropdown row), .ptah-c-btn_on (active
+     * toggle), .ptah-c-active_badge and .ptah-c-saved_filter_btn. Both sides of that
+     * pair are derived from --color-primary, so neither appears as a hex anywhere and
+     * no amount of reading the CSS reveals the contrast — it has to be computed.
+     *
+     * It was failing. At the original 55% mix the pair measured 4.47:1 against the
+     * config/ptah.php default primary, below the 4.5:1 floor for text. It survived the
+     * Fase 0 contrast sweep because forge.css defaults to a different primary that
+     * lands at 4.55:1 — the demo app passed while a stock install did not, which is
+     * exactly the asymmetry this test now removes by checking BOTH defaults.
+     *
+     * Percentages are read from the CSS rather than hardcoded, so tuning either token
+     * re-runs the measurement instead of silently invalidating it.
+     */
+    #[Test]
+    public function primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries(): void
+    {
+        $css = self::css();
+
+        if (! preg_match('/--ptah-primary-lite:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, #ffffff\);/', $css, $inkMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not find the --ptah-primary-lite color-mix() declaration.');
+        }
+
+        if (! preg_match('/--ptah-primary-soft-d:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, transparent\);/', $css, $pillMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not find the --ptah-primary-soft-d color-mix() declaration.');
+        }
+
+        $inkPct = ((int) $inkMatch[1]) / 100;
+        $pillAlpha = ((int) $pillMatch[1]) / 100;
+
+        // The pill is translucent, so it composites over whichever dark ground the
+        // component sits on. --ptah-surface is the shallower (lighter) of the two and
+        // therefore the worst case for light ink; --ptah-canvas is checked too because
+        // .ptah-c-dd_item_sel renders inside a dropdown over the page ground.
+        $grounds = [
+            '--ptah-surface' => '#1e293b',
+            '--ptah-canvas' => '#0f172a',
+        ];
+
+        // Both defaults, because they differ and the difference is what hid this bug:
+        // a host that never sets PTAH_COLOR_PRIMARY renders config/ptah.php's value,
+        // while forge.css's value is what the demo app and the docs show.
+        $primaries = [
+            'config/ptah.php default' => self::configPrimaryDefault(),
+            'forge.css default' => self::extractHex(
+                self::forgeCss(),
+                '/--color-primary:\s*(#[0-9a-fA-F]{6})/',
+                'forge.css --color-primary'
+            ),
+        ];
+
+        foreach ($primaries as $origin => $primary) {
+            $ink = self::mixWithWhite($primary, $inkPct);
+
+            foreach ($grounds as $groundName => $ground) {
+                $pill = self::compositeHex($primary, $pillAlpha, $ground);
+                $ratio = self::contrastRatio($ink, $pill);
+
+                $this->assertGreaterThanOrEqual(
+                    4.5,
+                    $ratio,
+                    sprintf(
+                        'primary-lite ink on a primary-soft-d pill (%s, primary %s over %s): '.
+                        'color-mix(%s %d%%, white) = %s on %d%% of %s over %s = %s -> %.2f:1, below 4.5:1. '.
+                        'Affects .ptah-c-dd_item_sel, .ptah-c-btn_on, .ptah-c-active_badge and '.
+                        '.ptah-c-saved_filter_btn. Raise the white share in --ptah-primary-lite '.
+                        '(contrast is monotonic in that direction) rather than patching call sites.',
+                        $origin,
+                        $primary,
+                        $groundName,
+                        $primary,
+                        $inkMatch[1],
+                        $ink,
+                        $pillMatch[1],
+                        $primary,
+                        $ground,
+                        $pill,
+                        $ratio
+                    )
+                );
+            }
+        }
     }
 
     /**

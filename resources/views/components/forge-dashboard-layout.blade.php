@@ -65,14 +65,14 @@
 
     {{-- BEING DISMANTLED — do not add color here. Guarded by LayoutStyleBaselineTest, which
          holds a golden fixture of all 184 declaration sites and a ceiling that only ever
-         shrinks (153 hex literals / 127 rules today).
+         shrinks (127 hex literals / 107 rules today).
 
          An earlier note called the whole block un-tokenizable. That was measured and is wrong:
          only 21 rules repaint Tailwind utility classes from a distance (.text-gray-400,
          .bg-slate-50, …), which works ONLY because an inline <style> is unlayered and so beats
          @layer utilities — those must move together with the view that uses them, and a green
          fixture does NOT prove such a move is safe (the fixture records what a rule declares,
-         never which rule wins). The other ~104 rules select this package's own semantic classes
+         never which rule wins). The other ~84 rules select this package's own semantic classes
          (.ptah-sidebar, .ptah-nav-item, .ptah-navbar, …), compete with nothing, and should be
          migrated to resources/css/ptah-components.css using the --ptah-* neutral tokens.
 
@@ -89,9 +89,6 @@
         /* Aplicado via .ptah-dark na div raiz, detectado do SO e/ou     */
         /* sobrescrito manualmente pelo usuário via localStorage.         */
 
-        /* Body / Root */
-        .ptah-dark { background-color: #0f172a; color: #e2e8f0; }
-
         /* Sidebar */
         .ptah-dark .ptah-sidebar {
             background-color: #1e293b;
@@ -101,13 +98,6 @@
             border-color: #334155;
         }
         .ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-toggle {
-            color: #94a3b8;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-toggle:hover {
-            background-color: #334155;
             color: #e2e8f0;
         }
         .ptah-dark .ptah-sidebar .ptah-nav-item {
@@ -127,23 +117,11 @@
         .ptah-dark .ptah-sidebar .ptah-logout-btn:hover {
             background-color: #450a0a;
         }
-        .ptah-dark .ptah-sidebar-overlay {
-            /* overlay mobile não muda no dark — já é escuro */
-        }
-
         /* Navbar */
         .ptah-dark .ptah-navbar {
             background-color: #1e293b;
             border-color: #334155;
             box-shadow: 0 1px 3px rgba(0,0,0,.4);
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-search input {
-            background-color: #0f172a;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-search input::placeholder {
-            color: #64748b;
         }
         .ptah-dark .ptah-navbar .ptah-navbar-icon-btn {
             color: #94a3b8;
@@ -201,11 +179,6 @@
         .ptah-dark .ptah-navbar .ptah-mobile-toggle:hover {
             background-color: #334155;
             color: #e2e8f0;
-        }
-
-        /* Main content */
-        .ptah-dark main {
-            background-color: #0f172a;
         }
 
         /* ─── Page Header ──────────────────────────────────── */
@@ -329,9 +302,6 @@
         .ptah-dark .ptah-alert-danger  { background-color: rgba(239,68,68,.15); }
         .ptah-dark .ptah-alert-warn    { background-color: rgba(245,158,11,.15); }
 
-        /* ─── Page Title ─────────────────────────────────────── */
-        .ptah-dark .ptah-page-title { color: #e2e8f0; }
-
         /* ─── Module Toolbar (company/permission views) ──────── */
         .ptah-dark .ptah-module-toolbar {
             background-color: #1e293b;
@@ -367,47 +337,6 @@
         /* ─── Modal genérico (slate classes) ─────────────── */
         .ptah-dark .ptah-modal-panel .text-slate-600 { color: #94a3b8; }
         .ptah-dark .ptah-modal-panel .text-slate-700 { color: #cbd5e1; }
-
-        /* ─── Company Switcher ───────────────────────────── */
-        .ptah-switcher-name {
-            color: #1e293b;
-        }
-        .ptah-switcher-sep {
-            display: inline-block;
-            width: 1px;
-            height: 1.1em;
-            background-color: #cbd5e1;
-            border-radius: 1px;
-            flex-shrink: 0;
-        }
-        .ptah-switcher-bar {
-            background-color: #f1f5f9;
-        }
-        .ptah-switcher-tab {
-            color: #64748b;
-            background: transparent;
-        }
-        .ptah-switcher-tab:hover {
-            background-color: #bfdbfe;
-            color: #1e3a8a;
-        }
-        .ptah-switcher-tab--active {
-            background-color: #1e40af !important;
-            color: #ffffff !important;
-            box-shadow: 0 1px 5px rgba(30,64,175,.35);
-        }
-        .ptah-dark .ptah-switcher-name  { color: #e2e8f0; }
-        .ptah-dark .ptah-switcher-sep   { background-color: #475569; }
-        .ptah-dark .ptah-switcher-bar   { background-color: #1e293b; }
-        .ptah-dark .ptah-switcher-tab   { color: #94a3b8; }
-        .ptah-dark .ptah-switcher-tab:hover {
-            background-color: rgba(59,130,246,.15);
-            color: #93c5fd;
-        }
-        .ptah-dark .ptah-switcher-tab--active {
-            background-color: #1e40af !important;
-            color: #ffffff !important;
-        }
     </style>
 
     {{-- Livewire (se disponível) --}}

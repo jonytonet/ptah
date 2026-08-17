@@ -17,7 +17,76 @@
         "deleted:  site => reason. Dead rules (no element carries the class) and rules that",
         "          only shadowed a dark: variant the component already declares."
     ],
-    "migrated": {},
-    "changed": {},
-    "deleted": {}
+    "migrated": {
+        ":scope-root|dark|background-color": "#0f172a",
+        ":scope-root|dark|color": "#e2e8f0",
+        "main|dark|background-color": "#0f172a",
+        ".ptah-page-title|dark|color": "#e2e8f0",
+        ".ptah-switcher-bar|dark|background-color": "#1e293b",
+        ".ptah-switcher-bar|light|background-color": "#f1f5f9",
+        ".ptah-switcher-name|dark|color": "#e2e8f0",
+        ".ptah-switcher-name|light|color": "#1e293b",
+        ".ptah-switcher-sep|dark|background-color": "#475569",
+        ".ptah-switcher-sep|light|background-color": "#cbd5e1",
+        ".ptah-switcher-sep|light|border-radius": "1px",
+        ".ptah-switcher-sep|light|display": "inline-block",
+        ".ptah-switcher-sep|light|flex-shrink": "0",
+        ".ptah-switcher-sep|light|height": "1.1em",
+        ".ptah-switcher-sep|light|width": "1px",
+        ".ptah-switcher-tab--active|light|box-shadow": "0 1px 5px rgba(30, 64, 175, 0.35)",
+        ".ptah-switcher-tab|dark|color": "#94a3b8",
+        ".ptah-switcher-tab|light|background": "transparent",
+        ".ptah-switcher-tab|light|color": "#64748b"
+    },
+    "changed": {
+        ".ptah-switcher-tab--active|dark|background-color": {
+            "from": "#1e40af !important",
+            "to": "var(--color-primary, #5b21b6) !important",
+            "reason": "aba ativa era navy fixo e ignorava PTAH_COLOR_PRIMARY; passa a usar --ptah-primary, entao num host com config default (#5b21b6) o azul vira violeta"
+        },
+        ".ptah-switcher-tab--active|light|background-color": {
+            "from": "#1e40af !important",
+            "to": "var(--color-primary, #5b21b6) !important",
+            "reason": "aba ativa era navy fixo e ignorava PTAH_COLOR_PRIMARY; passa a usar --ptah-primary, entao num host com config default (#5b21b6) o azul vira violeta"
+        },
+        ".ptah-switcher-tab--active|dark|color": {
+            "from": "#ffffff !important",
+            "to": "#ffffff !important",
+            "reason": "acompanha a troca do fundo para o token de marca: passa a usar --ptah-text-on-accent em vez de branco fixo, hoje com o mesmo valor renderizado"
+        },
+        ".ptah-switcher-tab--active|light|color": {
+            "from": "#ffffff !important",
+            "to": "#ffffff !important",
+            "reason": "acompanha a troca do fundo para o token de marca: passa a usar --ptah-text-on-accent em vez de branco fixo, hoje com o mesmo valor renderizado"
+        },
+        ".ptah-switcher-tab:hover|dark|background-color": {
+            "from": "rgba(59, 130, 246, 0.15)",
+            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 25%, transparent)",
+            "reason": "azul congelado do hover passa a derivar de --ptah-primary via --ptah-primary-soft-d, seguindo a marca escolhida pelo host em vez de um tom fixo"
+        },
+        ".ptah-switcher-tab:hover|light|background-color": {
+            "from": "#bfdbfe",
+            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 22%, #ffffff)",
+            "reason": "azul congelado do hover passa a derivar de --ptah-primary, seguindo a marca escolhida pelo host em vez de um tom fixo"
+        },
+        ".ptah-switcher-tab:hover|dark|color": {
+            "from": "#93c5fd",
+            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 45%, #ffffff)",
+            "reason": "cor de texto do hover passa a derivar de --ptah-primary via --ptah-primary-lite, seguindo a marca escolhida pelo host. O mix de --ptah-primary-lite caiu de 55% para 45% no mesmo passo: a 55% a combinacao primary-lite sobre primary-soft-d media 4.47:1 com o primary default de config/ptah.php, abaixo do minimo 4.5:1 — falha que ja existia em 4 componentes publicados do BaseCrud e nao foi introduzida por esta migracao. Ver ContrastGuardTest::primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries."
+        },
+        ".ptah-switcher-tab:hover|light|color": {
+            "from": "#1e3a8a",
+            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 85%, #000000)",
+            "reason": "cor de texto do hover passa a derivar de --ptah-primary via --ptah-primary-strong, seguindo a marca escolhida pelo host"
+        }
+    },
+    "deleted": {
+        ".ptah-sidebar .ptah-sidebar-toggle|dark|color": "nenhum elemento do pacote carrega a classe .ptah-sidebar-toggle; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-sidebar.blade.php nao usa essa classe",
+        ".ptah-sidebar .ptah-sidebar-toggle:hover|dark|background-color": "nenhum elemento do pacote carrega a classe .ptah-sidebar-toggle; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-sidebar.blade.php nao usa essa classe",
+        ".ptah-sidebar .ptah-sidebar-toggle:hover|dark|color": "nenhum elemento do pacote carrega a classe .ptah-sidebar-toggle; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-sidebar.blade.php nao usa essa classe",
+        ".ptah-navbar .ptah-navbar-search input|dark|background-color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
+        ".ptah-navbar .ptah-navbar-search input|dark|border-color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
+        ".ptah-navbar .ptah-navbar-search input|dark|color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
+        ".ptah-navbar .ptah-navbar-search input::placeholder|dark|color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe"
+    }
 }

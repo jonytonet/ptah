@@ -32,8 +32,20 @@
     /* Light text-on-dark variant for dark mode accents. Mixed with a literal
        #ffffff (not --ptah-surface) on purpose: this is the dark-mode "lite"
        text/border tint, so mixing it against the dark-mode --ptah-surface
-       (#1e293b) would darken it right back down, defeating the whole point. */
-    --ptah-primary-lite:   color-mix(in srgb, var(--ptah-primary) 55%, #ffffff);
+       (#1e293b) would darken it right back down, defeating the whole point.
+
+       45%, not the original 55%: this token is the ink on --ptah-primary-soft-d
+       in four shipped components (.ptah-c-dd_item_sel, .ptah-c-btn_on,
+       .ptah-c-active_badge, .ptah-c-saved_filter_btn) and at 55% that pair
+       measured 4.47:1 with the config/ptah.php default primary (#5b21b6) —
+       under the 4.5:1 floor for text. It went unnoticed because forge.css
+       defaults to #1e40af, which lands at 4.55:1: the demo app passed while a
+       stock install did not. 45% gives 5.63:1 there and 5.67:1 on #1e40af.
+       50% would also pass but leaves only ~0.5 of margin, and --color-primary
+       is host-configurable. Contrast is monotonic in this direction (the token
+       is only ever ink or border on a dark ground), so raising the white share
+       cannot regress any other call site. */
+    --ptah-primary-lite:   color-mix(in srgb, var(--ptah-primary) 45%, #ffffff);
     --ptah-primary-soft-d: color-mix(in srgb, var(--ptah-primary) 25%, transparent);
 
     /* Same "-lite" derivation as --ptah-primary-lite, for the semantic colors — the
@@ -560,4 +572,56 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 
     .ptah-base-crud table { font-size: 11px; }
     .ptah-base-crud th, .ptah-base-crud td { white-space: normal !important; position: static !important; }
+}
+
+/* ── Chrome (layout, sidebar, navbar, switcher) ─────────────────────────── */
+
+/* ── Body / Root (dark) ──────────────────────────────────────────────── */
+.ptah-dark { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
+
+/* ── Main content (dark) ─────────────────────────────────────────────── */
+.ptah-dark main { background-color: var(--ptah-canvas); }
+
+/* ── Page Title (dark) ───────────────────────────────────────────────── */
+.ptah-dark .ptah-page-title { color: var(--ptah-text-strong); }
+
+/* ── Company Switcher ────────────────────────────────────────────────── */
+.ptah-switcher-name {
+    color: var(--ptah-text-strong);
+}
+.ptah-switcher-sep {
+    display: inline-block;
+    width: 1px;
+    height: 1.1em;
+    background-color: var(--ptah-line-control);
+    border-radius: 1px;
+    flex-shrink: 0;
+}
+.ptah-switcher-bar {
+    background-color: var(--ptah-control-ghost);
+}
+.ptah-switcher-tab {
+    color: var(--ptah-text-muted);
+    background: transparent;
+}
+.ptah-switcher-tab:hover {
+    background-color: color-mix(in srgb, var(--ptah-primary) 22%, var(--ptah-surface));
+    color: var(--ptah-primary-strong);
+}
+.ptah-switcher-tab--active {
+    background-color: var(--ptah-primary) !important;
+    color: var(--ptah-text-on-accent) !important;
+    box-shadow: 0 1px 5px rgba(30,64,175,.35);
+}
+.ptah-dark .ptah-switcher-name  { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-switcher-sep   { background-color: var(--ptah-line-control); }
+.ptah-dark .ptah-switcher-bar   { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-switcher-tab   { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-switcher-tab:hover {
+    background-color: var(--ptah-primary-soft-d);
+    color: var(--ptah-primary-lite);
+}
+.ptah-dark .ptah-switcher-tab--active {
+    background-color: var(--ptah-primary) !important;
+    color: var(--ptah-text-on-accent) !important;
 }

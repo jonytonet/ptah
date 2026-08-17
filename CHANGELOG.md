@@ -50,6 +50,41 @@ would double-import Tailwind in the host.
   installation, i.e. the case that decides whether the fix reaches anyone; it now persists before
   returning.
 
+### Fixed — an AA failure that only the default configuration had
+
+`--ptah-primary-lite` is the ink on a `--ptah-primary-soft-d` pill in four shipped components:
+`.ptah-c-dd_item_sel` (selected dropdown row), `.ptah-c-btn_on` (active toggle),
+`.ptah-c-active_badge` and `.ptah-c-saved_filter_btn`. At its original 55% white mix that pair
+measured **4.47:1** against the `config/ptah.php` default primary (`#5b21b6`) — under the 4.5:1
+floor for text.
+
+It survived the 1.13.3 contrast sweep because `forge.css` defaults to a different primary
+(`#1e40af`) which lands at 4.55:1: **the demo app passed while a stock install did not.** Both
+sides of the pair derive from `--color-primary`, so neither ever appears as a hex in the CSS and no
+amount of reading the stylesheet reveals the ratio — it has to be computed, which is why it went
+unseen.
+
+The mix is now 45%, giving 5.63:1 on the config default and 5.67:1 on the `forge.css` one. Contrast
+is monotonic in that direction (the token is only ever ink or border on a dark ground), so no other
+call site can regress; 25 resolved sites shift, all of them the same substitution. 50% would also
+clear AA but leaves ~0.5 of margin, and `--color-primary` is host-configurable.
+
+### Changed — the chrome's dark mode starts moving onto the theme tokens
+
+The dashboard layout carried a 330-line inline `<style>` block that retrofitted dark mode onto the
+chrome with 153 colour literals and no tokens, so a user-selected theme could never reach it. The
+company switcher, the page root and `main` now take their colours from the `--ptah-*` neutrals
+instead (`ptah-components.css`), and five orphan rules were deleted — nothing in the package carries
+`.ptah-sidebar-toggle` or `.ptah-navbar-search`. The block is down to 127 literals / 107 rules.
+
+Visible change: the switcher's active tab and hover were a frozen navy (`#1e40af`) that ignored
+`PTAH_COLOR_PRIMARY` entirely. They now follow the configured brand, so a host on the default
+config sees violet where it used to see blue. That is the fix, not a side effect.
+
+Sidebar and navbar are next; the 21 rules that repaint Tailwind utility classes from a distance stay
+put for now, because an inline `<style>` is unlayered and beats `@layer utilities` — moving those
+without moving their views would change which rule wins.
+
 ### Tests
 - New `InstallCommandUpdateAppCssTest` (7 cases) exercises `updateAppCss()` directly against a
   temp `app.css`: fresh file gets the import in the right position, a realistic fixture with
@@ -58,6 +93,17 @@ would double-import Tailwind in the host.
   untouched, and a missing `app.css` still only warns. Two of the cases guard the defects above by
   their observable effect — both were verified to fail when the corresponding fix is reverted,
   rather than assumed to be covered.
+- New `ContrastGuardTest::primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries`
+  computes the pair for **both** default primaries over both dark grounds, reading the mix
+  percentages out of the CSS so tuning either token re-runs the measurement instead of invalidating
+  it. Verified to fail at the old 55%, reporting 4.4766:1 and naming the four affected components.
+- New golden-fixture harness for the layout teardown: `LayoutStyleBaselineTest` (184 declaration
+  sites plus a ceiling that only ever shrinks) and `LayoutMigrationLedgerTest`, which partitions a
+  frozen pre-migration snapshot — every site that leaves the `<style>` block must be recorded as
+  migrated verbatim, deliberately changed (with from/to/reason) or deleted (with a reason). Without
+  the frozen snapshot, a rule moving between the two stylesheets regenerates both fixtures at once,
+  so a colour change during the move would be indistinguishable from a faithful move; that scenario
+  was reproduced deliberately and the ledger caught it while both fixtures were green.
 
 ## [1.13.3] — 2026-07-29
 
