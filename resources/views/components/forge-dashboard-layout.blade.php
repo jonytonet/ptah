@@ -112,15 +112,6 @@
         .ptah-dark .ptah-page-header a  { background-color: #334155; color: #cbd5e1; }
         .ptah-dark .ptah-page-header a:hover { background-color: #475569; }
 
-        /* ─── Cards ────────────────────────────────────────── */
-        .ptah-dark .ptah-card-default {
-            background-color: #1e293b;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-card-default .border-b,
-        .ptah-dark .ptah-card-default .border-t { border-color: #334155; }
-
         /* ─── Buttons ───────────────────────────────────────── */
         .ptah-dark .ptah-btn-light,
         .ptah-dark .ptah-btn-secondary {

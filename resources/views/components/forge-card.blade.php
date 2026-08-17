@@ -14,7 +14,7 @@
 
 @php
     $typeMap = [
-        'default' => 'bg-white border-gray-100',
+        'default' => '',
         'primary' => 'bg-primary-light border-primary',
         'success' => 'bg-success-light border-success',
         'danger'  => 'bg-danger-light border-danger',

@@ -95,7 +95,7 @@
         '-translate-x-full': !sidebarOpen,
     }"
     :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : {}"
-    class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col overflow-hidden
+    class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 border-r flex flex-col overflow-hidden
            transition-all duration-300 ease-in-out
            md:translate-x-0 md:w-16 md:hover:w-64 lg:translate-x-0"
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"

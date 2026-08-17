@@ -705,7 +705,15 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 /* ── Body / Root (dark) ──────────────────────────────────────────────── */
 .ptah-dark { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 
-/* ── Sidebar (dark) ──────────────────────────────────────────────────── */
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+/* Migrated from forge-sidebar.blade.php's fixed `bg-white border-r
+   border-gray-100` — same token pair as the dark rule below, so the two
+   scopes stay in lockstep instead of only the dark side reacting to the
+   user's tone. */
+.ptah-sidebar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
 .ptah-dark .ptah-sidebar {
     background-color: var(--ptah-surface);
     border-color: var(--ptah-line-strong);
@@ -757,7 +765,15 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
     background-color: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
 }
 
-/* ── Navbar (dark) ───────────────────────────────────────────────────── */
+/* ── Navbar ───────────────────────────────────────────────────────────── */
+/* Migrated from forge-navbar.blade.php's fixed `bg-white border-b
+   border-gray-100` — same token pair as the dark rule below. `shadow-sm`
+   stays a Tailwind utility on the element; only the dark scope needs its own
+   box-shadow override (below), light already gets the right look from it. */
+.ptah-navbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
 .ptah-dark .ptah-navbar {
     background-color: var(--ptah-surface);
     border-color: var(--ptah-line-strong);
@@ -840,11 +856,33 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
     color: var(--ptah-text-strong);
 }
 
-/* ── Main content (dark) ─────────────────────────────────────────────── */
+/* ── Main content ─────────────────────────────────────────────────────── */
+/* Light had no rule at all — the page background was whatever the document
+   default happened to be, so the "Papel"/"Nevoa" light tones never reached it. */
+main { background-color: var(--ptah-canvas); }
 .ptah-dark main { background-color: var(--ptah-canvas); }
 
 /* ── Page Title (dark) ───────────────────────────────────────────────── */
 .ptah-dark .ptah-page-title { color: var(--ptah-text-strong); }
+
+/* ── Card (default variant) ──────────────────────────────────────────── */
+/* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
+   never tokenized) and from the layout's inline <style> `.ptah-card-default`
+   block (dark, fixed #1e293b/#334155/#e2e8f0 literals — see
+   tests/Fixtures/css-layout-ledger.json for the byte-identical migration of
+   those 5 sites). Only the `default` variant: primary/success/danger/warn/dark
+   are semantic Tailwind colors and stay as they are. */
+.ptah-card-default {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-card-default {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-card-default .border-b,
+.ptah-dark .ptah-card-default .border-t { border-color: var(--ptah-line-strong); }
 
 /* ── Company Switcher ────────────────────────────────────────────────── */
 .ptah-switcher-name {

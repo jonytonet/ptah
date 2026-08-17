@@ -15,7 +15,7 @@
 ])
 
 <nav {{ $attributes->merge([
-    'class' => 'ptah-navbar bg-white border-b border-gray-100 shadow-sm ' . ($sticky ? 'fixed top-0 left-0 right-0 z-50 h-16' : 'relative h-16')
+    'class' => 'ptah-navbar border-b shadow-sm ' . ($sticky ? 'fixed top-0 left-0 right-0 z-50 h-16' : 'relative h-16')
 ]) }}>
     <div class="h-full px-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
 
