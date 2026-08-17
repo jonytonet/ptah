@@ -15,7 +15,11 @@
     @endif
 
     {{-- Busca Global --}}
-    <div class="flex-1 min-w-[200px] max-w-xs relative">
+    {{-- Não usa flex-1: quando a toolbar quebra (densidade espaçosa, janela estreita), o
+         grupo de ações vai para a segunda linha e um flex-1 aqui faria a busca inflar para
+         ocupar a primeira linha inteira — o campo virava um retângulo de ~400px e a
+         quebra parecia defeito. Largura estável: full no mobile, fixa a partir de sm. --}}
+    <div class="relative w-full sm:w-60 md:w-72 shrink">
         <x-forge-input
             wire:model.live.debounce.400ms="search"
             type="text"

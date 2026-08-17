@@ -169,9 +169,17 @@
    properties declared here on the .ptah-base-crud root. Unlayered (this file
    has no @layer), so it wins over any Tailwind utility class applied on the
    same element regardless of source order — see the file banner. */
-.ptah-base-crud                          { --ptah-control-h: 2.25rem; --ptah-control-px: .75rem; --ptah-control-fs: .8125rem; --ptah-row-py: .625rem; }
-.ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;  --ptah-control-fs: .75rem;   --ptah-row-py: .25rem; }
-.ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: 1rem;   --ptah-control-fs: .875rem;  --ptah-row-py: 1rem; }
+/* Density recipe. Height is the axis that was actually asked for (the toolbar had three
+   different control heights); font-size and padding-inline ride along, but carefully —
+   they are the axes that cost WIDTH, and the toolbar holds 12 controls on one line.
+   A first pass set comfortable to 13px/.75rem and pushed the right-hand group onto a
+   second row: 12 controls each a little wider is enough to cross the wrap threshold even
+   on a 1500px viewport. Comfortable is therefore pinned to the 12px/.625rem it effectively
+   had before (text-xs, px-3 minus a hair), so this pass cannot make the toolbar wrap where
+   it did not wrap before; only spacious, which the user opts into, is allowed to be wider. */
+.ptah-base-crud                          { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;    --ptah-row-py: .625rem; }
+.ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;   --ptah-control-fs: .6875rem; --ptah-row-py: .25rem; }
+.ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: .875rem; --ptah-control-fs: .8125rem; --ptah-row-py: 1rem; }
 
 .ptah-c-control {
     height: var(--ptah-control-h);
