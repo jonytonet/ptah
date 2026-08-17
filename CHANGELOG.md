@@ -7,6 +7,50 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.13.3] — 2026-07-29
+
+### Fixed — 12 contrast failures, some of which made controls invisible
+
+A dedicated UI/UX audit (ahead of the upcoming theming work) found elements shipping below
+WCAG AA — a few badly enough to be unusable. All ratios below were calculated, not estimated,
+and a new test recomputes them from the source files so a revert breaks the suite.
+
+| Element | Before | After | Minimum |
+|---|---|---|---|
+| Sort-direction arrow, idle (light / dark) | **1.41** / 1.94 | 4.55 / 5.71 | 3.0 (icon) |
+| `forge-button color="warn"` | **2.15** | 6.81 | 4.5 |
+| Search placeholder (light / dark) | 2.50 / 3.35 | 4.63 / 6.23 | 4.5 |
+| Modal subtitle | 2.56 | 4.76 | 4.5 |
+| Clear-filter icon, dropdown chevron, clear-search | 2.54 | 4.76 | 3.0 |
+| Filter-panel muted text / cancel button | 2.54 | 4.76 | 4.5 |
+| `forge-button color="success"` | 2.54 | 5.48 | 4.5 |
+| Toast `success` / `danger` | 2.54 / 3.76 | 5.48 / 4.83 | 4.5 |
+| Bulk-delete and discard buttons | 3.76 | 4.83 | 4.5 |
+| `forge-button color="danger"` | 3.76 | 4.83 | 4.5 |
+| "Columns" button, active | 3.07 | 4.84 | 4.5 |
+| Delete-saved-filter (also moved off `rose` onto the `danger` role) | 3.34 | 5.91 | 4.5 |
+| "Trash" button, active | 4.41 | 5.91 | 4.5 |
+
+The **idle sort arrow at 1.41:1** meant the affordance telling you a column is sortable was
+effectively invisible. `forge-button color="warn"` was white on amber at **2.15:1** — the same
+mistake `forge-badge` already avoided by using dark text.
+
+### Fixed — the solid button scales now darken coherently
+`success` and `danger` had a resting colour that was *darker* than their own hover (or identical
+to it), so hovering gave no feedback or moved the wrong way. Both now darken monotonically
+(`success` 5.48 → 7.68 → 9.72; `danger` 4.83 → 6.47 → 8.31), and the `relief` variant stopped
+hard-coding `text-white` for every colour — it follows each family, which also fixed amber
+(3.19 → 4.59) and the light/secondary variant (**1.47** → 7.00).
+
+> `warn` keeps hover and relief on the same amber: a third, darker step would push the contrast
+> with its dark text back below 4.5 (darkening amber approaches the text's own luminance). Noted
+> in the component.
+
+### Tests
+- New `ContrastGuardTest` (30 cases): extracts the colours from the CSS/Blade **by regex** and
+  recomputes every ratio, plus two tests that compare relative luminance to pin that each button
+  scale keeps darkening. Verified failing before the fix.
+
 ## [1.13.2] — 2026-07-28
 
 ### Changed — the generated controller no longer ships unreachable CRUD actions

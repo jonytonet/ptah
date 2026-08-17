@@ -49,10 +49,10 @@
                  x-transition:leave-end="opacity-0 translate-y-2"
                  class="flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-semibold"
                  :class="{
-                     'bg-success text-white': t.color === 'success',
-                     'bg-warn text-dark':     t.color === 'warn',
-                     'bg-danger text-white':  t.color === 'danger',
-                     'bg-primary text-white': t.color === 'primary'
+                     'bg-[#047857] text-white': t.color === 'success',
+                     'bg-warn text-dark':       t.color === 'warn',
+                     'bg-danger-dark text-white': t.color === 'danger',
+                     'bg-primary text-white':  t.color === 'primary'
                  }">
                 <svg x-show="t.color === 'success'" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <svg x-show="t.color === 'warn'"    class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
@@ -183,7 +183,7 @@
                             {{ __('ptah::ui.btn_cancel') }}
                         </button>
                         <button @click="_bulkConfirm === 'force' ? $wire.bulkForceDelete() : $wire.bulkDelete(); _bulkConfirm = null"
-                            class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger hover:opacity-90">
+                            class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger-dark hover:opacity-90">
                             {{ __('ptah::ui.btn_delete') }}
                         </button>
                     </div>

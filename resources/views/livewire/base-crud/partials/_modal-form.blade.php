@@ -566,7 +566,7 @@
                     {{ __('ptah::ui.modal_unsaved_keep') }}
                 </button>
                 <button @click="_forceClose()"
-                    class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger hover:opacity-90">
+                    class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger-dark hover:opacity-90">
                     {{ __('ptah::ui.modal_unsaved_discard') }}
                 </button>
             </div>

@@ -42,10 +42,10 @@
 
 /* ── Search input ── */
 .ptah-c-search { background-color: rgba(248,250,252,0.6); border-color: #e2e8f0; color: #1e293b; }
-.ptah-c-search::placeholder                { color: #94a3b8; }
+.ptah-c-search::placeholder                { color: #64748b; }
 .ptah-c-search:focus                       { background-color: #ffffff; border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 .ptah-dark .ptah-c-search                  { background-color: rgba(30,41,59,0.6); border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-search::placeholder     { color: #64748b; }
+.ptah-dark .ptah-c-search::placeholder     { color: #94a3b8; }
 .ptah-dark .ptah-c-search:focus            { background-color: #1e293b; border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); }
 
 /* ── Icon/action buttons na toolbar ── */
@@ -85,8 +85,8 @@
 .ptah-c-fp_text            { color: #374151; }
 .ptah-dark .ptah-c-fp_text { color: #cbd5e1; }
 
-.ptah-c-fp_muted           { color: #9ca3af; }
-.ptah-dark .ptah-c-fp_muted { color: #64748b; }
+.ptah-c-fp_muted           { color: #64748b; }
+.ptah-dark .ptah-c-fp_muted { color: #94a3b8; }
 
 .ptah-c-fp_label           { color: #6b7280; }
 .ptah-dark .ptah-c-fp_label { color: #94a3b8; }
@@ -201,7 +201,7 @@
 .ptah-c-modal_ttl          { color: #1e293b; }
 .ptah-dark .ptah-c-modal_ttl { color: #f1f5f9; }
 
-.ptah-c-modal_sub          { color: #94a3b8; }
+.ptah-c-modal_sub          { color: #64748b; }
 .ptah-dark .ptah-c-modal_sub { color: #94a3b8; }
 
 .ptah-c-modal_body         { background-color: rgba(248,250,252,0.4); }
@@ -236,7 +236,7 @@
 .ptah-dark .ptah-c-ql_btn:hover { border-color: var(--ptah-primary-lite); color: var(--ptah-primary-lite); }
 
 /* ── Clear-filters icon button ── */
-.ptah-c-clear_btn            { background-color: #ffffff; color: #94a3b8; border-color: #e2e8f0; }
+.ptah-c-clear_btn            { background-color: #ffffff; color: #64748b; border-color: #e2e8f0; }
 .ptah-dark .ptah-c-clear_btn { background-color: #1e293b; color: #94a3b8; border-color: #334155; }
 
 /* ── Modal close button ── */
@@ -299,13 +299,13 @@
 .ptah-dark .ptah-c-col_dd_item:hover { background-color: rgba(51,65,85,0.6); }
 
 /* ── Toolbar: trash button active (showing trashed) ── */
-.ptah-c-btn_trash_on            { background-color: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.ptah-c-btn_trash_on            { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 .ptah-c-btn_trash_on:hover      { background-color: #fee2e2; }
 .ptah-dark .ptah-c-btn_trash_on { background-color: rgba(220,38,38,0.15); color: #f87171; border-color: rgba(220,38,38,0.4); }
 .ptah-dark .ptah-c-btn_trash_on:hover { background-color: rgba(220,38,38,0.25); }
 
 /* ── Toolbar: columns button when cols are hidden ── */
-.ptah-c-btn_col_on             { background-color: #fffbeb; color: #d97706; border-color: #fde68a; }
+.ptah-c-btn_col_on             { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
 .ptah-c-btn_col_on:hover       { background-color: #fef3c7; }
 .ptah-dark .ptah-c-btn_col_on  { background-color: rgba(217,119,6,0.2); color: #fbbf24; border-color: rgba(217,119,6,0.4); }
 .ptah-dark .ptah-c-btn_col_on:hover { background-color: rgba(217,119,6,0.3); }
@@ -315,7 +315,7 @@
 .ptah-dark .ptah-c-dd_active { color: var(--ptah-primary-lite); }
 
 /* ── Filter panel: chevron button in search dropdown ── */
-.ptah-c-fp_chevron            { color: #9ca3af; }
+.ptah-c-fp_chevron            { color: #64748b; }
 .ptah-c-fp_chevron:hover      { color: #6b7280; }
 .ptah-dark .ptah-c-fp_chevron { color: #64748b; }
 .ptah-dark .ptah-c-fp_chevron:hover { color: #94a3b8; }
@@ -327,10 +327,10 @@
 .ptah-dark .ptah-c-saved_filter_btn:hover { background-color: var(--ptah-primary-soft-d); }
 
 /* ── Filter panel: saved filter delete button ── */
-.ptah-c-saved_filter_del            { background-color: #fff1f2; color: #f43f5e; border-color: #fecdd3; }
-.ptah-c-saved_filter_del:hover      { background-color: #ffe4e6; }
-.ptah-dark .ptah-c-saved_filter_del { background-color: rgba(244,63,94,0.15); color: #fb7185; border-color: rgba(244,63,94,0.3); }
-.ptah-dark .ptah-c-saved_filter_del:hover { background-color: rgba(244,63,94,0.25); }
+.ptah-c-saved_filter_del            { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.ptah-c-saved_filter_del:hover      { background-color: #fee2e2; }
+.ptah-dark .ptah-c-saved_filter_del { background-color: rgba(220,38,38,0.15); color: #f87171; border-color: rgba(220,38,38,0.4); }
+.ptah-dark .ptah-c-saved_filter_del:hover { background-color: rgba(220,38,38,0.25); }
 
 /* ── Filter panel: save filter trigger text button ── */
 .ptah-c-fp_save_btn            { color: #64748b; }
@@ -339,21 +339,21 @@
 .ptah-dark .ptah-c-fp_save_btn:hover { color: var(--ptah-primary-lite); }
 
 /* ── Filter panel: cancel button in save-filter form ── */
-.ptah-c-fp_cancel_btn            { color: #9ca3af; }
+.ptah-c-fp_cancel_btn            { color: #64748b; }
 .ptah-c-fp_cancel_btn:hover      { color: #4b5563; }
-.ptah-dark .ptah-c-fp_cancel_btn { color: #64748b; }
-.ptah-dark .ptah-c-fp_cancel_btn:hover { color: #94a3b8; }
+.ptah-dark .ptah-c-fp_cancel_btn { color: #94a3b8; }
+.ptah-dark .ptah-c-fp_cancel_btn:hover { color: #cbd5e1; }
 
 /* ── Table: sort arrows ── */
 .ptah-c-sort_active                  { color: var(--ptah-primary); }
 .ptah-dark .ptah-c-sort_active       { color: var(--ptah-primary-lite); }
-.ptah-c-sort_idle                    { color: #d1d5db; }
-.ptah-dark .ptah-c-sort_idle         { color: #4b5563; }
+.ptah-c-sort_idle                    { color: #64748b; }
+.ptah-dark .ptah-c-sort_idle         { color: #94a3b8; }
 .ptah-c-sort_hover:hover             { color: var(--ptah-primary); }
 .ptah-dark .ptah-c-sort_hover:hover  { color: var(--ptah-primary-lite); }
 
 /* ── Toolbar: search clear X button ── */
-.ptah-c-search_x                  { color: #9ca3af; transition: color 0.12s; }
+.ptah-c-search_x                  { color: #64748b; transition: color 0.12s; }
 .ptah-c-search_x:hover            { color: #6b7280; }
 .ptah-dark .ptah-c-search_x       { color: #64748b; }
 .ptah-dark .ptah-c-search_x:hover { color: #94a3b8; }
