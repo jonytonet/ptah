@@ -7,6 +7,58 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.14.0] — 2026-08-17
+
+### Fixed — `ptah:install` never wired the host's `app.css` to Ptah's component stylesheet
+
+`updateAppCss()` injected `@source`, `@custom-variant dark` and the brand `@theme` tokens into the
+host's `resources/css/app.css`, but never the `@import` of `ptah-components.css` — the file that
+defines every `.ptah-c-*` BaseCrud class and the 24 neutral `--ptah-*` tokens (`--ptah-surface`,
+`--ptah-line`, `--ptah-text-*`, etc.). Since Tailwind v4 only compiles classes it can see from an
+`@import`/`@source` chain, a fresh install shipped a host app with a **completely unstyled BaseCrud
+UI** — tables, filters, modals — while the command reported every step, including `npm run build`,
+as successful.
+
+`updateAppCss()` now also injects:
+
+```css
+@import '../../vendor/jonytonet/ptah/resources/css/ptah-components.css';
+```
+
+right after `@import 'tailwindcss';` and before any `@theme` block, idempotently (safe to
+re-run, never duplicates an existing import). `ptah-components.css` was chosen over the also
+unused `resources/css/forge.css`: the latter re-declares `@import "tailwindcss"` internally, which
+would double-import Tailwind in the host.
+
+> **Upgrade note:** if you installed ptah before 1.14.0, your `app.css` is missing this import.
+> Either re-run `php artisan ptah:install` (it will only add what's missing) or add the line above
+> manually — see the "BaseCrud renders unstyled" entry in the Troubleshooting section of
+> [docs/InstallationGuide.md](docs/InstallationGuide.md).
+
+### Fixed — two defects in the same method, both surfaced by the import above
+
+- **The `@source` for the package's views stopped being injected.** Its guard was
+  `str_contains($content, 'vendor/jonytonet/ptah')`, and the new import line contains that exact
+  substring — so from the moment the import existed, the guard was always true and the `@source`
+  was never written again. Tailwind would then not scan Ptah's Blade files, and every utility class
+  used *only* inside the package would be tree-shaken out of the host's bundle: a fresh install
+  would still look broken, for a different reason than before. The guard now matches the views
+  path specifically.
+- **A host installed before this release gained nothing by re-running the command.** The method
+  returns early when the brand tokens are already present, and that path never wrote to disk — so
+  the import was computed in memory and discarded. This is the upgrade path for every existing
+  installation, i.e. the case that decides whether the fix reaches anyone; it now persists before
+  returning.
+
+### Tests
+- New `InstallCommandUpdateAppCssTest` (7 cases) exercises `updateAppCss()` directly against a
+  temp `app.css`: fresh file gets the import in the right position, a realistic fixture with
+  pre-existing `@source` lines gets it immediately after `@import 'tailwindcss';`, running the
+  command twice never duplicates it, an `app.css` that already has it is left byte-for-byte
+  untouched, and a missing `app.css` still only warns. Two of the cases guard the defects above by
+  their observable effect — both were verified to fail when the corresponding fix is reverted,
+  rather than assumed to be covered.
+
 ## [1.13.3] — 2026-07-29
 
 ### Fixed — 12 contrast failures, some of which made controls invisible

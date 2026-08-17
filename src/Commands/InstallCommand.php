@@ -163,9 +163,29 @@ class InstallCommand extends Command
 
             $content = file_get_contents($appCss);
 
+            // Import Ptah's compiled component styles (.ptah-c-* BaseCrud classes and the
+            // neutral --ptah-* tokens). Without this, Tailwind never sees those classes and
+            // a fresh install ships a completely unstyled BaseCrud UI. It uses
+            // ptah-components.css (not forge.css) on purpose: forge.css re-declares
+            // `@import "tailwindcss"`, which would double-import Tailwind in the host.
+            // Checked before the "already configured" early return below so that hosts
+            // which ran an older version of this command (missing only this import) also
+            // get it fixed by simply re-running `php artisan ptah:install`.
+            $componentsImport = "@import '../../vendor/jonytonet/ptah/resources/css/ptah-components.css';";
+            if (! str_contains($content, 'ptah-components.css')) {
+                $content = str_replace(
+                    "@import 'tailwindcss';",
+                    "@import 'tailwindcss';\n{$componentsImport}",
+                    $content
+                );
+            }
+
             // Add @source for Ptah package views (if not already present)
+            // Guard narrowed to the views path (not just 'vendor/jonytonet/ptah'): the
+            // components import above also contains that prefix, which would otherwise
+            // make this check always true and this @source line would never be added.
             $ptahSource = "@source '../../vendor/jonytonet/ptah/resources/views/**/*.blade.php';";
-            if (! str_contains($content, 'vendor/jonytonet/ptah')) {
+            if (! str_contains($content, 'vendor/jonytonet/ptah/resources/views')) {
                 // Insert after the last existing @source directive
                 if (preg_match('/(@source[^\n]+\n)(?!@source)/', $content, $m, PREG_OFFSET_CAPTURE)) {
                     $insertPos = $m[0][1] + strlen($m[0][0]);
@@ -192,6 +212,11 @@ class InstallCommand extends Command
 
             // Add Forge design tokens inside @theme (if not already present)
             if (str_contains($content, '--color-primary')) {
+                // Persist even here: on a re-run against an app already fully configured
+                // token-wise, this is the only remaining write that can flush the
+                // components import added above (e.g. a host installed before this fix).
+                file_put_contents($appCss, $content);
+
                 return; // already configured
             }
 

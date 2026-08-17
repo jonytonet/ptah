@@ -1020,6 +1020,25 @@ content: [
 ],
 ```
 
+### BaseCrud renders unstyled (no `.ptah-c-*` classes / `--ptah-*` tokens)
+
+Versions of `ptah:install` **before 1.14.0** injected `@source`, `@custom-variant dark` and the brand `@theme` tokens into `resources/css/app.css`, but never the `@import` of Ptah's own component stylesheet. If you installed ptah before that release, your `app.css` is missing this line and the BaseCrud UI (tables, filters, modals) will build without any `.ptah-c-*` class or the 24 neutral `--ptah-*` tokens — even though the original install reported success.
+
+**Fix — add the import manually**, right after `@import 'tailwindcss';` and before any `@theme` block or your own token overrides:
+
+```css
+@import 'tailwindcss';
+@import '../../vendor/jonytonet/ptah/resources/css/ptah-components.css';
+```
+
+Then rebuild your assets:
+
+```bash
+npm run build
+```
+
+> Re-running `php artisan ptah:install` (>= 1.14.0) also adds this import automatically if it is missing — safe to run again, it will not duplicate any existing directive.
+
 ### Admin password unknown after install
 
 The default admin user is created by ptah's seeder without printing the password in the terminal. Reset it via tinker:
