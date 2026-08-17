@@ -328,6 +328,50 @@ class ContrastGuardTest extends TestCase
         $switcherHoverTextLight = self::compositeHex($configPrimary, 0.85, '#000000'); // --ptah-primary-strong
         $switcherHoverBgLight = self::mixWithWhite($configPrimary, 0.22); // color-mix(primary 22%, --ptah-surface light)
 
+        // --- 18. .ptah-c-act_dup — row "duplicate" icon vs the sticky action cell bg ---
+        // (light was raw text-slate-400, 2.56:1 — failed; dark was already fine and is unchanged)
+        $actDupLight = self::extractHex($css, '/\.ptah-c-act_dup\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'act_dup light');
+        $actDupDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-act_dup\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'act_dup dark');
+
+        // --- 19. .ptah-c-act_restore (light) — row "restore" icon vs the sticky action cell bg ---
+        // Raw --color-success measured 2.54:1 in light and failed. It now follows the host's
+        // --color-success-dark so a brand override reaches the icon, with forge-button's darker
+        // green as the fallback. BOTH ends of that range are asserted, because they differ and
+        // the weaker one is what a stock host actually renders: the fallback (#047857, ~5.48:1)
+        // applies only when the host declares no --color-success-dark at all, while ptah:install
+        // and forge.css both inject #059669 (~3.77:1) — still over the 3:1 icon floor, but with
+        // far less margin, so it is the value worth pinning.
+        // Dark is covered by its own dedicated test below (it renders --color-success directly).
+        $actRestoreFallback = self::extractHex(
+            $css,
+            '/\.ptah-c-act_restore\s*\{[^}]*color:\s*var\(--color-success-dark,\s*(#[0-9a-fA-F]{6})\)/',
+            'act_restore light fallback'
+        );
+        $actRestoreThemed = self::extractHex(
+            $forge,
+            '/--color-success-dark:\s*(#[0-9a-fA-F]{6})/',
+            'forge.css --color-success-dark'
+        );
+
+        // --- 20. .ptah-c-act_del — row "delete" icon vs the sticky action cell bg ---
+        // Both scopes already passed today (raw --color-danger, invariant across scope) — pinned
+        // here so a future edit can't silently regress it while "fixing" the other three icons.
+        if (! preg_match('/\.ptah-c-act_del\s*\{[^}]*color:\s*var\(--color-danger\)/', $css)
+            || ! preg_match('/\.ptah-dark \.ptah-c-act_del\s*\{[^}]*color:\s*var\(--color-danger\)/', $css)) {
+            throw new RuntimeException('ContrastGuardTest: .ptah-c-act_del no longer derives its color from var(--color-danger) in both scopes.');
+        }
+        $colorDanger = self::extractHex($forge, '/--color-danger:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger');
+
+        // --- 21. Breadcrumb separator/link — vs the page canvas. The whole component had no
+        // dark variant at all: the link failed at 3.69:1 and the current item at ~2.05:1
+        // (raw --ptah-primary on a dark ground). The separator's light value was also a
+        // hardcoded gray-400 at 2.54:1; it is now a token and clears the icon floor. The
+        // separator is held to 3:1 rather than 4.5:1 because it is punctuation, not content.
+        $crumbSepLight = self::extractHex($css, '/\.ptah-c-crumb_sep\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb_sep light');
+        $crumbSepDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-crumb_sep\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb_sep dark');
+        $crumbLinkLight = self::extractHex($css, '/\.ptah-c-crumb\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb link light');
+        $crumbLinkDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-crumb\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb link dark');
+
         return [
             '1. modal_sub (light) vs modal header bg' => [$modalSubLight, '#ffffff', 4.5],
             '1. modal_sub (dark) vs modal header dark bg' => [$modalSubDark, '#1e293b', 4.5],
@@ -361,6 +405,18 @@ class ContrastGuardTest extends TestCase
             '15. forge-tab (slot) inactive hover (dark, slate-200) vs card surface' => [$tabHoverDark, '#1e293b', 4.5],
             '16. switcher active tab (--ptah-text-on-accent) vs --ptah-primary (config default)' => [$switcherActiveText, $configPrimary, 4.5],
             '17. switcher hover text (--ptah-primary-strong) vs hover bg (22% mix, light)' => [$switcherHoverTextLight, $switcherHoverBgLight, 4.5],
+            '18. act_dup (light) vs sticky cell bg — icon' => [$actDupLight, '#ffffff', 3.0],
+            '18. act_dup (dark) vs sticky cell dark bg — icon' => [$actDupDark, '#0f172a', 3.0],
+            // Both ends of the restore icon's range: the themed value a stock host renders and
+            // the fallback that applies when the host declares no --color-success-dark.
+            '19. act_restore (light, themed --color-success-dark) vs sticky cell bg — icon' => [$actRestoreThemed, '#ffffff', 3.0],
+            '19. act_restore (light, fallback) vs sticky cell bg — icon' => [$actRestoreFallback, '#ffffff', 3.0],
+            '20. act_del (light) vs sticky cell bg — icon' => [$colorDanger, '#ffffff', 3.0],
+            '20. act_del (dark) vs sticky cell dark bg — icon' => [$colorDanger, '#0f172a', 3.0],
+            '21. breadcrumb separator (light) vs page bg — punctuation, visibility floor' => [$crumbSepLight, '#ffffff', 3.0],
+            '21. breadcrumb separator (dark) vs page bg — punctuation, visibility floor' => [$crumbSepDark, '#0f172a', 3.0],
+            '21. breadcrumb link (light) vs page bg — text' => [$crumbLinkLight, '#ffffff', 4.5],
+            '21. breadcrumb link (dark) vs page bg — text' => [$crumbLinkDark, '#0f172a', 4.5],
         ];
     }
 
@@ -515,6 +571,110 @@ class ContrastGuardTest extends TestCase
                     )
                 );
             }
+        }
+    }
+
+    /**
+     * .ptah-c-act_restore (dark) renders the raw --color-success token straight from
+     * forge.css, not a --ptah-* custom property, so extractHex()'s resolver (which only
+     * substitutes --ptah-* references) cannot turn it into a hex — it has to be read
+     * from forge.css directly, same idiom as the "success"/"danger" forge-button blocks
+     * above. Guarded with a presence check so a revert to --ptah-success-lite (built for
+     * TEXT, at 55% white, and unnecessarily dim for an icon that only needs 3:1) doesn't
+     * silently pass.
+     */
+    #[Test]
+    public function action_icon_restore_dark_uses_the_raw_success_token_and_passes_the_icon_floor(): void
+    {
+        $css = self::css();
+
+        if (! preg_match('/\.ptah-dark \.ptah-c-act_restore\s*\{[^}]*color:\s*var\(--color-success\)/', $css)) {
+            throw new RuntimeException('ContrastGuardTest: .ptah-dark .ptah-c-act_restore no longer derives its color from var(--color-success).');
+        }
+
+        $colorSuccess = self::extractHex(self::forgeCss(), '/--color-success:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-success');
+        $ratio = self::contrastRatio($colorSuccess, '#0f172a');
+
+        $this->assertGreaterThanOrEqual(
+            3.0,
+            $ratio,
+            sprintf('act_restore (dark) %s vs sticky cell dark bg #0f172a = %.2f:1, below 3.0:1 (icon).', $colorSuccess, $ratio)
+        );
+    }
+
+    /**
+     * .ptah-c-act_edit derives both its light (raw --ptah-primary) and dark
+     * (--ptah-primary-lite) colors from the host's --color-primary, which resolves
+     * differently depending on whether the host ever imports forge.css — exactly the
+     * asymmetry documented on primary_lite_ink_on_a_primary_soft_pill_...() above, and
+     * the reason the dark variant (raw --ptah-primary, ~2.0:1 on either default) was
+     * shipped unnoticed. Recomputed against both default primaries in both themes.
+     */
+    #[Test]
+    public function action_icon_edit_passes_the_icon_floor_for_both_default_primaries_in_both_themes(): void
+    {
+        $primaries = [
+            'config/ptah.php default' => self::configPrimaryDefault(),
+            'forge.css default' => self::extractHex(self::forgeCss(), '/--color-primary:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-primary'),
+        ];
+
+        if (! preg_match('/--ptah-primary-lite:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, #ffffff\);/', self::css(), $m)) {
+            throw new RuntimeException('ContrastGuardTest: could not find the --ptah-primary-lite color-mix() declaration.');
+        }
+        $litePct = ((int) $m[1]) / 100;
+
+        foreach ($primaries as $origin => $primary) {
+            $lightRatio = self::contrastRatio($primary, '#ffffff');
+            $this->assertGreaterThanOrEqual(
+                3.0,
+                $lightRatio,
+                sprintf('act_edit (light, %s) raw primary %s vs sticky cell bg #ffffff = %.2f:1, below 3.0:1 (icon).', $origin, $primary, $lightRatio)
+            );
+
+            $lite = self::mixWithWhite($primary, $litePct);
+            $darkRatio = self::contrastRatio($lite, '#0f172a');
+            $this->assertGreaterThanOrEqual(
+                3.0,
+                $darkRatio,
+                sprintf('act_edit (dark, %s) primary-lite %s vs sticky cell dark bg #0f172a = %.2f:1, below 3.0:1 (icon).', $origin, $lite, $darkRatio)
+            );
+        }
+    }
+
+    /**
+     * .ptah-c-crumb_current has the same --color-primary-dependent asymmetry as
+     * .ptah-c-act_edit above (same tokens, same bug: raw --ptah-primary in dark mode
+     * was ~2.05:1). Text floor (4.5:1), not the icon floor, and checked against both
+     * default primaries in both themes for the same reason.
+     */
+    #[Test]
+    public function breadcrumb_current_item_passes_the_text_floor_for_both_default_primaries_in_both_themes(): void
+    {
+        $primaries = [
+            'config/ptah.php default' => self::configPrimaryDefault(),
+            'forge.css default' => self::extractHex(self::forgeCss(), '/--color-primary:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-primary'),
+        ];
+
+        if (! preg_match('/--ptah-primary-lite:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, #ffffff\);/', self::css(), $m)) {
+            throw new RuntimeException('ContrastGuardTest: could not find the --ptah-primary-lite color-mix() declaration.');
+        }
+        $litePct = ((int) $m[1]) / 100;
+
+        foreach ($primaries as $origin => $primary) {
+            $lightRatio = self::contrastRatio($primary, '#ffffff');
+            $this->assertGreaterThanOrEqual(
+                4.5,
+                $lightRatio,
+                sprintf('crumb_current (light, %s) raw primary %s vs page bg #ffffff = %.2f:1, below 4.5:1 (text).', $origin, $primary, $lightRatio)
+            );
+
+            $lite = self::mixWithWhite($primary, $litePct);
+            $darkRatio = self::contrastRatio($lite, '#0f172a');
+            $this->assertGreaterThanOrEqual(
+                4.5,
+                $darkRatio,
+                sprintf('crumb_current (dark, %s) primary-lite %s vs page bg #0f172a = %.2f:1, below 4.5:1 (text).', $origin, $lite, $darkRatio)
+            );
         }
     }
 

@@ -43,9 +43,19 @@ final class CssTokenResolver
         $light = self::parseDeclarationBlock($css, '/:root\s*\{([^}]*)\}/');
         $darkOverrides = self::parseDeclarationBlock($css, '/\.ptah-dark\s*\{([^}]*)\}/');
 
+        // .ptah-base-crud declares a second, narrower family of --ptah-* custom
+        // properties — the toolbar/table density recipe (--ptah-control-h,
+        // --ptah-control-px, --ptah-control-fs, --ptah-row-py). They vary by
+        // DENSITY (the bare selector vs `[data-density="compact"|"spacious"]`),
+        // an axis this resolver has no concept of, so only the bare selector's
+        // values are captured — i.e. what actually renders absent a
+        // data-density override ("comfortable"). They don't vary by light/dark
+        // at all, so — exactly like :root — the same map merges into BOTH scopes.
+        $componentDefaults = self::parseDeclarationBlock($css, '/\.ptah-base-crud\s*\{([^}]*)\}/');
+
         return [
-            'light' => $light,
-            'dark' => array_merge($light, $darkOverrides),
+            'light' => array_merge($light, $componentDefaults),
+            'dark' => array_merge($light, $componentDefaults, $darkOverrides),
         ];
     }
 

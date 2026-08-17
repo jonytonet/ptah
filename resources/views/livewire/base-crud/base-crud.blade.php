@@ -1,4 +1,4 @@
-<div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}"
+<div class="ptah-base-crud" data-density="{{ $viewDensity }}" wire:key="base-crud-{{ $crudTitle }}"
      x-data="{
          _toasts: [],
          _toastSeq: 0,

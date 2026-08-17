@@ -96,7 +96,7 @@
                 {{-- Coluna de ações padrão (sticky: stays visible on horizontal scroll) --}}
                 @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
                     {{-- width:1% + nowrap = shrink-to-fit dos ícones, sem sobra --}}
-                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text ptah-c-thead ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
+                    <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text ptah-c-sticky_th ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
                 @endif
             </tr>
         </thead>
@@ -151,7 +151,6 @@
 
                 <tr style="{{ $rowStyle }}"
                     class="group transition-colors ptah-c-tr ptah-tr
-                        @if($viewDensity === 'compact') @elseif($viewDensity === 'spacious') @endif
                         {{ in_array($row->id ?? 0, $selectedRows) ? 'ptah-c-tr_selected' : '' }}
                         {{ $rowLink ? 'cursor-pointer' : '' }}"
                     @if($rowLink)
@@ -163,7 +162,7 @@
                     {{-- Mestre/detalhe: expandir linha --}}
                     @if (!empty($masterDetails))
                         @php $isExpanded = in_array($row->id ?? 0, $expandedRows, true); @endphp
-                        <td class="px-2 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} ptah-no-print" onclick="event.stopPropagation()">
+                        <td class="px-2 py-(--ptah-row-py) ptah-no-print" onclick="event.stopPropagation()">
                             <button wire:click="toggleDetail({{ $row->id ?? 0 }})" @click.stop
                                 class="p-1.5 -m-1 rounded transition-all text-slate-400 hover:text-primary {{ $isExpanded ? 'rotate-90 text-primary' : '' }}"
                                 title="{{ __('ptah::ui.btn_detail_title') }}"
@@ -178,7 +177,7 @@
 
                     {{-- Checkbox de seleção em bulk --}}
                     @if ($effectivePerms['canDelete'])
-                        <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} ptah-no-print" onclick="event.stopPropagation()">
+                        <td class="px-3 py-(--ptah-row-py) ptah-no-print" onclick="event.stopPropagation()">
                             <input type="checkbox" wire:model.live="selectedRows" value="{{ $row->id ?? 0 }}"
                                    onclick="event.stopPropagation()"
                                    aria-label="{{ __('ptah::ui.bulk_select_row', ['id' => $row->id ?? 0]) }}"
@@ -198,7 +197,7 @@
                                     ? "width:{$cellSavedW}px;min-width:60px;"
                                     : (! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '');
                             @endphp
-                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} whitespace-nowrap {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
+                            <td class="px-3 py-(--ptah-row-py) whitespace-nowrap {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
                                 @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif>
                                 {!! $this->formatCell($col, $row) !!}
                             </td>
@@ -208,7 +207,7 @@
                     {{-- Colunas action --}}
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
-                            <td class="px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap">
+                            <td class="px-3 py-(--ptah-row-py) text-center whitespace-nowrap">
                                 @php
                                     $actionType  = $col['actionType']  ?? 'javascript';
                                     $actionValue = $col['actionValue'] ?? ($col['actionCall'] ?? '');
@@ -266,16 +265,18 @@
                         @endif
                     @endforeach
 
-                    {{-- Botões de ação padrão (sticky column; larger touch targets via p-2/-m-1) --}}
+                    {{-- Botões de ação padrão (sticky column; p-2 gives each a 32x32 touch target,
+                         no negative margin — that used to make adjacent buttons overlap and eat
+                         into the cell's own padding) --}}
                     @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
-                        <td class="sticky right-0 z-[1] px-3 py-{{ $viewDensity === 'compact' ? '1' : '2.5' }} text-center whitespace-nowrap ptah-c-sticky_cell ptah-no-print" style="width:1%">
+                        <td class="sticky right-0 z-[1] px-3 py-(--ptah-row-py) text-center whitespace-nowrap ptah-c-sticky_cell ptah-no-print" style="width:1%">
                             <div class="ptah-row-btns flex items-center justify-center gap-1">
 
                                 {{-- Editar --}}
                                 @if ($effectivePerms['canUpdate'] && !$showTrashed)
                                     <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
                                         @click.stop
-                                        class="p-2 -m-1 rounded transition-colors text-primary hover:text-primary/80"
+                                        class="p-2 rounded transition-colors ptah-c-act_edit"
                                         title="{{ __('ptah::ui.btn_edit_title') }}"
                                         aria-label="{{ __('ptah::ui.btn_edit_title') }}">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -288,7 +289,7 @@
                                 @if ($effectivePerms['canCreate'] && !$showTrashed)
                                     <button wire:click="duplicateRecord({{ $row->id ?? 0 }})" wire:loading.attr="disabled"
                                         @click.stop
-                                        class="p-2 -m-1 rounded transition-colors text-slate-400 hover:text-primary"
+                                        class="p-2 rounded transition-colors ptah-c-act_dup"
                                         title="{{ __('ptah::ui.btn_duplicate_title') }}"
                                         aria-label="{{ __('ptah::ui.btn_duplicate_title') }}">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,7 +303,7 @@
                                     @if ($effectivePerms['canRestore'])
                                         <button wire:click="restoreRecord({{ $row->id ?? 0 }})"
                                             @click.stop
-                                            class="p-2 -m-1 rounded transition-colors text-success hover:text-success/80"
+                                            class="p-2 rounded transition-colors ptah-c-act_restore"
                                             title="{{ __('ptah::ui.btn_restore_title') }}"
                                             aria-label="{{ __('ptah::ui.btn_restore_title') }}">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,7 +314,7 @@
                                 @elseif ($effectivePerms['canDelete'])
                                     <button wire:click="confirmDelete({{ $row->id ?? 0 }})"
                                         @click.stop
-                                        class="p-2 -m-1 rounded transition-colors text-danger hover:text-danger/80"
+                                        class="p-2 rounded transition-colors ptah-c-act_del"
                                         title="{{ __('ptah::ui.btn_delete_title') }}"
                                         aria-label="{{ __('ptah::ui.btn_delete_title') }}">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -160,6 +160,33 @@
 .ptah-c-toolbar            { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
 .ptah-dark .ptah-c-toolbar { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: none; }
 
+/* ── Toolbar controls: uniform height, density-aware ─────────────────────
+   Every toolbar control (buttons, search input, per-page select) has its own
+   Tailwind size utilities (px-3 py-1.5, py-2.5, px-2 py-1.5, forge-button's
+   own scale...) which never agreed on a rendered height. Instead of hand-
+   tuning each call site's padding, every control instead opts into a single
+   built height via .ptah-c-control below, driven by the density custom
+   properties declared here on the .ptah-base-crud root. Unlayered (this file
+   has no @layer), so it wins over any Tailwind utility class applied on the
+   same element regardless of source order — see the file banner. */
+.ptah-base-crud                          { --ptah-control-h: 2.25rem; --ptah-control-px: .75rem; --ptah-control-fs: .8125rem; --ptah-row-py: .625rem; }
+.ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;  --ptah-control-fs: .75rem;   --ptah-row-py: .25rem; }
+.ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: 1rem;   --ptah-control-fs: .875rem;  --ptah-row-py: 1rem; }
+
+.ptah-c-control {
+    height: var(--ptah-control-h);
+    padding-block: 0;
+    padding-inline: var(--ptah-control-px);
+    font-size: var(--ptah-control-fs);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+/* Count badges (filter count, hidden-columns count) and icon glyphs must keep
+   their own fixed w-4 h-4 box instead of shrinking on the row's main axis. */
+.ptah-c-control > svg,
+.ptah-c-control > .rounded-full { flex-shrink: 0; }
+
 /* ── Search input ── */
 .ptah-c-search { background-color: color-mix(in srgb, var(--ptah-field-muted) 60%, transparent); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
 .ptah-c-search::placeholder                { color: var(--ptah-text-muted); }
@@ -273,13 +300,32 @@
 .ptah-dark .ptah-c-tbody_div > * + * { border-top-color: color-mix(in srgb, var(--ptah-line) 50%, transparent); }
 
 /* Sticky action column — opaque (hides content scrolling under it) but tracks the row state
-   so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell */
-.ptah-c-sticky_cell                                              { background-color: var(--ptah-surface); }
+   so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell.
+   border-left + a subtle left shadow give it the edge of a FIXED column instead of a
+   panel floating over the row — without these two, content scrolling underneath reads
+   as "detached" rather than "pinned". */
+.ptah-c-sticky_cell                                              { background-color: var(--ptah-surface); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(15,23,42,.08); }
 /* Dark rows are transparent (see .ptah-c-tr above) over the page canvas (#0f172a), not
    --ptah-surface (#1e293b) — using --ptah-surface here made the sticky column visibly
    lighter than the row it belongs to (a seam). --ptah-canvas matches what a dark row
    actually renders as, so the opaque sticky cell blends in instead of floating on top. */
-.ptah-dark .ptah-c-sticky_cell                                   { background-color: var(--ptah-canvas); }
+.ptah-dark .ptah-c-sticky_cell                                   { background-color: var(--ptah-canvas); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(0,0,0,.3); }
+
+/* Sticky action column HEADER — must be OPAQUE, because .ptah-c-thead is translucent in
+   dark (color-mix(panel 80%, transparent)) and a sticky <th> that lets horizontally
+   scrolling content show through is the defect this replaces.
+
+   Opaque is not enough on its own though: .ptah-c-tbl_wrap declares no background, so
+   the translucent neighbours composite over the page canvas and land on
+   mix(panel 80%, canvas) — while a flat var(--ptah-panel) here would be measurably
+   lighter (#1e293b vs #1b2538) and leave a seam down the header, in exactly the spot
+   this is meant to clean up. So the dark value states that composite explicitly: same
+   rendered colour as its neighbours, but opaque. Light needs no such trick — the header
+   is already opaque there. Same banding as the rest of the header (2px bottom rule) plus
+   the sticky column's own left edge, matching .ptah-c-sticky_cell. */
+.ptah-c-sticky_th            { background-color: var(--ptah-panel); border-bottom: 2px solid var(--ptah-line-strong); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(15,23,42,.08); }
+.ptah-dark .ptah-c-sticky_th { background-color: color-mix(in srgb, var(--ptah-panel) 80%, var(--ptah-canvas)); border-bottom: 2px solid var(--ptah-line-strong); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(0,0,0,.3); }
+
 .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell                  { background-color: var(--ptah-surface-hover); }
 /* 30%, matching .ptah-dark .ptah-c-tr:hover exactly (both composite --ptah-surface-hover
    over the same canvas backdrop) — now that the resting state above tracks the canvas
@@ -290,6 +336,36 @@
 .ptah-c-tr_selected:hover .ptah-c-sticky_cell                    { background-color: var(--ptah-primary-softer); }
 .ptah-dark .ptah-c-tr_selected .ptah-c-sticky_cell,
 .ptah-dark .ptah-c-tr_selected:hover .ptah-c-sticky_cell         { background-color: var(--ptah-primary-soft-d); }
+
+/* Row action icons (edit / duplicate / restore / delete) — none had a dark: variant,
+   so at least one always failed the 3:1 AA floor for icons depending on theme. Colors
+   derive from tokens (neutral) or the existing brand/semantic vars, never a literal,
+   so a future theme override still reaches these. Measured against the sticky cell's
+   own background (--ptah-surface light / --ptah-canvas dark):
+     edit    : light var(--ptah-primary) ~8.7-9.0:1 (unchanged) -> dark var(--ptah-primary-lite) ~7.4-7.7:1 (was raw --ptah-primary, ~2.0:1)
+     duplicate: light var(--ptah-text-muted) #64748b ~4.76:1 (was text-slate-400, ~2.56:1) -> dark var(--ptah-text-muted) #94a3b8 ~6.96:1 (unchanged)
+     restore : light var(--color-success-dark) ~3.77:1, falling back to #047857 ~5.48:1 (was raw --color-success, ~2.54:1) -> dark var(--color-success) ~7.04:1 (unchanged)
+     delete  : light/dark var(--color-danger) ~3.76:1 / ~4.74:1 (already passing both, unchanged) */
+.ptah-c-act_edit            { color: var(--ptah-primary); }
+.ptah-c-act_edit:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_edit { color: var(--ptah-primary-lite); }
+
+.ptah-c-act_dup            { color: var(--ptah-text-muted); }
+.ptah-c-act_dup:hover      { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-act_dup { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-act_dup:hover { color: var(--ptah-primary-lite); }
+
+/* Follows the host's --color-success-dark when set (that is what makes a brand
+   override reach this icon); the fallback is the darker green forge-button already
+   ships, which carries more margin than forge.css's own #059669. A host that
+   overrides --color-success-dark with a light green would need to re-check this. */
+.ptah-c-act_restore            { color: var(--color-success-dark, #047857); }
+.ptah-c-act_restore:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_restore { color: var(--color-success); }
+
+.ptah-c-act_del            { color: var(--color-danger); }
+.ptah-c-act_del:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_del { color: var(--color-danger); }
 
 /* ── Empty state ── */
 .ptah-c-empty_box          { background-color: var(--ptah-surface-hover); box-shadow: 0 0 0 6px #f8fafc66, inset 0 0 0 1px #e2e8f0; border-radius: 9999px; }
@@ -551,6 +627,32 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 
 .ptah-c-tab_active_warn            { color: var(--color-warn); border-color: var(--color-warn); }
 .ptah-dark .ptah-c-tab_active_warn { color: var(--ptah-warn-lite); border-color: var(--ptah-warn-lite); }
+
+/* ── Breadcrumb (forge-breadcrumb) ─────────────────────────────
+   Had no dark: variant anywhere in the package — every role failed or
+   nearly failed AA once the page went dark (measured against the layout
+   canvas, #0f172a): separator ~7.03:1 (passes), link (raw text-gray-500)
+   ~3.69:1 (fails 4.5:1), current item (raw text-primary) ~2.05:1 (fails
+   badly — practically invisible). Light values for link/current are
+   preserved byte-for-byte (text-gray-500 / --ptah-primary); only the
+   .ptah-dark overrides are new, and both derive from existing tokens so a
+   future theme/brand override still reaches them.
+   The separator's light value was Tailwind's gray-400 (#9ca3af), a literal, at
+   2.54:1 against white — below even the 3:1 non-text floor. The WCAG case for
+   leaving it was arguable (a decorative punctuation glyph is exempt under
+   1.4.3/1.4.11), but the token case was not: a hardcoded hex here is invisible
+   to the user's theme choice, which is the whole point of this pass. Now
+   --ptah-text-muted, which is a token AND clears the floor at 4.76:1. */
+.ptah-c-crumb_sep            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-crumb_sep { color: var(--ptah-text-faint); }
+
+.ptah-c-crumb              { color: var(--ptah-text-faint); transition: color 150ms ease; }
+.ptah-c-crumb:hover        { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-crumb   { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-crumb:hover { color: var(--ptah-primary-lite); }
+
+.ptah-c-crumb_current            { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-crumb_current { color: var(--ptah-primary-lite); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */

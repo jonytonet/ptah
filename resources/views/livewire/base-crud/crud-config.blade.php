@@ -6,6 +6,7 @@
         flat
         color="dark"
         size="sm"
+        class="ptah-c-control"
         :title="__('ptah::ui.cfg_btn_title')">
         <x-slot name="icon">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

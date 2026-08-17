@@ -52,6 +52,45 @@ class NeutralTokenBaselineTest extends TestCase
     }
 
     /**
+     * CssTokenResolver merges the `.ptah-base-crud` token block into BOTH scopes,
+     * because the density recipe it holds varies by density rather than by theme.
+     * That merge takes precedence over `:root`, so a token declared in both places
+     * would resolve to the component value everywhere in the test's view — while in
+     * a browser it would only apply inside a BaseCrud. Every assertion about that
+     * token outside the CRUD would then be measuring a colour that never renders.
+     *
+     * The two blocks must therefore stay disjoint. They are today (35 tokens vs 4);
+     * this keeps them that way.
+     */
+    #[Test]
+    public function the_root_and_base_crud_token_blocks_declare_disjoint_names(): void
+    {
+        $css = self::css();
+
+        $this->assertSame(1, preg_match('/:root\s*\{([^}]*)\}/', $css, $root));
+        $this->assertSame(
+            1,
+            preg_match('/\.ptah-base-crud\s*\{([^}]*)\}/', $css, $crud),
+            'Bloco de tokens `.ptah-base-crud { ... }` (a receita de densidade) nao encontrado.'
+        );
+
+        preg_match_all('/(--ptah-[a-z0-9-]+)\s*:/', $root[1], $rootNames);
+        preg_match_all('/(--ptah-[a-z0-9-]+)\s*:/', $crud[1], $crudNames);
+
+        $collisions = array_values(array_intersect($rootNames[1], $crudNames[1]));
+
+        $this->assertSame(
+            [],
+            $collisions,
+            'Token declarado em `:root` E em `.ptah-base-crud`: '.implode(', ', $collisions)."\n".
+            'O resolver de teste mescla o bloco do componente sobre o :root nos dois escopos, '.
+            'entao a partir daqui ele resolveria esse token para o valor do componente em todo '.
+            'lugar — inclusive fora do BaseCrud, onde no browser o valor do :root e que vale. '.
+            'Renomeie o token do componente.'
+        );
+    }
+
+    /**
      * CssTokenResolver::parseTokens() reads the FIRST bare `.ptah-dark { ... }`
      * block in the file as the dark token map. The layout migration is about to
      * add a second one — the rule that paints the page background — and if that
