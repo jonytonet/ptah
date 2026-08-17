@@ -443,6 +443,31 @@ return [
     'profile_remove_btn' => 'Remover',
     'profile_remove_confirm' => 'Remover foto de perfil?',
 
+    'profile_tab_appearance' => 'Aparência',
+    'profile_appearance_updated' => 'Aparência atualizada.',
+    'profile_appearance_light_label' => 'Tom claro',
+    'profile_appearance_dark_label' => 'Tom escuro',
+    'profile_appearance_accent_label' => 'Cor de destaque',
+    'profile_appearance_text_label' => 'Cor da fonte',
+    'profile_appearance_light_puro' => 'Puro',
+    'profile_appearance_light_papel' => 'Papel',
+    'profile_appearance_light_nevoa' => 'Névoa',
+    'profile_appearance_dark_carvao' => 'Carvão',
+    'profile_appearance_dark_grafite' => 'Grafite',
+    'profile_appearance_dark_meianoite' => 'Meia-noite',
+    'profile_appearance_accent_azul' => 'Azul',
+    'profile_appearance_accent_violeta' => 'Violeta',
+    'profile_appearance_accent_ciano' => 'Ciano',
+    'profile_appearance_accent_verde' => 'Verde',
+    'profile_appearance_accent_teal' => 'Teal',
+    'profile_appearance_accent_ambar' => 'Âmbar',
+    'profile_appearance_accent_vermelho' => 'Vermelho',
+    'profile_appearance_accent_rosa' => 'Rosa',
+    'profile_appearance_accent_cinza' => 'Cinza',
+    'profile_appearance_text_suave' => 'Suave',
+    'profile_appearance_text_neutra' => 'Neutra',
+    'profile_appearance_text_forte' => 'Forte',
+
     /*
     |--------------------------------------------------------------------------
     | Labels de status (compartilhados)

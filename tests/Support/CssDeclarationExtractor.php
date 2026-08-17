@@ -79,7 +79,12 @@ final class CssDeclarationExtractor
                     continue;
                 }
 
-                $scope = str_starts_with($selector, '.ptah-dark') ? 'dark' : 'light';
+                // str_contains, not str_starts_with: presets de aparência usam
+                // `html.ptah-dark[data-ptah-dark="..."]` (AppearancePresetContrastTest),
+                // que não COMEÇA com ".ptah-dark" mas precisa ser escopo "dark" para
+                // resolver var() contra o mapa correto. `data-ptah-dark` (sem o ponto)
+                // não casa a substring ".ptah-dark", então não há falso positivo.
+                $scope = str_contains($selector, '.ptah-dark') ? 'dark' : 'light';
 
                 // A bare `.ptah-dark { ... }` rule is dark-scoped but has no
                 // remainder once the scope prefix is removed. Key it explicitly

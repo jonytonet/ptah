@@ -135,6 +135,13 @@ class ContrastGuardTest extends TestCase
         return strtolower($m[1]);
     }
 
+    private static function toastHostBlade(): string
+    {
+        static $blade = null;
+
+        return $blade ??= file_get_contents(dirname(__DIR__, 3).'/resources/views/components/forge-toast-host.blade.php');
+    }
+
     private static function baseCrudBlade(): string
     {
         static $blade = null;
@@ -284,17 +291,25 @@ class ContrastGuardTest extends TestCase
         $fpCancelLight = self::extractHex($css, '/\.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_cancel_btn light');
         $fpCancelDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-fp_cancel_btn\s*\{[^}]*(?<!-)color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'fp_cancel_btn dark');
 
-        // --- 13. Toast notifications (base-crud.blade.php) — white/dark text on solid bg ---
-        $baseCrud = self::baseCrudBlade();
-        $toastSuccessBg = self::extractHex($baseCrud, "/'bg-\[(#[0-9a-fA-F]{6})\] text-white':\s*t\.color === 'success'/", 'toast success bg');
-        if (! preg_match("/'bg-danger-dark text-white':\s*t\.color === 'danger'/", $baseCrud)) {
-            throw new RuntimeException("ContrastGuardTest: base-crud.blade.php danger toast no longer reuses 'bg-danger-dark' (AA regression).");
+        // --- 13. Toast notifications — white/dark text on solid bg ---
+        // The stack used to live inside base-crud.blade.php, which made toasts a
+        // privilege of CRUD screens; it now lives in forge-toast-host and listens on the
+        // window, so /profile and anything else can raise one. Reading the new file is
+        // the point: had this kept pointing at base-crud it would have silently stopped
+        // guarding the colours it exists to guard.
+        $toastHost = self::toastHostBlade();
+        $toastSuccessBg = self::extractHex($toastHost, "/'bg-\[(#[0-9a-fA-F]{6})\] text-white':\s*t\.color === 'success'/", 'toast success bg');
+        if (! preg_match("/'bg-danger-dark text-white':\s*t\.color === 'danger'/", $toastHost)) {
+            throw new RuntimeException("ContrastGuardTest: forge-toast-host.blade.php danger toast no longer reuses 'bg-danger-dark' (AA regression).");
         }
-        if (! preg_match("/'bg-warn text-dark':\s*t\.color === 'warn'/", $baseCrud)) {
-            throw new RuntimeException('ContrastGuardTest: base-crud.blade.php warn toast no longer uses bg-warn/text-dark.');
+        if (! preg_match("/'bg-warn text-dark':\s*t\.color === 'warn'/", $toastHost)) {
+            throw new RuntimeException('ContrastGuardTest: forge-toast-host.blade.php warn toast no longer uses bg-warn/text-dark.');
         }
 
         // --- 14. Bulk-delete confirm button (base-crud.blade.php) & discard-changes button (_modal-form.blade.php) ---
+        // Still base-crud: only the toast stack moved out, this button did not.
+        $baseCrud = self::baseCrudBlade();
+
         if (! preg_match('/text-white bg-danger-dark hover:opacity-90/', $baseCrud)) {
             throw new RuntimeException('ContrastGuardTest: base-crud.blade.php bulk-delete confirm button no longer uses bg-danger-dark (AA regression).');
         }
@@ -454,7 +469,18 @@ class ContrastGuardTest extends TestCase
             throw new RuntimeException('ContrastGuardTest: could not read --ptah-surface from the .ptah-dark token block.');
         }
         $avatarBgDark = self::compositeHex($configPrimary, ((int) $avatarMatch[1]) / 100, strtolower($surfaceMatch[1]));
-        $avatarInkDark = self::mixWithWhite($configPrimary, ((int) $inkMatch[1]) / 100);
+
+        // Read the -lite mix percentage HERE. It was originally taken from $inkMatch,
+        // which is populated in another test method and is undefined in this provider:
+        // ((int) null) / 100 is 0, mixWithWhite(primary, 0) is pure #ffffff, and white on
+        // the avatar tint passes comfortably. The assertion was green while measuring a
+        // colour the page never renders — the same silent-pass trap this file warns about
+        // two cases below, walked straight into.
+        if (! preg_match('/--ptah-primary-lite:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, #ffffff\);/', $css, $liteForAvatar)) {
+            throw new RuntimeException('ContrastGuardTest: could not read the --ptah-primary-lite mix percentage for the avatar case.');
+        }
+
+        $avatarInkDark = self::mixWithWhite($configPrimary, ((int) $liteForAvatar[1]) / 100);
 
         $navUsernameDark = self::extractHex(
             $css,

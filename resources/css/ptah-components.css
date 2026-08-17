@@ -436,6 +436,15 @@
 .ptah-c-modal_ft           { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-c-modal_ft { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
 
+/* Section heading inside a panel — the label above a group of controls. There was no
+   general-purpose class for this (only .ptah-c-modal_ttl, which is modal-specific), so
+   screens reached for the `text-dark` utility instead. That utility is --color-dark
+   (#1e293b): invisible on a dark page, and there is no dark: variant on it. The
+   Aparência tab's four group titles were unreadable for exactly this reason, and so were
+   five older spots on the same screen (2FA entries, recovery codes, session rows, the
+   photo picker label) — those had simply never been noticed. */
+.ptah-c-section_ttl       { color: var(--ptah-text-strong); }
+
 /* ── Modal form fields ── */
 .ptah-c-form_lbl           { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-form_lbl { color: var(--ptah-text-muted); }
@@ -877,3 +886,233 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
     background-color: var(--ptah-primary) !important;
     color: var(--ptah-text-on-accent) !important;
 }
+
+/* ── Presets de aparência (escolhidos pelo usuário em /profile) ── */
+/*
+   4 eixos independentes, aplicados via atributos no <html> (server-side —
+   ver Ptah\Livewire\Auth\ProfilePage e a whitelist em $lightPresets /
+   $darkPresets / $accentPresets / $textPresets do próprio componente):
+     data-ptah-light  = puro | papel | nevoa            (tom claro)
+     data-ptah-dark   = carvao | grafite | meianoite    (tom escuro)
+     data-ptah-accent = azul | violeta | ciano | verde | teal | ambar | vermelho | rosa | cinza
+     data-ptah-text   = suave | neutra | forte          (cor da fonte)
+
+   Especificidade — leia antes de tocar aqui. Os tokens base (acima, :root e
+   .ptah-dark) são ambos (0,1,0), decididos por ORDEM DE FONTE (.ptah-dark
+   vence por vir depois). Um preset escrito como `html[data-ptah-light="papel"]`
+   teria (0,1,1) e venceria `.ptah-dark` mesmo em modo escuro, destruindo-o.
+   Por isso:
+     - tom claro:  `html[data-ptah-light="X"]:not(.ptah-dark)`   — só casa fora do dark.
+     - tom escuro: `html.ptah-dark[data-ptah-dark="X"]`          — (0,2,1), sempre vence `.ptah-dark`.
+     - texto:      mesma lógica, claro com `:not(.ptah-dark)`, escuro com `html.ptah-dark[...]`.
+     - accent:     `html[data-ptah-accent="X"]` — (0,1,1), vale nos dois modos
+                    (só sobrescreve --color-primary; --ptah-primary e todos os
+                    tints -ring/-soft/-border/-lite/-soft-d/-strong em :root já
+                    o referenciam via var(), então seguem automaticamente).
+
+   `.ptah-dark` é aplicada SOMENTE em <html> — ver applyTheme() em
+   forge-dashboard-layout.blade.php; @custom-variant dark (forge.css) já
+   cobre toda a subárvore, inclusive conteúdo @@teleport('body'). Se algum
+   dia voltar a marcar também o <body>, os presets de tom escuro abaixo
+   deixam de casar ali e o body herda os tokens do bloco `.ptah-dark` nu em
+   silêncio — ver ThemeCarrierTest.
+
+   Só literais nos blocos abaixo — nenhum var() (ver
+   AppearancePresetContrastTest::css_presets_never_reference_a_var; um
+   var(--ptah-*) aqui resolveria contra o escopo errado no
+   CssDeclarationExtractor usado pelos testes golden).
+
+   O default (puro / grafite / neutra) NÃO é idêntico ao que já está em
+   :root/.ptah-dark acima — todo divergiu em pelo menos um token (ex.:
+   --ptah-line-field: #94a3b8 em :root vs #8f95a0 em "puro") — por isso os
+   três eixos são escritos por extenso abaixo, nada é reaproveitado por
+   omissão.
+
+   Valores verificados por busca binária contra alvos de contraste (342
+   pares, 0 falhas — ver AppearancePresetContrastTest). Não arredondar.
+*/
+
+/* ── Tom claro ── */
+html[data-ptah-light="puro"]:not(.ptah-dark) {
+    --ptah-canvas: #ffffff;
+    --ptah-surface: #ffffff;
+    --ptah-surface-raised: #ffffff;
+    --ptah-surface-sunken: #f8fafc;
+    --ptah-surface-hover: #f8fafc;
+    --ptah-menu-hover: #f9fafb;
+    --ptah-panel: #f8fafc;
+    --ptah-field: #ffffff;
+    --ptah-field-muted: #f8fafc;
+    --ptah-control-ghost: #f1f5f9;
+    --ptah-control-ghost-hover: #e2e8f0;
+    --ptah-line: #f1f5f9;
+    --ptah-line-strong: #e2e8f0;
+    --ptah-line-control: #cbd5e1;
+    --ptah-line-field: #8f95a0;
+}
+
+html[data-ptah-light="papel"]:not(.ptah-dark) {
+    --ptah-canvas: #fdfcfb;
+    --ptah-surface: #ffffff;
+    --ptah-surface-raised: #ffffff;
+    --ptah-surface-sunken: #f7f5f2;
+    --ptah-surface-hover: #f5f3f0;
+    --ptah-menu-hover: #f7f5f2;
+    --ptah-panel: #f7f5f2;
+    --ptah-field: #ffffff;
+    --ptah-field-muted: #f7f5f2;
+    --ptah-control-ghost: #efece7;
+    --ptah-control-ghost-hover: #e3ded6;
+    --ptah-line: #efece7;
+    --ptah-line-strong: #e3ded6;
+    --ptah-line-control: #cfc8bd;
+    --ptah-line-field: #8f95a0;
+}
+
+html[data-ptah-light="nevoa"]:not(.ptah-dark) {
+    --ptah-canvas: #ffffff;
+    --ptah-surface: #ffffff;
+    --ptah-surface-raised: #ffffff;
+    --ptah-surface-sunken: #fafafa;
+    --ptah-surface-hover: #f4f4f5;
+    --ptah-menu-hover: #f4f4f5;
+    --ptah-panel: #fafafa;
+    --ptah-field: #ffffff;
+    --ptah-field-muted: #fafafa;
+    --ptah-control-ghost: #f4f4f5;
+    --ptah-control-ghost-hover: #e4e4e7;
+    --ptah-line: #f4f4f5;
+    --ptah-line-strong: #e4e4e7;
+    --ptah-line-control: #d4d4d8;
+    --ptah-line-field: #8f95a0;
+}
+
+/* ── Tom escuro ── */
+html.ptah-dark[data-ptah-dark="carvao"] {
+    --ptah-canvas: #18181b;
+    --ptah-surface: #27272a;
+    --ptah-surface-raised: #27272a;
+    --ptah-surface-sunken: #18181b;
+    --ptah-surface-hover: #3f3f46;
+    --ptah-menu-hover: #3f3f46;
+    --ptah-panel: #27272a;
+    --ptah-field: #18181b;
+    --ptah-field-muted: #27272a;
+    --ptah-control-ghost: #3f3f46;
+    --ptah-control-ghost-hover: #52525b;
+    --ptah-line: #3f3f46;
+    --ptah-line-strong: #3f3f46;
+    --ptah-line-control: #52525b;
+    --ptah-line-field: #6c7177;
+}
+
+html.ptah-dark[data-ptah-dark="grafite"] {
+    --ptah-canvas: #0f172a;
+    --ptah-surface: #1e293b;
+    --ptah-surface-raised: #1e293b;
+    --ptah-surface-sunken: #0f172a;
+    --ptah-surface-hover: #334155;
+    --ptah-menu-hover: #334155;
+    --ptah-panel: #1e293b;
+    --ptah-field: #0f172a;
+    --ptah-field-muted: #1e293b;
+    --ptah-control-ghost: #334155;
+    --ptah-control-ghost-hover: #475569;
+    --ptah-line: #334155;
+    --ptah-line-strong: #334155;
+    --ptah-line-control: #475569;
+    --ptah-line-field: #6d7278;
+}
+
+html.ptah-dark[data-ptah-dark="meianoite"] {
+    --ptah-canvas: #080e1c;
+    --ptah-surface: #111c33;
+    --ptah-surface-raised: #111c33;
+    --ptah-surface-sunken: #080e1c;
+    --ptah-surface-hover: #243354;
+    --ptah-menu-hover: #243354;
+    --ptah-panel: #111c33;
+    --ptah-field: #080e1c;
+    --ptah-field-muted: #111c33;
+    --ptah-control-ghost: #243354;
+    --ptah-control-ghost-hover: #33456b;
+    --ptah-line: #243354;
+    --ptah-line-strong: #243354;
+    --ptah-line-control: #33456b;
+    --ptah-line-field: #63686e;
+}
+
+/* ── Cor da fonte — claro ──
+   As três escalas foram resolvidas contra o PIOR fundo de qualquer tom do
+   modo claro (ver cabeçalho da seção), então tom e cor-da-fonte são eixos
+   realmente independentes: qualquer combinação tom×escala passa >=4.5:1. */
+html[data-ptah-text="suave"]:not(.ptah-dark) {
+    --ptah-text-strong: #474a50;
+    --ptah-text-field: #4d5157;
+    --ptah-text: #55585f;
+    --ptah-text-secondary: #5d6168;
+    --ptah-text-muted: #60656c;
+    --ptah-text-faint: #686c74;
+}
+
+html[data-ptah-text="neutra"]:not(.ptah-dark) {
+    --ptah-text-strong: #2d2f33;
+    --ptah-text-field: #36383c;
+    --ptah-text: #43464b;
+    --ptah-text-secondary: #51545a;
+    --ptah-text-muted: #5d6168;
+    --ptah-text-faint: #646870;
+}
+
+html[data-ptah-text="forte"]:not(.ptah-dark) {
+    --ptah-text-strong: #17181a;
+    --ptah-text-field: #202124;
+    --ptah-text: #303236;
+    --ptah-text-secondary: #404247;
+    --ptah-text-muted: #51545a;
+    --ptah-text-faint: #585c63;
+}
+
+/* ── Cor da fonte — escuro ── */
+html.ptah-dark[data-ptah-text="suave"] {
+    --ptah-text-strong: #d9dadc;
+    --ptah-text-field: #d0d2d4;
+    --ptah-text: #c5c7c9;
+    --ptah-text-secondary: #bcbdc0;
+    --ptah-text-muted: #b6b8bb;
+    --ptah-text-faint: #adb0b3;
+}
+
+html.ptah-dark[data-ptah-text="neutra"] {
+    --ptah-text-strong: #f1f2f2;
+    --ptah-text-field: #e8e9ea;
+    --ptah-text: #d7d9da;
+    --ptah-text-secondary: #c9cacc;
+    --ptah-text-muted: #babcbf;
+    --ptah-text-faint: #b4b7ba;
+}
+
+html.ptah-dark[data-ptah-text="forte"] {
+    --ptah-text-strong: #f9fafa;
+    --ptah-text-field: #f6f7f7;
+    --ptah-text: #eceded;
+    --ptah-text-secondary: #dadcdd;
+    --ptah-text-muted: #c7c9cb;
+    --ptah-text-faint: #c0c2c5;
+}
+
+/* ── Cor de destaque ──
+   Só troca --color-primary (literal, propositalmente — é o próprio ponto
+   de definição da marca, não algo derivável de outro token). --ptah-primary
+   em :root referencia var(--color-primary, #5b21b6), e todos os tints
+   (-ring/-soft/-softer/-border/-strong/-lite/-soft-d) partem de
+   --ptah-primary, então seguem automaticamente nos dois modos. */
+html[data-ptah-accent="azul"]     { --color-primary: #1d4ed8; }
+html[data-ptah-accent="violeta"]  { --color-primary: #6d28d9; }
+html[data-ptah-accent="ciano"]    { --color-primary: #0e7490; }
+html[data-ptah-accent="verde"]    { --color-primary: #047857; }
+html[data-ptah-accent="teal"]     { --color-primary: #0f766e; }
+html[data-ptah-accent="ambar"]    { --color-primary: #b45309; }
+html[data-ptah-accent="vermelho"] { --color-primary: #b91c1c; }
+html[data-ptah-accent="rosa"]     { --color-primary: #be185d; }
+html[data-ptah-accent="cinza"]    { --color-primary: #475569; }

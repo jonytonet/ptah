@@ -22,8 +22,25 @@
     'theme'   => null,
 ])
 
+@php
+    // Aba "Aparência" de /profile (Ptah\Livewire\Auth\ProfilePage). O servidor é a
+    // fonte da verdade para usuário autenticado — renderizar os 4 atributos aqui
+    // (em vez de via Alpine/localStorage) é o que evita flash no F5/navegação.
+    // Visitante não autenticado sempre recebe os defaults (sanitize(null)); o
+    // toggle claro/escuro de visitante continua 100% em localStorage (ver
+    // :theme abaixo, que só é sobrescrito quando o chamador não informou nada).
+    $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
+        auth()->check() ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme') : null
+    );
+    $theme = $theme ?? $ptahAppearance['mode'];
+@endphp
+
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -286,6 +303,23 @@
                 Persistencia em localStorage:
                     ptah_sidebar_collapsed -> 'true'/'false'
                     ptah_dark_mode         -> 'true'/'false'
+
+        ATENÇÃO — NUNCA use aspas duplas dentro do x-data abaixo, nem em código nem em
+        comentário. O atributo é delimitado por aspas duplas, então a primeira aspa
+        interna FECHA o atributo e todo o resto do script é cuspido na página como
+        texto visível. Foi exatamente o que aconteceu: três ocorrências (a palavra
+        "mode" num comentário, um seletor meta[name=csrf-token] e um exemplo de
+        seletor de preset) despejaram o Alpine inteiro na tela. Prosa longa vem para
+        cá, em comentário Blade; dentro do atributo, só aspas simples.
+        Guardado por LayoutXDataQuotingTest.
+
+        Sobre o portador do tema: <html> é o único elemento que recebe .ptah-dark/.dark
+        (applyTheme mais abaixo). Isso é invariante de arquitetura, não estilo: o
+        @@custom-variant dark de forge.css já cobre toda a subárvore, inclusive conteúdo
+        teleportado para o body, e os atributos data-ptah-* dos presets de aparência só
+        existem no <html>. Se .ptah-dark voltasse a ser aplicada no body, os presets de
+        tom escuro deixariam de casar e o body herdaria os tokens do bloco .ptah-dark
+        genérico — silenciosamente, sem erro. Ver ThemeCarrierTest.
     --}}
     <div
         x-data="{
@@ -307,15 +341,37 @@
                 return false;
             })(),
 
+            // Rota de persistência do modo claro/escuro — só existe quando o usuário
+            // está autenticado E o módulo de auth está habilitado (mesmo gate da rota
+            // /profile, ver routes/ptah-auth.php). null para visitante: toggleDark()
+            // então permanece 100% localStorage, como sempre foi.
+            themeModeEndpoint: @js(auth()->check() && \Illuminate\Support\Facades\Route::has('ptah.appearance.theme-mode')
+                ? route('ptah.appearance.theme-mode')
+                : null),
+
+            persistThemeMode() {
+                if (!this.themeModeEndpoint) return;
+                var token = document.querySelector('meta[name=csrf-token]');
+                fetch(this.themeModeEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': token ? token.getAttribute('content') : '',
+                    },
+                    body: JSON.stringify({ mode: this.darkMode ? 'dark' : 'light' }),
+                    keepalive: true,
+                }).catch(() => {});
+            },
+
             applyTheme(isDark) {
-                document.body.classList.toggle('ptah-dark', isDark);
-                document.body.classList.toggle('dark', isDark);
                 document.documentElement.classList.toggle('ptah-dark', isDark);
                 document.documentElement.classList.toggle('dark', isDark);
             },
 
             init() {
-                /* Aplica ptah-dark + dark no body/html para cobrir elementos @@teleport('body') */
+                /* Portador do tema: ver o comentario Blade acima deste elemento. */
                 this.applyTheme(this.darkMode);
                 /* Atualiza breakpoints reativamente */
                 this._onResize = () => { this.isMd = window.innerWidth >= 768; this.isLg = window.innerWidth >= 1024; };
@@ -330,6 +386,7 @@
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
                 this.applyTheme(this.darkMode);
+                this.persistThemeMode();
             },
 
             toggleSidebarCollapse() {
@@ -337,7 +394,6 @@
                 localStorage.setItem('ptah_sidebar_collapsed', this.sidebarCollapsed);
             }
         }"
-        :class="{ 'ptah-dark': darkMode, 'dark': darkMode }"
         class="min-h-screen"
     >
 
@@ -359,6 +415,9 @@
                     {{ $slot }}
                 </div>
             </main>
+
+            {{-- Pilha global de toasts: escuta `ptah-toast` no window, serve qualquer tela --}}
+            <x-forge-toast-host />
         </div>
     </div>
 
