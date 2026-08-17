@@ -63,9 +63,21 @@
     {{-- Brand palette from config('ptah.theme.colors') --}}
     @include('ptah::partials.theme-colors')
 
-    {{-- FROZEN: this block selects Tailwind utility classes by descendant selector, not by
-         color token, so the Fase 1 neutral tokens do not apply here. Do not tokenize; see the
-         --ptah-* custom properties in resources/css/ptah-components.css instead. --}}
+    {{-- BEING DISMANTLED — do not add color here. Guarded by LayoutStyleBaselineTest, which
+         holds a golden fixture of all 184 declaration sites and a ceiling that only ever
+         shrinks (153 hex literals / 127 rules today).
+
+         An earlier note called the whole block un-tokenizable. That was measured and is wrong:
+         only 21 rules repaint Tailwind utility classes from a distance (.text-gray-400,
+         .bg-slate-50, …), which works ONLY because an inline <style> is unlayered and so beats
+         @layer utilities — those must move together with the view that uses them, and a green
+         fixture does NOT prove such a move is safe (the fixture records what a rule declares,
+         never which rule wins). The other ~104 rules select this package's own semantic classes
+         (.ptah-sidebar, .ptah-nav-item, .ptah-navbar, …), compete with nothing, and should be
+         migrated to resources/css/ptah-components.css using the --ptah-* neutral tokens.
+
+         Why it matters: a literal written here is invisible to the user's theme choice, so the
+         sidebar and navbar would stay slate no matter which tone the user picks. --}}
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
