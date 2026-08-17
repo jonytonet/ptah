@@ -362,6 +362,57 @@ class ContrastGuardTest extends TestCase
         }
         $colorDanger = self::extractHex($forge, '/--color-danger:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger');
 
+        // --- 22. Sidebar logout button label — vs its own resting and hover backgrounds ---
+        // The button has a text label, so the floor is 4.5:1, and by that measure the label
+        // never passed: raw text-danger was 4.29:1 on the old frozen #450a0a and 3.08:1 on the
+        // light bg-danger-light. Tokenising the dark background made it worse (3.27:1), which is
+        // how it was caught. The ink is now per-scope. All four states are pinned, because
+        // fixing hover while leaving rest broken (or the reverse) is the easy mistake here.
+        // Both inks are --ptah-* tokens that resolve to a color-mix() over --color-danger, so
+        // extractHex() cannot reduce them to a hex (it only substitutes --ptah-* names, and the
+        // brand var survives). Feeding it that string would not fail loudly — hexdec() happily
+        // digests "color-mix(..." into a meaningless RGB and the assertion would PASS on a
+        // colour that does not exist. So assert the declarations point at the right tokens, then
+        // recompute both mixes here, reading the percentages from the CSS.
+        if (! preg_match('/\.ptah-sidebar \.ptah-logout-btn\s*\{[^}]*color:\s*var\(--ptah-danger-strong\)/', $css)
+            || ! preg_match('/\.ptah-dark \.ptah-sidebar \.ptah-logout-btn\s*\{[^}]*color:\s*var\(--ptah-danger-lite\)/', $css)) {
+            throw new RuntimeException(
+                'ContrastGuardTest: the sidebar logout label no longer takes its ink from '.
+                '--ptah-danger-strong (light) / --ptah-danger-lite (dark). Raw --color-danger '.
+                'fails 4.5:1 against both of this button\'s backgrounds.'
+            );
+        }
+
+        if (! preg_match('/--ptah-danger-strong:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, #000000\)/', $css, $strongMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not read the --ptah-danger-strong mix percentage.');
+        }
+
+        if (! preg_match('/--ptah-danger-lite:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, #ffffff\)/', $css, $liteMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not read the --ptah-danger-lite mix percentage.');
+        }
+
+        // Mixing with black is the same arithmetic as compositing at that alpha over black.
+        $logoutInkLight = self::compositeHex($colorDanger, ((int) $strongMatch[1]) / 100, '#000000');
+        $logoutInkDark = self::mixWithWhite($colorDanger, ((int) $liteMatch[1]) / 100);
+
+        if (! preg_match(
+            '/\.ptah-dark \.ptah-sidebar \.ptah-logout-btn:hover\s*\{[^}]*background-color:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, transparent\)/',
+            $css,
+            $logoutHoverMatch
+        )) {
+            throw new RuntimeException('ContrastGuardTest: could not read the sidebar logout hover tint from ptah-components.css.');
+        }
+
+        $logoutHoverDarkBg = self::compositeHex(
+            $colorDanger,
+            ((int) $logoutHoverMatch[1]) / 100,
+            // --ptah-surface in dark: the sidebar's own background.
+            '#1e293b'
+        );
+        // Light hover comes from the view's `hover:bg-danger-light` utility, i.e. the host's
+        // --color-danger-light token — read it rather than assuming Tailwind's red-100.
+        $dangerLightBg = self::extractHex($forge, '/--color-danger-light:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger-light');
+
         // --- 21. Breadcrumb separator/link — vs the page canvas. The whole component had no
         // dark variant at all: the link failed at 3.69:1 and the current item at ~2.05:1
         // (raw --ptah-primary on a dark ground). The separator's light value was also a
@@ -413,6 +464,10 @@ class ContrastGuardTest extends TestCase
             '19. act_restore (light, fallback) vs sticky cell bg — icon' => [$actRestoreFallback, '#ffffff', 3.0],
             '20. act_del (light) vs sticky cell bg — icon' => [$colorDanger, '#ffffff', 3.0],
             '20. act_del (dark) vs sticky cell dark bg — icon' => [$colorDanger, '#0f172a', 3.0],
+            '22. sidebar logout label (light) at rest vs white sidebar — text' => [$logoutInkLight, '#ffffff', 4.5],
+            '22. sidebar logout label (light) on hover vs --color-danger-light — text' => [$logoutInkLight, $dangerLightBg, 4.5],
+            '22. sidebar logout label (dark) at rest vs --ptah-surface — text' => [$logoutInkDark, '#1e293b', 4.5],
+            '22. sidebar logout label (dark) on hover vs composited tint — text' => [$logoutInkDark, $logoutHoverDarkBg, 4.5],
             '21. breadcrumb separator (light) vs page bg — punctuation, visibility floor' => [$crumbSepLight, '#ffffff', 3.0],
             '21. breadcrumb separator (dark) vs page bg — punctuation, visibility floor' => [$crumbSepDark, '#0f172a', 3.0],
             '21. breadcrumb link (light) vs page bg — text' => [$crumbLinkLight, '#ffffff', 4.5],

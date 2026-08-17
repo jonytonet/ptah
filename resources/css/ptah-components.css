@@ -57,6 +57,13 @@
     --ptah-danger-lite:  color-mix(in srgb, var(--color-danger, #ef4444) 55%, #ffffff);
     --ptah-warn-lite:    color-mix(in srgb, var(--color-warn, #f59e0b) 55%, #ffffff);
 
+    /* The mirror of -lite: danger dark enough to read as TEXT on a danger-tinted
+       LIGHT background (bg-danger-light, #fee2e2). Needed because raw --color-danger
+       on that tint is 3.08:1 and --color-danger-dark only reaches 3.95:1 — both under
+       the 4.5:1 floor. 75% lands on 5.00:1; 80% would technically pass at 4.53:1 but
+       0.03 of margin is not margin when --color-danger is host-configurable. */
+    --ptah-danger-strong: color-mix(in srgb, var(--color-danger, #ef4444) 75%, #000000);
+
     /* ── Neutral tokens (Fase 1 restyle) ──────────────────────────────────
        Light-mode defaults for every neutral (non-brand, non-semantic) color
        used below. Each has a dark override in the .ptah-dark block right
@@ -688,6 +695,129 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 
 /* ── Body / Root (dark) ──────────────────────────────────────────────── */
 .ptah-dark { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
+
+/* ── Sidebar (dark) ──────────────────────────────────────────────────── */
+.ptah-dark .ptah-sidebar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-logo-wrapper {
+    border-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-nav-item {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-sidebar .ptah-nav-item:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+/* Active item pill: was a fixed navy (#1e3a8a bg / #93c5fd text) that ignored
+   PTAH_COLOR_PRIMARY no matter what the host configured. Same brand-token pair
+   as .ptah-c-dd_item_sel / .ptah-c-btn_on / .ptah-c-active_badge /
+   .ptah-c-saved_filter_btn — contrast already covered by
+   ContrastGuardTest::primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries,
+   which checks --ptah-primary-lite ink on a --ptah-primary-soft-d pill over
+   --ptah-surface (this exact composition) and --ptah-canvas, for both shipped
+   default primaries. */
+.ptah-dark .ptah-sidebar .ptah-nav-item.ptah-nav-active {
+    background-color: var(--ptah-primary-soft-d);
+    color: var(--ptah-primary-lite);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-footer {
+    border-color: var(--ptah-line-strong);
+}
+/* Logout hover: the frozen danger red (#450a0a) now derives from --color-danger, so a
+   host-configured danger tone reaches it.
+   The button carries a TEXT label, not just an icon (forge-sidebar.blade.php), so the
+   floor here is 4.5:1, not the 3:1 used for UI surfaces — and by that measure the label
+   never passed in either theme: raw text-danger read 4.29:1 on the old #450a0a and only
+   3.08:1 on the light bg-danger-light. Tinting the dark background from the token made
+   the dark case worse still (3.27:1), so the ink is now per-scope as well: -strong on
+   light, -lite on dark. All four states clear the floor — light 6.11:1 at rest / 5.00:1
+   on hover, dark 6.87:1 / 5.79:1. */
+.ptah-sidebar .ptah-logout-btn {
+    color: var(--ptah-danger-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-logout-btn {
+    color: var(--ptah-danger-lite);
+}
+.ptah-dark .ptah-sidebar .ptah-logout-btn:hover {
+    background-color: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
+}
+
+/* ── Navbar (dark) ───────────────────────────────────────────────────── */
+.ptah-dark .ptah-navbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-icon-btn {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-icon-btn:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-app-name {
+    color: var(--ptah-text-strong);
+}
+/* --ptah-text-secondary, not --ptah-text: both render #cbd5e1 in dark (byte-identical
+   here) but diverge in light (#374151 vs #475569). "Texto secundário de chrome" is the
+   correct semantic role for a navbar label, and light mode is where the choice becomes
+   observable once the theme switcher lands. */
+.ptah-dark .ptah-navbar .ptah-navbar-username {
+    color: var(--ptah-text-secondary);
+}
+/* Avatar: same brand-token substitution as the sidebar's nav-active pill above (fixed
+   navy #1e3a8a / #93c5fd -> --ptah-primary-soft-d / --ptah-primary-lite). Contrast
+   already covered by the same ContrastGuardTest case referenced above. */
+.ptah-dark .ptah-navbar .ptah-user-avatar-bg {
+    background-color: var(--ptah-primary-soft-d);
+}
+.ptah-dark .ptah-navbar .ptah-user-avatar-text {
+    color: var(--ptah-primary-lite);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown a,
+.ptah-dark .ptah-navbar .ptah-user-dropdown button {
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown hr {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown a,
+.ptah-dark .ptah-navbar .ptah-admin-dropdown button {
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
+    color: var(--ptah-icon-muted);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown hr {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-mobile-toggle {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-navbar .ptah-mobile-toggle:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
 
 /* ── Main content (dark) ─────────────────────────────────────────────── */
 .ptah-dark main { background-color: var(--ptah-canvas); }
