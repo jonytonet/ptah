@@ -771,11 +771,23 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-navbar .ptah-navbar-username {
     color: var(--ptah-text-secondary);
 }
+/* The button wrapping avatar + name + chevron only had `hover:bg-gray-100` and no dark
+   counterpart, so hovering it (or opening its dropdown) painted a near-white chip in the
+   middle of a dark navbar — and everything inside is deliberately light, so the label
+   dropped to 1.35:1 and the avatar initial to 1.40:1. Matches the icon buttons beside it. */
+.ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
 /* Avatar: same brand-token substitution as the sidebar's nav-active pill above (fixed
-   navy #1e3a8a / #93c5fd -> --ptah-primary-soft-d / --ptah-primary-lite). Contrast
-   already covered by the same ContrastGuardTest case referenced above. */
+   navy #1e3a8a / #93c5fd -> brand tint / --ptah-primary-lite).
+
+   OPAQUE, unlike the pill: --ptah-primary-soft-d is translucent, so it composited over
+   whatever the parent button was showing and drifted lighter on hover, taking the initial
+   from 5.63:1 down to 4.34:1. An avatar chip should be a solid colour, not a tint that
+   moves when you hover its container. Mixing against --ptah-surface instead of transparent
+   yields the identical colour at rest and holds it through the hover. */
 .ptah-dark .ptah-navbar .ptah-user-avatar-bg {
-    background-color: var(--ptah-primary-soft-d);
+    background-color: color-mix(in srgb, var(--ptah-primary) 25%, var(--ptah-surface));
 }
 .ptah-dark .ptah-navbar .ptah-user-avatar-text {
     color: var(--ptah-primary-lite);

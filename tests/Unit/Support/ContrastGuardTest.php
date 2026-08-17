@@ -413,6 +413,55 @@ class ContrastGuardTest extends TestCase
         // --color-danger-light token — read it rather than assuming Tailwind's red-100.
         $dangerLightBg = self::extractHex($forge, '/--color-danger-light:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger-light');
 
+        // --- 23. Navbar user chip, hovered, dark ---
+        // The chip's button had only `hover:bg-gray-100` and no dark rule, so hovering it in dark
+        // mode painted a near-white background under content that is deliberately light: the
+        // label measured 1.35:1 and the avatar initial 1.40:1. Everything here is asserted
+        // against the HOVER background specifically, because the resting state passed and the
+        // hover state is what nobody checked. The avatar's own tint is now opaque so it cannot
+        // drift with the parent's background — that drift alone cost 5.63:1 -> 4.34:1.
+        if (! preg_match(
+            '/\.ptah-dark \.ptah-navbar \.ptah-navbar-user-btn:hover\s*\{[^}]*background-color:\s*var\(--ptah-surface-hover\)/',
+            $css
+        )) {
+            throw new RuntimeException(
+                'ContrastGuardTest: the navbar user chip lost its dark hover background. '.
+                'Without it, hover:bg-gray-100 paints a near-white chip in a dark navbar.'
+            );
+        }
+
+        if (! preg_match(
+            '/\.ptah-dark \.ptah-navbar \.ptah-user-avatar-bg\s*\{[^}]*background-color:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, var\(--ptah-surface\)\)/',
+            $css,
+            $avatarMatch
+        )) {
+            throw new RuntimeException(
+                'ContrastGuardTest: the dark navbar avatar background is no longer an OPAQUE mix '.
+                'against --ptah-surface. A translucent tint here drifts with the parent button\'s '.
+                'hover background and drops the initial below AA.'
+            );
+        }
+
+        // The dark override, not :root's — read it from the .ptah-dark block explicitly.
+        if (! preg_match('/\.ptah-dark\s*\{[^}]*--ptah-surface-hover:\s*(#[0-9a-fA-F]{6})/s', $css, $hoverMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not read --ptah-surface-hover from the .ptah-dark token block.');
+        }
+        $navHoverBg = strtolower($hoverMatch[1]);
+
+        // Avatar tint is opaque and mixed against --ptah-surface, so it is the SAME whether or
+        // not the parent is hovered — which is the property being pinned.
+        if (! preg_match('/\.ptah-dark\s*\{[^}]*--ptah-surface:\s*(#[0-9a-fA-F]{6})/s', $css, $surfaceMatch)) {
+            throw new RuntimeException('ContrastGuardTest: could not read --ptah-surface from the .ptah-dark token block.');
+        }
+        $avatarBgDark = self::compositeHex($configPrimary, ((int) $avatarMatch[1]) / 100, strtolower($surfaceMatch[1]));
+        $avatarInkDark = self::mixWithWhite($configPrimary, ((int) $inkMatch[1]) / 100);
+
+        $navUsernameDark = self::extractHex(
+            $css,
+            '/\.ptah-dark \.ptah-navbar \.ptah-navbar-username\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/',
+            'navbar username dark'
+        );
+
         // --- 21. Breadcrumb separator/link — vs the page canvas. The whole component had no
         // dark variant at all: the link failed at 3.69:1 and the current item at ~2.05:1
         // (raw --ptah-primary on a dark ground). The separator's light value was also a
@@ -464,6 +513,8 @@ class ContrastGuardTest extends TestCase
             '19. act_restore (light, fallback) vs sticky cell bg — icon' => [$actRestoreFallback, '#ffffff', 3.0],
             '20. act_del (light) vs sticky cell bg — icon' => [$colorDanger, '#ffffff', 3.0],
             '20. act_del (dark) vs sticky cell dark bg — icon' => [$colorDanger, '#0f172a', 3.0],
+            '23. navbar username (dark) vs the chip HOVER background — text' => [$navUsernameDark, $navHoverBg, 4.5],
+            '23. navbar avatar initial (dark) vs its opaque tint — text' => [$avatarInkDark, $avatarBgDark, 4.5],
             '22. sidebar logout label (light) at rest vs white sidebar — text' => [$logoutInkLight, '#ffffff', 4.5],
             '22. sidebar logout label (light) on hover vs --color-danger-light — text' => [$logoutInkLight, $dangerLightBg, 4.5],
             '22. sidebar logout label (dark) at rest vs --ptah-surface — text' => [$logoutInkDark, '#1e293b', 4.5],

@@ -247,7 +247,11 @@
 
                 {{-- User Dropdown --}}
                 <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open" class="flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+                    {{-- ptah-navbar-user-btn: hook para o hover no tema escuro. Sem ele, o
+                         hover:bg-gray-100 abaixo pintava um chip quase branco no meio da
+                         navbar escura, e o nome/avatar (que sao claros de proposito) ficavam
+                         em ~1.4:1. Ver .ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover. --}}
+                    <button @click="open = !open" class="ptah-navbar-user-btn flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 transition-colors">
                         @php
                             $__photoPath = auth()->user()->profile_photo_path ?? null;
                             $__photoUrl  = $__photoPath ? \Illuminate\Support\Facades\Storage::url($__photoPath) : null;

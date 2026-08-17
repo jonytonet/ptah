@@ -128,8 +128,8 @@
         },
         ".ptah-navbar .ptah-user-avatar-bg|dark|background-color": {
             "from": "#1e3a8a",
-            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 25%, transparent)",
-            "reason": "mesmo motivo do pill ativo do sidebar: fundo do avatar era navy fixo e ignorava PTAH_COLOR_PRIMARY; passa a usar --ptah-primary-soft-d, seguindo a marca escolhida pelo host"
+            "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 25%, #1e293b)",
+            "reason": "fundo do avatar era navy congelado (#1e3a8a) e passa a derivar de --ptah-primary, para seguir a marca do host. Usa uma mistura OPACA contra --ptah-surface, nao o token translucido --ptah-primary-soft-d usado no pill do menu: translucido, ele compunha sobre o fundo do botao pai e clareava no hover, derrubando a inicial do avatar de 5.63:1 para 4.34:1. A cor em repouso e identica; o que muda e nao acompanhar mais o hover. No mesmo commit o botao pai ganhou hover escuro (so tinha hover:bg-gray-100, que pintava um chip quase branco na navbar escura e deixava o nome em 1.35:1 e a inicial em 1.40:1). Guardas: ContrastGuardTest casos 23."
         },
         ".ptah-navbar .ptah-user-avatar-text|dark|color": {
             "from": "#93c5fd",
