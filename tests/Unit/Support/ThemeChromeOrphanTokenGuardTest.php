@@ -86,18 +86,6 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
             'in light mode — a regression, not a fix. `.ptah-navbar .ptah-user-dropdown a` (the profile link) '.
             'IS tokenized; `button` deliberately is not.',
 
-        // ── (A) real orphans, deliberately NOT fixed yet — see the CSS
-        //        comments at each selector for the numbers ────────────────
-        '.ptah-sidebar .ptah-nav-item' => 'PENDING decision (see comment in ptah-components.css above this '.
-            'selector): the group button (text-gray-600) and the child link (text-gray-500) share this class '.
-            'but paint two different grays, and no single --ptah-text-* token lands within ~20/255 of both at '.
-            'once. Needs a product call on whether to unify the shade (like .ptah-dark already does) or keep '.
-            'them visually distinct.',
-        '.ptah-navbar .ptah-admin-dropdown svg' => 'PENDING decision (see comment in ptah-components.css above '.
-            'this selector): the icons are text-gray-400, which is 56/47/36 off --ptah-icon-muted (the token '.
-            'the .ptah-dark rule uses) — far past the ~20/255 caution line. The numerically closer token '.
-            '(--ptah-line-field) is a form-border role and would be a confusing scope pairing.',
-
         // ── (A) real orphan, OUT OF SCOPE for this pass by explicit instruction ──
         '.ptah-page-title' => 'Genuine defect (fixed `text-slate-800` utility in permission-guide.blade.php, '.
             'page-list.blade.php, audit-list.blade.php and department-list.blade.php). Explicitly out of scope: '.

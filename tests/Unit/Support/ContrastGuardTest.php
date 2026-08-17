@@ -511,6 +511,14 @@ class ContrastGuardTest extends TestCase
         $userDropdownLinkLight = self::extractHex($css, '/\.ptah-navbar \.ptah-user-dropdown a\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar user-dropdown link light');
         $adminDropdownLinkLight = self::extractHex($css, '/\.ptah-navbar \.ptah-admin-dropdown a,\s*\.ptah-navbar \.ptah-admin-dropdown button\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar admin-dropdown link light');
 
+        // --- 25. Sidebar nav-item (light) and admin-dropdown svg (light) — the two axes that
+        // were PENDING in ThemeChromeOrphanTokenGuardTest until now. The nav-item pair
+        // (text-gray-600 7.56:1 / text-gray-500 4.83:1) is now unified onto --ptah-text-muted;
+        // the admin-dropdown icon (text-gray-400) failed the 3:1 icon floor outright (2.54:1)
+        // and --ptah-icon-muted fixes that.
+        $navItemLight = self::extractHex($css, '/(?<!\.ptah-dark )\.ptah-sidebar \.ptah-nav-item\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'sidebar nav-item light');
+        $adminDropdownSvgLight = self::extractHex($css, '/(?<!\.ptah-dark )\.ptah-navbar \.ptah-admin-dropdown svg\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'navbar admin-dropdown svg light');
+
         return [
             '1. modal_sub (light) vs modal header bg' => [$modalSubLight, '#ffffff', 4.5],
             '1. modal_sub (dark) vs modal header dark bg' => [$modalSubDark, '#1e293b', 4.5],
@@ -569,6 +577,8 @@ class ContrastGuardTest extends TestCase
             '24. navbar mobile-toggle (light) vs navbar surface — icon' => [$navbarMobileToggleLight, '#ffffff', 3.0],
             '24. navbar user-dropdown link (light) vs dropdown surface — text' => [$userDropdownLinkLight, '#ffffff', 4.5],
             '24. navbar admin-dropdown link (light) vs dropdown surface — text' => [$adminDropdownLinkLight, '#ffffff', 4.5],
+            '25. sidebar nav-item (light, unified via --ptah-text-muted) vs sidebar surface — text' => [$navItemLight, '#ffffff', 4.5],
+            '25. navbar admin-dropdown svg (light, was text-gray-400 at 2.54:1) vs dropdown surface — icon' => [$adminDropdownSvgLight, '#ffffff', 3.0],
         ];
     }
 

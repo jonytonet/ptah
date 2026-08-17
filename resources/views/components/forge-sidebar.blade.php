@@ -148,7 +148,7 @@
                             @click="open = !open"
                             title="{{ $itemLabel }}"
                             class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150
-                                {{ $groupActive ? 'text-primary font-semibold' : 'text-gray-600 hover:text-primary' }}"
+                                {{ $groupActive ? 'text-primary font-semibold' : 'hover:text-primary' }}"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                 {!! $renderIcon($itemIcon) !!}
@@ -187,7 +187,7 @@
                                         class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
                                             {{ $childActive
                                                 ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                                : 'text-gray-500 hover:text-primary'
+                                                : 'hover:text-primary'
                                             }}"
                                     >
                                         <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-sm">
@@ -228,7 +228,7 @@
                             class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150 relative
                                 {{ $isActive
                                     ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                    : 'text-gray-600 hover:text-primary'
+                                    : 'hover:text-primary'
                                 }}"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">

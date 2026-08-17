@@ -755,17 +755,19 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
     color: var(--ptah-text-strong);
 }
-/* Base nav-item text color is INTENTIONALLY left off the neutral-token axis
-   for now: the group button (text-gray-600, #4b5563) and the child link
-   (text-gray-500, #6b7280) share this exact class but paint two different
-   grays, and no single --ptah-text-* token lands within ~20/255 of BOTH at
-   once — --ptah-text-muted is 1/6/14 off the button but 31/35/43 off the
-   child link; --ptah-icon-muted is 7/2/11 off the child link but 25/31/40
-   off the button. The .ptah-dark rule below sidesteps this by unifying both
-   to one shade already; doing the same in light would be a bigger visual
-   jump than this pass is authorized to make silently. See the documented
-   exception for `.ptah-nav-item|dark|color` in
-   ThemeChromeOrphanTokenGuardTest. */
+/* Base nav-item text color: the group button (text-gray-600, #4b5563, 7.56:1
+   on white) and the child link (text-gray-500, #6b7280, 4.83:1) shared this
+   exact class but painted two different grays — an accident of the two call
+   sites being styled independently, not a deliberate design choice, so
+   converging both onto one token is more coherent than preserving that
+   accident. --ptah-text-muted unifies them onto the SAME shade the .ptah-dark
+   rule below already uses (that scope had already unified its own pair).
+   Both light values already cleared 4.5:1, so nothing regresses — this is a
+   consistency fix, not a contrast fix. No longer a PENDING decision; the
+   ThemeChromeOrphanTokenGuardTest exception for this selector was removed. */
+.ptah-sidebar .ptah-nav-item {
+    color: var(--ptah-text-muted);
+}
 .ptah-dark .ptah-sidebar .ptah-nav-item {
     color: var(--ptah-text-muted);
 }
@@ -977,15 +979,16 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
     background-color: var(--ptah-menu-hover);
 }
-/* Icons intentionally left off the token axis for now: the fixed
-   `text-gray-400` (#9ca3af) they carry today is 56/47/36 off
-   --ptah-icon-muted (#64748b) — the semantically-correct icon token, and the
-   one the .ptah-dark rule below already uses — far past the ~20/255 caution
-   line. The numerically closer candidate, --ptah-line-field (tom "puro",
-   #8f95a0, delta 13/14/15), is a form-field-border token and would be a
-   confusing pairing with the dark rule's icon-muted. See the documented
-   exception for `.ptah-admin-dropdown svg|dark|color` in
-   ThemeChromeOrphanTokenGuardTest. */
+/* Icons were the fixed `text-gray-400` (#9ca3af), which measures 2.54:1 on
+   white — BELOW the 3:1 AA floor for a UI icon, and has been since before
+   this token pass. The large delta to --ptah-icon-muted (#64748b, 4.76:1) is
+   the fix, not a caution sign: the old value was the defect, not the token.
+   Now tokenized in both scopes, matching the .ptah-dark rule below. No
+   longer a PENDING decision; the ThemeChromeOrphanTokenGuardTest exception
+   for this selector was removed. */
+.ptah-navbar .ptah-admin-dropdown svg {
+    color: var(--ptah-icon-muted);
+}
 .ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
     color: var(--ptah-icon-muted);
 }
