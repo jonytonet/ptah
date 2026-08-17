@@ -53,6 +53,25 @@ class ContrastGuardTest extends TestCase
         return ($lighter + 0.05) / ($darker + 0.05);
     }
 
+    /**
+     * Replicates CSS `color-mix(in srgb, $hex $pct%, white)`: per the CSS Color 4
+     * spec, `in srgb` interpolates directly in the (non-linearized) sRGB channel
+     * space — i.e. result = hex * pct + 255 * (1 - pct) per channel, no gamma
+     * correction. This is exactly what ptah-components.css's --ptah-*-lite tokens
+     * use for the dark-mode "lite" text/border tint.
+     */
+    private static function mixWithWhite(string $hex, float $pct): string
+    {
+        $c = self::hexToRgb($hex);
+        $mixed = [
+            (int) round($c[0] * $pct + 255 * (1 - $pct)),
+            (int) round($c[1] * $pct + 255 * (1 - $pct)),
+            (int) round($c[2] * $pct + 255 * (1 - $pct)),
+        ];
+
+        return sprintf('#%02x%02x%02x', ...$mixed);
+    }
+
     /** Flattens a translucent foreground hex (0-1 alpha) over an opaque hex background. */
     private static function compositeHex(string $fgHex, float $alpha, string $bgHex): string
     {
@@ -101,6 +120,20 @@ class ContrastGuardTest extends TestCase
         static $blade = null;
 
         return $blade ??= file_get_contents(dirname(__DIR__, 3).'/resources/views/livewire/base-crud/partials/_modal-form.blade.php');
+    }
+
+    private static function forgeTabBlade(): string
+    {
+        static $blade = null;
+
+        return $blade ??= file_get_contents(dirname(__DIR__, 3).'/resources/views/components/forge-tab.blade.php');
+    }
+
+    private static function forgeTabsBlade(): string
+    {
+        static $blade = null;
+
+        return $blade ??= file_get_contents(dirname(__DIR__, 3).'/resources/views/components/forge-tabs.blade.php');
     }
 
     /** Extracts the 'success' or 'danger' color-map block body from forge-button.blade.php. */
@@ -220,6 +253,21 @@ class ContrastGuardTest extends TestCase
             throw new RuntimeException('ContrastGuardTest: _modal-form.blade.php discard-changes button no longer uses bg-danger-dark (AA regression).');
         }
 
+        // --- 15. forge-tab.blade.php (slot mode) inactive tab — dark idle/hover text ---
+        // Tailwind's fixed slate palette (slate-400/slate-200), not brand-overridable —
+        // hardcoded here (with a presence guard) because the source references the
+        // utility class name, not a raw hex, so there's nothing to regex a hex out of.
+        $tabBlade = self::forgeTabBlade();
+        if (! str_contains($tabBlade, 'dark:text-slate-400') || ! str_contains($tabBlade, 'dark:hover:text-slate-200')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tab.blade.php inactive tab lost its dark: idle/hover text classes (AA regression / re-diverges from array mode).');
+        }
+        $tabsBlade = self::forgeTabsBlade();
+        if (! str_contains($tabsBlade, 'dark:text-slate-400') || ! str_contains($tabsBlade, 'dark:hover:text-slate-200')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tabs.blade.php (array mode) inactive tab lost its dark: idle/hover text classes.');
+        }
+        $tabIdleDark = '#94a3b8'; // Tailwind slate-400
+        $tabHoverDark = '#e2e8f0'; // Tailwind slate-200
+
         return [
             '1. modal_sub (light) vs modal header bg' => [$modalSubLight, '#ffffff', 4.5],
             '1. modal_sub (dark) vs modal header dark bg' => [$modalSubDark, '#1e293b', 4.5],
@@ -249,6 +297,8 @@ class ContrastGuardTest extends TestCase
             '13. toast success vs white text' => ['#ffffff', $toastSuccessBg, 4.5],
             '13. toast danger (bg-danger-dark) vs white text' => ['#ffffff', $colorDangerDark, 4.5],
             '14. bulk-delete/discard buttons (bg-danger-dark) vs white text' => ['#ffffff', $colorDangerDark, 4.5],
+            '15. forge-tab (slot) inactive idle (dark, slate-400) vs card surface' => [$tabIdleDark, '#1e293b', 4.5],
+            '15. forge-tab (slot) inactive hover (dark, slate-200) vs card surface' => [$tabHoverDark, '#1e293b', 4.5],
         ];
     }
 
@@ -292,6 +342,119 @@ class ContrastGuardTest extends TestCase
 
         $this->assertLessThan($lumBg, $lumHover, "danger hover ({$hover}) must be darker than bg ({$bg}).");
         $this->assertLessThan($lumHover, $lumRelief, "danger relief ({$relief}) must be darker than hover ({$hover}).");
+    }
+
+    /**
+     * forge-tab.blade.php (slot mode) and forge-tabs.blade.php (array mode) each keep
+     * their own $activeClass map — the 13th failure existed because only forge-tab's
+     * copy was ever fixed for dark mode. Pin them byte-for-byte equal so a future
+     * edit to one can't silently re-diverge from the other.
+     */
+    #[Test]
+    public function tab_active_classes_are_identical_between_slot_and_array_modes(): void
+    {
+        if (! preg_match('/\$activeClass = \[(.*?)\];/s', self::forgeTabBlade(), $slot)) {
+            throw new RuntimeException('ContrastGuardTest: could not find $activeClass in forge-tab.blade.php (slot mode).');
+        }
+        if (! preg_match('/\$activeClass = \[(.*?)\];/s', self::forgeTabsBlade(), $array)) {
+            throw new RuntimeException('ContrastGuardTest: could not find $activeClass in forge-tabs.blade.php (array mode).');
+        }
+
+        $normalize = static fn (string $s): string => preg_replace('/\s+/', ' ', trim($s));
+
+        $this->assertSame(
+            $normalize($slot[1]),
+            $normalize($array[1]),
+            'forge-tab.blade.php (slot mode) and forge-tabs.blade.php (array mode) must map '.
+            'tab colors to the identical CSS classes, or they render differently in dark mode.'
+        );
+    }
+
+    /**
+     * The active-tab dark-mode tint (--ptah-{color}-lite) is a derived value, not a
+     * literal hex in the CSS — recompute the color-mix() formula in PHP against the
+     * real theme defaults (forge.css) and assert on the *resulting* color, so a
+     * revert to the raw --color-{success,danger,warn} (or --ptah-primary) token, or
+     * a change in the mix percentage, breaks this test.
+     */
+    #[Test]
+    public function tab_active_dark_tint_follows_the_color_mix_formula_and_passes_aa(): void
+    {
+        $css = self::css();
+        $forge = self::forgeCss();
+        $surface = '#1e293b'; // dark "card" surface used across .ptah-dark rules (modal_card, sticky_cell, tab surface)
+
+        $colors = [
+            'primary' => [
+                'base' => self::extractHex($forge, '/--color-primary:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-primary'),
+                'mixPattern' => '/--ptah-primary-lite:\s*color-mix\(in srgb, var\(--ptah-primary\) (\d+)%, #ffffff\);/',
+                'liteVar' => '--ptah-primary-lite',
+                'lightLine' => '.ptah-c-tab_active_primary            { color: var(--ptah-primary); border-color: var(--ptah-primary); }',
+                'darkLine' => '.ptah-dark .ptah-c-tab_active_primary { color: var(--ptah-primary-lite); border-color: var(--ptah-primary-lite); }',
+            ],
+            'success' => [
+                'base' => self::extractHex($forge, '/--color-success:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-success'),
+                'mixPattern' => '/--ptah-success-lite:\s*color-mix\(in srgb, var\(--color-success, #[0-9a-fA-F]{6}\) (\d+)%, #ffffff\);/',
+                'liteVar' => '--ptah-success-lite',
+                'lightLine' => '.ptah-c-tab_active_success            { color: var(--color-success); border-color: var(--color-success); }',
+                'darkLine' => '.ptah-dark .ptah-c-tab_active_success { color: var(--ptah-success-lite); border-color: var(--ptah-success-lite); }',
+            ],
+            'danger' => [
+                'base' => self::extractHex($forge, '/--color-danger:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger'),
+                'mixPattern' => '/--ptah-danger-lite:\s*color-mix\(in srgb, var\(--color-danger, #[0-9a-fA-F]{6}\) (\d+)%, #ffffff\);/',
+                'liteVar' => '--ptah-danger-lite',
+                'lightLine' => '.ptah-c-tab_active_danger            { color: var(--color-danger); border-color: var(--color-danger); }',
+                'darkLine' => '.ptah-dark .ptah-c-tab_active_danger { color: var(--ptah-danger-lite); border-color: var(--ptah-danger-lite); }',
+            ],
+            'warn' => [
+                'base' => self::extractHex($forge, '/--color-warn:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-warn'),
+                'mixPattern' => '/--ptah-warn-lite:\s*color-mix\(in srgb, var\(--color-warn, #[0-9a-fA-F]{6}\) (\d+)%, #ffffff\);/',
+                'liteVar' => '--ptah-warn-lite',
+                'lightLine' => '.ptah-c-tab_active_warn            { color: var(--color-warn); border-color: var(--color-warn); }',
+                'darkLine' => '.ptah-dark .ptah-c-tab_active_warn { color: var(--ptah-warn-lite); border-color: var(--ptah-warn-lite); }',
+            ],
+        ];
+
+        foreach ($colors as $color => $cfg) {
+            if (! str_contains($css, $cfg['lightLine'])) {
+                throw new RuntimeException("ContrastGuardTest: .ptah-c-tab_active_{$color} no longer sets color+border-color from the raw {$color} token in light mode.");
+            }
+            if (! str_contains($css, $cfg['darkLine'])) {
+                throw new RuntimeException("ContrastGuardTest: .ptah-dark .ptah-c-tab_active_{$color} no longer uses {$cfg['liteVar']} for both color and border-color (AA regression).");
+            }
+            if (! preg_match($cfg['mixPattern'], $css, $m)) {
+                throw new RuntimeException("ContrastGuardTest: could not find the {$cfg['liteVar']} color-mix() declaration in ptah-components.css.");
+            }
+
+            $pct = ((int) $m[1]) / 100;
+            $lite = self::mixWithWhite($cfg['base'], $pct);
+            $ratio = self::contrastRatio($lite, $surface);
+
+            $this->assertGreaterThanOrEqual(
+                4.5,
+                $ratio,
+                sprintf(
+                    'tab active (%s) dark tint: color-mix(%s %d%%, white) = %s vs surface %s = %.2f:1, below 4.5:1 (text).',
+                    $color,
+                    $cfg['base'],
+                    $m[1],
+                    $lite,
+                    $surface,
+                    $ratio
+                )
+            );
+            $this->assertGreaterThanOrEqual(
+                3.0,
+                $ratio,
+                sprintf(
+                    'tab active (%s) dark tint %s vs surface %s = %.2f:1, below 3.0:1 (bottom-border indicator).',
+                    $color,
+                    $lite,
+                    $surface,
+                    $ratio
+                )
+            );
+        }
     }
 
     #[Test]

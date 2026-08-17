@@ -44,11 +44,13 @@
 
     $firstTab    = $defaultTab ?? ($arrayMode ? $tabs[0]['id'] : null);
 
+    // Same .ptah-c-tab_active_* classes as forge-tab.blade.php's slot mode (dark-mode
+    // "-lite" tint) so both dual-mode variants render identically. See ptah-components.css.
     $activeClass = [
-        'primary' => 'text-primary border-b-2 border-primary',
-        'success' => 'text-success border-b-2 border-success',
-        'danger'  => 'text-danger  border-b-2 border-danger',
-        'warn'    => 'text-warn    border-b-2 border-warn',
+        'primary' => 'ptah-c-tab_active_primary border-b-2',
+        'success' => 'ptah-c-tab_active_success border-b-2',
+        'danger'  => 'ptah-c-tab_active_danger border-b-2',
+        'warn'    => 'ptah-c-tab_active_warn border-b-2',
     ];
     $active = $activeClass[$color] ?? $activeClass['primary'];
 @endphp
