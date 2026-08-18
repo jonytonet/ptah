@@ -14,7 +14,12 @@
 
      ResizeObserver em vez de listener de resize: dispara tambem quando a densidade muda
      (a altura dos controles muda) e quando a sidebar colapsa — casos que o evento de
-     janela nao cobre. _busy evita o laco, ja que a propria troca de classe altera o
+     janela nao cobre. Observa a LARGURA e ignora mudanca de altura: a propria troca de
+     classe muda o tamanho observado, e como o callback do observer e ASSINCRONO um flag
+     de reentrancia nao protege — ligar rotulo, disparar, medir, desligar, disparar de novo
+     e um laco que sempre termina colapsado. Foi o que aconteceu: ficou so icone mesmo com
+     espaco sobrando. Tambem re-mede quando as fontes carregam, porque medir antes disso da
+     largura de texto errada.
      tamanho observado.
 
      O default e COLAPSADO (ver .ptah-c-btn_label no CSS): comecar expandido e colapsar
@@ -22,7 +27,7 @@
      de altura mais perceptivel que icone virando texto no mesmo lugar. --}}
 <div class="flex flex-wrap items-center gap-2 px-4 py-3"
      x-data="{
-        _busy: false,
+        _lastWidth: -1,
         _wrapped(el) {
             if (!el) return false;
             const kids = Array.from(el.children).filter(k => k.offsetParent !== null);
@@ -31,18 +36,21 @@
             return kids.some(k => k.offsetTop !== top);
         },
         _measure() {
-            if (this._busy) return;
-            this._busy = true;
             const row = this.$el;
             row.classList.add('ptah-c-toolbar_labels');
             if (this._wrapped(row) || this._wrapped(row.querySelector('.ptah-c-toolbar_actions'))) {
                 row.classList.remove('ptah-c-toolbar_labels');
             }
-            this._busy = false;
         },
         init() {
             this.$nextTick(() => this._measure());
-            this._ro = new ResizeObserver(() => {
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => this._measure());
+            }
+            this._ro = new ResizeObserver(entries => {
+                const w = Math.round(entries[0].contentRect.width);
+                if (w === this._lastWidth) return;
+                this._lastWidth = w;
                 if (this._raf) cancelAnimationFrame(this._raf);
                 this._raf = requestAnimationFrame(() => this._measure());
             });
