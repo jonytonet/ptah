@@ -175,7 +175,7 @@ parameters:
 			path: src/Livewire/Permission/RoleList.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool, manage\: bool\}, Closure\(Ptah\\Models\\RolePermission\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool, manage\: bool\} given\.$#'
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool\}, Closure\(Ptah\\Models\\RolePermission\)\: array\{create\: bool, read\: bool, update\: bool, delete\: bool\} given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Livewire/Permission/RoleList.php

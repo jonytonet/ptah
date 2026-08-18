@@ -17,7 +17,7 @@ use Ptah\Tests\TestCase;
  * lives on the server methods, not only on the toolbar trigger.
  *
  * ptah_can_manage_config():
- *  - permissions module ON  → master OR 'crud.config' manage grant;
+ *  - permissions module ON  → master OR a 'read' grant on the 'crud.config' object;
  *  - module OFF             → ptah.crud.config_editor flag, DENY by default.
  */
 class CrudConfigAuthorizationTest extends TestCase

@@ -156,7 +156,7 @@ return [
         | Who may open/save the in-app CRUD configuration editor.
         |
         | When the permissions module is ACTIVE, editing is always restricted to
-        | master users or an explicit 'crud.config' manage grant (this flag is
+        | master users or an explicit 'crud.config' read grant (this flag is
         | ignored). When the module is OFF, the editor is DENIED by default —
         | set PTAH_CONFIG_EDITOR=true to opt back in. See ptah_can_manage_config().
         */

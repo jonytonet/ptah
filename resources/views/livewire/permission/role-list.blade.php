@@ -167,10 +167,6 @@
                                 <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_delete') }}</span>
                                 <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_delete" class="rounded" />
                             </label>
-                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
-                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_manage') }}</span>
-                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_manage" class="rounded" />
-                            </label>
                         </div>
                     </div>
                 @endforeach

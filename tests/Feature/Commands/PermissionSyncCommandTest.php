@@ -129,42 +129,6 @@ class PermissionSyncCommandTest extends TestCase
     }
 
     #[Test]
-    public function grant_all_maps_the_manage_verb_too(): void
-    {
-        $this->seedConfig('Widget', 'pageWidget');
-        $role = Role::create(['name' => 'SuperEditor2', 'is_active' => true]);
-
-        $this->artisan('ptah:permission:sync --role=SuperEditor2 --grant=all')->assertExitCode(0);
-
-        $pageObject = PageObject::where('obj_key', 'pageWidget')->firstOrFail();
-        $this->assertDatabaseHas('ptah_role_permissions', [
-            'role_id' => $role->id,
-            'page_object_id' => $pageObject->id,
-            'can_manage' => 1,
-        ]);
-    }
-
-    #[Test]
-    public function grant_manage_only_sets_can_manage_and_nothing_else(): void
-    {
-        $this->seedConfig('Widget', 'pageWidget');
-        $role = Role::create(['name' => 'ConfigEditor', 'is_active' => true]);
-
-        $this->artisan('ptah:permission:sync --role=ConfigEditor --grant=manage')->assertExitCode(0);
-
-        $pageObject = PageObject::where('obj_key', 'pageWidget')->firstOrFail();
-        $this->assertDatabaseHas('ptah_role_permissions', [
-            'role_id' => $role->id,
-            'page_object_id' => $pageObject->id,
-            'can_create' => 0,
-            'can_read' => 0,
-            'can_update' => 0,
-            'can_delete' => 0,
-            'can_manage' => 1,
-        ]);
-    }
-
-    #[Test]
     public function unknown_role_fails(): void
     {
         $this->seedConfig('Widget', 'pageWidget');

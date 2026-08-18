@@ -68,7 +68,7 @@ class RoleList extends Component
 
     /**
      * Permission matrix rows: obj_key, obj_label, obj_type, section and the
-     * five can_* flags (create/read/update/delete/manage) per page object.
+     * four can_* flags (create/read/update/delete) per page object.
      *
      * @var array<int, array<string, mixed>>
      */
@@ -193,7 +193,6 @@ class RoleList extends Component
                 'can_read' => $existingMap[$obj->id]['read'] ?? false,
                 'can_update' => $existingMap[$obj->id]['update'] ?? false,
                 'can_delete' => $existingMap[$obj->id]['delete'] ?? false,
-                'can_manage' => $existingMap[$obj->id]['manage'] ?? false,
             ])
             ->toArray();
 
@@ -210,7 +209,7 @@ class RoleList extends Component
         $bindings = [];
 
         foreach ($this->bindObjects as $obj) {
-            $hasAny = $obj['can_create'] || $obj['can_read'] || $obj['can_update'] || $obj['can_delete'] || $obj['can_manage'];
+            $hasAny = $obj['can_create'] || $obj['can_read'] || $obj['can_update'] || $obj['can_delete'];
 
             if ($hasAny) {
                 $bindings[(int) $obj['id']] = [
@@ -218,7 +217,6 @@ class RoleList extends Component
                     'can_read' => $obj['can_read'],
                     'can_update' => $obj['can_update'],
                     'can_delete' => $obj['can_delete'],
-                    'can_manage' => $obj['can_manage'],
                 ];
             }
         }

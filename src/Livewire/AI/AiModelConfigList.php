@@ -36,11 +36,24 @@ class AiModelConfigList extends Component
      * mount() runs once, so without re-checking, a user whose permission was
      * revoked mid-session (or a crafted request on an already-mounted component)
      * could still create/update/delete API-key records.
+     *
+     * Why `read` and not a dedicated `manage`/`configure` verb: PermissionService::ACTIONS
+     * is a whitelist whose entries are interpolated into a `can_{action}` COLUMN name
+     * (anti-SQLi guard) — adding a verb means adding a column, i.e. a migration. This
+     * package is already installed in production elsewhere and its migrations are
+     * auto-discovered (loadMigrationsFrom in the service provider), so a new migration
+     * would fire on the next `php artisan migrate` any consuming app happens to run, for
+     * a feature that app may not even use. Instead, the CAPABILITY is expressed as its
+     * own OBJECT (`ai.config`, a `page_object` an admin registers explicitly) and `read`
+     * on that object is what's granted — the object, not the verb, carries the meaning
+     * "may manage AI provider credentials". Do NOT "fix" this back to a `manage` verb
+     * without adding the column via a migration a human reviews and runs by hand; doing
+     * so silently makes this grant a no-op again for every non-MASTER user.
      */
     protected function authorizeAiConfig(): void
     {
         abort_unless(
-            ptah_can('ai.config', 'manage') || ptah_is_master(),
+            ptah_can('ai.config', 'read') || ptah_is_master(),
             403,
             trans('ptah::ui.permission_denied')
         );

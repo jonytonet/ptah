@@ -20,7 +20,7 @@ use Ptah\Services\Permission\PermissionService;
  *
  * Parameters:
  *   1. objectKey  — object key (e.g. 'users.store')
- *   2. action     — action: create|read|update|delete|manage
+ *   2. action     — action: create|read|update|delete
  *   3. companyId  — optional; uses session/auth if omitted
  */
 class PtahPermission

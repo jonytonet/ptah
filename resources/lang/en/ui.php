@@ -549,7 +549,6 @@ return [
     'role_bind_perm_create' => 'Create',
     'role_bind_perm_edit' => 'Edit',
     'role_bind_perm_delete' => 'Delete',
-    'role_bind_perm_manage' => 'Manage',
     'role_bind_empty' => 'No objects registered. Go to Pages and register objects first.',
     'role_bind_save' => 'Save Permissions',
     'role_delete_text' => 'Delete this role? Permissions and user bindings will be removed.',

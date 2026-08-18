@@ -57,7 +57,6 @@ The **permissions** module implements a hierarchical and granular access control
 | MASTER Role | Complete bypass of all permission checks |
 | Pages and Objects | Registration of system resources (buttons, fields, sections, APIs…) |
 | CRUD Permissions | Per object: `can_create`, `can_read`, `can_update`, `can_delete` |
-| Manage permission | Per object: `can_manage` — authorizes *configuring* the resource (independent from the CRUD quartet, which governs its data) |
 | Extra permissions | JSON `extra` field for actions beyond standard CRUD |
 | Company assignment | User can have different roles in each company |
 | Global roles | Assignment without a specific company — valid across all companies |
@@ -119,32 +118,62 @@ access, always bind the `UserRole` to a concrete `company_id`.
 
 ### Action whitelist
 
-Only `create`, `read`, `update`, `delete` and `manage` are valid actions
+Only `create`, `read`, `update` and `delete` are valid actions
 (`PermissionService::ACTIONS`). Any other string passed to `check()` /
 `getCompaniesForResource()` is rejected before it reaches a query — the action
 name is interpolated into a `can_{action}` column, so this guard prevents both
 typos and SQL-injection attempts.
 
-### The `manage` verb
+This whitelist is intentionally small and closed: because each entry is
+interpolated into a `can_{action}` **column name**, adding a verb means adding
+a column — a migration. `ptah`'s migrations are auto-discovered
+(`loadMigrationsFrom` in the service provider), so a new one is **not**
+opt-in for a consuming app: it fires on the very next `php artisan migrate`
+that app runs, for any reason. Since the package ships to projects already in
+production, a new verb is not something this module adds casually. See
+"Capability as an object" below for how to grant a one-off action without
+touching the schema.
 
-`manage` is a fifth action with its **own column** (`can_manage`), independent
-from the CRUD quartet (`create`/`read`/`update`/`delete`). It authorizes
-*configuring* a resource rather than operating its data — e.g. `ptah_can('crud.config',
-'manage')` gates whether a user may open and save the in-app CRUD configuration
-editor (joins, lifecycle hooks, link templates, etc. — inputs that feed SQL/render
-sinks). A role can be granted `manage` on an object without any of the other four
-flags, and vice-versa; the OR-across-roles logic and the MASTER bypass both apply
-to it exactly like the other four actions (see `buildPermissionMap()` /
-`buildMasterPermissionMap()`, which derive every flag from `ACTIONS`).
+### Capability as an object (no verb, no migration)
+
+Sometimes you need to gate a single, one-off action that isn't part of the
+CRUD quartet — e.g. "may open and save the in-app CRUD config editor", or
+"may manage AI provider credentials". The tempting fix is a new verb
+(`manage`, `configure`...), but that requires a new `can_*` column, which
+requires a migration this package cannot ship as a side effect of someone
+else's `php artisan migrate`.
+
+The pattern this package uses instead: **the capability is the object, not
+the verb.** Register a dedicated `PageObject` for the capability (its
+`obj_key` names the capability itself, e.g. `crud.config`), and grant `read`
+on it. `read` here doesn't mean "may view" — it means "has this capability" —
+because for a single-purpose object there is nothing else to grant. The
+CRUD quartet, the OR-across-roles logic and the MASTER bypass all keep
+working exactly as they do for any other object; nothing about the action
+whitelist needs to change.
+
+**Example — `crud.config` (gates the in-app CRUD configuration editor):**
 
 ```php
-// Grant a role permission to configure (but not operate) the CRUD config screen:
-app(RoleService::class)->bindPageObject($role, $pageObjectId, [
-    'can_manage' => true,
-]);
+// 1. Register the object once (e.g. via the /ptah-pages screen, or a seeder):
+$page = PtahPage::firstOrCreate(['slug' => 'crud-config'], ['name' => 'CRUD Config']);
+$object = PageObject::firstOrCreate(
+    ['page_id' => $page->id, 'section' => 'main', 'obj_key' => 'crud.config'],
+    ['obj_label' => 'Configure CRUD', 'obj_type' => 'page'] // label reads well as "Read = may configure"
+);
 
-ptah_can('crud.config', 'manage', $user); // true, without any of the CRUD flags
+// 2. Grant a role the capability — `can_read`, not a dedicated verb:
+app(RoleService::class)->bindPageObject($role, $object->id, ['can_read' => true]);
+
+// 3. Check it exactly like any other object:
+ptah_can('crud.config', 'read', $user); // true for that role, false otherwise
 ```
+
+`ptah_can_manage_config()` (`src/helpers.php`) and `AiModelConfigList`'s
+`authorizeAiConfig()` both follow this pattern for `crud.config` and
+`ai.config` respectively — see the comment on each call site for the full
+rationale, and don't "fix" either one back to a dedicated verb without adding
+the column via a migration a human reviews and runs by hand.
 
 ---
 
@@ -286,7 +315,6 @@ In `config/ptah.php`, `permissions` section:
 | `can_read` | boolean | — | Read permission |
 | `can_update` | boolean | — | Edit permission |
 | `can_delete` | boolean | — | Delete permission |
-| `can_manage` | boolean | — | `manage` permission — authorizes configuring the resource, independent from the CRUD quartet |
 | `extra` | json | ✓ | Custom permissions beyond CRUD |
 | `deleted_at` | timestamp | ✓ | SoftDelete |
 
@@ -313,7 +341,7 @@ In `config/ptah.php`, `permissions` section:
 | `user_id` | bigint | ✓ | User ID |
 | `company_id` | bigint | ✓ | Company in context |
 | `resource_key` | string | — | `obj_key` checked |
-| `action` | string | — | `create` `read` `update` `delete` `manage` |
+| `action` | string | — | `create` `read` `update` `delete` |
 | `result` | enum | — | `granted` or `denied` |
 | `ip_address` | string | ✓ | Request IP |
 | `user_agent` | string | ✓ | User-Agent |
@@ -405,8 +433,8 @@ PageObject::byType('button')->get();
 
 | Method | Return | Description |
 |---|---|---|
-| `allows(string $action): bool` | bool | Checks if `can_{action}` is `true`. Accepted actions: `create`, `read`, `update`, `delete`, `manage` |
-| `toCrudArray(): array` | array | Returns `['create'=>bool, 'read'=>bool, 'update'=>bool, 'delete'=>bool, 'manage'=>bool]` |
+| `allows(string $action): bool` | bool | Checks if `can_{action}` is `true`. Accepted actions: `create`, `read`, `update`, `delete` |
+| `toCrudArray(): array` | array | Returns `['create'=>bool, 'read'=>bool, 'update'=>bool, 'delete'=>bool]` |
 
 ---
 
@@ -607,7 +635,6 @@ $bindings = [
         'can_read'       => true,
         'can_update'     => false,
         'can_delete'     => false,
-        'can_manage'     => false,
     ],
     // ...
 ];
@@ -738,7 +765,7 @@ ptah.can:{objectKey},{action}[,{companyId}]
 | Parameter | Required | Description |
 |---|---|---|
 | `objectKey` | ✓ | Object key (e.g.: `users.store`) |
-| `action` | ✓ | `create`, `read`, `update`, `delete` or `manage` |
+| `action` | ✓ | `create`, `read`, `update` or `delete` |
 | `companyId` | — | If omitted, resolved from session |
 
 ---
@@ -762,11 +789,13 @@ The bundled ACL screens (`/ptah-roles`, `/ptah-pages`, `/ptah-users-acl`,
 
 > Related: the in-app CRUD config editor is gated by the `@ptahCanManageConfig`
 > Blade directive / `ptah_can_manage_config()` helper — MASTER, or a non-MASTER
-> user with `manage` granted on the `crud.config` object (`can_manage = true`
+> user with a **`read`** grant on the `crud.config` object (`can_read = true`
 > on the role's `ptah_role_permissions` row), when the permissions module is
-> on; otherwise the `PTAH_CONFIG_EDITOR` opt-in. See [BaseCrud.md](BaseCrud.md).
-> To grant it: register a `PageObject` with `obj_key = 'crud.config'` and bind
-> the role with `RoleService::bindPageObject($role, $pageObjectId, ['can_manage' => true])`.
+> on; otherwise the `PTAH_CONFIG_EDITOR` opt-in. See [BaseCrud.md](BaseCrud.md)
+> and ["Capability as an object"](#capability-as-an-object-no-verb-no-migration)
+> above for why it's `read` and not a dedicated verb. To grant it: register a
+> `PageObject` with `obj_key = 'crud.config'` and bind the role with
+> `RoleService::bindPageObject($role, $pageObjectId, ['can_read' => true])`.
 
 ---
 
@@ -797,7 +826,7 @@ Role CRUD + **object permissions modal**.
 
 **Permissions Modal (Bind):**
 
-Displays all `PageObject` items grouped by page/section. For each object, independent checkboxes for `can_read`, `can_create`, `can_update`, `can_delete`, `can_manage`. On save, calls `RoleService::syncPageBindings()`.
+Displays all `PageObject` items grouped by page/section. For each object, independent checkboxes for `can_read`, `can_create`, `can_update`, `can_delete`. On save, calls `RoleService::syncPageBindings()`.
 
 ```
 ┌─ Page: admin.users — Section: toolbar ────────────────────────────┐

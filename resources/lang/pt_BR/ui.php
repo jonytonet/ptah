@@ -550,7 +550,6 @@ return [
     'role_bind_perm_create' => 'Criar',
     'role_bind_perm_edit' => 'Editar',
     'role_bind_perm_delete' => 'Excluir',
-    'role_bind_perm_manage' => 'Configurar',
     'role_bind_empty' => 'Nenhum objeto cadastrado. Acesse Páginas e cadastre os objetos primeiro.',
     'role_bind_save' => 'Salvar Permissões',
     'role_delete_text' => 'Excluir este role? As permissões e vínculos com usuários serão removidos.',

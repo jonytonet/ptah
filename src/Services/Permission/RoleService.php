@@ -109,7 +109,7 @@ class RoleService
     /**
      * Associates or updates the permission of an object in a role.
      *
-     * @param  array{can_create?: bool, can_read?: bool, can_update?: bool, can_delete?: bool, can_manage?: bool, extra?: array}  $permissions
+     * @param  array{can_create?: bool, can_read?: bool, can_update?: bool, can_delete?: bool, extra?: array}  $permissions
      */
     public function bindPageObject(Role $role, int $pageObjectId, array $permissions = []): RolePermission
     {
@@ -121,7 +121,6 @@ class RoleService
             'can_read' => true,
             'can_update' => false,
             'can_delete' => false,
-            'can_manage' => false,
             'extra' => null,
         ];
 

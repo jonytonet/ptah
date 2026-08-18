@@ -56,15 +56,28 @@ if (! function_exists('ptah_can_manage_config')) {
      *
      * The editor writes joins, lifecycle hooks, link templates, colsMetodoCustom,
      * etc. — inputs that feed SQL/render sinks — so it must be gated:
-     *  - permissions module ACTIVE → master user OR 'crud.config' manage grant;
+     *  - permissions module ACTIVE → master user OR 'crud.config' read grant;
      *  - module OFF               → config('ptah.crud.config_editor'), default deny.
+     *
+     * Why `read` and not a dedicated `manage`/`configure` verb: PermissionService::ACTIONS
+     * is a whitelist whose entries are interpolated into a `can_{action}` COLUMN name
+     * (anti-SQLi guard) — adding a verb means adding a column, i.e. a migration. This
+     * package is already installed in production elsewhere and its migrations are
+     * auto-discovered (loadMigrationsFrom in the service provider), so a new migration
+     * would fire on the next `php artisan migrate` any consuming app happens to run, for
+     * a feature that app may not even use. Instead, the CAPABILITY is expressed as its
+     * own OBJECT (`crud.config`, a `page_object` an admin registers explicitly) and
+     * `read` on that object is what's granted — the object, not the verb, carries the
+     * meaning "may configure the CRUD editor". Do NOT "fix" this back to a `manage`
+     * verb without adding the column via a migration a human reviews and runs by hand;
+     * doing so silently makes this grant a no-op again for every non-MASTER user.
      *
      * @param  mixed  $user  User (null = current auth)
      */
     function ptah_can_manage_config(mixed $user = null): bool
     {
         if (config('ptah.modules.permissions')) {
-            return ptah_is_master($user) || ptah_can('crud.config', 'manage', $user);
+            return ptah_is_master($user) || ptah_can('crud.config', 'read', $user);
         }
 
         return (bool) config('ptah.crud.config_editor', false);

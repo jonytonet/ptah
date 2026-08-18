@@ -31,12 +31,8 @@ class PermissionService implements PermissionServiceContract
     /**
      * The only valid actions — whitelisted before any query interpolation
      * (each one is turned into a `can_{action}` column name).
-     *
-     * `manage` authorizes *configuring* a resource (e.g. the in-app CRUD
-     * config editor) and is independent from the CRUD quartet, which governs
-     * operating a resource's data.
      */
-    public const ACTIONS = ['create', 'read', 'update', 'delete', 'manage'];
+    public const ACTIONS = ['create', 'read', 'update', 'delete'];
 
     // ─────────────────────────────────────────
     // Company resolution
