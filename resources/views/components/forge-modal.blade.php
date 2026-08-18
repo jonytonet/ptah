@@ -86,7 +86,7 @@
         role="dialog"
         aria-modal="true"
         @if ($modalTitleId) aria-labelledby="{{ $modalTitleId }}" @endif
-        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] rounded-xl border shadow-2xl overflow-hidden"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 scale-95"

@@ -203,16 +203,41 @@
 .ptah-c-control {
     height: var(--ptah-control-h);
     padding-block: 0;
-    padding-inline: var(--ptah-control-px);
     font-size: var(--ptah-control-fs);
     line-height: 1;
     display: inline-flex;
     align-items: center;
 }
+/* Horizontal padding is applied to everything EXCEPT <input>, and that exclusion is
+   load-bearing. forge-input computes pl-9 when it renders an iconBefore, to reserve
+   room for the absolutely-positioned glyph. This class is unlayered, so a
+   padding-inline here beats that utility and collapses the reserved space — which is
+   exactly what happened to the quick-search box: the magnifier ended up sitting on
+   top of the placeholder text. Height was the axis that needed unifying; horizontal
+   padding riding along on a shared class that also lands on icon inputs is a trap.
+   Selects and buttons still get it, so the row stays visually even. */
+.ptah-c-control:not(input) {
+    padding-inline: var(--ptah-control-px);
+}
 /* Count badges (filter count, hidden-columns count) and icon glyphs must keep
    their own fixed w-4 h-4 box instead of shrinking on the row's main axis. */
 .ptah-c-control > svg,
 .ptah-c-control > .rounded-full { flex-shrink: 0; }
+
+/* Rótulos colapsáveis da toolbar.
+   O requisito é "mostra o texto sempre que couber; vira só ícone apenas quando a linha
+   quebraria". Isso NÃO é expressável por breakpoint de viewport: depende da largura do
+   CONTAINER (a sidebar colapsada muda), da densidade escolhida (espaçoso é mais largo) e
+   do tamanho das strings traduzidas (um host pode adicionar locale). Um `hidden lg:inline`
+   escondia o texto com espaço sobrando — foi rejeitado em teste pelo usuário.
+   Então quem decide é a medição em _toolbar.blade.php, que adiciona
+   .ptah-c-toolbar_labels quando cabe.
+
+   O default é COLAPSADO de propósito. Começar expandido e colapsar depois faria a toolbar
+   aparecer em duas linhas por um frame e pular para uma — salto de altura bem mais
+   perceptível que ícones virando texto no mesmo lugar. */
+.ptah-c-btn_label { display: none; }
+.ptah-c-toolbar_labels .ptah-c-btn_label { display: inline; }
 
 /* ── Search input ── */
 .ptah-c-search { background-color: color-mix(in srgb, var(--ptah-field-muted) 60%, transparent); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
@@ -424,6 +449,59 @@
 .ptah-c-dd_item:hover      { background-color: var(--ptah-menu-hover); }
 .ptah-dark .ptah-c-dd_item { color: var(--ptah-text); }
 .ptah-dark .ptah-c-dd_item:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); }
+
+/* ── Modal genérico (forge-modal) ────────────────────────────────────────
+   .ptah-modal-panel is the reusable dialog shell (forge-modal.blade.php),
+   used across the whole app — not just BaseCrud screens (see the separate
+   "Modal criar/editar" .ptah-c-modal_* family right below, which belongs to
+   the BaseCrud's own modal). It used to carry bg-white/border-gray-200
+   literally on the Blade element, with only the dark side patched from a
+   distance by forge-dashboard-layout's frozen <style> block — so the light
+   side never followed the user's chosen theme tone, and the dark side
+   couldn't either since it was a hex literal. Migrated here so BOTH scopes
+   read the same --ptah-* neutral tokens the rest of the CRUD chrome uses.
+   Site-by-site accounting of what left the frozen block:
+   tests/Fixtures/css-layout-ledger.json. */
+.ptah-modal-panel              { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-modal-panel   { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
+
+.ptah-modal-panel .border-b,
+.ptah-modal-panel .border-t            { border-color: var(--ptah-line); }
+.ptah-dark .ptah-modal-panel .border-b,
+.ptah-dark .ptah-modal-panel .border-t { border-color: var(--ptah-line); }
+
+.ptah-modal-panel h3            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-modal-panel h3 { color: var(--ptah-text-strong); }
+
+.ptah-modal-panel .text-gray-700            { color: var(--ptah-text); }
+.ptah-dark .ptah-modal-panel .text-gray-700 { color: var(--ptah-text); }
+
+.ptah-modal-panel .text-slate-700            { color: var(--ptah-text); }
+.ptah-dark .ptah-modal-panel .text-slate-700 { color: var(--ptah-text); }
+
+/* Subtitle. Dark side is a DELIBERATE value change, not a byte-identical
+   migration — the frozen block hardcoded #64748b (same hex as the light
+   default), which under-lightens on a dark surface. --ptah-text-muted is
+   the token every other "muted/subtitle" role in this file already uses
+   (.ptah-c-modal_sub, .ptah-c-fp_muted, .ptah-c-tab_idle...), so this
+   aligns the two modal implementations instead of leaving forge-modal on a
+   one-off value. Contrast already covered by ContrastGuardTest case 15
+   (tab_idle dark: the same --ptah-text-muted #94a3b8 against the same
+   --ptah-surface-raised #1e293b). See css-layout-ledger.json "changed". */
+.ptah-modal-panel .text-gray-400            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-modal-panel .text-gray-400 { color: var(--ptah-text-muted); }
+
+.ptah-modal-panel .text-gray-600            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-modal-panel .text-gray-600 { color: var(--ptah-text-muted); }
+
+.ptah-modal-panel .text-slate-600            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-modal-panel .text-slate-600 { color: var(--ptah-text-muted); }
+
+/* Close button hover. Light has no origin (the frozen block only ever
+   patched dark), so it takes the same hover ink already used for the
+   BaseCrud's own modal close button (.ptah-c-modal_close:hover) below. */
+.ptah-modal-panel button.text-gray-400:hover            { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-modal-panel button.text-gray-400:hover { color: var(--ptah-text-strong); }
 
 /* ── Modal criar/editar ── */
 .ptah-c-modal_card         { background-color: var(--ptah-surface); }

@@ -1,6 +1,73 @@
 {{-- ── Toolbar ──────────────────────────────────────────────────────── --}}
 <div class="mb-4 border rounded-lg ptah-c-toolbar">
-<div class="flex flex-wrap items-center gap-2 px-4 py-3">
+{{-- Medicao dos rotulos colapsaveis.
+
+     Requisito: o rotulo aparece sempre que couber, e vira so icone APENAS quando a linha
+     quebraria. Breakpoint de viewport nao expressa isso — depende da largura do CONTAINER
+     (sidebar colapsada muda), da densidade escolhida (espacoso e mais largo) e do tamanho
+     das strings traduzidas. Um `hidden lg:inline` escondia o texto com espaco sobrando e
+     foi rejeitado em teste pelo usuario.
+
+     Como mede: liga os rotulos, e verifica se algum filho direto ficou com offsetTop
+     diferente do primeiro. Checa DOIS containers, esta linha e .ptah-c-toolbar_actions,
+     porque o grupo de acoes pode quebrar internamente sem esta quebrar.
+
+     ResizeObserver em vez de listener de resize: dispara tambem quando a densidade muda
+     (a altura dos controles muda) e quando a sidebar colapsa — casos que o evento de
+     janela nao cobre. Observa a LARGURA e ignora mudanca de altura: a propria troca de
+     classe muda o tamanho observado, e como o callback do observer e ASSINCRONO um flag
+     de reentrancia nao protege — ligar rotulo, disparar, medir, desligar, disparar de novo
+     e um laco que sempre termina colapsado. Foi o que aconteceu: ficou so icone mesmo com
+     espaco sobrando. Tambem re-mede quando as fontes carregam, porque medir antes disso da
+     largura de texto errada.
+     tamanho observado.
+
+     O default e COLAPSADO (ver .ptah-c-btn_label no CSS): comecar expandido e colapsar
+     depois faria a toolbar aparecer em duas linhas por um frame e pular para uma — salto
+     de altura mais perceptivel que icone virando texto no mesmo lugar. --}}
+<div class="flex flex-wrap items-center gap-2 px-4 py-3"
+     x-data="{
+        _lastWidth: -1,
+        _wrapped(el) {
+            if (!el) return false;
+            const kids = Array.from(el.children).filter(k => k.offsetParent !== null);
+            if (kids.length < 2) return false;
+            /* Compara o CENTRO vertical, nao o topo. Estes containers usam items-center,
+               entao itens de alturas diferentes — o botao Novo, o campo de busca e os
+               botoes de acao nao tem a mesma altura — ficam com offsetTop DIFERENTE mesmo
+               na mesma linha. Comparar topo lia quebra sempre, e a toolbar vivia colapsada
+               com espaco de sobra. Com items-center os centros coincidem na mesma linha e
+               so divergem entre linhas. Tolerancia de 2px absorve arredondamento. */
+            const center = k => k.offsetTop + k.offsetHeight / 2;
+            const first = center(kids[0]);
+            return kids.some(k => Math.abs(center(k) - first) > 2);
+        },
+        _measure() {
+            const row = this.$el;
+            row.classList.add('ptah-c-toolbar_labels');
+            if (this._wrapped(row) || this._wrapped(row.querySelector('.ptah-c-toolbar_actions'))) {
+                row.classList.remove('ptah-c-toolbar_labels');
+            }
+        },
+        init() {
+            this.$nextTick(() => this._measure());
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => this._measure());
+            }
+            this._ro = new ResizeObserver(entries => {
+                const w = Math.round(entries[0].contentRect.width);
+                if (w === this._lastWidth) return;
+                this._lastWidth = w;
+                if (this._raf) cancelAnimationFrame(this._raf);
+                this._raf = requestAnimationFrame(() => this._measure());
+            });
+            this._ro.observe(this.$el);
+        },
+        destroy() {
+            if (this._ro) this._ro.disconnect();
+            if (this._raf) cancelAnimationFrame(this._raf);
+        }
+     }">
 
     {{-- Botão Novo --}}
     @if ($effectivePerms['canCreate'])
@@ -40,8 +107,11 @@
         @endif
     </div>
 
-    {{-- Grupo de ações à direita --}}
-    <div class="flex items-center gap-1.5 ml-auto flex-wrap">
+    {{-- Grupo de acoes a direita. A classe .ptah-c-toolbar_actions e o que a medicao
+         no container acima procura: este grupo e um flex proprio com flex-wrap, entao
+         pode quebrar internamente SEM a linha externa quebrar. Medir so a externa
+         deixaria passar exatamente o caso reportado. --}}
+    <div class="ptah-c-toolbar_actions flex items-center gap-1.5 ml-auto flex-wrap">
 
         {{-- Botão Filtros --}}
         @php
@@ -53,12 +123,13 @@
             <button wire:click="toggleFilters"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
-                title="{{ __('ptah::ui.btn_filters') }}">
+                title="{{ __('ptah::ui.btn_filters') }}"
+                aria-label="{{ __('ptah::ui.btn_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
-                <span class="hidden sm:inline">{{ __('ptah::ui.btn_filters') }}</span>
+                <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_filters') }}</span>
                 @if ($activeFilterCount > 0)
                     <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-primary">
                         {{ $activeFilterCount }}
@@ -72,18 +143,19 @@
             <button wire:click="toggleTrashed"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showTrashed ? 'ptah-c-btn_trash_on' : 'ptah-c-btn' }}"
-                title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
+                title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}"
+                aria-label="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                 @if ($showTrashed)
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
                     </svg>
-                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_back') }}</span>
+                    <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_back') }}</span>
                 @else
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_trash') }}</span>
+                    <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_trash') }}</span>
                 @endif
             </button>
         @endif
@@ -93,12 +165,13 @@
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
-                    title="{{ __('ptah::ui.btn_export') }}">
+                    title="{{ __('ptah::ui.btn_export') }}"
+                    aria-label="{{ __('ptah::ui.btn_export') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_export') }}</span>
+                    <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_export') }}</span>
                     @if ($exportOverLimit ?? false)
                         <span class="inline-flex items-center justify-center px-1.5 h-4 text-[10px] font-bold leading-none rounded-full bg-warn text-dark"
                               title="{{ __('ptah::ui.export_limit_badge') }}">
@@ -181,12 +254,13 @@
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                            {{ $hiddenColumnsCount > 0 ? 'ptah-c-btn_col_on' : 'ptah-c-btn' }}"
-                    title="{{ __('ptah::ui.btn_columns') }}">
+                    title="{{ __('ptah::ui.btn_columns') }}"
+                    aria-label="{{ __('ptah::ui.btn_columns') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 10h18M3 14h18M10 6v12M14 6v12"/>
                     </svg>
-                    <span class="hidden sm:inline">{{ __('ptah::ui.btn_columns') }}</span>
+                    <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_columns') }}</span>
                     @if ($hiddenColumnsCount > 0)
                         <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-dark rounded-full bg-warn">
                             {{ $hiddenColumnsCount }}
@@ -258,9 +332,10 @@
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
-                title="{{ __('ptah::ui.btn_density') }}">
+                title="{{ __('ptah::ui.btn_density') }}"
+                aria-label="{{ __('ptah::ui.btn_density') }}">
                 <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
-                <span class="hidden sm:inline">{{ __('ptah::ui.btn_density') }}</span>
+                <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_density') }}</span>
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>

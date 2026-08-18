@@ -125,4 +125,39 @@ class ToolbarControlUniformityTest extends TestCase
             '"Espacoso" tinha o mesmo padding de linha que "Confortavel") — valores: '.json_encode($rowPaddings)
         );
     }
+
+    /**
+     * .ptah-c-control must not set horizontal padding on an <input>.
+     *
+     * forge-input computes pl-9 to reserve room for an absolutely-positioned
+     * iconBefore. This class is unlayered, so a padding-inline reaching the input
+     * beats that utility, the reserved space collapses, and the icon ends up drawn
+     * on top of the placeholder — which is exactly what shipped on the quick-search
+     * box. Height was the axis that needed unifying; horizontal padding on a shared
+     * class that also lands on icon inputs is a trap, so the rule is pinned here.
+     */
+    #[Test]
+    public function the_control_class_never_sets_horizontal_padding_on_an_input(): void
+    {
+        $css = self::css();
+
+        if (! preg_match('/\.ptah-c-control\s*\{([^}]*)\}/', $css, $m)) {
+            throw new RuntimeException('ToolbarControlUniformityTest: bloco .ptah-c-control nao encontrado.');
+        }
+
+        foreach (['padding-inline', 'padding-left', 'padding-right', 'padding:'] as $prop) {
+            $this->assertStringNotContainsString(
+                $prop,
+                $m[1],
+                sprintf(
+                    'A regra .ptah-c-control declara "%s", que atinge o <input> da busca rapida. '.
+                    'Sendo CSS sem camada, ela vence o pl-9 que o forge-input calcula para o '.
+                    'iconBefore, o espaco reservado colapsa e a lupa fica DESENHADA SOBRE o '.
+                    'placeholder. Se precisar de padding horizontal, use '.
+                    '.ptah-c-control:not(input).',
+                    $prop
+                )
+            );
+        }
+    }
 }
