@@ -7,6 +7,176 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.15.0] — 2026-08-17
+
+> **Tagging note:** `1.13.3` and `1.14.0` below were never published as their own
+> Composer tag — `main` was still at `1.13.2` when this release was cut. Both
+> entries are kept exactly as written (they document distinct, independently
+> completed pieces of work) and ship for the first time inside `1.15.0`. If you
+> install via Composer you go straight from `1.13.2` to `1.15.0`; nothing in
+> either entry was skipped, both are simply bundled here.
+
+### Added — per-user Appearance (`/profile`, 6th tab)
+
+Four independent axes, chosen per user and persisted server-side:
+
+| Axis | Options (slugs) |
+|---|---|
+| Light tone | `puro`, `papel`, `nevoa` |
+| Dark tone | `carvao`, `grafite`, `meianoite` |
+| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` (9) |
+| Font colour | `suave`, `neutra`, `forte` |
+
+Slugs are plain ASCII on purpose (`nevoa`, `carvao`, `meianoite` — no accents), since
+they round-trip through a `data-ptah-*` HTML attribute and a JSON-cast preference
+column. Persisted in `UserPreference` under key `theme`, group `appearance`, sanitised
+against a server-side whitelist (`Ptah\Support\AppearancePresets`) before ever being
+written back or rendered — an un-whitelisted value would leave every `var(--ptah-*)`
+that depends on it invalid at computed-value time.
+
+The four resulting values are rendered as `data-ptah-light|dark|accent|text` attributes
+directly on `<html>` by the server (`forge-dashboard-layout`), so an authenticated
+user's choice never flashes the default on load. Each pill in the Aparência tab previews
+the option it represents (its own tone/scale/colour), not the currently active theme —
+literal CSS per option, verified by a dedicated test (see Tests).
+
+Building this surfaced and fixed several defects of its own before and shortly after
+shipping, all in the same feature: the dark presets were inert because `.ptah-dark` was
+also applied to `<body>` and the layout's root `<div>` (custom properties resolve per
+element, so the bare `.ptah-dark` block on `body` won and inherited everywhere); the
+accent only changed half the UI because a `theme-colors` partial pinned
+`--ptah-primary` to a literal instead of deriving from `--color-primary`; the three
+light tones were visually the same tone (`--ptah-surface`/`--ptah-canvas` were `#ffffff`
+in all three, so only pill buttons moved); the font-colour axis was inert in light mode
+because the token rule covering inherited text existed only under `.ptah-dark`; and
+light mode in general had never been tokenised for the four biggest surfaces
+(`main`, `forge-card`, `forge-sidebar`, `forge-navbar`) — a tone changed the buttons and
+nothing else. All are fixed in this release (see Changed/Fixed below for the resulting
+breaking/visual changes).
+
+### Added — global toast host
+
+The toast stack moved out of `base-crud` and into the layout (`<x-forge-toast-host>`),
+listening on `window` for a `ptah-toast` event — any component can raise one now, not
+just a BaseCrud screen. Undo changed from a direct `$wire.restoreRecord()` call to a
+`ptah-toast-undo` window event that BaseCrud listens for.
+
+> **Compatibility note:** if your host app overrode
+> `resources/views/vendor/ptah/components/base-crud.blade.php` (or otherwise dropped
+> the layout's toast host), it stops receiving toasts until `<x-forge-toast-host />` is
+> re-included — re-publish or manually add it to your copy of the layout.
+
+### Changed — behavioural breaking changes (no API changes)
+
+1. **`.ptah-dark` (and the plain `.dark` marker) now live only on `<html>`.** They were
+   also applied to `<body>` and the layout's root `<div>`; a host stylesheet that styled
+   `body.dark …` or `.dark > div …` directly stops matching.
+2. **`ptah:install` now injects `@import '.../ptah-components.css'` into the host's
+   `app.css`** (documented in the `1.14.0` entry below) — installs from before that fix
+   need to re-run `ptah:install` or add the import line by hand.
+3. **`--ptah-primary-lite` moved from a 55% to a 45% white mix** (also `1.14.0`, an AA
+   fix for the pair it inks four BaseCrud components with).
+4. **The `ambar` accent changed from `#b45309` to `#92400e`.** The old value measured
+   4.32:1 as ink against the package's new light backgrounds — under the 4.5:1 floor;
+   the new value clears it at 6.10:1. The other 8 accents were unaffected.
+5. **Sidebar and navbar borders now use `--ptah-line-strong` instead of `--ptah-line`**
+   (17/255 more visible) — the value the surfaces' own dark-mode rules already used, so
+   one token now backs the border in both scopes instead of two.
+6. **Inherited text in light mode no longer resolves to the browser's pure black
+   (`#000000`)** — a root rule now sets `color: var(--ptah-text-strong)` for light mode
+   too (it previously existed only under `.ptah-dark`), so any element that declares no
+   colour of its own (most BaseCrud table cells, among others) now follows the chosen
+   font-colour preset instead of the browser default.
+7. **`forge-card` (`default` variant), `forge-sidebar`, `forge-navbar`,
+   `forge-page-header` and `forge-tab` stopped hardcoding Tailwind color utilities**
+   (`bg-white`, `border-gray-100`, `text-gray-900`, `text-gray-500`, …) in favour of the
+   `--ptah-*` tokens. A host that overrode these components by targeting those utility
+   classes must now override the underlying tokens instead.
+
+### Fixed — accessibility (WCAG AA / non-text 3:1, measured before and after)
+
+| Element | Before | After |
+|---|---|---|
+| Row action icon "editar" (dark) | 2.05:1 | 7.40:1 |
+| Row action icon "duplicar" (light) | 2.56:1 | 4.76:1 |
+| Breadcrumb current item (no dark variant) | 2.05:1 | token-driven, both scopes |
+| Breadcrumb link (no dark variant) | 3.69:1 | token-driven, both scopes |
+| Navbar user chip — name | 1.35:1 | 6.97:1 |
+| Navbar user chip — avatar initial (on hover) | 1.40:1 | 5.63:1 |
+| Navbar user chip — chevron | 2.31:1 | 4.08:1 |
+| Logout button label (light / dark) | 3.08:1 / 4.29:1 (never passed) | 6.11:1 (5.00:1 hover) / 6.87:1 (5.79:1 hover) |
+| Admin dropdown icon | 2.54:1 | 4.76:1 |
+| Sidebar menu item, child | 4.83:1 | 8.21:1 |
+| Sidebar menu item, parent | 7.56:1 | 8.21:1 |
+| Inactive tab, dark (no dark variant) | 3.03:1 | 5.71:1 |
+| Active tab as text, dark | 1.68:1 | 5.06:1 |
+
+Also: native form controls (`input[type=date]`, native `select`, scrollbars, autofill)
+rendered with the OS **light** colour scheme outside BaseCrud screens, because
+`color-scheme` was declared only inside a BaseCrud-scoped selector — now declared on
+both `:root` and `.ptah-dark`, fixing every non-BaseCrud screen at once. The sticky
+action column in dark mode used `--ptah-surface` while its row is transparent over a
+darker page background, showing a visible seam; it now uses `--ptah-canvas` to match.
+
+### Fixed — BaseCrud UI
+
+- **Three different control heights in the same toolbar row** (buttons ~30px, per-page
+  select ~34px, search box ~42px) unified through a density token
+  (`--ptah-control-h/-px/-fs`) instead of matching paddings by hand.
+- **"Espaçoso" (spacious) density rendered identical row padding to "Confortável"**
+  (comfortable) — only font size changed. All three densities now differ in row
+  padding as well.
+- **The sticky action column** had a translucent header that let scrolling content show
+  through, and no left edge to read as a pinned column — now opaque with a left
+  border/shadow.
+- **The four row-action icons used `p-2 -m-1`**, whose negative margin pushed each
+  icon's hit area into its neighbour's; removed in favour of `gap`-based spacing.
+
+### Tests
+
+Suite grew from ~695 (pre-`1.13.3`) to **887** (6161 assertions). The additions worth
+calling out guard *classes* of defect, not one-off values:
+
+- **Golden fixture + frozen origin + ledger** (`LayoutStyleBaselineTest`,
+  `css-layout-origin.json`, `LayoutMigrationLedgerTest`) — makes a rule moving between
+  the layout's inline `<style>` and `ptah-components.css` fail if its colour changes
+  during the move, a case a diff alone cannot catch (both fixtures would otherwise
+  regenerate together and both stay green).
+- **Light/dark token parity** (`ThemeChromeOrphanTokenGuardTest`) — fails whenever a
+  `.ptah-dark` rule declares a `--ptah-*` token with no light counterpart, with a
+  documented, closed allowlist of legitimate exceptions.
+- **Perceptible separation between tones and font scales**
+  (`AppearancePresetContrastTest` additions) — a tone or scale that merely *passes
+  contrast* without visibly differing from its neighbours now fails explicitly
+  (consecutive font scales must separate by ≥ 12/255 per role; tone pairs by ≥ 10/255
+  on canvas or surface).
+- **Previews must be literal** (`AppearancePreviewLiteralTest`) — every pill option must
+  have a rule, no such rule may reference a `var(--ptah-*)` token (which would make
+  every option render identically), and tone previews specifically must not be scoped
+  to `.ptah-dark`.
+- **Double quotes inside an Alpine `x-data` attribute** (`LayoutXDataQuotingTest`) — a
+  quote inside a comment or an attribute selector used to close the `x-data` string
+  early and dump the entire Alpine object as visible text; now scanned across every
+  view carrying `x-data`/`x-init`.
+- **Single carrier of the theme** (`ThemeCarrierTest`) — pins `.ptah-dark`/the appearance
+  `data-ptah-*` attributes to `<html>` only, so a regression that reintroduces them on
+  `<body>` or a wrapper `<div>` (which would silently make dark presets inert) is
+  caught immediately.
+
+### Docs
+
+- `docs/Configuration.md` — new "Per-user Appearance" section under
+  `resources/css/ptah-components.css`: the four axes, the slug values, where the tab
+  lives, how it persists, and that a user-chosen preset overrides the `:root`/
+  `.ptah-dark` host override described earlier in that same section.
+- `docs/KnownLimitations.md` — new section documenting the partial coverage of the
+  theming work (measured, not estimated): how many color literals/rules remain in the
+  layout's inline `<style>`, how many hardcoded text-color utilities remain across the
+  views (and which two screens concentrate most of them), and that the whole Appearance
+  axis has no effect at all under the Tailwind CDN fallback (no Vite build).
+- `README.md` — one line in "Theming & customizing views" pointing at the new
+  per-user Appearance tab.
+
 ## [1.14.0] — 2026-08-17
 
 ### Fixed — `ptah:install` never wired the host's `app.css` to Ptah's component stylesheet

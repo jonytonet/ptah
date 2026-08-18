@@ -508,6 +508,19 @@ class ContrastGuardTest extends TestCase
         // (raw --ptah-primary on a dark ground). The separator's light value was also a
         // hardcoded gray-400 at 2.54:1; it is now a token and clears the icon floor. The
         // separator is held to 3:1 rather than 4.5:1 because it is punctuation, not content.
+        // The fallback values themselves, read from the token blocks rather than from a
+        // preset — these are what renders when no data-ptah-* reaches <html>.
+        if (! preg_match('/:root\s*\{[^}]*--ptah-line-field:\s*(#[0-9a-fA-F]{6})/s', $css, $lfL)) {
+            throw new RuntimeException('ContrastGuardTest: could not read --ptah-line-field from :root.');
+        }
+
+        if (! preg_match('/\.ptah-dark\s*\{[^}]*--ptah-line-field:\s*(#[0-9a-fA-F]{6})/s', $css, $lfD)) {
+            throw new RuntimeException('ContrastGuardTest: could not read --ptah-line-field from the .ptah-dark token block.');
+        }
+
+        $lineFieldLight = strtolower($lfL[1]);
+        $lineFieldDark = strtolower($lfD[1]);
+
         $crumbSepLight = self::extractHex($css, '/\.ptah-c-crumb_sep\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb_sep light');
         $crumbSepDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-crumb_sep\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb_sep dark');
         $crumbLinkLight = self::extractHex($css, '/\.ptah-c-crumb\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'crumb link light');
@@ -583,6 +596,14 @@ class ContrastGuardTest extends TestCase
             '22. sidebar logout label (light) on hover vs --color-danger-light — text' => [$logoutInkLight, $dangerLightBg, 4.5],
             '22. sidebar logout label (dark) at rest vs --ptah-surface — text' => [$logoutInkDark, '#1e293b', 4.5],
             '22. sidebar logout label (dark) on hover vs composited tint — text' => [$logoutInkDark, $logoutHoverDarkBg, 4.5],
+            // 24. --ptah-line-field FALLBACK. A field border is a UI component boundary,
+            // so 3:1 applies. Every tone preset already solves this token to 3:1 against
+            // its own surface and the layout always emits data-ptah-light, so a preset was
+            // covering it in practice — but a host that embeds the BaseCrud in its OWN
+            // layout gets no data-ptah-* and falls through to these :root/.ptah-dark values,
+            // which measured 2.56:1 and 1.93:1. That path had no test at all.
+            '24. line-field fallback (light) vs surface — control boundary' => [$lineFieldLight, '#ffffff', 3.0],
+            '24. line-field fallback (dark) vs surface — control boundary' => [$lineFieldDark, '#1e293b', 3.0],
             '21. breadcrumb separator (light) vs page bg — punctuation, visibility floor' => [$crumbSepLight, '#ffffff', 3.0],
             '21. breadcrumb separator (dark) vs page bg — punctuation, visibility floor' => [$crumbSepDark, '#0f172a', 3.0],
             '21. breadcrumb link (light) vs page bg — text' => [$crumbLinkLight, '#ffffff', 4.5],

@@ -16,7 +16,8 @@
 3. [Namespace Imports in Generated Models](#3-namespace-imports-in-generated-models)
 4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
 5. [`ptah:config` CLI — Column Types and Renderers](#5-ptahconfig-cli--column-types-and-renderers)
-6. [Post-Forge Checklist](#post-forge-checklist)
+6. [Theming — Partial Coverage (1.15.0)](#6-theming--partial-coverage-1150)
+7. [Post-Forge Checklist](#post-forge-checklist)
 
 ---
 
@@ -296,6 +297,68 @@ php artisan ptah:config "App\Models\Product" --set="configLinkLinha=/products/%i
 | joins | `--join` | ✅ supported |
 | general settings | `--set` | ✅ supported |
 | option values with `:` | `options=k:v` | ✅ fixed (2026-03-20) |
+
+---
+
+## 6. Theming — Partial Coverage (1.15.0)
+
+### What ptah covers
+
+As of `1.15.0`, the per-user Appearance preset (see the "Per-user Appearance" section in
+[`Configuration.md`](Configuration.md)) and the underlying `--ptah-*` neutral tokens
+reach BaseCrud screens, the Forge components (`<x-forge-*>`) and most of the dashboard
+chrome (sidebar, navbar, company switcher, page header, tabs).
+
+### What ptah does not cover yet
+
+Two areas are known to be **outside** the tokenised surface, measured directly against
+this release's sources rather than estimated:
+
+- **The dashboard layout's inline `<style>` block**
+  (`resources/views/components/forge-dashboard-layout.blade.php`) still carries
+  **84 hardcoded color literals across 79 CSS rules** (down from 153/127 when the
+  tokenisation work started; `LayoutStyleBaselineTest`'s ceiling caps it at 89/79 and
+  only ever shrinks). These rules retrofit dark mode onto a handful of remaining
+  screens (module toolbars/tables, generic modal text, stat cards, badges/alerts) and
+  do not react to the user's chosen tone.
+- **Views still hardcode Tailwind text-color utilities** (`text-gray-*`,
+  `text-slate-*`, `text-zinc-*`, `text-neutral-*`, `text-stone-*`, `text-white`,
+  `text-black`, including their `dark:` variants) instead of the `--ptah-text-*`
+  tokens — **1,057 occurrences across 56 Blade files**, measured with
+  `grep -rEo "text-(gray|slate|zinc|neutral|stone|white|black)(-[0-9]+)?"` over
+  `resources/views`. Two screens concentrate the largest share by far:
+  - `resources/views/livewire/base-crud/crud-config.blade.php` (the visual CrudConfig
+    editor) — 259 occurrences.
+  - `resources/views/livewire/permission/permission-guide.blade.php` — 144
+    occurrences.
+
+  Together these two views alone account for ~38% of all remaining hardcoded
+  text-color classes. Every other module screen (`page-list`, `menu-list`,
+  `audit-list`, `role-list`, `company-list`, `user-permission-list`,
+  `department-list`, `exports-panel`, `ai-model-config-list`, …) has a smaller but
+  non-trivial share. A user who picks a non-default font-colour preset will see it
+  applied almost everywhere on a BaseCrud screen, but largely **not** on `crud-config`
+  or `permission-guide`.
+
+- **The whole Appearance feature is inert under the Tailwind CDN fallback.** The
+  layout only loads `resources/css/ptah-components.css` (via `app.css`'s `@import`,
+  injected by `ptah:install`) when a Vite build exists
+  (`public/build/manifest.json`); otherwise it falls back to the
+  `cdn.tailwindcss.com` script, which never loads that stylesheet at all. Every
+  `--ptah-*` token, every `data-ptah-*` preset block, and therefore the entire
+  Appearance tab, has **no visual effect** on a host running without a Vite build —
+  it silently does nothing rather than erroring.
+
+### Developer responsibility
+
+- Treat `crud-config` and `permission-guide` as **not yet theme-aware**: a custom dark
+  or light-tone preset will look inconsistent there until they are migrated.
+- If your host cannot guarantee a Vite build in every environment (e.g. a `sync`/no-op
+  deployment step), do not advertise the Appearance tab to end users — it will appear
+  to do nothing.
+- Do not add new hardcoded `text-*`/`bg-*` color utilities to package views; use the
+  `--ptah-*` tokens (see the token table earlier in `Configuration.md`) so new code
+  does not add to the counts above.
 
 ---
 

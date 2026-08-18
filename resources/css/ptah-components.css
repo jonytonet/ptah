@@ -91,7 +91,16 @@
     --ptah-line:              #f1f5f9; /* hairline divider: dropdowns, filter-panel header/footer, modal header, row bottom */
     --ptah-line-strong:       #e2e8f0; /* more visible border: outer containers (toolbar, cards, wrapper), thead/tfoot 2px rule */
     --ptah-line-control:      #cbd5e1; /* scrollbar track/thumb, save-filter input border */
-    --ptah-line-field:        #94a3b8; /* resting form-field border: per-page select, filter input, generic form border */
+    /* Resting form-field border: per-page select, filter input, generic form border.
+       A field border is a UI component boundary, so the floor is 3:1 — and the old
+       #94a3b8 measured 2.56:1 against white and had since it was written. Every tone
+       preset already solves this token to exactly 3:1 against its own surface, and the
+       layout always emits a data-ptah-light attribute, so in practice a preset was
+       already covering it. This is the FALLBACK: it is what a host embedding the
+       BaseCrud in its own layout gets, with no data-ptah-* on <html> and therefore no
+       preset — the one path where the old value still rendered. Now 3.01:1, matching
+       the "puro" preset so the fallback and the default tone agree. */
+    --ptah-line-field:        #8f95a0;
     --ptah-line-field-hover:  #64748b; /* hover border for the above — invariant across scope on purpose (same hex today
                                            in both .ptah-c-fp_input:hover and .ptah-c-perpage:hover, light and dark) */
 
@@ -140,7 +149,10 @@
     --ptah-line:          #334155;
     --ptah-line-strong:   #334155;
     --ptah-line-control:  #475569;
-    --ptah-line-field:    #475569;
+    /* Same fix as the light fallback above: #475569 was 1.93:1 against the dark
+       surface, well under the 3:1 a field border needs. Matches the "grafite"
+       preset, which is the dark default. */
+    --ptah-line-field:    #6d7278;
 
     --ptah-text-strong:    #e2e8f0;
     --ptah-text-field:     #e2e8f0;

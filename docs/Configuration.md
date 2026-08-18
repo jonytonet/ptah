@@ -146,6 +146,41 @@ Redeclaring only the `:root` block is a common mistake: both `:root` and `.ptah-
 
 This is a pure restyle layer (no new options in `config/ptah.php`); the color/border/text *roles* above may be split further in a future release without breaking existing overrides that only touch the tokens they need.
 
+### Per-user Appearance (`/profile` → 6th tab)
+
+On top of the host-level tokens above, every authenticated user can pick their own
+combination of **4 independent axes** from a 6th tab at `/profile` ("Aparência"):
+
+| Axis | Options (stored slug) |
+|---|---|
+| Light tone | `puro`, `papel`, `nevoa` |
+| Dark tone | `carvao`, `grafite`, `meianoite` |
+| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` |
+| Font colour | `suave`, `neutra`, `forte` |
+
+Slugs are plain ASCII by design (`nevoa`, `carvao`, `meianoite` — no accented
+characters), since they round-trip through a `data-ptah-*` HTML attribute and a
+JSON-cast preference value.
+
+**Persistence & rendering.** The choice is stored via `UserPreference` (key `theme`,
+group `appearance`) and sanitized against the whitelist in
+`Ptah\Support\AppearancePresets` before every write and every render — a value outside
+the whitelist is never trusted, since it would leave a `var(--ptah-*)` with no matching
+CSS block invalid at computed-value time. The four resulting values are rendered as
+`data-ptah-light`, `data-ptah-dark`, `data-ptah-accent` and `data-ptah-text` attributes
+directly on `<html>` **by the server** (`forge-dashboard-layout`), so there is no flash
+of the default theme for an authenticated user. Each pill in the tab previews the
+option it represents (its own tone/scale/colour), not the currently active theme.
+
+> **Override precedence:** a user-chosen preset **always wins** over a host's
+> `:root`/`.ptah-dark` override (the contract described above) for the tokens the
+> preset axis touches — not because of declaration order, but because the preset
+> selectors carry higher specificity: `html[data-ptah-light="…"]:not(.ptah-dark)` /
+> `html.ptah-dark[data-ptah-dark="…"]` resolve to (0,2,1), against (0,1,0) for a plain
+> `:root`/`.ptah-dark` block. A host that needs a fixed brand regardless of user choice
+> should not rely on `:root`/`.ptah-dark` alone; restrict or disable the Appearance tab
+> instead (there is currently no config flag for that — see `docs/KnownLimitations.md`).
+
 ### File generation paths (`paths.*`)
 
 | Key | ENV | Default | Reference |
