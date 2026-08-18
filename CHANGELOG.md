@@ -132,9 +132,69 @@ darker page background, showing a visible seam; it now uses `--ptah-canvas` to m
 - **The four row-action icons used `p-2 -m-1`**, whose negative margin pushed each
   icon's hit area into its neighbour's; removed in favour of `gap`-based spacing.
 
+### Fixed — authorisation: three defects where the admin acted and nothing happened
+
+Found by auditing this package's permission system against the ERP it descends from,
+ahead of rebuilding that ERP on top of ptah. All three share a shape: the administrator
+performs an action, the screen confirms it, and the gate behaves as if nothing had
+changed. That is worse than a loud failure — nobody goes looking for it.
+
+- **Revoking a permission and then granting it again never took effect.**
+  `RoleService::bindPageObject()` passed `['deleted_at' => null]` through
+  `updateOrCreate()`, and `deleted_at` is not fillable, so `fill()` dropped it silently.
+  Measured: grant → allowed, revoke → denied, **re-grant → still denied**, with the row
+  stored as `can_read = true` *and* `deleted_at` set. The UI reported "Permissions
+  updated." with the box ticked. Now uses the SoftDeletes API (`firstOrNew` + `restore`),
+  the same technique `PermissionService::syncRole()` already used for `UserRole` — whose
+  docblock documents this exact trap. No test had ever covered the cycle back.
+
+- **The "Active" toggle on page objects and pages did nothing for authorisation.**
+  `buildPermissionMap()` never filtered `page_objects.is_active`, and nothing read
+  `ptah_pages.is_active` at all, so deactivating an object or a whole page revoked
+  nothing. Worse, `buildMasterPermissionMap()` *did* filter, so the MASTER map excluded
+  an inactive object while the ordinary map included it — `ptah_can()` and
+  `ptah_permissions()` disagreed with each other for the same user. Both maps now apply
+  the rule, an inactive page deactivates its objects, and `getCompaniesForResource()`
+  follows the same rule (it feeds company selectors, and would otherwise offer branches
+  for a resource the gate then refuses).
+  **Behavioural change:** if you have deactivated objects or pages expecting them to stay
+  reachable, they now deny. That is the intended meaning of the toggle.
+
+- **Every queued export was refused.** `GenerateCrudExportJob` ran the gate inside a
+  worker — no session, no `auth()` — so the user resolved to `null`, `allow_guest`
+  defaults to `false`, and the job failed the export with "You are not allowed to export
+  this data." For anyone, always. The authoriser now takes an explicit user and company,
+  and the job passes the export's own `user_id` and `company_id`. Passing the user alone
+  would not have been enough: with no session the company also resolves to `null`, and
+  `null` here means `whereNull('company_id')` strictly, not "any company", so a user
+  bound per branch would still have been refused.
+
+Also: cache is now invalidated when a page object or page changes (observers existed for
+roles, grants and assignments but not for these two, so a deleted object stayed permitted
+until the 1h TTL expired), and a dead `Cache::forget()` in `CompanyService::setActive()`
+naming keys from a superseded scheme was replaced with a real invalidation call.
+
+### Changed — the CRUD config editor and AI config can finally be delegated
+
+`ptah_can_manage_config()` and the AI model screen called `ptah_can(..., 'manage')`, but
+`manage` was not in the action whitelist — so both were *always* `false` and the
+capability was MASTER-only by construction, while the docs promised a `crud.config`
+grant. The capability is now expressed as the **object**: `crud.config` and `ai.config`
+are page objects, and holding `read` on one means you may configure it. A non-MASTER user
+with that grant can now open the editor.
+
+A `can_manage` column was implemented first and reverted. **The package's schema is
+frozen: an update must never require a migration.** Installing ptah runs migrations and
+that is fine; shipping a new one in an update is not, because existing installations will
+not run `migrate` again — and because `loadMigrationsFrom()` makes package migrations
+auto-discovered, so a new file executes on the consumer's next unrelated `php artisan
+migrate` rather than waiting to be asked for. `SchemaIsFrozenTest` now pins the 17
+migrations the package ships and fails on any addition or removal, with the alternatives
+spelled out in its failure message. **This release adds no migrations.**
+
 ### Tests
 
-Suite grew from ~695 (pre-`1.13.3`) to **887** (6161 assertions). The additions worth
+Suite grew from ~695 (pre-`1.13.3`) to **907** (6204 assertions). The additions worth
 calling out guard *classes* of defect, not one-off values:
 
 - **Golden fixture + frozen origin + ledger** (`LayoutStyleBaselineTest`,
