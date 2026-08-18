@@ -32,8 +32,15 @@
             if (!el) return false;
             const kids = Array.from(el.children).filter(k => k.offsetParent !== null);
             if (kids.length < 2) return false;
-            const top = kids[0].offsetTop;
-            return kids.some(k => k.offsetTop !== top);
+            /* Compara o CENTRO vertical, nao o topo. Estes containers usam items-center,
+               entao itens de alturas diferentes — o botao Novo, o campo de busca e os
+               botoes de acao nao tem a mesma altura — ficam com offsetTop DIFERENTE mesmo
+               na mesma linha. Comparar topo lia quebra sempre, e a toolbar vivia colapsada
+               com espaco de sobra. Com items-center os centros coincidem na mesma linha e
+               so divergem entre linhas. Tolerancia de 2px absorve arredondamento. */
+            const center = k => k.offsetTop + k.offsetHeight / 2;
+            const first = center(kids[0]);
+            return kids.some(k => Math.abs(center(k) - first) > 2);
         },
         _measure() {
             const row = this.$el;
