@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.reset_title') }}</h2>
-        <p class="text-sm text-gray-500 mt-1">{{ __('ptah::ui.reset_subtitle') }}</p>
+        <h2 class="text-xl font-semibold ptah-c-section_ttl">{{ __('ptah::ui.reset_title') }}</h2>
+        <p class="text-sm ptah-c-phdr_sub mt-1">{{ __('ptah::ui.reset_subtitle') }}</p>
     </div>
 
     @if ($errorMsg)

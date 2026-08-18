@@ -14,10 +14,25 @@
 @php
     $appName = $appName ?? config('app.name', 'Ptah');
     $title   = $title ?? null;
+
+    // Não há usuário autenticado nestas telas (login, 2FA, esqueci a senha,
+    // redefinir senha) — a ÚNICA fonte possível é o cookie ptah_appearance
+    // (ver AppearancePresets::queueCookie). Sempre sanitizado antes de tocar
+    // um atributo HTML: o cookie é controlado pelo cliente. Numa máquina
+    // compartilhada, isto faz a tela de login aparecer no tema do último
+    // usuário daquele navegador — ver docs/Configuration.md.
+    $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
+        \Ptah\Support\AppearancePresets::decodeCookie(request()->cookie(\Ptah\Support\AppearancePresets::COOKIE))
+    );
+    $theme = $ptahAppearance['mode'];
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +40,16 @@
     <title>{{ $appName }}{{ isset($title) ? ' — ' . $title : '' }}</title>
 
     @php $ptahAuthColors = config('ptah.theme.colors', []); @endphp
+
+    {{-- Mesmo esquema do forge-dashboard-layout: quando o host tem build, os estilos
+         vêm por @vite — e é isso que traz o ptah-components.css, onde vivem as regras
+         dos presets de aparência. Sem este ramo, os atributos data-ptah-* que o cookie
+         acabou de colocar no <html> não têm nenhuma regra para casar nesta tela, e o
+         tema escolhido simplesmente não aparece no login. O CDN abaixo continua sendo
+         o fallback para projeto sem build (onde o pacote já não tem CSS de componente). --}}
+    @if(file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -42,9 +67,16 @@
             }
         }
     </script>
+    @endif
+
     {{-- Brand palette from config('ptah.theme.colors') for ptah-components.css --}}
     @include('ptah::partials.theme-colors')
     <style>[x-cloak] { display: none !important; }</style>
+
+    {{-- Anti-FOUC: resolve the theme and paint the dark class BEFORE first paint.
+         Same partial as forge-dashboard-layout.blade.php — see it for the full
+         precedence rules; here $theme comes from the ptah_appearance cookie only. --}}
+    @include('ptah::partials.appearance-boot')
 
     {{-- Alpine via CDN apenas se Livewire não estiver presente.
          Livewire 4 já embute o Alpine internamente — carregar dois causa conflito. --}}
@@ -58,7 +90,7 @@
 
     @stack('styles')
 </head>
-<body class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex flex-col items-center justify-center p-4 font-sans antialiased">
+<body class="min-h-screen ptah-c-auth_bg flex flex-col items-center justify-center p-4 font-sans antialiased">
 
     {{-- Branding --}}
     <div class="mb-8 text-center">
@@ -67,13 +99,13 @@
                 {{ mb_strtoupper(mb_substr(config('app.name', 'P'), 0, 1)) }}
             </span>
         </div>
-        <h1 class="text-2xl font-bold text-dark">{{ config('app.name', 'Ptah') }}</h1>
+        <h1 class="text-2xl font-bold ptah-c-section_ttl">{{ config('app.name', 'Ptah') }}</h1>
     </div>
 
     {{-- Card --}}
-    <div class="w-full max-w-md bg-white rounded-md p-8 border border-gray-200">
+    <div class="w-full max-w-md ptah-card-default rounded-md p-8 border">
         @isset($title)
-            <h2 class="text-xl font-semibold text-dark mb-6">{{ $title }}</h2>
+            <h2 class="text-xl font-semibold ptah-c-section_ttl mb-6">{{ $title }}</h2>
         @endisset
 
         @hasSection('content')
@@ -85,7 +117,7 @@
     </div>
 
     {{-- Footer --}}
-    <p class="mt-6 text-sm text-gray-400">
+    <p class="mt-6 text-sm ptah-c-muted">
         &copy; {{ date('Y') }} {{ config('app.name', 'Ptah') }}. Todos os direitos reservados.
     </p>
 

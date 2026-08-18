@@ -467,6 +467,7 @@ return [
     'profile_appearance_text_suave' => 'Suave',
     'profile_appearance_text_neutra' => 'Neutra',
     'profile_appearance_text_forte' => 'Forte',
+    'profile_appearance_reset_btn' => 'Voltar ao original',
 
     /*
     |--------------------------------------------------------------------------

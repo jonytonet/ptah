@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Livewire;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Cookie;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Auth\ProfilePage;
@@ -151,5 +152,55 @@ class ProfilePageAppearanceTest extends TestCase
 
         $this->postJson(route('ptah.appearance.theme-mode'), ['mode' => 'dark'])
             ->assertStatus(204);
+    }
+
+    #[Test]
+    public function rota_de_persistencia_do_modo_tambem_atualiza_o_cookie(): void
+    {
+        $this->actingAsUser();
+
+        $this->postJson(route('ptah.appearance.theme-mode'), ['mode' => 'dark'])
+            ->assertStatus(204);
+
+        $queued = Cookie::queued(AppearancePresets::COOKIE);
+        $this->assertNotNull($queued);
+        $this->assertSame('dark', json_decode($queued->getValue(), true)['mode']);
+    }
+
+    // ── "Voltar ao original" ──────────────────────────────────────────────────
+
+    #[Test]
+    public function resetar_a_aparencia_restaura_os_4_eixos_mas_nao_mexe_no_modo(): void
+    {
+        $user = $this->actingAsUser();
+
+        UserPreference::set($user->id, 'theme', [
+            'mode' => 'dark',
+            'light' => 'nevoa',
+            'dark' => 'meianoite',
+            'accent' => 'teal',
+            'text' => 'suave',
+        ], 'appearance');
+
+        Livewire::test(ProfilePage::class)
+            ->call('resetAppearance')
+            ->assertSet('themeLight', AppearancePresets::DEFAULT_LIGHT)
+            ->assertSet('themeDark', AppearancePresets::DEFAULT_DARK)
+            ->assertSet('themeAccent', AppearancePresets::DEFAULT_ACCENT)
+            ->assertSet('themeText', AppearancePresets::DEFAULT_TEXT);
+
+        $stored = UserPreference::get($user->id, 'theme');
+
+        $this->assertSame([
+            'mode' => 'dark',
+            'light' => AppearancePresets::DEFAULT_LIGHT,
+            'dark' => AppearancePresets::DEFAULT_DARK,
+            'accent' => AppearancePresets::DEFAULT_ACCENT,
+            'text' => AppearancePresets::DEFAULT_TEXT,
+        ], $stored);
+
+        $queued = Cookie::queued(AppearancePresets::COOKIE);
+        $this->assertNotNull($queued);
+        $this->assertSame($stored, json_decode($queued->getValue(), true));
     }
 }

@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.forgot_title') }}</h2>
-        <p class="text-sm text-gray-500 mt-1">{{ __('ptah::ui.forgot_subtitle') }}</p>
+        <h2 class="text-xl font-semibold ptah-c-section_ttl">{{ __('ptah::ui.forgot_title') }}</h2>
+        <p class="text-sm ptah-c-phdr_sub mt-1">{{ __('ptah::ui.forgot_subtitle') }}</p>
     </div>
 
     @if ($status)
@@ -33,7 +33,7 @@
         </x-forge-button>
     </form>
 
-    <p class="text-center text-sm text-gray-500 mt-6">
+    <p class="text-center text-sm ptah-c-phdr_sub mt-6">
         {{ __('ptah::ui.forgot_remembered') }}
         <a href="{{ route('ptah.auth.login') }}" class="text-primary hover:underline font-medium">{{ __('ptah::ui.forgot_back_login') }}</a>
     </p>

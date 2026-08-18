@@ -11,8 +11,10 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Services\Company\CompanyService;
+use Ptah\Support\AppearancePresets;
 
 #[Layout('ptah::layouts.forge-auth')]
 class LoginPage extends Component
@@ -70,6 +72,12 @@ class LoginPage extends Component
         }
 
         Session::regenerate();
+
+        // Seed/refresh the ptah_appearance cookie from whatever is already saved in
+        // the database — covers a user who saved a preference long ago and will
+        // never touch the Aparência tab again, so the NEXT login screen (this
+        // browser) already renders in their theme instead of always the default.
+        AppearancePresets::queueCookie(AppearancePresets::sanitize(UserPreference::get($user->id, 'theme')));
 
         // Set the active company in the session (is_default → first active → first of all)
         app(CompanyService::class)->initSession();

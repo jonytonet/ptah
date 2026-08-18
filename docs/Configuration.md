@@ -181,6 +181,15 @@ option it represents (its own tone/scale/colour), not the currently active theme
 > should not rely on `:root`/`.ptah-dark` alone; restrict or disable the Appearance tab
 > instead (there is currently no config flag for that — see `docs/KnownLimitations.md`).
 
+**Auth screens (login, 2FA, forgot/reset password).** There is no authenticated user on
+these pages, so the same 4 axes plus the light/dark mode are mirrored into an `httpOnly`
+`ptah_appearance` cookie (1 year, `SameSite=Lax`, written by the server whenever the
+preference is saved via `/profile`, the navbar toggle, or a successful login) and read
+back — sanitized the same way — to render the attributes on `forge-auth`'s `<html>`. On a
+shared computer this means the login screen shows the *last* user's theme until someone
+else logs in and refreshes the cookie, a minor preference leak between people on the same
+device/browser; it never leaks credentials or any other account data.
+
 ### File generation paths (`paths.*`)
 
 | Key | ENV | Default | Reference |

@@ -998,6 +998,61 @@ class ContrastGuardTest extends TestCase
         );
     }
 
+    /**
+     * --ptah-line-field is now the border of forge-input/forge-textarea/forge-select's
+     * trigger (ptah-components.css "Form fields" section) AND of the "lembrar-me"
+     * checkbox on the auth screens (.ptah-c-form_border, reused as-is). Both are UI
+     * component boundaries, so the floor is 3:1 — and unlike the :root/.ptah-dark
+     * FALLBACK already pinned above (case 24), a real page almost always renders one
+     * of the 6 named presets (data-ptah-light/data-ptah-dark), each with its OWN
+     * --ptah-line-field AND its own --ptah-surface. This checks all 6 combinations
+     * directly, rather than trusting the token's own code comment that claims they
+     * all resolve to ~3:1.
+     */
+    #[Test]
+    public function line_field_border_passes_the_control_floor_against_its_own_surface_in_every_preset_tone(): void
+    {
+        $css = self::css();
+
+        $presets = [
+            'claro/puro' => 'html\[data-ptah-light="puro"\]:not\(\.ptah-dark\)',
+            'claro/papel' => 'html\[data-ptah-light="papel"\]:not\(\.ptah-dark\)',
+            'claro/nevoa' => 'html\[data-ptah-light="nevoa"\]:not\(\.ptah-dark\)',
+            'escuro/carvao' => 'html\.ptah-dark\[data-ptah-dark="carvao"\]',
+            'escuro/grafite' => 'html\.ptah-dark\[data-ptah-dark="grafite"\]',
+            'escuro/meianoite' => 'html\.ptah-dark\[data-ptah-dark="meianoite"\]',
+        ];
+
+        foreach ($presets as $label => $selectorPattern) {
+            if (! preg_match('/'.$selectorPattern.'\s*\{([^}]*)\}/', $css, $m)) {
+                throw new RuntimeException("ContrastGuardTest: preset block not found for [{$label}].");
+            }
+
+            $body = $m[1];
+
+            if (! preg_match('/--ptah-line-field:\s*(#[0-9a-fA-F]{6})/', $body, $lineField)) {
+                throw new RuntimeException("ContrastGuardTest: --ptah-line-field not declared in preset [{$label}].");
+            }
+            if (! preg_match('/--ptah-surface:\s*(#[0-9a-fA-F]{6})/', $body, $surface)) {
+                throw new RuntimeException("ContrastGuardTest: --ptah-surface not declared in preset [{$label}].");
+            }
+
+            $ratio = self::contrastRatio(strtolower($lineField[1]), strtolower($surface[1]));
+
+            $this->assertGreaterThanOrEqual(
+                3.0,
+                $ratio,
+                sprintf(
+                    'preset [%s]: --ptah-line-field %s vs its own --ptah-surface %s = %.2f:1, below 3.0:1 (control boundary).',
+                    $label,
+                    $lineField[1],
+                    $surface[1],
+                    $ratio
+                )
+            );
+        }
+    }
+
     #[Test]
     #[DataProvider('contrastPairsProvider')]
     public function meets_the_minimum_wcag_aa_contrast_ratio(string $foreground, string $background, float $minimum): void

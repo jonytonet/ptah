@@ -253,6 +253,33 @@ class ProfilePage extends Component
     }
 
     /**
+     * "Voltar ao original": restores the 4 preset axes (light, dark, accent,
+     * text) to their defaults. Deliberately leaves `mode` (claro/escuro)
+     * untouched — that is the navbar toggle's own setting, persisted via the
+     * `ptah.appearance.theme-mode` route, and a user clicking "restore
+     * defaults" on the Aparência tab does not expect it to also flip their
+     * light/dark choice.
+     */
+    public function resetAppearance(): void
+    {
+        $this->themeLight = AppearancePresets::DEFAULT_LIGHT;
+        $this->themeDark = AppearancePresets::DEFAULT_DARK;
+        $this->themeAccent = AppearancePresets::DEFAULT_ACCENT;
+        $this->themeText = AppearancePresets::DEFAULT_TEXT;
+
+        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $theme['light'] = AppearancePresets::DEFAULT_LIGHT;
+        $theme['dark'] = AppearancePresets::DEFAULT_DARK;
+        $theme['accent'] = AppearancePresets::DEFAULT_ACCENT;
+        $theme['text'] = AppearancePresets::DEFAULT_TEXT;
+
+        UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+        AppearancePresets::queueCookie($theme);
+
+        $this->flash(trans('ptah::ui.profile_appearance_updated'));
+    }
+
+    /**
      * Validates $value against the whitelist for $axis (light|dark|accent|text)
      * before writing anything — an un-whitelisted value has no matching CSS
      * block (see resources/css/ptah-components.css), so persisting it would
@@ -277,6 +304,7 @@ class ProfilePage extends Component
         $theme[$axis] = $value;
 
         UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+        AppearancePresets::queueCookie($theme);
 
         $this->flash(trans('ptah::ui.profile_appearance_updated'));
     }

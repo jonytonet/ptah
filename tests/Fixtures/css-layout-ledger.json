@@ -73,7 +73,26 @@
         ".ptah-navbar .ptah-admin-dropdown hr|dark|border-color": "#334155",
         ".ptah-navbar .ptah-mobile-toggle|dark|color": "#94a3b8",
         ".ptah-navbar .ptah-mobile-toggle:hover|dark|background-color": "#334155",
-        ".ptah-navbar .ptah-mobile-toggle:hover|dark|color": "#e2e8f0"
+        ".ptah-navbar .ptah-mobile-toggle:hover|dark|color": "#e2e8f0",
+        ".ptah-input-wrapper label|dark|color": "#94a3b8",
+        ".ptah-input-wrapper input|dark|background-color": "#1e293b",
+        ".ptah-input-wrapper input|dark|color": "#e2e8f0",
+        ".ptah-input-wrapper input::placeholder|dark|color": "#64748b",
+        ".ptah-input-wrapper input:disabled|dark|background-color": "#0f172a",
+        ".ptah-input-wrapper .text-gray-400|dark|color": "#64748b",
+        ".ptah-textarea-wrapper label|dark|color": "#94a3b8",
+        ".ptah-textarea-wrapper textarea|dark|background-color": "#1e293b",
+        ".ptah-textarea-wrapper textarea|dark|color": "#e2e8f0",
+        ".ptah-textarea-wrapper textarea::placeholder|dark|color": "#64748b",
+        ".ptah-textarea-wrapper .text-gray-500|dark|color": "#94a3b8",
+        ".ptah-select-wrapper > label|dark|color": "#94a3b8",
+        ".ptah-select-trigger|dark|background-color": "#1e293b",
+        ".ptah-select-trigger|dark|color": "#e2e8f0",
+        ".ptah-select-dropdown|dark|background-color": "#1e293b",
+        ".ptah-select-dropdown|dark|border-color": "#334155",
+        ".ptah-select-dropdown li|dark|color": "#cbd5e1",
+        ".ptah-select-dropdown li:hover|dark|background-color": "#334155",
+        ".ptah-select-dropdown li:hover|dark|color": "#e2e8f0"
     },
     "changed": {
         ".ptah-switcher-tab--active|dark|background-color": {
@@ -140,6 +159,21 @@
             "from": "#93c5fd",
             "to": "color-mix(in srgb, var(--color-primary, #5b21b6) 45%, #ffffff)",
             "reason": "acompanha a troca do fundo do avatar para o token de marca; passa a usar --ptah-primary-lite. Contraste ja coberto pelo mesmo caso do pill ativo do sidebar em ContrastGuardTest — texto sobre fundo, piso 4.5 ja validado para ambos os primaries default"
+        },
+        ".ptah-input-wrapper input|dark|border-color": {
+            "from": "#475569",
+            "to": "#6d7278",
+            "reason": "borda fixa rendia so 1.93:1 contra o fundo escuro do campo (#1e293b), abaixo do piso 3:1 de fronteira de controle; --ptah-line-field ja existe para exatamente esse defeito (mesmo token usado por .ptah-c-form_in, .ptah-c-fp_input e .ptah-c-perpage) e resolve para 3.0:1 no escopo escuro padrao"
+        },
+        ".ptah-textarea-wrapper textarea|dark|border-color": {
+            "from": "#475569",
+            "to": "#6d7278",
+            "reason": "mesmo defeito e mesma correcao da borda do forge-input: 1.93:1 contra o fundo escuro, abaixo do piso 3:1; --ptah-line-field resolve para 3.0:1 no escopo escuro padrao"
+        },
+        ".ptah-select-trigger|dark|border-color": {
+            "from": "#475569",
+            "to": "#6d7278",
+            "reason": "mesmo defeito e mesma correcao da borda do forge-input/forge-textarea: 1.93:1 contra o fundo escuro, abaixo do piso 3:1; --ptah-line-field resolve para 3.0:1 no escopo escuro padrao"
         }
     },
     "deleted": {

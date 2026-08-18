@@ -723,6 +723,18 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-c-phdr_ttl  { color: var(--ptah-text-strong); }
 
 .ptah-c-phdr_sub             { color: var(--ptah-text-muted); }
+
+/* Texto e link de apoio nas telas de autenticacao (rodape de copyright, "reenviar
+   codigo", "voltar ao login"). Usavam text-gray-400/500 fixos e falhavam AA: o rodape
+   media 2.18-2.19:1 nos tons Papel e Nevoa — no modo CLARO, onde ninguem foi olhar —
+   e os dois links do 2FA ficavam entre 2.18 e 3.99:1 dependendo do tom.
+   --ptah-text-muted e resolvido contra o pior fundo de qualquer tom, entao passa em
+   todas as 6 combinacoes (4.91:1 no pior caso). O hover do link segue a marca, como
+   .ptah-c-crumb ja faz. */
+.ptah-c-muted                       { color: var(--ptah-text-muted); }
+.ptah-c-muted_link                  { color: var(--ptah-text-muted); }
+.ptah-c-muted_link:hover            { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-muted_link:hover { color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
 
 .ptah-c-phdr_back            { color: var(--ptah-text-secondary); }
@@ -1100,6 +1112,124 @@ main { background-color: var(--ptah-canvas); }
 .ptah-card-default .border-t { border-color: var(--ptah-line); }
 .ptah-dark .ptah-card-default .border-b,
 .ptah-dark .ptah-card-default .border-t { border-color: var(--ptah-line-strong); }
+
+/* ── Form fields: input / textarea / select (forge-input/textarea/select) ──
+   Migrated from forge-dashboard-layout.blade.php's frozen <style> block,
+   which only ever had the DARK half of these rules — light relied entirely
+   on the Tailwind utilities baked into each component (bg-white,
+   border-gray-300, text-gray-800/700/600...), so a light-mode preset
+   ("papel"/"nevoa") never reached these fields at all, and neither layout
+   that DOESN'T include the frozen <style> block (forge-auth.blade.php,
+   which serves login/2FA/forgot/reset-password) ever painted them for dark
+   mode either — the reported "white input on a dark login page" defect.
+   Both scopes are now declared here, unlayered, so they win over the
+   components' own Tailwind utility classes exactly like every other rule
+   in this file. See tests/Fixtures/css-layout-ledger.json for the
+   site-by-site accounting of the dark half moved from the layout. */
+
+.ptah-input-wrapper label { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-input-wrapper label { color: var(--ptah-text-muted); }
+
+/* border-color: was a literal #475569 in the layout, 1.93:1 against the dark
+   surface — under the 3:1 floor a field border needs (same defect and same
+   fix as --ptah-line-field's own fallback story, and as .ptah-c-form_in /
+   .ptah-c-fp_input / .ptah-c-perpage already use). Recorded as "changed" in
+   the ledger, not "migrated". */
+.ptah-input-wrapper input {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-dark .ptah-input-wrapper input {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+/* placeholder + the icon-only elements inside the wrapper (iconBefore/After,
+   password-toggle eye) share --ptah-icon-muted, which is invariant across
+   scope (#64748b) — the exact literal the layout's dark rule already used,
+   so light gains the identical tone instead of falling back to Tailwind's
+   lighter/failing gray-400 (2.54:1, under the 3:1 icon floor). */
+.ptah-input-wrapper input::placeholder { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-input-wrapper input::placeholder { color: var(--ptah-icon-muted); }
+.ptah-input-wrapper .text-gray-400 { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-input-wrapper .text-gray-400 { color: var(--ptah-icon-muted); }
+/* disabled bg: recedes further from the resting field colour in BOTH
+   directions — lighter->muted in light, muted->darkest in dark — so a
+   disabled field still reads as "sunken" relative to an active one on
+   either theme. */
+.ptah-input-wrapper input:disabled { background-color: var(--ptah-field-muted); }
+.ptah-dark .ptah-input-wrapper input:disabled { background-color: var(--ptah-field); }
+
+.ptah-textarea-wrapper label { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-textarea-wrapper label { color: var(--ptah-text-muted); }
+
+.ptah-textarea-wrapper textarea {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-dark .ptah-textarea-wrapper textarea {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-textarea-wrapper textarea::placeholder { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-textarea-wrapper textarea::placeholder { color: var(--ptah-icon-muted); }
+.ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
+
+.ptah-select-wrapper > label { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-select-wrapper > label { color: var(--ptah-text-muted); }
+
+.ptah-select-trigger {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-dark .ptah-select-trigger {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+
+.ptah-select-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-select-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+/* Higher specificity than .ptah-c-dd_item/.ptah-c-dd_item_sel (which every
+   <li> also carries), so THIS is what actually wins — matches the layout's
+   pre-existing (if slightly idiosyncratic) behaviour of a SOLID hover tint
+   here instead of the translucent one plain dropdowns use elsewhere. */
+.ptah-select-dropdown li { color: var(--ptah-text); }
+.ptah-dark .ptah-select-dropdown li { color: var(--ptah-text); }
+.ptah-select-dropdown li:hover { background-color: var(--ptah-menu-hover); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-select-dropdown li:hover { background-color: var(--ptah-menu-hover); color: var(--ptah-text-strong); }
+
+/* ── Auth layout background (login, forgot/reset password, 2FA) ─────────
+   Migrated from forge-auth.blade.php's `bg-gradient-to-br from-primary/5
+   via-white to-primary/10` utility trio. The middle stop was a literal
+   white: in light mode that is invisible (the page is already white), but
+   once the auth layout started carrying the user's dark-mode class, the
+   same three-stop sweep (accent tint -> pure white -> accent tint) painted
+   a metallic gray wash across the login/2FA/forgot/reset-password screens —
+   the reported defect. Same diagonal, same 5%/10% mix ratios; only the
+   middle stop changes, from the literal #ffffff to --ptah-canvas, so the
+   sweep now fades through whatever background the user's tone preset
+   renders instead of always through white. An arbitrary-value utility
+   (`via-[var(--ptah-canvas)]`) was considered and rejected: Tailwind's JIT
+   scan of an arbitrary var() inside a gradient utility is fragile across
+   builds, where a plain class in this already-unlayered file is not. */
+.ptah-c-auth_bg {
+    background-image: linear-gradient(to bottom right, color-mix(in srgb, var(--ptah-primary) 5%, var(--ptah-canvas)), var(--ptah-canvas), color-mix(in srgb, var(--ptah-primary) 10%, var(--ptah-canvas)));
+}
+.ptah-dark .ptah-c-auth_bg {
+    background-image: linear-gradient(to bottom right, color-mix(in srgb, var(--ptah-primary) 5%, var(--ptah-canvas)), var(--ptah-canvas), color-mix(in srgb, var(--ptah-primary) 10%, var(--ptah-canvas)));
+}
 
 /* ── Company Switcher ────────────────────────────────────────────────── */
 .ptah-switcher-name {
