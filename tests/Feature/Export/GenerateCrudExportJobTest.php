@@ -10,6 +10,11 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Jobs\GenerateCrudExportJob;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\Export;
+use Ptah\Models\PageObject;
+use Ptah\Models\PtahPage;
+use Ptah\Models\Role;
+use Ptah\Models\RolePermission;
+use Ptah\Models\UserRole;
 use Ptah\Tests\TestCase;
 
 /** Plain stub on the shared `items` table (see tests/migrations). */
@@ -259,5 +264,104 @@ class GenerateCrudExportJobTest extends TestCase
 
         // Untouched — still 'done', not flipped back to 'processing'.
         $this->assertSame('done', $export->status);
+    }
+
+    // ── Real worker scenario: no request, no session, no auth() ────────────────
+    //
+    // A queue worker never has an authenticated user or an active session. The
+    // job must authorize by the EXPORT'S OWNER (user_id/company_id), not by the
+    // ambient request context — which is always empty here and would make
+    // every queued export fail (the "always denied" bug this test guards).
+
+    #[Test]
+    public function it_authorizes_by_the_export_owner_even_with_no_authenticated_user(): void
+    {
+        Storage::fake('local');
+
+        CrudConfig::where('model', JobExportStub::class)->delete();
+        CrudConfig::create([
+            'model' => JobExportStub::class,
+            'route' => '',
+            'config' => [
+                'crud' => JobExportStub::class,
+                'cols' => [],
+                'permissions' => ['permissionIdentifier' => 'job.export.owned'],
+            ],
+        ]);
+
+        $page = PtahPage::create(['slug' => 'job-export', 'name' => 'Job export', 'is_active' => true]);
+        $pageObject = PageObject::create([
+            'page_id' => $page->id, 'section' => 'main',
+            'obj_key' => 'job.export.owned', 'obj_label' => 'Job export',
+            'obj_type' => 'page', 'obj_order' => 1, 'is_active' => true,
+        ]);
+        $role = Role::create(['name' => 'ExportOwner', 'is_active' => true]);
+        RolePermission::create([
+            'role_id' => $role->id, 'page_object_id' => $pageObject->id,
+            'can_create' => false, 'can_read' => true, 'can_update' => false, 'can_delete' => false,
+        ]);
+        $ownerId = 42;
+        UserRole::create(['user_id' => $ownerId, 'role_id' => $role->id, 'company_id' => null, 'is_active' => true]);
+
+        $this->assertGuest();
+
+        $a = JobExportStub::create(['name' => 'Alpha']);
+
+        $export = $this->makeExport([
+            'user_id' => $ownerId,
+            'payload' => [
+                'version' => 1,
+                'userId' => $ownerId,
+                'model' => JobExportStub::class,
+                'route' => 'items',
+                'companyId' => null,
+                'ids' => [$a->id],
+                'columns' => [['field' => 'name', 'label' => 'Name', 'type' => 'text']],
+                'order' => 'id',
+                'direction' => 'DESC',
+                'format' => 'excel',
+            ],
+        ]);
+
+        (new GenerateCrudExportJob($export->id))->handle();
+
+        $export->refresh();
+
+        $this->assertSame('done', $export->status);
+        $this->assertNull($export->error);
+    }
+
+    #[Test]
+    public function it_denies_when_the_export_owner_lacks_the_grant_even_with_no_authenticated_user(): void
+    {
+        CrudConfig::where('model', JobExportStub::class)->delete();
+        CrudConfig::create([
+            'model' => JobExportStub::class,
+            'route' => '',
+            'config' => [
+                'crud' => JobExportStub::class,
+                'cols' => [],
+                'permissions' => ['permissionIdentifier' => 'job.export.owned'],
+            ],
+        ]);
+
+        $page = PtahPage::create(['slug' => 'job-export', 'name' => 'Job export', 'is_active' => true]);
+        PageObject::create([
+            'page_id' => $page->id, 'section' => 'main',
+            'obj_key' => 'job.export.owned', 'obj_label' => 'Job export',
+            'obj_type' => 'page', 'obj_order' => 1, 'is_active' => true,
+        ]);
+
+        $this->assertGuest();
+
+        // ownerId 999 has NO role/grant at all.
+        $export = $this->makeExport(['user_id' => 999]);
+
+        (new GenerateCrudExportJob($export->id))->handle();
+
+        $export->refresh();
+
+        $this->assertSame('failed', $export->status);
+        $this->assertSame('You are not allowed to export this data.', $export->error);
     }
 }

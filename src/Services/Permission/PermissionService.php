@@ -28,7 +28,10 @@ class PermissionService implements PermissionServiceContract
 {
     use ResolvesUser;
 
-    /** The only valid CRUD actions — whitelisted before any query interpolation. */
+    /**
+     * The only valid actions — whitelisted before any query interpolation
+     * (each one is turned into a `can_{action}` column name).
+     */
     public const ACTIONS = ['create', 'read', 'update', 'delete'];
 
     // ─────────────────────────────────────────
@@ -273,7 +276,16 @@ class PermissionService implements PermissionServiceContract
                 ->where('is_active', true)
                 ->whereHas('permissions', fn ($q2) => $q2
                     ->where($actionColumn, true)
-                    ->whereHas('pageObject', fn ($q3) => $q3->where('obj_key', $objectKey))
+                    // Same activity rule the permission maps apply: a deactivated
+                    // object — or one whose page is deactivated — grants nothing, so
+                    // it must not contribute companies either. Without this, a
+                    // company selector built from this method still offers branches
+                    // for a resource the gate will refuse.
+                    ->whereHas('pageObject', fn ($q3) => $q3
+                        ->where('obj_key', $objectKey)
+                        ->where('is_active', true)
+                        ->whereHas('page', fn ($q4) => $q4->where('is_active', true))
+                    )
                 )
             )
             ->pluck('company_id')
@@ -415,7 +427,14 @@ class PermissionService implements PermissionServiceContract
             // Without this, deactivating a role would NOT revoke access via check().
             ->whereHas('role', fn ($q) => $q->where('is_active', true))
             ->with([
-                'role.permissions' => fn ($q) => $q->whereNull('deleted_at'),
+                // Only permissions bound to an ACTIVE object on an ACTIVE page grant —
+                // consistent with queryPermission() and with buildMasterPermissionMap().
+                // Without this, deactivating an object/page from /ptah-pages would not
+                // revoke access via check().
+                'role.permissions' => fn ($q) => $q->whereNull('deleted_at')
+                    ->whereHas('pageObject', fn ($q2) => $q2->where('is_active', true)
+                        ->whereHas('page', fn ($q3) => $q3->where('is_active', true))
+                    ),
                 'role.permissions.pageObject',
             ])
             ->get()
@@ -430,14 +449,16 @@ class PermissionService implements PermissionServiceContract
             }
 
             if (! isset($map[$key])) {
-                $map[$key] = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
+                $map[$key] = array_fill_keys(self::ACTIONS, false);
             }
 
-            // OR logic: if any role grants, consider it granted
-            $map[$key]['create'] = $map[$key]['create'] || $perm->can_create;
-            $map[$key]['read'] = $map[$key]['read'] || $perm->can_read;
-            $map[$key]['update'] = $map[$key]['update'] || $perm->can_update;
-            $map[$key]['delete'] = $map[$key]['delete'] || $perm->can_delete;
+            // OR logic: if any role grants, consider it granted. Derived from
+            // ACTIONS (rather than hardcoding the four CRUD flags) so a new
+            // whitelisted verb is picked up here automatically instead of
+            // silently staying `false` for everyone but MASTER.
+            foreach (self::ACTIONS as $action) {
+                $map[$key][$action] = $map[$key][$action] || (bool) $perm->{"can_{$action}"};
+            }
         }
 
         return $map;
@@ -450,10 +471,17 @@ class PermissionService implements PermissionServiceContract
     {
         return PageObject::query()
             ->active()
+            // An inactive page deactivates all of its objects too — keeps the
+            // MASTER map consistent with buildPermissionMap()'s pageObject+page check.
+            ->whereHas('page', fn ($q) => $q->where('is_active', true))
             ->pluck('obj_key')
             ->unique()
+            // Derived from ACTIONS (not the 4 CRUD flags hardcoded) — a MASTER
+            // must pass every whitelisted verb, including `manage`, otherwise
+            // buildPermissionMap()/buildMasterPermissionMap() drift out of sync
+            // the moment a new action is added.
             ->mapWithKeys(fn ($key) => [
-                $key => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
+                $key => array_fill_keys(self::ACTIONS, true),
             ])
             ->toArray();
     }

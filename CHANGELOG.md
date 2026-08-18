@@ -7,6 +7,378 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.15.0] — 2026-08-17
+
+> **Tagging note:** `1.13.3` and `1.14.0` below were never published as their own
+> Composer tag — `main` was still at `1.13.2` when this release was cut. Both
+> entries are kept exactly as written (they document distinct, independently
+> completed pieces of work) and ship for the first time inside `1.15.0`. If you
+> install via Composer you go straight from `1.13.2` to `1.15.0`; nothing in
+> either entry was skipped, both are simply bundled here.
+
+### Added — per-user Appearance (`/profile`, 6th tab)
+
+Four independent axes, chosen per user and persisted server-side:
+
+| Axis | Options (slugs) |
+|---|---|
+| Light tone | `puro`, `papel`, `nevoa` |
+| Dark tone | `carvao`, `grafite`, `meianoite` |
+| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` (9) |
+| Font colour | `suave`, `neutra`, `forte` |
+
+Slugs are plain ASCII on purpose (`nevoa`, `carvao`, `meianoite` — no accents), since
+they round-trip through a `data-ptah-*` HTML attribute and a JSON-cast preference
+column. Persisted in `UserPreference` under key `theme`, group `appearance`, sanitised
+against a server-side whitelist (`Ptah\Support\AppearancePresets`) before ever being
+written back or rendered — an un-whitelisted value would leave every `var(--ptah-*)`
+that depends on it invalid at computed-value time.
+
+The four resulting values are rendered as `data-ptah-light|dark|accent|text` attributes
+directly on `<html>` by the server (`forge-dashboard-layout`), so an authenticated
+user's choice never flashes the default on load. Each pill in the Aparência tab previews
+the option it represents (its own tone/scale/colour), not the currently active theme —
+literal CSS per option, verified by a dedicated test (see Tests).
+
+Building this surfaced and fixed several defects of its own before and shortly after
+shipping, all in the same feature: the dark presets were inert because `.ptah-dark` was
+also applied to `<body>` and the layout's root `<div>` (custom properties resolve per
+element, so the bare `.ptah-dark` block on `body` won and inherited everywhere); the
+accent only changed half the UI because a `theme-colors` partial pinned
+`--ptah-primary` to a literal instead of deriving from `--color-primary`; the three
+light tones were visually the same tone (`--ptah-surface`/`--ptah-canvas` were `#ffffff`
+in all three, so only pill buttons moved); the font-colour axis was inert in light mode
+because the token rule covering inherited text existed only under `.ptah-dark`; and
+light mode in general had never been tokenised for the four biggest surfaces
+(`main`, `forge-card`, `forge-sidebar`, `forge-navbar`) — a tone changed the buttons and
+nothing else. All are fixed in this release (see Changed/Fixed below for the resulting
+breaking/visual changes).
+
+### Added — global toast host
+
+The toast stack moved out of `base-crud` and into the layout (`<x-forge-toast-host>`),
+listening on `window` for a `ptah-toast` event — any component can raise one now, not
+just a BaseCrud screen. Undo changed from a direct `$wire.restoreRecord()` call to a
+`ptah-toast-undo` window event that BaseCrud listens for.
+
+> **Compatibility note:** if your host app overrode
+> `resources/views/vendor/ptah/components/base-crud.blade.php` (or otherwise dropped
+> the layout's toast host), it stops receiving toasts until `<x-forge-toast-host />` is
+> re-included — re-publish or manually add it to your copy of the layout.
+
+### Changed — behavioural breaking changes (no API changes)
+
+1. **`.ptah-dark` (and the plain `.dark` marker) now live only on `<html>`.** They were
+   also applied to `<body>` and the layout's root `<div>`; a host stylesheet that styled
+   `body.dark …` or `.dark > div …` directly stops matching.
+2. **`ptah:install` now injects `@import '.../ptah-components.css'` into the host's
+   `app.css`** (documented in the `1.14.0` entry below) — installs from before that fix
+   need to re-run `ptah:install` or add the import line by hand.
+3. **`--ptah-primary-lite` moved from a 55% to a 45% white mix** (also `1.14.0`, an AA
+   fix for the pair it inks four BaseCrud components with).
+4. **The `ambar` accent changed from `#b45309` to `#92400e`.** The old value measured
+   4.32:1 as ink against the package's new light backgrounds — under the 4.5:1 floor;
+   the new value clears it at 6.10:1. The other 8 accents were unaffected.
+5. **Sidebar and navbar borders now use `--ptah-line-strong` instead of `--ptah-line`**
+   (17/255 more visible) — the value the surfaces' own dark-mode rules already used, so
+   one token now backs the border in both scopes instead of two.
+6. **Inherited text in light mode no longer resolves to the browser's pure black
+   (`#000000`)** — a root rule now sets `color: var(--ptah-text-strong)` for light mode
+   too (it previously existed only under `.ptah-dark`), so any element that declares no
+   colour of its own (most BaseCrud table cells, among others) now follows the chosen
+   font-colour preset instead of the browser default.
+7. **`forge-card` (`default` variant), `forge-sidebar`, `forge-navbar`,
+   `forge-page-header` and `forge-tab` stopped hardcoding Tailwind color utilities**
+   (`bg-white`, `border-gray-100`, `text-gray-900`, `text-gray-500`, …) in favour of the
+   `--ptah-*` tokens. A host that overrode these components by targeting those utility
+   classes must now override the underlying tokens instead.
+
+### Fixed — accessibility (WCAG AA / non-text 3:1, measured before and after)
+
+| Element | Before | After |
+|---|---|---|
+| Row action icon "editar" (dark) | 2.05:1 | 7.40:1 |
+| Row action icon "duplicar" (light) | 2.56:1 | 4.76:1 |
+| Breadcrumb current item (no dark variant) | 2.05:1 | token-driven, both scopes |
+| Breadcrumb link (no dark variant) | 3.69:1 | token-driven, both scopes |
+| Navbar user chip — name | 1.35:1 | 6.97:1 |
+| Navbar user chip — avatar initial (on hover) | 1.40:1 | 5.63:1 |
+| Navbar user chip — chevron | 2.31:1 | 4.08:1 |
+| Logout button label (light / dark) | 3.08:1 / 4.29:1 (never passed) | 6.11:1 (5.00:1 hover) / 6.87:1 (5.79:1 hover) |
+| Admin dropdown icon | 2.54:1 | 4.76:1 |
+| Sidebar menu item, child | 4.83:1 | 8.21:1 |
+| Sidebar menu item, parent | 7.56:1 | 8.21:1 |
+| Inactive tab, dark (no dark variant) | 3.03:1 | 5.71:1 |
+| Active tab as text, dark | 1.68:1 | 5.06:1 |
+
+Also: native form controls (`input[type=date]`, native `select`, scrollbars, autofill)
+rendered with the OS **light** colour scheme outside BaseCrud screens, because
+`color-scheme` was declared only inside a BaseCrud-scoped selector — now declared on
+both `:root` and `.ptah-dark`, fixing every non-BaseCrud screen at once. The sticky
+action column in dark mode used `--ptah-surface` while its row is transparent over a
+darker page background, showing a visible seam; it now uses `--ptah-canvas` to match.
+
+### Fixed — BaseCrud UI
+
+- **Three different control heights in the same toolbar row** (buttons ~30px, per-page
+  select ~34px, search box ~42px) unified through a density token
+  (`--ptah-control-h/-px/-fs`) instead of matching paddings by hand.
+- **"Espaçoso" (spacious) density rendered identical row padding to "Confortável"**
+  (comfortable) — only font size changed. All three densities now differ in row
+  padding as well.
+- **The sticky action column** had a translucent header that let scrolling content show
+  through, and no left edge to read as a pinned column — now opaque with a left
+  border/shadow.
+- **The four row-action icons used `p-2 -m-1`**, whose negative margin pushed each
+  icon's hit area into its neighbour's; removed in favour of `gap`-based spacing.
+
+### Fixed — authorisation: three defects where the admin acted and nothing happened
+
+Found by auditing this package's permission system against the ERP it descends from,
+ahead of rebuilding that ERP on top of ptah. All three share a shape: the administrator
+performs an action, the screen confirms it, and the gate behaves as if nothing had
+changed. That is worse than a loud failure — nobody goes looking for it.
+
+- **Revoking a permission and then granting it again never took effect.**
+  `RoleService::bindPageObject()` passed `['deleted_at' => null]` through
+  `updateOrCreate()`, and `deleted_at` is not fillable, so `fill()` dropped it silently.
+  Measured: grant → allowed, revoke → denied, **re-grant → still denied**, with the row
+  stored as `can_read = true` *and* `deleted_at` set. The UI reported "Permissions
+  updated." with the box ticked. Now uses the SoftDeletes API (`firstOrNew` + `restore`),
+  the same technique `PermissionService::syncRole()` already used for `UserRole` — whose
+  docblock documents this exact trap. No test had ever covered the cycle back.
+
+- **The "Active" toggle on page objects and pages did nothing for authorisation.**
+  `buildPermissionMap()` never filtered `page_objects.is_active`, and nothing read
+  `ptah_pages.is_active` at all, so deactivating an object or a whole page revoked
+  nothing. Worse, `buildMasterPermissionMap()` *did* filter, so the MASTER map excluded
+  an inactive object while the ordinary map included it — `ptah_can()` and
+  `ptah_permissions()` disagreed with each other for the same user. Both maps now apply
+  the rule, an inactive page deactivates its objects, and `getCompaniesForResource()`
+  follows the same rule (it feeds company selectors, and would otherwise offer branches
+  for a resource the gate then refuses).
+  **Behavioural change:** if you have deactivated objects or pages expecting them to stay
+  reachable, they now deny. That is the intended meaning of the toggle.
+
+- **Every queued export was refused.** `GenerateCrudExportJob` ran the gate inside a
+  worker — no session, no `auth()` — so the user resolved to `null`, `allow_guest`
+  defaults to `false`, and the job failed the export with "You are not allowed to export
+  this data." For anyone, always. The authoriser now takes an explicit user and company,
+  and the job passes the export's own `user_id` and `company_id`. Passing the user alone
+  would not have been enough: with no session the company also resolves to `null`, and
+  `null` here means `whereNull('company_id')` strictly, not "any company", so a user
+  bound per branch would still have been refused.
+
+Also: cache is now invalidated when a page object or page changes (observers existed for
+roles, grants and assignments but not for these two, so a deleted object stayed permitted
+until the 1h TTL expired), and a dead `Cache::forget()` in `CompanyService::setActive()`
+naming keys from a superseded scheme was replaced with a real invalidation call.
+
+### Changed — the CRUD config editor and AI config can finally be delegated
+
+`ptah_can_manage_config()` and the AI model screen called `ptah_can(..., 'manage')`, but
+`manage` was not in the action whitelist — so both were *always* `false` and the
+capability was MASTER-only by construction, while the docs promised a `crud.config`
+grant. The capability is now expressed as the **object**: `crud.config` and `ai.config`
+are page objects, and holding `read` on one means you may configure it. A non-MASTER user
+with that grant can now open the editor.
+
+A `can_manage` column was implemented first and reverted. **The package's schema is
+frozen: an update must never require a migration.** Installing ptah runs migrations and
+that is fine; shipping a new one in an update is not, because existing installations will
+not run `migrate` again — and because `loadMigrationsFrom()` makes package migrations
+auto-discovered, so a new file executes on the consumer's next unrelated `php artisan
+migrate` rather than waiting to be asked for. `SchemaIsFrozenTest` now pins the 17
+migrations the package ships and fails on any addition or removal, with the alternatives
+spelled out in its failure message. **This release adds no migrations.**
+
+### Tests
+
+Suite grew from ~695 (pre-`1.13.3`) to **907** (6204 assertions). The additions worth
+calling out guard *classes* of defect, not one-off values:
+
+- **Golden fixture + frozen origin + ledger** (`LayoutStyleBaselineTest`,
+  `css-layout-origin.json`, `LayoutMigrationLedgerTest`) — makes a rule moving between
+  the layout's inline `<style>` and `ptah-components.css` fail if its colour changes
+  during the move, a case a diff alone cannot catch (both fixtures would otherwise
+  regenerate together and both stay green).
+- **Light/dark token parity** (`ThemeChromeOrphanTokenGuardTest`) — fails whenever a
+  `.ptah-dark` rule declares a `--ptah-*` token with no light counterpart, with a
+  documented, closed allowlist of legitimate exceptions.
+- **Perceptible separation between tones and font scales**
+  (`AppearancePresetContrastTest` additions) — a tone or scale that merely *passes
+  contrast* without visibly differing from its neighbours now fails explicitly
+  (consecutive font scales must separate by ≥ 12/255 per role; tone pairs by ≥ 10/255
+  on canvas or surface).
+- **Previews must be literal** (`AppearancePreviewLiteralTest`) — every pill option must
+  have a rule, no such rule may reference a `var(--ptah-*)` token (which would make
+  every option render identically), and tone previews specifically must not be scoped
+  to `.ptah-dark`.
+- **Double quotes inside an Alpine `x-data` attribute** (`LayoutXDataQuotingTest`) — a
+  quote inside a comment or an attribute selector used to close the `x-data` string
+  early and dump the entire Alpine object as visible text; now scanned across every
+  view carrying `x-data`/`x-init`.
+- **Single carrier of the theme** (`ThemeCarrierTest`) — pins `.ptah-dark`/the appearance
+  `data-ptah-*` attributes to `<html>` only, so a regression that reintroduces them on
+  `<body>` or a wrapper `<div>` (which would silently make dark presets inert) is
+  caught immediately.
+
+### Docs
+
+- `docs/Configuration.md` — new "Per-user Appearance" section under
+  `resources/css/ptah-components.css`: the four axes, the slug values, where the tab
+  lives, how it persists, and that a user-chosen preset overrides the `:root`/
+  `.ptah-dark` host override described earlier in that same section.
+- `docs/KnownLimitations.md` — new section documenting the partial coverage of the
+  theming work (measured, not estimated): how many color literals/rules remain in the
+  layout's inline `<style>`, how many hardcoded text-color utilities remain across the
+  views (and which two screens concentrate most of them), and that the whole Appearance
+  axis has no effect at all under the Tailwind CDN fallback (no Vite build).
+- `README.md` — one line in "Theming & customizing views" pointing at the new
+  per-user Appearance tab.
+
+## [1.14.0] — 2026-08-17
+
+### Fixed — `ptah:install` never wired the host's `app.css` to Ptah's component stylesheet
+
+`updateAppCss()` injected `@source`, `@custom-variant dark` and the brand `@theme` tokens into the
+host's `resources/css/app.css`, but never the `@import` of `ptah-components.css` — the file that
+defines every `.ptah-c-*` BaseCrud class and the 24 neutral `--ptah-*` tokens (`--ptah-surface`,
+`--ptah-line`, `--ptah-text-*`, etc.). Since Tailwind v4 only compiles classes it can see from an
+`@import`/`@source` chain, a fresh install shipped a host app with a **completely unstyled BaseCrud
+UI** — tables, filters, modals — while the command reported every step, including `npm run build`,
+as successful.
+
+`updateAppCss()` now also injects:
+
+```css
+@import '../../vendor/jonytonet/ptah/resources/css/ptah-components.css';
+```
+
+right after `@import 'tailwindcss';` and before any `@theme` block, idempotently (safe to
+re-run, never duplicates an existing import). `ptah-components.css` was chosen over the also
+unused `resources/css/forge.css`: the latter re-declares `@import "tailwindcss"` internally, which
+would double-import Tailwind in the host.
+
+> **Upgrade note:** if you installed ptah before 1.14.0, your `app.css` is missing this import.
+> Either re-run `php artisan ptah:install` (it will only add what's missing) or add the line above
+> manually — see the "BaseCrud renders unstyled" entry in the Troubleshooting section of
+> [docs/InstallationGuide.md](docs/InstallationGuide.md).
+
+### Fixed — two defects in the same method, both surfaced by the import above
+
+- **The `@source` for the package's views stopped being injected.** Its guard was
+  `str_contains($content, 'vendor/jonytonet/ptah')`, and the new import line contains that exact
+  substring — so from the moment the import existed, the guard was always true and the `@source`
+  was never written again. Tailwind would then not scan Ptah's Blade files, and every utility class
+  used *only* inside the package would be tree-shaken out of the host's bundle: a fresh install
+  would still look broken, for a different reason than before. The guard now matches the views
+  path specifically.
+- **A host installed before this release gained nothing by re-running the command.** The method
+  returns early when the brand tokens are already present, and that path never wrote to disk — so
+  the import was computed in memory and discarded. This is the upgrade path for every existing
+  installation, i.e. the case that decides whether the fix reaches anyone; it now persists before
+  returning.
+
+### Fixed — an AA failure that only the default configuration had
+
+`--ptah-primary-lite` is the ink on a `--ptah-primary-soft-d` pill in four shipped components:
+`.ptah-c-dd_item_sel` (selected dropdown row), `.ptah-c-btn_on` (active toggle),
+`.ptah-c-active_badge` and `.ptah-c-saved_filter_btn`. At its original 55% white mix that pair
+measured **4.47:1** against the `config/ptah.php` default primary (`#5b21b6`) — under the 4.5:1
+floor for text.
+
+It survived the 1.13.3 contrast sweep because `forge.css` defaults to a different primary
+(`#1e40af`) which lands at 4.55:1: **the demo app passed while a stock install did not.** Both
+sides of the pair derive from `--color-primary`, so neither ever appears as a hex in the CSS and no
+amount of reading the stylesheet reveals the ratio — it has to be computed, which is why it went
+unseen.
+
+The mix is now 45%, giving 5.63:1 on the config default and 5.67:1 on the `forge.css` one. Contrast
+is monotonic in that direction (the token is only ever ink or border on a dark ground), so no other
+call site can regress; 25 resolved sites shift, all of them the same substitution. 50% would also
+clear AA but leaves ~0.5 of margin, and `--color-primary` is host-configurable.
+
+### Changed — the chrome's dark mode starts moving onto the theme tokens
+
+The dashboard layout carried a 330-line inline `<style>` block that retrofitted dark mode onto the
+chrome with 153 colour literals and no tokens, so a user-selected theme could never reach it. The
+company switcher, the page root and `main` now take their colours from the `--ptah-*` neutrals
+instead (`ptah-components.css`), and five orphan rules were deleted — nothing in the package carries
+`.ptah-sidebar-toggle` or `.ptah-navbar-search`. The block is down to 127 literals / 107 rules.
+
+Visible change: the switcher's active tab and hover were a frozen navy (`#1e40af`) that ignored
+`PTAH_COLOR_PRIMARY` entirely. They now follow the configured brand, so a host on the default
+config sees violet where it used to see blue. That is the fix, not a side effect.
+
+Sidebar and navbar are next; the 21 rules that repaint Tailwind utility classes from a distance stay
+put for now, because an inline `<style>` is unlayered and beats `@layer utilities` — moving those
+without moving their views would change which rule wins.
+
+### Tests
+- New `InstallCommandUpdateAppCssTest` (7 cases) exercises `updateAppCss()` directly against a
+  temp `app.css`: fresh file gets the import in the right position, a realistic fixture with
+  pre-existing `@source` lines gets it immediately after `@import 'tailwindcss';`, running the
+  command twice never duplicates it, an `app.css` that already has it is left byte-for-byte
+  untouched, and a missing `app.css` still only warns. Two of the cases guard the defects above by
+  their observable effect — both were verified to fail when the corresponding fix is reverted,
+  rather than assumed to be covered.
+- New `ContrastGuardTest::primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries`
+  computes the pair for **both** default primaries over both dark grounds, reading the mix
+  percentages out of the CSS so tuning either token re-runs the measurement instead of invalidating
+  it. Verified to fail at the old 55%, reporting 4.4766:1 and naming the four affected components.
+- New golden-fixture harness for the layout teardown: `LayoutStyleBaselineTest` (184 declaration
+  sites plus a ceiling that only ever shrinks) and `LayoutMigrationLedgerTest`, which partitions a
+  frozen pre-migration snapshot — every site that leaves the `<style>` block must be recorded as
+  migrated verbatim, deliberately changed (with from/to/reason) or deleted (with a reason). Without
+  the frozen snapshot, a rule moving between the two stylesheets regenerates both fixtures at once,
+  so a colour change during the move would be indistinguishable from a faithful move; that scenario
+  was reproduced deliberately and the ledger caught it while both fixtures were green.
+
+## [1.13.3] — 2026-07-29
+
+### Fixed — 12 contrast failures, some of which made controls invisible
+
+A dedicated UI/UX audit (ahead of the upcoming theming work) found elements shipping below
+WCAG AA — a few badly enough to be unusable. All ratios below were calculated, not estimated,
+and a new test recomputes them from the source files so a revert breaks the suite.
+
+| Element | Before | After | Minimum |
+|---|---|---|---|
+| Sort-direction arrow, idle (light / dark) | **1.41** / 1.94 | 4.55 / 5.71 | 3.0 (icon) |
+| `forge-button color="warn"` | **2.15** | 6.81 | 4.5 |
+| Search placeholder (light / dark) | 2.50 / 3.35 | 4.63 / 6.23 | 4.5 |
+| Modal subtitle | 2.56 | 4.76 | 4.5 |
+| Clear-filter icon, dropdown chevron, clear-search | 2.54 | 4.76 | 3.0 |
+| Filter-panel muted text / cancel button | 2.54 | 4.76 | 4.5 |
+| `forge-button color="success"` | 2.54 | 5.48 | 4.5 |
+| Toast `success` / `danger` | 2.54 / 3.76 | 5.48 / 4.83 | 4.5 |
+| Bulk-delete and discard buttons | 3.76 | 4.83 | 4.5 |
+| `forge-button color="danger"` | 3.76 | 4.83 | 4.5 |
+| "Columns" button, active | 3.07 | 4.84 | 4.5 |
+| Delete-saved-filter (also moved off `rose` onto the `danger` role) | 3.34 | 5.91 | 4.5 |
+| "Trash" button, active | 4.41 | 5.91 | 4.5 |
+
+The **idle sort arrow at 1.41:1** meant the affordance telling you a column is sortable was
+effectively invisible. `forge-button color="warn"` was white on amber at **2.15:1** — the same
+mistake `forge-badge` already avoided by using dark text.
+
+### Fixed — the solid button scales now darken coherently
+`success` and `danger` had a resting colour that was *darker* than their own hover (or identical
+to it), so hovering gave no feedback or moved the wrong way. Both now darken monotonically
+(`success` 5.48 → 7.68 → 9.72; `danger` 4.83 → 6.47 → 8.31), and the `relief` variant stopped
+hard-coding `text-white` for every colour — it follows each family, which also fixed amber
+(3.19 → 4.59) and the light/secondary variant (**1.47** → 7.00).
+
+> `warn` keeps hover and relief on the same amber: a third, darker step would push the contrast
+> with its dark text back below 4.5 (darkening amber approaches the text's own luminance). Noted
+> in the component.
+
+### Tests
+- New `ContrastGuardTest` (30 cases): extracts the colours from the CSS/Blade **by regex** and
+  recomputes every ratio, plus two tests that compare relative luminance to pin that each button
+  scale keeps darkening. Verified failing before the fix.
+
 ## [1.13.2] — 2026-07-28
 
 ### Changed — the generated controller no longer ships unreachable CRUD actions

@@ -4,7 +4,7 @@
 
     {{-- Botão Novo --}}
     @if ($effectivePerms['canCreate'])
-        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm">
+        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm" class="ptah-c-control">
             <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -15,13 +15,17 @@
     @endif
 
     {{-- Busca Global --}}
-    <div class="flex-1 min-w-[200px] max-w-xs relative">
+    {{-- Não usa flex-1: quando a toolbar quebra (densidade espaçosa, janela estreita), o
+         grupo de ações vai para a segunda linha e um flex-1 aqui faria a busca inflar para
+         ocupar a primeira linha inteira — o campo virava um retângulo de ~400px e a
+         quebra parecia defeito. Largura estável: full no mobile, fixa a partir de sm. --}}
+    <div class="relative w-full sm:w-60 md:w-72 shrink">
         <x-forge-input
             wire:model.live.debounce.400ms="search"
             type="text"
             :placeholder="__('ptah::ui.search_placeholder')"
             iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
-            class="ptah-c-search"
+            class="ptah-c-search ptah-c-control"
         />
         @if ($search !== '')
             <button type="button"
@@ -47,7 +51,7 @@
         @endphp
         @if ($hasFilterable)
             <button wire:click="toggleFilters"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                 title="{{ __('ptah::ui.btn_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,7 +70,7 @@
         {{-- Lixeira --}}
         @if ($permissions['showTrashButton'] ?? true)
             <button wire:click="toggleTrashed"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showTrashed ? 'ptah-c-btn_trash_on' : 'ptah-c-btn' }}"
                 title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
                 @if ($showTrashed)
@@ -88,7 +92,7 @@
         @if (!empty($exportCfg['enabled']))
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                     title="{{ __('ptah::ui.btn_export') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -175,7 +179,7 @@
         @if (!empty($formDataColumns))
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                            {{ $hiddenColumnsCount > 0 ? 'ptah-c-btn_col_on' : 'ptah-c-btn' }}"
                     title="{{ __('ptah::ui.btn_columns') }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -228,14 +232,14 @@
         {{-- Modo de visualização: tabela ⇄ cards --}}
         <div class="inline-flex border rounded-md overflow-hidden ptah-c-btn" role="group" aria-label="{{ __('ptah::ui.btn_view_mode') }}">
             <button wire:click="setViewMode('table')"
-                class="p-2 transition-colors {{ $viewMode === 'table' ? 'ptah-c-btn_on' : '' }}"
+                class="p-2 transition-colors ptah-c-control {{ $viewMode === 'table' ? 'ptah-c-btn_on' : '' }}"
                 title="{{ __('ptah::ui.view_mode_table') }}" aria-label="{{ __('ptah::ui.view_mode_table') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18"/>
                 </svg>
             </button>
             <button wire:click="setViewMode('cards')"
-                class="p-2 transition-colors {{ $viewMode === 'cards' ? 'ptah-c-btn_on' : '' }}"
+                class="p-2 transition-colors ptah-c-control {{ $viewMode === 'cards' ? 'ptah-c-btn_on' : '' }}"
                 title="{{ __('ptah::ui.view_mode_cards') }}" aria-label="{{ __('ptah::ui.view_mode_cards') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -253,7 +257,7 @@
         @endphp
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                 title="{{ __('ptah::ui.btn_density') }}">
                 <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                 <span class="hidden sm:inline">{{ __('ptah::ui.btn_density') }}</span>
@@ -291,7 +295,7 @@
 
         {{-- Atualizar --}}
         <button wire:click="$refresh"
-            class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn"
+            class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn ptah-c-control"
             title="{{ __('ptah::ui.btn_refresh') }}"
             aria-label="{{ __('ptah::ui.btn_refresh') }}">
             <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
@@ -304,7 +308,7 @@
         {{-- Limpar filtros (visível quando houver algo ativo) --}}
         @if ($search !== '' || !empty(array_filter($filters)) || $showTrashed)
             <button wire:click="clearFilters"
-                class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn"
+                class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none hover:bg-red-50 hover:text-red-500 hover:border-red-200 ptah-c-clear_btn ptah-c-control"
                 title="{{ __('ptah::ui.btn_clear_filters') }}"
                 aria-label="{{ __('ptah::ui.btn_clear_filters') }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -316,7 +320,7 @@
         {{-- Per page --}}
         <select wire:model.live="perPage"
             aria-label="{{ __('ptah::ui.per_page_label') }}"
-            class="text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage">
+            class="text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage ptah-c-control">
             @foreach ([10, 15, 25, 50, 100] as $n)
                 <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>
             @endforeach

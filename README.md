@@ -322,6 +322,11 @@ Ptah injects these as CSS variables (`--color-primary`, `--ptah-primary`, …) i
 layout `<head>`; every tint, focus ring and hover is derived from them via
 `color-mix()`. Accepts any CSS color (hex, rgb, hsl, oklch).
 
+**Per-user Appearance.** Every authenticated user can also pick their own light tone,
+dark tone, accent color and font color from a 6th tab at `/profile` — persisted
+server-side, applied on `<html>` with no flash. See
+[Configuration.md — Per-user Appearance](docs/Configuration.md#per-user-appearance-profile--6th-tab).
+
 **Customizing views — publish only what you edit.** Most customization is done
 through the CrudConfig modal (database-driven), so you rarely need to touch a Blade
 file. If you do, ⚠️ **publishing a view means you own it** — Laravel will prefer your

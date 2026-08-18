@@ -10,17 +10,156 @@
    ============================================================ */
 
 :root {
+    /* Tells the browser which native UI scheme (form controls, scrollbars, date-picker
+       chrome, autofill) to render. Without this, native <input type="date">/<select>
+       always paint with the OS light scheme even inside .ptah-dark, since color-scheme
+       is not something a background-color override can fix. .ptah-dark below wins by
+       source order (see the comment on that block). */
+    color-scheme: light;
+
     /* Brand token (host overrides via @theme --color-primary) */
     --ptah-primary:        var(--color-primary, #5b21b6);
-    /* Derived tints — used for rings, soft backgrounds and borders */
+    /* Derived tints — used for rings, soft backgrounds and borders. The
+       "-soft/-softer/-border" tints below mix against --ptah-surface (not a
+       literal #ffffff) so they land on the correct opaque surface if a host
+       ever overrides that token — see the Fase 1 neutral tokens below. */
     --ptah-primary-ring:   color-mix(in srgb, var(--ptah-primary) 15%, transparent);
-    --ptah-primary-soft:   color-mix(in srgb, var(--ptah-primary) 7%, #ffffff);
-    --ptah-primary-softer: color-mix(in srgb, var(--ptah-primary) 5%, #ffffff);
-    --ptah-primary-border: color-mix(in srgb, var(--ptah-primary) 35%, #ffffff);
+    --ptah-primary-soft:   color-mix(in srgb, var(--ptah-primary) 7%, var(--ptah-surface));
+    --ptah-primary-softer: color-mix(in srgb, var(--ptah-primary) 5%, var(--ptah-surface));
+    --ptah-primary-border: color-mix(in srgb, var(--ptah-primary) 35%, var(--ptah-surface));
+    /* Mixed with pure black in both scopes (not a surface) — left alone. */
     --ptah-primary-strong: color-mix(in srgb, var(--ptah-primary) 85%, #000000);
-    /* Light text-on-dark variant for dark mode accents */
-    --ptah-primary-lite:   color-mix(in srgb, var(--ptah-primary) 55%, #ffffff);
+    /* Light text-on-dark variant for dark mode accents. Mixed with a literal
+       #ffffff (not --ptah-surface) on purpose: this is the dark-mode "lite"
+       text/border tint, so mixing it against the dark-mode --ptah-surface
+       (#1e293b) would darken it right back down, defeating the whole point.
+
+       45%, not the original 55%: this token is the ink on --ptah-primary-soft-d
+       in four shipped components (.ptah-c-dd_item_sel, .ptah-c-btn_on,
+       .ptah-c-active_badge, .ptah-c-saved_filter_btn) and at 55% that pair
+       measured 4.47:1 with the config/ptah.php default primary (#5b21b6) —
+       under the 4.5:1 floor for text. It went unnoticed because forge.css
+       defaults to #1e40af, which lands at 4.55:1: the demo app passed while a
+       stock install did not. 45% gives 5.63:1 there and 5.67:1 on #1e40af.
+       50% would also pass but leaves only ~0.5 of margin, and --color-primary
+       is host-configurable. Contrast is monotonic in this direction (the token
+       is only ever ink or border on a dark ground), so raising the white share
+       cannot regress any other call site. */
+    --ptah-primary-lite:   color-mix(in srgb, var(--ptah-primary) 45%, #ffffff);
     --ptah-primary-soft-d: color-mix(in srgb, var(--ptah-primary) 25%, transparent);
+
+    /* Same "-lite" derivation as --ptah-primary-lite, for the semantic colors — the
+       raw success/danger/warn tokens read fine as text on white but fail (or come
+       dangerously close) as text/border on the dark card surface (#1e293b). Used by
+       the active-tab indicator (.ptah-c-tab_active_*). Local to this file, no new
+       token added to forge.css. */
+    --ptah-success-lite: color-mix(in srgb, var(--color-success, #10b981) 55%, #ffffff);
+    --ptah-danger-lite:  color-mix(in srgb, var(--color-danger, #ef4444) 55%, #ffffff);
+    --ptah-warn-lite:    color-mix(in srgb, var(--color-warn, #f59e0b) 55%, #ffffff);
+
+    /* The mirror of -lite: danger dark enough to read as TEXT on a danger-tinted
+       LIGHT background (bg-danger-light, #fee2e2). Needed because raw --color-danger
+       on that tint is 3.08:1 and --color-danger-dark only reaches 3.95:1 — both under
+       the 4.5:1 floor. 75% lands on 5.00:1; 80% would technically pass at 4.53:1 but
+       0.03 of margin is not margin when --color-danger is host-configurable. */
+    --ptah-danger-strong: color-mix(in srgb, var(--color-danger, #ef4444) 75%, #000000);
+
+    /* ── Neutral tokens (Fase 1 restyle) ──────────────────────────────────
+       Light-mode defaults for every neutral (non-brand, non-semantic) color
+       used below. Each has a dark override in the .ptah-dark block right
+       after this one. Values were derived 1:1 from the literals already in
+       this file — this pass is a pure tokenization, no color changed.
+       Host apps override BOTH blocks (see docs/Configuration.md) — redeclaring
+       only :root leaves .ptah-dark winning by source order in dark mode. */
+
+    /* Opaque backgrounds */
+    --ptah-canvas:                #ffffff; /* chrome flush with the page: toolbar, filter-panel card */
+    --ptah-surface:               #ffffff; /* default card-like surface: buttons, sticky cell, modal, delete-confirm */
+    --ptah-surface-raised:        #ffffff; /* shadow-elevated floating surface: dropdown menus, modal chrome */
+    --ptah-surface-sunken:        #f8fafc; /* recessed panel: modal body tint, master/detail row */
+    --ptah-surface-hover:         #f8fafc; /* generic interactive hover tint: buttons, rows, sticky cell, empty-state badge */
+    --ptah-menu-hover:            #f9fafb; /* dropdown/list item hover (subtly different from --ptah-surface-hover) */
+    --ptah-panel:                 #f8fafc; /* header/footer banding: thead, tfoot, filter-panel header/footer */
+    --ptah-field:                 #ffffff; /* active/focused input bg */
+    --ptah-field-muted:           #f8fafc; /* resting (unfocused) input bg — today identical to --ptah-panel; kept
+                                               separate because "campo em repouso" and "faixa de tabela" are different
+                                               roles that Fase 2 may want to diverge */
+    --ptah-control-ghost:         #f1f5f9; /* ghost-filled control chrome, e.g. column-visibility show/hide-all buttons */
+    --ptah-control-ghost-hover:   #e2e8f0; /* hover state of the above */
+
+    /* Borders / lines */
+    --ptah-line:              #f1f5f9; /* hairline divider: dropdowns, filter-panel header/footer, modal header, row bottom */
+    --ptah-line-strong:       #e2e8f0; /* more visible border: outer containers (toolbar, cards, wrapper), thead/tfoot 2px rule */
+    --ptah-line-control:      #cbd5e1; /* scrollbar track/thumb, save-filter input border */
+    /* Resting form-field border: per-page select, filter input, generic form border.
+       A field border is a UI component boundary, so the floor is 3:1 — and the old
+       #94a3b8 measured 2.56:1 against white and had since it was written. Every tone
+       preset already solves this token to exactly 3:1 against its own surface, and the
+       layout always emits a data-ptah-light attribute, so in practice a preset was
+       already covering it. This is the FALLBACK: it is what a host embedding the
+       BaseCrud in its own layout gets, with no data-ptah-* on <html> and therefore no
+       preset — the one path where the old value still rendered. Now 3.01:1, matching
+       the "puro" preset so the fallback and the default tone agree. */
+    --ptah-line-field:        #8f95a0;
+    --ptah-line-field-hover:  #64748b; /* hover border for the above — invariant across scope on purpose (same hex today
+                                           in both .ptah-c-fp_input:hover and .ptah-c-perpage:hover, light and dark) */
+
+    /* Text */
+    --ptah-text-strong:    #1e293b; /* darkest text: search input value, modal title (light side only — dark side is a
+                                        Fase-2-scale literal exception, see .ptah-dark .ptah-c-modal_ttl below) */
+    --ptah-text-field:     #1f2937; /* text typed/selected inside inputs and selects */
+    --ptah-text:           #374151; /* default body text: filter-panel copy, empty-state title, table footer, dropdown items */
+    --ptah-text-secondary: #475569; /* icon-button text, form labels */
+    --ptah-text-muted:     #64748b; /* muted text: helper copy, idle sort arrows, subtitles */
+    --ptah-text-faint:     #6b7280; /* faintest text: pagination summary, small field labels */
+    --ptah-icon-muted:     #64748b; /* toolbar icon glyphs — invariant across scope ON PURPOSE: .ptah-c-fp_chevron and
+                                        .ptah-c-search_x use the exact same hex in light and dark today */
+    --ptah-text-on-accent: #ffffff; /* white ink on solid accent/strong backgrounds — invariant across scope */
+}
+
+/* ── Neutral tokens — dark overrides (Fase 1 restyle) ──────────────────────
+   Must come AFTER :root: both match <html>, same specificity (0,1,0), so
+   source order decides — .ptah-dark second means it wins when both are
+   present, which is exactly what dark mode needs. Only overrides what
+   actually differs from :root; --ptah-icon-muted and --ptah-text-on-accent
+   are intentionally absent here (invariant across scope, see :root comments).
+   --ptah-line-field-hover is also intentionally absent (same reason). */
+.ptah-dark {
+    /* Same specificity (0,1,0) as :root's color-scheme: light — wins by source order
+       (this block is declared after :root), matching how every other token below
+       overrides its :root default. This is the fix for native controls (date picker,
+       select popup, scrollbars, autofill) rendering with the light OS scheme on any
+       screen that isn't the BaseCrud filter panel (which already special-cases this
+       locally in _scripts.blade.php — that rule is more specific and keeps working
+       unchanged; this one covers every other screen). */
+    color-scheme: dark;
+
+    --ptah-canvas:              #0f172a;
+    --ptah-surface:             #1e293b;
+    --ptah-surface-raised:      #1e293b;
+    --ptah-surface-sunken:      #0f172a;
+    --ptah-surface-hover:       #334155;
+    --ptah-menu-hover:          #334155;
+    --ptah-panel:               #1e293b;
+    --ptah-field:               #0f172a;
+    --ptah-field-muted:         #1e293b;
+    --ptah-control-ghost:       #334155;
+    --ptah-control-ghost-hover: #475569;
+
+    --ptah-line:          #334155;
+    --ptah-line-strong:   #334155;
+    --ptah-line-control:  #475569;
+    /* Same fix as the light fallback above: #475569 was 1.93:1 against the dark
+       surface, well under the 3:1 a field border needs. Matches the "grafite"
+       preset, which is the dark default. */
+    --ptah-line-field:    #6d7278;
+
+    --ptah-text-strong:    #e2e8f0;
+    --ptah-text-field:     #e2e8f0;
+    --ptah-text:           #cbd5e1;
+    --ptah-text-secondary: #cbd5e1;
+    --ptah-text-muted:     #94a3b8;
+    --ptah-text-faint:     #94a3b8;
 }
 
 /* x-cloak — oculta elementos Alpine até hidratação */
@@ -37,24 +176,59 @@
 }
 
 /* ── Toolbar ── */
-.ptah-c-toolbar            { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
-.ptah-dark .ptah-c-toolbar { background-color: #0f172a; border-color: #334155; box-shadow: none; }
+.ptah-c-toolbar            { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-toolbar { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: none; }
+
+/* ── Toolbar controls: uniform height, density-aware ─────────────────────
+   Every toolbar control (buttons, search input, per-page select) has its own
+   Tailwind size utilities (px-3 py-1.5, py-2.5, px-2 py-1.5, forge-button's
+   own scale...) which never agreed on a rendered height. Instead of hand-
+   tuning each call site's padding, every control instead opts into a single
+   built height via .ptah-c-control below, driven by the density custom
+   properties declared here on the .ptah-base-crud root. Unlayered (this file
+   has no @layer), so it wins over any Tailwind utility class applied on the
+   same element regardless of source order — see the file banner. */
+/* Density recipe. Height is the axis that was actually asked for (the toolbar had three
+   different control heights); font-size and padding-inline ride along, but carefully —
+   they are the axes that cost WIDTH, and the toolbar holds 12 controls on one line.
+   A first pass set comfortable to 13px/.75rem and pushed the right-hand group onto a
+   second row: 12 controls each a little wider is enough to cross the wrap threshold even
+   on a 1500px viewport. Comfortable is therefore pinned to the 12px/.625rem it effectively
+   had before (text-xs, px-3 minus a hair), so this pass cannot make the toolbar wrap where
+   it did not wrap before; only spacious, which the user opts into, is allowed to be wider. */
+.ptah-base-crud                          { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;    --ptah-row-py: .625rem; }
+.ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;   --ptah-control-fs: .6875rem; --ptah-row-py: .25rem; }
+.ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: .875rem; --ptah-control-fs: .8125rem; --ptah-row-py: 1rem; }
+
+.ptah-c-control {
+    height: var(--ptah-control-h);
+    padding-block: 0;
+    padding-inline: var(--ptah-control-px);
+    font-size: var(--ptah-control-fs);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+/* Count badges (filter count, hidden-columns count) and icon glyphs must keep
+   their own fixed w-4 h-4 box instead of shrinking on the row's main axis. */
+.ptah-c-control > svg,
+.ptah-c-control > .rounded-full { flex-shrink: 0; }
 
 /* ── Search input ── */
-.ptah-c-search { background-color: rgba(248,250,252,0.6); border-color: #e2e8f0; color: #1e293b; }
-.ptah-c-search::placeholder                { color: #94a3b8; }
-.ptah-c-search:focus                       { background-color: #ffffff; border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
-.ptah-dark .ptah-c-search                  { background-color: rgba(30,41,59,0.6); border-color: #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-search::placeholder     { color: #64748b; }
-.ptah-dark .ptah-c-search:focus            { background-color: #1e293b; border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); }
+.ptah-c-search { background-color: color-mix(in srgb, var(--ptah-field-muted) 60%, transparent); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
+.ptah-c-search::placeholder                { color: var(--ptah-text-muted); }
+.ptah-c-search:focus                       { background-color: var(--ptah-field); border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-dark .ptah-c-search                  { background-color: color-mix(in srgb, var(--ptah-field-muted) 60%, transparent); border-color: var(--ptah-line-control); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-search::placeholder     { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-search:focus            { background-color: var(--ptah-surface); border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); }
 
 /* ── Icon/action buttons na toolbar ── */
-.ptah-c-btn               { background-color: #ffffff; border-color: #e2e8f0; color: #475569; }
-.ptah-c-btn:hover         { background-color: #f8fafc; }
+.ptah-c-btn               { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text-secondary); }
+.ptah-c-btn:hover         { background-color: var(--ptah-surface-hover); }
 /* Visible keyboard focus (WCAG 2.4.7) — the toolbar buttons use focus:outline-none. */
 .ptah-c-btn:focus-visible { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
-.ptah-dark .ptah-c-btn    { background-color: #1e293b; border-color: #475569; color: #cbd5e1; }
-.ptah-dark .ptah-c-btn:hover { background-color: #334155; }
+.ptah-dark .ptah-c-btn    { background-color: var(--ptah-surface); border-color: var(--ptah-line-control); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-btn:hover { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-btn:focus-visible { border-color: var(--ptah-primary-lite); }
 
 /* forge-select: keyboard-highlighted option (arrow keys) */
@@ -62,80 +236,86 @@
 .ptah-dark .ptah-select-active { background-color: color-mix(in srgb, var(--ptah-primary) 24%, transparent); }
 
 /* ── Per-page select ── */
-.ptah-c-perpage            { background-color: #f8fafc; border: 1px solid #94a3b8; color: #475569; transition: border-color 150ms ease; }
-.ptah-c-perpage:hover      { border-color: #64748b; }
+.ptah-c-perpage            { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-field); color: var(--ptah-text-secondary); transition: border-color 150ms ease; }
+.ptah-c-perpage:hover      { border-color: var(--ptah-line-field-hover); }
 .ptah-c-perpage:focus      { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
-.ptah-dark .ptah-c-perpage { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-perpage:hover { border-color: #64748b; }
+.ptah-dark .ptah-c-perpage { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-perpage:hover { border-color: var(--ptah-line-field-hover); }
 .ptah-dark .ptah-c-perpage:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
 /* ── Filter panel card ── */
-.ptah-c-fp_card            { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
-.ptah-dark .ptah-c-fp_card { background-color: #0f172a; border-color: #334155; box-shadow: none; }
+.ptah-c-fp_card            { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-fp_card { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: none; }
 
 /* ── Filter panel header ── */
-.ptah-c-fp_hd              { background-color: #f8fafc; border-color: #f1f5f9; }
-.ptah-dark .ptah-c-fp_hd   { background-color: rgba(30,41,59,0.6); border-color: #334155; }
+.ptah-c-fp_hd              { background-color: var(--ptah-panel); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-fp_hd   { background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); border-color: var(--ptah-line); }
 
 /* ── Filter panel footer ── */
-.ptah-c-fp_ft              { background-color: rgba(248,250,252,0.6); border-color: #f1f5f9; }
-.ptah-dark .ptah-c-fp_ft   { background-color: rgba(30,41,59,0.4); border-color: #334155; }
+.ptah-c-fp_ft              { background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-fp_ft   { background-color: color-mix(in srgb, var(--ptah-panel) 40%, transparent); border-color: var(--ptah-line); }
 
 /* ── Filter panel text ── */
-.ptah-c-fp_text            { color: #374151; }
-.ptah-dark .ptah-c-fp_text { color: #cbd5e1; }
+.ptah-c-fp_text            { color: var(--ptah-text); }
+.ptah-dark .ptah-c-fp_text { color: var(--ptah-text); }
 
-.ptah-c-fp_muted           { color: #9ca3af; }
-.ptah-dark .ptah-c-fp_muted { color: #64748b; }
+.ptah-c-fp_muted           { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-fp_muted { color: var(--ptah-text-muted); }
 
-.ptah-c-fp_label           { color: #6b7280; }
-.ptah-dark .ptah-c-fp_label { color: #94a3b8; }
+.ptah-c-fp_label           { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-fp_label { color: var(--ptah-text-faint); }
 
 /* ── Filter panel inputs ── */
-.ptah-c-fp_input           { background-color: #f8fafc; border: 1px solid #94a3b8; color: #1e293b; transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease; }
-.ptah-c-fp_input:hover     { border-color: #64748b; background-color: #ffffff; }
-.ptah-c-fp_input:focus     { background-color: #ffffff; border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
-.ptah-dark .ptah-c-fp_input { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-fp_input:hover { border-color: #64748b; background-color: #0f172a; }
-.ptah-dark .ptah-c-fp_input:focus { background-color: #0f172a; border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-c-fp_input           { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-field); color: var(--ptah-text-strong); transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease; }
+.ptah-c-fp_input:hover     { border-color: var(--ptah-line-field-hover); background-color: var(--ptah-field); }
+.ptah-c-fp_input:focus     { background-color: var(--ptah-field); border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-dark .ptah-c-fp_input { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-field); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-fp_input:hover { border-color: var(--ptah-line-field-hover); background-color: var(--ptah-field); }
+.ptah-dark .ptah-c-fp_input:focus { background-color: var(--ptah-field); border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
 /* ── Filter panel save-filter input ── */
-.ptah-c-fp_save_in         { border: 1px solid #cbd5e1; background-color: #f8fafc; transition: border-color 150ms ease, box-shadow 150ms ease; }
-.ptah-c-fp_save_in:hover   { border-color: #94a3b8; }
+.ptah-c-fp_save_in         { border: 1px solid var(--ptah-line-control); background-color: var(--ptah-field-muted); transition: border-color 150ms ease, box-shadow 150ms ease; }
+.ptah-c-fp_save_in:hover   { border-color: var(--ptah-line-field); }
+/* background-color kept literal on purpose: when .ptah-dark is also present,
+   .ptah-dark .ptah-c-fp_save_in (equal 0,2,0 specificity, declared later in
+   this file) wins the cascade for background-color, so this #ffffff never
+   actually renders in dark mode — tokenizing it would only add risk (a
+   scope-varying token silently changing what a NON-dark-scoped rule resolves
+   to) for zero visual gain. */
 .ptah-c-fp_save_in:focus   { background-color: #ffffff; box-shadow: 0 0 0 3px var(--ptah-primary-ring); border-color: var(--ptah-primary); outline: none; }
-.ptah-dark .ptah-c-fp_save_in { background-color: #1e293b; border: 1px solid #475569; color: #e2e8f0; }
-.ptah-dark .ptah-c-fp_save_in:hover { border-color: #64748b; }
+.ptah-dark .ptah-c-fp_save_in { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-control); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-fp_save_in:hover { border-color: var(--ptah-line-field-hover); }
 .ptah-dark .ptah-c-fp_save_in:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
 /* ── Table wrapper border ── */
-.ptah-c-tbl_wrap           { border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
-.ptah-dark .ptah-c-tbl_wrap { border-color: #334155; box-shadow: none; scrollbar-color: #475569 transparent; }
+.ptah-c-tbl_wrap           { border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); scrollbar-width: thin; scrollbar-color: var(--ptah-line-control) transparent; }
+.ptah-dark .ptah-c-tbl_wrap { border-color: var(--ptah-line-strong); box-shadow: none; scrollbar-color: var(--ptah-line-control) transparent; }
 
 /* Thin styled scrollbar (WebKit) — the native Windows bar breaks the look */
 .ptah-c-tbl_wrap::-webkit-scrollbar              { height: 8px; width: 8px; }
 .ptah-c-tbl_wrap::-webkit-scrollbar-track        { background: transparent; }
-.ptah-c-tbl_wrap::-webkit-scrollbar-thumb        { background-color: #cbd5e1; border-radius: 9999px; }
-.ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover  { background-color: #94a3b8; }
-.ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb       { background-color: #475569; }
-.ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover { background-color: #64748b; }
+.ptah-c-tbl_wrap::-webkit-scrollbar-thumb        { background-color: var(--ptah-line-control); border-radius: 9999px; }
+.ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover  { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb       { background-color: var(--ptah-line-control); }
+.ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover { background-color: var(--ptah-line-field-hover); }
 
 /* ── Card (grid/mobile) — dedicated surface, not the table wrapper ── */
-.ptah-c-card            { border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
-.ptah-dark .ptah-c-card { border-color: #334155; box-shadow: none; }
+.ptah-c-card            { border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-card { border-color: var(--ptah-line-strong); box-shadow: none; }
 
 /* ── Table thead ── */
-.ptah-c-thead              { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; }
-.ptah-dark .ptah-c-thead   { background-color: rgba(30,41,59,0.8); border-bottom: 2px solid #334155; }
+.ptah-c-thead              { background-color: var(--ptah-panel); border-bottom: 2px solid var(--ptah-line-strong); }
+.ptah-dark .ptah-c-thead   { background-color: color-mix(in srgb, var(--ptah-panel) 80%, transparent); border-bottom: 2px solid var(--ptah-line-strong); }
 
-.ptah-c-th_text            { color: #64748b; }
-.ptah-dark .ptah-c-th_text { color: #94a3b8; }
+.ptah-c-th_text            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-th_text { color: var(--ptah-text-muted); }
 
 /* ── Table row ── */
 /* Neutral hover; brand color is reserved for the SELECTED state below. */
-.ptah-c-tr                 { background-color: #ffffff; border-bottom: 1px solid #f1f5f9; }
-.ptah-c-tr:hover           { background-color: #f8fafc; }
-.ptah-dark .ptah-c-tr      { background-color: transparent; border-bottom: 1px solid rgba(51,65,85,0.4); }
-.ptah-dark .ptah-c-tr:hover { background-color: rgba(51,65,85,0.3); }
+.ptah-c-tr                 { background-color: var(--ptah-surface); border-bottom: 1px solid var(--ptah-line); }
+.ptah-c-tr:hover           { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-tr      { background-color: transparent; border-bottom: 1px solid color-mix(in srgb, var(--ptah-line) 40%, transparent); }
+.ptah-dark .ptah-c-tr:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, transparent); }
 
 /* Selected row (bulk checkbox checked): soft brand bg + 2px brand edge */
 .ptah-c-tr_selected,
@@ -144,119 +324,188 @@
 .ptah-dark .ptah-c-tr_selected:hover   { background-color: var(--ptah-primary-soft-d); box-shadow: inset 2px 0 0 var(--ptah-primary-lite); }
 
 /* ── Table tbody divider ── */
-.ptah-dark .ptah-c-tbody_div > * + * { border-top-color: rgba(51,65,85,0.5); }
+.ptah-dark .ptah-c-tbody_div > * + * { border-top-color: color-mix(in srgb, var(--ptah-line) 50%, transparent); }
 
 /* Sticky action column — opaque (hides content scrolling under it) but tracks the row state
-   so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell */
-.ptah-c-sticky_cell                                              { background-color: #ffffff; }
-.ptah-dark .ptah-c-sticky_cell                                   { background-color: #1e293b; }
-.ptah-c-tbody_div > *:hover .ptah-c-sticky_cell                  { background-color: #f8fafc; }
-.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: rgba(51,65,85,0.6); }
+   so hover/selected tint runs edge-to-edge instead of leaving a seam at the sticky cell.
+   border-left + a subtle left shadow give it the edge of a FIXED column instead of a
+   panel floating over the row — without these two, content scrolling underneath reads
+   as "detached" rather than "pinned". */
+.ptah-c-sticky_cell                                              { background-color: var(--ptah-surface); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(15,23,42,.08); }
+/* Dark rows are transparent (see .ptah-c-tr above) over the page canvas (#0f172a), not
+   --ptah-surface (#1e293b) — using --ptah-surface here made the sticky column visibly
+   lighter than the row it belongs to (a seam). --ptah-canvas matches what a dark row
+   actually renders as, so the opaque sticky cell blends in instead of floating on top. */
+.ptah-dark .ptah-c-sticky_cell                                   { background-color: var(--ptah-canvas); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(0,0,0,.3); }
+
+/* Sticky action column HEADER — must be OPAQUE, because .ptah-c-thead is translucent in
+   dark (color-mix(panel 80%, transparent)) and a sticky <th> that lets horizontally
+   scrolling content show through is the defect this replaces.
+
+   Opaque is not enough on its own though: .ptah-c-tbl_wrap declares no background, so
+   the translucent neighbours composite over the page canvas and land on
+   mix(panel 80%, canvas) — while a flat var(--ptah-panel) here would be measurably
+   lighter (#1e293b vs #1b2538) and leave a seam down the header, in exactly the spot
+   this is meant to clean up. So the dark value states that composite explicitly: same
+   rendered colour as its neighbours, but opaque. Light needs no such trick — the header
+   is already opaque there. Same banding as the rest of the header (2px bottom rule) plus
+   the sticky column's own left edge, matching .ptah-c-sticky_cell. */
+.ptah-c-sticky_th            { background-color: var(--ptah-panel); border-bottom: 2px solid var(--ptah-line-strong); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(15,23,42,.08); }
+.ptah-dark .ptah-c-sticky_th { background-color: color-mix(in srgb, var(--ptah-panel) 80%, var(--ptah-canvas)); border-bottom: 2px solid var(--ptah-line-strong); border-left: 1px solid var(--ptah-line); box-shadow: -4px 0 6px -4px rgba(0,0,0,.3); }
+
+.ptah-c-tbody_div > *:hover .ptah-c-sticky_cell                  { background-color: var(--ptah-surface-hover); }
+/* 30%, matching .ptah-dark .ptah-c-tr:hover exactly (both composite --ptah-surface-hover
+   over the same canvas backdrop) — now that the resting state above tracks the canvas
+   too, the hover tint must use the same mix ratio as the row or it reintroduces the
+   seam on hover instead of at rest. */
+.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, transparent); }
 .ptah-c-tr_selected .ptah-c-sticky_cell,
 .ptah-c-tr_selected:hover .ptah-c-sticky_cell                    { background-color: var(--ptah-primary-softer); }
 .ptah-dark .ptah-c-tr_selected .ptah-c-sticky_cell,
 .ptah-dark .ptah-c-tr_selected:hover .ptah-c-sticky_cell         { background-color: var(--ptah-primary-soft-d); }
 
+/* Row action icons (edit / duplicate / restore / delete) — none had a dark: variant,
+   so at least one always failed the 3:1 AA floor for icons depending on theme. Colors
+   derive from tokens (neutral) or the existing brand/semantic vars, never a literal,
+   so a future theme override still reaches these. Measured against the sticky cell's
+   own background (--ptah-surface light / --ptah-canvas dark):
+     edit    : light var(--ptah-primary) ~8.7-9.0:1 (unchanged) -> dark var(--ptah-primary-lite) ~7.4-7.7:1 (was raw --ptah-primary, ~2.0:1)
+     duplicate: light var(--ptah-text-muted) #64748b ~4.76:1 (was text-slate-400, ~2.56:1) -> dark var(--ptah-text-muted) #94a3b8 ~6.96:1 (unchanged)
+     restore : light var(--color-success-dark) ~3.77:1, falling back to #047857 ~5.48:1 (was raw --color-success, ~2.54:1) -> dark var(--color-success) ~7.04:1 (unchanged)
+     delete  : light/dark var(--color-danger) ~3.76:1 / ~4.74:1 (already passing both, unchanged) */
+.ptah-c-act_edit            { color: var(--ptah-primary); }
+.ptah-c-act_edit:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_edit { color: var(--ptah-primary-lite); }
+
+.ptah-c-act_dup            { color: var(--ptah-text-muted); }
+.ptah-c-act_dup:hover      { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-act_dup { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-act_dup:hover { color: var(--ptah-primary-lite); }
+
+/* Follows the host's --color-success-dark when set (that is what makes a brand
+   override reach this icon); the fallback is the darker green forge-button already
+   ships, which carries more margin than forge.css's own #059669. A host that
+   overrides --color-success-dark with a light green would need to re-check this. */
+.ptah-c-act_restore            { color: var(--color-success-dark, #047857); }
+.ptah-c-act_restore:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_restore { color: var(--color-success); }
+
+.ptah-c-act_del            { color: var(--color-danger); }
+.ptah-c-act_del:hover      { opacity: .8; }
+.ptah-dark .ptah-c-act_del { color: var(--color-danger); }
+
 /* ── Empty state ── */
-.ptah-c-empty_box          { background-color: #f8fafc; box-shadow: 0 0 0 6px #f8fafc66, inset 0 0 0 1px #e2e8f0; border-radius: 9999px; }
-.ptah-dark .ptah-c-empty_box { background-color: rgba(51,65,85,0.6); box-shadow: 0 0 0 6px rgba(51,65,85,0.25), inset 0 0 0 1px #475569; }
+.ptah-c-empty_box          { background-color: var(--ptah-surface-hover); box-shadow: 0 0 0 6px #f8fafc66, inset 0 0 0 1px #e2e8f0; border-radius: 9999px; }
+.ptah-dark .ptah-c-empty_box { background-color: color-mix(in srgb, var(--ptah-surface-hover) 60%, transparent); box-shadow: 0 0 0 6px rgba(51,65,85,0.25), inset 0 0 0 1px #475569; }
 
-.ptah-c-empty_ttl          { color: #374151; }
-.ptah-dark .ptah-c-empty_ttl { color: #cbd5e1; }
+.ptah-c-empty_ttl          { color: var(--ptah-text); }
+.ptah-dark .ptah-c-empty_ttl { color: var(--ptah-text); }
 
-.ptah-c-empty_sub          { color: #64748b; }
-.ptah-dark .ptah-c-empty_sub { color: #94a3b8; }
+.ptah-c-empty_sub          { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-empty_sub { color: var(--ptah-text-muted); }
 
 /* ── Table footer / totalizadores ── */
-.ptah-c-tfoot              { border-top: 2px solid #e2e8f0; background-color: #f8fafc; }
-.ptah-dark .ptah-c-tfoot   { border-top: 2px solid #334155; background-color: rgba(30,41,59,0.6); }
+.ptah-c-tfoot              { border-top: 2px solid var(--ptah-line-strong); background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-tfoot   { border-top: 2px solid var(--ptah-line-strong); background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); }
 
-.ptah-c-tfoot_td           { color: #374151; }
-.ptah-dark .ptah-c-tfoot_td { color: #cbd5e1; }
+.ptah-c-tfoot_td           { color: var(--ptah-text); }
+.ptah-dark .ptah-c-tfoot_td { color: var(--ptah-text); }
 
 /* ── Pagination text ── */
-.ptah-c-pag                { color: #6b7280; }
-.ptah-dark .ptah-c-pag     { color: #94a3b8; }
+.ptah-c-pag                { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-pag     { color: var(--ptah-text-faint); }
 
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
-.ptah-c-dd                 { background-color: #ffffff; border-color: #f1f5f9; box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }
-.ptah-dark .ptah-c-dd      { background-color: #1e293b; border-color: #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4), 0 4px 6px -4px rgba(0,0,0,.4); }
+.ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-dd      { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(0,0,0,.4), 0 4px 6px -4px rgba(0,0,0,.4); }
 
-.ptah-c-dd_item            { color: #374151; }
-.ptah-c-dd_item:hover      { background-color: #f9fafb; }
-.ptah-dark .ptah-c-dd_item { color: #cbd5e1; }
-.ptah-dark .ptah-c-dd_item:hover { background-color: rgba(51,65,85,0.6); }
+.ptah-c-dd_item            { color: var(--ptah-text); }
+.ptah-c-dd_item:hover      { background-color: var(--ptah-menu-hover); }
+.ptah-dark .ptah-c-dd_item { color: var(--ptah-text); }
+.ptah-dark .ptah-c-dd_item:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); }
 
 /* ── Modal criar/editar ── */
-.ptah-c-modal_card         { background-color: #ffffff; }
-.ptah-dark .ptah-c-modal_card { background-color: #1e293b; }
+.ptah-c-modal_card         { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-modal_card { background-color: var(--ptah-surface); }
 
-.ptah-c-modal_hd           { background-color: #ffffff; border-color: #f1f5f9; }
-.ptah-dark .ptah-c-modal_hd { background-color: #1e293b; border-color: #334155; }
+.ptah-c-modal_hd           { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-modal_hd { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); }
 
 .ptah-c-modal_icon         { background-color: var(--ptah-primary-soft); }
 .ptah-dark .ptah-c-modal_icon { background-color: var(--ptah-primary-soft-d); }
 
-.ptah-c-modal_ttl          { color: #1e293b; }
+.ptah-c-modal_ttl          { color: var(--ptah-text-strong); }
+/* Fase 2: fora da escala — mantido literal (nenhum token de texto tem #f1f5f9 como variante dark no papel de titulo). */
 .ptah-dark .ptah-c-modal_ttl { color: #f1f5f9; }
 
-.ptah-c-modal_sub          { color: #94a3b8; }
-.ptah-dark .ptah-c-modal_sub { color: #94a3b8; }
+.ptah-c-modal_sub          { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-modal_sub { color: var(--ptah-text-muted); }
 
-.ptah-c-modal_body         { background-color: rgba(248,250,252,0.4); }
-.ptah-dark .ptah-c-modal_body { background-color: rgba(15,23,42,0.25); }
+.ptah-c-modal_body         { background-color: color-mix(in srgb, var(--ptah-surface-sunken) 40%, transparent); }
+.ptah-dark .ptah-c-modal_body { background-color: color-mix(in srgb, var(--ptah-surface-sunken) 25%, transparent); }
 
-.ptah-c-modal_ft           { background-color: #ffffff; border-color: #e2e8f0; }
-.ptah-dark .ptah-c-modal_ft { background-color: #1e293b; border-color: #334155; }
+.ptah-c-modal_ft           { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-modal_ft { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
+
+/* Section heading inside a panel — the label above a group of controls. There was no
+   general-purpose class for this (only .ptah-c-modal_ttl, which is modal-specific), so
+   screens reached for the `text-dark` utility instead. That utility is --color-dark
+   (#1e293b): invisible on a dark page, and there is no dark: variant on it. The
+   Aparência tab's four group titles were unreadable for exactly this reason, and so were
+   five older spots on the same screen (2FA entries, recovery codes, session rows, the
+   photo picker label) — those had simply never been noticed. */
+.ptah-c-section_ttl       { color: var(--ptah-text-strong); }
 
 /* ── Modal form fields ── */
-.ptah-c-form_lbl           { color: #475569; }
-.ptah-dark .ptah-c-form_lbl { color: #94a3b8; }
+.ptah-c-form_lbl           { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-form_lbl { color: var(--ptah-text-muted); }
 
-.ptah-c-form_in            { background-color: #ffffff; border-color: #94a3b8; color: #1f2937; }
+.ptah-c-form_in            { background-color: var(--ptah-field); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
 .ptah-c-form_in:focus      { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
-.ptah-dark .ptah-c-form_in { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
+.ptah-dark .ptah-c-form_in { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-form_in:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
-.ptah-c-form_sel           { background-color: #ffffff; border-color: #cbd5e1; color: #1f2937; padding: .625rem .75rem; cursor: pointer; }
-.ptah-dark .ptah-c-form_sel { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
+.ptah-c-form_sel           { background-color: var(--ptah-field); border-color: var(--ptah-line-control); color: var(--ptah-text-field); padding: .625rem .75rem; cursor: pointer; }
+.ptah-dark .ptah-c-form_sel { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
 
 /* ── Modal confirmação de exclusão ── */
-.ptah-c-del_card           { background-color: #ffffff; }
-.ptah-dark .ptah-c-del_card { background-color: #1e293b; }
+.ptah-c-del_card           { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-del_card { background-color: var(--ptah-surface); }
 
-.ptah-c-del_ft             { background-color: #f8fafc; }
-.ptah-dark .ptah-c-del_ft  { background-color: rgba(30,41,59,0.5); }
+.ptah-c-del_ft             { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-del_ft  { background-color: color-mix(in srgb, var(--ptah-panel) 50%, transparent); }
 
 /* ── Quick-date filter buttons ── */
-.ptah-c-ql_btn             { background-color: #ffffff; color: #475569; border-color: #e2e8f0; }
+.ptah-c-ql_btn             { background-color: var(--ptah-surface); color: var(--ptah-text-secondary); border-color: var(--ptah-line-strong); }
 .ptah-c-ql_btn:hover       { border-color: var(--ptah-primary-border); color: var(--ptah-primary); }
-.ptah-dark .ptah-c-ql_btn  { background-color: #1e293b; color: #cbd5e1; border-color: #475569; }
+.ptah-dark .ptah-c-ql_btn  { background-color: var(--ptah-surface); color: var(--ptah-text-secondary); border-color: var(--ptah-line-control); }
 .ptah-dark .ptah-c-ql_btn:hover { border-color: var(--ptah-primary-lite); color: var(--ptah-primary-lite); }
 
 /* ── Clear-filters icon button ── */
-.ptah-c-clear_btn            { background-color: #ffffff; color: #94a3b8; border-color: #e2e8f0; }
-.ptah-dark .ptah-c-clear_btn { background-color: #1e293b; color: #94a3b8; border-color: #334155; }
+.ptah-c-clear_btn            { background-color: var(--ptah-surface); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-clear_btn { background-color: var(--ptah-surface); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
 
 /* ── Modal close button ── */
+/* Fase 2: fora da escala — light-only, sem contrapartida .ptah-dark para a cor base (so :hover tem
+   override); um token que varia por escopo vazaria seu valor dark para dentro do modo escuro aqui. */
 .ptah-c-modal_close            { color: #94a3b8; }
-.ptah-c-modal_close:hover      { background-color: #f1f5f9; color: #475569; }
-.ptah-dark .ptah-c-modal_close:hover { background-color: rgba(51,65,85,0.7); color: #cbd5e1; }
+.ptah-c-modal_close:hover      { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-modal_close:hover { background-color: color-mix(in srgb, var(--ptah-control-ghost) 70%, transparent); color: var(--ptah-text-secondary); }
 
 /* ── Input border (non-error state) ── */
-.ptah-c-form_border            { border-color: #94a3b8; }
-.ptah-dark .ptah-c-form_border { border-color: #475569; }
+.ptah-c-form_border            { border-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-form_border { border-color: var(--ptah-line-field); }
 
 /* ── Select trigger: text when value is selected ── */
-.ptah-c-sel_val            { color: #1f2937; }
-.ptah-dark .ptah-c-sel_val { color: #e2e8f0; }
+.ptah-c-sel_val            { color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-sel_val { color: var(--ptah-text-field); }
 
 /* ── Dropdown option button (search-dropdown results) ── */
 .ptah-c-dd_opt             { color: inherit; }
 .ptah-c-dd_opt:hover       { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }
-.ptah-dark .ptah-c-dd_opt  { color: #cbd5e1; }
-.ptah-dark .ptah-c-dd_opt:hover { background-color: rgba(51,65,85,0.6); color: #cbd5e1; }
+.ptah-dark .ptah-c-dd_opt  { color: var(--ptah-text); }
+.ptah-dark .ptah-c-dd_opt:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); color: var(--ptah-text); }
 
 /* ── Selected item inside Alpine inline-select list ── */
 .ptah-c-dd_item_sel            { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }
@@ -269,8 +518,8 @@
 .ptah-dark .ptah-c-btn_on:hover { background-color: var(--ptah-primary-soft-d); }
 
 /* ── forge-button color="dark" flat — override no dark mode ── */
-.ptah-dark .ptah-btn.ptah-btn-dark           { color: #94a3b8; }
-.ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: rgba(51,65,85,0.45); color: #cbd5e1; }
+.ptah-dark .ptah-btn.ptah-btn-dark           { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
 
 /* ── Quick-date active button ── */
 .ptah-c-ql_btn_on             { background-color: var(--ptah-primary); color: #ffffff; border-color: var(--ptah-primary); }
@@ -283,29 +532,31 @@
 .ptah-dark .ptah-c-active_badge { background-color: var(--ptah-primary-soft-d); color: var(--ptah-primary-lite); border-color: var(--ptah-primary); }
 
 /* ── Column visibility dropdown: show/hide all buttons ── */
-.ptah-c-col_dd_btn             { background-color: #f1f5f9; color: #475569; }
-.ptah-c-col_dd_btn:hover       { background-color: #e2e8f0; color: #334155; }
-.ptah-dark .ptah-c-col_dd_btn  { background-color: #334155; color: #cbd5e1; }
-.ptah-dark .ptah-c-col_dd_btn:hover { background-color: #475569; color: #e2e8f0; }
+.ptah-c-col_dd_btn             { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+/* Fase 2: fora da escala — nenhum token de texto claro tem esse valor (e' um tom tipicamente usado no
+   dark mode, reaproveitado aqui). */
+.ptah-c-col_dd_btn:hover       { background-color: var(--ptah-control-ghost-hover); color: #334155; }
+.ptah-dark .ptah-c-col_dd_btn  { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-col_dd_btn:hover { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-field); }
 
 /* ── Column visibility dropdown: separator ── */
-.ptah-c-dd_sep            { border-color: #f1f5f9; }
-.ptah-dark .ptah-c-dd_sep { border-color: #334155; }
+.ptah-c-dd_sep            { border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-dd_sep { border-color: var(--ptah-line); }
 
 /* ── Column visibility dropdown: list item label ── */
-.ptah-c-col_dd_item            { color: #374151; }
-.ptah-c-col_dd_item:hover      { background-color: #f9fafb; }
-.ptah-dark .ptah-c-col_dd_item { color: #cbd5e1; }
-.ptah-dark .ptah-c-col_dd_item:hover { background-color: rgba(51,65,85,0.6); }
+.ptah-c-col_dd_item            { color: var(--ptah-text); }
+.ptah-c-col_dd_item:hover      { background-color: var(--ptah-menu-hover); }
+.ptah-dark .ptah-c-col_dd_item { color: var(--ptah-text); }
+.ptah-dark .ptah-c-col_dd_item:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); }
 
 /* ── Toolbar: trash button active (showing trashed) ── */
-.ptah-c-btn_trash_on            { background-color: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.ptah-c-btn_trash_on            { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 .ptah-c-btn_trash_on:hover      { background-color: #fee2e2; }
 .ptah-dark .ptah-c-btn_trash_on { background-color: rgba(220,38,38,0.15); color: #f87171; border-color: rgba(220,38,38,0.4); }
 .ptah-dark .ptah-c-btn_trash_on:hover { background-color: rgba(220,38,38,0.25); }
 
 /* ── Toolbar: columns button when cols are hidden ── */
-.ptah-c-btn_col_on             { background-color: #fffbeb; color: #d97706; border-color: #fde68a; }
+.ptah-c-btn_col_on             { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
 .ptah-c-btn_col_on:hover       { background-color: #fef3c7; }
 .ptah-dark .ptah-c-btn_col_on  { background-color: rgba(217,119,6,0.2); color: #fbbf24; border-color: rgba(217,119,6,0.4); }
 .ptah-dark .ptah-c-btn_col_on:hover { background-color: rgba(217,119,6,0.3); }
@@ -315,10 +566,10 @@
 .ptah-dark .ptah-c-dd_active { color: var(--ptah-primary-lite); }
 
 /* ── Filter panel: chevron button in search dropdown ── */
-.ptah-c-fp_chevron            { color: #9ca3af; }
-.ptah-c-fp_chevron:hover      { color: #6b7280; }
-.ptah-dark .ptah-c-fp_chevron { color: #64748b; }
-.ptah-dark .ptah-c-fp_chevron:hover { color: #94a3b8; }
+.ptah-c-fp_chevron            { color: var(--ptah-icon-muted); }
+.ptah-c-fp_chevron:hover      { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-fp_chevron { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-fp_chevron:hover { color: var(--ptah-text-faint); }
 
 /* ── Filter panel: saved filter load button ── */
 .ptah-c-saved_filter_btn            { background-color: var(--ptah-primary-softer); color: var(--ptah-primary); border-color: var(--ptah-primary-border); }
@@ -327,36 +578,36 @@
 .ptah-dark .ptah-c-saved_filter_btn:hover { background-color: var(--ptah-primary-soft-d); }
 
 /* ── Filter panel: saved filter delete button ── */
-.ptah-c-saved_filter_del            { background-color: #fff1f2; color: #f43f5e; border-color: #fecdd3; }
-.ptah-c-saved_filter_del:hover      { background-color: #ffe4e6; }
-.ptah-dark .ptah-c-saved_filter_del { background-color: rgba(244,63,94,0.15); color: #fb7185; border-color: rgba(244,63,94,0.3); }
-.ptah-dark .ptah-c-saved_filter_del:hover { background-color: rgba(244,63,94,0.25); }
+.ptah-c-saved_filter_del            { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.ptah-c-saved_filter_del:hover      { background-color: #fee2e2; }
+.ptah-dark .ptah-c-saved_filter_del { background-color: rgba(220,38,38,0.15); color: #f87171; border-color: rgba(220,38,38,0.4); }
+.ptah-dark .ptah-c-saved_filter_del:hover { background-color: rgba(220,38,38,0.25); }
 
 /* ── Filter panel: save filter trigger text button ── */
-.ptah-c-fp_save_btn            { color: #64748b; }
+.ptah-c-fp_save_btn            { color: var(--ptah-text-muted); }
 .ptah-c-fp_save_btn:hover      { color: var(--ptah-primary); }
-.ptah-dark .ptah-c-fp_save_btn { color: #94a3b8; }
+.ptah-dark .ptah-c-fp_save_btn { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-c-fp_save_btn:hover { color: var(--ptah-primary-lite); }
 
 /* ── Filter panel: cancel button in save-filter form ── */
-.ptah-c-fp_cancel_btn            { color: #9ca3af; }
-.ptah-c-fp_cancel_btn:hover      { color: #4b5563; }
-.ptah-dark .ptah-c-fp_cancel_btn { color: #64748b; }
-.ptah-dark .ptah-c-fp_cancel_btn:hover { color: #94a3b8; }
+.ptah-c-fp_cancel_btn            { color: var(--ptah-text-muted); }
+.ptah-c-fp_cancel_btn:hover      { color: #4b5563; /* Fase 2: fora da escala — nao ha token com esse tom especifico de cinza. */ }
+.ptah-dark .ptah-c-fp_cancel_btn { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-fp_cancel_btn:hover { color: var(--ptah-text); }
 
 /* ── Table: sort arrows ── */
 .ptah-c-sort_active                  { color: var(--ptah-primary); }
 .ptah-dark .ptah-c-sort_active       { color: var(--ptah-primary-lite); }
-.ptah-c-sort_idle                    { color: #d1d5db; }
-.ptah-dark .ptah-c-sort_idle         { color: #4b5563; }
+.ptah-c-sort_idle                    { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-sort_idle         { color: var(--ptah-text-muted); }
 .ptah-c-sort_hover:hover             { color: var(--ptah-primary); }
 .ptah-dark .ptah-c-sort_hover:hover  { color: var(--ptah-primary-lite); }
 
 /* ── Toolbar: search clear X button ── */
-.ptah-c-search_x                  { color: #9ca3af; transition: color 0.12s; }
-.ptah-c-search_x:hover            { color: #6b7280; }
-.ptah-dark .ptah-c-search_x       { color: #64748b; }
-.ptah-dark .ptah-c-search_x:hover { color: #94a3b8; }
+.ptah-c-search_x                  { color: var(--ptah-icon-muted); transition: color 0.12s; }
+.ptah-c-search_x:hover            { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-search_x       { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-search_x:hover { color: var(--ptah-text-faint); }
 
 /* ── Toolbar: active filter chips ── */
 .ptah-c-chip { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); border: 1px solid var(--ptah-primary-border); padding: 0.125rem 0.25rem 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
@@ -367,11 +618,11 @@
 .ptah-dark .ptah-c-chip button:hover { background-color: var(--ptah-primary-soft-d); }
 
 /* ── Bulk actions floating bar ── */
-.ptah-c-bulk_bar                  { background-color: var(--ptah-primary-strong); color: #ffffff; }
+.ptah-c-bulk_bar                  { background-color: var(--ptah-primary-strong); color: var(--ptah-text-on-accent); }
 .ptah-dark .ptah-c-bulk_bar       { background-color: var(--ptah-primary-strong); }
-.ptah-c-bulk_cancel_btn           { background-color: rgba(255,255,255,0.15); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; transition: background-color 0.12s; }
+.ptah-c-bulk_cancel_btn           { background-color: rgba(255,255,255,0.15); color: var(--ptah-text-on-accent); border: 1px solid rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; transition: background-color 0.12s; }
 .ptah-c-bulk_cancel_btn:hover     { background-color: rgba(255,255,255,0.25); }
-.ptah-c-bulk_delete_btn           { background-color: #dc2626; color: #ffffff; border: 1px solid rgba(220,38,38,0.5); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; transition: background-color 0.12s; }
+.ptah-c-bulk_delete_btn           { background-color: #dc2626; color: var(--ptah-text-on-accent); border: 1px solid rgba(220,38,38,0.5); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; transition: background-color 0.12s; }
 .ptah-c-bulk_delete_btn:hover     { background-color: #b91c1c; }
 
 /* ── Highlight de busca nas células ──────────────────────────── */
@@ -384,12 +635,98 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-c-break_row td,
 .ptah-dark .ptah-c-break_td  { background-color: var(--ptah-primary-soft-d); color: var(--ptah-primary-lite); border-bottom-color: var(--ptah-primary); }
 
-.ptah-c-break_subtotal td            { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; }
-.ptah-dark .ptah-c-break_subtotal td { background-color: rgba(30,41,59,0.6); border-bottom: 2px solid #334155; color: #cbd5e1; }
+.ptah-c-break_subtotal td            { background-color: var(--ptah-panel); border-bottom: 2px solid var(--ptah-line-strong); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-break_subtotal td { background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); border-bottom: 2px solid var(--ptah-line-strong); color: var(--ptah-text-secondary); }
 
 /* ── Master/detail expanded row ──────────────────────────────── */
-.ptah-c-detail_td            { background-color: #f8fafc; box-shadow: inset 0 2px 4px rgba(15,23,42,.04), inset 2px 0 0 var(--ptah-primary); }
-.ptah-dark .ptah-c-detail_td { background-color: rgba(15,23,42,0.5); box-shadow: inset 2px 0 0 var(--ptah-primary-lite); }
+.ptah-c-detail_td            { background-color: var(--ptah-surface-sunken); box-shadow: inset 0 2px 4px rgba(15,23,42,.04), inset 2px 0 0 var(--ptah-primary); }
+.ptah-dark .ptah-c-detail_td { background-color: color-mix(in srgb, var(--ptah-surface-sunken) 50%, transparent); box-shadow: inset 2px 0 0 var(--ptah-primary-lite); }
+
+/* ── Tabs (forge-tab / forge-tabs) — active indicator ────────────
+   Shared by both dual-mode variants (slot mode in forge-tab.blade.php,
+   array mode in forge-tabs.blade.php) so they render identically in
+   dark mode. Same idiom as .ptah-c-dd_active / .ptah-c-sort_active:
+   the raw accent (text-{color} + border-{color}) reads fine on the
+   light surface, but on the dark card surface (#1e293b) primary and
+   danger fail AA as text (and, being the tab's only signal beyond
+   color, as the bottom-border indicator too) — success/warn already
+   pass today but get the same "-lite" treatment for consistency,
+   since a host-overridden brand color could push them under 4.5 too. */
+.ptah-c-tab_active_primary            { color: var(--ptah-primary); border-color: var(--ptah-primary); }
+.ptah-dark .ptah-c-tab_active_primary { color: var(--ptah-primary-lite); border-color: var(--ptah-primary-lite); }
+
+.ptah-c-tab_active_success            { color: var(--color-success); border-color: var(--color-success); }
+.ptah-dark .ptah-c-tab_active_success { color: var(--ptah-success-lite); border-color: var(--ptah-success-lite); }
+
+.ptah-c-tab_active_danger            { color: var(--color-danger); border-color: var(--color-danger); }
+.ptah-dark .ptah-c-tab_active_danger { color: var(--ptah-danger-lite); border-color: var(--ptah-danger-lite); }
+
+.ptah-c-tab_active_warn            { color: var(--color-warn); border-color: var(--color-warn); }
+.ptah-dark .ptah-c-tab_active_warn { color: var(--ptah-warn-lite); border-color: var(--ptah-warn-lite); }
+
+/* ── Tabs — idle (inactive) text ──────────────────────────────
+   Replaces the fixed `text-gray-500 hover:text-gray-700` pair (plus the
+   `dark:text-slate-400 dark:hover:text-slate-200` bolted on in an earlier
+   contrast pass because the plain utility had no dark: counterpart at all
+   and failed AA once the page went dark). forge-tab/forge-tabs render on
+   every screen in the package, so leaving their idle text off the token
+   scale was one of the two reasons the font-colour axis in /profile
+   appeared inert. Same --ptah-text-muted/--ptah-text-strong pair used
+   everywhere else in this file (.ptah-c-section_ttl, .ptah-c-crumb, etc.),
+   so it inherits their existing AA guarantee across every tone x text-scale
+   combination instead of needing a bespoke one — see the rewritten case 15
+   in ContrastGuardTest. */
+.ptah-c-tab_idle                      { color: var(--ptah-text-muted); }
+.ptah-c-tab_idle:hover                { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-tab_idle           { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-tab_idle:hover     { color: var(--ptah-text-strong); }
+
+/* ── Breadcrumb (forge-breadcrumb) ─────────────────────────────
+   Had no dark: variant anywhere in the package — every role failed or
+   nearly failed AA once the page went dark (measured against the layout
+   canvas, #0f172a): separator ~7.03:1 (passes), link (raw text-gray-500)
+   ~3.69:1 (fails 4.5:1), current item (raw text-primary) ~2.05:1 (fails
+   badly — practically invisible). Light values for link/current are
+   preserved byte-for-byte (text-gray-500 / --ptah-primary); only the
+   .ptah-dark overrides are new, and both derive from existing tokens so a
+   future theme/brand override still reaches them.
+   The separator's light value was Tailwind's gray-400 (#9ca3af), a literal, at
+   2.54:1 against white — below even the 3:1 non-text floor. The WCAG case for
+   leaving it was arguable (a decorative punctuation glyph is exempt under
+   1.4.3/1.4.11), but the token case was not: a hardcoded hex here is invisible
+   to the user's theme choice, which is the whole point of this pass. Now
+   --ptah-text-muted, which is a token AND clears the floor at 4.76:1. */
+.ptah-c-crumb_sep            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-crumb_sep { color: var(--ptah-text-faint); }
+
+.ptah-c-crumb              { color: var(--ptah-text-faint); transition: color 150ms ease; }
+.ptah-c-crumb:hover        { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-crumb   { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-crumb:hover { color: var(--ptah-primary-lite); }
+
+.ptah-c-crumb_current            { color: var(--ptah-primary); }
+.ptah-dark .ptah-c-crumb_current { color: var(--ptah-primary-lite); }
+
+/* ── Page header (forge-page-header) ───────────────────────────
+   Title, subtitle and back-link were still fixed text-gray-900/500/600
+   Tailwind literals — forge-page-header renders on top of nearly every
+   screen in the package, so this (together with the tab idle text above)
+   was the other reason the font-colour axis chosen in /profile had almost
+   no visible effect: only 4 small section labels ever followed it.
+   Delta vs the old literals in the "neutra" (default) text scale: title
+   R:+20 G:+14 B:+2, subtitle R:-31 G:-35 B:-43, back link R:-6 G:-12 B:-21.
+   All three clear 4.5:1 against every canvas/surface of every light and
+   dark tone combined with every text scale (measured — see ContrastGuardTest,
+   floor comfortably cleared with margin to spare in the tightest case,
+   "suave" muted at ~5.5:1). */
+.ptah-c-phdr_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-phdr_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-phdr_sub             { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
+
+.ptah-c-phdr_back            { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-phdr_back { color: var(--ptah-text-secondary); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */
@@ -412,3 +749,676 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
     .ptah-base-crud table { font-size: 11px; }
     .ptah-base-crud th, .ptah-base-crud td { white-space: normal !important; position: static !important; }
 }
+
+/* ── Chrome (layout, sidebar, navbar, switcher) ─────────────────────────── */
+
+/* ── Body / Root ──────────────────────────────────────────────────────────
+   The dark rule below has always existed; the light one had not, and that single
+   omission is why the font-colour axis appeared not to work in light mode.
+
+   Most text in this package inherits its colour rather than declaring one — the
+   BaseCrud table cells, for instance, carry no colour class at all. In dark mode
+   they inherit from .ptah-dark and therefore follow --ptah-text-strong. In light
+   mode they were inheriting the browser default (pure black), so nothing the user
+   picked could reach them. One rule fixes every inheriting element at once.
+
+   Visible in the default tone: inherited body text goes from #000000 to
+   --ptah-text-strong (#252629 on Neutra). Slightly lighter, which is also what
+   dark mode has been doing all along, and pure black body copy is not something a
+   design system should ship by accident.
+
+   `html` (0,0,1) loses to `.ptah-dark` (0,1,0), so no :not() is needed. */
+html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
+.ptah-dark { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
+
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+/* Migrated from forge-sidebar.blade.php's fixed `bg-white border-r
+   border-gray-100` — same token pair as the dark rule below, so the two
+   scopes stay in lockstep instead of only the dark side reacting to the
+   user's tone. */
+.ptah-sidebar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-sidebar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+/* Logo wrapper divider — migrated from forge-sidebar.blade.php's fixed
+   `border-gray-100` utility. --ptah-line, not --ptah-line-strong (which the
+   .ptah-dark rule below uses): #eaeef4 (tom "puro") lands 9/6/2 per channel
+   from gray-100 (#f3f4f6), while --ptah-line-strong (#d9e0e9) would jump
+   26/20/13 — the two scopes are free to pick different tokens for the same
+   seam, and this is the one that does not visibly move the hairline. */
+.ptah-sidebar .ptah-sidebar-logo-wrapper {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-logo-wrapper {
+    border-color: var(--ptah-line-strong);
+}
+/* App name — migrated from the fixed `text-dark` utility (--color-dark,
+   #1e293b). Delta vs --ptah-text-strong (tom "puro"+"neutra", #252629):
+   7/3/18 per channel. */
+.ptah-sidebar .ptah-sidebar-app-name {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
+    color: var(--ptah-text-strong);
+}
+/* Base nav-item text color: the group button (text-gray-600, #4b5563, 7.56:1
+   on white) and the child link (text-gray-500, #6b7280, 4.83:1) shared this
+   exact class but painted two different grays — an accident of the two call
+   sites being styled independently, not a deliberate design choice, so
+   converging both onto one token is more coherent than preserving that
+   accident. --ptah-text-muted unifies them onto the SAME shade the .ptah-dark
+   rule below already uses (that scope had already unified its own pair).
+   Both light values already cleared 4.5:1, so nothing regresses — this is a
+   consistency fix, not a contrast fix. No longer a PENDING decision; the
+   ThemeChromeOrphanTokenGuardTest exception for this selector was removed. */
+.ptah-sidebar .ptah-nav-item {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-sidebar .ptah-nav-item {
+    color: var(--ptah-text-muted);
+}
+/* Hover background only — migrated from the fixed `hover:bg-gray-100`
+   utility (delta vs --ptah-surface-hover, tom "puro": 2/0/2). Text color is
+   deliberately left to the `hover:text-primary` utility still on the
+   element (accent, not a neutral token — see forge-sidebar.blade.php); the
+   .ptah-dark rule below also overrides color to --ptah-text-strong, which is
+   a pre-existing scope asymmetry this pass does not touch. */
+.ptah-sidebar .ptah-nav-item:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-sidebar .ptah-nav-item:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+/* Active item pill: was a fixed navy (#1e3a8a bg / #93c5fd text) that ignored
+   PTAH_COLOR_PRIMARY no matter what the host configured. Same brand-token pair
+   as .ptah-c-dd_item_sel / .ptah-c-btn_on / .ptah-c-active_badge /
+   .ptah-c-saved_filter_btn — contrast already covered by
+   ContrastGuardTest::primary_lite_ink_on_a_primary_soft_pill_passes_aa_for_both_default_primaries,
+   which checks --ptah-primary-lite ink on a --ptah-primary-soft-d pill over
+   --ptah-surface (this exact composition) and --ptah-canvas, for both shipped
+   default primaries. */
+.ptah-dark .ptah-sidebar .ptah-nav-item.ptah-nav-active {
+    background-color: var(--ptah-primary-soft-d);
+    color: var(--ptah-primary-lite);
+}
+/* Footer divider — same border migration as the logo wrapper above (delta
+   vs --ptah-line, tom "puro": 9/6/2 per channel). */
+.ptah-sidebar .ptah-sidebar-footer {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-footer {
+    border-color: var(--ptah-line-strong);
+}
+/* Logout hover: the frozen danger red (#450a0a) now derives from --color-danger, so a
+   host-configured danger tone reaches it.
+   The button carries a TEXT label, not just an icon (forge-sidebar.blade.php), so the
+   floor here is 4.5:1, not the 3:1 used for UI surfaces — and by that measure the label
+   never passed in either theme: raw text-danger read 4.29:1 on the old #450a0a and only
+   3.08:1 on the light bg-danger-light. Tinting the dark background from the token made
+   the dark case worse still (3.27:1), so the ink is now per-scope as well: -strong on
+   light, -lite on dark. All four states clear the floor — light 6.11:1 at rest / 5.00:1
+   on hover, dark 6.87:1 / 5.79:1. */
+.ptah-sidebar .ptah-logout-btn {
+    color: var(--ptah-danger-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-logout-btn {
+    color: var(--ptah-danger-lite);
+}
+.ptah-dark .ptah-sidebar .ptah-logout-btn:hover {
+    background-color: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
+}
+
+/* ── Navbar ───────────────────────────────────────────────────────────── */
+/* Migrated from forge-navbar.blade.php's fixed `bg-white border-b
+   border-gray-100` — same token pair as the dark rule below. `shadow-sm`
+   stays a Tailwind utility on the element; only the dark scope needs its own
+   box-shadow override (below), light already gets the right look from it. */
+.ptah-navbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-navbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+/* Icon buttons — migrated from the fixed `text-gray-500` utility shared by
+   every icon button in the navbar (mobile toggle, collapse toggle, dark-mode
+   toggle, admin trigger, notifications). --ptah-icon-muted (invariant across
+   scope, #64748b) is 7/2/11 off gray-500 (#6b7280) — the icon-glyph token,
+   not a text-* one, since these are icon-only buttons. */
+.ptah-navbar .ptah-navbar-icon-btn {
+    color: var(--ptah-icon-muted);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-icon-btn {
+    color: var(--ptah-text-muted);
+}
+/* Hover background only — migrated from the fixed `hover:bg-gray-100`
+   utility (delta vs --ptah-surface-hover, tom "puro": 2/0/2). Text color is
+   deliberately left to the `hover:text-primary` utility still on each
+   button (accent, not neutral); the .ptah-dark rule below overriding color
+   to --ptah-text-strong on hover is a pre-existing scope asymmetry, not
+   something this pass touches. */
+.ptah-navbar .ptah-navbar-icon-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-icon-btn:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+/* App name — same migration as the sidebar's (delta vs --ptah-text-strong,
+   tom "puro"+"neutra": 7/3/18 per channel). */
+.ptah-navbar .ptah-navbar-app-name {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-app-name {
+    color: var(--ptah-text-strong);
+}
+/* --ptah-text-secondary, not --ptah-text: both render #cbd5e1 in dark (byte-identical
+   here) but diverge in light (#374151 vs #475569). "Texto secundário de chrome" is the
+   correct semantic role for a navbar label, and light mode is where the choice becomes
+   observable once the theme switcher lands. */
+/* Username — migrated from the fixed `text-dark` utility. --ptah-text-strong
+   (tom "puro"+"neutra", #252629) is the closest token (delta 7/3/18) — the
+   .ptah-dark rule's choice of --ptah-text-secondary over --ptah-text-strong
+   was a semantic call made when both rendered byte-identical in dark; that
+   reasoning does not carry over to light, where the two tokens diverge and
+   --ptah-text-strong is by far the closer match to what already renders. */
+.ptah-navbar .ptah-navbar-username {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-username {
+    color: var(--ptah-text-secondary);
+}
+/* The button wrapping avatar + name + chevron only had `hover:bg-gray-100` and no dark
+   counterpart, so hovering it (or opening its dropdown) painted a near-white chip in the
+   middle of a dark navbar — and everything inside is deliberately light, so the label
+   dropped to 1.35:1 and the avatar initial to 1.40:1. Matches the icon buttons beside it. */
+/* Light side of the same fix: `hover:bg-gray-100` was already a fixed
+   utility, not a token — delta vs --ptah-surface-hover (tom "puro"): 2/0/2. */
+.ptah-navbar .ptah-navbar-user-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover {
+    background-color: var(--ptah-surface-hover);
+}
+/* Avatar: same brand-token substitution as the sidebar's nav-active pill above (fixed
+   navy #1e3a8a / #93c5fd -> brand tint / --ptah-primary-lite).
+
+   OPAQUE, unlike the pill: --ptah-primary-soft-d is translucent, so it composited over
+   whatever the parent button was showing and drifted lighter on hover, taking the initial
+   from 5.63:1 down to 4.34:1. An avatar chip should be a solid colour, not a tint that
+   moves when you hover its container. Mixing against --ptah-surface instead of transparent
+   yields the identical colour at rest and holds it through the hover. */
+.ptah-dark .ptah-navbar .ptah-user-avatar-bg {
+    background-color: color-mix(in srgb, var(--ptah-primary) 25%, var(--ptah-surface));
+}
+.ptah-dark .ptah-navbar .ptah-user-avatar-text {
+    color: var(--ptah-primary-lite);
+}
+/* User dropdown panel — migrated from the fixed `bg-white border-gray-200`
+   utilities. --ptah-surface-raised (tom "puro") is #ffffff, an exact match;
+   --ptah-line is 5/7/9 off gray-200 (#e5e7eb), and is the same token the
+   .ptah-dark rule below already uses for this seam. */
+.ptah-navbar .ptah-user-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+/* Only `a`, NOT `button`: the profile link (text-gray-700, delta vs
+   --ptah-text tom "puro"+"neutra": 4/4/15) is the only element this should
+   touch. The dropdown's other row is a <button> carrying `text-danger`
+   (semantic, accent) for the logout action — the .ptah-dark rule below
+   applies var(--ptah-text) to BOTH `a` and `button` and so already
+   overrides that button's red in dark mode (a pre-existing scope quirk,
+   left as-is); mirroring it in light would newly break the logout button's
+   danger color for every light-mode user, which is a regression this pass
+   will not introduce. */
+.ptah-navbar .ptah-user-dropdown a {
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown a,
+.ptah-dark .ptah-navbar .ptah-user-dropdown button {
+    color: var(--ptah-text);
+}
+/* Delta vs --ptah-menu-hover (tom "puro"): 5/4/2 off gray-50. */
+.ptah-navbar .ptah-user-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+.ptah-navbar .ptah-user-dropdown hr {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-user-dropdown hr {
+    border-color: var(--ptah-line);
+}
+/* Admin dropdown panel — same border/background migration as the user
+   dropdown above. */
+.ptah-navbar .ptah-admin-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+}
+/* Every link inside the admin dropdown uses `text-gray-700` uniformly (no
+   danger/accent buttons in here, unlike the user dropdown above), so `a` and
+   `button` can safely share one rule exactly like the .ptah-dark rule below. */
+.ptah-navbar .ptah-admin-dropdown a,
+.ptah-navbar .ptah-admin-dropdown button {
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown a,
+.ptah-dark .ptah-navbar .ptah-admin-dropdown button {
+    color: var(--ptah-text);
+}
+.ptah-navbar .ptah-admin-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
+    background-color: var(--ptah-menu-hover);
+}
+/* Icons were the fixed `text-gray-400` (#9ca3af), which measures 2.54:1 on
+   white — BELOW the 3:1 AA floor for a UI icon, and has been since before
+   this token pass. The large delta to --ptah-icon-muted (#64748b, 4.76:1) is
+   the fix, not a caution sign: the old value was the defect, not the token.
+   Now tokenized in both scopes, matching the .ptah-dark rule below. No
+   longer a PENDING decision; the ThemeChromeOrphanTokenGuardTest exception
+   for this selector was removed. */
+.ptah-navbar .ptah-admin-dropdown svg {
+    color: var(--ptah-icon-muted);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
+    color: var(--ptah-icon-muted);
+}
+.ptah-navbar .ptah-admin-dropdown hr {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-navbar .ptah-admin-dropdown hr {
+    border-color: var(--ptah-line);
+}
+/* Same icon-glyph migration as .ptah-navbar-icon-btn above (this button also
+   carries that class, so this rule is redundant in practice — kept for
+   parity with the .ptah-dark structure below, which does the same). */
+.ptah-navbar .ptah-mobile-toggle {
+    color: var(--ptah-icon-muted);
+}
+.ptah-dark .ptah-navbar .ptah-mobile-toggle {
+    color: var(--ptah-text-muted);
+}
+.ptah-navbar .ptah-mobile-toggle:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-navbar .ptah-mobile-toggle:hover {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-text-strong);
+}
+
+/* ── Main content ─────────────────────────────────────────────────────── */
+/* Light had no rule at all — the page background was whatever the document
+   default happened to be, so the "Papel"/"Nevoa" light tones never reached it. */
+main { background-color: var(--ptah-canvas); }
+.ptah-dark main { background-color: var(--ptah-canvas); }
+
+/* ── Page Title (dark) ───────────────────────────────────────────────── */
+.ptah-dark .ptah-page-title { color: var(--ptah-text-strong); }
+
+/* ── Card (default variant) ──────────────────────────────────────────── */
+/* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
+   never tokenized) and from the layout's inline <style> `.ptah-card-default`
+   block (dark, fixed #1e293b/#334155/#e2e8f0 literals — see
+   tests/Fixtures/css-layout-ledger.json for the byte-identical migration of
+   those 5 sites). Only the `default` variant: primary/success/danger/warn/dark
+   are semantic Tailwind colors and stay as they are. */
+.ptah-card-default {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-card-default {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+    color: var(--ptah-text-strong);
+}
+/* Header/footer divider inside a default-variant card — migrated from the
+   fixed `border-gray-100` utility in forge-card.blade.php (delta vs
+   --ptah-line, tom "puro": 9/6/2 per channel, same migration as the sidebar
+   and navbar hairlines above). Only reachable when the card's own wrapper
+   carries `ptah-card-default` (type="default"); other types keep their own
+   semantic Tailwind border color and are unaffected. */
+.ptah-card-default .border-b,
+.ptah-card-default .border-t { border-color: var(--ptah-line); }
+.ptah-dark .ptah-card-default .border-b,
+.ptah-dark .ptah-card-default .border-t { border-color: var(--ptah-line-strong); }
+
+/* ── Company Switcher ────────────────────────────────────────────────── */
+.ptah-switcher-name {
+    color: var(--ptah-text-strong);
+}
+.ptah-switcher-sep {
+    display: inline-block;
+    width: 1px;
+    height: 1.1em;
+    background-color: var(--ptah-line-control);
+    border-radius: 1px;
+    flex-shrink: 0;
+}
+.ptah-switcher-bar {
+    background-color: var(--ptah-control-ghost);
+}
+.ptah-switcher-tab {
+    color: var(--ptah-text-muted);
+    background: transparent;
+}
+.ptah-switcher-tab:hover {
+    background-color: color-mix(in srgb, var(--ptah-primary) 22%, var(--ptah-surface));
+    color: var(--ptah-primary-strong);
+}
+.ptah-switcher-tab--active {
+    background-color: var(--ptah-primary) !important;
+    color: var(--ptah-text-on-accent) !important;
+    box-shadow: 0 1px 5px rgba(30,64,175,.35);
+}
+.ptah-dark .ptah-switcher-name  { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-switcher-sep   { background-color: var(--ptah-line-control); }
+.ptah-dark .ptah-switcher-bar   { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-switcher-tab   { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-switcher-tab:hover {
+    background-color: var(--ptah-primary-soft-d);
+    color: var(--ptah-primary-lite);
+}
+.ptah-dark .ptah-switcher-tab--active {
+    background-color: var(--ptah-primary) !important;
+    color: var(--ptah-text-on-accent) !important;
+}
+
+/* ── Presets de aparência (escolhidos pelo usuário em /profile) ── */
+/*
+   4 eixos independentes, aplicados via atributos no <html> (server-side —
+   ver Ptah\Livewire\Auth\ProfilePage e a whitelist em $lightPresets /
+   $darkPresets / $accentPresets / $textPresets do próprio componente):
+     data-ptah-light  = puro | papel | nevoa            (tom claro)
+     data-ptah-dark   = carvao | grafite | meianoite    (tom escuro)
+     data-ptah-accent = azul | violeta | ciano | verde | teal | ambar | vermelho | rosa | cinza
+     data-ptah-text   = suave | neutra | forte          (cor da fonte)
+
+   Especificidade — leia antes de tocar aqui. Os tokens base (acima, :root e
+   .ptah-dark) são ambos (0,1,0), decididos por ORDEM DE FONTE (.ptah-dark
+   vence por vir depois). Um preset escrito como `html[data-ptah-light="papel"]`
+   teria (0,1,1) e venceria `.ptah-dark` mesmo em modo escuro, destruindo-o.
+   Por isso:
+     - tom claro:  `html[data-ptah-light="X"]:not(.ptah-dark)`   — só casa fora do dark.
+     - tom escuro: `html.ptah-dark[data-ptah-dark="X"]`          — (0,2,1), sempre vence `.ptah-dark`.
+     - texto:      mesma lógica, claro com `:not(.ptah-dark)`, escuro com `html.ptah-dark[...]`.
+     - accent:     `html[data-ptah-accent="X"]` — (0,1,1), vale nos dois modos
+                    (só sobrescreve --color-primary; --ptah-primary e todos os
+                    tints -ring/-soft/-border/-lite/-soft-d/-strong em :root já
+                    o referenciam via var(), então seguem automaticamente).
+
+   `.ptah-dark` é aplicada SOMENTE em <html> — ver applyTheme() em
+   forge-dashboard-layout.blade.php; @custom-variant dark (forge.css) já
+   cobre toda a subárvore, inclusive conteúdo @@teleport('body'). Se algum
+   dia voltar a marcar também o <body>, os presets de tom escuro abaixo
+   deixam de casar ali e o body herda os tokens do bloco `.ptah-dark` nu em
+   silêncio — ver ThemeCarrierTest.
+
+   Só literais nos blocos abaixo — nenhum var() (ver
+   AppearancePresetContrastTest::css_presets_never_reference_a_var; um
+   var(--ptah-*) aqui resolveria contra o escopo errado no
+   CssDeclarationExtractor usado pelos testes golden).
+
+   O default (puro / grafite / neutra) NÃO é idêntico ao que já está em
+   :root/.ptah-dark acima — todo divergiu em pelo menos um token (ex.:
+   --ptah-line-field: #94a3b8 em :root vs #8f95a0 em "puro") — por isso os
+   três eixos são escritos por extenso abaixo, nada é reaproveitado por
+   omissão.
+
+   Valores verificados por busca binária contra alvos de contraste (570
+   pares, 0 falhas — ver AppearancePresetContrastTest, incluindo as asserções
+   de separação perceptível entre tons e entre escalas de texto). Não
+   arredondar.
+*/
+
+/* ── Tom claro ── */
+html[data-ptah-light="puro"]:not(.ptah-dark) {
+    --ptah-canvas: #ffffff;
+    --ptah-surface: #ffffff;
+    --ptah-surface-raised: #ffffff;
+    --ptah-surface-sunken: #f4f6f9;
+    --ptah-surface-hover: #f1f4f8;
+    --ptah-menu-hover: #f4f6f9;
+    --ptah-panel: #f4f6f9;
+    --ptah-field: #ffffff;
+    --ptah-field-muted: #f4f6f9;
+    --ptah-control-ghost: #e9edf3;
+    --ptah-control-ghost-hover: #dce2ea;
+    --ptah-line: #eaeef4;
+    --ptah-line-strong: #d9e0e9;
+    --ptah-line-control: #c2ccd8;
+    --ptah-line-field: #8f95a0;
+}
+
+html[data-ptah-light="papel"]:not(.ptah-dark) {
+    --ptah-canvas: #f3eee3;
+    --ptah-surface: #fffaf0;
+    --ptah-surface-raised: #fffaf0;
+    --ptah-surface-sunken: #ece5d6;
+    --ptah-surface-hover: #e8e0cf;
+    --ptah-menu-hover: #ece5d6;
+    --ptah-panel: #ece5d6;
+    --ptah-field: #fffaf0;
+    --ptah-field-muted: #f0eadd;
+    --ptah-control-ghost: #e4dcc9;
+    --ptah-control-ghost-hover: #d6ccb5;
+    --ptah-line: #e4dcc9;
+    --ptah-line-strong: #d3c9b3;
+    --ptah-line-control: #bcb098;
+    --ptah-line-field: #8c929d;
+}
+
+html[data-ptah-light="nevoa"]:not(.ptah-dark) {
+    --ptah-canvas: #eceef1;
+    --ptah-surface: #ffffff;
+    --ptah-surface-raised: #ffffff;
+    --ptah-surface-sunken: #e4e7eb;
+    --ptah-surface-hover: #e0e4e9;
+    --ptah-menu-hover: #e9ecf0;
+    --ptah-panel: #e7eaee;
+    --ptah-field: #ffffff;
+    --ptah-field-muted: #f2f4f6;
+    --ptah-control-ghost: #dfe3e8;
+    --ptah-control-ghost-hover: #cfd5dd;
+    --ptah-line: #dfe3e8;
+    --ptah-line-strong: #ccd3db;
+    --ptah-line-control: #b3bcc7;
+    --ptah-line-field: #8f95a0;
+}
+
+/* ── Tom escuro ── */
+html.ptah-dark[data-ptah-dark="carvao"] {
+    --ptah-canvas: #18181b;
+    --ptah-surface: #27272a;
+    --ptah-surface-raised: #27272a;
+    --ptah-surface-sunken: #18181b;
+    --ptah-surface-hover: #3f3f46;
+    --ptah-menu-hover: #3f3f46;
+    --ptah-panel: #27272a;
+    --ptah-field: #18181b;
+    --ptah-field-muted: #27272a;
+    --ptah-control-ghost: #3f3f46;
+    --ptah-control-ghost-hover: #52525b;
+    --ptah-line: #3f3f46;
+    --ptah-line-strong: #3f3f46;
+    --ptah-line-control: #52525b;
+    --ptah-line-field: #6c7177;
+}
+
+html.ptah-dark[data-ptah-dark="grafite"] {
+    --ptah-canvas: #0f172a;
+    --ptah-surface: #1e293b;
+    --ptah-surface-raised: #1e293b;
+    --ptah-surface-sunken: #0f172a;
+    --ptah-surface-hover: #334155;
+    --ptah-menu-hover: #334155;
+    --ptah-panel: #1e293b;
+    --ptah-field: #0f172a;
+    --ptah-field-muted: #1e293b;
+    --ptah-control-ghost: #334155;
+    --ptah-control-ghost-hover: #475569;
+    --ptah-line: #334155;
+    --ptah-line-strong: #334155;
+    --ptah-line-control: #475569;
+    --ptah-line-field: #6d7278;
+}
+
+html.ptah-dark[data-ptah-dark="meianoite"] {
+    --ptah-canvas: #080e1c;
+    --ptah-surface: #111c33;
+    --ptah-surface-raised: #111c33;
+    --ptah-surface-sunken: #080e1c;
+    --ptah-surface-hover: #243354;
+    --ptah-menu-hover: #243354;
+    --ptah-panel: #111c33;
+    --ptah-field: #080e1c;
+    --ptah-field-muted: #111c33;
+    --ptah-control-ghost: #243354;
+    --ptah-control-ghost-hover: #33456b;
+    --ptah-line: #243354;
+    --ptah-line-strong: #243354;
+    --ptah-line-control: #33456b;
+    --ptah-line-field: #63686e;
+}
+
+/* ── Cor da fonte — claro ──
+   As três escalas foram resolvidas contra o PIOR fundo de qualquer tom do
+   modo claro (ver cabeçalho da seção), então tom e cor-da-fonte são eixos
+   realmente independentes: qualquer combinação tom×escala passa >=4.5:1. */
+html[data-ptah-text="suave"]:not(.ptah-dark) {
+    --ptah-text-strong: #414348;
+    --ptah-text-field: #46494f;
+    --ptah-text: #4e5157;
+    --ptah-text-secondary: #55585f;
+    --ptah-text-muted: #5a5f65;
+    --ptah-text-faint: #5e636a;
+}
+
+html[data-ptah-text="neutra"]:not(.ptah-dark) {
+    --ptah-text-strong: #252629;
+    --ptah-text-field: #2e3034;
+    --ptah-text: #3b3d42;
+    --ptah-text-secondary: #45494e;
+    --ptah-text-muted: #4c4f55;
+    --ptah-text-faint: #4f5358;
+}
+
+html[data-ptah-text="forte"]:not(.ptah-dark) {
+    --ptah-text-strong: #141416;
+    --ptah-text-field: #1e1f22;
+    --ptah-text: #28292c;
+    --ptah-text-secondary: #323437;
+    --ptah-text-muted: #3b3d42;
+    --ptah-text-faint: #414348;
+}
+
+/* ── Cor da fonte — escuro ── */
+html.ptah-dark[data-ptah-text="suave"] {
+    --ptah-text-strong: #d6d8d9;
+    --ptah-text-field: #cdcfd1;
+    --ptah-text: #c2c4c6;
+    --ptah-text-secondary: #b8babd;
+    --ptah-text-muted: #b0b3b6;
+    --ptah-text-faint: #abadb1;
+}
+
+html.ptah-dark[data-ptah-text="neutra"] {
+    --ptah-text-strong: #e8e9ea;
+    --ptah-text-field: #e2e2e4;
+    --ptah-text: #d3d5d6;
+    --ptah-text-secondary: #c7c9cb;
+    --ptah-text-muted: #bdbfc1;
+    --ptah-text-faint: #b8babd;
+}
+
+html.ptah-dark[data-ptah-text="forte"] {
+    --ptah-text-strong: #f9fafa;
+    --ptah-text-field: #f6f7f7;
+    --ptah-text: #eceded;
+    --ptah-text-secondary: #dfe0e1;
+    --ptah-text-muted: #cfd0d2;
+    --ptah-text-faint: #c7c9cb;
+}
+
+/* ── Cor de destaque ──
+   Só troca --color-primary (literal, propositalmente — é o próprio ponto
+   de definição da marca, não algo derivável de outro token). --ptah-primary
+   em :root referencia var(--color-primary, #5b21b6), e todos os tints
+   (-ring/-soft/-softer/-border/-strong/-lite/-soft-d) partem de
+   --ptah-primary, então seguem automaticamente nos dois modos. */
+html[data-ptah-accent="azul"]     { --color-primary: #1d4ed8; }
+html[data-ptah-accent="violeta"]  { --color-primary: #6d28d9; }
+html[data-ptah-accent="ciano"]    { --color-primary: #0e7490; }
+html[data-ptah-accent="verde"]    { --color-primary: #047857; }
+html[data-ptah-accent="teal"]     { --color-primary: #0f766e; }
+html[data-ptah-accent="ambar"]    { --color-primary: #92400e; }
+html[data-ptah-accent="vermelho"] { --color-primary: #b91c1c; }
+html[data-ptah-accent="rosa"]     { --color-primary: #be185d; }
+html[data-ptah-accent="cinza"]    { --color-primary: #475569; }
+
+
+/* ── Preview das pílulas da aba Aparência ──────────────────────────────────
+   Cada pílula mostra A SUA PRÓPRIA opção, não a que está ativa. Por isso estas
+   regras usam LITERAIS e nunca var(--ptah-*): um token resolveria para a escolha
+   corrente e as doze pílulas ficariam idênticas — um preview que não prevê nada,
+   e que passaria em qualquer teste de contraste ou de token. Guardado por
+   AppearancePreviewLiteralTest.
+
+   As pílulas de TOM não são escopadas por tema de propósito: "Carvão" tem de
+   aparecer escura mesmo com a página clara, porque é isso que a pessoa quer ver
+   antes de escolher. As de fonte e accent são escopadas, porque a mesma escala
+   tem tinta diferente em cada tema. */
+
+/* Cor da fonte — o rótulo na tinta real da escala */
+.ptah-swatch[data-ptah-text="suave"] { color: #414348; }
+.ptah-swatch[data-ptah-text="neutra"] { color: #252629; }
+.ptah-swatch[data-ptah-text="forte"] { color: #141416; }
+.ptah-dark .ptah-swatch[data-ptah-text="suave"] { color: #d6d8d9; }
+.ptah-dark .ptah-swatch[data-ptah-text="neutra"] { color: #e8e9ea; }
+.ptah-dark .ptah-swatch[data-ptah-text="forte"] { color: #f9fafa; }
+
+/* Cor de destaque — rótulo, bolinha e borda na própria cor */
+.ptah-swatch[data-ptah-accent="azul"] { color: #1d4ed8; border-color: #1d4ed8; }
+.ptah-swatch[data-ptah-accent="violeta"] { color: #6d28d9; border-color: #6d28d9; }
+.ptah-swatch[data-ptah-accent="ciano"] { color: #0e7490; border-color: #0e7490; }
+.ptah-swatch[data-ptah-accent="verde"] { color: #047857; border-color: #047857; }
+.ptah-swatch[data-ptah-accent="teal"] { color: #0f766e; border-color: #0f766e; }
+.ptah-swatch[data-ptah-accent="ambar"] { color: #92400e; border-color: #92400e; }
+.ptah-swatch[data-ptah-accent="vermelho"] { color: #b91c1c; border-color: #b91c1c; }
+.ptah-swatch[data-ptah-accent="rosa"] { color: #be185d; border-color: #be185d; }
+.ptah-swatch[data-ptah-accent="cinza"] { color: #475569; border-color: #475569; }
+.ptah-dark .ptah-swatch[data-ptah-accent="azul"] { color: #99afed; border-color: #99afed; }
+.ptah-dark .ptah-swatch[data-ptah-accent="violeta"] { color: #bd9eee; border-color: #bd9eee; }
+.ptah-dark .ptah-swatch[data-ptah-accent="ciano"] { color: #93c0cd; border-color: #93c0cd; }
+.ptah-dark .ptah-swatch[data-ptah-accent="verde"] { color: #8ec2b3; border-color: #8ec2b3; }
+.ptah-dark .ptah-swatch[data-ptah-accent="teal"] { color: #93c1be; border-color: #93c1be; }
+.ptah-dark .ptah-swatch[data-ptah-accent="ambar"] { color: #cea993; border-color: #cea993; }
+.ptah-dark .ptah-swatch[data-ptah-accent="vermelho"] { color: #e09999; border-color: #e09999; }
+.ptah-dark .ptah-swatch[data-ptah-accent="rosa"] { color: #e297b6; border-color: #e297b6; }
+.ptah-dark .ptah-swatch[data-ptah-accent="cinza"] { color: #acb3bc; border-color: #acb3bc; }
+
+/* Tons — a pílula pintada com o próprio tom, em qualquer tema */
+.ptah-swatch[data-ptah-light="puro"] { background-color: #ffffff; border-color: #8f95a0; color: #252629; }
+.ptah-swatch[data-ptah-light="papel"] { background-color: #fffaf0; border-color: #8c929d; color: #252629; }
+.ptah-swatch[data-ptah-light="nevoa"] { background-color: #ffffff; border-color: #8f95a0; color: #252629; }
+.ptah-swatch[data-ptah-dark="carvao"] { background-color: #27272a; border-color: #6c7177; color: #e8e9ea; }
+.ptah-swatch[data-ptah-dark="grafite"] { background-color: #1e293b; border-color: #6d7278; color: #e8e9ea; }
+.ptah-swatch[data-ptah-dark="meianoite"] { background-color: #111c33; border-color: #63686e; color: #e8e9ea; }

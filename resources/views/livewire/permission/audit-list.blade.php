@@ -31,13 +31,13 @@
             <option value="delete">{{ __('ptah::ui.audit_action_delete') }}</option>
         </select>
         <input wire:model.live="dateFrom" type="date"
-            class="py-2 px-3 text-sm rounded border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
+            class="py-2 px-3 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"
             :title="__('ptah::ui.audit_title_from')"/>
         <input wire:model.live="dateTo" type="date"
-            class="py-2 px-3 text-sm rounded border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
+            class="py-2 px-3 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"
             :title="__('ptah::ui.audit_title_to')"/>
         <button wire:click="clearFilters"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors select-none">
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md transition-colors select-none">
             {{ __('ptah::ui.btn_clear') }}
         </button>
     </div>

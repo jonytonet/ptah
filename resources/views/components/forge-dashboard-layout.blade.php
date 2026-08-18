@@ -22,8 +22,25 @@
     'theme'   => null,
 ])
 
+@php
+    // Aba "Aparência" de /profile (Ptah\Livewire\Auth\ProfilePage). O servidor é a
+    // fonte da verdade para usuário autenticado — renderizar os 4 atributos aqui
+    // (em vez de via Alpine/localStorage) é o que evita flash no F5/navegação.
+    // Visitante não autenticado sempre recebe os defaults (sanitize(null)); o
+    // toggle claro/escuro de visitante continua 100% em localStorage (ver
+    // :theme abaixo, que só é sobrescrito quando o chamador não informou nada).
+    $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
+        auth()->check() ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme') : null
+    );
+    $theme = $theme ?? $ptahAppearance['mode'];
+@endphp
+
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,6 +80,21 @@
     {{-- Brand palette from config('ptah.theme.colors') --}}
     @include('ptah::partials.theme-colors')
 
+    {{-- BEING DISMANTLED — do not add color here. Guarded by LayoutStyleBaselineTest, which
+         holds a golden fixture of all 184 declaration sites and a ceiling that only ever
+         shrinks (127 hex literals / 107 rules today).
+
+         An earlier note called the whole block un-tokenizable. That was measured and is wrong:
+         only 21 rules repaint Tailwind utility classes from a distance (.text-gray-400,
+         .bg-slate-50, …), which works ONLY because an inline <style> is unlayered and so beats
+         @layer utilities — those must move together with the view that uses them, and a green
+         fixture does NOT prove such a move is safe (the fixture records what a rule declares,
+         never which rule wins). The other ~84 rules select this package's own semantic classes
+         (.ptah-sidebar, .ptah-nav-item, .ptah-navbar, …), compete with nothing, and should be
+         migrated to resources/css/ptah-components.css using the --ptah-* neutral tokens.
+
+         Why it matters: a literal written here is invisible to the user's theme choice, so the
+         sidebar and navbar would stay slate no matter which tone the user picks. --}}
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
@@ -74,139 +106,11 @@
         /* Aplicado via .ptah-dark na div raiz, detectado do SO e/ou     */
         /* sobrescrito manualmente pelo usuário via localStorage.         */
 
-        /* Body / Root */
-        .ptah-dark { background-color: #0f172a; color: #e2e8f0; }
-
-        /* Sidebar */
-        .ptah-dark .ptah-sidebar {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-logo-wrapper {
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-app-name {
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-toggle {
-            color: #94a3b8;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-toggle:hover {
-            background-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-sidebar .ptah-nav-item {
-            color: #94a3b8;
-        }
-        .ptah-dark .ptah-sidebar .ptah-nav-item:hover {
-            background-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-sidebar .ptah-nav-item.ptah-nav-active {
-            background-color: #1e3a8a;
-            color: #93c5fd;
-        }
-        .ptah-dark .ptah-sidebar .ptah-sidebar-footer {
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-sidebar .ptah-logout-btn:hover {
-            background-color: #450a0a;
-        }
-        .ptah-dark .ptah-sidebar-overlay {
-            /* overlay mobile não muda no dark — já é escuro */
-        }
-
-        /* Navbar */
-        .ptah-dark .ptah-navbar {
-            background-color: #1e293b;
-            border-color: #334155;
-            box-shadow: 0 1px 3px rgba(0,0,0,.4);
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-search input {
-            background-color: #0f172a;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-search input::placeholder {
-            color: #64748b;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-icon-btn {
-            color: #94a3b8;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-icon-btn:hover {
-            background-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-app-name {
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-navbar .ptah-navbar-username {
-            color: #cbd5e1;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-avatar-bg {
-            background-color: #1e3a8a;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-avatar-text {
-            color: #93c5fd;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-dropdown {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-dropdown a,
-        .ptah-dark .ptah-navbar .ptah-user-dropdown button {
-            color: #cbd5e1;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-dropdown a:hover {
-            background-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-user-dropdown hr {
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown a,
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown button {
-            color: #cbd5e1;
-        }
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown a:hover {
-            background-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown svg {
-            color: #64748b;
-        }
-        .ptah-dark .ptah-navbar .ptah-admin-dropdown hr {
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-navbar .ptah-mobile-toggle {
-            color: #94a3b8;
-        }
-        .ptah-dark .ptah-navbar .ptah-mobile-toggle:hover {
-            background-color: #334155;
-            color: #e2e8f0;
-        }
-
-        /* Main content */
-        .ptah-dark main {
-            background-color: #0f172a;
-        }
-
         /* ─── Page Header ──────────────────────────────────── */
         .ptah-dark .ptah-page-header h1 { color: #e2e8f0; }
         .ptah-dark .ptah-page-header p  { color: #94a3b8; }
         .ptah-dark .ptah-page-header a  { background-color: #334155; color: #cbd5e1; }
         .ptah-dark .ptah-page-header a:hover { background-color: #475569; }
-
-        /* ─── Cards ────────────────────────────────────────── */
-        .ptah-dark .ptah-card-default {
-            background-color: #1e293b;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-card-default .border-b,
-        .ptah-dark .ptah-card-default .border-t { border-color: #334155; }
 
         /* ─── Buttons ───────────────────────────────────────── */
         .ptah-dark .ptah-btn-light,
@@ -314,9 +218,6 @@
         .ptah-dark .ptah-alert-danger  { background-color: rgba(239,68,68,.15); }
         .ptah-dark .ptah-alert-warn    { background-color: rgba(245,158,11,.15); }
 
-        /* ─── Page Title ─────────────────────────────────────── */
-        .ptah-dark .ptah-page-title { color: #e2e8f0; }
-
         /* ─── Module Toolbar (company/permission views) ──────── */
         .ptah-dark .ptah-module-toolbar {
             background-color: #1e293b;
@@ -352,47 +253,6 @@
         /* ─── Modal genérico (slate classes) ─────────────── */
         .ptah-dark .ptah-modal-panel .text-slate-600 { color: #94a3b8; }
         .ptah-dark .ptah-modal-panel .text-slate-700 { color: #cbd5e1; }
-
-        /* ─── Company Switcher ───────────────────────────── */
-        .ptah-switcher-name {
-            color: #1e293b;
-        }
-        .ptah-switcher-sep {
-            display: inline-block;
-            width: 1px;
-            height: 1.1em;
-            background-color: #cbd5e1;
-            border-radius: 1px;
-            flex-shrink: 0;
-        }
-        .ptah-switcher-bar {
-            background-color: #f1f5f9;
-        }
-        .ptah-switcher-tab {
-            color: #64748b;
-            background: transparent;
-        }
-        .ptah-switcher-tab:hover {
-            background-color: #bfdbfe;
-            color: #1e3a8a;
-        }
-        .ptah-switcher-tab--active {
-            background-color: #1e40af !important;
-            color: #ffffff !important;
-            box-shadow: 0 1px 5px rgba(30,64,175,.35);
-        }
-        .ptah-dark .ptah-switcher-name  { color: #e2e8f0; }
-        .ptah-dark .ptah-switcher-sep   { background-color: #475569; }
-        .ptah-dark .ptah-switcher-bar   { background-color: #1e293b; }
-        .ptah-dark .ptah-switcher-tab   { color: #94a3b8; }
-        .ptah-dark .ptah-switcher-tab:hover {
-            background-color: rgba(59,130,246,.15);
-            color: #93c5fd;
-        }
-        .ptah-dark .ptah-switcher-tab--active {
-            background-color: #1e40af !important;
-            color: #ffffff !important;
-        }
     </style>
 
     {{-- Livewire (se disponível) --}}
@@ -434,6 +294,23 @@
                 Persistencia em localStorage:
                     ptah_sidebar_collapsed -> 'true'/'false'
                     ptah_dark_mode         -> 'true'/'false'
+
+        ATENÇÃO — NUNCA use aspas duplas dentro do x-data abaixo, nem em código nem em
+        comentário. O atributo é delimitado por aspas duplas, então a primeira aspa
+        interna FECHA o atributo e todo o resto do script é cuspido na página como
+        texto visível. Foi exatamente o que aconteceu: três ocorrências (a palavra
+        "mode" num comentário, um seletor meta[name=csrf-token] e um exemplo de
+        seletor de preset) despejaram o Alpine inteiro na tela. Prosa longa vem para
+        cá, em comentário Blade; dentro do atributo, só aspas simples.
+        Guardado por LayoutXDataQuotingTest.
+
+        Sobre o portador do tema: <html> é o único elemento que recebe .ptah-dark/.dark
+        (applyTheme mais abaixo). Isso é invariante de arquitetura, não estilo: o
+        @@custom-variant dark de forge.css já cobre toda a subárvore, inclusive conteúdo
+        teleportado para o body, e os atributos data-ptah-* dos presets de aparência só
+        existem no <html>. Se .ptah-dark voltasse a ser aplicada no body, os presets de
+        tom escuro deixariam de casar e o body herdaria os tokens do bloco .ptah-dark
+        genérico — silenciosamente, sem erro. Ver ThemeCarrierTest.
     --}}
     <div
         x-data="{
@@ -455,15 +332,37 @@
                 return false;
             })(),
 
+            // Rota de persistência do modo claro/escuro — só existe quando o usuário
+            // está autenticado E o módulo de auth está habilitado (mesmo gate da rota
+            // /profile, ver routes/ptah-auth.php). null para visitante: toggleDark()
+            // então permanece 100% localStorage, como sempre foi.
+            themeModeEndpoint: @js(auth()->check() && \Illuminate\Support\Facades\Route::has('ptah.appearance.theme-mode')
+                ? route('ptah.appearance.theme-mode')
+                : null),
+
+            persistThemeMode() {
+                if (!this.themeModeEndpoint) return;
+                var token = document.querySelector('meta[name=csrf-token]');
+                fetch(this.themeModeEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': token ? token.getAttribute('content') : '',
+                    },
+                    body: JSON.stringify({ mode: this.darkMode ? 'dark' : 'light' }),
+                    keepalive: true,
+                }).catch(() => {});
+            },
+
             applyTheme(isDark) {
-                document.body.classList.toggle('ptah-dark', isDark);
-                document.body.classList.toggle('dark', isDark);
                 document.documentElement.classList.toggle('ptah-dark', isDark);
                 document.documentElement.classList.toggle('dark', isDark);
             },
 
             init() {
-                /* Aplica ptah-dark + dark no body/html para cobrir elementos @@teleport('body') */
+                /* Portador do tema: ver o comentario Blade acima deste elemento. */
                 this.applyTheme(this.darkMode);
                 /* Atualiza breakpoints reativamente */
                 this._onResize = () => { this.isMd = window.innerWidth >= 768; this.isLg = window.innerWidth >= 1024; };
@@ -478,6 +377,7 @@
                 this.darkMode = !this.darkMode;
                 localStorage.setItem('ptah_dark_mode', this.darkMode);
                 this.applyTheme(this.darkMode);
+                this.persistThemeMode();
             },
 
             toggleSidebarCollapse() {
@@ -485,7 +385,6 @@
                 localStorage.setItem('ptah_sidebar_collapsed', this.sidebarCollapsed);
             }
         }"
-        :class="{ 'ptah-dark': darkMode, 'dark': darkMode }"
         class="min-h-screen"
     >
 
@@ -507,6 +406,9 @@
                     {{ $slot }}
                 </div>
             </main>
+
+            {{-- Pilha global de toasts: escuta `ptah-toast` no window, serve qualquer tela --}}
+            <x-forge-toast-host />
         </div>
     </div>
 

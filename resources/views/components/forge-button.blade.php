@@ -36,28 +36,40 @@
             'flatHover' => 'hover:bg-primary-light',
         ],
         'success' => [
-            'bg'        => 'bg-success',
-            'hover'     => 'hover:bg-success-dark',
+            // Coherent darkening scale, all vs white text: bg 5.48 -> hover 7.68 -> relief 9.72.
+            // bg-success (#10b981) fails AA (2.54:1); success-dark (#059669) still falls
+            // short (3.77:1) — none of the three tiers can reuse theme tokens, so all
+            // three are arbitrary Tailwind values (no new token added to forge.css).
+            'bg'        => 'bg-[#047857]',
+            'hover'     => 'hover:bg-[#065f46]',
             'text'      => 'text-success',
             'textSolid' => 'text-white',
             'shadow'    => '',
-            'relief'    => 'bg-success-dark',
+            'relief'    => 'bg-[#064e3b]',
             'flatHover' => 'hover:bg-success-light',
         ],
         'danger' => [
-            'bg'        => 'bg-danger',
-            'hover'     => 'hover:bg-danger-dark',
+            // Coherent darkening scale, all vs white text: bg 4.83 -> hover 6.47 -> relief 8.31.
+            // bg-danger (#ef4444) fails AA (3.76:1); danger-dark (#dc2626) passes and is
+            // reused for bg. hover/relief need a 3rd/4th tier absent from the theme, so
+            // they're arbitrary Tailwind values (no new token added to forge.css).
+            'bg'        => 'bg-danger-dark',
+            'hover'     => 'hover:bg-[#b91c1c]',
             'text'      => 'text-danger',
             'textSolid' => 'text-white',
             'shadow'    => '',
-            'relief'    => 'bg-danger-dark',
+            'relief'    => 'bg-[#991b1b]',
             'flatHover' => 'hover:bg-danger-light',
         ],
         'warn' => [
             'bg'        => 'bg-warn',
             'hover'     => 'hover:bg-warn-dark',
             'text'      => 'text-warn',
-            'textSolid' => 'text-white',
+            // white text on bg-warn (#f59e0b) fails AA (2.15:1) — same fix as
+            // forge-badge: dark text on amber (6.81:1). warn-dark only holds 4.59:1
+            // with dark text, so relief reuses the hover tier as-is instead of
+            // darkening further (a 3rd amber tier would drop below 4.5:1).
+            'textSolid' => 'text-dark',
             'shadow'    => '',
             'relief'    => 'bg-warn-dark',
             'flatHover' => 'hover:bg-warn-light',
@@ -104,7 +116,10 @@
     if ($flat) {
         $variantClass = "bg-transparent {$c['text']} {$c['flatHover']}";
     } elseif ($relief) {
-        $variantClass = "{$c['relief']} text-white";
+        // Follow each family's own solid-text color (textSolid) instead of hardcoding
+        // white — warn needs dark text (AA), and this also fixes light/secondary,
+        // whose relief bg (gray-300) was unreadable with the old hardcoded white.
+        $variantClass = "{$c['relief']} {$c['textSolid']}";
     } else {
         // Solid buttons get a subtle elevation; flat/relief stay flush.
         $variantClass = "{$c['bg']} {$c['hover']} {$c['textSolid']} shadow-sm {$c['shadow']}";

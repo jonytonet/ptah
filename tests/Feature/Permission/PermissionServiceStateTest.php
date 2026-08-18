@@ -150,6 +150,54 @@ class PermissionServiceStateTest extends TestCase
         );
     }
 
+    #[Test]
+    public function non_master_map_excludes_an_inactive_object(): void
+    {
+        // Same symmetry the MASTER map already had via ->active() — a regular
+        // user's map must not disagree with the MASTER's map for the same object.
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, ['can_read' => true]);
+
+        PageObject::where('obj_key', 'products.index')->firstOrFail()->update(['is_active' => false]);
+
+        $map = $this->service->getPermissions($this->userId);
+
+        $this->assertArrayNotHasKey('products.index', $map);
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
+    }
+
+    #[Test]
+    public function non_master_map_excludes_an_object_whose_page_is_inactive(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, ['can_read' => true]);
+
+        PtahPage::where('slug', 'products')->firstOrFail()->update(['is_active' => false]);
+
+        $map = $this->service->getPermissions($this->userId);
+
+        $this->assertArrayNotHasKey('products.index', $map);
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
+    }
+
+    #[Test]
+    public function master_permission_map_excludes_objects_whose_page_is_inactive(): void
+    {
+        $this->assign($this->userId, $this->makeRole(master: true));
+
+        PtahPage::where('slug', 'products')->firstOrFail()->update(['is_active' => false]);
+
+        $map = $this->service->getPermissions($this->userId);
+
+        $this->assertArrayNotHasKey(
+            'products.index',
+            $map,
+            'An inactive page must deactivate its objects too, even for MASTER',
+        );
+    }
+
     // ── getCompaniesForResource() ────────────────────────────────────────────────
 
     #[Test]
@@ -164,6 +212,50 @@ class PermissionServiceStateTest extends TestCase
 
         sort($companies);
         $this->assertSame([5, 9], $companies);
+    }
+
+    /**
+     * The activity rule has to hold here too. This method feeds company selectors,
+     * so if it ignores is_active it offers branches for a resource the gate then
+     * refuses — the "Active" toggle looking decorative in a second place, which is
+     * the defect that was just fixed in the permission maps.
+     */
+    #[Test]
+    public function get_companies_for_resource_skips_an_inactive_object(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role, companyId: 5);
+        $this->grant($role, ['can_read' => true]);
+
+        $this->assertSame([5], $this->service->getCompaniesForResource($this->userId, 'products.index', 'read'));
+
+        PageObject::query()->where('obj_key', 'products.index')->update(['is_active' => false]);
+        $this->service->clearCache();
+
+        $this->assertSame(
+            [],
+            $this->service->getCompaniesForResource($this->userId, 'products.index', 'read'),
+            'A deactivated object must not contribute companies.',
+        );
+    }
+
+    #[Test]
+    public function get_companies_for_resource_skips_an_object_whose_page_is_inactive(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role, companyId: 5);
+        $this->grant($role, ['can_read' => true]);
+
+        $this->assertSame([5], $this->service->getCompaniesForResource($this->userId, 'products.index', 'read'));
+
+        PtahPage::query()->update(['is_active' => false]);
+        $this->service->clearCache();
+
+        $this->assertSame(
+            [],
+            $this->service->getCompaniesForResource($this->userId, 'products.index', 'read'),
+            'An inactive page must deactivate its objects here too.',
+        );
     }
 
     // ── sync / detach ─────────────────────────────────────────────────────────

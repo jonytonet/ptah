@@ -442,6 +442,31 @@ return [
     'profile_remove_btn' => 'Remove',
     'profile_remove_confirm' => 'Remove profile photo?',
 
+    'profile_tab_appearance' => 'Appearance',
+    'profile_appearance_updated' => 'Appearance updated.',
+    'profile_appearance_light_label' => 'Light tone',
+    'profile_appearance_dark_label' => 'Dark tone',
+    'profile_appearance_accent_label' => 'Accent color',
+    'profile_appearance_text_label' => 'Text color',
+    'profile_appearance_light_puro' => 'Pure',
+    'profile_appearance_light_papel' => 'Paper',
+    'profile_appearance_light_nevoa' => 'Mist',
+    'profile_appearance_dark_carvao' => 'Charcoal',
+    'profile_appearance_dark_grafite' => 'Graphite',
+    'profile_appearance_dark_meianoite' => 'Midnight',
+    'profile_appearance_accent_azul' => 'Blue',
+    'profile_appearance_accent_violeta' => 'Violet',
+    'profile_appearance_accent_ciano' => 'Cyan',
+    'profile_appearance_accent_verde' => 'Green',
+    'profile_appearance_accent_teal' => 'Teal',
+    'profile_appearance_accent_ambar' => 'Amber',
+    'profile_appearance_accent_vermelho' => 'Red',
+    'profile_appearance_accent_rosa' => 'Pink',
+    'profile_appearance_accent_cinza' => 'Gray',
+    'profile_appearance_text_suave' => 'Soft',
+    'profile_appearance_text_neutra' => 'Neutral',
+    'profile_appearance_text_forte' => 'Strong',
+
     /*
     |--------------------------------------------------------------------------
     | Status labels (shared)

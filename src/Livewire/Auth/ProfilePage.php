@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\SessionService;
 use Ptah\Services\Auth\TwoFactorService;
+use Ptah\Support\AppearancePresets;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class ProfilePage extends Component
@@ -52,6 +54,15 @@ class ProfilePage extends Component
     // ── Tab: Photo ─────────────────────────────────────────────────────
     public $photo = null;
 
+    // ── Tab: Appearance ────────────────────────────────────────────────
+    public string $themeLight = AppearancePresets::DEFAULT_LIGHT;
+
+    public string $themeDark = AppearancePresets::DEFAULT_DARK;
+
+    public string $themeAccent = AppearancePresets::DEFAULT_ACCENT;
+
+    public string $themeText = AppearancePresets::DEFAULT_TEXT;
+
     // ── Feedback ───────────────────────────────────────────────────────
     public string $successMsg = '';
 
@@ -63,6 +74,12 @@ class ProfilePage extends Component
         $this->name = $user->name ?? '';
         $this->email = $user->email ?? '';
         $this->totpType = $user->two_factor_type ?? '';
+
+        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $this->themeLight = $theme['light'];
+        $this->themeDark = $theme['dark'];
+        $this->themeAccent = $theme['accent'];
+        $this->themeText = $theme['text'];
     }
 
     // ── Profile ────────────────────────────────────────────────────────────
@@ -213,12 +230,76 @@ class ProfilePage extends Component
         $this->flash(trans('ptah::ui.profile_photo_removed'));
     }
 
+    // ── Appearance ─────────────────────────────────────────────────────────
+
+    public function setLight(string $value): void
+    {
+        $this->setAppearanceAxis('light', $value);
+    }
+
+    public function setDark(string $value): void
+    {
+        $this->setAppearanceAxis('dark', $value);
+    }
+
+    public function setAccent(string $value): void
+    {
+        $this->setAppearanceAxis('accent', $value);
+    }
+
+    public function setText(string $value): void
+    {
+        $this->setAppearanceAxis('text', $value);
+    }
+
+    /**
+     * Validates $value against the whitelist for $axis (light|dark|accent|text)
+     * before writing anything — an un-whitelisted value has no matching CSS
+     * block (see resources/css/ptah-components.css), so persisting it would
+     * eventually render a `data-ptah-*` attribute that breaks every
+     * var(--ptah-*) that depends on it. Silently ignored when invalid: the
+     * only caller is this component's own view, built from the same
+     * whitelist, so an invalid value here only ever comes from a tampered
+     * Livewire request.
+     */
+    private function setAppearanceAxis(string $axis, string $value): void
+    {
+        $whitelist = AppearancePresets::whitelistFor($axis);
+
+        if (! in_array($value, $whitelist, true)) {
+            return;
+        }
+
+        $property = 'theme'.ucfirst($axis);
+        $this->{$property} = $value;
+
+        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $theme[$axis] = $value;
+
+        UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+
+        $this->flash(trans('ptah::ui.profile_appearance_updated'));
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────
 
+    /**
+     * Success feedback goes out as a toast, not an inline alert.
+     *
+     * An inline alert pushed the form down on every save and stayed on screen until
+     * the next render; on a settings screen where you click several options in a row
+     * (the Aparência tab) it stacked up as visual noise. The toast host lives in the
+     * layout and listens on the window, so this component does not need to know it
+     * exists — see resources/views/components/forge-toast-host.blade.php.
+     *
+     * $successMsg is kept for backwards compatibility: a host that overrode the
+     * profile view and renders it still works, it just no longer receives a value.
+     */
     private function flash(string $msg): void
     {
-        $this->successMsg = $msg;
         $this->errorMsg = '';
+
+        $this->dispatch('ptah-toast', title: $msg, color: 'success');
     }
 
     public function render()

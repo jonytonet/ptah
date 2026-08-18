@@ -97,6 +97,90 @@ column means the key has no `.env` override (edit the published file instead).
 | `theme.colors.warn` | `PTAH_COLOR_WARN` | `#f59e0b` | `config/ptah.php` comments |
 | `theme.colors.dark` | `PTAH_COLOR_DARK` | `#1e293b` | `config/ptah.php` comments |
 
+### Neutral CSS tokens (`resources/css/ptah-components.css`)
+
+Besides the brand/semantic colors above (config-driven, injected via `theme-colors` partial), the BaseCrud UI's own neutral chrome (backgrounds, borders, text) is tokenized as CSS custom properties, declared once in `:root` (light defaults) with dark-mode overrides in a `.ptah-dark` block right after it. These are **not** exposed through `config/ptah.php` — they are pure CSS, overridable by any host app that loads its own stylesheet after Ptah's `@import`.
+
+| Token | Light | Dark | Used for |
+|-------|-------|------|----------|
+| `--ptah-canvas` | `#ffffff` | `#0f172a` | Chrome flush with the page: toolbar, filter-panel card |
+| `--ptah-surface` | `#ffffff` | `#1e293b` | Default card-like surface: buttons, sticky cell, modal, delete-confirm |
+| `--ptah-surface-raised` | `#ffffff` | `#1e293b` | Shadow-elevated floating surface: dropdown menus, modal chrome |
+| `--ptah-surface-sunken` | `#f8fafc` | `#0f172a` | Recessed panel: modal body tint, master/detail row |
+| `--ptah-surface-hover` | `#f8fafc` | `#334155` | Generic interactive hover tint: buttons, rows, sticky cell |
+| `--ptah-menu-hover` | `#f9fafb` | `#334155` | Dropdown/list item hover |
+| `--ptah-panel` | `#f8fafc` | `#1e293b` | Header/footer banding: thead, tfoot, filter-panel header/footer |
+| `--ptah-field` | `#ffffff` | `#0f172a` | Active/focused input background |
+| `--ptah-field-muted` | `#f8fafc` | `#1e293b` | Resting (unfocused) input background |
+| `--ptah-control-ghost` | `#f1f5f9` | `#334155` | Ghost-filled control chrome (e.g. column-visibility show/hide-all buttons) |
+| `--ptah-control-ghost-hover` | `#e2e8f0` | `#475569` | Hover state of the above |
+| `--ptah-line` | `#f1f5f9` | `#334155` | Hairline divider: dropdowns, filter-panel header/footer, modal header, row bottom |
+| `--ptah-line-strong` | `#e2e8f0` | `#334155` | More visible border: outer containers, thead/tfoot rule |
+| `--ptah-line-control` | `#cbd5e1` | `#475569` | Scrollbar track/thumb, save-filter input border |
+| `--ptah-line-field` | `#94a3b8` | `#475569` | Resting form-field border |
+| `--ptah-line-field-hover` | `#64748b` | `#64748b` | Hover border for the above (same in both scopes) |
+| `--ptah-text-strong` | `#1e293b` | `#e2e8f0` | Darkest text: search input value, modal title |
+| `--ptah-text-field` | `#1f2937` | `#e2e8f0` | Text typed/selected inside inputs and selects |
+| `--ptah-text` | `#374151` | `#cbd5e1` | Default body text |
+| `--ptah-text-secondary` | `#475569` | `#cbd5e1` | Icon-button text, form labels |
+| `--ptah-text-muted` | `#64748b` | `#94a3b8` | Muted text: helper copy, idle sort arrows, subtitles |
+| `--ptah-text-faint` | `#6b7280` | `#94a3b8` | Faintest text: pagination summary, small field labels |
+| `--ptah-icon-muted` | `#64748b` | `#64748b` | Toolbar icon glyphs (same in both scopes) |
+| `--ptah-text-on-accent` | `#ffffff` | `#ffffff` | White ink on solid accent/strong backgrounds |
+
+**Override contract:** to change any of these, redeclare **both** blocks in your host app's `app.css`, *after* the `@import` of `ptah-components.css`:
+
+```css
+@import '../../vendor/jonytonet/ptah/resources/css/ptah-components.css';
+
+:root {
+    --ptah-surface: #fafafa;
+}
+
+.ptah-dark {
+    --ptah-surface: #17202e;
+}
+```
+
+Redeclaring only the `:root` block is a common mistake: both `:root` and `.ptah-dark` match `<html>` with the same specificity (0,1,0), so the cascade falls back to source order — Ptah's own `.ptah-dark` block (declared right after its `:root`) still wins in dark mode, and your override silently only applies to light mode.
+
+This is a pure restyle layer (no new options in `config/ptah.php`); the color/border/text *roles* above may be split further in a future release without breaking existing overrides that only touch the tokens they need.
+
+### Per-user Appearance (`/profile` → 6th tab)
+
+On top of the host-level tokens above, every authenticated user can pick their own
+combination of **4 independent axes** from a 6th tab at `/profile` ("Aparência"):
+
+| Axis | Options (stored slug) |
+|---|---|
+| Light tone | `puro`, `papel`, `nevoa` |
+| Dark tone | `carvao`, `grafite`, `meianoite` |
+| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` |
+| Font colour | `suave`, `neutra`, `forte` |
+
+Slugs are plain ASCII by design (`nevoa`, `carvao`, `meianoite` — no accented
+characters), since they round-trip through a `data-ptah-*` HTML attribute and a
+JSON-cast preference value.
+
+**Persistence & rendering.** The choice is stored via `UserPreference` (key `theme`,
+group `appearance`) and sanitized against the whitelist in
+`Ptah\Support\AppearancePresets` before every write and every render — a value outside
+the whitelist is never trusted, since it would leave a `var(--ptah-*)` with no matching
+CSS block invalid at computed-value time. The four resulting values are rendered as
+`data-ptah-light`, `data-ptah-dark`, `data-ptah-accent` and `data-ptah-text` attributes
+directly on `<html>` **by the server** (`forge-dashboard-layout`), so there is no flash
+of the default theme for an authenticated user. Each pill in the tab previews the
+option it represents (its own tone/scale/colour), not the currently active theme.
+
+> **Override precedence:** a user-chosen preset **always wins** over a host's
+> `:root`/`.ptah-dark` override (the contract described above) for the tokens the
+> preset axis touches — not because of declaration order, but because the preset
+> selectors carry higher specificity: `html[data-ptah-light="…"]:not(.ptah-dark)` /
+> `html.ptah-dark[data-ptah-dark="…"]` resolve to (0,2,1), against (0,1,0) for a plain
+> `:root`/`.ptah-dark` block. A host that needs a fixed brand regardless of user choice
+> should not rely on `:root`/`.ptah-dark` alone; restrict or disable the Appearance tab
+> instead (there is currently no config flag for that — see `docs/KnownLimitations.md`).
+
 ### File generation paths (`paths.*`)
 
 | Key | ENV | Default | Reference |

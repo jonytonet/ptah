@@ -419,7 +419,7 @@ Refer to the [prism-php/prism documentation](https://prism.echolabs.dev) for the
 ## Security Considerations
 
 - **API keys** are stored with Laravel's `encrypted` cast — they are AES-256 encrypted using your `APP_KEY`. Never commit `.env` to version control.
-- **Access control** — the admin config screen (`/ptah-ai/models`) requires the user to pass `ptah_can('ai.config', 'manage') || ptah_is_master()`. Register the `ai.config` page object in the permissions module or ensure only master users access it.
+- **Access control** — the admin config screen (`/ptah-ai/models`) requires the user to pass `ptah_can('ai.config', 'read') || ptah_is_master()`. Register the `ai.config` page object in the permissions module and grant `read` on it, or ensure only master users access it.
 - **Rate limiting** — the built-in session-based rate limit protects against accidental cost spikes. For production, tune `PTAH_AI_RATE_LIMIT` to match your expected usage.
 - **Tool execution** — custom tool `execute()` methods run with the same user context as the Livewire request. Apply your own authorization checks inside `execute()` as needed.
 

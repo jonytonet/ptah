@@ -68,7 +68,7 @@ class RoleList extends Component
 
     /**
      * Permission matrix rows: obj_key, obj_label, obj_type, section and the
-     * four can_* flags per page object.
+     * four can_* flags (create/read/update/delete) per page object.
      *
      * @var array<int, array<string, mixed>>
      */

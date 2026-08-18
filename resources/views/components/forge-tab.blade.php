@@ -14,13 +14,19 @@
 ])
 
 @php
+    // .ptah-c-tab_active_* (ptah-components.css) carries a dark-mode "-lite" tint —
+    // the raw text-{color}/border-{color} pair reads fine in light mode but fails
+    // (or comes dangerously close) as text/border on the dark card surface.
     $activeClass = [
-        'primary' => 'text-primary border-b-2 border-primary',
-        'success' => 'text-success border-b-2 border-success',
-        'danger'  => 'text-danger  border-b-2 border-danger',
-        'warn'    => 'text-warn    border-b-2 border-warn',
+        'primary' => 'ptah-c-tab_active_primary border-b-2',
+        'success' => 'ptah-c-tab_active_success border-b-2',
+        'danger'  => 'ptah-c-tab_active_danger border-b-2',
+        'warn'    => 'ptah-c-tab_active_warn border-b-2',
     ];
-    $inactiveClass = 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent';
+    // .ptah-c-tab_idle (ptah-components.css) mirrors forge-tabs.blade.php's array mode —
+    // idle/hover text driven by --ptah-text-muted/--ptah-text-strong, so it follows the
+    // font-colour axis instead of a pair of fixed Tailwind dark-mode text utilities.
+    $inactiveClass = 'ptah-c-tab_idle border-b-2 border-transparent';
     $stateClass    = $active ? ($activeClass[$color] ?? $activeClass['primary']) : $inactiveClass;
 @endphp
 

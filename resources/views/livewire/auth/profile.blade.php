@@ -10,14 +10,12 @@
             <x-forge-tab key="two_factor"   :active="$activeTab === 'two_factor'"   wire:click="$set('activeTab','two_factor')">{{ __('ptah::ui.profile_tab_2fa') }}</x-forge-tab>
             <x-forge-tab key="sessions"     :active="$activeTab === 'sessions'"     wire:click="$set('activeTab','sessions'); $wire.loadSessions()">{{ __('ptah::ui.profile_tab_sessions') }}</x-forge-tab>
             <x-forge-tab key="photo"        :active="$activeTab === 'photo'"        wire:click="$set('activeTab','photo')">{{ __('ptah::ui.profile_tab_photo') }}</x-forge-tab>
+            <x-forge-tab key="appearance"   :active="$activeTab === 'appearance'"   wire:click="$set('activeTab','appearance')">{{ __('ptah::ui.profile_tab_appearance') }}</x-forge-tab>
         </x-slot>
 
         {{-- ── ABA: PERFIL ── --}}
         @if ($activeTab === 'profile')
         <x-forge-card>
-            @if ($successMsg)
-                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
-            @endif
 
             <form wire:submit="saveProfile" class="space-y-5 max-w-lg">
                 <x-forge-input name="name"  :label="__('ptah::ui.profile_name')"   wire:model="name"  :error="$errors->first('name')"  required />
@@ -31,9 +29,6 @@
         {{-- ── ABA: SENHA ── --}}
         @if ($activeTab === 'password')
         <x-forge-card>
-            @if ($successMsg)
-                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
-            @endif
             @if ($errorMsg)
                 <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
             @endif
@@ -54,9 +49,6 @@
         {{-- ── ABA: 2FA ── --}}
         @if ($activeTab === 'two_factor')
         <x-forge-card>
-            @if ($successMsg)
-                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
-            @endif
             @if ($errorMsg)
                 <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
             @endif
@@ -78,7 +70,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-semibold text-dark text-sm">Authenticator App (TOTP)</p>
+                                <p class="font-semibold ptah-c-section_ttl text-sm">Authenticator App (TOTP)</p>
                                 <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_totp_apps') }}</p>
                             </div>
                         </div>
@@ -115,7 +107,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-dark text-sm">E-mail</p>
+                                    <p class="font-semibold ptah-c-section_ttl text-sm">E-mail</p>
                                     <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_email_code_hint', ['email' => auth()->user()->email]) }}</p>
                                 </div>
                             </div>
@@ -134,7 +126,7 @@
                     {{-- Códigos de recuperação --}}
                     @if ($recoveryCodes)
                     <div>
-                        <p class="font-semibold text-sm text-dark mb-2">{{ __('ptah::ui.profile_recovery_codes_title') }}</p>
+                        <p class="font-semibold text-sm ptah-c-section_ttl mb-2">{{ __('ptah::ui.profile_recovery_codes_title') }}</p>
                         <p class="text-xs text-gray-500 mb-3">{{ __('ptah::ui.profile_recovery_codes_hint') }}</p>
                         <div class="grid grid-cols-2 gap-1 font-mono text-sm bg-gray-50 dark:bg-dark-3 p-3 rounded-md">
                             @foreach ($recoveryCodes as $rc)
@@ -162,9 +154,6 @@
         {{-- ── ABA: SESSÕES ── --}}
         @if ($activeTab === 'sessions')
         <x-forge-card>
-            @if ($successMsg)
-                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
-            @endif
 
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_sessions_intro') }}</p>
@@ -195,7 +184,7 @@
                                 @endif
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-dark">
+                                <p class="text-sm font-medium ptah-c-section_ttl">
                                     {{ $session['browser'] ?? __('ptah::ui.profile_unknown_browser') }}
                                     @if($session['is_current'])
                                         <span class="ml-1 text-xs text-green-600 font-semibold">({{ __('ptah::ui.profile_this_session') }})</span>
@@ -222,9 +211,6 @@
         {{-- ── ABA: FOTO ── --}}
         @if ($activeTab === 'photo')
         <x-forge-card>
-            @if ($successMsg)
-                <x-forge-alert type="success" class="mb-4">{{ $successMsg }}</x-forge-alert>
-            @endif
 
             <div class="flex flex-col items-center gap-5 max-w-xs mx-auto">
                 {{-- Preview atual --}}
@@ -244,7 +230,7 @@
 
                 <div class="w-full space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-dark mb-1">{{ __('ptah::ui.profile_select_image') }}</label>
+                        <label class="block text-sm font-medium ptah-c-form_lbl mb-1">{{ __('ptah::ui.profile_select_image') }}</label>
                         <input type="file" wire:model="photo" accept="image/*"
                                class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
                         @error('photo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
@@ -264,6 +250,82 @@
                                 {{ __('ptah::ui.profile_remove_btn') }}
                             </x-forge-button>
                         @endif
+                    </div>
+                </div>
+            </div>
+        </x-forge-card>
+        @endif
+
+        {{-- ── ABA: APARENCIA ── --}}
+        {{-- Feedback de sucesso sai por toast global (ver ProfilePage::flash e
+             forge-toast-host), nao por alerta inline: aqui o usuario clica varias
+             opcoes em sequencia e um alerta empilhado empurrava o formulario. --}}
+        @if ($activeTab === 'appearance')
+        <x-forge-card>
+            <div class="max-w-2xl space-y-8">
+
+                {{-- light --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_light_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::LIGHT as $option)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-light', '{{ $option }}')"
+                                wire:click="setLight('{{ $option }}')"
+                                data-ptah-light="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeLight === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                {{ __('ptah::ui.profile_appearance_light_'.$option) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- dark --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_dark_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::DARK as $option)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-dark', '{{ $option }}')"
+                                wire:click="setDark('{{ $option }}')"
+                                data-ptah-dark="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeDark === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                {{ __('ptah::ui.profile_appearance_dark_'.$option) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- accent --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_accent_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::ACCENT_HEX as $option => $hex)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-accent', '{{ $option }}')"
+                                wire:click="setAccent('{{ $option }}')"
+                                data-ptah-accent="{{ $option }}" class="ptah-swatch flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeAccent === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: {{ $hex }};"></span>
+                                {{ __('ptah::ui.profile_appearance_accent_'.$option) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- text --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_text_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::TEXT as $option)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-text', '{{ $option }}')"
+                                wire:click="setText('{{ $option }}')"
+                                data-ptah-text="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeText === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                {{ __('ptah::ui.profile_appearance_text_'.$option) }}
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
