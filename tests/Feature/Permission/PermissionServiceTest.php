@@ -107,6 +107,73 @@ class PermissionServiceTest extends TestCase
         $this->assertTrue($this->service->check($this->userId, 'products.index', 'update'));
     }
 
+    // ── The `manage` verb (own column, independent from the CRUD quartet) ──────
+
+    #[Test]
+    public function manage_is_denied_without_a_grant(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, 'products.index', ['can_read' => true]);
+
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'manage'));
+    }
+
+    #[Test]
+    public function manage_is_granted_independently_from_the_crud_quartet(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, 'products.index', ['can_manage' => true]);
+
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'manage'));
+        // Independent of the other four — none of them were granted.
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'create'));
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'update'));
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'delete'));
+    }
+
+    #[Test]
+    public function master_role_is_granted_manage_too(): void
+    {
+        $this->assign($this->userId, $this->makeRole(master: true));
+
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'manage'));
+    }
+
+    /**
+     * Regression for the bug this migration fixes: before `can_manage` existed,
+     * `crud.config`/`manage` was impossible to grant to anyone but MASTER by
+     * construction (the action whitelist rejected `manage` outright), so
+     * ptah_can_manage_config() could never return true for a non-MASTER user
+     * even with a documented `crud.config` grant configured.
+     */
+    #[Test]
+    public function ptah_can_manage_config_helper_works_for_a_non_master_user_with_the_grant(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+
+        $page = PtahPage::create(['slug' => 'crud-config', 'name' => 'CRUD Config', 'is_active' => true]);
+        PageObject::create([
+            'page_id' => $page->id, 'section' => 'main',
+            'obj_key' => 'crud.config', 'obj_label' => 'CRUD Config',
+            'obj_type' => 'page', 'obj_order' => 1, 'is_active' => true,
+        ]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+
+        $this->assertFalse(ptah_can_manage_config($this->userId), 'No grant yet — must stay denied.');
+
+        $this->grant($role, 'crud.config', ['can_manage' => true]);
+
+        $this->assertTrue(
+            ptah_can_manage_config($this->userId),
+            'A non-MASTER user with the crud.config manage grant must now be allowed to manage the CRUD config editor.',
+        );
+    }
+
     // ── Action whitelist (SQLi guard) ───────────────────────────────────────────
 
     #[Test]

@@ -38,7 +38,7 @@ class PermissionSyncCommand extends Command
 {
     protected $signature = 'ptah:permission:sync
         {--role= : Role name to grant the synced objects to}
-        {--grant= : Comma-separated actions to grant (create,read,update,delete or "all")}
+        {--grant= : Comma-separated actions to grant (create,read,update,delete,manage or "all")}
         {--dry-run : Preview the changes without persisting anything}';
 
     protected $description = 'Sync BaseCrud permissionIdentifier keys into ptah_pages/ptah_page_objects (and optionally grant a role)';
@@ -163,6 +163,7 @@ class PermissionSyncCommand extends Command
                         'can_read' => in_array('read', $grant, true),
                         'can_update' => in_array('update', $grant, true),
                         'can_delete' => in_array('delete', $grant, true),
+                        'can_manage' => in_array('manage', $grant, true),
                     ]);
                     $granted++;
                 }

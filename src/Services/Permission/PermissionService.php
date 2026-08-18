@@ -28,8 +28,15 @@ class PermissionService implements PermissionServiceContract
 {
     use ResolvesUser;
 
-    /** The only valid CRUD actions — whitelisted before any query interpolation. */
-    public const ACTIONS = ['create', 'read', 'update', 'delete'];
+    /**
+     * The only valid actions — whitelisted before any query interpolation
+     * (each one is turned into a `can_{action}` column name).
+     *
+     * `manage` authorizes *configuring* a resource (e.g. the in-app CRUD
+     * config editor) and is independent from the CRUD quartet, which governs
+     * operating a resource's data.
+     */
+    public const ACTIONS = ['create', 'read', 'update', 'delete', 'manage'];
 
     // ─────────────────────────────────────────
     // Company resolution
@@ -446,14 +453,16 @@ class PermissionService implements PermissionServiceContract
             }
 
             if (! isset($map[$key])) {
-                $map[$key] = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
+                $map[$key] = array_fill_keys(self::ACTIONS, false);
             }
 
-            // OR logic: if any role grants, consider it granted
-            $map[$key]['create'] = $map[$key]['create'] || $perm->can_create;
-            $map[$key]['read'] = $map[$key]['read'] || $perm->can_read;
-            $map[$key]['update'] = $map[$key]['update'] || $perm->can_update;
-            $map[$key]['delete'] = $map[$key]['delete'] || $perm->can_delete;
+            // OR logic: if any role grants, consider it granted. Derived from
+            // ACTIONS (rather than hardcoding the four CRUD flags) so a new
+            // whitelisted verb is picked up here automatically instead of
+            // silently staying `false` for everyone but MASTER.
+            foreach (self::ACTIONS as $action) {
+                $map[$key][$action] = $map[$key][$action] || (bool) $perm->{"can_{$action}"};
+            }
         }
 
         return $map;
@@ -471,8 +480,12 @@ class PermissionService implements PermissionServiceContract
             ->whereHas('page', fn ($q) => $q->where('is_active', true))
             ->pluck('obj_key')
             ->unique()
+            // Derived from ACTIONS (not the 4 CRUD flags hardcoded) — a MASTER
+            // must pass every whitelisted verb, including `manage`, otherwise
+            // buildPermissionMap()/buildMasterPermissionMap() drift out of sync
+            // the moment a new action is added.
             ->mapWithKeys(fn ($key) => [
-                $key => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
+                $key => array_fill_keys(self::ACTIONS, true),
             ])
             ->toArray();
     }

@@ -131,7 +131,7 @@ class PermissionServiceStateTest extends TestCase
 
         $map = $this->service->getPermissions($this->userId);
 
-        $this->assertSame(['create' => true, 'read' => true, 'update' => true, 'delete' => true], $map['products.index']);
+        $this->assertSame(['create' => true, 'read' => true, 'update' => true, 'delete' => true, 'manage' => true], $map['products.index']);
         $this->assertArrayNotHasKey('products.hidden', $map, 'Inactive objects must not appear in the master map');
     }
 
@@ -145,7 +145,7 @@ class PermissionServiceStateTest extends TestCase
         $map = $this->service->getPermissions($this->userId);
 
         $this->assertSame(
-            ['create' => false, 'read' => true, 'update' => true, 'delete' => false],
+            ['create' => false, 'read' => true, 'update' => true, 'delete' => false, 'manage' => false],
             $map['products.index'],
         );
     }

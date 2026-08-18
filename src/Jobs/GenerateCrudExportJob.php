@@ -81,7 +81,14 @@ class GenerateCrudExportJob implements ShouldQueue
         // Defence in depth: same allowlist + ptah_can('read') gate as
         // ExportController::download() — never generate a file for a model
         // that is not (or no longer) an authorised Ptah CRUD.
-        $reason = (new ExportAuthorizer)->reasonDenied($modelClass);
+        //
+        // A worker has no request/session: auth()->id() and the active-company
+        // session key are both empty here, so the gate must be told explicitly
+        // WHO owns this export (and in which company) rather than defaulting to
+        // an ambient context that will never exist in a queue worker. Without
+        // this, every queued export would be denied regardless of the owner's
+        // actual permissions — see GenerateCrudExportJobTest.
+        $reason = (new ExportAuthorizer)->reasonDenied($modelClass, $export->user_id, $export->company_id);
 
         if ($reason !== null) {
             $this->markFailed($export, $reason);

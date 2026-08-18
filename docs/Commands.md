@@ -527,7 +527,7 @@ php artisan ptah:permission:sync --role="Gerente"    --grant=all
 For each config it resolves the canonical RBAC key (`permissions.permissionIdentifier`,
 falling back to the legacy `identifier`), creates the `PageObject` whose `obj_key`
 matches that key, and — with `--role`/`--grant` — calls `RoleService::bindPageObject`
-(which invalidates the permission cache). `--grant` accepts `create,read,update,delete`
+(which invalidates the permission cache). `--grant` accepts `create,read,update,delete,manage`
 or `all`; `--role` and `--grant` are required together. The whole batch runs in a
 single transaction.
 

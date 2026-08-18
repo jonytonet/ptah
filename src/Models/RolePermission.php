@@ -17,6 +17,7 @@ use Ptah\Traits\HasAuditFields;
  * @property bool $can_read
  * @property bool $can_update
  * @property bool $can_delete
+ * @property bool $can_manage
  * @property array|null $extra
  */
 class RolePermission extends Model
@@ -32,6 +33,7 @@ class RolePermission extends Model
         'can_read',
         'can_update',
         'can_delete',
+        'can_manage',
         'extra',
         'created_by',
         'updated_by',
@@ -43,6 +45,7 @@ class RolePermission extends Model
         'can_read' => 'boolean',
         'can_update' => 'boolean',
         'can_delete' => 'boolean',
+        'can_manage' => 'boolean',
         'extra' => 'array',
         'created_by' => 'integer',
         'updated_by' => 'integer',
@@ -70,7 +73,7 @@ class RolePermission extends Model
     /**
      * Checks whether the action is allowed in this record.
      *
-     * @param  string  $action  create|read|update|delete
+     * @param  string  $action  create|read|update|delete|manage
      */
     public function allows(string $action): bool
     {
@@ -79,14 +82,15 @@ class RolePermission extends Model
             'read' => $this->can_read,
             'update' => $this->can_update,
             'delete' => $this->can_delete,
+            'manage' => $this->can_manage,
             default => false,
         };
     }
 
     /**
-     * Returns the CRUD flags as an associative array.
+     * Returns the CRUD + manage flags as an associative array.
      *
-     * @return array{create: bool, read: bool, update: bool, delete: bool}
+     * @return array{create: bool, read: bool, update: bool, delete: bool, manage: bool}
      */
     public function toCrudArray(): array
     {
@@ -95,6 +99,7 @@ class RolePermission extends Model
             'read' => $this->can_read,
             'update' => $this->can_update,
             'delete' => $this->can_delete,
+            'manage' => $this->can_manage,
         ];
     }
 }

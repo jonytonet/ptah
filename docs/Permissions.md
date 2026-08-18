@@ -57,6 +57,7 @@ The **permissions** module implements a hierarchical and granular access control
 | MASTER Role | Complete bypass of all permission checks |
 | Pages and Objects | Registration of system resources (buttons, fields, sections, APIs…) |
 | CRUD Permissions | Per object: `can_create`, `can_read`, `can_update`, `can_delete` |
+| Manage permission | Per object: `can_manage` — authorizes *configuring* the resource (independent from the CRUD quartet, which governs its data) |
 | Extra permissions | JSON `extra` field for actions beyond standard CRUD |
 | Company assignment | User can have different roles in each company |
 | Global roles | Assignment without a specific company — valid across all companies |
@@ -118,10 +119,32 @@ access, always bind the `UserRole` to a concrete `company_id`.
 
 ### Action whitelist
 
-Only `create`, `read`, `update` and `delete` are valid actions. Any other string
-passed to `check()` / `getCompaniesForResource()` is rejected before it reaches a
-query — the action name is interpolated into a `can_{action}` column, so this
-guard prevents both typos and SQL-injection attempts.
+Only `create`, `read`, `update`, `delete` and `manage` are valid actions
+(`PermissionService::ACTIONS`). Any other string passed to `check()` /
+`getCompaniesForResource()` is rejected before it reaches a query — the action
+name is interpolated into a `can_{action}` column, so this guard prevents both
+typos and SQL-injection attempts.
+
+### The `manage` verb
+
+`manage` is a fifth action with its **own column** (`can_manage`), independent
+from the CRUD quartet (`create`/`read`/`update`/`delete`). It authorizes
+*configuring* a resource rather than operating its data — e.g. `ptah_can('crud.config',
+'manage')` gates whether a user may open and save the in-app CRUD configuration
+editor (joins, lifecycle hooks, link templates, etc. — inputs that feed SQL/render
+sinks). A role can be granted `manage` on an object without any of the other four
+flags, and vice-versa; the OR-across-roles logic and the MASTER bypass both apply
+to it exactly like the other four actions (see `buildPermissionMap()` /
+`buildMasterPermissionMap()`, which derive every flag from `ACTIONS`).
+
+```php
+// Grant a role permission to configure (but not operate) the CRUD config screen:
+app(RoleService::class)->bindPageObject($role, $pageObjectId, [
+    'can_manage' => true,
+]);
+
+ptah_can('crud.config', 'manage', $user); // true, without any of the CRUD flags
+```
 
 ---
 
@@ -263,6 +286,7 @@ In `config/ptah.php`, `permissions` section:
 | `can_read` | boolean | — | Read permission |
 | `can_update` | boolean | — | Edit permission |
 | `can_delete` | boolean | — | Delete permission |
+| `can_manage` | boolean | — | `manage` permission — authorizes configuring the resource, independent from the CRUD quartet |
 | `extra` | json | ✓ | Custom permissions beyond CRUD |
 | `deleted_at` | timestamp | ✓ | SoftDelete |
 
@@ -289,7 +313,7 @@ In `config/ptah.php`, `permissions` section:
 | `user_id` | bigint | ✓ | User ID |
 | `company_id` | bigint | ✓ | Company in context |
 | `resource_key` | string | — | `obj_key` checked |
-| `action` | string | — | `create` `read` `update` `delete` |
+| `action` | string | — | `create` `read` `update` `delete` `manage` |
 | `result` | enum | — | `granted` or `denied` |
 | `ip_address` | string | ✓ | Request IP |
 | `user_agent` | string | ✓ | User-Agent |
@@ -381,8 +405,8 @@ PageObject::byType('button')->get();
 
 | Method | Return | Description |
 |---|---|---|
-| `allows(string $action): bool` | bool | Checks if `can_{action}` is `true`. Accepted actions: `create`, `read`, `update`, `delete` |
-| `toCrudArray(): array` | array | Returns `['can_create'=>bool, 'can_read'=>bool, 'can_update'=>bool, 'can_delete'=>bool]` |
+| `allows(string $action): bool` | bool | Checks if `can_{action}` is `true`. Accepted actions: `create`, `read`, `update`, `delete`, `manage` |
+| `toCrudArray(): array` | array | Returns `['create'=>bool, 'read'=>bool, 'update'=>bool, 'delete'=>bool, 'manage'=>bool]` |
 
 ---
 
@@ -583,6 +607,7 @@ $bindings = [
         'can_read'       => true,
         'can_update'     => false,
         'can_delete'     => false,
+        'can_manage'     => false,
     ],
     // ...
 ];
@@ -713,7 +738,7 @@ ptah.can:{objectKey},{action}[,{companyId}]
 | Parameter | Required | Description |
 |---|---|---|
 | `objectKey` | ✓ | Object key (e.g.: `users.store`) |
-| `action` | ✓ | `create`, `read`, `update` or `delete` |
+| `action` | ✓ | `create`, `read`, `update`, `delete` or `manage` |
 | `companyId` | — | If omitted, resolved from session |
 
 ---
@@ -736,9 +761,12 @@ The bundled ACL screens (`/ptah-roles`, `/ptah-pages`, `/ptah-users-acl`,
 `/ptah-audit`, `/ptah-departments`, `/ptah-permission-guide`) already use it.
 
 > Related: the in-app CRUD config editor is gated by the `@ptahCanManageConfig`
-> Blade directive / `ptah_can_manage_config()` helper — master (or a `crud.config`
-> grant) when the permissions module is on; otherwise the `PTAH_CONFIG_EDITOR`
-> opt-in. See [BaseCrud.md](BaseCrud.md).
+> Blade directive / `ptah_can_manage_config()` helper — MASTER, or a non-MASTER
+> user with `manage` granted on the `crud.config` object (`can_manage = true`
+> on the role's `ptah_role_permissions` row), when the permissions module is
+> on; otherwise the `PTAH_CONFIG_EDITOR` opt-in. See [BaseCrud.md](BaseCrud.md).
+> To grant it: register a `PageObject` with `obj_key = 'crud.config'` and bind
+> the role with `RoleService::bindPageObject($role, $pageObjectId, ['can_manage' => true])`.
 
 ---
 
@@ -769,7 +797,7 @@ Role CRUD + **object permissions modal**.
 
 **Permissions Modal (Bind):**
 
-Displays all `PageObject` items grouped by page/section. For each object, independent checkboxes for `can_read`, `can_create`, `can_update`, `can_delete`. On save, calls `RoleService::syncPageBindings()`.
+Displays all `PageObject` items grouped by page/section. For each object, independent checkboxes for `can_read`, `can_create`, `can_update`, `can_delete`, `can_manage`. On save, calls `RoleService::syncPageBindings()`.
 
 ```
 ┌─ Page: admin.users — Section: toolbar ────────────────────────────┐
