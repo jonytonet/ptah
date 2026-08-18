@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\TwoFactorService;
+use Ptah\Support\AppearancePresets;
 
 #[Layout('ptah::layouts.forge-auth')]
 class TwoFactorChallengePage extends Component
@@ -73,6 +75,11 @@ class TwoFactorChallengePage extends Component
         Auth::loginUsingId($userId);
         event(new Login('web', $user, false));
         Session::regenerate();
+
+        // Same seed/refresh as LoginPage::login() for the non-2FA path — this IS
+        // the other half of "login", and without it a 2FA user's browser would
+        // never pick up their saved theme on the login screen.
+        AppearancePresets::queueCookie(AppearancePresets::sanitize(UserPreference::get($userId, 'theme')));
 
         $this->redirect(config('ptah.auth.home', '/dashboard'), navigate: true);
     }

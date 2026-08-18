@@ -23,15 +23,19 @@
 ])
 
 @php
-    // Aba "Aparência" de /profile (Ptah\Livewire\Auth\ProfilePage). O servidor é a
-    // fonte da verdade para usuário autenticado — renderizar os 4 atributos aqui
-    // (em vez de via Alpine/localStorage) é o que evita flash no F5/navegação.
-    // Visitante não autenticado sempre recebe os defaults (sanitize(null)); o
-    // toggle claro/escuro de visitante continua 100% em localStorage (ver
-    // :theme abaixo, que só é sobrescrito quando o chamador não informou nada).
-    $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
-        auth()->check() ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme') : null
-    );
+    // Aba "Aparência" de /profile (Ptah\Livewire\Auth\ProfilePage). O banco continua
+    // sendo a fonte da verdade para usuário autenticado — renderizar os 4 atributos
+    // aqui (em vez de via Alpine/localStorage) é o que evita flash no F5/navegação.
+    // O cookie ptah_appearance (ver AppearancePresets::queueCookie) é só fallback:
+    // visitante sem sessão, ou usuário autenticado que nunca salvou preferência.
+    // Nunca inverter essa ordem — ver AppearancePresets::sanitize() para o porquê
+    // de tudo passar por ali antes de tocar um atributo HTML.
+    //
+    // Precedência final do $theme (mode claro/escuro): prop :theme do chamador >
+    // banco (autenticado) > cookie > localStorage (script abaixo) > claro.
+    $ptahDbTheme = auth()->check() ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme') : null;
+    $ptahCookieTheme = \Ptah\Support\AppearancePresets::decodeCookie(request()->cookie(\Ptah\Support\AppearancePresets::COOKIE));
+    $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize($ptahDbTheme ?? $ptahCookieTheme);
     $theme = $theme ?? $ptahAppearance['mode'];
 @endphp
 
@@ -263,26 +267,10 @@
     @stack('styles')
 
     {{-- Anti-FOUC: resolve the theme and paint the dark class BEFORE first paint.
-         Blocking + synchronous, runs before <body> renders. Mirrors the Alpine
-         darkMode logic exactly so there is never a light flash on F5 / navigation. --}}
-    <script>
-        (function () {
-            try {
-                var serverTheme = @js($theme);
-                var isDark;
-                if (serverTheme === 'dark' || serverTheme === 'light') {
-                    isDark = serverTheme === 'dark';
-                    localStorage.setItem('ptah_dark_mode', isDark);
-                } else {
-                    var saved = localStorage.getItem('ptah_dark_mode');
-                    isDark = saved === 'true';
-                }
-                if (isDark) {
-                    document.documentElement.classList.add('ptah-dark', 'dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
+         Mirrors the Alpine darkMode logic exactly so there is never a light flash
+         on F5 / navigation. Shared with layouts/forge-auth.blade.php — see the
+         partial for the full precedence rules. --}}
+    @include('ptah::partials.appearance-boot')
 </head>
 <body class="font-sans antialiased">
 

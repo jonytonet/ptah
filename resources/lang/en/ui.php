@@ -466,6 +466,7 @@ return [
     'profile_appearance_text_suave' => 'Soft',
     'profile_appearance_text_neutra' => 'Neutral',
     'profile_appearance_text_forte' => 'Strong',
+    'profile_appearance_reset_btn' => 'Restore defaults',
 
     /*
     |--------------------------------------------------------------------------

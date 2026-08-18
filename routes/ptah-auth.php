@@ -76,6 +76,7 @@ Route::middleware($middleware)->group(function () use ($prefix) {
             $theme['mode'] = $data['mode'];
 
             UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+            AppearancePresets::queueCookie($theme);
 
             return response()->noContent();
         })->name('ptah.appearance.theme-mode');

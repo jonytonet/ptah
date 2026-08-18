@@ -328,6 +328,20 @@
                         @endforeach
                     </div>
                 </div>
+
+                {{-- reset — ação de escape, discreta de propósito: não mexe no
+                     modo claro/escuro (isso é o toggle do navbar, tem vida própria). --}}
+                <div>
+                    <x-forge-button
+                        color="secondary"
+                        flat
+                        size="sm"
+                        @click="document.documentElement.setAttribute('data-ptah-light', '{{ \Ptah\Support\AppearancePresets::DEFAULT_LIGHT }}'); document.documentElement.setAttribute('data-ptah-dark', '{{ \Ptah\Support\AppearancePresets::DEFAULT_DARK }}'); document.documentElement.setAttribute('data-ptah-accent', '{{ \Ptah\Support\AppearancePresets::DEFAULT_ACCENT }}'); document.documentElement.setAttribute('data-ptah-text', '{{ \Ptah\Support\AppearancePresets::DEFAULT_TEXT }}')"
+                        wire:click="resetAppearance"
+                    >
+                        {{ __('ptah::ui.profile_appearance_reset_btn') }}
+                    </x-forge-button>
+                </div>
             </div>
         </x-forge-card>
         @endif
