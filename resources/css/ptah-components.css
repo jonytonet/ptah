@@ -652,6 +652,23 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-c-tab_active_warn            { color: var(--color-warn); border-color: var(--color-warn); }
 .ptah-dark .ptah-c-tab_active_warn { color: var(--ptah-warn-lite); border-color: var(--ptah-warn-lite); }
 
+/* ── Tabs — idle (inactive) text ──────────────────────────────
+   Replaces the fixed `text-gray-500 hover:text-gray-700` pair (plus the
+   `dark:text-slate-400 dark:hover:text-slate-200` bolted on in an earlier
+   contrast pass because the plain utility had no dark: counterpart at all
+   and failed AA once the page went dark). forge-tab/forge-tabs render on
+   every screen in the package, so leaving their idle text off the token
+   scale was one of the two reasons the font-colour axis in /profile
+   appeared inert. Same --ptah-text-muted/--ptah-text-strong pair used
+   everywhere else in this file (.ptah-c-section_ttl, .ptah-c-crumb, etc.),
+   so it inherits their existing AA guarantee across every tone x text-scale
+   combination instead of needing a bespoke one — see the rewritten case 15
+   in ContrastGuardTest. */
+.ptah-c-tab_idle                      { color: var(--ptah-text-muted); }
+.ptah-c-tab_idle:hover                { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-tab_idle           { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-tab_idle:hover     { color: var(--ptah-text-strong); }
+
 /* ── Breadcrumb (forge-breadcrumb) ─────────────────────────────
    Had no dark: variant anywhere in the package — every role failed or
    nearly failed AA once the page went dark (measured against the layout
@@ -677,6 +694,27 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 
 .ptah-c-crumb_current            { color: var(--ptah-primary); }
 .ptah-dark .ptah-c-crumb_current { color: var(--ptah-primary-lite); }
+
+/* ── Page header (forge-page-header) ───────────────────────────
+   Title, subtitle and back-link were still fixed text-gray-900/500/600
+   Tailwind literals — forge-page-header renders on top of nearly every
+   screen in the package, so this (together with the tab idle text above)
+   was the other reason the font-colour axis chosen in /profile had almost
+   no visible effect: only 4 small section labels ever followed it.
+   Delta vs the old literals in the "neutra" (default) text scale: title
+   R:+20 G:+14 B:+2, subtitle R:-31 G:-35 B:-43, back link R:-6 G:-12 B:-21.
+   All three clear 4.5:1 against every canvas/surface of every light and
+   dark tone combined with every text scale (measured — see ContrastGuardTest,
+   floor comfortably cleared with margin to spare in the tightest case,
+   "suave" muted at ~5.5:1). */
+.ptah-c-phdr_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-phdr_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-phdr_sub             { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
+
+.ptah-c-phdr_back            { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-phdr_back { color: var(--ptah-text-secondary); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */

@@ -71,7 +71,7 @@
                     @click="activeTab = '{{ $tab['id'] }}'"
                     @keydown.arrow-right.prevent="move(1); $el.parentElement.querySelector('[aria-selected=true]')?.focus()"
                     @keydown.arrow-left.prevent="move(-1); $el.parentElement.querySelector('[aria-selected=true]')?.focus()"
-                    :class="activeTab === '{{ $tab['id'] }}' ? '{{ $active }}' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 border-b-2 border-transparent'"
+                    :class="activeTab === '{{ $tab['id'] }}' ? '{{ $active }}' : 'ptah-c-tab_idle border-b-2 border-transparent'"
                     class="px-4 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-t"
                 >
                     {{ $tab['label'] }}

@@ -23,8 +23,10 @@
         'danger'  => 'ptah-c-tab_active_danger border-b-2',
         'warn'    => 'ptah-c-tab_active_warn border-b-2',
     ];
-    // dark: variants mirror forge-tabs.blade.php's array mode (idle text since v1.12.0).
-    $inactiveClass = 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 border-b-2 border-transparent';
+    // .ptah-c-tab_idle (ptah-components.css) mirrors forge-tabs.blade.php's array mode —
+    // idle/hover text driven by --ptah-text-muted/--ptah-text-strong, so it follows the
+    // font-colour axis instead of a pair of fixed Tailwind dark-mode text utilities.
+    $inactiveClass = 'ptah-c-tab_idle border-b-2 border-transparent';
     $stateClass    = $active ? ($activeClass[$color] ?? $activeClass['primary']) : $inactiveClass;
 @endphp
 

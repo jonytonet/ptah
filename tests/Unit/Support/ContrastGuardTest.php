@@ -318,20 +318,35 @@ class ContrastGuardTest extends TestCase
             throw new RuntimeException('ContrastGuardTest: _modal-form.blade.php discard-changes button no longer uses bg-danger-dark (AA regression).');
         }
 
-        // --- 15. forge-tab.blade.php (slot mode) inactive tab — dark idle/hover text ---
-        // Tailwind's fixed slate palette (slate-400/slate-200), not brand-overridable —
-        // hardcoded here (with a presence guard) because the source references the
-        // utility class name, not a raw hex, so there's nothing to regex a hex out of.
+        // --- 15. forge-tab.blade.php (slot mode) / forge-tabs.blade.php (array mode)
+        // inactive tab — idle/hover text ---
+        // Used to carry a fixed Tailwind slate palette (dark:text-slate-400 /
+        // dark:hover:text-slate-200), bolted on in an earlier contrast pass purely
+        // because the plain text-gray-500/700 utility had no dark: counterpart at all
+        // and failed AA once the page went dark. Both components now reach for
+        // .ptah-c-tab_idle (ptah-components.css), which drives idle/hover through
+        // --ptah-text-muted/--ptah-text-strong — the SAME pair the font-colour axis in
+        // /profile already reaches everywhere else in this file — so the fixed dark:
+        // classes are dead code and are asserted GONE, not present.
         $tabBlade = self::forgeTabBlade();
-        if (! str_contains($tabBlade, 'dark:text-slate-400') || ! str_contains($tabBlade, 'dark:hover:text-slate-200')) {
-            throw new RuntimeException('ContrastGuardTest: forge-tab.blade.php inactive tab lost its dark: idle/hover text classes (AA regression / re-diverges from array mode).');
+        if (! str_contains($tabBlade, 'ptah-c-tab_idle')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tab.blade.php inactive tab no longer uses .ptah-c-tab_idle (AA regression / re-diverges from array mode).');
+        }
+        if (str_contains($tabBlade, 'dark:text-slate-400') || str_contains($tabBlade, 'dark:hover:text-slate-200')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tab.blade.php still carries the dead dark:text-slate-400/dark:hover:text-slate-200 utilities — .ptah-c-tab_idle already covers dark mode via tokens.');
         }
         $tabsBlade = self::forgeTabsBlade();
-        if (! str_contains($tabsBlade, 'dark:text-slate-400') || ! str_contains($tabsBlade, 'dark:hover:text-slate-200')) {
-            throw new RuntimeException('ContrastGuardTest: forge-tabs.blade.php (array mode) inactive tab lost its dark: idle/hover text classes.');
+        if (! str_contains($tabsBlade, 'ptah-c-tab_idle')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tabs.blade.php (array mode) inactive tab no longer uses .ptah-c-tab_idle.');
         }
-        $tabIdleDark = '#94a3b8'; // Tailwind slate-400
-        $tabHoverDark = '#e2e8f0'; // Tailwind slate-200
+        if (str_contains($tabsBlade, 'dark:text-slate-400') || str_contains($tabsBlade, 'dark:hover:text-slate-200')) {
+            throw new RuntimeException('ContrastGuardTest: forge-tabs.blade.php still carries the dead dark:text-slate-400/dark:hover:text-slate-200 utilities.');
+        }
+
+        $tabIdleLight = self::extractHex($css, '/\.ptah-c-tab_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'tab_idle light');
+        $tabIdleDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-tab_idle\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'tab_idle dark');
+        $tabHoverLight = self::extractHex($css, '/\.ptah-c-tab_idle:hover\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'tab_idle hover light');
+        $tabHoverDark = self::extractHex($css, '/\.ptah-dark \.ptah-c-tab_idle:hover\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6}|var\(--ptah-[a-z0-9-]+\))/', 'tab_idle hover dark');
 
         // --- 16-17. Company switcher active tab / hover text — layout <style> dismantling (Passo 4) ---
         // The layout's forge-dashboard-layout.blade.php no longer hardcodes the switcher's
@@ -548,8 +563,10 @@ class ContrastGuardTest extends TestCase
             '13. toast success vs white text' => ['#ffffff', $toastSuccessBg, 4.5],
             '13. toast danger (bg-danger-dark) vs white text' => ['#ffffff', $colorDangerDark, 4.5],
             '14. bulk-delete/discard buttons (bg-danger-dark) vs white text' => ['#ffffff', $colorDangerDark, 4.5],
-            '15. forge-tab (slot) inactive idle (dark, slate-400) vs card surface' => [$tabIdleDark, '#1e293b', 4.5],
-            '15. forge-tab (slot) inactive hover (dark, slate-200) vs card surface' => [$tabHoverDark, '#1e293b', 4.5],
+            '15. tab_idle (light) inactive idle vs card surface' => [$tabIdleLight, '#ffffff', 4.5],
+            '15. tab_idle (dark) inactive idle vs card surface' => [$tabIdleDark, '#1e293b', 4.5],
+            '15. tab_idle (light) inactive hover vs card surface' => [$tabHoverLight, '#ffffff', 4.5],
+            '15. tab_idle (dark) inactive hover vs card surface' => [$tabHoverDark, '#1e293b', 4.5],
             '16. switcher active tab (--ptah-text-on-accent) vs --ptah-primary (config default)' => [$switcherActiveText, $configPrimary, 4.5],
             '17. switcher hover text (--ptah-primary-strong) vs hover bg (22% mix, light)' => [$switcherHoverTextLight, $switcherHoverBgLight, 4.5],
             '18. act_dup (light) vs sticky cell bg — icon' => [$actDupLight, '#ffffff', 3.0],
