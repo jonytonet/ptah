@@ -47,7 +47,7 @@
             @endphp
             @if ($hasDateFilterCols)
                 <div>
-                    <p class="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">{{ __('ptah::ui.filters_date_shortcuts') }}</p>
+                    <p class="mb-2 text-xs font-semibold tracking-wider uppercase ptah-c-fp_label">{{ __('ptah::ui.filters_date_shortcuts') }}</p>
                     <div class="flex flex-wrap gap-1.5">
                         @foreach ($quickLabels as $period => $qlabel)
                             <button wire:click="applyQuickDateFilter('{{ $period }}')"
@@ -83,31 +83,31 @@
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">{{ __('ptah::ui.filters_date_from') }}</p>
+                                        <p class="mb-1 text-xs ptah-c-fp_muted">{{ __('ptah::ui.filters_date_from') }}</p>
                                         <div class="flex gap-1">
                                             <select wire:model.live="dateRangeOperators.{{ $cfField }}_start"
-                                                class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
+                                                class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input ptah-c-control">
                                                 <option value=">=">&ge;</option>
                                                 <option value=">">&gt;</option>
                                                 <option value="=">=</option>
                                             </select>
                                             <input type="date"
                                                 wire:model.live="dateRanges.{{ $cfField }}_start"
-                                                class="flex-1 min-w-0 text-sm rounded-md px-2 py-1.5 ptah-c-fp_input" />
+                                                class="flex-1 min-w-0 text-sm rounded-md px-2 py-1.5 ptah-c-fp_input ptah-c-control" />
                                         </div>
                                     </div>
                                     <div>
-                                        <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">{{ __('ptah::ui.filters_date_to') }}</p>
+                                        <p class="mb-1 text-xs ptah-c-fp_muted">{{ __('ptah::ui.filters_date_to') }}</p>
                                         <div class="flex gap-1">
                                             <select wire:model.live="dateRangeOperators.{{ $cfField }}_end"
-                                                class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input">
+                                                class="text-xs rounded-md px-1.5 py-2 w-[58px] shrink-0 ptah-c-fp_input ptah-c-control">
                                                 <option value="<=">&le;</option>
                                                 <option value="<">&lt;</option>
                                                 <option value="=">=</option>
                                             </select>
                                             <input type="date"
                                                 wire:model.live="dateRanges.{{ $cfField }}_end"
-                                                class="flex-1 min-w-0 text-sm rounded-md px-2 py-1.5 ptah-c-fp_input" />
+                                                class="flex-1 min-w-0 text-sm rounded-md px-2 py-1.5 ptah-c-fp_input ptah-c-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +141,7 @@
 
                                 {{-- Operador: igual / diferente (item 5) --}}
                                 <select wire:model.live="filterOperators.{{ $cfField }}"
-                                    class="w-full text-xs rounded-md px-2 py-1.5 mb-1.5 ptah-c-fp_input">
+                                    class="w-full text-xs rounded-md px-2 py-1.5 mb-1.5 ptah-c-fp_input ptah-c-control">
                                     <option value="=">{{ __('ptah::ui.filters_op_equals') }}</option>
                                     <option value="!=">{{ __('ptah::ui.filters_op_not_equals') }}</option>
                                 </select>
@@ -177,7 +177,7 @@
                                             @focus="$wire.openFilterDropdown('{{ $cfField }}')"
                                             placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
                                             autocomplete="off"
-                                            class="w-full text-sm rounded-md px-2.5 py-2 pr-8 ptah-c-fp_input"
+                                            class="w-full text-sm rounded-md px-2.5 py-2 pr-8 ptah-c-fp_input ptah-c-control"
                                         />
                                         <button type="button"
                                             tabindex="-1"
@@ -199,7 +199,7 @@
                                                 {{ $opt['label'] }}
                                             </button>
                                         @empty
-                                            <p class="px-3 py-2 text-xs italic text-gray-400">{{ __('ptah::ui.filters_no_results') }}</p>
+                                            <p class="px-3 py-2 text-xs italic ptah-c-fp_muted">{{ __('ptah::ui.filters_no_results') }}</p>
                                         @endforelse
                                     </div>
                                 </div>
@@ -217,7 +217,7 @@
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                 <div class="flex gap-1">
                                     <select wire:model.live="filterOperators.{{ $cfField }}"
-                                        class="text-xs rounded-md px-1.5 py-2 w-[90px] shrink-0 ptah-c-fp_input">
+                                        class="text-xs rounded-md px-1.5 py-2 w-[90px] shrink-0 ptah-c-fp_input ptah-c-control">
                                         @if ($isNum)
                                             <option value="=">=</option>
                                             <option value="!=">&ne;</option>
@@ -241,7 +241,7 @@
                                         placeholder="{{ $isNullOp ? '—' : $cfLabel.'...' }}"
                                         @if($isNum) step="any" @endif
                                         @disabled($isNullOp)
-                                        class="flex-1 min-w-0 text-sm rounded-md px-2.5 py-2 ptah-c-fp_input disabled:opacity-50 disabled:cursor-not-allowed" />
+                                        class="flex-1 min-w-0 text-sm rounded-md px-2.5 py-2 ptah-c-fp_input ptah-c-control disabled:opacity-50 disabled:cursor-not-allowed" />
                                 </div>
                             </div>
                         @endif
@@ -265,7 +265,7 @@
                                             @focus="open = true"
                                             @click.outside="open = false"
                                             placeholder="{{ __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
-                                            class="w-full text-sm rounded-md px-2.5 py-2 ptah-c-fp_input" />
+                                            class="w-full text-sm rounded-md px-2.5 py-2 ptah-c-fp_input ptah-c-control" />
                                         @if (!empty($sdResults['cf_' . $cfField]))
                                             <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
                                                 @foreach ($sdResults['cf_' . $cfField] as $opt)
@@ -319,7 +319,7 @@
             {{-- Filtros salvos --}}
             @if (!empty($savedFilters))
                 <div class="flex flex-wrap items-center gap-2 pt-1">
-                    <span class="text-xs font-medium text-gray-400">{{ __('ptah::ui.filters_saved') }}</span>
+                    <span class="text-xs font-medium ptah-c-fp_label">{{ __('ptah::ui.filters_saved') }}</span>
                     @foreach (array_keys($savedFilters) as $sfName)
                         <div class="flex items-center">
                             <button wire:click="loadNamedFilter('{{ $sfName }}')"

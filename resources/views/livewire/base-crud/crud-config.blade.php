@@ -7,7 +7,8 @@
         color="dark"
         size="sm"
         class="ptah-c-control"
-        :title="__('ptah::ui.cfg_btn_title')">
+        :title="__('ptah::ui.cfg_btn_title')"
+        :aria-label="__('ptah::ui.cfg_btn_title')">
         <x-slot name="icon">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -16,7 +17,7 @@
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
         </x-slot>
-        <span class="hidden md:inline">Config</span>
+        <span class="ptah-c-btn_label">Config</span>
     </x-forge-button>
     @endptahCan
 

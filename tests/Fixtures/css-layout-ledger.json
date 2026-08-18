@@ -92,7 +92,17 @@
         ".ptah-select-dropdown|dark|border-color": "#334155",
         ".ptah-select-dropdown li|dark|color": "#cbd5e1",
         ".ptah-select-dropdown li:hover|dark|background-color": "#334155",
-        ".ptah-select-dropdown li:hover|dark|color": "#e2e8f0"
+        ".ptah-select-dropdown li:hover|dark|color": "#e2e8f0",
+        ".ptah-modal-panel|dark|background-color": "#1e293b",
+        ".ptah-modal-panel|dark|color": "#e2e8f0",
+        ".ptah-modal-panel .border-b|dark|border-color": "#334155",
+        ".ptah-modal-panel .border-t|dark|border-color": "#334155",
+        ".ptah-modal-panel h3|dark|color": "#e2e8f0",
+        ".ptah-modal-panel .text-gray-700|dark|color": "#cbd5e1",
+        ".ptah-modal-panel .text-gray-600|dark|color": "#94a3b8",
+        ".ptah-modal-panel button.text-gray-400:hover|dark|color": "#e2e8f0",
+        ".ptah-modal-panel .text-slate-600|dark|color": "#94a3b8",
+        ".ptah-modal-panel .text-slate-700|dark|color": "#cbd5e1"
     },
     "changed": {
         ".ptah-switcher-tab--active|dark|background-color": {
@@ -174,6 +184,11 @@
             "from": "#475569",
             "to": "#6d7278",
             "reason": "mesmo defeito e mesma correcao da borda do forge-input/forge-textarea: 1.93:1 contra o fundo escuro, abaixo do piso 3:1; --ptah-line-field resolve para 3.0:1 no escopo escuro padrao"
+        },
+        ".ptah-modal-panel .text-gray-400|dark|color": {
+            "from": "#64748b",
+            "to": "#94a3b8",
+            "reason": "subtitulo do forge-modal usava o mesmo hex do modo claro (#64748b) tambem no escuro, sem clarear para o fundo escuro; passa a usar --ptah-text-muted, o mesmo token que .ptah-c-modal_sub/.ptah-c-fp_muted/.ptah-c-tab_idle ja usam para o papel de 'texto apagado', alinhando as duas implementacoes de modal do pacote. Contraste ja coberto por ContrastGuardTest::case 15 (tab_idle dark: --ptah-text-muted #94a3b8 sobre --ptah-surface-raised #1e293b, a mesma dupla desta regra)"
         }
     },
     "deleted": {

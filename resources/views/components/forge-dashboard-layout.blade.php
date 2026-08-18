@@ -138,17 +138,10 @@
         .ptah-dark .ptah-stat-card .text-gray-400 { color: #64748b; }
 
         /* ─── Modal ──────────────────────────────────────────── */
-        .ptah-dark .ptah-modal-panel {
-            background-color: #1e293b;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-modal-panel .border-b,
-        .ptah-dark .ptah-modal-panel .border-t { border-color: #334155; }
-        .ptah-dark .ptah-modal-panel h3              { color: #e2e8f0; }
-        .ptah-dark .ptah-modal-panel .text-gray-700  { color: #cbd5e1; }
-        .ptah-dark .ptah-modal-panel .text-gray-400  { color: #64748b; }
-        .ptah-dark .ptah-modal-panel .text-gray-600  { color: #94a3b8; }
-        .ptah-dark .ptah-modal-panel button.text-gray-400:hover { color: #e2e8f0; }
+        /* .ptah-modal-panel migrado para resources/css/ptah-components.css (secao
+           "Modal generico (forge-modal)") — la ganhou o par claro que faltava aqui
+           (so o escuro existia). Ver tests/Fixtures/css-layout-ledger.json para a
+           contabilidade site a site. */
 
         /* ─── Table ──────────────────────────────────────────── */
         .ptah-dark .ptah-table-wrapper input[type="search"] {
@@ -223,10 +216,6 @@
         .ptah-dark .ptah-module-table .bg-slate-50    { background-color: #1e293b; }
         .ptah-dark .ptah-module-table .text-slate-700  { color: #cbd5e1; }
         .ptah-dark .ptah-module-table .text-slate-300  { color: #475569; }
-
-        /* ─── Modal genérico (slate classes) ─────────────── */
-        .ptah-dark .ptah-modal-panel .text-slate-600 { color: #94a3b8; }
-        .ptah-dark .ptah-modal-panel .text-slate-700 { color: #cbd5e1; }
     </style>
 
     {{-- Livewire (se disponível) --}}
