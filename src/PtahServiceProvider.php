@@ -48,6 +48,8 @@ use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Livewire\SearchDropdown\SearchDropdown;
+use Ptah\Models\PageObject;
+use Ptah\Models\PtahPage;
 use Ptah\Models\Role;
 use Ptah\Models\RolePermission;
 use Ptah\Models\UserRole;
@@ -207,10 +209,12 @@ class PtahServiceProvider extends ServiceProvider
 
     /**
      * Invalidates the permission cache the instant a role definition, a role's
-     * object bindings, or a user's role assignments change — closing the window
-     * where a revoked permission stayed effective until the TTL expired.
+     * object bindings, a page/object's availability, or a user's role assignments
+     * change — closing the window where a revoked permission (or a deactivated
+     * page/object) stayed effective until the TTL expired.
      *
      *  - Role / RolePermission change → affects many users → global generation bump.
+     *  - PageObject / PtahPage change → affects many users → global generation bump.
      *  - UserRole change              → affects one user   → that user's bump.
      */
     protected function registerPermissionCacheInvalidation(): void
@@ -227,6 +231,14 @@ class PtahServiceProvider extends ServiceProvider
             UserRole::{$event}(
                 fn (UserRole $ur) => $service()->clearCache((int) $ur->user_id)
             );
+        }
+
+        // PageObject / PtahPage are hard-deleted (no SoftDeletes trait — see their
+        // migrations), so only 'saved' and 'deleted' exist; registering 'restored'
+        // on them would throw (no such static method on a non-SoftDeletes model).
+        foreach (['saved', 'deleted'] as $event) {
+            PageObject::{$event}(fn () => $service()->bumpGlobalVersion());
+            PtahPage::{$event}(fn () => $service()->bumpGlobalVersion());
         }
     }
 

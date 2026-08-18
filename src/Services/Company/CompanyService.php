@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Models\Company;
+use Ptah\Services\Permission\PermissionService;
 use Ptah\Traits\ResolvesUser;
 
 /**
@@ -23,8 +24,9 @@ class CompanyService implements CompanyServiceContract
 
     protected string $sessionKey;
 
-    public function __construct()
-    {
+    public function __construct(
+        protected PermissionService $permission = new PermissionService,
+    ) {
         $this->sessionKey = config('ptah.permissions.company_session_key', 'ptah_company_id');
     }
 
@@ -187,11 +189,13 @@ class CompanyService implements CompanyServiceContract
 
         Session::put($this->sessionKey, $id);
 
-        // Invalidate permissions cache for the logged-in user
+        // Invalidate permissions cache for the logged-in user. The old scheme's
+        // literal Cache::forget() keys ("ptah_permissions:{u}:{c}:", "ptah_is_master:{u}")
+        // predate the versioned-generation cache and match nothing today — that was
+        // a silent no-op, exactly what clearPermissionCache() did in the legacy system.
         $userId = auth()->id();
         if ($userId) {
-            Cache::forget("ptah_permissions:{$userId}:{$id}:");
-            Cache::forget("ptah_is_master:{$userId}");
+            $this->permission->clearCache((int) $userId);
         }
     }
 

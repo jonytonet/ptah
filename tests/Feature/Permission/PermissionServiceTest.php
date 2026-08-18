@@ -175,6 +175,131 @@ class PermissionServiceTest extends TestCase
         $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
     }
 
+    // ── Re-granting after a revoke must not be a permanent no-op ────────────────
+    // Regression for the `deleted_at` mass-assignment pitfall: it is not fillable
+    // on RolePermission, so `updateOrCreate([...], [..., 'deleted_at' => null])`
+    // silently drops it, leaving the row trashed forever after the first revoke.
+
+    #[Test]
+    public function rebinding_an_object_after_unbinding_grants_access_again(): void
+    {
+        config(['ptah.permissions.cache' => true]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $roleService = new RoleService;
+        $obj = PageObject::where('obj_key', 'products.index')->firstOrFail();
+
+        // Grant.
+        $roleService->bindPageObject($role, $obj->id, ['can_read' => true]);
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'));
+
+        // Revoke.
+        $roleService->unbindPageObject($role, $obj->id);
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
+
+        // Re-grant — must actually restore access, not stay trashed with can_read=true.
+        $roleService->bindPageObject($role, $obj->id, ['can_read' => true]);
+        $this->assertTrue(
+            $this->service->check($this->userId, 'products.index', 'read'),
+            'Re-granting after a revoke must take effect immediately, not stay a permanent no-op',
+        );
+
+        $binding = RolePermission::withTrashed()
+            ->where('role_id', $role->id)
+            ->where('page_object_id', $obj->id)
+            ->first();
+        $this->assertNotNull($binding);
+        $this->assertNull($binding->deleted_at, 'The restored row must not still carry deleted_at');
+        $this->assertTrue($binding->can_read);
+        $this->assertSame(
+            1,
+            RolePermission::withTrashed()->where('role_id', $role->id)->where('page_object_id', $obj->id)->count(),
+            'Must restore the existing trashed row, not create a duplicate',
+        );
+    }
+
+    #[Test]
+    public function sync_page_bindings_rebinding_a_previously_removed_object_grants_access_again(): void
+    {
+        config(['ptah.permissions.cache' => true]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $roleService = new RoleService;
+        $obj = PageObject::where('obj_key', 'products.index')->firstOrFail();
+
+        $roleService->syncPageBindings($role, [$obj->id => ['can_read' => true]]);
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'));
+
+        // Syncing an empty set removes the binding (soft delete).
+        $roleService->syncPageBindings($role, []);
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read'));
+
+        // Syncing it back in must restore access, not stay a permanent no-op.
+        $roleService->syncPageBindings($role, [$obj->id => ['can_read' => true]]);
+        $this->assertTrue(
+            $this->service->check($this->userId, 'products.index', 'read'),
+            'Re-syncing a previously removed object must restore access',
+        );
+    }
+
+    // ── is_active is respected by the gate, with immediate cache invalidation ──
+
+    #[Test]
+    public function deactivating_an_object_denies_access_immediately(): void
+    {
+        config(['ptah.permissions.cache' => true]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, 'products.index', ['can_read' => true]);
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'));
+
+        PageObject::where('obj_key', 'products.index')->firstOrFail()->update(['is_active' => false]);
+
+        $this->assertFalse(
+            $this->service->check($this->userId, 'products.index', 'read'),
+            'Deactivating the object toggle must revoke access immediately',
+        );
+    }
+
+    #[Test]
+    public function deleting_an_object_denies_access_immediately(): void
+    {
+        config(['ptah.permissions.cache' => true]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, 'products.index', ['can_read' => true]);
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'));
+
+        PageObject::where('obj_key', 'products.index')->firstOrFail()->delete();
+
+        $this->assertFalse(
+            $this->service->check($this->userId, 'products.index', 'read'),
+            'Deleting the object must revoke access immediately — not after the cache TTL',
+        );
+    }
+
+    #[Test]
+    public function deactivating_a_page_denies_all_its_objects_immediately(): void
+    {
+        config(['ptah.permissions.cache' => true]);
+
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, 'products.index', ['can_read' => true]);
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'));
+
+        PtahPage::where('slug', 'products')->firstOrFail()->update(['is_active' => false]);
+
+        $this->assertFalse(
+            $this->service->check($this->userId, 'products.index', 'read'),
+            'Deactivating the page must revoke access to its objects immediately',
+        );
+    }
+
     // ── Multi-company isolation ─────────────────────────────────────────────────
 
     #[Test]

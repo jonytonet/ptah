@@ -126,10 +126,20 @@ class RoleService
 
         $data = array_merge($defaults, $permissions);
 
-        $binding = RolePermission::withTrashed()->updateOrCreate(
-            ['role_id' => $role->id, 'page_object_id' => $pageObject->id],
-            array_merge($data, ['deleted_at' => null])
-        );
+        // Uses the SoftDeletes API (restore) rather than a mass-assigned
+        // `deleted_at => null` — the latter is silently dropped (not fillable),
+        // leaving the binding trashed even though can_* looks correct.
+        $binding = RolePermission::withTrashed()->firstOrNew([
+            'role_id' => $role->id,
+            'page_object_id' => $pageObject->id,
+        ]);
+
+        if ($binding->trashed()) {
+            $binding->restore();
+        }
+
+        $binding->fill($data);
+        $binding->save();
 
         $this->invalidate();
 

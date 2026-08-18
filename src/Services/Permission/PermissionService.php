@@ -273,7 +273,16 @@ class PermissionService implements PermissionServiceContract
                 ->where('is_active', true)
                 ->whereHas('permissions', fn ($q2) => $q2
                     ->where($actionColumn, true)
-                    ->whereHas('pageObject', fn ($q3) => $q3->where('obj_key', $objectKey))
+                    // Same activity rule the permission maps apply: a deactivated
+                    // object — or one whose page is deactivated — grants nothing, so
+                    // it must not contribute companies either. Without this, a
+                    // company selector built from this method still offers branches
+                    // for a resource the gate will refuse.
+                    ->whereHas('pageObject', fn ($q3) => $q3
+                        ->where('obj_key', $objectKey)
+                        ->where('is_active', true)
+                        ->whereHas('page', fn ($q4) => $q4->where('is_active', true))
+                    )
                 )
             )
             ->pluck('company_id')
@@ -415,7 +424,14 @@ class PermissionService implements PermissionServiceContract
             // Without this, deactivating a role would NOT revoke access via check().
             ->whereHas('role', fn ($q) => $q->where('is_active', true))
             ->with([
-                'role.permissions' => fn ($q) => $q->whereNull('deleted_at'),
+                // Only permissions bound to an ACTIVE object on an ACTIVE page grant —
+                // consistent with queryPermission() and with buildMasterPermissionMap().
+                // Without this, deactivating an object/page from /ptah-pages would not
+                // revoke access via check().
+                'role.permissions' => fn ($q) => $q->whereNull('deleted_at')
+                    ->whereHas('pageObject', fn ($q2) => $q2->where('is_active', true)
+                        ->whereHas('page', fn ($q3) => $q3->where('is_active', true))
+                    ),
                 'role.permissions.pageObject',
             ])
             ->get()
@@ -450,6 +466,9 @@ class PermissionService implements PermissionServiceContract
     {
         return PageObject::query()
             ->active()
+            // An inactive page deactivates all of its objects too — keeps the
+            // MASTER map consistent with buildPermissionMap()'s pageObject+page check.
+            ->whereHas('page', fn ($q) => $q->where('is_active', true))
             ->pluck('obj_key')
             ->unique()
             ->mapWithKeys(fn ($key) => [
