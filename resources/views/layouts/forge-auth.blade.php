@@ -90,7 +90,7 @@
 
     @stack('styles')
 </head>
-<body class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex flex-col items-center justify-center p-4 font-sans antialiased">
+<body class="min-h-screen ptah-c-auth_bg flex flex-col items-center justify-center p-4 font-sans antialiased">
 
     {{-- Branding --}}
     <div class="mb-8 text-center">
@@ -99,13 +99,13 @@
                 {{ mb_strtoupper(mb_substr(config('app.name', 'P'), 0, 1)) }}
             </span>
         </div>
-        <h1 class="text-2xl font-bold text-dark">{{ config('app.name', 'Ptah') }}</h1>
+        <h1 class="text-2xl font-bold ptah-c-section_ttl">{{ config('app.name', 'Ptah') }}</h1>
     </div>
 
     {{-- Card --}}
-    <div class="w-full max-w-md bg-white rounded-md p-8 border border-gray-200">
+    <div class="w-full max-w-md ptah-card-default rounded-md p-8 border">
         @isset($title)
-            <h2 class="text-xl font-semibold text-dark mb-6">{{ $title }}</h2>
+            <h2 class="text-xl font-semibold ptah-c-section_ttl mb-6">{{ $title }}</h2>
         @endisset
 
         @hasSection('content')
@@ -117,7 +117,7 @@
     </div>
 
     {{-- Footer --}}
-    <p class="mt-6 text-sm text-gray-400">
+    <p class="mt-6 text-sm ptah-c-muted">
         &copy; {{ date('Y') }} {{ config('app.name', 'Ptah') }}. Todos os direitos reservados.
     </p>
 

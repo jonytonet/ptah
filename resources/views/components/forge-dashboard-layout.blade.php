@@ -126,40 +126,10 @@
         .ptah-dark .ptah-btn-light:hover,
         .ptah-dark .ptah-btn-secondary:hover { background-color: #475569 !important; }
 
-        /* ─── Inputs ─────────────────────────────────────────── */
-        .ptah-dark .ptah-input-wrapper label   { color: #94a3b8; }
-        .ptah-dark .ptah-input-wrapper input {
-            background-color: #1e293b;
-            border-color: #475569;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-input-wrapper input::placeholder { color: #64748b; }
-        .ptah-dark .ptah-input-wrapper input:disabled     { background-color: #0f172a; }
-        .ptah-dark .ptah-input-wrapper .text-gray-400     { color: #64748b; }
-
-        /* ─── Textarea ───────────────────────────────────────── */
-        .ptah-dark .ptah-textarea-wrapper label    { color: #94a3b8; }
-        .ptah-dark .ptah-textarea-wrapper textarea {
-            background-color: #1e293b;
-            border-color: #475569;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-textarea-wrapper textarea::placeholder { color: #64748b; }
-        .ptah-dark .ptah-textarea-wrapper .text-gray-500 { color: #94a3b8; }
-
-        /* ─── Select ─────────────────────────────────────────── */
-        .ptah-dark .ptah-select-wrapper > label { color: #94a3b8; }
-        .ptah-dark .ptah-select-trigger {
-            background-color: #1e293b;
-            border-color: #475569;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-select-dropdown {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-select-dropdown li { color: #cbd5e1; }
-        .ptah-dark .ptah-select-dropdown li:hover { background-color: #334155; color: #e2e8f0; }
+        /* Inputs/Textarea/Select migrados para resources/css/ptah-components.css
+           (secao "Form fields: input / textarea / select") — la ganharam o par
+           claro que faltava aqui (so o escuro existia). Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Stat Cards ────────────────────────────────────── */
         .ptah-dark .ptah-stat-card                { background-color: #1e293b; }

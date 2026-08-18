@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.two_fa_page_title') }}</h2>
-        <p class="text-sm text-gray-500 mt-1">
+        <h2 class="text-xl font-semibold ptah-c-section_ttl">{{ __('ptah::ui.two_fa_page_title') }}</h2>
+        <p class="text-sm ptah-c-phdr_sub mt-1">
             @if ($usingRecovery)
                 {{ __('ptah::ui.two_fa_recovery_subtitle') }}
             @else
@@ -55,12 +55,12 @@
         <button
             type="button"
             wire:click="sendEmailCode"
-            class="text-gray-500 hover:text-primary hover:underline"
+            class="ptah-c-muted_link hover:underline"
         >
             {{ __('ptah::ui.two_fa_resend_email') }}
         </button>
 
-        <a href="{{ route('ptah.auth.login') }}" class="text-gray-400 hover:text-gray-600 hover:underline">
+        <a href="{{ route('ptah.auth.login') }}" class="ptah-c-muted_link hover:underline">
                 {{ __('ptah::ui.two_fa_back_login') }}
         </a>
     </div>

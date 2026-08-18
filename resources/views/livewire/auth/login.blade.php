@@ -2,8 +2,8 @@
 <div class="w-full">
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-dark">{{ __('ptah::ui.login_title') }}</h2>
-        <p class="text-sm text-gray-500 mt-1">{{ __('ptah::ui.login_subtitle') }}</p>
+        <h2 class="text-xl font-semibold ptah-c-section_ttl">{{ __('ptah::ui.login_title') }}</h2>
+        <p class="text-sm ptah-c-phdr_sub mt-1">{{ __('ptah::ui.login_subtitle') }}</p>
     </div>
 
     {{-- Status message (após reset de senha) --}}
@@ -38,8 +38,8 @@
         />
 
         <div class="flex items-center justify-between text-sm">
-            <label class="flex items-center gap-2 cursor-pointer text-gray-600">
-                <input type="checkbox" wire:model="remember" class="rounded border-gray-300 text-primary focus:ring-primary/30">
+            <label class="flex items-center gap-2 cursor-pointer ptah-c-form_lbl">
+                <input type="checkbox" wire:model="remember" class="rounded ptah-c-form_border text-primary focus:ring-primary/30">
                 {{ __('ptah::ui.login_remember_me') }}
             </label>
             <a href="{{ route('ptah.auth.forgot-password') }}" class="text-primary hover:underline font-medium">
