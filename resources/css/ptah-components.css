@@ -1323,3 +1323,52 @@ html[data-ptah-accent="ambar"]    { --color-primary: #92400e; }
 html[data-ptah-accent="vermelho"] { --color-primary: #b91c1c; }
 html[data-ptah-accent="rosa"]     { --color-primary: #be185d; }
 html[data-ptah-accent="cinza"]    { --color-primary: #475569; }
+
+
+/* ── Preview das pílulas da aba Aparência ──────────────────────────────────
+   Cada pílula mostra A SUA PRÓPRIA opção, não a que está ativa. Por isso estas
+   regras usam LITERAIS e nunca var(--ptah-*): um token resolveria para a escolha
+   corrente e as doze pílulas ficariam idênticas — um preview que não prevê nada,
+   e que passaria em qualquer teste de contraste ou de token. Guardado por
+   AppearancePreviewLiteralTest.
+
+   As pílulas de TOM não são escopadas por tema de propósito: "Carvão" tem de
+   aparecer escura mesmo com a página clara, porque é isso que a pessoa quer ver
+   antes de escolher. As de fonte e accent são escopadas, porque a mesma escala
+   tem tinta diferente em cada tema. */
+
+/* Cor da fonte — o rótulo na tinta real da escala */
+.ptah-swatch[data-ptah-text="suave"] { color: #414348; }
+.ptah-swatch[data-ptah-text="neutra"] { color: #252629; }
+.ptah-swatch[data-ptah-text="forte"] { color: #141416; }
+.ptah-dark .ptah-swatch[data-ptah-text="suave"] { color: #d6d8d9; }
+.ptah-dark .ptah-swatch[data-ptah-text="neutra"] { color: #e8e9ea; }
+.ptah-dark .ptah-swatch[data-ptah-text="forte"] { color: #f9fafa; }
+
+/* Cor de destaque — rótulo, bolinha e borda na própria cor */
+.ptah-swatch[data-ptah-accent="azul"] { color: #1d4ed8; border-color: #1d4ed8; }
+.ptah-swatch[data-ptah-accent="violeta"] { color: #6d28d9; border-color: #6d28d9; }
+.ptah-swatch[data-ptah-accent="ciano"] { color: #0e7490; border-color: #0e7490; }
+.ptah-swatch[data-ptah-accent="verde"] { color: #047857; border-color: #047857; }
+.ptah-swatch[data-ptah-accent="teal"] { color: #0f766e; border-color: #0f766e; }
+.ptah-swatch[data-ptah-accent="ambar"] { color: #92400e; border-color: #92400e; }
+.ptah-swatch[data-ptah-accent="vermelho"] { color: #b91c1c; border-color: #b91c1c; }
+.ptah-swatch[data-ptah-accent="rosa"] { color: #be185d; border-color: #be185d; }
+.ptah-swatch[data-ptah-accent="cinza"] { color: #475569; border-color: #475569; }
+.ptah-dark .ptah-swatch[data-ptah-accent="azul"] { color: #99afed; border-color: #99afed; }
+.ptah-dark .ptah-swatch[data-ptah-accent="violeta"] { color: #bd9eee; border-color: #bd9eee; }
+.ptah-dark .ptah-swatch[data-ptah-accent="ciano"] { color: #93c0cd; border-color: #93c0cd; }
+.ptah-dark .ptah-swatch[data-ptah-accent="verde"] { color: #8ec2b3; border-color: #8ec2b3; }
+.ptah-dark .ptah-swatch[data-ptah-accent="teal"] { color: #93c1be; border-color: #93c1be; }
+.ptah-dark .ptah-swatch[data-ptah-accent="ambar"] { color: #cea993; border-color: #cea993; }
+.ptah-dark .ptah-swatch[data-ptah-accent="vermelho"] { color: #e09999; border-color: #e09999; }
+.ptah-dark .ptah-swatch[data-ptah-accent="rosa"] { color: #e297b6; border-color: #e297b6; }
+.ptah-dark .ptah-swatch[data-ptah-accent="cinza"] { color: #acb3bc; border-color: #acb3bc; }
+
+/* Tons — a pílula pintada com o próprio tom, em qualquer tema */
+.ptah-swatch[data-ptah-light="puro"] { background-color: #ffffff; border-color: #8f95a0; color: #252629; }
+.ptah-swatch[data-ptah-light="papel"] { background-color: #fffaf0; border-color: #8c929d; color: #252629; }
+.ptah-swatch[data-ptah-light="nevoa"] { background-color: #ffffff; border-color: #8f95a0; color: #252629; }
+.ptah-swatch[data-ptah-dark="carvao"] { background-color: #27272a; border-color: #6c7177; color: #e8e9ea; }
+.ptah-swatch[data-ptah-dark="grafite"] { background-color: #1e293b; border-color: #6d7278; color: #e8e9ea; }
+.ptah-swatch[data-ptah-dark="meianoite"] { background-color: #111c33; border-color: #63686e; color: #e8e9ea; }

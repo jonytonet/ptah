@@ -272,7 +272,7 @@
                             <button type="button"
                                 @click="document.documentElement.setAttribute('data-ptah-light', '{{ $option }}')"
                                 wire:click="setLight('{{ $option }}')"
-                                class="px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeLight === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                                data-ptah-light="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeLight === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                             >
                                 {{ __('ptah::ui.profile_appearance_light_'.$option) }}
                             </button>
@@ -288,7 +288,7 @@
                             <button type="button"
                                 @click="document.documentElement.setAttribute('data-ptah-dark', '{{ $option }}')"
                                 wire:click="setDark('{{ $option }}')"
-                                class="px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeDark === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                                data-ptah-dark="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeDark === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                             >
                                 {{ __('ptah::ui.profile_appearance_dark_'.$option) }}
                             </button>
@@ -304,7 +304,7 @@
                             <button type="button"
                                 @click="document.documentElement.setAttribute('data-ptah-accent', '{{ $option }}')"
                                 wire:click="setAccent('{{ $option }}')"
-                                class="flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeAccent === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                                data-ptah-accent="{{ $option }}" class="ptah-swatch flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeAccent === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                             >
                                 <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: {{ $hex }};"></span>
                                 {{ __('ptah::ui.profile_appearance_accent_'.$option) }}
@@ -321,7 +321,7 @@
                             <button type="button"
                                 @click="document.documentElement.setAttribute('data-ptah-text', '{{ $option }}')"
                                 wire:click="setText('{{ $option }}')"
-                                class="px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeText === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                                data-ptah-text="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeText === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                             >
                                 {{ __('ptah::ui.profile_appearance_text_'.$option) }}
                             </button>
