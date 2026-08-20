@@ -490,6 +490,13 @@ class PtahServiceProvider extends ServiceProvider
                 Livewire::component('ptah-permission-user-list', UserPermissionList::class);
                 Livewire::component('ptah-permission-audit-list', AuditList::class);
                 Livewire::component('ptah-permission-guide', PermissionGuide::class);
+
+                // Reinforcement, not the primary defense: each ACL list component's
+                // boot() already calls RequiresMasterAccess::assertMasterAccess() on
+                // every request. This makes the `ptah.master` route middleware itself
+                // reapply to the AJAX requests those components send after the initial
+                // mount, which Livewire otherwise skips (see PersistentMiddleware).
+                Livewire::addPersistentMiddleware(PtahMaster::class);
             }
 
             if (config('ptah.modules.ai_agent')) {

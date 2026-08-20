@@ -54,14 +54,23 @@ trait HasCrudBulkActions
             return;
         }
 
-        $this->bulkActionInProgress = true;
-        $modelInstance = $this->resolveEloquentModel();
+        // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
+        if (! $this->authorizeCrudAction('delete')) {
+            return;
+        }
 
-        if ($modelInstance) {
-            DB::transaction(function () use ($modelInstance) {
+        $this->bulkActionInProgress = true;
+
+        // Scoped by company / master-detail lock (scopedQuery()) so a
+        // client-supplied id in selectedRows cannot delete a record outside the
+        // current scope (IDOR) — same guard as the single-record deleteRecord().
+        $query = $this->scopedQuery();
+
+        if ($query) {
+            DB::transaction(function () use ($query) {
                 // Use each() + delete() individually to fire Eloquent events
                 // and allow HasAuditFields trait to record deleted_by per record.
-                $modelInstance->newQuery()->whereIn('id', $this->selectedRows)->each(
+                $query->whereIn('id', $this->selectedRows)->each(
                     fn ($record) => $record->delete()
                 );
             });
@@ -84,13 +93,21 @@ trait HasCrudBulkActions
             return;
         }
 
-        $this->bulkActionInProgress = true;
-        $modelInstance = $this->resolveEloquentModel();
+        // Ptah permission check — restore requires update permission (fail-closed).
+        if (! $this->authorizeCrudAction('update')) {
+            return;
+        }
 
-        if ($modelInstance) {
-            DB::transaction(function () use ($modelInstance) {
-                $modelInstance->newQuery()
-                    ->withTrashed()
+        $this->bulkActionInProgress = true;
+
+        // withTrashed() is chained onto the SCOPED query (never a raw
+        // newQuery()) so restoring a soft-deleted row still respects the
+        // company / master-detail lock (IDOR guard).
+        $query = $this->scopedQuery();
+
+        if ($query) {
+            DB::transaction(function () use ($query) {
+                $query->withTrashed()
                     ->whereIn('id', $this->selectedRows)
                     ->each(fn ($record) => $record->restore());
             });
@@ -112,13 +129,21 @@ trait HasCrudBulkActions
             return;
         }
 
-        $this->bulkActionInProgress = true;
-        $modelInstance = $this->resolveEloquentModel();
+        // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
+        if (! $this->authorizeCrudAction('delete')) {
+            return;
+        }
 
-        if ($modelInstance) {
-            DB::transaction(function () use ($modelInstance) {
-                $modelInstance->newQuery()
-                    ->withTrashed()
+        $this->bulkActionInProgress = true;
+
+        // withTrashed() is chained onto the SCOPED query (never a raw
+        // newQuery()) so force-deleting still respects the company /
+        // master-detail lock (IDOR guard).
+        $query = $this->scopedQuery();
+
+        if ($query) {
+            DB::transaction(function () use ($query) {
+                $query->withTrashed()
                     ->whereIn('id', $this->selectedRows)
                     ->each(fn ($record) => $record->forceDelete());
             });
@@ -146,6 +171,12 @@ trait HasCrudBulkActions
             return;
         }
 
+        // Ptah permission check — custom bulk actions mutate records, so they
+        // require the same guard as save()/restore() (fail-closed).
+        if (! $this->authorizeCrudAction('update')) {
+            return;
+        }
+
         $bulkActions = $this->crudConfig['bulkActions'] ?? [];
         $config = null;
 
@@ -160,6 +191,22 @@ trait HasCrudBulkActions
             return;
         }
 
+        // The handler receives ids chosen by the CLIENT (selectedRows is a public
+        // wire:model property), so they must be re-resolved through scopedQuery()
+        // — company + master-detail lock — before leaving this component, exactly
+        // like bulkDelete/bulkRestore/bulkForceDelete above. Otherwise a forged
+        // selection reaches the configured service with out-of-scope ids.
+        $modelInstance = new ($this->model);
+        $keyName = $modelInstance->getKeyName();
+        $scopedIds = $this->scopedQuery()
+            ?->whereIn($keyName, $this->selectedRows)
+            ->pluck($keyName)
+            ->all() ?? [];
+
+        if (empty($scopedIds)) {
+            return;
+        }
+
         $this->bulkActionInProgress = true;
 
         // Dispatch event for host to handle, or call method via service
@@ -170,7 +217,7 @@ trait HasCrudBulkActions
 
             try {
                 if (class_exists($class) && method_exists($class, $method)) {
-                    app($class)->{$method}($this->selectedRows, $this->model);
+                    app($class)->{$method}($scopedIds, $this->model);
                 }
             } catch (\Throwable $e) {
                 Log::error('Ptah bulk action failed', ['action' => $action, 'error' => $e->getMessage()]);

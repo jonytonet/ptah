@@ -11,6 +11,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Permission\Concerns\RequiresMasterAccess;
 use Ptah\Models\Department;
 use Ptah\Models\PageObject;
 use Ptah\Models\Role;
@@ -24,12 +25,14 @@ use Ptah\Services\Permission\RoleService;
 #[Layout('ptah::layouts.forge-dashboard')]
 class RoleList extends Component
 {
+    use RequiresMasterAccess;
     use WithPagination;
 
     protected RoleService $roleService;
 
     public function boot(RoleService $roleService): void
     {
+        $this->assertMasterAccess();
         $this->roleService = $roleService;
     }
 

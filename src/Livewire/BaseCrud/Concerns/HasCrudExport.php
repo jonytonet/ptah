@@ -59,6 +59,14 @@ trait HasCrudExport
 
     /**
      * Exports only the selected rows (bulk export) through the same token flow.
+     *
+     * selectedRows is a client-writable property (row checkboxes), so it is
+     * intersected with buildBaseQuery() — the same company/locked-filter/
+     * search/filter scope the listing itself uses — before being handed to the
+     * export token. Without this, a forged selectedRows could export ids
+     * belonging to another company or outside a master/detail lock (IDOR),
+     * even though the listing that produced the checkboxes was correctly
+     * scoped.
      */
     public function bulkExport(string $format = 'excel'): void
     {
@@ -66,7 +74,21 @@ trait HasCrudExport
             return;
         }
 
-        $this->dispatchExportDownload($this->selectedRows, $format);
+        $modelInstance = $this->resolveEloquentModel();
+
+        if (! $modelInstance) {
+            return;
+        }
+
+        [$query] = $this->buildBaseQuery($modelInstance);
+        $pk = $modelInstance->getKeyName();
+        $ids = $query->whereIn($pk, $this->selectedRows)->pluck($pk)->all();
+
+        if (empty($ids)) {
+            return;
+        }
+
+        $this->dispatchExportDownload($ids, $format);
     }
 
     /**

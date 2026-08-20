@@ -675,6 +675,8 @@ trait HasCrudQuery
      * rows belonging to another company or outside a master/detail lock (IDOR),
      * even though the listing itself is scoped. Callers chain ->find($id) (and
      * ->withTrashed() for restore).
+     *
+     * @return Builder<Model>|null
      */
     protected function scopedQuery(): ?Builder
     {
