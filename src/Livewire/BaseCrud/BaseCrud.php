@@ -138,6 +138,14 @@ class BaseCrud extends Component
 
     // ── Bulk actions ──────────────────────────────────────────────────────────
 
+    /**
+     * NOT #[Locked]: the row checkboxes write to it via wire:model.live
+     * (_table.blade.php / _cards.blade.php) — locking it would break selection.
+     * The IDOR/authorization guard instead lives in HasCrudBulkActions, which
+     * intersects these ids with scopedQuery()/buildBaseQuery() before any
+     * write or export, so a forged id here can never reach another
+     * company/master-detail scope.
+     */
     public array $selectedRows = [];
 
     public bool $selectAll = false;
@@ -273,7 +281,16 @@ class BaseCrud extends Component
      * Filters enforced on every query and untouchable from the UI — used by
      * nested detail grids (child rows locked to the parent's FK).
      * [column => value]
+     *
+     * #[Locked]: only ever assigned server-side, once, in mount() (a
+     * constructor param — see HasCrudLifecycle::mount()). No view writes to it
+     * via wire:model/$set/$wire (grep confirms it is read-only from Blade), so
+     * there is no legitimate client-side setter to preserve. A client-writable
+     * lockedFilters would let a forged request escape the master/detail lock
+     * it exists to enforce. Locked only blocks client-side updates; mount() is
+     * unaffected.
      */
+    #[Locked]
     public array $lockedFilters = [];
 
     public function toggleDetail(int $id): void

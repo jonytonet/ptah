@@ -391,7 +391,7 @@ Requires session driver `database` (`SESSION_DRIVER=database`). The `SessionServ
 | Method | Return | Description |
 |---|---|---|
 | `getActiveSessions(User $user)` | array | Lists active sessions with device details |
-| `revokeSession(string $sessionId)` | void | Removes session by ID |
+| `revokeSession(string $sessionId, Authenticatable $user)` | void | Removes session by ID (scoped to `$user`, IDOR guard) |
 | `revokeOtherSessions(User $user, string $currentId)` | void | Removes all except the current one |
 
 **Structure of each returned session:**

@@ -42,12 +42,20 @@ class SessionService
     }
 
     /**
-     * Revokes a specific session.
+     * Revokes a specific session belonging to $user.
+     *
+     * The `user_id` constraint is the IDOR guard: without it, any
+     * authenticated user could pass another user's session id (sessions are
+     * plain string ids, easy to enumerate/guess from a shared device) and
+     * delete a session they do not own.
      */
-    public function revokeSession(string $sessionId): void
+    public function revokeSession(string $sessionId, Authenticatable $user): void
     {
         if ($this->sessionsTableExists()) {
-            DB::table('sessions')->where('id', $sessionId)->delete();
+            DB::table('sessions')
+                ->where('id', $sessionId)
+                ->where('user_id', $user->getAuthIdentifier())
+                ->delete();
         }
     }
 

@@ -9,12 +9,19 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Permission\Concerns\RequiresMasterAccess;
 use Ptah\Models\PermissionAudit;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class AuditList extends Component
 {
+    use RequiresMasterAccess;
     use WithPagination;
+
+    public function boot(): void
+    {
+        $this->assertMasterAccess();
+    }
 
     public string $search = '';
 

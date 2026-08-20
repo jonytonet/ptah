@@ -9,13 +9,20 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Permission\Concerns\RequiresMasterAccess;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class PageList extends Component
 {
+    use RequiresMasterAccess;
     use WithPagination;
+
+    public function boot(): void
+    {
+        $this->assertMasterAccess();
+    }
 
     // ── Pages ─────────────────────────────────────────────────────────
     public string $search = '';

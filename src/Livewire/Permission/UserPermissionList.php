@@ -10,6 +10,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Permission\Concerns\RequiresMasterAccess;
 use Ptah\Models\Company;
 use Ptah\Models\Role;
 use Ptah\Models\UserRole;
@@ -18,12 +19,14 @@ use Ptah\Services\Permission\PermissionService;
 #[Layout('ptah::layouts.forge-dashboard')]
 class UserPermissionList extends Component
 {
+    use RequiresMasterAccess;
     use WithPagination;
 
     protected PermissionService $permissionService;
 
     public function boot(PermissionService $permissionService): void
     {
+        $this->assertMasterAccess();
         $this->permissionService = $permissionService;
     }
 

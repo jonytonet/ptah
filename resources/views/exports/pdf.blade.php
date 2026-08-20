@@ -180,13 +180,13 @@
                                         $value = $row->{$field};
                                         
                                         if ($value instanceof \DateTimeInterface) {
-                                            echo $value->format('d/m/Y H:i:s');
+                                            echo e($value->format('d/m/Y H:i:s'));
                                         } elseif (is_bool($value)) {
                                             echo $value ? 'Sim' : 'Não';
                                         } elseif (is_string($value) && strlen($value) > 100) {
-                                            echo substr($value, 0, 100) . '...';
+                                            echo e(substr($value, 0, 100)) . '...';
                                         } else {
-                                            echo $value ?? '-';
+                                            echo e($value ?? '-');
                                         }
                                     @endphp
                                 </td>
@@ -200,13 +200,13 @@
                                         $value = data_get($row, $field);
                                         
                                         if ($value instanceof \DateTimeInterface) {
-                                            echo $value->format('d/m/Y H:i:s');
+                                            echo e($value->format('d/m/Y H:i:s'));
                                         } elseif (is_bool($value)) {
                                             echo $value ? 'Sim' : 'Não';
                                         } elseif (is_string($value) && strlen($value) > 100) {
-                                            echo substr($value, 0, 100) . '...';
+                                            echo e(substr($value, 0, 100)) . '...';
                                         } else {
-                                            echo $value ?? '-';
+                                            echo e($value ?? '-');
                                         }
                                     @endphp
                                 </td>

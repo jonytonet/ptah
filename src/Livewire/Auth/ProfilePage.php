@@ -184,7 +184,7 @@ class ProfilePage extends Component
 
     public function revokeSession(string $sessionId, SessionService $sessionService): void
     {
-        $sessionService->revokeSession($sessionId);
+        $sessionService->revokeSession($sessionId, Auth::user());
         $this->loadSessions($sessionService);
         $this->flash(trans('ptah::ui.profile_session_revoked'));
     }
