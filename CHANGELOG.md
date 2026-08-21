@@ -7,6 +7,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- The AI chat panel scrolls the conversation to the bottom when OPENED —
+  `scrollToBottom()` only fired on send, so the widget opened showing the top
+  of the history.
+
 ## [1.18.0] — 2026-08-21
 
 UX waves A–D, driven by screenshots and live testing from a real consumer
