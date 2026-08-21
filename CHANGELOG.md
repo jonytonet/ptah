@@ -7,6 +7,69 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.18.0] — 2026-08-21
+
+UX waves A–D, driven by screenshots and live testing from a real consumer
+project. No schema change — as in every release since 1.13.2.
+
+### Added
+
+- **Global density and font size** as the 5th and 6th appearance axes in
+  `/profile` (`data-ptah-density`: `compacta`/`confortavel`/`espacosa`;
+  `data-ptah-fontsize`: `pequena`/`normal`/`grande`), riding the same
+  whitelist/cookie/reset infrastructure as the other four. Each component
+  family has its own density tokens (`--ptah-field-fs/-py`, `--ptah-bar-py`)
+  whose *comfortable* value is that family's pre-density value — zero visual
+  regression for users who never open the picker, pinned by a parity test.
+- **Per-screen density can now follow the profile**: the BaseCrud toolbar's
+  density dropdown gained "Padrão do perfil" (the new default). A persisted
+  legacy `comfortable` migrates to it on load (it was the never-chosen
+  default); persisted `compact`/`spacious` were deliberate and stay pinned.
+- **Keyboard shortcuts**, discoverable via a `?` overlay: `/` focus search,
+  `n` new record, `f` toggle filters, `v` table/cards, `r` reload, and
+  `Ctrl+B`/`Cmd+B` collapses the sidebar (VSCode convention).
+- **"Gerenciar Permissões" modal**: client-side filter over pages/objects and
+  a per-page accordion (always opens collapsed; each header shows a live
+  checked/total summary).
+- **`<x-forge-empty>` and `<x-forge-skeleton>`** so custom screens get
+  native-looking empty and loading states; the BaseCrud table's own empty
+  state now uses the former.
+- **`docs/CustomScreens.md`**: the token contract, the six axes, the
+  `forge-*` catalog with real props, a full page recipe, the house traps
+  (each with the guard that catches it) and a PR checklist. A doc guard
+  fails when a published component is missing from it.
+
+### Fixed
+
+- **The ACL/module modals are legible in dark mode** — the v1.17.0 migration
+  missed them; light slate bands under theme-following text measured as low
+  as 1.13:1. Systematic sweep, semantic chip tokens
+  (`--ptah-success/danger/warn-soft`), and the modal repaint scoped so it
+  cannot leak into the BaseCrud's own modals.
+- **Collapsed sidebar is genuinely icon-only**: labels leave the flow, icons
+  center, group rail no longer renders squeezed, tooltips only while
+  collapsed, and a group whose child is the active page wears the active
+  pill. On tablet, tapping a group icon peeks the rail open (the old formula
+  ignored user intent between 768 and 1024px).
+- **Keyboard shortcuts actually work**: the "is a dialog open?" guard tested
+  the `aria-modal` element's own computed display, which never changes when
+  an ancestor is the hidden one — so every BaseCrud page reported a phantom
+  open dialog and silently swallowed every key. `checkVisibility()` (with a
+  `getClientRects()` fallback) tests rendered visibility through the chain.
+- The six module screens report success/error through the global toast
+  (pausing on hover/focus, WCAG 2.2.1) instead of an inline alert that
+  scrolls out of view.
+- `prefers-reduced-motion` keeps spinners spinning (slowly) instead of
+  freezing them — a stopped spinner reads as a hung screen.
+
+### Notes for the curious
+
+- Bare `$wire`/`$el` inside `x-data` methods **work** — Alpine evaluates
+  `x-data` under `with(scope)`, so closures resolve magics at call time. A
+  reviewer and the maintainers both got this wrong in the same week; the
+  codebase uses `this.$` as an explicitness convention, not a correctness
+  fix. Recorded here so nobody "fixes" a healthy component again.
+
 ## [1.17.0] — 2026-08-21
 
 Waves 2–4 of the full v1.15.2 audit (four independent reviewers: backend,
