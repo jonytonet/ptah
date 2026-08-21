@@ -281,6 +281,7 @@ return [
     */
     'two_fa_code_invalid' => 'Código inválido ou expirado.',
     'two_fa_email_sent' => 'Código enviado para :email',
+    'two_fa_email_rate_limited' => 'Muitos códigos solicitados. Tente novamente em :seconds segundos.',
 
     /*
     |--------------------------------------------------------------------------

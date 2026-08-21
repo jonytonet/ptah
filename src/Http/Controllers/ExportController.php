@@ -14,6 +14,8 @@ use Ptah\Exports\CrudExport;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
+use Ptah\Support\ModelKey;
+use Ptah\Support\SqlIdentifier;
 
 class ExportController
 {
@@ -114,7 +116,7 @@ class ExportController
         $fileName = Str::slug($modelName).'-'.now()->format('Y-m-d-His');
 
         if ($format === 'pdf') {
-            return $this->exportPdf($query, $fileName, $modelName, $columns);
+            return $this->exportPdf($query, $fileName, $modelName, $columns, $modelClass);
         }
 
         return $this->exportExcel($query, $fileName, $columns);
@@ -151,7 +153,7 @@ class ExportController
     /**
      * Exporta para PDF
      */
-    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [])
+    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [], ?string $modelClass = null)
     {
         $data = $query->get();
 
@@ -159,8 +161,10 @@ class ExportController
             abort(404, 'Nenhum registro encontrado para exportar');
         }
 
-        // Buscar totalizadores se configurados
-        $totalizers = $this->getTotalizers($query, $modelName);
+        // Buscar totalizadores se configurados. A resolução do config precisa do
+        // identificador COMPLETO (FQCN ou chave canônica com sub-pasta), não do
+        // class_basename usado no título — ver getTotalizers().
+        $totalizers = $this->getTotalizers($query, $modelClass ?? $modelName);
 
         return Pdf::loadView('ptah::exports.pdf', [
             'data' => $data,
@@ -204,8 +208,23 @@ class ExportController
     protected function getTotalizers($query, string $modelName): array
     {
         try {
-            // Buscar configuração do CRUD
-            $crudConfig = CrudConfig::where('model_name', $modelName)->first();
+            // Buscar configuração do CRUD.
+            // NOTA (achado durante a Onda 2): a consulta antiga usava a coluna
+            // inexistente `model_name` — QueryException sempre, engolida pelo
+            // catch abaixo, então os totalizadores do PDF nunca apareceram.
+            // A resolução espelha ExportAuthorizer::findConfig(): match exato
+            // primeiro (chave canônica ou FQCN gravado literal), depois a forma
+            // canônica — cobre CRUDs em sub-pasta ("Purchase/Order/PurchaseOrders"),
+            // que um class_basename nunca casaria.
+            $crudConfig = CrudConfig::where('model', $modelName)->first();
+
+            if (! $crudConfig) {
+                $canonical = ModelKey::canonical($modelName);
+
+                if ($canonical !== $modelName) {
+                    $crudConfig = CrudConfig::where('model', $canonical)->first();
+                }
+            }
 
             if (! $crudConfig) {
                 return [];
@@ -233,7 +252,10 @@ class ExportController
                 $aggregate = $totCol['aggregate'] ?? 'sum';
                 $label = $totCol['label'] ?? ucwords(str_replace('_', ' ', $field));
 
-                if (! $field) {
+                // Column comes from config → guard before it reaches the aggregate
+                // (sum/avg/… interpolate it as an identifier). Same check as the
+                // screen's totalizer (HasCrudQuery::totalizers()).
+                if (! $field || ! SqlIdentifier::isSafe((string) $field)) {
                     continue;
                 }
 

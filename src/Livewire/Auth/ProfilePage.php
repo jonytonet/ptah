@@ -6,6 +6,7 @@ namespace Ptah\Livewire\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -151,6 +152,20 @@ class ProfilePage extends Component
 
     public function enableEmailTwoFactor(TwoFactorService $twoFactor): void
     {
+        // Throttle code sends to prevent email bombing (an attacker repeatedly
+        // triggering this action to flood the victim's inbox). Same key shape
+        // as TwoFactorChallengePage::sendEmailCode(), scoped by user+IP.
+        $sendThrottleKey = 'ptah-2fa-send|'.Auth::id().'|'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($sendThrottleKey, 3)) {
+            $seconds = RateLimiter::availableIn($sendThrottleKey);
+            $this->errorMsg = trans('ptah::ui.two_fa_email_rate_limited', ['seconds' => $seconds]);
+
+            return;
+        }
+
+        RateLimiter::hit($sendThrottleKey, 60);
+
         $twoFactor->sendEmailCode(Auth::user());
         $this->totpType = 'email';
         $this->flash(trans('ptah::ui.profile_email_2fa_sent'));

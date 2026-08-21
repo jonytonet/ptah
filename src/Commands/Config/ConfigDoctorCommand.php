@@ -7,6 +7,7 @@ namespace Ptah\Commands\Config;
 use Illuminate\Console\Command;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
+use Ptah\Models\PageObject;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
 
@@ -25,6 +26,16 @@ use Ptah\Support\ModelKey;
  *                        silently ungated. `--fix` migrates the value.
  *   - route ambiguity  → a model with both a global and a route-specific config
  *                        (the fallback is active — easy to mistake for a dup).
+ *   - permissionIdentifier collision → two crud_configs for DIFFERENT models
+ *                        share the same permissions.permissionIdentifier. Permission
+ *                        resolution is global by that identifier, so granting access
+ *                        to one model's screen grants it to the other's too.
+ *   - obj_key collision → two ptah_page_objects on DIFFERENT pages share the same
+ *                        obj_key. Resolution is global by obj_key too
+ *                        (PermissionService::buildPermissionMap), same cross-grant risk.
+ *
+ * Both collision checks are diagnostic only — they do not change how permissions
+ * resolve, they only surface the pre-existing global-key sharing risk.
  *
  * Exit code is non-zero when any ERROR is found (CI-friendly).
  */
@@ -50,6 +61,10 @@ class ConfigDoctorCommand extends Command
 
         /** @var array<string, string[]> $routesByModel */
         $routesByModel = [];
+
+        // Collected during the main loop below, checked once at the end.
+        /** @var array<string, array<string, true>> $modelsByPermissionIdentifier */
+        $modelsByPermissionIdentifier = [];
 
         foreach ($rows as $row) {
             $model = (string) $row->model;
@@ -121,6 +136,14 @@ class ConfigDoctorCommand extends Command
                     $errors++;
                 }
             }
+
+            // Collected for check 6b below (after --fix, $config already reflects
+            // the migrated key). Same identifier on a DIFFERENT model is a
+            // cross-grant risk — resolution is global by permissionIdentifier.
+            $permissionIdentifier = (string) ($config['permissions']['permissionIdentifier'] ?? '');
+            if ($permissionIdentifier !== '') {
+                $modelsByPermissionIdentifier[$permissionIdentifier][$canonical] = true;
+            }
         }
 
         // 6. Route ambiguity (global + route-specific for the same model).
@@ -130,6 +153,35 @@ class ConfigDoctorCommand extends Command
 
             if ($hasGlobal && $specific !== []) {
                 $this->line("ℹ️  <fg=cyan>route fallback</> [{$canonical}]: global config aplica-se às rotas sem config própria; ".count($specific).' route-specific ('.implode(', ', $specific).') sobrepõe(m) a global apenas na(s) sua(s) rota(s)');
+            }
+        }
+
+        // 7. permissionIdentifier collision across DIFFERENT models. Resolution
+        //    (HasCrudForm::authorizeCrudAction / BaseCrud::getEffectivePermissions /
+        //    ExportController) is global by this identifier — sharing it grants
+        //    cross-model access without anyone intending it. Diagnostic only: does
+        //    not change how permissions resolve.
+        foreach ($modelsByPermissionIdentifier as $identifier => $models) {
+            $modelNames = array_keys($models);
+
+            if (count($modelNames) > 1) {
+                $this->line("🟡 <fg=yellow>permissionIdentifier collision</> '{$identifier}': compartilhado pelos models ".implode(', ', $modelNames).' — a resolução de permissão é global por esse identificador (crossgrant entre telas)');
+                $warnings++;
+            }
+        }
+
+        // 8. obj_key collision across DIFFERENT pages. Resolution
+        //    (PermissionService::buildPermissionMap) is global by obj_key — the
+        //    same key on two pages means granting access to one object grants it
+        //    to the other too. Diagnostic only.
+        $objectsByKey = PageObject::query()->with('page:id,slug')->get()->groupBy('obj_key');
+
+        foreach ($objectsByKey as $key => $objects) {
+            $pageSlugs = $objects->pluck('page.slug')->filter()->unique()->values();
+
+            if ($pageSlugs->count() > 1) {
+                $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all()).' — a resolução de permissão é global por obj_key (crossgrant entre páginas)');
+                $warnings++;
             }
         }
 

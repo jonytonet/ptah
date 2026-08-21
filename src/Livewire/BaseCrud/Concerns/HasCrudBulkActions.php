@@ -19,7 +19,8 @@ trait HasCrudBulkActions
         $this->selectAll = ! $this->selectAll;
 
         if ($this->selectAll) {
-            $this->selectedRows = $this->rows->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+            $keyName = (new ($this->model))->getKeyName();
+            $this->selectedRows = $this->rows->pluck($keyName)->map(fn ($id) => (string) $id)->toArray();
         } else {
             $this->selectedRows = [];
         }
@@ -67,10 +68,17 @@ trait HasCrudBulkActions
         $query = $this->scopedQuery();
 
         if ($query) {
-            DB::transaction(function () use ($query) {
+            // Match on the model's actual primary key, not a hardcoded 'id' —
+            // same as bulkExport() (HasCrudExport.php) — so CRUDs with a
+            // non-default key name are matched correctly instead of silently
+            // deleting nothing (or the wrong rows, if an unrelated 'id' column
+            // exists on the table).
+            $keyName = (new ($this->model))->getKeyName();
+
+            DB::transaction(function () use ($query, $keyName) {
                 // Use each() + delete() individually to fire Eloquent events
                 // and allow HasAuditFields trait to record deleted_by per record.
-                $query->whereIn('id', $this->selectedRows)->each(
+                $query->whereIn($keyName, $this->selectedRows)->each(
                     fn ($record) => $record->delete()
                 );
             });
@@ -106,9 +114,13 @@ trait HasCrudBulkActions
         $query = $this->scopedQuery();
 
         if ($query) {
-            DB::transaction(function () use ($query) {
+            // Match on the model's actual primary key, not a hardcoded 'id' —
+            // same as bulkExport() (HasCrudExport.php).
+            $keyName = (new ($this->model))->getKeyName();
+
+            DB::transaction(function () use ($query, $keyName) {
                 $query->withTrashed()
-                    ->whereIn('id', $this->selectedRows)
+                    ->whereIn($keyName, $this->selectedRows)
                     ->each(fn ($record) => $record->restore());
             });
             $this->cacheService->invalidateModel($this->model);
@@ -142,9 +154,13 @@ trait HasCrudBulkActions
         $query = $this->scopedQuery();
 
         if ($query) {
-            DB::transaction(function () use ($query) {
+            // Match on the model's actual primary key, not a hardcoded 'id' —
+            // same as bulkExport() (HasCrudExport.php).
+            $keyName = (new ($this->model))->getKeyName();
+
+            DB::transaction(function () use ($query, $keyName) {
                 $query->withTrashed()
-                    ->whereIn('id', $this->selectedRows)
+                    ->whereIn($keyName, $this->selectedRows)
                     ->each(fn ($record) => $record->forceDelete());
             });
             $this->cacheService->invalidateModel($this->model);

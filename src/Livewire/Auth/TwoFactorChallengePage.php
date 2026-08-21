@@ -87,6 +87,21 @@ class TwoFactorChallengePage extends Component
     public function sendEmailCode(TwoFactorService $twoFactor): void
     {
         $userId = Session::get('ptah.2fa.user_id');
+
+        // Throttle code sends to prevent email bombing (an attacker repeatedly
+        // triggering this action to flood the victim's inbox). Same key shape
+        // as the verify() throttle, scoped by user+IP, own bucket/limit.
+        $sendThrottleKey = 'ptah-2fa-send|'.$userId.'|'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($sendThrottleKey, 3)) {
+            $seconds = RateLimiter::availableIn($sendThrottleKey);
+            $this->errorMsg = trans('ptah::ui.two_fa_email_rate_limited', ['seconds' => $seconds]);
+
+            return;
+        }
+
+        RateLimiter::hit($sendThrottleKey, 60);
+
         $userModel = config('auth.providers.users.model', 'App\\Models\\User');
         $user = $userModel::findOrFail($userId);
         $twoFactor->sendEmailCode($user);

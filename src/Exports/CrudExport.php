@@ -113,6 +113,18 @@ class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
             return $value;
         }
 
+        // Formula injection: este export é sempre .xlsx escrito via PhpSpreadsheet
+        // (nunca CSV — ver GenerateCrudExportJob), e o DefaultValueBinder só
+        // classifica como TYPE_FORMULA valores começando com "=". Prefixos como
+        // "+", "-" e "@" já são gravados como TYPE_STRING — e o apóstrofo, num
+        // .xlsx programático, fica LITERAL e visível na célula, corrompendo
+        // telefones ("+55 11 ...") e handles ("@user"). Por isso o guard cobre
+        // apenas "=". Se um dia houver export CSV, a lista precisa voltar a
+        // =, +, -, @, TAB, CR (OWASP) naquele caminho.
+        if (is_string($value) && str_starts_with($value, '=')) {
+            return "'".$value;
+        }
+
         // Outros valores
         return $value ?? '';
     }

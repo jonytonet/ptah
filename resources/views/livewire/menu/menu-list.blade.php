@@ -101,7 +101,7 @@
                         </td>
                         {{-- Status --}}
                         <td class="px-3 py-2.5 text-center">
-                            <button wire:click="toggleActive({{ $row->id }})" :title="$row->is_active ? __('ptah::ui.menu_toggle_disable') : __('ptah::ui.menu_toggle_enable')">
+                            <button wire:click="toggleActive({{ $row->id }})" title="{{ $row->is_active ? __('ptah::ui.menu_toggle_disable') : __('ptah::ui.menu_toggle_enable') }}">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-opacity hover:opacity-70
                                     {{ $row->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
                                     {{ $row->is_active ? __('ptah::ui.lbl_active') : __('ptah::ui.lbl_inactive') }}
@@ -111,10 +111,10 @@
                         {{-- Ações --}}
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-2">
-                                <button wire:click="edit({{ $row->id }})" class="transition-colors text-primary hover:text-primary/80" :title="__('ptah::ui.btn_edit_title')">
+                                <button wire:click="edit({{ $row->id }})" class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}" aria-label="{{ __('ptah::ui.btn_edit_title') }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                 </button>
-                                <button wire:click="confirmDelete({{ $row->id }})" class="transition-colors text-danger hover:text-danger/80" :title="__('ptah::ui.btn_delete_title')">
+                                <button wire:click="confirmDelete({{ $row->id }})" class="transition-colors text-danger hover:text-danger/80" title="{{ __('ptah::ui.btn_delete_title') }}" aria-label="{{ __('ptah::ui.btn_delete_title') }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
@@ -187,7 +187,7 @@
                         <span class="font-normal text-slate-400 dark:text-slate-500">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
                     </label>
                     <div class="flex gap-2 items-center">
-                        <input wire:model.live="icon" type="text" :placeholder="__('ptah::ui.menu_form_icon_ph')"
+                        <input wire:model.live="icon" type="text" placeholder="{{ __('ptah::ui.menu_form_icon_ph') }}"
                             class="flex-1 px-3 py-2 text-sm rounded border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all font-mono"/>
                         <span class="flex items-center justify-center w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl flex-shrink-0" title="Preview">
                             <i class="{{ $icon ?: 'bx bx-circle' }}"></i>

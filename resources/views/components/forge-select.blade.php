@@ -31,7 +31,14 @@
 ])
 
 @php
-    $uniqueId        = 'forge-select-' . uniqid();
+    // Morph-stable id: o DOM-diff do Livewire usa `el.id` como chave quando não há
+    // wire:id/wire:key, então um id aleatório por render (uniqid, como era antes)
+    // faz o morph REMOVER e recriar o elemento — destruindo o componente Alpine
+    // (perde foco, `open`, `activeIndex`) a cada atualização do Livewire. O id é
+    // derivado da identidade do campo (label|name|placeholder|wire:model), logo
+    // igual em todo render. Mesmo padrão de forge-input.blade.php.
+    $wireModelAttr   = collect($attributes->whereStartsWith('wire:model')->getAttributes())->first() ?? '';
+    $uniqueId        = 'forge-select-' . substr(md5($label.'|'.($name ?? '').'|'.$placeholder.'|'.$wireModelAttr), 0, 12);
     $disabledClass   = $disabled ? 'opacity-50 pointer-events-none' : '';
     $borderNormal    = $error ? 'border-red-400' : 'border-gray-300';
     $borderOpen      = $error ? 'border-red-500' : 'border-primary';
@@ -41,10 +48,11 @@
     $hasWireModel = $attributes->has('wire:model')
         || $attributes->whereStartsWith('wire:model.')->isNotEmpty();
 
-    // A ponte hidden→Livewire é unidirecional e o morph do Livewire chaveia por
-    // `el.id` (uniqid acima), logo o x-data é reavaliado a cada render. Sem semear
-    // do estado do Livewire, `selected` volta a null e o gatilho exibe o
-    // placeholder mesmo com o valor aplicado. `:selected` continua vencendo.
+    // A ponte hidden→Livewire é unidirecional (Alpine escreve via $watch, nada
+    // volta de Livewire para `selected` depois do primeiro render). Com o id agora
+    // estável, o node sobrevive ao morph — então este seeding cobre o primeiro
+    // render; sem ele, `selected` fica null e o gatilho mostra o placeholder mesmo
+    // com o valor já aplicado no Livewire. `:selected` (prop explícita) continua vencendo.
     $resolvedSelected = $selected;
     if ($resolvedSelected === null && $hasWireModel && isset($__livewire)) {
         $resolvedSelected = data_get($__livewire, (string) $attributes->wire('model')->value());
