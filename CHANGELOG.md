@@ -7,6 +7,173 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.17.0] — 2026-08-21
+
+Waves 2–4 of the full v1.15.2 audit (four independent reviewers: backend,
+frontend, UX, security). No schema change — as in every release since 1.13.2.
+
+### Fixed — functional
+
+- **Bound `:title` / `:placeholder` / `:aria-label` with `__()` on plain HTML
+  tags** emitted the raw string into the DOM; the page-level Alpine root then
+  evaluated `__('…')` as JavaScript and threw a silent `ReferenceError`.
+  Tooltips never rendered, the audit screen's search had no placeholder, and
+  icon-only buttons had no accessible name. Fixed across the module screens
+  (roles, companies, menu, audit, departments, pages, company-switcher) — the
+  correct form is `title="{{ __('…') }}"`. Guarded by
+  `BladeBoundAttributeOnPlainTagTest`, which flags a bare `__(` anywhere in a
+  bound value on a non-`<x-…>` tag (ternaries included; `{{ }}` / `@js()` are
+  exempt as server-compiled).
+- **`forge-select` regenerated its root id with `uniqid()` on every render**,
+  so Livewire's morph treated it as a new node — an open dropdown closed
+  whenever any neighbouring field triggered a round-trip. Now a deterministic
+  md5 id, the same cure `forge-input` already had.
+- **PDF export totalizers never worked**: the lookup queried a column that does
+  not exist (`model_name`) and the `QueryException` was swallowed, so the
+  feature silently returned nothing since its introduction. The lookup now uses
+  the real column and resolves like `ExportAuthorizer` (exact match, then
+  canonical `ModelKey`), covering nested identifiers. **Behavioral change:**
+  configs with `totalizadores.enabled` will see a totals row appear in PDF
+  exports for the first time.
+- **Excel formula-injection guard scoped to `=` only.** PhpSpreadsheet's
+  writer only reinterprets values starting with `=` in a programmatic `.xlsx`;
+  prefixing `+` / `-` / `@` (the broader OWASP CSV list) left a *visible*
+  apostrophe in the cell, corrupting formatted phones (`+55 11 …`) and handles
+  (`@user`) for zero security gain.
+- **CLI parsers stopped truncating values at `:`** — `FilterParser`
+  (`options=active:Active,inactive:Inactive` silently became `active`) and
+  `JoinParser` (its own docblock example lost every `select=` column past the
+  first alias) now use the tokenizer `ColumnParser` always had.
+- `ptah:config-doctor` warns when two configs share a `permissionIdentifier`
+  or two pages share an `obj_key` — permission resolution is global by key, so
+  a collision grants cross-access. Diagnosis only; resolution unchanged.
+- Bulk actions and `toggleSelectAll` use the model's real primary key
+  (`getKeyName()`); with a custom PK, "select all" used to fill the selection
+  with `null`s.
+- 2FA **email-code sending is rate-limited** (3/min per user+IP, distinct
+  limiter family from verification, so the buckets cannot collide).
+
+### Fixed — theme & accessibility
+
+- **`forge-alert` passes WCAG AA in light mode** (the old pairs measured
+  1.9–3.1:1). New `--ptah-success-strong` / `--ptah-warn-strong` tokens join
+  `danger-strong`; `AlertContrastTest` computes real luminance for all twelve
+  pairs in both modes.
+- **A field with a validation error is visibly different again.** The wrapper's
+  unlayered border rule was flattening `border-red-400`; an
+  `[aria-invalid="true"]` rule now outranks it, `forge-input` and the five
+  inline modal field types expose `aria-invalid` / `aria-describedby`, and the
+  message color passes 4.5:1.
+- **`forge-modal` closes on Esc, traps focus** (`x-trap` ships inside
+  Livewire 4's bundle — verified in the dist) and keys its title id off md5
+  instead of `Str::random`.
+- **`search-dropdown` is keyboard-operable** (combobox/listbox/option roles,
+  arrows, Enter, Escape, `aria-activedescendant` cleared on collapse) and its
+  panel/clear button follow the theme tokens.
+- **The module screens (roles, companies, menu, audit, departments, pages,
+  user×permission) follow the appearance presets in BOTH modes.** Their ~24
+  chrome rules left the frozen layout `<style>` for tokenized CSS — the frozen
+  block's ceilings dropped 57 literals/56 rules → 36/39, every site accounted
+  for in the migration ledger.
+- **The CrudConfig editor (2,830 lines) follows the theme, dark mode and the
+  user's accent.** Its two in-view `<style>` blocks moved to tokenized CSS
+  (`.ptah-cfg` / `.ptah-cfg-content` scopes; the always-dark nav rail is
+  deliberately excluded); the indigo focus ring now derives from the accent.
+- Pagination (`<nav aria-label>`, arrow labels, `aria-current="page"`),
+  toolbar dropdowns (Esc + `aria-expanded`), sidebar (`aria-expanded`,
+  `aria-current`, tokenized rail hairline).
+
+### Added
+
+- ~200 new behavioral tests (suite: 953 → 1177), including first-ever coverage
+  for the CLI parsers, `ConfigValidator`, `CrudConfigEnums`, the CLI/flash
+  error formatters and `GetSystemInfoTool` (asserting it does NOT expose
+  framework/PHP versions unless `ptah.ai_agent.expose_system_details` is
+  explicitly enabled).
+
+### Known limitation (recorded, deliberately deferred)
+
+- `ptah:config --style=` is inoperative end-to-end (pre-existing): the parser,
+  the schema validator and the runtime disagree on keys and operator
+  vocabulary. Unifying them is a design decision — tracked, not patched here.
+
+## [1.16.0] — 2026-08-20
+
+Wave 1 of the audit: the confirmed security criticals. Every fix replicates a
+pattern that already existed in the package — the holes were omissions, not
+missing infrastructure. No schema change.
+
+### Security
+
+- **Bulk actions enforce authorization and tenant scope.** `bulkDelete` /
+  `bulkRestore` / `bulkForceDelete` / `executeBulkAction` ran on the raw
+  client-writable selection with no `authorizeCrudAction()` and no
+  `scopedQuery()` — any authenticated user could delete (or permanently
+  force-delete) another company's records from the console. All four now gate
+  and re-resolve ids through the scoped query; `executeBulkAction`
+  re-resolves BEFORE handing ids to the configured service.
+- **`bulkExport` no longer exfiltrates cross-tenant data** — the selection is
+  intersected with `buildBaseQuery()` (same scope as the listing) before the
+  export token is issued.
+- **The six ACL screens re-assert master access on every Livewire request**
+  (new `RequiresMasterAccess` trait called in `boot()`). Livewire 4 does not
+  re-apply custom route middleware on subsequent component requests, so a user
+  whose MASTER role was revoked mid-session could previously keep granting
+  permissions on an open screen. `PtahMaster` is also registered as persistent
+  middleware as reinforcement.
+- **PDF export escapes every value it echoes** — the cell renderers used raw
+  `echo` inside `@php`, so free-text fields reached DomPDF unescaped.
+- **`SessionService::revokeSession()` requires the owning user** and filters
+  by `user_id`. **BREAKING** for direct callers: the signature is now
+  `revokeSession(string $sessionId, Authenticatable $user)`. Previously any
+  authenticated user could terminate any other user's session by id.
+- **`BaseCrud::$lockedFilters` is `#[Locked]`** — it is the master-detail
+  security scope and was the only scope property still client-writable.
+- **Dependencies patched** (dompdf 3.1.6, guzzle 7.15.3, commonmark 2.10,
+  phpspreadsheet 1.30.6): `composer audit` is clean — was 21 advisories.
+
+### Added
+
+- 23 regression tests, each proven to fail without its fix (suite: 930 → 953).
+  Two new test-only migrations live in `tests/migrations/` and are loaded
+  exclusively by the test `TestCase` — never by the ServiceProvider.
+
+## [1.15.2] — 2026-08-18
+
+### Fixed
+
+- **BaseCrud follows the theme and the density.** The appearance picker shipped
+  in 1.15.0 reached the chrome but stopped at the working surface: the modal
+  panel, filter panel and config form still carried hardcoded slate/white
+  utilities. All three now paint from `--ptah-*` tokens, so every preset
+  reaches them (the modal's transparency went with it).
+- Toolbar controls share one height, padding and font size, driven by the
+  density variables — search and buttons stop disagreeing.
+- The search magnifier no longer overlaps the placeholder (`.ptah-c-control`
+  skips `padding-inline` on inputs, which was clobbering `pl-9`).
+- **Toolbar button labels collapse to icon-only ONLY when the row genuinely
+  wraps**, measured on the rendered layout (vertical-centre comparison — with
+  `items-center`, items of different heights sit at different `offsetTop` on
+  the same line, which defeated naive detection) instead of guessed from a
+  breakpoint.
+
+## [1.15.1] — 2026-08-18
+
+### Added
+
+- **The theme survives logout.** The four appearance axes are mirrored into a
+  sanitized, `httpOnly`, `SameSite=Lax` cookie, so the login screen renders in
+  the user's chosen theme before authentication; on login the server-side
+  preference wins over the cookie.
+- **The auth screens follow the theme** — inputs and labels included.
+- **"Voltar ao original"** reset button on the Aparência tab restores the
+  four axes to the package defaults.
+
+### Fixed
+
+- Preferences load correctly at login (previously the defaults flashed until
+  the first interaction re-applied the stored choice).
+
 ## [1.15.0] — 2026-08-17
 
 > **Tagging note:** `1.13.3` and `1.14.0` below were never published as their own
