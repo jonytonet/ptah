@@ -84,7 +84,7 @@ class RoleListBindModalAccordionTest extends TestCase
     }
 
     #[Test]
-    public function with_more_than_three_pages_every_accordion_group_starts_collapsed(): void
+    public function with_many_pages_every_accordion_group_starts_collapsed(): void
     {
         $this->createPageWithObject('page-a', 'Page A', 'page-a.view');
         $this->createPageWithObject('page-b', 'Page B', 'page-b.view');
@@ -102,8 +102,11 @@ class RoleListBindModalAccordionTest extends TestCase
     }
 
     #[Test]
-    public function with_three_or_fewer_pages_every_accordion_group_starts_expanded(): void
+    public function even_with_few_pages_every_accordion_group_starts_collapsed(): void
     {
+        // Pedido explicito do usuario apos usar a primeira versao (que expandia
+        // com ate 3 paginas): o modal SEMPRE abre colapsado — o resumo N/M no
+        // cabecalho de cada grupo da a visao geral sem expandir nada.
         $this->createPageWithObject('page-a', 'Page A', 'page-a.view');
         $this->createPageWithObject('page-b', 'Page B', 'page-b.view');
         $role = Role::create(['name' => 'Reader', 'is_active' => true]);
@@ -112,8 +115,8 @@ class RoleListBindModalAccordionTest extends TestCase
             ->call('openBind', $role->id)
             ->html();
 
-        $this->assertGreaterThanOrEqual(2, substr_count($html, 'manualOpen: true'));
-        $this->assertStringNotContainsString('manualOpen: false', $html);
+        $this->assertGreaterThanOrEqual(2, substr_count($html, 'manualOpen: false'));
+        $this->assertStringNotContainsString('manualOpen: true', $html);
     }
 
     #[Test]

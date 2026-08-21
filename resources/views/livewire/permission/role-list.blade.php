@@ -152,7 +152,9 @@
                 return $obj;
             })
             ->groupBy('page_name');
-        $bindExpandByDefault = $bindGroups->count() <= 3;
+        // Sempre colapsado ao abrir (pedido do usuario): o resumo N/M no cabecalho
+        // de cada grupo da a visao geral sem precisar expandir nada.
+        $bindExpandByDefault = false;
         $bindFullBlob = $bindGroups->map(fn ($group, $page) => mb_strtolower(str_replace(["'", '"', '\\'], ' ', (string) $page)).' '.$group->pluck('__search')->implode(' '))->implode(' ||| ');
     @endphp
     <div x-data="{ open: @entangle('showBindModal') }">
