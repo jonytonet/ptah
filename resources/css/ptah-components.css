@@ -77,6 +77,19 @@
     --ptah-success-strong: color-mix(in srgb, var(--color-success, #10b981) 60%, #000000);
     --ptah-warn-strong:    color-mix(in srgb, var(--color-warn, #f59e0b) 35%, #000000);
 
+    /* Same "-soft" idiom as --ptah-primary-soft (mixed against --ptah-surface, not a
+       literal #ffffff, for the same "correct opaque surface if a host overrides the
+       token" reason), one per semantic color — the module-screen status/audit/MASTER
+       chips (Onda A UX-ACL, FIX 1) need a light tinted background to pair with the
+       existing -strong ink, and none existed before this pass (only the alert
+       component had its own one-off tint, not reusable here). Paired with the ink
+       tokens above: light chip = -strong text on -soft bg (~5-9.5:1, see
+       ModuleScreenSemanticChipContrastTest); dark chip = -lite text on the .ptah-dark
+       override of this same token below (~6.5-7.5:1). */
+    --ptah-success-soft: color-mix(in srgb, var(--color-success, #10b981) 16%, var(--ptah-surface));
+    --ptah-danger-soft:  color-mix(in srgb, var(--color-danger, #ef4444) 14%, var(--ptah-surface));
+    --ptah-warn-soft:    color-mix(in srgb, var(--color-warn, #f59e0b) 16%, var(--ptah-surface));
+
     /* ── Neutral tokens (Fase 1 restyle) ──────────────────────────────────
        Light-mode defaults for every neutral (non-brand, non-semantic) color
        used below. Each has a dark override in the .ptah-dark block right
@@ -173,6 +186,15 @@
     --ptah-text-secondary: #cbd5e1;
     --ptah-text-muted:     #94a3b8;
     --ptah-text-faint:     #94a3b8;
+
+    /* Dark override of the -soft tokens above — mixed against `transparent`
+       instead of --ptah-surface, same idiom as --ptah-primary-soft-d: the chip
+       sits over a row whose own background varies (resting/hover/selected), so
+       a translucent tint blends into whichever one is behind instead of baking
+       in a single flat tone that would mismatch on hover. */
+    --ptah-success-soft: color-mix(in srgb, var(--color-success, #10b981) 24%, transparent);
+    --ptah-danger-soft:  color-mix(in srgb, var(--color-danger, #ef4444) 24%, transparent);
+    --ptah-warn-soft:    color-mix(in srgb, var(--color-warn, #f59e0b) 24%, transparent);
 }
 
 /* x-cloak — oculta elementos Alpine até hidratação */
@@ -667,6 +689,35 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 
 .ptah-modal-panel .text-slate-600            { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-modal-panel .text-slate-600 { color: var(--ptah-text-muted); }
+
+/* Onda A UX-ACL, FIX 1 — the role-list create/edit modal's MASTER badge
+   and the user-permission-list "manage roles" modal (assigned-role rows,
+   empty-state hint) carried more slate/amber shades with no dark: pair
+   than the set above covered. SCOPED to .ptah-c-mod_modal (a wrapper the
+   two ACL modals carry) instead of .ptah-modal-panel: the generic panel
+   class wraps EVERY modal in the package, and these rules outrank the
+   dark: utilities the BaseCrud image field relies on (review finding,
+   wave A) — repainting from the shared class changed CRUD modals that
+   were never audited. */
+.ptah-c-mod_modal .text-slate-800            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_modal .text-slate-800 { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_modal .text-slate-400            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_modal .text-slate-400 { color: var(--ptah-text-muted); }
+
+.ptah-c-mod_modal .text-slate-500            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_modal .text-slate-500 { color: var(--ptah-text-muted); }
+
+.ptah-c-mod_modal .bg-slate-50            { background-color: var(--ptah-surface-sunken); }
+.ptah-dark .ptah-c-mod_modal .bg-slate-50 { background-color: var(--ptah-surface-sunken); }
+
+.ptah-c-mod_modal .border-slate-200            { border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_modal .border-slate-200 { border-color: var(--ptah-line); }
+
+.ptah-c-mod_modal .text-amber-500,
+.ptah-c-mod_modal .text-amber-600            { color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-c-mod_modal .text-amber-500,
+.ptah-dark .ptah-c-mod_modal .text-amber-600 { color: var(--ptah-warn-lite); }
 
 /* Close button hover. Light has no origin (the frozen block only ever
    patched dark), so it takes the same hover ink already used for the
@@ -1635,6 +1686,12 @@ main { background-color: var(--ptah-canvas); }
 .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 .ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 
+/* Onda A UX-ACL, FIX 1 — toolbar filter labels (menu-list "Filtrar por tipo",
+   user-permission-list "Perfil") carried the same bare `text-slate-500` with
+   no dark: pair. */
+.ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
@@ -1691,6 +1748,184 @@ main { background-color: var(--ptah-canvas); }
    as .text-slate-400 above — no text token renders #475569 in dark. */
 .ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
 .ptah-dark .ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
+
+/* ── Onda A UX-ACL, FIX 1 ────────────────────────────────────────────────
+   The generic repaint above only ever covered the neutral slate family.
+   The 7 module screens also carry semantic chips/badges (status, MASTER/
+   DEFAULT, audit action, menu type) built from raw Tailwind `bg-*-100`/
+   `text-*-600/700` utilities with zero dark: counterpart — invisible or
+   near-invisible once `.ptah-dark` paints the table canvas/panel behind
+   them (role-list "Gerenciar Permissões" and page-list screenshots).
+   Same reuse-by-descendant-selector mechanism as the block above: only
+   the utility class is repainted, markup in the 7 views is untouched. */
+
+/* text-slate-600 (#475569) has an EXACT literal match in --ptah-text-secondary
+   — used by page-list's object-type chip, audit-list's user/resource code,
+   menu-list's icon glyph and order badge. */
+.ptah-module-table .text-slate-600 { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-module-table .text-slate-600 { color: var(--ptah-text-secondary); }
+
+/* "Info" family (role objects-count chip, menu Link badge, audit "read"
+   action) — mapped onto the brand/primary tokens, same idiom already used
+   by .ptah-c-active_badge, instead of a hardcoded blue untouched by a host's
+   --color-primary override. */
+.ptah-module-table .bg-blue-50  { background-color: var(--ptah-primary-softer); }
+.ptah-module-table .bg-blue-100 { background-color: var(--ptah-primary-soft); }
+.ptah-dark .ptah-module-table .bg-blue-50,
+.ptah-dark .ptah-module-table .bg-blue-100 { background-color: var(--ptah-primary-soft-d); }
+
+.ptah-module-table .text-blue-600 { color: var(--ptah-primary); }
+.ptah-module-table .text-blue-700 { color: var(--ptah-primary-strong); }
+.ptah-dark .ptah-module-table .text-blue-600,
+.ptah-dark .ptah-module-table .text-blue-700 { color: var(--ptah-primary-lite); }
+
+/* "Warn" family (role MASTER badge, company DEFAULT badge, audit "update"
+   action, user-permission MASTER role chip) — reuses --ptah-warn-strong/
+   -lite (already exist for exactly this "chip ink" role) plus a local
+   color-mix for the soft chip background, same pattern as
+   --ptah-primary-soft/-soft-d but for the warn hue (no such root token
+   existed yet; kept local here rather than promoted to :root since this is
+   the only two call sites). Measured (default --color-warn #f59e0b):
+   warn-strong on light mix ~9.5:1, warn-lite on dark mix ~7.5:1 — see
+   ModuleScreenSemanticChipContrastTest. */
+.ptah-module-table .bg-amber-100 { background-color: var(--ptah-warn-soft); }
+.ptah-dark .ptah-module-table .bg-amber-100 { background-color: var(--ptah-warn-soft); }
+
+.ptah-module-table .text-amber-600,
+.ptah-module-table .text-amber-700 { color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-module-table .text-amber-600,
+.ptah-dark .ptah-module-table .text-amber-700 { color: var(--ptah-warn-lite); }
+
+/* "Success" family (active/granted/create) — same idiom, --ptah-success-strong/-lite. */
+.ptah-module-table .bg-green-100 { background-color: var(--ptah-success-soft); }
+.ptah-dark .ptah-module-table .bg-green-100 { background-color: var(--ptah-success-soft); }
+
+.ptah-module-table .text-green-700 { color: var(--ptah-success-strong); }
+.ptah-dark .ptah-module-table .text-green-700 { color: var(--ptah-success-lite); }
+
+/* "Danger" family (inactive/denied/delete) — same idiom, --ptah-danger-strong/-lite. */
+.ptah-module-table .bg-red-100 { background-color: var(--ptah-danger-soft); }
+.ptah-dark .ptah-module-table .bg-red-100 { background-color: var(--ptah-danger-soft); }
+
+.ptah-module-table .text-red-600,
+.ptah-module-table .text-red-700 { color: var(--ptah-danger-strong); }
+.ptah-dark .ptah-module-table .text-red-600,
+.ptah-dark .ptah-module-table .text-red-700 { color: var(--ptah-danger-lite); }
+
+/* menu-list "Grupo" badge — the one chip family with no success/danger/warn/
+   primary semantic to borrow. Fase-2-style literal exception (documented,
+   not tokenized): light is byte-identical to Tailwind's own purple-100/700
+   (already correct there, only dark was ever missing); dark is a fresh
+   literal measured at 8.0:1 (#e9d5ff on the composited mix, see
+   ModuleScreenSemanticChipContrastTest) against the table's own dark
+   canvas. */
+.ptah-module-table .bg-purple-100 { background-color: #f3e8ff; }
+.ptah-dark .ptah-module-table .bg-purple-100 { background-color: color-mix(in srgb, #a855f7 25%, transparent); }
+
+.ptah-module-table .text-purple-700 { color: #7e22ce; }
+.ptah-dark .ptah-module-table .text-purple-700 { color: #e9d5ff; }
+
+/* role-list "👑 MASTER" row highlight — was the literal utility
+   `bg-amber-50/60` (a fractional-opacity Tailwind class, not selectable by
+   a plain `.bg-amber-50` repaint rule), with no dark: pair. Same warn-soft
+   idiom as the badge above, at a lighter mix so the highlight still reads
+   as a subtle row tint rather than another chip. */
+.ptah-c-mod_master_row            { background-color: color-mix(in srgb, var(--color-warn, #f59e0b) 8%, var(--ptah-surface)); }
+.ptah-dark .ptah-c-mod_master_row { background-color: color-mix(in srgb, var(--color-warn, #f59e0b) 14%, transparent); }
+
+/* audit-list "denied" row highlight — same fractional-opacity problem as the
+   MASTER row above (`bg-red-50/30`). */
+.ptah-c-mod_denied_row            { background-color: color-mix(in srgb, var(--color-danger, #ef4444) 6%, var(--ptah-surface)); }
+.ptah-dark .ptah-c-mod_denied_row { background-color: color-mix(in srgb, var(--color-danger, #ef4444) 12%, transparent); }
+
+/* "Manage permissions"/"Manage roles" buttons (role-list, user-permission-
+   list) — was `text-blue-600 bg-blue-50 hover:bg-blue-100`; the :hover
+   variant can't be reached by a plain utility-class repaint (its class
+   token is literally "hover:bg-blue-100", not "bg-blue-100"), hence a
+   dedicated component class instead of extending the table repaint above. */
+.ptah-c-mod_btn_soft               { color: var(--ptah-primary); background-color: var(--ptah-primary-softer); }
+.ptah-c-mod_btn_soft:hover         { background-color: var(--ptah-primary-soft); }
+.ptah-dark .ptah-c-mod_btn_soft    { color: var(--ptah-primary-lite); background-color: var(--ptah-primary-soft-d); }
+.ptah-dark .ptah-c-mod_btn_soft:hover { background-color: color-mix(in srgb, var(--ptah-primary) 30%, transparent); }
+
+/* page-list left column ("Páginas") and audit/department/page page-header
+   subtitles — hand-rolled `<h1>`/`<p>` markup (role/company/menu/
+   user-permission-list use <x-forge-page-header>, already tokenized) that
+   carried bare `text-slate-700`/`text-slate-500` with no dark: pair. */
+.ptah-c-mod_hdg            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_hdg { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_subttl            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_subttl { color: var(--ptah-text-muted); }
+
+/* page-list "Páginas" list — a bordered/divided item list, same visual role
+   as .ptah-module-table but built from <div>s, not a <table>: the tag-based
+   `tbody tr`/`tbody td` rules above can't reach it, so its own utility
+   classes are repainted the same way, under a dedicated wrapper class. */
+.ptah-c-mod_pagelist            { border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-mod_pagelist { border-color: var(--ptah-line-strong); }
+
+.ptah-c-mod_pagelist .text-slate-800 { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-800 { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_pagelist .text-slate-700 { color: var(--ptah-text); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-700 { color: var(--ptah-text); }
+
+.ptah-c-mod_pagelist .text-slate-500 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-500 { color: var(--ptah-text-faint); }
+
+.ptah-c-mod_pagelist .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-mod_pagelist .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-mod_pagelist .border-slate-200 { border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_pagelist .border-slate-200 { border-color: var(--ptah-line); }
+
+/* page-list item row — hover + selected state (was `hover:bg-slate-50/70`
+   idle and `bg-blue-50 border-l-4 border-blue-500` selected, neither with a
+   dark: pair). Selected reuses the same primary-soft idiom as
+   .ptah-c-tr_selected in the BaseCrud table. */
+.ptah-c-mod_item:hover                { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-mod_item:hover     { background-color: var(--ptah-surface-hover); }
+
+.ptah-c-mod_item_sel                  { background-color: var(--ptah-primary-softer); box-shadow: inset 3px 0 0 var(--ptah-primary); }
+.ptah-c-mod_item_sel:hover            { background-color: var(--ptah-primary-softer); }
+.ptah-dark .ptah-c-mod_item_sel,
+.ptah-dark .ptah-c-mod_item_sel:hover { background-color: var(--ptah-primary-soft-d); box-shadow: inset 3px 0 0 var(--ptah-primary-lite); }
+
+/* ── role-list "Gerenciar Permissões" bind modal — per-page accordion
+   (Onda A UX-ACL, FIX 3) ──────────────────────────────────────────────
+   Replaces the old plain sticky "CATEGORIES — MAIN" divider (bg-slate-100,
+   no dark: pair, and the whole reason the section header was unreadable
+   in the screenshot) with a real <button> group header. */
+.ptah-c-acc_hd            { background-color: var(--ptah-panel); color: var(--ptah-text-strong); }
+.ptah-c-acc_hd:hover      { background-color: var(--ptah-surface-hover); }
+.ptah-c-acc_hd:focus-visible { outline: 2px solid var(--ptah-primary); outline-offset: 1px; }
+.ptah-dark .ptah-c-acc_hd { background-color: color-mix(in srgb, var(--ptah-panel) 80%, transparent); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-acc_hd:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 40%, transparent); }
+
+/* Chevron rotates via the button's own `aria-expanded` — driven by the
+   attribute Alpine already has to set for accessibility, so the rotation
+   and the a11y state can never drift apart (no separate `:class` to keep
+   in sync with `:aria-expanded`). */
+.ptah-c-acc_chevron            { color: var(--ptah-icon-muted); transition: transform 150ms ease; }
+.ptah-dark .ptah-c-acc_chevron { color: var(--ptah-icon-muted); }
+.ptah-c-acc_hd[aria-expanded="true"] .ptah-c-acc_chevron { transform: rotate(90deg); }
+
+/* Object row inside the group body — was `hover:bg-slate-50 border
+   border-transparent hover:border-slate-200`, no dark: pair. */
+.ptah-c-mod_obj_row               { border-color: transparent; }
+.ptah-c-mod_obj_row:hover         { background-color: var(--ptah-surface-hover); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_obj_row               { border-color: transparent; }
+.ptah-dark .ptah-c-mod_obj_row:hover         { background-color: var(--ptah-surface-hover); border-color: var(--ptah-line); }
+
+.ptah-c-mod_obj_ttl            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_obj_ttl { color: var(--ptah-text-strong); }
+
+/* obj_type ("· page") — was `text-slate-300`, invisible on the modal's own
+   dark surface (1.48:1 against white too — the only genuinely broken
+   slate shade in this audit, not just missing a dark: pair). */
+.ptah-c-mod_obj_type            { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-mod_obj_type { color: var(--ptah-text-faint); }
 
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,

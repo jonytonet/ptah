@@ -73,7 +73,7 @@
                         </td>
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <button wire:click="openUserModal({{ $user->id }}, '{{ addslashes($user->name) }}')"
-                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                                class="ptah-c-mod_btn_soft inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-colors">
                                 {{ __('ptah::ui.user_perm_manage_btn') }}
                             </button>
                         </td>
@@ -100,7 +100,7 @@
     </div>
 
     @if ($rows->hasPages())
-    <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+    <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
         <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
         <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
     </div>
@@ -109,7 +109,7 @@
     {{-- Modal de gestão de roles do usuário --}}
     <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="__('ptah::ui.user_perm_modal_prefix') . ' ' . $bindingUserName" size="lg">
-            <div class="space-y-5">
+            <div class="ptah-c-mod_modal space-y-5">
                 {{-- Roles atuais --}}
                 <div>
                     <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ __('ptah::ui.user_perm_assigned_roles') }}</h3>

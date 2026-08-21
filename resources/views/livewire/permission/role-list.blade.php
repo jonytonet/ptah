@@ -38,7 +38,7 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
-                    <tr class="transition-colors hover:bg-slate-50/70 {{ $row->is_master ? 'bg-amber-50/60' : '' }}">
+                    <tr class="transition-colors hover:bg-slate-50/70 {{ $row->is_master ? 'ptah-c-mod_master_row' : '' }}">
                         <td class="px-3 py-2.5">
                             <div class="flex items-center gap-2">
                                 @if ($row->color)
@@ -62,7 +62,7 @@
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-2">
                                 <button wire:click="openBind({{ $row->id }})"
-                                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                    class="ptah-c-mod_btn_soft inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-colors"
                                     title="{{ __('ptah::ui.role_manage_perms_title') }}">
                                     {{ __('ptah::ui.role_manage_perms_btn') }}
                                 </button>
@@ -97,7 +97,7 @@
     </div>
 
     @if ($rows->hasPages())
-        <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
             <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
             <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
         </div>
@@ -106,7 +106,7 @@
     {{-- Modal criar/editar role --}}
     <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal :title="$isEditing ? __('ptah::ui.role_form_title_edit') : __('ptah::ui.role_new_btn')" size="md">
-            <div class="space-y-4">
+            <div class="ptah-c-mod_modal space-y-4">
                 <x-forge-input :label="__('ptah::ui.role_form_name')" wire:model="name" :error="$errors->first('name')" required />
                 <x-forge-textarea :label="__('ptah::ui.role_form_desc')" wire:model="description" rows="2" />
                 <div class="grid grid-cols-2 gap-4">
@@ -134,45 +134,122 @@
     </div>
 
     {{-- Modal de bind de permissões --}}
+    @php
+        // Presentation-only grouping/search-index for the accordion + client-side
+        // filter below (FIX 2/FIX 3, Onda A UX-ACL) — saveBind() and the shape of
+        // $bindObjects itself are untouched, this only reads the array to render it
+        // grouped instead of flat. Quotes/backslashes are stripped (not escaped)
+        // from the search index on purpose: it is embedded inside a single-quoted
+        // Alpine JS string literal below, and stripping avoids re-introducing the
+        // exact "stray quote breaks the attribute" failure mode LayoutXDataQuotingTest
+        // guards against elsewhere, without needing per-character JS escaping.
+        $bindSearchOf = fn (array $o): string => mb_strtolower(str_replace(["'", '"', '\\'], ' ', $o['page_name'].' '.$o['obj_label'].' '.$o['obj_key']));
+        $bindGroups = collect($bindObjects)
+            ->map(function (array $obj, int $i) use ($bindSearchOf): array {
+                $obj['__idx'] = $i;
+                $obj['__search'] = $bindSearchOf($obj);
+
+                return $obj;
+            })
+            ->groupBy('page_name');
+        $bindExpandByDefault = $bindGroups->count() <= 3;
+        $bindFullBlob = $bindGroups->map(fn ($group, $page) => mb_strtolower(str_replace(["'", '"', '\\'], ' ', (string) $page)).' '.$group->pluck('__search')->implode(' '))->implode(' ||| ');
+    @endphp
     <div x-data="{ open: @entangle('showBindModal') }">
         <x-forge-modal :title="__('ptah::ui.role_bind_modal_prefix') . ' ' . $bindingRoleName" size="xl">
-            <div class="space-y-2 max-h-[60vh] overflow-y-auto">
-                @php $currentPage = null; @endphp
-                @foreach ($bindObjects as $i => $obj)
-                    @if ($currentPage !== $obj['page_name'])
-                        @php $currentPage = $obj['page_name']; @endphp
-                        <div class="sticky top-0 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 uppercase tracking-wider rounded">
-                            📄 {{ $obj['page_name'] }} — {{ $obj['section'] }}
+            <div class="ptah-c-mod_modal" x-data="{ filterText: '' }">
+                @if (! empty($bindObjects))
+                    <div class="relative mb-3">
+                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
+                        </svg>
+                        <input
+                            type="search"
+                            x-model.debounce.150ms="filterText"
+                            class="ptah-c-search w-full py-2 pl-9 pr-4 text-sm rounded border outline-none transition-all"
+                            placeholder="{{ __('ptah::ui.role_bind_filter_ph') }}"
+                            aria-label="{{ __('ptah::ui.role_bind_filter_aria') }}"
+                        />
+                    </div>
+                @endif
+                <div class="space-y-2 max-h-[60vh] overflow-y-auto">
+                    @foreach ($bindGroups as $pageName => $group)
+                        @php
+                            $groupIdx = $loop->index;
+                            $groupBlob = $group->pluck('__search')->implode(' ||| ');
+                            $groupTotal = $group->count() * 4;
+                            $groupChecked = $group->sum(fn (array $o) => (int) ($o['can_read'] ?? false) + (int) ($o['can_create'] ?? false) + (int) ($o['can_update'] ?? false) + (int) ($o['can_delete'] ?? false));
+                            $section = $group->first()['section'] ?? '';
+                        @endphp
+                        <div
+                            wire:key="ptah-bind-group-{{ md5($pageName) }}"
+                            x-data="{ manualOpen: {{ $bindExpandByDefault ? 'true' : 'false' }}, checkedCount: {{ $groupChecked }} }"
+                            x-show="filterText.trim() === '' || '{{ $groupBlob }}'.includes(filterText.trim().toLowerCase())"
+                        >
+                            {{-- Enquanto o filtro esta ativo os grupos com match ficam forcados
+                                 abertos; alternar manualOpen nesse estado nao teria feedback
+                                 visual nenhum e mudaria o estado que reaparece ao limpar o
+                                 filtro — por isso o clique so alterna com o filtro vazio. --}}
+                            <button
+                                type="button"
+                                class="ptah-c-acc_hd w-full flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                                @click="if (filterText.trim() === '') manualOpen = !manualOpen"
+                                :aria-expanded="filterText.trim() === '' ? manualOpen : true"
+                                aria-controls="ptah-bind-group-{{ $groupIdx }}"
+                            >
+                                <svg class="ptah-c-acc_chevron w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span class="truncate">📄 {{ $pageName }} — {{ $section }}</span>
+                                <span class="ml-auto ptah-c-modal_sub font-normal normal-case tracking-normal shrink-0" x-text="checkedCount + '/{{ $groupTotal }}'"></span>
+                            </button>
+                            <div id="ptah-bind-group-{{ $groupIdx }}" x-show="filterText.trim() === '' ? manualOpen : true" class="space-y-1 pt-1">
+                                @foreach ($group as $obj)
+                                    @php $i = $obj['__idx']; @endphp
+                                    <div
+                                        wire:key="ptah-bind-obj-{{ $i }}"
+                                        class="ptah-c-mod_obj_row flex items-center gap-3 px-3 py-2 rounded-md border"
+                                        data-ptah-search="{{ $obj['__search'] }}"
+                                        x-show="filterText.trim() === '' || $el.dataset.ptahSearch.includes(filterText.trim().toLowerCase())"
+                                    >
+                                        <div class="flex-1 min-w-0">
+                                            <p class="ptah-c-mod_obj_ttl text-sm font-medium truncate">{{ $obj['obj_label'] }}</p>
+                                            <p class="text-xs text-slate-400 font-mono">{{ $obj['obj_key'] }} <span class="ml-1 ptah-c-mod_obj_type">· {{ $obj['obj_type'] }}</span></p>
+                                        </div>
+                                        <div class="flex items-center gap-3 shrink-0">
+                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
+                                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_read') }}</span>
+                                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_read" @change="checkedCount += $event.target.checked ? 1 : -1" class="rounded" />
+                                            </label>
+                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
+                                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_create') }}</span>
+                                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_create" @change="checkedCount += $event.target.checked ? 1 : -1" class="rounded" />
+                                            </label>
+                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
+                                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_edit') }}</span>
+                                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_update" @change="checkedCount += $event.target.checked ? 1 : -1" class="rounded" />
+                                            </label>
+                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
+                                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_delete') }}</span>
+                                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_delete" @change="checkedCount += $event.target.checked ? 1 : -1" class="rounded" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                    @if (empty($bindObjects))
+                        <div class="py-8 text-center text-slate-400 text-sm">{{ __('ptah::ui.role_bind_empty') }}</div>
+                    @else
+                        <div
+                            x-show="filterText.trim() !== '' && !('{{ $bindFullBlob }}'.includes(filterText.trim().toLowerCase()))"
+                            class="py-8 text-center text-slate-400 text-sm"
+                        >
+                            {{ __('ptah::ui.role_bind_filter_empty') }}
                         </div>
                     @endif
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 border border-transparent hover:border-slate-200">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-slate-800 truncate">{{ $obj['obj_label'] }}</p>
-                            <p class="text-xs text-slate-400 font-mono">{{ $obj['obj_key'] }} <span class="ml-1 text-slate-300">· {{ $obj['obj_type'] }}</span></p>
-                        </div>
-                        <div class="flex items-center gap-3 shrink-0">
-                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
-                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_read') }}</span>
-                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_read" class="rounded" />
-                            </label>
-                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
-                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_create') }}</span>
-                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_create" class="rounded" />
-                            </label>
-                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
-                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_edit') }}</span>
-                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_update" class="rounded" />
-                            </label>
-                            <label class="flex flex-col items-center gap-0.5 cursor-pointer">
-                                <span class="text-xs text-slate-400">{{ __('ptah::ui.role_bind_perm_delete') }}</span>
-                                <input type="checkbox" wire:model="bindObjects.{{ $i }}.can_delete" class="rounded" />
-                            </label>
-                        </div>
-                    </div>
-                @endforeach
-                @if (empty($bindObjects))
-                    <div class="py-8 text-center text-slate-400 text-sm">{{ __('ptah::ui.role_bind_empty') }}</div>
-                @endif
+                </div>
             </div>
             <x-slot name="footer">
                 <x-forge-button color="light" @click="open = false">{{ __('ptah::ui.btn_cancel') }}</x-forge-button>

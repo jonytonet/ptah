@@ -2,7 +2,7 @@
 <div>
     <div class="mb-5">
         <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.dept_title') }}</h1>
-        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.dept_subtitle') }}</p>
+        <p class="text-sm ptah-c-mod_subttl mt-0.5">{{ __('ptah::ui.dept_subtitle') }}</p>
     </div>
 
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
@@ -30,7 +30,7 @@
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('name')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.dept_col_name') }} @if($sort==='name')<span class="text-blue-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.dept_col_name') }} @if($sort==='name')<span class="ptah-c-sort_active">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.dept_col_desc') }}</th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.dept_col_roles') }}</th>
@@ -82,7 +82,7 @@
     </div>
 
     @if ($rows->hasPages())
-        <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
             <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
             <div>{{ $rows->links('ptah::components.forge-pagination')  }}</div>
         </div>

@@ -83,6 +83,59 @@ class ModuleScreenThemeParityTest extends TestCase
             '.ptah-module-table .text-slate-700' => ['.ptah-module-table .text-slate-700'],
             '.ptah-module-table .text-slate-300' => ['.ptah-module-table .text-slate-300'],
             '.ptah-page-title' => ['.ptah-page-title'],
+
+            // Onda A UX-ACL, FIX 1 — semantic chips/badges (status, MASTER/DEFAULT,
+            // audit action, menu Link) inside the 7 module screens' own tables.
+            '.ptah-module-table .text-slate-600' => ['.ptah-module-table .text-slate-600'],
+            '.ptah-module-table .bg-blue-50' => ['.ptah-module-table .bg-blue-50'],
+            '.ptah-module-table .bg-blue-100' => ['.ptah-module-table .bg-blue-100'],
+            '.ptah-module-table .text-blue-600' => ['.ptah-module-table .text-blue-600'],
+            '.ptah-module-table .text-blue-700' => ['.ptah-module-table .text-blue-700'],
+            '.ptah-module-table .bg-amber-100' => ['.ptah-module-table .bg-amber-100'],
+            '.ptah-module-table .text-amber-600' => ['.ptah-module-table .text-amber-600'],
+            '.ptah-module-table .text-amber-700' => ['.ptah-module-table .text-amber-700'],
+            '.ptah-module-table .bg-green-100' => ['.ptah-module-table .bg-green-100'],
+            '.ptah-module-table .text-green-700' => ['.ptah-module-table .text-green-700'],
+            '.ptah-module-table .bg-red-100' => ['.ptah-module-table .bg-red-100'],
+            '.ptah-module-table .text-red-600' => ['.ptah-module-table .text-red-600'],
+            '.ptah-module-table .text-red-700' => ['.ptah-module-table .text-red-700'],
+
+            // Toolbar filter labels (menu-list "Filtrar por tipo", user-permission-list
+            // "Perfil") and the two modal families (create/edit + manage-roles) that
+            // carried more slate/amber shades than the original modal-panel set covered.
+            '.ptah-module-toolbar .text-slate-500' => ['.ptah-module-toolbar .text-slate-500'],
+            '.ptah-c-mod_modal .text-slate-800' => ['.ptah-c-mod_modal .text-slate-800'],
+            '.ptah-c-mod_modal .text-slate-400' => ['.ptah-c-mod_modal .text-slate-400'],
+            '.ptah-c-mod_modal .text-slate-500' => ['.ptah-c-mod_modal .text-slate-500'],
+            '.ptah-c-mod_modal .bg-slate-50' => ['.ptah-c-mod_modal .bg-slate-50'],
+            '.ptah-c-mod_modal .border-slate-200' => ['.ptah-c-mod_modal .border-slate-200'],
+            '.ptah-c-mod_modal .text-amber-500' => ['.ptah-c-mod_modal .text-amber-500'],
+            '.ptah-c-mod_modal .text-amber-600' => ['.ptah-c-mod_modal .text-amber-600'],
+
+            // page-list's hand-rolled "Páginas" list (a <div>-based item list, not a
+            // <table>) and its heading/subtitle pair.
+            '.ptah-c-mod_pagelist' => ['.ptah-c-mod_pagelist'],
+            '.ptah-c-mod_pagelist .text-slate-800' => ['.ptah-c-mod_pagelist .text-slate-800'],
+            '.ptah-c-mod_pagelist .text-slate-700' => ['.ptah-c-mod_pagelist .text-slate-700'],
+            '.ptah-c-mod_pagelist .text-slate-500' => ['.ptah-c-mod_pagelist .text-slate-500'],
+            '.ptah-c-mod_pagelist .bg-slate-100' => ['.ptah-c-mod_pagelist .bg-slate-100'],
+            '.ptah-c-mod_pagelist .border-slate-200' => ['.ptah-c-mod_pagelist .border-slate-200'],
+            '.ptah-c-mod_hdg' => ['.ptah-c-mod_hdg'],
+            '.ptah-c-mod_subttl' => ['.ptah-c-mod_subttl'],
+
+            // Bespoke component classes replacing fractional-opacity/hover utilities
+            // that a plain class-repaint selector cannot reach (FIX 1), plus the
+            // role-list bind-modal accordion/object-row classes (FIX 3).
+            // NOTE: .ptah-c-mod_master_row / .ptah-c-mod_denied_row are intentionally
+            // NOT listed here — their dark rule mixes the semantic color straight
+            // against `transparent` (a lighter, row-tint-only mix than the chip
+            // tokens above), so it carries no var(--ptah-*) for this mechanism to
+            // key on. Covered instead by ModuleScreenSemanticChipContrastTest.
+            '.ptah-c-mod_btn_soft' => ['.ptah-c-mod_btn_soft'],
+            '.ptah-c-mod_item_sel' => ['.ptah-c-mod_item_sel'],
+            '.ptah-c-acc_hd' => ['.ptah-c-acc_hd'],
+            '.ptah-c-mod_obj_ttl' => ['.ptah-c-mod_obj_ttl'],
+            '.ptah-c-mod_obj_type' => ['.ptah-c-mod_obj_type'],
         ];
     }
 

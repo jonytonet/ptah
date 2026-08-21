@@ -41,7 +41,7 @@
                 <tr>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-12">{{ __('ptah::ui.company_col_abbr') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('name')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="text-blue-500">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="ptah-c-sort_active">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">E-mail</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">CNPJ / Tax</th>
@@ -124,7 +124,7 @@
 
     {{-- Paginação --}}
     @if ($rows->hasPages())
-        <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
             <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
             <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
         </div>

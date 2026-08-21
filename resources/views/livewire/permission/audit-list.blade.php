@@ -2,7 +2,7 @@
 <div>
     <div class="mb-5">
         <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.audit_title') }}</h1>
-        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.audit_subtitle') }}</p>
+        <p class="text-sm ptah-c-mod_subttl mt-0.5">{{ __('ptah::ui.audit_subtitle') }}</p>
     </div>
 
     {{-- Barra de filtros --}}
@@ -56,7 +56,7 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
-                    <tr class="transition-colors hover:bg-slate-50/70 {{ $row->result === 'denied' ? 'bg-red-50/30' : '' }}">
+                    <tr class="transition-colors hover:bg-slate-50/70 {{ $row->result === 'denied' ? 'ptah-c-mod_denied_row' : '' }}">
                         <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap text-xs">
                             {{ $row->created_at?->format('d/m/Y H:i:s') }}
                         </td>
@@ -114,7 +114,7 @@
     </div>
 
     @if ($rows->hasPages())
-    <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+    <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
         <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
         <div>{{ $rows->links('ptah::components.forge-pagination')  }}</div>
     </div>
