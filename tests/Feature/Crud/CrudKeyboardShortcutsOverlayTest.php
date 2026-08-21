@@ -112,4 +112,18 @@ class CrudKeyboardShortcutsOverlayTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/[^.\w]\$el\.querySelector/', $blade);
         $this->assertDoesNotMatchRegularExpression('/[^.\w]\$wire\.prepareCreate/', $blade);
     }
+
+    #[Test]
+    public function the_dialog_guard_tests_real_visibility_not_own_computed_display(): void
+    {
+        // getComputedStyle(el).display nao reflete ancestral escondido: os
+        // confirms ad-hoc tem x-show no wrapper e aria-modal no painel interno,
+        // entao a versao antiga via "dialog aberto" em toda pagina e engolia
+        // TODAS as teclas em silencio (bug de campo: nada acontece, console
+        // limpo). O guard precisa de checkVisibility()/getClientRects().
+        $blade = file_get_contents(dirname(__DIR__, 3).'/resources/views/livewire/base-crud/base-crud.blade.php');
+
+        $this->assertStringContainsString('el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0', $blade);
+        $this->assertStringNotContainsString("getComputedStyle(el).display !== 'none'", $blade);
+    }
 }

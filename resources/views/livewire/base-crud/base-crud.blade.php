@@ -4,7 +4,9 @@
     (_modal-form.blade.php) mantinha atualizado — o confirm de exclusao em massa
     e o de descartar alteracoes, ambos deste mesmo arquivo, nao tocavam nele, e
     um atalho ainda disparava por baixo deles. Todo dialog do pacote (forge-modal
-    e os confirms ad-hoc abaixo) carrega aria-modal=true e some via x-show
+    e os confirms ad-hoc abaixo) carrega aria-modal=true; a visibilidade real
+    e testada com checkVisibility()/getClientRects() porque o x-show mora no
+    WRAPPER e display computado do painel interno nunca muda
     (display:none), entao checar o display computado cobre qualquer um deles sem
     acoplar a um estado Alpine especifico de outro componente.
 --}}
@@ -13,8 +15,17 @@
          _bulkConfirm: null,
          _showShortcuts: false,
          _anyDialogOpen() {
+             /* getComputedStyle(el).display NAO vira none quando quem esconde e
+                um ANCESTRAL: os confirms ad-hoc e este proprio overlay poem o
+                x-show no wrapper e o aria-modal no painel interno, cujo display
+                computado fica block para sempre — a versao anterior via um
+                dialog aberto em TODA pagina e engolia todas as teclas em
+                silencio (bug reportado pelo usuario: nada acontece, nada no
+                console). checkVisibility() olha a cadeia inteira; o fallback
+                getClientRects() cobre navegador antigo (elemento nao
+                renderizado nao gera caixa, mesmo position:fixed). */
              return Array.from(document.querySelectorAll('[aria-modal=true]')).some(
-                 el => getComputedStyle(el).display !== 'none'
+                 el => el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0
              );
          },
          _hotkeys(e) {
