@@ -28,7 +28,7 @@
     <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
         x-show="$wire.showModal" x-cloak
         x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }"
-        class="fixed inset-0 z-[9999] flex items-center justify-center">
+        class="fixed inset-0 z-[9999] flex items-center justify-center ptah-cfg">
         {{-- Backdrop --}}
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$wire.showModal = false; $wire.closeModal()">
         </div>
@@ -130,7 +130,7 @@
             </aside>
 
             {{-- ── Conteúdo Principal ────────────────────────────────────── --}}
-            <div class="flex flex-col flex-1 min-w-0">
+            <div class="flex flex-col flex-1 min-w-0 ptah-cfg-content">
                 {{-- Top bar --}}
                 <div class="flex items-center justify-between py-4 bg-white border-b px-7 border-slate-100">
                     <div>
@@ -1958,7 +1958,7 @@
                                     __('ptah::ui.cfg_style_presets') }}</p>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'color:#999;text-decoration:line-through;background:#F5F5F5;')"
-                                    class="cursor-pointer tag hover:bg-slate-200"
+                                    class="cursor-pointer tag"
                                     style="color:#999;text-decoration:line-through;background:#F5F5F5;">{{
                                     __('ptah::ui.cfg_style_preset_cancelled') }}</button>
                                 <button type="button"
@@ -2741,63 +2741,8 @@
 
     @once
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" defer></script>
-    <style>
-        .cfg-label {
-            display: block;
-            margin-bottom: .25rem;
-            font-size: .6875rem;
-            font-weight: 600;
-            color: #6B7280;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-        }
-
-        .cfg-input {
-            display: block;
-            width: 100%;
-            border-radius: .5rem;
-            border: 1px solid #D1D5DB;
-            background: #fff;
-            padding: .5rem .75rem;
-            font-size: .75rem;
-            color: #1E293B;
-            outline: none;
-            transition: border-color .15s, box-shadow .15s;
-        }
-
-        .cfg-input:focus {
-            border-color: #818CF8;
-            box-shadow: 0 0 0 3px rgba(129, 140, 248, .2);
-        }
-
-        .cfg-input-sm {
-            display: block;
-            width: 100%;
-            border-radius: .375rem;
-            border: 1px solid #D1D5DB;
-            background: #fff;
-            padding: .25rem .5rem;
-            font-size: .6875rem;
-            color: #1E293B;
-            outline: none;
-            transition: border-color .15s;
-        }
-
-        .cfg-input-sm:focus {
-            border-color: #818CF8;
-        }
-
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 9999px;
-            background: #F1F5F9;
-            color: #475569;
-            font-size: .6875rem;
-            font-weight: 500;
-            padding: .125rem .5rem;
-        }
-    </style>
+    {{-- .cfg-label/.cfg-input/.cfg-input-sm/.tag moved to resources/css/ptah-components.css,
+         scoped under .ptah-cfg and following the user's theme + dark mode (Onda 4 Parte A). --}}
 
     <script>
         function crudConfigApp(fields, filters, styles) {

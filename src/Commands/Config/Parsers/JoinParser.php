@@ -12,7 +12,7 @@ class JoinParser
      */
     public function parse(string $definition): array
     {
-        $parts = explode(':', $definition);
+        $parts = $this->tokenize($definition);
 
         if (count($parts) < 3) {
             throw new \InvalidArgumentException('JOIN syntax requires at least: type:table:first=second');
@@ -47,5 +47,55 @@ class JoinParser
         }
 
         return $config;
+    }
+
+    /**
+     * The naive explode(':') truncated select= at the first ':' inside its
+     * value — the docblock's own example (select=suppliers.name:supplier_name,
+     * suppliers.cnpj:supplier_cnpj) silently lost everything past
+     * "suppliers.name". Same algorithm as FilterParser/ColumnParser, with one
+     * join-specific twist: the bare keyword "distinct" is always a standalone
+     * token, never a continuation of an open key=value buffer (it legally
+     * appears right after the ON pair, which opens a buffer).
+     *
+     * @return array<int, string>
+     */
+    private function tokenize(string $definition): array
+    {
+        $raw = explode(':', $definition);
+        $result = [];
+        $buffer = null;
+
+        foreach ($raw as $i => $part) {
+            // First two tokens (type, table) are always standalone.
+            if ($i < 2) {
+                $result[] = $part;
+
+                continue;
+            }
+
+            if ($part === 'distinct') {
+                if ($buffer !== null) {
+                    $result[] = $buffer;
+                    $buffer = null;
+                }
+                $result[] = $part;
+            } elseif (str_contains($part, '=')) {
+                if ($buffer !== null) {
+                    $result[] = $buffer;
+                }
+                $buffer = $part;
+            } elseif ($buffer !== null) {
+                $buffer .= ':'.$part;
+            } else {
+                $result[] = $part;
+            }
+        }
+
+        if ($buffer !== null) {
+            $result[] = $buffer;
+        }
+
+        return $result;
     }
 }

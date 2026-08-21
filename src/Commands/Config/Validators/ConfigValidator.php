@@ -137,8 +137,14 @@ class ConfigValidator
             }
         }
 
-        if (! in_array($config['condition'], CrudConfigEnums::OPERATORS)) {
-            throw new \InvalidArgumentException("Invalid style condition: {$config['condition']}. Valid operators: ".implode(', ', CrudConfigEnums::OPERATORS));
+        // BUG FIX (Onda 4 Parte B): this used to validate against
+        // CrudConfigEnums::OPERATORS (the SQL-filter list: '=', 'LIKE', ...),
+        // which rejected the runtime's actual '==' condition while silently
+        // accepting '=' and 'LIKE' — both of which HasCrudRenderers::getRowStyle()
+        // never matches, so a style configured that way would pass validation
+        // and then never apply, with no error anywhere.
+        if (! in_array($config['condition'], CrudConfigEnums::STYLE_CONDITIONS)) {
+            throw new \InvalidArgumentException("Invalid style condition: {$config['condition']}. Valid conditions: ".implode(', ', CrudConfigEnums::STYLE_CONDITIONS));
         }
     }
 

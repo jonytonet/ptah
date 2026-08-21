@@ -281,6 +281,151 @@
 .ptah-dark .ptah-c-perpage:hover { border-color: var(--ptah-line-field-hover); }
 .ptah-dark .ptah-c-perpage:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
+/* ── BaseCrud: drag/resize de colunas, hover de linha, loading bar ────────
+   Migrated from partials/_scripts.blade.php's own inline <style> block
+   (Onda 4 Parte A) — the guard is BaseCrudNoInlineStyleTest below: neither
+   this partial nor crud-config.blade.php may carry a <style> tag again.
+   Global selectors (html, @keyframes) were already global before the move
+   (an inline <style> inside a Blade partial is no more scoped than this
+   file); relocating them here changes nothing about their reach. */
+html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layout shift ao abrir/fechar modais */
+
+.ptah-sortable-col.ptah-dragging   { opacity: .45; }
+.ptah-sortable-col.ptah-drag-over  { outline: 2px solid var(--ptah-primary, #5b21b6); outline-offset: -2px; }
+.ptah-drag-grip                    { touch-action: none; }
+
+#ptah-resize-indicator {
+    position: fixed; top: 0; bottom: 0; width: 2px;
+    background: var(--ptah-primary, #5b21b6); z-index: 9999; pointer-events: none; display: none;
+}
+#ptah-resize-indicator.active { display: block; }
+
+/* Filter panel field labels/inputs. #64748B and #E2E8F0/#FFFFFF (light) are exact
+   matches for --ptah-text-muted and --ptah-line-strong/--ptah-field below. */
+.ptah-base-crud .p-4 label,
+.ptah-base-crud .space-y-4 label:not(.flex) {
+    display: block;
+    margin-bottom: .375rem;
+    font-size: .6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ptah-text-muted);
+}
+.ptah-base-crud .p-4 input:not([type="checkbox"]),
+.ptah-base-crud .p-4 select {
+    border-color: var(--ptah-line-strong);
+    background-color: var(--ptah-field);
+    transition: border-color .15s, box-shadow .15s;
+}
+.ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
+.ptah-base-crud .p-4 select:focus {
+    border-color: var(--ptah-primary);
+    box-shadow: 0 0 0 3px var(--ptah-primary-ring);
+    outline: none;
+}
+/* Dark half — this file already carried its OWN .ptah-dark rules (the finding
+   was the missing LIGHT/token half above, not this one). #94a3b8/#475569/
+   #1e293b/#e2e8f0/#0f172a are exact matches for --ptah-text-muted/
+   --ptah-line-control/--ptah-field-muted/--ptah-text-strong/--ptah-field in
+   this scope, so tokenizing them changes nothing rendered. Covers both cases:
+   the component's own theme (.ptah-base-crud.ptah-dark) and the layout's
+   (.ptah-dark .ptah-base-crud). */
+.ptah-base-crud.ptah-dark .p-4 label,
+.ptah-dark .ptah-base-crud .p-4 label,
+.ptah-base-crud.ptah-dark .space-y-4 label:not(.flex),
+.ptah-dark .ptah-base-crud .space-y-4 label:not(.flex) {
+    color: var(--ptah-text-muted);
+}
+.ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]),
+.ptah-dark .ptah-base-crud .p-4 input:not([type="checkbox"]),
+.ptah-base-crud.ptah-dark .p-4 select,
+.ptah-dark .ptah-base-crud .p-4 select {
+    border-color: var(--ptah-line-control);
+    background-color: var(--ptah-field-muted);
+    color: var(--ptah-text-strong);
+    color-scheme: dark;
+}
+.ptah-base-crud.ptah-dark .p-4 input:not([type="checkbox"]):focus,
+.ptah-dark .ptah-base-crud .p-4 input:not([type="checkbox"]):focus,
+.ptah-base-crud.ptah-dark .p-4 select:focus,
+.ptah-dark .ptah-base-crud .p-4 select:focus {
+    border-color: var(--ptah-primary-lite);
+    box-shadow: 0 0 0 3px var(--ptah-primary-ring);
+    background-color: var(--ptah-field);
+    outline: none;
+}
+
+/* Table header sticky shadow line */
+.ptah-cols-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Row hover highlight. #1e40af/#1d4ed8 kept LITERAL on purpose (byte-identical
+   relocation, not tokenized): they are not --ptah-* neutrals, and they already
+   don't match --ptah-primary's own #5b21b6 fallback — the same "default brand
+   blue" family the loading bar's var(--color-primary, #1e40af) fallback below
+   uses. That mismatch pre-dates this move; resolving it is out of scope here. */
+.ptah-base-crud tbody tr.ptah-c-tr {
+    position: relative;
+    transition: background-color .12s ease, box-shadow .12s ease;
+}
+.ptah-base-crud tbody tr.ptah-c-tr:hover {
+    box-shadow: inset 3px 0 0 #1e40af;
+}
+.ptah-base-crud.ptah-dark tbody tr.ptah-c-tr:hover,
+.ptah-dark .ptah-base-crud tbody tr.ptah-c-tr:hover {
+    box-shadow: inset 3px 0 0 #1d4ed8;
+}
+/* Botões de ação ficam opacos no hover da linha */
+.ptah-base-crud tbody tr.ptah-c-tr .ptah-row-btns {
+    opacity: 0.35;
+    transition: opacity .12s ease;
+}
+.ptah-base-crud tbody tr.ptah-c-tr:hover .ptah-row-btns {
+    opacity: 1;
+}
+/* Telas tácteis (sem hover): botões sempre visíveis */
+@media (hover: none) {
+    .ptah-base-crud tbody tr.ptah-c-tr .ptah-row-btns {
+        opacity: 1;
+    }
+}
+
+/* Row action buttons. #F1F5F9 kept literal: no .ptah-dark counterpart existed
+   before this move either, so dark mode already rendered this exact literal —
+   tokenizing it now would be a behavior change this wave didn't ask for. */
+.ptah-base-crud .ptah-row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    transition: background-color .12s, color .12s;
+}
+.ptah-base-crud .ptah-row-action:hover {
+    background-color: #F1F5F9;
+}
+
+/* ── Loading shimmer bar ── */
+@keyframes ptah-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+}
+.ptah-loading-bar {
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-primary, #1e40af) 50%,
+        transparent 100%);
+    background-size: 200% 100%;
+    animation: ptah-shimmer 1.4s ease-in-out infinite;
+    border-radius: 1px;
+}
+
 /* ── Filter panel card ── */
 .ptah-c-fp_card            { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
 .ptah-dark .ptah-c-fp_card { background-color: var(--ptah-canvas); border-color: var(--ptah-line-strong); box-shadow: none; }
@@ -596,6 +741,175 @@
 .ptah-c-modal_close            { color: #94a3b8; }
 .ptah-c-modal_close:hover      { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-modal_close:hover { background-color: color-mix(in srgb, var(--ptah-control-ghost) 70%, transparent); color: var(--ptah-text-secondary); }
+
+/* ── CRUD Config editor (Onda 4 Parte A) ─────────────────────────────────
+   crud-config.blade.php's modal was light-mode-only: 51 `bg-white`, ~250
+   text-slate and border-slate utilities baked into the markup, 0 `dark:`,
+   and its own <style> block with hex literals (indigo focus ring
+   included). Two things migrated here, both scoped so a host app's own
+   `.tag`/`.cfg-*` classes elsewhere stay untouched:
+
+   1. .cfg-label/.cfg-input/.cfg-input-sm/.tag — the view's own <style>
+      block, now under .ptah-cfg (the modal's outer wrapper, added in the
+      view). The indigo focus ring (#818CF8) becomes --ptah-primary, same
+      idiom as every other focus ring in this file.
+   2. A scoped repaint of the bg-white, text-slate-* and border-slate-*
+      utility families actually used in the view (grepped, not guessed — 7
+      border-slate/text-slate shades plus bg-white cover every site).
+      bg-white and border-slate-100/200/300 are scoped to .ptah-cfg (the
+      whole modal: the left nav rail never uses them). text-slate-300 up
+      through text-slate-800 are scoped one level narrower, to
+      .ptah-cfg-content (the "Conteúdo Principal" pane, added in the view)
+      — the nav rail is a permanently dark rail (bg-slate-900, same idea as
+      a code-editor activity bar) that reuses those EXACT SAME utility
+      names for its own legible-on-black text in EITHER theme; repainting
+      them from here would go invisible against the rail's own always-dark
+      background. Of the bg-slate family, only the DARK ones (bg-slate-900
+      rail chrome, the JSON-preview box) stay out of scope — they are what
+      keeps those two elements dark regardless of theme. The LIGHT ones
+      (bg-slate-50/100/200) are repainted below: they sit under the very
+      text this section tokenizes, and leaving them literal produced
+      1.13:1 light-on-light in .ptah-dark (review finding, wave 4). */
+.ptah-cfg .cfg-label {
+    display: block;
+    margin-bottom: .25rem;
+    font-size: .6875rem;
+    font-weight: 600;
+    color: var(--ptah-text-faint); /* #6B7280, exact match */
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+.ptah-dark .ptah-cfg .cfg-label { color: var(--ptah-text-faint); }
+
+/* Border has no exact token match (#D1D5DB): --ptah-line-field is the
+   semantic "generic form field border" token the rest of the design system
+   already uses for this exact role, and it clears the 3:1 floor the other
+   field borders were raised to — the visible border gets a hair darker as a
+   result, same trade already made for every other form field in this file. */
+.ptah-cfg .cfg-input {
+    display: block;
+    width: 100%;
+    border-radius: .5rem;
+    border: 1px solid var(--ptah-line-field);
+    background: var(--ptah-field); /* #fff, exact match */
+    padding: .5rem .75rem;
+    font-size: .75rem;
+    color: var(--ptah-text-strong); /* #1E293B, exact match */
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.ptah-cfg .cfg-input:focus {
+    border-color: var(--ptah-primary);
+    box-shadow: 0 0 0 3px var(--ptah-primary-ring);
+}
+.ptah-dark .ptah-cfg .cfg-input {
+    border: 1px solid var(--ptah-line-field);
+    background: var(--ptah-field);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-cfg .cfg-input:focus {
+    border-color: var(--ptah-primary-lite);
+    box-shadow: 0 0 0 3px var(--ptah-primary-ring);
+}
+
+.ptah-cfg .cfg-input-sm {
+    display: block;
+    width: 100%;
+    border-radius: .375rem;
+    border: 1px solid var(--ptah-line-field);
+    background: var(--ptah-field);
+    padding: .25rem .5rem;
+    font-size: .6875rem;
+    color: var(--ptah-text-strong);
+    outline: none;
+    transition: border-color .15s;
+}
+.ptah-cfg .cfg-input-sm:focus { border-color: var(--ptah-primary); }
+.ptah-dark .ptah-cfg .cfg-input-sm {
+    border: 1px solid var(--ptah-line-field);
+    background: var(--ptah-field);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-cfg .cfg-input-sm:focus { border-color: var(--ptah-primary-lite); }
+
+.ptah-cfg .tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    background: var(--ptah-control-ghost); /* #F1F5F9, exact match */
+    color: var(--ptah-text-secondary); /* #475569, exact match */
+    font-size: .6875rem;
+    font-weight: 500;
+    padding: .125rem .5rem;
+}
+.ptah-dark .ptah-cfg .tag {
+    background: var(--ptah-control-ghost);
+    color: var(--ptah-text-secondary);
+}
+
+/* Utility repaint — same "unlayered rule beats the Tailwind utility class"
+   idiom the Module screens section above already relies on. */
+.ptah-cfg .bg-white            { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-cfg .bg-white { background-color: var(--ptah-surface); }
+
+.ptah-cfg .border-slate-100            { border-color: var(--ptah-line); }
+.ptah-dark .ptah-cfg .border-slate-100 { border-color: var(--ptah-line); }
+
+.ptah-cfg .border-slate-200            { border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-cfg .border-slate-200 { border-color: var(--ptah-line-strong); }
+
+.ptah-cfg .border-slate-300            { border-color: var(--ptah-line-control); }
+.ptah-dark .ptah-cfg .border-slate-300 { border-color: var(--ptah-line-control); }
+
+/* The bg-slate-* backgrounds MUST move with the text they sit under. The first
+   pass tokenized text-slate-* and left these behind, which read fine in light
+   mode and produced 1.13:1 light-on-light in .ptah-dark (review finding).
+   bg-slate-50 (#f8fafc) and bg-slate-100 (#f1f5f9) are exact token matches;
+   bg-slate-200 (#e2e8f0) matches --ptah-line-strong's value — a border token,
+   but every call site here is a tiny neutral pip/skeleton bar, i.e. "line
+   drawn as a filled shape", so the semantic stretch is small and documented. */
+.ptah-cfg-content .bg-slate-50            { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-cfg-content .bg-slate-50 { background-color: var(--ptah-panel); }
+
+.ptah-cfg-content .bg-slate-100            { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-cfg-content .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+
+.ptah-cfg-content .bg-slate-200            { background-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-cfg-content .bg-slate-200 { background-color: var(--ptah-line-strong); }
+
+/* .tag's own background is tokenized; its hover was still the literal
+   hover:bg-slate-200 utility in the view (light flash over dark theme). */
+.ptah-cfg .tag:hover            { background-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-cfg .tag:hover { background-color: var(--ptah-line-strong); }
+
+/* text-slate-300: no exact token (#cbd5e1) — --ptah-text-faint is the
+   semantic "faintest text" tier (placeholder dashes, empty separators),
+   which is the role every call site here plays. */
+.ptah-cfg-content .text-slate-300            { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-cfg-content .text-slate-300 { color: var(--ptah-text-faint); }
+
+/* text-slate-400: no exact token (#94a3b8) — that hex is the SAME literal
+   already flagged elsewhere in this file as failing the 3:1 floor (see
+   --ptah-line-field's own comment), so it is not a value worth preserving.
+   --ptah-text-muted is the nearest passing neutral. */
+.ptah-cfg-content .text-slate-400            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg-content .text-slate-400 { color: var(--ptah-text-muted); }
+
+.ptah-cfg-content .text-slate-500            { color: var(--ptah-text-muted); } /* #64748b, exact match */
+.ptah-dark .ptah-cfg-content .text-slate-500 { color: var(--ptah-text-muted); }
+
+.ptah-cfg-content .text-slate-600            { color: var(--ptah-text-secondary); } /* #475569, exact match */
+.ptah-dark .ptah-cfg-content .text-slate-600 { color: var(--ptah-text-secondary); }
+
+/* text-slate-700 (#334155) has no exact token — --ptah-text (#374151) is the
+   gray-family analogue already used file-wide for default body copy, off by
+   4/0/4 per channel, the same order of magnitude as other "closest exact
+   value" picks documented elsewhere in this file. */
+.ptah-cfg-content .text-slate-700            { color: var(--ptah-text); }
+.ptah-dark .ptah-cfg-content .text-slate-700 { color: var(--ptah-text); }
+
+.ptah-cfg-content .text-slate-800            { color: var(--ptah-text-strong); } /* #1e293b, exact match */
+.ptah-dark .ptah-cfg-content .text-slate-800 { color: var(--ptah-text-strong); }
 
 /* ── Input border (non-error state) ── */
 .ptah-c-form_border            { border-color: var(--ptah-line-field); }
