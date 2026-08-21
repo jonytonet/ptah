@@ -98,6 +98,48 @@ finance.margin_report → margin report
 api.products.export → export endpoint
 ```
 
+### Qualified key (disambiguating an `obj_key` collision)
+
+`obj_key` resolution in the main (bare) map is **global** — `ptah:config:doctor`
+flags two `PageObject`s on *different* pages sharing the same `obj_key` as an
+"obj_key collision", because granting access to one silently grants it to the
+other too (`buildPermissionMap()` ORs across every matching row, retro-compat,
+unchanged).
+
+Since v1.8.0, `check()` (and therefore `ptah_can()`, the `ptah.can` middleware
+and `@ptahCan`) also accepts a **qualified key** to disambiguate that exact
+case:
+
+```
+{page.slug}::{obj_key}              e.g. "sales::export"
+{page.slug}::{section}::{obj_key}   e.g. "sales::toolbar::export"  (same page, two sections)
+```
+
+Resolution order in `check()`: the **bare** key is always tried first (so an
+`obj_key` that literally contains `::` — unusual, but not forbidden — still
+resolves via the bare map, never falling through by accident); the qualified
+map is only consulted when the bare lookup misses **and** the requested key
+actually contains `::` (`PermissionService::KEY_QUALIFIER`). MASTER still
+short-circuits before either lookup. `getCompaniesForResource()` also accepts
+a qualified key, decomposing it into the same page/section restriction.
+
+```php
+// Both objects share obj_key "export" — one on "sales", one on "finance".
+ptah_can('export', 'read');              // bare — ORs both pages' grants (legacy behaviour)
+ptah_can('sales::export', 'read');       // qualified — only the "sales" page's grant
+ptah_can('finance::toolbar::export', 'read'); // qualified + section, when the same page repeats the key
+```
+
+`ptah:config:doctor`'s "obj_key collision" warning now also prints the
+qualified form to use for each colliding page, e.g.
+`use a chave qualificada: sales::export, finance::export`. See
+[`getRoleNames`/`hasRole`](#getrolenamesmixed-user--null-int-companyid--null-array--hasrolemixed-user-stringarray-roles-int-companyid--null-bool)
+above for an unrelated, identity-only mechanism — do not confuse the two.
+
+> The `ptah.can` middleware parameter syntax is unaffected: `ptah.can:sales::export,read`
+> still works, because Laravel's middleware pipeline splits parameters on the
+> first `:` and then on `,` — `::` never collides with that.
+
 ### MASTER Role
 
 The system allows exactly **1 role** with `is_master = true`. Users with this role have unrestricted access to all resources without going through the permission check. Ideal for system administrators.
@@ -242,6 +284,10 @@ In `config/ptah.php`, `permissions` section:
     // When audit is on: granted accesses are logged; audit_denied ALSO logs denials.
     'audit_denied'  => env('PTAH_PERMISSION_AUDIT_DENIED', true),
     'audit_master'  => env('PTAH_PERMISSION_AUDIT_MASTER', false),  // also log MASTER bypass grants
+    // Retention window (days) for `ptah:audit-prune` — read with a `?? 90`
+    // inline fallback in the command too, so a config file published before
+    // this key existed still works.
+    'audit_retention_days' => env('PTAH_PERMISSION_AUDIT_RETENTION_DAYS', 90),
 
     // Multi-company: uses company_session_key to filter permissions (default: true)
     'multi_company' => env('PTAH_MULTI_COMPANY', true),
@@ -606,6 +652,49 @@ Invalidates the permissions cache via **generation counters** (see [Cache](#cach
 `clearCache($user)` bumps that user's counter (all companies at once);
 `clearCache()` bumps the global counter (every user). Works on any cache driver —
 no dependency on tag support. The `$companyId` argument is no longer needed.
+
+---
+
+#### `getRoleNames(mixed $user = null, ?int $companyId = null): array` / `hasRole(mixed $user, string|array $roles, ?int $companyId = null): bool`
+
+**Not part of `PermissionServiceContract`** — these two live only on the
+concrete `PermissionService` (and the `ptah_has_role()` helper below). They
+answer **"which role(s) does this user hold"** — IDENTITY, not a GATE. Use
+`ptah_can()` / `check()` to authorize an action; use `hasRole()` only for
+role-name-based branching that isn't really a permission check (e.g. a
+welcome banner that reads differently for a "Vendas" role).
+
+```php
+$service = app(\Ptah\Services\Permission\PermissionService::class);
+
+$service->getRoleNames($user);              // ['Vendas Externas', 'Estoquista']
+$service->hasRole($user, 'Vendas Externas'); // true
+$service->hasRole($user, ['RH', 'Vendas Externas']); // true — array is an OR
+```
+
+Match is tolerant: case-insensitive/trimmed, OR equal once both sides go
+through `Str::slug()` — so `'Vendas Externas'`, `'VENDAS EXTERNAS'` and
+`'vendas-externas'` all match each other. Only an active `UserRole` (in the
+given/resolved company scope) bound to an active `Role` counts — the same
+activity rule the permission maps apply.
+
+> ⚠️ **MASTER does not satisfy `hasRole()` for an unrelated role name.**
+> Unlike `check()`, there is deliberately **no MASTER short-circuit** here —
+> a master user only bypasses permission checks; they don't "hold" every
+> role name that happens to exist. `hasRole($masterUser, 'Vendas')` is
+> `false` unless the master user is *also* literally assigned a role named
+> "Vendas".
+
+#### `ptah_has_role(string|array $roles, mixed $user = null, ?int $companyId = null): bool`
+
+Global helper mirroring `hasRole()`, with the same object/role-first argument
+order as the other `ptah_*` helpers (role(s) first, `$user` optional last):
+
+```php
+if (ptah_has_role('Vendas Externas')) {
+    // …
+}
+```
 
 ---
 
@@ -1146,6 +1235,30 @@ Permission::clearCache();        // everyone (bumps the global counter)
 > The `$companyId` argument of `clearCache()` is no longer needed — a single
 > per-user bump clears every company-scoped map for that user at once.
 
+### Request-scoped memo (since v1.8.0)
+
+On top of the byte-level cache above, `PermissionService` keeps a **request-scoped
+memo** (a plain PHP array on the instance) for `isMasterById()`, `getPermissions()`,
+`getQualifiedPermissions()` and `getRoleNames()`. Repeating the same lookup within
+one request/instance skips the database (and, when `cache=true`, even the cache
+store round-trip) entirely on the 2nd+ call — this matters most with
+`ptah.permissions.cache = false`, where every `check()` would otherwise hit the
+database again for the very same user/company/action within the same request.
+
+The memo key is the *same* generation-versioned string `cacheKey()` already
+computes fresh on every call — so a mid-request revocation (e.g. via `RoleService`,
+which bumps the shared generation counter) changes the key on the very next call
+and is picked up immediately, exactly like the cache-based invalidation already
+guarantees. `bumpGlobalVersion()` / `bumpUserVersion()` also wipe the memo array
+outright, as a second line of defense. Bounded at 100 entries (`MEMO_MAX`) to
+guard against unbounded growth on a long-running worker (Octane) — once
+exceeded, the memo is wiped rather than left to grow.
+
+> **Limitation:** a generation bump from a genuinely different OS process/worker
+> is only visible on THIS instance's *next* request — there is nothing to
+> memoize across processes. Within a single request/instance (including the
+> normal one-singleton-per-HTTP-request wiring), revocation stays immediate.
+
 ---
 
 ## Integration with Auth and BaseCrud
@@ -1291,6 +1404,7 @@ class CompanySwitcher extends Component
     'audit'              => env('PTAH_PERMISSION_AUDIT', false),
     'audit_denied'       => env('PTAH_PERMISSION_AUDIT_DENIED', true),
     'audit_master'       => env('PTAH_PERMISSION_AUDIT_MASTER', false),
+    'audit_retention_days' => env('PTAH_PERMISSION_AUDIT_RETENTION_DAYS', 90),
     'multi_company'      => env('PTAH_MULTI_COMPANY', true),
     'allow_guest'        => env('PTAH_PERMISSION_ALLOW_GUEST', false),
     'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrator'),
@@ -1313,6 +1427,7 @@ class CompanySwitcher extends Component
 | `PTAH_PERMISSION_AUDIT` | `false` | Audits all accesses |
 | `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Audits only denied accesses |
 | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audits MASTER bypass |
+| `PTAH_PERMISSION_AUDIT_RETENTION_DAYS` | `90` | Default `--days` window for `ptah:audit-prune` |
 | `PTAH_MULTI_COMPANY` | `true` | Permissions filtered by company |
 | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | Default admin e-mail |
 | `PTAH_ADMIN_PASSWORD` | *(none)* | Admin password. If unset, a strong random one is generated and shown once at install — no fixed default |

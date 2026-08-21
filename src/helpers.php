@@ -20,7 +20,10 @@ if (! function_exists('ptah_can')) {
      *  - null          → uses session (config ptah.permissions.company_session_key)
      *  - int           → company ID
      *
-     * @param  string  $objectKey  Object key (e.g. 'users.store', 'reports.export')
+     * @param  string  $objectKey  Object key (e.g. 'users.store', 'reports.export'). May also be a
+     *                             QUALIFIED key (`page::obj_key` / `page::section::obj_key`, see
+     *                             `PermissionService::KEY_QUALIFIER`) to disambiguate an obj_key
+     *                             that collides across pages — passed through unchanged to check().
      * @param  string  $action  Desired action: 'create', 'read', 'update', 'delete'
      * @param  mixed  $user  User (null = current auth)
      * @param  int|null  $companyId  Company ID (null = current session)
@@ -123,6 +126,29 @@ if (! function_exists('ptah_companies')) {
         $service = app(CompanyService::class);
 
         return $service->getAll();
+    }
+}
+
+if (! function_exists('ptah_has_role')) {
+    /**
+     * Checks whether the user holds (at least one of) the given role name(s).
+     * Tolerant match: case-insensitive/trimmed, or equal once both sides go
+     * through `Str::slug()` (so "Vendas Externas" matches "vendas-externas").
+     *
+     * This is IDENTITY, not a GATE — for authorization use ptah_can(). A
+     * MASTER user does NOT automatically "have" every role name here; they
+     * only bypass permission checks, which is a different concern.
+     *
+     * @param  string|string[]  $roles  One role name, or several (OR match)
+     * @param  mixed  $user  User (null = current auth)
+     * @param  int|null  $companyId  Company ID (null = current session)
+     */
+    function ptah_has_role(string|array $roles, mixed $user = null, ?int $companyId = null): bool
+    {
+        /** @var PermissionService $service */
+        $service = app(PermissionService::class);
+
+        return $service->hasRole($user, $roles, $companyId);
     }
 }
 

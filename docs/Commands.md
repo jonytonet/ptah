@@ -13,11 +13,13 @@ This document lists all Artisan commands available in the Ptah package.
 5. [ptah:config:doctor](#ptahconfigdoctor)
 6. [ptah:config:export-all / import-all](#ptahconfigexport-all--import-all)
 7. [ptah:permission:sync](#ptahpermissionsync)
-8. [ptah:config:relabel](#ptahconfigrelabel)
-9. [ptah:export-prune](#ptahexport-prune)
-10. [ptah:hooks](#ptahhooks)
-11. [ptah:menu-sync](#ptahmenu-sync)
-12. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+8. [ptah:permission:why](#ptahpermissionwhy)
+9. [ptah:config:relabel](#ptahconfigrelabel)
+10. [ptah:export-prune](#ptahexport-prune)
+11. [ptah:audit-prune](#ptahaudit-prune)
+12. [ptah:hooks](#ptahhooks)
+13. [ptah:menu-sync](#ptahmenu-sync)
+14. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
 
 ---
 
@@ -530,6 +532,45 @@ matches that key, and — with `--role`/`--grant` — calls `RoleService::bindPa
 (which invalidates the permission cache). `--grant` accepts `create,read,update,delete`
 or `all`; `--role` and `--grant` are required together. The whole batch runs in a
 single transaction.
+
+## ptah:permission:why
+
+Explains WHY `ptah_can($objKey, $action, $user)` grants or denies access, without
+reimplementing the permission engine — the granted/denied verdict itself always
+comes from `PermissionService::check()`. Diagnostic tool: forces
+`ptah.permissions.audit` off for the duration of the command, so running it never
+pollutes `ptah_permission_audits`.
+
+```bash
+php artisan ptah:permission:why 42 users.store --action=create
+php artisan ptah:permission:why admin@admin.com sales::export --action=read --company=3
+```
+
+**Arguments:**
+- `{user}` — numeric user ID, or an e-mail looked up via `config('ptah.permissions.user_model')`.
+- `{objKey}` — bare or qualified (`page::obj_key` / `page::section::obj_key` — see
+  ["Qualified key"](Permissions.md#qualified-key-disambiguating-an-obj_key-collision)).
+
+**Options:**
+- `--action=read` — action to evaluate (`create|read|update|delete`).
+- `--company=` — company context. Omit to use the console context: with no HTTP
+  session, `PermissionService::resolveCompanyId()` resolves to `null`, so only
+  global (`company_id IS NULL`) grants are considered — the command prints this
+  explicitly.
+
+Prints, in order: the user's `UserRole` bindings (with the reason each one does
+or doesn't count), every `PageObject` registered under the requested `obj_key`
+(an `obj_key` collision across pages prints all of them), the `RolePermission`
+rows crossing the two (including trashed ones and all 4 `can_*` flags), and the
+result for every CRUD action via `PermissionService::check()`. When the
+requested `--action` is denied, prints the single most specific missing piece,
+in this precedence order: nonexistent object → inactive object → inactive page
+→ no active role → no bind at all → `can_{action}=false` → bind trashed → grant
+scoped to a different company → grant only on a different page (suggesting the
+qualified key to use instead).
+
+Exit code: `0` when granted, `1` when denied (or when the user/action can't be
+resolved).
 
 ## ptah:config:relabel
 
@@ -1079,6 +1120,31 @@ php artisan ptah:export-prune
 
 TTL comes from `config('ptah.export.ttl_hours')` (default 48). Safe to run repeatedly
 (only removes what is already expired/orphaned).
+
+## ptah:audit-prune
+
+> ⚠️ **DESTRUTIVO** — permanently deletes rows from `ptah_permission_audits`
+> (no `SoftDeletes`; the log is immutable by design — this command is the only
+> path to shrinking it). Meant to be scheduled (e.g. daily/weekly) once
+> `ptah.permissions.audit = true` is on, since that table otherwise grows
+> forever.
+
+```bash
+php artisan ptah:audit-prune                # uses config('ptah.permissions.audit_retention_days', 90)
+php artisan ptah:audit-prune --days=30
+php artisan ptah:audit-prune --dry-run      # count only, no deletion
+php artisan ptah:audit-prune --chunk=500    # delete window size (portable across drivers, incl. sqlite)
+```
+
+**Options:**
+- `--days=` — retention window in days; defaults to
+  `config('ptah.permissions.audit_retention_days', 90)`. Rejected (exit ≠ 0)
+  when `< 1`, as a guard against wiping the whole table by accident.
+- `--chunk=1000` — rows deleted per batch. Portable across every driver Ptah
+  supports (including sqlite, which has no fast conditional truncate): pulls a
+  page of ids ordered by PK, deletes exactly those ids, repeats until a page
+  comes back smaller than the chunk size.
+- `--dry-run` — only counts the rows that would be deleted; no writes.
 
 ## ptah:hooks
 

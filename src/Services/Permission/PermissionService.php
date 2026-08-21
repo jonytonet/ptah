@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Permission;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Models\PageObject;
 use Ptah\Models\PermissionAudit;
+use Ptah\Models\PtahPage;
 use Ptah\Models\UserRole;
 use Ptah\Traits\ResolvesUser;
 
@@ -33,6 +36,65 @@ class PermissionService implements PermissionServiceContract
      * (each one is turned into a `can_{action}` column name).
      */
     public const ACTIONS = ['create', 'read', 'update', 'delete'];
+
+    /**
+     * Separator used to disambiguate an `obj_key` that collides across
+     * different pages (see `ConfigDoctorCommand`'s "obj_key collision"
+     * check). A qualified key takes the form `{page.slug}::{obj_key}` or,
+     * to disambiguate within the same page, `{page.slug}::{section}::{obj_key}`.
+     * The BARE key resolution (buildPermissionMap/getPermissions) is
+     * untouched and remains the primary, backward-compatible lookup —
+     * qualified keys are only consulted when the bare lookup misses AND the
+     * key actually contains this qualifier (see `check()`).
+     */
+    public const KEY_QUALIFIER = '::';
+
+    /**
+     * Guard against unbounded growth on a long-running worker (Octane): once
+     * the request memo holds this many entries, it is wiped instead of kept
+     * growing. A single request legitimately touching more than 100 distinct
+     * (user, company) permission lookups is not a realistic case this memo
+     * needs to optimise for.
+     */
+    protected const MEMO_MAX = 100;
+
+    /**
+     * Request-scoped memo — since this class is bound as a singleton, one
+     * instance lives for the whole request/job (or, on Octane, several).
+     * Bounded, and fully cleared on any global/user cache-generation bump.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $requestMemo = [];
+
+    /**
+     * Memoizes the result of $resolver() for the given key, for the lifetime
+     * of this instance. Does NOT itself read/write the generation counters —
+     * callers key the memo with an already-resolved (fresh) cache key, so a
+     * generation bump (from ANY PermissionService instance, since the
+     * counters live in the shared Cache store) changes the key on the very
+     * next call and is picked up immediately, exactly like the underlying
+     * Cache::remember() calls already are. This is what lets a mid-request
+     * revocation still be seen by the next check() (see
+     * PermissionServiceTest::revoking_a_permission_takes_effect_immediately,
+     * which predates this memo and must keep passing unmodified).
+     *
+     * Limitation: a generation bump from a genuinely different OS
+     * process/worker only becomes visible on this instance's NEXT request —
+     * within the same request there is nothing to memoize across processes.
+     */
+    protected function memo(string $key, \Closure $resolver): mixed
+    {
+        if (array_key_exists($key, $this->requestMemo)) {
+            return $this->requestMemo[$key];
+        }
+
+        if (count($this->requestMemo) >= self::MEMO_MAX) {
+            $this->requestMemo = [];
+        }
+
+        return $this->requestMemo[$key] = $resolver();
+    }
 
     // ─────────────────────────────────────────
     // Company resolution
@@ -112,6 +174,7 @@ class PermissionService implements PermissionServiceContract
             Cache::forever('ptah_perm_gver', 1);
         }
         Cache::increment('ptah_perm_gver');
+        $this->requestMemo = [];
     }
 
     /** Invalidates every cached entry for a single user across all companies. */
@@ -122,6 +185,7 @@ class PermissionService implements PermissionServiceContract
             Cache::forever($key, 1);
         }
         Cache::increment($key);
+        $this->requestMemo = [];
     }
 
     // ─────────────────────────────────────────
@@ -164,7 +228,23 @@ class PermissionService implements PermissionServiceContract
         //    Ensures consistency: clearCache() invalidates the map and this read
         //    immediately reflects any role/permission changes.
         $map = $this->getPermissions($user, $resolvedCompanyId);
-        $result = (bool) ($map[$objectKey][$action] ?? false);
+
+        if (isset($map[$objectKey])) {
+            // Literal (bare) match takes precedence — an obj_key containing
+            // "::" literally (unusual, but not forbidden) resolves here first,
+            // never falling through to the qualified map by accident.
+            $result = (bool) $map[$objectKey][$action];
+        } elseif (str_contains($objectKey, self::KEY_QUALIFIER)) {
+            // 2b. Bare lookup missed AND the caller passed a qualified key
+            //     (page::obj_key or page::section::obj_key) — consult the
+            //     qualified map. Without this, a colliding obj_key (see
+            //     ConfigDoctorCommand's "obj_key collision" check) has no way
+            //     to be granted unambiguously.
+            $qmap = $this->getQualifiedPermissions($user, $resolvedCompanyId);
+            $result = (bool) ($qmap[$objectKey][$action] ?? false);
+        } else {
+            $result = false;
+        }
 
         // 3. Auditoria — grava acessos concedidos quando `audit` está ligado; os
         //    negados só quando `audit_denied` também está (conforme documentado).
@@ -191,21 +271,118 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
+     * Returns the (active) role names bound to the user in the given company
+     * scope — identity information, NOT a gate. Mirrors the same activity
+     * rules as the permission map: only an active `UserRole` (forCompany)
+     * bound to an active `Role` counts.
+     *
+     * @return string[]
+     */
+    public function getRoleNames(mixed $user = null, ?int $companyId = null): array
+    {
+        $userId = $this->resolveUserId($user);
+        if ($userId === null) {
+            return [];
+        }
+
+        $resolvedCompanyId = $this->resolveCompanyId($companyId);
+        $memoKey = $this->cacheKey('role_names', $userId, $resolvedCompanyId);
+
+        return $this->memo($memoKey, function () use ($userId, $resolvedCompanyId, $memoKey) {
+            if ($this->cacheEnabled()) {
+                return Cache::remember($memoKey, $this->ttl(), fn () => $this->queryRoleNames($userId, $resolvedCompanyId));
+            }
+
+            return $this->queryRoleNames($userId, $resolvedCompanyId);
+        });
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function queryRoleNames(int $userId, ?int $companyId): array
+    {
+        return UserRole::query()
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->forCompany($companyId)
+            ->whereHas('role', fn ($q) => $q->where('is_active', true))
+            ->with('role:id,name')
+            ->get()
+            ->pluck('role.name')
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Checks whether the user holds (at least one of) the given role name(s)
+     * — a tolerant string match (case-insensitive, trimmed, and also compared
+     * via `Str::slug()` on both sides so "Vendas Externas" matches
+     * "vendas-externas"). `$roles` as an array is an OR.
+     *
+     * This is IDENTITY, not a GATE: unlike `check()`, MASTER does **not**
+     * short-circuit here — a master user does not "have" every role name,
+     * they only bypass every permission check. Do not use this to authorize
+     * an action; use `ptah_can()` / `check()` for that.
+     */
+    public function hasRole(mixed $user, string|array $roles, ?int $companyId = null): bool
+    {
+        $wanted = is_array($roles) ? $roles : [$roles];
+        $current = $this->getRoleNames($user, $companyId);
+
+        foreach ($wanted as $want) {
+            foreach ($current as $have) {
+                if ($this->roleNamesMatch($want, $have)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Role-name match: equal once both are lower-cased and trimmed — and
+     * nothing looser. The first version also matched on Str::slug equality,
+     * which collapses SEPARATORS into an equivalence class: "Vendas-SP" and
+     * "vendas sp" would name the same role, and two distinct roles differing
+     * only by separator would collide (review finding). hasRole() is identity
+     * — host apps branch behavior on it — so a wrong-role match is a wrong
+     * branch. Tightening later would be breaking; loosening later is not.
+     */
+    protected function roleNamesMatch(string $a, string $b): bool
+    {
+        $aTrim = mb_strtolower(trim($a));
+        $bTrim = mb_strtolower(trim($b));
+
+        if ($aTrim === '' || $bTrim === '') {
+            return false;
+        }
+
+        return $aTrim === $bTrim;
+    }
+
+    /**
      * Internal MASTER check by ID (cached).
      */
     protected function isMasterById(int $userId): bool
     {
-        if ($this->cacheEnabled()) {
-            // Versioned key: a role becoming/ceasing to be MASTER (global bump) or
-            // the user's assignments changing (user bump) invalidates it at once.
-            return (bool) Cache::remember(
-                $this->cacheKey('is_master', $userId, null),
-                $this->ttl(),
-                fn () => $this->queryIsMaster($userId)
-            );
-        }
+        $memoKey = $this->cacheKey('is_master', $userId, null);
 
-        return $this->queryIsMaster($userId);
+        return $this->memo($memoKey, function () use ($userId, $memoKey) {
+            if ($this->cacheEnabled()) {
+                // Versioned key: a role becoming/ceasing to be MASTER (global bump) or
+                // the user's assignments changing (user bump) invalidates it at once.
+                return (bool) Cache::remember(
+                    $memoKey,
+                    $this->ttl(),
+                    fn () => $this->queryIsMaster($userId)
+                );
+            }
+
+            return $this->queryIsMaster($userId);
+        });
     }
 
     protected function queryIsMaster(int $userId): bool
@@ -229,26 +406,71 @@ class PermissionService implements PermissionServiceContract
 
         if ($this->isMasterById($userId)) {
             // MASTER: devolve mapa "tudo liberado" dos objetos cadastrados (cached)
-            if ($this->cacheEnabled()) {
-                return Cache::remember(
-                    "ptah_master_map:g{$this->globalVersion()}",
-                    $this->ttl(),
-                    fn () => $this->buildMasterPermissionMap()
-                );
-            }
+            $memoKey = "ptah_master_map:g{$this->globalVersion()}";
 
-            return $this->buildMasterPermissionMap();
+            return $this->memo($memoKey, function () use ($memoKey) {
+                if ($this->cacheEnabled()) {
+                    return Cache::remember($memoKey, $this->ttl(), fn () => $this->buildMasterPermissionMap());
+                }
+
+                return $this->buildMasterPermissionMap();
+            });
         }
 
         $resolvedCompanyId = $this->resolveCompanyId($companyId);
+        $memoKey = $this->cacheKey('perms_map', $userId, $resolvedCompanyId);
 
-        if ($this->cacheEnabled()) {
-            $key = $this->cacheKey('perms_map', $userId, $resolvedCompanyId);
+        return $this->memo($memoKey, function () use ($userId, $resolvedCompanyId, $memoKey) {
+            if ($this->cacheEnabled()) {
+                return Cache::remember($memoKey, $this->ttl(), fn () => $this->buildPermissionMap($userId, $resolvedCompanyId));
+            }
 
-            return Cache::remember($key, $this->ttl(), fn () => $this->buildPermissionMap($userId, $resolvedCompanyId));
+            return $this->buildPermissionMap($userId, $resolvedCompanyId);
+        });
+    }
+
+    /**
+     * Mirrors `getPermissions()` but returns the QUALIFIED map (keyed by
+     * `{page.slug}::{obj_key}` / `{page.slug}::{section}::{obj_key}` — see
+     * `buildQualifiedPermissionMap()`). Used by `check()` as a fallback when
+     * the bare `obj_key` lookup misses and the requested key is itself
+     * qualified.
+     *
+     * Includes the MASTER arm deliberately — returning `[]` for master would
+     * be a silent no-op (every qualified lookup would then miss for a user
+     * who should pass everything).
+     *
+     * @return array<string, array{create: bool, read: bool, update: bool, delete: bool}>
+     */
+    public function getQualifiedPermissions(mixed $user = null, ?int $companyId = null): array
+    {
+        $userId = $this->resolveUserId($user);
+        if ($userId === null) {
+            return [];
         }
 
-        return $this->buildPermissionMap($userId, $resolvedCompanyId);
+        if ($this->isMasterById($userId)) {
+            $memoKey = "ptah_master_qmap:g{$this->globalVersion()}";
+
+            return $this->memo($memoKey, function () use ($memoKey) {
+                if ($this->cacheEnabled()) {
+                    return Cache::remember($memoKey, $this->ttl(), fn () => $this->buildMasterQualifiedPermissionMap());
+                }
+
+                return $this->buildMasterQualifiedPermissionMap();
+            });
+        }
+
+        $resolvedCompanyId = $this->resolveCompanyId($companyId);
+        $memoKey = $this->cacheKey('perms_qmap', $userId, $resolvedCompanyId);
+
+        return $this->memo($memoKey, function () use ($userId, $resolvedCompanyId, $memoKey) {
+            if ($this->cacheEnabled()) {
+                return Cache::remember($memoKey, $this->ttl(), fn () => $this->buildQualifiedPermissionMap($userId, $resolvedCompanyId));
+            }
+
+            return $this->buildQualifiedPermissionMap($userId, $resolvedCompanyId);
+        });
     }
 
     /**
@@ -269,6 +491,13 @@ class PermissionService implements PermissionServiceContract
 
         $actionColumn = "can_{$action}";
 
+        // A qualified key (page::obj_key or page::section::obj_key — see
+        // check()/buildQualifiedPermissionMap()) must decompose into the same
+        // page/section restriction the qualified map applies, otherwise this
+        // method silently returns [] for any resource only reachable through
+        // its qualified form (an obj_key colliding across pages).
+        [$bareObjKey, $pageSlug, $section] = $this->decomposeQualifiedKey($objectKey);
+
         return UserRole::query()
             ->where('user_id', $userId)
             ->where('is_active', true)
@@ -281,11 +510,20 @@ class PermissionService implements PermissionServiceContract
                     // it must not contribute companies either. Without this, a
                     // company selector built from this method still offers branches
                     // for a resource the gate will refuse.
-                    ->whereHas('pageObject', fn ($q3) => $q3
-                        ->where('obj_key', $objectKey)
-                        ->where('is_active', true)
-                        ->whereHas('page', fn ($q4) => $q4->where('is_active', true))
-                    )
+                    ->whereHas('pageObject', function ($q3) use ($bareObjKey, $pageSlug, $section) {
+                        $q3->where('obj_key', $bareObjKey)
+                            ->where('is_active', true)
+                            ->whereHas('page', function ($q4) use ($pageSlug) {
+                                $q4->where('is_active', true);
+                                if ($pageSlug !== null) {
+                                    $q4->where('slug', $pageSlug);
+                                }
+                            });
+
+                        if ($section !== null) {
+                            $q3->where('section', $section);
+                        }
+                    })
                 )
             )
             ->pluck('company_id')
@@ -294,6 +532,39 @@ class PermissionService implements PermissionServiceContract
             ->unique()
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Decomposes a possibly-qualified object key into
+     * [bareObjKey, pageSlug|null, section|null]. A bare key (no
+     * `KEY_QUALIFIER`) yields [$objectKey, null, null].
+     *
+     * @return array{0: string, 1: ?string, 2: ?string}
+     */
+    protected function decomposeQualifiedKey(string $objectKey): array
+    {
+        if (! str_contains($objectKey, self::KEY_QUALIFIER)) {
+            return [$objectKey, null, null];
+        }
+
+        // Literal-primeiro, a MESMA ordem que check() aplica no mapa bare: um
+        // obj_key legitimo que contenha '::' nunca e decomposto — sem isso,
+        // getCompaniesForResource filtrava por um page.slug inexistente e
+        // devolvia [] silencioso para um recurso real (achado de revisao).
+        if (PageObject::query()->where('obj_key', $objectKey)->exists()) {
+            return [$objectKey, null, null];
+        }
+
+        $parts = explode(self::KEY_QUALIFIER, $objectKey);
+
+        if (count($parts) >= 3) {
+            // page::section::obj_key — obj_key may itself contain further
+            // qualifier separators, so re-join everything after the first two.
+            return [implode(self::KEY_QUALIFIER, array_slice($parts, 2)), $parts[0], $parts[1]];
+        }
+
+        // page::obj_key
+        return [$parts[1], $parts[0], null];
     }
 
     /**
@@ -415,11 +686,22 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
-     * Builds the full permissions map: [ 'obj_key' => ['create'=>bool, ...] ]
+     * Returns the raw, still-ungrouped `RolePermission` rows that grant
+     * something to this user in this company scope — the same activity
+     * rules `buildPermissionMap()` (bare map) and `buildQualifiedPermissionMap()`
+     * (qualified map) both fold into their respective maps. Extracted so both
+     * builders share a single source of truth for "what counts as a grant".
+     *
+     * @param  bool  $withPage  Eager-load `role.permissions.pageObject.page` (needed
+     *                          to qualify a key by page slug/section); the bare map
+     *                          doesn't need it.
+     * @return Collection<int, mixed>
      */
-    protected function buildPermissionMap(int $userId, ?int $companyId): array
+    protected function grantRowsFor(int $userId, ?int $companyId, bool $withPage = false): Collection
     {
-        $rows = UserRole::query()
+        $pageObjectRelation = $withPage ? 'role.permissions.pageObject.page' : 'role.permissions.pageObject';
+
+        return UserRole::query()
             ->where('user_id', $userId)
             ->where('is_active', true)
             ->forCompany($companyId)
@@ -435,10 +717,18 @@ class PermissionService implements PermissionServiceContract
                     ->whereHas('pageObject', fn ($q2) => $q2->where('is_active', true)
                         ->whereHas('page', fn ($q3) => $q3->where('is_active', true))
                     ),
-                'role.permissions.pageObject',
+                $pageObjectRelation,
             ])
             ->get()
             ->flatMap(fn (UserRole $ur) => $ur->role->permissions ?? collect());
+    }
+
+    /**
+     * Builds the full permissions map: [ 'obj_key' => ['create'=>bool, ...] ]
+     */
+    protected function buildPermissionMap(int $userId, ?int $companyId): array
+    {
+        $rows = $this->grantRowsFor($userId, $companyId);
 
         $map = [];
 
@@ -465,6 +755,61 @@ class PermissionService implements PermissionServiceContract
     }
 
     /**
+     * Builds the QUALIFIED permissions map — same grants as `buildPermissionMap()`,
+     * but keyed by `{page.slug}::{obj_key}` AND `{page.slug}::{section}::{obj_key}`
+     * instead of (or in addition to, via `getQualifiedPermissions()`) the bare
+     * `obj_key`. Disambiguates the case where the same `obj_key` is registered
+     * on more than one page (see `ConfigDoctorCommand`'s "obj_key collision"
+     * check) — `check()` only consults this map when the bare lookup misses.
+     *
+     * @return array<string, array{create: bool, read: bool, update: bool, delete: bool}>
+     */
+    protected function buildQualifiedPermissionMap(int $userId, ?int $companyId): array
+    {
+        $rows = $this->grantRowsFor($userId, $companyId, withPage: true);
+
+        $map = [];
+
+        foreach ($rows as $perm) {
+            // The `pageObject`/`page` relations have no PHPDoc generics
+            // (matching the rest of this codebase), so static analysis only
+            // knows them as a plain Model — narrow explicitly rather than
+            // chaining `?->`.
+            $pageObject = $perm->pageObject;
+            if (! $pageObject instanceof PageObject) {
+                continue;
+            }
+
+            $page = $pageObject->page;
+            $pageSlug = $page instanceof PtahPage ? $page->slug : null;
+            $objKey = $pageObject->obj_key;
+            $section = $pageObject->section;
+
+            if (! $objKey || ! $pageSlug) {
+                continue;
+            }
+
+            $keys = [$pageSlug.self::KEY_QUALIFIER.$objKey];
+            if ($section !== '') {
+                $keys[] = $pageSlug.self::KEY_QUALIFIER.$section.self::KEY_QUALIFIER.$objKey;
+            }
+
+            foreach ($keys as $key) {
+                if (! isset($map[$key])) {
+                    $map[$key] = array_fill_keys(self::ACTIONS, false);
+                }
+
+                // Same OR-merge as buildPermissionMap().
+                foreach (self::ACTIONS as $action) {
+                    $map[$key][$action] = $map[$key][$action] || (bool) $perm->{"can_{$action}"};
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * MASTER map: all registered objects with all flags set to true.
      */
     protected function buildMasterPermissionMap(): array
@@ -484,6 +829,39 @@ class PermissionService implements PermissionServiceContract
                 $key => array_fill_keys(self::ACTIONS, true),
             ])
             ->toArray();
+    }
+
+    /**
+     * MASTER qualified map: same source (active `PageObject` on an active
+     * `PtahPage`) as `buildMasterPermissionMap()`, but keyed by
+     * `{page.slug}::{obj_key}` and `{page.slug}::{section}::{obj_key}` — the
+     * qualified-key equivalent of the MASTER bypass, so a qualified lookup
+     * for a MASTER user doesn't silently miss.
+     */
+    protected function buildMasterQualifiedPermissionMap(): array
+    {
+        $map = [];
+
+        PageObject::query()
+            ->active()
+            ->whereHas('page', fn ($q) => $q->where('is_active', true))
+            ->with('page:id,slug')
+            ->get()
+            ->each(function (PageObject $obj) use (&$map) {
+                $page = $obj->page;
+                if (! $page instanceof PtahPage) {
+                    return;
+                }
+
+                $pageSlug = $page->slug;
+                $map[$pageSlug.self::KEY_QUALIFIER.$obj->obj_key] = array_fill_keys(self::ACTIONS, true);
+
+                if ($obj->section !== '') {
+                    $map[$pageSlug.self::KEY_QUALIFIER.$obj->section.self::KEY_QUALIFIER.$obj->obj_key] = array_fill_keys(self::ACTIONS, true);
+                }
+            });
+
+        return $map;
     }
 
     // ─────────────────────────────────────────

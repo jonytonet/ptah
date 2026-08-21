@@ -215,17 +215,22 @@ class ConfigDoctorCommand extends Command
             }
         }
 
-        // 8. obj_key collision across DIFFERENT pages. Resolution
-        //    (PermissionService::buildPermissionMap) is global by obj_key — the
-        //    same key on two pages means granting access to one object grants it
-        //    to the other too. Diagnostic only.
+        // 8. obj_key collision across DIFFERENT pages. The BARE map
+        //    (PermissionService::buildPermissionMap) is still global by
+        //    obj_key — granting access to one object grants it to the other
+        //    too — but each grant can now be disambiguated by calling
+        //    ptah_can()/check() with the QUALIFIED key ("{page.slug}::{obj_key}",
+        //    or "{page.slug}::{section}::{obj_key}" if the same page also
+        //    repeats the key across sections) instead of the bare obj_key.
+        //    Diagnostic only — does not change how the bare map resolves.
         $objectsByKey = PageObject::query()->with('page:id,slug')->get()->groupBy('obj_key');
 
         foreach ($objectsByKey as $key => $objects) {
             $pageSlugs = $objects->pluck('page.slug')->filter()->unique()->values();
 
             if ($pageSlugs->count() > 1) {
-                $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all()).' — a resolução de permissão é global por obj_key (crossgrant entre páginas)');
+                $qualifiedForms = $pageSlugs->map(fn ($slug) => "{$slug}::{$key}")->implode(', ');
+                $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all())." — a resolução do mapa bare é global por obj_key (crossgrant entre páginas); use a chave qualificada para desambiguar: {$qualifiedForms}");
                 $warnings++;
             }
         }

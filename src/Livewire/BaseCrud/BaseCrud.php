@@ -412,6 +412,10 @@ class BaseCrud extends Component
      *   3. Ptah RBAC checks via ptah_can() (when module is active + permissionIdentifier configured)
      *
      * Cached per render to avoid redundant ptah_can() calls.
+     *
+     * `permissionIdentifier` may itself be a QUALIFIED key
+     * (`page::obj_key` / `page::section::obj_key`, see
+     * `PermissionService::KEY_QUALIFIER`) — it passes through unchanged.
      */
     protected function getEffectivePermissions(): array
     {

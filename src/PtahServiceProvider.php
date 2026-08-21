@@ -21,7 +21,9 @@ use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
+use Ptah\Commands\Permission\AuditPruneCommand;
 use Ptah\Commands\Permission\PermissionSyncCommand;
+use Ptah\Commands\Permission\PermissionWhyCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\CompanyServiceContract;
@@ -202,6 +204,8 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigRelabelCommand::class,    // ptah:config:relabel
                 MakeHooksCommand::class,     // ptah:hooks
                 PermissionSyncCommand::class, // ptah:permission:sync
+                PermissionWhyCommand::class,  // ptah:permission:why
+                AuditPruneCommand::class,     // ptah:audit-prune
                 ExportPruneCommand::class,    // ptah:export-prune
             ]);
         }
@@ -244,6 +248,10 @@ class PtahServiceProvider extends ServiceProvider
 
     /**
      * Registers Ptah Blade directives.
+     *
+     * @ptahCan's $objectKey may be a QUALIFIED key (`page::obj_key` /
+     * `page::section::obj_key`, see `PermissionService::KEY_QUALIFIER`) — it
+     * passes through unchanged to ptah_can()/check().
      */
     protected function registerBladeDirectives(): void
     {

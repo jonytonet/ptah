@@ -19,7 +19,11 @@ use Ptah\Services\Permission\PermissionService;
  *   Route::middleware('ptah.can:reports,read,optional_company_id')
  *
  * Parameters:
- *   1. objectKey  — object key (e.g. 'users.store')
+ *   1. objectKey  — object key (e.g. 'users.store'). May be a QUALIFIED key
+ *                   (`page::obj_key` / `page::section::obj_key`, see
+ *                   `PermissionService::KEY_QUALIFIER`) — passes through
+ *                   unchanged to check(). Note '::' never collides with the
+ *                   middleware's own ':'/',' parameter-splitting syntax.
  *   2. action     — action: create|read|update|delete
  *   3. companyId  — optional; uses session/auth if omitted
  */
