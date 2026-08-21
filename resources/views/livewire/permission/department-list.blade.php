@@ -5,9 +5,6 @@
         <p class="text-sm ptah-c-mod_subttl mt-0.5">{{ __('ptah::ui.dept_subtitle') }}</p>
     </div>
 
-    @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
-    @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
-
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <button wire:click="create"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors duration-150 focus:outline-none select-none">

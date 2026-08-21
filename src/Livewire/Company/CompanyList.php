@@ -60,11 +60,6 @@ class CompanyList extends Component
 
     public bool $showDeleteModal = false;
 
-    // ── Feedback ──────────────────────────────────────────────────────
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     protected function rules(): array
     {
         return [
@@ -159,7 +154,7 @@ class CompanyList extends Component
             $this->showModal = false;
             $this->resetForm();
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error saving: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Error saving: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -175,7 +170,7 @@ class CompanyList extends Component
             $company = Company::findOrFail($this->deleteId);
 
             if ($company->is_default) {
-                $this->errorMsg = 'The default company cannot be deleted.';
+                $this->dispatch('ptah-toast', title: 'The default company cannot be deleted.', color: 'danger');
                 $this->showDeleteModal = false;
 
                 return;
@@ -184,7 +179,7 @@ class CompanyList extends Component
             $company->delete();
             $this->flash('Company deleted.');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error deleting: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Error deleting: '.$e->getMessage(), color: 'danger');
         }
 
         $this->showDeleteModal = false;
@@ -211,7 +206,7 @@ class CompanyList extends Component
 
     protected function flash(string $message): void
     {
-        $this->successMsg = $message;
+        $this->dispatch('ptah-toast', title: $message, color: 'success');
     }
 
     // ── Render ─────────────────────────────────────────────────────────

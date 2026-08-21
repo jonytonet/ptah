@@ -84,11 +84,6 @@ class RoleList extends Component
 
     public bool $showDeleteModal = false;
 
-    // ── Feedback ──────────────────────────────────────────────────────
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     // ── Rules ──────────────────────────────────────────────────────────
 
     protected function rules(): array
@@ -152,17 +147,17 @@ class RoleList extends Component
             if ($this->isEditing) {
                 $role = Role::findOrFail($this->editingId);
                 $this->roleService->update($role, $data);
-                $this->successMsg = 'Role updated.';
+                $this->dispatch('ptah-toast', title: 'Role updated.', color: 'success');
             } else {
                 $this->roleService->create($data);
-                $this->successMsg = 'Role created.';
+                $this->dispatch('ptah-toast', title: 'Role created.', color: 'success');
             }
 
             $this->showModal = false;
         } catch (ValidationException $e) {
-            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Validation error.';
+            $this->dispatch('ptah-toast', title: collect($e->errors())->flatten()->first() ?? 'Validation error.', color: 'danger');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -226,10 +221,10 @@ class RoleList extends Component
 
         try {
             $this->roleService->syncPageBindings($role, $bindings);
-            $this->successMsg = "Permissions for '{$role->name}' updated.";
+            $this->dispatch('ptah-toast', title: "Permissions for '{$role->name}' updated.", color: 'success');
             $this->showBindModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -246,11 +241,11 @@ class RoleList extends Component
         try {
             $role = Role::findOrFail($this->deleteId);
             $this->roleService->delete($role);
-            $this->successMsg = 'Role deleted.';
+            $this->dispatch('ptah-toast', title: 'Role deleted.', color: 'success');
         } catch (ValidationException $e) {
-            $this->errorMsg = collect($e->errors())->flatten()->first() ?? 'Error.';
+            $this->dispatch('ptah-toast', title: collect($e->errors())->flatten()->first() ?? 'Error.', color: 'danger');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
 
         $this->showDeleteModal = false;

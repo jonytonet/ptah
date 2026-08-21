@@ -5,9 +5,6 @@
         <p class="text-sm ptah-c-mod_subttl mt-0.5">{{ __('ptah::ui.page_subtitle') }}</p>
     </div>
 
-    @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
-    @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
-
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
         {{-- ── COLUNA: Páginas ──────────────────────────────── --}}

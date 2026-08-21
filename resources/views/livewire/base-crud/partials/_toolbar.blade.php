@@ -105,6 +105,9 @@
                 </svg>
             </button>
         @endif
+        {{-- A dica visual do "/" dentro do campo foi removida a pedido do
+             usuario ("ficou feio essa caixa"); o atalho segue documentado no
+             overlay de atalhos (tecla ?). --}}
     </div>
 
     {{-- Grupo de acoes a direita. A classe .ptah-c-toolbar_actions e o que a medicao

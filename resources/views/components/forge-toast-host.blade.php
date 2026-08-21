@@ -15,6 +15,11 @@
     `$wire`): ele re-emite `ptah-toast-undo` no window com o id, e quem sabe restaurar
     escuta. E o que desacopla a pilha do BaseCrud.
 
+    Auto-dismiss pausa no hover/foco (WCAG 2.2.1 — Timing Adjustable): cada toast
+    guarda a duracao total e quando o timer atual comecou, entao _pause() calcula
+    quanto falta e cancela o setTimeout, e _resume() reagenda so o restante. Sem
+    isso, um toast com Desfazer podia desaparecer com o mouse ainda em cima dele.
+
     ATENCAO: nenhuma aspa dupla dentro do x-data — ver LayoutXDataQuotingTest.
 
     Cores: os fundos usam os mesmos valores auditados do BaseCrud (#047857 para
@@ -27,11 +32,21 @@
         _show(title, color, undoId = null) {
             if (!title) return;
             const id = ++this._seq;
-            this._toasts.push({ id, title, color: color || 'success', undoId });
-            setTimeout(() => this._dismiss(id), undoId ? 6000 : 3500);
+            const duration = undoId ? 6000 : 3500;
+            const toast = { id, title, color: color || 'success', undoId, duration, startedAt: Date.now(), timer: null };
+            toast.timer = setTimeout(() => this._dismiss(id), duration);
+            this._toasts.push(toast);
         },
         _dismiss(id) {
             this._toasts = this._toasts.filter(t => t.id !== id);
+        },
+        _pause(t) {
+            clearTimeout(t.timer);
+            t.duration = Math.max(0, t.duration - (Date.now() - t.startedAt));
+        },
+        _resume(t) {
+            t.startedAt = Date.now();
+            t.timer = setTimeout(() => this._dismiss(t.id), t.duration);
         },
         _undo(t) {
             window.dispatchEvent(new CustomEvent('ptah-toast-undo', { detail: { id: t.undoId } }));
@@ -48,6 +63,10 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0"
              x-transition:leave-end="opacity-0 translate-y-2"
+             @mouseenter="_pause(t)"
+             @mouseleave="_resume(t)"
+             @focusin="_pause(t)"
+             @focusout="_resume(t)"
              class="flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg text-sm font-semibold"
              :class="{
                  'bg-[#047857] text-white': t.color === 'success',
@@ -64,7 +83,7 @@
                 {{ __('ptah::ui.toast_undo') }}
             </button>
             <button @click="_dismiss(t.id)" class="ml-1 opacity-70 hover:opacity-100"
-                    aria-label="{{ __('ptah::ui.btn_cancel') }}">
+                    aria-label="{{ __('ptah::ui.modal_close') }}">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>

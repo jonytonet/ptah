@@ -6,14 +6,6 @@
         :subtitle="__('ptah::ui.company_subtitle')"
     />
 
-    {{-- Alertas --}}
-    @if ($successMsg)
-        <x-forge-alert type="success" class="mb-3" wire:key="success-msg">{{ $successMsg }}</x-forge-alert>
-    @endif
-    @if ($errorMsg)
-        <x-forge-alert type="danger" class="mb-3" wire:key="error-msg">{{ $errorMsg }}</x-forge-alert>
-    @endif
-
     {{-- Toolbar --}}
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <x-forge-button wire:click="create" color="primary" size="sm">

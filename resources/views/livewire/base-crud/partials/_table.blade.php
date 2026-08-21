@@ -360,8 +360,10 @@
                                 || count(array_filter($dateRanges)) > 0
                                 || $quickDateFilter !== '';
                         @endphp
-                        <div class="flex flex-col items-center gap-3">
-                            <div class="flex items-center justify-center w-16 h-16 rounded-full ptah-c-empty_box">
+                        <x-forge-empty
+                            :title="$emptyIsFiltered ? __('ptah::ui.empty_filtered_title') : __('ptah::ui.empty_title')"
+                            :description="$emptyIsFiltered ? __('ptah::ui.empty_filtered_subtitle') : __('ptah::ui.empty_subtitle')">
+                            <x-slot:icon>
                                 @if ($emptyIsFiltered)
                                     <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -371,25 +373,19 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                     </svg>
                                 @endif
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold ptah-c-empty_ttl">
-                                    {{ $emptyIsFiltered ? __('ptah::ui.empty_filtered_title') : __('ptah::ui.empty_title') }}
-                                </p>
-                                <p class="text-xs mt-0.5 ptah-c-empty_sub">
-                                    {{ $emptyIsFiltered ? __('ptah::ui.empty_filtered_subtitle') : __('ptah::ui.empty_subtitle') }}
-                                </p>
-                            </div>
+                            </x-slot:icon>
                             @if ($emptyIsFiltered)
-                                <button wire:click="clearFilters"
-                                    class="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all ptah-c-btn">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                    {{ __('ptah::ui.btn_clear_filters') }}
-                                </button>
+                                <x-slot:cta>
+                                    <button wire:click="clearFilters"
+                                        class="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all ptah-c-btn">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        {{ __('ptah::ui.btn_clear_filters') }}
+                                    </button>
+                                </x-slot:cta>
                             @endif
-                        </div>
+                        </x-forge-empty>
                     </td>
                 </tr>
             @endforelse

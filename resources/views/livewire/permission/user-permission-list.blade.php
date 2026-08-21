@@ -5,9 +5,6 @@
         :subtitle="__('ptah::ui.user_perm_subtitle')"
     />
 
-    @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
-    @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
-
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <div class="flex-1 min-w-[180px] max-w-xs">
             <x-forge-input

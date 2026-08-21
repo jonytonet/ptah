@@ -1526,6 +1526,11 @@ return [
     'btn_save_and_new' => 'Save & add another',
     'sort_by_column' => 'Sort by :column',
     'per_page_label' => 'Rows per page',
+    'shortcuts_title' => 'Keyboard shortcuts',
+    'shortcuts_search' => 'Focus search',
+    'shortcuts_new' => 'New record',
+    'shortcuts_help' => 'Show this list',
+    'shortcuts_open_hint' => 'Press ? for shortcuts',
 
     // -------------------------------------------------------------------------
     // Cascading (dependent) search dropdowns

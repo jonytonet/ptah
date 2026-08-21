@@ -1528,6 +1528,11 @@ return [
     'btn_save_and_new' => 'Salvar e criar outro',
     'sort_by_column' => 'Ordenar por :column',
     'per_page_label' => 'Linhas por página',
+    'shortcuts_title' => 'Atalhos de teclado',
+    'shortcuts_search' => 'Focar a busca',
+    'shortcuts_new' => 'Novo registro',
+    'shortcuts_help' => 'Mostrar esta lista',
+    'shortcuts_open_hint' => 'Pressione ? para atalhos',
 
     // -------------------------------------------------------------------------
     // SearchDropdowns em cascata (campos dependentes)

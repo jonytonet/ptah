@@ -84,9 +84,29 @@
     style="display: none;"
 ></div>
 
-{{-- Sidebar --}}
+{{--
+    Sidebar — comportamento do modo colapsado (decisao FIX 1 / Onda C):
+      - iconOnly(): true quando o rótulo deve ficar FORA do fluxo (nao so opacity:0),
+        ou seja, quando ninguem está passando o mouse E (tablet icon-only, ou desktop
+        colapsado). Todo texto/seta usa x-show="!iconOnly()" — display:none real, sem
+        vazar largura — em vez do :style anterior (max-width:0 ainda somava ao gap).
+      - Grupo (menuGroup) colapsado: clicar no ícone expande a sidebar (persistindo
+        ptah_sidebar_collapsed) E abre o grupo, em vez de um flyout separado — mais
+        simples e previsível, e cobre o caso sem hover (touch) em que o preview por
+        hover nunca chega a acontecer.
+      - A sublista do grupo (x-show="open && !iconOnly()") só é desenhada quando o
+        rótulo está visível: era o trilho (border-l/ml-3/pl-3) aparecendo estreito e
+        desalinhado dentro dos 4rem da trilha só-ícones.
+--}}
 <aside
-    x-data="{ hovered: false, isMd: window.innerWidth >= 768, isLg: window.innerWidth >= 1024 }"
+    x-data="{
+        hovered: false,
+        isMd: window.innerWidth >= 768,
+        isLg: window.innerWidth >= 1024,
+        iconOnly() {
+            return !this.hovered && ((!this.isLg && this.isMd) || (this.isLg && this.sidebarCollapsed));
+        }
+    }"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @resize.window="isMd = window.innerWidth >= 768; isLg = window.innerWidth >= 1024"
@@ -101,7 +121,9 @@
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
 >
     {{-- Logo --}}
-    <div class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b flex-shrink-0">
+    <div
+        :class="iconOnly() ? 'justify-center' : ''"
+        class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b flex-shrink-0">
         <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
             @if($logoUrl)
                 <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-6 w-6 object-contain" />
@@ -112,8 +134,8 @@
             @endif
         </div>
         <span
-            :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
-            class="ptah-sidebar-app-name font-bold text-base whitespace-nowrap transition-all duration-300">
+            x-show="!iconOnly()"
+            class="ptah-sidebar-app-name font-bold text-base whitespace-nowrap">
             {{ $appName }}
         </span>
     </div>
@@ -142,13 +164,22 @@
                 {{-- ── menuGroup com filhos → acordeon Alpine ── --}}
                 @if($itemType === 'menuGroup' && $hasKids)
                     <li x-data="{ open: {{ $groupActive ? 'true' : 'false' }} }">
-                        {{-- Botão do grupo --}}
+                        {{-- Botão do grupo. Colapsada (iconOnly): expande a sidebar E abre o
+                             grupo (decisão documentada no comentário acima do <aside>) em vez
+                             de apenas alternar `open` — sem isso o grupo abriria escondido
+                             atrás da trilha só-ícones. --}}
                         <button
                             type="button"
-                            @click="open = !open"
-                            title="{{ $itemLabel }}"
+                            @click="if (iconOnly()) { sidebarCollapsed = false; localStorage.setItem('ptah_sidebar_collapsed', 'false'); open = true; } else { open = !open; }"
+                            :title="iconOnly() ? @js($itemLabel) : null"
                             :aria-expanded="open"
                             aria-haspopup="true"
+                            {{-- Colapsada, a sublista some e este botao e o UNICO vestigio do
+                                 item ativo la dentro — so text-primary no icone nao se enxerga
+                                 de relance (feedback do usuario, com screenshot). Com filho
+                                 ativo + iconOnly, o grupo veste a mesma pilula ativa dos itens
+                                 de topo. --}}
+                            :class="iconOnly() ? 'justify-center{{ $groupActive ? ' ptah-nav-active bg-primary-light' : '' }}' : ''"
                             class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150
                                 {{ $groupActive ? 'text-primary font-semibold' : 'hover:text-primary' }}"
                         >
@@ -156,22 +187,24 @@
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
-                                class="flex-1 text-left whitespace-nowrap text-sm transition-all duration-300">
+                                x-show="!iconOnly()"
+                                class="flex-1 text-left whitespace-nowrap text-sm">
                                 {{ $itemLabel }}
                             </span>
                             {{-- Seta --}}
                             <svg
+                                x-show="!iconOnly()"
                                 :class="open ? 'rotate-180' : ''"
-                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;width:0;overflow:hidden;' : 'opacity:1;'"
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                 class="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
 
-                        {{-- Sub-itens --}}
-                        <ul x-show="open" x-collapse class="mt-1 ml-3 pl-3 border-l space-y-0.5 ptah-c-sidebar_subnav">
+                        {{-- Sub-itens. So desenha quando o rotulo do grupo tambem esta visivel
+                             — colapsada (iconOnly), a lista fica fora do fluxo em vez de render
+                             estreito com o trilho (border-l/ml-3/pl-3) cortado pelos 4rem. --}}
+                        <ul x-show="open && !iconOnly()" x-collapse class="mt-1 ml-3 pl-3 border-l space-y-0.5 ptah-c-sidebar_subnav">
                             @foreach($children as $child)
                                 @php
                                     $childLabel  = $child['label'] ?? ($child['text'] ?? '');
@@ -185,7 +218,6 @@
                                     <a
                                         href="{{ $childUrl }}"
                                         target="{{ $childTarget }}"
-                                        title="{{ $childLabel }}"
                                         @if ($childActive) aria-current="page" @endif
                                         class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
                                             {{ $childActive
@@ -207,15 +239,16 @@
                 @elseif($itemType === 'menuGroup')
                     <li>
                         <div
-                            title="{{ $itemLabel }}"
+                            :title="iconOnly() ? @js($itemLabel) : null"
+                            :class="iconOnly() ? 'justify-center' : ''"
                             class="flex items-center gap-3 px-3 py-2.5 rounded-md text-gray-400 cursor-default"
                         >
                             <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
-                                class="whitespace-nowrap text-sm italic transition-all duration-300">
+                                x-show="!iconOnly()"
+                                class="whitespace-nowrap text-sm italic">
                                 {{ $itemLabel }}
                             </span>
                         </div>
@@ -227,8 +260,9 @@
                         <a
                             href="{{ $itemUrl }}"
                             target="{{ $itemTarget }}"
-                            title="{{ $itemLabel }}"
+                            :title="iconOnly() ? @js($itemLabel) : null"
                             @if ($isActive) aria-current="page" @endif
+                            :class="iconOnly() ? 'justify-center' : ''"
                             class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150 relative
                                 {{ $isActive
                                     ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
@@ -239,8 +273,8 @@
                                 {!! $renderIcon($itemIcon) !!}
                             </span>
                             <span
-                                :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
-                                class="whitespace-nowrap text-sm transition-all duration-300">
+                                x-show="!iconOnly()"
+                                class="whitespace-nowrap text-sm">
                                 {{ $itemLabel }}
                             </span>
                         </a>
@@ -261,15 +295,16 @@
             @csrf
             <button
                 type="submit"
-                title="{{ __('ptah::ui.navbar_user_logout') }}"
+                :title="iconOnly() ? @js(__('ptah::ui.navbar_user_logout')) : null"
+                :class="iconOnly() ? 'justify-center' : ''"
                 class="ptah-logout-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-danger hover:bg-danger-light transition-colors duration-150"
             >
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                     <i class="bx bx-log-out text-xl leading-none"></i>
                 </span>
                 <span
-                    :style="(!hovered && ((!isLg && isMd) || (isLg && sidebarCollapsed))) ? 'opacity:0;max-width:0;overflow:hidden;white-space:nowrap;' : 'opacity:1;max-width:200px;'"
-                    class="whitespace-nowrap text-sm font-medium transition-all duration-300">
+                    x-show="!iconOnly()"
+                    class="whitespace-nowrap text-sm font-medium">
                     {{ __('ptah::ui.navbar_user_logout') }}
                 </span>
             </button>
