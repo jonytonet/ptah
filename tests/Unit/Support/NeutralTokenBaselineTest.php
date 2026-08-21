@@ -52,42 +52,57 @@ class NeutralTokenBaselineTest extends TestCase
     }
 
     /**
-     * CssTokenResolver merges the `.ptah-base-crud` token block into BOTH scopes,
-     * because the density recipe it holds varies by density rather than by theme.
-     * That merge takes precedence over `:root`, so a token declared in both places
-     * would resolve to the component value everywhere in the test's view — while in
-     * a browser it would only apply inside a BaseCrud. Every assertion about that
-     * token outside the CRUD would then be measuring a colour that never renders.
+     * Onda B moved the density recipe's DEFAULT (--ptah-control-h/px/fs/row-py)
+     * out of a bare `.ptah-base-crud { ... }` block and into `:root` (see the
+     * file banner near the top of ptah-components.css) — that block no longer
+     * exists at all, on purpose: a BaseCrud screen whose own toolbar dropdown
+     * never picked "compact"/"spacious" now inherits the GLOBAL density chosen
+     * in /profile instead of always forcing the literal "comfortable" numbers.
      *
-     * The two blocks must therefore stay disjoint. They are today (35 tokens vs 4);
-     * this keeps them that way.
+     * What is left of the old component-scoped family is exactly two LOCAL
+     * overrides, `.ptah-base-crud[data-density="compact"|"spacious"]` — and
+     * they must only ever redeclare token NAMES that already exist in `:root`.
+     * A name that exists ONLY there would be invisible outside those two
+     * density choices (the resolver above never merges them), which is a much
+     * cheaper defect to catch here than in a browser.
      */
     #[Test]
-    public function the_root_and_base_crud_token_blocks_declare_disjoint_names(): void
+    public function the_base_crud_density_overrides_only_redeclare_root_token_names(): void
     {
         $css = self::css();
 
         $this->assertSame(1, preg_match('/:root\s*\{([^}]*)\}/', $css, $root));
         $this->assertSame(
-            1,
-            preg_match('/\.ptah-base-crud\s*\{([^}]*)\}/', $css, $crud),
-            'Bloco de tokens `.ptah-base-crud { ... }` (a receita de densidade) nao encontrado.'
+            0,
+            preg_match('/\.ptah-base-crud\s*\{/', $css),
+            'Um bloco de tokens `.ptah-base-crud { ... }` (bare, sem atributo) voltou a existir — '.
+            'a Onda B moveu esse default para `:root` de proposito (ver o comentario la); '.
+            'reintroduzi-lo aqui faria o BaseCrud voltar a ignorar a densidade global.'
         );
 
         preg_match_all('/(--ptah-[a-z0-9-]+)\s*:/', $root[1], $rootNames);
-        preg_match_all('/(--ptah-[a-z0-9-]+)\s*:/', $crud[1], $crudNames);
 
-        $collisions = array_values(array_intersect($rootNames[1], $crudNames[1]));
+        foreach (['compact', 'spacious'] as $density) {
+            $pattern = '/\.ptah-base-crud\[data-density="'.$density.'"\]\s*\{([^}]*)\}/';
+            $this->assertSame(
+                1,
+                preg_match($pattern, $css, $override),
+                "Bloco .ptah-base-crud[data-density=\"{$density}\"] nao encontrado."
+            );
 
-        $this->assertSame(
-            [],
-            $collisions,
-            'Token declarado em `:root` E em `.ptah-base-crud`: '.implode(', ', $collisions)."\n".
-            'O resolver de teste mescla o bloco do componente sobre o :root nos dois escopos, '.
-            'entao a partir daqui ele resolveria esse token para o valor do componente em todo '.
-            'lugar — inclusive fora do BaseCrud, onde no browser o valor do :root e que vale. '.
-            'Renomeie o token do componente.'
-        );
+            preg_match_all('/(--ptah-[a-z0-9-]+)\s*:/', $override[1], $overrideNames);
+
+            $unknown = array_values(array_diff($overrideNames[1], $rootNames[1]));
+
+            $this->assertSame(
+                [],
+                $unknown,
+                'Token(s) declarado(s) em .ptah-base-crud[data-density="'.$density.'"] mas ausente(s) '.
+                'em `:root`: '.implode(', ', $unknown)."\n".
+                'Uma densidade por tela so pode SOBRESCREVER um token que ja existe globalmente — '.
+                'senao ele fica indefinido para qualquer BaseCrud que nao escolheu essa densidade.'
+            );
+        }
     }
 
     /**

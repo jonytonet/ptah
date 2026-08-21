@@ -66,6 +66,8 @@ class TwoFactorChallengeAppearanceCookieTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'compacta',
+            'fontsize' => 'pequena',
         ], 'appearance');
 
         session(['ptah.2fa.user_id' => $user->id]);
@@ -83,6 +85,8 @@ class TwoFactorChallengeAppearanceCookieTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'compacta',
+            'fontsize' => 'pequena',
         ], json_decode($queued->getValue(), true));
     }
 }

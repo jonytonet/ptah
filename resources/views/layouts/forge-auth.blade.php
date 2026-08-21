@@ -32,7 +32,9 @@
     data-ptah-light="{{ $ptahAppearance['light'] }}"
     data-ptah-dark="{{ $ptahAppearance['dark'] }}"
     data-ptah-accent="{{ $ptahAppearance['accent'] }}"
-    data-ptah-text="{{ $ptahAppearance['text'] }}">
+    data-ptah-text="{{ $ptahAppearance['text'] }}"
+    data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

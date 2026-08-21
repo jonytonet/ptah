@@ -149,7 +149,7 @@ This is a pure restyle layer (no new options in `config/ptah.php`); the color/bo
 ### Per-user Appearance (`/profile` → 6th tab)
 
 On top of the host-level tokens above, every authenticated user can pick their own
-combination of **4 independent axes** from a 6th tab at `/profile` ("Aparência"):
+combination of **6 independent axes** from a 6th tab at `/profile` ("Aparência"):
 
 | Axis | Options (stored slug) |
 |---|---|
@@ -157,6 +157,8 @@ combination of **4 independent axes** from a 6th tab at `/profile` ("Aparência"
 | Dark tone | `carvao`, `grafite`, `meianoite` |
 | Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` |
 | Font colour | `suave`, `neutra`, `forte` |
+| Density | `compacta`, `confortavel`, `espacosa` |
+| Font size | `pequena`, `normal`, `grande` |
 
 Slugs are plain ASCII by design (`nevoa`, `carvao`, `meianoite` — no accented
 characters), since they round-trip through a `data-ptah-*` HTML attribute and a
@@ -166,11 +168,31 @@ JSON-cast preference value.
 group `appearance`) and sanitized against the whitelist in
 `Ptah\Support\AppearancePresets` before every write and every render — a value outside
 the whitelist is never trusted, since it would leave a `var(--ptah-*)` with no matching
-CSS block invalid at computed-value time. The four resulting values are rendered as
-`data-ptah-light`, `data-ptah-dark`, `data-ptah-accent` and `data-ptah-text` attributes
-directly on `<html>` **by the server** (`forge-dashboard-layout`), so there is no flash
-of the default theme for an authenticated user. Each pill in the tab previews the
-option it represents (its own tone/scale/colour), not the currently active theme.
+CSS block invalid at computed-value time. The six resulting values are rendered as
+`data-ptah-light`, `data-ptah-dark`, `data-ptah-accent`, `data-ptah-text`,
+`data-ptah-density` and `data-ptah-fontsize` attributes directly on `<html>` **by the
+server** (`forge-dashboard-layout`), so there is no flash of the default theme for an
+authenticated user. Each pill in the tab previews the option it represents (its own
+tone/scale/colour/spacing), not the currently active theme.
+
+**Density.** Reuses, byte-for-byte, the 3-recipe scale (`--ptah-control-h/px/fs`,
+`--ptah-row-py`) that already existed per-screen inside every BaseCrud toolbar
+(`viewDensity`), now also driven globally from `:root`/`html[data-ptah-density="…"]`. A
+BaseCrud screen whose own toolbar dropdown never picked "compact"/"spacious" (i.e. it is
+still at its default "comfortable") inherits this global choice; a screen that DID pick
+one of those two explicitly keeps it regardless of the global setting. `forge-input`,
+`forge-button` (`sm`/`md`), `forge-select` and the 7 module-screen toolbars/tables also
+scale with this axis.
+
+**Font size.** Scales `<html>`'s `font-size` (87.5% / 100% / 112.5%) — since most of the
+package is sized in `rem`, this scales controls, tables, modals and chrome (sidebar,
+navbar) from one root. A few literal-`px` sites do NOT follow, on purpose (not converted
+by this pass — only listed here): the `@media print` table font (`11px`), the fixed
+28×28px `.ptah-row-action` icon buttons, the sidebar's `max-width:200px` inline style used
+during the collapse/hover label transition, and the many `w-[Npx]`/`h-[Npx]`/`text-[Npx]`
+Tailwind arbitrary values scattered across the module screens and BaseCrud partials
+(fixed-width selects, dropdown panels, small badge text — e.g. `_filter-panel.blade.php`'s
+`w-[58px]` operator select, `_toolbar.blade.php`'s `text-[10px]` chips).
 
 > **Override precedence:** a user-chosen preset **always wins** over a host's
 > `:root`/`.ptah-dark` override (the contract described above) for the tokens the

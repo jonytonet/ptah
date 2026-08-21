@@ -472,6 +472,14 @@ return [
     'profile_appearance_text_suave' => 'Suave',
     'profile_appearance_text_neutra' => 'Neutra',
     'profile_appearance_text_forte' => 'Forte',
+    'profile_appearance_density_label' => 'Densidade',
+    'profile_appearance_density_compacta' => 'Compacta',
+    'profile_appearance_density_confortavel' => 'Confortável',
+    'profile_appearance_density_espacosa' => 'Espaçosa',
+    'profile_appearance_fontsize_label' => 'Tamanho de fonte',
+    'profile_appearance_fontsize_pequena' => 'Pequena',
+    'profile_appearance_fontsize_normal' => 'Normal',
+    'profile_appearance_fontsize_grande' => 'Grande',
     'profile_appearance_reset_btn' => 'Voltar ao original',
 
     /*

@@ -329,6 +329,38 @@
                     </div>
                 </div>
 
+                {{-- densidade --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_density_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::DENSITY as $option)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-density', '{{ $option }}')"
+                                wire:click="setDensity('{{ $option }}')"
+                                data-ptah-density="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeDensity === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                {{ __('ptah::ui.profile_appearance_density_'.$option) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- tamanho de fonte --}}
+                <div>
+                    <p class="text-sm font-medium ptah-c-section_ttl mb-3">{{ __('ptah::ui.profile_appearance_fontsize_label') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (\Ptah\Support\AppearancePresets::FONTSIZE as $option)
+                            <button type="button"
+                                @click="document.documentElement.setAttribute('data-ptah-fontsize', '{{ $option }}')"
+                                wire:click="setFontsize('{{ $option }}')"
+                                data-ptah-fontsize="{{ $option }}" class="ptah-swatch px-4 py-2 rounded-full border text-sm font-medium transition-colors {{ $themeFontsize === $option ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
+                            >
+                                {{ __('ptah::ui.profile_appearance_fontsize_'.$option) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
                 {{-- reset — ação de escape, discreta de propósito: não mexe no
                      modo claro/escuro (isso é o toggle do navbar, tem vida própria). --}}
                 <div>
@@ -336,7 +368,7 @@
                         color="secondary"
                         flat
                         size="sm"
-                        @click="document.documentElement.setAttribute('data-ptah-light', '{{ \Ptah\Support\AppearancePresets::DEFAULT_LIGHT }}'); document.documentElement.setAttribute('data-ptah-dark', '{{ \Ptah\Support\AppearancePresets::DEFAULT_DARK }}'); document.documentElement.setAttribute('data-ptah-accent', '{{ \Ptah\Support\AppearancePresets::DEFAULT_ACCENT }}'); document.documentElement.setAttribute('data-ptah-text', '{{ \Ptah\Support\AppearancePresets::DEFAULT_TEXT }}')"
+                        @click="document.documentElement.setAttribute('data-ptah-light', '{{ \Ptah\Support\AppearancePresets::DEFAULT_LIGHT }}'); document.documentElement.setAttribute('data-ptah-dark', '{{ \Ptah\Support\AppearancePresets::DEFAULT_DARK }}'); document.documentElement.setAttribute('data-ptah-accent', '{{ \Ptah\Support\AppearancePresets::DEFAULT_ACCENT }}'); document.documentElement.setAttribute('data-ptah-text', '{{ \Ptah\Support\AppearancePresets::DEFAULT_TEXT }}'); document.documentElement.setAttribute('data-ptah-density', '{{ \Ptah\Support\AppearancePresets::DEFAULT_DENSITY }}'); document.documentElement.setAttribute('data-ptah-fontsize', '{{ \Ptah\Support\AppearancePresets::DEFAULT_FONTSIZE }}')"
                         wire:click="resetAppearance"
                     >
                         {{ __('ptah::ui.profile_appearance_reset_btn') }}

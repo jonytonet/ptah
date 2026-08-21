@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Cookie;
 
 /**
  * Whitelist + defaults for the appearance presets exposed in the "Aparência"
- * tab of /profile (four independent axes: light tone, dark tone, accent
- * color, text color). Single source of truth shared by:
+ * tab of /profile (six independent axes: light tone, dark tone, accent
+ * color, text color, density and font size). Single source of truth shared by:
  *   - Ptah\Livewire\Auth\ProfilePage — validates input before persisting to
  *     UserPreference (key "theme", group "appearance").
  *   - resources/views/components/forge-dashboard-layout.blade.php — renders
@@ -45,6 +45,33 @@ final class AppearancePresets
     /** @var list<string> */
     public const TEXT = ['suave', 'neutra', 'forte'];
 
+    /**
+     * Global density axis (Onda B) — reuses the exact 3-recipe scale that
+     * already existed per-screen inside BaseCrud (viewDensity: compact |
+     * comfortable | spacious, see HasCrudFilters::setViewDensity()), but as a
+     * whole-app choice rendered on `data-ptah-density` in <html>. The CSS
+     * recipes (--ptah-control-h/px/fs/row-py) now live in :root, scoped by
+     * `html[data-ptah-density="..."]` — see resources/css/ptah-components.css.
+     * A screen's own toolbar dropdown still wins locally when it picks
+     * "compact"/"spacious" explicitly (`.ptah-base-crud[data-density="..."]`);
+     * its default "comfortable" has no local override, so it inherits this
+     * global choice instead.
+     *
+     * @var list<string>
+     */
+    public const DENSITY = ['compacta', 'confortavel', 'espacosa'];
+
+    /**
+     * Global font-size axis (Onda B): scales the whole app's rem-based type
+     * via `html[data-ptah-fontsize="..."] { font-size: ...% }`. "normal" has
+     * no CSS rule at all (100%, i.e. the browser default) — see the same
+     * "no server opinion" idiom `mode` uses, except this axis DOES have a
+     * default (unlike mode).
+     *
+     * @var list<string>
+     */
+    public const FONTSIZE = ['pequena', 'normal', 'grande'];
+
     /** @var list<string> */
     public const MODE = ['light', 'dark'];
 
@@ -55,6 +82,10 @@ final class AppearancePresets
     public const DEFAULT_ACCENT = 'azul';
 
     public const DEFAULT_TEXT = 'neutra';
+
+    public const DEFAULT_DENSITY = 'confortavel';
+
+    public const DEFAULT_FONTSIZE = 'normal';
 
     /**
      * Display swatch for each accent option (matches `--color-primary` in the
@@ -90,7 +121,7 @@ final class AppearancePresets
      * existing localStorage-only dark/light toggle keep working for a user
      * who never touched the Aparência tab.
      *
-     * @return array{mode: string|null, light: string, dark: string, accent: string, text: string}
+     * @return array{mode: string|null, light: string, dark: string, accent: string, text: string, density: string, fontsize: string}
      */
     public static function sanitize(mixed $raw): array
     {
@@ -102,6 +133,8 @@ final class AppearancePresets
             'dark' => in_array($raw['dark'] ?? null, self::DARK, true) ? $raw['dark'] : self::DEFAULT_DARK,
             'accent' => in_array($raw['accent'] ?? null, self::ACCENT, true) ? $raw['accent'] : self::DEFAULT_ACCENT,
             'text' => in_array($raw['text'] ?? null, self::TEXT, true) ? $raw['text'] : self::DEFAULT_TEXT,
+            'density' => in_array($raw['density'] ?? null, self::DENSITY, true) ? $raw['density'] : self::DEFAULT_DENSITY,
+            'fontsize' => in_array($raw['fontsize'] ?? null, self::FONTSIZE, true) ? $raw['fontsize'] : self::DEFAULT_FONTSIZE,
         ];
     }
 
@@ -115,6 +148,8 @@ final class AppearancePresets
             'dark' => self::DARK,
             'accent' => self::ACCENT,
             'text' => self::TEXT,
+            'density' => self::DENSITY,
+            'fontsize' => self::FONTSIZE,
             default => [],
         };
     }
@@ -161,7 +196,7 @@ final class AppearancePresets
      * database for a user who saved a preference long ago and will never
      * touch the Aparência tab again.
      *
-     * @param  array{mode: string|null, light: string, dark: string, accent: string, text: string}  $sanitized
+     * @param  array{mode: string|null, light: string, dark: string, accent: string, text: string, density: string, fontsize: string}  $sanitized
      */
     public static function queueCookie(array $sanitized): void
     {

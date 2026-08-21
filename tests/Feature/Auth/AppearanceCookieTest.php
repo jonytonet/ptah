@@ -77,6 +77,8 @@ class AppearanceCookieTest extends TestCase
         $response->assertSee('data-ptah-dark="'.AppearancePresets::DEFAULT_DARK.'"', false);
         $response->assertSee('data-ptah-accent="'.AppearancePresets::DEFAULT_ACCENT.'"', false);
         $response->assertSee('data-ptah-text="'.AppearancePresets::DEFAULT_TEXT.'"', false);
+        $response->assertSee('data-ptah-density="'.AppearancePresets::DEFAULT_DENSITY.'"', false);
+        $response->assertSee('data-ptah-fontsize="'.AppearancePresets::DEFAULT_FONTSIZE.'"', false);
         $response->assertDontSee('onload=alert', false);
     }
 
@@ -201,6 +203,8 @@ class AppearanceCookieTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'espacosa',
+            'fontsize' => 'grande',
         ], 'appearance');
 
         Livewire::test(LoginPage::class)
@@ -218,6 +222,8 @@ class AppearanceCookieTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'espacosa',
+            'fontsize' => 'grande',
         ], json_decode($queued->getValue(), true));
         $this->assertTrue($queued->isHttpOnly());
     }

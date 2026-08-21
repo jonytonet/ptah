@@ -471,6 +471,14 @@ return [
     'profile_appearance_text_suave' => 'Soft',
     'profile_appearance_text_neutra' => 'Neutral',
     'profile_appearance_text_forte' => 'Strong',
+    'profile_appearance_density_label' => 'Density',
+    'profile_appearance_density_compacta' => 'Compact',
+    'profile_appearance_density_confortavel' => 'Comfortable',
+    'profile_appearance_density_espacosa' => 'Spacious',
+    'profile_appearance_fontsize_label' => 'Font size',
+    'profile_appearance_fontsize_pequena' => 'Small',
+    'profile_appearance_fontsize_normal' => 'Normal',
+    'profile_appearance_fontsize_grande' => 'Large',
     'profile_appearance_reset_btn' => 'Restore defaults',
 
     /*

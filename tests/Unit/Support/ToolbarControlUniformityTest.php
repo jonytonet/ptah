@@ -101,7 +101,11 @@ class ToolbarControlUniformityTest extends TestCase
         $rowPaddings = [];
 
         foreach ([
-            'comfortable' => '/\.ptah-base-crud\s*\{[^}]*--ptah-control-h:\s*([^;]+);[^}]*--ptah-row-py:\s*([^;]+);/',
+            // Onda B: o default "confortavel" nao vive mais num `.ptah-base-crud`
+            // bare — foi movido para `:root` (ver o comentario la), de onde a
+            // densidade tambem passou a ser um eixo GLOBAL de aparencia. "compact"
+            // e "spacious" continuam sendo overrides locais do BaseCrud.
+            'comfortable' => '/:root\s*\{[^}]*--ptah-control-h:\s*([^;]+);[^}]*--ptah-row-py:\s*([^;]+);/',
             'compact' => '/\.ptah-base-crud\[data-density="compact"\]\s*\{[^}]*--ptah-control-h:\s*([^;]+);[^}]*--ptah-row-py:\s*([^;]+);/',
             'spacious' => '/\.ptah-base-crud\[data-density="spacious"\]\s*\{[^}]*--ptah-control-h:\s*([^;]+);[^}]*--ptah-row-py:\s*([^;]+);/',
         ] as $density => $pattern) {
