@@ -50,7 +50,7 @@ class ForgeSidebarCollapseTest extends TestCase
         ]);
 
         $this->assertMatchesRegularExpression(
-            '/iconOnly\(\)\s*\{\s*return !this\.hovered/',
+            '/iconOnly\(\)\s*\{.*?return !this\.hovered && !this\.peek/s',
             $html
         );
     }
@@ -114,7 +114,7 @@ class ForgeSidebarCollapseTest extends TestCase
         ]);
 
         $this->assertMatchesRegularExpression(
-            "/@click=\"if \(iconOnly\(\)\) \{ sidebarCollapsed = false; localStorage\.setItem\('ptah_sidebar_collapsed', 'false'\); open = true; \} else \{ open = !open; \}\"/",
+            "/@click=\"if \(iconOnly\(\)\) \{ if \(isLg\) \{ sidebarCollapsed = false; localStorage\.setItem\('ptah_sidebar_collapsed', 'false'\); \} else \{ peek = true; \} open = true; \} else \{ open = !open; \}\"/",
             $html
         );
     }

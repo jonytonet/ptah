@@ -101,9 +101,10 @@ class CrudKeyboardShortcutsOverlayTest extends TestCase
     #[Test]
     public function hotkey_magics_are_accessed_through_this_inside_the_alpine_method(): void
     {
-        // Dentro de um metodo do x-data, $el/$wire crus nao existem como
-        // variaveis (ReferenceError silencioso — o usuario reportou "aperto n
-        // e nao aparece nada"). O acesso correto e this.$el / this.$wire.
+        // Convencao local: this.$el/this.$wire em metodos do x-data, por
+        // explicitude. (Magic cru FUNCIONA via with(scope) do avaliador do
+        // Alpine — provado empiricamente — mas depende de mecanismo pouco
+        // obvio; este guard pina a convencao neste arquivo, nao corretude.)
         $blade = file_get_contents(dirname(__DIR__, 3).'/resources/views/livewire/base-crud/base-crud.blade.php');
 
         $this->assertStringContainsString('this.$el.querySelector', $blade);

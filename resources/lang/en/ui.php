@@ -1530,7 +1530,6 @@ return [
     'shortcuts_search' => 'Focus search',
     'shortcuts_new' => 'New record',
     'shortcuts_help' => 'Show this list',
-    'shortcuts_open_hint' => 'Press ? for shortcuts',
 
     // -------------------------------------------------------------------------
     // Cascading (dependent) search dropdowns

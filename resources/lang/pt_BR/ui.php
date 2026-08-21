@@ -1532,7 +1532,6 @@ return [
     'shortcuts_search' => 'Focar a busca',
     'shortcuts_new' => 'Novo registro',
     'shortcuts_help' => 'Mostrar esta lista',
-    'shortcuts_open_hint' => 'Pressione ? para atalhos',
 
     // -------------------------------------------------------------------------
     // SearchDropdowns em cascata (campos dependentes)

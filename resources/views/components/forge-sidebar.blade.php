@@ -101,10 +101,14 @@
 <aside
     x-data="{
         hovered: false,
+        peek: false,
         isMd: window.innerWidth >= 768,
         isLg: window.innerWidth >= 1024,
         iconOnly() {
-            return !this.hovered && ((!this.isLg && this.isMd) || (this.isLg && this.sidebarCollapsed));
+            /* peek: expansao temporaria em tablet (md sem hover confiavel) — o ramo
+               tablet ignorava qualquer intencao do usuario e o clique no grupo nao
+               tinha efeito visivel (achado de revisao, Onda C). */
+            return !this.hovered && !this.peek && ((!this.isLg && this.isMd) || (this.isLg && this.sidebarCollapsed));
         }
     }"
     @mouseenter="hovered = true"
@@ -114,7 +118,8 @@
         'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
     }"
-    :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : {}"
+    :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : (isMd && peek ? { width: '16rem' } : {})"
+    @click.outside="peek = false"
     class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 border-r flex flex-col overflow-hidden
            transition-all duration-300 ease-in-out
            md:translate-x-0 md:w-16 md:hover:w-64 lg:translate-x-0"
@@ -170,7 +175,7 @@
                              atrás da trilha só-ícones. --}}
                         <button
                             type="button"
-                            @click="if (iconOnly()) { sidebarCollapsed = false; localStorage.setItem('ptah_sidebar_collapsed', 'false'); open = true; } else { open = !open; }"
+                            @click="if (iconOnly()) { if (isLg) { sidebarCollapsed = false; localStorage.setItem('ptah_sidebar_collapsed', 'false'); } else { peek = true; } open = true; } else { open = !open; }"
                             :title="iconOnly() ? @js($itemLabel) : null"
                             :aria-expanded="open"
                             aria-haspopup="true"

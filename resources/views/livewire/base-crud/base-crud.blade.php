@@ -30,10 +30,12 @@
              if (this._anyDialogOpen()) return;
              if (e.key === '/') {
                  e.preventDefault();
-                 /* Dentro de um METODO do x-data os magics nao existem como
-                    variaveis soltas — $el/$wire cru lancam ReferenceError
-                    silencioso (mesma familia do bug ptahToolbarActions). Sempre
-                    this.$el / this.$wire aqui. */
+                 /* this.$el/this.$wire por EXPLICITUDE. Nota de arquivo: magic
+                    cru ($wire) DENTRO de metodo do x-data FUNCIONA — o avaliador
+                    do Alpine cria o objeto sob with(scope), e a closure resolve o
+                    magic na chamada (verificado empiricamente; o search-dropdown
+                    usa $wire cru ha meses). O prefixo this. e convencao local
+                    para nao depender desse mecanismo pouco obvio. */
                  const s = this.$el.querySelector('input.ptah-c-search')
                         || this.$el.querySelector('.ptah-c-search input')
                         || this.$el.querySelector('.ptah-c-search');
