@@ -1,22 +1,80 @@
+{{--
+    Guarda dos atalhos (FIX 3, Onda C): _anyDialogOpen() substitui o antigo
+    `document.body.style.overflow === 'hidden'`, que so o modal de criar/editar
+    (_modal-form.blade.php) mantinha atualizado — o confirm de exclusao em massa
+    e o de descartar alteracoes, ambos deste mesmo arquivo, nao tocavam nele, e
+    um atalho ainda disparava por baixo deles. Todo dialog do pacote (forge-modal
+    e os confirms ad-hoc abaixo) carrega aria-modal=true; a visibilidade real
+    e testada com checkVisibility()/getClientRects() porque o x-show mora no
+    WRAPPER e display computado do painel interno nunca muda
+    (display:none), entao checar o display computado cobre qualquer um deles sem
+    acoplar a um estado Alpine especifico de outro componente.
+--}}
 <div class="ptah-base-crud" data-density="{{ $viewDensity }}" wire:key="base-crud-{{ $crudTitle }}"
      x-data="{
          _bulkConfirm: null,
+         _showShortcuts: false,
+         _anyDialogOpen() {
+             /* getComputedStyle(el).display NAO vira none quando quem esconde e
+                um ANCESTRAL: os confirms ad-hoc e este proprio overlay poem o
+                x-show no wrapper e o aria-modal no painel interno, cujo display
+                computado fica block para sempre — a versao anterior via um
+                dialog aberto em TODA pagina e engolia todas as teclas em
+                silencio (bug reportado pelo usuario: nada acontece, nada no
+                console). checkVisibility() olha a cadeia inteira; o fallback
+                getClientRects() cobre navegador antigo (elemento nao
+                renderizado nao gera caixa, mesmo position:fixed). */
+             return Array.from(document.querySelectorAll('[aria-modal=true]')).some(
+                 el => el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0
+             );
+         },
          _hotkeys(e) {
-             // Ignore while typing or while any modal holds the page scroll.
+             // Ignore while typing or while any dialog is open.
              if (e.target.closest('input, textarea, select, [contenteditable]')) return;
-             if (document.body.style.overflow === 'hidden') return;
+             if (e.key === '?') {
+                 e.preventDefault();
+                 if (this._anyDialogOpen()) return;
+                 this._showShortcuts = true;
+
+                 return;
+             }
+             if (this._anyDialogOpen()) return;
+             if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.toggleFilters();
+
+                 return;
+             }
+             if (e.key === 'v' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.setViewMode(this.$wire.viewMode === 'table' ? 'cards' : 'table');
+
+                 return;
+             }
+             if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.$refresh();
+
+                 return;
+             }
              if (e.key === '/') {
                  e.preventDefault();
-                 const s = $el.querySelector('input.ptah-c-search')
-                        || $el.querySelector('.ptah-c-search input')
-                        || $el.querySelector('.ptah-c-search');
+                 /* this.$el/this.$wire por EXPLICITUDE. Nota de arquivo: magic
+                    cru ($wire) DENTRO de metodo do x-data FUNCIONA — o avaliador
+                    do Alpine cria o objeto sob with(scope), e a closure resolve o
+                    magic na chamada (verificado empiricamente; o search-dropdown
+                    usa $wire cru ha meses). O prefixo this. e convencao local
+                    para nao depender desse mecanismo pouco obvio. */
+                 const s = this.$el.querySelector('input.ptah-c-search')
+                        || this.$el.querySelector('.ptah-c-search input')
+                        || this.$el.querySelector('.ptah-c-search');
                  if (s) s.focus();
              }
              @if ($effectivePerms['canCreate'] ?? false)
              if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                  e.preventDefault();
-                 $wire.showModal = true;
-                 $wire.prepareCreate();
+                 this.$wire.showModal = true;
+                 this.$wire.prepareCreate();
              }
              @endif
          }
@@ -153,6 +211,66 @@
             Execute <code>php artisan ptah:forge {{ $model }}</code> para gerar.
         </x-forge-alert>
     @endif
+
+    {{-- Atalhos de teclado (FIX 3, Onda C) — "?" fora de um campo abre esta lista.
+         So os atalhos que este componente realmente tem (ver _hotkeys acima):
+         "/" foca a busca, "n" abre "Novo" (so quando o usuario pode criar). --}}
+    <div x-show="_showShortcuts" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         @keydown.escape.window="_showShortcuts = false">
+        <div class="absolute inset-0 bg-black/40" @click="_showShortcuts = false"></div>
+        <div x-trap.noscroll="_showShortcuts"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             role="dialog" aria-modal="true" aria-labelledby="ptah-shortcuts-title"
+             class="ptah-modal-panel relative w-full max-w-sm rounded-xl border shadow-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="ptah-shortcuts-title" class="text-base font-semibold">
+                    {{ __('ptah::ui.shortcuts_title') }}
+                </h3>
+                <button type="button" @click="_showShortcuts = false"
+                    class="shrink-0 rounded transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    aria-label="{{ __('ptah::ui.modal_close') }}">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <dl class="space-y-2.5 text-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_search') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">/</kbd></dd>
+                </div>
+                @if ($effectivePerms['canCreate'] ?? false)
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_new') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">n</kbd></dd>
+                </div>
+                @endif
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_filters') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">f</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_view_mode') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">v</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_refresh') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">r</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_sidebar') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">Ctrl+B</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_help') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">?</kbd></dd>
+                </div>
+            </dl>
+        </div>
+    </div>
 
     @include('ptah::livewire.base-crud.partials._modal-form')
 

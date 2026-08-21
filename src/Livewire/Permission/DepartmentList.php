@@ -45,10 +45,6 @@ class DepartmentList extends Component
 
     public bool $showDeleteModal = false;
 
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     protected function rules(): array
     {
         return [
@@ -103,15 +99,15 @@ class DepartmentList extends Component
 
             if ($this->isEditing) {
                 Department::findOrFail($this->editingId)->update($data);
-                $this->successMsg = 'Department updated.';
+                $this->dispatch('ptah-toast', title: 'Department updated.', color: 'success');
             } else {
                 Department::create($data);
-                $this->successMsg = 'Department created.';
+                $this->dispatch('ptah-toast', title: 'Department created.', color: 'success');
             }
 
             $this->showModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Error: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -125,9 +121,9 @@ class DepartmentList extends Component
     {
         try {
             Department::findOrFail($this->deleteId)->delete();
-            $this->successMsg = 'Department deleted.';
+            $this->dispatch('ptah-toast', title: 'Department deleted.', color: 'success');
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Error: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Error: '.$e->getMessage(), color: 'danger');
         }
 
         $this->showDeleteModal = false;

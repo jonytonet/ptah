@@ -2,18 +2,15 @@
 <div>
     <div class="mb-5">
         <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.page_title') }}</h1>
-        <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.page_subtitle') }}</p>
+        <p class="text-sm ptah-c-mod_subttl mt-0.5">{{ __('ptah::ui.page_subtitle') }}</p>
     </div>
-
-    @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
-    @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
         {{-- ── COLUNA: Páginas ──────────────────────────────── --}}
         <div>
             <div class="flex items-center justify-between mb-3">
-                <h2 class="font-semibold text-slate-700">{{ __('ptah::ui.page_col_pages') }}</h2>
+                <h2 class="font-semibold ptah-c-mod_hdg">{{ __('ptah::ui.page_col_pages') }}</h2>
                 <button wire:click="createPage"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors duration-150 focus:outline-none select-none">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -28,12 +25,12 @@
                         class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"/>
             </div>
 
-            <div class="border border-slate-200 rounded-md overflow-hidden">
+            <div class="ptah-c-mod_pagelist border rounded-md overflow-hidden">
                 <div class="divide-y divide-slate-100">
                     @forelse ($pageRows as $page)
                         <div
                             wire:click="selectPage({{ $page->id }}, '{{ addslashes($page->name) }}')"
-                            class="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors {{ $selectedPageId === $page->id ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-slate-50/70' }}"
+                            class="ptah-c-mod_item flex items-center justify-between px-4 py-3 cursor-pointer transition-colors {{ $selectedPageId === $page->id ? 'ptah-c-mod_item_sel' : '' }}"
                         >
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
@@ -83,7 +80,7 @@
         <div>
             @if ($selectedPageId)
                 <div class="flex items-center justify-between mb-3">
-                    <h2 class="font-semibold text-slate-700">
+                    <h2 class="font-semibold ptah-c-mod_hdg">
                         {{ __('ptah::ui.page_objects_header', ['page' => $selectedPageName]) }}
                     </h2>
                     <button wire:click="createObj"
@@ -153,7 +150,7 @@
                     </table>
                 </div>
                 @if ($objRows?->hasPages())
-                    <div class="flex items-center justify-between mt-2 text-sm text-slate-500">
+                    <div class="flex items-center justify-between mt-2 text-sm ptah-c-pag">
                         <span>{{ __('ptah::ui.company_pagination', ['first' => $objRows->firstItem(), 'last' => $objRows->lastItem(), 'total' => $objRows->total()]) }}</span>
                         <div>{{ $objRows->links('ptah::components.forge-pagination') }}</div>
                     </div>

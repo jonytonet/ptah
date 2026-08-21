@@ -6,14 +6,6 @@
         :subtitle="__('ptah::ui.company_subtitle')"
     />
 
-    {{-- Alertas --}}
-    @if ($successMsg)
-        <x-forge-alert type="success" class="mb-3" wire:key="success-msg">{{ $successMsg }}</x-forge-alert>
-    @endif
-    @if ($errorMsg)
-        <x-forge-alert type="danger" class="mb-3" wire:key="error-msg">{{ $errorMsg }}</x-forge-alert>
-    @endif
-
     {{-- Toolbar --}}
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <x-forge-button wire:click="create" color="primary" size="sm">
@@ -41,7 +33,7 @@
                 <tr>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-12">{{ __('ptah::ui.company_col_abbr') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('name')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="text-blue-500">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.company_col_name') }} @if($sort === 'name')<span class="ptah-c-sort_active">{{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">E-mail</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">CNPJ / Tax</th>
@@ -124,7 +116,7 @@
 
     {{-- Paginação --}}
     @if ($rows->hasPages())
-        <div class="flex items-center justify-between mt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between mt-4 text-sm ptah-c-pag">
             <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
             <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
         </div>

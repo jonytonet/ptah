@@ -6,10 +6,6 @@
         :subtitle="__('ptah::ui.menu_subtitle')"
     />
 
-    {{-- Alertas --}}
-    @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
-    @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
-
     {{-- Toolbar --}}
     <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <x-forge-button wire:click="create" color="primary" size="sm">
@@ -52,13 +48,13 @@
                 <tr>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-10">{{ __('ptah::ui.menu_col_icon') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('text')">
-                        <span class="flex items-center gap-1">{{ __('ptah::ui.menu_col_text') }} @if($sort==='text')<span class="text-blue-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
+                        <span class="flex items-center gap-1">{{ __('ptah::ui.menu_col_text') }} @if($sort==='text')<span class="ptah-c-sort_active">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_type') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_url') }}</th>
                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_parent') }}</th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer" wire:click="sort('link_order')">
-                        <span class="flex items-center justify-center gap-1">{{ __('ptah::ui.menu_col_order') }} @if($sort==='link_order')<span class="text-blue-500">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
+                        <span class="flex items-center justify-center gap-1">{{ __('ptah::ui.menu_col_order') }} @if($sort==='link_order')<span class="ptah-c-sort_active">{{ $direction==='asc'?'↑':'↓' }}</span>@endif</span>
                     </th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_status') }}</th>
                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">{{ __('ptah::ui.menu_col_actions') }}</th>

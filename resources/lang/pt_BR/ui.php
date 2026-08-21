@@ -38,6 +38,7 @@ return [
     | Density labels
     |--------------------------------------------------------------------------
     */
+    'density_global' => 'Padrão do perfil',
     'density_compact' => 'Compacto',
     'density_comfortable' => 'Confortável',
     'density_spacious' => 'Espaçoso',
@@ -472,6 +473,14 @@ return [
     'profile_appearance_text_suave' => 'Suave',
     'profile_appearance_text_neutra' => 'Neutra',
     'profile_appearance_text_forte' => 'Forte',
+    'profile_appearance_density_label' => 'Densidade',
+    'profile_appearance_density_compacta' => 'Compacta',
+    'profile_appearance_density_confortavel' => 'Confortável',
+    'profile_appearance_density_espacosa' => 'Espaçosa',
+    'profile_appearance_fontsize_label' => 'Tamanho de fonte',
+    'profile_appearance_fontsize_pequena' => 'Pequena',
+    'profile_appearance_fontsize_normal' => 'Normal',
+    'profile_appearance_fontsize_grande' => 'Grande',
     'profile_appearance_reset_btn' => 'Voltar ao original',
 
     /*
@@ -552,11 +561,14 @@ return [
     'role_empty_found' => 'Nenhum role encontrado',
     'role_empty_hint' => 'Adicione o primeiro perfil de acesso',
     'role_bind_modal_prefix' => 'Gerenciar Permissões',
+    'role_bind_filter_ph' => 'Buscar páginas ou objetos...',
+    'role_bind_filter_aria' => 'Filtrar páginas e objetos',
     'role_bind_perm_read' => 'Ler',
     'role_bind_perm_create' => 'Criar',
     'role_bind_perm_edit' => 'Editar',
     'role_bind_perm_delete' => 'Excluir',
     'role_bind_empty' => 'Nenhum objeto cadastrado. Acesse Páginas e cadastre os objetos primeiro.',
+    'role_bind_filter_empty' => 'Nenhuma página ou objeto encontrado para a busca.',
     'role_bind_save' => 'Salvar Permissões',
     'role_delete_text' => 'Excluir este role? As permissões e vínculos com usuários serão removidos.',
 
@@ -1517,6 +1529,14 @@ return [
     'btn_save_and_new' => 'Salvar e criar outro',
     'sort_by_column' => 'Ordenar por :column',
     'per_page_label' => 'Linhas por página',
+    'shortcuts_title' => 'Atalhos de teclado',
+    'shortcuts_search' => 'Focar a busca',
+    'shortcuts_new' => 'Novo registro',
+    'shortcuts_filters' => 'Abrir/fechar filtros',
+    'shortcuts_view_mode' => 'Alternar tabela / cards',
+    'shortcuts_refresh' => 'Recarregar a listagem',
+    'shortcuts_sidebar' => 'Recolher / expandir o menu',
+    'shortcuts_help' => 'Mostrar esta lista',
 
     // -------------------------------------------------------------------------
     // SearchDropdowns em cascata (campos dependentes)

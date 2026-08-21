@@ -105,6 +105,9 @@
                 </svg>
             </button>
         @endif
+        {{-- A dica visual do "/" dentro do campo foi removida a pedido do
+             usuario ("ficou feio essa caixa"); o atalho segue documentado no
+             overlay de atalhos (tecla ?). --}}
     </div>
 
     {{-- Grupo de acoes a direita. A classe .ptah-c-toolbar_actions e o que a medicao
@@ -329,6 +332,7 @@
         {{-- Densidade da visualização --}}
         @php
             $densityMap = [
+                'global'      => ['icon' => '◈', 'label' => __('ptah::ui.density_global')],
                 'compact'     => ['icon' => '≡', 'label' => __('ptah::ui.density_compact')],
                 'comfortable' => ['icon' => '☰', 'label' => __('ptah::ui.density_comfortable')],
                 'spacious'    => ['icon' => '⊟', 'label' => __('ptah::ui.density_spacious')],
@@ -353,7 +357,7 @@
                      style="transform-origin: top right"
                  class="absolute right-0 mt-1.5 border rounded-lg z-20 min-w-[180px] py-1 ptah-c-dd">
                 @foreach ($densityMap as $d => $info)
-                    <button wire:click="$set('viewDensity', '{{ $d }}')" @click="open = false"
+                    <button wire:click="setViewDensity('{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
                                {{ $viewDensity === $d ? 'font-semibold ptah-c-dd_active' : '' }}">
                         <span>{{ $info['icon'] }} {{ $info['label'] }}</span>

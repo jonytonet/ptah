@@ -40,22 +40,24 @@ final class CssTokenResolver
     {
         $css = self::stripComments($css);
 
+        // The toolbar/table density recipe (--ptah-control-h, --ptah-control-px,
+        // --ptah-control-fs, --ptah-row-py) used to live in a bare `.ptah-base-crud
+        // { ... }` block, merged into both scopes here as a second custom-property
+        // family this resolver had no concept of "density" for. Onda B moved that
+        // default straight into `:root` (see the file banner near the top of
+        // ptah-components.css) — it is now an ordinary :root token like any other,
+        // so $light already carries it and no special-case merge is needed. The
+        // density-specific overrides (`.ptah-base-crud[data-density="compact"|
+        // "spacious"]`, `html[data-ptah-density="..."]`) stay OUT of this resolver
+        // on purpose, same as before: they are a per-element/per-density axis, not
+        // part of the two big light/dark theme scopes this class resolves — see
+        // tests/Unit/Support/DensityFontsizeCssParityTest.php for that axis instead.
         $light = self::parseDeclarationBlock($css, '/:root\s*\{([^}]*)\}/');
         $darkOverrides = self::parseDeclarationBlock($css, '/\.ptah-dark\s*\{([^}]*)\}/');
 
-        // .ptah-base-crud declares a second, narrower family of --ptah-* custom
-        // properties — the toolbar/table density recipe (--ptah-control-h,
-        // --ptah-control-px, --ptah-control-fs, --ptah-row-py). They vary by
-        // DENSITY (the bare selector vs `[data-density="compact"|"spacious"]`),
-        // an axis this resolver has no concept of, so only the bare selector's
-        // values are captured — i.e. what actually renders absent a
-        // data-density override ("comfortable"). They don't vary by light/dark
-        // at all, so — exactly like :root — the same map merges into BOTH scopes.
-        $componentDefaults = self::parseDeclarationBlock($css, '/\.ptah-base-crud\s*\{([^}]*)\}/');
-
         return [
-            'light' => array_merge($light, $componentDefaults),
-            'dark' => array_merge($light, $componentDefaults, $darkOverrides),
+            'light' => $light,
+            'dark' => array_merge($light, $darkOverrides),
         ];
     }
 

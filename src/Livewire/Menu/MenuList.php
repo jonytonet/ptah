@@ -55,11 +55,6 @@ class MenuList extends Component
 
     public bool $showDeleteModal = false;
 
-    // ── Feedback ───────────────────────────────────────────────────────
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     // ── Validation rules ──────────────────────────────────────────────
     protected function rules(): array
     {
@@ -101,7 +96,7 @@ class MenuList extends Component
     // ── CRUD ───────────────────────────────────────────────────────────
     public function create(): void
     {
-        $this->reset(['text', 'url', 'icon', 'type', 'target', 'parent_id', 'link_order', 'is_active', 'editingId', 'errorMsg']);
+        $this->reset(['text', 'url', 'icon', 'type', 'target', 'parent_id', 'link_order', 'is_active', 'editingId']);
         $this->icon = 'bx bx-circle';
         $this->type = 'menuLink';
         $this->target = '_self';
@@ -146,10 +141,10 @@ class MenuList extends Component
 
             if ($this->isEditing) {
                 Menu::findOrFail($this->editingId)->update($data);
-                $this->successMsg = "Item \"{$this->text}\" atualizado.";
+                $this->dispatch('ptah-toast', title: "Item \"{$this->text}\" atualizado.", color: 'success');
             } else {
                 Menu::create($data);
-                $this->successMsg = "Item \"{$this->text}\" criado.";
+                $this->dispatch('ptah-toast', title: "Item \"{$this->text}\" criado.", color: 'success');
             }
 
             app(MenuService::class)->clearCache();
@@ -157,7 +152,7 @@ class MenuList extends Component
             $this->resetPage();
 
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao salvar: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro ao salvar: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -166,7 +161,7 @@ class MenuList extends Component
         $menu = Menu::findOrFail($id);
         $menu->update(['is_active' => ! $menu->is_active]);
         app(MenuService::class)->clearCache();
-        $this->successMsg = $menu->is_active ? 'Item ativado.' : 'Item desativado.';
+        $this->dispatch('ptah-toast', title: $menu->is_active ? 'Item ativado.' : 'Item desativado.', color: 'success');
     }
 
     public function confirmDelete(int $id): void
@@ -191,10 +186,10 @@ class MenuList extends Component
 
             $menu->delete();
             app(MenuService::class)->clearCache();
-            $this->successMsg = 'Item deleted.';
+            $this->dispatch('ptah-toast', title: 'Item deleted.', color: 'success');
 
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro ao excluir: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro ao excluir: '.$e->getMessage(), color: 'danger');
         }
 
         $this->showDeleteModal = false;

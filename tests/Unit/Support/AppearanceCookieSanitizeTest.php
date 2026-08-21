@@ -45,6 +45,8 @@ class AppearanceCookieSanitizeTest extends TestCase
                 'accent' => 'nonexistent-preset',
                 'text' => '<img src=x onerror=alert(1)>',
                 'mode' => 'sepia',
+                'density' => 'gigante',
+                'fontsize' => 'enorme',
             ])],
         ];
     }
@@ -59,6 +61,8 @@ class AppearanceCookieSanitizeTest extends TestCase
         $this->assertSame(AppearancePresets::DEFAULT_DARK, $sanitized['dark']);
         $this->assertSame(AppearancePresets::DEFAULT_ACCENT, $sanitized['accent']);
         $this->assertSame(AppearancePresets::DEFAULT_TEXT, $sanitized['text']);
+        $this->assertSame(AppearancePresets::DEFAULT_DENSITY, $sanitized['density']);
+        $this->assertSame(AppearancePresets::DEFAULT_FONTSIZE, $sanitized['fontsize']);
         $this->assertNull($sanitized['mode']);
 
         // Never lets an un-whitelisted string reach the caller under any key.
@@ -72,6 +76,29 @@ class AppearanceCookieSanitizeTest extends TestCase
     }
 
     #[Test]
+    public function a_pre_density_cookie_with_only_the_original_five_keys_gains_the_new_defaults(): void
+    {
+        // O formato que usuarios REAIS tem no navegador hoje: o cookie gravado
+        // antes dos eixos density/fontsize existirem. Ele precisa parsear sem
+        // erro e ganhar os defaults novos — este e o cenario de migracao mais
+        // importante dos dois eixos (achado de revisao, Onda B).
+        $raw = json_encode([
+            'mode' => 'dark',
+            'light' => 'papel',
+            'dark' => 'carvao',
+            'accent' => 'ciano',
+            'text' => 'forte',
+        ]);
+
+        $sanitized = AppearancePresets::sanitize(AppearancePresets::decodeCookie($raw));
+
+        $this->assertSame('dark', $sanitized['mode']);
+        $this->assertSame('ciano', $sanitized['accent']);
+        $this->assertSame('confortavel', $sanitized['density']);
+        $this->assertSame('normal', $sanitized['fontsize']);
+    }
+
+    #[Test]
     public function a_well_formed_cookie_round_trips_through_decode_and_sanitize(): void
     {
         $raw = json_encode([
@@ -80,6 +107,8 @@ class AppearanceCookieSanitizeTest extends TestCase
             'dark' => 'carvao',
             'accent' => 'ciano',
             'text' => 'forte',
+            'density' => 'compacta',
+            'fontsize' => 'grande',
         ]);
 
         $sanitized = AppearancePresets::sanitize(AppearancePresets::decodeCookie($raw));
@@ -90,6 +119,8 @@ class AppearanceCookieSanitizeTest extends TestCase
             'dark' => 'carvao',
             'accent' => 'ciano',
             'text' => 'forte',
+            'density' => 'compacta',
+            'fontsize' => 'grande',
         ], $sanitized);
     }
 
@@ -99,6 +130,8 @@ class AppearanceCookieSanitizeTest extends TestCase
         $raw = json_encode([
             'light' => 'papel',
             'accent' => 'not-a-real-accent',
+            'density' => 'espacosa',
+            'fontsize' => 'nao-existe',
         ]);
 
         $sanitized = AppearancePresets::sanitize(AppearancePresets::decodeCookie($raw));
@@ -107,5 +140,7 @@ class AppearanceCookieSanitizeTest extends TestCase
         $this->assertSame(AppearancePresets::DEFAULT_ACCENT, $sanitized['accent']);
         $this->assertSame(AppearancePresets::DEFAULT_DARK, $sanitized['dark']);
         $this->assertSame(AppearancePresets::DEFAULT_TEXT, $sanitized['text']);
+        $this->assertSame('espacosa', $sanitized['density']);
+        $this->assertSame(AppearancePresets::DEFAULT_FONTSIZE, $sanitized['fontsize']);
     }
 }

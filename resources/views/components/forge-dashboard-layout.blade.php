@@ -24,7 +24,7 @@
 
 @php
     // Aba "Aparência" de /profile (Ptah\Livewire\Auth\ProfilePage). O banco continua
-    // sendo a fonte da verdade para usuário autenticado — renderizar os 4 atributos
+    // sendo a fonte da verdade para usuário autenticado — renderizar os 6 atributos
     // aqui (em vez de via Alpine/localStorage) é o que evita flash no F5/navegação.
     // O cookie ptah_appearance (ver AppearancePresets::queueCookie) é só fallback:
     // visitante sem sessão, ou usuário autenticado que nunca salvou preferência.
@@ -44,7 +44,9 @@
     data-ptah-light="{{ $ptahAppearance['light'] }}"
     data-ptah-dark="{{ $ptahAppearance['dark'] }}"
     data-ptah-accent="{{ $ptahAppearance['accent'] }}"
-    data-ptah-text="{{ $ptahAppearance['text'] }}">
+    data-ptah-text="{{ $ptahAppearance['text'] }}"
+    data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -306,6 +308,8 @@
                 localStorage.setItem('ptah_sidebar_collapsed', this.sidebarCollapsed);
             }
         }"
+        @keydown.window.ctrl.b.prevent="toggleSidebarCollapse()"
+        @keydown.window.meta.b.prevent="toggleSidebarCollapse()"
         class="min-h-screen"
     >
 

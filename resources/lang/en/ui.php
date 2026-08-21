@@ -37,6 +37,7 @@ return [
     | Density labels
     |--------------------------------------------------------------------------
     */
+    'density_global' => 'Profile default',
     'density_compact' => 'Compact',
     'density_comfortable' => 'Comfortable',
     'density_spacious' => 'Spacious',
@@ -471,6 +472,14 @@ return [
     'profile_appearance_text_suave' => 'Soft',
     'profile_appearance_text_neutra' => 'Neutral',
     'profile_appearance_text_forte' => 'Strong',
+    'profile_appearance_density_label' => 'Density',
+    'profile_appearance_density_compacta' => 'Compact',
+    'profile_appearance_density_confortavel' => 'Comfortable',
+    'profile_appearance_density_espacosa' => 'Spacious',
+    'profile_appearance_fontsize_label' => 'Font size',
+    'profile_appearance_fontsize_pequena' => 'Small',
+    'profile_appearance_fontsize_normal' => 'Normal',
+    'profile_appearance_fontsize_grande' => 'Large',
     'profile_appearance_reset_btn' => 'Restore defaults',
 
     /*
@@ -551,11 +560,14 @@ return [
     'role_empty_found' => 'No roles found',
     'role_empty_hint' => 'Add the first access profile',
     'role_bind_modal_prefix' => 'Manage Permissions ',
+    'role_bind_filter_ph' => 'Search pages or objects...',
+    'role_bind_filter_aria' => 'Filter pages and objects',
     'role_bind_perm_read' => 'Read',
     'role_bind_perm_create' => 'Create',
     'role_bind_perm_edit' => 'Edit',
     'role_bind_perm_delete' => 'Delete',
     'role_bind_empty' => 'No objects registered. Go to Pages and register objects first.',
+    'role_bind_filter_empty' => 'No pages or objects match your search.',
     'role_bind_save' => 'Save Permissions',
     'role_delete_text' => 'Delete this role? Permissions and user bindings will be removed.',
 
@@ -1515,6 +1527,14 @@ return [
     'btn_save_and_new' => 'Save & add another',
     'sort_by_column' => 'Sort by :column',
     'per_page_label' => 'Rows per page',
+    'shortcuts_title' => 'Keyboard shortcuts',
+    'shortcuts_search' => 'Focus search',
+    'shortcuts_new' => 'New record',
+    'shortcuts_filters' => 'Toggle the filter panel',
+    'shortcuts_view_mode' => 'Switch table / cards',
+    'shortcuts_refresh' => 'Reload the listing',
+    'shortcuts_sidebar' => 'Collapse / expand the menu',
+    'shortcuts_help' => 'Show this list',
 
     // -------------------------------------------------------------------------
     // Cascading (dependent) search dropdowns

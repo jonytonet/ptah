@@ -85,10 +85,6 @@ class PageList extends Component
 
     public string $deleteTarget = ''; // 'page' | 'obj'
 
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     protected function pageRules(): array
     {
         return [
@@ -169,15 +165,15 @@ class PageList extends Component
 
             if ($this->isEditingPage) {
                 PtahPage::findOrFail($this->editingPageId)->update($data);
-                $this->successMsg = 'Page updated.';
+                $this->dispatch('ptah-toast', title: 'Page updated.', color: 'success');
             } else {
                 PtahPage::create($data);
-                $this->successMsg = 'Page created.';
+                $this->dispatch('ptah-toast', title: 'Page created.', color: 'success');
             }
 
             $this->showPageModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -235,15 +231,15 @@ class PageList extends Component
 
             if ($this->isEditingObj) {
                 PageObject::findOrFail($this->editingObjId)->update($data);
-                $this->successMsg = 'Object updated.';
+                $this->dispatch('ptah-toast', title: 'Object updated.', color: 'success');
             } else {
                 PageObject::create($data);
-                $this->successMsg = 'Object created.';
+                $this->dispatch('ptah-toast', title: 'Object created.', color: 'success');
             }
 
             $this->showObjModal = false;
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -268,16 +264,16 @@ class PageList extends Component
         try {
             if ($this->deleteTarget === 'page') {
                 PtahPage::findOrFail($this->deletePageId)->delete();
-                $this->successMsg = 'Page deleted.';
+                $this->dispatch('ptah-toast', title: 'Page deleted.', color: 'success');
                 if ($this->selectedPageId === $this->deletePageId) {
                     $this->selectedPageId = null;
                 }
             } elseif ($this->deleteTarget === 'obj') {
                 PageObject::findOrFail($this->deleteObjId)->delete();
-                $this->successMsg = 'Object deleted.';
+                $this->dispatch('ptah-toast', title: 'Object deleted.', color: 'success');
             }
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
 
         $this->showDeleteModal = false;

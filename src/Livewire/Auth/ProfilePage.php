@@ -64,6 +64,10 @@ class ProfilePage extends Component
 
     public string $themeText = AppearancePresets::DEFAULT_TEXT;
 
+    public string $themeDensity = AppearancePresets::DEFAULT_DENSITY;
+
+    public string $themeFontsize = AppearancePresets::DEFAULT_FONTSIZE;
+
     // ── Feedback ───────────────────────────────────────────────────────
     public string $successMsg = '';
 
@@ -81,6 +85,8 @@ class ProfilePage extends Component
         $this->themeDark = $theme['dark'];
         $this->themeAccent = $theme['accent'];
         $this->themeText = $theme['text'];
+        $this->themeDensity = $theme['density'];
+        $this->themeFontsize = $theme['fontsize'];
     }
 
     // ── Profile ────────────────────────────────────────────────────────────
@@ -267,13 +273,23 @@ class ProfilePage extends Component
         $this->setAppearanceAxis('text', $value);
     }
 
+    public function setDensity(string $value): void
+    {
+        $this->setAppearanceAxis('density', $value);
+    }
+
+    public function setFontsize(string $value): void
+    {
+        $this->setAppearanceAxis('fontsize', $value);
+    }
+
     /**
-     * "Voltar ao original": restores the 4 preset axes (light, dark, accent,
-     * text) to their defaults. Deliberately leaves `mode` (claro/escuro)
-     * untouched — that is the navbar toggle's own setting, persisted via the
-     * `ptah.appearance.theme-mode` route, and a user clicking "restore
-     * defaults" on the Aparência tab does not expect it to also flip their
-     * light/dark choice.
+     * "Voltar ao original": restores the 6 preset axes (light, dark, accent,
+     * text, density, fontsize) to their defaults. Deliberately leaves `mode`
+     * (claro/escuro) untouched — that is the navbar toggle's own setting,
+     * persisted via the `ptah.appearance.theme-mode` route, and a user
+     * clicking "restore defaults" on the Aparência tab does not expect it to
+     * also flip their light/dark choice.
      */
     public function resetAppearance(): void
     {
@@ -281,12 +297,16 @@ class ProfilePage extends Component
         $this->themeDark = AppearancePresets::DEFAULT_DARK;
         $this->themeAccent = AppearancePresets::DEFAULT_ACCENT;
         $this->themeText = AppearancePresets::DEFAULT_TEXT;
+        $this->themeDensity = AppearancePresets::DEFAULT_DENSITY;
+        $this->themeFontsize = AppearancePresets::DEFAULT_FONTSIZE;
 
         $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
         $theme['light'] = AppearancePresets::DEFAULT_LIGHT;
         $theme['dark'] = AppearancePresets::DEFAULT_DARK;
         $theme['accent'] = AppearancePresets::DEFAULT_ACCENT;
         $theme['text'] = AppearancePresets::DEFAULT_TEXT;
+        $theme['density'] = AppearancePresets::DEFAULT_DENSITY;
+        $theme['fontsize'] = AppearancePresets::DEFAULT_FONTSIZE;
 
         UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
         AppearancePresets::queueCookie($theme);

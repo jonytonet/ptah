@@ -74,7 +74,9 @@ class ProfilePageAppearanceTest extends TestCase
             ->assertSet('themeLight', AppearancePresets::DEFAULT_LIGHT)
             ->assertSet('themeDark', AppearancePresets::DEFAULT_DARK)
             ->assertSet('themeAccent', AppearancePresets::DEFAULT_ACCENT)
-            ->assertSet('themeText', AppearancePresets::DEFAULT_TEXT);
+            ->assertSet('themeText', AppearancePresets::DEFAULT_TEXT)
+            ->assertSet('themeDensity', AppearancePresets::DEFAULT_DENSITY)
+            ->assertSet('themeFontsize', AppearancePresets::DEFAULT_FONTSIZE);
     }
 
     #[Test]
@@ -90,7 +92,11 @@ class ProfilePageAppearanceTest extends TestCase
             ->call('setAccent', 'ciano')
             ->assertSet('themeAccent', 'ciano')
             ->call('setText', 'forte')
-            ->assertSet('themeText', 'forte');
+            ->assertSet('themeText', 'forte')
+            ->call('setDensity', 'compacta')
+            ->assertSet('themeDensity', 'compacta')
+            ->call('setFontsize', 'grande')
+            ->assertSet('themeFontsize', 'grande');
 
         $stored = UserPreference::get($user->id, 'theme');
 
@@ -100,6 +106,8 @@ class ProfilePageAppearanceTest extends TestCase
             'dark' => 'carvao',
             'accent' => 'ciano',
             'text' => 'forte',
+            'density' => 'compacta',
+            'fontsize' => 'grande',
         ], $stored);
     }
 
@@ -114,7 +122,11 @@ class ProfilePageAppearanceTest extends TestCase
             ->call('setAccent', 'javascript:alert(1)')
             ->assertSet('themeAccent', 'rosa')
             ->call('setLight', '../../etc/passwd')
-            ->assertSet('themeLight', AppearancePresets::DEFAULT_LIGHT);
+            ->assertSet('themeLight', AppearancePresets::DEFAULT_LIGHT)
+            ->call('setDensity', 'gigante')
+            ->assertSet('themeDensity', AppearancePresets::DEFAULT_DENSITY)
+            ->call('setFontsize', 'enorme')
+            ->assertSet('themeFontsize', AppearancePresets::DEFAULT_FONTSIZE);
 
         $stored = UserPreference::get($user->id, 'theme');
 
@@ -133,13 +145,17 @@ class ProfilePageAppearanceTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'espacosa',
+            'fontsize' => 'pequena',
         ], 'appearance');
 
         Livewire::test(ProfilePage::class)
             ->assertSet('themeLight', 'nevoa')
             ->assertSet('themeDark', 'meianoite')
             ->assertSet('themeAccent', 'teal')
-            ->assertSet('themeText', 'suave');
+            ->assertSet('themeText', 'suave')
+            ->assertSet('themeDensity', 'espacosa')
+            ->assertSet('themeFontsize', 'pequena');
     }
 
     #[Test]
@@ -170,7 +186,7 @@ class ProfilePageAppearanceTest extends TestCase
     // ── "Voltar ao original" ──────────────────────────────────────────────────
 
     #[Test]
-    public function resetar_a_aparencia_restaura_os_4_eixos_mas_nao_mexe_no_modo(): void
+    public function resetar_a_aparencia_restaura_os_6_eixos_mas_nao_mexe_no_modo(): void
     {
         $user = $this->actingAsUser();
 
@@ -180,6 +196,8 @@ class ProfilePageAppearanceTest extends TestCase
             'dark' => 'meianoite',
             'accent' => 'teal',
             'text' => 'suave',
+            'density' => 'espacosa',
+            'fontsize' => 'grande',
         ], 'appearance');
 
         Livewire::test(ProfilePage::class)
@@ -187,7 +205,9 @@ class ProfilePageAppearanceTest extends TestCase
             ->assertSet('themeLight', AppearancePresets::DEFAULT_LIGHT)
             ->assertSet('themeDark', AppearancePresets::DEFAULT_DARK)
             ->assertSet('themeAccent', AppearancePresets::DEFAULT_ACCENT)
-            ->assertSet('themeText', AppearancePresets::DEFAULT_TEXT);
+            ->assertSet('themeText', AppearancePresets::DEFAULT_TEXT)
+            ->assertSet('themeDensity', AppearancePresets::DEFAULT_DENSITY)
+            ->assertSet('themeFontsize', AppearancePresets::DEFAULT_FONTSIZE);
 
         $stored = UserPreference::get($user->id, 'theme');
 
@@ -197,6 +217,8 @@ class ProfilePageAppearanceTest extends TestCase
             'dark' => AppearancePresets::DEFAULT_DARK,
             'accent' => AppearancePresets::DEFAULT_ACCENT,
             'text' => AppearancePresets::DEFAULT_TEXT,
+            'density' => AppearancePresets::DEFAULT_DENSITY,
+            'fontsize' => AppearancePresets::DEFAULT_FONTSIZE,
         ], $stored);
 
         $queued = Cookie::queued(AppearancePresets::COOKIE);

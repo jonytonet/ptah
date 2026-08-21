@@ -52,10 +52,6 @@ class UserPermissionList extends Component
 
     public int $newCompanyId = 0;
 
-    public string $successMsg = '';
-
-    public string $errorMsg = '';
-
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -93,7 +89,7 @@ class UserPermissionList extends Component
     public function addRole(): void
     {
         if (! $this->newRoleId) {
-            $this->errorMsg = 'Selecione um role.';
+            $this->dispatch('ptah-toast', title: 'Selecione um role.', color: 'danger');
 
             return;
         }
@@ -101,12 +97,12 @@ class UserPermissionList extends Component
         try {
             $companyIds = $this->newCompanyId ? [$this->newCompanyId] : [];
             $this->permissionService->syncRole($this->bindingUserId, $this->newRoleId, $companyIds);
-            $this->successMsg = 'Role adicionado.';
+            $this->dispatch('ptah-toast', title: 'Role adicionado.', color: 'success');
             $this->newRoleId = 0;
             $this->newCompanyId = 0;
             $this->loadAssignedRoles();
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 
@@ -116,17 +112,17 @@ class UserPermissionList extends Component
             $ur = UserRole::findOrFail($userRoleId);
 
             if ($ur->role?->is_master) {
-                $this->errorMsg = 'Cannot remove the MASTER role from a user directly.';
+                $this->dispatch('ptah-toast', title: 'Cannot remove the MASTER role from a user directly.', color: 'danger');
 
                 return;
             }
 
             $ur->delete();
-            $this->successMsg = 'Role removido.';
+            $this->dispatch('ptah-toast', title: 'Role removido.', color: 'success');
             $this->loadAssignedRoles();
             $this->permissionService->clearCache($this->bindingUserId);
         } catch (\Throwable $e) {
-            $this->errorMsg = 'Erro: '.$e->getMessage();
+            $this->dispatch('ptah-toast', title: 'Erro: '.$e->getMessage(), color: 'danger');
         }
     }
 

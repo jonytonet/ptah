@@ -79,6 +79,8 @@ class AppearancePreviewLiteralTest extends TestCase
             'cor de destaque' => ['data-ptah-accent', ['azul', 'violeta', 'ciano', 'verde', 'teal', 'ambar', 'vermelho', 'rosa', 'cinza']],
             'tom claro' => ['data-ptah-light', ['puro', 'papel', 'nevoa']],
             'tom escuro' => ['data-ptah-dark', ['carvao', 'grafite', 'meianoite']],
+            'densidade' => ['data-ptah-density', ['compacta', 'confortavel', 'espacosa']],
+            'tamanho de fonte' => ['data-ptah-fontsize', ['pequena', 'normal', 'grande']],
         ];
     }
 

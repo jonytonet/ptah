@@ -77,6 +77,19 @@
     --ptah-success-strong: color-mix(in srgb, var(--color-success, #10b981) 60%, #000000);
     --ptah-warn-strong:    color-mix(in srgb, var(--color-warn, #f59e0b) 35%, #000000);
 
+    /* Same "-soft" idiom as --ptah-primary-soft (mixed against --ptah-surface, not a
+       literal #ffffff, for the same "correct opaque surface if a host overrides the
+       token" reason), one per semantic color — the module-screen status/audit/MASTER
+       chips (Onda A UX-ACL, FIX 1) need a light tinted background to pair with the
+       existing -strong ink, and none existed before this pass (only the alert
+       component had its own one-off tint, not reusable here). Paired with the ink
+       tokens above: light chip = -strong text on -soft bg (~5-9.5:1, see
+       ModuleScreenSemanticChipContrastTest); dark chip = -lite text on the .ptah-dark
+       override of this same token below (~6.5-7.5:1). */
+    --ptah-success-soft: color-mix(in srgb, var(--color-success, #10b981) 16%, var(--ptah-surface));
+    --ptah-danger-soft:  color-mix(in srgb, var(--color-danger, #ef4444) 14%, var(--ptah-surface));
+    --ptah-warn-soft:    color-mix(in srgb, var(--color-warn, #f59e0b) 16%, var(--ptah-surface));
+
     /* ── Neutral tokens (Fase 1 restyle) ──────────────────────────────────
        Light-mode defaults for every neutral (non-brand, non-semantic) color
        used below. Each has a dark override in the .ptah-dark block right
@@ -128,6 +141,37 @@
     --ptah-icon-muted:     #64748b; /* toolbar icon glyphs — invariant across scope ON PURPOSE: .ptah-c-fp_chevron and
                                         .ptah-c-search_x use the exact same hex in light and dark today */
     --ptah-text-on-accent: #ffffff; /* white ink on solid accent/strong backgrounds — invariant across scope */
+
+    /* ── Densidade (Onda B, eixo global de aparência) ────────────────────
+       Baseline: o que renderiza quando NADA (nem preset, nem `.ptah-base-crud`
+       local) define estes 4 tokens — mesmo papel que os outros tokens de
+       :root acima (fallback para um host que embuta o BaseCrud fora do
+       layout do pacote, sem nenhum data-ptah-* em <html>). Valores idênticos
+       à receita "confortável" abaixo e à antiga regra `.ptah-base-crud` sem
+       atributo (removida — ver html[data-ptah-density="confortavel"] e
+       DensityFontsizeCssParityTest::global_confortavel_matches_the_root_default_recipe).
+       Não variam por tema (claro/escuro), por isso vivem aqui e não em
+       .ptah-dark. Atenção: nenhum comentário dentro deste bloco :root pode
+       conter, literalmente, abre-chave e fecha-chave — os testes que fazem
+       parsing de CSS via regex (CssTokenResolver, AppearancePresetContrastTest,
+       DensityFontsizeCssParityTest...) não removem comentários antes de casar
+       o conteúdo do bloco, então a PRIMEIRA fecha-chave que aparecer — mesmo
+       dentro de um comentário — encerra o bloco prematuramente. */
+    --ptah-control-h:  2.25rem;
+    --ptah-control-px: .625rem;
+    --ptah-control-fs: .75rem;
+    --ptah-row-py:     .625rem;
+    /* Per-family density tokens. Families that were historically LARGER than
+       the BaseCrud toolbar controls (inputs at text-sm, default buttons,
+       module toolbars at py-3) get their own tokens instead of borrowing
+       --ptah-control-*: the review measured that sharing the control token
+       shrank every login/profile/module input from .875rem to .75rem for
+       users who never opened /profile. The comfortable value of each token
+       IS the pre-density value of its family — zero regression by
+       construction, not by numeric coincidence. */
+    --ptah-field-fs:   .875rem;
+    --ptah-field-py:   .625rem;
+    --ptah-bar-py:     .75rem;
 }
 
 /* ── Neutral tokens — dark overrides (Fase 1 restyle) ──────────────────────
@@ -173,18 +217,42 @@
     --ptah-text-secondary: #cbd5e1;
     --ptah-text-muted:     #94a3b8;
     --ptah-text-faint:     #94a3b8;
+
+    /* Dark override of the -soft tokens above — mixed against `transparent`
+       instead of --ptah-surface, same idiom as --ptah-primary-soft-d: the chip
+       sits over a row whose own background varies (resting/hover/selected), so
+       a translucent tint blends into whichever one is behind instead of baking
+       in a single flat tone that would mismatch on hover. */
+    --ptah-success-soft: color-mix(in srgb, var(--color-success, #10b981) 24%, transparent);
+    --ptah-danger-soft:  color-mix(in srgb, var(--color-danger, #ef4444) 24%, transparent);
+    --ptah-warn-soft:    color-mix(in srgb, var(--color-warn, #f59e0b) 24%, transparent);
 }
 
 /* x-cloak — oculta elementos Alpine até hidratação */
 [x-cloak] { display: none !important; }
 
-/* Respect users who ask for less motion (spinners, loading bar, transitions). */
+/* Respect users who ask for less motion (spinners, loading bar, transitions).
+   `.001ms`, not `0ms`: an Alpine `x-transition` (forge-toast-host, the sidebar
+   overlay, every forge-modal) waits for the `transitionend` event to finish
+   its enter/leave sequence — `0ms` never fires that event and strands the
+   element mid-sequence (e.g. a toast stuck at opacity:0). Pure CSS: no
+   x-transition or Alpine directive is touched here.
+
+   FIX 5 (Onda C): spinners (animate-spin/-bounce/-wave, see
+   forge-spinner.blade.php) are deliberately exempted below. A frozen spinner
+   reads as "the screen is stuck", not as "no unnecessary motion" — the same
+   reasoning behind reduced-motion's own "essential" carve-out. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: .001ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: .001ms !important;
         scroll-behavior: auto !important;
+    }
+
+    .animate-spin, .animate-bounce, .animate-wave {
+        animation-duration: 1s !important;
+        animation-iteration-count: infinite !important;
     }
 }
 
@@ -198,9 +266,23 @@
    own scale...) which never agreed on a rendered height. Instead of hand-
    tuning each call site's padding, every control instead opts into a single
    built height via .ptah-c-control below, driven by the density custom
-   properties declared here on the .ptah-base-crud root. Unlayered (this file
-   has no @layer), so it wins over any Tailwind utility class applied on the
-   same element regardless of source order — see the file banner. */
+   properties. Unlayered (this file has no @layer), so it wins over any
+   Tailwind utility class applied on the same element regardless of source
+   order — see the file banner.
+
+   Onda B: --ptah-control-h/px/fs/row-py stopped being a `.ptah-base-crud`-only
+   concern. Their DEFAULT now lives in :root (see the top of this file) and
+   they double as the GLOBAL "densidade" axis of /profile, rendered on
+   `html[data-ptah-density="compacta|confortavel|espacosa"]` below (same 3
+   numbers this section always had — nothing here changed visually by
+   itself). What DID change: a screen's own toolbar dropdown
+   (setViewDensity(), _toolbar.blade.php) still writes `data-density` on the
+   `.ptah-base-crud` div, but only "compact"/"spacious" have a LOCAL override
+   rule below — its default, "comfortable", has none, so it now INHERITS
+   whatever global density the person picked in Aparência instead of always
+   forcing the literal comfortable numbers. That is the point: pick "compacta"
+   in the profile and every BaseCrud screen that was never touched by its own
+   density dropdown shrinks too. */
 /* Density recipe. Height is the axis that was actually asked for (the toolbar had three
    different control heights); font-size and padding-inline ride along, but carefully —
    they are the axes that cost WIDTH, and the toolbar holds 12 controls on one line.
@@ -208,8 +290,11 @@
    second row: 12 controls each a little wider is enough to cross the wrap threshold even
    on a 1500px viewport. Comfortable is therefore pinned to the 12px/.625rem it effectively
    had before (text-xs, px-3 minus a hair), so this pass cannot make the toolbar wrap where
-   it did not wrap before; only spacious, which the user opts into, is allowed to be wider. */
-.ptah-base-crud                          { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;    --ptah-row-py: .625rem; }
+   it did not wrap before; only spacious, which the user opts into, is allowed to be wider.
+   "Comfortable" itself has no rule here anymore — see :root and
+   html[data-ptah-density="confortavel"] below; a BaseCrud screen that never touched its
+   own dropdown has no local override at all and inherits the global choice. */
+.ptah-base-crud[data-density="comfortable"] { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;   --ptah-row-py: .625rem; }
 .ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;   --ptah-control-fs: .6875rem; --ptah-row-py: .25rem; }
 .ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: .875rem; --ptah-control-fs: .8125rem; --ptah-row-py: 1rem; }
 
@@ -668,6 +753,35 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-modal-panel .text-slate-600            { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-modal-panel .text-slate-600 { color: var(--ptah-text-muted); }
 
+/* Onda A UX-ACL, FIX 1 — the role-list create/edit modal's MASTER badge
+   and the user-permission-list "manage roles" modal (assigned-role rows,
+   empty-state hint) carried more slate/amber shades with no dark: pair
+   than the set above covered. SCOPED to .ptah-c-mod_modal (a wrapper the
+   two ACL modals carry) instead of .ptah-modal-panel: the generic panel
+   class wraps EVERY modal in the package, and these rules outrank the
+   dark: utilities the BaseCrud image field relies on (review finding,
+   wave A) — repainting from the shared class changed CRUD modals that
+   were never audited. */
+.ptah-c-mod_modal .text-slate-800            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_modal .text-slate-800 { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_modal .text-slate-400            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_modal .text-slate-400 { color: var(--ptah-text-muted); }
+
+.ptah-c-mod_modal .text-slate-500            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_modal .text-slate-500 { color: var(--ptah-text-muted); }
+
+.ptah-c-mod_modal .bg-slate-50            { background-color: var(--ptah-surface-sunken); }
+.ptah-dark .ptah-c-mod_modal .bg-slate-50 { background-color: var(--ptah-surface-sunken); }
+
+.ptah-c-mod_modal .border-slate-200            { border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_modal .border-slate-200 { border-color: var(--ptah-line); }
+
+.ptah-c-mod_modal .text-amber-500,
+.ptah-c-mod_modal .text-amber-600            { color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-c-mod_modal .text-amber-500,
+.ptah-dark .ptah-c-mod_modal .text-amber-600 { color: var(--ptah-warn-lite); }
+
 /* Close button hover. Light has no origin (the frozen block only ever
    patched dark), so it takes the same hover ink already used for the
    BaseCrud's own modal close button (.ptah-c-modal_close:hover) below. */
@@ -976,6 +1090,17 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-btn.ptah-btn-dark           { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
 
+/* ── forge-button sm/md — densidade global (Onda B) ──────────────────────
+   Só font-size, de propósito: height/padding-inline ficam de fora para
+   preservar a diferença de tamanho entre "sm" e "md" (os dois convergiriam
+   para o mesmo --ptah-control-h/px, que é uma receita única por densidade,
+   não uma por tamanho de botão — colapsar os dois junto seria uma regressão
+   visual maior do que a Onda B pede). "lg" fica fora de propósito — não faz
+   parte do sistema de controles compactos/toolbar. Fallback = o que
+   text-xs/text-sm (sizeMap do componente) já renderizavam. */
+.ptah-btn-size-sm { font-size: var(--ptah-control-fs, .75rem); }
+.ptah-btn-size-md { font-size: var(--ptah-field-fs, .875rem); }
+
 /* ── Quick-date active button ── */
 .ptah-c-ql_btn_on             { background-color: var(--ptah-primary); color: #ffffff; border-color: var(--ptah-primary); }
 .ptah-c-ql_btn_on:hover       { background-color: var(--ptah-primary-strong); border-color: var(--ptah-primary-strong); }
@@ -1110,6 +1235,14 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-bulk_cancel_btn:hover     { background-color: rgba(255,255,255,0.25); }
 .ptah-c-bulk_delete_btn           { background-color: #dc2626; color: var(--ptah-text-on-accent); border: 1px solid rgba(220,38,38,0.5); padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; transition: background-color 0.12s; }
 .ptah-c-bulk_delete_btn:hover     { background-color: #b91c1c; }
+
+/* ── Keyboard shortcuts overlay (FIX 3, Onda C) ──────────────────
+   `.ptah-c-kbd` is the little key-cap badge next to each shortcut listed in
+   the `?` overlay (base-crud.blade.php) — a raised chip, not a button, so it
+   borrows --ptah-control-ghost (the same "inert chrome" surface the
+   column-visibility toggles use) instead of the interactive --ptah-surface. */
+.ptah-c-kbd                  { background-color: var(--ptah-control-ghost); border-color: var(--ptah-line-strong); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-kbd       { background-color: var(--ptah-control-ghost); border-color: var(--ptah-line-strong); color: var(--ptah-text-secondary); }
 
 /* ── Highlight de busca nas células ──────────────────────────── */
 mark.ptah-hl                      { background-color: #fef08a; color: inherit; border-radius: 2px; padding: 0 2px; }
@@ -1607,9 +1740,15 @@ main { background-color: var(--ptah-canvas); }
    to carry the exact required hex, the closest EXACT VALUE match was used
    instead (documented per rule) — changing the token would just be swapping
    one accident of the original author's palette for another. */
+/* padding-block (Onda B): as 7 views embrulham este container com `py-3`
+   (.75rem) fixo no markup. Fallback igual a esse literal — quem não tiver
+   nenhum data-ptah-density em <html> continua vendo exatamente o que via
+   antes; com a densidade global presente (o caso normal, ver :root), a
+   toolbar passa a acompanhar o mesmo --ptah-row-py das tabelas abaixo. */
 .ptah-module-toolbar {
     background-color: var(--ptah-surface);
     border-color: var(--ptah-line-strong);
+    padding-block: var(--ptah-bar-py, .75rem);
 }
 .ptah-dark .ptah-module-toolbar {
     background-color: var(--ptah-surface);
@@ -1635,6 +1774,12 @@ main { background-color: var(--ptah-canvas); }
 .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 .ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 
+/* Onda A UX-ACL, FIX 1 — toolbar filter labels (menu-list "Filtrar por tipo",
+   user-permission-list "Perfil") carried the same bare `text-slate-500` with
+   no dark: pair. */
+.ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
@@ -1655,7 +1800,9 @@ main { background-color: var(--ptah-canvas); }
 .ptah-module-table tbody tr { border-color: var(--ptah-line); }
 .ptah-dark .ptah-module-table tbody tr { border-color: var(--ptah-line); }
 
-.ptah-module-table tbody td { color: var(--ptah-text); }
+/* padding-block (Onda B): as 7 views usam `py-2.5` (.625rem) fixo em cada <td> —
+   fallback igual a esse literal, mesma razão do toolbar acima. */
+.ptah-module-table tbody td { color: var(--ptah-text); padding-block: var(--ptah-row-py, .625rem); }
 .ptah-dark .ptah-module-table tbody td { color: var(--ptah-text); }
 
 /* Reuses --ptah-surface (the plain card tone), not --ptah-surface-hover: the
@@ -1691,6 +1838,184 @@ main { background-color: var(--ptah-canvas); }
    as .text-slate-400 above — no text token renders #475569 in dark. */
 .ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
 .ptah-dark .ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
+
+/* ── Onda A UX-ACL, FIX 1 ────────────────────────────────────────────────
+   The generic repaint above only ever covered the neutral slate family.
+   The 7 module screens also carry semantic chips/badges (status, MASTER/
+   DEFAULT, audit action, menu type) built from raw Tailwind `bg-*-100`/
+   `text-*-600/700` utilities with zero dark: counterpart — invisible or
+   near-invisible once `.ptah-dark` paints the table canvas/panel behind
+   them (role-list "Gerenciar Permissões" and page-list screenshots).
+   Same reuse-by-descendant-selector mechanism as the block above: only
+   the utility class is repainted, markup in the 7 views is untouched. */
+
+/* text-slate-600 (#475569) has an EXACT literal match in --ptah-text-secondary
+   — used by page-list's object-type chip, audit-list's user/resource code,
+   menu-list's icon glyph and order badge. */
+.ptah-module-table .text-slate-600 { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-module-table .text-slate-600 { color: var(--ptah-text-secondary); }
+
+/* "Info" family (role objects-count chip, menu Link badge, audit "read"
+   action) — mapped onto the brand/primary tokens, same idiom already used
+   by .ptah-c-active_badge, instead of a hardcoded blue untouched by a host's
+   --color-primary override. */
+.ptah-module-table .bg-blue-50  { background-color: var(--ptah-primary-softer); }
+.ptah-module-table .bg-blue-100 { background-color: var(--ptah-primary-soft); }
+.ptah-dark .ptah-module-table .bg-blue-50,
+.ptah-dark .ptah-module-table .bg-blue-100 { background-color: var(--ptah-primary-soft-d); }
+
+.ptah-module-table .text-blue-600 { color: var(--ptah-primary); }
+.ptah-module-table .text-blue-700 { color: var(--ptah-primary-strong); }
+.ptah-dark .ptah-module-table .text-blue-600,
+.ptah-dark .ptah-module-table .text-blue-700 { color: var(--ptah-primary-lite); }
+
+/* "Warn" family (role MASTER badge, company DEFAULT badge, audit "update"
+   action, user-permission MASTER role chip) — reuses --ptah-warn-strong/
+   -lite (already exist for exactly this "chip ink" role) plus a local
+   color-mix for the soft chip background, same pattern as
+   --ptah-primary-soft/-soft-d but for the warn hue (no such root token
+   existed yet; kept local here rather than promoted to :root since this is
+   the only two call sites). Measured (default --color-warn #f59e0b):
+   warn-strong on light mix ~9.5:1, warn-lite on dark mix ~7.5:1 — see
+   ModuleScreenSemanticChipContrastTest. */
+.ptah-module-table .bg-amber-100 { background-color: var(--ptah-warn-soft); }
+.ptah-dark .ptah-module-table .bg-amber-100 { background-color: var(--ptah-warn-soft); }
+
+.ptah-module-table .text-amber-600,
+.ptah-module-table .text-amber-700 { color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-module-table .text-amber-600,
+.ptah-dark .ptah-module-table .text-amber-700 { color: var(--ptah-warn-lite); }
+
+/* "Success" family (active/granted/create) — same idiom, --ptah-success-strong/-lite. */
+.ptah-module-table .bg-green-100 { background-color: var(--ptah-success-soft); }
+.ptah-dark .ptah-module-table .bg-green-100 { background-color: var(--ptah-success-soft); }
+
+.ptah-module-table .text-green-700 { color: var(--ptah-success-strong); }
+.ptah-dark .ptah-module-table .text-green-700 { color: var(--ptah-success-lite); }
+
+/* "Danger" family (inactive/denied/delete) — same idiom, --ptah-danger-strong/-lite. */
+.ptah-module-table .bg-red-100 { background-color: var(--ptah-danger-soft); }
+.ptah-dark .ptah-module-table .bg-red-100 { background-color: var(--ptah-danger-soft); }
+
+.ptah-module-table .text-red-600,
+.ptah-module-table .text-red-700 { color: var(--ptah-danger-strong); }
+.ptah-dark .ptah-module-table .text-red-600,
+.ptah-dark .ptah-module-table .text-red-700 { color: var(--ptah-danger-lite); }
+
+/* menu-list "Grupo" badge — the one chip family with no success/danger/warn/
+   primary semantic to borrow. Fase-2-style literal exception (documented,
+   not tokenized): light is byte-identical to Tailwind's own purple-100/700
+   (already correct there, only dark was ever missing); dark is a fresh
+   literal measured at 8.0:1 (#e9d5ff on the composited mix, see
+   ModuleScreenSemanticChipContrastTest) against the table's own dark
+   canvas. */
+.ptah-module-table .bg-purple-100 { background-color: #f3e8ff; }
+.ptah-dark .ptah-module-table .bg-purple-100 { background-color: color-mix(in srgb, #a855f7 25%, transparent); }
+
+.ptah-module-table .text-purple-700 { color: #7e22ce; }
+.ptah-dark .ptah-module-table .text-purple-700 { color: #e9d5ff; }
+
+/* role-list "👑 MASTER" row highlight — was the literal utility
+   `bg-amber-50/60` (a fractional-opacity Tailwind class, not selectable by
+   a plain `.bg-amber-50` repaint rule), with no dark: pair. Same warn-soft
+   idiom as the badge above, at a lighter mix so the highlight still reads
+   as a subtle row tint rather than another chip. */
+.ptah-c-mod_master_row            { background-color: color-mix(in srgb, var(--color-warn, #f59e0b) 8%, var(--ptah-surface)); }
+.ptah-dark .ptah-c-mod_master_row { background-color: color-mix(in srgb, var(--color-warn, #f59e0b) 14%, transparent); }
+
+/* audit-list "denied" row highlight — same fractional-opacity problem as the
+   MASTER row above (`bg-red-50/30`). */
+.ptah-c-mod_denied_row            { background-color: color-mix(in srgb, var(--color-danger, #ef4444) 6%, var(--ptah-surface)); }
+.ptah-dark .ptah-c-mod_denied_row { background-color: color-mix(in srgb, var(--color-danger, #ef4444) 12%, transparent); }
+
+/* "Manage permissions"/"Manage roles" buttons (role-list, user-permission-
+   list) — was `text-blue-600 bg-blue-50 hover:bg-blue-100`; the :hover
+   variant can't be reached by a plain utility-class repaint (its class
+   token is literally "hover:bg-blue-100", not "bg-blue-100"), hence a
+   dedicated component class instead of extending the table repaint above. */
+.ptah-c-mod_btn_soft               { color: var(--ptah-primary); background-color: var(--ptah-primary-softer); }
+.ptah-c-mod_btn_soft:hover         { background-color: var(--ptah-primary-soft); }
+.ptah-dark .ptah-c-mod_btn_soft    { color: var(--ptah-primary-lite); background-color: var(--ptah-primary-soft-d); }
+.ptah-dark .ptah-c-mod_btn_soft:hover { background-color: color-mix(in srgb, var(--ptah-primary) 30%, transparent); }
+
+/* page-list left column ("Páginas") and audit/department/page page-header
+   subtitles — hand-rolled `<h1>`/`<p>` markup (role/company/menu/
+   user-permission-list use <x-forge-page-header>, already tokenized) that
+   carried bare `text-slate-700`/`text-slate-500` with no dark: pair. */
+.ptah-c-mod_hdg            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_hdg { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_subttl            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-mod_subttl { color: var(--ptah-text-muted); }
+
+/* page-list "Páginas" list — a bordered/divided item list, same visual role
+   as .ptah-module-table but built from <div>s, not a <table>: the tag-based
+   `tbody tr`/`tbody td` rules above can't reach it, so its own utility
+   classes are repainted the same way, under a dedicated wrapper class. */
+.ptah-c-mod_pagelist            { border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-mod_pagelist { border-color: var(--ptah-line-strong); }
+
+.ptah-c-mod_pagelist .text-slate-800 { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-800 { color: var(--ptah-text-strong); }
+
+.ptah-c-mod_pagelist .text-slate-700 { color: var(--ptah-text); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-700 { color: var(--ptah-text); }
+
+.ptah-c-mod_pagelist .text-slate-500 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-mod_pagelist .text-slate-500 { color: var(--ptah-text-faint); }
+
+.ptah-c-mod_pagelist .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-mod_pagelist .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-mod_pagelist .border-slate-200 { border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_pagelist .border-slate-200 { border-color: var(--ptah-line); }
+
+/* page-list item row — hover + selected state (was `hover:bg-slate-50/70`
+   idle and `bg-blue-50 border-l-4 border-blue-500` selected, neither with a
+   dark: pair). Selected reuses the same primary-soft idiom as
+   .ptah-c-tr_selected in the BaseCrud table. */
+.ptah-c-mod_item:hover                { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-mod_item:hover     { background-color: var(--ptah-surface-hover); }
+
+.ptah-c-mod_item_sel                  { background-color: var(--ptah-primary-softer); box-shadow: inset 3px 0 0 var(--ptah-primary); }
+.ptah-c-mod_item_sel:hover            { background-color: var(--ptah-primary-softer); }
+.ptah-dark .ptah-c-mod_item_sel,
+.ptah-dark .ptah-c-mod_item_sel:hover { background-color: var(--ptah-primary-soft-d); box-shadow: inset 3px 0 0 var(--ptah-primary-lite); }
+
+/* ── role-list "Gerenciar Permissões" bind modal — per-page accordion
+   (Onda A UX-ACL, FIX 3) ──────────────────────────────────────────────
+   Replaces the old plain sticky "CATEGORIES — MAIN" divider (bg-slate-100,
+   no dark: pair, and the whole reason the section header was unreadable
+   in the screenshot) with a real <button> group header. */
+.ptah-c-acc_hd            { background-color: var(--ptah-panel); color: var(--ptah-text-strong); }
+.ptah-c-acc_hd:hover      { background-color: var(--ptah-surface-hover); }
+.ptah-c-acc_hd:focus-visible { outline: 2px solid var(--ptah-primary); outline-offset: 1px; }
+.ptah-dark .ptah-c-acc_hd { background-color: color-mix(in srgb, var(--ptah-panel) 80%, transparent); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-acc_hd:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 40%, transparent); }
+
+/* Chevron rotates via the button's own `aria-expanded` — driven by the
+   attribute Alpine already has to set for accessibility, so the rotation
+   and the a11y state can never drift apart (no separate `:class` to keep
+   in sync with `:aria-expanded`). */
+.ptah-c-acc_chevron            { color: var(--ptah-icon-muted); transition: transform 150ms ease; }
+.ptah-dark .ptah-c-acc_chevron { color: var(--ptah-icon-muted); }
+.ptah-c-acc_hd[aria-expanded="true"] .ptah-c-acc_chevron { transform: rotate(90deg); }
+
+/* Object row inside the group body — was `hover:bg-slate-50 border
+   border-transparent hover:border-slate-200`, no dark: pair. */
+.ptah-c-mod_obj_row               { border-color: transparent; }
+.ptah-c-mod_obj_row:hover         { background-color: var(--ptah-surface-hover); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-mod_obj_row               { border-color: transparent; }
+.ptah-dark .ptah-c-mod_obj_row:hover         { background-color: var(--ptah-surface-hover); border-color: var(--ptah-line); }
+
+.ptah-c-mod_obj_ttl            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-mod_obj_ttl { color: var(--ptah-text-strong); }
+
+/* obj_type ("· page") — was `text-slate-300`, invisible on the modal's own
+   dark surface (1.48:1 against white too — the only genuinely broken
+   slate shade in this audit, not just missing a dark: pair). */
+.ptah-c-mod_obj_type            { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-mod_obj_type { color: var(--ptah-text-faint); }
 
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
@@ -1741,10 +2066,22 @@ main { background-color: var(--ptah-canvas); }
    fix as --ptah-line-field's own fallback story, and as .ptah-c-form_in /
    .ptah-c-fp_input / .ptah-c-perpage already use). Recorded as "changed" in
    the ledger, not "migrated". */
+/* Onda B — densidade/fontsize globais. Só padding-block e font-size: NUNCA
+   padding-inline aqui (forge-input reserva pl-9/pr-9 para iconBefore/After via
+   Tailwind; uma padding-inline unlayered nesta regra colapsaria esse espaço —
+   mesma armadilha documentada em .ptah-c-control acima) e NUNCA `height` fixa
+   (o line-height de text-sm não muda com a densidade, então uma altura fixa
+   menor que confortável cortaria o texto). Fallback = o que o input já
+   rendia antes desta Onda (py-2.5 / text-sm). O token --ptah-field-* tem
+   o valor confortavel IGUAL ao antigo, entao mesmo com :root sempre
+   definindo o token o render padrao nao muda; o fallback literal cobre so
+   quem consome o CSS do componente sem o arquivo de tokens. */
 .ptah-input-wrapper input {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line-field);
     color: var(--ptah-text-field);
+    padding-block: var(--ptah-field-py, .625rem);
+    font-size: var(--ptah-field-fs, .875rem);
 }
 .ptah-dark .ptah-input-wrapper input {
     background-color: var(--ptah-field-muted);
@@ -1788,16 +2125,24 @@ main { background-color: var(--ptah-canvas); }
 .ptah-select-wrapper > label { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-select-wrapper > label { color: var(--ptah-text-muted); }
 
+/* Onda B — mesma densidade global do input acima. Só padding-block (a
+   trigger não tem ícone reservando espaço horizontal via padding-inline,
+   então não há a mesma armadilha, mas o eixo pedido aqui é altura/padding,
+   não largura). O rótulo (<span class="text-sm">) tem font-size próprio
+   (utilitário Tailwind), então precisa de um seletor descendente dedicado
+   — setar font-size só no botão não alcançaria o texto. */
 .ptah-select-trigger {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line-field);
     color: var(--ptah-text-field);
+    padding-block: var(--ptah-field-py, .625rem);
 }
 .ptah-dark .ptah-select-trigger {
     background-color: var(--ptah-field-muted);
     border-color: var(--ptah-line-field);
     color: var(--ptah-text-field);
 }
+.ptah-select-trigger > span:first-child { font-size: var(--ptah-field-fs, .875rem); }
 
 .ptah-select-dropdown {
     background-color: var(--ptah-surface-raised);
@@ -1880,13 +2225,14 @@ main { background-color: var(--ptah-canvas); }
 
 /* ── Presets de aparência (escolhidos pelo usuário em /profile) ── */
 /*
-   4 eixos independentes, aplicados via atributos no <html> (server-side —
-   ver Ptah\Livewire\Auth\ProfilePage e a whitelist em $lightPresets /
-   $darkPresets / $accentPresets / $textPresets do próprio componente):
-     data-ptah-light  = puro | papel | nevoa            (tom claro)
-     data-ptah-dark   = carvao | grafite | meianoite    (tom escuro)
-     data-ptah-accent = azul | violeta | ciano | verde | teal | ambar | vermelho | rosa | cinza
-     data-ptah-text   = suave | neutra | forte          (cor da fonte)
+   6 eixos independentes, aplicados via atributos no <html> (server-side —
+   ver Ptah\Livewire\Auth\ProfilePage e a whitelist em Ptah\Support\AppearancePresets):
+     data-ptah-light    = puro | papel | nevoa            (tom claro)
+     data-ptah-dark     = carvao | grafite | meianoite    (tom escuro)
+     data-ptah-accent   = azul | violeta | ciano | verde | teal | ambar | vermelho | rosa | cinza
+     data-ptah-text     = suave | neutra | forte          (cor da fonte)
+     data-ptah-density  = compacta | confortavel | espacosa (densidade — Onda B)
+     data-ptah-fontsize = pequena | normal | grande         (tamanho de fonte — Onda B)
 
    Especificidade — leia antes de tocar aqui. Os tokens base (acima, :root e
    .ptah-dark) são ambos (0,1,0), decididos por ORDEM DE FONTE (.ptah-dark
@@ -1900,6 +2246,10 @@ main { background-color: var(--ptah-canvas); }
                     (só sobrescreve --color-primary; --ptah-primary e todos os
                     tints -ring/-soft/-border/-lite/-soft-d/-strong em :root já
                     o referenciam via var(), então seguem automaticamente).
+     - densidade/fontsize: `html[data-ptah-density="X"]` / `html[data-ptah-fontsize="X"]` —
+                    ortogonais a claro/escuro (nenhum dos 4 tokens/valores que
+                    controlam varia por tema), então não precisam de par com
+                    `.ptah-dark` nem de `:not(.ptah-dark)`.
 
    `.ptah-dark` é aplicada SOMENTE em <html> — ver applyTheme() em
    forge-dashboard-layout.blade.php; @custom-variant dark (forge.css) já
@@ -2110,6 +2460,36 @@ html[data-ptah-accent="vermelho"] { --color-primary: #b91c1c; }
 html[data-ptah-accent="rosa"]     { --color-primary: #be185d; }
 html[data-ptah-accent="cinza"]    { --color-primary: #475569; }
 
+/* ── Densidade (eixo global) ──────────────────────────────────────────────
+   Mesmos 3 números que a receita de densidade por tela sempre teve (ver a
+   seção "Toolbar controls: uniform height, density-aware" perto do topo do
+   arquivo) — só o SELETOR mudou: agora vivem em <html>, então qualquer
+   componente fora de um BaseCrud (forge-input, forge-button, forge-select,
+   toolbars/tabelas dos 7 telas de módulo) também os herda. Não variam por
+   tema (claro/escuro), por isso, ao contrário de tom/accent/texto, não
+   precisam de par `.ptah-dark` nem de `:not(.ptah-dark)` — density e tema
+   são eixos ortogonais.
+
+   "confortavel" repete de propósito os mesmos 4 valores já declarados em
+   :root (ver o comentário lá) — dá paridade explícita com as outras 2
+   opções e serve de documentação: nenhum eixo aqui fica "implícito só por
+   omissão", igual light/dark/accent/text acima. Ver
+   DensityFontsizeCssParityTest para a asserção de paridade com as
+   receitas locais do BaseCrud (.ptah-base-crud[data-density="compact"|"spacious"]). */
+html[data-ptah-density="compacta"]    { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;   --ptah-control-fs: .6875rem; --ptah-row-py: .25rem;  --ptah-field-fs: .8125rem; --ptah-field-py: .5rem;   --ptah-bar-py: .5rem; }
+html[data-ptah-density="confortavel"] { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;   --ptah-row-py: .625rem; --ptah-field-fs: .875rem;  --ptah-field-py: .625rem; --ptah-bar-py: .75rem; }
+html[data-ptah-density="espacosa"]    { --ptah-control-h: 2.75rem; --ptah-control-px: .875rem; --ptah-control-fs: .8125rem; --ptah-row-py: 1rem;    --ptah-field-fs: .9375rem; --ptah-field-py: .75rem;  --ptah-bar-py: 1rem; }
+
+/* ── Tamanho de fonte (eixo global) ───────────────────────────────────────
+   Escala o `font-size` de <html> — como quase todo o pacote mede em rem,
+   isso escala o sistema inteiro (controles, tabelas, modais...) a partir de
+   uma raiz só. "normal" não tem regra (100%, o padrão do navegador) — mesmo
+   motivo de `mode` não ter default: é o "sem opinião" do eixo, só que aqui
+   o "sem opinião" e o "default" coincidem no mesmo valor (100%). Ver
+   docs/Configuration.md ("Font size") para o levantamento de px cravados que
+   NÃO acompanham esta escala (títulos/alturas fixas fora do sistema rem). */
+html[data-ptah-fontsize="pequena"] { font-size: 87.5%; }
+html[data-ptah-fontsize="grande"]  { font-size: 112.5%; }
 
 /* ── Preview das pílulas da aba Aparência ──────────────────────────────────
    Cada pílula mostra A SUA PRÓPRIA opção, não a que está ativa. Por isso estas
@@ -2158,3 +2538,50 @@ html[data-ptah-accent="cinza"]    { --color-primary: #475569; }
 .ptah-swatch[data-ptah-dark="carvao"] { background-color: #27272a; border-color: #6c7177; color: #e8e9ea; }
 .ptah-swatch[data-ptah-dark="grafite"] { background-color: #1e293b; border-color: #6d7278; color: #e8e9ea; }
 .ptah-swatch[data-ptah-dark="meianoite"] { background-color: #111c33; border-color: #63686e; color: #e8e9ea; }
+
+/* Densidade — três linhas horizontais com espaçamentos diferentes, desenhadas com
+   repeating-linear-gradient em ::before (nenhum markup novo dentro da pílula).
+   currentColor herda a tinta que .ptah-c-btn/.ptah-c-btn_on já resolvem para o botão —
+   não é var(--ptah-*) (permitido: AppearancePreviewLiteralTest só proíbe var(--ptah-),
+   e currentColor se adapta a claro/escuro sozinho, sem par .ptah-dark redundante). */
+.ptah-swatch[data-ptah-density]::before {
+    content: '';
+    display: inline-block;
+    width: 1.125rem;
+    height: .875rem;
+    margin-right: .375rem;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+}
+.ptah-swatch[data-ptah-density="compacta"]::before {
+    background-image: repeating-linear-gradient(to bottom, currentColor 0, currentColor 1px, transparent 1px, transparent 4px);
+}
+.ptah-swatch[data-ptah-density="confortavel"]::before {
+    background-image: repeating-linear-gradient(to bottom, currentColor 0, currentColor 1px, transparent 1px, transparent 6px);
+}
+.ptah-swatch[data-ptah-density="espacosa"]::before {
+    background-image: repeating-linear-gradient(to bottom, currentColor 0, currentColor 1px, transparent 1px, transparent 8px);
+}
+
+/* Tamanho de fonte — "Ag" desenhado em ::before em 3 tamanhos literais, sem relação
+   com --ptah-control-fs (esse é o tamanho de CONTROLES; este eixo é o font-size de
+   <html>). Mesma razão para não escopar por tema: currentColor. */
+.ptah-swatch[data-ptah-fontsize]::before {
+    content: 'Ag' / '';
+    margin-right: .375rem;
+    font-weight: 700;
+}
+.ptah-swatch[data-ptah-fontsize="pequena"]::before { font-size: .75rem; }
+.ptah-swatch[data-ptah-fontsize="normal"]::before { font-size: 1rem; }
+.ptah-swatch[data-ptah-fontsize="grande"]::before { font-size: 1.25rem; }
+
+/* ── forge-skeleton (FIX 4, Onda C) ───────────────────────────────────────
+   Placeholder de carregamento para telas customizadas (fora do BaseCrud, que
+   ja tem sua propria loading bar). --ptah-surface-hover e a mesma superficie
+   "inerte" que .ptah-c-empty_box usa — nao e interativa, so precisa destoar
+   um pouco do fundo. */
+.ptah-c-skel                 { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-skel      { background-color: color-mix(in srgb, var(--ptah-surface-hover) 60%, transparent); }
+.ptah-c-skel_card            { border-color: var(--ptah-line-strong); background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-skel_card { border-color: var(--ptah-line-strong); background-color: var(--ptah-surface); }
+

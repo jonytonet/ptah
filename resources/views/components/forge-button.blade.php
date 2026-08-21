@@ -105,6 +105,11 @@
 
     $c = $colorMap[$color] ?? $colorMap['primary'];
     $ptahColorClass = 'ptah-btn-' . $color;
+    // Onda B — hook para o eixo global de densidade (resources/css/ptah-components.css,
+    // ".ptah-btn-size-sm"/".ptah-btn-size-md"): NUNCA os utilitários Tailwind abaixo
+    // ($sizeClass) como seletor, porque eles descrevem o VISUAL, não a identidade do
+    // slot — mesmo padrão de $ptahColorClass, uma classe por eixo.
+    $ptahSizeClass = 'ptah-btn-size-' . $size;
 
     $sizeMap = [
         'sm' => 'px-3 py-1.5 text-xs gap-1.5',
@@ -133,7 +138,7 @@
 <button
     {{ $attributes->merge([
         'type'     => 'button',
-        'class'    => "ptah-btn {$ptahColorClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
+        'class'    => "ptah-btn {$ptahColorClass} {$ptahSizeClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
                        {$sizeClass} {$radiusClass} {$variantClass} {$baseTransition} {$disabledClass}",
         'disabled' => $disabled || $loading ? true : false,
     ]) }}
