@@ -358,6 +358,7 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[Custom Screens](docs/CustomScreens.md)** | Building your own screens outside BaseCrud — design tokens, the 6 appearance axes, the `<x-forge-*>` catalog and common pitfalls (pt-BR) |
 | **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
 | **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |
+| **[Testing](docs/Testing.md)** | How to run the standard suite and the browser (Dusk) suite — setup, gotchas, coverage (pt-BR) |
 
 ---
 

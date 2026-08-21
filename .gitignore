@@ -28,3 +28,12 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Dusk (ONDA IV / Fase 2.5) — capturas/logs de depuracao, nunca artefatos de codigo.
+/.phpunit.cache/
+/tests/Browser/screenshots/*
+!/tests/Browser/screenshots/.gitignore
+/tests/Browser/console/*
+!/tests/Browser/console/.gitignore
+/tests/Browser/source/*
+!/tests/Browser/source/.gitignore
