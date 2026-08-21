@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Suíte de testes de navegador (Dusk / testbench-dusk) — ONDA IV da Fase 2.5.
+
+    Arquivo de configuração SEPARADO de phpunit.xml, de propósito: a suíte
+    padrão (vendor/bin/phpunit, hoje 1424 testes) precisa continuar rápida e
+    verde SEM Chrome/chromedriver instalados (ex.: CI mínimo, ambiente sem
+    display). Um elemento testsuite extra dentro do phpunit.xml principal
+    seria executado por padrão junto com Unit/Feature sempre que ninguém
+    passar a flag de testsuite na linha de comando; exatamente o que este
+    arquivo evita ao existir sozinho.
+
+    Uso:
+        vendor/bin/phpunit -c phpunit.dusk.xml
+
+    Requisitos (ver docs/Testing.md):
+      - Google Chrome instalado.
+      - ChromeDriver compatível no PATH ou baixado via
+        vendor/bin/dusk-updater (orchestra/dusk-updater, dependência de
+        orchestra/testbench-dusk, resolve a versão certa automaticamente).
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         stopOnFailure="false"
+         cacheDirectory=".phpunit.cache/dusk">
+    <testsuites>
+        <testsuite name="Browser">
+            <directory>tests/Browser</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+    </php>
+</phpunit>

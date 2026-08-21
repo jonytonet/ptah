@@ -525,18 +525,16 @@ The modal has **7 main tabs**:
 
 **Interface:**
 - Card per style rule
-- Each rule: field, operator, value, CSS (background, color, fontWeight, custom)
+- Each rule: `field`, `condition`, `value`, `style` (inline CSS declaration list)
 
-**Example rule:**
+**Example rule (canonical shape, persisted under `contitionStyles`):**
 
 ```json
 {
-  "styleField": "status",
-  "styleOperator": "==",
-  "styleValue": "cancelled",
-  "styleBackgroundColor": "#FEE2E2",
-  "styleColor": "#991B1B",
-  "styleFontWeight": "bold"
+  "field": "status",
+  "condition": "==",
+  "value": "cancelled",
+  "style": "background:#FEE2E2;color:#991B1B;font-weight:bold;"
 }
 ```
 
@@ -1332,22 +1330,32 @@ field:type:operator:label=Label:options=opt1,opt2
 
 #### --style (Styles)
 
+Persisted under `contitionStyles` in the saved config (the correctly-spelled
+`conditionStyles` is accepted as a read alias, but never written).
+
 **Format:**
 ```
-field:operator:value:background=color:color=textColor:fontWeight=weight
+field:condition:value:style
 ```
+
+`condition` is one of `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`,
+`ne`, `lt`, `gt`, `lte`, `gte`, `=`) — these are the only operators
+`HasCrudRenderers::getRowStyle()` evaluates at render time; anything else
+(including `LIKE`) is rejected. `style` is an inline CSS declaration list —
+everything from the 4th colon onward, so it may contain its own colons and
+semicolons.
 
 **Examples:**
 
 ```bash
 # Cancelled status in red
---style="status:==:cancelled:background=#FEE2E2:color=#991B1B:fontWeight=bold"
+--style="status:==:cancelled:background:#FEE2E2;color:#991B1B;font-weight:bold;"
 
 # High priority in yellow
---style="priority:>:5:background=#FEF3C7:color=#92400E"
+--style="priority:>:5:background:#FEF3C7;color:#92400E;"
 
 # Low stock
---style="stock:<:10:background=#DBEAFE:color=#1E40AF:fontWeight=normal"
+--style="stock:<:10:background:#DBEAFE;color:#1E40AF;"
 ```
 
 #### --join (JOINs)
@@ -1505,7 +1513,7 @@ php artisan ptah:config "App\Models\Product" --import=product-config.json
   "cols": [...],
   "actions": [...],
   "filters": [...],
-  "styles": [...],
+  "contitionStyles": [...],
   "joins": [...],
   "permissions": {...},
   "cacheEnabled": true,
@@ -1776,22 +1784,18 @@ Full configuration saved in the `crud_configs.config` table:
       "colsFilterPlaceholder": "From date"
     }
   ],
-  "styles": [
+  "contitionStyles": [
     {
-      "styleField": "status",
-      "styleOperator": "==",
-      "styleValue": "inactive",
-      "styleBackgroundColor": "#FEE2E2",
-      "styleColor": "#991B1B",
-      "styleFontWeight": "normal"
+      "field": "status",
+      "condition": "==",
+      "value": "inactive",
+      "style": "background:#FEE2E2;color:#991B1B;"
     },
     {
-      "styleField": "stock",
-      "styleOperator": "<",
-      "styleValue": "10",
-      "styleBackgroundColor": "#FEF3C7",
-      "styleColor": "#92400E",
-      "styleFontWeight": "bold"
+      "field": "stock",
+      "condition": "<",
+      "value": "10",
+      "style": "background:#FEF3C7;color:#92400E;font-weight:bold;"
     }
   ],
   "joins": [
@@ -2126,28 +2130,25 @@ Properties of each filter in `filters[]`:
 
 ## Style Configuration
 
-Properties of each style rule in `styles[]`:
+Properties of each style rule in `contitionStyles[]` — the only key
+`HasCrudRenderers::getRowStyle()` reads (the correctly-spelled
+`conditionStyles` is accepted as a read-only alias, never written):
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `styleField` | string | — | Field to check (required) |
-| `styleOperator` | string | `'=='` | Operator: `==`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
-| `styleValue` | mixed | — | Comparison value (required) |
-| `styleBackgroundColor` | string | `''` | Background color (e.g.: `#FEE2E2`) |
-| `styleColor` | string | `''` | Text color (e.g.: `#991B1B`) |
-| `styleFontWeight` | string | `'normal'` | Font weight: `normal`, `bold`, `lighter`, `bolder` |
-| `styleCustom` | string | `''` | Custom CSS (e.g.: `border: 2px solid red;`) |
+| `field` | string | — | Field to check (required). Legacy alias: `colsNomeFisico` |
+| `condition` | string | `'=='` | Operator: `==`, `!=`, `>`, `<`, `>=`, `<=` (aliases: `eq`, `ne`, `lt`, `gt`, `lte`, `gte`, `=`). `LIKE` is **not** valid — the renderer's `match()` has no arm for it |
+| `value` | mixed | — | Comparison value (required) |
+| `style` | string | — | Inline CSS declaration list applied to the `<tr style="...">` (required), e.g. `"background:#FEE2E2;color:#991B1B;font-weight:bold;"` |
 
 **Example:**
 
 ```json
 {
-  "styleField": "status",
-  "styleOperator": "==",
-  "styleValue": "cancelled",
-  "styleBackgroundColor": "#FEE2E2",
-  "styleColor": "#991B1B",
-  "styleFontWeight": "bold"
+  "field": "status",
+  "condition": "==",
+  "value": "cancelled",
+  "style": "background:#FEE2E2;color:#991B1B;font-weight:bold;"
 }
 ```
 
@@ -2369,7 +2370,7 @@ php artisan ptah:config "App\Models\Product" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info" \
   --filter="status:select:=:options=active,inactive" \
   --filter="category_id:searchdropdown:=:sdTable=categories:sdSelectColumn=name:sdValueColumn=id" \
-  --style="stock:<:10:background=#FEF3C7:color=#92400E:fontWeight=bold" \
+  --style="stock:<:10:background:#FEF3C7;color:#92400E;font-weight:bold;" \
   --set="displayName=Products" \
   --set="itemsPerPage=25" \
   --set="cacheEnabled=true" \
@@ -2395,8 +2396,8 @@ php artisan ptah:config "App\Models\Contact" \
   --action="scheduleCall:livewire:scheduleCall(%id%):icon=bx-phone:color=info" \
   --filter="lead_status:select:=:options=new,contacted,qualified,lost" \
   --filter="lead_score:number:>=:label=Minimum Score" \
-  --style="lead_status:==:lost:background=#FEE2E2:color=#991B1B" \
-  --style="lead_score:>:80:background=#D1FAE5:color=#065F46:fontWeight=bold" \
+  --style="lead_status:==:lost:background:#FEE2E2;color:#991B1B;" \
+  --style="lead_score:>:80:background:#D1FAE5;color:#065F46;font-weight:bold;" \
   --set="displayName=Contacts" \
   --set="itemsPerPage=50" \
   --set="quickDateColumn=last_contact_at"
@@ -2423,7 +2424,7 @@ php artisan ptah:config "App\Models\Post" \
   --filter="status:select:=:options=draft,published,scheduled" \
   --filter="category_id:searchdropdown:=:sdTable=categories:sdSelectColumn=name:sdValueColumn=id" \
   --filter="author_id:searchdropdown:=:sdTable=users:sdSelectColumn=name:sdValueColumn=id" \
-  --style="status:==:draft:background=#F3F4F6:color=#6B7280" \
+  --style="status:==:draft:background:#F3F4F6;color:#6B7280;" \
   --set="displayName=Blog Posts" \
   --set="itemsPerPage=20" \
   --set="exportEnabled=true"

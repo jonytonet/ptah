@@ -100,7 +100,20 @@ class BaseCrud extends Component
     /** Route path captured from request (e.g. 'categories') — used to load screen-specific config */
     public string $configRoute = '';
 
-    /** Full CrudConfig configuration array */
+    /**
+     * Full CrudConfig configuration array — governs cols, rows, totals, print,
+     * export, hooks, bulkActions and permissions.
+     *
+     * #[Locked]: only ever assigned server-side, in boot()/mount() and in
+     * reloadCrudConfig() (the #[On('ptah:crud-config-updated')] handler fired
+     * by the CrudConfig editor), always reading from CrudConfigService/DB —
+     * never from the client payload. No view writes to it via wire:model/$set/
+     * $wire (grep confirms it is read-only from Blade). A client-writable
+     * crudConfig would let a forged request override every permission check,
+     * export limit and hook derived from it. Locked only blocks client-side
+     * updates; the editor→event→reload flow (server-side) is unaffected.
+     */
+    #[Locked]
     public array $crudConfig = [];
 
     // ── Table state ───────────────────────────────────────────────────────────
@@ -399,6 +412,10 @@ class BaseCrud extends Component
      *   3. Ptah RBAC checks via ptah_can() (when module is active + permissionIdentifier configured)
      *
      * Cached per render to avoid redundant ptah_can() calls.
+     *
+     * `permissionIdentifier` may itself be a QUALIFIED key
+     * (`page::obj_key` / `page::section::obj_key`, see
+     * `PermissionService::KEY_QUALIFIER`) — it passes through unchanged.
      */
     protected function getEffectivePermissions(): array
     {

@@ -32,6 +32,11 @@ class ExportAuthorizer
      * empty and would make every queued export fail regardless of who owns it
      * or what they're allowed to do. Both default to null, preserving the
      * synchronous HTTP behaviour (resolved from auth()/session).
+     *
+     * `permissionIdentifier` may itself be a QUALIFIED key
+     * (`page::obj_key` / `page::section::obj_key`, see
+     * `PermissionService::KEY_QUALIFIER`) — it passes through unchanged to
+     * `ptah_can()`.
      */
     public function reasonDenied(string $model, mixed $user = null, ?int $companyId = null): ?string
     {

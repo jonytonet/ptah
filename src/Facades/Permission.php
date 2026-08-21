@@ -14,6 +14,8 @@ use Ptah\Services\Permission\PermissionService;
  * @method static bool isMaster(mixed $user = null)
  * @method static array getPermissions(mixed $user = null, ?int $companyId = null)
  * @method static array getCompaniesForResource(mixed $user, string $objectKey, string $action)
+ * @method static array getRoleNames(mixed $user = null, ?int $companyId = null)
+ * @method static bool hasRole(mixed $user, string|array $roles, ?int $companyId = null)
  * @method static void syncRole(mixed $user, int $roleId, array $companyIds = [])
  * @method static void detachRole(mixed $user, int $roleId, ?int $companyId = null)
  * @method static void clearCache(mixed $user = null, ?int $companyId = null)

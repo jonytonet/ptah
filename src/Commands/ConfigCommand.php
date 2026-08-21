@@ -203,7 +203,7 @@ class ConfigCommand extends Command
             $this->info('Processing styles...');
             foreach ($this->option('style') as $styleConfig) {
                 $parsed = $this->parseStyleOption($styleConfig);
-                $this->config['styles'][] = $parsed;
+                $this->config['contitionStyles'][] = $parsed;
             }
         }
 
@@ -304,7 +304,7 @@ class ConfigCommand extends Command
                 $style = $styleWizard->run();
 
                 if ($style) {
-                    $this->config['styles'][] = $style;
+                    $this->config['contitionStyles'][] = $style;
                     $this->info('✓ Style rule added.');
                 }
             }
@@ -572,7 +572,7 @@ class ConfigCommand extends Command
         $this->line('- Columns: '.count($this->config['cols'] ?? []));
         $this->line('- Actions: '.count($this->config['actions'] ?? []));
         $this->line('- Filters: '.count($this->config['filters'] ?? []));
-        $this->line('- Styles: '.count($this->config['styles'] ?? []));
+        $this->line('- Styles: '.count($this->config['contitionStyles'] ?? []));
         $this->line('- Joins: '.count($this->config['joins'] ?? []));
         $this->newLine();
     }

@@ -10,6 +10,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
+use Ptah\Support\StyleRule;
 
 /**
  * Audits every row in `crud_configs` and surfaces the silent-failure classes the
@@ -24,6 +25,13 @@ use Ptah\Support\ModelKey;
  *   - legacy RBAC key  → permissions.identifier is set but permissions.permissionIdentifier
  *                        (the key the runtime actually reads) is empty — the screen is
  *                        silently ungated. `--fix` migrates the value.
+ *   - legacy styles key → the flat 'styles' key some now-corrected callers used to
+ *                        write; the runtime only reads 'contitionStyles'/'conditionStyles',
+ *                        so any rule stored there silently never applies. `--fix`
+ *                        normalises each item and folds it into 'contitionStyles'.
+ *   - unusable row style → a 'contitionStyles' item that StyleRule::normalize()
+ *                        rejects (empty field/style, unrecognised condition) — it
+ *                        will never apply at render time. Warning only.
  *   - route ambiguity  → a model with both a global and a route-specific config
  *                        (the fallback is active — easy to mistake for a dup).
  *   - permissionIdentifier collision → two crud_configs for DIFFERENT models
@@ -137,6 +145,43 @@ class ConfigDoctorCommand extends Command
                 }
             }
 
+            // 5b. Legacy 'styles' key — the flat key some now-corrected callers
+            //     used to write to. The runtime only ever reads 'contitionStyles'
+            //     (or its correctly-spelled read alias 'conditionStyles'), so any
+            //     rule stored under 'styles' silently never applies. --fix
+            //     normalises each item (StyleRule::normalize()) and folds the
+            //     usable ones into 'contitionStyles', then drops 'styles'.
+            $legacyStyles = $config['styles'] ?? [];
+            if (! empty($legacyStyles)) {
+                if ($this->option('fix')) {
+                    $migrated = array_values(array_filter(array_map(
+                        static fn (array $style): ?array => StyleRule::normalize($style),
+                        $legacyStyles
+                    )));
+
+                    $config['contitionStyles'] = array_merge($config['contitionStyles'] ?? [], $migrated);
+                    unset($config['styles']);
+                    $row->update(['config' => $config]);
+                    $this->line("🔧 <fg=green>fixed</> legacy styles key [{$label}]: 'styles' → 'contitionStyles' (".count($migrated).' rule(s) migrated)');
+                    $fixed++;
+                } else {
+                    $this->line("🔴 <fg=red>legacy styles key</> [{$label}]: chave 'styles' gravada (legado); o runtime lê 'contitionStyles' — estas regras de estilo NÃO são aplicadas. Rode --fix");
+                    $errors++;
+                }
+            }
+
+            // 5c. Unusable row style — a 'contitionStyles' item that
+            //     StyleRule::normalize() rejects (empty field/style, or an
+            //     unrecognised condition) never applies at render time.
+            //     Diagnostic only — not an error, since it does not make the
+            //     screen unusable, only that one styling rule.
+            foreach (($config['contitionStyles'] ?? []) as $styleIndex => $style) {
+                if (StyleRule::normalize($style) === null) {
+                    $this->line("🟡 <fg=yellow>unusable row style</> [{$label}] index {$styleIndex}: regra em 'contitionStyles' não normaliza (campo/estilo vazio ou condição desconhecida) — nunca será aplicada");
+                    $warnings++;
+                }
+            }
+
             // Collected for check 6b below (after --fix, $config already reflects
             // the migrated key). Same identifier on a DIFFERENT model is a
             // cross-grant risk — resolution is global by permissionIdentifier.
@@ -170,17 +215,22 @@ class ConfigDoctorCommand extends Command
             }
         }
 
-        // 8. obj_key collision across DIFFERENT pages. Resolution
-        //    (PermissionService::buildPermissionMap) is global by obj_key — the
-        //    same key on two pages means granting access to one object grants it
-        //    to the other too. Diagnostic only.
+        // 8. obj_key collision across DIFFERENT pages. The BARE map
+        //    (PermissionService::buildPermissionMap) is still global by
+        //    obj_key — granting access to one object grants it to the other
+        //    too — but each grant can now be disambiguated by calling
+        //    ptah_can()/check() with the QUALIFIED key ("{page.slug}::{obj_key}",
+        //    or "{page.slug}::{section}::{obj_key}" if the same page also
+        //    repeats the key across sections) instead of the bare obj_key.
+        //    Diagnostic only — does not change how the bare map resolves.
         $objectsByKey = PageObject::query()->with('page:id,slug')->get()->groupBy('obj_key');
 
         foreach ($objectsByKey as $key => $objects) {
             $pageSlugs = $objects->pluck('page.slug')->filter()->unique()->values();
 
             if ($pageSlugs->count() > 1) {
-                $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all()).' — a resolução de permissão é global por obj_key (crossgrant entre páginas)');
+                $qualifiedForms = $pageSlugs->map(fn ($slug) => "{$slug}::{$key}")->implode(', ');
+                $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all())." — a resolução do mapa bare é global por obj_key (crossgrant entre páginas); use a chave qualificada para desambiguar: {$qualifiedForms}");
                 $warnings++;
             }
         }

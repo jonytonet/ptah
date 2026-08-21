@@ -317,8 +317,8 @@ php artisan ptah:config "App\Models\Product" \
   --column="name:text:label=Nome:sortable=true:searchable=true" \
   --column="price:money:label=Preço:sortable=true" \
   --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
-  --style="is_active:eq:0:bg-red-50 text-red-700" \
-  --style="stock:lt:5:bg-yellow-50 text-yellow-700" \
+  --style="is_active:eq:0:background:#FEF2F2;color:#B91C1C;" \
+  --style="stock:lt:5:background:#FEFCE8;color:#A16207;" \
   --filter="is_active:boolean:eq:Ativos" \
   --action="duplicate:wire:duplicate:bx bx-copy:info:Duplicar?" \
   --set="itemsPerPage=15" \
@@ -366,11 +366,14 @@ Format: `field:type:modifier1:modifier2:option1=value1:option2=value2`
 
 #### --style
 
-Format: `field:operator:value:css_classes`
+Format: `field:condition:value:style` — `style` is an **inline CSS declaration
+list** (it is rendered as `style="{{ ... }}"` on the row), not Tailwind
+classes.
 
-**Operators:** `eq`, `ne`, `lt`, `gt`, `lte`, `gte`
+**Conditions:** `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`, `ne`,
+`lt`, `gt`, `lte`, `gte`, `=`)
 
-**Example:** `is_active:eq:0:bg-red-50 text-red-700`
+**Example:** `is_active:eq:0:background:#FEF2F2;color:#B91C1C;`
 
 #### --filter
 

@@ -2,6 +2,8 @@
 
 namespace Ptah\Enums;
 
+use Ptah\Support\StyleRule;
+
 class CrudConfigEnums
 {
     /**
@@ -118,14 +120,10 @@ class CrudConfigEnums
      * default arm silently returns false, so the configured style just never
      * applies, with no error anywhere. See ConfigValidator::validateStyle().
      */
-    public const STYLE_CONDITIONS = [
-        '==',
-        '!=',
-        '>',
-        '<',
-        '>=',
-        '<=',
-    ];
+    // Fonte unica: StyleRule e o normalizador canonico de row styles; esta
+    // constante existe para consumidores antigos e para o wizard, e referencia
+    // a mesma lista para nunca driftar (achado de revisao, Fase 2.5 Onda II).
+    public const STYLE_CONDITIONS = StyleRule::CONDITIONS;
 
     /**
      * SQL aggregation functions

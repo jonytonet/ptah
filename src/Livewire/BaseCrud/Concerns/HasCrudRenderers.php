@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Ptah\Support\StyleRule;
 
 /**
  * Cell rendering, row styling, helper formatters and custom method resolution.
@@ -91,20 +92,24 @@ trait HasCrudRenderers
 
     /**
      * Returns the inline style for a row based on contitionStyles.
+     * Reads the persisted key (typo intentional — the runtime contract, see
+     * StyleRule) with the correctly-spelled conditionStyles as a read alias.
      */
     public function getRowStyle(mixed $row): string
     {
-        $styles = $this->crudConfig['contitionStyles'] ?? [];
+        $styles = $this->crudConfig['contitionStyles'] ?? $this->crudConfig['conditionStyles'] ?? [];
 
         foreach ($styles as $style) {
-            $field = $style['field'] ?? $style['colsNomeFisico'] ?? null;
-            $condition = $style['condition'] ?? '==';
-            $target = $style['value'] ?? null;
-            $css = $style['style'] ?? '';
+            $rule = StyleRule::normalize($style);
 
-            if (! $field) {
+            if ($rule === null) {
                 continue;
             }
+
+            $field = $rule['field'];
+            $condition = $rule['condition'];
+            $target = $rule['value'];
+            $css = $rule['style'];
 
             $rowValue = $row instanceof Model
                 ? $row->getAttribute($field)

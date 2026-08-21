@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\Crud;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudForm;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudRenderers;
@@ -270,6 +271,91 @@ class CrudRenderersTest extends TestCase
         $this->assertSame('background: red', $this->harness->getRowStyle(['status' => 'urgent', 'amount' => 1]));
         $this->assertSame('background: gold', $this->harness->getRowStyle(['status' => 'ok', 'amount' => 500]));
         $this->assertSame('', $this->harness->getRowStyle(['status' => 'ok', 'amount' => 1]));
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: int, 2: int}>
+     */
+    public static function rowStyleOperatorCases(): array
+    {
+        return [
+            '==' => ['==', 10, 10],
+            '!=' => ['!=', 10, 20],
+            '>' => ['>', 10, 20],
+            '<' => ['<', 20, 10],
+            '>=' => ['>=', 10, 10],
+            '<=' => ['<=', 10, 10],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('rowStyleOperatorCases')]
+    public function row_style_matches_for_each_of_the_six_operators(string $condition, int $target, int $rowAmount): void
+    {
+        $this->harness->crudConfig = [
+            'contitionStyles' => [
+                ['field' => 'amount', 'condition' => $condition, 'value' => $target, 'style' => 'color:red;'],
+            ],
+        ];
+
+        $this->assertSame('color:red;', $this->harness->getRowStyle(['amount' => $rowAmount]));
+    }
+
+    #[Test]
+    public function legacy_cols_nome_fisico_and_eq_operator_applies_on_read(): void
+    {
+        // A config saved before this fix (or by a still-unfixed caller) using
+        // the schema-legacy keys must still apply — normalised on read, no
+        // migration required to keep the row styled.
+        $this->harness->crudConfig = [
+            'contitionStyles' => [
+                ['colsNomeFisico' => 'status', 'colsOperator' => 'eq', 'colsValue' => 'cancelled', 'colsCss' => 'background:#FEE2E2;'],
+            ],
+        ];
+
+        $this->assertSame('background:#FEE2E2;', $this->harness->getRowStyle(['status' => 'cancelled']));
+        $this->assertSame('', $this->harness->getRowStyle(['status' => 'ok']));
+    }
+
+    #[Test]
+    public function first_matching_rule_wins(): void
+    {
+        $this->harness->crudConfig = [
+            'contitionStyles' => [
+                ['field' => 'amount', 'condition' => '>', 'value' => 0, 'style' => 'color:first;'],
+                ['field' => 'amount', 'condition' => '>', 'value' => 0, 'style' => 'color:second;'],
+            ],
+        ];
+
+        $this->assertSame('color:first;', $this->harness->getRowStyle(['amount' => 5]));
+    }
+
+    #[Test]
+    public function a_rule_with_an_empty_style_no_longer_shadows_the_rules_after_it(): void
+    {
+        // Before the fix, a matching rule with an empty 'style' returned '' and
+        // stopped the loop — blocking every subsequent rule from ever applying.
+        // StyleRule::normalize() now rejects it (null) so the loop continues.
+        $this->harness->crudConfig = [
+            'contitionStyles' => [
+                ['field' => 'amount', 'condition' => '>', 'value' => 0, 'style' => ''],
+                ['field' => 'amount', 'condition' => '>', 'value' => 0, 'style' => 'color:second;'],
+            ],
+        ];
+
+        $this->assertSame('color:second;', $this->harness->getRowStyle(['amount' => 5]));
+    }
+
+    #[Test]
+    public function condition_styles_correctly_spelled_key_is_read(): void
+    {
+        $this->harness->crudConfig = [
+            'conditionStyles' => [
+                ['field' => 'status', 'condition' => '==', 'value' => 'urgent', 'style' => 'background: red'],
+            ],
+        ];
+
+        $this->assertSame('background: red', $this->harness->getRowStyle(['status' => 'urgent']));
     }
 
     #[Test]

@@ -529,6 +529,11 @@ trait HasCrudForm
      *  - No permissionIdentifier configured → allowed (CRUD opts out of gating).
      *  - Identifier configured but no authenticated user → DENIED (fail-closed).
      *  - Otherwise → delegated to ptah_can().
+     *
+     * `permissionIdentifier` may itself be a QUALIFIED key
+     * (`page::obj_key` / `page::section::obj_key`, see
+     * `PermissionService::KEY_QUALIFIER`) — it passes through unchanged to
+     * `ptah_can()`/`check()`, which already knows how to resolve it.
      */
     protected function authorizeCrudAction(string $action): bool
     {

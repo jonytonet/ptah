@@ -285,6 +285,11 @@ return [
     | audit               : log accesses to the ptah_permission_audits table
     | audit_denied        : also log denied accesses
     | audit_master        : log accesses from users with MASTER role
+    | audit_retention_days: default --days window for `ptah:audit-prune` (rows
+    |                       older than this are eligible for deletion). Read
+    |                       with an inline `?? 90` fallback in the command
+    |                       itself too, so a config file published before this
+    |                       key existed still works.
     | multi_company       : user can have roles in multiple companies
     | allow_guest         : if false, guests always return false
     | admin_name          : name of the admin user created by the seeder
@@ -307,6 +312,7 @@ return [
         'audit' => env('PTAH_PERMISSION_AUDIT', false),
         'audit_denied' => env('PTAH_PERMISSION_AUDIT_DENIED', true),
         'audit_master' => env('PTAH_PERMISSION_AUDIT_MASTER', false),
+        'audit_retention_days' => (int) env('PTAH_PERMISSION_AUDIT_RETENTION_DAYS', 90),
         'multi_company' => env('PTAH_MULTI_COMPANY', true),
         'allow_guest' => env('PTAH_PERMISSION_ALLOW_GUEST', false),
         'admin_name' => env('PTAH_ADMIN_NAME', 'Administrador'),

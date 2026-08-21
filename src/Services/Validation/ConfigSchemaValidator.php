@@ -7,6 +7,7 @@ namespace Ptah\Services\Validation;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Enums\CrudConfigEnums;
 use Ptah\Exceptions\ConfigValidationException;
+use Ptah\Support\StyleRule;
 
 /**
  * Validator for CRUD configuration arrays.
@@ -287,6 +288,16 @@ class ConfigSchemaValidator
     /**
      * Validate styles configuration.
      *
+     * Accepts BOTH shapes a style rule can arrive in — canonical
+     * (field/condition/value/style) and the schema-legacy one
+     * (colsNomeFisico/colsOperator/colsValue/colsCss) — via the single
+     * normaliser StyleRule::normalize() also used at render time
+     * (HasCrudRenderers::getRowStyle()) and by the CLI (StyleParser). This
+     * validates the `styles` section only; `contitionStyles` (the key the
+     * runtime actually reads) is deliberately left unvalidated here —
+     * enforcing this schema on it would break saves from existing editor
+     * screens that already persist rules in either shape.
+     *
      * @param  array<int, array<string, mixed>>  $styles
      *
      * @throws ConfigValidationException
@@ -294,36 +305,17 @@ class ConfigSchemaValidator
     protected function validateStyles(array $styles): void
     {
         foreach ($styles as $index => $style) {
-            // Validate required fields
-            if (empty($style['colsNomeFisico'])) {
-                throw ConfigValidationException::missingRequiredField('colsNomeFisico', 'styles')
-                    ->withJsonPath("$.styles[{$index}].colsNomeFisico");
-            }
+            if (StyleRule::normalize($style) === null) {
+                $field = (string) ($style['field'] ?? $style['colsNomeFisico'] ?? '');
+                $condition = $style['condition'] ?? $style['colsOperator'] ?? null;
 
-            if (empty($style['colsOperator'])) {
-                throw ConfigValidationException::missingRequiredField('colsOperator', 'styles')
-                    ->withJsonPath("$.styles[{$index}].colsOperator");
-            }
-
-            if (! isset($style['colsValue'])) {
-                throw ConfigValidationException::missingRequiredField('colsValue', 'styles')
-                    ->withJsonPath("$.styles[{$index}].colsValue");
-            }
-
-            if (empty($style['colsCss'])) {
-                throw ConfigValidationException::missingRequiredField('colsCss', 'styles')
-                    ->withJsonPath("$.styles[{$index}].colsCss");
-            }
-
-            // Validate operator
-            $validOperators = ['eq', 'ne', 'lt', 'gt', 'lte', 'gte'];
-            if (! in_array($style['colsOperator'], $validOperators, true)) {
                 throw ConfigValidationException::invalidColumnType(
-                    $style['colsNomeFisico'],
-                    $style['colsOperator'],
-                    $validOperators,
-                    'styles'
-                )->withJsonPath("$.styles[{$index}].colsOperator");
+                    $field,
+                    $condition,
+                    StyleRule::CONDITIONS,
+                    'styles',
+                    'style condition'
+                )->withJsonPath("$.styles[{$index}]");
             }
         }
     }

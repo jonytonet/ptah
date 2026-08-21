@@ -292,11 +292,22 @@ php artisan ptah:config "App\Models\Product" --set="configLinkLinha=/products/%i
 |---|---|---|
 | columns | `--column` | ✅ full support |
 | filters | `--filter` | ✅ fixed (2026-03-20) |
-| conditional styles | `--style` | ✅ fixed (2026-03-20) |
+| conditional styles | `--style` | ✅ fixed (Fase 2.5 Onda II)† |
 | actions | `--action` | ✅ fixed (2026-03-20) |
 | joins | `--join` | ✅ supported |
 | general settings | `--set` | ✅ supported |
 | option values with `:` | `options=k:v` | ✅ fixed (2026-03-20) |
+
+† Before Fase 2.5 Onda II, `--style` was **inoperative**, not merely
+incomplete: four different persisted shapes coexisted across the codebase
+(`styles` vs `contitionStyles`, `field`/`condition`/`value`/`style` vs
+`colsNomeFisico`/`colsOperator`/`colsValue`/`colsCss`), and only the shape
+`HasCrudRenderers::getRowStyle()` actually reads (`contitionStyles` with
+`field`/`condition`/`value`/`style`) ever took effect at render time. A style
+rule configured via `--style` was silently saved to a key nothing ever read.
+`StyleRule::normalize()` is now the single place that canonicalises every
+shape, used by the CLI parser, the wizard, the schema validator, the doctor
+command and the renderer itself.
 
 ---
 
@@ -406,6 +417,6 @@ Apply this checklist **immediately after each `ptah:forge`**, before running
 | `--no-soft-deletes` on existing migration | ✅ fixed — use `--force` to auto-strip | remove `use SoftDeletes` from Model manually |
 | `created_at` auto-added to CrudConfig | ✅ fixed — not added anymore | add via config modal when needed |
 | `--filter` CLI flag | ✅ fixed (2026-03-20) | works directly via CLI |
-| `--style` CLI flag | ✅ fixed (2026-03-20) | works directly via CLI |
+| `--style` CLI flag | ✅ fixed (Fase 2.5 Onda II) — was inoperative before (wrote to a key/shape the runtime never read) | works directly via CLI |
 | `--action` CLI flag (URL values) | ✅ fixed (2026-03-20) | use `link`/`livewire`/`javascript` as type |
 | `options=k:v` with `:` in values | ✅ fixed (2026-03-20) | smart tokenizer preserves value |

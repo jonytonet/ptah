@@ -22,7 +22,7 @@ class StyleWizard
         $this->command->info('=== Style Rule Configuration Wizard ===');
         $this->command->newLine();
 
-        $field = $this->command->ask('Field to check', $existingStyle['styleField'] ?? null);
+        $field = $this->command->ask('Field to check', $existingStyle['field'] ?? null);
 
         if (! $field) {
             $this->command->warn('Field name is required.');
@@ -30,33 +30,35 @@ class StyleWizard
             return null;
         }
 
-        $operator = $this->command->choice(
+        $condition = $this->command->choice(
             'Comparison operator',
-            CrudConfigEnums::OPERATORS,
-            $existingStyle['styleOperator'] ?? '='
+            CrudConfigEnums::STYLE_CONDITIONS,
+            $existingStyle['condition'] ?? '=='
         );
 
-        $value = $this->command->ask('Comparison value', $existingStyle['styleValue'] ?? '');
+        $value = $this->command->ask('Comparison value', $existingStyle['value'] ?? '');
 
         $this->command->info('Enter CSS styles to apply when condition is met:');
 
-        $backgroundColor = $this->command->ask('Background color (e.g., #FFE, red)', $existingStyle['styleBackgroundColor'] ?? '');
-        $textColor = $this->command->ask('Text color', $existingStyle['styleColor'] ?? '');
+        // No re-run (usuario declinou salvar), o shape canonico guarda o CSS
+        // como string unica — nao da para decompor de volta em background/cor/
+        // peso, entao o conjunto anterior inteiro vira default do customCss.
+        $backgroundColor = $this->command->ask('Background color (e.g., #FFE, red)', '');
+        $textColor = $this->command->ask('Text color', '');
         $fontWeight = $this->command->choice(
             'Font weight',
             ['normal', 'bold', 'lighter', 'bolder'],
-            $existingStyle['styleFontWeight'] ?? 'normal'
+            'normal'
         );
-        $customCss = $this->command->ask('Custom CSS properties (e.g., border:2px solid red)', $existingStyle['styleCustom'] ?? '');
+        $customCss = $this->command->ask('Custom CSS properties (e.g., border:2px solid red)', $existingStyle['style'] ?? '');
+
+        $css = $this->buildCss($backgroundColor, $textColor, $fontWeight, $customCss);
 
         $style = [
-            'styleField' => $field,
-            'styleOperator' => $operator,
-            'styleValue' => $value,
-            'styleBackgroundColor' => $backgroundColor,
-            'styleColor' => $textColor,
-            'styleFontWeight' => $fontWeight,
-            'styleCustom' => $customCss,
+            'field' => $field,
+            'condition' => $condition,
+            'value' => $value,
+            'style' => $css,
         ];
 
         $this->previewStyle($style);
@@ -69,19 +71,43 @@ class StyleWizard
     }
 
     /**
+     * Assembles the inline CSS declaration list from the wizard's individual
+     * prompts, skipping whichever were left blank.
+     */
+    protected function buildCss(string $backgroundColor, string $textColor, string $fontWeight, string $customCss): string
+    {
+        $declarations = [];
+
+        if ($backgroundColor !== '') {
+            $declarations[] = "background:{$backgroundColor};";
+        }
+
+        if ($textColor !== '') {
+            $declarations[] = "color:{$textColor};";
+        }
+
+        if ($fontWeight !== '') {
+            $declarations[] = "font-weight:{$fontWeight};";
+        }
+
+        if ($customCss !== '') {
+            $declarations[] = rtrim($customCss, ';').';';
+        }
+
+        return implode('', $declarations);
+    }
+
+    /**
      * Preview style configuration
      */
     protected function previewStyle(array $style): void
     {
         $this->command->newLine();
         $this->command->info('=== Style Rule Preview ===');
-        $this->command->line("When {$style['styleField']} {$style['styleOperator']} {$style['styleValue']}:");
+        $this->command->line("When {$style['field']} {$style['condition']} {$style['value']}:");
         $this->command->table(
             ['Property', 'Value'],
-            collect($style)->except(['styleField', 'styleOperator', 'styleValue'])->map(fn ($value, $key) => [
-                $key,
-                $value ?: '(not set)',
-            ])->toArray()
+            [['style', $style['style'] ?: '(not set)']]
         );
         $this->command->newLine();
     }
