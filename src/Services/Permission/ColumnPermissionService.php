@@ -88,6 +88,63 @@ class ColumnPermissionService
     }
 
     /**
+     * Filters an EXPORT column list — the `field`/`label`/`type`/`permission`
+     * shape built by `HasCrudExport::getVisibleColumnsForExport()`, NOT the
+     * raw CrudConfig `cols` shape `apply()` consumes — down to the columns
+     * $user may READ.
+     *
+     * Called again at file-generation time (ExportController::download(),
+     * GenerateCrudExportJob::handle()) instead of trusting the permission
+     * baked into a cached/queued payload at dispatch time: a grant revoked
+     * between queuing the export and the worker/controller actually building
+     * the file must still exclude the column — authorization is never frozen.
+     *
+     * `permission` is an OPTIONAL key (added by this wave): absent means
+     * public, exactly like `apply()`'s `colsPermission` tag — so a payload
+     * queued/cached before this wave (no `permission` key on any column at
+     * all) is filtered as entirely public and keeps working unchanged.
+     *
+     * @param  array<int, array{field: string, label: string, type: string, permission?: string}>  $columns
+     * @return array<int, array{field: string, label: string, type: string, permission?: string}>
+     */
+    public function filterExportColumns(array $columns, mixed $user = null, ?int $companyId = null): array
+    {
+        if (! config('ptah.modules.permissions')) {
+            return $columns;
+        }
+
+        $keys = [];
+        foreach ($columns as $column) {
+            $key = $this->extractExportKey($column);
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+
+        $granted = $this->resolveKeys(array_values(array_unique($keys)), $user, $companyId);
+
+        return array_values(array_filter(
+            $columns,
+            function (array $column) use ($granted) {
+                $key = $this->extractExportKey($column);
+
+                return $key === '' || ($granted[$key] ?? false);
+            }
+        ));
+    }
+
+    /**
+     * Extracts the permission key configured on a single EXPORT column (the
+     * `field`/`label`/`type`/`permission` shape — see `filterExportColumns()`).
+     */
+    private function extractExportKey(array $column): string
+    {
+        $v = $column['permission'] ?? null;
+
+        return is_string($v) ? trim($v) : '';
+    }
+
+    /**
      * Resolves each distinct permission key to a `read` grant, WITHOUT ever
      * calling `check()` in a loop — that would write one audit row per
      * column, per render (N inserts). Instead:

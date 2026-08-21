@@ -332,4 +332,147 @@ class ColumnPermissionServiceTest extends TestCase
 
         unset($page);
     }
+
+    // ── filterExportColumns() — the EXPORT column shape (Wave 2) ────────────
+    //
+    // Same key-resolution logic as apply() (resolveKeys(), reused internally
+    // — not duplicated), but over the `field`/`label`/`type`/`permission`
+    // shape HasCrudExport::getVisibleColumnsForExport() builds, not the raw
+    // CrudConfig `cols` shape apply() consumes.
+
+    private function exportCol(string $field, mixed $permission = null): array
+    {
+        $col = ['field' => $field, 'label' => $field, 'type' => 'text'];
+
+        if ($permission !== null) {
+            $col['permission'] = $permission;
+        }
+
+        return $col;
+    }
+
+    #[Test]
+    public function filter_export_columns_is_a_byte_identical_passthrough_when_the_module_is_off(): void
+    {
+        config(['ptah.modules.permissions' => false]);
+        $columns = [
+            $this->exportCol('id'),
+            $this->exportCol('cost', 'secret.cost'), // would deny a guest if the module were on
+        ];
+
+        $result = $this->service->filterExportColumns($columns, null);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_keeps_a_column_with_no_permission_key(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $columns = [$this->exportCol('name')];
+
+        $result = $this->service->filterExportColumns($columns, null);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_denies_a_guest_by_default(): void
+    {
+        config(['ptah.modules.permissions' => true, 'ptah.permissions.allow_guest' => false]);
+        $columns = [$this->exportCol('name'), $this->exportCol('cost', 'secret.cost')];
+
+        $result = $this->service->filterExportColumns($columns, null);
+
+        $this->assertSame([$this->exportCol('name')], $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_grants_a_guest_when_allow_guest_is_true(): void
+    {
+        config(['ptah.modules.permissions' => true, 'ptah.permissions.allow_guest' => true]);
+        $columns = [$this->exportCol('cost', 'secret.cost')];
+
+        $result = $this->service->filterExportColumns($columns, null);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_passes_master_even_with_no_registered_page_object(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $this->assign($this->userId, $this->makeRole(master: true));
+        $columns = [$this->exportCol('cost', 'nonexistent.key')];
+
+        $result = $this->service->filterExportColumns($columns, $this->userId);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_denies_an_ordinary_user_without_the_read_grant(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $page = $this->makePage('export-screen');
+        $obj = $this->makeObject($page, 'items.secret_amount');
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, $obj, ['can_create' => true]); // no read
+
+        $columns = [$this->exportCol('name'), $this->exportCol('amount', 'items.secret_amount')];
+
+        $result = $this->service->filterExportColumns($columns, $this->userId);
+
+        $this->assertSame([$this->exportCol('name')], $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_keeps_a_column_the_user_has_the_read_grant_for(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $page = $this->makePage('export-screen');
+        $obj = $this->makeObject($page, 'items.secret_amount');
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, $obj, ['can_read' => true]);
+
+        $columns = [$this->exportCol('amount', 'items.secret_amount')];
+
+        $result = $this->service->filterExportColumns($columns, $this->userId);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_resolves_qualified_keys_the_same_way_apply_does(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $page = $this->makePage('export-screen');
+        $obj = $this->makeObject($page, 'shared.key');
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $this->grant($role, $obj, ['can_read' => true]);
+
+        $columns = [$this->exportCol('field', 'export-screen::shared.key')];
+
+        $result = $this->service->filterExportColumns($columns, $this->userId);
+
+        $this->assertSame($columns, $result);
+    }
+
+    #[Test]
+    public function filter_export_columns_returns_an_empty_list_when_every_column_is_denied(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $page = $this->makePage('export-screen');
+        $this->makeObject($page, 'items.secret_amount');
+        $this->assign($this->userId, $this->makeRole()); // no grant at all
+
+        $columns = [$this->exportCol('amount', 'items.secret_amount')];
+
+        $result = $this->service->filterExportColumns($columns, $this->userId);
+
+        $this->assertSame([], $result);
+    }
 }

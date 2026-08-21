@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Ptah\Exports\CrudExport;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
+use Ptah\Services\Permission\ColumnPermissionService;
 
 /**
  * Generates the file for a queued BaseCrud export (Fase 3 — "grande volume").
@@ -96,13 +97,34 @@ class GenerateCrudExportJob implements ShouldQueue
             return;
         }
 
+        // Re-authorize the column list at file-generation time — never trust
+        // the permission baked into $payload['columns'] at queueExport()
+        // time: a grant revoked between dispatch() and the worker actually
+        // picking this job up must still exclude the column (authorization
+        // is never frozen — see ColumnPermissionService::filterExportColumns()).
+        $columns = app(ColumnPermissionService::class)->filterExportColumns(
+            $payload['columns'] ?? [],
+            $export->user_id,
+            $export->company_id,
+        );
+
+        // Fail-closed: an empty column list must never reach CrudExport/the
+        // PDF view, both of which treat "no columns configured" as "export
+        // every attribute" (see CrudExport::headings()/map() and
+        // exports/pdf.blade.php) — exactly what an owner denied on every
+        // column would otherwise still get.
+        if ($columns === []) {
+            $this->markFailed($export, 'No exportable column is authorized for the export owner.');
+
+            return;
+        }
+
         $export->status = 'processing';
         $export->save();
 
         $modelInstance = new $modelClass;
         $pk = $modelInstance->getKeyName();
         $ids = $payload['ids'] ?? [];
-        $columns = $payload['columns'] ?? [];
         $format = (string) ($payload['format'] ?? 'excel');
 
         $query = $modelClass::query()->whereIn($pk, $ids);
