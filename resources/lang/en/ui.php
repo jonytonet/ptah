@@ -1533,6 +1533,7 @@ return [
     'shortcuts_filters' => 'Toggle the filter panel',
     'shortcuts_view_mode' => 'Switch table / cards',
     'shortcuts_refresh' => 'Reload the listing',
+    'shortcuts_sidebar' => 'Collapse / expand the menu',
     'shortcuts_help' => 'Show this list',
 
     // -------------------------------------------------------------------------

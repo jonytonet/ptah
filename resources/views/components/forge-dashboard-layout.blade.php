@@ -308,6 +308,8 @@
                 localStorage.setItem('ptah_sidebar_collapsed', this.sidebarCollapsed);
             }
         }"
+        @keydown.window.ctrl.b.prevent="toggleSidebarCollapse()"
+        @keydown.window.meta.b.prevent="toggleSidebarCollapse()"
         class="min-h-screen"
     >
 

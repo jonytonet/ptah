@@ -261,6 +261,10 @@
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">r</kbd></dd>
                 </div>
                 <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_sidebar') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">Ctrl+B</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
                     <dt>{{ __('ptah::ui.shortcuts_help') }}</dt>
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">?</kbd></dd>
                 </div>

@@ -141,4 +141,20 @@ class CrudKeyboardShortcutsOverlayTest extends TestCase
         $this->assertStringContainsString(__('ptah::ui.shortcuts_view_mode'), $html);
         $this->assertStringContainsString(__('ptah::ui.shortcuts_refresh'), $html);
     }
+
+    #[Test]
+    public function ctrl_b_toggles_the_sidebar_from_the_layout_root(): void
+    {
+        // Atalho GLOBAL (convencao VSCode/Slack, pedido do usuario): vive no
+        // layout, nao no BaseCrud — mas e documentado no overlay do "?" por
+        // ser a unica superficie de descoberta de atalhos.
+        $layout = file_get_contents(dirname(__DIR__, 3).'/resources/views/components/forge-dashboard-layout.blade.php');
+
+        $this->assertStringContainsString('@keydown.window.ctrl.b.prevent="toggleSidebarCollapse()"', $layout);
+        $this->assertStringContainsString('@keydown.window.meta.b.prevent="toggleSidebarCollapse()"', $layout);
+
+        $this->makeConfig();
+        $html = Livewire::test(BaseCrud::class, ['model' => ShortcutsOverlayStub::class])->html();
+        $this->assertStringContainsString(__('ptah::ui.shortcuts_sidebar'), $html);
+    }
 }
