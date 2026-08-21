@@ -64,6 +64,19 @@
        0.03 of margin is not margin when --color-danger is host-configurable. */
     --ptah-danger-strong: color-mix(in srgb, var(--color-danger, #ef4444) 75%, #000000);
 
+    /* Same "-strong" idiom as --ptah-danger-strong, for forge-alert's success/warn
+       variants: dark enough to read as TEXT on their own tinted LIGHT background
+       (bg-success-light #d1fae5 / bg-warn-light #fef3c7). Raw --color-success on its
+       own tint is 2.24:1 and raw --color-warn is 1.93:1 — both far under the 4.5:1
+       floor, and both worse than danger's 3.08:1 (success/warn start from a brighter
+       hue, so they need more black to compensate). 60% success clears 5.46:1. Warn
+       needs a more aggressive mix (~65% black) to clear the floor with real margin —
+       55% only reaches 5.55:1 at the edge of the range that still reads amber; the
+       chosen 35%/65% split leaves 9.70:1, closer to how much darker warn's raw hue
+       already is versus success/danger before any mixing. See AlertContrastTest. */
+    --ptah-success-strong: color-mix(in srgb, var(--color-success, #10b981) 60%, #000000);
+    --ptah-warn-strong:    color-mix(in srgb, var(--color-warn, #f59e0b) 35%, #000000);
+
     /* ── Neutral tokens (Fase 1 restyle) ──────────────────────────────────
        Light-mode defaults for every neutral (non-brand, non-semantic) color
        used below. Each has a dark override in the .ptah-dark block right
@@ -440,6 +453,19 @@
 .ptah-c-pag                { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-pag     { color: var(--ptah-text-faint); }
 
+/* ── forge-pagination: desktop prev/next chevron icon ─────────────────────
+   Was `text-gray-300 dark:text-slate-600` when disabled (1.47:1 / 2.36:1
+   against the page canvas — both far under the 3:1 icon floor) and
+   `text-gray-500 dark:text-slate-400` when active (already passing).
+   --ptah-icon-muted unifies both states onto one legible, invariant-across-
+   scope tone (4.76:1 light / 3.75:1 dark) — close enough to the old ACTIVE
+   value that the enabled chevron looks unchanged; the disabled one becomes
+   readable instead of near-invisible. The disabled/enabled distinction
+   still reads from `cursor-not-allowed` plus the absence of the hover
+   background, not from a near-invisible icon. */
+.ptah-c-pag_icon            { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-pag_icon { color: var(--ptah-icon-muted); }
+
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
 .ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }
@@ -575,6 +601,43 @@
 .ptah-c-form_border            { border-color: var(--ptah-line-field); }
 .ptah-dark .ptah-c-form_border { border-color: var(--ptah-line-field); }
 
+/* ── Invalid field border (aria-invalid) ───────────────────────────────────
+   forge-input's `border-red-400` utility (and the BaseCrud inline fields'
+   `.ptah-c-form_in`/`.ptah-c-form_sel`, both unlayered like everything in
+   this file) always lost to the plain `.ptah-input-wrapper input` /
+   `.ptah-c-form_in` / `.ptah-c-form_sel` rules above regardless of which
+   came first in the stylesheet, since border-color was declared uncondit-
+   ionally on all three — a field with a validation error rendered IDENTICAL
+   to a valid one. `[aria-invalid="true"]` raises the selector's specificity
+   (0,3,1 vs the base rules' 0,2,1) so THIS wins no matter the source order,
+   and doubles as the accessibility signal itself (paired with
+   aria-describedby — see forge-input.blade.php / _modal-form.blade.php).
+   --ptah-danger-strong reads fine against a light field bg (6.11:1, well
+   past the 3:1 border floor) but FAILS it against a dark one (2.39:1 vs
+   --ptah-surface, 2.92:1 vs --ptah-field) — raw var(--color-danger) does
+   not have that problem (3.89-4.74:1 in dark, same token already used by
+   .ptah-c-act_del in both scopes), so dark keeps that instead. */
+.ptah-input-wrapper input[aria-invalid="true"],
+.ptah-c-form_in[aria-invalid="true"],
+.ptah-c-form_sel[aria-invalid="true"] {
+    border-color: var(--ptah-danger-strong);
+}
+.ptah-dark .ptah-input-wrapper input[aria-invalid="true"],
+.ptah-dark .ptah-c-form_in[aria-invalid="true"],
+.ptah-dark .ptah-c-form_sel[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
+/* ── Field error message text ──────────────────────────────────────────────
+   Replaces the raw `text-red-500` utility (3.76:1 against white — below the
+   4.5:1 text floor). Dark uses --ptah-danger-lite, not --ptah-danger-strong:
+   the message is real text (4.5:1 floor), and -strong only reaches 3.89:1
+   against --ptah-surface — under that floor, same defect as the border
+   above but for a different reason (text vs UI-component contrast ratio).
+   -lite clears it comfortably (6.87-8.38:1 depending on background). */
+.ptah-c-field_err            { color: var(--ptah-danger-strong); }
+.ptah-dark .ptah-c-field_err { color: var(--ptah-danger-lite); }
+
 /* ── Select trigger: text when value is selected ── */
 .ptah-c-sel_val            { color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-sel_val { color: var(--ptah-text-field); }
@@ -694,6 +757,37 @@
 .ptah-dark .ptah-c-chip { background-color: var(--ptah-primary-soft-d); color: var(--ptah-primary-lite); border-color: var(--ptah-primary); }
 .ptah-dark .ptah-c-chip button { color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-chip button:hover { background-color: var(--ptah-primary-soft-d); }
+
+/* ── forge-alert: title/body text for success/warn/danger ─────────────────
+   The raw `text-success`/`text-warn`/`text-danger` (+ their `-dark` title
+   variants) utilities forge-alert used to apply here all failed AA against
+   the alert's own `bg-*-light` background in light mode (measured: success
+   2.24:1 / warn 1.93:1 / danger 3.08:1 for body text; the `-dark` title
+   variants fared only slightly better — 3.32 / 2.86 / 3.95:1 — still all
+   under the 4.5:1 floor). --ptah-*-strong fixes both roles with one token
+   per color, since forge-alert already gives the title extra weight via
+   font-semibold — no separate darker tone is needed to tell them apart.
+   dark mode already passed (bg-slate-800/60 is dark enough that the
+   existing neutral Tailwind grays clear 10:1+), so the .ptah-dark overrides
+   below keep those exact literals instead of switching to a token that
+   would need re-deriving for no visual gain. Scoped under the color class
+   forge-alert already applies to the wrapper (.ptah-alert-success etc.) so
+   primary/dark (not part of this defect — see AlertContrastTest) are
+   untouched. See AlertContrastTest for the measured pairs, both scopes. */
+.ptah-alert-success .ptah-c-alert_title,
+.ptah-alert-success .ptah-c-alert_text  { color: var(--ptah-success-strong); }
+.ptah-dark .ptah-alert-success .ptah-c-alert_title { color: #ffffff; }
+.ptah-dark .ptah-alert-success .ptah-c-alert_text  { color: #cbd5e1; }
+
+.ptah-alert-danger .ptah-c-alert_title,
+.ptah-alert-danger .ptah-c-alert_text  { color: var(--ptah-danger-strong); }
+.ptah-dark .ptah-alert-danger .ptah-c-alert_title { color: #ffffff; }
+.ptah-dark .ptah-alert-danger .ptah-c-alert_text  { color: #cbd5e1; }
+
+.ptah-alert-warn .ptah-c-alert_title,
+.ptah-alert-warn .ptah-c-alert_text  { color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-alert-warn .ptah-c-alert_title { color: #ffffff; }
+.ptah-dark .ptah-alert-warn .ptah-c-alert_text  { color: #e2e8f0; }
 
 /* ── Bulk actions floating bar ── */
 .ptah-c-bulk_bar                  { background-color: var(--ptah-primary-strong); color: var(--ptah-text-on-accent); }
@@ -944,6 +1038,14 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-sidebar .ptah-sidebar-footer {
     border-color: var(--ptah-line-strong);
 }
+/* menuGroup sub-item rail — was the fixed `border-gray-200` utility, invisible
+   to the user's chosen tone (and to dark mode, which had no override at all). */
+.ptah-sidebar .ptah-c-sidebar_subnav {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-sidebar .ptah-c-sidebar_subnav {
+    border-color: var(--ptah-line-strong);
+}
 /* Logout hover: the frozen danger red (#450a0a) now derives from --color-danger, so a
    host-configured danger tone reaches it.
    The button carries a TEXT label, not just an icon (forge-sidebar.blade.php), so the
@@ -1161,8 +1263,120 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 main { background-color: var(--ptah-canvas); }
 .ptah-dark main { background-color: var(--ptah-canvas); }
 
-/* ── Page Title (dark) ───────────────────────────────────────────────── */
+/* ── Page Title ───────────────────────────────────────────────────────── */
+/* Light had no rule at all — only .ptah-dark existed, so the <h1> stayed a
+   fixed `text-slate-800` no matter which light tone the user picked. Used
+   directly (not via forge-page-header) by page-list, department-list,
+   audit-list and permission-guide.blade.php. Removes the
+   ThemeChromeOrphanTokenGuardTest exception for this selector — it is no
+   longer orphaned. */
+.ptah-page-title { color: var(--ptah-text-strong); }
 .ptah-dark .ptah-page-title { color: var(--ptah-text-strong); }
+
+/* ── Module screens (role/company/menu/audit/department/user-permission/page
+   list) ──────────────────────────────────────────────────────────────────
+   Migrated from forge-dashboard-layout.blade.php's frozen <style> block,
+   which only ever had the DARK half of these 24 sites — light relied
+   entirely on the `bg-white`/`border-slate-200`/`bg-slate-50`/`text-slate-*`
+   utilities baked into each of the 7 views, so a light-mode preset never
+   reached these toolbars/tables at all, and neither did dark mode for any
+   host embedding these screens outside forge-dashboard-layout. Both scopes
+   are declared here now, unlayered, so they win over the views' own
+   Tailwind utilities exactly like every other rule in this file — the
+   `.text-slate-*`/`.bg-slate-*` classes stay in the 7 views' markup
+   unchanged (same "repaint a utility class from a distance" mechanism the
+   frozen block always used); only the wrapper elements' own
+   bg-white/border-slate-200 were removed from those views, since this rule
+   now owns that job. Every dark value below is byte-identical to the frozen
+   literal it replaces — see tests/Fixtures/css-layout-ledger.json
+   ("migrated", all 24 sites). Where no semantically-matching token happened
+   to carry the exact required hex, the closest EXACT VALUE match was used
+   instead (documented per rule) — changing the token would just be swapping
+   one accident of the original author's palette for another. */
+.ptah-module-toolbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-module-toolbar {
+    background-color: var(--ptah-surface);
+    border-color: var(--ptah-line-strong);
+}
+/* Só os <input>/<select> CRUS das telas de módulo (audit/department/page).
+   Os embrulhados em <x-forge-input> ficam de fora: esta regra é mais específica
+   que a do wrapper (.ptah-input-wrapper input) e a venceria, trocando a borda
+   --ptah-line-field (3:1) por --ptah-line (~1,1:1) — borda invisível, regressão
+   real pega em revisão. O :not() remove o match em vez de disputar a cascata. */
+.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
+.ptah-module-toolbar select {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line);
+    color: var(--ptah-text-field);
+}
+.ptah-dark .ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
+.ptah-dark .ptah-module-toolbar select {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line);
+    color: var(--ptah-text-field);
+}
+.ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
+
+.ptah-module-table { border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
+
+.ptah-module-table thead tr {
+    background-color: var(--ptah-panel);
+    border-color: var(--ptah-line-control);
+}
+.ptah-dark .ptah-module-table thead tr {
+    background-color: var(--ptah-panel);
+    border-color: var(--ptah-line-control);
+}
+.ptah-module-table thead th { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-module-table thead th { color: var(--ptah-text-muted); }
+
+.ptah-module-table tbody { background-color: var(--ptah-canvas); }
+.ptah-dark .ptah-module-table tbody { background-color: var(--ptah-canvas); }
+
+.ptah-module-table tbody tr { border-color: var(--ptah-line); }
+.ptah-dark .ptah-module-table tbody tr { border-color: var(--ptah-line); }
+
+.ptah-module-table tbody td { color: var(--ptah-text); }
+.ptah-dark .ptah-module-table tbody td { color: var(--ptah-text); }
+
+/* Reuses --ptah-surface (the plain card tone), not --ptah-surface-hover: the
+   frozen literal (#1e293b) happened to equal the base surface tone, not a
+   deliberate hover tint — matching --ptah-surface-hover here would CHANGE
+   the rendered value (#334155 in dark), and this site is "migrated"
+   (byte-identical), not "changed", in the ledger. */
+.ptah-module-table tbody tr:hover { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-module-table tbody tr:hover { background-color: var(--ptah-surface); }
+
+.ptah-module-table .text-slate-800 { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-module-table .text-slate-800 { color: var(--ptah-text-strong); }
+
+.ptah-module-table .text-slate-500 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-module-table .text-slate-500 { color: var(--ptah-text-muted); }
+
+/* --ptah-icon-muted, not a text-* token: the only token whose dark value
+   equals the frozen literal (#64748b) — same reuse the input placeholder
+   above already relies on. */
+.ptah-module-table .text-slate-400 { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-module-table .text-slate-400 { color: var(--ptah-icon-muted); }
+
+.ptah-module-table .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-module-table .bg-slate-100 { background-color: var(--ptah-control-ghost); }
+
+.ptah-module-table .bg-slate-50 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-module-table .bg-slate-50 { background-color: var(--ptah-surface); }
+
+.ptah-module-table .text-slate-700 { color: var(--ptah-text); }
+.ptah-dark .ptah-module-table .text-slate-700 { color: var(--ptah-text); }
+
+/* --ptah-line-control, not a text-* token: same "closest exact value" reuse
+   as .text-slate-400 above — no text token renders #475569 in dark. */
+.ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
+.ptah-dark .ptah-module-table .text-slate-300 { color: var(--ptah-line-control); }
 
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,

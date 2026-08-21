@@ -86,7 +86,7 @@
 
     {{-- BEING DISMANTLED — do not add color here. Guarded by LayoutStyleBaselineTest, which
          holds a golden fixture of all 184 declaration sites and a ceiling that only ever
-         shrinks (127 hex literals / 107 rules today).
+         shrinks (36 hex literals / 39 rules today).
 
          An earlier note called the whole block un-tokenizable. That was measured and is wrong:
          only 21 rules repaint Tailwind utility classes from a distance (.text-gray-400,
@@ -185,37 +185,11 @@
         .ptah-dark .ptah-alert-danger  { background-color: rgba(239,68,68,.15); }
         .ptah-dark .ptah-alert-warn    { background-color: rgba(245,158,11,.15); }
 
-        /* ─── Module Toolbar (company/permission views) ──────── */
-        .ptah-dark .ptah-module-toolbar {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-        .ptah-dark .ptah-module-toolbar input[type="search"],
-        .ptah-dark .ptah-module-toolbar select {
-            background-color: #0f172a;
-            border-color: #334155;
-            color: #e2e8f0;
-        }
-        .ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: #64748b; }
-
-        /* ─── Module Table ────────────────────────────────────── */
-        .ptah-dark .ptah-module-table { border-color: #334155; }
-        .ptah-dark .ptah-module-table thead tr {
-            background-color: #1e293b;
-            border-color: #475569;
-        }
-        .ptah-dark .ptah-module-table thead th { color: #94a3b8; }
-        .ptah-dark .ptah-module-table tbody { background-color: #0f172a; }
-        .ptah-dark .ptah-module-table tbody tr { border-color: #334155; }
-        .ptah-dark .ptah-module-table tbody td { color: #cbd5e1; }
-        .ptah-dark .ptah-module-table tbody tr:hover { background-color: #1e293b; }
-        .ptah-dark .ptah-module-table .text-slate-800 { color: #e2e8f0; }
-        .ptah-dark .ptah-module-table .text-slate-500 { color: #94a3b8; }
-        .ptah-dark .ptah-module-table .text-slate-400 { color: #64748b; }
-        .ptah-dark .ptah-module-table .bg-slate-100   { background-color: #334155; }
-        .ptah-dark .ptah-module-table .bg-slate-50    { background-color: #1e293b; }
-        .ptah-dark .ptah-module-table .text-slate-700  { color: #cbd5e1; }
-        .ptah-dark .ptah-module-table .text-slate-300  { color: #475569; }
+        /* .ptah-module-toolbar / .ptah-module-table migrados para
+           resources/css/ptah-components.css (secao "Module screens") — la
+           ganharam o par claro que faltava aqui (so o escuro existia). Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a
+           site. */
     </style>
 
     {{-- Livewire (se disponível) --}}

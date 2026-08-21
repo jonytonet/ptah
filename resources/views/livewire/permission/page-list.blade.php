@@ -100,7 +100,7 @@
                         class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"/>
                 </div>
 
-                <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
+                <div class="ptah-module-table overflow-x-auto border rounded-md">
                     <table class="w-full text-sm">
                         <thead class="bg-slate-50 border-b-2 border-slate-200">
                             <tr>

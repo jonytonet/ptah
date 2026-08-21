@@ -160,6 +160,10 @@
                                         >
                                         <div
                                             tabindex="{{ $tabIdx }}"
+                                            role="combobox"
+                                            aria-haspopup="listbox"
+                                            :aria-expanded="open"
+                                            @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             @keydown.space.prevent @keydown.enter.prevent="open = !open"
                                             @click="open = !open"
                                             :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
@@ -200,7 +204,7 @@
                                         </div>
                                     </div>
                                     @if ($fError)
-                                        <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
                                     @endif
                                 </div>
 
@@ -250,6 +254,7 @@
                                                 autocomplete="off"
                                                 tabindex="{{ $tabIdx }}"
                                                 @if ($sdParentEmpty) disabled @endif
+                                                @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                                 class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800"
                                             />
                                             <button type="button"
@@ -279,7 +284,7 @@
                                         </div>
                                     </div>
                                     @if ($fError)
-                                        <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                        <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
                                     @endif
                                 </div>
 
@@ -370,6 +375,7 @@
                                             @input="updateFromUrl($event.target.value)"
                                             placeholder="https://..."
                                             tabindex="{{ $tabIdx }}"
+                                            @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
                                     </div>
@@ -381,7 +387,7 @@
                                              @@error="previewUrl = ''" />
                                     </div>
 
-                                    @if ($fError)<p class="mt-1 text-xs text-red-500">{{ $fError }}</p>@endif
+                                    @if ($fError)<p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>@endif
                                 </div>
 
                             @else
@@ -448,6 +454,7 @@
                                             @if($fRequired) required @endif
                                             tabindex="{{ $tabIdx }}"
                                             placeholder="R$ 0,00"
+                                            @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                         />
                                         <input
@@ -456,7 +463,7 @@
                                             wire:model="formData.{{ $fField }}"
                                         />
                                         @if ($fError)
-                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                            <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
                                         @endif
                                     </div>
 
@@ -485,12 +492,13 @@
                                                 @if($fRequired) required @endif
                                                 tabindex="{{ $tabIdx }}"
                                                 placeholder=""
+                                                @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                                 class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
                                             />
                                             <input type="hidden" x-ref="upHidden" wire:model="formData.{{ $fField }}" />
                                         </div>
                                         @if ($fError)
-                                            <p class="mt-1 text-xs text-red-500">{{ $fError }}</p>
+                                            <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
                                         @endif
                                     </div>
 

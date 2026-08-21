@@ -6,7 +6,7 @@
     </div>
 
     {{-- Barra de filtros --}}
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <div class="flex-1 min-w-[180px] max-w-xs">
             <div class="relative">
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +42,7 @@
         </button>
     </div>
 
-    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
+    <div class="ptah-module-table overflow-x-auto border rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>

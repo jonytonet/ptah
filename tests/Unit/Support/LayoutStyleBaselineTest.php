@@ -82,14 +82,14 @@ class LayoutStyleBaselineTest extends TestCase
         $rules = preg_match_all('/\{/', $css);
 
         $this->assertLessThanOrEqual(
-            57,
+            36,
             $colorLiterals,
             'O bloco <style> do layout ganhou literais de cor. Cor nova de chrome vai em '.
             'resources/css/ptah-components.css usando os tokens --ptah-*, senao o tema '.
             'escolhido pelo usuario nunca alcanca esse elemento.'
         );
         $this->assertLessThanOrEqual(
-            56,
+            39,
             $rules,
             'O bloco <style> do layout ganhou regras. Ele esta sendo desmontado, nao estendido.'
         );

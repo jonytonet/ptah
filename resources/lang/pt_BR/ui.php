@@ -123,6 +123,10 @@ return [
     'pagination_previous' => '← Anterior',
     'pagination_next' => 'Próxima →',
     'pagination_page_of' => 'Página :current de :last',
+    'pagination_nav_label' => 'Paginação',
+    'pagination_previous_page' => 'Página anterior',
+    'pagination_next_page' => 'Próxima página',
+    'pagination_current_page' => 'Página atual',
 
     /*
     |--------------------------------------------------------------------------

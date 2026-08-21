@@ -64,6 +64,7 @@
     @if ($hasWireModel) x-data="{ open: @entangle($wireModel) }" @endif
     x-show="open"
     x-cloak
+    @keydown.escape.window="if (open) { typeof closeModal === 'function' ? closeModal() : (open = false) }"
     class="fixed inset-0 z-50 flex items-center justify-center"
     {{ $rootAttributes }}
 >
@@ -81,11 +82,20 @@
     ></div>
 
     {{-- Painel --}}
-    @php $modalTitleId = $title ? 'forge-modal-title-'.\Illuminate\Support\Str::random(6) : null; @endphp
+    {{--
+        Morph-stable id: Str::random(6) regenerated on every render, and Livewire's
+        DOM-diff keys the morph on `el.id` when there is no wire:id/wire:key — same
+        defect and same fix as forge-input.blade.php's $inputId (md5 of stable
+        identity, no uniqid/random). Derived from $title alone: two distinct modals
+        with the same title on one page would collide, but that is true of
+        aria-labelledby ids in general and out of scope here.
+    --}}
+    @php $modalTitleId = $title ? 'forge-modal-title-'.substr(md5($title), 0, 12) : null; @endphp
     <div
         role="dialog"
         aria-modal="true"
         @if ($modalTitleId) aria-labelledby="{{ $modalTitleId }}" @endif
+        x-trap.noscroll="open"
         class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] rounded-xl border shadow-2xl overflow-hidden"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"

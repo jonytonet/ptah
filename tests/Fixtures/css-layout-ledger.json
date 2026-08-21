@@ -102,7 +102,28 @@
         ".ptah-modal-panel .text-gray-600|dark|color": "#94a3b8",
         ".ptah-modal-panel button.text-gray-400:hover|dark|color": "#e2e8f0",
         ".ptah-modal-panel .text-slate-600|dark|color": "#94a3b8",
-        ".ptah-modal-panel .text-slate-700|dark|color": "#cbd5e1"
+        ".ptah-modal-panel .text-slate-700|dark|color": "#cbd5e1",
+        ".ptah-module-table .bg-slate-100|dark|background-color": "#334155",
+        ".ptah-module-table .bg-slate-50|dark|background-color": "#1e293b",
+        ".ptah-module-table .text-slate-300|dark|color": "#475569",
+        ".ptah-module-table .text-slate-400|dark|color": "#64748b",
+        ".ptah-module-table .text-slate-500|dark|color": "#94a3b8",
+        ".ptah-module-table .text-slate-700|dark|color": "#cbd5e1",
+        ".ptah-module-table .text-slate-800|dark|color": "#e2e8f0",
+        ".ptah-module-table tbody td|dark|color": "#cbd5e1",
+        ".ptah-module-table tbody tr:hover|dark|background-color": "#1e293b",
+        ".ptah-module-table tbody tr|dark|border-color": "#334155",
+        ".ptah-module-table tbody|dark|background-color": "#0f172a",
+        ".ptah-module-table thead th|dark|color": "#94a3b8",
+        ".ptah-module-table thead tr|dark|background-color": "#1e293b",
+        ".ptah-module-table thead tr|dark|border-color": "#475569",
+        ".ptah-module-table|dark|border-color": "#334155",
+        ".ptah-module-toolbar input[type=\"search\"]::placeholder|dark|color": "#64748b",
+        ".ptah-module-toolbar select|dark|background-color": "#0f172a",
+        ".ptah-module-toolbar select|dark|border-color": "#334155",
+        ".ptah-module-toolbar select|dark|color": "#e2e8f0",
+        ".ptah-module-toolbar|dark|background-color": "#1e293b",
+        ".ptah-module-toolbar|dark|border-color": "#334155"
     },
     "changed": {
         ".ptah-switcher-tab--active|dark|background-color": {
@@ -198,6 +219,9 @@
         ".ptah-navbar .ptah-navbar-search input|dark|background-color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
         ".ptah-navbar .ptah-navbar-search input|dark|border-color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
         ".ptah-navbar .ptah-navbar-search input|dark|color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
-        ".ptah-navbar .ptah-navbar-search input::placeholder|dark|color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe"
+        ".ptah-navbar .ptah-navbar-search input::placeholder|dark|color": "nenhum elemento do pacote carrega a classe .ptah-navbar-search; grep em todo o repositorio (resources/views, componentes) so encontra o seletor dentro deste proprio bloco <style> e no fixture congelado; regra orfa, forge-navbar.blade.php nao usa essa classe",
+        ".ptah-module-toolbar input[type=\"search\"]|dark|background-color": "Seletor estreitado com :not(.ptah-input-wrapper input): a regra original (mais especifica que a do forge-input) clobberava a borda --ptah-line-field do campo embrulhado, deixando-a ~1.1:1. Os valores seguem byte-identicos na regra sucessora \".ptah-module-toolbar input[type=\\\"search\\\"]:not(.ptah-input-wrapper input)\" em ptah-components.css, coberta por ModuleScreenThemeParityTest.",
+        ".ptah-module-toolbar input[type=\"search\"]|dark|border-color": "Seletor estreitado com :not(.ptah-input-wrapper input): a regra original (mais especifica que a do forge-input) clobberava a borda --ptah-line-field do campo embrulhado, deixando-a ~1.1:1. Os valores seguem byte-identicos na regra sucessora \".ptah-module-toolbar input[type=\\\"search\\\"]:not(.ptah-input-wrapper input)\" em ptah-components.css, coberta por ModuleScreenThemeParityTest.",
+        ".ptah-module-toolbar input[type=\"search\"]|dark|color": "Seletor estreitado com :not(.ptah-input-wrapper input): a regra original (mais especifica que a do forge-input) clobberava a borda --ptah-line-field do campo embrulhado, deixando-a ~1.1:1. Os valores seguem byte-identicos na regra sucessora \".ptah-module-toolbar input[type=\\\"search\\\"]:not(.ptah-input-wrapper input)\" em ptah-components.css, coberta por ModuleScreenThemeParityTest."
     }
 }
