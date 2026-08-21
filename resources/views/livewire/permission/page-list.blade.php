@@ -24,7 +24,7 @@
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.page_search_ph')"
+                <input wire:model.live.debounce.300ms="search" type="search" placeholder="{{ __('ptah::ui.page_search_ph') }}"
                         class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"/>
             </div>
 
@@ -96,11 +96,11 @@
                     <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                     </svg>
-                    <input wire:model.live.debounce.300ms="objSearch" type="search" :placeholder="__('ptah::ui.page_obj_search_ph')"
+                    <input wire:model.live.debounce.300ms="objSearch" type="search" placeholder="{{ __('ptah::ui.page_obj_search_ph') }}"
                         class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"/>
                 </div>
 
-                <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
+                <div class="ptah-module-table overflow-x-auto border rounded-md">
                     <table class="w-full text-sm">
                         <thead class="bg-slate-50 border-b-2 border-slate-200">
                             <tr>

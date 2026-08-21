@@ -7,10 +7,19 @@ namespace Ptah\Tests\Feature\Commands;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\CrudConfig;
+use Ptah\Models\PageObject;
+use Ptah\Models\PtahPage;
 use Ptah\Support\ModelKey;
 use Ptah\Tests\TestCase;
 
 class DoctorStub extends Model
+{
+    protected $table = 'items';
+
+    protected $fillable = ['name'];
+}
+
+class DoctorStubTwo extends Model
 {
     protected $table = 'items';
 
@@ -116,5 +125,86 @@ class ConfigDoctorCommandTest extends TestCase
 
         // Re-run is clean.
         $this->artisan('ptah:config:doctor')->assertExitCode(0);
+    }
+
+    #[Test]
+    public function shared_permission_identifier_across_different_models_warns(): void
+    {
+        $configA = $this->goodConfig();
+        $configA['permissions'] = ['permissionIdentifier' => 'pageShared'];
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $configA);
+
+        $configB = $this->goodConfig();
+        $configB['permissions'] = ['permissionIdentifier' => 'pageShared'];
+        $this->seedConfig(ModelKey::canonical(DoctorStubTwo::class), '', $configB);
+
+        // Warning only — does not fail the exit code, same as "no columns".
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('permissionIdentifier collision')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function distinct_permission_identifiers_do_not_warn(): void
+    {
+        $configA = $this->goodConfig();
+        $configA['permissions'] = ['permissionIdentifier' => 'pageStubA'];
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $configA);
+
+        $configB = $this->goodConfig();
+        $configB['permissions'] = ['permissionIdentifier' => 'pageStubB'];
+        $this->seedConfig(ModelKey::canonical(DoctorStubTwo::class), '', $configB);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('permissionIdentifier collision')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function shared_obj_key_across_different_pages_warns(): void
+    {
+        $pageA = PtahPage::create(['slug' => 'page-a', 'name' => 'Page A']);
+        $pageB = PtahPage::create(['slug' => 'page-b', 'name' => 'Page B']);
+
+        PageObject::create([
+            'page_id' => $pageA->id,
+            'section' => 'main',
+            'obj_key' => 'shared.button',
+            'obj_label' => 'Shared button',
+            'obj_type' => 'button',
+        ]);
+        PageObject::create([
+            'page_id' => $pageB->id,
+            'section' => 'main',
+            'obj_key' => 'shared.button',
+            'obj_label' => 'Shared button',
+            'obj_type' => 'button',
+        ]);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('obj_key collision')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function obj_key_scoped_to_a_single_page_does_not_warn(): void
+    {
+        $page = PtahPage::create(['slug' => 'page-solo', 'name' => 'Page Solo']);
+
+        PageObject::create([
+            'page_id' => $page->id,
+            'section' => 'main',
+            'obj_key' => 'solo.button',
+            'obj_label' => 'Solo button',
+            'obj_type' => 'button',
+        ]);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('obj_key collision')
+            ->assertExitCode(0);
     }
 }

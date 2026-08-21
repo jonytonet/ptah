@@ -6,13 +6,13 @@
     </div>
 
     {{-- Barra de filtros --}}
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <div class="flex-1 min-w-[180px] max-w-xs">
             <div class="relative">
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.audit_search_ph')"
+                <input wire:model.live.debounce.300ms="search" type="search" placeholder="{{ __('ptah::ui.audit_search_ph') }}"
                     class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"/>
             </div>
         </div>
@@ -32,17 +32,17 @@
         </select>
         <input wire:model.live="dateFrom" type="date"
             class="py-2 px-3 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"
-            :title="__('ptah::ui.audit_title_from')"/>
+            title="{{ __('ptah::ui.audit_title_from') }}"/>
         <input wire:model.live="dateTo" type="date"
             class="py-2 px-3 text-sm rounded border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-700/60 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 outline-none transition-all"
-            :title="__('ptah::ui.audit_title_to')"/>
+            title="{{ __('ptah::ui.audit_title_to') }}"/>
         <button wire:click="clearFilters"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md transition-colors select-none">
             {{ __('ptah::ui.btn_clear') }}
         </button>
     </div>
 
-    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
+    <div class="ptah-module-table overflow-x-auto border rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>

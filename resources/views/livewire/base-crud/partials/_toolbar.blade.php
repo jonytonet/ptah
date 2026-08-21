@@ -124,7 +124,8 @@
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                 title="{{ __('ptah::ui.btn_filters') }}"
-                aria-label="{{ __('ptah::ui.btn_filters') }}">
+                aria-label="{{ __('ptah::ui.btn_filters') }}"
+                aria-expanded="{{ $showFilters ? 'true' : 'false' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -162,11 +163,13 @@
 
         {{-- Exportação --}}
         @if (!empty($exportCfg['enabled']))
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                     title="{{ __('ptah::ui.btn_export') }}"
-                    aria-label="{{ __('ptah::ui.btn_export') }}">
+                    aria-label="{{ __('ptah::ui.btn_export') }}"
+                    aria-haspopup="true"
+                    :aria-expanded="open">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -250,12 +253,14 @@
 
         {{-- Colunas (visibilidade) --}}
         @if (!empty($formDataColumns))
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                            {{ $hiddenColumnsCount > 0 ? 'ptah-c-btn_col_on' : 'ptah-c-btn' }}"
                     title="{{ __('ptah::ui.btn_columns') }}"
-                    aria-label="{{ __('ptah::ui.btn_columns') }}">
+                    aria-label="{{ __('ptah::ui.btn_columns') }}"
+                    aria-haspopup="true"
+                    :aria-expanded="open">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 10h18M3 14h18M10 6v12M14 6v12"/>
@@ -329,11 +334,13 @@
                 'spacious'    => ['icon' => '⊟', 'label' => __('ptah::ui.density_spacious')],
             ];
         @endphp
-        <div class="relative" x-data="{ open: false }">
+        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
             <button @click="open = !open"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                 title="{{ __('ptah::ui.btn_density') }}"
-                aria-label="{{ __('ptah::ui.btn_density') }}">
+                aria-label="{{ __('ptah::ui.btn_density') }}"
+                aria-haspopup="true"
+                :aria-expanded="open">
                 <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
                 <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_density') }}</span>
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

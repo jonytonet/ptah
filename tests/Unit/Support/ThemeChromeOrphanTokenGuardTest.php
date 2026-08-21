@@ -85,13 +85,6 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
             'this selector would win the cascade over that utility and repaint the logout button neutral gray '.
             'in light mode — a regression, not a fix. `.ptah-navbar .ptah-user-dropdown a` (the profile link) '.
             'IS tokenized; `button` deliberately is not.',
-
-        // ── (A) real orphan, OUT OF SCOPE for this pass by explicit instruction ──
-        '.ptah-page-title' => 'Genuine defect (fixed `text-slate-800` utility in permission-guide.blade.php, '.
-            'page-list.blade.php, audit-list.blade.php and department-list.blade.php). Explicitly out of scope: '.
-            'these are module screens (same family as crud-config), and the task that added this guard was '.
-            'scoped to "NAO migre os utilitarios de texto das telas de modulo — outro trabalho." Tracked here so '.
-            'it is not silently lost, not accepted as correct.',
     ];
 
     #[Test]

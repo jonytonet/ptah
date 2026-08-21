@@ -45,7 +45,9 @@
     };
     $messageColor = match($resolvedState) {
         'success' => 'text-green-600',
-        'danger'  => 'text-red-500',
+        // text-red-500 measured 3.76:1 against white — below the 4.5:1 text floor.
+        // .ptah-c-field_err (ptah-components.css) fixes it in both scopes.
+        'danger'  => 'ptah-c-field_err',
         'warn'    => 'text-yellow-600',
         default   => 'text-gray-400',
     };
@@ -64,6 +66,16 @@
         ?: ($label !== ''
             ? 'forge-input-'.substr(md5($label.'|'.($name ?? '').'|'.$type.'|'.$wireModel), 0, 12)
             : null);
+
+    // Same morph-stable derivation as $inputId (own prefix, so the two ids never
+    // collide) — deterministic across renders, which is what lets aria-describedby
+    // keep pointing at the right <p> instead of a stale/regenerated one.
+    $messageId = $resolvedMessage !== ''
+        ? 'forge-input-msg-'.substr(md5($label.'|'.($name ?? '').'|'.$type.'|'.$wireModel), 0, 12)
+        : null;
+    // aria-invalid/aria-describedby only fire for a REAL validation error ($error),
+    // not for state="danger" used purely for styling without a message to describe.
+    $isInvalid = $error !== null && $error !== '';
 @endphp
 
 <div class="ptah-input-wrapper w-full" @if($isPassword) x-data="{ _show: false }" @endif>
@@ -82,6 +94,8 @@
 
         <input
             @if ($inputId) id="{{ $inputId }}" @endif
+            @if ($isInvalid) aria-invalid="true" @endif
+            @if ($isInvalid && $messageId) aria-describedby="{{ $messageId }}" @endif
             {{ $attributes->merge([
                 'type'        => $type,
                 'placeholder' => $placeholder,
@@ -130,6 +144,6 @@
     </div>
 
     @if ($resolvedMessage)
-        <p class="mt-1 text-xs {{ $messageColor }}">{{ $resolvedMessage }}</p>
+        <p @if ($messageId) id="{{ $messageId }}" @endif class="mt-1 text-xs {{ $messageColor }}">{{ $resolvedMessage }}</p>
     @endif
 </div>

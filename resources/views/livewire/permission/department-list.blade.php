@@ -8,7 +8,7 @@
     @if ($successMsg) <x-forge-alert type="success" class="mb-3">{{ $successMsg }}</x-forge-alert> @endif
     @if ($errorMsg)   <x-forge-alert type="danger"  class="mb-3">{{ $errorMsg }}</x-forge-alert>   @endif
 
-    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md bg-white border-slate-200">
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
         <button wire:click="create"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors duration-150 focus:outline-none select-none">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -19,13 +19,13 @@
                 <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search" type="search" :placeholder="__('ptah::ui.dept_search_ph')"
+                <input wire:model.live.debounce.300ms="search" type="search" placeholder="{{ __('ptah::ui.dept_search_ph') }}"
                     class="w-full py-2 pl-9 pr-4 text-sm rounded border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"/>
             </div>
         </div>
     </div>
 
-    <div class="ptah-module-table overflow-x-auto border border-slate-200 rounded-md">
+    <div class="ptah-module-table overflow-x-auto border rounded-md">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
@@ -53,10 +53,10 @@
                         </td>
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-2">
-                                <button wire:click="edit({{ $row->id }})" class="transition-colors text-primary hover:text-primary/80" :title="__('ptah::ui.btn_edit_title')">
+                                <button wire:click="edit({{ $row->id }})" class="transition-colors text-primary hover:text-primary/80" title="{{ __('ptah::ui.btn_edit_title') }}" aria-label="{{ __('ptah::ui.btn_edit_title') }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                 </button>
-                                <button wire:click="confirmDelete({{ $row->id }})" class="transition-colors text-danger hover:text-danger/80" :title="__('ptah::ui.btn_delete_title')">
+                                <button wire:click="confirmDelete({{ $row->id }})" class="transition-colors text-danger hover:text-danger/80" title="{{ __('ptah::ui.btn_delete_title') }}" aria-label="{{ __('ptah::ui.btn_delete_title') }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>

@@ -6,7 +6,7 @@
       - $elements  : array (page numbers or "...")
 --}}
 @if ($paginator->hasPages())
-<div class="ptah-pagination flex items-center justify-between gap-4">
+<nav aria-label="{{ __('ptah::ui.pagination_nav_label') }}" class="ptah-pagination flex items-center justify-between gap-4">
 
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
@@ -32,15 +32,16 @@
 
         {{-- Botão < --}}
         @if ($paginator->onFirstPage())
-            <span class="p-2 rounded-md text-gray-300 dark:text-slate-600 cursor-not-allowed">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span class="p-2 rounded-md cursor-not-allowed ptah-c-pag_icon" aria-label="{{ __('ptah::ui.pagination_previous_page') }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="p-2 rounded-md text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ptah-c-pag_icon"
+                    aria-label="{{ __('ptah::ui.pagination_previous_page') }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
@@ -54,6 +55,8 @@
                 @foreach ($element as $page => $url)
                     @if ($page == $paginator->currentPage())
                         <button wire:click="$set('page', {{ $page }})"
+                                aria-current="page"
+                                aria-label="{{ __('ptah::ui.pagination_current_page') }}"
                                 class="w-9 h-9 rounded-md text-sm font-medium bg-primary text-white transition-colors duration-150">
                             {{ $page }}
                         </button>
@@ -70,14 +73,15 @@
         {{-- Botão > --}}
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="p-2 rounded-md text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ptah-c-pag_icon"
+                    aria-label="{{ __('ptah::ui.pagination_next_page') }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </button>
         @else
-            <span class="p-2 rounded-md text-gray-300 dark:text-slate-600 cursor-not-allowed">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span class="p-2 rounded-md cursor-not-allowed ptah-c-pag_icon" aria-label="{{ __('ptah::ui.pagination_next_page') }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </span>
@@ -88,5 +92,5 @@
     <p class="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
         {{ __('ptah::ui.pagination_page_of', ['current' => $paginator->currentPage(), 'last' => $paginator->lastPage()]) }}
     </p>
-</div>
+</nav>
 @endif

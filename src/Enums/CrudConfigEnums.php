@@ -95,7 +95,9 @@ class CrudConfigEnums
     ];
 
     /**
-     * Comparison operators for filters and conditions
+     * Comparison operators for filters (SQL-style — consumed by
+     * FilterService/TextFilterStrategy/RelationFilterStrategy, which build a
+     * WHERE clause with '=' and 'LIKE' literally).
      */
     public const OPERATORS = [
         '=',
@@ -105,6 +107,24 @@ class CrudConfigEnums
         '>=',
         '<=',
         'LIKE',
+    ];
+
+    /**
+     * Comparison conditions for conditionStyles (PHP-style — consumed by
+     * HasCrudRenderers::getRowStyle()'s match() expression, which recognises
+     * '==' and has no 'LIKE' arm at all). Deliberately NOT the same list as
+     * OPERATORS above: a style condition of '=' or 'LIKE' would pass the old,
+     * shared validation but never match anything at render time — the match()
+     * default arm silently returns false, so the configured style just never
+     * applies, with no error anywhere. See ConfigValidator::validateStyle().
+     */
+    public const STYLE_CONDITIONS = [
+        '==',
+        '!=',
+        '>',
+        '<',
+        '>=',
+        '<=',
     ];
 
     /**

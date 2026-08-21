@@ -122,6 +122,10 @@ return [
     'pagination_previous' => '← Previous',
     'pagination_next' => 'Next →',
     'pagination_page_of' => 'Page :current of :last',
+    'pagination_nav_label' => 'Pagination',
+    'pagination_previous_page' => 'Previous page',
+    'pagination_next_page' => 'Next page',
+    'pagination_current_page' => 'Current page',
 
     /*
     |--------------------------------------------------------------------------
@@ -280,6 +284,7 @@ return [
     */
     'two_fa_code_invalid' => 'Invalid or expired code.',
     'two_fa_email_sent' => 'Code sent to :email',
+    'two_fa_email_rate_limited' => 'Too many codes requested. Try again in :seconds seconds.',
 
     /*
     |--------------------------------------------------------------------------

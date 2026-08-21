@@ -123,6 +123,10 @@ return [
     'pagination_previous' => '← Anterior',
     'pagination_next' => 'Próxima →',
     'pagination_page_of' => 'Página :current de :last',
+    'pagination_nav_label' => 'Paginação',
+    'pagination_previous_page' => 'Página anterior',
+    'pagination_next_page' => 'Próxima página',
+    'pagination_current_page' => 'Página atual',
 
     /*
     |--------------------------------------------------------------------------
@@ -281,6 +285,7 @@ return [
     */
     'two_fa_code_invalid' => 'Código inválido ou expirado.',
     'two_fa_email_sent' => 'Código enviado para :email',
+    'two_fa_email_rate_limited' => 'Muitos códigos solicitados. Tente novamente em :seconds segundos.',
 
     /*
     |--------------------------------------------------------------------------

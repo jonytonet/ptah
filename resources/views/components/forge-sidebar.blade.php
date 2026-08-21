@@ -147,6 +147,8 @@
                             type="button"
                             @click="open = !open"
                             title="{{ $itemLabel }}"
+                            :aria-expanded="open"
+                            aria-haspopup="true"
                             class="ptah-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150
                                 {{ $groupActive ? 'text-primary font-semibold' : 'hover:text-primary' }}"
                         >
@@ -169,7 +171,7 @@
                         </button>
 
                         {{-- Sub-itens --}}
-                        <ul x-show="open" x-collapse class="mt-1 ml-3 pl-3 border-l border-gray-200 space-y-0.5">
+                        <ul x-show="open" x-collapse class="mt-1 ml-3 pl-3 border-l space-y-0.5 ptah-c-sidebar_subnav">
                             @foreach($children as $child)
                                 @php
                                     $childLabel  = $child['label'] ?? ($child['text'] ?? '');
@@ -184,6 +186,7 @@
                                         href="{{ $childUrl }}"
                                         target="{{ $childTarget }}"
                                         title="{{ $childLabel }}"
+                                        @if ($childActive) aria-current="page" @endif
                                         class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
                                             {{ $childActive
                                                 ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
@@ -225,6 +228,7 @@
                             href="{{ $itemUrl }}"
                             target="{{ $itemTarget }}"
                             title="{{ $itemLabel }}"
+                            @if ($isActive) aria-current="page" @endif
                             class="ptah-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-150 relative
                                 {{ $isActive
                                     ? 'ptah-nav-active bg-primary-light text-primary font-semibold'

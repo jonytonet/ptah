@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
 use Ptah\Livewire\Permission\PageList;
+use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Services\Permission\PermissionService;
@@ -49,6 +50,7 @@ class AclComponentsReauthorizeTest extends TestCase
             'DepartmentList' => [DepartmentList::class],
             'UserPermissionList' => [UserPermissionList::class],
             'AuditList' => [AuditList::class],
+            'PermissionGuide' => [PermissionGuide::class],
         ];
     }
 

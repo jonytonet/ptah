@@ -32,11 +32,18 @@
     // dark: variants follow Ptah's .ptah-dark toggle (see forge.css's
     // @custom-variant dark), same convention as forge-modal/forge-button.
     // Purely additive — light mode classes are unchanged.
+    // title/text for success|danger|warn use ptah-c-alert_title / ptah-c-alert_text
+    // (ptah-components.css) instead of the raw text-{color}[-dark] utilities: those
+    // measured 1.9-3.1:1 against the alert's own bg-{color}-light in light mode,
+    // below the 4.5:1 AA floor for text. The two classes are colored via the
+    // ancestor .ptah-alert-{color} wrapper class already applied below, and carry
+    // their own .ptah-dark override — see the CSS comment for the measured pairs.
+    // primary/dark are unaffected: both already pass (7.15:1+/always-white title).
     $colorMap = [
         'primary' => ['bg' => 'bg-primary-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-primary dark:border-primary-400', 'title' => 'text-primary-dark dark:text-primary-300', 'text' => 'text-primary dark:text-primary-200', 'icon' => 'text-primary dark:text-primary-400'],
-        'success' => ['bg' => 'bg-success-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-success dark:border-success', 'title' => 'text-success-dark dark:text-white', 'text' => 'text-success dark:text-slate-300', 'icon' => 'text-success dark:text-success'],
-        'danger'  => ['bg' => 'bg-danger-light dark:bg-slate-800/60',  'border' => 'border-l-4 border-danger dark:border-danger',  'title' => 'text-danger-dark dark:text-white',  'text' => 'text-danger dark:text-slate-300',  'icon' => 'text-danger dark:text-danger'],
-        'warn'    => ['bg' => 'bg-warn-light dark:bg-slate-800/60',    'border' => 'border-l-4 border-warn dark:border-warn',    'title' => 'text-warn-dark dark:text-white',    'text' => 'text-warn dark:text-slate-200',    'icon' => 'text-warn dark:text-warn'],
+        'success' => ['bg' => 'bg-success-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-success dark:border-success', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-success dark:text-success'],
+        'danger'  => ['bg' => 'bg-danger-light dark:bg-slate-800/60',  'border' => 'border-l-4 border-danger dark:border-danger',  'title' => 'ptah-c-alert_title',  'text' => 'ptah-c-alert_text',  'icon' => 'text-danger dark:text-danger'],
+        'warn'    => ['bg' => 'bg-warn-light dark:bg-slate-800/60',    'border' => 'border-l-4 border-warn dark:border-warn',    'title' => 'ptah-c-alert_title',    'text' => 'ptah-c-alert_text',    'icon' => 'text-warn dark:text-warn'],
         'dark'    => ['bg' => 'bg-dark dark:bg-slate-700',            'border' => 'border-l-4 border-dark-dark dark:border-slate-600', 'title' => 'text-white',                     'text' => 'text-dark-light dark:text-slate-300', 'icon' => 'text-dark-light dark:text-slate-300'],
     ];
     $c = $colorMap[$color] ?? $colorMap['primary'];
