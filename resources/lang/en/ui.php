@@ -1530,6 +1530,9 @@ return [
     'shortcuts_title' => 'Keyboard shortcuts',
     'shortcuts_search' => 'Focus search',
     'shortcuts_new' => 'New record',
+    'shortcuts_filters' => 'Toggle the filter panel',
+    'shortcuts_view_mode' => 'Switch table / cards',
+    'shortcuts_refresh' => 'Reload the listing',
     'shortcuts_help' => 'Show this list',
 
     // -------------------------------------------------------------------------

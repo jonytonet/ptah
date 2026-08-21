@@ -1532,6 +1532,9 @@ return [
     'shortcuts_title' => 'Atalhos de teclado',
     'shortcuts_search' => 'Focar a busca',
     'shortcuts_new' => 'Novo registro',
+    'shortcuts_filters' => 'Abrir/fechar filtros',
+    'shortcuts_view_mode' => 'Alternar tabela / cards',
+    'shortcuts_refresh' => 'Recarregar a listagem',
     'shortcuts_help' => 'Mostrar esta lista',
 
     // -------------------------------------------------------------------------

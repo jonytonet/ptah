@@ -39,6 +39,24 @@
                  return;
              }
              if (this._anyDialogOpen()) return;
+             if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.toggleFilters();
+
+                 return;
+             }
+             if (e.key === 'v' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.setViewMode(this.$wire.viewMode === 'table' ? 'cards' : 'table');
+
+                 return;
+             }
+             if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                 e.preventDefault();
+                 this.$wire.$refresh();
+
+                 return;
+             }
              if (e.key === '/') {
                  e.preventDefault();
                  /* this.$el/this.$wire por EXPLICITUDE. Nota de arquivo: magic
@@ -230,6 +248,18 @@
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">n</kbd></dd>
                 </div>
                 @endif
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_filters') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">f</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_view_mode') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">v</kbd></dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_refresh') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">r</kbd></dd>
+                </div>
                 <div class="flex items-center justify-between gap-3">
                     <dt>{{ __('ptah::ui.shortcuts_help') }}</dt>
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">?</kbd></dd>

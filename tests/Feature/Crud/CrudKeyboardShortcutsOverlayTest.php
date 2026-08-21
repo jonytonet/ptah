@@ -126,4 +126,19 @@ class CrudKeyboardShortcutsOverlayTest extends TestCase
         $this->assertStringContainsString('el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0', $blade);
         $this->assertStringNotContainsString("getComputedStyle(el).display !== 'none'", $blade);
     }
+
+    #[Test]
+    public function the_f_v_and_r_shortcuts_are_wired_and_documented_in_the_overlay(): void
+    {
+        $this->makeConfig();
+
+        $html = Livewire::test(BaseCrud::class, ['model' => ShortcutsOverlayStub::class])->html();
+
+        $this->assertStringContainsString('this.$wire.toggleFilters()', $html);
+        $this->assertStringContainsString('this.$wire.setViewMode(', $html);
+        $this->assertStringContainsString('this.$wire.$refresh()', $html);
+        $this->assertStringContainsString(__('ptah::ui.shortcuts_filters'), $html);
+        $this->assertStringContainsString(__('ptah::ui.shortcuts_view_mode'), $html);
+        $this->assertStringContainsString(__('ptah::ui.shortcuts_refresh'), $html);
+    }
 }
