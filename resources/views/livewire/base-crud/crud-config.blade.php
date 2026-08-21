@@ -219,6 +219,14 @@
                                             <span class="text-[10px] text-slate-400 ml-1">→ {{ $col['colsRelacaoNested']
                                                 }}</span>
                                             @endif
+                                            @if (!empty($col['colsPermission']))
+                                            <svg class="inline-block w-3 h-3 ml-1 text-amber-700" fill="currentColor"
+                                                viewBox="0 0 24 24"
+                                                title="{{ __('ptah::ui.cfg_col_permission_badge_title', ['key' => $col['colsPermission']]) }}">
+                                                <path
+                                                    d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-9a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm0 2a3 3 0 013 3v3H9V6a3 3 0 013-3z" />
+                                            </svg>
+                                            @endif
                                         </td>
                                         <td class="px-3 py-2 text-slate-700">{{ $col['colsNomeLogico'] ?? '' }}</td>
                                         <td class="px-3 py-2">
@@ -431,6 +439,20 @@
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
                                     </div>
+                                    {{-- Column-level visibility permission (only when the "permissions" module is on) --}}
+                                    @if (config('ptah.modules.permissions'))
+                                    @php $permissionKeyOptions = $this->availablePermissionKeys(); @endphp
+                                    <div class="col-span-2">
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_permission_label') }}</label>
+                                        <select wire:model="formDataField.colsPermission" class="cfg-input">
+                                            <option value="">{{ __('ptah::ui.cfg_col_permission_none') }}</option>
+                                            @foreach ($permissionKeyOptions as $opt)
+                                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
+                                            @endforeach
+                                        </select>
+                                        <p class="text-[11px] text-amber-700 mt-1">{{ __('ptah::ui.cfg_col_permission_hint') }}</p>
+                                    </div>
+                                    @endif
                                     {{-- Form block (section) + onChange formula (calculated fields) --}}
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>

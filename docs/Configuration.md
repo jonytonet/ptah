@@ -1241,6 +1241,7 @@ field:type:modifier:option=value:option=value...
 | `uploadAllowedTypes` | `colsUploadAllowedTypes` | string | `uploadAllowedTypes=jpg,png,webp` — comma-separated extensions |
 | `totalizer` | `colsTotal` | bool | `totalizer=true` |
 | `totalizadorType` | `totalizadorType` | string | `totalizadorType=sum` |
+| `permission` | `colsPermission` | string | `permission=page::viewCost` — column-level visibility gate, see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions) |
 
 **Examples:**
 
@@ -1859,6 +1860,7 @@ Properties of each column in `cols[]`:
 | `colsGravar` | bool | `true` | Save value to database |
 | `colsRequired` | bool | `false` | Required field |
 | `colsIsFilterable` | bool | `true` | Allows filtering by this column |
+| `colsPermission` | string | `''` | Column-level visibility gate (requires the `permissions` module). An `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — this is the default for every column. |
 | `colsVisibleList` | bool | `true` | Show in list |
 | `colsEditableForm` | bool | `true` | Editable in form |
 | `colsAlign` | string | `'text-start'` | Alignment: `text-start`, `text-center`, `text-end` |

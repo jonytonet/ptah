@@ -110,4 +110,24 @@ class ColumnParserTest extends TestCase
         $this->assertSame(2, $c['colsRendererDecimals']);   // numeric → int
         $this->assertTrue($c['colsRendererLinkNewTab']);    // 'true' → bool
     }
+
+    #[Test]
+    public function maps_permission_shortcut_to_colspermission(): void
+    {
+        $c = $this->parser->parse('cost:number:permission=viewCost');
+
+        $this->assertSame('viewCost', $c['colsPermission']);
+    }
+
+    #[Test]
+    public function permission_shortcut_preserves_the_qualified_key_separator(): void
+    {
+        // The value side of permission=… contains '::' (page-qualified key,
+        // see PermissionService::KEY_QUALIFIER) which the tokenizer must NOT
+        // split — it only special-cases the single ':' that separates DSL
+        // tokens, re-joining anything without '=' back into the open buffer.
+        $c = $this->parser->parse('cost:number:permission=page::viewCost');
+
+        $this->assertSame('page::viewCost', $c['colsPermission']);
+    }
 }

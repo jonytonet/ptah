@@ -40,8 +40,9 @@
 17. [Audit](#audit)
 18. [Cache](#cache)
 19. [Integration with Auth and BaseCrud](#integration-with-auth-and-basecrud)
-20. [Practical Examples](#practical-examples)
-21. [Configuration Reference](#configuration-reference)
+20. [Column-level Permissions](#column-level-permissions)
+21. [Practical Examples](#practical-examples)
+22. [Configuration Reference](#configuration-reference)
 
 ---
 
@@ -1288,6 +1289,107 @@ Or full control via `readOnly` for read-only screens:
     'model'    => 'Product',
     'readOnly' => !ptah_can('products.store', 'update'),
 ])
+```
+
+---
+
+## Column-level Permissions
+
+Beyond gating whole screens/actions (`ptah_can()`), a single BaseCrud **column**
+can be hidden from every user who lacks a specific grant — the same
+`ptah_page_objects` / `ptah_role_permissions` machinery, applied one column at
+a time instead of one screen at a time.
+
+### How it works
+
+A column opts into the gate via the `colsPermission` tag in its `cols[]`
+entry (see [Configuration.md § Column Configuration](Configuration.md#column-configuration)):
+
+```json
+{ "colsNomeFisico": "cost", "colsNomeLogico": "Cost", "colsTipo": "number", "colsPermission": "purchase.view_cost" }
+```
+
+- **Empty / absent `colsPermission`** (the default for every column) → the
+  column is **public** — no gate, byte-identical to a screen that never used
+  this feature.
+- **Non-empty `colsPermission`** → `ColumnPermissionService` (`Ptah\Services\Permission\ColumnPermissionService`)
+  filters the column out of the header, the data cells, the card view, the
+  column-visibility dropdown, the export, and the async export job — for
+  every user who does not hold a `read` grant on that `obj_key` — **before**
+  the column ever reaches the Livewire component's public state, the query
+  builder or the view.
+- A colliding `obj_key` (registered on more than one page — see
+  `ptah:config:doctor`'s "obj_key collision" check) is disambiguated with the
+  qualified form `{page.slug}::{obj_key}` (or `{page.slug}::{section}::{obj_key}`),
+  exactly like a regular `ptah_can()` check (see [§ Qualified key](#qualified-key-disambiguating-an-obj_key-collision)).
+- This is a **READ** gate only. Create/update/delete authorization for the
+  CRUD as a whole is unaffected.
+
+### Setting it up
+
+1. **Register the `PageObject`** the column will be gated by — via the
+   PageList administration screen, or directly:
+   ```php
+   $page = PtahPage::firstOrCreate(['slug' => 'purchase-orders'], ['name' => 'Purchase Orders']);
+   PageObject::create([
+       'page_id' => $page->id, 'section' => 'main',
+       'obj_key' => 'purchase.view_cost', 'obj_label' => 'View cost column',
+       'obj_type' => 'field', 'is_active' => true,
+   ]);
+   ```
+   Or, equivalently, the raw SQL for the initial keys — **human execution
+   only**, never run automatically by an agent/script:
+   ```sql
+   -- human execution — review page_id/section before running
+   INSERT INTO ptah_pages (slug, name, is_active, created_at, updated_at)
+   VALUES ('purchase-orders', 'Purchase Orders', 1, NOW(), NOW());
+
+   INSERT INTO ptah_page_objects (page_id, section, obj_key, obj_label, obj_type, is_active, created_at, updated_at)
+   VALUES (LAST_INSERT_ID(), 'main', 'purchase.view_cost', 'View cost column', 'field', 1, NOW(), NOW());
+   ```
+2. **Tag the column** with that `obj_key` — either:
+   - visually, in the BaseCrud config editor: Columns tab → edit the column →
+     "Visibility permission" select (only rendered when the `permissions`
+     module is on) — a `<select>` of every active `PageObject` on an active
+     page, never free text (a typo in a text field would mean "nobody sees
+     it", silently); or
+   - via the CLI: `php artisan ptah:config Product --column="cost:number:permission=purchase.view_cost"`.
+3. **Grant `read`** on that `obj_key` to the roles that should see the column
+   — RoleList administration screen, or `RolePermission::create([... 'can_read' => true])`.
+
+### Default-closed
+
+Tagging a column that is **today public** immediately hides it from
+**everyone** — including users who already saw it — until the grant above is
+made for their role. There is no "grandfather" period. The editor's hint text
+next to the select restates this.
+
+### Cache invalidation
+
+Like every other permission check, this gate reads the same generation-versioned
+cache `PermissionService` already maintains (see [§ Cache](#cache)) — granting
+or revoking a role's `read` flag bumps the global/user generation counter via
+the existing model observers, which instantly invalidates every cached
+permission map. **No `cache:clear` (or any cache command) is ever needed** for
+a column-permission change to take effect on the next request.
+
+### No audit trail for column checks
+
+Unlike `ptah_can()`/`check()`, the column-level gate **does not** write to
+`ptah_permission_audits` — a conscious decision, not an oversight. A single
+list render can touch `N` columns; auditing every column check on every
+render (`N` columns × `N` renders) would flood the audit table with rows no
+one queries for insight. The screen-level `ptah_can()` audit (when
+`ptah.permissions.audit` is on) still covers the CRUD as a whole.
+
+### Diagnostics: `ptah:config:doctor`
+
+`ptah:config:doctor` warns (never errors — a column simply not yet wired to a
+real object is a normal work-in-progress state) when a `colsPermission` tag
+names no registered `PageObject` at all:
+
+```
+🟡 unknown column permission key [Product]: 'purchase.view_cost' não corresponde a nenhum ptah_page_objects registrado — a coluna fica invisível para todos, exceto MASTER, até que a chave seja cadastrada
 ```
 
 ---

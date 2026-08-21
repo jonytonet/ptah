@@ -51,7 +51,11 @@ class SidebarCollapseBrowserTest extends DuskTestCase
             $expandedWidth = (float) $browser->script(
                 "return document.querySelector('.ptah-sidebar').getBoundingClientRect().width;"
             )[0];
-            $this->assertGreaterThan(200, $expandedWidth, 'sidebar deveria estar expandida (16rem) por padrao');
+            // Distinguir expandida (~256px/16rem) de colapsada (~64px/4rem): o limiar
+            // fica no meio-termo — medicoes reais variam com scrollbar/zoom do
+            // headless (ja se viu 197.46px numa janela estreita), e 200 colado no
+            // topo do estado colapsado gerava flake sem bug nenhum.
+            $this->assertGreaterThan(150, $expandedWidth, 'sidebar deveria estar expandida (16rem) por padrao');
 
             $this->dispatchGlobalKeydown($browser, 'b', ctrl: true);
 

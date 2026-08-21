@@ -83,6 +83,7 @@ class ColumnParser
             'method' => 'colsMetodoCustom',
             'method_raw' => 'colsMetodoRaw',
             'order_by' => 'colsOrderBy',
+            'permission' => 'colsPermission',
 
             // SearchDropdown
             'sd_mode' => 'colsSDMode',
