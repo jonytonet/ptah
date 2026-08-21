@@ -68,6 +68,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Menu\MenuService;
+use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
 use Ptah\Support\SchemaInspector;
@@ -105,6 +106,7 @@ class PtahServiceProvider extends ServiceProvider
         // Permissions module
         $this->app->singleton(PermissionService::class);
         $this->app->singleton(RoleService::class);
+        $this->app->singleton(ColumnPermissionService::class);
         $this->app->bind(PermissionServiceContract::class, PermissionService::class);
 
         // AI Agent module
