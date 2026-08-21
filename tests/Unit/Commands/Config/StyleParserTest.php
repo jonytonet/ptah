@@ -58,11 +58,32 @@ class StyleParserTest extends TestCase
     }
 
     #[Test]
-    public function accepts_an_empty_style_segment(): void
+    public function rejects_an_empty_style_segment(): void
     {
-        // 4 segments exist (the 4th is just empty) — no exception expected.
-        $c = $this->parser->parse('status:==:cancelled:');
+        // DEVIATION from the original expectation (this used to accept an
+        // empty style silently): StyleRule::normalize() treats an empty style
+        // as unusable — HasCrudRenderers::getRowStyle() would never apply it
+        // anyway — so the single canonical normaliser now rejects it here too,
+        // consistently with every other consumer (CrudRenderersTest, doctor).
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->assertSame('', $c['style']);
+        $this->parser->parse('status:==:cancelled:');
+    }
+
+    #[Test]
+    public function canonicalises_the_eq_alias_to_the_php_style_operator(): void
+    {
+        $c = $this->parser->parse('status:eq:cancelled:color:red;');
+
+        $this->assertSame('==', $c['condition']);
+    }
+
+    #[Test]
+    public function like_operator_is_rejected_with_the_valid_conditions_list(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Valid conditions: ==, !=, >, <, >=, <=');
+
+        $this->parser->parse('status:LIKE:cancelled:color:red;');
     }
 }

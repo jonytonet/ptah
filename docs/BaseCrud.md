@@ -640,6 +640,11 @@ Configured in `contitionStyles` of CrudConfig. Applies inline CSS to the `<tr>` 
 
 > **Note:** the field key is `field`. The legacy alias `colsNomeFisico` is still accepted as a fallback for backwards compatibility, but use `field` in new configs.
 
+> **Note:** the top-level key is `contitionStyles` (misspelling intentional — it
+> is the persisted contract every writer/reader agrees on). The correctly
+> spelled `conditionStyles` is accepted as a **read-only alias** (used when
+> `contitionStyles` is absent) but is never written by any tool in ptah.
+
 | Operator | Description |
 |---|---|
 | `==` | Equal (string comparison) |

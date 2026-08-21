@@ -117,4 +117,63 @@ class ConfigCommandTest extends TestCase
             '--list' => true,
         ])->assertExitCode(0);
     }
+
+    // ── --style (Fase 2.5 Onda II): o gap de integracao apontado em revisao ──
+
+    #[Test]
+    public function style_option_persists_into_contition_styles_in_canonical_shape(): void
+    {
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--style' => ['status:==:cancelled:background:#FEE2E2;color:#991B1B;'],
+            '--non-interactive' => true,
+        ])->assertExitCode(0);
+
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first();
+
+        $this->assertSame(
+            [['field' => 'status', 'condition' => '==', 'value' => 'cancelled', 'style' => 'background:#FEE2E2;color:#991B1B;']],
+            $cfg->config['contitionStyles'] ?? null,
+            'O --style tem de gravar na chave que o runtime le (contitionStyles), no shape canonico.'
+        );
+    }
+
+    #[Test]
+    public function style_option_preserves_pre_existing_rules(): void
+    {
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--style' => ['status:==:cancelled:color:red;'],
+            '--non-interactive' => true,
+        ])->assertExitCode(0);
+
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--style' => ['stock:<:5:color:orange;'],
+            '--non-interactive' => true,
+        ])->assertExitCode(0);
+
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first();
+        $fields = array_column($cfg->config['contitionStyles'], 'field');
+
+        $this->assertSame(['status', 'stock'], $fields, 'A segunda execucao nao pode apagar a regra da primeira.');
+    }
+
+    #[Test]
+    public function an_invalid_style_operator_aborts_even_under_dry_run(): void
+    {
+        // Kernel::call() (usado pelo $this->artisan() de teste) desabilita o
+        // catchExceptions do console — em uso real (php artisan) a mesma
+        // excecao vira exit 1 via Kernel::handle(). Por isso o assert aqui e
+        // expectException, nao assertExitCode (nota do revisor, Onda II).
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/==/');
+
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--style' => ['status:LIKE:x:color:red;'],
+            '--dry-run' => true,
+            '--non-interactive' => true,
+        ]);
+    }
 }

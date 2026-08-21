@@ -448,7 +448,7 @@ php artisan ptah:config "App\Models\Product" \
 - ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
 - ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
 - ``--filter=*`` — Add custom filter: ``field:type:operator:label=Label``
-- ``--style=*`` — Add style rule: ``field:operator:value:css``
+- ``--style=*`` — Add style rule: ``field:condition:value:style`` (``condition`` is ``==``/``!=``/``>``/``<``/``>=``/``<=`` or the aliases ``eq``/``ne``/``lt``/``gt``/``lte``/``gte``/``=``; ``style`` is an inline CSS declaration list, e.g. ``background:#FEE2E2;color:#991B1B;``)
 - ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
 - ``--set=*`` — Set general config: ``key=value``
 - ``--permission=*`` — Set permission: ``action=permission``
@@ -652,11 +652,11 @@ user_id:searchdropdown:=:sdTable=users:sdSelectColumn=name
 
 ```bash
 # Format
-field:operator:value:background=color:color=textColor
+field:condition:value:style
 
 # Examples
-status:==:cancelled:background=#FEE:color=#C00
-priority:>:5:background=#FFE:fontWeight=bold
+status:==:cancelled:background:#FEE;color:#C00;
+priority:>:5:background:#FFE;font-weight:bold;
 ```
 
 **Join Syntax (--join):**

@@ -128,6 +128,54 @@ class ConfigDoctorCommandTest extends TestCase
     }
 
     #[Test]
+    public function legacy_styles_key_is_reported_then_migrated_idempotently(): void
+    {
+        $canonical = ModelKey::canonical(DoctorStub::class);
+        $config = $this->goodConfig();
+        $config['styles'] = [
+            ['colsNomeFisico' => 'status', 'colsOperator' => 'eq', 'colsValue' => 'cancelled', 'colsCss' => 'background:red;'],
+        ];
+        $this->seedConfig($canonical, '', $config);
+
+        // Without --fix: reported as an error, the rule never applies.
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('legacy styles key')
+            ->assertExitCode(1);
+
+        // With --fix: the rule is normalised and folded into contitionStyles,
+        // the legacy 'styles' key is dropped.
+        $this->artisan('ptah:config:doctor --fix')->assertExitCode(0);
+
+        $row = CrudConfig::where('model', $canonical)->first();
+        $this->assertArrayNotHasKey('styles', $row->config);
+        $this->assertSame(
+            ['field' => 'status', 'condition' => '==', 'value' => 'cancelled', 'style' => 'background:red;'],
+            $row->config['contitionStyles'][0]
+        );
+
+        // Re-run is clean and the stored config is byte-identical (idempotent).
+        $before = $row->config;
+        $this->artisan('ptah:config:doctor')->assertExitCode(0);
+        $after = CrudConfig::where('model', $canonical)->first()->config;
+        $this->assertSame($before, $after);
+    }
+
+    #[Test]
+    public function unusable_row_style_warns_but_does_not_fail(): void
+    {
+        $canonical = ModelKey::canonical(DoctorStub::class);
+        $config = $this->goodConfig();
+        $config['contitionStyles'] = [
+            ['field' => 'status', 'condition' => 'LIKE', 'value' => 'cancelled', 'style' => 'background:red;'],
+        ];
+        $this->seedConfig($canonical, '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('unusable row style')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
     public function shared_permission_identifier_across_different_models_warns(): void
     {
         $configA = $this->goodConfig();
