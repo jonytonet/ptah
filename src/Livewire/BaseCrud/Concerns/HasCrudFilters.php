@@ -112,7 +112,7 @@ trait HasCrudFilters
 
     public function setViewDensity(string $density): void
     {
-        $allowed = ['compact', 'comfortable', 'spacious'];
+        $allowed = ['global', 'compact', 'comfortable', 'spacious'];
         if (! in_array($density, $allowed, true)) {
             return;
         }

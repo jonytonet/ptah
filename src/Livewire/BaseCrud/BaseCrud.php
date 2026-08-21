@@ -308,7 +308,7 @@ class BaseCrud extends Component
 
     public array $columnWidths = [];
 
-    public string $viewDensity = 'comfortable'; // compact | comfortable | spacious
+    public string $viewDensity = 'global'; // global (segue o perfil) | compact | comfortable | spacious
 
     public string $viewMode = 'table';
 

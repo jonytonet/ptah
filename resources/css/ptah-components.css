@@ -294,6 +294,7 @@
    "Comfortable" itself has no rule here anymore — see :root and
    html[data-ptah-density="confortavel"] below; a BaseCrud screen that never touched its
    own dropdown has no local override at all and inherits the global choice. */
+.ptah-base-crud[data-density="comfortable"] { --ptah-control-h: 2.25rem; --ptah-control-px: .625rem; --ptah-control-fs: .75rem;   --ptah-row-py: .625rem; }
 .ptah-base-crud[data-density="compact"]  { --ptah-control-h: 1.75rem; --ptah-control-px: .5rem;   --ptah-control-fs: .6875rem; --ptah-row-py: .25rem; }
 .ptah-base-crud[data-density="spacious"] { --ptah-control-h: 2.75rem; --ptah-control-px: .875rem; --ptah-control-fs: .8125rem; --ptah-row-py: 1rem; }
 

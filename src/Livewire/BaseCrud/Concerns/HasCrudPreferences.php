@@ -98,7 +98,12 @@ trait HasCrudPreferences
         $this->columnWidths = $prefs['columnWidths'] ?? [];
         $this->formDataColumns = $prefs['columns'] ?? $this->formDataColumns;
         $this->viewMode = $prefs['viewMode'] ?? 'table';
-        $this->viewDensity = $prefs['viewDensity'] ?? 'comfortable';
+        // Migracao de legado: antes do eixo global de aparencia (v1.18), toda tela
+        // persistia 'comfortable' explicito por ser o default do dropdown — nao era
+        // uma escolha. Mapear para 'global' devolve essas telas ao controle do perfil;
+        // compact/spacious persistidos eram escolhas deliberadas e ficam pinados.
+        $saved = $prefs['viewDensity'] ?? 'global';
+        $this->viewDensity = $saved === 'comfortable' ? 'global' : $saved;
 
         // Filters
         $filterPrefs = $prefs['filters'] ?? [];
@@ -131,7 +136,7 @@ trait HasCrudPreferences
     protected function applyDefaultUiPreferences(): void
     {
         $ui = $this->crudConfig['uiPreferences'] ?? [];
-        $this->viewDensity = ! empty($ui['compactMode']) ? 'compact' : 'comfortable';
+        $this->viewDensity = ! empty($ui['compactMode']) ? 'compact' : 'global';
         $this->perPage = (int) ($ui['perPage'] ?? config('ptah.crud.per_page', 25));
     }
 }

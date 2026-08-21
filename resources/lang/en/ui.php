@@ -37,6 +37,7 @@ return [
     | Density labels
     |--------------------------------------------------------------------------
     */
+    'density_global' => 'Profile default',
     'density_compact' => 'Compact',
     'density_comfortable' => 'Comfortable',
     'density_spacious' => 'Spacious',
