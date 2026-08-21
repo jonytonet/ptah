@@ -7,13 +7,75 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.19.0] — 2026-08-21
+
+Fase 2.5: the four debts the August audit made non-deferrable, closed in one
+release. No schema change — as in every release since 1.13.2.
+
+### Security
+
+- **`BaseCrud::$crudConfig` is `#[Locked]`** — the last query-governing public
+  property still client-writable (an aging follow-up known since July). It
+  governs cols, permission mapping, export limits, hooks and bulkActions; a
+  forged `$wire.set` could override all of it. Every legitimate write is
+  server-side and the editor's event→reload flow is regression-tested.
 
 ### Fixed
 
 - The AI chat panel scrolls the conversation to the bottom when OPENED —
   `scrollToBottom()` only fired on send, so the widget opened showing the top
   of the history.
+
+- **`ptah:config --style=` works for the first time.** Four row-style formats
+  coexisted and only the runtime's worked: the CLI wrote to a key nothing
+  reads, its validator demanded a shape its own parser never produced (every
+  save aborted since introduction), the wizard emitted a third shape, and the
+  docs described a fourth — including a claim it was "fixed" in March. One
+  canonical shape now — `{field, condition (==,!=,>,<,>=,<=), value, style}`
+  under `contitionStyles` (the typo stays: it is the de-facto contract of the
+  editor, generator, model accessor and docs; `conditionStyles` is accepted as
+  a read alias) — normalized by the new `Ptah\Support\StyleRule` at every
+  boundary. Legacy `cols*`/`eq` entries keep working via on-read
+  normalization; `ptah:config:doctor --fix` migrates them idempotently
+  (**human execution, per environment**); a rule with empty CSS no longer
+  shadows the rules after it.
+
+### Added
+
+- **Permission wave 5**, the prerequisites for running a large ERP on ptah's
+  ACL:
+  - `ptah_has_role()` / `PermissionService::hasRole()/getRoleNames()` — role
+    as *identity*, never a gate (use `ptah_can()` to authorize). Master does
+    NOT satisfy another role's name. Matching is lowercase+trim exact;
+    separators are significant ("Vendas-SP" ≠ "vendas sp").
+  - **Qualified permission keys** `page::obj_key` / `page::section::obj_key`
+    disambiguate an `obj_key` that collides across pages — as plain strings
+    that traverse the middleware, config identifiers and helpers with zero
+    signature changes. Bare keys behave exactly as before (literal match wins
+    first, everywhere); the bare permission map is byte-identical.
+  - **`ptah:permission:why {user} {objKey}`** — prints the whole chain (roles,
+    every page object with that key, the crossing binds) and the exact missing
+    piece, with the verdict taken from the real `check()`. Auditing is
+    disabled in memory during diagnosis; the company context is printed
+    explicitly.
+  - **`ptah:audit-prune`** — batched, truncate-free retention pruning for
+    `ptah_permission_audits` (`--days`, `--chunk`, `--dry-run`; refuses
+    `--days<1`; inline default 90 so older published configs stay safe).
+    **Destructive; human execution, always `--dry-run` first.**
+  - **Per-request memoization**: a warm permission gate drops from 9 cache
+    reads to 0; flushed by the same version bumps every in-process mutation
+    already fires, so immediate revocation semantics are unchanged.
+- **A real-browser test suite** (`orchestra/testbench-dusk` + Chrome, its own
+  `phpunit.dusk.xml`, excluded from the default run): twelve tests aimed at
+  the bug class no file-reading test can see — hotkeys via real KeyboardEvents,
+  modal Esc/aria-invalid, sidebar collapse/active pill, global density
+  changing computed heights, toolbar label collapse, dark-theme computed
+  backgrounds, and search-then-back persistence. Setup lessons (fixed
+  `app.key` or `livewire.js` 404s; file session driver or "Page Expired";
+  migrations inside `$app->booted()`) are recorded in `docs/Testing.md`.
+- Quick-search persistence contract pinned end-to-end by tests (typed search
+  survives a full remount and actually filters; clearing persists; guest
+  session fallback holds).
 
 ## [1.18.0] — 2026-08-21
 
