@@ -150,6 +150,7 @@ return [
     'select_placeholder' => 'Selecione...',
     'search_entity' => 'Buscar :label...',
     'no_results' => 'Nenhum resultado encontrado.',
+    'forge_select_filter_aria' => 'Filtrar opções',
     'btn_cancel' => 'Cancelar',
     'btn_save_changes' => 'Salvar Alterações',
     'btn_create' => 'Criar',
@@ -1134,9 +1135,20 @@ return [
     'cfg_col_sd_value_field' => 'Campo Valor (value)',
     'cfg_col_sd_label_field' => 'Campo Label (label)',
     'cfg_col_sd_label_two' => 'Label Dois (opcional)',
+    'cfg_col_sd_label_three' => 'Label Três (opcional)',
     'cfg_col_sd_order_by' => 'Ordenação (orderByRaw)',
     'cfg_col_sd_limit' => 'Limite de Resultados',
     'cfg_col_sd_filters' => 'Filtros Estáticos (JSON)',
+    'cfg_col_sd_init_with_data' => 'Carregar a lista antes de digitar (iniciar com a lista carregada)',
+    'cfg_col_sd_init_with_data_hint' => 'Quando desligado, o dropdown fica vazio até o usuário digitar um termo de busca — mais leve para tabelas muito grandes.',
+    'cfg_col_sd_start_list' => 'Posição da lista',
+    'cfg_col_sd_start_list_bottom' => 'Abaixo do campo (padrão)',
+    'cfg_col_sd_start_list_top' => 'Acima do campo',
+    'cfg_col_sd_array_search' => 'Colunas extras de busca (separadas por vírgula)',
+    'cfg_col_sd_array_search_hint' => 'Colunas também comparadas com o termo de busca além do label, ex: cnpj,email.',
+    'cfg_col_sd_mask_one' => 'Máscara do label',
+    'cfg_col_sd_mask_two' => 'Máscara do Label Dois',
+    'cfg_col_sd_mask_three' => 'Máscara do Label Três',
 
     // Columns > Totalizer extra
     'cfg_col_total_func' => 'Função',
@@ -1600,6 +1612,7 @@ return [
     'cfg_preview_empty' => 'Nenhuma coluna gravável configurada ainda. Marque colunas como "Gravar" para vê-las aqui.',
     'cfg_preview_calc_badge' => 'calculado',
     'cfg_preview_depends' => 'Depende de :parent (cascata)',
+    'cfg_preview_sd_lazy' => 'Só carrega a lista depois de digitar um termo de busca',
     'cfg_preview_footer_hint' => 'Botões são ilustrativos — isto é uma prévia.',
 
 ];

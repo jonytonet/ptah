@@ -1913,12 +1913,22 @@ Properties of each column in `cols[]`:
 | `colsRelacao` | string | `''` | Eloquent relation method name |
 | `colsRelacaoExibe` | string | `'name'` | Field to display from the relation |
 | `colsRelacaoNested` | string | `''` | Nested relation (e.g.: `category.parent.name`) |
-| `colsSDModel` | string | `''` | Full model for SearchDropdown (e.g.: `App\Models\Category`) |
-| `colsSDLabel` | string | `'name'` | Display field in SearchDropdown |
+| `colsSDModel` | string | `''` | Model class for SearchDropdown (e.g.: `App\Models\Category`), or `Namespace\Class\method` in service mode |
+| `colsSDTipo` | `'model'\|'service'` | `'model'` | SearchDropdown search mode |
+| `colsSDLabel` | string | `'name'` | Display field in SearchDropdown (dot-notation supported for a relation column) |
 | `colsSDValor` | string | `'id'` | Value field in SearchDropdown |
-| `colsSDOrder` | string | `'name ASC'` | SearchDropdown sort order |
-| `colsSDTipo` | string | `'searchdropdown'` | SearchDropdown type |
-| `colsSDMode` | string | `'single'` | Mode: `single`, `multiple` |
+| `colsSDOrder` | string | `'{label} ASC'` | SearchDropdown sort order (raw `ORDER BY`) |
+| `colsSDLimit` | int | `15` | Result limit |
+| `colsSDInitWithData` | bool | `true` | When `false`, the dropdown stays empty on focus until a term is typed |
+
+> The full SearchDropdown surface (`colsSDLabelTwo`/`colsSDLabelThree`,
+> `colsSDMaskOne`/`Two`/`Three`, `colsSDArraySearch`, `colsSDFilters`,
+> `colsSDPlaceholder`, `colsSDStartList`, `colsSDDependsOn`/`colsSDFilterColumn`
+> for cascading dropdowns, and `colsSDService`/`colsSDServiceMethod` for
+> service mode) is documented in full in
+> [SearchDropdown.md § BaseCrud inline widget configuration surface](SearchDropdown.md#basecrud-inline-widget-configuration-surface) —
+> including the read-alias resolution a config written in an older dialect
+> still relies on.
 
 ### Input Mask
 

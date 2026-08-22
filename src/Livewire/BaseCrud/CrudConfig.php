@@ -456,7 +456,8 @@ class CrudConfig extends Component
             // Validations
             'colsValidations' => [],
             // SearchDropdown
-            'colsSDMode' => 'model',
+            'colsSDTipo' => 'model',
+            'colsSDInitWithData' => true,
             // Cell style
             'colsCellStyle' => '',
             'colsCellClass' => '',
@@ -975,9 +976,58 @@ class CrudConfig extends Component
             ) {
                 unset($field[ColumnPermissionService::TAG]);
             }
+
+            if (($field['colsTipo'] ?? '') === 'searchdropdown') {
+                $field = $this->normalizeSdField($field);
+            }
         }
 
         return $fields;
+    }
+
+    /**
+     * Rewrites legacy SearchDropdown editor keys (colsSDMode/colsSDValueField/
+     * colsSDLabelField/colsSDOrderBy) to the canonical ones the runtime
+     * (HasCrudSearchDropdown::sdSettings()) reads, and composes colsSDModel
+     * from colsSDService + colsSDServiceMethod when in service mode (the UI
+     * never binds colsSDModel directly for that mode). Legacy keys are left
+     * in place — sdSettings() already falls back to reading them — so this
+     * is purely additive, never destructive of existing data.
+     *
+     * @param  array<string, mixed>  $field
+     * @return array<string, mixed>
+     */
+    protected function normalizeSdField(array $field): array
+    {
+        if (
+            empty($field['colsSDTipo'])
+            && ! empty($field['colsSDMode'])
+            && in_array($field['colsSDMode'], ['model', 'service'], true)
+        ) {
+            $field['colsSDTipo'] = $field['colsSDMode'];
+        }
+
+        if (empty($field['colsSDValor']) && ! empty($field['colsSDValueField'])) {
+            $field['colsSDValor'] = $field['colsSDValueField'];
+        }
+
+        if (empty($field['colsSDLabel']) && ! empty($field['colsSDLabelField'])) {
+            $field['colsSDLabel'] = $field['colsSDLabelField'];
+        }
+
+        if (empty($field['colsSDOrder']) && ! empty($field['colsSDOrderBy'])) {
+            $field['colsSDOrder'] = $field['colsSDOrderBy'];
+        }
+
+        if (
+            ($field['colsSDTipo'] ?? '') === 'service'
+            && ! empty($field['colsSDService'])
+            && ! empty($field['colsSDServiceMethod'])
+        ) {
+            $field['colsSDModel'] = rtrim((string) $field['colsSDService'], '\\/').'\\'.$field['colsSDServiceMethod'];
+        }
+
+        return $field;
     }
 
     /**

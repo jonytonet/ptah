@@ -213,6 +213,7 @@
                                 @php
                                     $sdInitLabel  = $sdLabels[$fField] ?? '';
                                     $sdHasResults = !empty($sdResults[$fField]);
+                                    $sdSettings   = $this->sdSettings($col);
                                     // Cascading dropdown: locked until the parent field has a value.
                                     $sdDependsOn   = $col['colsSDDependsOn'] ?? null;
                                     $sdParentEmpty = $sdDependsOn && (($formData[$sdDependsOn] ?? null) === null || ($formData[$sdDependsOn] ?? '') === '');
@@ -250,7 +251,7 @@
                                                 @focus="$wire.openDropdown('{{ $fField }}')"
                                                 placeholder="{{ $sdParentEmpty
                                                     ? __('ptah::ui.sd_select_parent_first', ['parent' => $sdParentLabel])
-                                                    : __('ptah::ui.search_entity', ['label' => $fLabel]) }}"
+                                                    : ($sdSettings['placeholder'] ?: __('ptah::ui.search_entity', ['label' => $fLabel])) }}"
                                                 autocomplete="off"
                                                 tabindex="{{ $tabIdx }}"
                                                 @if ($sdParentEmpty) disabled @endif
@@ -270,13 +271,19 @@
                                         </div>
                                         <input type="hidden" wire:model="formData.{{ $fField }}" />
                                         <div x-show="open" x-cloak
-                                            class="absolute z-30 w-full mt-1 overflow-y-auto rounded-md max-h-48 ptah-c-dd">
+                                            class="absolute z-30 w-full {{ $sdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md max-h-48 ptah-c-dd">
                                             @forelse ($sdResults[$fField] ?? [] as $opt)
                                                 <button type="button"
                                                     wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                     @click="open = false"
                                                     class="block w-full px-4 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-600 dark:text-white ptah-c-dd_opt">
                                                     {{ $opt['label'] }}
+                                                    @if (array_key_exists('labelTwo', $opt))
+                                                        <span class="block text-[11px] opacity-70">{{ $opt['labelTwo'] }}</span>
+                                                    @endif
+                                                    @if (array_key_exists('labelThree', $opt))
+                                                        <span class="block text-[11px] opacity-70">{{ $opt['labelThree'] }}</span>
+                                                    @endif
                                                 </button>
                                             @empty
                                                 <p class="px-4 py-3 text-xs italic text-gray-400">{{ __('ptah::ui.no_results') }}</p>

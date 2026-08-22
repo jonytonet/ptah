@@ -97,6 +97,14 @@ class ColumnParser
             'sd_limit' => 'colsSDLimit',
             'sd_placeholder' => 'colsSDPlaceholder',
             'sd_filters' => 'colsSDFilters',
+            'sd_init_with_data' => 'colsSDInitWithData',
+            'sd_label_three' => 'colsSDLabelThree',
+            'sd_mask_one' => 'colsSDMaskOne',
+            'sd_mask_two' => 'colsSDMaskTwo',
+            'sd_mask_three' => 'colsSDMaskThree',
+            'sd_start_list' => 'colsSDStartList',
+            'sd_depends_on' => 'colsSDDependsOn',
+            'sd_filter_column' => 'colsSDFilterColumn',
 
             // Renderer specific
             'currency' => 'colsRendererCurrency',
@@ -142,6 +150,9 @@ class ColumnParser
         } elseif ($key === 'upload_allowed_types') {
             // Split comma-separated extension list into an array
             $config['colsUploadAllowedTypes'] = array_map('trim', explode(',', $value));
+        } elseif ($key === 'sd_array_search') {
+            // Split comma-separated column list into an array
+            $config['colsSDArraySearch'] = array_map('trim', explode(',', $value));
         } elseif ($mappedKey === 'totalizadorType') {
             $config['totalizadorEnabled'] = true;
             $config['totalizadorType'] = $value;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\SearchDropdown;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -13,6 +12,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
+use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -515,18 +515,11 @@ class SearchDropdown extends Component
             return $v;
         }
 
-        // Built-in masks
-        $builtin = match ($mask) {
-            'cnpj' => $this->applyMaskCnpj($v),
-            'cpf' => $this->applyMaskCpf($v),
-            'money' => $this->applyMaskMoney($v),
-            'phone' => $this->applyMaskPhone($v),
-            'date' => $this->applyMaskDate($v),
-            default => null,
-        };
-
-        if ($builtin !== null) {
-            return $builtin;
+        // Built-in masks — shared with the BaseCrud inline widget via
+        // SearchDropdownMask (see its docblock for why the dynamic branches
+        // below are NOT part of that shared helper).
+        if (in_array($mask, SearchDropdownMask::builtins(), true)) {
+            return SearchDropdownMask::format($v, $mask);
         }
 
         // Dynamic: static call — 'App\Helpers\Masks::format'
@@ -570,79 +563,5 @@ class SearchDropdown extends Component
 
         $this->modelClass = 'App\\Models\\'.$suffix;
         $this->serviceClass = 'App\\Services\\'.$suffix.'Service';
-    }
-
-    private function applyMaskCnpj(string $v): string
-    {
-        $digits = preg_replace('/\D/', '', $v);
-        if (strlen($digits) !== 14) {
-            return $v;
-        }
-
-        return sprintf(
-            '%s.%s.%s/%s-%s',
-            substr($digits, 0, 2),
-            substr($digits, 2, 3),
-            substr($digits, 5, 3),
-            substr($digits, 8, 4),
-            substr($digits, 12, 2)
-        );
-    }
-
-    private function applyMaskCpf(string $v): string
-    {
-        $digits = preg_replace('/\D/', '', $v);
-        if (strlen($digits) !== 11) {
-            return $v;
-        }
-
-        return sprintf(
-            '%s.%s.%s-%s',
-            substr($digits, 0, 3),
-            substr($digits, 3, 3),
-            substr($digits, 6, 3),
-            substr($digits, 9, 2)
-        );
-    }
-
-    private function applyMaskMoney(string $v): string
-    {
-        $num = (float) str_replace(',', '.', preg_replace('/[^\d,.]/', '', $v));
-
-        return 'R$ '.number_format($num, 2, ',', '.');
-    }
-
-    private function applyMaskPhone(string $v): string
-    {
-        $digits = preg_replace('/\D/', '', $v);
-        $len = strlen($digits);
-
-        if ($len === 11) {
-            return sprintf('(%s) %s %s-%s',
-                substr($digits, 0, 2),
-                substr($digits, 2, 1),
-                substr($digits, 3, 4),
-                substr($digits, 7, 4)
-            );
-        }
-
-        if ($len === 10) {
-            return sprintf('(%s) %s-%s',
-                substr($digits, 0, 2),
-                substr($digits, 2, 4),
-                substr($digits, 6, 4)
-            );
-        }
-
-        return $v;
-    }
-
-    private function applyMaskDate(string $v): string
-    {
-        try {
-            return Carbon::parse($v)->format('d/m/Y');
-        } catch (\Throwable) {
-            return $v;
-        }
     }
 }

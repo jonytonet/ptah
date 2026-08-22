@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Ptah\Support\SearchDropdownMask;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 /**
@@ -628,7 +629,16 @@ trait HasCrudForm
             $exibe = $col['colsRelacaoExibe'] ?? null;
 
             if ($rel && $exibe && $record->{$rel}) {
-                $this->sdLabels[$field] = $record->{$rel}->{$exibe} ?? '';
+                $label = $record->{$rel}->{$exibe} ?? '';
+
+                // Same mask applied to the search results themselves
+                // (HasCrudSearchDropdown::sdApplyMask) — without this, editing
+                // a record opens with a raw value (e.g. an unmasked CPF) while
+                // a fresh selection shows it masked.
+                $mask = $col['colsSDMaskOne'] ?? 'defaultMask';
+                $this->sdLabels[$field] = $mask !== 'defaultMask'
+                    ? SearchDropdownMask::format($label, $mask)
+                    : $label;
             }
         }
     }

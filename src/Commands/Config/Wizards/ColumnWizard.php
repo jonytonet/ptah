@@ -286,17 +286,40 @@ class ColumnWizard
     }
 
     /**
-     * Ask SearchDropdown options
+     * Ask SearchDropdown options.
+     *
+     * Writes the CANONICAL keys HasCrudSearchDropdown::sdSettings() reads
+     * directly (colsSDModel/colsSDLabel/colsSDValor/colsSDOrder/colsSDLimit/
+     * colsSDInitWithData) — the previous version of this wizard wrote a
+     * dialect (colsSdTable/colsSdSelectColumn/colsSdValueColumn/
+     * colsSdFilterWhere/colsSdOrderBy/colsSdLimit) that nothing read at the
+     * time. Since v1.21, sdSettings() DOES resolve those keys as the legacy
+     * CLI-wizard fallback — configs written by the old wizard now work; the
+     * canonical keys are still what new writes should produce.
+     *
+     * "WHERE filter" is now asked in colsSDFilters' own safe JSON shape
+     * (a list of {"field","value","op"?} objects) instead of a raw SQL
+     * fragment — a free-form WHERE string has no safe translation into the
+     * [column, operator, value] triples sdSettings() validates against
+     * SqlIdentifier, and accepting one here would reopen exactly the
+     * SQL-injection surface that guard exists to close.
      */
     protected function askSearchDropdownOptions(): array
     {
         return [
-            'colsSdTable' => $this->command->ask('Search table'),
-            'colsSdSelectColumn' => $this->command->ask('Display column', 'name'),
-            'colsSdValueColumn' => $this->command->ask('Value column', 'id'),
-            'colsSdFilterWhere' => $this->command->ask('WHERE filter (optional)', ''),
-            'colsSdOrderBy' => $this->command->ask('ORDER BY', 'name ASC'),
-            'colsSdLimit' => (int) $this->command->ask('Search result limit', 20),
+            'colsSDModel' => $this->command->ask('Search table/model'),
+            'colsSDLabel' => $this->command->ask('Display column', 'name'),
+            'colsSDValor' => $this->command->ask('Value column', 'id'),
+            'colsSDFilters' => $this->command->ask(
+                'Static filters as JSON (optional, e.g. [{"field":"active","value":"S"}])',
+                ''
+            ),
+            'colsSDOrder' => $this->command->ask('ORDER BY', 'name ASC'),
+            'colsSDLimit' => (int) $this->command->ask('Search result limit', 20),
+            'colsSDInitWithData' => $this->command->confirm(
+                'Load the list before typing (start with the list loaded)?',
+                true
+            ),
         ];
     }
 
