@@ -7,6 +7,87 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.21.0] — 2026-08-22
+
+Config-editor polish and the full SearchDropdown configuration surface.
+No schema change — as in every release since 1.13.2.
+
+### ⚠️ Behavior change — read before upgrading
+
+Three searchdropdown column keys — `colsSDFilters`, `colsSDLabelTwo` and
+`colsSDPlaceholder` — were **editable in the visual editor but dead at
+runtime** for months. From this release they are honored: a config that
+carries them will start filtering, showing a second label line, or using its
+own placeholder on the next deploy, with no one touching the config. To audit
+which screens are affected before upgrading, run against your database:
+
+```php
+// php artisan tinker — human execution, read-only
+Ptah\Models\CrudConfig::all()->flatMap(fn ($c) => collect($c->config['cols'] ?? [])
+    ->filter(fn ($col) => ($col['colsTipo'] ?? '') === 'searchdropdown'
+        && (!empty($col['colsSDFilters']) || !empty($col['colsSDLabelTwo']) || !empty($col['colsSDPlaceholder'])))
+    ->map(fn ($col) => $c->model.' :: '.$col['colsNomeFisico']))->values();
+```
+
+This is deliberately **not** a permanent `doctor` warning — it would flag
+every legitimate future use of these keys forever.
+
+### Added
+
+- **The BaseCrud inline searchdropdown gains the component's full surface.**
+  Background: BaseCrud never used the standalone SearchDropdown component —
+  it has its own inline widget, and *three divergent `colsSD*` dialects*
+  coexisted with eleven dead keys. The editor wrote keys the runtime never
+  read, so configuring a searchdropdown's value/label/ordering/service mode
+  through the editor was silently impossible. Now:
+  - `sdSettings()` resolves all three dialects (canonical → editor → wizard)
+    so every config ever written by any producer works, zero data migration;
+  - `colsSDInitWithData` — open the dropdown without querying until the user
+    types (the headline request);
+  - `colsSDLabelTwo`/`colsSDLabelThree` item lines; builtin masks
+    (`cnpj|cpf|money|phone|date`) via the new `Ptah\Support\SearchDropdownMask`
+    (shared with the component by delegation, parity-pinned; the dynamic
+    `Class::method` mask branches deliberately did NOT become
+    config-editable); extra LIKE columns and fixed filters (identifiers
+    guarded by `SqlIdentifier`, operators whitelisted, values always bound);
+    `colsSDPlaceholder`; panel position;
+  - the editor's SD tab appears only for searchdropdown columns and writes
+    the canonical keys; CLI gains `sd_init_with_data`, `sd_label_three`,
+    `sd_mask_one/two/three`, `sd_array_search`, `sd_start_list`,
+    `sd_depends_on`, `sd_filter_column`; the wizard writes canonical keys and
+    its free-form "WHERE filter" question was replaced by the validated JSON
+    filter shape (a raw SQL fragment has no safe translation);
+  - `ptah:config:doctor` gains seven searchdropdown checks with an idempotent
+    `--fix` migrating legacy-dialect keys.
+- **`forge-select` is optionally searchable** (`searchable` prop): filter
+  input focused on open, diacritics-insensitive matching ("permissao" finds
+  "Permissão"), arrows walk only visible options, double-Escape, empty-value
+  options never filtered out, `aria-live` on the filtered list. The column
+  permission select in the config editor uses it. Opt-in proven: no
+  searchable artifact leaks into a non-searchable render.
+
+### Fixed
+
+- **Eight dark-mode contrast failures in the Configurar CRUD modal**, each
+  measured with WCAG math before and after (worst: hover surfaces at 1.36:1,
+  now 6.97:1) — light hover literals, the permission badge, text over the
+  theme-invariant hint boxes, explicit placeholders. `hover:border-slate-300`
+  was audited and deliberately kept (the token would regress it).
+- Real-Chrome tests for the searchable select caught a real bug the
+  structural tests could not: clicking the trigger bypassed `openList()`, so
+  the filter never focused nor reset on the most common open path.
+
+### Notes
+
+- One browser test (modal save via synthetic WebDriver click) is skipped with
+  a full diagnosis: under Chrome 151.0.7922.173 the synthetic click on the
+  teleported save button delivers every DOM event but Livewire's binding does
+  not fire. Human clicks and keyboard-driven `wire:model` work; server-side
+  validation coverage lives in the Feature suite. See `docs/Testing.md`.
+- Internal API: `HasCrudSearchDropdown::resolveSearchDropdownResults()`
+  (protected) changed signature; `sdSettings()` is protected by design —
+  public would be needless wire-callable surface.
+
 ## [1.20.0] — 2026-08-22
 
 Column-level permissions for the BaseCrud, plus a full documentation audit.
