@@ -11,6 +11,8 @@ use Ptah\Models\PageObject;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
+use Ptah\Support\SearchDropdownMask;
+use Ptah\Support\SqlIdentifier;
 use Ptah\Support\StyleRule;
 
 /**
@@ -47,6 +49,20 @@ use Ptah\Support\StyleRule;
  *                        PageObject (bare, or decomposed when qualified) — the
  *                        column silently becomes invisible to everyone but
  *                        MASTER. Warning only, never an error.
+ *   - searchdropdown surface → per `searchdropdown` column, all warning-only:
+ *                        (a) non-numeric/`< 1` colsSDLimit; (b) colsSDMask*
+ *                        outside the built-ins (SearchDropdownMask::builtins());
+ *                        (c) legacy dialect key present without its canonical
+ *                        counterpart (colsSDMode/colsSDValueField/
+ *                        colsSDLabelField/colsSDOrderBy) — `--fix` copies the
+ *                        legacy value into the canonical key (idempotent,
+ *                        never deletes the legacy one); (d) colsSDFilters that
+ *                        isn't valid JSON/array; (e) a colsSDArraySearch
+ *                        column SqlIdentifier::isSafe() rejects; (f) colsSDMode
+ *                        outside model|service; (g) a service-mode
+ *                        colsSDService class outside
+ *                        config('ptah.crud.sd_service_namespaces') — purely
+ *                        diagnostic, not enforced at request time.
  *
  * Both collision checks are diagnostic only — they do not change how permissions
  * resolve, they only surface the pre-existing global-key sharing risk.
@@ -210,6 +226,125 @@ class ConfigDoctorCommand extends Command
                 }
             }
 
+            // 5e. SearchDropdown surface — every check here is a warning, never
+            //     an error: none of these make the column unusable (sdSettings()
+            //     already has safe defaults/fallbacks for all of them), they
+            //     only surface a config that likely doesn't do what its author
+            //     intended.
+            $sdConfigChanged = false;
+            foreach (($config['cols'] ?? []) as $colIndex => $col) {
+                if (($col['colsTipo'] ?? '') !== 'searchdropdown') {
+                    continue;
+                }
+
+                $field = (string) ($col['colsNomeFisico'] ?? $colIndex);
+
+                // (a) colsSDLimit non-numeric or < 1 — sdSettings() casts it to
+                //     int regardless, silently turning a typo into 0 or worse.
+                if (array_key_exists('colsSDLimit', $col) && (! is_numeric($col['colsSDLimit']) || (int) $col['colsSDLimit'] < 1)) {
+                    $this->line("🟡 <fg=yellow>searchdropdown: invalid colsSDLimit</> [{$label}] column '{$field}': '{$col['colsSDLimit']}' não é um inteiro >= 1 — sdSettings() usará o resultado do cast (int)");
+                    $warnings++;
+                }
+
+                // (b) colsSDMask* outside the built-ins — silently rendered raw.
+                foreach (['colsSDMaskOne', 'colsSDMaskTwo', 'colsSDMaskThree'] as $maskKey) {
+                    $mask = $col[$maskKey] ?? null;
+                    if ($mask !== null && $mask !== 'defaultMask' && ! in_array($mask, SearchDropdownMask::builtins(), true)) {
+                        $this->line("🟡 <fg=yellow>searchdropdown: unknown mask</> [{$label}] column '{$field}': {$maskKey}='{$mask}' não é um mask nativo (".implode(', ', SearchDropdownMask::builtins()).') — o valor será exibido cru');
+                        $warnings++;
+                    }
+                }
+
+                // (c) Legacy dialect key present without its canonical
+                //     counterpart. sdSettings() already reads the legacy key as
+                //     a fallback, so this never breaks the column — --fix just
+                //     normalises it (idempotent: a second run finds nothing
+                //     left to do, since the canonical key now exists).
+                $legacyToCanonical = [
+                    'colsSDMode' => 'colsSDTipo',
+                    'colsSDValueField' => 'colsSDValor',
+                    'colsSDLabelField' => 'colsSDLabel',
+                    'colsSDOrderBy' => 'colsSDOrder',
+                ];
+                foreach ($legacyToCanonical as $legacyKey => $canonicalKey) {
+                    if (! array_key_exists($legacyKey, $col) || array_key_exists($canonicalKey, $col)) {
+                        continue;
+                    }
+
+                    // colsSDMode only aliases colsSDTipo when it holds a
+                    // recognised value — 'both' (an earlier doc's mistake)
+                    // must never be promoted to colsSDTipo.
+                    if ($legacyKey === 'colsSDMode' && ! in_array($col[$legacyKey], ['model', 'service'], true)) {
+                        continue;
+                    }
+
+                    if ($this->option('fix')) {
+                        $config['cols'][$colIndex][$canonicalKey] = $col[$legacyKey];
+                        $sdConfigChanged = true;
+                        $this->line("🔧 <fg=green>fixed</> searchdropdown legacy key [{$label}] column '{$field}': '{$legacyKey}' → '{$canonicalKey}'");
+                        $fixed++;
+                    } else {
+                        $this->line("🟡 <fg=yellow>searchdropdown: legacy dialect key</> [{$label}] column '{$field}': '{$legacyKey}' gravado sem a chave canônica '{$canonicalKey}' — sdSettings() já lê o legado como fallback, mas rode --fix para normalizar");
+                        $warnings++;
+                    }
+                }
+
+                // (d) Malformed colsSDFilters — not valid JSON/array, so
+                //     sdNormalizeFilters() silently discards it (empty filter set).
+                if (array_key_exists('colsSDFilters', $col) && ! $this->sdFiltersLookValid($col['colsSDFilters'])) {
+                    $this->line("🟡 <fg=yellow>searchdropdown: malformed colsSDFilters</> [{$label}] column '{$field}': não é um JSON válido nem um array de filtros — será ignorado em runtime");
+                    $warnings++;
+                }
+
+                // (e) arraySearch column rejected by SqlIdentifier — never
+                //     reaches the query, silently.
+                $arraySearchRaw = $col['colsSDArraySearch'] ?? null;
+                if ($arraySearchRaw !== null) {
+                    $arrayCols = is_array($arraySearchRaw) ? $arraySearchRaw : explode(',', (string) $arraySearchRaw);
+                    foreach ($arrayCols as $arrayCol) {
+                        $arrayCol = trim((string) $arrayCol);
+                        if ($arrayCol !== '' && ! SqlIdentifier::isSafe($arrayCol)) {
+                            $this->line("🟡 <fg=yellow>searchdropdown: unsafe arraySearch column</> [{$label}] column '{$field}': '{$arrayCol}' rejeitado por SqlIdentifier — nunca entrará na busca");
+                            $warnings++;
+                        }
+                    }
+                }
+
+                // (f) colsSDMode outside model|service — never aliases colsSDTipo.
+                if (array_key_exists('colsSDMode', $col) && ! in_array($col['colsSDMode'], ['model', 'service'], true)) {
+                    $this->line("🟡 <fg=yellow>searchdropdown: invalid colsSDMode</> [{$label}] column '{$field}': '{$col['colsSDMode']}' não é 'model' nem 'service' — não é usado como alias de colsSDTipo (default 'model' aplicado)");
+                    $warnings++;
+                }
+
+                // (g) Service-mode class outside the configured namespaces.
+                //     Diagnostic only — see config('ptah.crud.sd_service_namespaces').
+                $sdTipo = $col['colsSDTipo']
+                    ?? (in_array($col['colsSDMode'] ?? null, ['model', 'service'], true) ? $col['colsSDMode'] : 'model');
+
+                if ($sdTipo === 'service' && ! empty($col['colsSDService'])) {
+                    $allowedNamespaces = (array) config('ptah.crud.sd_service_namespaces', []);
+                    $serviceClass = (string) $col['colsSDService'];
+                    $inNamespace = false;
+
+                    foreach ($allowedNamespaces as $namespace) {
+                        $prefix = rtrim((string) $namespace, '\\').'\\';
+                        if ($serviceClass === $namespace || str_starts_with($serviceClass, $prefix)) {
+                            $inNamespace = true;
+                            break;
+                        }
+                    }
+
+                    if (! $inNamespace && $allowedNamespaces !== []) {
+                        $this->line("🟡 <fg=yellow>searchdropdown: service outside sd_service_namespaces</> [{$label}] column '{$field}': '{$serviceClass}' fora de ".implode(', ', $allowedNamespaces)." — hoje é apenas diagnóstico (config('ptah.crud.sd_service_namespaces'))");
+                        $warnings++;
+                    }
+                }
+            }
+
+            if ($sdConfigChanged) {
+                $row->update(['config' => $config]);
+            }
+
             // Collected for check 6b below (after --fix, $config already reflects
             // the migrated key). Same identifier on a DIFFERENT model is a
             // cross-grant risk — resolution is global by permissionIdentifier.
@@ -309,5 +444,32 @@ class ConfigDoctorCommand extends Command
             ->when($section !== null, fn ($q) => $q->where('section', $section))
             ->whereHas('page', fn ($q) => $q->where('slug', $pageSlug))
             ->exists();
+    }
+
+    /**
+     * Structural-only validity check for colsSDFilters (check 5e-d) — a
+     * string must decode as valid JSON into an array; anything already an
+     * array is accepted as-is. Does NOT validate individual filter items
+     * (unsafe columns/operators are silently dropped at runtime by
+     * HasCrudSearchDropdown::sdNormalizeFilters() — that degrades safely, so
+     * it is not itself an error condition worth flagging here).
+     */
+    protected function sdFiltersLookValid(mixed $raw): bool
+    {
+        if ($raw === null || $raw === '') {
+            return true;
+        }
+
+        if (is_array($raw)) {
+            return true;
+        }
+
+        if (! is_string($raw)) {
+            return false;
+        }
+
+        json_decode($raw, true);
+
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }

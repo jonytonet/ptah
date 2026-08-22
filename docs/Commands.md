@@ -672,6 +672,15 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `sd_limit` | `colsSDLimit` | `sd_limit=15` |
 | `sd_placeholder` | `colsSDPlaceholder` | — |
 | `sd_filters` | `colsSDFilters` | — |
+| `sd_init_with_data` | `colsSDInitWithData` | `sd_init_with_data=false` |
+| `sd_label_three` | `colsSDLabelThree` | — |
+| `sd_mask_one` | `colsSDMaskOne` | `sd_mask_one=cnpj` |
+| `sd_mask_two` | `colsSDMaskTwo` | — |
+| `sd_mask_three` | `colsSDMaskThree` | — |
+| `sd_array_search` | `colsSDArraySearch` (special: comma-separated column list) | `sd_array_search=cnpj,email` |
+| `sd_start_list` | `colsSDStartList` | `sd_start_list=top` |
+| `sd_depends_on` | `colsSDDependsOn` | `sd_depends_on=state_id` |
+| `sd_filter_column` | `colsSDFilterColumn` | `sd_filter_column=state_id` |
 | `currency` | `colsRendererCurrency` | `currency=BRL` |
 | `decimals` | `colsRendererDecimals` | `decimals=2` |
 | `bool_true` | `colsRendererBoolTrue` | — |
@@ -707,13 +716,17 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 > `decimals=2`).
 >
 > `sd_value`/`sd_label`/`sd_order_by` write `colsSDValor`/`colsSDLabel`/
-> `colsSDOrder`. The SearchDropdown column widget itself
-> (`HasCrudSearchDropdown`) reads `colsSDValor`/`colsSDLabel`/`colsSDOrder`
-> instead — see [SearchDropdown.md](SearchDropdown.md) and
-> [Configuration.md § Relation](Configuration.md#relation) for the schema the
-> renderer actually consumes. Prefer the visual CrudConfig editor or a JSON
-> import for SearchDropdown columns until this CLI shortcut is reconciled with
-> the renderer's key names.
+> `colsSDOrder` — these ARE the canonical keys the BaseCrud inline widget
+> (`HasCrudSearchDropdown::sdSettings()`) reads. `sd_mode`/`sd_service`/
+> `sd_service_method` are also read directly by `sdSettings()`: `sd_mode`
+> selects `colsSDTipo` (only `model`|`service` are recognised as an alias —
+> any other value falls back to `model`), and in service mode `sdSettings()`
+> composes the runtime's `Service\Class\methodName` string from
+> `sd_service`+`sd_service_method` itself (the CLI never needs to write a
+> composed `colsSDModel` for that case). See
+> [SearchDropdown.md](SearchDropdown.md#basecrud-inline-widget-configuration-surface)
+> for the full BaseCrud searchdropdown key reference (masks, arraySearch,
+> filters, initWithData, cascading).
 
 **Examples:**
 

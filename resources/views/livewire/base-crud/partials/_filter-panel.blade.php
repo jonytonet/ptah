@@ -135,6 +135,7 @@
                                 $cfFilterKey      = 'filter_' . $cfField;
                                 $cfFilterSelected = $sdFilterLabels[$cfField] ?? null;
                                 $cfFilterHasRes   = !empty($sdResults[$cfFilterKey]);
+                                $cfSdSettings     = $this->sdSettings($col);
                             @endphp
                             <div>
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
@@ -175,7 +176,7 @@
                                         <input type="text"
                                             wire:keyup.debounce.300ms="filterSearchDropdown('{{ $cfField }}', $event.target.value)"
                                             @focus="$wire.openFilterDropdown('{{ $cfField }}')"
-                                            placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
+                                            placeholder="{{ $cfFilterSelected ? __('ptah::ui.filters_change') : ($cfSdSettings['placeholder'] ?: __('ptah::ui.filters_search_label', ['label' => $cfLabel])) }}"
                                             autocomplete="off"
                                             class="w-full text-sm rounded-md px-2.5 py-2 pr-8 ptah-c-fp_input ptah-c-control"
                                         />
@@ -190,13 +191,19 @@
                                         </button>
                                     </div>
                                     <div x-show="open" x-cloak
-                                        class="absolute z-30 w-full mt-1 overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
+                                        class="absolute z-30 w-full {{ $cfSdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
                                         @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                             <button type="button"
                                                 wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                 @click="open = false"
                                                 class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
                                                 {{ $opt['label'] }}
+                                                @if (array_key_exists('labelTwo', $opt))
+                                                    <span class="block text-[11px] opacity-70">{{ $opt['labelTwo'] }}</span>
+                                                @endif
+                                                @if (array_key_exists('labelThree', $opt))
+                                                    <span class="block text-[11px] opacity-70">{{ $opt['labelThree'] }}</span>
+                                                @endif
                                             </button>
                                         @empty
                                             <p class="px-3 py-2 text-xs italic ptah-c-fp_muted">{{ __('ptah::ui.filters_no_results') }}</p>

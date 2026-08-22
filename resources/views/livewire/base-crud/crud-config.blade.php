@@ -325,9 +325,13 @@
                                 ['id' => 'mask', 'label' => __('ptah::ui.cfg_col_subtab_mask')],
                                 ['id' => 'validation', 'label' => __('ptah::ui.cfg_col_subtab_validation')],
                                 ['id' => 'relation', 'label' => __('ptah::ui.cfg_col_subtab_relation')],
-                                ['id' => 'sd', 'label' => __('ptah::ui.cfg_col_subtab_sd')],
-                                ['id' => 'total', 'label' => __('ptah::ui.cfg_col_subtab_totalizer')],
                                 ];
+                                // The SD tab only makes sense for searchdropdown columns — hiding it
+                                // otherwise avoids a confusing, always-irrelevant sub-tab.
+                                if (($formDataField['colsTipo'] ?? '') === 'searchdropdown') {
+                                    $fTabs[] = ['id' => 'sd', 'label' => __('ptah::ui.cfg_col_subtab_sd')];
+                                }
+                                $fTabs[] = ['id' => 'total', 'label' => __('ptah::ui.cfg_col_subtab_totalizer')];
                                 @endphp
                                 @foreach ($fTabs as $ft)
                                 <button @click="editTab = '{{ $ft['id'] }}'"
@@ -1245,25 +1249,43 @@
                                     <div class="px-4 py-3 border border-blue-200 rounded-md bg-blue-50">
                                         <p class="text-xs text-blue-700">{!! __('ptah::ui.cfg_col_sd_type_hint') !!}</p>
                                     </div>
+
+                                    {{-- ── Highlight: initial load behaviour + result limit ── --}}
+                                    <div class="grid grid-cols-2 gap-4 p-4 border rounded-md border-emerald-200 bg-emerald-50">
+                                        <div class="col-span-2">
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" wire:model="formDataField.colsSDInitWithData"
+                                                    class="text-primary rounded border-slate-300" />
+                                                <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_col_sd_init_with_data') }}</span>
+                                            </label>
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_init_with_data_hint') }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_limit') }}</label>
+                                            <input type="number" wire:model="formDataField.colsSDLimit" placeholder="10"
+                                                min="1" max="100" class="cfg-input" />
+                                        </div>
+                                    </div>
+
                                     <div class="grid grid-cols-2 gap-4">
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_search_mode') }}</label>
                                             <div class="flex gap-3">
                                                 <label class="flex items-center gap-2 cursor-pointer">
-                                                    <input type="radio" wire:model.live="formDataField.colsSDMode"
+                                                    <input type="radio" wire:model.live="formDataField.colsSDTipo"
                                                         value="model" class="text-primary" />
                                                     <span class="text-xs font-medium text-slate-700">Model
                                                         Eloquent</span>
                                                 </label>
                                                 <label class="flex items-center gap-2 cursor-pointer">
-                                                    <input type="radio" wire:model.live="formDataField.colsSDMode"
+                                                    <input type="radio" wire:model.live="formDataField.colsSDTipo"
                                                         value="service" class="text-primary" />
                                                     <span class="text-xs font-medium text-slate-700">{{
                                                         __('ptah::ui.cfg_col_sd_mode_service') }}</span>
                                                 </label>
                                             </div>
                                         </div>
-                                        @if (($formDataField['colsSDMode'] ?? 'model') === 'model')
+                                        @if (($formDataField['colsSDTipo'] ?? 'model') === 'model')
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_model') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDModel"
@@ -1286,12 +1308,12 @@
                                         @endif
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_value_field') }}</label>
-                                            <input type="text" wire:model="formDataField.colsSDValueField"
+                                            <input type="text" wire:model="formDataField.colsSDValor"
                                                 placeholder="id" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_field') }}</label>
-                                            <input type="text" wire:model="formDataField.colsSDLabelField"
+                                            <input type="text" wire:model="formDataField.colsSDLabel"
                                                 placeholder="name" class="font-mono cfg-input" />
                                         </div>
                                         <div>
@@ -1301,20 +1323,71 @@
                                                 placeholder="cnpj" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_order_by') }}</label>
-                                            <input type="text" wire:model="formDataField.colsSDOrderBy"
-                                                placeholder="id asc" class="font-mono cfg-input" />
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_three') }}</label>
+                                            <input type="text" wire:model="formDataField.colsSDLabelThree"
+                                                placeholder="city" class="font-mono cfg-input" />
                                         </div>
                                         <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_limit') }}</label>
-                                            <input type="number" wire:model="formDataField.colsSDLimit" placeholder="10"
-                                                min="1" max="100" class="cfg-input" />
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_order_by') }}</label>
+                                            <input type="text" wire:model="formDataField.colsSDOrder"
+                                                placeholder="id asc" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">Placeholder</label>
                                             <input type="text" wire:model="formDataField.colsSDPlaceholder"
                                                 placeholder="Buscar..." class="cfg-input" />
                                         </div>
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_start_list') }}</label>
+                                            <select wire:model="formDataField.colsSDStartList" class="cfg-input">
+                                                <option value="bottom">{{ __('ptah::ui.cfg_col_sd_start_list_bottom') }}</option>
+                                                <option value="top">{{ __('ptah::ui.cfg_col_sd_start_list_top') }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_array_search') }}</label>
+                                            <input type="text" wire:model="formDataField.colsSDArraySearch"
+                                                placeholder="cnpj,email" class="font-mono cfg-input" />
+                                            <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_array_search_hint') }}</p>
+                                        </div>
+
+                                        {{-- ── Format masks (label / labelTwo / labelThree) ── --}}
+                                        <div class="col-span-2 grid grid-cols-3 gap-4 pt-3 mt-1 border-t border-slate-100">
+                                            <div>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_one') }}</label>
+                                                <select wire:model="formDataField.colsSDMaskOne" class="cfg-input">
+                                                    <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
+                                                    <option value="cnpj">cnpj</option>
+                                                    <option value="cpf">cpf</option>
+                                                    <option value="money">money</option>
+                                                    <option value="phone">phone</option>
+                                                    <option value="date">date</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_two') }}</label>
+                                                <select wire:model="formDataField.colsSDMaskTwo" class="cfg-input">
+                                                    <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
+                                                    <option value="cnpj">cnpj</option>
+                                                    <option value="cpf">cpf</option>
+                                                    <option value="money">money</option>
+                                                    <option value="phone">phone</option>
+                                                    <option value="date">date</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_three') }}</label>
+                                                <select wire:model="formDataField.colsSDMaskThree" class="cfg-input">
+                                                    <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
+                                                    <option value="cnpj">cnpj</option>
+                                                    <option value="cpf">cpf</option>
+                                                    <option value="money">money</option>
+                                                    <option value="phone">phone</option>
+                                                    <option value="date">date</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filters') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDFilters"

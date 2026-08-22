@@ -92,15 +92,20 @@
                                         $parentLabel = $pDepends
                                             ? (collect($formEditFields)->firstWhere('colsNomeFisico', $pDepends)['colsNomeLogico'] ?? $pDepends)
                                             : null;
+                                        $pSdPlaceholder = $col['colsSDPlaceholder'] ?? null;
+                                        $pSdLazy = ($col['colsSDInitWithData'] ?? true) === false;
                                     @endphp
                                     <div class="relative">
                                         <input type="text" disabled
-                                            placeholder="{{ $pDepends ? __('ptah::ui.sd_select_parent_first', ['parent' => $parentLabel]) : __('ptah::ui.search_entity', ['label' => $pLabel]) }}"
+                                            placeholder="{{ $pDepends ? __('ptah::ui.sd_select_parent_first', ['parent' => $parentLabel]) : ($pSdPlaceholder ?: __('ptah::ui.search_entity', ['label' => $pLabel])) }}"
                                             class="block w-full rounded-md border border-slate-200 px-3 py-2.5 pr-9 text-sm bg-slate-50 text-slate-400 cursor-not-allowed" />
                                         <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                                     </div>
                                     @if ($pDepends)
                                         <p class="mt-1 text-[10px] text-indigo-500">🔗 {{ __('ptah::ui.cfg_preview_depends', ['parent' => $parentLabel]) }}</p>
+                                    @endif
+                                    @if ($pSdLazy)
+                                        <p class="mt-1 text-[10px] text-slate-400">⏳ {{ __('ptah::ui.cfg_preview_sd_lazy') }}</p>
                                     @endif
                                     @break
 

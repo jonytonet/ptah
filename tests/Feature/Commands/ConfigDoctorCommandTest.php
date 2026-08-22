@@ -340,4 +340,193 @@ class ConfigDoctorCommandTest extends TestCase
             ->doesntExpectOutputToContain('unknown column permission key')
             ->assertExitCode(0);
     }
+
+    // ── 5e. SearchDropdown surface ───────────────────────────────────────────
+
+    private function sdConfig(array $sdExtra): array
+    {
+        $config = $this->goodConfig();
+        $config['cols'][] = array_merge([
+            'colsNomeFisico' => 'supplier_id',
+            'colsNomeLogico' => 'Supplier',
+            'colsTipo' => 'searchdropdown',
+            'colsSDModel' => 'Supplier',
+        ], $sdExtra);
+
+        return $config;
+    }
+
+    #[Test]
+    public function invalid_cols_sd_limit_warns_but_does_not_fail(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDLimit' => 0]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('invalid colsSDLimit')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_valid_cols_sd_limit_does_not_warn(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDLimit' => 20]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('invalid colsSDLimit')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function unknown_mask_warns(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDMaskOne' => 'not-a-real-mask']));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('unknown mask')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_builtin_mask_does_not_warn(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDMaskOne' => 'cnpj']));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown mask')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function legacy_sd_dialect_key_is_reported_then_fixed_idempotently(): void
+    {
+        $canonical = ModelKey::canonical(DoctorStub::class);
+        $this->seedConfig($canonical, '', $this->sdConfig([
+            'colsSDMode' => 'model',
+            'colsSDValueField' => 'id',
+            'colsSDLabelField' => 'name',
+            'colsSDOrderBy' => 'name asc',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('legacy dialect key')
+            ->assertExitCode(0); // warning only
+
+        $this->artisan('ptah:config:doctor --fix')->assertExitCode(0);
+
+        $row = CrudConfig::where('model', $canonical)->first();
+        $col = collect($row->config['cols'])->firstWhere('colsNomeFisico', 'supplier_id');
+
+        $this->assertSame('model', $col['colsSDTipo']);
+        $this->assertSame('id', $col['colsSDValor']);
+        $this->assertSame('name', $col['colsSDLabel']);
+        $this->assertSame('name asc', $col['colsSDOrder']);
+        // Legacy keys preserved — additive only.
+        $this->assertSame('model', $col['colsSDMode']);
+
+        // Idempotent: a second --fix run changes nothing further.
+        $before = $row->config;
+        $this->artisan('ptah:config:doctor --fix')->assertExitCode(0);
+        $after = CrudConfig::where('model', $canonical)->first()->config;
+        $this->assertSame($before, $after);
+    }
+
+    #[Test]
+    public function cols_sd_mode_both_is_not_promoted_to_the_canonical_key(): void
+    {
+        $canonical = ModelKey::canonical(DoctorStub::class);
+        $this->seedConfig($canonical, '', $this->sdConfig(['colsSDMode' => 'both']));
+
+        $this->artisan('ptah:config:doctor --fix')->assertExitCode(0);
+
+        $row = CrudConfig::where('model', $canonical)->first();
+        $col = collect($row->config['cols'])->firstWhere('colsNomeFisico', 'supplier_id');
+
+        $this->assertArrayNotHasKey('colsSDTipo', $col);
+    }
+
+    #[Test]
+    public function malformed_cols_sd_filters_warns(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDFilters' => 'not-json{']));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('malformed colsSDFilters')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function valid_cols_sd_filters_does_not_warn(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig([
+            'colsSDFilters' => '[{"field":"active","value":"S"}]',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('malformed colsSDFilters')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function unsafe_array_search_column_warns(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig([
+            'colsSDArraySearch' => 'name; DROP TABLE items',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('unsafe arraySearch column')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_safe_array_search_column_does_not_warn(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig([
+            'colsSDArraySearch' => 'name,status',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unsafe arraySearch column')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function invalid_cols_sd_mode_warns(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig(['colsSDMode' => 'both']));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('invalid colsSDMode')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function service_class_outside_configured_namespaces_warns(): void
+    {
+        config()->set('ptah.crud.sd_service_namespaces', ['App\\Services']);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig([
+            'colsSDTipo' => 'service',
+            'colsSDService' => 'Evil\\Namespace\\ExfilService',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('service outside sd_service_namespaces')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function service_class_inside_configured_namespaces_does_not_warn(): void
+    {
+        config()->set('ptah.crud.sd_service_namespaces', ['App\\Services']);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->sdConfig([
+            'colsSDTipo' => 'service',
+            'colsSDService' => 'App\\Services\\SupplierService',
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('service outside sd_service_namespaces')
+            ->assertExitCode(0);
+    }
 }

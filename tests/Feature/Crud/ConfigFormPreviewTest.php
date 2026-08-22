@@ -125,4 +125,64 @@ class ConfigFormPreviewTest extends TestCase
             ->assertSee('Active')
             ->assertSee('Inactive');
     }
+
+    // ── SearchDropdown surface: placeholder + lazy-load badge ───────────────
+
+    #[Test]
+    public function preview_renders_the_configured_sd_placeholder(): void
+    {
+        $fields = [
+            ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number', 'colsGravar' => false],
+            [
+                'colsNomeFisico' => 'supplier_id',
+                'colsNomeLogico' => 'Supplier',
+                'colsTipo' => 'searchdropdown',
+                'colsGravar' => true,
+                'colsSDPlaceholder' => 'Type a supplier name...',
+            ],
+        ];
+
+        Livewire::test(CrudConfig::class, ['model' => 'Widget'])
+            ->set('formEditFields', $fields)
+            ->call('previewForm')
+            ->assertSee('Type a supplier name...');
+    }
+
+    #[Test]
+    public function preview_shows_the_lazy_load_badge_when_init_with_data_is_false(): void
+    {
+        $fields = [
+            ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number', 'colsGravar' => false],
+            [
+                'colsNomeFisico' => 'supplier_id',
+                'colsNomeLogico' => 'Supplier',
+                'colsTipo' => 'searchdropdown',
+                'colsGravar' => true,
+                'colsSDInitWithData' => false,
+            ],
+        ];
+
+        $html = Livewire::test(CrudConfig::class, ['model' => 'Widget'])
+            ->set('formEditFields', $fields)
+            ->call('previewForm')
+            ->html();
+
+        $this->assertStringContainsString(__('ptah::ui.cfg_preview_sd_lazy'), $html);
+    }
+
+    #[Test]
+    public function preview_hides_the_lazy_load_badge_by_default(): void
+    {
+        $fields = [
+            ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number', 'colsGravar' => false],
+            ['colsNomeFisico' => 'supplier_id', 'colsNomeLogico' => 'Supplier', 'colsTipo' => 'searchdropdown', 'colsGravar' => true],
+        ];
+
+        $html = Livewire::test(CrudConfig::class, ['model' => 'Widget'])
+            ->set('formEditFields', $fields)
+            ->call('previewForm')
+            ->html();
+
+        $this->assertStringNotContainsString(__('ptah::ui.cfg_preview_sd_lazy'), $html);
+    }
 }

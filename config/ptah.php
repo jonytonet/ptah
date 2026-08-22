@@ -177,6 +177,17 @@ return [
         |   'observacoes' => 'Observações', 'valor_total' => 'Valor Total'
         */
         'label_dictionary' => [],
+
+        /*
+        | Namespaces a searchdropdown column's service (colsSDService, mode
+        | 'service') is expected to live under. Mirrors hook_namespaces above,
+        | but — UNLIKE hook_namespaces — this is HOJE apenas diagnóstico: only
+        | `ptah:config:doctor` reads it, to warn when a config's service class
+        | falls outside the expected namespaces. Nothing in the request-time
+        | resolver (HasCrudSearchDropdown::resolveSearchDropdownResults) is
+        | restricted by this list — enforcing it there is a v2 change.
+        */
+        'sd_service_namespaces' => ['App\\Services'],
     ],
 
     /*

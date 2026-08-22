@@ -1134,9 +1134,20 @@ return [
     'cfg_col_sd_value_field' => 'Value Field (value)',
     'cfg_col_sd_label_field' => 'Label Field (label)',
     'cfg_col_sd_label_two' => 'Label Two (optional)',
+    'cfg_col_sd_label_three' => 'Label Three (optional)',
     'cfg_col_sd_order_by' => 'Sort order (orderByRaw)',
     'cfg_col_sd_limit' => 'Results Limit',
     'cfg_col_sd_filters' => 'Static Filters (JSON)',
+    'cfg_col_sd_init_with_data' => 'Load the list before typing (start with the list loaded)',
+    'cfg_col_sd_init_with_data_hint' => 'When off, the dropdown stays empty until the user types a search term — lighter for very large tables.',
+    'cfg_col_sd_start_list' => 'List position',
+    'cfg_col_sd_start_list_bottom' => 'Below the field (default)',
+    'cfg_col_sd_start_list_top' => 'Above the field',
+    'cfg_col_sd_array_search' => 'Extra search columns (comma-separated)',
+    'cfg_col_sd_array_search_hint' => 'Columns also matched by the search term besides the label, e.g. cnpj,email.',
+    'cfg_col_sd_mask_one' => 'Label mask',
+    'cfg_col_sd_mask_two' => 'Label Two mask',
+    'cfg_col_sd_mask_three' => 'Label Three mask',
 
     // Columns > Totalizer extra
     'cfg_col_total_func' => 'Function',
@@ -1599,6 +1610,7 @@ return [
     'cfg_preview_empty' => 'No savable columns configured yet. Mark columns as "Save" to see them here.',
     'cfg_preview_calc_badge' => 'calculated',
     'cfg_preview_depends' => 'Depends on :parent (cascading)',
+    'cfg_preview_sd_lazy' => 'Loads the list only after typing a search term',
     'cfg_preview_footer_hint' => 'Buttons are illustrative — this is a preview.',
 
 ];

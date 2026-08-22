@@ -340,7 +340,7 @@ a hard delete has no undo option, since there is nothing left to restore.
 
 | Method | Parameters | Description |
 |---|---|---|
-| `openDropdown()` | `string $field` | Loads the first items (no query) when focused/clicked |
+| `openDropdown()` | `string $field` | Loads the first items (no query) when focused/clicked — skipped when `colsSDInitWithData` is `false` and no term was typed yet (see [SearchDropdown.md](SearchDropdown.md#basecrud-inline-widget-configuration-surface)) |
 | `searchDropdown()` | `string $field, string $query` | Filters suggestions by typed text (min 1 char, 300ms debounce) |
 | `selectDropdownOption()` | `string $field, mixed $value, string $label` | Confirms selection and updates `formData` and `sdLabels` |
 | `filterSearchDropdown()` | `string $field, string $query` | Search in the filter panel |

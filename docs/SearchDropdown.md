@@ -417,22 +417,109 @@ SearchDropdown also works embedded in BaseCrud forms and the filter panel, manag
 
 No component instantiation is needed — just configure the column with `colsTipo: searchdropdown`.
 
-### Configuration keys
+### BaseCrud inline widget configuration surface
 
-#### Form column
+Every key below is read by `HasCrudSearchDropdown::sdSettings()` — the single
+resolver both the modal-form widget and the filter-panel widget call to
+normalise a column's configuration. It accepts three historical dialects
+(the canonical keys, the visual CrudConfig editor's earlier split fields, and
+the CLI wizard's now-dead field names) and falls back through them in that
+order, so a config written by any of them behaves identically — see
+[Read-alias resolution](#read-alias-resolution) below.
+
+#### Form column — canonical keys
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `colsSDModel` | `string` | — | Model or service class (e.g. `BusinessPartner`, `Product/ProductService/search`) |
-| `colsSDLabel` | `string` | `'name'` | Column displayed as the label. In model-mode, accepts dot-notation for a relation column (e.g. `user.name`, or nested `a.b.name`) — see [note below](#via-model) |
-| `colsSDValor` | `string` | `'id'` | Column used as the value (saved in `formData`) |
-| `colsSDOrder` | `string` | `'{label} ASC'` | Raw ORDER BY |
+| `colsSDModel` | `string` | — | Model class (e.g. `BusinessPartner`), or — in service mode — `Namespace\Class\method` (composed automatically from `colsSDService`+`colsSDServiceMethod` when absent — see [via custom service](#via-custom-service-basecrud)) |
 | `colsSDTipo` | `'model'\|'service'` | `'model'` | Search mode |
+| `colsSDLabel` | `string` | `'name'` | Column displayed as the label. In model-mode, accepts dot-notation for a relation column (e.g. `user.name`, or nested `a.b.name`) — see [note below](#via-model) |
+| `colsSDLabelTwo` | `string\|null` | `null` | Second label column, rendered as a smaller second line in the list item — only appears in the result item when set |
+| `colsSDLabelThree` | `string\|null` | `null` | Third label column, same rendering as `colsSDLabelTwo` |
+| `colsSDValor` | `string` | `'id'` | Column used as the value (saved in `formData`) |
+| `colsSDOrder` | `string` | `'{label} ASC'` | Raw `ORDER BY` |
 | `colsSDLimit` | `int` | `15` | Results limit |
-| `colsSDMode` | `'create'\|'edit'\|'both'` | `'both'` | Which modal mode the field appears in |
-| `colsSDLabelTwo` | `string\|null` | `null` | Second label column in the list item |
-| `colsRelacao` | `string\|null` | `null` | Eloquent relation name used to pre-fill the label in edit mode |
+| `colsSDInitWithData` | `bool` | `true` | When `false`, the dropdown stays empty on focus until the user types a term (mirrors the standalone component's `initWithData`) — lighter for very large tables |
+| `colsSDPlaceholder` | `string\|null` | `null` | Input placeholder; falls back to the generic "Search :label..." text when unset |
+| `colsSDStartList` | `'bottom'\|'top'` | `'bottom'` | Whether the results list opens below or above the input |
+| `colsSDArraySearch` | `string\|list<string>` | `[]` | Extra columns also matched by the LIKE search, besides `colsSDLabel` — CSV string or array; every column is validated by `SqlIdentifier::isSafe()`, unsafe ones are silently dropped |
+| `colsSDFilters` | `string\|array` | `[]` | Static `WHERE` filters, always applied in addition to the search term. Accepts a JSON string of `{"field","value","op"?}` objects, a plain list of `[column, operator, value]` triples, or an associative `{"column": "value"}` map (implicit `=`). Every column/operator is validated (`SqlIdentifier::isSafe()` + a fixed operator allow-list: `=`,`!=`,`>`,`>=`,`<`,`<=`,`LIKE`) — anything unsafe or unrecognised is silently discarded |
+| `colsSDMaskOne` | `string` | `'defaultMask'` | Format mask applied to the label (`cnpj`\|`cpf`\|`money`\|`phone`\|`date`, or `'defaultMask'` for no transformation — see [SearchDropdownMask](../src/Support/SearchDropdownMask.php); unlike the standalone component's `maskOne`, dynamic `Class::method`/`Class@method` masks are NOT supported here — a config-editable class/method call is a code-execution vector) |
+| `colsSDMaskTwo` | `string` | `'defaultMask'` | Same builtins, applied to `colsSDLabelTwo` |
+| `colsSDMaskThree` | `string` | `'defaultMask'` | Same builtins, applied to `colsSDLabelThree` |
+| `colsSDDependsOn` | `string\|null` | `null` | Physical name of a parent field — turns this into a **cascading** dropdown, locked until the parent has a value (see [Cascading dropdowns](#cascading-dependent-dropdowns) below) |
+| `colsSDFilterColumn` | `string\|null` | same as `colsSDDependsOn` | Column on this field's model used to filter by the parent's value |
+| `colsSDService` | `string\|null` | — | Service class, service mode only (paired with `colsSDServiceMethod`) |
+| `colsSDServiceMethod` | `string\|null` | — | Service method name, service mode only |
+| `colsRelacao` | `string\|null` | `null` | Eloquent relation name used to pre-fill the label in edit mode (masked with `colsSDMaskOne` when set) |
 | `colsRelacaoExibe` | `string\|null` | `null` | Relation attribute displayed in the input in edit mode |
+
+> **Mask vs. search caveat:** the LIKE search always runs against the RAW
+> column value — exactly like the standalone component — never against the
+> masked/formatted display. If users search by typing the masked form (e.g.
+> `123.456.789-09`), it will not match a raw `12345678909` column. Store the
+> value in the shape users are most likely to type, or add the raw column to
+> `colsSDArraySearch` so both the formatted label and an alternate raw column
+> can be searched together.
+
+#### Read-alias resolution
+
+`sdSettings()` reads each setting canonical-first, then falls back — in this
+order — to the visual editor's pre-existing dialect, then the CLI wizard's
+dead dialect, then a hard default:
+
+| Setting | Canonical | Editor dialect (legacy) | CLI-wizard dialect (legacy) |
+|---|---|---|---|
+| Model | `colsSDModel` | — | `colsSdTable` |
+| Value | `colsSDValor` | `colsSDValueField` | `colsSdValueColumn` |
+| Label | `colsSDLabel` | `colsSDLabelField` | `colsSdSelectColumn` |
+| Order | `colsSDOrder` | `colsSDOrderBy` | `colsSdOrderBy` |
+| Limit | `colsSDLimit` | — | `colsSdLimit` |
+| Search mode | `colsSDTipo` | `colsSDMode` (only when it holds `'model'` or `'service'` — any other value, e.g. `'both'`, is ignored and falls back to `'model'`) | — |
+
+The legacy keys are never deleted by this resolution — `CrudConfig::formatFieldsForDb()`
+additively writes the canonical key alongside them when saving from the
+editor, and `ptah:config:doctor --fix` does the same for any already-persisted
+config (idempotent — a second run finds nothing left to normalise).
+
+#### Cascading (dependent) dropdowns
+
+```json
+[
+  {"colsNomeFisico": "state_id", "colsTipo": "searchdropdown", "colsSDModel": "State"},
+  {
+    "colsNomeFisico": "city_id",
+    "colsTipo": "searchdropdown",
+    "colsSDModel": "City",
+    "colsSDDependsOn": "state_id",
+    "colsSDFilterColumn": "state_id"
+  }
+]
+```
+
+`city_id` stays disabled until `state_id` has a value; once it does, its
+options are filtered by `WHERE state_id = :parentValue`. Selecting a new
+parent value clears every descendant field (and its cached results),
+recursively.
+
+#### Component ↔ BaseCrud key matrix
+
+| Standalone `SearchDropdown` prop | BaseCrud config key |
+|---|---|
+| `model` | `colsSDModel` |
+| `label` | `colsSDLabel` |
+| `labelTwo` | `colsSDLabelTwo` |
+| `labelThree` | `colsSDLabelThree` |
+| `value` | `colsSDValor` |
+| `orderByRaw` | `colsSDOrder` |
+| `limit` | `colsSDLimit` |
+| `initWithData` | `colsSDInitWithData` |
+| `arraySearch` | `colsSDArraySearch` |
+| `dataFilter` | `colsSDFilters` |
+| `maskOne`/`maskTwo`/`maskThree` | `colsSDMaskOne`/`colsSDMaskTwo`/`colsSDMaskThree` (built-ins only — see caveat above) |
+| `useService` | `colsSDTipo: 'service'` + `colsSDService`/`colsSDServiceMethod` |
+| `placeholder` | `colsSDPlaceholder` |
+| `startList` | `colsSDStartList` |
 
 #### Filter keys (side panel)
 
@@ -547,6 +634,16 @@ class ProductService
 ```
 
 > **Note:** Ptah resolves the service via `app($class)`, so dependency injection works.
+
+> **Editor shortcut:** the visual CrudConfig editor's "sd" tab lets you fill
+> `colsSDService` (e.g. `Product\ProductService`) and `colsSDServiceMethod`
+> (e.g. `searchActive`) as two separate fields instead of composing the
+> `Namespace\Class\method` string by hand — `sdSettings()` composes it for you
+> at read time (and `CrudConfig::formatFieldsForDb()` also composes it into
+> `colsSDModel` when saving from the editor). Either form works; service-mode
+> results are returned by your service as-is — `colsSDLabelTwo`/`colsSDLabelThree`/
+> `colsSDMaskOne` and friends are model-mode-only, since the service already
+> controls the shape of every returned item.
 
 ---
 
