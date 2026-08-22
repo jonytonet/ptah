@@ -197,3 +197,16 @@ por dois motivos concretos:
    Fazer esse fluxo caber corretamente exigiria mexer em código de produção
    ou inventar uma convenção de fixture nova — fora do escopo de "adicionar
    testes".
+
+### Known quirk — synthetic clicks on teleported modal buttons (Chrome ≥ 151.0.7922.173)
+
+A WebDriver click on a `wire:click` button living inside forge-modal's
+`@teleport('body')` delivers every DOM event to the element (pointerdown,
+mousedown, mouseup, click — none default-prevented; verified with listeners on
+the button itself) yet Livewire's binding never fires. Human clicks work in
+real usage, `$wire.method()` works, and keyboard-driven `wire:model` works —
+the quirk is exclusive to the synthetic dispatch path. Until the upstream
+cause is identified, browser tests that need to trigger an action inside a
+teleported modal should call `window.Livewire.all()[0].$wire.method()` via
+`executeScript` and assert on the resulting DOM, which still exercises the
+full server round-trip.

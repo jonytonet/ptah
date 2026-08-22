@@ -149,6 +149,7 @@ return [
     'select_placeholder' => 'Select...',
     'search_entity' => 'Search :label...',
     'no_results' => 'No results found.',
+    'forge_select_filter_aria' => 'Filter options',
     'btn_cancel' => 'Cancel',
     'btn_save_changes' => 'Save Changes',
     'btn_create' => 'Create',

@@ -12,6 +12,13 @@
                      wire:model[.mod], é semeado da propriedade Livewire
                      correspondente — dot-path suportado, ex. "filters.kind")
       - name       : consumed internally
+      - searchable : boolean (default false). Adds a client-side filter input
+                     at the top of the dropdown; matching is case/accent-
+                     insensitive (NFD-strip diacritics). Arrow-key navigation
+                     visits only the currently-matching options. Every new
+                     property/method below is emitted ONLY when this prop is
+                     true — a consumer that never sets it gets byte-identical
+                     markup to before (see ForgeSelectSearchableTest).
 
     LIMITAÇÃO CONHECIDA: `multiple` não é suportado com wire:model (a ponte
     hidden envia string JSON, não array) — nenhum call site do pacote combina
@@ -28,6 +35,7 @@
     'error'       => null,
     'selected'    => null,
     'name'        => null,
+    'searchable'  => false,
 ])
 
 @php
@@ -77,6 +85,41 @@
             multiple: {{ $multiple ? 'true' : 'false' }},
             options: {{ json_encode($options) }},
             placeholder: '{{ addslashes($placeholder) }}',
+@if ($searchable)
+            search: '',
+            normalizeText(value) {
+                return String(value).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+            },
+            matchesFilter(option) {
+                // A clear-selection option (empty value, e.g. a leading
+                // None entry) is a control affordance, not searchable
+                // content — it must stay reachable no matter what the user
+                // typed, or the filter could hide the only way to unselect.
+                if (option.value === '' || option.value === null) return true;
+                const needle = this.normalizeText(this.search);
+                return !needle || this.normalizeText(option.label).includes(needle);
+            },
+            firstVisibleIndex() {
+                for (let i = 0; i < this.options.length; i++) {
+                    if (this.matchesFilter(this.options[i])) return i;
+                }
+                return -1;
+            },
+            hasVisibleOptions() {
+                return this.firstVisibleIndex() >= 0;
+            },
+            onFilterInput() {
+                this.activeIndex = this.firstVisibleIndex();
+            },
+            onFilterEscape() {
+                if (this.search !== '') {
+                    this.search = '';
+                    this.activeIndex = this.firstVisibleIndex();
+                } else {
+                    this.open = false;
+                }
+            },
+@endif
             get displayLabel() {
                 if (this.multiple) {
                     if (!this.selected || !this.selected.length) return this.placeholder;
@@ -105,6 +148,28 @@
                 }
             },
             activeIndex: -1,
+@if ($searchable)
+            openList() {
+                this.open = true;
+                /* A stale filter from the previous open could hide the currently
+                   selected option or show a confusing empty state (review
+                   finding) — every open starts clean. */
+                this.search = '';
+                this.$nextTick(() => { if (this.$refs.filterInput) this.$refs.filterInput.focus(); });
+                const sel = this.options.findIndex(o => this.isSelected(o.value));
+                this.activeIndex = (sel >= 0 && this.matchesFilter(this.options[sel])) ? sel : this.firstVisibleIndex();
+            },
+            move(delta) {
+                if (!this.open) { this.openList(); return; }
+                const n = this.options.length;
+                if (!n || !this.hasVisibleOptions()) { this.activeIndex = -1; return; }
+                let next = this.activeIndex;
+                for (let i = 0; i < n; i++) {
+                    next = (next + delta + n) % n;
+                    if (this.matchesFilter(this.options[next])) { this.activeIndex = next; return; }
+                }
+            },
+@else
             openList() {
                 this.open = true;
                 if (this.activeIndex < 0) {
@@ -118,6 +183,7 @@
                 if (!n) return;
                 this.activeIndex = (this.activeIndex + delta + n) % n;
             },
+@endif
             selectActive() {
                 if (this.open && this.activeIndex >= 0 && this.options[this.activeIndex]) {
                     this.toggle(this.options[this.activeIndex].value);
@@ -143,7 +209,11 @@
         {{-- Trigger --}}
         <button
             type="button"
-            @click="open = !open"
+            {{-- Searchable: clicking must route through openList() — it is what
+                 focuses the filter input and resets a stale filter. The plain
+                 toggle bypassed both, caught by the browser test in real
+                 Chrome (the structural tests could not see it). --}}
+            @click="{{ $searchable ? 'open ? open = false : openList()' : 'open = !open' }}"
             @keydown.enter.prevent="selectActive()"
             @keydown.space.prevent="selectActive()"
             @keydown.arrow-down.prevent="move(1)"
@@ -170,6 +240,58 @@
         </button>
 
         {{-- Dropdown --}}
+@if ($searchable)
+        <div
+            x-show="open"
+            x-cloak
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md overflow-hidden"
+        >
+            <div class="p-1.5 border-b ptah-c-dd_sep">
+                <input
+                    type="text"
+                    x-ref="filterInput"
+                    x-model="search"
+                    @input="onFilterInput()"
+                    @keydown.enter.prevent="selectActive()"
+                    @keydown.arrow-down.prevent="move(1)"
+                    @keydown.arrow-up.prevent="move(-1)"
+                    @keydown.escape.prevent="onFilterEscape()"
+                    :aria-activedescendant="activeIndex >= 0 ? ('{{ $uniqueId }}-opt-' + activeIndex) : null"
+                    aria-label="{{ __('ptah::ui.forge_select_filter_aria') }}"
+                    autocomplete="off"
+                    class="ptah-select-filter w-full rounded border px-2 py-1 text-sm focus:outline-none"
+                >
+            </div>
+            <ul class="py-1 max-h-48 overflow-auto" role="listbox" id="{{ $uniqueId }}-list" :aria-multiselectable="multiple" aria-live="polite">
+                <template x-for="(option, idx) in options" :key="option.value">
+                    <li
+                        x-show="matchesFilter(option)"
+                        :id="'{{ $uniqueId }}-opt-' + idx"
+                        @click="toggle(option.value)"
+                        @mouseenter="activeIndex = idx"
+                        role="option"
+                        :aria-selected="isSelected(option.value)"
+                        :class="[ isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item', activeIndex === idx ? 'ptah-select-active' : '' ]"
+                        class="px-4 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors duration-100"
+                    >
+                        <span x-text="option.label"></span>
+                        <svg x-show="isSelected(option.value)" class="h-4 w-4 text-primary shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </li>
+                </template>
+                <li x-show="!hasVisibleOptions()" class="ptah-select-empty px-4 py-2 text-sm" role="presentation">
+                    {{ __('ptah::ui.no_results') }}
+                </li>
+            </ul>
+        </div>
+@else
         <div
             x-show="open"
             x-cloak
@@ -199,6 +321,7 @@
                 </template>
             </ul>
         </div>
+@endif
     </div>
 
     @if ($error)

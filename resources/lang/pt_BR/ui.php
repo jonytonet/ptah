@@ -150,6 +150,7 @@ return [
     'select_placeholder' => 'Selecione...',
     'search_entity' => 'Buscar :label...',
     'no_results' => 'Nenhum resultado encontrado.',
+    'forge_select_filter_aria' => 'Filtrar opções',
     'btn_cancel' => 'Cancelar',
     'btn_save_changes' => 'Salvar Alterações',
     'btn_create' => 'Criar',

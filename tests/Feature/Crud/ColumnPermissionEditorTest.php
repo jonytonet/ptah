@@ -131,11 +131,30 @@ class ColumnPermissionEditorTest extends TestCase
     {
         $this->makeObject($this->makePage('sales'), 'sales.view_cost', label: 'View cost');
 
-        $this->editor()
+        $html = $this->editor()
             ->assertSee(__('ptah::ui.cfg_col_permission_label'))
-            ->assertSee(__('ptah::ui.cfg_col_permission_none'))
-            ->assertSee('sales.view_cost — View cost (sales)')
-            ->assertSee(__('ptah::ui.cfg_col_permission_hint'));
+            ->assertSee(__('ptah::ui.cfg_col_permission_hint'))
+            ->html();
+
+        // Onda: colsPermission moved from a plain <select><option> (real text
+        // nodes) to <x-forge-select searchable>, which serializes `options`
+        // into the `x-data` JSON blob instead — option labels only become
+        // visible TEXT once Alpine hydrates client-side, which this
+        // server-render assertion cannot execute. assertSee() still works
+        // (it substring-searches the raw HTML, JSON blob included), but
+        // json_encode() escapes non-ASCII by default, so the em dash in
+        // "sales.view_cost — View cost (sales)" is NOT a literal "—" in the
+        // markup — it is the escaped `—` sequence PHP's json_encode
+        // produces. Assert against that same escaped form instead of
+        // reverting the encoding just to keep a literal string comparison.
+        $this->assertStringContainsString(
+            trim(json_encode(__('ptah::ui.cfg_col_permission_none')), '"'),
+            $html
+        );
+        $this->assertStringContainsString(
+            trim(json_encode('sales.view_cost — View cost (sales)'), '"'),
+            $html
+        );
     }
 
     #[Test]
@@ -144,6 +163,27 @@ class ColumnPermissionEditorTest extends TestCase
         config()->set('ptah.modules.permissions', false);
 
         $this->editor()->assertDontSee(__('ptah::ui.cfg_col_permission_label'));
+    }
+
+    /**
+     * The colsPermission field is a searchable <x-forge-select>, not a plain
+     * <select> — this is what forge-select actually renders as (see
+     * ForgeSelectSearchableTest for the markup contract) — and its options
+     * carry the qualified `{page}::{key}` values on collision, unmodified
+     * from availablePermissionKeys().
+     */
+    #[Test]
+    public function the_permission_field_renders_as_a_searchable_forge_select_with_qualified_values_on_collision(): void
+    {
+        $this->makeObject($this->makePage('page-a'), 'shared.button');
+        $this->makeObject($this->makePage('page-b'), 'shared.button');
+
+        $html = $this->editor()->html();
+
+        $this->assertStringContainsString('ptah-select-filter', $html, 'colsPermission nao esta usando um forge-select searchable.');
+        $this->assertStringNotContainsString('<select wire:model="formDataField.colsPermission"', $html);
+        $this->assertStringContainsString('page-a::shared.button', $html);
+        $this->assertStringContainsString('page-b::shared.button', $html);
     }
 
     // ── View: lock badge in the columns list ────────────────────────────────

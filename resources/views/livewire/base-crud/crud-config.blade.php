@@ -220,7 +220,7 @@
                                                 }}</span>
                                             @endif
                                             @if (!empty($col['colsPermission']))
-                                            <svg class="inline-block w-3 h-3 ml-1 text-amber-700" fill="currentColor"
+                                            <svg class="inline-block w-3 h-3 ml-1 cfg-ink-warn" fill="currentColor"
                                                 viewBox="0 0 24 24"
                                                 title="{{ __('ptah::ui.cfg_col_permission_badge_title', ['key' => $col['colsPermission']]) }}">
                                                 <path
@@ -363,7 +363,7 @@
                                         <input type="text" wire:model="formDataField.colsSource"
                                             placeholder="ex: suppliers.name" class="font-mono cfg-input" />
                                         <div
-                                            class="mt-2 p-3 rounded-md border border-sky-100 bg-sky-50/60 text-[11px] space-y-1.5">
+                                            class="mt-2 p-3 rounded-md border border-sky-100 bg-sky-50 text-[11px] space-y-1.5">
                                             <p class="font-semibold text-sky-700">{{
                                                 __('ptah::ui.cfg_col_field_guide_title') }}</p>
                                             <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-slate-600">
@@ -441,16 +441,19 @@
                                     </div>
                                     {{-- Column-level visibility permission (only when the "permissions" module is on) --}}
                                     @if (config('ptah.modules.permissions'))
-                                    @php $permissionKeyOptions = $this->availablePermissionKeys(); @endphp
+                                    @php
+                                        $permissionKeyOptions = array_merge(
+                                            [['value' => '', 'label' => __('ptah::ui.cfg_col_permission_none')]],
+                                            $this->availablePermissionKeys()
+                                        );
+                                    @endphp
                                     <div class="col-span-2">
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_permission_label') }}</label>
-                                        <select wire:model="formDataField.colsPermission" class="cfg-input">
-                                            <option value="">{{ __('ptah::ui.cfg_col_permission_none') }}</option>
-                                            @foreach ($permissionKeyOptions as $opt)
-                                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
-                                            @endforeach
-                                        </select>
-                                        <p class="text-[11px] text-amber-700 mt-1">{{ __('ptah::ui.cfg_col_permission_hint') }}</p>
+                                        <x-forge-select
+                                            searchable
+                                            wire:model="formDataField.colsPermission"
+                                            :options="$permissionKeyOptions" />
+                                        <p class="text-[11px] cfg-ink-warn mt-1">{{ __('ptah::ui.cfg_col_permission_hint') }}</p>
                                     </div>
                                     @endif
                                     {{-- Form block (section) + onChange formula (calculated fields) --}}

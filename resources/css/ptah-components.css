@@ -142,6 +142,24 @@
                                         .ptah-c-search_x use the exact same hex in light and dark today */
     --ptah-text-on-accent: #ffffff; /* white ink on solid accent/strong backgrounds — invariant across scope */
 
+    /* Same "invariant across scope" idiom as --ptah-icon-muted, for the CRUD
+       Config editor's two literal-tinted callout boxes (bg-sky-50 SQL-source
+       guide, bg-indigo-50 cascading-dropdown hint — see the ".ptah-cfg-content
+       .bg-sky-50 .text-slate-*" rules below). Those boxes keep their own
+       light background in EITHER theme (they were never part of the
+       bg-white/bg-slate-* repaint — see that section's own comment), but the
+       text-slate-400/500/600 nested inside them IS repainted file-wide for
+       the ambient canvas, which in .ptah-dark turns lighter — exactly wrong
+       for ink that still sits on a background that never left near-white.
+       One token, not one per slate shade: --ptah-text-muted's OWN light
+       value (#64748b) only reaches 4.26-4.46:1 on these two tints (below the
+       4.5:1 floor, still an improvement on the 2.29-2.41:1 it replaces but
+       not a pass) — --ptah-text-secondary's light value clears both
+       (6.78-7.11:1) with real margin, so every nested shade (400/500/600)
+       in these callouts routes through this ONE ink, not a muted/secondary
+       split that would leave the muted tier failing. */
+    --ptah-text-secondary-on-tint: #475569; /* --ptah-text-secondary's :root value, exact match */
+
     /* ── Densidade (Onda B, eixo global de aparência) ────────────────────
        Baseline: o que renderiza quando NADA (nem preset, nem `.ptah-base-crud`
        local) define estes 4 tokens — mesmo papel que os outros tokens de
@@ -1024,6 +1042,81 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 
 .ptah-cfg-content .text-slate-800            { color: var(--ptah-text-strong); } /* #1e293b, exact match */
 .ptah-dark .ptah-cfg-content .text-slate-800 { color: var(--ptah-text-strong); }
+
+/* ── CRUD Config editor — dark contrast follow-up (Onda 5) ────────────────
+   The v1.15.2 pass above tokenized bg-white, bg-slate-* and text-slate-* —
+   every utility that only ever appears as a plain (non-`:hover`, non-nested)
+   class. Four failure modes it did not cover, all found by grepping this
+   view's remaining color utility families and computing the resolved
+   .ptah-dark pair (same relative-luminance math as AlertContrastTest /
+   ModuleScreenSemanticChipContrastTest — see CrudConfigDarkContrastTest):
+
+   1. `.cfg-input`/`.cfg-input-sm` never set an explicit ::placeholder color,
+      leaving it to the browser's UA default (`color-mix(currentcolor 54%,
+      transparent)` in Chromium) instead of a value this file owns and can
+      prove — every other input-like control in this file (.ptah-c-search)
+      sets one explicitly. */
+.ptah-cfg .cfg-input::placeholder            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg .cfg-input::placeholder { color: var(--ptah-text-muted); }
+.ptah-cfg .cfg-input-sm::placeholder            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg .cfg-input-sm::placeholder { color: var(--ptah-text-muted); }
+
+/* 2. `hover:bg-slate-50`/`hover:bg-slate-100` are literal Tailwind utilities
+      (compiled selector `.hover\:bg-slate-50:hover`, unaffected by
+      .ptah-dark on their own) applied to rows/buttons whose RESTING state
+      already reads the tokenized (light-in-dark) ink above — on hover the
+      background flashes back to its literal near-white value while the
+      text stays light, producing 1.36-1.42:1. Same fix, same idiom, for the
+      literal `hover:text-slate-500`/`hover:text-slate-600` used on icons and
+      links that keep the ambient (already-dark) surface behind them but
+      swap to a literal mid-gray ink on hover — 1.93-3.07:1 there.
+      `hover:border-slate-300` was measured too and left alone: the literal
+      value (#cbd5e1) already reads 9.85:1 against the dark surface, better
+      than the --ptah-line-control token would (1.93:1) — repainting it
+      would be a regression, not a fix. */
+.ptah-cfg-content .hover\:bg-slate-50:hover            { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-cfg-content .hover\:bg-slate-50:hover { background-color: var(--ptah-surface-hover); }
+
+.ptah-cfg-content .hover\:bg-slate-100:hover            { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-cfg-content .hover\:bg-slate-100:hover { background-color: var(--ptah-control-ghost); }
+
+.ptah-cfg-content .hover\:text-slate-500:hover            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg-content .hover\:text-slate-500:hover { color: var(--ptah-text-muted); }
+
+.ptah-cfg-content .hover\:text-slate-600:hover            { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-cfg-content .hover\:text-slate-600:hover { color: var(--ptah-text-secondary); }
+
+/* 3. The column-permission badge icon (svg, columns table) and the
+   column-permission select's own hint paragraph (Básico tab) both use the
+   bare `text-amber-700` utility directly on the tokenized ambient surface —
+   2.91:1 in .ptah-dark, since amber-700 was only ever tuned as ink on a
+   near-white background. `.cfg-ink-warn` replaces it at both call sites:
+   the light rule keeps the exact original hex (no visual change), the dark
+   rule reuses the already-existing --ptah-warn-lite token (defined at the
+   top of this file for the same "warn ink on a dark card surface" role),
+   9.61:1. */
+.ptah-cfg-content .cfg-ink-warn            { color: #b45309; } /* text-amber-700, exact match */
+.ptah-dark .ptah-cfg-content .cfg-ink-warn { color: var(--ptah-warn-lite); }
+
+/* 4. The SQL-source guide box (bg-sky-50, Básico tab) and the cascading-
+   dropdown hint box (bg-indigo-50, Buscar/SD tab) are literal-tinted
+   callouts that keep the SAME near-white background in both themes (unlike
+   bg-white/bg-slate-* above, never part of that repaint) — but they nest
+   the file-wide text-slate-400/500/600 utilities, whose .ptah-dark override
+   assumes the ambient canvas actually went dark. Inside these two boxes it
+   never does, so the "lighter ink for a dark background" override reads
+   WORSE than doing nothing (1.39-2.41:1) — restored here to a passing
+   literal via the invariant token declared next to --ptah-icon-muted (see
+   its own comment for why every nested shade routes through the SAME
+   "-secondary" ink instead of a muted/secondary split).
+   (The sky box's own background lost its `/60` translucency in the view:
+   solid bg-sky-50, matching every sibling info box's convention, so its
+   composite no longer drifts toward a lighter tone under .ptah-dark's
+   surface-based ambient — see the view for that one-line change.) */
+.ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-400,
+.ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-500,
+.ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-600,
+.ptah-dark .ptah-cfg-content .bg-indigo-50 .text-slate-500 { color: var(--ptah-text-secondary-on-tint); }
 
 /* ── Input border (non-error state) ── */
 .ptah-c-form_border            { border-color: var(--ptah-line-field); }
@@ -2160,6 +2253,31 @@ main { background-color: var(--ptah-canvas); }
 .ptah-dark .ptah-select-dropdown li { color: var(--ptah-text); }
 .ptah-select-dropdown li:hover { background-color: var(--ptah-menu-hover); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-select-dropdown li:hover { background-color: var(--ptah-menu-hover); color: var(--ptah-text-strong); }
+
+/* ── forge-select `searchable` filter input ───────────────────────────────
+   Same field tokens as .ptah-select-trigger (this is the same "field" role,
+   just inside the open dropdown instead of the closed trigger). The
+   wrapper's own bottom border reuses .ptah-c-dd_sep (the existing dropdown-
+   separator token class) instead of a new rule — same hairline role. */
+.ptah-select-filter {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-select-filter::placeholder { color: var(--ptah-text-muted); }
+.ptah-select-filter:focus { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); }
+.ptah-dark .ptah-select-filter {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-field);
+}
+.ptah-dark .ptah-select-filter::placeholder { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-select-filter:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); }
+
+/* "No results" row — same ink as the module-screen empty state, not a real
+   `role="option"` (it never gets `.ptah-c-dd_item`/`.ptah-select-active`). */
+.ptah-select-empty            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-select-empty { color: var(--ptah-text-muted); }
 
 /* ── Auth layout background (login, forgot/reset password, 2FA) ─────────
    Migrated from forge-auth.blade.php's `bg-gradient-to-br from-primary/5

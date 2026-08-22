@@ -85,6 +85,27 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
             'this selector would win the cascade over that utility and repaint the logout button neutral gray '.
             'in light mode — a regression, not a fix. `.ptah-navbar .ptah-user-dropdown a` (the profile link) '.
             'IS tokenized; `button` deliberately is not.',
+        '.ptah-cfg-content .cfg-ink-warn' => 'Light rule exists (color: #b45309) but is an intentional literal — '.
+            'the exact hex of the text-amber-700 utility it replaces, same "keep the original value" idiom as '.
+            '.ptah-c-fp_cancel_btn:hover above — not a var(--ptah-*), by design (see '.
+            'CrudConfigThemeParityTest::cfg_ink_warn_keeps_the_original_light_literal_and_tokenizes_dark).',
+
+        // ── (C) legitimately dark-only, CRUD Config editor Onda 5 ─────────
+        // These four sit inside a literal-tinted callout (bg-sky-50 /
+        // bg-indigo-50) that renders the SAME near-white background in both
+        // themes. Light mode needs no extra rule here: the base (non-nested)
+        // `.ptah-cfg-content .text-slate-400/500/600` light rule already
+        // applies correctly (identity — the callout's background never
+        // drifted in light to begin with). The dark override exists purely
+        // to COUNTERACT that same base rule's DARK value, which assumes the
+        // ambient canvas went dark — it never does inside these two boxes.
+        '.ptah-cfg-content .bg-sky-50 .text-slate-400' => 'Callout keeps the same near-white bg-sky-50 background '.
+            'in light mode too, where the base .text-slate-400 rule already resolves correctly — this override '.
+            'only needs to exist in .ptah-dark, to undo that same rule\'s dark value inside this one literal box.',
+        '.ptah-cfg-content .bg-sky-50 .text-slate-500' => 'Same reasoning as .bg-sky-50 .text-slate-400 above.',
+        '.ptah-cfg-content .bg-sky-50 .text-slate-600' => 'Same reasoning as .bg-sky-50 .text-slate-400 above.',
+        '.ptah-cfg-content .bg-indigo-50 .text-slate-500' => 'Same reasoning as .bg-sky-50 .text-slate-400 above, '.
+            'for the cascading-dropdown hint box (bg-indigo-50) instead of the SQL-source guide.',
     ];
 
     #[Test]
