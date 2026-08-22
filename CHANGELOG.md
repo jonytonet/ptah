@@ -7,6 +7,78 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.20.0] — 2026-08-22
+
+Column-level permissions for the BaseCrud, plus a full documentation audit.
+No schema change — as in every release since 1.13.2.
+
+### Added — column-level permissions
+
+A `colsPermission` tag on any column in `crud_configs` restricts that column
+to users granted the referenced `page_object` key (qualified
+`page::section::obj_key` accepted, resolved literal-first). **No tag = public
+= byte-identical behavior**, pinned by test; permissions module off = the tag
+is ignored, like every other gate in the package.
+
+- **The cut happens at the source**: `crudConfig` is `#[Locked]` and rebuilt
+  from the DB on every request, so filtering it there is the per-request
+  re-intersection for every derived reader — table, cards, quick search,
+  filter/URL whitelists, form fields, export payload, print. What does not
+  derive from it gets an explicit guard: a forged sort falls back to `id`,
+  filters probing a denied column are dropped, `openEdit` unsets denied keys
+  from the public payload, `renderLink`/custom renderers skip denied
+  attributes, and totalizers / conditional row styles / custom filters /
+  `groupBy`/`groupBreak` leave the config with the column (a group header
+  renders the grouping value; a row color reveals the range).
+- **File paths re-authorize at generation time** — a grant revoked between
+  dispatching an export and the worker running still excludes the column.
+  The synchronous PDF's totalizer recomputation now runs behind the gate,
+  and the pre-existing fail-open (an empty column list made the exporter
+  dump every attribute) is closed at both consumers: all columns denied
+  means 403 (sync) or a failed export (queued), before any file is written.
+- **Authoring**: the visual editor offers a select over the real, active
+  `page_objects` (never free text — a typo'd key would mean "nobody sees
+  it" silently), defaulting to "None (everyone sees it)", auto-emitting the
+  qualified form on cross-page collisions, with a closed-by-default warning
+  and a lock badge on the column list. CLI:
+  `--column="cost:number:permission=page::viewCost"`. `ptah:config:doctor`
+  warns on a tag pointing at a key no `page_object` has.
+- **Cost**: the gate resolves every key on a screen in one pass over the
+  memoized permission map — zero extra queries, zero audit rows (deliberate:
+  N columns × N renders would flood the audit table; documented).
+- Proven in real Chrome (Dusk): the denied user's page contains neither the
+  column's header nor the value anywhere in the source.
+
+### Fixed — documentation audit (the docs stop lying)
+
+An audit of every doc claim against the code found 11 direct lies, 10 stale
+mentions and 7 gaps — all corrected, the code being the only source of
+truth. Highlights: the bundled skill's CLI section taught an almost entirely
+fictional `--column`/`--filter`/`--action` syntax; two option tables were
+invented in camelCase for keys the parser never knew; `ptah:docs` was
+documented but does not exist; the README undercounted components and
+appearance axes. New drift guards make the worst class unrepeatable:
+`docs/Commands.md`'s option table is parsed and compared against the real
+parser `$keyMap` in both directions, and the action-type enum is compared
+against both the renderer and the JSON schema.
+
+### Fixed — validator vs runtime (the house's oldest footgun, twice more)
+
+- The schema validator accepted action types `wire/route/url/modal` while
+  the runtime only executes `link|livewire|javascript` — aligned to the enum
+  the renderer honors (no legacy configs used the dead types).
+- The `sd_value`/`sd_label`/`sd_order_by` CLI shortcuts wrote keys the
+  SearchDropdown runtime never reads — an accepted option that silently did
+  nothing. They now write the keys the runtime actually consumes.
+
+### Operational notes (human execution, per environment)
+
+Seeding the permission keys (`ptah_page_objects`) and granting them per role
+is done by a human through ptah's own permission screens — an example
+snippet lives in `docs/Permissions.md`. Marking a currently-public column
+hides it from everyone except masters until the grant is made: the default
+is closed, by design.
+
 ## [1.19.0] — 2026-08-21
 
 Fase 2.5: the four debts the August audit made non-deferrable, closed in one
