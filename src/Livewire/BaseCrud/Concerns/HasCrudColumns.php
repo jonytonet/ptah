@@ -98,6 +98,16 @@ trait HasCrudColumns
 
     protected function updateHiddenColumnsCount(): void
     {
+        // A denied column (see ColumnPermissionService) never ends up in
+        // crudConfig['cols'], but a stale saved preference from before the
+        // column was gated can still carry the key — strip it so it neither
+        // inflates/deflates the count nor lingers in the column-visibility
+        // dropdown. Purely cosmetic: getVisibleColumns() already filters by
+        // crudConfig['cols'], so the column itself never renders regardless.
+        foreach ($this->deniedColumns as $denied) {
+            unset($this->formDataColumns[$denied]);
+        }
+
         $this->hiddenColumnsCount = (int) count(
             array_filter($this->formDataColumns, fn ($v) => ! $v)
         );

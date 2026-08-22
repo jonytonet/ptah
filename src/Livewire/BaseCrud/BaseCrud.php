@@ -26,6 +26,7 @@ use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
+use Ptah\Services\Permission\ColumnPermissionService;
 
 /**
  * Livewire BaseCrud component.
@@ -143,6 +144,19 @@ class BaseCrud extends Component
     public array $formDataColumns = [];
 
     public int $hiddenColumnsCount = 0;
+
+    /**
+     * `colsNomeFisico` of every column the current user may not READ (see
+     * ColumnPermissionService), computed by HasCrudLifecycle::applyColumnPermissions()
+     * every time $crudConfig is (re)loaded. Deliberately NOT public: unlike
+     * `crudConfig`, this never needs a client-visible payload, and a plain
+     * `protected` property is not serialised to/from the browser at all
+     * (stronger than #[Locked], which only blocks client WRITES) — boot()
+     * recomputes it every request regardless.
+     *
+     * @var string[]
+     */
+    protected array $deniedColumns = [];
 
     // ── Active filter badge summary ───────────────────────────────────────────
 
@@ -340,6 +354,8 @@ class BaseCrud extends Component
     protected CacheService $cacheService;
 
     protected FormValidatorService $formValidator;
+
+    protected ColumnPermissionService $columnPermissionService;
 
     /** Resolved Eloquent model instance */
     protected ?Model $eloquentModel = null;

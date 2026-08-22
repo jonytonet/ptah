@@ -404,7 +404,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="price:number:required:label=Price:mask=money_brl:renderer=money" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --action="approve:livewire:approve(%id%):icon=bx-check:color=success" \
-  --filter="status:select:=:options=active,inactive" \
+  --filter="status:select:label=Status:operator==:options=active,inactive" \
   --set="cacheEnabled=true" \
   --set="itemsPerPage=25"
 
@@ -449,7 +449,7 @@ php artisan ptah:config "App\Models\Product" \
 - ``{model}`` — Full model class name (e.g., ``App\Models\Product``)
 - ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
 - ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
-- ``--filter=*`` — Add custom filter: ``field:type:operator:label=Label``
+- ``--filter=*`` — Add custom filter: ``field:type:label=Label:operator==:options=value``  (no positional operator — everything after ``field:type`` is ``key=value``)
 - ``--style=*`` — Add style rule: ``field:condition:value:style`` (``condition`` is ``==``/``!=``/``>``/``<``/``>=``/``<=`` or the aliases ``eq``/``ne``/``lt``/``gt``/``lte``/``gte``/``=``; ``style`` is an inline CSS declaration list, e.g. ``background:#FEE2E2;color:#991B1B;``)
 - ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
 - ``--set=*`` — Set general config: ``key=value``
@@ -606,87 +606,161 @@ bypasses that guard (still asks for confirmation). Persists via `CrudConfigServi
 > until** step 3 grants it. Run steps 2 and 3 together (staging first). Master users are
 > unaffected (short-circuit).
 
-**Column Syntax (--column):**
+**Column Syntax (--column):** parsed by `ColumnParser` (`src/Commands/Config/Parsers/ColumnParser.php`).
 
 ```bash
 # Basic format
-field:type:modifier:option=value
+field:type:modifier:modifier:option=value:option=value
 
 # Examples
 name:text:required:label=Name
 email:text:required:validation=email|max:255
-price:number:label=Price:mask=money_brl:renderer=money:rendererDecimals=2
+price:number:label=Price:mask=money_brl:renderer=money:decimals=2
 status:select:options=active,inactive:renderer=badge:badges=active|green,inactive|red
-user_id:searchdropdown:relation=user:sdSelectColumn=name:sdValueColumn=id
-description:textarea:optional:placeholder=Enter description
-active:boolean:default=true
-created_at:datetime:readonly:renderer=datetime:rendererFormat=d/m/Y H:i:s
-
-# Modifiers (shorthands)
-required    → colsRequired = true
-optional    → colsRequired = false
-readonly    → colsEditableForm = false
-hidden      → colsVisibleList = false
-noFilter    → colsIsFilterable = false
-noSave      → colsGravar = false
-total       → colsTotal = true (add to totalizer)
-
-# Column options (option=value)
-label           → colsNomeLogico (display label)
-help            → colsHelpText (help text below field)
-placeholder     → colsPlaceholder
-default         → colsDefaultValue
-align           → colsAlign (text-start, text-center, text-end)
-width           → colsWidth (120px, 20%, auto)
-renderer        → colsRenderer (text, badge, pill, boolean, money, date, datetime, link, image, etc.)
-rendererLink    → colsRendererLink (URL pattern for link renderer)
-rendererTarget  → colsRendererTarget (_self, _blank)
-rendererCurrency→ colsRendererCurrency (BRL, USD, EUR)
-rendererDecimals→ colsRendererDecimals (2, 0)
-rendererPrefix  → colsRendererPrefix (prefix for number renderer)
-rendererSuffix  → colsRendererSuffix (suffix for number renderer)
-badges          → colsRendererBadges (value:color pairs, e.g., active:green,inactive:red)
-mask            → colsMask (money_brl, cpf, cnpj, phone, cep, date, etc.)
-maskTransform   → colsMaskTransform (money_to_float, digits_only, etc.)
-validation      → colsValidation (Laravel validation rules: required|email|max:255)
-options         → colsOptions (for select: value1:Label1,value2:Label2 or value1,value2)
-relation        → colsRelation (relation method name)
-sdTable         → colsSdTable (table for searchdropdown)
-sdSelectColumn  → colsSdSelectColumn (display column for searchdropdown)
-sdValueColumn   → colsSdValueColumn (value column for searchdropdown)
-uploadPath           → colsUploadPath (storage path for uploads; default: images/{kebab-model})
-uploadMaxSize        → colsUploadMaxSize (max file size in KB; default: 2048)
-uploadAllowedTypes   → colsUploadAllowedTypes (comma-separated extensions; default: jpg,png,webp,gif)
-rendererImageWidth   → colsRendererImageWidth (thumbnail width in px for renderer=image)
-rendererImageHeight  → colsRendererImageHeight (thumbnail height in px for renderer=image)
-totalizer       → colsTotal (add to totalizer)
-totalizadorType → totalizadorType (sum, avg, count, min, max)
+user_id:searchdropdown:sd_model=App\Models\User:sd_value=id:sd_label=name
+description:textarea:nullable:placeholder=Enter description
+active:boolean:required
+created_at:datetime:readonly:renderer=datetime
 ```
 
-**Action Syntax (--action):**
+**`colsTipo` values (`type`, the 2nd token):** `text`, `textarea`, `number`, `date`,
+`datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`. `colsTipo` is
+the FORM INPUT type — it is independent from `renderer=`, which controls how the
+value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimitations.md#5-ptahconfig-cli--column-types-and-renderers).
+
+**Modifiers (bare tokens — never `modifier=true`):**
+
+| Modifier | Effect |
+|---|---|
+| `required` | `colsRequired = true` |
+| `nullable` | `colsRequired = false` |
+| `readonly` | `colsGravar = false` (not saved to DB) |
+| `hidden` | `colsVisibleList = false` |
+| `sortable` | `colsOrderBy = <field>` |
+| `filterable` | `colsIsFilterable = true` |
+| `not_filterable` | `colsIsFilterable = false` |
+
+**Column options (`option=value`) — full `$keyMap`:**
+
+| Option | Mapping | Example |
+|---|---|---|
+| `label` | `colsNomeLogico` | `label=Product Name` |
+| `placeholder` | `colsPlaceholder` | `placeholder=Type here...` |
+| `align` | `colsAlign` | `align=text-end` |
+| `renderer` | `colsRenderer` | `renderer=money` (`text`,`badge`,`pill`,`boolean`,`money`,`date`,`datetime`,`link`,`image`,`truncate`,`number`,`filesize`,`duration`,`code`,`color`,`progress`,`rating`,`qrcode`) |
+| `mask` | `colsMask` | `mask=money_brl` |
+| `relation` | `colsRelacao` | `relation=category` |
+| `relation_display` | `colsRelacaoExibe` | `relation_display=name` |
+| `relation_nested` | `colsRelacaoNested` | `relation_nested=category.parent.name` |
+| `min_width` | `colsMinWidth` | `min_width=120px` (there is no `width=`) |
+| `cell_style` | `colsCellStyle` | `cell_style=background:#FEE;` |
+| `cell_class` | `colsCellClass` | `cell_class=font-bold` |
+| `cell_icon` | `colsCellIcon` | `cell_icon=bx-user` |
+| `source` | `colsSource` | `source=JOIN categories` |
+| `method` | `colsMetodoCustom` | `method=formatCustom` |
+| `method_raw` | `colsMetodoRaw` | — |
+| `order_by` | `colsOrderBy` | `order_by=name` |
+| `permission` | `colsPermission` | `permission=page::viewCost` — column-level visibility gate, see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions) |
+| `sd_mode` | `colsSDMode` | — |
+| `sd_model` | `colsSDModel` | `sd_model=App\Models\Category` |
+| `sd_service` | `colsSDService` | — |
+| `sd_service_method` | `colsSDServiceMethod` | — |
+| `sd_value` | `colsSDValor` | `sd_value=id` |
+| `sd_label` | `colsSDLabel` | `sd_label=name` |
+| `sd_label_two` | `colsSDLabelTwo` | — |
+| `sd_order_by` | `colsSDOrder` | — |
+| `sd_limit` | `colsSDLimit` | `sd_limit=15` |
+| `sd_placeholder` | `colsSDPlaceholder` | — |
+| `sd_filters` | `colsSDFilters` | — |
+| `currency` | `colsRendererCurrency` | `currency=BRL` |
+| `decimals` | `colsRendererDecimals` | `decimals=2` |
+| `bool_true` | `colsRendererBoolTrue` | — |
+| `bool_false` | `colsRendererBoolFalse` | — |
+| `link_template` | `colsRendererLinkTemplate` | `link_template=/products/%id%` |
+| `link_label` | `colsRendererLinkLabel` | — |
+| `link_new_tab` | `colsRendererLinkNewTab` | `link_new_tab=true` |
+| `image_width` | `colsRendererImageWidth` | — |
+| `image_height` | `colsRendererImageHeight` | — |
+| `upload_path` | `colsUploadPath` | `upload_path=products/images` |
+| `upload_max_size` | `colsUploadMaxSize` | `upload_max_size=2048` (KB) |
+| `upload_allowed_types` | `colsUploadAllowedTypes` | `upload_allowed_types=jpg,png,webp` (comma-separated) |
+| `max_chars` | `colsRendererMaxChars` | `max_chars=50` |
+| `locale` | `colsRendererLocale` | — |
+| `progress_max` | `colsRendererMax` | — |
+| `progress_color` | `colsRendererColor` | — |
+| `rating_max` | `colsRendererMax` | — |
+| `duration_unit` | `colsRendererDurationUnit` | — |
+| `qr_size` | `colsRendererQrSize` | — |
+| `mask_regex` | `colsMaskRegex` | — |
+| `mask_transform` | `colsMaskTransform` | `mask_transform=money_to_float` |
+| `totalizer` | `totalizadorType` (also sets `totalizadorEnabled=true`) | `totalizer=sum` |
+| `totalizer_format` | `totalizadorFormat` | `totalizer_format=currency` |
+| `totalizer_label` | `totalizadorLabel` | — |
+| `totalizer_enabled` | `totalizadorEnabled` | — |
+| `validation` | `colsValidations` (special: `\|`-split rules) | `validation=required\|max:255` |
+| `options` | `colsSelect` (special: kept as raw string) | `options=active:Active,inactive:Inactive` |
+| `badges` | `colsRendererBadges` (special: parsed into `value/color/label` triples) | `badges=active\|green\|Ativo,inactive\|gray\|Inativo` — **`\|`-separated**, never `:` (collides with the `field:type:modifier` syntax) |
+
+> Any `option=value` key **not** in this list is stored verbatim under that raw
+> key on the column array (e.g. a typo like `rendererDecimals=2` silently sets a
+> `rendererDecimals` key nothing reads, instead of `colsRendererDecimals` — use
+> `decimals=2`).
+>
+> `sd_value`/`sd_label`/`sd_order_by` write `colsSDValor`/`colsSDLabel`/
+> `colsSDOrder`. The SearchDropdown column widget itself
+> (`HasCrudSearchDropdown`) reads `colsSDValor`/`colsSDLabel`/`colsSDOrder`
+> instead — see [SearchDropdown.md](SearchDropdown.md) and
+> [Configuration.md § Relation](Configuration.md#relation) for the schema the
+> renderer actually consumes. Prefer the visual CrudConfig editor or a JSON
+> import for SearchDropdown columns until this CLI shortcut is reconciled with
+> the renderer's key names.
+
+**Examples:**
+
+```bash
+# Price with mask and renderer
+--column="price:number:required:mask=money_brl:renderer=money:currency=BRL:decimals=2"
+
+# Status with select and badges
+--column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red,pending|yellow"
+
+# Readonly datetime
+--column="created_at:datetime:readonly:renderer=datetime"
+
+# Image with upload
+--column="image:image:upload_path=products:upload_max_size=2048:upload_allowed_types=jpg,png,webp"
+
+# Number with totalizer
+--column="quantity:number:totalizer=sum:totalizer_format=number"
+```
+
+**Action Syntax (--action):** parsed by `ActionParser`. Only `link`, `livewire`
+and `javascript` are executed by the table renderer
+(`resources/views/livewire/base-crud/partials/_table.blade.php`) — any other
+`actionType` value is rejected by `ConfigSchemaValidator`.
 
 ```bash
 # Format
-name:type:value:icon=icon:color=color
+name:type:value:icon=icon:color=color:confirm=bool:confirm_message=text:permission=key
 
 # Examples
-approve:livewire:approve(%id%):icon=bx-check:color=success
+approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true
 reject:livewire:reject(%id%):icon=bx-x:color=danger
 view:link:https://example.com/view/%id%:icon=bx-show:color=primary
 export:javascript:exportData():icon=bx-download:color=info
 ```
 
-**Filter Syntax (--filter):**
+**Filter Syntax (--filter):** parsed by `FilterParser` — **there is no
+positional operator token**; everything after `field:type` is `key=value`.
 
 ```bash
 # Format
-field:type:operator:label=Label
+field:type:label=Label:operator==:options=opt1,opt2
 
 # Examples
-status:select:=:label=Status:options=active,inactive
-price:number:>=:label=Minimum Price
-created_at:date:>=:label=From Date
-user_id:searchdropdown:=:sdTable=users:sdSelectColumn=name
+status:select:label=Status:operator==:options=active,inactive
+price:number:label=Minimum Price:operator=>=
+created_at:date:label=From Date:operator=>=
 ```
 
 **Style Syntax (--style):**
@@ -748,9 +822,9 @@ php artisan ptah:config "App\Models\Product" \
   --column="name:text:required:label=Product Name" \
   --column="sku:text:required:label=SKU:validation=required|unique:products,sku" \
   --column="price:number:required:mask=money_brl:renderer=money" \
-  --column="stock:number:label=Stock:renderer=number:rendererDecimals=0" \
+  --column="stock:number:label=Stock:renderer=number:decimals=0" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
-  --column="category_id:searchdropdown:relation=category:sdSelectColumn=name" \
+  --column="category_id:searchdropdown:sd_model=App\Models\Category" \
   --set="itemsPerPage=25" \
   --set="cacheEnabled=true"
 
@@ -759,7 +833,7 @@ php artisan ptah:config "App\Models\Product" --list
 
 # 4. Add more columns later
 php artisan ptah:config "App\Models\Product" \
-  --column="description:textarea:optional" \
+  --column="description:textarea:nullable" \
   --column="image:image:upload_path=products/photos:upload_max_size=2048:upload_allowed_types=jpg,png,webp"
 
 # 5. Export for backup or sharing

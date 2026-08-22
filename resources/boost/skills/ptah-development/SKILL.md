@@ -295,13 +295,23 @@ class Product extends Model
 ## CSS Architecture Rules
 
 1. **Never** add `<style>` blocks inside view files
-2. All CSS (including dark overrides) lives in `forge-dashboard-layout.blade.php`
-3. Dark mode always via `.ptah-dark` ancestor:
+2. New CSS lives in `resources/css/ptah-components.css`, built on `--ptah-*` design
+   tokens (`--ptah-primary`, `--ptah-surface`, `--ptah-text-*`, …) — never a bare hex
+   literal. `forge-dashboard-layout.blade.php` still carries a legacy inline `<style>`
+   block for a shrinking set of chrome rules; it is being dismantled, not extended —
+   `LayoutStyleBaselineTest` fails the build if it gains a single color literal or rule
+   (see [KnownLimitations.md §6](../../../../docs/KnownLimitations.md#6-theming--partial-coverage-1150))
+3. Dark mode always via a `.ptah-dark` ancestor
+4. The 6 per-user appearance axes (light/dark tone, accent, text weight, density, font
+   size) are selected via `data-ptah-*` attributes on `<html>`, resolved by
+   `Ptah\Support\AppearancePresets` — see [CustomScreens.md](../../../../docs/CustomScreens.md)
 
 ```css
-/* ✅ Inside forge-dashboard-layout.blade.php <style> tag */
-.my-component { background: #ffffff; color: #1e293b; }
-.ptah-dark .my-component { background: #1e293b; color: #f8fafc; }
+/* ✅ Inside resources/css/ptah-components.css — .ptah-dark redefines the SAME
+   token names in its own block, components never branch on .ptah-dark themselves */
+:root      { --ptah-surface: #ffffff; }
+.ptah-dark { --ptah-surface: #1e293b; }
+.my-component { background: var(--ptah-surface); }
 ```
 
 ---
@@ -313,14 +323,14 @@ class Product extends Model
 ```bash
 # Configure complete CRUD in one command
 php artisan ptah:config "App\Models\Product" \
-  --column="id:text:label=ID:sortable=true:width=80" \
-  --column="name:text:label=Nome:sortable=true:searchable=true" \
-  --column="price:money:label=Preço:sortable=true" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
-  --style="is_active:eq:0:background:#FEF2F2;color:#B91C1C;" \
-  --style="stock:lt:5:background:#FEFCE8;color:#A16207;" \
-  --filter="is_active:boolean:eq:Ativos" \
-  --action="duplicate:wire:duplicate:bx bx-copy:info:Duplicar?" \
+  --column="id:number:label=ID:sortable:min_width=80px" \
+  --column="name:text:label=Nome:required:sortable" \
+  --column="price:number:label=Preço:renderer=money:sortable" \
+  --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
+  --style="is_active:==:0:background:#FEF2F2;color:#B91C1C;" \
+  --style="stock:<:5:background:#FEFCE8;color:#A16207;" \
+  --filter="is_active:select:label=Ativos:operator==:options=1:Ativo,0:Inativo" \
+  --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info:confirm=true" \
   --set="itemsPerPage=15" \
   --set="cacheEnabled=true"
 
@@ -342,27 +352,31 @@ php artisan ptah:config "App\Models\Product" --column="..." --dry-run
 
 ### Option Formats
 
+Full option reference (every key each parser accepts): [Commands.md](../../../../docs/Commands.md#ptahconfig). What follows is what an agent needs day to day — **verify against `src/Commands/Config/Parsers/*.php` before trusting any doc, including this one, if behaviour looks off.**
+
 #### --column
 
-Format: `field:type:modifier1:modifier2:option1=value1:option2=value2`
+Format: `field:type:modifier:modifier:option=value:option=value` (`ColumnParser`)
 
-**Types:**
-- `text` — Plain text
-- `badge` — Colored badge (requires `badgeMap`)
-- `boolean` — ✓/✗ icon
-- `date` — Formatted date (DD/MM/YYYY)
-- `datetime` — Date + time
-- `money` — Currency (R$ 1.234,56)
-- `numeric` — Formatted number
-- `relation` — Relationship (requires `relation=model.field`)
+**`colsTipo` values** (the FORM INPUT type — independent from the display renderer, see [KnownLimitations.md §5](../../../../docs/KnownLimitations.md#5-ptahconfig-cli--column-types-and-renderers)):
+`text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`
 
-**Modifiers:**
-- `sortable=true` — Enable sorting
-- `searchable=true` — Enable search
-- `label=Text` — Column label
-- `width=80` — Width in pixels
-- `badgeMap=val1:color1:text1,val2:color2:text2` — Badge mapping
-- `relation=model.field` — Relationship path
+**Bare modifiers** (no `=value` — presence alone flips the flag, never `sortable=true`):
+`required`, `nullable`, `readonly` (→ `colsGravar=false`), `hidden` (→ `colsVisibleList=false`), `sortable` (→ `colsOrderBy=<field>`), `filterable`, `not_filterable`
+
+**Common `key=value` options:**
+- `label=` — display label
+- `renderer=` — how the value is DISPLAYED in the list table (`badge`, `pill`, `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`, `filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode`) — a separate concept from `colsTipo`
+- `min_width=` — e.g. `min_width=120px` (there is no `width=`)
+- `badges=value|color|label,value2|color2|label2` — **pipe**-separated inside each entry (`:` is the field:type:modifier separator and would collide)
+- `options=value:Label,value2:Label2` — for `select`/`searchdropdown`
+- `mask=`, `mask_transform=` — input mask
+- `sd_model=`, `sd_value=`, `sd_label=` — searchdropdown source
+- `link_template=`, `link_label=`, `link_new_tab=` — for `renderer=link`
+- `upload_path=`, `upload_max_size=`, `upload_allowed_types=` — for `colsTipo=file|image`
+- `permission=` — gates the column via `colsPermission` (see [Permissions.md](../../../../docs/Permissions.md))
+
+**Example:** `is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo`
 
 #### --style
 
@@ -373,25 +387,28 @@ classes.
 **Conditions:** `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`, `ne`,
 `lt`, `gt`, `lte`, `gte`, `=`)
 
-**Example:** `is_active:eq:0:background:#FEF2F2;color:#B91C1C;`
+**Example:** `is_active:==:0:background:#FEF2F2;color:#B91C1C;`
 
 #### --filter
 
-Format: `field:type:operator:label[:default_value]`
+Format: `field:type:option=value:option=value` (`FilterParser`) — **no positional
+operator**; everything after `field:type` is `key=value`.
 
-**Types:** `boolean`, `select`, `numeric`, `date`
+**Types:** `text`, `number`, `date`, `select`, `searchdropdown`
 
-**Example:** `status:select:eq:Pendentes:pending`
+**Common options:** `label=`, `operator=` (`=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`), `options=`
+
+**Example:** `status:select:label=Status:operator==:options=active:Active,inactive:Inactive`
 
 #### --action
 
-Format: `name:type:method:icon:color[:confirm_message]`
+Format: `name:type:value:option=value:option=value` (`ActionParser`)
 
-**Types:** `wire` (Livewire method), `route` (redirect), `url` (external)
+**Types (the only ones the table renderer executes — `_table.blade.php`):** `link`, `livewire`, `javascript`
 
-**Colors:** `primary`, `success`, `danger`, `warning`, `info`
+**Common options:** `icon=`, `color=` (`primary`, `success`, `danger`, `warning`, `info`, `secondary`), `confirm=true`, `confirm_message=`, `permission=`
 
-**Example:** `duplicate:wire:duplicate:bx bx-copy:info:Deseja duplicar?`
+**Example:** `approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true`
 
 #### --set
 
@@ -399,51 +416,62 @@ Format: `key=value`
 
 **Settings:** `itemsPerPage=15`, `cacheEnabled=true`, `cacheTime=30`, `paginationEnabled=true`, `exportEnabled=true`
 
+### UI helpers agents reach for often
+
+- **Toast:** `$this->dispatch('ptah-toast', title: 'Salvo com sucesso.', color: 'success');` — `color` is `success`/`danger`/`warn`. An undo toast (`ptah-toast-undo`) is dispatched by the delete flow and wired to `restoreRecord()` — see [BaseCrud.md](../../../../docs/BaseCrud.md).
+- **Empty/loading states:** use `<x-forge-empty>` / `<x-forge-skeleton>` instead of ad-hoc markup.
+- **Appearance tokens/eixos** (density, tone, font, radius, motion, contrast): see [CustomScreens.md](../../../../docs/CustomScreens.md) and [Configuration.md](../../../../docs/Configuration.md).
+
 ---
 
 ## Configuring BaseCrud (JSON)
 
+The persisted config shape (`crud_configs.config`) uses the SAME property names the
+runtime reads directly — `colsNomeFisico`, `colsTipo`, etc. — not a `field`/`label`/`type`
+shorthand. Full property reference: [Configuration.md § Column Configuration](../../../../docs/Configuration.md#column-configuration).
+
 ```json
 {
-  "model": "Product",
   "cols": [
-    { "field": "name",      "label": "Nome",   "type": "text",    "sort": true, "search": true },
-    { "field": "sku",       "label": "SKU",    "type": "badge",   "badgeColor": "primary" },
-    { "field": "price",     "label": "Preço",  "type": "money",   "sort": true },
-    { "field": "is_active", "label": "Ativo",  "type": "boolean" }
+    { "colsNomeFisico": "name", "colsNomeLogico": "Nome", "colsTipo": "text",
+      "colsGravar": true, "colsRequired": true, "colsIsFilterable": true,
+      "colsVisibleList": true, "colsEditableForm": true },
+    { "colsNomeFisico": "price", "colsNomeLogico": "Preço", "colsTipo": "number",
+      "colsRenderer": "money", "colsRendererCurrency": "BRL", "colsRendererDecimals": 2 },
+    { "colsNomeFisico": "is_active", "colsNomeLogico": "Status", "colsTipo": "select",
+      "colsRenderer": "badge",
+      "colsRendererBadges": [
+        { "value": "1", "color": "success", "label": "Ativo" },
+        { "value": "0", "color": "danger",  "label": "Inativo" }
+      ] }
   ],
-  "rowStyles": [
-    { "field": "stock", "op": "<", "value": 5, "class": "bg-red-50 dark:bg-red-900/20" }
+  "actions": [
+    { "colsNomeLogico": "Aprovar", "colsTipo": "action", "actionType": "livewire",
+      "actionValue": "approve(%id%)", "actionIcon": "bx-check", "actionColor": "success",
+      "actionConfirm": true }
   ],
-  "modal": {
-    "width": "md",
-    "fields": [
-      { "field": "name",        "type": "text",           "label": "Nome",      "required": true },
-      { "field": "sku",         "type": "text",           "label": "SKU" },
-      { "field": "price",       "type": "number",         "label": "Preço" },
-      { "field": "category_id", "type": "searchDropdown", "label": "Categoria", "relation": "category", "display": "name" },
-      { "field": "is_active",   "type": "switch",         "label": "Ativo" }
-    ]
-  },
-  "quickFilters": {
-    "date_field": "created_at",
-    "options": ["today", "week", "month", "year"]
-  }
+  "filters": [
+    { "field": "is_active", "label": "Status", "colsFilterType": "select",
+      "defaultOperator": "=", "options": "1:Ativo,0:Inativo" }
+  ],
+  "contitionStyles": [
+    { "field": "stock", "condition": "<", "value": "5",
+      "style": "background:#FEFCE8;color:#A16207;" }
+  ],
+  "joins": [
+    { "type": "left", "table": "categories",
+      "first": "products.category_id", "second": "categories.id" }
+  ],
+  "permissions": { "permissionIdentifier": "products.index" },
+  "itemsPerPage": 25,
+  "cacheEnabled": true
 }
 ```
 
-Badge enum mapping:
-```json
-{
-  "field": "status",
-  "type": "badge",
-  "badgeMap": {
-    "active":   { "label": "Ativo",    "color": "success" },
-    "inactive": { "label": "Inativo",  "color": "danger"  },
-    "pending":  { "label": "Pendente", "color": "warn"    }
-  }
-}
-```
+> Note the misspelling `contitionStyles` (not `conditionStyles`) — that is the key
+> `HasCrudRenderers::getRowStyle()` actually reads; `StyleRule::normalize()` is the
+> single place that canonicalises every legacy shape into this one. Never invent a
+> `rowStyles`/`badgeMap`/`modal.fields` shape — the runtime does not read it.
 
 ---
 
@@ -492,7 +520,11 @@ php artisan ptah:install --demo      # Seed demo companies/roles/menu
 
 ```php
 use Livewire\Livewire;
-use Ptah\Tests\TestCase;  // Testbench + RefreshDatabase + SQLite :memory:
+// `Ptah\Tests\TestCase` (Testbench + RefreshDatabase + SQLite :memory:) is the
+// PACKAGE's own dev-only base class, registered under ptah's `autoload-dev` —
+// it is NOT available to a consuming app. In a host app, extend the host's own
+// `Tests\TestCase` (Laravel's default, `tests/TestCase.php`) instead.
+use Tests\TestCase;
 use Tests\Factories\ProductFactory;  // Custom factory — NO Eloquent Factory
 
 class ProductListTest extends TestCase

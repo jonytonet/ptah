@@ -206,15 +206,26 @@ trait HasCrudQuery
             $this->filterService->applyFilters($query, $activeFilters);
         }
 
-        // Date ranges (standard ERP: _start/_end, legacy: _from/_to)
-        $drFilters = $this->filterService->processDateRangeFilters($this->dateRanges, $this->dateRangeOperators);
+        // Date ranges (standard ERP: _start/_end, legacy: _from/_to) — drop
+        // entries whose base field (same suffix regex HasCrudFilters::buildTextFilter()
+        // uses) is a denied column, so a stale dateRanges['cost_start'] left
+        // over from before the column was gated cannot filter by it.
+        $dateRanges = empty($this->deniedColumns) ? $this->dateRanges : array_filter(
+            $this->dateRanges,
+            fn ($key) => ! in_array(preg_replace('/_(start|end|from|to)$/', '', (string) $key), $this->deniedColumns, true),
+            ARRAY_FILTER_USE_KEY
+        );
+        $drFilters = $this->filterService->processDateRangeFilters($dateRanges, $this->dateRangeOperators);
         if (! empty($drFilters)) {
             $this->filterService->applyFilters($query, $drFilters);
         }
 
         // Quick date filter — quickDateColumn is a public (client-settable) property,
-        // so guard it as an identifier before it reaches whereBetween.
-        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '' && SqlIdentifier::isSafe($this->quickDateColumn)) {
+        // so guard it as an identifier before it reaches whereBetween, AND
+        // reject a denied column (a forged wire:model could otherwise point
+        // it at a column the user may not read).
+        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '' && SqlIdentifier::isSafe($this->quickDateColumn)
+            && ! in_array($this->quickDateColumn, $this->deniedColumns, true)) {
             [$from, $to] = $this->getQuickDateRange($this->quickDateFilter);
             if ($from && $to) {
                 $query->whereBetween($this->quickDateColumn, [$from, $to]);
@@ -472,6 +483,13 @@ trait HasCrudQuery
         )));
 
         foreach ($fields as $field) {
+            // A denied column (see ColumnPermissionService) never reaches the
+            // "plain column" branch below, which would otherwise infer its
+            // value straight from $this->filters — a client-writable property.
+            if (in_array($field, $this->deniedColumns, true)) {
+                continue;
+            }
+
             // A URL filter (?f[field]=...) overrides this field entirely — skip
             // it here so buildBaseQuery() applies the URL version instead of
             // ANDing both together.
@@ -606,6 +624,14 @@ trait HasCrudQuery
                     continue;
                 }
 
+                // addAdvancedSearchField() takes the field name straight from
+                // the client (call('addAdvancedSearchField', 'cost', ...)) —
+                // used here without any findColByField() lookup, so a denied
+                // column must be rejected explicitly.
+                if (in_array($field, $this->deniedColumns, true)) {
+                    continue;
+                }
+
                 $domainFilters[] = new FilterDTO(
                     field: $field,
                     value: $value,
@@ -621,6 +647,15 @@ trait HasCrudQuery
 
     protected function resolveSortColumn(): string
     {
+        // $sort is a client-writable property (sortBy()/wire:model on the
+        // table header) — a denied column would otherwise fall straight
+        // through to `return $this->sort;` below (findColByField() already
+        // misses it, since crudConfig['cols'] is pre-filtered) and leak an
+        // ORDER BY on data the user may not read.
+        if (in_array($this->sort, $this->deniedColumns, true)) {
+            return 'id';
+        }
+
         $col = $this->findColByField($this->sort);
 
         // colsSource has priority (JOIN column — use qualified name for ORDER BY)

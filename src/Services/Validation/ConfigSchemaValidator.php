@@ -226,14 +226,14 @@ class ConfigSchemaValidator
                     ->withJsonPath("$.actions[{$index}].colsNomeLogico");
             }
 
-            // Validate action type
+            // Validate action type (must match the types actually executed by
+            // the table renderer — see resources/views/livewire/base-crud/partials/_table.blade.php)
             if (isset($action['actionType'])) {
-                $validTypes = ['wire', 'route', 'url', 'modal'];
-                if (! in_array($action['actionType'], $validTypes, true)) {
+                if (! in_array($action['actionType'], CrudConfigEnums::ACTION_TYPES, true)) {
                     throw ConfigValidationException::invalidColumnType(
                         $action['colsNomeLogico'],
                         $action['actionType'],
-                        $validTypes,
+                        CrudConfigEnums::ACTION_TYPES,
                         'actions'
                     )->withJsonPath("$.actions[{$index}].actionType");
                 }

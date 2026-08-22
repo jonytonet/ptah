@@ -992,6 +992,12 @@ return [
     'cfg_col_cb_required' => 'Obrigatório',
     'cfg_col_cb_filterable' => 'Filtrável',
 
+    // Aba Colunas — permissão por coluna (requer o módulo "permissions")
+    'cfg_col_permission_label' => 'Permissão de visibilidade',
+    'cfg_col_permission_none' => 'Nenhuma (todos veem)',
+    'cfg_col_permission_hint' => 'Marcar uma coluna aqui a esconde de todos — inclusive de quem já a vê hoje — até que o acesso seja concedido a um perfil para esta chave.',
+    'cfg_col_permission_badge_title' => 'Restrita pela chave de permissão: :key',
+
     // Opções de tipo
     'cfg_col_type_text' => 'text — Texto',
     'cfg_col_type_number' => 'number — Número',

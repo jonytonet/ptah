@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cookie;
  *   - Ptah\Livewire\Auth\ProfilePage — validates input before persisting to
  *     UserPreference (key "theme", group "appearance").
  *   - resources/views/components/forge-dashboard-layout.blade.php — renders
- *     the 4 `data-ptah-*` attributes on `<html>` from the user's saved
+ *     the 6 `data-ptah-*` attributes on `<html>` from the user's saved
  *     preference (server-side, so there is no flash for authenticated users),
  *     falling back to the `ptah_appearance` cookie for a visitor or a user
  *     who never saved a preference. The database is always the source of

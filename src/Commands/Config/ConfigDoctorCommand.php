@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
+use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
 use Ptah\Support\StyleRule;
@@ -41,6 +42,11 @@ use Ptah\Support\StyleRule;
  *   - obj_key collision → two ptah_page_objects on DIFFERENT pages share the same
  *                        obj_key. Resolution is global by obj_key too
  *                        (PermissionService::buildPermissionMap), same cross-grant risk.
+ *   - unknown column permission key → a `colsPermission` tag (see
+ *                        ColumnPermissionService::TAG) names no registered
+ *                        PageObject (bare, or decomposed when qualified) — the
+ *                        column silently becomes invisible to everyone but
+ *                        MASTER. Warning only, never an error.
  *
  * Both collision checks are diagnostic only — they do not change how permissions
  * resolve, they only surface the pre-existing global-key sharing risk.
@@ -182,6 +188,28 @@ class ConfigDoctorCommand extends Command
                 }
             }
 
+            // 5d. Unknown column permission key — a `colsPermission` tag (see
+            //     ColumnPermissionService::TAG) that names no registered
+            //     PageObject at all (bare, or — when qualified — its
+            //     decomposed page/section) can never be granted to anyone but
+            //     MASTER: the column is invisible for every other user, and
+            //     nothing else surfaces this typo (the gate fails closed
+            //     silently, by design). Diagnostic only — a column simply not
+            //     yet wired to a real object is a normal work-in-progress
+            //     state, not a broken config.
+            foreach (($config['cols'] ?? []) as $colIndex => $col) {
+                $permissionKey = trim((string) ($col['colsPermission'] ?? ''));
+                if ($permissionKey === '') {
+                    continue;
+                }
+
+                if (! $this->permissionKeyExists($permissionKey)) {
+                    $field = (string) ($col['colsNomeFisico'] ?? $colIndex);
+                    $this->line("🟡 <fg=yellow>unknown column permission key</> [{$label}] column '{$field}': '{$permissionKey}' não corresponde a nenhum ptah_page_objects registrado — a coluna fica invisível para todos, exceto MASTER, até que a chave seja cadastrada");
+                    $warnings++;
+                }
+            }
+
             // Collected for check 6b below (after --fix, $config already reflects
             // the migrated key). Same identifier on a DIFFERENT model is a
             // cross-grant risk — resolution is global by permissionIdentifier.
@@ -243,5 +271,43 @@ class ConfigDoctorCommand extends Command
         $errors > 0 ? $this->error($summary) : $this->info($summary);
 
         return $errors > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Resolves whether $key names a registered `PageObject` — bare, or, when
+     * it contains `PermissionService::KEY_QUALIFIER`, decomposed into
+     * page/section. Mirrors `PermissionService::decomposeQualifiedKey()`'s
+     * literal-first order (duplicated here — pure string parsing for a
+     * diagnostic, not an authorization decision): a bare `obj_key` that
+     * happens to contain `::` is checked as-is FIRST, so it is never wrongly
+     * decomposed into a page/section that doesn't exist.
+     */
+    protected function permissionKeyExists(string $key): bool
+    {
+        if (PageObject::query()->where('obj_key', $key)->exists()) {
+            return true;
+        }
+
+        if (! str_contains($key, PermissionService::KEY_QUALIFIER)) {
+            return false;
+        }
+
+        $parts = explode(PermissionService::KEY_QUALIFIER, $key);
+
+        if (count($parts) >= 3) {
+            $bareObjKey = implode(PermissionService::KEY_QUALIFIER, array_slice($parts, 2));
+            $pageSlug = $parts[0];
+            $section = $parts[1];
+        } else {
+            $bareObjKey = $parts[1];
+            $pageSlug = $parts[0];
+            $section = null;
+        }
+
+        return PageObject::query()
+            ->where('obj_key', $bareObjKey)
+            ->when($section !== null, fn ($q) => $q->where('section', $section))
+            ->whereHas('page', fn ($q) => $q->where('slug', $pageSlug))
+            ->exists();
     }
 }

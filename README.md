@@ -23,7 +23,7 @@
 
 | Pillar | What it delivers |
 |---|---|
-| **Ptah Forge** | 26 Blade components (`<x-forge-*>`) with Tailwind v4 + Alpine.js — layout, sidebar, navbar, modal, table, forms and much more |
+| **Ptah Forge** | 31 Blade components (`<x-forge-*>`) with Tailwind v4 + Alpine.js — layout, sidebar, navbar, modal, table, forms and much more |
 | **ptah:forge** | SOLID scaffolding generator: an entire entity in seconds, with layered architecture and customisable stubs |
 | **BaseCrud** | Fully generated Livewire screen — filters, create/edit modal, soft delete, export and per-user preferences, all configurable via the database |
 
@@ -285,12 +285,20 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | `php artisan ptah:forge {Entity}` | **Generates the complete structure for an entity** ⭐ |
 | `php artisan ptah:config {Model}` | Configures a BaseCrud screen (columns/filters/actions/styles) via CLI. Accepts the FQCN or the runtime key |
 | `php artisan ptah:config:doctor` | Audits all CRUD configs — orphan keys, malformed configs, empty screens, route ambiguity (`--fix` repairs orphan keys) |
+| `php artisan ptah:config:relabel` | Re-humanises column labels generated before the scaffold's label humaniser existed (`--dry-run`, `--all`) |
 | `php artisan ptah:config:export-all` / `import-all` | Version the whole config set to a git-friendly directory and rebuild it (seeding) |
+| `php artisan ptah:permission:sync` | Registers the RBAC objects derived from existing CRUD configs; `--role`/`--grant` binds a role in the same step |
+| `php artisan ptah:permission:why` | Explains why `ptah_can()` grants or denies access for a given user + object key |
+| `php artisan ptah:audit-prune` | Deletes `ptah_permission_audits` rows older than the retention window (destructive — `--days`) |
+| `php artisan ptah:export-prune` | Deletes stale async export files and records (expired + orphaned) |
 | `php artisan ptah:module {module}` | Enables an optional module |
 | `php artisan ptah:module --list` | Lists modules and their states |
 | `php artisan ptah:menu-sync` | Syncs the sidebar menu from the MenuRegistry |
 | `php artisan ptah:hooks {Entity}` | Scaffolds a lifecycle-hooks class for an entity |
-| `php artisan ptah:docs {Entity}` | Generates Swagger/OpenAPI annotations |
+
+> Full reference for every command and every flag: **[Commands.md](docs/Commands.md)**.
+> Swagger/OpenAPI docs are generated via `ptah:forge --api` (or `ptah:module api`) followed
+> by `php artisan l5-swagger:generate` — there is no standalone `ptah:docs` command.
 
 ---
 
@@ -322,9 +330,10 @@ Ptah injects these as CSS variables (`--color-primary`, `--ptah-primary`, …) i
 layout `<head>`; every tint, focus ring and hover is derived from them via
 `color-mix()`. Accepts any CSS color (hex, rgb, hsl, oklch).
 
-**Per-user Appearance.** Every authenticated user can also pick their own light tone,
-dark tone, accent color and font color from a 6th tab at `/profile` — persisted
-server-side, applied on `<html>` with no flash. See
+**Per-user Appearance.** Every authenticated user can also pick their own combination of
+**6 independent axes** — light tone, dark tone, accent color, font color, density and
+font size — from a 6th tab at `/profile`, persisted server-side and applied on `<html>`
+with no flash. See
 [Configuration.md — Per-user Appearance](docs/Configuration.md#per-user-appearance-profile--6th-tab).
 
 **Customizing views — publish only what you edit.** Most customization is done
@@ -351,12 +360,17 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[Quick Start](docs/QuickStart.md)** | Your first CRUD in 5 minutes — one entity, SQLite, zero decisions |
 | **[Installation Guide](docs/InstallationGuide.md)** | Step-by-step guide with real terminal output — Laravel 11/12, all modules and Boost |
 | **[BaseCrud](docs/BaseCrud.md)** | Complete reference — column schema, types, filters, renderers, export, preferences and UI configuration |
+| **[Configuration](docs/Configuration.md)** | Every `config/ptah.php` key, the CRUD JSON config shape and the per-user Appearance system |
+| **[Commands](docs/Commands.md)** | Every `artisan ptah:*` command, every flag and the full `ptah:config` CLI syntax |
 | **[Modules](docs/Modules.md)** | Detailed documentation for Auth, Menu, Company, Permissions and API modules |
 | **[Company](docs/Company.md)** | Company module — companies, departments, company switcher and multi-company |
 | **[Permissions](docs/Permissions.md)** | Permissions module — RBAC, roles, middleware, helpers, Blade directives and audit log |
+| **[SearchDropdown](docs/SearchDropdown.md)** | Async search-select column/filter type — model mode, service mode, relation labels, cascading |
+| **[Validation System](docs/Validation-System.md)** | `ConfigSchemaValidator` / `JsonSchemaBuilder` — how CRUD configs are validated and the JSON Schema they generate |
 | **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |
 | **[Custom Screens](docs/CustomScreens.md)** | Building your own screens outside BaseCrud — design tokens, the 6 appearance axes, the `<x-forge-*>` catalog and common pitfalls (pt-BR) |
 | **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
+| **[AI Agent module](docs/AiAgent.md)** | The optional in-app AI chat widget module — providers, tools, rate limits and token budget |
 | **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |
 | **[Testing](docs/Testing.md)** | How to run the standard suite and the browser (Dusk) suite — setup, gotchas, coverage (pt-BR) |
 

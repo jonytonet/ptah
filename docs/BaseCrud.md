@@ -44,7 +44,8 @@
 33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
 34. [Image Input](#image-input)
 35. [Partial Structure (Blade)](#partial-structure-blade)
-36. [Multi-Config per Route](#multi-config-per-route)
+36. [Keyboard Shortcuts](#keyboard-shortcuts)
+37. [Multi-Config per Route](#multi-config-per-route)
 
 ---
 
@@ -214,7 +215,7 @@ All public properties are accessible in the view via `$this->` or directly in th
 |---|---|---|---|
 | `$columnOrder` | `array` | `[]` | Custom column order |
 | `$columnWidths` | `array` | `[]` | Custom column widths |
-| `$viewDensity` | `string` | `'comfortable'` | `compact`, `comfortable`, `spacious` |
+| `$viewDensity` | `string` | `'global'` | `global` (inherits the user's Appearance density preset), `compact`, `comfortable`, `spacious` |
 | `$viewMode` | `string` | `'table'` | Display mode |
 
 ### External filter / multi-tenant
@@ -248,7 +249,7 @@ All public properties are accessible in the view via `$this->` or directly in th
 | `toggleFilters()` | — | Opens/closes the filter panel |
 | `clearFilters()` | — | Clears all filters |
 | `toggleTrashed()` | — | Toggles display of soft-deleted records |
-| `setViewDensity()` | `string $density` | Sets density: `compact`, `comfortable`, `spacious` |
+| `setViewDensity()` | `string $density` | Sets the screen's own density: `global` (inherit the user's global Appearance density preset), `compact`, `comfortable` or `spacious` — picking any of the 4 pins it for this screen, see [Configuration.md — Density](Configuration.md#per-user-appearance-profile--6th-tab) |
 
 ### Modal
 
@@ -267,6 +268,11 @@ All public properties are accessible in the view via `$this->` or directly in th
 | `cancelDelete()` | — | Cancels deletion |
 | `deleteRecord()` | — | Executes deletion (soft or hard) |
 | `restoreRecord()` | `int $id` | Restores a soft-deleted record |
+
+A soft delete's confirmation toast includes an **Undo** button: it re-emits `ptah-toast-undo`
+on `window` with the deleted record's ID, which `base-crud.blade.php` listens for
+(`@ptah-toast-undo.window="$wire.restoreRecord($event.detail.id)"`) to call `restoreRecord()` —
+a hard delete has no undo option, since there is nothing left to restore.
 
 ### Saved filters
 
@@ -427,6 +433,7 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
 | `colsEditableForm` | `bool` | If `false`, the field does NOT appear in the create/edit form (default: `true`) |
 | `colsVisibleList` | `bool` | If `false`, the column starts hidden in the list by default (default: `true`) |
+| `colsPermission` | `string` | Column-level visibility gate (requires the `permissions` module). An `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — the default for every column |
 | `colsAlign` | `string\|null` | Column alignment in the table: `text-start`, `text-center`, `text-end` (default: `text-start`) |
 | `colsReverse` | `bool\|'S'\|'N'\|int` | If `true`, `'S'`, `1` or `'1'`, applies `font-medium` on the cell to highlight the value (default: `false`) |
 
@@ -2425,41 +2432,83 @@ php artisan ptah:config "App\Models\Product" \
 
 ## Partial Structure (Blade)
 
-The main view `ptah::livewire.base-crud` is a ~40-line skeleton that includes 7 independent partials:
+The main view `ptah::livewire.base-crud` (`resources/views/livewire/base-crud/base-crud.blade.php`,
+287 lines — keyboard-shortcut handling, the bulk-actions floating bar and the toast-undo
+listener live here too, it is not a thin skeleton) directly includes 9 of the **11**
+partials under `resources/views/livewire/base-crud/partials/` — namespace
+`ptah::livewire.base-crud.partials.*`:
 
 ```blade
-<div class="ptah-base-crud" wire:key="base-crud-{{ $crudTitle }}">
-    {{-- Success flash / export status --}}
-
-    @if (!empty($crudConfig))
-        @include('ptah::livewire.partials._toolbar')
-        @include('ptah::livewire.partials._filter-panel')
-        @include('ptah::livewire.partials._table')
-        @include('ptah::livewire.partials._pagination')
-    @else
-        {{-- Empty state: no CrudConfig --}}
+<div class="ptah-base-crud" ...>
+    @if (!empty($urlFilters))
+        @include('ptah::livewire.base-crud.partials._url-filters-banner')
     @endif
 
-    @include('ptah::livewire.partials._modal-form')
-    @include('ptah::livewire.partials._modal-delete')
-    {{-- Loading overlay --}}
-    @include('ptah::livewire.partials._scripts')
+    @if (!empty($crudConfig))
+        @include('ptah::livewire.base-crud.partials._toolbar')
+        @include('ptah::livewire.base-crud.partials._filter-panel')
+
+        @if ($viewMode === 'cards')
+            @include('ptah::livewire.base-crud.partials._cards')
+        @else
+            @include('ptah::livewire.base-crud.partials._table')
+        @endif
+
+        @include('ptah::livewire.base-crud.partials._pagination')
+    @endif
+
+    @include('ptah::livewire.base-crud.partials._modal-form')
+    @include('ptah::livewire.base-crud.partials._modal-delete')
+    @include('ptah::livewire.base-crud.partials._scripts')
 </div>
 ```
 
+The remaining 2 files are included from elsewhere, not directly from `base-crud.blade.php`:
+`_break-subtotal` is nested inside `_table.blade.php` (rendered once per group break), and
+`_config-form-preview` belongs to the visual **CrudConfig editor** (`crud-config.blade.php`),
+not to the runtime BaseCrud screen at all.
+
 ### File → Responsibility
 
-| File | Responsibility |
-|---|---|
-| `_toolbar.blade.php` | Top bar: New button, global search, filters, trash, export, columns, density, config, refresh, clear, per-page |
-| `_filter-panel.blade.php` | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
-| `_table.blade.php` | Table: `<thead>` with drag/sort/resize, `<tbody>` with rows/actions/empty state, `<tfoot>` with totalisers |
-| `_pagination.blade.php` | Pagination div: first/last/next/prev links, record counter |
-| `_modal-form.blade.php` | Create/edit modal: `@teleport('body')` + Alpine, fields by type (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
-| `_modal-delete.blade.php` | Delete confirmation modal: `@teleport('body')` + Alpine |
-| `_scripts.blade.php` | `@once` block with styles and JS for column drag-and-drop and resize |
+| File | Lines | Responsibility |
+|---|---|---|
+| `_toolbar.blade.php` | 445 | Top bar: New button, global search, filters, trash, export, columns, density, config, refresh, clear, per-page |
+| `_modal-form.blade.php` | 583 | Create/edit modal: `@teleport('body')` + Alpine, fields by type (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
+| `_table.blade.php` | 424 | Table: `<thead>` with drag/sort/resize, `<tbody>` with rows/actions/empty state, `<tfoot>` with totalisers |
+| `_filter-panel.blade.php` | 376 | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
+| `_scripts.blade.php` | 265 | `@once` block with styles and JS for column drag-and-drop and resize |
+| `_config-form-preview.blade.php` | 147 | Live preview of a field inside the CrudConfig editor modal — included by `crud-config.blade.php`, not by `base-crud.blade.php` |
+| `_cards.blade.php` | 116 | Card/mosaic listing, shown instead of `_table` when `$viewMode === 'cards'` |
+| `_url-filters-banner.blade.php` | 37 | Banner shown when the screen was opened with `?f[...]` URL filters |
+| `_break-subtotal.blade.php` | 35 | Group-break subtotal row — included from inside `_table.blade.php`, not directly |
+| `_pagination.blade.php` | 22 | Pagination div: first/last/next/prev links, record counter |
+| `_modal-delete.blade.php` | 21 | Delete confirmation modal: `@teleport('body')` + Alpine |
 
-> **Publish only the partial you need to customise** — as the partials use `ptah::livewire.partials.*`, simply publish the specific file via `php artisan vendor:publish --tag=ptah-views` and edit the published file in `resources/views/vendor/ptah/livewire/partials/`.
+> **Publish only the partial you need to customise:**
+> `php artisan vendor:publish --tag=ptah-views-base-crud` publishes the whole
+> `base-crud/` directory (views + partials) to
+> `resources/views/vendor/ptah/livewire/base-crud/` — delete the files you don't
+> intend to override so Laravel keeps resolving them from the package.
+
+---
+
+## Keyboard shortcuts
+
+Handled by `_hotkeys()` in `base-crud.blade.php` (bound via `@keydown.window`), except
+sidebar collapse which lives in `forge-dashboard-layout.blade.php`. Ignored while
+typing in an `input`/`textarea`/`select`/`[contenteditable]`, and while any dialog
+(modal, bulk-delete confirm, this very overlay) is open — except `?`, which still opens
+the overlay from anywhere. Press `?` to see this list in the app itself.
+
+| Key | Action | Requires |
+|---|---|---|
+| `/` | Focus the global search input | — |
+| `n` | Open the create modal (`prepareCreate()`) | create permission |
+| `f` | Toggle the filter panel | — |
+| `v` | Switch between table and cards view | — |
+| `r` | Refresh the listing (`$wire.$refresh()`) | — |
+| `Ctrl+B` / `Cmd+B` | Collapse / expand the sidebar | — |
+| `?` | Show this shortcuts overlay | — |
 
 ---
 

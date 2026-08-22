@@ -338,6 +338,14 @@ trait HasCrudRenderers
 
         if ($row instanceof Model) {
             foreach ($row->getAttributes() as $k => $v) {
+                // A denied column (see ColumnPermissionService) must never be
+                // substituted into the link, even though the row itself was
+                // fetched from the DB (the ATTRIBUTE, not the column, is what
+                // is gated) — colsRendererLinkTemplate is config-driven, so
+                // any %field% it names is trusted to be public.
+                if (in_array($k, $this->deniedColumns, true)) {
+                    continue;
+                }
                 $url = str_replace('%'.$k.'%', (string) ($v ?? ''), $url);
             }
         }
@@ -690,9 +698,16 @@ trait HasCrudRenderers
             ? array_map(function (string $token) use ($row): mixed {
                 $token = trim($token);
 
-                // %fieldName% → field value from the record
+                // %fieldName% → field value from the record. A denied column
+                // (see ColumnPermissionService) resolves to '' rather than
+                // the real attribute — colsMetodoCustom is config-driven, so
+                // any %field% it names is trusted to be public.
                 if (preg_match('/^%([\w\.]+)%$/', $token, $pm)) {
                     $f = $pm[1];
+
+                    if (in_array($f, $this->deniedColumns, true)) {
+                        return '';
+                    }
 
                     return $row instanceof Model
                         ? ($row->getAttribute($f) ?? data_get($row, $f) ?? '')

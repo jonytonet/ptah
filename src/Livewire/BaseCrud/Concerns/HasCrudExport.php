@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Ptah\Jobs\GenerateCrudExportJob;
 use Ptah\Models\Export;
+use Ptah\Services\Permission\ColumnPermissionService;
 
 /**
  * Handles synchronous and asynchronous data export.
@@ -400,6 +401,14 @@ trait HasCrudExport
 
     /**
      * Retorna apenas as colunas visíveis (não-action) para exportação
+     *
+     * Carries the column's `colsPermission` key forward as `permission` (only
+     * when non-empty) so the token/queued payload can be RE-authorized at
+     * file-generation time (ColumnPermissionService::filterExportColumns(),
+     * called from ExportController::download() and
+     * GenerateCrudExportJob::handle()) instead of trusting a gate applied only
+     * once, here, at dispatch time. Absent key = public column — unchanged
+     * for every screen with no `colsPermission` tag anywhere.
      */
     protected function getVisibleColumnsForExport(): array
     {
@@ -415,11 +424,18 @@ trait HasCrudExport
                 continue;
             }
 
-            $exportColumns[] = [
+            $exportColumn = [
                 'field' => $col['colsNomeFisico'] ?? '',
                 'label' => $col['colsNomeLogico'] ?? '',
                 'type' => $tipo,
             ];
+
+            $permission = $col[ColumnPermissionService::TAG] ?? null;
+            if (is_string($permission) && trim($permission) !== '') {
+                $exportColumn['permission'] = trim($permission);
+            }
+
+            $exportColumns[] = $exportColumn;
         }
 
         return $exportColumns;

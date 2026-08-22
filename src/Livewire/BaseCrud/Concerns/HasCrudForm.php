@@ -57,6 +57,14 @@ trait HasCrudForm
 
         $this->editingId = $id;
         $this->formData = $record->toArray();
+
+        // formData is a public property (part of the Livewire payload sent
+        // to the browser) — a denied column (see ColumnPermissionService)
+        // must never reach it, even though it is not in getFormCols().
+        foreach ($this->deniedColumns as $denied) {
+            unset($this->formData[$denied]);
+        }
+
         $this->formErrors = [];
         $this->sdSearches = [];
         $this->sdResults = [];

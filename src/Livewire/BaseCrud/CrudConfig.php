@@ -6,7 +6,10 @@ namespace Ptah\Livewire\BaseCrud;
 
 use Illuminate\View\View;
 use Livewire\Component;
+use Ptah\Models\PageObject;
 use Ptah\Services\Crud\CrudConfigService;
+use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Services\Permission\PermissionService;
 
 /**
  * BaseCrud configuration component.
@@ -268,6 +271,61 @@ class CrudConfig extends Component
         }
 
         return $cols;
+    }
+
+    // ── Column permissions ────────────────────────────────────────────────
+
+    /**
+     * Options for the `colsPermission` select in the column editor: every
+     * active `PageObject` on an active `PtahPage` — the same activity rule
+     * `PermissionService::buildMasterPermissionMap()` applies, so an
+     * inactive/deactivated object is never offered as a gating target a
+     * grant could never reach.
+     *
+     * The option `value` is normally the bare `obj_key`. When the SAME
+     * `obj_key` is registered on more than one page (see
+     * `ConfigDoctorCommand`'s "obj_key collision" check), the bare form is
+     * ambiguous — every colliding option instead uses the QUALIFIED form
+     * `{page.slug}::{obj_key}` so each one resolves to exactly one grant.
+     *
+     * Empty (module off, or no PageObject registered) → the caller renders
+     * only the "None" option, matching the default-public behaviour of a
+     * column with no tag.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public function availablePermissionKeys(): array
+    {
+        if (! config('ptah.modules.permissions')) {
+            return [];
+        }
+
+        $objects = PageObject::query()
+            ->active()
+            ->whereHas('page', fn ($q) => $q->where('is_active', true))
+            ->with('page:id,slug')
+            ->orderBy('obj_key')
+            ->get();
+
+        $collidingKeys = $objects
+            ->groupBy('obj_key')
+            ->filter(fn ($group) => $group->pluck('page.slug')->filter()->unique()->count() > 1)
+            ->keys();
+
+        return $objects
+            ->map(function (PageObject $object) use ($collidingKeys) {
+                $pageSlug = $object->page->slug ?? '';
+                $value = $collidingKeys->contains($object->obj_key)
+                    ? $pageSlug.PermissionService::KEY_QUALIFIER.$object->obj_key
+                    : $object->obj_key;
+
+                return [
+                    'value' => $value,
+                    'label' => "{$object->obj_key} — {$object->obj_label} ({$pageSlug})",
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     // ── Load config ──────────────────────────────────────────────────────
@@ -904,6 +962,18 @@ class CrudConfig extends Component
                 && ($field['colsTipo'] ?? '') === 'select'
             ) {
                 $field['colsSelect'] = $this->parseColsSelect($field['colsSelect']);
+            }
+
+            // Second trap for an empty `colsPermission` tag — the first is
+            // ColumnPermissionService::extractKey() treating a blank string
+            // as "public" at read time. Dropping it here too keeps a saved
+            // config from carrying a meaningless empty key around forever.
+            if (
+                array_key_exists(ColumnPermissionService::TAG, $field)
+                && is_string($field[ColumnPermissionService::TAG])
+                && trim($field[ColumnPermissionService::TAG]) === ''
+            ) {
+                unset($field[ColumnPermissionService::TAG]);
             }
         }
 

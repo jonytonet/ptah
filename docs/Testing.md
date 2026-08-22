@@ -133,6 +133,7 @@ isolado.
 | `ToolbarLabelCollapseBrowserTest` | Em viewport largo os rótulos da toolbar aparecem; encolher a janela colapsa para só-ícone. |
 | `SearchPersistenceAcrossBackNavigationBrowserTest` | **Fluxo 6 — o sintoma real do usuário.** Digitar na busca, navegar para outra URL, `history.back()`: o input e a listagem filtrada precisam sobreviver. Ver achado abaixo. |
 | `DarkThemeBrowserTest` | Alternar `.ptah-dark` no `<html>` muda o `background-color` computado (pega token órfão). |
+| `ColumnPermissionBrowserTest` | O gate `colsPermission`, num Chrome real: o `<th>`/`<td>` da coluna negada nunca chega ao DOM (não só ausente do HTML servido) — classe de bug que um teste `Livewire::test()->html()` não enxerga. |
 
 **Fluxo 8 (search-dropdown por teclado) não foi implementado** — ver
 "Achados" abaixo.

@@ -991,6 +991,12 @@ return [
     'cfg_col_cb_required' => 'Required',
     'cfg_col_cb_filterable' => 'Filterable',
 
+    // Columns tab — column-level permission (requires the "permissions" module)
+    'cfg_col_permission_label' => 'Visibility permission',
+    'cfg_col_permission_none' => 'None (everyone sees it)',
+    'cfg_col_permission_hint' => 'Marking a column here hides it from everyone — including today\'s viewers — until access is granted to a role for this key.',
+    'cfg_col_permission_badge_title' => 'Gated by permission key: :key',
+
     // Type options
     'cfg_col_type_text' => 'text — Text',
     'cfg_col_type_number' => 'number — Number',

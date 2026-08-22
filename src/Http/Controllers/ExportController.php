@@ -14,6 +14,7 @@ use Ptah\Exports\CrudExport;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
+use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SqlIdentifier;
 
@@ -99,8 +100,25 @@ class ExportController
         $model = App::make($modelClass);
         $pk = $model->getKeyName();
         $ids = $payload['ids'] ?? [];
-        $columns = $payload['columns'] ?? [];
         $format = $payload['format'] ?? 'excel';
+
+        // Re-authorize the column list at file-generation time — never trust
+        // the permission baked into the cached payload at dispatch time (see
+        // ColumnPermissionService::filterExportColumns()). $owner already IS
+        // the resolved user id checked above; companyId comes from the payload
+        // for symmetry with getTotalizers() and the queued job, instead of
+        // leaning implicitly on the session fallback.
+        $columns = app(ColumnPermissionService::class)
+            ->filterExportColumns($payload['columns'] ?? [], $owner, $payload['companyId'] ?? null);
+
+        // Fail-closed: an empty column list must never reach CrudExport/the
+        // PDF view, both of which treat "no columns configured" as "export
+        // every attribute" (see CrudExport::headings()/map() and
+        // exports/pdf.blade.php) — exactly what a user denied on every
+        // column would otherwise still get.
+        if ($columns === []) {
+            abort(403, 'No exportable column is authorized for the current user.');
+        }
 
         $query = $model::query()->whereIn($pk, $ids);
 
@@ -116,7 +134,7 @@ class ExportController
         $fileName = Str::slug($modelName).'-'.now()->format('Y-m-d-His');
 
         if ($format === 'pdf') {
-            return $this->exportPdf($query, $fileName, $modelName, $columns, $modelClass);
+            return $this->exportPdf($query, $fileName, $modelName, $columns, $modelClass, $owner, $payload['companyId'] ?? null);
         }
 
         return $this->exportExcel($query, $fileName, $columns);
@@ -153,7 +171,7 @@ class ExportController
     /**
      * Exporta para PDF
      */
-    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [], ?string $modelClass = null)
+    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [], ?string $modelClass = null, mixed $userId = null, ?int $companyId = null)
     {
         $data = $query->get();
 
@@ -163,8 +181,10 @@ class ExportController
 
         // Buscar totalizadores se configurados. A resolução do config precisa do
         // identificador COMPLETO (FQCN ou chave canônica com sub-pasta), não do
-        // class_basename usado no título — ver getTotalizers().
-        $totalizers = $this->getTotalizers($query, $modelClass ?? $modelName);
+        // class_basename usado no título — ver getTotalizers(). $userId/$companyId
+        // re-authorize the totalizer columns against the column-permission gate
+        // (see getTotalizers()) instead of trusting the raw crud_configs row.
+        $totalizers = $this->getTotalizers($query, $modelClass ?? $modelName, $userId, $companyId);
 
         return Pdf::loadView('ptah::exports.pdf', [
             'data' => $data,
@@ -204,8 +224,15 @@ class ExportController
 
     /**
      * Busca totalizadores configurados no CrudConfig
+     *
+     * $userId/$companyId re-authorize `totalizadores.columns` against the
+     * SAME per-column `colsPermission` gate the listing/print screen already
+     * enforce (HasCrudLifecycle::applyColumnPermissions()) — this method
+     * queries `crud_configs` FRESH from the DB, so a denied column's total
+     * would otherwise leak into the downloaded PDF even though the screen
+     * itself never shows it (the vulnerability this wave closes).
      */
-    protected function getTotalizers($query, string $modelName): array
+    protected function getTotalizers($query, string $modelName, mixed $userId = null, ?int $companyId = null): array
     {
         try {
             // Buscar configuração do CRUD.
@@ -244,10 +271,22 @@ class ExportController
                 return [];
             }
 
+            // Column-level READ gate (see class docblock above): drop any
+            // totalizer whose field is denied to $userId, mirroring
+            // HasCrudLifecycle::applyColumnPermissions()'s own re-intersection
+            // of totalizadores.columns against the identical gate.
+            $deniedFields = app(ColumnPermissionService::class)
+                ->apply($config['cols'] ?? [], $userId, $companyId)['denied'];
+
+            $totColumns = array_values(array_filter(
+                $totConfig['columns'],
+                fn (array $totCol) => ! in_array($totCol['field'] ?? null, $deniedFields, true)
+            ));
+
             $result = [];
 
             // Calcular cada totalizador
-            foreach ($totConfig['columns'] as $totCol) {
+            foreach ($totColumns as $totCol) {
                 $field = $totCol['field'] ?? null;
                 $aggregate = $totCol['aggregate'] ?? 'sum';
                 $label = $totCol['label'] ?? ucwords(str_replace('_', ' ', $field));

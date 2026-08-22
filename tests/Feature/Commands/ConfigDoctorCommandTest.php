@@ -255,4 +255,89 @@ class ConfigDoctorCommandTest extends TestCase
             ->doesntExpectOutputToContain('obj_key collision')
             ->assertExitCode(0);
     }
+
+    // ── colsPermission → unknown column permission key ─────────────────────
+
+    #[Test]
+    public function a_colspermission_naming_no_registered_pageobject_warns(): void
+    {
+        $config = $this->goodConfig();
+        $config['cols'][0]['colsPermission'] = 'items.no_such_key';
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('unknown column permission key')
+            ->assertExitCode(0); // warning only — never fails the exit code
+    }
+
+    #[Test]
+    public function a_colspermission_naming_a_registered_bare_obj_key_does_not_warn(): void
+    {
+        $page = PtahPage::create(['slug' => 'items-screen', 'name' => 'Items Screen']);
+        PageObject::create([
+            'page_id' => $page->id,
+            'section' => 'main',
+            'obj_key' => 'items.secret_amount',
+            'obj_label' => 'Secret amount',
+            'obj_type' => 'field',
+        ]);
+
+        $config = $this->goodConfig();
+        $config['cols'][0]['colsPermission'] = 'items.secret_amount';
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown column permission key')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_qualified_colspermission_resolving_to_a_registered_pageobject_does_not_warn(): void
+    {
+        $pageA = PtahPage::create(['slug' => 'page-a', 'name' => 'Page A']);
+        $pageB = PtahPage::create(['slug' => 'page-b', 'name' => 'Page B']);
+
+        // Same obj_key on two pages (a real collision) — only the QUALIFIED
+        // form unambiguously names one of them.
+        PageObject::create([
+            'page_id' => $pageA->id, 'section' => 'main',
+            'obj_key' => 'shared.button', 'obj_label' => 'Shared button', 'obj_type' => 'button',
+        ]);
+        PageObject::create([
+            'page_id' => $pageB->id, 'section' => 'main',
+            'obj_key' => 'shared.button', 'obj_label' => 'Shared button', 'obj_type' => 'button',
+        ]);
+
+        $config = $this->goodConfig();
+        $config['cols'][0]['colsPermission'] = 'page-a::shared.button';
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown column permission key')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_qualified_colspermission_naming_no_such_page_warns(): void
+    {
+        $config = $this->goodConfig();
+        $config['cols'][0]['colsPermission'] = 'no-such-page::items.secret_amount';
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('unknown column permission key')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_empty_colspermission_never_warns(): void
+    {
+        $config = $this->goodConfig();
+        $config['cols'][0]['colsPermission'] = '';
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $config);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown column permission key')
+            ->assertExitCode(0);
+    }
 }

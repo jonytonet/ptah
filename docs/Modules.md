@@ -248,7 +248,7 @@ Sucesso → Auth::loginUsingId() + Session::regenerate() + evento Login
 **Arquivo:** `src/Livewire/Auth/ProfilePage.php`  
 **View:** `resources/views/livewire/auth/profile.blade.php`
 
-Profile page with 5 tabs:
+Profile page with 6 tabs:
 
 | Tab (`activeTab`) | Functionality |
 |---|---|
@@ -257,6 +257,7 @@ Profile page with 5 tabs:
 | `two_factor` | Configure / disable 2FA (TOTP + email) |
 | `sessions` | View and revoke active sessions |
 | `photo` | Upload profile photo (`WithFileUploads`) |
+| `appearance` | Per-user Appearance — 6 axes (light/dark tone, accent, text weight, density, font size), see [Configuration.md — Per-user Appearance](Configuration.md#per-user-appearance-profile--6th-tab) |
 
 **Main methods:**
 
@@ -270,7 +271,7 @@ Profile page with 5 tabs:
 | `disableTwoFactor()` | Deactivates and removes 2FA data |
 | `regenerateRecoveryCodes()` | Generates 8 new recovery codes |
 | `loadSessions()` | Loads active sessions via `SessionService` |
-| `revokeSession($id)` | Revokes specific session |
+| `revokeSession(string $sessionId, SessionService $sessionService)` | Revokes specific session (Livewire method-injects the service) |
 | `revokeOtherSessions()` | Revokes all except the current one |
 | `savePhoto()` | Saves photo to `profile-photos` disk |
 | `removePhoto()` | Removes photo and clears field in database |
@@ -647,11 +648,11 @@ The **permissions** module implements granular hierarchical ACL based on roles.
 - Per-object permissions: `can_create`, `can_read`, `can_update`, `can_delete` + JSON `extra`
 - `PermissionService` with cache (Redis tag support), auditing and automatic user resolution
 - `RoleService` with MASTER protection and batch permission synchronization
-- Global helpers: `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`
+- Global helpers: `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`, `ptah_has_role()`, `ptah_can_manage_config()`
 - `Permission::check()` Facade
 - Blade directives: `@ptahCan` / `@ptahMaster`
 - Middleware: `ptah.can:object,action`
-- 5 Livewire admin screens: Departments, Roles, Pages/Objects, Users ACL, Audit
+- 6 Livewire admin screens: Departments, Roles, Pages/Objects, Users ACL, Audit, Permissions Guide
 - Idempotent `DefaultAdminSeeder` that creates the entire admin chain
 - All models (`Role`, `PtahPage`, `PageObject`, `UserRole`, `RolePermission`) use the `HasAuditFields` trait — automatic tracking of who created, edited and deleted each record
 
