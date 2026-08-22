@@ -65,8 +65,8 @@ The **permissions** module implements a hierarchical and granular access control
 | Audit | Log of granted and denied accesses with JSON context |
 | Middleware | `ptah.can:object,action` for route protection |
 | Blade directives | `@ptahCan('key', 'action')` and `@ptahMaster` |
-| Global helpers | `ptah_can()`, `ptah_is_master()`, `ptah_permissions()` |
-| 5 admin screens | Departments, Roles, Pages/Objects, Users, Audit |
+| Global helpers | `ptah_can()`, `ptah_is_master()`, `ptah_permissions()`, `ptah_has_role()`, `ptah_can_manage_config()` |
+| 6 admin screens | Departments, Roles, Pages/Objects, Users, Audit, Permissions Guide |
 
 ---
 

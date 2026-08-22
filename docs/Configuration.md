@@ -177,12 +177,17 @@ tone/scale/colour/spacing), not the currently active theme.
 
 **Density.** Reuses, byte-for-byte, the 3-recipe scale (`--ptah-control-h/px/fs`,
 `--ptah-row-py`) that already existed per-screen inside every BaseCrud toolbar
-(`viewDensity`), now also driven globally from `:root`/`html[data-ptah-density="…"]`. A
-BaseCrud screen whose own toolbar dropdown never picked "compact"/"spacious" (i.e. it is
-still at its default "comfortable") inherits this global choice; a screen that DID pick
-one of those two explicitly keeps it regardless of the global setting. `forge-input`,
-`forge-button` (`sm`/`md`), `forge-select` and the 7 module-screen toolbars/tables also
-scale with this axis.
+(`viewDensity`), now also driven globally from `:root`/`html[data-ptah-density="…"]`. Each
+BaseCrud screen's own density dropdown (`HasCrudFilters::setViewDensity()`) offers **4
+options**: **Profile default** (`global` — inherits the global preset above), **Compact**,
+**Comfortable** and **Spacious**. Picking any of the 4 explicitly — including
+**Comfortable** — pins that choice for the screen, regardless of the global preset.
+Configs saved before this dropdown existed persisted `'comfortable'` implicitly (it was
+the old, silent default, not a deliberate choice); `HasCrudPreferences::loadPreferences()`
+migrates that legacy value to `'global'` on load so those screens fall back under the
+profile's global density, while an explicitly-persisted `'compact'`/`'spacious'` (a real
+prior choice) is left untouched. `forge-input`, `forge-button` (`sm`/`md`), `forge-select`
+and the 7 module-screen toolbars/tables also scale with this axis.
 
 **Font size.** Scales `<html>`'s `font-size` (87.5% / 100% / 112.5%) — since most of the
 package is sized in `rem`, this scales controls, tables, modals and chrome (sidebar,
@@ -204,7 +209,7 @@ Tailwind arbitrary values scattered across the module screens and BaseCrud parti
 > instead (there is currently no config flag for that — see `docs/KnownLimitations.md`).
 
 **Auth screens (login, 2FA, forgot/reset password).** There is no authenticated user on
-these pages, so the same 4 axes plus the light/dark mode are mirrored into an `httpOnly`
+these pages, so the same 6 axes plus the light/dark mode are mirrored into an `httpOnly`
 `ptah_appearance` cookie (1 year, `SameSite=Lax`, written by the server whenever the
 preference is saved via `/profile`, the navbar toggle, or a successful login) and read
 back — sanitized the same way — to render the attributes on `forge-auth`'s `<html>`. On a
@@ -333,6 +338,7 @@ device/browser; it never leaks credentials or any other account data.
 | `permissions.audit` | `PTAH_PERMISSION_AUDIT` | `false` | [Permissions.md](Permissions.md) |
 | `permissions.audit_denied` | `PTAH_PERMISSION_AUDIT_DENIED` | `true` | [Permissions.md](Permissions.md) |
 | `permissions.audit_master` | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | [Permissions.md](Permissions.md) |
+| `permissions.audit_retention_days` | `PTAH_PERMISSION_AUDIT_RETENTION_DAYS` | `90` | default `--days` window for `ptah:audit-prune` — see [Commands.md](Commands.md) |
 | `permissions.multi_company` | `PTAH_MULTI_COMPANY` | `true` | [Permissions.md](Permissions.md) |
 | `permissions.allow_guest` | `PTAH_PERMISSION_ALLOW_GUEST` | `false` | [Permissions.md](Permissions.md) |
 | `permissions.admin_name` | `PTAH_ADMIN_NAME` | `Administrador` | [Permissions.md](Permissions.md) |
@@ -1171,10 +1177,10 @@ Run with options to configure directly:
 php artisan ptah:config "App\Models\Product" \
   --column="name:text:required:label=Product Name:validation=required|max:255" \
   --column="sku:text:required:validation=required|unique:products,sku" \
-  --column="price:number:required:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2" \
-  --column="stock:number:label=Stock:renderer=number:rendererDecimals=0" \
+  --column="price:number:required:mask=money_brl:renderer=money:currency=BRL:decimals=2" \
+  --column="stock:number:label=Stock:renderer=number:decimals=0" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
-  --column="category_id:searchdropdown:relation=category:sdSelectColumn=name:sdValueColumn=id" \
+  --column="category_id:searchdropdown:sd_model=App\Models\Category" \
   --set="itemsPerPage=25" \
   --set="cacheEnabled=true" \
   --set="cacheTtl=3600"
@@ -1192,56 +1198,65 @@ field:type:modifier:option=value:option=value...
 **Parts:**
 1. `field` — Physical column name (required)
 2. `type` — Column type (required): `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`
-3. `modifier` — Optional modifier (shorthand): `required`, `optional`, `readonly`, `hidden`, `noFilter`, `noSave`, `total`
+3. `modifier` — Optional bare modifier (never `modifier=true`): `required`, `nullable`, `readonly`, `hidden`, `sortable`, `filterable`, `not_filterable`
 4. `option=value` — Key=value pairs for additional settings
 
-**Modifiers (shorthands):**
+**Modifiers (bare tokens):**
 
 | Modifier | Equivalent to | Description |
 |----------|--------------|-------------|
 | `required` | `colsRequired = true` | Required field |
-| `optional` | `colsRequired = false` | Optional field |
-| `readonly` | `colsEditableForm = false` | Read-only in form |
+| `nullable` | `colsRequired = false` | Optional field |
+| `readonly` | `colsGravar = false` | Not saved to database |
 | `hidden` | `colsVisibleList = false` | Not shown in list |
-| `noFilter` | `colsIsFilterable = false` | Not filterable |
-| `noSave` | `colsGravar = false` | Not saved to database |
-| `total` | `colsTotal = true` | Add to totalizer |
+| `sortable` | `colsOrderBy = <field>` | Sortable by its own column |
+| `filterable` | `colsIsFilterable = true` | Filterable |
+| `not_filterable` | `colsIsFilterable = false` | Not filterable |
 
-**Options (key=value):**
+**Options (key=value) — full `ColumnParser::$keyMap`:**
 
 | Option | Mapping | Type | Example |
 |--------|------------|------|---------|
 | `label` | `colsNomeLogico` | string | `label=Product Name` |
-| `help` | `colsHelpText` | string | `help=Enter product name` |
 | `placeholder` | `colsPlaceholder` | string | `placeholder=Type here...` |
-| `default` | `colsDefaultValue` | mixed | `default=0` |
 | `align` | `colsAlign` | string | `align=text-end` |
-| `width` | `colsWidth` | string | `width=120px` |
-| `renderer` | `colsRenderer` | string | `renderer=money` |
-| `rendererLink` | `colsRendererLink` | string | `rendererLink=/products/%id%` |
-| `rendererTarget` | `colsRendererTarget` | string | `rendererTarget=_blank` |
-| `rendererCurrency` | `colsRendererCurrency` | string | `rendererCurrency=BRL` |
-| `rendererDecimals` | `colsRendererDecimals` | int | `rendererDecimals=2` |
-| `rendererPrefix` | `colsRendererPrefix` | string | `rendererPrefix=$` |
-| `rendererSuffix` | `colsRendererSuffix` | string | `rendererSuffix=%` |
-| `rendererFormat` | `colsRendererFormat` | string | `rendererFormat=d/m/Y` |
-| `rendererMaxChars` | `colsRendererMaxChars` | int | `rendererMaxChars=50` |
-| `badges` | `colsRendererBadges` | array | `badges=active|green,inactive|red` |
+| `min_width` | `colsMinWidth` | string | `min_width=120px` (there is no `width=`) |
+| `renderer` | `colsRenderer` | string | `renderer=money` (`text`,`badge`,`pill`,`boolean`,`money`,`date`,`datetime`,`link`,`image`,`truncate`,`number`,`filesize`,`duration`,`code`,`color`,`progress`,`rating`,`qrcode`) |
+| `cell_style` | `colsCellStyle` | string | `cell_style=background:#FEE;` |
+| `cell_class` | `colsCellClass` | string | `cell_class=font-bold` |
+| `cell_icon` | `colsCellIcon` | string | `cell_icon=bx-user` |
+| `source` | `colsSource` | string | `source=JOIN categories` |
+| `method` | `colsMetodoCustom` | string | `method=formatCustom` |
+| `order_by` | `colsOrderBy` | string | `order_by=name` |
+| `link_template` | `colsRendererLinkTemplate` | string | `link_template=/products/%id%` |
+| `link_label` | `colsRendererLinkLabel` | string | `link_label=Ver` |
+| `link_new_tab` | `colsRendererLinkNewTab` | bool | `link_new_tab=true` |
+| `currency` | `colsRendererCurrency` | string | `currency=BRL` |
+| `decimals` | `colsRendererDecimals` | int | `decimals=2` |
+| `max_chars` | `colsRendererMaxChars` | int | `max_chars=50` |
+| `badges` | `colsRendererBadges` | array | `badges=active\|green,inactive\|red` — `\|`-separated, not `:` |
 | `mask` | `colsMask` | string | `mask=money_brl` |
-| `maskTransform` | `colsMaskTransform` | string | `maskTransform=money_to_float` |
-| `maskDecimalPlaces` | `colsMaskDecimalPlaces` | int | `maskDecimalPlaces=2` |
-| `validation` | `colsValidation` | array | `validation=required\|email` |
-| `options` | `colsOptions` | array | `options=yes:Yes,no:No` |
-| `relation` | `colsRelation` | string | `relation=category` |
-| `sdTable` | `colsSdTable` | string | `sdTable=categories` |
-| `sdSelectColumn` | `colsSdSelectColumn` | string | `sdSelectColumn=name` |
-| `sdValueColumn` | `colsSdValueColumn` | string | `sdValueColumn=id` |
-| `uploadPath` | `colsUploadPath` | string | `uploadPath=products/images` — overrides the auto-derived path |
-| `uploadMaxSize` | `colsUploadMaxSize` | int | `uploadMaxSize=2048` — max size in KB (default: 2048) |
-| `uploadAllowedTypes` | `colsUploadAllowedTypes` | string | `uploadAllowedTypes=jpg,png,webp` — comma-separated extensions |
-| `totalizer` | `colsTotal` | bool | `totalizer=true` |
-| `totalizadorType` | `totalizadorType` | string | `totalizadorType=sum` |
+| `mask_transform` | `colsMaskTransform` | string | `mask_transform=money_to_float` |
+| `validation` | `colsValidations` | array | `validation=required\|max:255` |
+| `options` | `colsSelect` | string | `options=yes:Yes,no:No` |
+| `relation` | `colsRelacao` | string | `relation=category` |
+| `relation_display` | `colsRelacaoExibe` | string | `relation_display=name` |
+| `relation_nested` | `colsRelacaoNested` | string | `relation_nested=category.parent.name` |
+| `sd_model` | `colsSDModel` | string | `sd_model=App\Models\Category` |
+| `sd_value` | `colsSDValor` | string | `sd_value=id` |
+| `sd_label` | `colsSDLabel` | string | `sd_label=name` — see the caveat in [Commands.md](Commands.md#ptahconfig) about the keys the SearchDropdown renderer actually reads (`colsSDValor`/`colsSDLabel`) |
+| `upload_path` | `colsUploadPath` | string | `upload_path=products/images` — overrides the auto-derived path |
+| `upload_max_size` | `colsUploadMaxSize` | int | `upload_max_size=2048` — max size in KB (default: 2048) |
+| `upload_allowed_types` | `colsUploadAllowedTypes` | string | `upload_allowed_types=jpg,png,webp` — comma-separated extensions |
+| `image_width` | `colsRendererImageWidth` | int | `image_width=64` |
+| `image_height` | `colsRendererImageHeight` | int | `image_height=64` |
+| `totalizer` | `totalizadorType` (also sets `totalizadorEnabled=true`) | string | `totalizer=sum` (`sum`,`avg`,`count`,`min`,`max`) |
+| `totalizer_format` | `totalizadorFormat` | string | `totalizer_format=currency` |
 | `permission` | `colsPermission` | string | `permission=page::viewCost` — column-level visibility gate, see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions) |
+
+> Any `option=value` key not in `ColumnParser::$keyMap` is stored verbatim under
+> that raw key instead of being translated — e.g. `rendererDecimals=2` (not in
+> the map) silently sets a `rendererDecimals` key nothing reads; use `decimals=2`.
 
 **Examples:**
 
@@ -1253,31 +1268,31 @@ field:type:modifier:option=value:option=value...
 --column="email:text:required:validation=required|email|max:255"
 
 # Price with mask and renderer
---column="price:number:required:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2"
+--column="price:number:required:mask=money_brl:renderer=money:currency=BRL:decimals=2"
 
 # Status with select and badges
 --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red,pending|yellow"
 
 # SearchDropdown for category
---column="category_id:searchdropdown:relation=category:sdSelectColumn=name:sdValueColumn=id"
+--column="category_id:searchdropdown:sd_model=App\Models\Category"
 
 # Readonly date
---column="created_at:datetime:readonly:renderer=datetime:rendererFormat=d/m/Y H:i:s"
+--column="created_at:datetime:readonly:renderer=datetime"
 
 # Boolean
---column="active:boolean:default=true"
+--column="active:boolean:required"
 
 # Description with textarea
---column="description:textarea:optional:placeholder=Enter description"
+--column="description:textarea:nullable:placeholder=Enter description"
 
 # Image with upload — auto path: storage/app/public/images/product/
---column="image:image:uploadPath=products:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp"
+--column="image:image:upload_path=products:upload_max_size=2048:upload_allowed_types=jpg,png,webp"
 
 # Image with custom path and strict types
 --column="photo:image:upload_path=avatars:upload_max_size=1024:upload_allowed_types=jpg,png"
 
 # Number with totalizer
---column="quantity:number:total:totalizadorType=sum:totalizadorFormat=number"
+--column="quantity:number:totalizer=sum:totalizer_format=number"
 ```
 
 #### --action (Actions)
@@ -1317,13 +1332,13 @@ field:type:operator:label=Label:options=opt1,opt2
 --filter="status:select:=:label=Status:options=active,inactive,pending"
 
 # Number with minimum
---filter="price:number:>=:label=Minimum Price"
+--filter="price:number:operator=>=:label=Minimum Price"
 
 # Date
---filter="created_at:date:>=:label=From Date"
+--filter="created_at:date:operator=>=:label=From Date"
 
 # SearchDropdown
---filter="user_id:searchdropdown:=:label=User:sdTable=users:sdSelectColumn=name:sdValueColumn=id"
+--filter="user_id:searchdropdown:label=User:sd_model=App\Models\User:sd_value=id:sd_label=name"
 
 # Text with LIKE
 --filter="name:text:LIKE:label=Search Name"
@@ -1864,7 +1879,6 @@ Properties of each column in `cols[]`:
 | `colsVisibleList` | bool | `true` | Show in list |
 | `colsEditableForm` | bool | `true` | Editable in form |
 | `colsAlign` | string | `'text-start'` | Alignment: `text-start`, `text-center`, `text-end` |
-| `colsWidth` | string | `'auto'` | Column width: `120px`, `20%`, `auto` |
 | `colsSource` | string | `''` | Badge indicating SQL source (e.g.: `JOIN categories`) |
 
 ### Cell Style
@@ -2364,14 +2378,14 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 php artisan ptah:config "App\Models\Product" \
   --column="name:text:required:label=Product Name:validation=required|max:255" \
   --column="sku:text:required:label=SKU:validation=required|unique:products,sku" \
-  --column="price:number:required:label=Price:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2:validation=required|numeric|min:0:totalizer=true:totalizadorType=sum" \
-  --column="cost:number:label=Cost:mask=money_brl:renderer=money:rendererCurrency=BRL:rendererDecimals=2:validation=numeric|min:0:totalizer=true:totalizadorType=sum" \
-  --column="stock:number:label=Stock:renderer=number:rendererDecimals=0:validation=integer|min:0" \
+  --column="price:number:required:label=Price:mask=money_brl:renderer=money:currency=BRL:decimals=2:validation=required|numeric|min:0:totalizer=sum" \
+  --column="cost:number:label=Cost:mask=money_brl:renderer=money:currency=BRL:decimals=2:validation=numeric|min:0:totalizer=sum" \
+  --column="stock:number:label=Stock:renderer=number:decimals=0:validation=integer|min:0" \
   --column="status:select:required:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
-  --column="category_id:searchdropdown:label=Category:relation=category:sdSelectColumn=name:sdValueColumn=id" \
+  --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info" \
-  --filter="status:select:=:options=active,inactive" \
-  --filter="category_id:searchdropdown:=:sdTable=categories:sdSelectColumn=name:sdValueColumn=id" \
+  --filter="status:select:options=active,inactive" \
+  --filter="category_id:searchdropdown:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --style="stock:<:10:background:#FEF3C7;color:#92400E;font-weight:bold;" \
   --set="displayName=Products" \
   --set="itemsPerPage=25" \
@@ -2391,8 +2405,8 @@ php artisan ptah:config "App\Models\Contact" \
   --column="company:text:label=Company" \
   --column="position:text:label=Position" \
   --column="lead_status:select:required:options=new:New,contacted:Contacted,qualified:Qualified,lost:Lost:renderer=badge:badges=new|blue,contacted|yellow,qualified|green,lost|red" \
-  --column="lead_score:number:label=Lead Score:renderer=number:rendererDecimals=0:validation=integer|min:0|max:100" \
-  --column="last_contact_at:datetime:label=Last Contact:renderer=datetime:rendererFormat=d/m/Y H:i:s" \
+  --column="lead_score:number:label=Lead Score:renderer=number:decimals=0:validation=integer|min:0|max:100" \
+  --column="last_contact_at:datetime:label=Last Contact:renderer=datetime" \
   --column="notes:textarea:label=Notes" \
   --action="sendEmail:livewire:sendEmail(%id%):icon=bx-envelope:color=primary" \
   --action="scheduleCall:livewire:scheduleCall(%id%):icon=bx-phone:color=info" \
@@ -2416,16 +2430,16 @@ php artisan ptah:config "App\Models\Post" \
   --column="excerpt:textarea:label=Excerpt:validation=max:500" \
   --column="content:textarea:required:label=Content:validation=required" \
   --column="featured_image:image:label=Featured Image:uploadPath=posts:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp" \
-  --column="author_id:searchdropdown:required:label=Author:relation=author:sdSelectColumn=name:sdValueColumn=id" \
-  --column="category_id:searchdropdown:label=Category:relation=category:sdSelectColumn=name:sdValueColumn=id" \
+  --column="author_id:searchdropdown:required:label=Author:relation=author:sd_model=App\Models\User:sd_value=id:sd_label=name" \
+  --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --column="status:select:required:options=draft:Draft,published:Published,scheduled:Scheduled:renderer=badge:badges=draft|gray,published|green,scheduled|blue" \
-  --column="published_at:datetime:label=Publish Date:renderer=datetime:rendererFormat=d/m/Y H:i:s" \
-  --column="views:number:readonly:label=Views:renderer=number:rendererDecimals=0" \
+  --column="published_at:datetime:label=Publish Date:renderer=datetime" \
+  --column="views:number:readonly:label=Views:renderer=number:decimals=0" \
   --action="preview:link:https://blog.com/posts/%slug%:icon=bx-show:color=info" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=secondary" \
   --filter="status:select:=:options=draft,published,scheduled" \
-  --filter="category_id:searchdropdown:=:sdTable=categories:sdSelectColumn=name:sdValueColumn=id" \
-  --filter="author_id:searchdropdown:=:sdTable=users:sdSelectColumn=name:sdValueColumn=id" \
+  --filter="category_id:searchdropdown:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
+  --filter="author_id:searchdropdown:sd_model=App\Models\User:sd_value=id:sd_label=name" \
   --style="status:==:draft:background:#F3F4F6;color:#6B7280;" \
   --set="displayName=Blog Posts" \
   --set="itemsPerPage=20" \

@@ -224,7 +224,7 @@ php artisan ptah:config "App\Models\Product" \
 **Valid `colsTipo` values:** `text`, `textarea`, `number`, `date`, `datetime`,
 `select`, `searchdropdown`, `boolean`, `file`, `image`
 
-**Valid `renderer` values (all 19 supported via CLI):** `text`, `badge`, `pill`,
+**Valid `renderer` values (all 18 supported via CLI):** `text`, `badge`, `pill`,
 `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`,
 `filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode`
 
@@ -327,23 +327,23 @@ this release's sources rather than estimated:
 
 - **The dashboard layout's inline `<style>` block**
   (`resources/views/components/forge-dashboard-layout.blade.php`) still carries
-  **84 hardcoded color literals across 79 CSS rules** (down from 153/127 when the
-  tokenisation work started; `LayoutStyleBaselineTest`'s ceiling caps it at 89/79 and
+  **36 hardcoded color literals across 39 CSS rules** (down from 153/127 when the
+  tokenisation work started; `LayoutStyleBaselineTest`'s ceiling caps it at 36/39 and
   only ever shrinks). These rules retrofit dark mode onto a handful of remaining
   screens (module toolbars/tables, generic modal text, stat cards, badges/alerts) and
   do not react to the user's chosen tone.
 - **Views still hardcode Tailwind text-color utilities** (`text-gray-*`,
   `text-slate-*`, `text-zinc-*`, `text-neutral-*`, `text-stone-*`, `text-white`,
   `text-black`, including their `dark:` variants) instead of the `--ptah-text-*`
-  tokens — **1,057 occurrences across 56 Blade files**, measured with
+  tokens — **999 occurrences across 52 Blade files**, measured with
   `grep -rEo "text-(gray|slate|zinc|neutral|stone|white|black)(-[0-9]+)?"` over
   `resources/views`. Two screens concentrate the largest share by far:
   - `resources/views/livewire/base-crud/crud-config.blade.php` (the visual CrudConfig
-    editor) — 259 occurrences.
-  - `resources/views/livewire/permission/permission-guide.blade.php` — 144
+    editor) — 271 occurrences.
+  - `resources/views/livewire/permission/permission-guide.blade.php` — 228
     occurrences.
 
-  Together these two views alone account for ~38% of all remaining hardcoded
+  Together these two views alone account for ~50% of all remaining hardcoded
   text-color classes. Every other module screen (`page-list`, `menu-list`,
   `audit-list`, `role-list`, `company-list`, `user-permission-list`,
   `department-list`, `exports-panel`, `ai-model-config-list`, …) has a smaller but

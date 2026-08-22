@@ -118,7 +118,7 @@ class JsonSchemaBuilder
                     ],
                     'colsTipo' => [
                         'type' => 'string',
-                        'enum' => ['wire', 'route', 'url', 'modal'],
+                        'enum' => CrudConfigEnums::ACTION_TYPES,
                         'description' => 'Action type',
                     ],
                     'colsValue' => [

@@ -497,7 +497,7 @@
 <span class="text-pink-400">@</span><span class="text-green-400">endif</span>
 
 <span class="text-slate-500">{{-- Assinaturas completas do helper --}}</span>
-<span class="text-slate-500">{{-- ptah_can(string $key, string $action = 'read', ?int $userId = null, ?int $companyId = null): bool --}}</span></code></pre>
+<span class="text-slate-500">{{-- ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool --}}</span></code></pre>
             </div>
         </div>
 
