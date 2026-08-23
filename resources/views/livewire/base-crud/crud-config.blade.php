@@ -50,7 +50,12 @@
                         </svg>
                         <span class="text-xs font-semibold tracking-widest uppercase text-slate-300">CRUD Config</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-mono truncate">{{ $model }}</p>
+                    {{-- text-slate-400, not -500: the sidebar rail is a permanently-dark surface in
+                         EITHER theme (see the .ptah-cfg-content scoping comment above), and -500
+                         (2.56:1) never cleared 4.5:1 against bg-slate-900 here regardless of theme —
+                         -400 is the same "legible on black" shade already used by every other rail
+                         label (see CrudConfigDarkContrastBrowserTest). --}}
+                    <p class="text-[11px] text-slate-400 font-mono truncate">{{ $model }}</p>
                     {{-- Badge de escopo da rota (read-only) --}}
                     <div class="mt-1.5 flex items-center gap-1.5">
                         @if ($configRoute)
@@ -125,7 +130,9 @@
 
                 {{-- Footer sidebar --}}
                 <div class="px-4 py-3 border-t border-slate-700/60">
-                    <p class="text-[10px] text-slate-600">ptah &bull; crud engine</p>
+                    {{-- text-slate-400, not -600 — same "permanently-dark rail" fix as the model-path
+                         label above (-600 measured 2.36:1 against bg-slate-900). --}}
+                    <p class="text-[10px] text-slate-400">ptah &bull; crud engine</p>
                 </div>
             </aside>
 
@@ -2054,15 +2061,21 @@
                             <div class="flex flex-wrap gap-2">
                                 <p class="text-[11px] text-slate-400 font-semibold w-full">{{
                                     __('ptah::ui.cfg_style_presets') }}</p>
+                                {{-- Preset colours are literal by design (free-form example CSS the user can
+                                     already edit as plain text) — but #999 (2.61:1) and the missing `color` on
+                                     "Urgent" (which fell through to the theme-tokenized .tag ink, illegible in
+                                     dark mode) both failed WCAG AA regardless of theme. #6b6b6b/#856404 are the
+                                     same swatches with a passing ink (4.5:1+ against their own literal
+                                     background — see CrudConfigDarkContrastBrowserTest), not new "brand" colours. --}}
                                 <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'color:#999;text-decoration:line-through;background:#F5F5F5;')"
+                                    wire:click="$set('formDataStyle.style', 'color:#6b6b6b;text-decoration:line-through;background:#F5F5F5;')"
                                     class="cursor-pointer tag"
-                                    style="color:#999;text-decoration:line-through;background:#F5F5F5;">{{
+                                    style="color:#6b6b6b;text-decoration:line-through;background:#F5F5F5;">{{
                                     __('ptah::ui.cfg_style_preset_cancelled') }}</button>
                                 <button type="button"
-                                    wire:click="$set('formDataStyle.style', 'background:#FFF3CD;font-weight:bold;border-left:4px solid #FFC107;')"
+                                    wire:click="$set('formDataStyle.style', 'color:#856404;background:#FFF3CD;font-weight:bold;border-left:4px solid #FFC107;')"
                                     class="cursor-pointer tag hover:bg-amber-200"
-                                    style="background:#FFF3CD;font-weight:bold;">{{
+                                    style="color:#856404;background:#FFF3CD;font-weight:bold;">{{
                                     __('ptah::ui.cfg_style_preset_urgent') }}</button>
                                 <button type="button"
                                     wire:click="$set('formDataStyle.style', 'background:#D4EDDA;color:#155724;')"
@@ -2237,7 +2250,7 @@
                                         $join['table'] ?? '—' }}</span>
                                     @if(!empty($join['distinct']))
                                     <span
-                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary text-primary">DISTINCT</span>
+                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-light text-primary">DISTINCT</span>
                                     @endif
                                 </div>
                                 <div class="flex items-center gap-2 ml-4 shrink-0">

@@ -106,6 +106,47 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
         '.ptah-cfg-content .bg-sky-50 .text-slate-600' => 'Same reasoning as .bg-sky-50 .text-slate-400 above.',
         '.ptah-cfg-content .bg-indigo-50 .text-slate-500' => 'Same reasoning as .bg-sky-50 .text-slate-400 above, '.
             'for the cascading-dropdown hint box (bg-indigo-50) instead of the SQL-source guide.',
+
+        // ── (C) legitimately dark-only, CRUD Config editor Onda 6 (browser
+        //        audit — see CrudConfigDarkContrastBrowserTest) ────────────
+        '.ptah-cfg-content .bg-indigo-50 .cfg-label' => 'Same reasoning as .bg-sky-50 .text-slate-400 above: the '.
+            'cascading-dropdown box keeps the same near-white background in light mode, where .cfg-label\'s base '.
+            'rule already resolves correctly — this override only undoes that rule\'s dark value inside the box.',
+        '.ptah-cfg-content .bg-emerald-50 .text-slate-500' => 'Same reasoning as .bg-sky-50 .text-slate-400 above, '.
+            'for the SearchDropdown "initial load / result limit" highlight box (bg-emerald-50).',
+        '.ptah-cfg-content .bg-emerald-50 .text-slate-700' => 'Same reasoning as .bg-sky-50 .text-slate-400 above, '.
+            'for the bg-emerald-50 box (the checkbox label, not just its hint paragraph).',
+        '.ptah-cfg-content .bg-emerald-50 .cfg-label' => 'Same reasoning as .bg-sky-50 .text-slate-400 above, for '.
+            'the bg-emerald-50 box\'s own "Results Limit" field label.',
+        '.ptah-cfg-content .text-primary' => 'Light mode already renders the raw Tailwind `text-primary` utility '.
+            '(itself var(--color-primary)) unmodified — already tone-aware via the host\'s own token, just not '.
+            'through a --ptah-* alias. The dark override swaps it to --ptah-primary-lite ONLY because the '.
+            'ambient card this text sits on (active sub-tab label, "Preview form"/"Edit join" buttons, guide-box '.
+            'headers) goes dark — same "-lite on a dark card" idiom as .ptah-c-dd_item_sel and the active-tab '.
+            'indicators, just applied to this view\'s own raw utility class instead of a component class.',
+        '.ptah-cfg-content .text-red-600' => 'Same reasoning as .ptah-cfg-content .text-primary above, for the '.
+            'JOINs tab\'s "Remove" button (raw text-red-600, swapped to --ptah-danger-lite on the dark card).',
+        '.ptah-cfg-content .bg-primary-light\/50' => 'Light mode already renders this translucent highlight/guide '.
+            'box correctly (a pale tint over the white ambient) — no override needed there. The dark override '.
+            'exists purely because, UNLIKE the opaque tint boxes above, this one is translucent: composited over '.
+            'the dark ambient it becomes a mid-tone grey-lavender no existing ink token can pair with, so dark '.
+            'mode instead drops the tint entirely (same "shed the translucency" fix as the sky-50 box).',
+        '.ptah-cfg-content .bg-primary-light .text-slate-700' => 'The validation-rule / column-visibility checkbox cards\' '.
+            '"selected" state (border-primary bg-primary-light) keeps the same fixed light accent tint in light '.
+            'mode, where the base .text-slate-700 rule already resolves correctly — this override only undoes '.
+            'that rule\'s dark value for the ambient (never dark) surface inside this one utility combination.',
+        '.ptah-cfg-content .bg-primary-light .text-slate-400' => 'Same reasoning as '.
+            '.ptah-cfg-content .bg-primary-light .text-slate-700 above, for the JOINs guide\'s worked-example '.
+            'chip and the theme-selector\'s "White background, light gray borders" description.',
+        '.ptah-cfg-content .bg-primary-light .text-slate-500' => 'Same reasoning as '.
+            '.ptah-cfg-content .bg-primary-light .text-slate-700 above, for the JOINs guide\'s '.
+            '"Na aba Colunas:" label.',
+        '.ptah-cfg-content .bg-sky-50 .bg-white' => 'Light mode already renders this literal white-on-near-white '.
+            'inline-code chip correctly (identity) — no override needed there. The dark override exists because '.
+            'the chip\'s ink is intentionally fixed dark (Onda 5\'s .bg-sky-50 .text-slate-500 exception, '.
+            'inherited from the surrounding <ul>) for this box\'s permanently near-white background, but its OWN '.
+            'background is the separate, unconditionally-dark-in-.ptah-dark `.bg-white` rule — dark ink on a now-'.
+            'dark chip. --ptah-surface-on-tint holds the chip\'s background at its light value instead.',
     ];
 
     #[Test]

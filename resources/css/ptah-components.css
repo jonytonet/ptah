@@ -160,6 +160,17 @@
        split that would leave the muted tier failing. */
     --ptah-text-secondary-on-tint: #475569; /* --ptah-text-secondary's :root value, exact match */
 
+    /* Same "invariant across scope" idiom as --ptah-text-secondary-on-tint
+       immediately above, for the opposite half of the same defect (Onda 6,
+       CrudConfigDarkContrastBrowserTest): the small `bg-white` inline-code
+       chips nested INSIDE the bg-sky-50 SQL-source guide. --ptah-surface's
+       own dark value is correct for the AMBIENT canvas, but these chips sit
+       on a box whose background never leaves near-white — routing their
+       background through --ptah-surface directly paints them dark under
+       dark ink (inherited from --ptah-text-secondary-on-tint above), 1.93:1.
+       This is --ptah-surface's OWN :root (light) value, held fixed. */
+    --ptah-surface-on-tint: #ffffff; /* --ptah-surface's :root value, exact match */
+
     /* ── Densidade (Onda B, eixo global de aparência) ────────────────────
        Baseline: o que renderiza quando NADA (nem preset, nem `.ptah-base-crud`
        local) define estes 4 tokens — mesmo papel que os outros tokens de
@@ -1116,7 +1127,159 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-400,
 .ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-500,
 .ptah-dark .ptah-cfg-content .bg-sky-50 .text-slate-600,
-.ptah-dark .ptah-cfg-content .bg-indigo-50 .text-slate-500 { color: var(--ptah-text-secondary-on-tint); }
+.ptah-dark .ptah-cfg-content .bg-indigo-50 .text-slate-500,
+.ptah-dark .ptah-cfg-content .bg-indigo-50 .cfg-label,
+.ptah-dark .ptah-cfg-content .bg-emerald-50 .text-slate-500,
+.ptah-dark .ptah-cfg-content .bg-emerald-50 .text-slate-700,
+.ptah-dark .ptah-cfg-content .bg-emerald-50 .cfg-label { color: var(--ptah-text-secondary-on-tint); }
+
+/* ── CRUD Config editor — dark contrast follow-up (Onda 6, browser audit) ──
+   Ondas 4/5 above were both found by GREPPING the view for a specific
+   utility-class family and computing its .ptah-dark pair by hand — which is
+   exactly why they missed whole categories. This block instead comes from
+   CrudConfigDarkContrastBrowserTest actually opening the modal in a real
+   Chrome, walking every sidebar section and every column-form sub-tab, and
+   measuring the ACTUAL computed color/background of every visible element —
+   see that test's own docblock and tests/Browser/source/contrast-report.txt
+   for the full ordered list this was derived from.
+
+   1. `.bg-emerald-50` (the SearchDropdown "initial load / result limit"
+      highlight box, introduced in v1.21.0) was never added to the tint-box
+      exception group above — the exact regression the user reported: its
+      checkbox label and hint text went illegible (1.40-1.85:1) the moment
+      dark mode repainted the ambient .text-slate-500/700 override without
+      this box's fixed near-white background moving with it. Folded into
+      the shared selector list above (`.bg-emerald-50 .text-slate-500/700`,
+      `.bg-emerald-50 .cfg-label`) rather than a new isolated rule, since it
+      is the identical defect class.
+
+   2. Raw `text-primary` / `text-red-600` utilities, used directly in the
+      view (active sub-tab label, "Preview form"/"Edit join" buttons, the
+      SearchDropdown/JOINs/Filters collapsible-guide headers, the nested-
+      relation preview chip, "Remove" join button…) read fine as dark-purple-
+      on-white in light mode but 1.15-3.03:1 once their ambient card repaints
+      dark — the same "-lite" swap already applied elsewhere in this file
+      (.ptah-c-dd_item_sel, the active-tab indicators) was simply never
+      extended to this view's OWN raw utility classes. */
+.ptah-dark .ptah-cfg-content .text-primary  { color: var(--ptah-primary-lite); }
+.ptah-dark .ptah-cfg-content .text-red-600  { color: var(--ptah-danger-lite); }
+.ptah-dark .ptah-cfg-content .text-red-500  { color: var(--ptah-danger-lite); }
+
+/* 3. `.bg-primary-light/50` — the collapsible "how to use…" guide boxes
+   (Filtros/JOINs/Estilos tabs) and the Relação tab's nested-path highlight —
+   is translucent, so unlike the OPAQUE tint boxes above it does not stay a
+   fixed near-white; composited over the dark ambient it becomes a mid-tone
+   grey-lavender (~rgb(125,138,157)) that neither the light nor the dark
+   variant of any existing ink token can pair with (measured: every nested
+   text-slate-* / .cfg-label combination read 1.38-1.91:1). Dropping the tint
+   in dark mode — same "shed the translucency" fix already applied to the
+   sky-50 box above — turns it into a plain dark card, which is exactly the
+   surface every one of those nested ink tokens already targets. */
+.ptah-dark .ptah-cfg-content .bg-primary-light\/50 { background-color: var(--ptah-surface); }
+
+/* 4. `.bg-primary-light` (opaque, no `/50`) is the "selected" state of the
+   validation-rule and column-visibility checkbox cards, AND the JOINs
+   guide's own worked-example chips ("Na aba Colunas: Physical Name …") —
+   always a fixed light accent tint, same idiom as the tint boxes in Onda
+   5's rule #4. Its nested text-slate-400/500/700 read fine as dark ink
+   stays dark ink, but the ambient .ptah-cfg-content override repaints them
+   light for the dark canvas — 1.21-1.51:1 on this box's own always-light
+   background. */
+.ptah-dark .ptah-cfg-content .bg-primary-light .text-slate-400,
+.ptah-dark .ptah-cfg-content .bg-primary-light .text-slate-500,
+.ptah-dark .ptah-cfg-content .bg-primary-light .text-slate-700 { color: var(--ptah-text-secondary-on-tint); }
+
+/* 5. `.bg-slate-50\/60` — the inert form-preview overlay's footer band — is
+   the one Tailwind opacity-modifier variant of `bg-slate-50` this file's
+   Onda 4 repaint did not enumerate (it only covers the bare, non-suffixed
+   class). Same color-mix idiom as the file's own --ptah-primary-ring/-soft
+   tokens: composite the panel tone at the same 60% the original literal
+   used, so light mode is pixel-identical and dark mode tracks the token. */
+.ptah-cfg-content .bg-slate-50\/60            { background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); }
+.ptah-dark .ptah-cfg-content .bg-slate-50\/60 { background-color: color-mix(in srgb, var(--ptah-panel) 60%, transparent); }
+
+/* 6. `.border-slate-300` (JOINs "select columns" textarea, badge-renderer's
+   custom-color swatch input) is scoped to the wider `.ptah-cfg` (Onda 4),
+   not just form fields — its target, --ptah-line-control, only reaches
+   1.63-1.93:1 against this view's plain card in EITHER theme (light: the
+   #cbd5e1 token itself barely clears ~1.5:1 on white; dark: 1.93:1 on the
+   dark surface). --ptah-line-field is the token this file already uses for
+   every OTHER resting form-field border at a verified 3:1+ (see its own
+   :root comment) — reusing it here, instead of introducing a new value, is
+   the same fix already applied to that token's own light-mode fallback.
+   Both sides changed this time (unlike the rest of this section): the
+   light-mode floor failure here is pre-existing, not a dark-only
+   regression — found by the light-mode mirror pass, not by grepping. */
+.ptah-cfg .border-slate-300            { border-color: var(--ptah-line-field); }
+.ptah-dark .ptah-cfg .border-slate-300 { border-color: var(--ptah-line-field); }
+
+/* 7. The Básico tab's SQL-source guide (bg-sky-50) nests small `bg-white`
+   "inline code" chips (e.g. <code>suppliers.name</code>) for its format
+   examples. Their INK is already fixed by Onda 5's rule #4 above
+   (.bg-sky-50 .text-slate-500, inherited by these <code> tags from the
+   surrounding <ul>) — dark ink, correct for this box's fixed near-white
+   background. But their own BACKGROUND is the separate, unconditionally-
+   tokenized `.ptah-cfg .bg-white` rule (Onda 4), which repaints EVERY
+   bg-white dark for the ambient canvas with no awareness that this
+   particular one sits inside a box that never went dark — dark ink on a
+   now-dark chip, 1.93:1. --ptah-surface-on-tint is the same "invariant
+   companion" idiom as --ptah-text-secondary-on-tint (declared next to it in
+   :root): the literal light value of --ptah-surface, for the one nested
+   role that must NOT track the ambient theme. */
+.ptah-dark .ptah-cfg-content .bg-sky-50 .bg-white { background-color: var(--ptah-surface-on-tint); }
+
+/* 8. Two raw danger-family utilities read fine on white but not quite —
+   `.text-red-500` (the preview overlay's required-field asterisk, 3.76:1)
+   and `.text-red-400` (the badge-renderer's "remove row" ✕, an even
+   lighter shade, 2.77:1). Both already had a DARK fix (rule #2's
+   --ptah-danger-lite, and red-400 was never touched because it already
+   read fine on a dark card by coincidence) — this is the light-mode-only
+   mirror pass finding the other half. --ptah-danger-strong already exists
+   for exactly this "ink dark enough for text on a near-white surface" role
+   (defined for alert/chip text on bg-danger-light, an even lower-luminance
+   surface than plain white, so it clears this floor with more margin than
+   its own source role needs). */
+.ptah-cfg-content .text-red-500 { color: var(--ptah-danger-strong); }
+.ptah-cfg-content .text-red-400 { color: var(--ptah-danger-strong); }
+
+/* 9. `.text-gray-400` (forge-select's "Select…" empty-state label, Básico
+   tab's colsPermission picker) is untouched by this file's existing
+   .ptah-modal-panel/.ptah-input-wrapper scoped fixes for the SAME utility
+   (see above) — neither scope wraps this component when it renders inside
+   `.ptah-cfg`. 2.54:1 on white; passed dark only by coincidence (the raw
+   value happens to clear the dark card). --ptah-text-muted is the same
+   token those other two scopes already resolve this exact utility to. */
+.ptah-cfg-content .text-gray-400            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg-content .text-gray-400 { color: var(--ptah-text-muted); }
+
+/* 10. `.resize-y` (the JOINs tab's "select columns" textarea — the one
+   multi-line field in this modal not built from the shared .cfg-input
+   class) never had an explicit `::placeholder` rule, so it fell to the
+   browser's UA default (`color-mix(currentcolor 54%, transparent)`) —
+   2.54:1 on white. Same explicit-placeholder idiom as .cfg-input's own
+   fix (Onda 5, rule #1 at the top of this section). */
+.ptah-cfg-content .resize-y::placeholder            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-cfg-content .resize-y::placeholder { color: var(--ptah-text-muted); }
+
+/* 11. `.cfg-input`'s border, inside the three near-white tint boxes that
+   nest one (bg-indigo-50, bg-emerald-50, and bg-primary-light/50 — the
+   last one only in LIGHT mode; rule #3 above already makes it match the
+   plain dark card in .ptah-dark, where the generic .cfg-input dark border
+   already passes): --ptah-line-field's light value is tuned to clear 3:1
+   against WHITE with only a hair of margin (3.01:1 — see its own :root
+   comment), and every one of these near-white-but-not-quite-white tints
+   was enough to tip it back under (2.69-2.86:1). --ptah-line-field-hover
+   is "invariant across scope" by design (same :root comment) and reads
+   4.5:1+ against all three — the dark line restates the SAME value the
+   generic dark .cfg-input rule already gives (Onda 4), written explicitly
+   so this compound selector does not depend on cascade source order
+   against that other rule (both have equal specificity). */
+.ptah-cfg-content .bg-indigo-50 .cfg-input,
+.ptah-cfg-content .bg-emerald-50 .cfg-input,
+.ptah-cfg-content .bg-primary-light\/50 .cfg-input { border-color: var(--ptah-line-field-hover); }
+.ptah-dark .ptah-cfg-content .bg-indigo-50 .cfg-input,
+.ptah-dark .ptah-cfg-content .bg-emerald-50 .cfg-input,
+.ptah-dark .ptah-cfg-content .bg-primary-light\/50 .cfg-input { border-color: var(--ptah-line-field); }
 
 /* ── Input border (non-error state) ── */
 .ptah-c-form_border            { border-color: var(--ptah-line-field); }

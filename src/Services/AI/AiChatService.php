@@ -277,8 +277,24 @@ class AiChatService
         // Apply provider credentials (restored by the caller after the request)
         $restoreConfig = $this->applyConfig($config);
 
-        // Extend execution time for local/slow AI providers
-        set_time_limit(300);
+        // Extend execution time for local/slow AI providers — but only where
+        // there is a limit to extend.
+        //
+        // Unguarded, this call was actively harmful in CLI: `php artisan`,
+        // queue workers and PHPUnit all run with max_execution_time = 0
+        // (unlimited), so set_time_limit(300) IMPOSED a 300s ceiling on the
+        // whole process where none existed. That is what killed test runs
+        // mid-suite with "Maximum execution time of 300 seconds exceeded"
+        // pointing at unrelated files (a docblock parser, a query grammar) —
+        // the timer started here and expired somewhere else entirely.
+        //
+        // It also must never LOWER an existing limit: a host that already
+        // grants 600s to this endpoint should keep it.
+        $currentLimit = (int) ini_get('max_execution_time');
+
+        if (PHP_SAPI !== 'cli' && $currentLimit > 0 && $currentLimit < 300) {
+            set_time_limit(300);
+        }
 
         $prismMessages = $this->buildPrismMessages($history);
         $prismMessages[] = new UserMessage($message);
