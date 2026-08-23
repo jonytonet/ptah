@@ -237,13 +237,29 @@
                 </div>
                 @endif
 
-                {{-- Notifications --}}
-                <button class="ptah-navbar-icon-btn relative p-2 rounded-md hover:text-primary transition-colors">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full"></span>
-                </button>
+                {{-- Notifications — see Ptah\Support\NavbarSlot for the 3-state resolution. --}}
+                @php
+                    $__notifSlot = \Ptah\Support\NavbarSlot::resolve(config('ptah.navbar.notifications'));
+                    // A COMPONENT alias that resolves to nothing registered (typo, module
+                    // off, …) must NOT throw ComponentNotFoundException from inside the
+                    // layout — that would take down every page using it. Fall back to the
+                    // static bell instead.
+                    if ($__notifSlot['mode'] === \Ptah\Support\NavbarSlot::MODE_COMPONENT
+                        && ! (class_exists(\Livewire\Livewire::class) && \Livewire\Livewire::exists($__notifSlot['component']))) {
+                        $__notifSlot['mode'] = \Ptah\Support\NavbarSlot::MODE_DEFAULT;
+                    }
+                @endphp
+                @if($__notifSlot['mode'] === \Ptah\Support\NavbarSlot::MODE_COMPONENT)
+                    @livewire($__notifSlot['component'])
+                @elseif($__notifSlot['mode'] === \Ptah\Support\NavbarSlot::MODE_DEFAULT)
+                    <button class="ptah-navbar-icon-btn relative p-2 rounded-md hover:text-primary transition-colors">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full"></span>
+                    </button>
+                @endif
+                {{-- MODE_HIDDEN: renders nothing --}}
 
                 {{-- User Dropdown --}}
                 <div x-data="{ open: false }" class="relative">

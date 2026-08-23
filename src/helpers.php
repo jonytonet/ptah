@@ -5,7 +5,9 @@ declare(strict_types=1);
 use Illuminate\Support\Collection;
 use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
+use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Traits\ResolvesUser;
 
 if (! function_exists('ptah_can')) {
     /**
@@ -166,5 +168,74 @@ if (! function_exists('ptah_permissions')) {
         $service = app(PermissionService::class);
 
         return $service->getPermissions($user, $companyId);
+    }
+}
+
+if (! function_exists('ptah_notify')) {
+    /**
+     * Pushes (or, when $data contains `dedupe_key`, updates) a notification
+     * for a single user — see Ptah\Services\Notification\NotificationService::push().
+     * No-op (returns 0) when the notifications module is off, its table is
+     * not migrated, or $user cannot be resolved to an id.
+     *
+     * @param  mixed  $user  int|string id, an Authenticatable/Model, or null (= current auth)
+     * @param  array<string, mixed>  $data  type,category,title,body,icon,url,action_label,dedupe_key,company_id
+     */
+    function ptah_notify(mixed $user, array $data): int
+    {
+        $userId = (new class
+        {
+            use ResolvesUser;
+
+            public function resolve(mixed $user): ?int
+            {
+                return $this->resolveUserId($user);
+            }
+        })->resolve($user);
+
+        if ($userId === null) {
+            return 0;
+        }
+
+        /** @var NotificationService $service */
+        $service = app(NotificationService::class);
+
+        return $service->toUser($userId, $data);
+    }
+}
+
+if (! function_exists('ptah_notify_role')) {
+    /**
+     * Broadcasts a notification to every user holding an ACTIVE assignment of
+     * an active role named $roleName (tolerant match, see
+     * PermissionService::hasRole()), optionally scoped to a company.
+     *
+     * @param  array<string, mixed>  $data
+     * @return int How many notifications were written.
+     */
+    function ptah_notify_role(string $roleName, array $data, ?int $companyId = null): int
+    {
+        /** @var NotificationService $service */
+        $service = app(NotificationService::class);
+
+        return $service->toRole($roleName, $data, $companyId);
+    }
+}
+
+if (! function_exists('ptah_notify_all')) {
+    /**
+     * Broadcasts a notification to every "staff" user (anyone holding an
+     * active role, optionally scoped to a company) or, with $onlyStaff =
+     * false, to every user of the host application's user model.
+     *
+     * @param  array<string, mixed>  $data
+     * @return int How many notifications were written.
+     */
+    function ptah_notify_all(array $data, ?int $companyId = null, bool $onlyStaff = true): int
+    {
+        /** @var NotificationService $service */
+        $service = app(NotificationService::class);
+
+        return $service->toAll($data, $companyId, $onlyStaff);
     }
 }
