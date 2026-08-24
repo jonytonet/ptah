@@ -119,13 +119,25 @@ class CrudNotificationDispatcher
         $notifySelf = (bool) ($rule['notifySelf'] ?? false);
         $exceptUserId = $notifySelf ? null : Auth::id();
 
-        SendCrudNotificationJob::dispatch(
+        $job = SendCrudNotificationJob::dispatch(
             (string) ($rule['audience'] ?? 'user'),
             (string) ($rule['audienceValue'] ?? ''),
             $payload,
             $payload['company_id'],
             $exceptUserId,
         );
+
+        // A host that runs no worker can force delivery inline for
+        // notifications ONLY, without moving the whole application to `sync`.
+        // Left null (the default) the application's own connection is used.
+        // Note this is applied to the PendingDispatch, not inside the job:
+        // `onConnection` there would be too late for `sync`, which resolves the
+        // connection at dispatch time.
+        $connection = config('ptah.notifications.queue_connection');
+
+        if (is_string($connection) && $connection !== '') {
+            $job->onConnection($connection);
+        }
     }
 
     /**

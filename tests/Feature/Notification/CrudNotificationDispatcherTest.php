@@ -546,4 +546,50 @@ class CrudNotificationDispatcherTest extends NotificationTestCase
         $this->assertSame(1, Notification::query()->count());
         $this->assertSame('A criado', Notification::query()->first()->title);
     }
+
+    // ── Queue connection ────────────────────────────────────────────────────
+
+    #[Test]
+    public function the_configured_queue_connection_is_applied_to_the_job(): void
+    {
+        // Documented escape hatch for hosts that run no worker: force
+        // notifications inline without moving the whole application to `sync`.
+        // A rule that is enqueued and never delivered is indistinguishable from
+        // a broken feature, so this knob has to actually reach the job.
+        config(['ptah.notifications.queue_connection' => 'sync']);
+
+        Bus::fake([SendCrudNotificationJob::class]);
+
+        $this->seedConfig(CrudNotificationStubA::class, [
+            ['event' => 'created', 'audience' => 'staff', 'audienceValue' => '', 'title' => 'Novo'],
+        ], $this->defaultCols());
+
+        CrudNotificationStubA::create(['name' => 'Acme']);
+
+        Bus::assertDispatched(
+            SendCrudNotificationJob::class,
+            fn (SendCrudNotificationJob $job) => $job->connection === 'sync'
+        );
+    }
+
+    #[Test]
+    public function without_the_config_the_job_keeps_the_application_connection(): void
+    {
+        // null must mean "do not touch it" — never a silent override of the
+        // host's own queue configuration.
+        config(['ptah.notifications.queue_connection' => null]);
+
+        Bus::fake([SendCrudNotificationJob::class]);
+
+        $this->seedConfig(CrudNotificationStubA::class, [
+            ['event' => 'created', 'audience' => 'staff', 'audienceValue' => '', 'title' => 'Novo'],
+        ], $this->defaultCols());
+
+        CrudNotificationStubA::create(['name' => 'Beta']);
+
+        Bus::assertDispatched(
+            SendCrudNotificationJob::class,
+            fn (SendCrudNotificationJob $job) => $job->connection === null
+        );
+    }
 }

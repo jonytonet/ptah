@@ -277,6 +277,15 @@ return [
         'dropdown_limit' => 20,
         'retention_days' => 30,
         'broadcast' => env('PTAH_NOTIFICATIONS_BROADCAST', false),
+
+        /*
+         | Queue connection for CRUD notification jobs. null = the application's
+         | own default connection. Set to 'sync' to deliver inline when you run
+         | no worker: on any other connection the job waits in the queue, which
+         | looks exactly like the feature being broken. `ptah:config:doctor`
+         | reports the condition.
+         */
+        'queue_connection' => env('PTAH_NOTIFICATIONS_QUEUE_CONNECTION'),
     ],
 
     /*

@@ -339,6 +339,39 @@ in-memory attributes **before** queueing — a deleted record notifying "Order
 #42 removed" still has `#42` available even though the row is already gone
 by the time the job would otherwise run.
 
+> **You need a queue worker running.** This is the single most likely reason a
+> correctly configured rule appears to do nothing. On any connection other
+> than `sync` the job waits in the queue until a worker picks it up — so
+> `QUEUE_CONNECTION=database` with no `php artisan queue:work` means the
+> notification is *enqueued and never delivered*, with no error anywhere.
+> Nothing is lost: start a worker and the backlog is delivered.
+>
+> `php artisan ptah:config:doctor` states this whenever any screen carries
+> notification rules and the connection is not `sync`.
+
+Two ways out if you do not run a worker:
+
+```dotenv
+# Option A — deliver inline, in the request that saved the record.
+# Simple, and `afterCommit` still applies (the insert happens after the
+# transaction commits, never inside it). The cost lands in the request: one
+# insert per recipient, so an "all staff" audience of 200 people is 200
+# inserts before the response returns.
+QUEUE_CONNECTION=sync
+```
+
+```php
+// Option B — keep the app on a real queue and force only notifications inline.
+// config/ptah.php
+'notifications' => [
+    // ...
+    'queue_connection' => 'sync',
+],
+```
+
+Option B is read by `SendCrudNotificationJob`; leave it `null` (the default)
+to use the application's own queue connection.
+
 ### Actor exclusion
 
 By default, the user who triggered the event (`Auth::id()`) is **excluded**
@@ -529,12 +562,20 @@ database notification and the poll are unaffected either way.
     'dropdown_limit' => 20,
     'retention_days' => 30,
     'broadcast' => env('PTAH_NOTIFICATIONS_BROADCAST', false), // see Realtime (optional)
+    'queue_connection' => env('PTAH_NOTIFICATIONS_QUEUE_CONNECTION'), // null = app default
 ],
 ```
 
 Both blocks are **top level** on purpose. Laravel merges package config
 shallowly, so a new *nested* key would never reach an application that already
 published `config/ptah.php` — exactly the installations this design protects.
+
+`queue_connection` is itself a nested key added later, and it is safe *because
+its absence is its default*: an application whose published config predates it
+reads `null`, which means "use the application's own connection" — the exact
+behaviour it had before the key existed. Nested keys are only viable under that
+constraint; anything whose default is not "absent" still needs a top-level
+block.
 
 If you cache config, run `php artisan config:clear` after upgrading, or the
 new keys stay invisible.
