@@ -26,11 +26,12 @@
 12. [JOIN Configuration](#join-configuration)
 13. [General Settings](#general-settings)
 14. [Permissions Configuration](#permissions-configuration)
-15. [Lifecycle Hooks (Dynamic Code)](#lifecycle-hooks-dynamic-code)
-16. [Complete Practical Examples](#complete-practical-examples)
-17. [Recommended Workflow](#recommended-workflow)
-18. [Import/Export of Configurations](#importexport-of-configurations)
-19. [Troubleshooting](#troubleshooting)
+15. [Notifications Configuration](#notifications-configuration)
+16. [Lifecycle Hooks (Dynamic Code)](#lifecycle-hooks-dynamic-code)
+17. [Complete Practical Examples](#complete-practical-examples)
+18. [Recommended Workflow](#recommended-workflow)
+19. [Import/Export of Configurations](#importexport-of-configurations)
+20. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -424,7 +425,7 @@ The modal is opened automatically when clicking the **⚙️ Config** button at 
 
 ### Tab Structure
 
-The modal has **7 main tabs**:
+The modal has **9 main tabs**:
 
 #### 1️⃣ Columns
 
@@ -1039,6 +1040,47 @@ public function reloadConfig($data)
             'message' => 'Configuration reloaded!'
         ]);
     }
+}
+```
+
+---
+
+#### 9️⃣ Notifications
+
+**What it does:** Configures rules that turn this model's `created` /
+`updated` / `deleted` events into notifications through the always-on
+notification centre — no code, see [docs/Notifications.md](Notifications.md#config-driven-crud-notifications)
+for the full behaviour (placeholders, precedence, delivery, why there is no
+`dedupe_key` here).
+
+**Requirements:**
+- `ptah.notifications.enabled` must be on — otherwise the tab shows a
+  step-by-step card (env, publish, migrate) instead of the rule list.
+- The model must `use Ptah\Traits\SendsCrudNotifications;` — the tab warns
+  when it does not, since rules configured for a model without the trait
+  never fire.
+
+**Interface:**
+- List of configured rules (event, audience, title) with edit/remove
+- Form: event, type, audience + audience value (with a live estimated
+  recipient count), title, body, available `%column%` placeholders, url,
+  action label, category, icon, and a "notify the actor too" toggle
+
+**Example rule (one entry of `notifications.rules`):**
+
+```json
+{
+  "event": "created",
+  "audience": "role",
+  "audienceValue": "Finance",
+  "title": "New invoice: %code% (#%id%)",
+  "body": "Total: %total%",
+  "url": "/invoices/%id%",
+  "type": "info",
+  "category": "billing",
+  "icon": "bx bx-receipt",
+  "actionLabel": "Open invoice",
+  "notifySelf": false
 }
 ```
 
@@ -1830,6 +1872,23 @@ Full configuration saved in the `crud_configs.config` table:
     "export": "product.export",
     "import": "product.import"
   },
+  "notifications": {
+    "rules": [
+      {
+        "event": "created",
+        "audience": "role",
+        "audienceValue": "Finance",
+        "title": "New invoice: %code% (#%id%)",
+        "body": "Total: %total%",
+        "url": "/invoices/%id%",
+        "type": "info",
+        "category": "billing",
+        "icon": "bx bx-receipt",
+        "actionLabel": "Open invoice",
+        "notifySelf": false
+      }
+    ]
+  },
   "cacheEnabled": true,
   "cacheTtl": 3600,
   "paginationEnabled": true,
@@ -2352,6 +2411,35 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
     abort(403, 'Unauthorized');
 }
 ```
+
+---
+
+## Notifications Configuration
+
+Properties in `notifications.rules[]` — configured through the modal's
+Notifications tab (see [Tab Structure](#tab-structure) above) or hand-edited
+in the JSON. Full behaviour (placeholders, precedence, delivery, security) is
+documented in [docs/Notifications.md § Config-driven CRUD notifications](Notifications.md#config-driven-crud-notifications);
+this table is the field reference only.
+
+| Key | Type | Default | Description |
+|-------|------|--------|----------|
+| `event` | string | — | `created` \| `updated` \| `deleted` |
+| `audience` | string | `'user'` | `user` \| `role` \| `staff` |
+| `audienceValue` | string | `''` | user id or role name; unused for `staff` |
+| `title` | string | — | required; template, truncated to 180 chars |
+| `body` | string | `''` | template |
+| `url` | string | `''` | template |
+| `type` | string | `'info'` | `info` \| `success` \| `warning` \| `danger` |
+| `category` | string | `''` | free grouping key |
+| `icon` | string | `''` | icon class |
+| `actionLabel` | string | `''` | button label |
+| `notifySelf` | bool | `false` | include the user who triggered the event |
+
+This feature also requires `ptah.notifications.enabled` (see
+[config/ptah.php](../config/ptah.php)) and the model using
+`Ptah\Traits\SendsCrudNotifications` — without either, rules configured here
+are never fired.
 
 ---
 

@@ -17,9 +17,11 @@ push notifications.
 - [Deduplication](#deduplication)
 - [Audiences](#audiences)
 - [Company scope](#company-scope)
+- [Config-driven CRUD notifications](#config-driven-crud-notifications)
 - [The bell component](#the-bell-component)
 - [Service reference](#service-reference)
 - [Security model](#security-model)
+- [Realtime (optional)](#realtime-optional)
 - [Configuration reference](#configuration-reference)
 - [What is not implemented yet](#what-is-not-implemented-yet)
 
@@ -246,6 +248,124 @@ semantics as role bindings.
 
 ---
 
+## Config-driven CRUD notifications
+
+Everything above is a manual API — you decide when to call `ptah_notify*()`.
+This layer instead turns a model's `created`/`updated`/`deleted` events into
+notifications **without writing a generator**: rules are configured entirely
+through the CrudConfig editor's **Notifications** tab and stored in the same
+`crud_configs.config` JSON your columns and actions already live in.
+
+### Wiring a model
+
+The model must opt in with a trait — without it, rules configured in the
+editor are silently never fired (the editor itself warns about this):
+
+```php
+use Ptah\Traits\SendsCrudNotifications;
+
+class Product extends Model
+{
+    use SendsCrudNotifications;
+}
+```
+
+### Rule shape
+
+Each entry in `notifications.rules` is a plain array with these 11 fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `event` | string | `created` \| `updated` \| `deleted` |
+| `audience` | string | `user` \| `role` \| `staff` — see [Audiences](#audiences) |
+| `audienceValue` | string | user id (`audience: user`) or role name (`audience: role`); ignored for `staff` |
+| `title` | string | required; template, truncated to 180 chars (the column width) with no `…` marker — an already-180-char title must not overflow under a strict SQL mode |
+| `body` | string | optional; template |
+| `url` | string | optional; template |
+| `type` | string | `info` \| `success` \| `warning` \| `danger` |
+| `category` | string | optional free grouping key, same as the manual API |
+| `icon` | string | optional icon class |
+| `actionLabel` | string | optional button label |
+| `notifySelf` | bool | default `false` — see [Actor exclusion](#actor-exclusion) below |
+
+A rule with an empty `title` (after resolving its template) is skipped —
+nothing is queued.
+
+### Placeholders and the allowlist
+
+`title`, `body` and `url` may reference `%column%`. Only **savable** columns
+that carry **no** `colsPermission` restriction are resolved — a placeholder
+outside that allowlist resolves to an empty string, never to the raw value.
+The model's primary key is added to the allowlist automatically (so
+`/orders/%id%` works even when `id` is not itself a configured column) —
+**unless the config explicitly restricts that exact column**, in which case
+the restriction wins and `%id%` resolves empty too.
+
+That last clause is a fixed bypass, not a hypothetical: forcing the primary
+key into the allowlist unconditionally meant an admin who tagged `id` with a
+`colsPermission` would still see `%id%` resolved for every recipient — the
+one placeholder guaranteed to always work was also the one the restriction
+could never actually gate.
+
+### Precedence
+
+A model can have more than one `CrudConfig` row (a global one with
+`route === ''`, plus route-scoped overrides). The dispatcher picks the
+**first** row — ordered by `route` ascending, so the global row always sorts
+first — whose `notifications.rules` is non-empty. Rules from other rows for
+the same model are not merged in.
+
+### Audiences
+
+Same three audiences as the manual API, routed through the same service
+methods — including where each returns zero:
+
+| `audience` | Routes to | Returns 0 when |
+|---|---|---|
+| `user` | `NotificationService::toUser()` | `audienceValue` is not a positive integer |
+| `role` | `NotificationService::toRole()` | the permissions module is off, the role does not exist, or no user holds it as an **active** assignment of an **active** role in the record's company |
+| `staff` | `NotificationService::toAll(onlyStaff: true)` | the permissions module is off, or nobody holds an active role in the record's company |
+
+### Delivery: queued, after commit
+
+Each matching rule is dispatched as `Ptah\Jobs\SendCrudNotificationJob` with
+`$afterCommit = true` — a bulk delete wrapped in `DB::transaction()` only
+inserts notifications once the transaction actually commits (and a rolled
+back transaction inserts none). `afterCommit` also works correctly with the
+`sync` queue driver, which honours it just like a real queue connection.
+
+For a `deleted` event, every placeholder is resolved from the row's
+in-memory attributes **before** queueing — a deleted record notifying "Order
+#42 removed" still has `#42` available even though the row is already gone
+by the time the job would otherwise run.
+
+### Actor exclusion
+
+By default, the user who triggered the event (`Auth::id()`) is **excluded**
+from the audience — you rarely want to tell someone about their own action.
+Set `notifySelf: true` on the rule to include them. Without an authenticated
+actor (a console command, a queued import), nobody is excluded.
+
+### Why there is no `dedupe_key` here
+
+The manual API's `dedupe_key` (see [Deduplication](#deduplication)) is
+deliberately **not** exposed on CRUD rules. An `updated` rule firing twice
+would `updateOrCreate()` the same row — which preserves `read_at`. If the
+recipient already read the first version, the second `update()` would
+silently arrive already marked read, with no badge, no unread count change,
+nothing to notice. CRUD rules always `create()` a fresh row per event
+instead, so every occurrence is independently visible.
+
+### Reentrancy
+
+A rule's own side effects (a lifecycle hook that saves a related model
+which also uses `SendsCrudNotifications`) cannot trigger a **second**,
+nested dispatch while the outer one is still running — a process-wide latch
+suppresses it. Only the outermost event's rules ever fire for a single
+request.
+
+---
+
 ## The bell component
 
 Alias `ptah-notification-bell`, registered only when the module is enabled.
@@ -326,6 +446,75 @@ notifications from them.
 
 ---
 
+## Realtime (optional)
+
+**Nothing above requires Reverb, Echo, or any websocket server.** The bell's
+`wire:poll` (default `60s`, see [Polling cost](#polling-cost)) is the
+delivery mechanism out of the box: push a notification (manually or via a
+CRUD rule) and it reaches the recipient on the next poll — no extra setup,
+no package to install. This is what every test in the suite runs against.
+
+Enabling `ptah.notifications.broadcast` layers near-instant delivery on top,
+without replacing the poll — it stays as the fallback in both configurations.
+
+### What ptah does for you
+
+With the flag on, `NotificationService::push()` (the single funnel both the
+manual API and CRUD rules go through) fires
+`Ptah\Events\PtahNotificationCreated`, and `PtahServiceProvider::boot()`
+registers the private channel authorization for you:
+
+```php
+Broadcast::channel('ptah.notifications.{userId}', fn ($user, $userId) =>
+    (int) $user->getAuthIdentifier() === (int) $userId
+);
+```
+
+You do **not** need to touch `routes/channels.php` yourself. The bell
+component only registers its Echo listener when the flag is on **and** a
+user id can be resolved — a guest never gets one.
+
+The broadcast payload deliberately carries only the notification's `id` —
+never `title`/`body` — because it travels through the websocket server. The
+bell already re-reads the row (scoped to the authenticated user) once
+triggered.
+
+**A broken broadcast connection never blocks anything.** If dispatching the
+event throws — a missing driver SDK, a misconfigured connection — it is
+caught and logged (`Log::warning`); the notification row was already
+written before broadcasting was even attempted, and the poll keeps working
+regardless.
+
+### Host setup checklist
+
+1. `composer require laravel/reverb`
+2. `php artisan install:broadcasting` (creates `routes/channels.php`,
+   `config/broadcasting.php` entries, and wires the Reverb server — ptah's
+   own channel registration above coexists with it; you do not need to add
+   `ptah.notifications.*` to `channels.php` yourself)
+3. `npm install --save-dev laravel-echo pusher-js` then `npm run build`
+   (Reverb speaks the Pusher protocol, so the `pusher-js` client is required
+   even without a Pusher account)
+4. `.env`:
+   ```dotenv
+   BROADCAST_CONNECTION=reverb
+   REVERB_APP_ID=...
+   REVERB_APP_KEY=...
+   REVERB_APP_SECRET=...
+   REVERB_HOST=...
+   REVERB_PORT=443
+   REVERB_SCHEME=https
+   PTAH_NOTIFICATIONS_BROADCAST=true
+   ```
+5. Run the Reverb server (`php artisan reverb:start`, or your process
+   manager of choice) alongside your queue worker — `PtahNotificationCreated`
+   is queued like any other broadcast event.
+
+Any step skipped simply means realtime delivery does not activate; the
+database notification and the poll are unaffected either way.
+
+---
+
 ## Configuration reference
 
 ```php
@@ -339,6 +528,7 @@ notifications from them.
     'poll' => env('PTAH_NOTIFICATIONS_POLL', '60s'),       // or 'none'
     'dropdown_limit' => 20,
     'retention_days' => 30,
+    'broadcast' => env('PTAH_NOTIFICATIONS_BROADCAST', false), // see Realtime (optional)
 ],
 ```
 
@@ -360,9 +550,11 @@ Honest status, so nothing here is a promise:
 | Navbar slot with 3 states (Layer 1) | **done** |
 | Table, model, service, helpers | **done** |
 | Bell component (badge, dropdown, read/dismiss, poll) | **done** |
+| Config-driven CRUD notifications (editor tab, rules, placeholders) | **done** |
+| Realtime delivery (Reverb/Echo), opt-in via `ptah.notifications.broadcast` | **done** — see [Realtime (optional)](#realtime-optional) |
 | "View all" history page + route | **not yet** — the footer link stays hidden until it exists |
 | `ptah:notification-prune` retention command | **not yet** — `purgeRead()` exists on the service and can be scheduled from your app in the meantime |
-| Broadcasting / websockets, email, per-user preferences | **not planned** |
+| Email delivery, per-user preferences | **not planned** |
 
 Generating notifications is your application's job: scan your own sources on a
 schedule and call `ptah_notify*` with a stable `dedupe_key`. The package

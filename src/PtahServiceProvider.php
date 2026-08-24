@@ -9,6 +9,8 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Ptah\Commands\Config\ConfigDoctorCommand;
@@ -28,6 +30,7 @@ use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
+use Ptah\Events\PtahNotificationCreated;
 use Ptah\Http\Middleware\PtahMaster;
 use Ptah\Http\Middleware\PtahPermission;
 use Ptah\Livewire\AI\AiChatWidget;
@@ -76,6 +79,7 @@ use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
 use Ptah\Support\SchemaInspector;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 class PtahServiceProvider extends ServiceProvider
 {
@@ -167,6 +171,7 @@ class PtahServiceProvider extends ServiceProvider
         $this->loadMigrations();
         $this->registerLivewire();
         $this->registerPermissionCacheInvalidation();
+        $this->registerNotificationBroadcastChannel();
 
         // Render a friendly 403 page when the host app has no custom one.
         // Only activates when the permissions module is enabled; falls back to
@@ -254,6 +259,37 @@ class PtahServiceProvider extends ServiceProvider
         foreach (['saved', 'deleted'] as $event) {
             PageObject::{$event}(fn () => $service()->bumpGlobalVersion());
             PtahPage::{$event}(fn () => $service()->bumpGlobalVersion());
+        }
+    }
+
+    /**
+     * Registers the private `ptah.notifications.{userId}` channel used by
+     * {@see PtahNotificationCreated} — ONLY when
+     * `ptah.notifications.broadcast` is enabled, which is what lets a host
+     * WITHOUT Reverb/Echo installed skip this call entirely. This also means
+     * the host does NOT need to touch its own routes/channels.php.
+     *
+     * The try/catch is NOT optional: Broadcast::channel() resolves the
+     * default broadcast connection via BroadcastManager::__call() ->
+     * driver() the first time any channel is registered, so if the host's
+     * BROADCAST_CONNECTION points at a driver whose SDK is not installed
+     * this call throws — without the catch it would break the boot of
+     * EVERY request, not just realtime ones.
+     */
+    protected function registerNotificationBroadcastChannel(): void
+    {
+        if (! config('ptah.notifications.broadcast')) {
+            return;
+        }
+
+        try {
+            Broadcast::channel('ptah.notifications.{userId}', function ($user, $userId) {
+                return (int) $user->getAuthIdentifier() === (int) $userId;
+            });
+        } catch (Throwable $e) {
+            Log::warning('[Ptah] Failed to register the notifications broadcast channel', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

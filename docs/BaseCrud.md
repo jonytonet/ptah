@@ -40,11 +40,12 @@
 29. [Simplified Internal Flow](#simplified-internal-flow)
 30. [Configurable JOINs](#configurable-joins)
 31. [Lifecycle Hooks](#lifecycle-hooks)
-32. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
-33. [Image Input](#image-input)
-34. [Partial Structure (Blade)](#partial-structure-blade)
-35. [Keyboard Shortcuts](#keyboard-shortcuts)
-36. [Multi-Config per Route](#multi-config-per-route)
+32. [CRUD Notifications](#crud-notifications)
+33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
+34. [Image Input](#image-input)
+35. [Partial Structure (Blade)](#partial-structure-blade)
+36. [Keyboard Shortcuts](#keyboard-shortcuts)
+37. [Multi-Config per Route](#multi-config-per-route)
 
 ---
 
@@ -2205,6 +2206,59 @@ protected function afterUpdate(Model $record): mixed
 ```
 
 > **Note:** the `before*` hooks receive `$data` by reference — any changes to the array inside the hook are reflected in the persisted data. The `after*` hooks receive the already-persisted `Model` with `id` filled in.
+
+---
+
+## CRUD Notifications
+
+Turns a model's `created` / `updated` / `deleted` events into notifications through the always-on notification centre (see [Notifications.md](Notifications.md)) — entirely config-driven, no code beyond one trait.
+
+### Activate
+
+**Notifications** tab of the CrudConfig modal. Requires `ptah.notifications.enabled` (the tab shows setup instructions instead of the rule list while it is off).
+
+### Wiring the model
+
+```php
+use Ptah\Traits\SendsCrudNotifications;
+
+class Product extends Model
+{
+    use SendsCrudNotifications;
+}
+```
+
+Without the trait, rules configured in the tab are never fired — the tab itself warns when the resolved model class does not use it.
+
+### JSON key
+
+```json
+{
+  "notifications": {
+    "rules": [
+      {
+        "event": "created",
+        "audience": "staff",
+        "audienceValue": "",
+        "title": "New: %name% (#%id%)",
+        "body": "",
+        "url": "/products/%id%",
+        "type": "info",
+        "category": "",
+        "icon": "",
+        "actionLabel": "",
+        "notifySelf": false
+      }
+    ]
+  }
+}
+```
+
+Full field reference: [Configuration.md § Notifications Configuration](Configuration.md#notifications-configuration). Full runtime behaviour (placeholder allowlist, precedence across multiple `CrudConfig` rows, queued/`afterCommit` delivery, why there is no `dedupe_key`): [Notifications.md § Config-driven CRUD notifications](Notifications.md#config-driven-crud-notifications).
+
+### Realtime delivery
+
+Notifications reach the bell through its `wire:poll` by default — no extra setup. Optionally enabling `ptah.notifications.broadcast` (Reverb/Echo) delivers them near-instantly instead; see [Notifications.md § Realtime (optional)](Notifications.md#realtime-optional).
 
 ---
 
