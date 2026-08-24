@@ -7,6 +7,141 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.23.0] — 2026-08-24
+
+Notifications stop being something you write code for. A CRUD screen now
+declares — in the visual editor, in the ninth tab — which lifecycle events
+notify whom, and one trait on the model makes it happen. Optional realtime
+through Reverb. No schema change on upgrade.
+
+### Added — config-driven CRUD notifications
+
+The dev picks the event (`created` / `updated` / `deleted`), the audience
+(a specific user, a role, or every active staff member), and the message.
+The model gets one trait:
+
+```php
+use Ptah\Traits\SendsCrudNotifications;
+
+class Order extends Model
+{
+    use SendsCrudNotifications;
+}
+```
+
+That is the whole integration. The rules live in the `config` JSON of the
+screen's `crud_configs` row, under `notifications.rules`, alongside the
+columns and filters they already describe — so exporting a screen's config
+carries its notifications with it.
+
+Titles, bodies and URLs accept `%column%` placeholders, resolved from the
+saved record: `Nova venda: %customer_name%`, `/orders/%id%`.
+
+**Placeholders honour column permissions.** A column tagged with
+`colsPermission` is not substitutable — a notification cannot become the
+side channel that leaks a value the recipient is not allowed to see on the
+grid. The primary key is normally substitutable even without a column entry
+(so `/orders/%id%` works out of the box), *unless* the config explicitly
+restricts it, in which case the restriction wins. Both halves of that
+contract are pinned by tests.
+
+Delivery is a queued job (`SendCrudNotificationJob`) marked
+`afterCommit` — a rolled-back save sends nothing, and the `sync` driver
+honours that too. A delivery failure is logged, never raised: a
+notification must not be able to break the save that triggered it. A
+reentrancy latch means a cascading save inside a lifecycle hook does not
+fire a second round of notifications.
+
+### Added — optional realtime (Reverb)
+
+Off by default and inert: three early returns (dispatch, channel
+registration, the bell's listener) mean a host that never sets
+`PTAH_NOTIFICATIONS_BROADCAST=true` does not execute a line of this code,
+and the existing poll keeps working unchanged.
+
+When enabled, `PtahNotificationCreated` broadcasts on the private channel
+`ptah.notifications.{userId}`, authorized to its owner only — registered by
+the package, so no edit to `routes/channels.php`. **The event carries the
+notification id and nothing else** — never the title or body. The payload
+transits the websocket server, and a notification's text can quote a
+record's data; the id is a pure "go refresh" trigger, and the content still
+arrives over the authenticated path.
+
+The channel registration is wrapped in `try/catch` on purpose:
+`Broadcast::channel()` resolves the default connection the first time it
+runs, so a host whose `BROADCAST_CONNECTION` points at a driver with no SDK
+installed would otherwise have this package breaking the boot of *every*
+request. A test asserts the boot survives exactly that.
+
+### Added — a tooltip on every field of the config editor
+
+All 147 form fields in the CrudConfig editor carry a `title` explaining what
+the field does, in English and pt-BR. A test fails the build when a field
+lacks one — and when it uses the `:title="__()"` form, which on a plain HTML
+tag is an Alpine expression, not a Blade binding (the bug this codebase has
+now shipped twice).
+
+Two tooltips written for this release described behaviour the code does not
+have and were corrected against the implementation before merge.
+
+### Added — `ptah:config:doctor` check 9: notification delivery
+
+Found by using the feature: a correctly configured rule delivered nothing, and
+nothing anywhere said why. The queue connection was `database` with no worker
+running, so the job sat in the queue looking exactly like a broken feature.
+
+The doctor now reports, per screen carrying `notifications.rules` and all
+warning-only:
+
+- the model does not use `SendsCrudNotifications` — the rules are inert, since
+  nothing hooks the Eloquent events;
+- an audience naming a role or user that does not exist, or left empty;
+- a rule whose title is empty (the runtime drops it).
+
+And once per run, when any screen has rules and the connection is not `sync`:
+the note that delivery only happens while a worker runs.
+
+New `ptah.notifications.queue_connection` (default `null` = the application's
+own connection) forces notification jobs onto a specific connection — set it to
+`sync` to deliver inline without moving the whole application off its queue.
+It is a nested config key, which is normally unsafe under Laravel's shallow
+package merge; it is safe here only because its absence *is* its default.
+
+The role match uses the same identity rule as `ptah_has_role`: case-insensitive
+and trimmed, never slugged.
+
+### Changed
+
+- **"Tema Visual" removed from the general settings tab.** Appearance has
+  been global for several releases (the six `data-ptah-*` axes on `<html>`);
+  the per-screen `theme` key was read by nothing but the editor that wrote
+  it. Existing values are ignored, not migrated — nothing to do.
+- `docs/Configuration.md` said the editor had 7 tabs. It has 9, and the
+  `notifications.rules` schema was documented nowhere. Both fixed, plus the
+  full 11-field rule shape, config precedence when a model has two config
+  rows, and where each audience legitimately resolves to zero recipients.
+- The bell's dropdown list scrolls (`max-h-[min(24rem,60vh)]`), with "mark
+  all as read" pinned outside the scroll area. At `dropdown_limit` 20 the
+  panel passed 1800px and pushed its own footer off-screen, and the navbar
+  is fixed, so the page behind it did not scroll to the rescue.
+
+### Fixed
+
+- `AiChatService` called `set_time_limit(300)` unconditionally. Under CLI the
+  limit is 0 (unlimited), so the call *imposed* a five-minute ceiling on the
+  process — this was the cause of test runs dying around 95% for days. Now
+  guarded by SAPI.
+
+### Still not implemented (documented as such)
+
+The notification history page and `ptah:notification-prune` remain absent;
+`purgeRead()` exists on the service for anyone scheduling their own cleanup.
+
+**Suite:** 1766 passing (+257 since 1.22.0). PHPStan clean, no new baseline
+entries. No migrations.
+
+---
+
 ## [1.22.0] — 2026-08-23
 
 A reusable notification centre, a contrast audit that measures the rendered
@@ -2541,12 +2676,40 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.23.0...HEAD
+[1.23.0]: https://github.com/jonytonet/ptah/compare/v1.22.0...v1.23.0
+[1.22.0]: https://github.com/jonytonet/ptah/compare/v1.21.0...v1.22.0
+[1.21.0]: https://github.com/jonytonet/ptah/compare/v1.20.0...v1.21.0
+[1.20.0]: https://github.com/jonytonet/ptah/compare/v1.19.0...v1.20.0
+[1.19.0]: https://github.com/jonytonet/ptah/compare/v1.18.0...v1.19.0
+[1.18.0]: https://github.com/jonytonet/ptah/compare/v1.17.0...v1.18.0
+[1.17.0]: https://github.com/jonytonet/ptah/compare/v1.16.0...v1.17.0
+[1.16.0]: https://github.com/jonytonet/ptah/compare/v1.15.2...v1.16.0
+[1.15.2]: https://github.com/jonytonet/ptah/compare/v1.15.1...v1.15.2
+[1.15.1]: https://github.com/jonytonet/ptah/compare/v1.15.0...v1.15.1
+[1.15.0]: https://github.com/jonytonet/ptah/compare/v1.13.2...v1.15.0
+[1.13.2]: https://github.com/jonytonet/ptah/compare/v1.13.1...v1.13.2
+[1.13.1]: https://github.com/jonytonet/ptah/compare/v1.13.0...v1.13.1
+[1.13.0]: https://github.com/jonytonet/ptah/compare/v1.12.0...v1.13.0
+[1.12.0]: https://github.com/jonytonet/ptah/compare/v1.11.2...v1.12.0
+[1.11.2]: https://github.com/jonytonet/ptah/compare/v1.11.1...v1.11.2
+[1.11.1]: https://github.com/jonytonet/ptah/compare/v1.11.0...v1.11.1
+[1.11.0]: https://github.com/jonytonet/ptah/compare/v1.10.1...v1.11.0
+[1.10.1]: https://github.com/jonytonet/ptah/compare/v1.10.0...v1.10.1
+[1.10.0]: https://github.com/jonytonet/ptah/compare/v1.9.1...v1.10.0
+[1.9.1]: https://github.com/jonytonet/ptah/compare/v1.9.0...v1.9.1
+[1.9.0]: https://github.com/jonytonet/ptah/compare/v1.8.0...v1.9.0
+[1.8.0]: https://github.com/jonytonet/ptah/compare/v1.7.0...v1.8.0
+[1.7.0]: https://github.com/jonytonet/ptah/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/jonytonet/ptah/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/jonytonet/ptah/compare/v1.4.1...v1.5.0
+[1.4.1]: https://github.com/jonytonet/ptah/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/jonytonet/ptah/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/jonytonet/ptah/compare/v1.2.1...v1.3.0
+[1.2.1]: https://github.com/jonytonet/ptah/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/jonytonet/ptah/compare/v1.1.1...v1.2.0
+[1.1.1]: https://github.com/jonytonet/ptah/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/jonytonet/ptah/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/jonytonet/ptah/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jonytonet/ptah/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.5...v1.0.0
-[1.0.0-rc.5]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.4...v1.0.0-rc.5
-[1.0.0-rc.4]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.3...v1.0.0-rc.4
-[1.0.0-rc.3]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.2...v1.0.0-rc.3
-[1.0.0-rc.2]: https://github.com/jonytonet/ptah/compare/v1.0.0-rc.1...v1.0.0-rc.2
-[1.0.0-rc.1]: https://github.com/jonytonet/ptah/releases/tag/v1.0.0-rc.1
+[1.0.0]: https://github.com/jonytonet/ptah/releases/tag/v1.0.0
