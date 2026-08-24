@@ -261,6 +261,14 @@ return [
     |                 '60s', '30000ms'). 'none'/false disables polling.
     | dropdown_limit: how many recent notifications the bell dropdown shows.
     | retention_days: default --days window for a future prune command.
+    | broadcast     : reserved toggle for a future real-time delivery channel
+    |                 for CRUD-driven notifications (Fase 3 dispatches only
+    |                 through the database table; this flag is not consumed
+    |                 yet). Note: config() merges the vendor defaults with the
+    |                 app's published copy SHALLOWLY per top-level key, so an
+    |                 app that already published `notifications` before this
+    |                 flag existed will NOT automatically receive it — hence
+    |                 the safe default of `false` (absent = inert either way).
     |
     */
     'notifications' => [
@@ -268,6 +276,7 @@ return [
         'poll' => env('PTAH_NOTIFICATIONS_POLL', '60s'),
         'dropdown_limit' => 20,
         'retention_days' => 30,
+        'broadcast' => env('PTAH_NOTIFICATIONS_BROADCAST', false),
     ],
 
     /*

@@ -214,10 +214,13 @@ class CrudConfigThemeParityTest extends TestCase
             $blade,
             'crud-config.blade.php: o hint do select de permissao voltou a usar text-amber-700 bare.'
         );
+        // 3rd use added by the Notifications tab (Fase 2): the "model missing
+        // SendsCrudNotifications" warning icon sits bare on the same tokenized
+        // ambient surface as the two above, so it needs the same fix.
         $this->assertSame(
-            2,
+            3,
             substr_count($blade, 'cfg-ink-warn'),
-            'crud-config.blade.php: esperava exatamente 2 usos de .cfg-ink-warn (icone do badge + hint do select).'
+            'crud-config.blade.php: esperava exatamente 3 usos de .cfg-ink-warn (icone do badge + hint do select + aviso de trait ausente).'
         );
     }
 

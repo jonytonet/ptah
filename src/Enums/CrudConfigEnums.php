@@ -217,14 +217,6 @@ class CrudConfigEnums
     ];
 
     /**
-     * UI themes
-     */
-    public const THEMES = [
-        'light',
-        'dark',
-    ];
-
-    /**
      * Text alignment options for colsAlign
      */
     public const ALIGNMENTS = [

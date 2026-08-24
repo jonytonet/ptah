@@ -106,6 +106,10 @@
                     0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', 'label' => __('ptah::ui.cfg_nav_permissions'), 'count' =>
                     null],
                     ['id' => 'hooks', 'icon' => 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', 'label' => __('ptah::ui.cfg_nav_hooks'), 'count' => null],
+                    ['id' => 'notifications', 'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002
+                    0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595
+                    1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9', 'label' => __('ptah::ui.cfg_nav_notifications'),
+                    'count' => count($notificationRules)],
                     ];
                     @endphp
 
@@ -149,7 +153,8 @@
                                 joins: '{{ __('ptah::ui.cfg_tab_title_joins') }}',
                                 general: '{{ __('ptah::ui.cfg_tab_title_general') }}',
                                 permissions: '{{ __('ptah::ui.cfg_tab_title_permissions') }}',
-                                hooks: '{{ __('ptah::ui.cfg_tab_title_hooks') }}'
+                                hooks: '{{ __('ptah::ui.cfg_tab_title_hooks') }}',
+                                notifications: '{{ __('ptah::ui.cfg_tab_title_notifications') }}'
                             }[tab]"></h2>
                         <p class="text-xs text-slate-400 mt-0.5" x-text="{
                                 cols: '{{ __('ptah::ui.cfg_tab_desc_cols') }}',
@@ -159,7 +164,8 @@
                                 joins: '{{ __('ptah::ui.cfg_tab_desc_joins') }}',
                                 general: '{{ __('ptah::ui.cfg_tab_desc_general') }}',
                                 permissions: '{{ __('ptah::ui.cfg_tab_desc_permissions') }}',
-                                hooks: '{{ __('ptah::ui.cfg_tab_desc_hooks') }}'
+                                hooks: '{{ __('ptah::ui.cfg_tab_desc_hooks') }}',
+                                notifications: '{{ __('ptah::ui.cfg_tab_desc_notifications') }}'
                             }[tab]"></p>
                     </div>
                     <button @click="$wire.showModal = false; $wire.closeModal()"
@@ -355,11 +361,13 @@
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_field_label') }}</label>
                                         <input type="text" wire:model="formDataField.colsNomeFisico"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_nome_fisico') }}"
                                             placeholder="ex: supplier_id" class="font-mono cfg-input" />
                                     </div>
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_logic_label') }}</label>
                                         <input type="text" wire:model="formDataField.colsNomeLogico"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_nome_logico') }}"
                                             placeholder="ex: Fornecedor" class="cfg-input" />
                                     </div>
                                     {{-- Fonte SQL (colsSource) — para colunas de JOIN --}}
@@ -372,6 +380,7 @@
                                                 __('ptah::ui.cfg_col_sql_optional') !!}</span>
                                         </label>
                                         <input type="text" wire:model="formDataField.colsSource"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_fonte_sql') }}"
                                             placeholder="ex: suppliers.name" class="font-mono cfg-input" />
                                         <div
                                             class="mt-2 p-3 rounded-md border border-sky-100 bg-sky-50 text-[11px] space-y-1.5">
@@ -410,7 +419,8 @@
                                     </div>
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_type_label') }}</label>
-                                        <select wire:model.live="formDataField.colsTipo" class="cfg-input">
+                                        <select wire:model.live="formDataField.colsTipo"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_tipo') }}" class="cfg-input">
                                             <option value="text">{{ __('ptah::ui.cfg_col_type_text') }}</option>
                                             <option value="number">{{ __('ptah::ui.cfg_col_type_number') }}</option>
                                             <option value="date">{{ __('ptah::ui.cfg_col_type_date') }}</option>
@@ -423,7 +433,8 @@
                                     </div>
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_align_label') }}</label>
-                                        <select wire:model="formDataField.colsAlign" class="cfg-input">
+                                        <select wire:model="formDataField.colsAlign"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_align') }}" class="cfg-input">
                                             <option value="text-start">{{ __('ptah::ui.cfg_col_align_left') }}</option>
                                             <option value="text-center">{{ __('ptah::ui.cfg_col_align_center') }}
                                             </option>
@@ -433,18 +444,21 @@
                                     <div class="flex col-span-2 gap-6">
                                         <label class="flex items-center gap-2 cursor-pointer select-none">
                                             <input type="checkbox" wire:model="formDataField.colsGravar"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_gravar') }}"
                                                 class="text-primary rounded border-slate-300" />
                                             <span class="text-xs font-medium text-slate-600">{{
                                                 __('ptah::ui.cfg_col_cb_save') }}</span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer select-none">
                                             <input type="checkbox" wire:model="formDataField.colsRequired"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_required') }}"
                                                 class="text-primary rounded border-slate-300" />
                                             <span class="text-xs font-medium text-slate-600">{{
                                                 __('ptah::ui.cfg_col_cb_required') }}</span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer select-none">
                                             <input type="checkbox" wire:model="formDataField.colsIsFilterable"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_is_filterable') }}"
                                                 class="text-primary rounded border-slate-300" />
                                             <span class="text-xs font-medium text-slate-600">{{
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
@@ -463,6 +477,7 @@
                                         <x-forge-select
                                             searchable
                                             wire:model="formDataField.colsPermission"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_permission') }}"
                                             :options="$permissionKeyOptions" />
                                         <p class="text-[11px] cfg-ink-warn mt-1">{{ __('ptah::ui.cfg_col_permission_hint') }}</p>
                                     </div>
@@ -471,12 +486,14 @@
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_form_block') }}</label>
                                         <input type="text" wire:model="formDataField.colsFormBlock"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_form_block') }}"
                                             placeholder="ex: Endereço" class="cfg-input" />
                                         <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_form_block_hint') }}</p>
                                     </div>
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_on_change') }}</label>
                                         <input type="text" wire:model="formDataField.colsOnChange"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_on_change') }}"
                                             placeholder="merge(data, {'total': data['qty'] * data['price']})"
                                             class="cfg-input font-mono text-[11px]" />
                                         <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_on_change_hint') }}</p>
@@ -487,6 +504,7 @@
                                     <div class="col-span-2">
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_select_opts') }}</label>
                                         <input type="text" wire:model="formDataField.colsSelect"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_select') }}"
                                             placeholder="{{ __('ptah::ui.cfg_col_select_opts_ph') }}"
                                             class="font-mono cfg-input" />
                                         <p class="text-[11px] text-slate-400 mt-1">{!!
@@ -496,12 +514,14 @@
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_custom_method') }}</label>
                                         <input type="text" wire:model="formDataField.colsMetodoCustom"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_metodo_custom') }}"
                                             placeholder="App\Services\MyService\formatValue(%campo%)"
                                             class="cfg-input font-mono text-[11px]" />
                                         <div class="flex items-center gap-2 mt-2">
                                             <input type="checkbox"
                                                 id="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 wire:model="formDataField.colsMetodoRaw"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_metodo_raw') }}"
                                                 class="text-primary rounded border-slate-300" />
                                             <label for="colsMetodoRaw_{{ $col['colsNomeFisico'] ?? 'f' }}"
                                                 class="text-[11px] text-slate-600 cursor-pointer select-none">
@@ -556,6 +576,7 @@
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_order_by') }}</label>
                                         <input type="text" wire:model="formDataField.colsOrderBy"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_order_by') }}"
                                             placeholder="campo_db ou relation.campo" class="cfg-input" />
                                     </div>
 
@@ -574,6 +595,7 @@
                                             <div>
                                                 <label class="cfg-label">CSS Inline (colsCellStyle)</label>
                                                 <input type="text" wire:model.live="formDataField.colsCellStyle"
+                                                    title="{{ __('ptah::ui.cfg_tip_cols_cell_style') }}"
                                                     placeholder="font-weight:700; color:#1a56db; font-size:13px;"
                                                     class="cfg-input font-mono text-[11px]" />
                                                 <p class="text-[11px] text-slate-400 mt-1">{{
@@ -583,12 +605,14 @@
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_min_width')
                                                     }}</label>
                                                 <input type="text" wire:model="formDataField.colsMinWidth"
+                                                    title="{{ __('ptah::ui.cfg_tip_cols_min_width') }}"
                                                     placeholder="140px ou 8rem" class="cfg-input" />
                                             </div>
                                             <div>
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_icon_prefix')
                                                     }}</label>
                                                 <input type="text" wire:model="formDataField.colsCellIcon"
+                                                    title="{{ __('ptah::ui.cfg_tip_cols_cell_icon') }}"
                                                     placeholder="bx bx-user-circle mr-1" class="font-mono cfg-input" />
                                                 <p class="text-[11px] text-slate-400 mt-1">{{
                                                     __('ptah::ui.cfg_col_cell_icon_hint') }}</p>
@@ -597,6 +621,7 @@
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_cell_tw_class')
                                                     }}</label>
                                                 <input type="text" wire:model="formDataField.colsCellClass"
+                                                    title="{{ __('ptah::ui.cfg_tip_cols_cell_class') }}"
                                                     placeholder="font-bold text-blue-600 uppercase"
                                                     class="font-mono cfg-input" />
                                             </div>
@@ -628,7 +653,8 @@
                                 <div x-show="editTab === 'renderer'" class="space-y-4">
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_label') }}</label>
-                                        <select wire:model.live="formDataField.colsRenderer" class="max-w-xs cfg-input">
+                                        <select wire:model.live="formDataField.colsRenderer"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_renderer') }}" class="max-w-xs cfg-input">
                                             <option value="">{{ __('ptah::ui.cfg_col_renderer_none') }}</option>
                                             <option value="badge">{{ __('ptah::ui.cfg_col_renderer_opt_badge') }}
                                             </option>
@@ -678,9 +704,11 @@
                                         <div class="flex items-center gap-2 mb-2">
                                             <input type="text"
                                                 wire:model="formDataField.colsRendererBadges.{{ $bi }}.value"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_badge_value') }}"
                                                 placeholder="valor" class="flex-1 font-mono cfg-input-sm" />
                                             <input type="text"
                                                 wire:model="formDataField.colsRendererBadges.{{ $bi }}.label"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_badge_label') }}"
                                                 placeholder="{{ __('ptah::ui.cfg_col_badge_label_ph') }}"
                                                 class="flex-1 cfg-input-sm" />
                                             {{-- Swatches de Cor --}}
@@ -708,7 +736,7 @@
                                                 @endforeach
                                                 <input type="color" value="{{ $swHex ? $swCur : '#6366f1' }}"
                                                     @change="$wire.set('formDataField.colsRendererBadges.{{ $bi }}.color', $event.target.value)"
-                                                    title="Cor personalizada (hex)"
+                                                    title="{{ __('ptah::ui.cfg_tip_renderer_badge_color_custom') }}"
                                                     class="w-6 h-5 p-0 overflow-hidden border rounded cursor-pointer border-slate-300" />
                                                 @if ($swHex)
                                                 <span class="text-[9px] font-mono" style="color:{{ $swCur }}">{{ $swCur
@@ -717,6 +745,7 @@
                                             </div>
                                             <input type="text"
                                                 wire:model="formDataField.colsRendererBadges.{{ $bi }}.icon"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_badge_icon') }}"
                                                 placeholder="bx bx-check (opcional)" class="flex-1 cfg-input-sm" />
                                             <button
                                                 wire:click="$set('formDataField.colsRendererBadges', array_values(array_filter($formDataField['colsRendererBadges'] ?? [], fn($k) => $k != {{ $bi }}, ARRAY_FILTER_USE_KEY)))"
@@ -737,12 +766,14 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_bool_true')
                                                 }}</label>
                                             <input type="text" wire:model="formDataField.colsRendererBoolTrue"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_bool_true') }}"
                                                 placeholder="Sim" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_bool_false')
                                                 }}</label>
                                             <input type="text" wire:model="formDataField.colsRendererBoolFalse"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_bool_false') }}"
                                                 placeholder="{{ __('ptah::ui.cfg_col_bool_false_ph') }}"
                                                 class="cfg-input" />
                                         </div>
@@ -755,7 +786,8 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_currency')
                                                 }}</label>
-                                            <select wire:model="formDataField.colsRendererCurrency" class="cfg-input">
+                                            <select wire:model="formDataField.colsRendererCurrency"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_currency') }}" class="cfg-input">
                                                 <option value="BRL">{{ __('ptah::ui.cfg_col_currency_brl') }}</option>
                                                 <option value="USD">{{ __('ptah::ui.cfg_col_currency_usd') }}</option>
                                                 <option value="EUR">{{ __('ptah::ui.cfg_col_currency_eur') }}</option>
@@ -765,7 +797,7 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_decimals')
                                                 }}</label>
                                             <input type="number" wire:model="formDataField.colsRendererDecimals" min="0"
-                                                max="4" class="cfg-input" />
+                                                max="4" title="{{ __('ptah::ui.cfg_tip_renderer_money_decimals') }}" class="cfg-input" />
                                         </div>
                                     </div>
                                     @endif
@@ -777,6 +809,7 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_url_tmpl')
                                                 }}</label>
                                             <input type="text" wire:model="formDataField.colsRendererLinkTemplate"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_link_template') }}"
                                                 placeholder="/pedidos/%id%/detalhe" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">Use <code
                                                     class="px-1 rounded bg-slate-100">%campo%</code> para substituir por
@@ -788,12 +821,14 @@
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_link_label')
                                                     }}</label>
                                                 <input type="text" wire:model="formDataField.colsRendererLinkLabel"
+                                                    title="{{ __('ptah::ui.cfg_tip_renderer_link_label') }}"
                                                     placeholder="Ver detalhes" class="cfg-input" />
                                             </div>
                                             <div class="flex items-end pb-1">
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="checkbox"
                                                         wire:model="formDataField.colsRendererLinkNewTab"
+                                                        title="{{ __('ptah::ui.cfg_tip_renderer_link_new_tab') }}"
                                                         class="text-primary rounded border-slate-300" />
                                                     <span class="text-xs text-slate-600">{{
                                                         __('ptah::ui.cfg_col_renderer_new_tab') }}</span>
@@ -809,12 +844,14 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_width') }}</label>
                                             <input type="number" wire:model="formDataField.colsRendererImageWidth"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_image_width') }}"
                                                 placeholder="40" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_height')
                                                 }}</label>
                                             <input type="number" wire:model="formDataField.colsRendererImageHeight"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_image_height') }}"
                                                 placeholder="40" class="cfg-input" />
                                         </div>
                                     </div>
@@ -825,6 +862,7 @@
                                     <div class="max-w-xs">
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_max_chars') }}</label>
                                         <input type="number" wire:model="formDataField.colsRendererMaxChars"
+                                            title="{{ __('ptah::ui.cfg_tip_renderer_max_chars') }}"
                                             placeholder="50" class="cfg-input" />
                                     </div>
                                     @endif
@@ -836,11 +874,12 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_decimals') }}
                                                 (colsRendererDecimals)</label>
                                             <input type="number" wire:model="formDataField.colsRendererDecimals" min="0"
-                                                max="6" placeholder="2" class="cfg-input" />
+                                                max="6" title="{{ __('ptah::ui.cfg_tip_renderer_number_decimals') }}" placeholder="2" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">Locale (colsRendererLocale)</label>
                                             <input type="text" wire:model="formDataField.colsRendererLocale"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_locale') }}"
                                                 placeholder="pt-BR" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">Ex: pt-BR, en-US, de-DE</p>
                                         </div>
@@ -854,12 +893,14 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_max_val') }}
                                                 (colsRendererMax)</label>
                                             <input type="number" wire:model="formDataField.colsRendererMax"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_progress_max') }}"
                                                 placeholder="100" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_color') }}
                                                 (colsRendererColor)</label>
-                                            <select wire:model="formDataField.colsRendererColor" class="cfg-input">
+                                            <select wire:model="formDataField.colsRendererColor"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_progress_color') }}" class="cfg-input">
                                                 <option value="indigo">indigo</option>
                                                 <option value="green">green</option>
                                                 <option value="blue">blue</option>
@@ -877,7 +918,7 @@
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_max_stars') }}
                                             (colsRendererMax)</label>
                                         <input type="number" wire:model="formDataField.colsRendererMax" placeholder="5"
-                                            min="1" max="10" class="cfg-input" />
+                                            min="1" max="10" title="{{ __('ptah::ui.cfg_tip_renderer_rating_max') }}" class="cfg-input" />
                                     </div>
                                     @endif
 
@@ -886,7 +927,8 @@
                                     <div class="max-w-xs">
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_duration') }}
                                             (colsRendererDurationUnit)</label>
-                                        <select wire:model="formDataField.colsRendererDurationUnit" class="cfg-input">
+                                        <select wire:model="formDataField.colsRendererDurationUnit"
+                                            title="{{ __('ptah::ui.cfg_tip_renderer_duration_unit') }}" class="cfg-input">
                                             <option value="minutes">minutes — entrada em minutos</option>
                                             <option value="seconds">seconds — entrada em segundos</option>
                                         </select>
@@ -899,7 +941,7 @@
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_renderer_qr_size') }}
                                             (colsRendererQrSize)</label>
                                         <input type="number" wire:model="formDataField.colsRendererQrSize"
-                                            placeholder="64" min="32" max="256" class="cfg-input" />
+                                            placeholder="64" min="32" max="256" title="{{ __('ptah::ui.cfg_tip_renderer_qr_size') }}" class="cfg-input" />
                                         <p class="text-[11px] text-slate-400 mt-1">Tamanho em pixels (quadrado). Requer
                                             qrcode.js via CDN.</p>
                                     </div>
@@ -911,7 +953,8 @@
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_label') }}</label>
-                                            <select wire:model.live="formDataField.colsMask" class="cfg-input">
+                                            <select wire:model.live="formDataField.colsMask"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_mask') }}" class="cfg-input">
                                                 <option value="">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
                                                 <optgroup label="{{ __('ptah::ui.cfg_col_mask_grp_monetary') }}">
                                                     <option value="money_brl">money_brl — R$ 1.253,08</option>
@@ -955,7 +998,8 @@
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_transform') }}</label>
-                                            <select wire:model="formDataField.colsMaskTransform" class="cfg-input">
+                                            <select wire:model="formDataField.colsMaskTransform"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_mask_transform') }}" class="cfg-input">
                                                 <option value="">— Nenhuma —</option>
                                                 <option value="money_to_float">money_to_float — "R$ 1.253,08" → 1253.08
                                                 </option>
@@ -978,6 +1022,7 @@
                                     <div>
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_regex') }}</label>
                                         <input type="text" wire:model="formDataField.colsMaskRegex"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_mask_regex') }}"
                                             placeholder="Ex: 000-000-A ou /^[A-Z]{3}$/" class="font-mono cfg-input" />
                                     </div>
                                     @endif
@@ -1029,6 +1074,7 @@
                                             class="flex items-center gap-2 cursor-pointer p-2.5 rounded-md border {{ $hasRule($rule) ? 'border-primary bg-primary-light' : 'border-slate-200 bg-white hover:bg-slate-50' }} transition-colors select-none">
                                             <input type="checkbox" {{ $hasRule($rule) ? 'checked' : '' }}
                                                 wire:change="$set('formDataField.colsValidations', {{ json_encode($toggleRule($rule)) }})"
+                                                title="{{ __('ptah::ui.cfg_tip_valid_'.$rule) }}"
                                                 class="text-primary rounded border-slate-300" />
                                             <span class="text-xs font-medium text-slate-700">{{ $ruleLabel }}</span>
                                         </label>
@@ -1043,7 +1089,7 @@
                                                         let rules = @js($currentValidations).filter(r => !r.startsWith('min:'));
                                                         if ($event.target.value !== '') rules.push('min:' + $event.target.value);
                                                         $wire.set('formDataField.colsValidations', rules);
-                                                    " placeholder="ex: 0" class="cfg-input" />
+                                                    " placeholder="ex: 0" title="{{ __('ptah::ui.cfg_tip_valid_min') }}" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_max') }}</label>
@@ -1053,7 +1099,7 @@
                                                         let rules = @js($currentValidations).filter(r => !r.startsWith('max:'));
                                                         if ($event.target.value !== '') rules.push('max:' + $event.target.value);
                                                         $wire.set('formDataField.colsValidations', rules);
-                                                    " placeholder="ex: 9999" class="cfg-input" />
+                                                    " placeholder="ex: 9999" title="{{ __('ptah::ui.cfg_tip_valid_max') }}" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_min_len') }}</label>
@@ -1063,7 +1109,7 @@
                                                         let rules = @js($currentValidations).filter(r => !r.startsWith('minLength:'));
                                                         if ($event.target.value !== '') rules.push('minLength:' + $event.target.value);
                                                         $wire.set('formDataField.colsValidations', rules);
-                                                    " placeholder="ex: 3" class="cfg-input" />
+                                                    " placeholder="ex: 3" title="{{ __('ptah::ui.cfg_tip_valid_min_len') }}" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_max_len') }}</label>
@@ -1073,7 +1119,7 @@
                                                         let rules = @js($currentValidations).filter(r => !r.startsWith('maxLength:'));
                                                         if ($event.target.value !== '') rules.push('maxLength:' + $event.target.value);
                                                         $wire.set('formDataField.colsValidations', rules);
-                                                    " placeholder="ex: 255" class="cfg-input" />
+                                                    " placeholder="ex: 255" title="{{ __('ptah::ui.cfg_tip_valid_max_len') }}" class="cfg-input" />
                                         </div>
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_regex') }}</label>
@@ -1084,6 +1130,7 @@
                                                         if ($event.target.value !== '') rules.push('regex:' + $event.target.value);
                                                         $wire.set('formDataField.colsValidations', rules);
                                                     " placeholder="Ex: ^[A-Z]{2,5}$ ou /^\d{5}$/"
+                                                title="{{ __('ptah::ui.cfg_tip_valid_regex') }}"
                                                 class="font-mono cfg-input" />
                                         </div>
                                         {{-- ── Novas regras paramétricas ── --}}
@@ -1095,7 +1142,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('digits:'));
                                                     if ($event.target.value !== '') rules.push('digits:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="ex: 8" class="cfg-input" />
+                                                " placeholder="ex: 8" title="{{ __('ptah::ui.cfg_tip_valid_digits') }}" class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_digits_btw')
@@ -1106,7 +1153,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('digitsBetween:'));
                                                     if ($event.target.value !== '') rules.push('digitsBetween:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="ex: 8,11" class="font-mono cfg-input" />
+                                                " placeholder="ex: 8,11" title="{{ __('ptah::ui.cfg_tip_valid_digits_btw') }}" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_after') }}</label>
@@ -1116,7 +1163,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('after:'));
                                                     if ($event.target.value !== '') rules.push('after:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="today ou 2020-01-01" class="font-mono cfg-input" />
+                                                " placeholder="today ou 2020-01-01" title="{{ __('ptah::ui.cfg_tip_valid_after') }}" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_before') }}</label>
@@ -1126,7 +1173,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('before:'));
                                                     if ($event.target.value !== '') rules.push('before:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="today ou 2030-12-31" class="font-mono cfg-input" />
+                                                " placeholder="today ou 2030-12-31" title="{{ __('ptah::ui.cfg_tip_valid_before') }}" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_date_fmt') }}</label>
@@ -1136,7 +1183,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('dateFormat:'));
                                                     if ($event.target.value !== '') rules.push('dateFormat:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="d/m/Y ou Y-m-d" class="font-mono cfg-input" />
+                                                " placeholder="d/m/Y ou Y-m-d" title="{{ __('ptah::ui.cfg_tip_valid_date_fmt') }}" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_confirmed')
@@ -1147,7 +1194,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('confirmed:'));
                                                     if ($event.target.value !== '') rules.push('confirmed:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="password_confirmation" class="font-mono cfg-input" />
+                                                " placeholder="password_confirmation" title="{{ __('ptah::ui.cfg_tip_valid_confirmed') }}" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">{{
                                                 __('ptah::ui.cfg_col_valid_confirmed_hint') }}</p>
                                         </div>
@@ -1159,7 +1206,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('unique:'));
                                                     if ($event.target.value !== '') rules.push('unique:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="Product,email" class="font-mono cfg-input" />
+                                                " placeholder="Product,email" title="{{ __('ptah::ui.cfg_tip_valid_unique') }}" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">{{
                                                 __('ptah::ui.cfg_col_valid_unique_hint') }}</p>
                                         </div>
@@ -1171,7 +1218,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('in:'));
                                                     if ($event.target.value !== '') rules.push('in:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="ativo,inativo,pendente" class="font-mono cfg-input" />
+                                                " placeholder="ativo,inativo,pendente" title="{{ __('ptah::ui.cfg_tip_valid_in') }}" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_valid_not_in') }}</label>
@@ -1181,7 +1228,7 @@
                                                     let rules = @js($currentValidations).filter(r => !r.startsWith('notIn:'));
                                                     if ($event.target.value !== '') rules.push('notIn:' + $event.target.value);
                                                     $wire.set('formDataField.colsValidations', rules);
-                                                " placeholder="deletado,arquivado" class="font-mono cfg-input" />
+                                                " placeholder="deletado,arquivado" title="{{ __('ptah::ui.cfg_tip_valid_not_in') }}" class="font-mono cfg-input" />
                                         </div>
                                     </div>
                                     @if (!empty($currentValidations))
@@ -1205,6 +1252,7 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_name') }}</label>
                                             <input type="text" wire:model="formDataField.colsRelacao"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_relacao') }}"
                                                 placeholder="ex: supplier" class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">{{
                                                 __('ptah::ui.cfg_col_rel_name_hint') }}</p>
@@ -1212,6 +1260,7 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_display') }}</label>
                                             <input type="text" wire:model="formDataField.colsRelacaoExibe"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_relacao_exibe') }}"
                                                 placeholder="ex: name" class="font-mono cfg-input" />
                                         </div>
                                     </div>
@@ -1227,6 +1276,7 @@
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_rel_nested_label')
                                                 }}</label>
                                             <input type="text" wire:model="formDataField.colsRelacaoNested"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_relacao_nested') }}"
                                                 placeholder="ex: address.city.name ou supplier.contact.email"
                                                 class="font-mono cfg-input" />
                                             <p class="text-[11px] text-slate-400 mt-1">{{
@@ -1262,6 +1312,7 @@
                                         <div class="col-span-2">
                                             <label class="flex items-center gap-2 cursor-pointer select-none">
                                                 <input type="checkbox" wire:model="formDataField.colsSDInitWithData"
+                                                    title="{{ __('ptah::ui.cfg_tip_sd_init_with_data') }}"
                                                     class="text-primary rounded border-slate-300" />
                                                 <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_col_sd_init_with_data') }}</span>
                                             </label>
@@ -1270,7 +1321,7 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_limit') }}</label>
                                             <input type="number" wire:model="formDataField.colsSDLimit" placeholder="10"
-                                                min="1" max="100" class="cfg-input" />
+                                                min="1" max="100" title="{{ __('ptah::ui.cfg_tip_sd_limit') }}" class="cfg-input" />
                                         </div>
                                     </div>
 
@@ -1280,13 +1331,13 @@
                                             <div class="flex gap-3">
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="radio" wire:model.live="formDataField.colsSDTipo"
-                                                        value="model" class="text-primary" />
+                                                        value="model" title="{{ __('ptah::ui.cfg_tip_sd_mode_model') }}" class="text-primary" />
                                                     <span class="text-xs font-medium text-slate-700">Model
                                                         Eloquent</span>
                                                 </label>
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="radio" wire:model.live="formDataField.colsSDTipo"
-                                                        value="service" class="text-primary" />
+                                                        value="service" title="{{ __('ptah::ui.cfg_tip_sd_mode_service') }}" class="text-primary" />
                                                     <span class="text-xs font-medium text-slate-700">{{
                                                         __('ptah::ui.cfg_col_sd_mode_service') }}</span>
                                                 </label>
@@ -1296,6 +1347,7 @@
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_model') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDModel"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_model') }}"
                                                 placeholder="ex: Entrie/ShippingCompanies"
                                                 class="font-mono cfg-input" />
                                         </div>
@@ -1303,12 +1355,14 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_service') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDService"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_service') }}"
                                                 placeholder="ex: Entrie/ShippingCompaniesService"
                                                 class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_method') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDServiceMethod"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_service_method') }}"
                                                 placeholder="ex: searchDropDownOfShippingCompanies"
                                                 class="font-mono cfg-input" />
                                         </div>
@@ -1316,37 +1370,44 @@
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_value_field') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDValor"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_value_field') }}"
                                                 placeholder="id" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_field') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDLabel"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_label_field') }}"
                                                 placeholder="name" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_two')
                                                 }}</label>
                                             <input type="text" wire:model="formDataField.colsSDLabelTwo"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_label_two') }}"
                                                 placeholder="cnpj" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_label_three') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDLabelThree"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_label_three') }}"
                                                 placeholder="city" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_order_by') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDOrder"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_order_by') }}"
                                                 placeholder="id asc" class="font-mono cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">Placeholder</label>
                                             <input type="text" wire:model="formDataField.colsSDPlaceholder"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_placeholder') }}"
                                                 placeholder="Buscar..." class="cfg-input" />
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_start_list') }}</label>
-                                            <select wire:model="formDataField.colsSDStartList" class="cfg-input">
+                                            <select wire:model="formDataField.colsSDStartList"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_start_list') }}" class="cfg-input">
                                                 <option value="bottom">{{ __('ptah::ui.cfg_col_sd_start_list_bottom') }}</option>
                                                 <option value="top">{{ __('ptah::ui.cfg_col_sd_start_list_top') }}</option>
                                             </select>
@@ -1354,6 +1415,7 @@
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_array_search') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDArraySearch"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_array_search') }}"
                                                 placeholder="cnpj,email" class="font-mono cfg-input" />
                                             <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_array_search_hint') }}</p>
                                         </div>
@@ -1362,7 +1424,8 @@
                                         <div class="col-span-2 grid grid-cols-3 gap-4 pt-3 mt-1 border-t border-slate-100">
                                             <div>
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_one') }}</label>
-                                                <select wire:model="formDataField.colsSDMaskOne" class="cfg-input">
+                                                <select wire:model="formDataField.colsSDMaskOne"
+                                                    title="{{ __('ptah::ui.cfg_tip_sd_mask_one') }}" class="cfg-input">
                                                     <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
                                                     <option value="cnpj">cnpj</option>
                                                     <option value="cpf">cpf</option>
@@ -1373,7 +1436,8 @@
                                             </div>
                                             <div>
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_two') }}</label>
-                                                <select wire:model="formDataField.colsSDMaskTwo" class="cfg-input">
+                                                <select wire:model="formDataField.colsSDMaskTwo"
+                                                    title="{{ __('ptah::ui.cfg_tip_sd_mask_two') }}" class="cfg-input">
                                                     <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
                                                     <option value="cnpj">cnpj</option>
                                                     <option value="cpf">cpf</option>
@@ -1384,7 +1448,8 @@
                                             </div>
                                             <div>
                                                 <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_mask_three') }}</label>
-                                                <select wire:model="formDataField.colsSDMaskThree" class="cfg-input">
+                                                <select wire:model="formDataField.colsSDMaskThree"
+                                                    title="{{ __('ptah::ui.cfg_tip_sd_mask_three') }}" class="cfg-input">
                                                     <option value="defaultMask">{{ __('ptah::ui.cfg_col_mask_none') }}</option>
                                                     <option value="cnpj">cnpj</option>
                                                     <option value="cpf">cpf</option>
@@ -1398,6 +1463,7 @@
                                         <div class="col-span-2">
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filters') }}</label>
                                             <input type="text" wire:model="formDataField.colsSDFilters"
+                                                title="{{ __('ptah::ui.cfg_tip_sd_filters') }}"
                                                 placeholder='[{"field":"active","value":"S"}]'
                                                 class="cfg-input font-mono text-[11px]" />
                                         </div>
@@ -1414,12 +1480,14 @@
                                                 <div>
                                                     <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_depends_on') }}</label>
                                                     <input type="text" wire:model="formDataField.colsSDDependsOn"
+                                                        title="{{ __('ptah::ui.cfg_tip_sd_depends_on') }}"
                                                         placeholder="ex: state_id" class="font-mono cfg-input" />
                                                     <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_depends_on_hint') }}</p>
                                                 </div>
                                                 <div>
                                                     <label class="cfg-label">{{ __('ptah::ui.cfg_col_sd_filter_column') }}</label>
                                                     <input type="text" wire:model="formDataField.colsSDFilterColumn"
+                                                        title="{{ __('ptah::ui.cfg_tip_sd_filter_column') }}"
                                                         placeholder="ex: state_id" class="font-mono cfg-input" />
                                                     <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_col_sd_filter_column_hint') }}</p>
                                                 </div>
@@ -1433,6 +1501,7 @@
                                     <label
                                         class="flex items-center gap-2 p-3 border rounded-md cursor-pointer select-none border-slate-200 hover:bg-slate-50">
                                         <input type="checkbox" wire:model.live="formDataField.totalizadorEnabled"
+                                            title="{{ __('ptah::ui.cfg_tip_totalizador_enable') }}"
                                             class="text-primary rounded border-slate-300" />
                                         <span class="text-sm font-medium text-slate-700">{{
                                             __('ptah::ui.cfg_col_total_enable') }}</span>
@@ -1441,7 +1510,8 @@
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_func') }}</label>
-                                            <select wire:model="formDataField.totalizadorType" class="cfg-input">
+                                            <select wire:model="formDataField.totalizadorType"
+                                                title="{{ __('ptah::ui.cfg_tip_totalizador_type') }}" class="cfg-input">
                                                 <option value="sum">{{ __('ptah::ui.cfg_col_total_sum') }}</option>
                                                 <option value="avg">{{ __('ptah::ui.cfg_col_total_avg') }}</option>
                                                 <option value="count">{{ __('ptah::ui.cfg_col_total_count') }}</option>
@@ -1451,7 +1521,8 @@
                                         </div>
                                         <div>
                                             <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_format') }}</label>
-                                            <select wire:model="formDataField.totalizadorFormat" class="cfg-input">
+                                            <select wire:model="formDataField.totalizadorFormat"
+                                                title="{{ __('ptah::ui.cfg_tip_totalizador_format') }}" class="cfg-input">
                                                 <option value="currency">currency — R$ 1.253,08</option>
                                                 <option value="number">number — 1.253,08</option>
                                                 <option value="integer">integer — 1.253</option>
@@ -1460,6 +1531,7 @@
                                         <div class="col-span-2">
                                             <label class="cfg-label">Label</label>
                                             <input type="text" wire:model="formDataField.totalizadorLabel"
+                                                title="{{ __('ptah::ui.cfg_tip_totalizador_label') }}"
                                                 placeholder="Total" class="cfg-input" />
                                         </div>
                                     </div>
@@ -1584,11 +1656,13 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_name_label') }}</label>
                                     <input type="text" wire:model="formDataAction.colsNomeLogico"
+                                        title="{{ __('ptah::ui.cfg_tip_action_name') }}"
                                         placeholder="ex: Ver Detalhes" class="cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_type_label') }}</label>
-                                    <select wire:model="formDataAction.actionType" class="cfg-input">
+                                    <select wire:model="formDataAction.actionType"
+                                        title="{{ __('ptah::ui.cfg_tip_action_type') }}" class="cfg-input">
                                         <option value="link">{{ __('ptah::ui.cfg_act_type_link') }}</option>
                                         <option value="livewire">{{ __('ptah::ui.cfg_act_type_livewire') }}</option>
                                         <option value="javascript">{{ __('ptah::ui.cfg_act_type_js') }}</option>
@@ -1597,6 +1671,7 @@
                                 <div class="col-span-2">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_value_label') }}</label>
                                     <input type="text" wire:model="formDataAction.actionValue"
+                                        title="{{ __('ptah::ui.cfg_tip_action_value') }}"
                                         placeholder="link: /pedidos/%id%  |  livewire: approve(%id%)  |  js: confirm(%id%)"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">Use <code
@@ -1608,6 +1683,7 @@
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_icon_label') }}</label>
                                     <div class="flex gap-2">
                                         <input type="text" wire:model.live="formDataAction.actionIcon"
+                                            title="{{ __('ptah::ui.cfg_tip_action_icon') }}"
                                             placeholder="bx bx-show" class="flex-1 font-mono cfg-input" />
                                         @if (!empty($formDataAction['actionIcon']))
                                         <div
@@ -1623,7 +1699,8 @@
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_color_label') }}</label>
-                                    <select wire:model="formDataAction.actionColor" class="cfg-input">
+                                    <select wire:model="formDataAction.actionColor"
+                                        title="{{ __('ptah::ui.cfg_tip_action_color') }}" class="cfg-input">
                                         <option value="primary">primary</option>
                                         <option value="success">success</option>
                                         <option value="danger">danger</option>
@@ -1635,6 +1712,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_permission_label') }}</label>
                                     <input type="text" wire:model="formDataAction.actionPermission"
+                                        title="{{ __('ptah::ui.cfg_tip_action_permission') }}"
                                         placeholder="ex: admin" class="font-mono cfg-input" />
                                 </div>
                             </div>
@@ -1789,6 +1867,7 @@
                                             class="font-normal text-slate-400">(identificador)</span>
                                     </label>
                                     <input type="text" wire:model="formDataFilter.field" placeholder="ex: supplier_name"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_field') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_filter_field_hint')
                                         }}</p>
@@ -1799,13 +1878,15 @@
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_filter_lbl_label') }} <span
                                             class="font-normal text-slate-400">(exibido no painel)</span></label>
                                     <input type="text" wire:model="formDataFilter.label" placeholder="ex: Fornecedor"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_label') }}"
                                         class="cfg-input" />
                                 </div>
 
                                 {{-- Tipo --}}
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_filter_type_label') }}</label>
-                                    <select wire:model="formDataFilter.colsFilterType" class="cfg-input">
+                                    <select wire:model="formDataFilter.colsFilterType"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_type') }}" class="cfg-input">
                                         <option value="text">{{ __('ptah::ui.cfg_filter_type_text') }}</option>
                                         <option value="number">{{ __('ptah::ui.cfg_filter_type_number') }}</option>
                                         <option value="date">{{ __('ptah::ui.cfg_filter_type_date') }}</option>
@@ -1817,7 +1898,8 @@
                                 {{-- Operador --}}
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_filter_op_label') }}</label>
-                                    <select wire:model="formDataFilter.defaultOperator" class="cfg-input">
+                                    <select wire:model="formDataFilter.defaultOperator"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_operator') }}" class="cfg-input">
                                         <option value="=">{{ __('ptah::ui.op_eq') }}</option>
                                         <option value="LIKE">{{ __('ptah::ui.op_like') }}</option>
                                         <option value=">">{{ __('ptah::ui.op_gt') }}</option>
@@ -1844,6 +1926,7 @@
                                             __('ptah::ui.cfg_term_rel_name_ph') }}</span>
                                     </label>
                                     <input type="text" wire:model="formDataFilter.whereHas" placeholder="ex: supplier"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_where_has') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">{!!
                                         __('ptah::ui.cfg_filter_rel_method_hint') !!}</p>
@@ -1855,6 +1938,7 @@
                                         {{ __('ptah::ui.cfg_filter_rel_field') }}
                                     </label>
                                     <input type="text" wire:model="formDataFilter.field_relation" placeholder="ex: name"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_field_relation') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.cfg_filter_rel_col_hint')
                                         }}</p>
@@ -1866,7 +1950,8 @@
                                         {{ __('ptah::ui.cfg_filter_aggregate') }} <span
                                             class="font-normal text-slate-400">(para whereHas + HAVING)</span>
                                     </label>
-                                    <select wire:model="formDataFilter.aggregate" class="cfg-input">
+                                    <select wire:model="formDataFilter.aggregate"
+                                        title="{{ __('ptah::ui.cfg_tip_filter_aggregate') }}" class="cfg-input">
                                         <option value="">{{ __('ptah::ui.cfg_filter_agg_none') }}</option>
                                         <option value="SUM">{{ __('ptah::ui.cfg_filter_agg_sum') }}</option>
                                         <option value="COUNT">{{ __('ptah::ui.cfg_filter_agg_count') }}</option>
@@ -2015,6 +2100,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_style_field_label') }}</label>
                                     <input type="text" wire:model="formDataStyle.field" placeholder="ex: status"
+                                        title="{{ __('ptah::ui.cfg_tip_style_field') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">Coluna real do model (ex: <code
                                             class="px-1 rounded bg-slate-100">status</code>, <code
@@ -2022,7 +2108,8 @@
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_style_op_label') }}</label>
-                                    <select wire:model="formDataStyle.condition" class="cfg-input">
+                                    <select wire:model="formDataStyle.condition"
+                                        title="{{ __('ptah::ui.cfg_tip_style_operator') }}" class="cfg-input">
                                         <option value="==">{{ __('ptah::ui.op_eq2') }}</option>
                                         <option value="!=">{{ __('ptah::ui.op_neq') }}</option>
                                         <option value=">">{{ __('ptah::ui.op_gt') }}</option>
@@ -2034,6 +2121,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_style_val_label') }}</label>
                                     <input type="text" wire:model="formDataStyle.value" placeholder="ex: Active"
+                                        title="{{ __('ptah::ui.cfg_tip_style_value') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">{{ __('ptah::ui.op_style_case_hint') }}
                                     </p>
@@ -2042,6 +2130,7 @@
                             <div>
                                 <label class="cfg-label">{{ __('ptah::ui.cfg_style_css_label') }}</label>
                                 <input type="text" wire:model.live="formDataStyle.style"
+                                    title="{{ __('ptah::ui.cfg_tip_style_css') }}"
                                     placeholder="background:#D4EDDA;color:#155724;" class="font-mono cfg-input" />
                                 <p class="text-[11px] text-slate-400 mt-1">Propriedades CSS separadas por <code
                                         class="px-1 rounded bg-slate-100">;</code> — aplicadas no <code
@@ -2334,7 +2423,8 @@
                                 {{-- Tipo --}}
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_join_type_label') }}</label>
-                                    <select wire:model.live="formDataJoin.type" class="cfg-input">
+                                    <select wire:model.live="formDataJoin.type"
+                                        title="{{ __('ptah::ui.cfg_tip_join_type') }}" class="cfg-input">
                                         <option value="left">{{ __('ptah::ui.cfg_join_type_left') }}</option>
                                         <option value="inner">{{ __('ptah::ui.cfg_join_type_inner') }}</option>
                                     </select>
@@ -2347,6 +2437,7 @@
                                             class="font-normal text-slate-400">(nome no banco)</span>
                                     </label>
                                     <input type="text" wire:model.live="formDataJoin.table" placeholder="ex: suppliers"
+                                        title="{{ __('ptah::ui.cfg_tip_join_table') }}"
                                         class="font-mono cfg-input {{ in_array($formDataJoin['table'] ?? '', array_column($joins, 'table')) && ($formDataJoin['table'] ?? '') !== '' && $editingJoinIndex < 0 ? 'border-red-400 bg-red-50' : '' }}" />
                                     @if(($formDataJoin['table'] ?? '') !== '' && in_array($formDataJoin['table'] ?? '',
                                     array_column($joins, 'table')) && $editingJoinIndex < 0) <p
@@ -2367,6 +2458,7 @@
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_join_left_col') }} <span
                                             class="font-normal text-slate-400">(ON ...)</span></label>
                                     <input type="text" wire:model="formDataJoin.first"
+                                        title="{{ __('ptah::ui.cfg_tip_join_left_col') }}"
                                         placeholder="ex: products.supplier_id" class="font-mono cfg-input" />
                                     <p class="mt-1 text-[11px] text-slate-400">Formato <code
                                             class="px-1 rounded bg-slate-100">tabela_principal.fk</code></p>
@@ -2377,6 +2469,7 @@
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_join_right_col') }} <span
                                             class="font-normal text-slate-400">(ON ... = ...)</span></label>
                                     <input type="text" wire:model="formDataJoin.second" placeholder="ex: suppliers.id"
+                                        title="{{ __('ptah::ui.cfg_tip_join_right_col') }}"
                                         class="font-mono cfg-input" />
                                     <p class="mt-1 text-[11px] text-slate-400">Formato <code
                                             class="px-1 rounded bg-slate-100">tabela_joined.pk</code></p>
@@ -2387,6 +2480,7 @@
                             <label
                                 class="flex items-center gap-3 p-3 transition-colors border rounded-md cursor-pointer border-slate-200 hover:bg-slate-50">
                                 <input type="checkbox" wire:model="formDataJoin.distinct"
+                                    title="{{ __('ptah::ui.cfg_tip_join_distinct') }}"
                                     class="w-4 h-4 text-primary rounded border-slate-300" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">{{ __('ptah::ui.cfg_join_distinct')
@@ -2404,6 +2498,7 @@
                                             class="px-1 rounded bg-slate-100">tabela.coluna:alias</code>)</span>
                                 </label>
                                 <textarea wire:model="formDataJoin.selectRaw" rows="4"
+                                    title="{{ __('ptah::ui.cfg_tip_join_select_raw') }}"
                                     placeholder="suppliers.name:supplier_name&#10;suppliers.phone:supplier_phone&#10;suppliers.cnpj:supplier_cnpj"
                                     class="w-full px-3 py-2 font-mono text-xs bg-white border rounded-md resize-y border-slate-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent"></textarea>
                                 <p class="mt-1 text-[11px] text-slate-400">{!! __('ptah::ui.cfg_join_selectraw_hint')
@@ -2462,6 +2557,7 @@
                                 <div class="col-span-2">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_display_name') }}</label>
                                     <input type="text" wire:model="displayName"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_display_name') }}"
                                         placeholder="{{ __('ptah::ui.cfg_gen_display_name_ph') }}" class="cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">{{
                                         __('ptah::ui.cfg_gen_display_name_hint') }}</p>
@@ -2469,34 +2565,40 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_link_linha') }}</label>
                                     <input type="text" wire:model="configLinkLinha" placeholder="/rota/%id%"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_link_linha') }}"
                                         class="font-mono cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_table_class') }}</label>
                                     <input type="text" wire:model="tableClass" placeholder="table table-hover"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_table_class') }}"
                                         class="cfg-input font-mono text-[11px]" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_thead_class') }}</label>
                                     <input type="text" wire:model="theadClass" placeholder=""
+                                        title="{{ __('ptah::ui.cfg_tip_gen_thead_class') }}"
                                         class="font-mono cfg-input" />
                                 </div>
                             </div>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model="uiCompactMode"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_compact') }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_compact')
                                         }}</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model="uiStickyHeader"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_sticky') }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_sticky')
                                         }}</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model="showTotalizador"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_totalizer') }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_totalizer')
                                         }}</span>
@@ -2513,23 +2615,27 @@
                                 <div class="col-span-2 md:col-span-1">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_group_break') }}</label>
                                     <input type="text" wire:model="groupBreak" placeholder="ex: status"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_group_break') }}"
                                         class="font-mono cfg-input" />
                                     <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_group_break_hint') }}</p>
                                 </div>
                                 <div class="col-span-2 md:col-span-1">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_model') }}</label>
                                     <input type="text" wire:model="detailModel" placeholder="ex: OrderItem"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_detail_model') }}"
                                         class="font-mono cfg-input" />
                                     <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_detail_hint') }}</p>
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_fk') }}</label>
                                     <input type="text" wire:model="detailForeignKey" placeholder="ex: order_id"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_detail_fk') }}"
                                         class="font-mono cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_label') }}</label>
                                     <input type="text" wire:model="detailTitle" placeholder="ex: Itens do pedido"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_detail_label') }}"
                                         class="cfg-input" />
                                 </div>
                             </div>
@@ -2541,6 +2647,7 @@
                                 <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_gen_cache') }}</h3>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model.live="cacheEnabled"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_cache_enabled') }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{
                                         __('ptah::ui.cfg_gen_cache_enabled') }}</span>
@@ -2549,7 +2656,7 @@
                             @if ($cacheEnabled)
                             <div class="max-w-xs">
                                 <label class="cfg-label">{{ __('ptah::ui.cfg_gen_ttl') }}</label>
-                                <input type="number" wire:model="cacheTtl" min="0" class="cfg-input" />
+                                <input type="number" wire:model="cacheTtl" min="0" title="{{ __('ptah::ui.cfg_tip_gen_ttl') }}" class="cfg-input" />
                                 <p class="text-[11px] text-slate-400 mt-1">300 = 5 minutos · 3600 = 1 hora</p>
                             </div>
                             @endif
@@ -2563,15 +2670,16 @@
                             <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_export_async') }}</label>
-                                    <input type="number" wire:model="exportAsyncThreshold" min="1" class="cfg-input" />
+                                    <input type="number" wire:model="exportAsyncThreshold" min="1" title="{{ __('ptah::ui.cfg_tip_gen_export_async') }}" class="cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_export_max') }}</label>
-                                    <input type="number" wire:model="exportMaxRows" min="1" class="cfg-input" />
+                                    <input type="number" wire:model="exportMaxRows" min="1" title="{{ __('ptah::ui.cfg_tip_gen_export_max') }}" class="cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_export_orientation') }}</label>
-                                    <select wire:model="exportOrientation" class="cfg-input">
+                                    <select wire:model="exportOrientation"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_export_orientation') }}" class="cfg-input">
                                         <option value="landscape">{{ __('ptah::ui.cfg_gen_export_landscape') }}</option>
                                         <option value="portrait">{{ __('ptah::ui.cfg_gen_export_portrait') }}</option>
                                     </select>
@@ -2590,6 +2698,7 @@
                                 </div>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model.live="broadcastEnabled"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_broadcast_enabled') }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{
                                         __('ptah::ui.cfg_gen_broadcast_enabled') }}</span>
@@ -2607,6 +2716,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_channel') }}</label>
                                     <input type="text" wire:model.live="broadcastChannel" placeholder="{{ $bcChannel }}"
+                                        title="{{ __('ptah::ui.cfg_tip_broadcast_channel') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">Vazio = <span class="font-mono">{{
                                             $bcChannel }}</span></p>
@@ -2614,6 +2724,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_event') }}</label>
                                     <input type="text" wire:model.live="broadcastEvent" placeholder="{{ $bcEvent }}"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_event') }}"
                                         class="font-mono cfg-input" />
                                     <p class="text-[11px] text-slate-400 mt-1">Vazio = <span class="font-mono">{{
                                             $bcEvent }}</span></p>
@@ -2635,54 +2746,6 @@
                             @endif
                         </div>
 
-                        {{-- Tema Visual --}}
-                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
-                            <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
-                                __('ptah::ui.cfg_gen_theme') }}</h3>
-                            <p class="text-xs text-slate-400">{{ __('ptah::ui.cfg_gen_theme_desc') }}</p>
-                            <div class="grid grid-cols-2 gap-3">
-                                {{-- Light --}}
-                                <label
-                                    class="flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors
-                                    {{ $theme === 'light' ? 'border-primary bg-primary-light' : 'border-slate-200 hover:border-slate-300' }}">
-                                    <input type="radio" wire:model.live="theme" value="light"
-                                        class="text-primary border-slate-300" />
-                                    <div>
-                                        <p
-                                            class="text-xs font-semibold {{ $theme === 'light' ? 'text-primary' : 'text-slate-700' }}">
-                                            {{ __('ptah::ui.cfg_gen_theme_light') }}</p>
-                                        <p class="text-[11px] text-slate-400 mt-0.5">{{
-                                            __('ptah::ui.cfg_gen_theme_light_desc') }}</p>
-                                    </div>
-                                    {{-- Preview micro --}}
-                                    <div class="ml-auto flex flex-col gap-0.5">
-                                        <div class="w-16 h-1.5 rounded bg-slate-200"></div>
-                                        <div class="w-12 h-1.5 rounded bg-slate-100"></div>
-                                        <div class="w-14 h-1.5 rounded bg-primary-light"></div>
-                                    </div>
-                                </label>
-                                {{-- Dark --}}
-                                <label
-                                    class="flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors
-                                    {{ $theme === 'dark' ? 'border-primary bg-primary-light' : 'border-slate-200 hover:border-slate-300' }}">
-                                    <input type="radio" wire:model.live="theme" value="dark"
-                                        class="text-primary border-slate-300" />
-                                    <div>
-                                        <p
-                                            class="text-xs font-semibold {{ $theme === 'dark' ? 'text-primary' : 'text-slate-700' }}">
-                                            {{ __('ptah::ui.cfg_gen_theme_dark') }}</p>
-                                        <p class="text-[11px] text-slate-400 mt-0.5">{{
-                                            __('ptah::ui.cfg_gen_theme_dark_desc') }}</p>
-                                    </div>
-                                    {{-- Preview micro --}}
-                                    <div class="ml-auto flex flex-col gap-0.5">
-                                        <div class="w-16 h-1.5 rounded bg-slate-600"></div>
-                                        <div class="w-12 h-1.5 rounded bg-slate-700"></div>
-                                        <div class="w-14 h-1.5 rounded bg-primary-light"></div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
                     </div>
 
                     {{-- ═══════════════════════════════════════════════════ --}}
@@ -2693,6 +2756,15 @@
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
                                 __('ptah::ui.cfg_perm_gates_title') }}</h3>
                             <div class="grid grid-cols-2 gap-4">
+                                @php
+                                    $permGateTips = [
+                                        'permissionCreate' => 'cfg_tip_perm_create',
+                                        'permissionEdit' => 'cfg_tip_perm_edit',
+                                        'permissionDelete' => 'cfg_tip_perm_delete',
+                                        'permissionExport' => 'cfg_tip_perm_export',
+                                        'permissionRestore' => 'cfg_tip_perm_restore',
+                                    ];
+                                @endphp
                                 @foreach (['permissionCreate' => __('ptah::ui.cfg_perm_create'), 'permissionEdit' =>
                                 __('ptah::ui.cfg_perm_edit'),
                                 'permissionDelete' => __('ptah::ui.cfg_perm_delete'), 'permissionExport' =>
@@ -2701,6 +2773,7 @@
                                 <div>
                                     <label class="cfg-label">Gate: {{ $permLabel }}</label>
                                     <input type="text" wire:model="{{ $prop }}"
+                                        title="{{ __('ptah::ui.'.$permGateTips[$prop]) }}"
                                         placeholder="ex: admin ou manage-{{ strtolower($permLabel) }}"
                                         class="font-mono cfg-input" />
                                 </div>
@@ -2708,6 +2781,7 @@
                                 <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_perm_identifier') }}</label>
                                     <input type="text" wire:model="permissionIdentifier" placeholder="pageMinhaRotina"
+                                        title="{{ __('ptah::ui.cfg_tip_perm_identifier') }}"
                                         class="font-mono cfg-input" />
                                 </div>
                             </div>
@@ -2716,6 +2790,14 @@
                             <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">{{
                                 __('ptah::ui.cfg_perm_visibility_title') }}</h3>
                             <div class="grid grid-cols-2 gap-3">
+                                @php
+                                    $permVisibilityTips = [
+                                        'showCreateButton' => 'cfg_tip_perm_btn_create',
+                                        'showEditButton' => 'cfg_tip_perm_btn_edit',
+                                        'showDeleteButton' => 'cfg_tip_perm_btn_delete',
+                                        'showTrashButton' => 'cfg_tip_perm_btn_trash',
+                                    ];
+                                @endphp
                                 @foreach (['showCreateButton' => __('ptah::ui.cfg_perm_btn_create'), 'showEditButton' =>
                                 __('ptah::ui.cfg_perm_btn_edit'),
                                 'showDeleteButton' => __('ptah::ui.cfg_perm_btn_delete'), 'showTrashButton' =>
@@ -2724,6 +2806,7 @@
                                 <label
                                     class="flex items-center gap-2 cursor-pointer p-2.5 rounded-md border {{ $$prop ? 'border-primary bg-primary-light' : 'border-slate-200 bg-white' }} hover:bg-slate-50 transition-colors select-none">
                                     <input type="checkbox" wire:model="{{ $prop }}"
+                                        title="{{ __('ptah::ui.'.$permVisibilityTips[$prop]) }}"
                                         class="text-primary rounded border-slate-300" />
                                     <span class="text-xs font-medium text-slate-700">{{ $btnLabel }}</span>
                                 </label>
@@ -2755,6 +2838,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_create_desc') }}</p>
                                 <textarea wire:model="hookBeforeCreate" rows="6"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_before_create') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;merge(data, {'status': 'pending', 'uuid': uuid()})&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeCreate&#10;@App\CrudHooks\ProductHooks"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
@@ -2767,6 +2851,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_create_desc') }}</p>
                                 <textarea wire:model="hookAfterCreate" rows="6"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_after_create') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterCreate&#10;@App\CrudHooks\ProductHooks@afterCreate&#10;&#10;// {{ __('ptah::ui.cfg_hooks_after_create_desc') }}"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
@@ -2779,6 +2864,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_update_desc') }}</p>
                                 <textarea wire:model="hookBeforeUpdate" rows="6"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_before_update') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_syntax') }}&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_inline') }}&#10;merge(data, {'published_at': now()})&#10;&#10;// {{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::beforeUpdate&#10;@App\CrudHooks\ProductHooks"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
@@ -2791,6 +2877,7 @@
                                 </div>
                                 <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_after_update_desc') }}</p>
                                 <textarea wire:model="hookAfterUpdate" rows="6"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_after_update') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@ProductHooks::afterUpdate&#10;@App\CrudHooks\ProductHooks@afterUpdate&#10;&#10;// {{ __('ptah::ui.cfg_hooks_after_update_desc') }}"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
@@ -2805,6 +2892,218 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    {{-- TAB: NOTIFICAÇÕES ─────────────────────────────────── --}}
+                    {{-- ═══════════════════════════════════════════════════ --}}
+                    <div x-show="tab === 'notifications'" class="p-6 space-y-5">
+                        @if (! config('ptah.notifications.enabled'))
+                        {{-- Module off: the tab stays visible with a step-by-step card instead of
+                             hiding — a dev configuring this CRUD must still discover the feature. --}}
+                        <div class="p-5 space-y-3 bg-white border shadow-sm rounded-md border-slate-200">
+                            <h3 class="pb-2 text-sm font-semibold border-b text-slate-700 border-slate-100">
+                                {{ __('ptah::ui.cfg_notif_off_title') }}</h3>
+                            <p class="text-xs text-slate-400">{{ __('ptah::ui.cfg_notif_off_desc') }}</p>
+                            <ol class="pl-1 space-y-2 text-[11px] text-slate-600 list-decimal list-inside">
+                                <li>{!! __('ptah::ui.cfg_notif_off_step_env') !!}</li>
+                                <li>{!! __('ptah::ui.cfg_notif_off_step_publish') !!}</li>
+                                <li>{!! __('ptah::ui.cfg_notif_off_step_migrate') !!}</li>
+                            </ol>
+                        </div>
+                        @else
+
+                        {{-- ── Aviso: model sem a trait ─────────────────── --}}
+                        @if($this->notificationTraitMissing())
+                        <div class="flex items-start gap-3 p-4 border rounded-md border-amber-200 bg-amber-50">
+                            <svg class="w-5 h-5 shrink-0 mt-0.5 cfg-ink-warn" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p class="text-xs text-amber-800">{{ __('ptah::ui.cfg_notif_trait_missing', ['trait' =>
+                                'SendsCrudNotifications']) }}</p>
+                        </div>
+                        @endif
+
+                        {{-- ── Regras configuradas ──────────────────────── --}}
+                        @forelse ($notificationRules as $ni => $rule)
+                        <div class="overflow-hidden bg-white border shadow-sm rounded-md border-slate-200">
+                            <div class="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
+                                <div class="flex flex-wrap items-center min-w-0 gap-2">
+                                    <span class="tag bg-primary-light text-primary uppercase">{{ $rule['event'] ?? ''
+                                        }}</span>
+                                    <span class="tag">{{ $rule['audience'] ?? '' }}{{ !empty($rule['audienceValue']) ?
+                                        ': '.$rule['audienceValue'] : '' }}</span>
+                                    <span class="text-sm font-semibold truncate text-slate-800">{{ $rule['title'] ?? ''
+                                        }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 ml-4 shrink-0">
+                                    <button wire:click="editNotificationRule({{ $ni }})"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-primary transition-colors border border-primary rounded-md hover:bg-primary-light">
+                                        <i class="bx bx-edit-alt"></i> {{ __('ptah::ui.cfg_notif_edit_btn') }}
+                                    </button>
+                                    <button wire:click="removeNotificationRule({{ $ni }})"
+                                        wire:confirm="{{ __('ptah::ui.cfg_notif_remove_confirm') }}"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors border border-red-200 rounded-md hover:bg-red-50">
+                                        <i class="bx bx-trash"></i> {{ __('ptah::ui.cfg_notif_remove_btn') }}
+                                    </button>
+                                </div>
+                            </div>
+                            @if(!empty($rule['body']))
+                            <div class="px-5 pb-4 text-[11px] text-slate-500">{{ $rule['body'] }}</div>
+                            @endif
+                        </div>
+                        @empty
+                        <div
+                            class="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-md border-slate-200">
+                            <svg class="w-10 h-10 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <p class="text-sm font-medium text-slate-400">{{ __('ptah::ui.cfg_notif_empty') }}</p>
+                            <p class="mt-1 text-xs text-slate-300">{{ __('ptah::ui.cfg_notif_empty_hint') }}</p>
+                        </div>
+                        @endforelse
+
+                        {{-- ── Formulário: nova / editar regra ──────────── --}}
+                        <div class="p-5 space-y-4 bg-white border shadow-sm rounded-md border-slate-200">
+                            @if($editingNotificationIndex >= 0)
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary-light text-primary uppercase tracking-wider">{{
+                                __('ptah::ui.cfg_notif_form_editing') }}</span>
+                            @else
+                            <h3 class="text-sm font-semibold text-slate-700">{{ __('ptah::ui.cfg_notif_form_new') }}
+                            </h3>
+                            @endif
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_event_label') }}</label>
+                                    <select wire:model="formDataNotification.event"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_event') }}" class="cfg-input">
+                                        <option value="created">{{ __('ptah::ui.cfg_notif_event_created') }}</option>
+                                        <option value="updated">{{ __('ptah::ui.cfg_notif_event_updated') }}</option>
+                                        <option value="deleted">{{ __('ptah::ui.cfg_notif_event_deleted') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_type_label') }}</label>
+                                    <select wire:model="formDataNotification.type"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_type') }}" class="cfg-input">
+                                        <option value="info">{{ __('ptah::ui.cfg_notif_type_info') }}</option>
+                                        <option value="success">{{ __('ptah::ui.cfg_notif_type_success') }}</option>
+                                        <option value="warning">{{ __('ptah::ui.cfg_notif_type_warning') }}</option>
+                                        <option value="danger">{{ __('ptah::ui.cfg_notif_type_danger') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_audience_label') }}</label>
+                                    <select wire:model.live="formDataNotification.audience"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_audience') }}" class="cfg-input">
+                                        <option value="user">{{ __('ptah::ui.cfg_notif_audience_user') }}</option>
+                                        <option value="role">{{ __('ptah::ui.cfg_notif_audience_role') }}</option>
+                                        <option value="staff">{{ __('ptah::ui.cfg_notif_audience_staff') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">
+                                        {{ __('ptah::ui.cfg_notif_audience_value_label') }}
+                                        <span class="font-normal text-slate-400">({{
+                                            __('ptah::ui.cfg_notif_audience_count', ['count' =>
+                                            $this->notificationAudienceCount()]) }})</span>
+                                    </label>
+                                    <input type="text" wire:model.live="formDataNotification.audienceValue"
+                                        @if(($formDataNotification['audience'] ?? 'user' )==='staff' ) disabled
+                                        @endif
+                                        title="{{ __('ptah::ui.cfg_tip_notif_audience_value') }}"
+                                        placeholder="{{ __('ptah::ui.cfg_notif_audience_value_placeholder') }}"
+                                        class="cfg-input" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="cfg-label">{{ __('ptah::ui.cfg_notif_title_label') }}</label>
+                                <input type="text" wire:model="formDataNotification.title" maxlength="180"
+                                    title="{{ __('ptah::ui.cfg_tip_notif_title') }}"
+                                    class="cfg-input" />
+                            </div>
+
+                            <div>
+                                <label class="cfg-label">{{ __('ptah::ui.cfg_notif_body_label') }}</label>
+                                <textarea wire:model="formDataNotification.body" rows="3"
+                                    title="{{ __('ptah::ui.cfg_tip_notif_body') }}"
+                                    class="w-full px-3 py-2 text-xs bg-white border rounded-md resize-y border-slate-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent"></textarea>
+                            </div>
+
+                            <div>
+                                <p class="text-[11px] text-slate-400 mb-1.5">{{
+                                    __('ptah::ui.cfg_notif_placeholders_hint') }}</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach($this->notificationPlaceholderOptions() as $placeholder)
+                                    <span class="font-mono tag">%{{ $placeholder }}%</span>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_url_label') }}</label>
+                                    <input type="text" wire:model="formDataNotification.url"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_url') }}"
+                                        class="font-mono cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_action_label_label') }}</label>
+                                    <input type="text" wire:model="formDataNotification.actionLabel"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_action_label') }}"
+                                        class="cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_category_label') }}</label>
+                                    <input type="text" wire:model="formDataNotification.category"
+                                        title="{{ __('ptah::ui.cfg_tip_notif_category') }}"
+                                        class="cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_notif_icon_label') }}</label>
+                                    <input type="text" wire:model="formDataNotification.icon" title="{{ __('ptah::ui.cfg_tip_notif_icon') }}" class="cfg-input" />
+                                </div>
+                            </div>
+
+                            <label
+                                class="flex items-center gap-3 p-3 transition-colors border rounded-md cursor-pointer border-slate-200 hover:bg-slate-50">
+                                <input type="checkbox" wire:model="formDataNotification.notifySelf"
+                                    title="{{ __('ptah::ui.cfg_tip_notif_notify_self') }}"
+                                    class="w-4 h-4 text-primary rounded border-slate-300" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">{{
+                                        __('ptah::ui.cfg_notif_notify_self_label') }}</span>
+                                    <p class="text-[11px] text-slate-400">{{
+                                        __('ptah::ui.cfg_notif_notify_self_hint') }}</p>
+                                </div>
+                            </label>
+
+                            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                                @if($editingNotificationIndex >= 0)
+                                <button wire:click="cancelEditNotificationRule"
+                                    class="px-4 py-2 text-xs font-medium transition-colors border rounded-md text-slate-600 border-slate-300 hover:bg-slate-50">
+                                    {{ __('ptah::ui.cfg_notif_cancel_edit') }}
+                                </button>
+                                <button wire:click="addNotificationRule"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-primary rounded-md hover:bg-primary-light">
+                                    <i class="bx bx-check"></i> {{ __('ptah::ui.cfg_notif_btn_update') }}
+                                </button>
+                                @else
+                                <button wire:click="addNotificationRule"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white transition-colors bg-primary rounded-md hover:bg-primary-light">
+                                    {{ __('ptah::ui.cfg_notif_btn_add') }}
+                                </button>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                 </div>{{-- /scroll area --}}

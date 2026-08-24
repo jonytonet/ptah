@@ -69,6 +69,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Menu\MenuService;
+use Ptah\Services\Notification\CrudNotificationDispatcher;
 use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
@@ -115,6 +116,7 @@ class PtahServiceProvider extends ServiceProvider
         // gate lives inside NotificationService::tableExists(), consulted on
         // every read/write.
         $this->app->singleton(NotificationService::class);
+        $this->app->singleton(CrudNotificationDispatcher::class);
 
         // AI Agent module
         if (config('ptah.modules.ai_agent')) {

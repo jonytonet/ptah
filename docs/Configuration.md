@@ -609,9 +609,6 @@ The modal has **7 main tabs**:
    - `broadcastChannel` — Channel name (default: `page-{model}-observer`)
    - `broadcastEvent` — Event name (default: `.page{Model}Observer`)
 
-6. **Visual Theme:**
-   - `theme` — light/dark
-
 #### 7️⃣ Permissions
 
 **What it does:** Maps Laravel gates/abilities per action
@@ -1412,7 +1409,6 @@ key=value
 --set="exportEnabled=true"
 --set="exportMaxRows=10000"
 --set="softDeletes=true"
---set="theme=dark"
 --set="compactMode=false"
 --set="displayName=Products"
 ```
@@ -1844,7 +1840,6 @@ Full configuration saved in the `crud_configs.config` table:
   "softDeletes": true,
   "showTrashed": false,
   "companyField": "company_id",
-  "theme": "light",
   "compactMode": false,
   "striped": true,
   "hover": true,
@@ -2270,7 +2265,6 @@ Properties at the root level of the config:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `theme` | string | `'light'` | Visual theme: `light`, `dark` |
 | `compactMode` | bool | `false` | Compact mode |
 | `striped` | bool | `true` | Striped rows |
 | `hover` | bool | `true` | Hover effect on rows |
@@ -2313,7 +2307,6 @@ php artisan ptah:config "App\Models\Product" \
   --set="cacheTtl=7200" \
   --set="itemsPerPage=50" \
   --set="exportMaxRows=50000" \
-  --set="theme=dark" \
   --set="compactMode=true" \
   --set="softDeletes=true"
 ```

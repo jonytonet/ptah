@@ -298,8 +298,8 @@ class CrudConfigDarkContrastBrowserTest extends DuskTestCase
         ]]).')');
 
         // ── Sidebar nav tabs (Colunas, Ações, Filtros Custom, Estilos, JOINs,
-        //    Geral, Permissões, Lifecycle Hooks) ──────────────────────────
-        foreach (['cols', 'actions', 'filters', 'styles', 'joins', 'general', 'permissions', 'hooks'] as $tabId) {
+        //    Geral, Permissões, Lifecycle Hooks, Notificações) ─────────────
+        foreach (['cols', 'actions', 'filters', 'styles', 'joins', 'general', 'permissions', 'hooks', 'notifications'] as $tabId) {
             $this->setTab($browser, $tabId);
             $this->collect($records, $browser, "{$themeLabel} / nav:{$tabId}");
         }

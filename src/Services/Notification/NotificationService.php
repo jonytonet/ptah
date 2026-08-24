@@ -102,7 +102,7 @@ class NotificationService
      * @param  iterable<int, int|string>  $userIds
      * @param  array<string, mixed>  $data
      */
-    public function pushMany(iterable $userIds, array $data): int
+    public function pushMany(iterable $userIds, array $data, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists()) {
             return 0;
@@ -111,7 +111,13 @@ class NotificationService
         $count = 0;
 
         foreach ($userIds as $userId) {
-            if ($this->push((int) $userId, $data) !== null) {
+            $userId = (int) $userId;
+
+            if ($exceptUserId !== null && $userId === $exceptUserId) {
+                continue;
+            }
+
+            if ($this->push($userId, $data) !== null) {
                 $count++;
             }
         }
@@ -136,7 +142,7 @@ class NotificationService
      *
      * @param  array<string, mixed>  $data
      */
-    public function toRole(string $roleName, array $data, ?int $companyId = null): int
+    public function toRole(string $roleName, array $data, ?int $companyId = null, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists() || ! $this->userRolesTableExists()) {
             return 0;
@@ -151,7 +157,7 @@ class NotificationService
             ->filter(fn ($userId) => $this->permissions->hasRole((int) $userId, $roleName, $companyId))
             ->values();
 
-        return $this->pushMany($userIds, $this->withCompany($data, $companyId));
+        return $this->pushMany($userIds, $this->withCompany($data, $companyId), $exceptUserId);
     }
 
     /**
@@ -162,7 +168,7 @@ class NotificationService
      *
      * @param  array<string, mixed>  $data
      */
-    public function toAll(array $data, ?int $companyId = null, bool $onlyStaff = true): int
+    public function toAll(array $data, ?int $companyId = null, bool $onlyStaff = true, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists()) {
             return 0;
@@ -182,7 +188,7 @@ class NotificationService
                 ->distinct()
                 ->pluck('user_id');
 
-            return $this->pushMany($userIds, $payload);
+            return $this->pushMany($userIds, $payload, $exceptUserId);
         }
 
         /** @var class-string<Model>|mixed $modelClass */
@@ -194,11 +200,15 @@ class NotificationService
 
         $count = 0;
 
-        $modelClass::query()->chunkById(500, function (Collection $users) use (&$count, $payload) {
+        $modelClass::query()->chunkById(500, function (Collection $users) use (&$count, $payload, $exceptUserId) {
             foreach ($users as $user) {
                 $userId = $this->resolveUserId($user);
 
-                if ($userId !== null && $this->push($userId, $payload) !== null) {
+                if ($userId === null || ($exceptUserId !== null && $userId === $exceptUserId)) {
+                    continue;
+                }
+
+                if ($this->push($userId, $payload) !== null) {
                     $count++;
                 }
             }

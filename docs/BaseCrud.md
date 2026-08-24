@@ -37,15 +37,14 @@
 26. [FormValidatorService](#formvalidatorservice)
 27. [Display Name](#display-name)
 28. [Broadcast / Real-time](#broadcast--real-time)
-29. [Visual Theme (Light / Dark)](#visual-theme-light--dark)
-30. [Simplified Internal Flow](#simplified-internal-flow)
-31. [Configurable JOINs](#configurable-joins)
-32. [Lifecycle Hooks](#lifecycle-hooks)
-33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
-34. [Image Input](#image-input)
-35. [Partial Structure (Blade)](#partial-structure-blade)
-36. [Keyboard Shortcuts](#keyboard-shortcuts)
-37. [Multi-Config per Route](#multi-config-per-route)
+29. [Simplified Internal Flow](#simplified-internal-flow)
+30. [Configurable JOINs](#configurable-joins)
+31. [Lifecycle Hooks](#lifecycle-hooks)
+32. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
+33. [Image Input](#image-input)
+34. [Partial Structure (Blade)](#partial-structure-blade)
+35. [Keyboard Shortcuts](#keyboard-shortcuts)
+36. [Multi-Config per Route](#multi-config-per-route)
 
 ---
 
@@ -1961,43 +1960,6 @@ class PageProductObserver implements ShouldBroadcast
     }
 }
 ```
-
----
-
-## Visual Theme (Light / Dark)
-
-BaseCrud supports two themes: **light** (default) and **dark**.
-
-### Activate
-
-**General** tab of the CrudConfig modal, **"Visual Theme"** card, select `Light` or `Dark`.
-
-### JSON key
-
-```json
-{ "theme": "dark" }
-```
-
-### Technical behaviour
-
-- When `theme = 'dark'`, the component root div receives the `ptah-dark` class.
-- Within the blade, a `$T` array (theme tokens) defines two colour palettes: for each structural element there is a key such as `$T['toolbar']`, `$T['thead']`, `$T['modal_card']`, etc.
-- An inline `<style>` block in the component defines CSS overrides for `.ptah-base-crud.ptah-dark` on filter panel elements (inputs, selects, labels) via selector specificity.
-- All theme logic lives in the blade — it does **not** depend on Tailwind `dark:` or compiled dynamic classes.
-
-> **⚠️ Independence from the layout theme:** the BaseCrud theme is **separate and independent** from the automatic dark mode of `forge-dashboard-layout`. The layout detects the user's OS and applies `.ptah-dark` globally to the sidebar and navbar. BaseCrud ignores this global class — it has its own per-component configuration saved to the database via `CrudConfig`. This allows, for example, having the layout in dark mode while a specific BaseCrud stays in light mode (or vice versa).
-
-### Palettes
-
-| Token | Light | Dark |
-|---|---|---|
-| `toolbar` | `bg-white border-slate-200` | `bg-slate-900 border-slate-700` |
-| `thead` | `bg-slate-50 border-slate-200` | `bg-slate-800/80 border-slate-700` |
-| `tr` (hover) | `hover:bg-slate-50/70` | `hover:bg-slate-800/60` |
-| `modal_card` | `bg-white` | `bg-slate-900` |
-| `modal_body` | `bg-slate-50/40` | `bg-slate-800/20` |
-| `form_in` | `bg-white text-gray-800` | `bg-slate-800 text-slate-200` |
-| `empty_box` | `bg-slate-100` | `bg-slate-700/60` |
 
 ---
 
