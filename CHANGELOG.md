@@ -7,6 +7,103 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.24.0] — 2026-08-24
+
+Closes the `--style=` design debt by deciding the question underneath it: the
+misspelled `contitionStyles` **is** the canonical key, ratified rather than
+renamed. Nothing to migrate, no behaviour change for any existing `--style=`
+call.
+
+### Changed — `contitionStyles` is official
+
+Every writer (CLI, visual editor, generator, doctor) and the only render-time
+reader (`HasCrudRenderers::getRowStyle`) already agreed on it. Renaming to the
+correct spelling would touch every exported config in every installation — and
+this package is on Packagist, so "every installation" is not a number anyone
+knows — to buy nothing but orthography. The correctly-spelled
+`conditionStyles` stays a read-only alias, as before.
+
+### Fixed — the published JSON schema rejected every working config
+
+`JsonSchemaBuilder` documented a `styles` section, which nothing reads at
+render time, and carried `additionalProperties: false` over 7 declared keys
+while real configurations carry 24+ (`cacheStrategy`, `configLinkLinha`,
+`crud`, `customFilters`, `uiPreferences`, `notifications`…). Anyone who wired
+it up to validate a real config would have seen everything fail at once.
+
+It now names `contitionStyles`, accepts **both** item shapes via `anyOf` (the
+legacy shape still renders, so rejecting it would report a problem that does
+not exist), takes its condition enum straight from `StyleRule::CONDITIONS` so
+the two cannot drift, and leaves the root open. A documentation schema that
+enumerates a growing key set becomes a lie the moment a key is added; the
+authority on validity is, and remains, `ConfigSchemaValidator`.
+
+### Fixed — a colon in the style VALUE corrupted the rule in silence
+
+```bash
+--style="start_at:==:12:30:background:#eee;"
+# value "12", style "30:background:#eee;" — never matches, emits garbage CSS
+```
+
+The style segment is colon-rich by nature, so the positional form cannot also
+let the value hold a colon. There is now an explicit end-of-value marker, in
+the same `key=value` idiom `--column`/`--filter`/`--action` already use:
+
+```bash
+--style="start_at:==:12:30:style=background:#eee;"
+# value "12:30", style "background:#eee;"
+```
+
+**The short form is byte-for-byte unchanged**, which means the bad case above
+is still mis-parsed when the marker is omitted. That is deliberate: nothing
+distinguishes `30:background:#eee;` from a legitimate style string, so
+auto-detection would be a heuristic that mis-parses valid input instead. The
+constraint is documented in `docs/KnownLimitations.md`, and both behaviours
+are pinned by tests.
+
+`FilterParser` and `ColumnParser` fixed this same class of bug for their
+`options=` lists back in 1.17.0; `--style=` was the one left out.
+
+### Changed — new configs no longer sprout an unread key
+
+`getDefaultConfiguration()` stopped seeding `'styles' => []`. A key that
+exists only so `ptah:config:doctor --fix` can migrate it later is an
+invitation: whoever opens the JSON — person or agent — writes rules where the
+name makes sense, and those rules silently never apply. Rows that already
+carry it are still migrated.
+
+### Deprecated
+
+`Ptah\Commands\Config\Validators\ConfigValidator` is marked
+`@deprecated`, superseded by `ConfigSchemaValidator` (what `ConfigCommand`
+actually runs). It has had no production caller for several releases. **It is
+not removed**: it is a public class on a published 1.x package, so deleting it
+would be a semver break for anyone calling it, dead or not. Removal is
+scheduled for 2.0.
+
+The harmful half is fixed now — a docblock in `CrudConfigEnums` pointed
+readers at `ConfigValidator::validateStyle()` as the authority on style
+conditions, when the authority is `StyleRule::normalize()`.
+
+### Added — the guard for schema-vs-runtime drift
+
+`PublishedSchemaMatchesRuntimeTest` runs `ptah:config --style=` and asserts
+that the package's own published schema accepts the package's own output.
+Verified against the pre-fix schema: 5 of its 6 tests fail there.
+
+Every finding behind this release has the same shape — *an artifact that
+describes the system drifted from the system, and nothing broke*. The schema,
+the orphan class, the key that is born empty, the docblock pointing at the
+wrong validator: all green the whole time, because nothing tested the
+coherence between what the package says about itself and what it does. This
+package already guards doc↔keyMap, enum↔renderer↔schema and tooltip↔field;
+schema↔runtime was the missing axis.
+
+**Suite:** 1776 passing (+10). PHPStan clean, no new baseline entries. No
+migrations.
+
+---
+
 ## [1.23.0] — 2026-08-24
 
 Notifications stop being something you write code for. A CRUD screen now
@@ -2676,7 +2773,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.23.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.24.0...HEAD
+[1.24.0]: https://github.com/jonytonet/ptah/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/jonytonet/ptah/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/jonytonet/ptah/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/jonytonet/ptah/compare/v1.20.0...v1.21.0
