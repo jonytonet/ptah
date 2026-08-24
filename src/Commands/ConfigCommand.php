@@ -431,6 +431,14 @@ class ConfigCommand extends Command
 
     /**
      * Get default configuration
+     *
+     * No 'styles' key on purpose. It used to be seeded empty here, and nothing
+     * reads it at render time — getRowStyle() reads 'contitionStyles'. A key
+     * that exists only so ptah:config:doctor can migrate it later is an
+     * invitation: whoever opens the JSON (person or agent) writes rules into
+     * 'styles', because that is where the name makes sense, and those rules
+     * silently never apply. The doctor still migrates rows that already carry
+     * it; new configs simply never grow one.
      */
     protected function getDefaultConfiguration(string $modelClass): array
     {
@@ -438,7 +446,6 @@ class ConfigCommand extends Command
             'cols' => [],
             'actions' => [],
             'filters' => [],
-            'styles' => [],
             'joins' => [],
             'permissions' => [],
             'cacheEnabled' => true,

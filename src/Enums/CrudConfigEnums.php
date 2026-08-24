@@ -118,7 +118,10 @@ class CrudConfigEnums
      * OPERATORS above: a style condition of '=' or 'LIKE' would pass the old,
      * shared validation but never match anything at render time — the match()
      * default arm silently returns false, so the configured style just never
-     * applies, with no error anywhere. See ConfigValidator::validateStyle().
+     * applies, with no error anywhere. Enforced by StyleRule::normalize() (and
+     * therefore by ConfigSchemaValidator, StyleParser and getRowStyle alike) —
+     * NOT by the deprecated ConfigValidator this line used to point at, which
+     * has no production caller.
      */
     // Fonte unica: StyleRule e o normalizador canonico de row styles; esta
     // constante existe para consumidores antigos e para o wizard, e referencia

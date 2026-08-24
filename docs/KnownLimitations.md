@@ -253,6 +253,25 @@ preserved correctly:
 --column="status:select:options=active|Active,inactive|Inactive"
 ```
 
+### `--style` — a value containing `:` needs the long form
+
+The style segment is colon-rich by nature, so the positional form
+`field:condition:value:style` cannot also let the value hold a colon. Use the
+`style=` marker to end the value explicitly:
+
+```bash
+# Silently wrong: value "12", style "30:background:#eee;" — never matches
+php artisan ptah:config "App\Models\Slot" --style="start_at:==:12:30:background:#eee;"
+
+# Correct: value "12:30"
+php artisan ptah:config "App\Models\Slot" --style="start_at:==:12:30:style=background:#eee;"
+```
+
+Why not detect it automatically: nothing distinguishes `30:background:#eee;`
+from a legitimate style string, so any auto-detection would be a heuristic that
+mis-parses valid input. The marker is explicit, and the short form is kept
+byte-for-byte compatible.
+
 ### `--filter` and `--style` via CLI
 
 These flags now work correctly via CLI:
