@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Livewire\Component;
+use Ptah\Commands\Config\ModelIntrospector;
 use Ptah\Models\PageObject;
+use Ptah\Models\UserRole;
 use Ptah\Services\Crud\CrudConfigService;
+use Ptah\Services\Notification\CrudNotificationDispatcher;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Traits\SendsCrudNotifications;
 
 /**
  * BaseCrud configuration component.
@@ -106,6 +111,14 @@ class CrudConfig extends Component
 
     public string $broadcastEvent = ''; // empty = auto-generated
 
+    // ── CRUD notifications (config-driven, see CrudNotificationDispatcher) ──
+
+    public array $notificationRules = []; // saved rules
+
+    public array $formDataNotification = []; // form for the rule being filled
+
+    public int $editingNotificationIndex = -1; // index being edited (-1 = new)
+
     // ── GroupBy ────────────────────────────────────────────────────────
     public string $groupBy = ''; // field name for GROUP BY, empty = disabled
 
@@ -118,9 +131,6 @@ class CrudConfig extends Component
     public string $detailForeignKey = '';
 
     public string $detailTitle = '';
-
-    // ── Visual Theme ────────────────────────────────────────────────────
-    public string $theme = 'light'; // 'light' | 'dark'
 
     // ── Lifecycle Hooks (inline sandboxed expression or @Class reference) ───────
     public string $hookBeforeCreate = '';  // runs before INSERT
@@ -190,9 +200,11 @@ class CrudConfig extends Component
         $this->formDataFilter = [];
         $this->formDataStyle = [];
         $this->formDataJoin = [];
+        $this->formDataNotification = [];
         $this->editingFieldIndex = -1;
         $this->editingActionIndex = -1;
         $this->editingJoinIndex = -1;
+        $this->editingNotificationIndex = -1;
     }
 
     /**
@@ -221,9 +233,11 @@ class CrudConfig extends Component
         $this->formDataFilter = [];
         $this->formDataStyle = [];
         $this->formDataJoin = [];
+        $this->formDataNotification = [];
         $this->editingFieldIndex = -1;
         $this->editingActionIndex = -1;
         $this->editingJoinIndex = -1;
+        $this->editingNotificationIndex = -1;
     }
 
     // ── Form preview (inert) ──────────────────────────────────────────────
@@ -359,6 +373,9 @@ class CrudConfig extends Component
         // JOINs
         $this->joins = $cfg['joins'] ?? [];
 
+        // CRUD notifications
+        $this->notificationRules = $cfg['notifications']['rules'] ?? [];
+
         // General
         $this->displayName = $cfg['displayName'] ?? '';
         $this->configLinkLinha = $cfg['configLinkLinha'] ?? '';
@@ -396,9 +413,6 @@ class CrudConfig extends Component
         $this->detailModel = $detail['model'] ?? '';
         $this->detailForeignKey = $detail['foreignKey'] ?? '';
         $this->detailTitle = $detail['title'] ?? '';
-
-        // Theme
-        $this->theme = $cfg['theme'] ?? 'light';
 
         // Lifecycle Hooks
         $hooks = $cfg['lifecycleHooks'] ?? [];
@@ -816,6 +830,187 @@ class CrudConfig extends Component
             $this->editingJoinIndex = -1;
         }
     }
+    // ── CRUD notifications ───────────────────────────────────────────────────
+
+    public function addNotificationRule(): void
+    {
+        $event = trim($this->formDataNotification['event'] ?? '');
+        $title = trim($this->formDataNotification['title'] ?? '');
+
+        if (! $event || ! $title) {
+            return;
+        }
+
+        $entry = [
+            'event' => $event,
+            'audience' => $this->formDataNotification['audience'] ?? 'user',
+            'audienceValue' => trim($this->formDataNotification['audienceValue'] ?? ''),
+            'title' => $title,
+            'body' => trim($this->formDataNotification['body'] ?? ''),
+            'url' => trim($this->formDataNotification['url'] ?? ''),
+            'type' => $this->formDataNotification['type'] ?? 'info',
+            'category' => trim($this->formDataNotification['category'] ?? ''),
+            'icon' => trim($this->formDataNotification['icon'] ?? ''),
+            'actionLabel' => trim($this->formDataNotification['actionLabel'] ?? ''),
+            'notifySelf' => (bool) ($this->formDataNotification['notifySelf'] ?? false),
+        ];
+
+        if ($this->editingNotificationIndex >= 0 && isset($this->notificationRules[$this->editingNotificationIndex])) {
+            $this->notificationRules[$this->editingNotificationIndex] = $entry;
+        } else {
+            $this->notificationRules[] = $entry;
+        }
+
+        $this->formDataNotification = [];
+        $this->editingNotificationIndex = -1;
+    }
+
+    public function editNotificationRule(int $index): void
+    {
+        if (! isset($this->notificationRules[$index])) {
+            return;
+        }
+
+        $this->editingNotificationIndex = $index;
+        $this->formDataNotification = $this->notificationRules[$index];
+    }
+
+    public function cancelEditNotificationRule(): void
+    {
+        $this->formDataNotification = [];
+        $this->editingNotificationIndex = -1;
+    }
+
+    public function removeNotificationRule(int $index): void
+    {
+        array_splice($this->notificationRules, $index, 1);
+        $this->notificationRules = array_values($this->notificationRules);
+
+        if ($this->editingNotificationIndex === $index) {
+            $this->formDataNotification = [];
+            $this->editingNotificationIndex = -1;
+        }
+    }
+
+    /**
+     * Placeholder columns (`%column%`) the notification templates may
+     * reference: savable columns without a `colsPermission` restriction, plus
+     * the model's primary key (always readable — mirrors the exact allowlist
+     * rule {@see CrudNotificationDispatcher::resolveTemplate()}
+     * applies at dispatch time, so what the editor offers here is always safe
+     * to use).
+     *
+     * @return array<int, string>
+     */
+    public function notificationPlaceholderOptions(): array
+    {
+        $columns = [];
+
+        foreach ($this->formEditFields as $field) {
+            $name = $field['colsNomeFisico'] ?? '';
+
+            if ($name === '' || ($field['colsTipo'] ?? '') === 'action') {
+                continue;
+            }
+
+            if (! empty($field[ColumnPermissionService::TAG])) {
+                continue;
+            }
+
+            $columns[] = $name;
+        }
+
+        $primaryKey = $this->modelPrimaryKey();
+
+        // Offer the primary key so `/orders/%id%` is possible even when the key
+        // is not a configured column — unless the config restricts that very
+        // column. Adding it unconditionally offered a placeholder the runtime
+        // would (now) strip, i.e. the editor would advertise a leak it cannot
+        // deliver; before the runtime fix it WAS the leak (review finding).
+        $primaryKeyRestricted = $primaryKey !== null && collect($this->formEditFields)
+            ->contains(fn ($field) => is_array($field)
+                && ($field['colsNomeFisico'] ?? '') === $primaryKey
+                && ! empty($field[ColumnPermissionService::TAG]));
+
+        if ($primaryKey !== null && ! $primaryKeyRestricted && ! in_array($primaryKey, $columns, true)) {
+            $columns[] = $primaryKey;
+        }
+
+        return array_values(array_unique($columns));
+    }
+
+    /**
+     * True when the model does NOT use {@see SendsCrudNotifications} — shown
+     * as a warning next to the rules list so a dev configuring rules for a
+     * model that will never fire them notices immediately, instead of
+     * silently getting zero notifications at runtime.
+     */
+    public function notificationTraitMissing(): bool
+    {
+        $class = app(ModelIntrospector::class)->resolveClass($this->model);
+
+        if ($class === null) {
+            return false;
+        }
+
+        return ! in_array(SendsCrudNotifications::class, class_uses_recursive($class), true);
+    }
+
+    /**
+     * Estimated recipient count for the audience currently being edited —
+     * a single COUNT query per audience type, purely informational (the
+     * runtime dispatcher resolves the real recipients on its own).
+     */
+    public function notificationAudienceCount(): int
+    {
+        $audience = $this->formDataNotification['audience'] ?? '';
+        $value = trim((string) ($this->formDataNotification['audienceValue'] ?? ''));
+
+        try {
+            return match ($audience) {
+                'user' => $value !== '' ? 1 : 0,
+                'role' => $value === '' ? 0 : $this->countActiveRoleUsers($value),
+                'staff' => $this->countActiveRoleUsers(null),
+                default => 0,
+            };
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function countActiveRoleUsers(?string $roleName): int
+    {
+        if (! Schema::hasTable('ptah_user_roles') || ! Schema::hasTable('ptah_roles')) {
+            return 0;
+        }
+
+        return UserRole::query()
+            ->active()
+            ->whereHas('role', function ($query) use ($roleName) {
+                $query->where('is_active', true);
+
+                if ($roleName !== null) {
+                    $query->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($roleName))]);
+                }
+            })
+            ->distinct()
+            ->count('user_id');
+    }
+
+    private function modelPrimaryKey(): ?string
+    {
+        $class = app(ModelIntrospector::class)->resolveClass($this->model);
+
+        if ($class === null) {
+            return null;
+        }
+
+        try {
+            return (new $class)->getKeyName();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
     // ── Filtros personalizados — CRUD ─────────────────────────────────────────
 
     public function addCustomFilter(): void
@@ -918,7 +1113,6 @@ class CrudConfig extends Component
                 ),
             ]),
             'uiPreferences' => array_merge($existing['uiPreferences'] ?? [], [
-                'theme' => $this->theme,
                 'compactMode' => $this->uiCompactMode,
                 'stickyHeader' => $this->uiStickyHeader,
                 'showTotalizador' => $this->showTotalizador,
@@ -929,7 +1123,6 @@ class CrudConfig extends Component
                 'channel' => $this->broadcastChannel ?: null,
                 'event' => $this->broadcastEvent ?: null,
             ],
-            'theme' => $this->theme,
             'groupBy' => $this->groupBy ?: null,
             'groupBreak' => $this->groupBreak ?: null,
             'masterDetail' => ($this->detailModel && $this->detailForeignKey)
@@ -947,6 +1140,9 @@ class CrudConfig extends Component
                 'afterCreate' => $this->hookAfterCreate ?: null,
                 'beforeUpdate' => $this->hookBeforeUpdate ?: null,
                 'afterUpdate' => $this->hookAfterUpdate ?: null,
+            ],
+            'notifications' => [
+                'rules' => array_values($this->notificationRules),
             ],
         ]);
     }

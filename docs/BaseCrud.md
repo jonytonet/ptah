@@ -37,10 +37,10 @@
 26. [FormValidatorService](#formvalidatorservice)
 27. [Display Name](#display-name)
 28. [Broadcast / Real-time](#broadcast--real-time)
-29. [Visual Theme (Light / Dark)](#visual-theme-light--dark)
-30. [Simplified Internal Flow](#simplified-internal-flow)
-31. [Configurable JOINs](#configurable-joins)
-32. [Lifecycle Hooks](#lifecycle-hooks)
+29. [Simplified Internal Flow](#simplified-internal-flow)
+30. [Configurable JOINs](#configurable-joins)
+31. [Lifecycle Hooks](#lifecycle-hooks)
+32. [CRUD Notifications](#crud-notifications)
 33. [configGroupBy — Record Grouping](#configgroupby--record-grouping)
 34. [Image Input](#image-input)
 35. [Partial Structure (Blade)](#partial-structure-blade)
@@ -1964,43 +1964,6 @@ class PageProductObserver implements ShouldBroadcast
 
 ---
 
-## Visual Theme (Light / Dark)
-
-BaseCrud supports two themes: **light** (default) and **dark**.
-
-### Activate
-
-**General** tab of the CrudConfig modal, **"Visual Theme"** card, select `Light` or `Dark`.
-
-### JSON key
-
-```json
-{ "theme": "dark" }
-```
-
-### Technical behaviour
-
-- When `theme = 'dark'`, the component root div receives the `ptah-dark` class.
-- Within the blade, a `$T` array (theme tokens) defines two colour palettes: for each structural element there is a key such as `$T['toolbar']`, `$T['thead']`, `$T['modal_card']`, etc.
-- An inline `<style>` block in the component defines CSS overrides for `.ptah-base-crud.ptah-dark` on filter panel elements (inputs, selects, labels) via selector specificity.
-- All theme logic lives in the blade — it does **not** depend on Tailwind `dark:` or compiled dynamic classes.
-
-> **⚠️ Independence from the layout theme:** the BaseCrud theme is **separate and independent** from the automatic dark mode of `forge-dashboard-layout`. The layout detects the user's OS and applies `.ptah-dark` globally to the sidebar and navbar. BaseCrud ignores this global class — it has its own per-component configuration saved to the database via `CrudConfig`. This allows, for example, having the layout in dark mode while a specific BaseCrud stays in light mode (or vice versa).
-
-### Palettes
-
-| Token | Light | Dark |
-|---|---|---|
-| `toolbar` | `bg-white border-slate-200` | `bg-slate-900 border-slate-700` |
-| `thead` | `bg-slate-50 border-slate-200` | `bg-slate-800/80 border-slate-700` |
-| `tr` (hover) | `hover:bg-slate-50/70` | `hover:bg-slate-800/60` |
-| `modal_card` | `bg-white` | `bg-slate-900` |
-| `modal_body` | `bg-slate-50/40` | `bg-slate-800/20` |
-| `form_in` | `bg-white text-gray-800` | `bg-slate-800 text-slate-200` |
-| `empty_box` | `bg-slate-100` | `bg-slate-700/60` |
-
----
-
 
 ```
 @livewire('ptah::base-crud', ['model' => 'Product'])
@@ -2243,6 +2206,59 @@ protected function afterUpdate(Model $record): mixed
 ```
 
 > **Note:** the `before*` hooks receive `$data` by reference — any changes to the array inside the hook are reflected in the persisted data. The `after*` hooks receive the already-persisted `Model` with `id` filled in.
+
+---
+
+## CRUD Notifications
+
+Turns a model's `created` / `updated` / `deleted` events into notifications through the always-on notification centre (see [Notifications.md](Notifications.md)) — entirely config-driven, no code beyond one trait.
+
+### Activate
+
+**Notifications** tab of the CrudConfig modal. Requires `ptah.notifications.enabled` (the tab shows setup instructions instead of the rule list while it is off).
+
+### Wiring the model
+
+```php
+use Ptah\Traits\SendsCrudNotifications;
+
+class Product extends Model
+{
+    use SendsCrudNotifications;
+}
+```
+
+Without the trait, rules configured in the tab are never fired — the tab itself warns when the resolved model class does not use it.
+
+### JSON key
+
+```json
+{
+  "notifications": {
+    "rules": [
+      {
+        "event": "created",
+        "audience": "staff",
+        "audienceValue": "",
+        "title": "New: %name% (#%id%)",
+        "body": "",
+        "url": "/products/%id%",
+        "type": "info",
+        "category": "",
+        "icon": "",
+        "actionLabel": "",
+        "notifySelf": false
+      }
+    ]
+  }
+}
+```
+
+Full field reference: [Configuration.md § Notifications Configuration](Configuration.md#notifications-configuration). Full runtime behaviour (placeholder allowlist, precedence across multiple `CrudConfig` rows, queued/`afterCommit` delivery, why there is no `dedupe_key`): [Notifications.md § Config-driven CRUD notifications](Notifications.md#config-driven-crud-notifications).
+
+### Realtime delivery
+
+Notifications reach the bell through its `wire:poll` by default — no extra setup. Optionally enabling `ptah.notifications.broadcast` (Reverb/Echo) delivers them near-instantly instead; see [Notifications.md § Realtime (optional)](Notifications.md#realtime-optional).
 
 ---
 

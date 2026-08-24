@@ -7,7 +7,9 @@ namespace Ptah\Services\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Events\PtahNotificationCreated;
 use Ptah\Models\Notification;
 use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
@@ -83,14 +85,13 @@ class NotificationService
         // WHERE would match `dedupe_key IS NULL`, which is TRUE for every
         // untagged notification of this user — the 2nd untagged push would
         // silently overwrite the 1st instead of adding a new row.
-        if ($dedupeKey === null) {
-            return Notification::create($payload);
-        }
+        $notification = $dedupeKey === null
+            ? Notification::create($payload)
+            : Notification::updateOrCreate(['user_id' => $userId, 'dedupe_key' => $dedupeKey], $payload);
 
-        return Notification::updateOrCreate(
-            ['user_id' => $userId, 'dedupe_key' => $dedupeKey],
-            $payload
-        );
+        $this->broadcastCreated($notification, $userId);
+
+        return $notification;
     }
 
     /**
@@ -102,7 +103,7 @@ class NotificationService
      * @param  iterable<int, int|string>  $userIds
      * @param  array<string, mixed>  $data
      */
-    public function pushMany(iterable $userIds, array $data): int
+    public function pushMany(iterable $userIds, array $data, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists()) {
             return 0;
@@ -111,7 +112,13 @@ class NotificationService
         $count = 0;
 
         foreach ($userIds as $userId) {
-            if ($this->push((int) $userId, $data) !== null) {
+            $userId = (int) $userId;
+
+            if ($exceptUserId !== null && $userId === $exceptUserId) {
+                continue;
+            }
+
+            if ($this->push($userId, $data) !== null) {
                 $count++;
             }
         }
@@ -136,7 +143,7 @@ class NotificationService
      *
      * @param  array<string, mixed>  $data
      */
-    public function toRole(string $roleName, array $data, ?int $companyId = null): int
+    public function toRole(string $roleName, array $data, ?int $companyId = null, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists() || ! $this->userRolesTableExists()) {
             return 0;
@@ -151,7 +158,7 @@ class NotificationService
             ->filter(fn ($userId) => $this->permissions->hasRole((int) $userId, $roleName, $companyId))
             ->values();
 
-        return $this->pushMany($userIds, $this->withCompany($data, $companyId));
+        return $this->pushMany($userIds, $this->withCompany($data, $companyId), $exceptUserId);
     }
 
     /**
@@ -162,7 +169,7 @@ class NotificationService
      *
      * @param  array<string, mixed>  $data
      */
-    public function toAll(array $data, ?int $companyId = null, bool $onlyStaff = true): int
+    public function toAll(array $data, ?int $companyId = null, bool $onlyStaff = true, ?int $exceptUserId = null): int
     {
         if (! $this->tableExists()) {
             return 0;
@@ -182,7 +189,7 @@ class NotificationService
                 ->distinct()
                 ->pluck('user_id');
 
-            return $this->pushMany($userIds, $payload);
+            return $this->pushMany($userIds, $payload, $exceptUserId);
         }
 
         /** @var class-string<Model>|mixed $modelClass */
@@ -194,11 +201,15 @@ class NotificationService
 
         $count = 0;
 
-        $modelClass::query()->chunkById(500, function (Collection $users) use (&$count, $payload) {
+        $modelClass::query()->chunkById(500, function (Collection $users) use (&$count, $payload, $exceptUserId) {
             foreach ($users as $user) {
                 $userId = $this->resolveUserId($user);
 
-                if ($userId !== null && $this->push($userId, $payload) !== null) {
+                if ($userId === null || ($exceptUserId !== null && $userId === $exceptUserId)) {
+                    continue;
+                }
+
+                if ($this->push($userId, $payload) !== null) {
                     $count++;
                 }
             }
@@ -437,6 +448,31 @@ class NotificationService
         }
 
         return $url;
+    }
+
+    /**
+     * Emits {@see PtahNotificationCreated} for the single push() funnel —
+     * every CRUD notification and any host `ptah_notify()` call converge
+     * here. Gated by `ptah.notifications.broadcast` (default false, so a
+     * host without Reverb/Echo installed never touches the event system
+     * at all), and wrapped in try/catch: a broadcast failure (e.g. a
+     * misconfigured queue/broadcast connection) must NEVER hide the fact
+     * that the notification row itself was already written.
+     */
+    private function broadcastCreated(Notification $notification, int $userId): void
+    {
+        if (! config('ptah.notifications.broadcast')) {
+            return;
+        }
+
+        try {
+            event(new PtahNotificationCreated($notification->id, $userId));
+        } catch (Throwable $e) {
+            Log::warning('[Ptah] Failed to broadcast notification created event', [
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -82,12 +82,6 @@ class GeneralWizard
         // UI Settings
         $this->command->newLine();
         $this->command->info('--- UI Settings ---');
-        $config['theme'] = $this->command->choice(
-            'Theme',
-            CrudConfigEnums::THEMES,
-            $existingConfig['theme'] ?? 'light'
-        );
-
         $config['showRowNumbers'] = $this->command->confirm('Show row numbers?', $existingConfig['showRowNumbers'] ?? true);
         $config['compactMode'] = $this->command->confirm('Compact mode?', $existingConfig['compactMode'] ?? false);
         $config['striped'] = $this->command->confirm('Striped rows?', $existingConfig['striped'] ?? true);

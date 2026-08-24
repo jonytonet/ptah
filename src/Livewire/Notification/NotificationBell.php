@@ -8,8 +8,10 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Ptah\Events\PtahNotificationCreated;
 use Ptah\Models\Notification;
 use Ptah\Services\Notification\NotificationService;
+use Ptah\Traits\ResolvesUser;
 
 /**
  * "ptah-notification-bell" — the Camada 2 navbar bell: unread badge + dropdown
@@ -24,6 +26,8 @@ use Ptah\Services\Notification\NotificationService;
  */
 class NotificationBell extends Component
 {
+    use ResolvesUser;
+
     /**
      * Whether the dropdown is open. #[Locked] so the client cannot flip it
      * directly via the request payload (Livewire only lets server-side
@@ -143,6 +147,37 @@ class NotificationBell extends Component
         $key = config('ptah.permissions.company_session_key', 'ptah_company_id');
 
         return $key && session()->has($key) ? (int) session($key) : null;
+    }
+
+    /**
+     * Registers the Echo private-channel listener that lets the bell
+     * `$refresh` the instant {@see PtahNotificationCreated} is
+     * broadcast for the current user — same dot-prefixed event-name
+     * convention BaseCrud already uses for its own Echo listeners (see
+     * BaseCrud::getListeners()).
+     *
+     * Only registered when BOTH `ptah.notifications.broadcast` is enabled
+     * AND a user id can be resolved (a guest has no private channel to
+     * listen on). With the flag off — the default — this returns an empty
+     * array: without Laravel Echo loaded in the browser, Livewire simply
+     * logs a console.warn for an unknown listener type and moves on, but
+     * skipping the entry entirely avoids even that noise.
+     *
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        if (! config('ptah.notifications.broadcast')) {
+            return [];
+        }
+
+        $userId = $this->resolveUserId(null);
+
+        if ($userId === null) {
+            return [];
+        }
+
+        return ["echo-private:ptah.notifications.{$userId},.ptah.notification.created" => '$refresh'];
     }
 
     public function render()

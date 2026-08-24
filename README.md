@@ -365,7 +365,7 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[Modules](docs/Modules.md)** | Detailed documentation for Auth, Menu, Company, Permissions and API modules |
 | **[Company](docs/Company.md)** | Company module — companies, departments, company switcher and multi-company |
 | **[Permissions](docs/Permissions.md)** | Permissions module — RBAC, roles, middleware, helpers, Blade directives and audit log |
-| **[Notifications](docs/Notifications.md)** | Notification centre — the 3-state navbar slot, opt-in table, service, audiences, dedupe and the bell |
+| **[Notifications](docs/Notifications.md)** | Notification centre — the 3-state navbar slot, opt-in table, service, audiences, dedupe, config-driven per-CRUD rules, optional Reverb/Echo realtime and the bell |
 | **[SearchDropdown](docs/SearchDropdown.md)** | Async search-select column/filter type — model mode, service mode, relation labels, cascading |
 | **[Validation System](docs/Validation-System.md)** | `ConfigSchemaValidator` / `JsonSchemaBuilder` — how CRUD configs are validated and the JSON Schema they generate |
 | **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |

@@ -5,15 +5,20 @@ declare(strict_types=1);
 namespace Ptah\Commands\Config;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
+use Ptah\Models\Role;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
 use Ptah\Support\StyleRule;
+use Ptah\Traits\SendsCrudNotifications;
+use Throwable;
 
 /**
  * Audits every row in `crud_configs` and surfaces the silent-failure classes the
@@ -63,6 +68,14 @@ use Ptah\Support\StyleRule;
  *                        colsSDService class outside
  *                        config('ptah.crud.sd_service_namespaces') — purely
  *                        diagnostic, not enforced at request time.
+ *   - notification delivery → per config with `notifications.rules`, all
+ *                        warning-only: (a) the model lacks the
+ *                        SendsCrudNotifications trait, so no rule can ever
+ *                        fire; (b) an audience naming a role/user that does
+ *                        not exist, or left empty; (c) the queue connection is
+ *                        not `sync`, which means delivery only happens while a
+ *                        worker is running — the silent-nothing this check
+ *                        exists to make visible.
  *
  * Both collision checks are diagnostic only — they do not change how permissions
  * resolve, they only surface the pre-existing global-key sharing risk.
@@ -95,6 +108,10 @@ class ConfigDoctorCommand extends Command
         // Collected during the main loop below, checked once at the end.
         /** @var array<string, array<string, true>> $modelsByPermissionIdentifier */
         $modelsByPermissionIdentifier = [];
+
+        // Set by check 9 when ANY config carries notification rules — the queue
+        // note at the end is emitted once, not once per screen.
+        $anyNotificationRule = false;
 
         foreach ($rows as $row) {
             $model = (string) $row->model;
@@ -345,6 +362,70 @@ class ConfigDoctorCommand extends Command
                 $row->update(['config' => $config]);
             }
 
+            // 9. Notification delivery. Rules configured here are inert unless
+            //    the model carries the trait, and the audience has to resolve to
+            //    somebody. Every branch is warning-only: a rule that delivers to
+            //    nobody is a misconfiguration, not a broken config file.
+            $notificationRules = $config['notifications']['rules'] ?? [];
+
+            if (is_array($notificationRules) && $notificationRules !== []) {
+                $anyNotificationRule = true;
+
+                $modelClass = $introspector->resolveClass($canonical);
+
+                // The trait is what hooks the Eloquent events. Without it the
+                // rules sit in the JSON looking correct and nothing ever fires —
+                // the exact silent-nothing this check exists for.
+                if ($modelClass !== null && ! in_array(SendsCrudNotifications::class, class_uses_recursive($modelClass), true)) {
+                    $this->line("🟡 <fg=yellow>notifications: model without the trait</> [{$label}]: ".count($notificationRules)." rule(s) configured but {$modelClass} does not use SendsCrudNotifications — no rule can ever fire");
+                    $warnings++;
+                }
+
+                foreach ($notificationRules as $index => $rule) {
+                    if (! is_array($rule)) {
+                        $this->line("🟡 <fg=yellow>notifications: malformed rule</> [{$label}] #{$index}: not an object — the runtime skips it");
+                        $warnings++;
+
+                        continue;
+                    }
+
+                    $audience = (string) ($rule['audience'] ?? '');
+                    $audienceValue = trim((string) ($rule['audienceValue'] ?? ''));
+
+                    if (in_array($audience, ['user', 'role'], true) && $audienceValue === '') {
+                        $this->line("🟡 <fg=yellow>notifications: audience without a value</> [{$label}] #{$index}: audience '{$audience}' needs a ".($audience === 'user' ? 'user id' : 'role name').' — the rule delivers to nobody');
+                        $warnings++;
+
+                        continue;
+                    }
+
+                    // Past the guard above, $audienceValue is non-empty for role/user.
+                    if ($audience === 'role' && $this->rolesAreQueryable()) {
+                        // Same identity rule as ptah_has_role: case-insensitive,
+                        // trimmed, NO slug — separators are not an equivalence
+                        // class here (see the wave-5 decision).
+                        $exists = Role::query()
+                            ->get(['name'])
+                            ->contains(fn (Role $role) => mb_strtolower(trim((string) $role->name)) === mb_strtolower($audienceValue));
+
+                        if (! $exists) {
+                            $this->line("🟡 <fg=yellow>notifications: unknown role</> [{$label}] #{$index}: no role named '{$audienceValue}' — the rule delivers to nobody");
+                            $warnings++;
+                        }
+                    }
+
+                    if ($audience === 'user' && ! $this->userExists($audienceValue)) {
+                        $this->line("🟡 <fg=yellow>notifications: unknown user</> [{$label}] #{$index}: no user with id '{$audienceValue}' — the rule delivers to nobody");
+                        $warnings++;
+                    }
+
+                    if (trim((string) ($rule['title'] ?? '')) === '') {
+                        $this->line("🟡 <fg=yellow>notifications: empty title</> [{$label}] #{$index}: the runtime drops a rule whose resolved title is empty");
+                        $warnings++;
+                    }
+                }
+            }
+
             // Collected for check 6b below (after --fix, $config already reflects
             // the migrated key). Same identifier on a DIFFERENT model is a
             // cross-grant risk — resolution is global by permissionIdentifier.
@@ -398,6 +479,20 @@ class ConfigDoctorCommand extends Command
             }
         }
 
+        // 9b. The queue note, emitted once. Delivery is a queued job on purpose
+        //     (a notification must never slow down or break the save), but on any
+        //     driver other than `sync` that means NOTHING is delivered while no
+        //     worker runs — the job just sits in the queue looking like the
+        //     feature is broken. We cannot detect a running worker reliably, so
+        //     the honest move is to state the condition.
+        if ($anyNotificationRule) {
+            $connection = (string) config('queue.default');
+
+            if ($connection !== 'sync') {
+                $this->line("ℹ️  <fg=cyan>notifications: queue</> connection '{$connection}' — CRUD notifications are queued jobs, so they are only delivered while a worker is running (`php artisan queue:work`). Nothing is lost meanwhile: the job waits in the queue.");
+            }
+        }
+
         $this->newLine();
         $summary = "Checked {$rows->count()} config(s): {$errors} error(s), {$warnings} warning(s)";
         if ($this->option('fix')) {
@@ -406,6 +501,47 @@ class ConfigDoctorCommand extends Command
         $errors > 0 ? $this->error($summary) : $this->info($summary);
 
         return $errors > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Whether the roles table can be queried at all. The permissions module is
+     * optional, so a host can have notification rules naming a role while the
+     * table does not exist — that is not a finding, it is an uninstalled
+     * module, and querying it would throw.
+     */
+    protected function rolesAreQueryable(): bool
+    {
+        try {
+            return Schema::hasTable((new Role)->getTable());
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Whether $id names an existing user, via the configured user model. Returns
+     * true (i.e. "no finding") whenever the question cannot be answered — an
+     * unresolvable user model or an unreadable table must not be reported as a
+     * broken rule.
+     */
+    protected function userExists(string $id): bool
+    {
+        if (! ctype_digit($id)) {
+            return false;
+        }
+
+        /** @var class-string<Model>|mixed $userModel */
+        $userModel = config('ptah.permissions.user_model', 'App\Models\User');
+
+        if (! is_string($userModel) || ! class_exists($userModel)) {
+            return true;
+        }
+
+        try {
+            return $userModel::query()->whereKey((int) $id)->exists();
+        } catch (Throwable) {
+            return true;
+        }
     }
 
     /**

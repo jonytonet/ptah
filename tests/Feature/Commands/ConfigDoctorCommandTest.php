@@ -9,8 +9,10 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
+use Ptah\Models\Role;
 use Ptah\Support\ModelKey;
 use Ptah\Tests\TestCase;
+use Ptah\Traits\SendsCrudNotifications;
 
 class DoctorStub extends Model
 {
@@ -21,6 +23,32 @@ class DoctorStub extends Model
 
 class DoctorStubTwo extends Model
 {
+    protected $table = 'items';
+
+    protected $fillable = ['name'];
+}
+
+/**
+ * The `user` audience is only checkable when a user model resolves — see
+ * ConfigDoctorCommand::userExists(), which deliberately reports NOTHING when it
+ * cannot answer the question (an unresolvable model must not be read as a broken
+ * rule). These tests therefore point the config at this stub.
+ */
+class DoctorTestUser extends Model
+{
+    protected $table = 'users';
+
+    protected $fillable = ['name', 'email', 'password'];
+}
+
+/**
+ * Carries SendsCrudNotifications — the counterpart of DoctorStub, so check 9
+ * can be exercised on both sides of the trait question.
+ */
+class DoctorStubNotified extends Model
+{
+    use SendsCrudNotifications;
+
     protected $table = 'items';
 
     protected $fillable = ['name'];
@@ -527,6 +555,184 @@ class ConfigDoctorCommandTest extends TestCase
 
         $this->artisan('ptah:config:doctor')
             ->doesntExpectOutputToContain('service outside sd_service_namespaces')
+            ->assertExitCode(0);
+    }
+
+    /**
+     * Builds a config carrying notification rules on top of the good column set,
+     * so check 9 is the only thing under test.
+     *
+     * @param  array<int, array<string, mixed>>  $rules
+     * @return array<string, mixed>
+     */
+    private function configWithRules(array $rules): array
+    {
+        return $this->goodConfig() + ['notifications' => ['rules' => $rules]];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function staffRule(array $overrides = []): array
+    {
+        return array_merge([
+            'event' => 'created',
+            'audience' => 'staff',
+            'audienceValue' => '',
+            'title' => 'Created: %name%',
+        ], $overrides);
+    }
+
+    #[Test]
+    public function rules_on_a_model_without_the_trait_are_reported(): void
+    {
+        // The defect a real consumer hit: the rules look right in the editor and
+        // nothing ever fires, because nothing hooks the Eloquent events.
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->configWithRules([$this->staffRule()]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: model without the trait')
+            ->assertExitCode(0); // warning only — the config file itself is valid
+    }
+
+    #[Test]
+    public function rules_on_a_model_with_the_trait_are_not_reported(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([$this->staffRule()]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('model without the trait')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_audience_left_without_a_value_is_reported(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'user', 'audienceValue' => '']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: audience without a value')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_audience_naming_an_unknown_role_is_reported(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'role', 'audienceValue' => 'Financeiro']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: unknown role')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_existing_role_matches_case_insensitively(): void
+    {
+        // Same identity rule as ptah_has_role: case-insensitive and trimmed, but
+        // NOT slugged — 'financeiro' matches 'FINANCEIRO', never 'financeiro-x'.
+        Role::create(['name' => 'FINANCEIRO', 'is_active' => true]);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'role', 'audienceValue' => '  financeiro ']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown role')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_audience_naming_an_unknown_user_is_reported(): void
+    {
+        config(['ptah.permissions.user_model' => DoctorTestUser::class]);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'user', 'audienceValue' => '99999']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: unknown user')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_existing_user_id_is_not_reported(): void
+    {
+        config(['ptah.permissions.user_model' => DoctorTestUser::class]);
+
+        $user = DoctorTestUser::create(['name' => 'Ana', 'email' => 'ana@example.test', 'password' => 'x']);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'user', 'audienceValue' => (string) $user->getKey()]),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown user')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function an_unresolvable_user_model_reports_nothing(): void
+    {
+        // The helper's contract: when the question cannot be answered, stay
+        // quiet. A host without the referenced user model must not be told its
+        // rules are broken.
+        config(['ptah.permissions.user_model' => 'App\Models\NoSuchUser']);
+
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['audience' => 'user', 'audienceValue' => '99999']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('unknown user')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_rule_with_an_empty_title_is_reported(): void
+    {
+        // The runtime drops such a rule (dispatchRule returns early), so it is a
+        // rule that silently delivers nothing.
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([
+            $this->staffRule(['title' => '   ']),
+        ]));
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: empty title')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function the_queue_note_appears_only_on_a_non_sync_connection(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->configWithRules([$this->staffRule()]));
+
+        config()->set('queue.default', 'database');
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('notifications: queue')
+            ->assertExitCode(0);
+
+        config()->set('queue.default', 'sync');
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('notifications: queue')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function the_queue_note_is_silent_when_no_config_has_rules(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStubNotified::class), '', $this->goodConfig());
+
+        config()->set('queue.default', 'database');
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('notifications: queue')
             ->assertExitCode(0);
     }
 }
