@@ -7,6 +7,101 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.22.0] — 2026-08-23
+
+A reusable notification centre, a contrast audit that measures the rendered
+DOM instead of the source, and the root cause of test runs dying mid-suite.
+No schema change on upgrade — the notification table is publishable and
+opt-in.
+
+### Added — notification centre
+
+The navbar bell stops being a decorative dead control. ptah provides the
+plumbing; your application provides the generators. Full guide:
+[docs/Notifications.md](docs/Notifications.md).
+
+- **Navbar slot with three states** (`ptah.navbar.notifications`): unset keeps
+  today's static bell byte-identical; `none` (also `off`/`hidden`/`false`/`0`)
+  **removes the bell from the DOM**; any other value mounts that Livewire
+  alias. A typo'd alias falls back to the static bell instead of throwing
+  `ComponentNotFoundException` from inside the layout, which would take down
+  every page.
+- **`ptah_notify()` / `ptah_notify_role()` / `ptah_notify_all()`** plus
+  `NotificationService` — idempotent pushes by `dedupe_key`, audience
+  targeting that reuses the roles and company scoping from 1.19.0, and
+  `unreadCount`/`list`/`markRead`/`dismiss`/`purgeRead`.
+- **`ptah-notification-bell`** — unread badge (hidden at zero), dropdown with
+  colour and icon per type, click marks read and deep-links to the record,
+  empty state, Esc/click-away, `aria-expanded`/`aria-haspopup`, dark mode
+  through the existing tokens (zero new CSS). The list query runs only while
+  the dropdown is open, so a closed bell polls one indexed `count()`;
+  `PTAH_NOTIFICATIONS_POLL=none` turns polling off entirely.
+- **Opt-in by construction**: the migration lives in a publishable
+  `database/migrations/`, the module is off by default, and every read
+  degrades to a neutral value when the table is absent — no exception, no
+  logged SQL error. A test proves the table does not appear from the
+  package's own migrations even with the module enabled.
+
+> **Upgrading changes nothing** unless you opt in:
+> `vendor:publish --tag=ptah-notifications` + `migrate`, then
+> `PTAH_MODULE_NOTIFICATIONS=true`. Human-executed, per environment.
+
+Not implemented yet, and marked as such in the docs: the "view all" history
+page and the `ptah:notification-prune` command (the service's `purgeRead()`
+can be scheduled from your app meanwhile). Broadcasting, email and per-user
+preferences are not planned.
+
+### Fixed — contrast, measured in the browser
+
+Two previous releases "fixed" dark-mode contrast in the CRUD config modal by
+measuring pairs picked by hand from the source. That method missed whole
+categories, so the modal was still wrong. A browser auditor that walks every
+visible text node, composes the effective background up the tree and computes
+the real WCAG ratio found **67 failing pairs**, including:
+
+- a title at **1.00:1** — text the exact colour of its background — because
+  the form-preview overlay is a *sibling* of the config panel, so no theming
+  rule ever reached it;
+- the emerald tint box introduced by 1.21.0's own SearchDropdown wave
+  (1.40:1);
+- the DISTINCT badge painting `text-primary` on `bg-primary` — 1.00:1 in
+  **both** themes;
+- bare `text-primary`/`text-red-600` that never received the `-lite` swap
+  their neighbours had, and rail labels at 2.36:1.
+
+Mirroring the sweep to **light mode** found 15 more, which is the point of
+mirroring: `--ptah-line-control` never reached 3:1 against white, and two
+row-style presets ("Cancelled"/"Urgent") failed in *every* theme — a
+pre-existing bug no dark-mode audit could have caught. Genuinely inert
+elements are exempted, as WCAG 2.1 exempts inactive components.
+
+The auditor stays as a permanent browser guard: reintroducing a light box
+with light text now fails the suite by element name and ratio.
+
+### Fixed — `set_time_limit` was capping the whole process
+
+`AiChatService` called `set_time_limit(300)` to give slow local AI providers
+more room. In CLI that did the opposite: `artisan`, queue workers and PHPUnit
+run with `max_execution_time = 0` (unlimited), so the call **imposed** a 300s
+ceiling on the entire process — the timer started in the AI service and
+expired minutes later inside an unrelated docblock parser or query grammar.
+That is what had been killing full test runs at ~95% for days, and in a queue
+worker it would have cut a long conversation in half. Now guarded on SAPI,
+and it never lowers a limit the host already granted.
+
+### Notes
+
+- Two browser tests are skipped with full diagnoses recorded in the tests and
+  in `docs/Testing.md`: DOM-driven Livewire bindings (`wire:click` inside a
+  teleport, `wire:model.live` on the search input) never reach the server in
+  the Dusk harness, while `$wire.set()` does a complete round-trip. A
+  page-authored native `input` event fails identically, which rules out
+  "synthetic events are not trusted". Root cause unidentified; the behaviour
+  those tests covered is pinned server-side in the Feature suite.
+- `NotificationsDocTest` fails when the documentation and the code disagree:
+  every documented service method must exist, every `PTAH_*` env must be in
+  the config, and every value that hides the bell must appear in the doc.
+
 ## [1.21.0] — 2026-08-22
 
 Config-editor polish and the full SearchDropdown configuration surface.
