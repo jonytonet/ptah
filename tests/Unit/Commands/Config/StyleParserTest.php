@@ -86,4 +86,53 @@ class StyleParserTest extends TestCase
 
         $this->parser->parse('status:LIKE:cancelled:color:red;');
     }
+
+    #[Test]
+    public function the_style_marker_lets_the_value_keep_its_own_colons(): void
+    {
+        // The mirror of stops_splitting_after_the_fourth_segment: that test
+        // proves the STYLE keeps its colons, and this one proves the VALUE can
+        // too — which the positional form alone cannot express, since the style
+        // is colon-rich by nature and takes everything after the third colon.
+        $rule = $this->parser->parse('start_at:==:12:30:style=background:#eee;');
+
+        $this->assertSame('start_at', $rule['field']);
+        $this->assertSame('==', $rule['condition']);
+        $this->assertSame('12:30', $rule['value']);
+        $this->assertSame('background:#eee;', $rule['style']);
+    }
+
+    #[Test]
+    public function without_the_marker_the_positional_form_is_unchanged(): void
+    {
+        // Backwards compatibility is the point: every --style= call written
+        // before the marker existed must parse byte-for-byte as it did. That
+        // includes the known-bad case (a colon in the value), which stays
+        // mis-parsed on purpose rather than being "fixed" by a heuristic that
+        // could mis-parse a legitimate style string instead. Documented in
+        // docs/KnownLimitations.md.
+        $rule = $this->parser->parse('start_at:==:12:30:background:#eee;');
+
+        $this->assertSame('12', $rule['value']);
+        $this->assertSame('30:background:#eee;', $rule['style']);
+    }
+
+    #[Test]
+    public function the_marker_form_still_requires_field_condition_and_value(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->parser->parse('start_at:style=background:#eee;');
+    }
+
+    #[Test]
+    public function only_the_first_style_marker_ends_the_value(): void
+    {
+        // A style that itself contains the literal 'style=' (a CSS custom
+        // property, say) must not re-split the definition.
+        $rule = $this->parser->parse('kind:==:a:b:style=--style=x;color:red;');
+
+        $this->assertSame('a:b', $rule['value']);
+        $this->assertSame('--style=x;color:red;', $rule['style']);
+    }
 }

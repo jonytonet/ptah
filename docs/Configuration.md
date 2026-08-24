@@ -1386,12 +1386,36 @@ field:type:operator:label=Label:options=opt1,opt2
 #### --style (Styles)
 
 Persisted under `contitionStyles` in the saved config (the correctly-spelled
-`conditionStyles` is accepted as a read alias, but never written).
+`conditionStyles` is accepted as a read alias, but never written). This is also
+the key the published JSON schema (`JsonSchemaBuilder`) documents — it used to
+name `styles`, which nothing reads at render time.
 
 **Format:**
 ```
 field:condition:value:style
 ```
+
+**Long form — required when the value itself contains a `:`**
+```
+field:condition:value:style=<css>
+```
+
+The style segment is colon-rich by nature (`background:#eee;color:#111`), so the
+short form gives it everything after the third colon. That means a *value*
+containing a colon is cut at that colon and the remainder ends up inside the
+CSS, producing a rule that never matches — with no error. The `style=` marker
+ends the value explicitly:
+
+```bash
+# WRONG — value becomes "12", style becomes "30:background:#eee;"
+--style="start_at:==:12:30:background:#eee;"
+
+# RIGHT — value stays "12:30"
+--style="start_at:==:12:30:style=background:#eee;"
+```
+
+Every call without the marker parses exactly as it always did; the marker is
+purely additive.
 
 `condition` is one of `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`,
 `ne`, `lt`, `gt`, `lte`, `gte`, `=`) — these are the only operators

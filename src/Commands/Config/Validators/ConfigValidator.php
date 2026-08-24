@@ -3,7 +3,18 @@
 namespace Ptah\Commands\Config\Validators;
 
 use Ptah\Enums\CrudConfigEnums;
+use Ptah\Services\Validation\ConfigSchemaValidator;
 
+/**
+ * @deprecated since 1.24.0 — superseded by {@see ConfigSchemaValidator},
+ *             which is what ConfigCommand actually runs. This class has had no
+ *             production caller for several releases; it is kept only because
+ *             it is a public class on a published 1.x package, and removing it
+ *             would be a semver break for anyone who happens to call it.
+ *             Scheduled for removal in 2.0. Do not add callers, and do not
+ *             treat its rules as authoritative: where the two disagree, the
+ *             runtime (and therefore ConfigSchemaValidator) wins.
+ */
 class ConfigValidator
 {
     /**
