@@ -212,4 +212,36 @@ class NotificationBellTest extends NotificationTestCase
         );
         $this->assertNotCount(0, $limitedSelects, 'items() nao rodou com a dropdown aberta.');
     }
+
+    #[Test]
+    public function a_long_list_scrolls_inside_the_dropdown_and_the_footer_stays_out_of_it(): void
+    {
+        // Relato do usuario: com muitas notificacoes o painel crescia sem
+        // limite, e como a navbar e fixed a pagina atras nao rola — o rodape
+        // ("marcar todas como lidas") ficava fora da viewport, inalcancavel.
+        $this->loginAs(1);
+
+        foreach (range(1, 25) as $i) {
+            app(NotificationService::class)->push(1, ['title' => "Notificacao {$i}"]);
+        }
+
+        $html = Livewire::test(NotificationBell::class)
+            ->call('toggle')
+            ->html();
+
+        // A regiao de itens rola e nao deixa a roda do mouse vazar pra pagina.
+        $this->assertMatchesRegularExpression(
+            '/role="none"[^>]*class="[^"]*max-h-\[min\(24rem,60vh\)\][^"]*overflow-y-auto[^"]*overscroll-contain/',
+            $html,
+            'A lista de itens precisa de um container com altura maxima e scroll proprio.'
+        );
+
+        // E o rodape fica FORA dela — a ordem no HTML prova o aninhamento:
+        // o </div> do container de scroll vem antes do bloco do rodape.
+        $scrollEnd = strpos($html, 'overscroll-contain');
+        $footer = strpos($html, __('ptah::ui.notif_mark_all_read'));
+
+        $this->assertNotFalse($footer, 'O rodape com "marcar todas" precisa estar presente.');
+        $this->assertGreaterThan($scrollEnd, $footer, 'O rodape nao pode estar dentro da area que rola.');
+    }
 }

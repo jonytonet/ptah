@@ -45,6 +45,22 @@
             class="ptah-admin-dropdown absolute right-0 mt-2 w-80 max-w-[90vw] rounded-md border py-1 z-50"
             role="menu"
         >
+            {{-- Scroll container for the ITEMS only, so the footer ("mark all
+                 as read") stays reachable no matter how long the list is. With
+                 dropdown_limit at 20 the unscrolled panel passed 1800px and
+                 pushed the footer past the bottom of the viewport, and the
+                 navbar is fixed so the page behind it does not scroll to
+                 rescue it (user report).
+
+                 max-h-[min(24rem,60vh)]: 24rem is the comfortable desktop
+                 height; 60vh takes over on short viewports, where a fixed rem
+                 value would still overflow. overscroll-contain keeps the wheel
+                 from scrolling the page once the list bottoms out.
+
+                 role="none" is required: direct children of role="menu" must be
+                 menuitems (or presentational), so an unlabelled div here would
+                 break the a11y tree the items rely on. --}}
+            <div role="none" class="max-h-[min(24rem,60vh)] overflow-y-auto overscroll-contain">
             @forelse($notifications as $notification)
                 @php($__safeUrl = \Ptah\Services\Notification\NotificationService::safeUrl($notification->url))
 
@@ -100,8 +116,11 @@
                     {{ __('ptah::ui.notif_empty') }}
                 </button>
             @endforelse
+            </div>
 
-            <div class="flex items-center justify-between px-4 pt-1">
+            {{-- Outside the scroll container on purpose — always reachable. The
+                 top border reads as the edge of the scrollable region. --}}
+            <div class="flex items-center justify-between px-4 pt-2 mt-1 border-t border-[color:var(--ptah-line)]">
                 <button type="button" wire:click="markAllRead" class="text-xs font-semibold">
                     {{ __('ptah::ui.notif_mark_all_read') }}
                 </button>
