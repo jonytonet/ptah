@@ -1613,4 +1613,15 @@ return [
     'cfg_preview_sd_lazy' => 'Loads the list only after typing a search term',
     'cfg_preview_footer_hint' => 'Buttons are illustrative — this is a preview.',
 
+    // -------------------------------------------------------------------------
+    // Notification bell (ptah-notification-bell)
+    // -------------------------------------------------------------------------
+    'notif_bell_title' => 'Notifications',
+    'notif_empty' => 'No notifications.',
+    'notif_action_default' => 'View details',
+    'notif_mark_all_read' => 'Mark all as read',
+    'notif_view_all' => 'View all',
+    'notif_dismiss' => 'Dismiss',
+    'notif_unread_badge_label' => ':count unread notification(s)',
+
 ];

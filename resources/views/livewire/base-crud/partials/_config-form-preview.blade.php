@@ -3,8 +3,20 @@
      columns currently being configured (unsaved). Visual only: every control
      is disabled, no wire:model, no validation, no queries, no actions.
      ═══════════════════════════════════════════════════════════════════════ --}}
+{{-- `ptah-cfg-content` (in addition to the layout classes below) is a pure CSS
+     scoping hook, not a layout concern: this partial is included as a SIBLING
+     of the main "Conteúdo Principal" pane (both direct children of `.ptah-cfg`
+     — see crud-config.blade.php), so none of that pane's bg-white/text-slate-*
+     dark-mode token overrides ever reached this overlay's own bg-white,
+     text-slate-300..800, bg-slate-50 and bg-slate-50/60 utilities — the whole
+     panel silently stayed light-mode-styled even when opened from dark mode
+     (found by CrudConfigDarkContrastBrowserTest; e.g. the title itself
+     rendered at a 1:1 fg/bg ratio). Reusing the exact same scoping class the
+     rest of the file already treats as "just a CSS hook" is the smallest fix
+     that makes every existing `.ptah-cfg-content <utility>` rule apply here
+     too, with no new selectors needed. --}}
 <div x-show="$wire.showPreview" x-cloak
-     class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+     class="fixed inset-0 z-[70] flex items-center justify-center p-4 ptah-cfg-content"
      @keydown.escape.window="$wire.closePreview()">
 
     {{-- Backdrop --}}

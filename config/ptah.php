@@ -129,6 +129,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Navbar slots
+    |--------------------------------------------------------------------------
+    |
+    | notifications: alias of a Livewire component that replaces the static
+    | bell icon in forge-navbar.blade.php (see Ptah\Support\NavbarSlot).
+    | null/'' keeps the current static bell (default, byte-identical). A
+    | recognised "off" value ('none', 'off', 'hidden', 'false', '0', or
+    | boolean false) hides the slot entirely. Any other string is treated as
+    | a Livewire component alias — e.g. 'ptah-notification-bell'.
+    |
+    | Deliberately a TOP-LEVEL key, not nested under an existing block:
+    | ServiceProvider::register() calls mergeConfigFrom(), which does a SHALLOW
+    | array_merge() (see mergeConfigFrom in this same file's ServiceProvider —
+    | src/PtahServiceProvider.php:84-87). A new key nested inside an array a
+    | consumer already published (e.g. under 'forge') would never be merged in
+    | for them; a new top-level key is.
+    |
+    */
+    'navbar' => [
+        'notifications' => env('PTAH_NAVBAR_NOTIFICATIONS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Scaffold
     |--------------------------------------------------------------------------
     */
@@ -212,6 +236,38 @@ return [
         'path' => env('PTAH_EXPORT_PATH', 'ptah-exports'),
         'ttl_hours' => (int) env('PTAH_EXPORT_TTL_HOURS', 48),
         'async_max_rows' => (int) env('PTAH_EXPORT_ASYNC_MAX_ROWS', 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notifications
+    |--------------------------------------------------------------------------
+    |
+    | "Baterias inclusas" notification center (NotificationService,
+    | ptah_notify() helpers, ptah-notification-bell). Deliberately a TOP-LEVEL
+    | key — NOT nested under 'modules' — for two reasons: (1) mergeConfigFrom()
+    | does a shallow array_merge (see the 'navbar' block above), so a consumer
+    | who already published config/ptah.php would never receive a new key
+    | nested inside 'modules'; (2) PtahServiceProvider::loadMigrations() reads
+    | 'modules' to decide whether to auto-load src/Migrations — keeping
+    | notifications out of that array keeps the opt-in ptah_notifications
+    | schema (database/migrations/, NOT auto-discovered) completely unrelated
+    | to that decision.
+    |
+    | enabled       : gates every read of the ptah_notifications table — see
+    |                 NotificationService::tableExists(). When false, the
+    |                 service and the bell component are inert (zero query).
+    | poll          : wire:poll interval for the bell's unread badge (e.g.
+    |                 '60s', '30000ms'). 'none'/false disables polling.
+    | dropdown_limit: how many recent notifications the bell dropdown shows.
+    | retention_days: default --days window for a future prune command.
+    |
+    */
+    'notifications' => [
+        'enabled' => env('PTAH_MODULE_NOTIFICATIONS', false),
+        'poll' => env('PTAH_NOTIFICATIONS_POLL', '60s'),
+        'dropdown_limit' => 20,
+        'retention_days' => 30,
     ],
 
     /*

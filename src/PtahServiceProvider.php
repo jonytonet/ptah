@@ -43,6 +43,7 @@ use Ptah\Livewire\Company\CompanyList;
 use Ptah\Livewire\Company\CompanySwitcher;
 use Ptah\Livewire\Exports\ExportsPanel;
 use Ptah\Livewire\Menu\MenuList;
+use Ptah\Livewire\Notification\NotificationBell;
 use Ptah\Livewire\Permission\AuditList;
 use Ptah\Livewire\Permission\DepartmentList;
 use Ptah\Livewire\Permission\PageList;
@@ -68,6 +69,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Menu\MenuService;
+use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
@@ -108,6 +110,11 @@ class PtahServiceProvider extends ServiceProvider
         $this->app->singleton(RoleService::class);
         $this->app->singleton(ColumnPermissionService::class);
         $this->app->bind(PermissionServiceContract::class, PermissionService::class);
+
+        // Notifications — no gate here (a singleton binding is cheap); the
+        // gate lives inside NotificationService::tableExists(), consulted on
+        // every read/write.
+        $this->app->singleton(NotificationService::class);
 
         // AI Agent module
         if (config('ptah.modules.ai_agent')) {
@@ -395,6 +402,13 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/Migrations/ai/2026_03_31_000003_add_user_to_ptah_ai_conversations_table.php' => database_path('migrations/2026_03_31_000003_add_user_to_ptah_ai_conversations_table.php'),
             ], 'ptah-ai-agent');
 
+            // Publish notifications module (migration) — opt-in schema, deliberately
+            // NOT under src/Migrations/loadMigrations() (see the migration's own
+            // docblock and tests/Unit/Support/OptInSchemaIsFrozenTest.php).
+            $this->publishes([
+                __DIR__.'/../database/migrations/2026_08_23_000000_create_ptah_notifications_table.php' => database_path('migrations/2026_08_23_000000_create_ptah_notifications_table.php'),
+            ], 'ptah-notifications');
+
             // Publish permissions module (migrations)
             $this->publishes([
                 __DIR__.'/Migrations/2024_01_04_000002_create_ptah_roles_table.php' => database_path('migrations/2024_01_04_000002_create_ptah_roles_table.php'),
@@ -512,6 +526,12 @@ class PtahServiceProvider extends ServiceProvider
             if (config('ptah.modules.ai_agent')) {
                 Livewire::component('ptah-ai-model-config-list', AiModelConfigList::class);
                 Livewire::component('ptah-ai-chat-widget', AiChatWidget::class);
+            }
+
+            // Notifications — 'ptah.notifications.enabled', NOT 'ptah.modules.*'
+            // (see the config's own docblock for why it is a top-level key).
+            if (config('ptah.notifications.enabled')) {
+                Livewire::component('ptah-notification-bell', NotificationBell::class);
             }
         }
     }

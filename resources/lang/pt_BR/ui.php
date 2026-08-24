@@ -1615,4 +1615,15 @@ return [
     'cfg_preview_sd_lazy' => 'Só carrega a lista depois de digitar um termo de busca',
     'cfg_preview_footer_hint' => 'Botões são ilustrativos — isto é uma prévia.',
 
+    // -------------------------------------------------------------------------
+    // Sino de notificações (ptah-notification-bell)
+    // -------------------------------------------------------------------------
+    'notif_bell_title' => 'Notificações',
+    'notif_empty' => 'Nenhuma notificação.',
+    'notif_action_default' => 'Ver detalhes',
+    'notif_mark_all_read' => 'Marcar todas como lidas',
+    'notif_view_all' => 'Ver todas',
+    'notif_dismiss' => 'Dispensar',
+    'notif_unread_badge_label' => ':count notificação(ões) não lida(s)',
+
 ];

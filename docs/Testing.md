@@ -134,9 +134,75 @@ isolado.
 | `SearchPersistenceAcrossBackNavigationBrowserTest` | **Fluxo 6 — o sintoma real do usuário.** Digitar na busca, navegar para outra URL, `history.back()`: o input e a listagem filtrada precisam sobreviver. Ver achado abaixo. |
 | `DarkThemeBrowserTest` | Alternar `.ptah-dark` no `<html>` muda o `background-color` computado (pega token órfão). |
 | `ColumnPermissionBrowserTest` | O gate `colsPermission`, num Chrome real: o `<th>`/`<td>` da coluna negada nunca chega ao DOM (não só ausente do HTML servido) — classe de bug que um teste `Livewire::test()->html()` não enxerga. |
+| `CrudConfigDarkContrastBrowserTest` | **Guarda permanente de contraste do modal "Configurar CRUD".** Abre o modal de verdade, percorre TODAS as abas da sidebar e TODOS os sub-tabs do formulário de coluna (incluindo SearchDropdown em modo `model` e `service`) e o overlay de pré-visualização, e mede o contraste WCAG real (cor computada × fundo composto, não a folha CSS) de cada texto/placeholder (piso 4.5:1) e borda de campo (piso 3:1) — em modo claro E escuro. Ver "Achados" abaixo para o porquê de existir. |
 
 **Fluxo 8 (search-dropdown por teclado) não foi implementado** — ver
 "Achados" abaixo.
+
+### CrudConfigDarkContrastBrowserTest — por que uma varredura, não pares escolhidos a dedo
+
+Duas ondas anteriores "corrigiram" o contraste do modal "Configurar CRUD"
+grepando a view por famílias de classe conhecidas (`bg-white`, `text-slate-*`)
+e computando o par `.ptah-dark` à mão num teste PHPUnit puro
+(`CrudConfigDarkContrastTest`, suíte Unit). Isso corrige exatamente os pares
+em que alguém pensou em grepar — e nada mais. A v1.21.0 provou o limite desse
+método: a caixa de destaque verde (`bg-emerald-50`) da aba SearchDropdown foi
+introduzida DEPOIS da última varredura por grep e nunca entrou na lista de
+exceções do `ThemeChromeOrphanTokenGuardTest`; o texto do checkbox e da dica
+ficaram ilegíveis (~1.4:1) desde o primeiro dia daquela caixa — regressão
+silenciosa que nenhum teste pegou porque nenhum teste pergunta "existe uma
+caixa clara nova que ninguém repintou ainda?".
+
+Este teste em vez disso abre o Chrome de verdade, entra no modal, e para cada
+estado (8 abas da sidebar, 3 variações de sub-tab de coluna, overlay de
+pré-visualização) injeta o script `AUDIT_JS`: percorre `.ptah-cfg *`, filtra
+por visibilidade real (`offsetWidth`/`display`/`visibility`), soma o
+background efetivo subindo a árvore (compondo alpha), e calcula a razão de
+luminância relativa da WCAG — o valor que o NAVEGADOR realmente pinta, não o
+que a regra CSS *deveria* produzir. Isso pega qualquer caixa clara nova em
+QUALQUER aba futura sem precisar saber o nome dela de antemão, do mesmo jeito
+que `ThemeChromeOrphanTokenGuardTest` enumera toda regra `.ptah-dark` em vez
+de re-checar uma lista fixa.
+
+**Achados desta rodada** — a tabela completa (antes → depois, ~60 pares) está
+no PR/relatório da sessão; os destaques:
+
+- A caixa `bg-emerald-50` da aba SearchDropdown (regressão real da v1.21.0,
+  nunca antes coberta) e a mesma caixa `bg-indigo-50`/`.cfg-label` que a onda
+  anterior só cobriu parcialmente.
+- `text-primary`/`text-red-600` usados diretamente na view (rótulo da sub-aba
+  ativa, botão "Pré-visualizar formulário", "Editar"/"Remover" de JOIN, chip
+  de relação aninhada) nunca receberam o swap `-lite` que outros componentes
+  do arquivo já usam havia tempo — liam roxo/vermelho escuro sobre o cartão
+  ESCURO, 1.15-3.03:1.
+- O overlay inteiro de pré-visualização do formulário (`_config-form-preview.
+  blade.php`) é IRMÃO do painel de conteúdo principal, não filho — nenhuma
+  das regras `.ptah-cfg-content` chegava até ele. O título chegava a 1.00:1
+  (cor de texto idêntica ao fundo). Corrigido reaproveitando `ptah-cfg-content`
+  como classe de escopo (não de layout) no wrapper do overlay.
+- `.bg-primary-light/50` (caixas de "como usar" nas abas JOINs/Filtros/
+  Estilos e o destaque de relação aninhada) é translúcida — ao contrário das
+  caixas opacas acima, compõe com o card escuro para um cinza-lavanda médio
+  que nenhum token de tinta existente resolve; a correção larga a translucidez
+  em modo escuro, igual ao que já foi feito para a caixa `bg-sky-50`.
+- Dois presets literais de estilo de linha ("Cancelled"/"Urgent") falhavam
+  WCAG AA em QUALQUER tema — `#999` sobre quase-branco e a ausência total de
+  `color` no preset "Urgent" (herdava a tinta tokenizada de `.tag`, ilegível
+  no escuro). Não é regressão de dark mode, é um bug pré-existente que a
+  varredura pegou de graça.
+- O espelhamento para o modo claro (Passo obrigatório desta suíte) achou o
+  sinal invertido esperado: `--ptah-line-control` nunca alcançou 3:1 contra
+  branco (a correção do modo escuro tampouco tocava o claro), o botão
+  "Create" ilustrativo do preview ficava ilegível só no claro
+  (`bg-primary/50` sobre branco vira lavanda claro demais para texto branco —
+  mas esse elemento é decorativo/inerte, então a correção certa foi isentá-lo
+  da varredura, não repintá-lo), e `text-red-400`/`text-red-500` (as cores cruas
+  do Tailwind) nunca alcançavam 4.5:1 sobre branco.
+
+O piso de bordas (3:1) e o de texto/placeholder (4.5:1) tratam elementos
+DESABILITADOS (`disabled`, ou o combo `cursor-not-allowed select-none` dos
+dois botões ilustrativos do preview) como isentos — mesma isenção que a WCAG
+2.1 já concede a componentes de interface inativos (SC 1.4.3/1.4.11).
 
 ### Achados desta rodada (ONDA IV)
 
@@ -210,3 +276,31 @@ cause is identified, browser tests that need to trigger an action inside a
 teleported modal should call `window.Livewire.all()[0].$wire.method()` via
 `executeScript` and assert on the resulting DOM, which still exercises the
 full server round-trip.
+
+### Known quirk — DOM-driven Livewire bindings do not commit in the Dusk harness
+
+Two browser tests are skipped for the same underlying reason, both with the
+full diagnosis inline: `wire:click` inside forge-modal's `@teleport` and
+`wire:model.live` on the BaseCrud search input never reach the server in the
+test app, while `$wire.method()` / `$wire.set()` do.
+
+The decisive measurement (search input, real Chrome, three paths):
+
+| path | `$wire` local | server | rows |
+|---|---|---|---|
+| `type()` (WebDriver) | "Alfa" | *empty* | 2 |
+| JS `dispatchEvent(new Event('input', {bubbles:true}))` | "Beta" | *empty* | 2 |
+| `$wire.set('search', 'Alfa')` | "Alfa" | "Alfa" | 1 |
+
+The second row rules out "the synthetic click/keystroke is not trusted" — a
+page-authored native event fails identically. The Livewire core is alive (the
+third row does a full round-trip and the morph updates the table), so what is
+missing are the DOM directive listeners on this page. Root cause still
+unidentified; the layout does include `@livewireScripts` and the console is
+clean apart from the Tailwind CDN warning.
+
+**Practical rule until this is solved:** in browser tests, drive Livewire
+state through `$wire` and assert on the resulting DOM. The server-side
+behavior those tests cover is pinned in the Feature suite
+(`CrudSearchPersistenceTest`, `ForgeInputAriaInvalidTest`,
+`ModalFormFieldErrorAccessibilityTest`).
