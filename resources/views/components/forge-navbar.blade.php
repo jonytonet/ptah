@@ -70,13 +70,46 @@
             @endisset
         </div>
 
-        {{-- Company Switcher (centralizado) --}}
-        <div class="flex items-center justify-center px-4">
+        @php
+            // Hoisted porque DUAS decisoes dependem dela: se o menu de
+            // administracao existe, ele hospeda o seletor de empresas no
+            // celular e o grupo central se esconde ali. Duplicar a condicao
+            // deixaria o usuario de celular SEM seletor no dia em que uma das
+            // duas mudasse.
+            $ptahHasAdminMenu = auth()->check() && (
+                config('ptah.modules.company')
+                || config('ptah.modules.permissions')
+                || config('ptah.modules.menu')
+                || config('ptah.modules.ai_agent')
+            );
+        @endphp
+
+        {{-- Company Switcher (centralizado).
+
+             No celular o grupo inline (nome da empresa + uma tab por empresa)
+             disputava os mesmos ~60px com o sino, o avatar e a engrenagem — as
+             empresas ficavam ilegiveis e sobrepostas (relato de ERP em
+             producao). Ali ele se esconde e reaparece DENTRO do menu de
+             administracao, na variante 'stacked'.
+
+             Se esse menu nao existe (nenhum modulo que o gera esta ativo), o
+             grupo central continua visivel no celular: apertado e melhor que
+             ausente — sem ele nao haveria como trocar de empresa. --}}
+        <div class="{{ $ptahHasAdminMenu ? 'hidden md:flex' : 'flex' }} items-center justify-center px-4">
             @livewire('ptah-company-switcher')
         </div>
 
-        {{-- Actions --}}
-        <div class="flex items-center justify-end gap-1 md:gap-2">
+        {{-- Actions.
+
+             col-start-3 e OBRIGATORIO, nao decorativo. A navbar e um grid de
+             tres colunas (1fr | auto | 1fr) com tres filhos, e o do meio — o
+             seletor de empresas — passou a ser `hidden` no celular. Um item com
+             display:none NAO ocupa coluna nenhuma: o auto-placement entao puxa
+             este bloco para a coluna 2, que dimensiona pelo conteudo e fica no
+             MEIO da barra. Foi exatamente o sintoma relatado ("os itens tem que
+             ficar a direita e nao estao"). Fixar a coluna torna a posicao
+             independente de quantos irmaos estao visiveis. --}}
+        <div class="col-start-3 flex items-center justify-end gap-1 md:gap-2">
             @isset($actions)
                 {{ $actions }}
             @else
@@ -98,8 +131,10 @@
                     </svg>
                 </button>
 
-                {{-- Admin Dropdown (company + permissions + menu + ai_agent) --}}
-                @if(auth()->check() && (config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu') || config('ptah.modules.ai_agent')))
+                {{-- Admin Dropdown (company + permissions + menu + ai_agent).
+                     No celular acumula o papel de menu unico da direita: ele
+                     tambem hospeda o seletor de empresas. --}}
+                @if($ptahHasAdminMenu)
                 <div x-data="{ openAdmin: false }" class="relative">
                     <button
                         @click="openAdmin = !openAdmin"
@@ -121,9 +156,27 @@
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
-                        class="ptah-admin-dropdown absolute right-0 mt-2 w-56 rounded-md border py-1 z-50"
+                        {{-- w-64 no celular: o painel passa a hospedar nomes de
+                             empresa, que em 224px truncavam cedo demais. --}}
+                        class="ptah-admin-dropdown absolute right-0 mt-2 w-64 md:w-56 rounded-md border py-1 z-50"
                         @click="openAdmin = false"
                     >
+                        {{-- Seletor de empresas — SO no celular (o grupo central
+                             cobre as telas largas). Segunda instancia do mesmo
+                             componente Livewire, nao um clone da marcacao: a
+                             acao de trocar de empresa continua pertencendo ao
+                             CompanySwitcher, entao nao ha logica duplicada para
+                             sair de sincronia. O componente ja nao renderiza
+                             nada com menos de 2 empresas, portanto a secao
+                             desaparece sozinha em instalacao de empresa unica.
+
+                             `key` distinto e obrigatorio: duas instancias do
+                             mesmo componente na mesma pagina sem chave propria
+                             colidem no morph do Livewire. --}}
+                        <div class="md:hidden">
+                            @livewire('ptah-company-switcher', ['layout' => 'stacked'], key('ptah-company-switcher-mobile'))
+                        </div>
+
                         {{-- Company --}}
                         @if(config('ptah.modules.company') && \Illuminate\Support\Facades\Route::has('ptah.company.index'))
                         <a href="{{ route('ptah.company.index') }}"

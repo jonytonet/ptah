@@ -121,6 +121,58 @@ trait HasCrudColumns
      *
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * The visible columns a user can actually sort by, as
+     * `[['field' => ..., 'sortBy' => ..., 'label' => ...], ...]`.
+     *
+     * Single source of truth for BOTH the clickable table headers and the card
+     * view's sort select. They used to disagree by construction: the header
+     * computed sortability inline in the Blade and the card view offered no
+     * sorting at all, so switching to cards silently froze the listing on
+     * whatever the table had last chosen — the exact complaint that produced
+     * this method.
+     *
+     * The criteria mirror what the table header has always applied:
+     *   - action columns are not data and cannot be ordered;
+     *   - a dotted field ('customer.name') is a relation display column whose
+     *     ORDER BY is resolved through a JOIN only when colsOrderBy names a
+     *     real column, so it is not offered raw;
+     *   - colsMetodoCustom is computed in PHP after the query, so the database
+     *     has nothing to order by;
+     *   - a column denied by column permissions must not even be namable, or
+     *     the select becomes an oracle for data the user cannot read.
+     *
+     * @return array<int, array{field: string, sortBy: string, label: string}>
+     */
+    public function sortableColumns(): array
+    {
+        $out = [];
+
+        foreach ($this->getVisibleColumns() as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+
+            if ($field === '' || ($col['colsTipo'] ?? '') === 'action') {
+                continue;
+            }
+
+            if (str_contains($field, '.') || ! empty($col['colsMetodoCustom'])) {
+                continue;
+            }
+
+            if (in_array($field, $this->deniedColumns, true)) {
+                continue;
+            }
+
+            $out[] = [
+                'field' => $field,
+                'sortBy' => (string) ($col['colsOrderBy'] ?? $field),
+                'label' => (string) ($col['colsNomeLogico'] ?? $field),
+            ];
+        }
+
+        return $out;
+    }
+
     public function getVisibleColumns(): array
     {
         $cols = $this->crudConfig['cols'] ?? [];

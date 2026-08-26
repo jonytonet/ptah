@@ -170,6 +170,18 @@ return [
     |
     */
     'crud' => [
+        /*
+         | Card layout on narrow viewports.
+         |
+         | true (default): a screen whose viewMode is 'auto' renders the table on
+         | wide screens and cards on phones, decided by CSS at render time — no
+         | round-trip, no layout flash, nothing device-specific persisted.
+         | false: 'auto' behaves exactly like 'table', which is how every
+         | release before 1.25.0 behaved. An explicit 'table'/'cards' pin made
+         | by the user is honoured either way.
+         */
+        'responsive_cards' => env('PTAH_CRUD_RESPONSIVE_CARDS', true),
+
         'cache_enabled' => true,
         'cache_ttl' => 3600,
         'per_page' => 25,

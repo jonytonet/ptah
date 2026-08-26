@@ -47,7 +47,12 @@
              }
              if (e.key === 'v' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                  e.preventDefault();
-                 this.$wire.setViewMode(this.$wire.viewMode === 'table' ? 'cards' : 'table');
+                 /* Cicla auto → table → cards → auto. O ternario anterior
+                    (table ? cards : table) engolia o estado 'auto': a primeira
+                    tecla 'v' a partir do default virava 'table', que e
+                    justamente o que o usuario nao pediu. */
+                 const _next = { auto: 'table', table: 'cards', cards: 'auto' };
+                 this.$wire.setViewMode(_next[this.$wire.viewMode] ?? 'auto');
 
                  return;
              }
@@ -109,10 +114,46 @@
                  class="ptah-loading-bar absolute inset-0 hidden"></div>
         </div>
 
-        @if ($viewMode === 'cards')
+        {{-- Layout da listagem.
+
+             'auto' (default) renderiza AS DUAS e deixa o CSS escolher: tabela em
+             >= md, cards abaixo. A alternativa seria decidir no servidor, mas o
+             servidor nao conhece o viewport — precisaria de um round-trip do
+             Alpine informando a largura, o que custa um flash de layout errado
+             no primeiro paint e outro a cada rotacao de tela. Aqui a troca e
+             instantanea, sobrevive a redimensionamento e nao persiste nada
+             especifico do aparelho.
+
+             O custo e HTML duplicado no modo auto, MEDIDO e nao estimado: numa
+             tela real de 4 linhas, +11.826 bytes crus e +984 bytes apos gzip
+             (2,1% da resposta). O gzip come quase tudo porque a marcacao
+             duplicada e altamente repetitiva; a ~2,9 KB crus por linha, uma
+             pagina de 25 linhas custa da ordem de 70 KB crus.
+
+             Nao ha trabalho extra de banco nem de formatacao: as duas visoes
+             consomem as MESMAS linhas e o mesmo formatCell. A metade escondida
+             fica em display:none, que o navegador nao pagina nem calcula
+             layout. E quem fixa 'table' ou 'cards' nao paga nada disso —
+             renderiza apenas a visao escolhida.
+
+             ptah.crud.responsive_cards = false devolve o comportamento anterior
+             (auto se comporta como table) para quem nao quiser a troca. --}}
+        @php
+            $ptahResponsiveCards = (bool) config('ptah.crud.responsive_cards', true);
+            $ptahViewMode = ($viewMode === 'auto' && ! $ptahResponsiveCards) ? 'table' : $viewMode;
+        @endphp
+
+        @if ($ptahViewMode === 'cards')
             @include('ptah::livewire.base-crud.partials._cards')
-        @else
+        @elseif ($ptahViewMode === 'table')
             @include('ptah::livewire.base-crud.partials._table')
+        @else
+            <div class="hidden md:block">
+                @include('ptah::livewire.base-crud.partials._table')
+            </div>
+            <div class="md:hidden">
+                @include('ptah::livewire.base-crud.partials._cards')
+            </div>
         @endif
 
         @include('ptah::livewire.base-crud.partials._pagination')

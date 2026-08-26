@@ -216,7 +216,7 @@ All public properties are accessible in the view via `$this->` or directly in th
 | `$columnOrder` | `array` | `[]` | Custom column order |
 | `$columnWidths` | `array` | `[]` | Custom column widths |
 | `$viewDensity` | `string` | `'global'` | `global` (inherits the user's Appearance density preset), `compact`, `comfortable`, `spacious` |
-| `$viewMode` | `string` | `'table'` | Display mode |
+| `$viewMode` | `string` | `'auto'` | Listing layout: `auto` (table on wide screens, cards on narrow), or an explicit `table`/`cards` pin |
 
 ### External filter / multi-tenant
 
@@ -2466,8 +2466,12 @@ partials under `resources/views/livewire/base-crud/partials/` — namespace
 
         @if ($viewMode === 'cards')
             @include('ptah::livewire.base-crud.partials._cards')
-        @else
+        @elseif ($viewMode === 'table')
             @include('ptah::livewire.base-crud.partials._table')
+        @else
+            {{-- 'auto': both, each gated by its breakpoint (see Responsive layout) --}}
+            <div class="hidden md:block">@include('ptah::livewire.base-crud.partials._table')</div>
+            <div class="md:hidden">@include('ptah::livewire.base-crud.partials._cards')</div>
         @endif
 
         @include('ptah::livewire.base-crud.partials._pagination')
@@ -2478,6 +2482,73 @@ partials under `resources/views/livewire/base-crud/partials/` — namespace
     @include('ptah::livewire.base-crud.partials._scripts')
 </div>
 ```
+
+### Responsive layout (`viewMode`)
+
+`$viewMode` has three states and defaults to **`auto`**:
+
+| Value | Behaviour |
+|---|---|
+| `auto` *(default)* | Table on `≥ md`, cards below. Decided by CSS at render time. |
+| `table` | Table on every viewport (horizontal scroll on a phone). |
+| `cards` | Cards on every viewport, including wide screens. |
+
+**Why a third state instead of just switching on a phone.** `$viewMode` is a
+*persisted per-user preference*, while the layout question is *per-device*.
+Writing `cards` because someone opened the screen on their phone would hand
+their desktop session a card grid the next morning. `auto` persists nothing
+device-specific.
+
+**Why CSS and not a viewport round-trip.** The server cannot know the viewport.
+Having Alpine measure it and tell the server costs a wrong-layout flash on
+first paint and another on every rotation. Under `auto` both layouts are
+rendered and CSS picks one, so the switch is instant and survives resize.
+
+The cost is duplicated markup, measured rather than assumed: on a real 4-row
+listing, **+11,826 bytes raw and +984 bytes after gzip** (2.1% of the
+response) — the duplicated structure is repetitive, so gzip absorbs nearly all
+of it. There is no extra database or formatting work: both layouts consume the
+same rows through the same `formatCell()`. The hidden half sits in
+`display:none`, which the browser does not lay out. An explicit `table`/`cards`
+pin renders only that layout and costs nothing.
+
+Set `ptah.crud.responsive_cards` to `false` to make `auto` behave exactly like
+`table` (the pre-1.25.0 behaviour). **If your application published
+`config/ptah.php` before this release, that key is absent from your copy** —
+Laravel merges package config shallowly, so a new *nested* key never reaches an
+existing published file. Absence reads as `true`, which is the intended
+default; to disable it you must add the key to your own config file, and the
+`PTAH_CRUD_RESPONSIVE_CARDS` env var alone will not reach you.
+
+**Existing installations get the new default.** Every preference blob written
+before this release stored `viewMode: 'table'` because that was the default,
+not a choice, so reading them literally would mean the responsive layout never
+reaches a single existing user. The preference schema version (`2.2.0`) is what
+makes the migration precise: pre-2.2.0 blobs storing `table` are read as
+`auto`, while a `table` pin chosen *after* upgrading is respected. A legacy
+`cards` value was always deliberate and is never touched.
+
+### Sorting in the card view
+
+The table sorts by clicking a column header, which folds two gestures into one
+(pick the column, click again to reverse). That does not translate to a touch
+screen, and the card view had no sorting at all — the order came from whatever
+the table view had last chosen, so on a phone, where the table is never opened,
+every listing was stuck on `id DESC`.
+
+`_sort-bar.blade.php` splits it into two controls: a `<select>` for the column
+and a button for the direction. Both are built from `sortableColumns()`, the
+same method that decides which table headers are clickable, so the select and
+the headers cannot drift apart. It renders nothing when a screen has no
+sortable column.
+
+`sortBy()` still serves the table headers — it *toggles* direction when the same
+column returns, which is right for a header and wrong for a dropdown, where
+re-picking the current option would silently reverse the listing. The select
+binds to `$sort` and goes through `updatedSort()`, which keeps the direction,
+resets the page, saves preferences, and re-validates the incoming value against
+`sortableColumns()`: a column the user is not allowed to read must not be
+namable, or the ordering becomes an oracle for it.
 
 The remaining 2 files are included from elsewhere, not directly from `base-crud.blade.php`:
 `_break-subtotal` is nested inside `_table.blade.php` (rendered once per group break), and
@@ -2494,7 +2565,8 @@ not to the runtime BaseCrud screen at all.
 | `_filter-panel.blade.php` | 376 | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
 | `_scripts.blade.php` | 265 | `@once` block with styles and JS for column drag-and-drop and resize |
 | `_config-form-preview.blade.php` | 147 | Live preview of a field inside the CrudConfig editor modal — included by `crud-config.blade.php`, not by `base-crud.blade.php` |
-| `_cards.blade.php` | 116 | Card/mosaic listing, shown instead of `_table` when `$viewMode === 'cards'` |
+| `_cards.blade.php` | 118 | Card/mosaic listing — the narrow-viewport layout under `auto`, or pinned via `$viewMode === 'cards'` |
+| `_sort-bar.blade.php` | 68 | Column + direction controls for the card view (the table's clickable headers have no equivalent gesture on a touch screen) |
 | `_url-filters-banner.blade.php` | 37 | Banner shown when the screen was opened with `?f[...]` URL filters |
 | `_break-subtotal.blade.php` | 35 | Group-break subtotal row — included from inside `_table.blade.php`, not directly |
 | `_pagination.blade.php` | 22 | Pagination div: first/last/next/prev links, record counter |
