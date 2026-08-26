@@ -392,6 +392,40 @@ Active name   Label of each company (clickable button)
 - Clicking another label switches the active company and reloads the current page
 - In dark mode, colors adapt via `.ptah-dark` on the ancestor element
 
+### On a phone: one menu instead of two controls
+
+The horizontal bar competed with the bell, the avatar and the settings gear for
+the same ~60px on a phone, and the companies came out overlapping and
+unreadable. Below the `md` breakpoint the inline bar is therefore hidden and the
+switcher reappears as a vertical section at the top of the navbar's **admin
+menu** — so the right-hand side is one menu rather than two controls colliding.
+
+That is the `$layout` property:
+
+| Value | Renders |
+|---|---|
+| `inline` *(default)* | The horizontal bar above — active company name, separator, one tab per company. |
+| `stacked` | A vertical list of menu items, for use inside a dropdown panel. |
+
+```blade
+{{-- What forge-navbar does --}}
+@livewire('ptah-company-switcher', ['layout' => 'stacked'], key('ptah-company-switcher-mobile'))
+```
+
+Three details worth knowing if you embed the switcher yourself:
+
+- **It is a second component instance, not copied markup.** Switching company
+  stays owned by `CompanySwitcher`, so there is no duplicated logic to fall out
+  of sync. A distinct `key` is required — two instances of the same component on
+  one page collide in Livewire's morph without one.
+- **The active row is marked by an icon, not only by colour** (`aria-current`
+  plus a check glyph). The dark navbar panel does not give two text colours
+  enough separation to rely on, and WCAG 1.4.1 forbids colour as the sole
+  carrier of information regardless.
+- **If no admin menu exists** — every module that generates it is off — the
+  inline bar stays visible on mobile instead. Cramped beats absent: hiding it
+  there would leave a phone user with no way to change company at all.
+
 ### `getLabelDisplay()`
 
 Method of the `Company` model. Returns in priority order:

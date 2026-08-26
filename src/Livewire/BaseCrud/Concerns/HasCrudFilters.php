@@ -34,6 +34,57 @@ trait HasCrudFilters
         $this->savePreferences();
     }
 
+    /**
+     * Livewire hook for the card view's sort select (`wire:model.live="sort"`).
+     *
+     * sortBy() cannot serve a select: it TOGGLES direction when the same column
+     * comes back, which is right for a clickable table header and wrong for a
+     * dropdown — re-picking the option you already have would silently reverse
+     * the listing. Choosing a column here keeps the current direction and only
+     * carries the side effects a new ordering needs.
+     *
+     * The value arrives from the client, so it is validated against the same
+     * allowlist the select was built from; anything else falls back to the key.
+     * Without this, `$wire.set('sort', ...)` could name a column the user is
+     * not allowed to read and use the ordering as an oracle for it.
+     */
+    public function updatedSort(): void
+    {
+        $allowed = array_column($this->sortableColumns(), 'sortBy');
+
+        if (! in_array($this->sort, $allowed, true) && $this->sort !== 'id') {
+            $this->sort = 'id';
+        }
+
+        $this->resetPage();
+        $this->savePreferences();
+    }
+
+    /**
+     * Flips ASC/DESC without changing the column — the card view's counterpart
+     * to clicking an already-sorted table header.
+     */
+    public function toggleSortDirection(): void
+    {
+        $this->direction = $this->direction === 'ASC' ? 'DESC' : 'ASC';
+
+        $this->resetPage();
+        $this->savePreferences();
+    }
+
+    /**
+     * Guards the direction against a client write. `$direction` is bound in the
+     * view and interpolated into ORDER BY; Laravel's orderBy() throws on
+     * anything but asc/desc, so an unchecked value turns a listing into a 500.
+     */
+    public function updatedDirection(): void
+    {
+        $this->direction = strtoupper($this->direction) === 'ASC' ? 'ASC' : 'DESC';
+
+        $this->resetPage();
+        $this->savePreferences();
+    }
+
     // ── Watchers ───────────────────────────────────────────────────────────────
 
     public function updatedSearch(): void
@@ -121,11 +172,12 @@ trait HasCrudFilters
     }
 
     /**
-     * Switches between the table and the card (mosaic) listing.
+     * Switches the listing layout: 'auto' (follow the viewport), or an explicit
+     * 'table'/'cards' pin that holds on every screen size.
      */
     public function setViewMode(string $mode): void
     {
-        if (! in_array($mode, ['table', 'cards'], true)) {
+        if (! in_array($mode, ['auto', 'table', 'cards'], true)) {
             return;
         }
         $this->viewMode = $mode;

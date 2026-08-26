@@ -337,7 +337,19 @@ class BaseCrud extends Component
 
     public string $viewDensity = 'global'; // global (segue o perfil) | compact | comfortable | spacious
 
-    public string $viewMode = 'table';
+    /**
+     * 'auto' | 'table' | 'cards'.
+     *
+     * 'auto' is the default and means "follow the viewport": the table on wide
+     * screens, cards on narrow ones. It exists because this property is a
+     * PERSISTED per-user preference while the layout question is per-DEVICE —
+     * writing 'cards' because someone opened the screen on a phone would hand
+     * their desktop session a card grid the next morning. With 'auto' the
+     * decision is made by CSS at render time and nothing device-specific is
+     * ever stored; 'table'/'cards' are explicit pins that hold on every
+     * viewport.
+     */
+    public string $viewMode = 'auto';
 
     // ── Export ────────────────────────────────────────────────────────────────
 

@@ -383,6 +383,47 @@
 .ptah-dark .ptah-c-btn:hover { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-btn:focus-visible { border-color: var(--ptah-primary-lite); }
 
+/* ── Barra de ordenacao da visao em cards ─────────────────────────────────
+   A visao em cards nao tinha ordenacao: a ordem vinha do que a tabela tinha
+   escolhido, e no celular — onde a tabela nunca e aberta — isso significava
+   sempre id DESC (relato de uso real, ERP em producao).
+
+   Cores derivadas do MESMO contrato de .ptah-c-btn logo acima, para o controle
+   nao ser o unico elemento da tela fora dos eixos de aparencia. Altura vem de
+   .ptah-c-control (densidade), com um piso de 2.75rem ate 640px: 2.25rem do
+   modo confortavel e menor que o alvo de toque de 44px, e esta barra existe
+   exatamente para quem esta usando o dedo. */
+.ptah-c-sortbar_select,
+.ptah-c-sortbar_dir               { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text-secondary); }
+.ptah-c-sortbar_select:hover,
+.ptah-c-sortbar_dir:hover         { background-color: var(--ptah-surface-hover); }
+.ptah-c-sortbar_select:focus-visible,
+.ptah-c-sortbar_dir:focus-visible { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-c-sortbar_icon              { color: var(--ptah-icon-muted); }
+/* Botao quadrado de sentido: apenas centraliza o glifo. .ptah-c-control ja
+   define display:inline-flex e align-items:center — aqui falta so o eixo
+   horizontal, porque o conteudo e um icone sozinho. */
+.ptah-c-sortbar_dir               { justify-content: center; }
+
+.ptah-dark .ptah-c-sortbar_select,
+.ptah-dark .ptah-c-sortbar_dir               { background-color: var(--ptah-surface); border-color: var(--ptah-line-control); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-sortbar_select:hover,
+.ptah-dark .ptah-c-sortbar_dir:hover         { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-sortbar_select:focus-visible,
+.ptah-dark .ptah-c-sortbar_dir:focus-visible { border-color: var(--ptah-primary-lite); }
+
+/* NAO existe override de altura aqui, e isso e deliberado.
+   A primeira versao punha min-height:2.75rem abaixo de 640px "pelo alvo de
+   toque de 44px". O efeito foi tirar esses dois controles do eixo de
+   densidade: eles ficavam 44px enquanto a toolbar logo acima ficava 36px no
+   modo confortavel (e 28px no compacto), visivelmente desalinhados — relatado
+   na primeira revisao visual. min-height vence height, entao qualquer piso
+   aqui anula --ptah-control-h.
+
+   Quem quer controle maior no dedo ja tem a alavanca certa: a densidade
+   "espacosa" do perfil (--ptah-control-h: 2.75rem), que sobe TODOS os
+   controles juntos em vez de destacar dois. */
+
 /* forge-select: keyboard-highlighted option (arrow keys) */
 .ptah-select-active            { background-color: var(--ptah-primary-soft); }
 .ptah-dark .ptah-select-active { background-color: color-mix(in srgb, var(--ptah-primary) 24%, transparent); }

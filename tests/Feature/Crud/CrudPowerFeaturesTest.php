@@ -136,15 +136,21 @@ class CrudPowerFeaturesTest extends TestCase
         $component->call('toggleDetail', $id)->assertSet('expandedRows', []);
     }
 
-    // ── View mode (table ⇄ cards) ─────────────────────────────────────────────
+    // ── View mode (auto ⇄ table ⇄ cards) ──────────────────────────────────────
 
     #[Test]
-    public function view_mode_toggles_between_table_and_cards(): void
+    public function view_mode_cycles_through_auto_table_and_cards(): void
     {
         $this->makeConfig();
         $this->seedRows();
 
+        // The default became 'auto' when the card layout stopped needing to be
+        // hand-picked on a phone; 'table' and 'cards' are now explicit pins.
+        // See CrudResponsiveViewModeTest for the state machine and the legacy
+        // preference migration.
         $component = Livewire::test(BaseCrud::class, ['model' => PowerStub::class])
+            ->assertSet('viewMode', 'auto')
+            ->call('setViewMode', 'table')
             ->assertSet('viewMode', 'table')
             ->call('setViewMode', 'cards')
             ->assertSet('viewMode', 'cards');

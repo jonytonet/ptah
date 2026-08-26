@@ -12,12 +12,19 @@ use Ptah\Models\UserPreference;
  */
 trait HasCrudPreferences
 {
+    /**
+     * Schema version of the persisted preference blob. Bumped to 2.2.0 when
+     * `viewMode` gained the 'auto' state — see the migration in
+     * loadPreferences().
+     */
+    private const PREFS_VERSION = '2.2.0';
+
     // ── Save / load ────────────────────────────────────────────────────────────
 
     public function savePreferences(): void
     {
         $prefs = [
-            '_version' => '2.1.0',
+            '_version' => self::PREFS_VERSION,
             '_lastModified' => now()->toIso8601String(),
             'company' => $this->companyFilter ?: ptah_company_id(),
             'table' => [
@@ -97,7 +104,22 @@ trait HasCrudPreferences
         $this->columnOrder = $prefs['columnOrder'] ?? [];
         $this->columnWidths = $prefs['columnWidths'] ?? [];
         $this->formDataColumns = $prefs['columns'] ?? $this->formDataColumns;
-        $this->viewMode = $prefs['viewMode'] ?? 'table';
+        // Legacy migration, same reasoning as viewDensity's below: before 'auto'
+        // existed, EVERY screen persisted 'table' because it was the default —
+        // it was never a choice. Reading those rows as a deliberate pin would
+        // mean the responsive card layout never reaches a single existing
+        // installation, which is exactly the users who would benefit from it.
+        //
+        // The version marker is what makes this precise rather than a guess: a
+        // blob written by 2.2.0 or later stores what the user actually picked,
+        // so a 'table' pin chosen AFTER this release is respected and left
+        // alone. Only pre-2.2.0 blobs are reinterpreted.
+        $storedVersion = (string) ($prefs['_version'] ?? '0');
+        $storedViewMode = $prefs['viewMode'] ?? 'table';
+
+        $this->viewMode = (version_compare($storedVersion, '2.2.0', '<') && $storedViewMode === 'table')
+            ? 'auto'
+            : $storedViewMode;
         // Migracao de legado: antes do eixo global de aparencia (v1.18), toda tela
         // persistia 'comfortable' explicito por ser o default do dropdown — nao era
         // uma escolha. Mapear para 'global' devolve essas telas ao controle do perfil;

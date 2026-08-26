@@ -311,8 +311,21 @@
             </div>
         @endif
 
-        {{-- Modo de visualização: tabela ⇄ cards --}}
+        {{-- Modo de visualização: auto ⇄ tabela ⇄ cards.
+
+             'auto' e o default e o primeiro do grupo por ser o comportamento
+             esperado: tabela no desktop, cards no celular, sem ninguem
+             escolher nada. Os outros dois sao fixacoes explicitas que valem em
+             qualquer largura — quem quer o mosaico no monitor grande, ou a
+             tabela no telefone com rolagem horizontal, continua podendo. --}}
         <div class="inline-flex border rounded-md overflow-hidden ptah-c-btn" role="group" aria-label="{{ __('ptah::ui.btn_view_mode') }}">
+            <button wire:click="setViewMode('auto')"
+                class="p-2 transition-colors ptah-c-control {{ $viewMode === 'auto' ? 'ptah-c-btn_on' : '' }}"
+                title="{{ __('ptah::ui.view_mode_auto') }}" aria-label="{{ __('ptah::ui.view_mode_auto') }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </button>
             <button wire:click="setViewMode('table')"
                 class="p-2 transition-colors ptah-c-control {{ $viewMode === 'table' ? 'ptah-c-btn_on' : '' }}"
                 title="{{ __('ptah::ui.view_mode_table') }}" aria-label="{{ __('ptah::ui.view_mode_table') }}">
