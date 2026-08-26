@@ -7,6 +7,121 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.25.0] — 2026-08-25
+
+The mobile round. Every item here came from a production ERP's first day on a
+phone — none of it from the test suite.
+
+### Changed — cards are the default on a narrow screen
+
+`viewMode` gained a third state, **`auto`**, and it is the new default: the
+table at `≥ md`, cards below.
+
+The third state is not decoration. `viewMode` is a *persisted per-user*
+preference while the layout question is *per-device* — writing `cards` because
+someone opened a screen on their phone would hand their desktop session a card
+grid the next morning. `auto` persists nothing device-specific and lets CSS
+decide at render time, which also means no viewport round-trip, no wrong-layout
+flash on first paint, and none on rotation either.
+
+**Existing installations get it.** Every preference blob written before this
+release stored `viewMode: 'table'` because that was the default, not a choice;
+reading them literally would mean the responsive layout never arrives for a
+single existing user — exactly the people who reported the problem. The
+preference schema version (`2.2.0`) separates the two cases: pre-2.2.0 blobs
+storing `table` are read as `auto`, a `table` pin chosen *after* upgrading is
+respected, and a legacy `cards` was always deliberate and is never touched.
+Same mechanism the density axis used in 1.18.0.
+
+Rendering both layouts under `auto` costs, measured rather than assumed: on a
+real 4-row listing **+11,826 bytes raw, +984 after gzip (2.1%)**. No extra
+database or formatting work — both layouts consume the same rows through the
+same `formatCell()`, and the hidden half sits in `display:none`, which the
+browser does not lay out. An explicit `table`/`cards` pin renders only that
+layout.
+
+Set `ptah.crud.responsive_cards` to `false` for the previous behaviour. **If
+you published `config/ptah.php` before this release, that key is absent from
+your copy** — Laravel merges package config shallowly, so a new *nested* key
+never reaches an existing published file. Absence reads as `true`, which is the
+intended default; disabling it means adding the key to your own config, and the
+`PTAH_CRUD_RESPONSIVE_CARDS` env var alone will not reach you.
+
+### Added — the card view can be sorted
+
+It could not be, at all. The order came from whatever the **table** view had
+last chosen, so on a phone — where the table is never opened — every listing
+was frozen on `id DESC`.
+
+A table header folds two gestures into one (pick the column, click again to
+reverse), which does not survive a touch screen. The new `_sort-bar` splits
+them: a `<select>` for the column, a button for the direction. Both are built
+from the new `sortableColumns()`, the same method that decides which table
+headers are clickable, so the select and the headers cannot drift apart. It
+renders nothing on a screen with no sortable column.
+
+`sortBy()` still serves the headers. The select goes through `updatedSort()`,
+which **keeps** the direction — toggling on re-pick would silently reverse the
+listing — resets the page, saves preferences, and re-validates the incoming
+value against the allowlist: a column the user may not read must not be
+namable, or ordering becomes an oracle for it.
+
+### Fixed — a tampered sort direction could 500 the screen
+
+`$direction` is bound in the view and interpolated into `ORDER BY`. Laravel's
+`orderBy()` throws on anything but asc/desc, so a single `$wire.set` was enough
+to take a listing down. `updatedDirection()` now normalises it.
+
+### Changed — the navbar collapses into one menu on a phone
+
+The company switcher's inline bar (active company name plus one tab per
+company) fought the bell, the avatar and the settings gear for the same ~60px,
+and the companies came out overlapping and unreadable.
+
+Below `md` the inline bar is hidden and the switcher reappears as a vertical
+section at the top of the admin menu — the switcher's new `stacked` layout. It
+is a second instance of the same Livewire component, not copied markup, so
+switching company stays owned by `CompanySwitcher` and there is no duplicated
+logic to fall out of sync. The active row is marked by an icon and
+`aria-current`, not by colour alone (WCAG 1.4.1, and the dark panel does not
+give two text colours enough separation anyway).
+
+If no admin menu exists — every module that generates it is off — the inline bar
+stays visible on mobile instead. Cramped beats absent: hiding it there would
+leave a phone user with no way to change company at all.
+
+### Fixed — three regressions from this very release, caught by looking
+
+Recorded because each is a class of bug a green suite cannot see:
+
+- **The descending sort icon was clipped.** Its path drew to `y=28` inside a
+  24-unit `viewBox`. `DESC` is the default direction, so it was the icon every
+  user would have seen first.
+- **`min-height: 2.75rem` on the sort controls broke the density axis.** Added
+  "for the 44px touch target", it lifted exactly two controls off
+  `--ptah-control-h`: 44px against the toolbar's 36px (comfortable) or 28px
+  (compact) — `min-height` beats `height`. Removed, because the lever already
+  existed: the profile's **spacious** density *is* 44px and raises every
+  control together. Measured after the fix: 28 / 36 / 44 px across all four
+  controls.
+- **Hiding the navbar's middle grid child moved the actions to the middle.** A
+  `display:none` item occupies no grid column, so auto-placement pulled the
+  actions from column 3 into the `auto` column 2 and they rendered mid-bar
+  instead of against the right edge. Fixed with an explicit `col-start-3`;
+  measured 16px from the right edge (the navbar's own `px-4`) at 390 / 767 /
+  768 / 1440.
+
+All three now have guards. A note on the verification, since it cost time:
+Chrome on Windows clamps `--window-size` to roughly 504px, so only device
+emulation gives a true phone viewport — the "overflow" first visible in a
+screenshot was the image being cropped at 390 while the page was laid out at
+504.
+
+**Suite:** 1802 passing (+26). PHPStan clean, no new baseline entries. No
+migrations.
+
+---
+
 ## [1.24.0] — 2026-08-24
 
 Closes the `--style=` design debt by deciding the question underneath it: the
@@ -2773,7 +2888,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.24.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.25.0...HEAD
+[1.25.0]: https://github.com/jonytonet/ptah/compare/v1.24.0...v1.25.0
 [1.24.0]: https://github.com/jonytonet/ptah/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/jonytonet/ptah/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/jonytonet/ptah/compare/v1.21.0...v1.22.0
