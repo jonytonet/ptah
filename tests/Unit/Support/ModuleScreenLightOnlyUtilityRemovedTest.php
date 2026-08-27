@@ -39,6 +39,15 @@ class ModuleScreenLightOnlyUtilityRemovedTest extends TestCase
             'company-list sort-arrow text-blue-500' => ['livewire/company/company-list.blade.php', 'class="text-blue-500"'],
             'menu-list sort-arrow text-blue-500' => ['livewire/menu/menu-list.blade.php', 'class="text-blue-500"'],
             'department-list sort-arrow text-blue-500' => ['livewire/permission/department-list.blade.php', 'class="text-blue-500"'],
+
+            // Batch 6 (palette-token migration) — the exact focus:bg-white specificity
+            // bug reported by a user ("papel item fica branco") and the row-hover
+            // opacity a class-name repaint hook cannot reach.
+            'audit-list toolbar field bg-slate-50/60' => ['livewire/permission/audit-list.blade.php', 'bg-slate-50/60'],
+            'audit-list toolbar field focus:bg-white' => ['livewire/permission/audit-list.blade.php', 'focus:bg-white'],
+            'company-list row hover:bg-slate-50/70' => ['livewire/company/company-list.blade.php', 'hover:bg-slate-50/70'],
+            'menu-list row hover:bg-slate-50/70' => ['livewire/menu/menu-list.blade.php', 'hover:bg-slate-50/70'],
+            'exports-panel row hover:bg-slate-50/70' => ['livewire/exports/exports-panel.blade.php', 'hover:bg-slate-50/70'],
         ];
     }
 
@@ -80,6 +89,11 @@ class ModuleScreenLightOnlyUtilityRemovedTest extends TestCase
             'department-list pagination class' => ['livewire/permission/department-list.blade.php', 'ptah-c-pag'],
             'user-permission-list manage button class' => ['livewire/permission/user-permission-list.blade.php', 'ptah-c-mod_btn_soft'],
             'user-permission-list pagination class' => ['livewire/permission/user-permission-list.blade.php', 'ptah-c-pag'],
+
+            'audit-list toolbar field class' => ['livewire/permission/audit-list.blade.php', 'ptah-c-mod_field'],
+            'company-list row hover class' => ['livewire/company/company-list.blade.php', 'ptah-c-mod_row'],
+            'menu-list row hover class' => ['livewire/menu/menu-list.blade.php', 'ptah-c-mod_row'],
+            'exports-panel row hover class' => ['livewire/exports/exports-panel.blade.php', 'ptah-c-mod_row'],
         ];
     }
 

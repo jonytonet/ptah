@@ -2267,6 +2267,25 @@ main { background-color: var(--ptah-canvas); }
 .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
 
+/* ── audit-list toolbar fields — resting/focus opacity loses the fight ──────
+   `bg-slate-50/60 focus:bg-white` (`.focus\:bg-white:focus`, specificity
+   0,2,0) beats `.ptah-module-toolbar select` (0,1,1): focusing the filter
+   painted it solid white regardless of tone — the exact "papel item fica
+   branco" symptom, still live with the guard green. --ptah-field-muted/
+   --ptah-field are opaque by contract, so this loses the translucency on
+   purpose (that /60 was never reachable in dark mode anyway, since Tailwind
+   opacity modifiers don't compose with dark: the way this markup assumed). */
+.ptah-c-mod_field                 { background-color: var(--ptah-field-muted); }
+.ptah-c-mod_field:focus           { background-color: var(--ptah-field); }
+.ptah-dark .ptah-c-mod_field      { background-color: var(--ptah-field-muted); }
+.ptah-dark .ptah-c-mod_field:focus { background-color: var(--ptah-field); }
+
+/* ── ACL module table row hover — bg-slate-50/70 dark:hover:bg-slate-800/60
+   kept the translucency the repaint mechanism cannot reproduce (opacity
+   modifiers on a utility class are invisible to a class-name hook). ── */
+.ptah-c-mod_row:hover              { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
+.ptah-dark .ptah-c-mod_row:hover   { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 

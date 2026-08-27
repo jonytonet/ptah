@@ -62,7 +62,7 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($rows as $row)
-                    <tr class="transition-colors hover:bg-slate-50/70 {{ !$row->is_active ? 'opacity-50' : '' }}">
+                    <tr class="transition-colors ptah-c-mod_row {{ !$row->is_active ? 'opacity-50' : '' }}">
                         {{-- Ícone preview --}}
                         <td class="px-3 py-2.5 text-center">
                             <span class="text-slate-600 text-lg leading-none" title="{{ $row->icon }}">

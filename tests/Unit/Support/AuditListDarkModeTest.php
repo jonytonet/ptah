@@ -43,10 +43,15 @@ class AuditListDarkModeTest extends TestCase
 
         foreach ($matches[1] as $classList) {
             $this->assertStringContainsString('dark:border-slate-600', $classList);
-            $this->assertStringContainsString('dark:bg-slate-700/60', $classList);
             $this->assertStringContainsString('dark:text-slate-200', $classList);
-            $this->assertStringContainsString('dark:focus:bg-slate-700', $classList);
             $this->assertStringContainsString('dark:focus:border-blue-500', $classList);
+            // Palette-token migration (batch 6): the resting/focus background moved
+            // from dark:bg-slate-700/60 + dark:focus:bg-slate-700 to .ptah-c-mod_field
+            // (--ptah-field-muted / --ptah-field, both scopes) — same fix as the
+            // focus:bg-white specificity bug on the search input/selects above.
+            $this->assertStringContainsString('ptah-c-mod_field', $classList);
+            $this->assertStringNotContainsString('dark:bg-slate-700/60', $classList);
+            $this->assertStringNotContainsString('dark:focus:bg-slate-700', $classList);
         }
     }
 

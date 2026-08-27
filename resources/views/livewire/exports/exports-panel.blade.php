@@ -34,7 +34,7 @@
                         // ad-hoc hardcoded gray.
                         $status = $statusMap[$row->status] ?? ['label' => $row->status, 'class' => 'bg-dark text-white'];
                     @endphp
-                    <tr class="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60">
+                    <tr class="transition-colors ptah-c-mod_row">
                         <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ class_basename(str_replace('/', '\\', $row->model)) }}</td>
                         <td class="px-3 py-2.5 text-xs uppercase text-slate-500 dark:text-slate-400">{{ $row->format }}</td>
                         <td class="px-3 py-2.5 text-center">
