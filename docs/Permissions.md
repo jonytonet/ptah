@@ -1052,10 +1052,10 @@ Interactive documentation screen for the permissions system. Displayed in the na
 
 | Tab | `$activeTab` | Content |
 |---|---|---|
-| Overview | `overview` | Architecture diagram, core concepts (Role, Page, Object, MASTER, Company, Audit) and visual decision flow |
-| Step by Step | `setup` | 5 guided steps with direct links to each ACL module screen |
-| Code Examples | `code` | Highlighted snippets: `ptah_can()` in Blade, `ptah.can` middleware, `PermissionService`, `HasPermission` in Livewire and `.env` variables |
-| FAQ | `faq` | 8 Alpine accordions with frequently asked questions |
+| Overview | `overview` | Architecture diagram, core concepts (Role, Page, Object, MASTER, Company, Audit) and the real 6-node decision flow |
+| Step by Step | `setup` | 5 guided steps with direct links to each ACL module screen, plus `colsPermission` |
+| Code Examples | `code` | Plain, escaped snippets: `ptah_can()` in Blade (including a qualified key), `ptah.can` middleware, `PermissionServiceContract::check()`, a plain Livewire component (no dedicated trait exists) and the real `.env` audit/cache variables |
+| FAQ | `faq` | 10 Alpine accordions with frequently asked questions, sourced from `guide_faq_*` in both locales |
 
 **Livewire property:**
 

@@ -543,8 +543,8 @@ Permission::check(auth()-&gt;user(), 'vendas.criar-pedido', 'create');</code></p
 {
     public function deletar(int $id): void
     {
-        // Não existe trait "HasPermission"/requirePermission() no pacote —
-        // verifique com o helper e aborte manualmente.
+        // Sem trait dedicado no pacote — verifique com o helper e aborte
+        // manualmente.
         if (! ptah_can('vendas.criar-pedido', 'delete')) {
             abort(403);
         }

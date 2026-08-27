@@ -7,6 +7,87 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Changed — `read` is now a real gate on BaseCrud, MASTER ratified as global
+
+- **`can_read` now closes the screen.** `BaseCrud::render()` aborts 403 before
+  the listing query runs when the CRUD's `permissionIdentifier` is denied
+  `read`; export/bulk-export/queued-export/print follow the same rule. Before
+  this, `can_read = false` never actually hid anything — the docs and the
+  in-app guide taught it as if it did. `can_read` defaults to `true` (schema
+  and `RoleService::bindPageObject()`), so no existing grant is affected; only
+  a host that explicitly unchecked `read` starts being denied. A CRUD with no
+  `permissionIdentifier` configured is unaffected either way.
+- **MASTER is ratified as GLOBAL by definition.** `company_id` on a MASTER
+  binding was already silently ignored by `PermissionService::queryIsMaster()`
+  (never filtered by company); this is now documented as intentional rather
+  than fixed, since scoping it would revoke access for every existing MASTER
+  binding created under the opposite assumption. New/updated MASTER bindings
+  now have `company_id` normalised to `null` at write time (logged), and
+  `ptah:config:doctor` flags any pre-existing MASTER binding that still
+  carries one, as a security alert.
+- **Docs stop promising a `Str::slug()` role-name match** that
+  `PermissionService::roleNamesMatch()` dropped five releases ago (identity
+  match is case-insensitive/trimmed only — separators are not collapsed).
+
+### Fixed — `/ptah-permission-guide` taught APIs that don't exist
+
+The in-app manual (`Ptah\Livewire\Permission\PermissionGuide`) is a text
+screen with no logic of its own, and had drifted out of sync with the code it
+documents — four of its code samples would fatal-error if copied verbatim:
+`Ptah\Traits\HasPermission` (never existed), `PermissionServiceContract::
+can(userId:, key:, action:)` (the real method is `check(mixed $user, string
+$objectKey, string $action, ?int $companyId = null)`), `Ptah\Models\Page`
+(the class is `Ptah\Models\PtahPage`), and `PTAH_AUDIT_MAX_RECORDS` (does not
+exist anywhere in the repository — the real knobs are `audit`/
+`audit_denied`/`audit_master`/`audit_retention_days` plus `ptah:audit-prune`).
+The screen also never mentioned the qualified-key syntax (`page::obj_key`,
+v1.19) or column-level permissions (`colsPermission`, v1.20), taught the
+decision flow as a 3-node tree that ended in "redirects to login" (the guest
+branch actually resolves `allow_guest`, and the redirect belongs to the
+`auth` middleware, not this check), and the FAQ tab was hardcoded in
+Portuguese in the view while translated `guide_faq_*` keys existed in both
+locales and were never consulted — an `en`-locale user always read
+Portuguese.
+
+All of the above is corrected, plus: MASTER's company-blindness (see above),
+the real 3-way company-scope resolution, generation-based (instant) cache
+invalidation, the 4 real audit conditions, and two new FAQ entries pointing
+at `ptah:permission:why` (diagnostics) and explaining the new `read` gate.
+
+### Changed — `/ptah-permission-guide` theming (279 → 0 hardcoded utilities)
+
+The screen also carried 279 fixed-palette utilities with zero `dark:` pairs
+(tracked in `docs/KnownLimitations.md` §6 as "scheduled for its own wave" —
+this is that wave). It now reuses `<x-forge-page-header>`, `<x-forge-tabs>`,
+`<x-forge-card>`, `<x-forge-alert>` and existing `.ptah-c-*` classes, plus 8
+new token-driven classes with no new `--ptah-*` token:
+`.ptah-c-code`/`.ptah-c-code_cap` (the code-examples tab, which also drops
+~130 lines of hand-rolled per-token syntax-highlight spans in favour of a
+plain escaped code block), `.ptah-c-step_num` (setup-tab step badges) and
+`.ptah-c-guide_node`/`_q`/`_ok`/`_no`/`.ptah-c-guide_conn` (the architecture
+and decision-flow diagrams). Its hardcoded-palette-ceiling fixture entry is
+removed (count reached 0). A companion sweep fixed 23 fixed-palette
+utilities baked directly into the `guide_*` lang strings themselves (`bg-
+slate-100` code chips, `text-indigo-600`/`text-purple-700`/`text-blue-700`/
+`text-slate-400` spans) — invisible to the view-level ratchet, which never
+reads lang files.
+
+### Added
+
+- `tests/Unit/Support/GuidePaletteFreeLangTest.php` — zero-tolerance guard for
+  raw Tailwind palette utilities in any `guide_*` lang key, in both locales.
+- `tests/Unit/Support/PermissionGuideClaimsTest.php` — pins the 5 corrected
+  falsehoods and the 4 newly-taught terms against ever drifting back.
+- `tests/Feature/Permission/PermissionGuideContentTest.php` — renders all 4
+  tabs in `pt_BR` and `en` for a MASTER user, asserting no raw
+  `ptah::ui.`-prefixed key leaks into the output.
+- `ConfigDoctorCommand` check 10 — MASTER bindings scoped by `company_id`.
+
+**Compatibility:** no PHP API changes. A host that published/overrode the
+guide's view keeps its own copy and does not receive these corrections.
+
 ## [1.26.0] — 2026-08-26
 
 The theming wave. The package starts obeying its own rule — *every color
