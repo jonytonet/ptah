@@ -36,7 +36,7 @@
     "livewire/base-crud/partials/_table.blade.php": 7,
     "livewire/base-crud/partials/_toolbar.blade.php": 4,
     "livewire/company/company-list.blade.php": 19,
-    "livewire/exports/exports-panel.blade.php": 30,
+    "livewire/exports/exports-panel.blade.php": 6,
     "livewire/menu/menu-list.blade.php": 47,
     "livewire/notification/notification-bell.blade.php": 1,
     "livewire/permission/audit-list.blade.php": 30,

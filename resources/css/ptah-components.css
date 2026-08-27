@@ -2338,6 +2338,18 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_input                 { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
 
+/* ── exports-panel (batch 7) — a standalone table, not one of the 7
+   .ptah-module-table screens, so it gets its own thin set of classes
+   (reusing .ptah-c-mod_hdg for the h2 title and .ptah-c-tbl_head_row for
+   the thead background — same tokens, zero side effects to duplicate).
+   Status chips (queued/processing/done/failed/fallback) already ride
+   bg-warn/primary/success/danger/dark text-white/text-dark — untouched. ── */
+.ptah-c-exp_model                 { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-exp_model      { color: var(--ptah-text-secondary); }
+
+.ptah-c-exp_muted                 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-exp_muted      { color: var(--ptah-text-muted); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
