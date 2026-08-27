@@ -19,7 +19,7 @@
     "components/forge-table.blade.php": 5,
     "components/forge-textarea.blade.php": 2,
     "components/forge-toast-host.blade.php": 5,
-    "errors/403.blade.php": 10,
+    "errors/403.blade.php": 7,
     "forge-demo.blade.php": 17,
     "layouts/forge-auth.blade.php": 1,
     "livewire/ai/ai-chat-widget.blade.php": 21,
