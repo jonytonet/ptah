@@ -182,8 +182,7 @@
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- Create / Edit modal                                                    --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
-    @if($showModal)
-    <div x-data="{ open: true }" @close="$wire.closeModal()">
+    <div x-data="{ open: @entangle('showModal') }">
         <x-forge-modal
             title="{{ $isEditing ? __('ptah::ui.modal_edit_prefix').' '.__('ptah::ui.ai_config_title') : __('ptah::ui.modal_new_prefix').' '.__('ptah::ui.ai_config_title') }}"
             subtitle="{{ $isEditing ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle') }}"
@@ -324,13 +323,11 @@
             </x-slot:footer>
         </x-forge-modal>
     </div>
-    @endif
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- Delete confirmation modal                                              --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
-    @if($showDeleteModal)
-    <div x-data="{ open: true }" @close="$wire.set('showDeleteModal', false)">
+    <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal
             title="{{ __('ptah::ui.delete_title') }}"
             subtitle="{{ __('ptah::ui.delete_message') }}"
@@ -346,6 +343,5 @@
             </x-slot:footer>
         </x-forge-modal>
     </div>
-    @endif
 
 </div>
