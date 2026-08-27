@@ -828,6 +828,17 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-tbl_head_row            { background-color: var(--ptah-panel); }
 .ptah-dark .ptah-c-tbl_head_row { background-color: var(--ptah-panel); }
 
+/* ── forge-avatar: "light" color variant + neutral/offline badge dot.
+   primary/success/danger/dark text-white stays (ink on accent). ── */
+.ptah-c-avatar_light                    { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-avatar_light         { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+
+.ptah-c-avatar_badge_light              { background-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-avatar_badge_light   { background-color: var(--ptah-line-strong); }
+
+.ptah-c-avatar_badge_offline            { background-color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-icon-muted); }
+
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
 .ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }

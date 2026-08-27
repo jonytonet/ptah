@@ -1,6 +1,6 @@
 {
     "components/forge-alert.blade.php": 8,
-    "components/forge-avatar.blade.php": 9,
+    "components/forge-avatar.blade.php": 4,
     "components/forge-badge.blade.php": 6,
     "components/forge-button.blade.php": 33,
     "components/forge-card.blade.php": 1,
