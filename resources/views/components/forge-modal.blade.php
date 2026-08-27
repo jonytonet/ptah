@@ -108,7 +108,7 @@
         {{-- Header --}}
         <div class="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
             <div>
-                <h3 @if ($modalTitleId) id="{{ $modalTitleId }}" @endif class="text-base font-semibold text-gray-800 dark:text-white">{{ $title }}</h3>
+                <h3 @if ($modalTitleId) id="{{ $modalTitleId }}" @endif class="text-base font-semibold">{{ $title }}</h3>
                 @if ($subtitle)
                     <p class="text-xs text-gray-400 dark:text-slate-400 mt-0.5">{{ $subtitle }}</p>
                 @endif

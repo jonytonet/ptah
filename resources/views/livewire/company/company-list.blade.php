@@ -48,7 +48,7 @@
                         $badgeColors = ['bg-blue-700','bg-amber-500','bg-emerald-600','bg-rose-600','bg-purple-700','bg-sky-600'];
                         $badgeColor  = $badgeColors[$row->id % count($badgeColors)];
                     @endphp
-                    <tr class="transition-colors hover:bg-slate-50/70">
+                    <tr class="transition-colors ptah-c-mod_row">
                         <td class="px-3 py-2.5 text-center">
                             <div class="w-8 h-8 rounded-md {{ $badgeColor }} flex items-center justify-center mx-auto">
                                 <span class="text-white font-bold text-[10px] tracking-wide leading-none">

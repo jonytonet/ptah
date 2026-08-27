@@ -51,7 +51,7 @@
         'warn'    => 'text-yellow-600',
         default   => 'text-gray-400',
     };
-    $disabledClass  = $disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'bg-white';
+    $disabledClass  = $disabled ? 'opacity-50 cursor-not-allowed' : '';
     $paddingLeft    = $iconBefore ? 'pl-9' : 'pl-3';
     $isPassword     = $type === 'password';
     $paddingRight   = ($iconAfter || $loading || $isPassword) ? 'pr-9' : 'pr-3';
@@ -80,7 +80,7 @@
 
 <div class="ptah-input-wrapper w-full" @if($isPassword) x-data="{ _show: false }" @endif>
     @if ($label)
-        <label for="{{ $inputId }}" class="block text-xs font-medium text-gray-600 mb-1">
+        <label for="{{ $inputId }}" class="block text-xs font-medium mb-1">
             {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif
         </label>
     @endif
@@ -101,7 +101,7 @@
                 'placeholder' => $placeholder,
                 'name'        => $name,
                 'required'    => $required ?: null,
-                'class'       => "block w-full rounded border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm text-gray-800 {$disabledClass} transition-colors duration-150 focus:ring-2",
+                'class'       => "block w-full rounded border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm {$disabledClass} transition-colors duration-150 focus:ring-2",
                 'disabled'    => $disabled,
             ]) }}
             @if($isPassword) :type="_show ? 'text' : 'password'" @endif
@@ -116,7 +116,7 @@
             </span>
         @elseif ($isPassword)
             <button type="button" @click="_show = !_show"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors focus:outline-none"
                 :title="_show ? @js(__('ptah::ui.input_hide_password')) : @js(__('ptah::ui.input_show_password'))"
                 :aria-label="_show ? @js(__('ptah::ui.input_hide_password')) : @js(__('ptah::ui.input_show_password'))"
                 tabindex="-1">

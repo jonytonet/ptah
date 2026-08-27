@@ -31,6 +31,6 @@
         {{ $attributes->merge(['class' => "w-4 h-4 rounded border-gray-300 transition-colors {$colorClass}"]) }}
     />
     @if($label)
-        <span class="text-sm text-gray-700 select-none">{{ $label }}</span>
+        <span class="text-sm ptah-c-ctrl_label select-none">{{ $label }}</span>
     @endif
 </label>

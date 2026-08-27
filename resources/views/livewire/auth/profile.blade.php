@@ -56,7 +56,7 @@
             {{-- Habilitar −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−--}}
             @if (!auth()->user()->two_factor_confirmed_at)
                 <div class="max-w-lg">
-                    <p class="text-gray-600 mb-5">
+                    <p class="ptah-c-prof_body mb-5">
                         {{ __('ptah::ui.profile_2fa_intro') }}
                     </p>
 
@@ -71,19 +71,19 @@
                             </div>
                             <div>
                                 <p class="font-semibold ptah-c-section_ttl text-sm">Authenticator App (TOTP)</p>
-                                <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_totp_apps') }}</p>
+                                <p class="text-xs ptah-c-prof_hint">{{ __('ptah::ui.profile_totp_apps') }}</p>
                             </div>
                         </div>
 
                         @if ($showSetup2fa && $totpType === 'totp')
                             {{-- QR Code setup --}}
                             <div class="space-y-4">
-                                <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_scan_qr') }}</p>
+                                <p class="text-sm ptah-c-prof_body">{{ __('ptah::ui.profile_scan_qr') }}</p>
                                 <div class="flex justify-center p-3 bg-white rounded-md border border-gray-200 w-fit mx-auto">
                                     <img src="{{ $qrCodeSvg }}" alt="QR Code 2FA" class="w-[200px] h-[200px]">
                                 </div>
-                                <p class="text-xs text-gray-500 text-center">
-                                    {{ __('ptah::ui.profile_enter_key') }} <code class="font-mono bg-gray-100 dark:bg-dark-3 px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
+                                <p class="text-xs ptah-c-prof_hint text-center">
+                                    {{ __('ptah::ui.profile_enter_key') }} <code class="font-mono ptah-c-prof_chip px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
                                 </p>
                                 <form wire:submit="confirmTotp" class="flex gap-2">
                                     <x-forge-input name="totp_code" wire:model="totp_code" placeholder="000000"
@@ -108,7 +108,7 @@
                                 </div>
                                 <div>
                                     <p class="font-semibold ptah-c-section_ttl text-sm">E-mail</p>
-                                    <p class="text-xs text-gray-500">{{ __('ptah::ui.profile_email_code_hint', ['email' => auth()->user()->email]) }}</p>
+                                    <p class="text-xs ptah-c-prof_hint">{{ __('ptah::ui.profile_email_code_hint', ['email' => auth()->user()->email]) }}</p>
                                 </div>
                             </div>
                             <x-forge-button wire:click="enableEmailTwoFactor" color="secondary" size="sm">{{ __('ptah::ui.profile_enable_btn') }}</x-forge-button>
@@ -127,8 +127,8 @@
                     @if ($recoveryCodes)
                     <div>
                         <p class="font-semibold text-sm ptah-c-section_ttl mb-2">{{ __('ptah::ui.profile_recovery_codes_title') }}</p>
-                        <p class="text-xs text-gray-500 mb-3">{{ __('ptah::ui.profile_recovery_codes_hint') }}</p>
-                        <div class="grid grid-cols-2 gap-1 font-mono text-sm bg-gray-50 dark:bg-dark-3 p-3 rounded-md">
+                        <p class="text-xs ptah-c-prof_hint mb-3">{{ __('ptah::ui.profile_recovery_codes_hint') }}</p>
+                        <div class="grid grid-cols-2 gap-1 font-mono text-sm ptah-c-prof_panel p-3 rounded-md">
                             @foreach ($recoveryCodes as $rc)
                                 <span>{{ $rc }}</span>
                             @endforeach
@@ -156,7 +156,7 @@
         <x-forge-card>
 
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm text-gray-600">{{ __('ptah::ui.profile_sessions_intro') }}</p>
+                <p class="text-sm ptah-c-prof_body">{{ __('ptah::ui.profile_sessions_intro') }}</p>
                 <x-forge-button wire:click="revokeOtherSessions" color="danger" size="sm"
                     wire:confirm="{{ __('ptah::ui.profile_disconnect_confirm') }}">
                     {{ __('ptah::ui.profile_disconnect_others') }}
@@ -170,7 +170,7 @@
                     @foreach ($sessions as $session)
                     <div class="flex items-center justify-between py-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-dark-3 flex items-center justify-center text-gray-400">
+                            <div class="w-9 h-9 rounded-full ptah-c-prof_chip flex items-center justify-center ptah-c-prof_icon">
                                 @if (str_contains(strtolower($session['platform'] ?? ''), 'mobile') || in_array($session['platform'] ?? '', ['Android','iPhone','iPad']))
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -190,7 +190,7 @@
                                         <span class="ml-1 text-xs text-green-600 font-semibold">({{ __('ptah::ui.profile_this_session') }})</span>
                                     @endif
                                 </p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs ptah-c-prof_hint">
                                     {{ $session['platform'] ?? '' }} · {{ $session['ip_address'] ?? '' }}
                                     · {{ __('ptah::ui.profile_last_activity') }} {{ $session['last_activity_human'] ?? '' }}
                                 </p>
@@ -232,7 +232,7 @@
                     <div>
                         <label class="block text-sm font-medium ptah-c-form_lbl mb-1">{{ __('ptah::ui.profile_select_image') }}</label>
                         <input type="file" wire:model="photo" accept="image/*"
-                               class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
+                               class="w-full text-sm ptah-c-prof_hint file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
                         @error('photo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
 

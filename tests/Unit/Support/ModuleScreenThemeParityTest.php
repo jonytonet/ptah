@@ -66,7 +66,7 @@ class ModuleScreenThemeParityTest extends TestCase
     {
         return [
             '.ptah-module-toolbar' => ['.ptah-module-toolbar'],
-            '.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input), .ptah-module-toolbar select' => ['.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input), .ptah-module-toolbar select'],
+            '.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field), .ptah-module-toolbar select:not(.ptah-c-mod_field)' => ['.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field), .ptah-module-toolbar select:not(.ptah-c-mod_field)'],
             '.ptah-module-toolbar input[type="search"]::placeholder' => ['.ptah-module-toolbar input[type="search"]::placeholder'],
             '.ptah-module-table' => ['.ptah-module-table'],
             '.ptah-module-table thead tr' => ['.ptah-module-table thead tr'],
@@ -136,6 +136,15 @@ class ModuleScreenThemeParityTest extends TestCase
             '.ptah-c-acc_hd' => ['.ptah-c-acc_hd'],
             '.ptah-c-mod_obj_ttl' => ['.ptah-c-mod_obj_ttl'],
             '.ptah-c-mod_obj_type' => ['.ptah-c-mod_obj_type'],
+
+            // Onda B (batch 6) — audit-list's toolbar fields (bg-slate-50/60
+            // focus:bg-white, opaque-by-contract replacement for the /60
+            // translucency the .focus\:bg-white:focus specificity bug exploited)
+            // and the ACL row-hover tint 3 module screens carried as a plain
+            // opacity utility (invisible to a class-name repaint hook).
+            '.ptah-c-mod_field' => ['.ptah-c-mod_field'],
+            '.ptah-c-mod_field:focus' => ['.ptah-c-mod_field:focus'],
+            '.ptah-c-mod_row:hover' => ['.ptah-c-mod_row:hover'],
         ];
     }
 

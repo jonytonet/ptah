@@ -115,18 +115,17 @@
         /* ─── Page Header ──────────────────────────────────── */
         .ptah-dark .ptah-page-header h1 { color: #e2e8f0; }
         .ptah-dark .ptah-page-header p  { color: #94a3b8; }
-        .ptah-dark .ptah-page-header a  { background-color: #334155; color: #cbd5e1; }
-        .ptah-dark .ptah-page-header a:hover { background-color: #475569; }
+        /* .ptah-page-header a (back button) migrado para resources/css/ptah-components.css
+           (.ptah-c-phdr_back) — essa regra ficava aqui em cima na cascata e vencia por
+           especificidade (0,3,1 contra 0,2,0), anulando a migracao. Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Buttons ───────────────────────────────────────── */
-        .ptah-dark .ptah-btn-light,
-        .ptah-dark .ptah-btn-secondary {
-            background-color: #334155 !important;
-            color: #e2e8f0 !important;
-            box-shadow: none !important;
-        }
-        .ptah-dark .ptah-btn-light:hover,
-        .ptah-dark .ptah-btn-secondary:hover { background-color: #475569 !important; }
+        /* .ptah-btn-light / .ptah-btn-secondary migrados para resources/css/ptah-components.css
+           — essas regras usavam !important e ficavam aqui em cima na cascata, vencendo
+           SEMPRE a migracao (a variante light/secondary do forge-button nunca renderizava
+           no escuro). Ver tests/Fixtures/css-layout-ledger.json para a contabilidade
+           site a site. */
 
         /* Inputs/Textarea/Select migrados para resources/css/ptah-components.css
            (secao "Form fields: input / textarea / select") — la ganharam o par
@@ -134,8 +133,10 @@
            tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Stat Cards ────────────────────────────────────── */
-        .ptah-dark .ptah-stat-card                { background-color: #1e293b; }
-        .ptah-dark .ptah-stat-card .text-gray-500 { color: #94a3b8; }
+        /* Background migrado para resources/css/ptah-components.css (secao
+           "forge-stat-card"), la ganhou o par claro que faltava aqui; title/
+           trend-neutral tambem migraram para .ptah-c-stat_muted. Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
         .ptah-dark .ptah-stat-card .text-dark     { color: #e2e8f0; }
         .ptah-dark .ptah-stat-card .text-gray-400 { color: #64748b; }
 
@@ -173,13 +174,15 @@
         .ptah-dark .ptah-table-wrapper tbody tr:hover { background-color: rgba(91,33,182,.08); }
 
         /* ─── Pagination ──────────────────────────────────────── */
-        .ptah-dark .ptah-pagination button:not(.bg-primary)      { color: #94a3b8; border-color: #475569; }
-        .ptah-dark .ptah-pagination button:not(.bg-primary):hover { background-color: #334155; color: #e2e8f0; }
-        .ptah-dark .ptah-pagination .text-gray-500 { color: #94a3b8; }
-        .ptah-dark .ptah-pagination .text-gray-400 { color: #64748b; }
+        /* .ptah-pagination button:not(.bg-primary) migrado para resources/css/ptah-components.css
+           (.ptah-c-pag_btn/_num/_icon) — essa regra tinha especificidade (0,3,1) contra
+           (0,2,0) das classes novas e vencia sempre, anulando a migracao no escuro. Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Badge light ────────────────────────────────────── */
-        .ptah-dark .ptah-badge-light { background-color: #475569; color: #e2e8f0; }
+        /* Migrado para resources/css/ptah-components.css (secao "forge-badge"),
+           la ganhou o par claro que faltava aqui. Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Alert ──────────────────────────────────────────── */
         .ptah-dark .ptah-alert-primary { background-color: rgba(91,33,182,.18); }

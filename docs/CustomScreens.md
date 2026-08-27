@@ -492,7 +492,74 @@ class TaskList extends Component
 
 ---
 
-## 6. Checklist de PR
+**Paleta fixa em view do pacote é barrada por teste.** `HardcodedPaletteCeilingTest`
+mantém um teto POR ARQUIVO de utilitários `bg-*`/`text-*` de paleta fixa que só
+pode diminuir — a contagem cresceu 999→1019 entre 1.15.0 e 1.25.0 enquanto a
+regra só existia em prosa, e é por isso que agora existe catraca.
+
+---
+
+## 6. Diagnóstico: "troquei o tom para *papel* e um item ficou branco"
+
+O sintoma mais comum de tela fora do tema, visto em projeto real: o usuário
+troca o tom claro em `/profile` → Aparência para **papel** (ou **névoa**) e um
+cartão, um fundo ou um texto fica para trás — um retângulo branco numa página
+de papel. A causa é sempre a mesma: **alguma cor daquele item não passa por um
+token que os presets reescrevem.**
+
+### Como achar o infrator
+
+```bash
+# nas views do SEU projeto (o host):
+grep -rnE 'bg-(white|light|slate|gray)-?|text-(slate|gray)-|dark:|#[0-9a-fA-F]{3,6}'   resources/views --include='*.blade.php'
+
+# e no CSS próprio do host:
+grep -rnE '#[0-9a-fA-F]{3,6}|rgb\(' resources/css --include='*.css' | grep -v 'var(--'
+```
+
+Cada linha que aparecer é um candidato. Nem toda ocorrência é bug — `bg-primary`,
+`bg-success`, `bg-danger`, `bg-warn` são seguras (a primeira segue o eixo de
+accent; as demais são constantes de status por decisão) — mas **superfície e
+texto** em classe de paleta fixa são exatamente o que não acompanha.
+
+### Tabela de conversão
+
+| Se a view tem | Troque por |
+|---|---|
+| `bg-white`, `bg-light`, `bg-gray-50` (superfície de cartão) | `style="background: var(--ptah-surface)"` |
+| `bg-slate-50/100` (painel, faixa de cabeçalho) | `var(--ptah-panel)` ou `var(--ptah-surface-sunken)` |
+| `bg-white` em dropdown/menu flutuante | `var(--ptah-surface-raised)` |
+| `hover:bg-gray-100` | `var(--ptah-surface-hover)` (ou `--ptah-menu-hover` em item de menu) |
+| `text-slate-800`, `text-gray-900` | `var(--ptah-text)` (ou `--ptah-text-strong` para título) |
+| `text-slate-500`, `text-gray-400` | `var(--ptah-text-secondary)` / `--ptah-text-faint` |
+| `border-slate-200` | `var(--ptah-line)` (ou `--ptah-line-strong`) |
+| `dark:bg-slate-800` + par claro | **apague o par inteiro** — o token já carrega os dois modos |
+| `<style>` na view com hex | mova para o `app.css` do host, reescrito em tokens |
+
+O par `claro + dark:` é o caso que mais engana: ele *parece* cuidar de tema,
+mas cuida só do eixo claro/escuro e ignora os outros cinco. Um token cuida dos
+seis de uma vez — o `.ptah-dark` e cada preset reescrevem o MESMO nome.
+
+> **Escopo desta receita: o SEU projeto (host).** Dentro do pacote ptah a
+> convenção é outra — classe nomeada `ptah-c-*` com par de regras (claro e
+> `.ptah-dark`) em `resources/css/ptah-components.css`, nunca `style=""` inline.
+> O host usa `style=""`/token porque não pode editar o stylesheet do pacote;
+> quem contribui para o pacote segue a convenção dele, e o
+> `HardcodedPaletteCeilingTest` a aplica.
+
+### Se o infrator for do próprio ptah
+
+Algumas views internas do pacote ainda carregam paleta fixa (herança de antes
+do contrato de tokens) — a visão em cards do BaseCrud é o caso mais visível.
+Isso é dívida nossa, rastreada em
+[KnownLimitations.md](KnownLimitations.md#package-views-with-fixed-palette-surfaces);
+não tente "consertar" por cima com CSS no host, porque o seletor que você
+escrever vai quebrar quando o pacote corrigir. Se doer, abra uma issue e pine
+o tom **puro** até a correção.
+
+---
+
+## 7. Checklist de PR
 
 - [ ] Nenhuma cor/tamanho hardcoded — só `color="..."` dos componentes ou `var(--ptah-*)`.
 - [ ] Nenhum `<style>` na view; CSS extra (se necessário) vai no `app.css` do host, usando tokens.

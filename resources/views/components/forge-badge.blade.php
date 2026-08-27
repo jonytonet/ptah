@@ -20,10 +20,9 @@
         'danger'  => 'bg-danger text-white',
         'warn'    => 'bg-warn text-dark',
         'dark'    => 'bg-dark text-white',
-        'light'   => 'bg-gray-100 text-gray-800',
+        'light'   => 'ptah-badge-light',
     ];
     $colorClass = $colorMap[$color] ?? $colorMap['danger'];
-    $ptahBadgeClass = $color === 'light' ? 'ptah-badge-light' : '';
 
     $posMap = [
         'top-right'    => '-top-1.5 -right-1.5',
@@ -37,7 +36,7 @@
 
 <span class="relative inline-flex {{ $attributes->get('class', '') }}">
     {{ $slot }}
-    <span class="absolute {{ $posClass }} inline-flex items-center justify-center rounded-full {{ $colorClass }} {{ $badgeSize }} {{ $ptahBadgeClass }}">
+    <span class="absolute {{ $posClass }} inline-flex items-center justify-center rounded-full {{ $colorClass }} {{ $badgeSize }}">
         @if ($dot)
             <span class="absolute inline-flex h-full w-full rounded-full {{ $colorMap[$color] ?? $colorMap['danger'] }} opacity-75 animate-ping"></span>
         @else

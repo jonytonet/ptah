@@ -118,7 +118,7 @@
                                     $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-primary/15 dark:ring-primary/30';
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -167,7 +167,7 @@
                                             @keydown.space.prevent @keydown.enter.prevent="open = !open"
                                             @click="open = !open"
                                             :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
-                                            class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 bg-white dark:bg-slate-700 dark:text-white ptah-c-form_sel"
+                                            class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 ptah-c-form_sel"
                                         >
                                             <span
                                                 :class="(selected !== null && selected !== '') ? 'ptah-c-sel_val' : 'text-gray-400'"
@@ -186,7 +186,7 @@
                                             x-transition:enter="transition ease-out duration-150"
                                             x-transition:enter-start="opacity-0 -translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                            class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 ptah-c-dd">
+                                            class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 border-slate-200 dark:border-slate-600 ptah-c-dd">
                                             <ul class="py-1">
                                                 <template x-for="option in options" :key="option.value">
                                                     <li
@@ -222,7 +222,7 @@
                                         : null;
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -256,7 +256,7 @@
                                                 tabindex="{{ $tabIdx }}"
                                                 @if ($sdParentEmpty) disabled @endif
                                                 @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-800"
+                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed"
                                             />
                                             <button type="button"
                                                 tabindex="-1"
@@ -276,7 +276,7 @@
                                                 <button type="button"
                                                     wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
                                                     @click="open = false"
-                                                    class="block w-full px-4 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-600 dark:text-white ptah-c-dd_opt">
+                                                    class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
                                                     {{ $opt['label'] }}
                                                     @if (array_key_exists('labelTwo', $opt))
                                                         <span class="block text-[11px] opacity-70">{{ $opt['labelTwo'] }}</span>
@@ -340,7 +340,7 @@
                                             this.previewUrl = this.savedUrl;
                                         }
                                     }">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                     </label>
 
@@ -383,7 +383,7 @@
                                             placeholder="https://..."
                                             tabindex="{{ $tabIdx }}"
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
+                                            class="block w-full rounded-lg border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                         />
                                     </div>
 
@@ -450,7 +450,7 @@
                                             }
                                         }"
                                     >
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
+                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -462,7 +462,7 @@
                                             tabindex="{{ $tabIdx }}"
                                             placeholder="R$ 0,00"
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                            class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
+                                            class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                         />
                                         <input
                                             type="hidden"
@@ -488,7 +488,7 @@
                                                 }
                                             }"
                                         >
-                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 ptah-c-form_lbl">
+                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
                                                 {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
                                             </label>
                                             <input
@@ -500,7 +500,7 @@
                                                 tabindex="{{ $tabIdx }}"
                                                 placeholder=""
                                                 @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 ptah-c-form_in"
+                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                             />
                                             <input type="hidden" x-ref="upHidden" wire:model="formData.{{ $fField }}" />
                                         </div>

@@ -11,19 +11,19 @@
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
         @if ($paginator->onFirstPage())
-            <span class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_previous') }}</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-md border opacity-40 cursor-not-allowed ptah-c-pag_btn_off">{{ __('ptah::ui.pagination_previous') }}</span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_previous') }}</button>
+                    class="px-3 py-2 text-sm font-medium rounded-md border transition-colors ptah-c-pag_btn">{{ __('ptah::ui.pagination_previous') }}</button>
         @endif
 
         <span class="text-sm text-gray-500 dark:text-slate-400">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
 
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{{ __('ptah::ui.pagination_next') }}</button>
+                    class="px-3 py-2 text-sm font-medium rounded-md border transition-colors ptah-c-pag_btn">{{ __('ptah::ui.pagination_next') }}</button>
         @else
-            <span class="px-3 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500 opacity-40 cursor-not-allowed">{{ __('ptah::ui.pagination_next') }}</span>
+            <span class="px-3 py-2 text-sm font-medium rounded-md border opacity-40 cursor-not-allowed ptah-c-pag_btn_off">{{ __('ptah::ui.pagination_next') }}</span>
         @endif
     </div>
 
@@ -39,7 +39,7 @@
             </span>
         @else
             <button wire:click="$set('page', {{ $paginator->currentPage() - 1 }})"
-                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ptah-c-pag_icon"
+                    class="p-2 rounded-md transition-colors ptah-c-pag_icon"
                     aria-label="{{ __('ptah::ui.pagination_previous_page') }}">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -50,7 +50,7 @@
         {{-- Números das páginas via $elements (padrão Laravel) --}}
         @foreach ($elements as $element)
             @if (is_string($element))
-                <span class="px-2 text-gray-400 dark:text-slate-500">{{ $element }}</span>
+                <span class="px-2 ptah-c-pag_gap">{{ $element }}</span>
             @elseif (is_array($element))
                 @foreach ($element as $page => $url)
                     @if ($page == $paginator->currentPage())
@@ -62,7 +62,7 @@
                         </button>
                     @else
                         <button wire:click="$set('page', {{ $page }})"
-                                class="w-9 h-9 rounded-md text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150">
+                                class="w-9 h-9 rounded-md text-sm font-medium transition-colors duration-150 ptah-c-pag_num">
                             {{ $page }}
                         </button>
                     @endif
@@ -73,7 +73,7 @@
         {{-- Botão > --}}
         @if ($paginator->hasMorePages())
             <button wire:click="$set('page', {{ $paginator->currentPage() + 1 }})"
-                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ptah-c-pag_icon"
+                    class="p-2 rounded-md transition-colors ptah-c-pag_icon"
                     aria-label="{{ __('ptah::ui.pagination_next_page') }}">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -89,7 +89,7 @@
 
     </div>
 
-    <p class="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
+    <p class="text-xs hidden sm:block ptah-c-pag_sum">
         {{ __('ptah::ui.pagination_page_of', ['current' => $paginator->currentPage(), 'last' => $paginator->lastPage()]) }}
     </p>
 </nav>

@@ -36,6 +36,21 @@
     @endif
 
     <style>
+        /* This is a standalone document (own <!DOCTYPE html>, optional CDN Tailwind
+           fallback above) that never loads resources/css/ptah-components.css, so the
+           --ptah-* neutral tokens do not exist here — same reason crud-print.blade.php
+           is exempt from the palette-utility guard. Light-mode values below are
+           literal hex, matching this file's own pre-existing idiom (the dark-mode
+           overrides beneath were already written the same way), not tokens.
+           auto-dark-bg/-card are safe to give a light rule here (bg-gray-50/bg-white
+           were each used with a single, consistent value everywhere the class
+           appears); auto-dark-txt/-muted are NOT (title vs back-button share
+           auto-dark-txt but started at text-gray-900 vs text-gray-700, and the
+           description vs "logged in as"/footer share auto-dark-muted but started at
+           text-gray-500 vs text-gray-400 — unifying either pair would change one
+           side's light-mode color, so those 7 sites keep their Tailwind utility). */
+        .auto-dark-bg   { background-color: #f9fafb; }
+        .auto-dark-card { background-color: #ffffff; }
         /* Dark mode via preferência do sistema como fallback */
         @media (prefers-color-scheme: dark) {
             .auto-dark-bg  { background-color: #0f172a; }
@@ -50,7 +65,7 @@
         .ptah-dark .auto-dark-muted { color: #94a3b8; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50 auto-dark-bg auto-dark-txt">
+<body class="min-h-screen flex items-center justify-center p-4 auto-dark-bg auto-dark-txt">
 
     {{--
         Detecta preferência de dark mode salva em localStorage e aplica .ptah-dark
@@ -70,7 +85,7 @@
     <div class="w-full max-w-lg">
 
         {{-- Card principal --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center auto-dark-card">
+        <div class="border border-gray-200 rounded-2xl shadow-sm p-8 text-center auto-dark-card">
 
             {{-- Ícone de escudo / cadeado --}}
             <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-red-50">
@@ -100,7 +115,7 @@
 
                 {{-- Voltar --}}
                 <a href="javascript:history.back()"
-                   class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 auto-dark-card auto-dark-txt">
+                   class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 auto-dark-card auto-dark-txt">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
                     </svg>

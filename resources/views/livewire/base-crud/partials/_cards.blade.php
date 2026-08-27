@@ -31,7 +31,7 @@
                  @click="ptahRowNav($event, '{{ $rowLink }}')"
                  @auxclick="ptahRowNav($event, '{{ $rowLink }}')"
              @endif
-             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card bg-white dark:bg-slate-800 hover:shadow-md
+             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card hover:shadow-md
                     {{ $rowLink ? 'cursor-pointer' : '' }}
                     {{ $isSelected ? 'ptah-c-tr_selected' : '' }}">
 
@@ -45,11 +45,11 @@
                 @endif
                 <div class="min-w-0 flex-1">
                     @if ($titleCol)
-                        <p class="text-sm font-semibold truncate text-slate-800 dark:text-white">
+                        <p class="text-sm font-semibold truncate ptah-c-card_ttl">
                             {!! $this->formatCell($titleCol, $row) !!}
                         </p>
                     @endif
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">#{{ $row->id ?? '—' }}</p>
+                    <p class="text-[11px] ptah-c-card_id">#{{ $row->id ?? '—' }}</p>
                 </div>
             </div>
 
@@ -60,7 +60,7 @@
                         <dt class="shrink-0 font-medium uppercase tracking-wide text-[10px] text-slate-400 dark:text-slate-500">
                             {{ $col['colsNomeLogico'] ?? $col['colsNomeFisico'] }}
                         </dt>
-                        <dd class="truncate text-right text-slate-700 dark:text-slate-200">
+                        <dd class="truncate text-right ptah-c-card_val">
                             {!! $this->formatCell($col, $row) !!}
                         </dd>
                     </div>

@@ -31,10 +31,10 @@
     $trendNegative = $trend && str_starts_with(ltrim($trend), '-');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'ptah-stat-card bg-white rounded-md p-5 border border-gray-200 hover:border-primary/40 transition-colors duration-150']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-stat-card rounded-md p-5 border border-gray-200 hover:border-primary/40 transition-colors duration-150']) }}>
     <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
-            <p class="text-sm text-gray-500 font-medium">{{ $title }}</p>
+            <p class="text-sm ptah-c-stat_muted font-medium">{{ $title }}</p>
             <p class="text-2xl md:text-3xl font-bold text-dark mt-1">{{ $value }}</p>
 
             @if($trend)
@@ -50,7 +50,7 @@
                         </svg>
                         <span class="text-xs font-semibold text-danger">{{ $trend }}</span>
                     @else
-                        <span class="text-xs font-semibold text-gray-500">{{ $trend }}</span>
+                        <span class="text-xs font-semibold ptah-c-stat_muted">{{ $trend }}</span>
                     @endif
                     @if($trendLabel)
                         <span class="text-xs text-gray-400">{{ $trendLabel }}</span>

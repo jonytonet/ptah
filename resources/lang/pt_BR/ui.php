@@ -609,6 +609,8 @@ return [
     'menu_form_icon_label' => 'Ícone',
     'menu_form_icon_hint' => '(classe CSS — Boxicons ou FontAwesome)',
     'menu_form_icon_ph' => 'bx bx-home  /  fas fa-user',
+    'menu_form_icon_preview' => 'Pré-visualização',
+    'menu_form_icon_examples' => 'Exemplos:',
     'menu_form_parent_group' => 'Grupo pai',
     'menu_form_root' => 'Raiz (nível superior)',
     'menu_form_order' => 'Ordem',

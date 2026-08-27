@@ -35,7 +35,7 @@
         'danger'  => 'bg-danger text-white',
         'warn'    => 'bg-warn text-dark',
         'dark'    => 'bg-dark text-white',
-        'light'   => 'bg-gray-100 text-gray-800',
+        'light'   => 'ptah-c-avatar_light',
     ];
     $colorClass = $colorMap[$color] ?? $colorMap['primary'];
 
@@ -48,10 +48,10 @@
     $badgeColorMap = [
         'primary' => 'bg-primary', 'success' => 'bg-success',
         'danger'  => 'bg-danger',  'warn'    => 'bg-warn',
-        'dark'    => 'bg-dark',    'light'   => 'bg-gray-200',
-        'online'  => 'bg-success', 'offline' => 'bg-gray-400', 'busy' => 'bg-danger',
+        'dark'    => 'bg-dark',    'light'   => 'ptah-c-avatar_badge_light',
+        'online'  => 'bg-success', 'offline' => 'ptah-c-avatar_badge_offline', 'busy' => 'bg-danger',
     ];
-    $badgeColorClass = isset($badgeColor) ? ($badgeColorMap[$badgeColor] ?? 'bg-gray-400') : null;
+    $badgeColorClass = isset($badgeColor) ? ($badgeColorMap[$badgeColor] ?? 'ptah-c-avatar_badge_offline') : null;
     $initials        = $text ? mb_strtoupper(mb_substr($text, 0, 2)) : '';
 @endphp
 

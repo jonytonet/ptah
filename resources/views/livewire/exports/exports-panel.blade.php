@@ -1,19 +1,19 @@
 {{-- ptah::livewire.exports.exports-panel --}}
 <div @if ($hasPending) wire:poll.5s @endif>
     <div class="mb-4">
-        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">{{ __('ptah::ui.exports_panel_title') }}</h2>
+        <h2 class="text-xl font-bold ptah-c-mod_hdg">{{ __('ptah::ui.exports_panel_title') }}</h2>
     </div>
 
     <div class="overflow-x-auto border rounded-md border-slate-200 dark:border-slate-700">
         <table class="w-full text-sm">
-            <thead class="bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700">
+            <thead class="ptah-c-tbl_head_row border-b-2 border-slate-200 dark:border-slate-700">
                 <tr>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_model') }}</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_format') }}</th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_status') }}</th>
-                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_rows') }}</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_created') }}</th>
-                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('ptah::ui.exports_panel_col_actions') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_model') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_format') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_status') }}</th>
+                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_rows') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_created') }}</th>
+                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider ptah-c-exp_muted">{{ __('ptah::ui.exports_panel_col_actions') }}</th>
                 </tr>
             </thead>
             {{-- aria-live: announces status changes (queued → processing → done/
@@ -34,9 +34,9 @@
                         // ad-hoc hardcoded gray.
                         $status = $statusMap[$row->status] ?? ['label' => $row->status, 'class' => 'bg-dark text-white'];
                     @endphp
-                    <tr class="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60">
-                        <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ class_basename(str_replace('/', '\\', $row->model)) }}</td>
-                        <td class="px-3 py-2.5 text-xs uppercase text-slate-500 dark:text-slate-400">{{ $row->format }}</td>
+                    <tr class="transition-colors ptah-c-mod_row">
+                        <td class="px-3 py-2.5 ptah-c-exp_model">{{ class_basename(str_replace('/', '\\', $row->model)) }}</td>
+                        <td class="px-3 py-2.5 text-xs uppercase ptah-c-exp_muted">{{ $row->format }}</td>
                         <td class="px-3 py-2.5 text-center">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $status['class'] }}"
                                 @if ($row->status === 'failed' && $row->error) title="{{ $row->error }}" @endif>
@@ -48,8 +48,8 @@
                                 </div>
                             @endif
                         </td>
-                        <td class="px-3 py-2.5 text-right text-slate-500 dark:text-slate-400">{{ $row->rows ?? '—' }}</td>
-                        <td class="px-3 py-2.5 text-xs whitespace-nowrap text-slate-500 dark:text-slate-400">{{ $row->created_at?->format('d/m/Y H:i:s') }}</td>
+                        <td class="px-3 py-2.5 text-right ptah-c-exp_muted">{{ $row->rows ?? '—' }}</td>
+                        <td class="px-3 py-2.5 text-xs whitespace-nowrap ptah-c-exp_muted">{{ $row->created_at?->format('d/m/Y H:i:s') }}</td>
                         <td class="px-3 py-2.5 text-right whitespace-nowrap"
                             wire:loading.class="opacity-50 pointer-events-none" wire:target="remove({{ $row->id }})">
                             @if ($canDownload)

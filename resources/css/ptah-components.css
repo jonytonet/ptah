@@ -638,8 +638,8 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-c-tbl_wrap::-webkit-scrollbar-thumb:hover { background-color: var(--ptah-line-field-hover); }
 
 /* ── Card (grid/mobile) — dedicated surface, not the table wrapper ── */
-.ptah-c-card            { border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
-.ptah-dark .ptah-c-card { border-color: var(--ptah-line-strong); box-shadow: none; }
+.ptah-c-card            { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.ptah-dark .ptah-c-card { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); box-shadow: none; }
 
 /* ── Table thead ── */
 .ptah-c-thead              { background-color: var(--ptah-panel); border-bottom: 2px solid var(--ptah-line-strong); }
@@ -764,7 +764,175 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
    still reads from `cursor-not-allowed` plus the absence of the hover
    background, not from a near-invisible icon. */
 .ptah-c-pag_icon            { color: var(--ptah-icon-muted); }
+.ptah-c-pag_icon:hover      { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-pag_icon { color: var(--ptah-icon-muted); }
+
+/* ── forge-pagination: prev/next text button, numbered button, gap, summary ── */
+/* Revisao adversarial (grupo 3d): o utilitario original era text-gray-600
+   (#4b5563) — --ptah-text-secondary (#475569 claro) fica muito mais perto
+   disso que --ptah-text (#374151), e no escuro e byte-identico a
+   dark:text-slate-300 (#cbd5e1) em vez de aproximado.
+   Revisao adversarial (grupo 4e): a borda contra --ptah-canvas cai a
+   1.30:1 em nevoa (piso 3:1, borda de componente de UI — ja falhava antes
+   da migracao com o border-gray-200 original, entao esta e uma correcao de
+   falha herdada, nao uma regressao desta onda). --ptah-line-field-hover
+   (invariante) da 3.72-4.76:1 contra --ptah-canvas nos 6 tons. */
+.ptah-c-pag_btn                 { color: var(--ptah-text-secondary); border-color: var(--ptah-line-field-hover); }
+.ptah-c-pag_btn:hover           { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text-secondary); border-color: var(--ptah-line-field-hover); }
+
+.ptah-c-pag_btn_off             { color: var(--ptah-text-faint); border-color: var(--ptah-line-field-hover); }
+.ptah-dark .ptah-c-pag_btn_off  { color: var(--ptah-text-faint); border-color: var(--ptah-line-field-hover); }
+
+/* Mesmo caso de .ptah-c-pag_btn acima (grupo 3d). */
+.ptah-c-pag_num                 { color: var(--ptah-text-secondary); }
+.ptah-c-pag_num:hover           { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-pag_num      { color: var(--ptah-text-secondary); }
+
+.ptah-c-pag_gap                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-pag_gap      { color: var(--ptah-text-faint); }
+
+.ptah-c-pag_sum                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-pag_sum      { color: var(--ptah-text-faint); }
+
+/* ── forge-stepper: zero dark: variant before this — the idle/neutral states
+   (active/completed already ride bg-primary/bg-success, both theme-aware)
+   are the only ones that needed a token pair. ── */
+/* Revisao adversarial (grupo 2d): --ptah-text-faint sobre --ptah-line-strong
+   cai a 3.68:1 em papel/suave (piso de texto 4.5:1 — o numero do passo e
+   texto 14px semibold, nao um icone). --ptah-text resolve 4.84:1 no pior
+   caso (mesma combinacao). O fundo do circulo (line-strong) e um chip, nao
+   um divisor informativo — fica como esta (fora do grupo 2c). */
+.ptah-c-step_circle_idle             { background-color: var(--ptah-line-strong); color: var(--ptah-text); }
+.ptah-dark .ptah-c-step_circle_idle  { background-color: var(--ptah-line-strong); color: var(--ptah-text); }
+
+/* Revisao adversarial (grupo 2c): a linha conectora carrega informacao
+   (progresso completado/pendente), nao e um separador decorativo — precisa
+   do piso de 3:1 de componente de UI. --ptah-line-strong caiu para ~1.4:1
+   no escuro (mesmo tom do --ptah-surface ao redor); --ptah-line-field da
+   ~3:1 nos 6 tons. */
+.ptah-c-step_line                    { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-step_line         { background-color: var(--ptah-line-field); }
+
+.ptah-c-step_label_done              { color: var(--ptah-text); }
+.ptah-dark .ptah-c-step_label_done   { color: var(--ptah-text); }
+
+.ptah-c-step_label_idle              { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-step_label_idle   { color: var(--ptah-text-faint); }
+
+.ptah-c-step_desc                    { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-step_desc         { color: var(--ptah-text-faint); }
+
+/* ── forge-stat-card: background moves in from forge-dashboard-layout.blade.php's
+   <style> (dark-only, #1e293b, byte-identical to --ptah-surface dark — see
+   css-layout-ledger.json "migrated"); title/trend-neutral text is new. ── */
+.ptah-stat-card                 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-stat-card      { background-color: var(--ptah-surface); }
+
+.ptah-c-stat_muted              { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-stat_muted   { color: var(--ptah-text-faint); }
+
+/* ── forge-table (standalone component, distinct from the BaseCrud _table.blade.php
+   partial that already uses .ptah-c-thead/.ptah-c-th_text) — zero dark: before
+   this. Header text reuses .ptah-c-th_text, same role, single declaration.
+   The mobile card's bg-white/text-gray-500 are NOT touched here: they are live
+   repaint hooks for forge-dashboard-layout.blade.php's
+   ".ptah-table-wrapper .bg-white.rounded-md" / ".text-gray-500" (shared with
+   ai-model-config-list.blade.php's desktop wrapper, not migrated in this
+   batch) — .ptah-table-wrapper IS applied by package views (forge-table.blade.php
+   itself, plus ai-model-config-list.blade.php), contrary to what the migration
+   plan assumed when sizing this batch's target count. */
+.ptah-c-tbl_surface             { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-tbl_surface  { background-color: var(--ptah-surface); }
+
+.ptah-c-tbl_head_row            { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-tbl_head_row { background-color: var(--ptah-panel); }
+
+/* ── forge-avatar: "light" color variant + neutral/offline badge dot.
+   primary/success/danger/dark text-white stays (ink on accent). ── */
+.ptah-c-avatar_light                    { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-avatar_light         { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+
+/* Revisao adversarial (grupo 2c): o badge "light" e um indicador de status,
+   nao decoracao — mesmo piso de 3:1 do step_line acima. */
+.ptah-c-avatar_badge_light              { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-avatar_badge_light   { background-color: var(--ptah-line-field); }
+
+/* Revisao adversarial (grupo 3b): --ptah-icon-muted (#64748b invariante) e
+   MAIS ESCURO que os originais (#9ca3af/#94a3b8) e caiu para ~2.2:1 contra
+   o fundo do chip no escuro — reduziu a visibilidade do indicador de status
+   em vez de so trocar a familia de cor. --ptah-text-muted resolve por
+   tom, >=4.72:1 contra --ptah-control-ghost em todos os 6 tons x 3 escalas. */
+.ptah-c-avatar_badge_offline            { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-text-muted); }
+
+/* ── forge-badge "light" color variant — background/text move in from
+   forge-dashboard-layout.blade.php's <style> (dark-only, #475569/#e2e8f0,
+   byte-identical to --ptah-control-ghost-hover/--ptah-text-strong dark — see
+   css-layout-ledger.json "migrated"); light-mode pair is new. ── */
+/* Revisao adversarial (grupo 3a): bg-gray-100 (o utilitario original no
+   claro) mapeia para --ptah-control-ghost, nao --ptah-control-ghost-hover —
+   compare com .ptah-c-avatar_light acima, que fez esse mapeamento certo. O
+   lado escuro fica: era literalmente #475569 no <style> do layout
+   (verificado no ledger), byte-identico a --ptah-control-ghost-hover dark. */
+.ptah-badge-light               { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-badge-light    { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
+
+/* ── forge-switch: zero dark: before this. Active/checked track already rides
+   bg-primary/success/danger/warn (theme-aware); only the "off" track, the
+   knob and the label were fixed-palette. ── */
+/* Revisao adversarial (grupo 2b): --ptah-line-field e calibrado a 3:1 contra
+   --ptah-surface nos 6 tons (piso de componente de UI) — o token anterior
+   nao tinha essa garantia. O knob (thumb) claro continua --ptah-surface
+   (branco/quase-branco, >=3:1 contra o trilho nos 3 tons claros); no escuro
+   --ptah-surface ficava MAIS ESCURO que o proprio trilho (thumb-vs-trilho
+   <1:1 de diferenca real). --ptah-text-on-accent (#ffffff invariante) da
+   4.85-5.62:1 contra --ptah-line-field nos 3 tons escuros — conhecido, nao
+   precisa de nova prova por tom×escala de texto (nao e um token de texto). */
+.ptah-c-switch_track_off             { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-switch_track_off  { background-color: var(--ptah-line-field); }
+
+.ptah-c-switch_thumb                 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-switch_thumb      { background-color: var(--ptah-text-on-accent); }
+
+/* Shared inline label for switch/checkbox/radio — same "text-sm text-gray-700
+   select-none" pattern in all three, zero dark: before this. */
+.ptah-c-ctrl_label                   { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ctrl_label        { color: var(--ptah-text); }
+
+/* ── forge-progress: zero dark: before this. The fill bar already rides
+   bg-primary/success/danger/warn/dark (theme-aware). ── */
+/* Revisao adversarial (grupo 2c): o trilho da progress bar carrega
+   informacao (parte "faltando" do progresso) — mesmo piso de 3:1 acima. */
+.ptah-c-progress_track               { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-progress_track    { background-color: var(--ptah-line-field); }
+
+.ptah-c-progress_label               { color: var(--ptah-text); }
+.ptah-dark .ptah-c-progress_label    { color: var(--ptah-text); }
+
+.ptah-c-progress_value               { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-progress_value    { color: var(--ptah-text-faint); }
+
+/* ── forge-chart-card: zero dark: before this. ── */
+.ptah-c-chart_surface                { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-chart_surface     { background-color: var(--ptah-surface); }
+
+/* Revisao adversarial (grupo 2a): text-dark (--color-dark, #1e293b invariant)
+   sobre .ptah-c-chart_surface no escuro = 1.00:1 (grafite: #1e293b sobre
+   #1e293b, o mesmo tom). --ptah-text-strong resolve por tom/escala de texto. */
+.ptah-c-chart_ttl                    { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chart_ttl         { color: var(--ptah-text-strong); }
+
+.ptah-c-chart_subtitle               { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chart_subtitle    { color: var(--ptah-text-faint); }
+
+.ptah-c-chart_footer                 { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-chart_footer      { background-color: var(--ptah-panel); }
+
+/* ── forge-list: zero dark: before this. Empty-state text-gray-400 is
+   deferred (faint-glyph tier, see KnownLimitations section 6). ── */
+.ptah-c-list_desc                    { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-list_desc         { color: var(--ptah-text-faint); }
 
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
@@ -896,8 +1064,12 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 
 .ptah-c-form_in            { background-color: var(--ptah-field); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
 .ptah-c-form_in:focus      { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-c-form_in::placeholder { color: var(--ptah-text-muted); }
+.ptah-c-form_in:disabled  { background-color: var(--ptah-surface-sunken); }
 .ptah-dark .ptah-c-form_in { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-form_in:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
+.ptah-dark .ptah-c-form_in::placeholder { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-form_in:disabled { background-color: var(--ptah-surface-sunken); }
 
 .ptah-c-form_sel           { background-color: var(--ptah-field); border-color: var(--ptah-line-control); color: var(--ptah-text-field); padding: .625rem .75rem; cursor: pointer; }
 .ptah-dark .ptah-c-form_sel { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
@@ -1383,9 +1555,79 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-c-btn_on  { background-color: var(--ptah-primary-soft-d); border-color: var(--ptah-primary); color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-btn_on:hover { background-color: var(--ptah-primary-soft-d); }
 
-/* ── forge-button color="dark" flat — override no dark mode ── */
-.ptah-dark .ptah-btn.ptah-btn-dark           { color: var(--ptah-text-muted); }
-.ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
+/* ── forge-button "light"/"secondary" neutral color families — solid, flat and
+   relief shapes. Both families render identically (same $colorMap values
+   pre-migration), so one selector list covers both; zero dark: coverage
+   before this. $ptahShapeClass (forge-button.blade.php) is what lets a single
+   .ptah-btn-light/.ptah-btn-secondary root tell the 3 shapes apart once their
+   own bg/hover/text/relief utilities are gone from the view. Token mapping:
+   bg-gray-100 -> --ptah-control-ghost, hover:bg-gray-200 ->
+   --ptah-control-ghost-hover, bg-gray-300 (relief) -> --ptah-line-strong,
+   text-gray-700 (both text and textSolid: same light value pre-migration)
+   -> --ptah-text, hover:bg-gray-50 (flatHover) -> --ptah-surface-hover
+   (byte-identical to dark:hover:bg-slate-700 in dark scope). ── */
+.ptah-btn-light,
+.ptah-btn-secondary {
+    background-color: var(--ptah-control-ghost);
+    color: var(--ptah-text);
+}
+.ptah-btn-light:hover,
+.ptah-btn-secondary:hover {
+    background-color: var(--ptah-control-ghost-hover);
+}
+.ptah-btn-light.ptah-btn-relief,
+.ptah-btn-secondary.ptah-btn-relief {
+    background-color: var(--ptah-line-strong);
+}
+.ptah-btn-light.ptah-btn-flat,
+.ptah-btn-secondary.ptah-btn-flat {
+    background-color: transparent;
+}
+.ptah-btn-light.ptah-btn-flat:hover,
+.ptah-btn-secondary.ptah-btn-flat:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-btn-light,
+.ptah-dark .ptah-btn-secondary {
+    background-color: var(--ptah-control-ghost);
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-btn-light:hover,
+.ptah-dark .ptah-btn-secondary:hover {
+    background-color: var(--ptah-control-ghost-hover);
+}
+/* Revisao adversarial (grupo 3c): --ptah-line-strong dark e byte-identico a
+   --ptah-control-ghost dark nos 3 tons escuros (mesmo valor por definicao —
+   ver preset), entao relief ficava indistinguivel do solido. Light nao tem
+   esse problema (--ptah-line-strong claro ja difere de --ptah-control-ghost
+   claro nos 3 tons), entao so o escuro muda, para --ptah-line-field-hover
+   (invariante, difere do solido em 2.18-2.63x nos 3 tons escuros). */
+.ptah-dark .ptah-btn-light.ptah-btn-relief,
+.ptah-dark .ptah-btn-secondary.ptah-btn-relief {
+    background-color: var(--ptah-line-field-hover);
+}
+.ptah-dark .ptah-btn-light.ptah-btn-flat,
+.ptah-dark .ptah-btn-secondary.ptah-btn-flat {
+    background-color: transparent;
+}
+.ptah-dark .ptah-btn-light.ptah-btn-flat:hover,
+.ptah-dark .ptah-btn-secondary.ptah-btn-flat:hover {
+    background-color: var(--ptah-surface-hover);
+}
+
+/* ── forge-button color="dark" flat — override no dark mode ──
+   Scoped to .ptah-btn-flat (not the bare .ptah-btn-dark) because the bg/
+   hover/relief scale below stays on the brand --color-dark utilities in
+   BOTH scopes (see the $colorMap comment in forge-button.blade.php) — an
+   unscoped rule here would also repaint the solid/relief shapes' textSolid
+   (text-white), which needs to stay white for contrast against bg-dark/
+   dark:bg-slate-600. Light side uses --ptah-text-strong / --ptah-control-ghost,
+   byte-identical to the text-dark / hover:bg-dark-light utilities they
+   replace (both #1e293b / #f1f5f9 respectively). */
+.ptah-btn.ptah-btn-dark.ptah-btn-flat              { color: var(--ptah-text-strong); }
+.ptah-btn.ptah-btn-dark.ptah-btn-flat:hover         { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-btn.ptah-btn-dark.ptah-btn-flat       { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-btn.ptah-btn-dark.ptah-btn-flat:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
 
 /* ── forge-button sm/md — densidade global (Onda B) ──────────────────────
    Só font-size, de propósito: height/padding-inline ficam de fora para
@@ -1653,8 +1895,14 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-c-muted_link:hover { color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
 
-.ptah-c-phdr_back            { color: var(--ptah-text-secondary); }
-.ptah-dark .ptah-c-phdr_back { color: var(--ptah-text-secondary); }
+/* Revisao adversarial (grupo 4c): --ptah-text-secondary sobre
+   --ptah-control-ghost-hover cai a 4.47:1 em papel/suave (abaixo do piso).
+   --ptah-text no :hover sobe a margem (o icone-only <svg> desse botao usa a
+   propria cor via currentColor). */
+.ptah-c-phdr_back             { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
+.ptah-c-phdr_back:hover       { color: var(--ptah-text); background-color: var(--ptah-control-ghost-hover); }
+.ptah-dark .ptah-c-phdr_back  { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-phdr_back:hover { color: var(--ptah-text); background-color: var(--ptah-control-ghost-hover); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */
@@ -2056,14 +2304,14 @@ main { background-color: var(--ptah-canvas); }
    que a do wrapper (.ptah-input-wrapper input) e a venceria, trocando a borda
    --ptah-line-field (3:1) por --ptah-line (~1,1:1) — borda invisível, regressão
    real pega em revisão. O :not() remove o match em vez de disputar a cascata. */
-.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
-.ptah-module-toolbar select {
+.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field),
+.ptah-module-toolbar select:not(.ptah-c-mod_field) {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line);
     color: var(--ptah-text-field);
 }
-.ptah-dark .ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
-.ptah-dark .ptah-module-toolbar select {
+.ptah-dark .ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field),
+.ptah-dark .ptah-module-toolbar select:not(.ptah-c-mod_field) {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line);
     color: var(--ptah-text-field);
@@ -2076,6 +2324,187 @@ main { background-color: var(--ptah-canvas); }
    no dark: pair. */
 .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-module-toolbar .text-slate-500 { color: var(--ptah-text-muted); }
+
+/* ── audit-list toolbar fields — resting/focus opacity loses the fight ──────
+   `bg-slate-50/60 focus:bg-white` (`.focus\:bg-white:focus`, specificity
+   0,2,0) beats `.ptah-module-toolbar select` (0,1,1): focusing the filter
+   painted it solid white regardless of tone — the exact "papel item fica
+   branco" symptom, still live with the guard green. --ptah-field-muted/
+   --ptah-field are opaque by contract, so this loses the translucency on
+   purpose (that /60 was never reachable in dark mode anyway, since Tailwind
+   opacity modifiers don't compose with dark: the way this markup assumed).
+
+   Revisao adversarial (grupo 4a): .ptah-c-mod_field sozinho (0,1,0) perdia
+   para .ptah-module-toolbar select (0,1,1) e para o seletor composto de
+   input[type="search"] acima (0,3,2) em repouso — inerte em 3 dos 5
+   controles de audit-list (as 2 selects + a busca; os 2 <input type="date">
+   nunca colidiam, pois nenhuma das duas regras acima casa com type="date").
+   Em vez de brigar por especificidade, as duas regras acima agora tem
+   :not(.ptah-c-mod_field) — o elemento marcado sai do escopo delas e so
+   .ptah-c-mod_field o estiliza, em repouso e em foco. */
+.ptah-c-mod_field                 { background-color: var(--ptah-field-muted); }
+.ptah-c-mod_field:focus           { background-color: var(--ptah-field); }
+.ptah-dark .ptah-c-mod_field      { background-color: var(--ptah-field-muted); }
+.ptah-dark .ptah-c-mod_field:focus { background-color: var(--ptah-field); }
+
+/* ── ACL module table row hover — bg-slate-50/70 dark:hover:bg-slate-800/60
+   kept the translucency the repaint mechanism cannot reproduce (opacity
+   modifiers on a utility class are invisible to a class-name hook). ── */
+.ptah-c-mod_row:hover              { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
+.ptah-dark .ptah-c-mod_row:hover   { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
+
+/* ── profile.blade.php (Onda A UX-ACL, batch 7) — zero dark: coverage before
+   this. The QR-code white background (2FA setup) and the profile-photo
+   fallback's text-white (ink on bg-primary) are untouched by design: a QR
+   code needs a real white quiet zone to stay scannable in every theme, and
+   the accent-ink rule (D1 exception 5) is unaffected either way. Faint icon
+   glyphs (empty-sessions message, session-type icon) are also untouched —
+   deferred faint-glyph tier, see KnownLimitations section 6. ── */
+.ptah-c-prof_body             { color: var(--ptah-text); }
+.ptah-dark .ptah-c-prof_body  { color: var(--ptah-text); }
+
+.ptah-c-prof_hint             { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-prof_hint  { color: var(--ptah-text-faint); }
+
+.ptah-c-prof_chip             { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-prof_chip  { background-color: var(--ptah-control-ghost); }
+
+/* Revisao adversarial (grupo 4f): o glifo do tipo de sessao ficou para tras
+   como text-gray-400 bruto quando o fundo do chip escureceu — 1.86:1 no
+   escuro. --ptah-text-muted resolve por tom, >=4.72:1 contra
+   --ptah-control-ghost nos 6 tons x 3 escalas. */
+.ptah-c-prof_icon             { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-prof_icon  { color: var(--ptah-text-muted); }
+
+/* ── menu-list "Novo Item de Menu" modal, campo Icone (adendo ao grupo 4,
+   reportado pelo autor testando em producao) — a unica parte do modal fora
+   do .ptah-c-form_lbl/x-forge-input ja tokenizados, porque usa <input>/
+   <span>/<code> crus em vez dos componentes forge-*. ── */
+.ptah-c-menu_icon_input             { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-menu_icon_input  { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+
+.ptah-c-menu_icon_chip              { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-menu_icon_chip   { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+
+.ptah-c-menu_icon_hint              { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-menu_icon_hint   { color: var(--ptah-text-faint); }
+
+.ptah-c-prof_panel            { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-prof_panel { background-color: var(--ptah-panel); }
+
+/* ── ai-chat-widget (batch 7) — zero dark: coverage before this except the
+   panel surface/border, which already carried a dark: pair (just not a
+   token). The header icon buttons, the send button, the user bubble and the
+   floating toggle keep their text-white/bg-white translucent overlays: they
+   all sit on bg-primary, and --ptah-text-on-accent is #ffffff invariant, so
+   converting them would not change a pixel (D1 exception 5). The two
+   empty-state icon+caption pairs (history/messages) and the keyboard-hint
+   caption (tier 300, no --ptah-* token has that light value) stay deferred —
+   same faint-glyph tier as everywhere else in this wave. ── */
+.ptah-c-chat_panel                 { background-color: var(--ptah-surface-raised); }
+.ptah-dark .ptah-c-chat_panel      { background-color: var(--ptah-surface-raised); }
+
+.ptah-c-chat_label                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chat_label       { color: var(--ptah-text-faint); }
+
+.ptah-c-chat_hist_item:hover              { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-chat_hist_item:hover   { background-color: var(--ptah-surface-hover); }
+
+.ptah-c-chat_hist_title            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chat_hist_title { color: var(--ptah-text-strong); }
+
+.ptah-c-chat_avatar                { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-chat_avatar     { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-chat_bubble                { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chat_bubble     { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+
+/* Revisao adversarial (grupo 3b): mesmo caso de .ptah-c-avatar_badge_offline
+   — o dot vive dentro de .ptah-c-chat_bubble (--ptah-control-ghost), nao da
+   superficie; --ptah-text-muted da >=4.72:1 contra --ptah-control-ghost. */
+.ptah-c-chat_dot                   { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-chat_dot        { background-color: var(--ptah-text-muted); }
+
+/* Revisao adversarial (grupo 4d): a caixa de mensagem e um campo de
+   formulario — todo campo do pacote usa --ptah-field*, nao
+   --ptah-surface-hover (papel de hover, nao de campo). Mesmo par
+   claro/escuro que .ptah-textarea-wrapper textarea ja usa (field no claro,
+   field-muted no escuro). O placeholder ganha regra propria (invariante,
+   mesmo idioma de .ptah-textarea-wrapper textarea::placeholder), entao o
+   dark:placeholder-slate-400 orfao sai da view. */
+.ptah-c-chat_input                 { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-field-muted); color: var(--ptah-text-field); }
+.ptah-c-chat_input::placeholder            { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-chat_input::placeholder { color: var(--ptah-icon-muted); }
+
+/* ── exports-panel (batch 7) — a standalone table, not one of the 7
+   .ptah-module-table screens, so it gets its own thin set of classes
+   (reusing .ptah-c-mod_hdg for the h2 title and .ptah-c-tbl_head_row for
+   the thead background — same tokens, zero side effects to duplicate).
+   Status chips (queued/processing/done/failed/fallback) already ride
+   bg-warn/primary/success/danger/dark text-white/text-dark — untouched. ── */
+.ptah-c-exp_model                 { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-exp_model      { color: var(--ptah-text-secondary); }
+
+.ptah-c-exp_muted                 { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-exp_muted      { color: var(--ptah-text-muted); }
+
+/* ── ai-model-config-list (batch 7) — the how-to-guide cards sit outside
+   .ptah-table-wrapper and had zero coverage of their own (the title had no
+   light color at all, dark:text-slate-200 with nothing to pair against).
+   Table header text reuses .ptah-c-th_text. The provider/inactive-status
+   chip backgrounds and the edit-icon hover get their own classes.
+   text-gray-400/text-gray-500 inside .ptah-table-wrapper are NOT touched
+   here: they are live repaint hooks
+   (.ptah-dark .ptah-table-wrapper .text-gray-400/.text-gray-500 in
+   forge-dashboard-layout.blade.php's <style>), and .bg-white on the desktop
+   table wrapper div is the shared .bg-white.rounded-md hook forge-table.blade.php's
+   mobile card still needs — same deviation as batch 4's forge-table commit. ── */
+.ptah-c-ai_card                 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-ai_card      { background-color: var(--ptah-surface); }
+
+.ptah-c-ai_card_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-ai_card_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-ai_card_desc            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-ai_card_desc { color: var(--ptah-text-muted); }
+
+.ptah-c-ai_card_url             { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-ai_card_url  { color: var(--ptah-text-faint); }
+
+.ptah-c-ai_chip                 { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-ai_chip      { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-ai_chip_text            { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ai_chip_text { color: var(--ptah-text); }
+
+.ptah-c-ai_icon_btn:hover              { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-ai_icon_btn:hover   { background-color: var(--ptah-surface-hover); }
+
+/* Revisao adversarial (grupo 3b): mesmo caso acima — o dot vive dentro de
+   .ptah-c-ai_chip (--ptah-control-ghost), nao da superficie da tabela. */
+.ptah-c-ai_dot                  { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-ai_dot       { background-color: var(--ptah-text-muted); }
+
+.ptah-c-ai_hint                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-ai_hint      { color: var(--ptah-text-faint); }
+
+.ptah-c-ai_checkbox_label            { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ai_checkbox_label { color: var(--ptah-text); }
+
+/* ── _cards.blade.php — closing the gap batch 1 (card surface only) left
+   between its own narrow scope and the plan's own conversion table, which
+   already names these exact sites/tokens. The dt uppercase caption + the
+   duplicate-icon/empty-state glyphs (text-slate-400, cited in the same
+   table under "Glifo/ícone tier 400") stay deferred. ── */
+.ptah-c-card_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-card_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-card_id              { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-card_id   { color: var(--ptah-text-muted); }
+
+.ptah-c-card_val             { color: var(--ptah-text); }
+.ptah-dark .ptah-c-card_val  { color: var(--ptah-text); }
 
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
@@ -2418,6 +2847,11 @@ main { background-color: var(--ptah-canvas); }
 .ptah-dark .ptah-textarea-wrapper textarea::placeholder { color: var(--ptah-icon-muted); }
 .ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
+/* Revisao adversarial (grupo 4b): forge-textarea nunca ganhou o par
+   :disabled que forge-input ja tem acima — mesmos valores, mesma logica
+   ("recua" mais fundo em ambas as direcoes). */
+.ptah-textarea-wrapper textarea:disabled { background-color: var(--ptah-field-muted); }
+.ptah-dark .ptah-textarea-wrapper textarea:disabled { background-color: var(--ptah-field); }
 
 .ptah-select-wrapper > label { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-select-wrapper > label { color: var(--ptah-text-muted); }

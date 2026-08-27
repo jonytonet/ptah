@@ -608,6 +608,8 @@ return [
     'menu_form_icon_label' => 'Icon',
     'menu_form_icon_hint' => '(CSS class Boxicons or FontAwesome)',
     'menu_form_icon_ph' => 'bx bx-home  /  fas fa-user',
+    'menu_form_icon_preview' => 'Preview',
+    'menu_form_icon_examples' => 'Examples:',
     'menu_form_parent_group' => 'Parent group',
     'menu_form_root' => 'Root (top level) ',
     'menu_form_order' => 'Order',

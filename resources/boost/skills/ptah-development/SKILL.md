@@ -17,6 +17,59 @@ Use this skill when:
 
 ---
 
+## Decision map — configure before you code
+
+The most expensive mistake an agent makes here is **rebuilding something the
+package already ships**. Read this table before writing any file; each row
+names the ready-made path and what NOT to do.
+
+| You need | Do this | Do NOT |
+|---|---|---|
+| A new entity + full CRUD screen | `php artisan ptah:forge Name --fields="..."` then configure via `ptah:config` or the visual editor (gear icon on the screen) | Hand-write a Livewire listing/form component |
+| Columns, filters, badges, row styles, actions, modal fields on an existing CRUD | `ptah:config` flags or the visual editor — it is all JSON in `crud_configs` | Edit Blade views or create custom components |
+| A listing of an existing table | A `crud_configs` row is enough — BaseCrud renders from config; no view, no component, no controller beyond the thin generated one | Build a table view by hand |
+| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate, and the bases ship the full CRUD method set: find/create/update/destroy/restore) | Write Eloquent queries in Livewire/controllers |
+| A REST API for an entity | `php artisan ptah:module api` once, then `ptah:forge Name --fields="..." --api` — controller with full Swagger `@OA\*` annotations, Create/Update API requests, versioned `Route::prefix('v1')` routes and the `BaseResponse` envelope, all generated and working | Hand-write API controllers, resources or response envelopes |
+| Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
+| Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
+| A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
+
+### What BaseCrud already does (do not rebuild any of this)
+
+Global search + per-column search · custom filters with operators · date-range
+and quick-date filters · saved filters · sorting (table headers + card-view
+sort bar) · pagination with per-page control · export XLSX/CSV/PDF + print ·
+bulk actions (delete/restore/export + custom, permission-gated) · row styles
+by condition · badges with value→color maps · relation columns via JOIN ·
+SearchDropdown fields (model or service mode, masks, filters) · master-detail ·
+group break with subtotals · totalizers · soft deletes + trash view + restore ·
+audit fields (created/updated/deleted_by) · column-level permissions · ACL
+integration · per-CRUD event notifications · responsive card layout (auto on
+mobile) with its own sorting · per-user preferences (columns, widths, order,
+view mode, density) · keyboard shortcuts · CSV/JSON config import/export ·
+lifecycle hooks for custom logic around save/delete.
+
+If the request maps to anything above, the answer is **configuration**, not
+code. When in doubt: `php artisan ptah:config "App\Models\X" --list` shows
+what a screen already has.
+
+### Where to read more (token budget guide)
+
+Read the SMALLEST document that answers the question — in this order:
+
+| Question | Read |
+|---|---|
+| Any config flag / column type / option syntax | This skill's "Configuring BaseCrud" sections below |
+| Full BaseCrud runtime behaviour | `docs/BaseCrud.md` |
+| Every `ptah:*` command | `docs/Commands.md` |
+| Repository/Service/DTO contracts | `ptah-data-layer` skill, then `docs/BaseLayer.md` |
+| Custom screens, tokens, theming | `docs/CustomScreens.md` |
+| Permissions/ACL | `docs/Permissions.md` |
+| Notifications | `docs/Notifications.md` |
+| What is known-broken or deliberate | `docs/KnownLimitations.md` |
+
+---
+
 ## SOLID Architecture — Layer Rules (NEVER violate)
 
 ### Layer map
@@ -101,7 +154,7 @@ public function save(): void
 public function create(ProductDTO $dto): Product
 {
     if ($this->repo->existsBySku($dto->sku)) {
-        throw new DuplicateSkuException("SKU {$dto->sku} já cadastrado.");
+        throw new DuplicateSkuException("SKU {$dto->sku} already registered.");
     }
     return $this->repo->create($dto->toArray());
 }
@@ -115,25 +168,74 @@ public function existsBySku(string $sku): bool
 
 ---
 
-## Design Tokens — always use, never hardcode
+## Colors & Theming — the rule that keeps screens on-theme
 
-| Token | Hex | Tailwind / component prop |
-|---|---|---|
-| `primary` | `#5b21b6` | `bg-primary` `text-primary` `color="primary"` |
-| `success` | `#10b981` | `bg-success` `text-success` `color="success"` |
-| `danger` | `#ef4444` | `bg-danger` `text-danger` `color="danger"` |
-| `warn` | `#f59e0b` | `bg-warn` `text-warn` `color="warn"` |
-| `dark` | `#1e293b` | `bg-dark` `text-dark` |
-| `light` | `#f8fafc` | `bg-light` `color="light"` |
+Ptah has 6 per-user appearance axes (light tone, dark tone, accent, text
+weight, density, font size). The user can switch the light tone to **papel**
+(warm paper) or **nevoa** at any time, and every ptah screen follows. A screen
+follows the theme **only** if every color in it resolves through a CSS custom
+property the presets rewrite. A fixed Tailwind palette class does not.
+
+**The failure this rule prevents, seen in production:** a screen built with
+`bg-white` / `bg-light` stays literally white when the user switches the tone
+to *papel* — it is the one white rectangle on a warm-paper page.
+
+### The 3 layers, in order of preference
+
+1. **`<x-forge-*>` component props** — zero theming work, always safe:
 
 ```blade
-{{-- ✅ Always use color props --}}
 <x-forge-button color="primary">Salvar</x-forge-button>
 <x-forge-button color="danger" flat>Excluir</x-forge-button>
 <x-forge-alert type="success">Salvo!</x-forge-alert>
+```
 
-{{-- ❌ Never hardcode --}}
-<button style="background:#5b21b6">Salvar</button>
+2. **Semantic Tailwind classes that are theme-safe** — safe because their
+   `--color-*` variable is rewritten by a preset (accent axis) or is a
+   deliberate constant (status colors mean the same thing in every theme):
+
+   `bg-primary` `text-primary` · `bg-success` `text-success` ·
+   `bg-danger` `text-danger` · `bg-warn` `text-warn`
+
+3. **`var(--ptah-*)` tokens for any custom surface/text/border** — the full
+   contract (~30 tokens with usage notes) is
+   [CustomScreens.md §1](../../../../docs/CustomScreens.md); the ones you will
+   need constantly:
+
+| Need | Token |
+|---|---|
+| Page-flush background (toolbar, filter panel) | `--ptah-canvas` |
+| Card / button / modal surface | `--ptah-surface` |
+| Elevated surface (dropdown menu) | `--ptah-surface-raised` |
+| Recessed panel (modal body) | `--ptah-surface-sunken` |
+| Hover tint | `--ptah-surface-hover` |
+| Default / secondary / faint text | `--ptah-text` / `--ptah-text-secondary` / `--ptah-text-faint` |
+| Border / stronger border | `--ptah-line` / `--ptah-line-strong` |
+| Control height & font (density axis) | `--ptah-control-h` / `--ptah-control-fs` |
+
+### Forbidden in any view or CSS you write
+
+- `bg-white`, `bg-light`, `bg-dark`, `bg-slate-*`, `bg-gray-*`, `text-slate-*`
+  and every other fixed-palette class used for **surfaces or text** — they
+  ignore the tone presets.
+- `dark:` Tailwind variants — dark mode here is `.ptah-dark` redefining the
+  SAME tokens; markup never branches on the mode.
+- Hex/rgb literals in views or in per-view `<style>` blocks (which are
+  themselves forbidden — see CSS Architecture Rules).
+
+```blade
+{{-- ❌ stays white under the papel tone --}}
+<div class="bg-white dark:bg-slate-800 border rounded-lg p-4">
+
+{{-- ✅ follows every axis with zero extra work --}}
+<div class="rounded-lg p-4 border"
+     style="background: var(--ptah-surface); border-color: var(--ptah-line);">
+```
+
+To find offenders in an existing project:
+
+```bash
+grep -rnE 'bg-(white|light|slate|gray)|dark:|#[0-9a-fA-F]{3,6}' resources/views --include='*.blade.php'
 ```
 
 ---
@@ -157,25 +259,25 @@ php artisan ptah:forge Catalog/Product \
   --api
 ```
 
-### Menu Automático
+### Automatic menu
 
-Cada entidade gerada com subfolder **adiciona automaticamente** um link no menu da sidebar:
+Every entity generated with a subfolder **automatically adds** a sidebar menu link:
 
 ```bash
-# Durante scaffolding
+# During scaffolding
 php artisan ptah:forge Health/VaccinationType --fields="..."
-# → Adiciona entrada em database/seeders/MenuRegistry.php
+# → Adds an entry to database/seeders/MenuRegistry.php
 
-# Após gerar todas as entidades, sincronizar menu:
+# After generating all entities, sync the menu:
 php artisan ptah:menu-sync --fresh
-# → Popula tabela 'menus' com todos os links
+# → Populates the 'menus' table with every link
 ```
 
-**Mapeamentos automáticos:**
-- Módulo `Health` → grupo "Saúde" (ícone `bx bx-plus-medical`)
-- Entidade `VaccinationType` → link "Tipos de Vacina" (ícone `bx bx-shield-plus`)
+**Automatic mappings:**
+- Module `Health` → group "Saúde" (icon `bx bx-plus-medical`)
+- Entity `VaccinationType` → link "Tipos de Vacina" (icon `bx bx-shield-plus`)
 
-**Desabilitar menu de uma entidade:**
+**Disabling the menu for one entity:**
 ```bash
 php artisan ptah:forge Health/Test --fields="..." --no-menu
 ```
@@ -300,7 +402,7 @@ class Product extends Model
    literal. `forge-dashboard-layout.blade.php` still carries a legacy inline `<style>`
    block for a shrinking set of chrome rules; it is being dismantled, not extended —
    `LayoutStyleBaselineTest` fails the build if it gains a single color literal or rule
-   (see [KnownLimitations.md §6](../../../../docs/KnownLimitations.md#6-theming--partial-coverage-1150))
+   (see [KnownLimitations.md §6](../../../../docs/KnownLimitations.md#6-theming--partial-coverage-1260))
 3. Dark mode always via a `.ptah-dark` ancestor
 4. The 6 per-user appearance axes (light/dark tone, accent, text weight, density, font
    size) are selected via `data-ptah-*` attributes on `<html>`, resolved by
@@ -325,7 +427,7 @@ class Product extends Model
 php artisan ptah:config "App\Models\Product" \
   --column="id:number:label=ID:sortable:min_width=80px" \
   --column="name:text:label=Nome:required:sortable" \
-  --column="price:number:label=Preço:renderer=money:sortable" \
+  --column="price:number:label=Price:renderer=money:sortable" \
   --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
   --style="is_active:==:0:background:#FEF2F2;color:#B91C1C;" \
   --style="stock:<:5:background:#FEFCE8;color:#A16207;" \
@@ -436,7 +538,7 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
     { "colsNomeFisico": "name", "colsNomeLogico": "Nome", "colsTipo": "text",
       "colsGravar": true, "colsRequired": true, "colsIsFilterable": true,
       "colsVisibleList": true, "colsEditableForm": true },
-    { "colsNomeFisico": "price", "colsNomeLogico": "Preço", "colsTipo": "number",
+    { "colsNomeFisico": "price", "colsNomeLogico": "Price", "colsTipo": "number",
       "colsRenderer": "money", "colsRendererCurrency": "BRL", "colsRendererDecimals": 2 },
     { "colsNomeFisico": "is_active", "colsNomeLogico": "Status", "colsTipo": "select",
       "colsRenderer": "badge",
@@ -595,78 +697,78 @@ class ProductFactory
 
 ## API Module (`ptah:module api`)
 
-### Activação
+### Activation
 
 ```bash
 php artisan ptah:module api
 ```
 
-Instala automaticamente `darkaonline/l5-swagger` e publica:
-- `app/Responses/BaseResponse.php` — envelope padrão de resposta
-- `app/Http/Controllers/API/BaseApiController.php` — controller base
-- `app/Http/Controllers/API/SwaggerInfo.php` — metadados Swagger (`@OA\Info`, `@OA\SecurityScheme`)
+Automatically installs `darkaonline/l5-swagger` and publishes:
+- `app/Responses/BaseResponse.php` — the standard response envelope
+- `app/Http/Controllers/API/BaseApiController.php` — base controller
+- `app/Http/Controllers/API/SwaggerInfo.php` — Swagger metadata (`@OA\Info`, `@OA\SecurityScheme`)
 
-### Gerando entidades com API
+### Generating entities with an API
 
 ```bash
-# Modo combinado (web + API em um único comando) — recomendado
+# Combined mode (web + API in a single command) — recommended
 php artisan ptah:forge Catalog/Product \
   --fields="name:string,price:decimal,category_id:unsignedBigInteger,is_active:boolean" \
   --api
 ```
 
-Gera automaticamente **web e API juntos**:
+Automatically generates **web and API together**:
 - `app/Http/Controllers/Catalog/ProductController.php` — controller web (Livewire)
 - `resources/views/livewire/catalog/product/` — views
 - `app/Http/Controllers/API/Catalog/ProductController.php` — Swagger `@OA\*` completo
 - `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
 - `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
 - `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
-- `routes/web.php` (rota web, com `auth` se o módulo estiver ativo) + `routes/api.php` (grupo `Route::prefix('v1')->middleware(config('ptah.api.middleware'))`, só com `--api`; requer `routes/api.php` existente)
+- `routes/web.php` (web route, with `auth` when the module is active) + `routes/api.php` (`Route::prefix('v1')->middleware(config('ptah.api.middleware'))` group, only with `--api`; requires an existing `routes/api.php`)
 
-> **Model preservado:** Se a entidade já existir, `--api` injeta apenas o bloco `@OA\Schema` na model
-> sem sobrescrever `$fillable`, `$casts` ou relacionamentos.
+> **Model preserved:** if the entity already exists, `--api` only injects the `@OA\Schema`
+> block into the model, never overwriting `$fillable`, `$casts` or relationships.
 
-> **Somente API (sem views):** use `--api-only` — comportamento legado do antigo `--api`.
+> **API only (no views):** use `--api-only` — the legacy behaviour of the old `--api`.
 
 ### Workflow completo
 
 ```bash
-# 1. Instalar módulo (uma vez por projeto)
+# 1. Install the module (once per project)
 php artisan ptah:module api
 
-# 2. Gerar entidade (web + API juntos)
+# 2. Generate the entity (web + API together)
 php artisan ptah:forge Catalog/Product \
   --fields="name:string,price:decimal" \
   --api
 
-# 3. Corrigir TODOs de imports nos arquivos gerados
-# 4. Rodar pint
+# 3. Fix the import TODOs in the generated files
+# 4. Run pint
 ./vendor/bin/pint
 
-# 5. Migrar
+# 5. Migrate
 php artisan migrate
 
-# 6. Gerar documentação Swagger
+# 6. Generate the Swagger docs
 php artisan l5-swagger:generate
 
-# 7. Acessar docs
+# 7. Open the docs
 # http://localhost/api/documentation
 ```
 
-### BaseResponse — regras de uso
+### BaseResponse — usage rules
 
-**SEMPRE** use `BaseResponse::` — **NUNCA** use `response()->json()` diretamente.
+**ALWAYS** use `BaseResponse::` — **NEVER** call `response()->json()` directly.
 
 ```php
 use App\Responses\BaseResponse;
 
-// index — paginado
+// index — paginated
 return BaseResponse::paginated($this->service->getData($request));
 
-// show — individual
+// show — single record
 $item = $this->service->show($id);
-return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Produto não encontrado');
+return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Product not found');
 
 // store
 return BaseResponse::created($this->service->create($request->validated()));
@@ -677,11 +779,11 @@ return BaseResponse::ok($this->service->update($request->validated(), $id));
 // destroy
 return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();
 
-// erro customizado
-return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
+// custom error
+return BaseResponse::error('Message', ['field' => 'detail'], 422);
 ```
 
-**Envelope de resposta:**
+**Response envelope:**
 ```json
 {
   "success": true,
@@ -691,22 +793,22 @@ return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
 }
 ```
 
-### getData($request) — busca inteligente
+### getData($request) — smart listing
 
-O método `getData(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros da request:
+`BaseService::getData(Request $request)` orchestrates the whole listing from request parameters:
 
-| Parâmetro | Comportamento |
+| Parameter | Behaviour |
 |---|---|
-| `search` | OR entre todos os `$fillable` |
-| `searchLike` | Filtro incremental com operadores `>`, `>=`, `<=`, `<`, `whereIn` |
-| nenhum deles | AND exato (`findAllFieldsAnd`) |
-| `limit`, `page` | Paginação automática |
-| `order`, `direction` | Ordenação |
-| `fields` | Selecionar apenas colunas específicas |
-| `relations` | Eager load (separados por vírgula) |
+| `search` | OR across every `$fillable` |
+| `searchLike` | Incremental filter with `>`, `>=`, `<=`, `<`, `whereIn` operators |
+| neither of them | Exact AND (`findAllFieldsAnd`) |
+| `limit`, `page` | Automatic pagination |
+| `order`, `direction` | Sorting |
+| `fields` | Select only specific columns |
+| `relations` | Eager load (comma-separated) |
 
 ```php
-// No controller, só isso:
+// In the controller, this is all of it:
 public function index(Request $request): JsonResponse
 {
     return BaseResponse::paginated($this->service->getData($request));
@@ -733,7 +835,7 @@ public function index() {
 // ❌ NUNCA — response()->json() avulso
 return response()->json(['data' => $data]);
 
-// ❌ NUNCA — lógica de negócio no controller
+// ❌ NEVER — business logic in the controller
 public function store(Request $request) {
     if (Product::where('sku', $request->sku)->exists()) { ... }
 }
@@ -1340,10 +1442,10 @@ git commit -m "feat: ..."
 ```
 
 ```
-feat:     nova funcionalidade
-fix:      correção de bug
-docs:     apenas documentação
-refactor: sem feat/fix
-test:     testes
-chore:    manutenção (deps, config)
+feat:     new feature
+fix:      bug fix
+docs:     documentation only
+refactor: no feat/fix
+test:     tests
+chore:    maintenance (deps, config)
 ```
