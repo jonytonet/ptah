@@ -901,4 +901,26 @@ class AppearancePresetContrastTest extends TestCase
             3.0
         );
     }
+
+    #[Test]
+    public function code_text_passes_aa_text_contrast_on_its_own_background(): void
+    {
+        $this->assertTwoRulesMeetFloor(
+            'code texto/fundo',
+            '.ptah-c-code', 'color',
+            '.ptah-c-code', 'background-color',
+            4.5
+        );
+    }
+
+    #[Test]
+    public function code_cap_text_passes_aa_text_contrast_on_its_own_background(): void
+    {
+        $this->assertTwoRulesMeetFloor(
+            'code_cap texto/fundo',
+            '.ptah-c-code_cap', 'color',
+            '.ptah-c-code_cap', 'background-color',
+            4.5
+        );
+    }
 }

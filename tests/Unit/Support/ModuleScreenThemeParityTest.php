@@ -145,6 +145,11 @@ class ModuleScreenThemeParityTest extends TestCase
             '.ptah-c-mod_field' => ['.ptah-c-mod_field'],
             '.ptah-c-mod_field:focus' => ['.ptah-c-mod_field:focus'],
             '.ptah-c-mod_row:hover' => ['.ptah-c-mod_row:hover'],
+
+            // permission-guide "Code Examples" tab (truth+theme wave) — replaces
+            // the per-token syntax-highlight span soup with a plain code block.
+            '.ptah-c-code' => ['.ptah-c-code'],
+            '.ptah-c-code_cap' => ['.ptah-c-code_cap'],
         ];
     }
 

@@ -2743,6 +2743,17 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-mod_obj_type            { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-mod_obj_type { color: var(--ptah-text-faint); }
 
+/* ── permission-guide "Code Examples" tab ────────────────────────────────
+   Replaces a hand-rolled per-token syntax-highlight sopa (one <span
+   class="text-{color}-{shade}"> per keyword/string/punctuation, ~130 lines
+   across 5 snippets) with a plain, token-driven code block: same idea as a
+   markdown fenced block, no highlighting, content fully HTML-escaped. */
+.ptah-c-code            { background-color: var(--ptah-surface-sunken); color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-code { background-color: var(--ptah-surface-sunken); color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+
+.ptah-c-code_cap            { background-color: var(--ptah-panel); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-code_cap { background-color: var(--ptah-panel); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
+
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
    never tokenized) and from the layout's inline <style> `.ptah-card-default`

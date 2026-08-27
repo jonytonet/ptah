@@ -462,147 +462,143 @@
     <div class="space-y-6">
 
         {{-- Helper Blade --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">resources/views/vendas/index.blade.php — Helper ptah_can()</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">{{-- Verificar permissão de leitura --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.exportar'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Exportar CSV</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">resources/views/vendas/index.blade.php — Helper ptah_can()</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Verificar permissão de leitura
+&#64;if (ptah_can('vendas.exportar', 'read'))
+    &lt;button&gt;Exportar CSV&lt;/button&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Verificar permissão de criação --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">, </span><span class="text-amber-300">'create'</span><span class="text-slate-300">))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">button</span><span class="text-slate-300"> </span><span class="text-purple-400">wire:click</span><span class="text-slate-300">=</span><span class="text-amber-300">"novoPedido"</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">+ Novo Pedido</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+// Verificar permissão de criação
+&#64;if (ptah_can('vendas.criar-pedido', 'create'))
+    &lt;button wire:click="novoPedido"&gt;+ Novo Pedido&lt;/button&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Verificar com escopo de empresa --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.ver-desconto'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">, </span><span class="text-yellow-300">companyId</span><span class="text-slate-300">: </span><span class="text-blue-400">$empresa</span><span class="text-slate-300">-></span><span class="text-slate-300">id))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Desconto: @{{ $pedido->desconto }}%</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+// Verificar com escopo de empresa explícito
+&#64;if (ptah_can('vendas.ver-desconto', 'read', companyId: $empresa->id))
+    &lt;span&gt;Desconto: @{{ $pedido->desconto }}%&lt;/span&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Assinaturas completas do helper --}}</span>
-<span class="text-slate-500">{{-- ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool --}}</span></code></pre>
-            </div>
+// Chave QUALIFICADA — use "pagina::obj_key" quando o mesmo obj_key existe em
+// mais de uma Página (PermissionService::KEY_QUALIFIER = '::'). Sem isso o
+// obj_key duplicado só resolve pelo mapa BARE, que é global — não por página.
+&#64;if (ptah_can('vendas::exportar', 'read'))
+    &lt;button&gt;Exportar (só a Página "vendas")&lt;/button&gt;
+&#64;endif
+
+// Assinatura completa:
+// ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool</code></pre>
         </div>
 
         {{-- Middleware em rotas --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">routes/web.php — Middleware ptah.can</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">// Proteger rota individual — verifica can_read</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">get</span><span class="text-slate-300">(</span><span class="text-amber-300">'/vendas/exportar'</span><span class="text-slate-300">, [</span><span class="text-blue-400">VendasController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">, </span><span class="text-amber-300">'exportar'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">middleware</span><span class="text-slate-300">(</span><span class="text-amber-300">'ptah.can:vendas.exportar,read'</span><span class="text-slate-300">);</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">routes/web.php — Middleware ptah.can</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Proteger rota individual — verifica can_read
+Route::get('/vendas/exportar', [VendasController::class, 'exportar'])
+    -&gt;middleware('ptah.can:vendas.exportar,read');
 
-<span class="text-slate-500">// Proteger rota de criar — verifica can_create</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">post</span><span class="text-slate-300">(</span><span class="text-amber-300">'/vendas/pedidos'</span><span class="text-slate-300">, [</span><span class="text-blue-400">PedidoController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">, </span><span class="text-amber-300">'store'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">middleware</span><span class="text-slate-300">(</span><span class="text-amber-300">'ptah.can:vendas.criar-pedido,create'</span><span class="text-slate-300">);</span>
+// Proteger rota de criar — verifica can_create
+Route::post('/vendas/pedidos', [PedidoController::class, 'store'])
+    -&gt;middleware('ptah.can:vendas.criar-pedido,create');
 
-<span class="text-slate-500">// Grupo de rotas protegidas</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">middleware</span><span class="text-slate-300">([</span><span class="text-amber-300">'auth'</span><span class="text-slate-300">, </span><span class="text-amber-300">'ptah.can:admin.usuarios,read'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">group</span><span class="text-slate-300">(</span><span class="text-green-400">function</span><span class="text-slate-300"> () {</span>
-        <span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">resource</span><span class="text-slate-300">(</span><span class="text-amber-300">'usuarios'</span><span class="text-slate-300">, </span><span class="text-blue-400">UsuarioController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">);</span>
-    <span class="text-slate-300">});</span>
+// 3º parâmetro OPCIONAL: companyId explícito (sem ele, usa sessão/auth)
+Route::get('/relatorios/vendas', [RelatorioController::class, 'index'])
+    -&gt;middleware('ptah.can:relatorios.vendas,read,1');
 
-<span class="text-slate-500">// Sintaxe: 'ptah.can:{obj_key},{action}'</span>
-<span class="text-slate-500">// Actions: read | create | update | delete</span></code></pre>
-            </div>
+// action é OPCIONAL — se omitida, o middleware assume 'read'
+Route::middleware(['auth', 'ptah.can:admin.usuarios'])
+    -&gt;group(function () {
+        Route::resource('usuarios', UsuarioController::class);
+    });
+
+// Chave qualificada também funciona aqui — o '::' nunca colide com o
+// parsing ':'/',' dos parâmetros do middleware
+Route::get('/financeiro/exportar', [FinanceiroController::class, 'exportar'])
+    -&gt;middleware('ptah.can:financeiro::toolbar::exportar,read');
+
+// Sintaxe: 'ptah.can:{obj_key},{action?},{companyId?}'
+// Actions: read | create | update | delete (default: read)</code></pre>
         </div>
 
         {{-- PHP direto --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">app/Http/Controllers/PedidoController.php — PermissionService</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">// Usando o serviço diretamente via injeção de dependência</span>
-<span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">Ptah\Contracts\PermissionServiceContract</span><span class="text-slate-300">;</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">app/Http/Controllers/PedidoController.php — PermissionServiceContract</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Usando o contrato diretamente via injeção de dependência
+use Ptah\Contracts\PermissionServiceContract;
 
-<span class="text-green-400">class</span><span class="text-slate-300"> </span><span class="text-blue-400">PedidoController</span><span class="text-slate-300"> </span><span class="text-green-400">extends</span><span class="text-slate-300"> </span><span class="text-blue-400">Controller</span>
-<span class="text-slate-300">{</span>
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">store</span><span class="text-slate-300">(</span><span class="text-blue-400">Request</span><span class="text-slate-300"> </span><span class="text-blue-400">$request</span><span class="text-slate-300">, </span><span class="text-blue-400">PermissionServiceContract</span><span class="text-slate-300"> </span><span class="text-blue-400">$permissions</span><span class="text-slate-300">)</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-slate-500">// Verificação manual</span>
-        <span class="text-green-400">if</span><span class="text-slate-300"> (! </span><span class="text-blue-400">$permissions</span><span class="text-slate-300">-></span><span class="text-yellow-300">can</span><span class="text-slate-300">(</span>
-            <span class="text-yellow-300">userId:</span><span class="text-slate-300"> </span><span class="text-yellow-300">auth</span><span class="text-slate-300">()-></span><span class="text-yellow-300">id</span><span class="text-slate-300">(),</span>
-            <span class="text-yellow-300">key:</span><span class="text-slate-300"> </span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">,</span>
-            <span class="text-yellow-300">action:</span><span class="text-slate-300"> </span><span class="text-amber-300">'create'</span><span class="text-slate-300">,</span>
-        <span class="text-slate-300">)) {</span>
-            <span class="text-green-400">abort</span><span class="text-slate-300">(</span><span class="text-blue-300">403</span><span class="text-slate-300">, </span><span class="text-amber-300">'Sem permissão para criar pedidos'</span><span class="text-slate-300">);</span>
-        <span class="text-slate-300">}</span>
+class PedidoController extends Controller
+{
+    public function store(Request $request, PermissionServiceContract $permissions)
+    {
+        // check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
+        // — NÃO é can(userId:, key:, action:); esse método não existe no contrato.
+        if (! $permissions-&gt;check(auth()-&gt;user(), 'vendas.criar-pedido', 'create')) {
+            abort(403, 'Sem permissão para criar pedidos');
+        }
 
-        <span class="text-slate-500">// ... criar pedido</span>
-    <span class="text-slate-300">}</span>
-<span class="text-slate-300">}</span></code></pre>
-            </div>
+        // ... criar pedido
+    }
+}
+
+// Ou pela facade, fora de um construtor:
+use Ptah\Facades\Permission;
+
+Permission::check(auth()-&gt;user(), 'vendas.criar-pedido', 'create');</code></pre>
         </div>
 
         {{-- Livewire --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">app/Livewire/Vendas/PedidoList.php — Livewire Component</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">Ptah\Traits\HasPermission</span><span class="text-slate-300">;</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">app/Livewire/Vendas/PedidoList.php — Componente Livewire (fora do BaseCrud)</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>class PedidoList extends Component
+{
+    public function deletar(int $id): void
+    {
+        // Não existe trait "HasPermission"/requirePermission() no pacote —
+        // verifique com o helper e aborte manualmente.
+        if (! ptah_can('vendas.criar-pedido', 'delete')) {
+            abort(403);
+        }
 
-<span class="text-green-400">class</span><span class="text-slate-300"> </span><span class="text-blue-400">PedidoList</span><span class="text-slate-300"> </span><span class="text-green-400">extends</span><span class="text-slate-300"> </span><span class="text-blue-400">Component</span>
-<span class="text-slate-300">{</span>
-    <span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">HasPermission</span><span class="text-slate-300">;</span>
+        Pedido::destroy($id);
+    }
 
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">deletar</span><span class="text-slate-300">(</span><span class="text-green-400">int</span><span class="text-slate-300"> </span><span class="text-blue-400">$id</span><span class="text-slate-300">): </span><span class="text-green-400">void</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-slate-500">// Trait helper — lança 403 automaticamente se sem permissão</span>
-        <span class="text-blue-400">$this</span><span class="text-slate-300">-></span><span class="text-yellow-300">requirePermission</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">, </span><span class="text-amber-300">'delete'</span><span class="text-slate-300">);</span>
+    public function render(): View
+    {
+        return view('livewire.vendas.pedido-list', [
+            // No Blade: &#64;if (ptah_can('vendas.exportar', 'read'))
+            'podeExportar' => ptah_can('vendas.exportar', 'read'),
+        ]);
+    }
+}
 
-        <span class="text-blue-400">Pedido</span><span class="text-slate-300">::</span><span class="text-yellow-300">destroy</span><span class="text-slate-300">(</span><span class="text-blue-400">$id</span><span class="text-slate-300">);</span>
-    <span class="text-slate-300">}</span>
-
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">render</span><span class="text-slate-300">(): </span><span class="text-blue-400">View</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-green-400">return</span><span class="text-slate-300"> </span><span class="text-yellow-300">view</span><span class="text-slate-300">(</span><span class="text-amber-300">'livewire.vendas.pedido-list'</span><span class="text-slate-300">, [</span>
-            <span class="text-slate-500">// No Blade: &#64;if(ptah_can('vendas.exportar', 'read'))</span>
-            <span class="text-amber-300">'podeExportar'</span><span class="text-slate-300"> => </span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.exportar'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">),</span>
-        <span class="text-slate-300">]);</span>
-    <span class="text-slate-300">}</span>
-<span class="text-slate-300">}</span></code></pre>
-            </div>
+// Isto NÃO é um BaseCrud (Ptah\Livewire\BaseCrud\BaseCrud): lá, basta
+// configurar 'permissions.permissionIdentifier' no CrudConfig — o próprio
+// componente já gate create/update/delete e também 'read': render() aborta
+// 403 antes de a listagem consultar o banco. Sem permissionIdentifier
+// configurado, o CRUD fica livre (grants não são consultados).</code></pre>
         </div>
 
         {{-- .env --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">.env — Configurações do módulo Ptah</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500"># Habilitar os módulos do Ptah</span>
-<span class="text-green-400">PTAH_MODULE_AUTH</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
-<span class="text-green-400">PTAH_MODULE_COMPANY</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
-<span class="text-green-400">PTAH_MODULE_PERMISSIONS</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">.env — Configurações do módulo Ptah</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code># Habilitar os módulos do Ptah
+PTAH_MODULE_AUTH=true
+PTAH_MODULE_COMPANY=true
+PTAH_MODULE_PERMISSIONS=true
 
-<span class="text-slate-500"># Habilitar log de auditoria de permissões</span>
-<span class="text-green-400">PTAH_PERMISSION_AUDIT</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
+# Auditoria de permissões — não existe "número máximo de registros": a
+# tabela ptah_permission_audits cresce sem teto até você agendar a poda.
+PTAH_PERMISSION_AUDIT=true                  # grava acessos CONCEDIDOS (default: false)
+PTAH_PERMISSION_AUDIT_DENIED=true           # também grava NEGADOS (default: true)
+PTAH_PERMISSION_AUDIT_MASTER=false          # grava acessos de MASTER (default: false)
+PTAH_PERMISSION_AUDIT_RETENTION_DAYS=90     # janela usada por "ptah:audit-prune"
 
-<span class="text-slate-500"># Número máximo de registros de auditoria (0 = sem limite)</span>
-<span class="text-green-400">PTAH_AUDIT_MAX_RECORDS</span><span class="text-slate-300">=</span><span class="text-blue-300">10000</span></code></pre>
-            </div>
+# Cache do mapa de permissões (recomendado ligado)
+PTAH_PERMISSION_CACHE=true
+PTAH_PERMISSION_CACHE_TTL=3600
+
+# Agende a poda (comando DESTRUTIVO — revise antes de rodar em produção):
+#   php artisan ptah:audit-prune --days=90</code></pre>
         </div>
 
     </div>
