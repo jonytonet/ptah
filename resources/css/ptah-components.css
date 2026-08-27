@@ -1507,9 +1507,73 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-c-btn_on  { background-color: var(--ptah-primary-soft-d); border-color: var(--ptah-primary); color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-btn_on:hover { background-color: var(--ptah-primary-soft-d); }
 
-/* ── forge-button color="dark" flat — override no dark mode ── */
-.ptah-dark .ptah-btn.ptah-btn-dark           { color: var(--ptah-text-muted); }
-.ptah-dark .ptah-btn.ptah-btn-dark:hover     { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
+/* ── forge-button "light"/"secondary" neutral color families — solid, flat and
+   relief shapes. Both families render identically (same $colorMap values
+   pre-migration), so one selector list covers both; zero dark: coverage
+   before this. $ptahShapeClass (forge-button.blade.php) is what lets a single
+   .ptah-btn-light/.ptah-btn-secondary root tell the 3 shapes apart once their
+   own bg/hover/text/relief utilities are gone from the view. Token mapping:
+   bg-gray-100 -> --ptah-control-ghost, hover:bg-gray-200 ->
+   --ptah-control-ghost-hover, bg-gray-300 (relief) -> --ptah-line-strong,
+   text-gray-700 (both text and textSolid: same light value pre-migration)
+   -> --ptah-text, hover:bg-gray-50 (flatHover) -> --ptah-surface-hover
+   (byte-identical to dark:hover:bg-slate-700 in dark scope). ── */
+.ptah-btn-light,
+.ptah-btn-secondary {
+    background-color: var(--ptah-control-ghost);
+    color: var(--ptah-text);
+}
+.ptah-btn-light:hover,
+.ptah-btn-secondary:hover {
+    background-color: var(--ptah-control-ghost-hover);
+}
+.ptah-btn-light.ptah-btn-relief,
+.ptah-btn-secondary.ptah-btn-relief {
+    background-color: var(--ptah-line-strong);
+}
+.ptah-btn-light.ptah-btn-flat,
+.ptah-btn-secondary.ptah-btn-flat {
+    background-color: transparent;
+}
+.ptah-btn-light.ptah-btn-flat:hover,
+.ptah-btn-secondary.ptah-btn-flat:hover {
+    background-color: var(--ptah-surface-hover);
+}
+.ptah-dark .ptah-btn-light,
+.ptah-dark .ptah-btn-secondary {
+    background-color: var(--ptah-control-ghost);
+    color: var(--ptah-text);
+}
+.ptah-dark .ptah-btn-light:hover,
+.ptah-dark .ptah-btn-secondary:hover {
+    background-color: var(--ptah-control-ghost-hover);
+}
+.ptah-dark .ptah-btn-light.ptah-btn-relief,
+.ptah-dark .ptah-btn-secondary.ptah-btn-relief {
+    background-color: var(--ptah-line-strong);
+}
+.ptah-dark .ptah-btn-light.ptah-btn-flat,
+.ptah-dark .ptah-btn-secondary.ptah-btn-flat {
+    background-color: transparent;
+}
+.ptah-dark .ptah-btn-light.ptah-btn-flat:hover,
+.ptah-dark .ptah-btn-secondary.ptah-btn-flat:hover {
+    background-color: var(--ptah-surface-hover);
+}
+
+/* ── forge-button color="dark" flat — override no dark mode ──
+   Scoped to .ptah-btn-flat (not the bare .ptah-btn-dark) because the bg/
+   hover/relief scale below stays on the brand --color-dark utilities in
+   BOTH scopes (see the $colorMap comment in forge-button.blade.php) — an
+   unscoped rule here would also repaint the solid/relief shapes' textSolid
+   (text-white), which needs to stay white for contrast against bg-dark/
+   dark:bg-slate-600. Light side uses --ptah-text-strong / --ptah-control-ghost,
+   byte-identical to the text-dark / hover:bg-dark-light utilities they
+   replace (both #1e293b / #f1f5f9 respectively). */
+.ptah-btn.ptah-btn-dark.ptah-btn-flat              { color: var(--ptah-text-strong); }
+.ptah-btn.ptah-btn-dark.ptah-btn-flat:hover         { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-btn.ptah-btn-dark.ptah-btn-flat       { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-btn.ptah-btn-dark.ptah-btn-flat:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 45%, transparent); color: var(--ptah-text); }
 
 /* ── forge-button sm/md — densidade global (Onda B) ──────────────────────
    Só font-size, de propósito: height/padding-inline ficam de fora para

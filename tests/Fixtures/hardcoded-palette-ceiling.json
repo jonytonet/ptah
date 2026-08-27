@@ -2,7 +2,7 @@
     "components/forge-alert.blade.php": 8,
     "components/forge-avatar.blade.php": 4,
     "components/forge-badge.blade.php": 4,
-    "components/forge-button.blade.php": 33,
+    "components/forge-button.blade.php": 7,
     "components/forge-card.blade.php": 1,
     "components/forge-empty.blade.php": 1,
     "components/forge-input.blade.php": 5,

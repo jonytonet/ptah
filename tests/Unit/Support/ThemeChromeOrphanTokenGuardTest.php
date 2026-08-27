@@ -61,11 +61,6 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
         '.ptah-c-dd_opt' => 'Light color is `inherit`, which resolves up to the `html { color: '.
             'var(--ptah-text-strong) }` root rule (ThemeSurfaceLightDarkParityTest) — already token-driven, '.
             'just not declared locally.',
-        '.ptah-btn.ptah-btn-dark' => "forge-button.blade.php's colorMap['dark']['text'] is the Tailwind ".
-            'utility `text-dark` (the --color-dark brand/semantic token), baked directly into the component '.
-            'for the flat variant — this stylesheet only needs to override it back for the .ptah-dark scope.',
-        '.ptah-btn.ptah-btn-dark:hover' => "Same as above: colorMap['dark']['flatHover'] is `hover:bg-dark-light` ".
-            '(the --color-dark-light token), already in forge-button.blade.php.',
         '.ptah-c-fp_cancel_btn:hover' => 'Light already has its own rule (color: #4b5563), documented in the '.
             'CSS itself as a Fase-2 literal exception (no token matches that exact gray) — present, just not a '.
             'var(--ptah-*).',

@@ -75,31 +75,37 @@
             'flatHover' => 'hover:bg-warn-light',
         ],
         'dark' => [
+            // bg/hover/relief keep the brand --color-dark/-dark-dark scale as-is (light AND
+            // dark scope): it is intentionally scope-INVARIANT (a "solid dark" button, same
+            // idea as primary/success/danger), and dark:bg-slate-600 exists to stay visibly
+            // LIGHTER than --ptah-surface dark (both #1e293b) — collapsing it into plain
+            // bg-dark would make the button blend into any dark card behind it. Only the flat
+            // shape's text/hover (ptah-btn-dark.ptah-btn-flat below) move to CSS.
             'bg'        => 'bg-dark dark:bg-slate-600',
             'hover'     => 'hover:bg-dark-dark dark:hover:bg-slate-500',
-            'text'      => 'text-dark dark:text-slate-300',
+            'text'      => '',
             'textSolid' => 'text-white',
             'shadow'    => '',
             'relief'    => 'bg-dark-dark dark:bg-slate-700',
-            'flatHover' => 'hover:bg-dark-light dark:hover:bg-slate-700',
+            'flatHover' => '',
         ],
         'light' => [
-            'bg'        => 'bg-gray-100 dark:bg-slate-700',
-            'hover'     => 'hover:bg-gray-200 dark:hover:bg-slate-600',
-            'text'      => 'text-gray-700 dark:text-slate-300',
-            'textSolid' => 'text-gray-700 dark:text-slate-200',
+            'bg'        => '',
+            'hover'     => '',
+            'text'      => '',
+            'textSolid' => '',
             'shadow'    => '',
-            'relief'    => 'bg-gray-300 dark:bg-slate-600',
-            'flatHover' => 'hover:bg-gray-50 dark:hover:bg-slate-700',
+            'relief'    => '',
+            'flatHover' => '',
         ],
         'secondary' => [
-            'bg'        => 'bg-gray-100 dark:bg-slate-700',
-            'hover'     => 'hover:bg-gray-200 dark:hover:bg-slate-600',
-            'text'      => 'text-gray-700 dark:text-slate-300',
-            'textSolid' => 'text-gray-700 dark:text-slate-200',
+            'bg'        => '',
+            'hover'     => '',
+            'text'      => '',
+            'textSolid' => '',
             'shadow'    => '',
-            'relief'    => 'bg-gray-300 dark:bg-slate-600',
-            'flatHover' => 'hover:bg-gray-50 dark:hover:bg-slate-700',
+            'relief'    => '',
+            'flatHover' => '',
         ],
     ];
 
@@ -110,6 +116,12 @@
     // ($sizeClass) como seletor, porque eles descrevem o VISUAL, não a identidade do
     // slot — mesmo padrão de $ptahColorClass, uma classe por eixo.
     $ptahSizeClass = 'ptah-btn-size-' . $size;
+    // Once bg/hover/relief/flatHover are emptied for the neutral color families
+    // (light/secondary/dark's flat state), nothing in the emitted class list
+    // distinguishes solid vs flat vs relief anymore — this hook lets
+    // ptah-components.css tell them apart the same way $ptahColorClass lets it
+    // tell colors apart.
+    $ptahShapeClass = $flat ? 'ptah-btn-flat' : ($relief ? 'ptah-btn-relief' : '');
 
     $sizeMap = [
         'sm' => 'px-3 py-1.5 text-xs gap-1.5',
@@ -138,7 +150,7 @@
 <button
     {{ $attributes->merge([
         'type'     => 'button',
-        'class'    => "ptah-btn {$ptahColorClass} {$ptahSizeClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
+        'class'    => "ptah-btn {$ptahColorClass} {$ptahSizeClass} {$ptahShapeClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
                        {$sizeClass} {$radiusClass} {$variantClass} {$baseTransition} {$disabledClass}",
         'disabled' => $disabled || $loading ? true : false,
     ]) }}
