@@ -183,8 +183,14 @@
                         <span class="font-normal ptah-c-menu_icon_hint">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
                     </label>
                     <div class="flex gap-2 items-center">
-                        <input wire:model.live="icon" type="text" placeholder="{{ __('ptah::ui.menu_form_icon_ph') }}"
-                            class="flex-1 px-3 py-2 text-sm rounded border border-slate-200 dark:border-slate-600 ptah-c-menu_icon_input focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all font-mono"/>
+                        <div class="flex-1">
+                            <x-forge-input
+                                wire:model.live="icon"
+                                :placeholder="__('ptah::ui.menu_form_icon_ph')"
+                                class="font-mono"
+                                :error="$errors->first('icon')"
+                            />
+                        </div>
                         <span class="flex items-center justify-center w-9 h-9 rounded-md ptah-c-menu_icon_chip text-xl flex-shrink-0" title="{{ __('ptah::ui.menu_form_icon_preview') }}">
                             <i class="{{ $icon ?: 'bx bx-circle' }}"></i>
                         </span>
@@ -194,7 +200,6 @@
                         <code class="ptah-c-menu_icon_chip px-1 rounded">fas fa-cog</code>
                         <code class="ptah-c-menu_icon_chip px-1 rounded">bx bxs-shopping-bag</code>
                     </p>
-                    @error('icon') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Grupo pai --}}
