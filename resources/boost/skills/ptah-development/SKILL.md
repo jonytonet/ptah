@@ -28,7 +28,8 @@ names the ready-made path and what NOT to do.
 | A new entity + full CRUD screen | `php artisan ptah:forge Name --fields="..."` then configure via `ptah:config` or the visual editor (gear icon on the screen) | Hand-write a Livewire listing/form component |
 | Columns, filters, badges, row styles, actions, modal fields on an existing CRUD | `ptah:config` flags or the visual editor — it is all JSON in `crud_configs` | Edit Blade views or create custom components |
 | A listing of an existing table | A `crud_configs` row is enough — BaseCrud renders from config; no view, no component, no controller beyond the thin generated one | Build a table view by hand |
-| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate) | Write Eloquent queries in Livewire/controllers |
+| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate, and the bases ship the full CRUD method set: find/create/update/destroy/restore) | Write Eloquent queries in Livewire/controllers |
+| A REST API for an entity | `php artisan ptah:module api` once, then `ptah:forge Name --fields="..." --api` — controller with full Swagger `@OA\*` annotations, Create/Update API requests, versioned `Route::prefix('v1')` routes and the `BaseResponse` envelope, all generated and working | Hand-write API controllers, resources or response envelopes |
 | Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
 | Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
 | A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
@@ -153,7 +154,7 @@ public function save(): void
 public function create(ProductDTO $dto): Product
 {
     if ($this->repo->existsBySku($dto->sku)) {
-        throw new DuplicateSkuException("SKU {$dto->sku} já cadastrado.");
+        throw new DuplicateSkuException("SKU {$dto->sku} already registered.");
     }
     return $this->repo->create($dto->toArray());
 }
@@ -258,25 +259,25 @@ php artisan ptah:forge Catalog/Product \
   --api
 ```
 
-### Menu Automático
+### Automatic menu
 
-Cada entidade gerada com subfolder **adiciona automaticamente** um link no menu da sidebar:
+Every entity generated with a subfolder **automatically adds** a sidebar menu link:
 
 ```bash
-# Durante scaffolding
+# During scaffolding
 php artisan ptah:forge Health/VaccinationType --fields="..."
-# → Adiciona entrada em database/seeders/MenuRegistry.php
+# → Adds an entry to database/seeders/MenuRegistry.php
 
-# Após gerar todas as entidades, sincronizar menu:
+# After generating all entities, sync the menu:
 php artisan ptah:menu-sync --fresh
-# → Popula tabela 'menus' com todos os links
+# → Populates the 'menus' table with every link
 ```
 
-**Mapeamentos automáticos:**
-- Módulo `Health` → grupo "Saúde" (ícone `bx bx-plus-medical`)
-- Entidade `VaccinationType` → link "Tipos de Vacina" (ícone `bx bx-shield-plus`)
+**Automatic mappings:**
+- Module `Health` → group "Saúde" (icon `bx bx-plus-medical`)
+- Entity `VaccinationType` → link "Tipos de Vacina" (icon `bx bx-shield-plus`)
 
-**Desabilitar menu de uma entidade:**
+**Disabling the menu for one entity:**
 ```bash
 php artisan ptah:forge Health/Test --fields="..." --no-menu
 ```
@@ -426,7 +427,7 @@ class Product extends Model
 php artisan ptah:config "App\Models\Product" \
   --column="id:number:label=ID:sortable:min_width=80px" \
   --column="name:text:label=Nome:required:sortable" \
-  --column="price:number:label=Preço:renderer=money:sortable" \
+  --column="price:number:label=Price:renderer=money:sortable" \
   --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
   --style="is_active:==:0:background:#FEF2F2;color:#B91C1C;" \
   --style="stock:<:5:background:#FEFCE8;color:#A16207;" \
@@ -537,7 +538,7 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
     { "colsNomeFisico": "name", "colsNomeLogico": "Nome", "colsTipo": "text",
       "colsGravar": true, "colsRequired": true, "colsIsFilterable": true,
       "colsVisibleList": true, "colsEditableForm": true },
-    { "colsNomeFisico": "price", "colsNomeLogico": "Preço", "colsTipo": "number",
+    { "colsNomeFisico": "price", "colsNomeLogico": "Price", "colsTipo": "number",
       "colsRenderer": "money", "colsRendererCurrency": "BRL", "colsRendererDecimals": 2 },
     { "colsNomeFisico": "is_active", "colsNomeLogico": "Status", "colsTipo": "select",
       "colsRenderer": "badge",
@@ -696,78 +697,78 @@ class ProductFactory
 
 ## API Module (`ptah:module api`)
 
-### Activação
+### Activation
 
 ```bash
 php artisan ptah:module api
 ```
 
-Instala automaticamente `darkaonline/l5-swagger` e publica:
-- `app/Responses/BaseResponse.php` — envelope padrão de resposta
-- `app/Http/Controllers/API/BaseApiController.php` — controller base
-- `app/Http/Controllers/API/SwaggerInfo.php` — metadados Swagger (`@OA\Info`, `@OA\SecurityScheme`)
+Automatically installs `darkaonline/l5-swagger` and publishes:
+- `app/Responses/BaseResponse.php` — the standard response envelope
+- `app/Http/Controllers/API/BaseApiController.php` — base controller
+- `app/Http/Controllers/API/SwaggerInfo.php` — Swagger metadata (`@OA\Info`, `@OA\SecurityScheme`)
 
-### Gerando entidades com API
+### Generating entities with an API
 
 ```bash
-# Modo combinado (web + API em um único comando) — recomendado
+# Combined mode (web + API in a single command) — recommended
 php artisan ptah:forge Catalog/Product \
   --fields="name:string,price:decimal,category_id:unsignedBigInteger,is_active:boolean" \
   --api
 ```
 
-Gera automaticamente **web e API juntos**:
+Automatically generates **web and API together**:
 - `app/Http/Controllers/Catalog/ProductController.php` — controller web (Livewire)
 - `resources/views/livewire/catalog/product/` — views
 - `app/Http/Controllers/API/Catalog/ProductController.php` — Swagger `@OA\*` completo
 - `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
 - `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
 - `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
-- `routes/web.php` (rota web, com `auth` se o módulo estiver ativo) + `routes/api.php` (grupo `Route::prefix('v1')->middleware(config('ptah.api.middleware'))`, só com `--api`; requer `routes/api.php` existente)
+- `routes/web.php` (web route, with `auth` when the module is active) + `routes/api.php` (`Route::prefix('v1')->middleware(config('ptah.api.middleware'))` group, only with `--api`; requires an existing `routes/api.php`)
 
-> **Model preservado:** Se a entidade já existir, `--api` injeta apenas o bloco `@OA\Schema` na model
-> sem sobrescrever `$fillable`, `$casts` ou relacionamentos.
+> **Model preserved:** if the entity already exists, `--api` only injects the `@OA\Schema`
+> block into the model, never overwriting `$fillable`, `$casts` or relationships.
 
-> **Somente API (sem views):** use `--api-only` — comportamento legado do antigo `--api`.
+> **API only (no views):** use `--api-only` — the legacy behaviour of the old `--api`.
 
 ### Workflow completo
 
 ```bash
-# 1. Instalar módulo (uma vez por projeto)
+# 1. Install the module (once per project)
 php artisan ptah:module api
 
-# 2. Gerar entidade (web + API juntos)
+# 2. Generate the entity (web + API together)
 php artisan ptah:forge Catalog/Product \
   --fields="name:string,price:decimal" \
   --api
 
-# 3. Corrigir TODOs de imports nos arquivos gerados
-# 4. Rodar pint
+# 3. Fix the import TODOs in the generated files
+# 4. Run pint
 ./vendor/bin/pint
 
-# 5. Migrar
+# 5. Migrate
 php artisan migrate
 
-# 6. Gerar documentação Swagger
+# 6. Generate the Swagger docs
 php artisan l5-swagger:generate
 
-# 7. Acessar docs
+# 7. Open the docs
 # http://localhost/api/documentation
 ```
 
-### BaseResponse — regras de uso
+### BaseResponse — usage rules
 
-**SEMPRE** use `BaseResponse::` — **NUNCA** use `response()->json()` diretamente.
+**ALWAYS** use `BaseResponse::` — **NEVER** call `response()->json()` directly.
 
 ```php
 use App\Responses\BaseResponse;
 
-// index — paginado
+// index — paginated
 return BaseResponse::paginated($this->service->getData($request));
 
-// show — individual
+// show — single record
 $item = $this->service->show($id);
-return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Produto não encontrado');
+return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Product not found');
 
 // store
 return BaseResponse::created($this->service->create($request->validated()));
@@ -778,11 +779,11 @@ return BaseResponse::ok($this->service->update($request->validated(), $id));
 // destroy
 return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();
 
-// erro customizado
-return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
+// custom error
+return BaseResponse::error('Message', ['field' => 'detail'], 422);
 ```
 
-**Envelope de resposta:**
+**Response envelope:**
 ```json
 {
   "success": true,
@@ -792,22 +793,22 @@ return BaseResponse::error('Mensagem', ['campo' => 'detalhe'], 422);
 }
 ```
 
-### getData($request) — busca inteligente
+### getData($request) — smart listing
 
-O método `getData(Request $request)` do `BaseService` orquestra automaticamente a busca com base nos parâmetros da request:
+`BaseService::getData(Request $request)` orchestrates the whole listing from request parameters:
 
-| Parâmetro | Comportamento |
+| Parameter | Behaviour |
 |---|---|
-| `search` | OR entre todos os `$fillable` |
-| `searchLike` | Filtro incremental com operadores `>`, `>=`, `<=`, `<`, `whereIn` |
-| nenhum deles | AND exato (`findAllFieldsAnd`) |
-| `limit`, `page` | Paginação automática |
-| `order`, `direction` | Ordenação |
-| `fields` | Selecionar apenas colunas específicas |
-| `relations` | Eager load (separados por vírgula) |
+| `search` | OR across every `$fillable` |
+| `searchLike` | Incremental filter with `>`, `>=`, `<=`, `<`, `whereIn` operators |
+| neither of them | Exact AND (`findAllFieldsAnd`) |
+| `limit`, `page` | Automatic pagination |
+| `order`, `direction` | Sorting |
+| `fields` | Select only specific columns |
+| `relations` | Eager load (comma-separated) |
 
 ```php
-// No controller, só isso:
+// In the controller, this is all of it:
 public function index(Request $request): JsonResponse
 {
     return BaseResponse::paginated($this->service->getData($request));
@@ -834,7 +835,7 @@ public function index() {
 // ❌ NUNCA — response()->json() avulso
 return response()->json(['data' => $data]);
 
-// ❌ NUNCA — lógica de negócio no controller
+// ❌ NEVER — business logic in the controller
 public function store(Request $request) {
     if (Product::where('sku', $request->sku)->exists()) { ... }
 }
@@ -1441,10 +1442,10 @@ git commit -m "feat: ..."
 ```
 
 ```
-feat:     nova funcionalidade
-fix:      correção de bug
-docs:     apenas documentação
-refactor: sem feat/fix
-test:     testes
-chore:    manutenção (deps, config)
+feat:     new feature
+fix:      bug fix
+docs:     documentation only
+refactor: no feat/fix
+test:     tests
+chore:    maintenance (deps, config)
 ```

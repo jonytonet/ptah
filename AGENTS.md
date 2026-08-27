@@ -16,7 +16,10 @@ switched on by configuration (`php artisan ptah:config` or the visual editor).
 If you are about to write a Livewire listing, a table Blade view, or an
 Eloquent query inside a component: stop — the ready-made path is
 `ptah:forge` + `ptah:config` for screens, and `BaseRepository`/`BaseService`
-via contracts for data access.
+via contracts for data access (the bases ship the full CRUD method set;
+`getData(Request)` alone covers search/filter/sort/paginate). A complete REST
+API — Swagger-annotated controller, form requests, versioned routes, response
+envelope — is one flag: `ptah:forge Name --fields="..." --api`.
 
 `php artisan ptah:config "App\Models\X" --list` shows what a screen already has.
 
