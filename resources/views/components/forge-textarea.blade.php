@@ -41,7 +41,7 @@
 
 <div x-data="{ chars: 0 }" class="ptah-textarea-wrapper w-full">
     @if($label)
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $label }}</label>
+        <label class="block text-sm font-medium mb-1">{{ $label }}</label>
     @endif
 
     <textarea
@@ -51,9 +51,9 @@
         @if($maxlength) maxlength="{{ $maxlength }}" @endif
         @if($counter) @input="chars = $event.target.value.length" @endif
         {{ $attributes->merge([
-            'class' => "w-full rounded-md border bg-white px-4 py-2.5 text-sm transition-colors duration-150
+            'class' => "w-full rounded-md border px-4 py-2.5 text-sm transition-colors duration-150
                         focus:outline-none focus:ring-2 focus:ring-offset-0
-                        disabled:bg-gray-50 disabled:cursor-not-allowed resize-y {$stateClasses}"
+                        disabled:cursor-not-allowed resize-y {$stateClasses}"
         ]) }}
     >{{ $slot }}</textarea>
 
