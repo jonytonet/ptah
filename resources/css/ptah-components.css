@@ -2754,6 +2754,14 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-code_cap            { background-color: var(--ptah-panel); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-c-code_cap { background-color: var(--ptah-panel); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
 
+/* ── permission-guide "Step by Step" tab — step-number badge. Was a bare
+   `bg-blue-700 text-white` circle repeated 5 times with no dark: pair (the
+   accent value itself is fine invariant white-on-accent, but the class name
+   hardcoded "blue"/"white" instead of the semantic accent/on-accent tokens
+   every other numbered-badge in the package already uses). */
+.ptah-c-step_num            { background-color: var(--ptah-primary); color: var(--ptah-text-on-accent); }
+.ptah-dark .ptah-c-step_num { background-color: var(--ptah-primary); color: var(--ptah-text-on-accent); }
+
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
    never tokenized) and from the layout's inline <style> `.ptah-card-default`

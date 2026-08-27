@@ -828,7 +828,7 @@ return [
     'guide_flow_login' => '🚫 Redirect to login',
 
     // Setup tab - Prerequisite
-    'guide_setup_prereq' => '<strong>Prerequisite:</strong> Run <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> to create the Ptah tables, and <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> to create the default company.',
+    'guide_setup_prereq' => '<strong>Prerequisite (human execution — do not automate on deploy):</strong> Run <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> to create the Ptah tables, and <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> to create the default company.',
 
     // Setup — Step 1
     'guide_s1_title' => 'Register Departments <span class="text-slate-400 font-normal">(Optional)</span>',
@@ -844,7 +844,7 @@ return [
     'guide_s2_title' => 'Register Pages and Objects',
     'guide_s2_desc' => 'Register the system modules and what can be controlled in them.',
     'guide_s2_btn' => 'Go to Pages →',
-    'guide_s2_body' => 'A <strong>Page</strong> represents a module or section of the system (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.sales</code>). Each page can have multiple <strong>Objects</strong> — representing granular elements such as buttons, fields or actions.',
+    'guide_s2_body' => 'A <strong>Page</strong> represents a module or section of the system (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.sales</code>). Each page can have multiple <strong>Objects</strong> — representing granular elements such as buttons, fields or actions. An <code class="font-mono text-xs bg-slate-100 px-1 rounded">obj_key</code> is only unique within its own Page (more precisely, Page + section); if the same <code class="font-mono text-xs bg-slate-100 px-1 rounded">obj_key</code> exists on another Page, use the QUALIFIED key <code class="font-mono text-xs bg-slate-100 px-1 rounded">page::obj_key</code> (or <code class="font-mono text-xs bg-slate-100 px-1 rounded">page::section::obj_key</code>) to disambiguate — see the <strong>Code Examples</strong> tab.',
     'guide_s2_page_title' => '📄 Page Example',
     'guide_s2_page_slug' => 'Slug',
     'guide_s2_page_name' => 'Name',
@@ -862,7 +862,7 @@ return [
     'guide_s3_col_create' => 'Create',
     'guide_s3_col_edit' => 'Edit',
     'guide_s3_col_delete' => 'Delete',
-    'guide_s3_note' => '↑ Seller can create orders but cannot see discounts and cannot export without restriction.',
+    'guide_s3_note' => '↑ Seller can create orders but cannot see discounts and cannot export without restriction. Unchecking "Read" on an object that is a CRUD screen\'s `permissionIdentifier` now closes the WHOLE screen (HTTP 403) for whoever lacks it — not just a hidden field anymore.',
 
     // Setup — Step 4
     'guide_s4_title' => 'Link users to Roles',
@@ -878,6 +878,13 @@ return [
     'guide_s5_desc' => 'See the "Code Examples" tab for full details.',
     'guide_s5_btn' => 'See examples →',
     'guide_s5_body' => 'Use the helper <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah_can(\'object.key\', \'read\')</code> in Blade views or the middleware <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah.can:object.key,read</code> in routes to protect access.',
+    'guide_s5_permid_note' => 'On a Ptah CRUD screen (<code class="font-mono text-xs bg-slate-100 px-1.5 rounded">Ptah\\Livewire\\BaseCrud\\BaseCrud</code>), you don\'t need to call the helper by hand: configure <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">permissions.permissionIdentifier</code> in the CrudConfig and the component itself already requires <em>create/update/delete</em> — and also <em>read</em>: without the permission, the screen responds HTTP 403 before the listing is even queried. With no <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">permissionIdentifier</code> configured, the CRUD stays open (grants are never consulted). After registering the Page/Objects, run <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">php artisan ptah:permission:sync</code> to check/generate the expected permission columns.',
+
+    // Setup — Column-level permission (colsPermission, optional)
+    'guide_s_col_title' => 'Restrict columns by permission (optional)',
+    'guide_s_col_desc' => 'Hide an entire CRUD column from whoever lacks read permission on that object.',
+    'guide_s_col_body' => 'In the CrudConfig, tag the column with <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> pointing at the <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">obj_key</code> that controls access to it. Required order: 1) register the Object (Step 2); 2) grant <em>Read</em> to the Roles that should see the column (Step 3); 3) only then tag <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> on the column. This also applies to exports — the column disappears from the generated file, not just from the screen.',
+    'guide_s_col_warn' => '⚠️ A column tagged with <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> is born CLOSED: hidden from EVERYONE until a read grant exists for that object — there is no grace period. A column without the tag stays public, as it always was.',
 
     // FAQ items
     'guide_faq_q1' => 'What happens if the user has no Role?',

@@ -272,185 +272,185 @@
         </x-forge-alert>
 
         {{-- Passo 1 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{!! __('ptah::ui.guide_s1_title') !!}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">1</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{!! __('ptah::ui.guide_s1_title') !!}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
+                    </div>
+                    <a href="{{ route('ptah.acl.departments') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s1_btn') }}
+                    </a>
                 </div>
-                <a href="{{ route('ptah.acl.departments') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s1_btn') }}
-                </a>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{{ __('ptah::ui.guide_s1_body') }}</p>
+            <div class="ptah-c-card rounded-md border p-4 mt-3 text-sm">
+                <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
+                <ul class="mt-2 space-y-1 list-disc list-inside">
+                    <li>{!! __('ptah::ui.guide_s1_ex_it') !!}</li>
+                    <li>{!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
+                    <li>{!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
+                </ul>
             </div>
-            <div class="px-5 py-4 space-y-3">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {{ __('ptah::ui.guide_s1_body') }}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm text-slate-600">
-                    <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
-                    <ul class="mt-2 space-y-1 list-none">
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_it') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 2 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s2_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.pages') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s2_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s2_body') !!}
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                        <h4 class="text-xs font-bold text-blue-800 mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
-                        <table class="w-full text-xs">
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono text-blue-700">admin.vendas</td></tr>
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_name') }}</td><td class="py-1 text-blue-700">Módulo de Vendas</td></tr>
-                            <tr><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1 text-blue-700">🛒</td></tr>
-                        </table>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">2</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s2_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
                     </div>
-                    <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                        <h4 class="text-xs font-bold text-green-800 mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.criar-pedido</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">button</span>
-                            </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.ver-desconto</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">field</span>
-                            </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.exportar</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">action</span>
-                            </div>
+                    <a href="{{ route('ptah.acl.pages') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s2_btn') }}
+                    </a>
+                </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s2_body') !!}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="ptah-c-card rounded-md border p-4">
+                    <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
+                    <table class="w-full text-xs">
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono">admin.vendas</td></tr>
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium">{{ __('ptah::ui.guide_s2_page_name') }}</td><td class="py-1">Módulo de Vendas</td></tr>
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1">🛒</td></tr>
+                    </table>
+                </div>
+                <div class="ptah-c-card rounded-md border p-4">
+                    <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.criar-pedido</span>
+                            <span class="ptah-c-chip">button</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.ver-desconto</span>
+                            <span class="ptah-c-chip">field</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.exportar</span>
+                            <span class="ptah-c-chip">action</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 3 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s3_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.roles') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s3_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s3_body') !!}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-                    <h4 class="text-xs font-bold text-slate-700 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs border-collapse">
-                            <thead>
-                                <tr class="bg-slate-200">
-                                    <th class="px-3 py-2 text-left text-slate-600 font-semibold rounded-tl-lg">{{ __('ptah::ui.guide_s3_col_obj') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_read') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_create') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_edit') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold rounded-tr-lg">{{ __('ptah::ui.guide_s3_col_delete') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200">
-                                @foreach ([
-                                    ['vendas.criar-pedido',  true,  true,  true,  false],
-                                    ['vendas.ver-desconto',  false, false, false, false],
-                                    ['vendas.exportar',      true,  false, false, false],
-                                ] as [$obj, $r, $c, $u, $d])
-                                <tr class="bg-white">
-                                    <td class="px-3 py-2 font-mono text-slate-600">{{ $obj }}</td>
-                                    @foreach ([$r, $c, $u, $d] as $check)
-                                    <td class="px-3 py-2 text-center">
-                                        @if ($check)
-                                            <span class="text-green-600 font-bold">✓</span>
-                                        @else
-                                            <span class="text-slate-300">—</span>
-                                        @endif
-                                    </td>
-                                    @endforeach
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">3</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s3_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
                     </div>
-                    <p class="text-xs text-slate-400 mt-2">{{ __('ptah::ui.guide_s3_note') }}</p>
+                    <a href="{{ route('ptah.acl.roles') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s3_btn') }}
+                    </a>
                 </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s3_body') !!}</p>
+            <h4 class="ptah-c-mod_hdg text-xs font-bold mt-4 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
+            <div class="ptah-module-table overflow-x-auto border rounded-md">
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="ptah-c-tbl_head_row">
+                            <th class="px-3 py-2 text-left ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_obj') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_read') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_create') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_edit') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_delete') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        @foreach ([
+                            ['vendas.criar-pedido',  true,  true,  true,  false],
+                            ['vendas.ver-desconto',  false, false, false, false],
+                            ['vendas.exportar',      true,  false, false, false],
+                        ] as [$obj, $r, $c, $u, $d])
+                        <tr>
+                            <td class="px-3 py-2 font-mono">{{ $obj }}</td>
+                            @foreach ([$r, $c, $u, $d] as $check)
+                            <td class="px-3 py-2 text-center">
+                                @if ($check)
+                                    <span class="text-green-600 font-bold">✓</span>
+                                @else
+                                    <span>—</span>
+                                @endif
+                            </td>
+                            @endforeach
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        </div>
+            <p class="ptah-c-mod_subttl text-xs mt-2">{{ __('ptah::ui.guide_s3_note') }}</p>
+        </x-forge-card>
 
         {{-- Passo 4 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">4</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s4_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.users') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s4_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-3">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s4_body') !!}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm">
-                    <h4 class="text-xs font-bold text-slate-700 mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
-                            {!! __('ptah::ui.guide_s4_ex1') !!}
-                        </div>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
-                            {!! __('ptah::ui.guide_s4_ex2') !!}
-                        </div>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">4</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s4_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
                     </div>
+                    <a href="{{ route('ptah.acl.users') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s4_btn') }}
+                    </a>
+                </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s4_body') !!}</p>
+            <div class="ptah-c-card rounded-md border p-4 mt-3 text-sm">
+                <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
+                <div class="space-y-2 text-xs">
+                    <div>{!! __('ptah::ui.guide_s4_ex1') !!}</div>
+                    <div>{!! __('ptah::ui.guide_s4_ex2') !!}</div>
                 </div>
             </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 5 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold flex items-center justify-center shrink-0">5</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s5_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">5</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s5_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
+                    </div>
+                    <button wire:click="$set('activeTab', 'code')" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s5_btn') }}
+                    </button>
                 </div>
-                <button wire:click="$set('activeTab', 'code')"
-                    class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200">
-                    {{ __('ptah::ui.guide_s5_btn') }}
-                </button>
-            </div>
-            <div class="px-5 py-4">
-                <p class="text-sm text-slate-600">
-                    {!! __('ptah::ui.guide_s5_body') !!}
-                </p>
-            </div>
-        </div>
+            </x-slot>
+
+            <p class="text-sm">{!! __('ptah::ui.guide_s5_body') !!}</p>
+            <p class="text-sm mt-3">{!! __('ptah::ui.guide_s5_permid_note') !!}</p>
+        </x-forge-card>
+
+        {{-- Permissão por coluna (colsPermission, opcional — não é um passo numerado) --}}
+        <x-forge-card>
+            <x-slot name="header">
+                <h3 class="ptah-c-mod_hdg text-sm font-bold">🔒 {{ __('ptah::ui.guide_s_col_title') }}</h3>
+                <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s_col_desc') }}</p>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s_col_body') !!}</p>
+            <x-forge-alert type="warn" class="mt-3">
+                {!! __('ptah::ui.guide_s_col_warn') !!}
+            </x-forge-alert>
+        </x-forge-card>
 
     </div>
     @endif

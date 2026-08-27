@@ -38,6 +38,7 @@ class ModuleScreenThemeParityTest extends TestCase
             'department-list' => ['livewire/permission/department-list.blade.php'],
             'user-permission-list' => ['livewire/permission/user-permission-list.blade.php'],
             'page-list' => ['livewire/permission/page-list.blade.php'],
+            'permission-guide' => ['livewire/permission/permission-guide.blade.php'],
         ];
     }
 
@@ -150,6 +151,9 @@ class ModuleScreenThemeParityTest extends TestCase
             // the per-token syntax-highlight span soup with a plain code block.
             '.ptah-c-code' => ['.ptah-c-code'],
             '.ptah-c-code_cap' => ['.ptah-c-code_cap'],
+
+            // permission-guide "Step by Step" tab — step-number badge.
+            '.ptah-c-step_num' => ['.ptah-c-step_num'],
         ];
     }
 

@@ -923,4 +923,15 @@ class AppearancePresetContrastTest extends TestCase
             4.5
         );
     }
+
+    // NOTE: .ptah-c-step_num (permission-guide step badge) is intentionally NOT
+    // proved here with assertTwoRulesMeetFloor — its background is
+    // var(--ptah-primary), an ACCENT token (host-configurable per user, not a
+    // tone/text-scale token these two helpers resolve), and its ink is the
+    // same invariant #ffffff every accent is already proved against by
+    // every_accent_passes_white_ink_on_solid_background() above. Feeding an
+    // accent token through resolveAnyToken() falls back to the RAW `:root`
+    // declaration (`var(--color-primary, ...)`, not a hex), which
+    // contrastRatio()/hexToRgb() cannot parse — a silent, meaningless pass
+    // with a PHP deprecation, not a real proof.
 }

@@ -829,7 +829,7 @@ return [
     'guide_flow_login' => '🚫 Redireciona para login',
 
     // Passo a Passo — Pré-requisito
-    'guide_setup_prereq' => '<strong>Pré-requisito:</strong> Execute <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> para criar as tabelas do Ptah, e <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> para criar a empresa padrão.',
+    'guide_setup_prereq' => '<strong>Pré-requisito (execução humana — não automatize em deploy):</strong> Execute <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> para criar as tabelas do Ptah, e <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> para criar a empresa padrão.',
 
     // Passo 1
     'guide_s1_title' => 'Cadastrar Departamentos <span class="text-slate-400 font-normal">(Opcional)</span>',
@@ -845,7 +845,7 @@ return [
     'guide_s2_title' => 'Cadastrar Páginas e Objetos',
     'guide_s2_desc' => 'Registre os módulos do sistema e o que pode ser controlado neles.',
     'guide_s2_btn' => 'Ir para Páginas →',
-    'guide_s2_body' => 'Uma <strong>Página</strong> representa um módulo ou seção do sistema (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.vendas</code>). Cada página pode ter vários <strong>Objetos</strong> — que representam elementos granulares como botões, campos ou ações.',
+    'guide_s2_body' => 'Uma <strong>Página</strong> representa um módulo ou seção do sistema (ex: <code class="font-mono text-xs bg-slate-100 px-1 rounded">admin.vendas</code>). Cada página pode ter vários <strong>Objetos</strong> — que representam elementos granulares como botões, campos ou ações. Um <code class="font-mono text-xs bg-slate-100 px-1 rounded">obj_key</code> só é único dentro da própria Página (mais precisamente, por Página + seção); se o mesmo <code class="font-mono text-xs bg-slate-100 px-1 rounded">obj_key</code> existir em outra Página, use a chave QUALIFICADA <code class="font-mono text-xs bg-slate-100 px-1 rounded">pagina::obj_key</code> (ou <code class="font-mono text-xs bg-slate-100 px-1 rounded">pagina::secao::obj_key</code>) para desambiguar — veja a aba <strong>Exemplos de Código</strong>.',
     'guide_s2_page_title' => '📄 Exemplo de Página',
     'guide_s2_page_slug' => 'Slug',
     'guide_s2_page_name' => 'Nome',
@@ -863,7 +863,7 @@ return [
     'guide_s3_col_create' => 'Criar',
     'guide_s3_col_edit' => 'Editar',
     'guide_s3_col_delete' => 'Excluir',
-    'guide_s3_note' => '↑ Vendedor pode criar pedidos mas não vê desconto e não pode exportar de forma irrestrita.',
+    'guide_s3_note' => '↑ Vendedor pode criar pedidos mas não vê desconto e não pode exportar de forma irrestrita. Desmarcar a coluna "Ler" de um objeto que seja o `permissionIdentifier` de uma tela CRUD fecha a tela inteira (HTTP 403) para quem não tiver a permissão — não é mais só um campo escondido.',
 
     // Passo 4
     'guide_s4_title' => 'Vincular usuários a Roles',
@@ -879,6 +879,13 @@ return [
     'guide_s5_desc' => 'Veja a aba "Exemplos de Código" para detalhes completos.',
     'guide_s5_btn' => 'Ver exemplos →',
     'guide_s5_body' => 'Use o helper <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah_can(\'objeto.chave\', \'read\')</code> nas views Blade ou o middleware <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">ptah.can:objeto.chave,read</code> nas rotas para proteger o acesso.',
+    'guide_s5_permid_note' => 'Numa tela CRUD do Ptah (<code class="font-mono text-xs bg-slate-100 px-1.5 rounded">Ptah\\Livewire\\BaseCrud\\BaseCrud</code>), não é preciso chamar o helper manualmente: configure <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">permissions.permissionIdentifier</code> no CrudConfig e o próprio componente passa a exigir <em>create/update/delete</em> — e também <em>read</em>: sem a permissão, a tela responde HTTP 403 antes mesmo de consultar a listagem. Sem <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">permissionIdentifier</code> configurado, o CRUD fica livre (os grants nunca são consultados). Depois de cadastrar Página/Objetos, rode <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">php artisan ptah:permission:sync</code> para conferir/gerar as colunas de permissão esperadas.',
+
+    // Passo — Permissão por coluna (colsPermission, opcional)
+    'guide_s_col_title' => 'Restringir colunas por permissão (opcional)',
+    'guide_s_col_desc' => 'Esconda uma coluna inteira do CRUD para quem não tiver a permissão de leitura daquele objeto.',
+    'guide_s_col_body' => 'No CrudConfig, marque a coluna com <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> apontando para o <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">obj_key</code> que controla o acesso a ela. Ordem obrigatória: 1) cadastre o Objeto (Passo 2); 2) conceda <em>Ler</em> aos Roles que devem ver a coluna (Passo 3); 3) só então marque <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> na coluna. Vale também no export — a coluna some do arquivo gerado, não só da tela.',
+    'guide_s_col_warn' => '⚠️ Uma coluna marcada com <code class="font-mono text-xs bg-slate-100 px-1.5 rounded">colsPermission</code> nasce FECHADA: fica escondida para TODOS até que exista um grant de leitura para aquele objeto — não há período de carência. Uma coluna sem a tag continua pública, como sempre foi.',
 
     // FAQ
     'guide_faq_q1' => 'O que acontece se o usuário não tiver nenhum Role?',
