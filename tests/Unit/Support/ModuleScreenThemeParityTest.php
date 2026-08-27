@@ -38,6 +38,7 @@ class ModuleScreenThemeParityTest extends TestCase
             'department-list' => ['livewire/permission/department-list.blade.php'],
             'user-permission-list' => ['livewire/permission/user-permission-list.blade.php'],
             'page-list' => ['livewire/permission/page-list.blade.php'],
+            'permission-guide' => ['livewire/permission/permission-guide.blade.php'],
         ];
     }
 
@@ -145,6 +146,21 @@ class ModuleScreenThemeParityTest extends TestCase
             '.ptah-c-mod_field' => ['.ptah-c-mod_field'],
             '.ptah-c-mod_field:focus' => ['.ptah-c-mod_field:focus'],
             '.ptah-c-mod_row:hover' => ['.ptah-c-mod_row:hover'],
+
+            // permission-guide "Code Examples" tab (truth+theme wave) — replaces
+            // the per-token syntax-highlight span soup with a plain code block.
+            '.ptah-c-code' => ['.ptah-c-code'],
+            '.ptah-c-code_cap' => ['.ptah-c-code_cap'],
+
+            // permission-guide "Step by Step" tab — step-number badge.
+            '.ptah-c-step_num' => ['.ptah-c-step_num'],
+
+            // permission-guide "Overview" tab — architecture diagram + flow nodes.
+            '.ptah-c-guide_node' => ['.ptah-c-guide_node'],
+            '.ptah-c-guide_node_q' => ['.ptah-c-guide_node_q'],
+            '.ptah-c-guide_node_ok' => ['.ptah-c-guide_node_ok'],
+            '.ptah-c-guide_node_no' => ['.ptah-c-guide_node_no'],
+            '.ptah-c-guide_conn' => ['.ptah-c-guide_conn'],
         ];
     }
 

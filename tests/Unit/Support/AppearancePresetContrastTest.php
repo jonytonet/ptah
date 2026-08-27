@@ -92,17 +92,30 @@ class AppearancePresetContrastTest extends TestCase
         return max(abs($a[0] - $b[0]), abs($a[1] - $b[1]), abs($a[2] - $b[2]));
     }
 
-    /** Replicates CSS `color-mix(in srgb, $hex $pct%, white)` — see ContrastGuardTest::mixWithWhite(). */
-    private static function mixWithWhite(string $hex, float $pct): string
+    /** Replicates CSS `color-mix(in srgb, $hex $pct%, $onto)` (both opaque hex) — see ModuleScreenSemanticChipContrastTest::mix(). */
+    private static function mix(string $hex, float $pct, string $onto): string
     {
         $c = self::hexToRgb($hex);
+        $o = self::hexToRgb($onto);
         $mixed = [
-            (int) round($c[0] * $pct + 255 * (1 - $pct)),
-            (int) round($c[1] * $pct + 255 * (1 - $pct)),
-            (int) round($c[2] * $pct + 255 * (1 - $pct)),
+            (int) round($c[0] * $pct + $o[0] * (1 - $pct)),
+            (int) round($c[1] * $pct + $o[1] * (1 - $pct)),
+            (int) round($c[2] * $pct + $o[2] * (1 - $pct)),
         ];
 
         return sprintf('#%02x%02x%02x', ...$mixed);
+    }
+
+    /** Replicates `color-mix(in srgb, $hex $pct%, black)` (--ptah-*-strong idiom). */
+    private static function mixWithBlack(string $hex, float $pct): string
+    {
+        return self::mix($hex, $pct, '#000000');
+    }
+
+    /** Replicates CSS `color-mix(in srgb, $hex $pct%, white)` — see ContrastGuardTest::mixWithWhite(). */
+    private static function mixWithWhite(string $hex, float $pct): string
+    {
+        return self::mix($hex, $pct, '#ffffff');
     }
 
     // ── CSS parsing ──────────────────────────────────────────────────────────
@@ -900,5 +913,126 @@ class AppearancePresetContrastTest extends TestCase
             '.ptah-c-prof_chip', 'background-color',
             3.0
         );
+    }
+
+    #[Test]
+    public function code_text_passes_aa_text_contrast_on_its_own_background(): void
+    {
+        $this->assertTwoRulesMeetFloor(
+            'code texto/fundo',
+            '.ptah-c-code', 'color',
+            '.ptah-c-code', 'background-color',
+            4.5
+        );
+    }
+
+    #[Test]
+    public function code_cap_text_passes_aa_text_contrast_on_its_own_background(): void
+    {
+        $this->assertTwoRulesMeetFloor(
+            'code_cap texto/fundo',
+            '.ptah-c-code_cap', 'color',
+            '.ptah-c-code_cap', 'background-color',
+            4.5
+        );
+    }
+
+    // NOTE: .ptah-c-step_num (permission-guide step badge) is intentionally NOT
+    // proved here with assertTwoRulesMeetFloor — its background is
+    // var(--ptah-primary), an ACCENT token (host-configurable per user, not a
+    // tone/text-scale token these two helpers resolve), and its ink is the
+    // same invariant #ffffff every accent is already proved against by
+    // every_accent_passes_white_ink_on_solid_background() above. Feeding an
+    // accent token through resolveAnyToken() falls back to the RAW `:root`
+    // declaration (`var(--color-primary, ...)`, not a hex), which
+    // contrastRatio()/hexToRgb() cannot parse — a silent, meaningless pass
+    // with a PHP deprecation, not a real proof.
+
+    #[Test]
+    public function guide_node_text_passes_aa_text_contrast_on_its_own_background(): void
+    {
+        $this->assertTwoRulesMeetFloor(
+            'guide_node texto/fundo',
+            '.ptah-c-guide_node', 'color',
+            '.ptah-c-guide_node', 'background-color',
+            4.5
+        );
+    }
+
+    #[Test]
+    public function guide_conn_passes_non_text_contrast_on_surface(): void
+    {
+        $this->assertRuleMeetsFloorAgainstAmbient(
+            'guide_conn/surface',
+            '.ptah-c-guide_conn', 'background-color',
+            '--ptah-surface',
+            3.0
+        );
+    }
+
+    /**
+     * .ptah-c-guide_node_q/_ok/_no (permission-guide flow diagram) reuse the
+     * EXACT -strong(light)/-lite(dark) ink over -soft background recipe
+     * ModuleScreenSemanticChipContrastTest already proves for the
+     * module-table status chips — extended here across all 6 REAL tone
+     * presets (that test only checks the single default canvas hex), since
+     * --ptah-success/danger/warn-soft mixes against --ptah-surface (light) /
+     * transparent composited over whatever sits behind it (dark, here also
+     * --ptah-surface via .ptah-c-guide_node's own background) — and
+     * --ptah-surface differs per tone. NOT run through
+     * assertTwoRulesMeetFloor/assertRuleMeetsFloorAgainstAmbient: those
+     * resolve a token by reading its literal CSS declaration, which for a
+     * `color-mix(...)` expression (every semantic soft/strong/lite token) is
+     * not a hex — the same class of problem noted above for .ptah-c-step_num.
+     */
+    #[Test]
+    public function guide_node_semantic_ink_clears_aa_text_contrast_on_its_own_soft_background(): void
+    {
+        $cases = [
+            // label => [defaultHex, strongPct (light ink), softPctLight, litePct (dark ink), softPctDark]
+            'guide_node_q (warn)' => ['#f59e0b', 0.35, 0.16, 0.55, 0.24],
+            'guide_node_ok (success)' => ['#10b981', 0.60, 0.16, 0.55, 0.24],
+            'guide_node_no (danger)' => ['#ef4444', 0.75, 0.14, 0.55, 0.24],
+        ];
+
+        foreach ($cases as $label => [$color, $strongPct, $softPctLight, $litePct, $softPctDark]) {
+            foreach (self::lightTonePresets() as $toneName => $toneTokens) {
+                $ink = self::mixWithBlack($color, $strongPct);
+                $bg = self::mix($color, $softPctLight, $toneTokens['--ptah-surface']);
+                $ratio = self::contrastRatio($ink, $bg);
+
+                $this->assertGreaterThanOrEqual(
+                    4.5,
+                    $ratio,
+                    sprintf(
+                        '[claro] %s tom=%s: ink %s vs bg %s = %.2f:1, abaixo de 4.5:1.',
+                        $label,
+                        $toneName,
+                        $ink,
+                        $bg,
+                        $ratio
+                    )
+                );
+            }
+
+            foreach (self::darkTonePresets() as $toneName => $toneTokens) {
+                $ink = self::mixWithWhite($color, $litePct);
+                $bg = self::mix($color, $softPctDark, $toneTokens['--ptah-surface']);
+                $ratio = self::contrastRatio($ink, $bg);
+
+                $this->assertGreaterThanOrEqual(
+                    4.5,
+                    $ratio,
+                    sprintf(
+                        '[escuro] %s tom=%s: ink %s vs bg %s = %.2f:1, abaixo de 4.5:1.',
+                        $label,
+                        $toneName,
+                        $ink,
+                        $bg,
+                        $ratio
+                    )
+                );
+            }
+        }
     }
 }

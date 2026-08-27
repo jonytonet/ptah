@@ -10,6 +10,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
 use Ptah\Models\Role;
+use Ptah\Models\UserRole;
 use Ptah\Support\ModelKey;
 use Ptah\Tests\TestCase;
 use Ptah\Traits\SendsCrudNotifications;
@@ -733,6 +734,47 @@ class ConfigDoctorCommandTest extends TestCase
 
         $this->artisan('ptah:config:doctor')
             ->doesntExpectOutputToContain('notifications: queue')
+            ->assertExitCode(0);
+    }
+
+    // ── MASTER scoped by company_id (security alert) ────────────────────────────
+
+    #[Test]
+    public function a_master_binding_with_a_company_id_is_flagged_as_a_security_alert(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $master = Role::create(['name' => 'MASTER', 'is_master' => true, 'is_active' => true]);
+        UserRole::create(['user_id' => 1, 'role_id' => $master->id, 'company_id' => 1, 'is_active' => true]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('SECURITY ALERT — MASTER scoped by company_id')
+            ->assertExitCode(0); // warning only — MASTER still resolves globally
+    }
+
+    #[Test]
+    public function a_master_binding_without_a_company_id_is_not_flagged(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $master = Role::create(['name' => 'MASTER', 'is_master' => true, 'is_active' => true]);
+        UserRole::create(['user_id' => 1, 'role_id' => $master->id, 'company_id' => null, 'is_active' => true]);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('SECURITY ALERT')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_regular_role_binding_with_a_company_id_is_not_flagged(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $regular = Role::create(['name' => 'STAFF', 'is_master' => false, 'is_active' => true]);
+        UserRole::create(['user_id' => 1, 'role_id' => $regular->id, 'company_id' => 1, 'is_active' => true]);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('SECURITY ALERT')
             ->assertExitCode(0);
     }
 }

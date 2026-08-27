@@ -1,33 +1,22 @@
 {{-- ptah::livewire.permission.permission-guide --}}
 <div>
-    <div class="mb-5 flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.guide_title') }}</h1>
-            <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.guide_subtitle') }}</p>
-        </div>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full shrink-0">
-            {{ __('ptah::ui.guide_badge') }}
-        </span>
-    </div>
+    <x-forge-page-header :title="__('ptah::ui.guide_title')" :subtitle="__('ptah::ui.guide_subtitle')">
+        <span class="ptah-c-chip">{{ __('ptah::ui.guide_badge') }}</span>
+    </x-forge-page-header>
 
-    {{-- Navegação de abas --}}
-    <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 pb-0">
-        @foreach ([
-            ['key' => 'overview',  'label' => __('ptah::ui.guide_tab_overview')],
-            ['key' => 'setup',     'label' => __('ptah::ui.guide_tab_setup')],
-            ['key' => 'code',      'label' => __('ptah::ui.guide_tab_code')],
-            ['key' => 'faq',       'label' => __('ptah::ui.guide_tab_faq')],
-        ] as $tab)
-            <button
-                wire:click="$set('activeTab', '{{ $tab['key'] }}')"
-                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap
-                    {{ $activeTab === $tab['key']
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
-                {{ $tab['label'] }}
-            </button>
-        @endforeach
-    </div>
+    <x-forge-tabs>
+        <x-slot name="tabs">
+            @foreach ([
+                ['key' => 'overview',  'label' => __('ptah::ui.guide_tab_overview')],
+                ['key' => 'setup',     'label' => __('ptah::ui.guide_tab_setup')],
+                ['key' => 'code',      'label' => __('ptah::ui.guide_tab_code')],
+                ['key' => 'faq',       'label' => __('ptah::ui.guide_tab_faq')],
+            ] as $tab)
+                <x-forge-tab :key="$tab['key']" :active="$activeTab === $tab['key']" wire:click="$set('activeTab', '{{ $tab['key'] }}')">
+                    {{ $tab['label'] }}
+                </x-forge-tab>
+            @endforeach
+        </x-slot>
 
     {{-- ═══════════════════════════════════════════════════════════
          ABA 1 — VISÃO GERAL
@@ -36,17 +25,17 @@
     <div class="space-y-8">
 
         {{-- Intro --}}
-        <div class="bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-md p-6">
-            <h2 class="text-lg font-bold text-blue-900 mb-2">{{ __('ptah::ui.guide_ov_title') }}</h2>
-            <p class="text-sm text-blue-700 leading-relaxed">
+        <x-forge-alert type="primary">
+            <h2 class="font-bold mb-2">{{ __('ptah::ui.guide_ov_title') }}</h2>
+            <p class="leading-relaxed">
                 {!! __('ptah::ui.guide_ov_body') !!}
             </p>
-        </div>
+        </x-forge-alert>
 
         {{-- Diagrama de arquitetura --}}
         <div>
-            <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">1</span>
+            <h2 class="ptah-c-mod_hdg text-base font-bold mb-4 flex items-center gap-2">
+                <span class="ptah-c-step_num w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">1</span>
                 {{ __('ptah::ui.guide_ov_arch_title') }}
             </h2>
             <div class="overflow-x-auto">
@@ -54,64 +43,60 @@
 
                     {{-- Departamentos --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-amber-50 border-2 border-amber-200 rounded-md p-3 text-center">
+                        <div class="ptah-c-guide_node w-36 border-2 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🏢</div>
-                            <p class="text-xs font-bold text-amber-800">{{ __('ptah::ui.guide_ov_dept_title') }}</p>
-                            <p class="text-xs text-amber-600 mt-0.5">{{ __('ptah::ui.guide_ov_dept_desc') }}</p>
+                            <p class="text-xs font-bold">{{ __('ptah::ui.guide_ov_dept_title') }}</p>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_ov_dept_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_dept_ex') }}</p>
+                        <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_dept_ex') }}</p>
                     </div>
 
-                    {{-- Seta --}}
-                    <div class="flex items-center px-2 text-slate-300 text-2xl font-thin">→</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Roles --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-purple-50 border-2 border-purple-300 rounded-md p-3 text-center">
+                        <div class="ptah-c-guide_node w-36 border-2 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🎭</div>
-                            <p class="text-xs font-bold text-purple-800">{{ __('ptah::ui.guide_ov_roles_title') }}</p>
-                            <p class="text-xs text-purple-600 mt-0.5">{{ __('ptah::ui.guide_ov_roles_desc') }}</p>
+                            <p class="text-xs font-bold">{{ __('ptah::ui.guide_ov_roles_title') }}</p>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_ov_roles_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_roles_ex') }}</p>
+                        <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_roles_ex') }}</p>
                     </div>
 
-                    {{-- Seta --}}
-                    <div class="flex items-center px-2 text-slate-300 text-2xl font-thin">↔</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Páginas/Objetos --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-40 bg-blue-50 border-2 border-blue-300 rounded-md p-3 text-center">
+                        <div class="ptah-c-guide_node w-40 border-2 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">📄</div>
-                            <p class="text-xs font-bold text-blue-800">{{ __('ptah::ui.guide_ov_pages_title') }}</p>
-                            <p class="text-xs text-blue-600 mt-0.5">{{ __('ptah::ui.guide_ov_pages_desc') }}</p>
+                            <p class="text-xs font-bold">{{ __('ptah::ui.guide_ov_pages_title') }}</p>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_ov_pages_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[140px]">{{ __('ptah::ui.guide_ov_pages_ex') }}</p>
+                        <p class="ptah-c-mod_subttl text-xs text-center max-w-[140px]">{{ __('ptah::ui.guide_ov_pages_ex') }}</p>
                     </div>
 
-                    {{-- Seta --}}
-                    <div class="flex items-center px-2 text-slate-300 text-2xl font-thin">←</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Usuários --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-green-50 border-2 border-green-300 rounded-md p-3 text-center">
+                        <div class="ptah-c-guide_node w-36 border-2 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">👤</div>
-                            <p class="text-xs font-bold text-green-800">{{ __('ptah::ui.guide_ov_users_title') }}</p>
-                            <p class="text-xs text-green-600 mt-0.5">{{ __('ptah::ui.guide_ov_users_desc') }}</p>
+                            <p class="text-xs font-bold">{{ __('ptah::ui.guide_ov_users_title') }}</p>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_ov_users_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_users_ex') }}</p>
+                        <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_users_ex') }}</p>
                     </div>
 
-                    {{-- Seta --}}
-                    <div class="flex items-center px-2 text-slate-300 text-2xl font-thin">←</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Empresas --}}
                     <div class="flex flex-col items-center gap-2">
-                        <div class="w-36 bg-slate-50 border-2 border-slate-300 rounded-md p-3 text-center">
+                        <div class="ptah-c-guide_node w-36 border-2 rounded-md p-3 text-center">
                             <div class="text-2xl mb-1">🏭</div>
-                            <p class="text-xs font-bold text-slate-700">{{ __('ptah::ui.guide_ov_co_title') }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_ov_co_desc') }}</p>
+                            <p class="text-xs font-bold">{{ __('ptah::ui.guide_ov_co_title') }}</p>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_ov_co_desc') }}</p>
                         </div>
-                        <p class="text-xs text-slate-400 text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_co_ex') }}</p>
+                        <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_co_ex') }}</p>
                     </div>
 
                 </div>
@@ -120,151 +105,145 @@
 
         {{-- Conceitos-chave em cards --}}
         <div>
-            <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">2</span>
+            <h2 class="ptah-c-mod_hdg text-base font-bold mb-4 flex items-center gap-2">
+                <span class="ptah-c-step_num w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">2</span>
                 {{ __('ptah::ui.guide_ov_concepts_title') }}
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🎭</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_role_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_role_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {{ __('ptah::ui.guide_con_role_body') }}
                     </p>
                     <div class="mt-3 flex flex-wrap gap-1">
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Admin</span>
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Vendedor</span>
-                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">👑 MASTER</span>
+                        <span class="ptah-c-chip">Admin</span>
+                        <span class="ptah-c-chip">Vendedor</span>
+                        <span class="ptah-c-chip">👑 MASTER</span>
                     </div>
-                </div>
+                </x-forge-card>
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📄</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_page_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_page_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {!! __('ptah::ui.guide_con_page_body') !!}
                     </p>
                     <div class="mt-3 flex flex-wrap gap-1">
-                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">admin.vendas</span>
-                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">admin.estoque</span>
+                        <span class="ptah-c-chip">admin.vendas</span>
+                        <span class="ptah-c-chip">admin.estoque</span>
                     </div>
-                </div>
+                </x-forge-card>
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🔑</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_obj_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_obj_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {!! __('ptah::ui.guide_con_obj_body') !!}
                     </p>
                     <div class="mt-3 grid grid-cols-4 gap-1">
                         @foreach ([__('ptah::ui.guide_con_perms_read'), __('ptah::ui.guide_con_perms_create'), __('ptah::ui.guide_con_perms_edit'), __('ptah::ui.guide_con_perms_delete')] as $perm)
                         <div class="text-center">
-                            <div class="w-7 h-7 rounded-md bg-green-100 flex items-center justify-center mx-auto"><span class="text-green-600 text-xs font-bold">✓</span></div>
-                            <p class="text-xs text-slate-500 mt-0.5">{{ $perm }}</p>
+                            <div class="ptah-c-guide_node_ok w-7 h-7 rounded-md border flex items-center justify-center mx-auto"><span class="text-xs font-bold">✓</span></div>
+                            <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ $perm }}</p>
                         </div>
                         @endforeach
                     </div>
-                </div>
+                </x-forge-card>
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">👑</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_master_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_master_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {!! __('ptah::ui.guide_con_master_body') !!}
                     </p>
-                    <div class="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-2">
+                    <x-forge-alert type="warn" class="mt-3">
                         {{ __('ptah::ui.guide_con_master_warn') }}
-                    </div>
-                </div>
+                    </x-forge-alert>
+                </x-forge-card>
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">🏭</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_scope_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_scope_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {!! __('ptah::ui.guide_con_scope_body') !!}
                     </p>
-                </div>
+                </x-forge-card>
 
-                <div class="bg-white border border-slate-200 rounded-md p-4">
+                <x-forge-card>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xl">📋</span>
-                        <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_con_audit_title') }}</h3>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_con_audit_title') }}</h3>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">
+                    <p class="ptah-c-mod_subttl text-xs leading-relaxed">
                         {!! __('ptah::ui.guide_con_audit_body') !!}
                     </p>
-                </div>
+                </x-forge-card>
 
             </div>
         </div>
 
         {{-- Fluxo de decisão --}}
         <div>
-            <h2 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center font-bold">3</span>
+            <h2 class="ptah-c-mod_hdg text-base font-bold mb-4 flex items-center gap-2">
+                <span class="ptah-c-step_num w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">3</span>
                 {{ __('ptah::ui.guide_ov_flow_title') }}
             </h2>
-            <div class="bg-white border border-slate-200 rounded-md p-5 overflow-x-auto">
-                <div class="min-w-[500px] flex flex-col items-center gap-0">
-                    {{-- Início --}}
-                    <div class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-full">{{ __('ptah::ui.guide_flow_start') }}</div>
-                    <div class="w-px h-5 bg-slate-300"></div>
-                    {{-- Passo 1 --}}
-                    <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-64">{{ __('ptah::ui.guide_flow_q1') }}</div>
-                    <div class="flex gap-8 items-start">
-                        <div class="flex flex-col items-center">
-                            <div class="w-px h-4 bg-slate-300"></div>
-                            <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
-                            <div class="w-px h-4 bg-slate-300"></div>
-                            {{-- Passo 2 --}}
-                            <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q2') }}</div>
-                            <div class="flex gap-8 items-start">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
-                                    <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="bg-green-100 border border-green-300 rounded-md px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
-                                </div>
-                                <div class="flex flex-col items-center">
-                                    <div class="w-px h-4 bg-slate-300"></div>
-                                    <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
-                                    <div class="w-px h-4 bg-slate-300"></div>
-                                    {{-- Passo 3 --}}
-                                    <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-xs text-amber-800 font-medium text-center w-56">{{ __('ptah::ui.guide_flow_q3') }}</div>
-                                    <div class="flex gap-6 items-start mt-0">
-                                        <div class="flex flex-col items-center">
-                                            <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="text-xs text-green-600 font-bold">{{ __('ptah::ui.guide_flow_yes') }}</div>
-                                            <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-green-100 border border-green-300 rounded-md px-4 py-2 text-xs text-green-800 font-bold text-center">{{ __('ptah::ui.guide_flow_granted') }}</div>
-                                        </div>
-                                        <div class="flex flex-col items-center">
-                                            <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
-                                            <div class="w-px h-4 bg-slate-300"></div>
-                                            <div class="bg-red-100 border border-red-300 rounded-md px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_denied') }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-center mt-4">
-                            <div class="text-xs text-red-500 font-bold">{{ __('ptah::ui.guide_flow_no') }}</div>
-                            <div class="w-px h-4 bg-slate-300"></div>
-                            <div class="bg-red-100 border border-red-300 rounded-md px-4 py-2 text-xs text-red-800 font-bold text-center">{{ __('ptah::ui.guide_flow_login') }}</div>
-                        </div>
-                    </div>
+            <div class="ptah-c-card rounded-md border p-5 space-y-2">
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q1') }}</div>
+                    <span class="ptah-c-guide_node_no rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_no') }}</span>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q2') }}</div>
+                    <span class="ptah-c-guide_node_no rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_no') }}</span>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q3') }}</div>
+                    <span class="ptah-c-guide_node_ok rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_granted') }}</span>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q4') }}</div>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">5</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q5') }}</div>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">6</span>
+                    <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q6') }}</div>
+                </div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
+
+                <div class="flex items-center gap-3 pl-10">
+                    <span class="ptah-c-guide_node_ok rounded-md border px-3 py-1.5 text-xs font-bold">{{ __('ptah::ui.guide_flow_granted') }}</span>
+                    <span class="ptah-c-guide_node_no rounded-md border px-3 py-1.5 text-xs font-bold">{{ __('ptah::ui.guide_flow_denied') }}</span>
                 </div>
             </div>
         </div>
@@ -283,185 +262,185 @@
         </x-forge-alert>
 
         {{-- Passo 1 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{!! __('ptah::ui.guide_s1_title') !!}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">1</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{!! __('ptah::ui.guide_s1_title') !!}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
+                    </div>
+                    <a href="{{ route('ptah.acl.departments') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s1_btn') }}
+                    </a>
                 </div>
-                <a href="{{ route('ptah.acl.departments') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s1_btn') }}
-                </a>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{{ __('ptah::ui.guide_s1_body') }}</p>
+            <div class="ptah-c-card rounded-md border p-4 mt-3 text-sm">
+                <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
+                <ul class="mt-2 space-y-1 list-disc list-inside">
+                    <li>{!! __('ptah::ui.guide_s1_ex_it') !!}</li>
+                    <li>{!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
+                    <li>{!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
+                </ul>
             </div>
-            <div class="px-5 py-4 space-y-3">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {{ __('ptah::ui.guide_s1_body') }}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm text-slate-600">
-                    <strong>{{ __('ptah::ui.guide_s1_example') }}:</strong>
-                    <ul class="mt-2 space-y-1 list-none">
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_it') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_sales') !!}</li>
-                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span> {!! __('ptah::ui.guide_s1_ex_fin') !!}</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 2 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s2_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.pages') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s2_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s2_body') !!}
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                        <h4 class="text-xs font-bold text-blue-800 mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
-                        <table class="w-full text-xs">
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono text-blue-700">admin.vendas</td></tr>
-                            <tr class="border-b border-blue-200"><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_name') }}</td><td class="py-1 text-blue-700">Módulo de Vendas</td></tr>
-                            <tr><td class="py-1 text-blue-600 font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1 text-blue-700">🛒</td></tr>
-                        </table>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">2</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s2_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
                     </div>
-                    <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                        <h4 class="text-xs font-bold text-green-800 mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.criar-pedido</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">button</span>
-                            </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.ver-desconto</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">field</span>
-                            </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-mono text-green-700">vendas.exportar</span>
-                                <span class="bg-green-100 text-green-700 px-1.5 rounded">action</span>
-                            </div>
+                    <a href="{{ route('ptah.acl.pages') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s2_btn') }}
+                    </a>
+                </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s2_body') !!}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="ptah-c-card rounded-md border p-4">
+                    <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{{ __('ptah::ui.guide_s2_page_title') }}</h4>
+                    <table class="w-full text-xs">
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium w-24">{{ __('ptah::ui.guide_s2_page_slug') }}</td><td class="py-1 font-mono">admin.vendas</td></tr>
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium">{{ __('ptah::ui.guide_s2_page_name') }}</td><td class="py-1">Módulo de Vendas</td></tr>
+                        <tr><td class="py-1 ptah-c-mod_subttl font-medium">{{ __('ptah::ui.guide_s2_page_icon') }}</td><td class="py-1">🛒</td></tr>
+                    </table>
+                </div>
+                <div class="ptah-c-card rounded-md border p-4">
+                    <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{{ __('ptah::ui.guide_s2_obj_title') }}</h4>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.criar-pedido</span>
+                            <span class="ptah-c-chip">button</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.ver-desconto</span>
+                            <span class="ptah-c-chip">field</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-mono">vendas.exportar</span>
+                            <span class="ptah-c-chip">action</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 3 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s3_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.roles') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s3_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s3_body') !!}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
-                    <h4 class="text-xs font-bold text-slate-700 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs border-collapse">
-                            <thead>
-                                <tr class="bg-slate-200">
-                                    <th class="px-3 py-2 text-left text-slate-600 font-semibold rounded-tl-lg">{{ __('ptah::ui.guide_s3_col_obj') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_read') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_create') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold">{{ __('ptah::ui.guide_s3_col_edit') }}</th>
-                                    <th class="px-3 py-2 text-center text-slate-600 font-semibold rounded-tr-lg">{{ __('ptah::ui.guide_s3_col_delete') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200">
-                                @foreach ([
-                                    ['vendas.criar-pedido',  true,  true,  true,  false],
-                                    ['vendas.ver-desconto',  false, false, false, false],
-                                    ['vendas.exportar',      true,  false, false, false],
-                                ] as [$obj, $r, $c, $u, $d])
-                                <tr class="bg-white">
-                                    <td class="px-3 py-2 font-mono text-slate-600">{{ $obj }}</td>
-                                    @foreach ([$r, $c, $u, $d] as $check)
-                                    <td class="px-3 py-2 text-center">
-                                        @if ($check)
-                                            <span class="text-green-600 font-bold">✓</span>
-                                        @else
-                                            <span class="text-slate-300">—</span>
-                                        @endif
-                                    </td>
-                                    @endforeach
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">3</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s3_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
                     </div>
-                    <p class="text-xs text-slate-400 mt-2">{{ __('ptah::ui.guide_s3_note') }}</p>
+                    <a href="{{ route('ptah.acl.roles') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s3_btn') }}
+                    </a>
                 </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s3_body') !!}</p>
+            <h4 class="ptah-c-mod_hdg text-xs font-bold mt-4 mb-3">{{ __('ptah::ui.guide_s3_ex_title') }}</h4>
+            <div class="ptah-module-table overflow-x-auto border rounded-md">
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="ptah-c-tbl_head_row">
+                            <th class="px-3 py-2 text-left ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_obj') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_read') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_create') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_edit') }}</th>
+                            <th class="px-3 py-2 text-center ptah-c-th_text font-semibold">{{ __('ptah::ui.guide_s3_col_delete') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        @foreach ([
+                            ['vendas.criar-pedido',  true,  true,  true,  false],
+                            ['vendas.ver-desconto',  false, false, false, false],
+                            ['vendas.exportar',      true,  false, false, false],
+                        ] as [$obj, $r, $c, $u, $d])
+                        <tr>
+                            <td class="px-3 py-2 font-mono">{{ $obj }}</td>
+                            @foreach ([$r, $c, $u, $d] as $check)
+                            <td class="px-3 py-2 text-center">
+                                @if ($check)
+                                    <span class="ptah-c-guide_node_ok rounded px-1 font-bold">✓</span>
+                                @else
+                                    <span>—</span>
+                                @endif
+                            </td>
+                            @endforeach
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        </div>
+            <p class="ptah-c-mod_subttl text-xs mt-2">{{ __('ptah::ui.guide_s3_note') }}</p>
+        </x-forge-card>
 
         {{-- Passo 4 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold flex items-center justify-center shrink-0">4</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s4_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
-                </div>
-                <a href="{{ route('ptah.acl.users') }}" class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-md transition-colors">
-                    {{ __('ptah::ui.guide_s4_btn') }}
-                </a>
-            </div>
-            <div class="px-5 py-4 space-y-3">
-                <p class="text-sm text-slate-600 leading-relaxed">
-                    {!! __('ptah::ui.guide_s4_body') !!}
-                </p>
-                <div class="bg-slate-50 border border-slate-200 rounded-md p-4 text-sm">
-                    <h4 class="text-xs font-bold text-slate-700 mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
-                            {!! __('ptah::ui.guide_s4_ex1') !!}
-                        </div>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
-                            {!! __('ptah::ui.guide_s4_ex2') !!}
-                        </div>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">4</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s4_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
                     </div>
+                    <a href="{{ route('ptah.acl.users') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s4_btn') }}
+                    </a>
+                </div>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s4_body') !!}</p>
+            <div class="ptah-c-card rounded-md border p-4 mt-3 text-sm">
+                <h4 class="ptah-c-mod_hdg text-xs font-bold mb-2">{!! __('ptah::ui.guide_s4_ex_title') !!}</h4>
+                <div class="space-y-2 text-xs">
+                    <div>{!! __('ptah::ui.guide_s4_ex1') !!}</div>
+                    <div>{!! __('ptah::ui.guide_s4_ex2') !!}</div>
                 </div>
             </div>
-        </div>
+        </x-forge-card>
 
         {{-- Passo 5 --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
-                <span class="w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold flex items-center justify-center shrink-0">5</span>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800">{{ __('ptah::ui.guide_s5_title') }}</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
+        <x-forge-card>
+            <x-slot name="header">
+                <div class="flex items-center gap-3">
+                    <span class="ptah-c-step_num w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0">5</span>
+                    <div>
+                        <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s5_title') }}</h3>
+                        <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s5_desc') }}</p>
+                    </div>
+                    <button wire:click="$set('activeTab', 'code')" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                        {{ __('ptah::ui.guide_s5_btn') }}
+                    </button>
                 </div>
-                <button wire:click="$set('activeTab', 'code')"
-                    class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200">
-                    {{ __('ptah::ui.guide_s5_btn') }}
-                </button>
-            </div>
-            <div class="px-5 py-4">
-                <p class="text-sm text-slate-600">
-                    {!! __('ptah::ui.guide_s5_body') !!}
-                </p>
-            </div>
-        </div>
+            </x-slot>
+
+            <p class="text-sm">{!! __('ptah::ui.guide_s5_body') !!}</p>
+            <p class="text-sm mt-3">{!! __('ptah::ui.guide_s5_permid_note') !!}</p>
+        </x-forge-card>
+
+        {{-- Permissão por coluna (colsPermission, opcional — não é um passo numerado) --}}
+        <x-forge-card>
+            <x-slot name="header">
+                <h3 class="ptah-c-mod_hdg text-sm font-bold">🔒 {{ __('ptah::ui.guide_s_col_title') }}</h3>
+                <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s_col_desc') }}</p>
+            </x-slot>
+
+            <p class="text-sm leading-relaxed">{!! __('ptah::ui.guide_s_col_body') !!}</p>
+            <x-forge-alert type="warn" class="mt-3">
+                {!! __('ptah::ui.guide_s_col_warn') !!}
+            </x-forge-alert>
+        </x-forge-card>
 
     </div>
     @endif
@@ -473,147 +452,143 @@
     <div class="space-y-6">
 
         {{-- Helper Blade --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">resources/views/vendas/index.blade.php — Helper ptah_can()</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">{{-- Verificar permissão de leitura --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.exportar'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Exportar CSV</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">resources/views/vendas/index.blade.php — Helper ptah_can()</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Verificar permissão de leitura
+&#64;if (ptah_can('vendas.exportar', 'read'))
+    &lt;button&gt;Exportar CSV&lt;/button&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Verificar permissão de criação --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">, </span><span class="text-amber-300">'create'</span><span class="text-slate-300">))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">button</span><span class="text-slate-300"> </span><span class="text-purple-400">wire:click</span><span class="text-slate-300">=</span><span class="text-amber-300">"novoPedido"</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">+ Novo Pedido</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">button</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+// Verificar permissão de criação
+&#64;if (ptah_can('vendas.criar-pedido', 'create'))
+    &lt;button wire:click="novoPedido"&gt;+ Novo Pedido&lt;/button&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Verificar com escopo de empresa --}}</span>
-<span class="text-pink-400">@</span><span class="text-green-400">if</span><span class="text-slate-300"> (</span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.ver-desconto'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">, </span><span class="text-yellow-300">companyId</span><span class="text-slate-300">: </span><span class="text-blue-400">$empresa</span><span class="text-slate-300">-></span><span class="text-slate-300">id))</span>
-    <span class="text-slate-300">&lt;</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span><span class="text-slate-300">Desconto: @{{ $pedido->desconto }}%</span><span class="text-slate-300">&lt;/</span><span class="text-blue-400">span</span><span class="text-slate-300">&gt;</span>
-<span class="text-pink-400">@</span><span class="text-green-400">endif</span>
+// Verificar com escopo de empresa explícito
+&#64;if (ptah_can('vendas.ver-desconto', 'read', companyId: $empresa->id))
+    &lt;span&gt;Desconto: @{{ $pedido->desconto }}%&lt;/span&gt;
+&#64;endif
 
-<span class="text-slate-500">{{-- Assinaturas completas do helper --}}</span>
-<span class="text-slate-500">{{-- ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool --}}</span></code></pre>
-            </div>
+// Chave QUALIFICADA — use "pagina::obj_key" quando o mesmo obj_key existe em
+// mais de uma Página (PermissionService::KEY_QUALIFIER = '::'). Sem isso o
+// obj_key duplicado só resolve pelo mapa BARE, que é global — não por página.
+&#64;if (ptah_can('vendas::exportar', 'read'))
+    &lt;button&gt;Exportar (só a Página "vendas")&lt;/button&gt;
+&#64;endif
+
+// Assinatura completa:
+// ptah_can(string $objectKey, string $action, mixed $user = null, ?int $companyId = null): bool</code></pre>
         </div>
 
         {{-- Middleware em rotas --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">routes/web.php — Middleware ptah.can</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">// Proteger rota individual — verifica can_read</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">get</span><span class="text-slate-300">(</span><span class="text-amber-300">'/vendas/exportar'</span><span class="text-slate-300">, [</span><span class="text-blue-400">VendasController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">, </span><span class="text-amber-300">'exportar'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">middleware</span><span class="text-slate-300">(</span><span class="text-amber-300">'ptah.can:vendas.exportar,read'</span><span class="text-slate-300">);</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">routes/web.php — Middleware ptah.can</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Proteger rota individual — verifica can_read
+Route::get('/vendas/exportar', [VendasController::class, 'exportar'])
+    -&gt;middleware('ptah.can:vendas.exportar,read');
 
-<span class="text-slate-500">// Proteger rota de criar — verifica can_create</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">post</span><span class="text-slate-300">(</span><span class="text-amber-300">'/vendas/pedidos'</span><span class="text-slate-300">, [</span><span class="text-blue-400">PedidoController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">, </span><span class="text-amber-300">'store'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">middleware</span><span class="text-slate-300">(</span><span class="text-amber-300">'ptah.can:vendas.criar-pedido,create'</span><span class="text-slate-300">);</span>
+// Proteger rota de criar — verifica can_create
+Route::post('/vendas/pedidos', [PedidoController::class, 'store'])
+    -&gt;middleware('ptah.can:vendas.criar-pedido,create');
 
-<span class="text-slate-500">// Grupo de rotas protegidas</span>
-<span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">middleware</span><span class="text-slate-300">([</span><span class="text-amber-300">'auth'</span><span class="text-slate-300">, </span><span class="text-amber-300">'ptah.can:admin.usuarios,read'</span><span class="text-slate-300">])</span>
-    <span class="text-slate-300">-></span><span class="text-yellow-300">group</span><span class="text-slate-300">(</span><span class="text-green-400">function</span><span class="text-slate-300"> () {</span>
-        <span class="text-blue-400">Route</span><span class="text-slate-300">::</span><span class="text-yellow-300">resource</span><span class="text-slate-300">(</span><span class="text-amber-300">'usuarios'</span><span class="text-slate-300">, </span><span class="text-blue-400">UsuarioController</span><span class="text-slate-300">::</span><span class="text-yellow-300">class</span><span class="text-slate-300">);</span>
-    <span class="text-slate-300">});</span>
+// 3º parâmetro OPCIONAL: companyId explícito (sem ele, usa sessão/auth)
+Route::get('/relatorios/vendas', [RelatorioController::class, 'index'])
+    -&gt;middleware('ptah.can:relatorios.vendas,read,1');
 
-<span class="text-slate-500">// Sintaxe: 'ptah.can:{obj_key},{action}'</span>
-<span class="text-slate-500">// Actions: read | create | update | delete</span></code></pre>
-            </div>
+// action é OPCIONAL — se omitida, o middleware assume 'read'
+Route::middleware(['auth', 'ptah.can:admin.usuarios'])
+    -&gt;group(function () {
+        Route::resource('usuarios', UsuarioController::class);
+    });
+
+// Chave qualificada também funciona aqui — o '::' nunca colide com o
+// parsing ':'/',' dos parâmetros do middleware
+Route::get('/financeiro/exportar', [FinanceiroController::class, 'exportar'])
+    -&gt;middleware('ptah.can:financeiro::toolbar::exportar,read');
+
+// Sintaxe: 'ptah.can:{obj_key},{action?},{companyId?}'
+// Actions: read | create | update | delete (default: read)</code></pre>
         </div>
 
         {{-- PHP direto --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">app/Http/Controllers/PedidoController.php — PermissionService</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500">// Usando o serviço diretamente via injeção de dependência</span>
-<span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">Ptah\Contracts\PermissionServiceContract</span><span class="text-slate-300">;</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">app/Http/Controllers/PedidoController.php — PermissionServiceContract</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>// Usando o contrato diretamente via injeção de dependência
+use Ptah\Contracts\PermissionServiceContract;
 
-<span class="text-green-400">class</span><span class="text-slate-300"> </span><span class="text-blue-400">PedidoController</span><span class="text-slate-300"> </span><span class="text-green-400">extends</span><span class="text-slate-300"> </span><span class="text-blue-400">Controller</span>
-<span class="text-slate-300">{</span>
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">store</span><span class="text-slate-300">(</span><span class="text-blue-400">Request</span><span class="text-slate-300"> </span><span class="text-blue-400">$request</span><span class="text-slate-300">, </span><span class="text-blue-400">PermissionServiceContract</span><span class="text-slate-300"> </span><span class="text-blue-400">$permissions</span><span class="text-slate-300">)</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-slate-500">// Verificação manual</span>
-        <span class="text-green-400">if</span><span class="text-slate-300"> (! </span><span class="text-blue-400">$permissions</span><span class="text-slate-300">-></span><span class="text-yellow-300">can</span><span class="text-slate-300">(</span>
-            <span class="text-yellow-300">userId:</span><span class="text-slate-300"> </span><span class="text-yellow-300">auth</span><span class="text-slate-300">()-></span><span class="text-yellow-300">id</span><span class="text-slate-300">(),</span>
-            <span class="text-yellow-300">key:</span><span class="text-slate-300"> </span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">,</span>
-            <span class="text-yellow-300">action:</span><span class="text-slate-300"> </span><span class="text-amber-300">'create'</span><span class="text-slate-300">,</span>
-        <span class="text-slate-300">)) {</span>
-            <span class="text-green-400">abort</span><span class="text-slate-300">(</span><span class="text-blue-300">403</span><span class="text-slate-300">, </span><span class="text-amber-300">'Sem permissão para criar pedidos'</span><span class="text-slate-300">);</span>
-        <span class="text-slate-300">}</span>
+class PedidoController extends Controller
+{
+    public function store(Request $request, PermissionServiceContract $permissions)
+    {
+        // check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
+        // — NÃO é can(userId:, key:, action:); esse método não existe no contrato.
+        if (! $permissions-&gt;check(auth()-&gt;user(), 'vendas.criar-pedido', 'create')) {
+            abort(403, 'Sem permissão para criar pedidos');
+        }
 
-        <span class="text-slate-500">// ... criar pedido</span>
-    <span class="text-slate-300">}</span>
-<span class="text-slate-300">}</span></code></pre>
-            </div>
+        // ... criar pedido
+    }
+}
+
+// Ou pela facade, fora de um construtor:
+use Ptah\Facades\Permission;
+
+Permission::check(auth()-&gt;user(), 'vendas.criar-pedido', 'create');</code></pre>
         </div>
 
         {{-- Livewire --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">app/Livewire/Vendas/PedidoList.php — Livewire Component</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">Ptah\Traits\HasPermission</span><span class="text-slate-300">;</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">app/Livewire/Vendas/PedidoList.php — Componente Livewire (fora do BaseCrud)</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code>class PedidoList extends Component
+{
+    public function deletar(int $id): void
+    {
+        // Sem trait dedicado no pacote — verifique com o helper e aborte
+        // manualmente.
+        if (! ptah_can('vendas.criar-pedido', 'delete')) {
+            abort(403);
+        }
 
-<span class="text-green-400">class</span><span class="text-slate-300"> </span><span class="text-blue-400">PedidoList</span><span class="text-slate-300"> </span><span class="text-green-400">extends</span><span class="text-slate-300"> </span><span class="text-blue-400">Component</span>
-<span class="text-slate-300">{</span>
-    <span class="text-green-400">use</span><span class="text-slate-300"> </span><span class="text-blue-400">HasPermission</span><span class="text-slate-300">;</span>
+        Pedido::destroy($id);
+    }
 
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">deletar</span><span class="text-slate-300">(</span><span class="text-green-400">int</span><span class="text-slate-300"> </span><span class="text-blue-400">$id</span><span class="text-slate-300">): </span><span class="text-green-400">void</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-slate-500">// Trait helper — lança 403 automaticamente se sem permissão</span>
-        <span class="text-blue-400">$this</span><span class="text-slate-300">-></span><span class="text-yellow-300">requirePermission</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.criar-pedido'</span><span class="text-slate-300">, </span><span class="text-amber-300">'delete'</span><span class="text-slate-300">);</span>
+    public function render(): View
+    {
+        return view('livewire.vendas.pedido-list', [
+            // No Blade: &#64;if (ptah_can('vendas.exportar', 'read'))
+            'podeExportar' => ptah_can('vendas.exportar', 'read'),
+        ]);
+    }
+}
 
-        <span class="text-blue-400">Pedido</span><span class="text-slate-300">::</span><span class="text-yellow-300">destroy</span><span class="text-slate-300">(</span><span class="text-blue-400">$id</span><span class="text-slate-300">);</span>
-    <span class="text-slate-300">}</span>
-
-    <span class="text-green-400">public function</span><span class="text-slate-300"> </span><span class="text-yellow-300">render</span><span class="text-slate-300">(): </span><span class="text-blue-400">View</span>
-    <span class="text-slate-300">{</span>
-        <span class="text-green-400">return</span><span class="text-slate-300"> </span><span class="text-yellow-300">view</span><span class="text-slate-300">(</span><span class="text-amber-300">'livewire.vendas.pedido-list'</span><span class="text-slate-300">, [</span>
-            <span class="text-slate-500">// No Blade: &#64;if(ptah_can('vendas.exportar', 'read'))</span>
-            <span class="text-amber-300">'podeExportar'</span><span class="text-slate-300"> => </span><span class="text-yellow-300">ptah_can</span><span class="text-slate-300">(</span><span class="text-amber-300">'vendas.exportar'</span><span class="text-slate-300">, </span><span class="text-amber-300">'read'</span><span class="text-slate-300">),</span>
-        <span class="text-slate-300">]);</span>
-    <span class="text-slate-300">}</span>
-<span class="text-slate-300">}</span></code></pre>
-            </div>
+// Isto NÃO é um BaseCrud (Ptah\Livewire\BaseCrud\BaseCrud): lá, basta
+// configurar 'permissions.permissionIdentifier' no CrudConfig — o próprio
+// componente já gate create/update/delete e também 'read': render() aborta
+// 403 antes de a listagem consultar o banco. Sem permissionIdentifier
+// configurado, o CRUD fica livre (grants não são consultados).</code></pre>
         </div>
 
         {{-- .env --}}
-        <div class="border border-slate-200 rounded-md overflow-hidden">
-            <div class="px-5 py-3 bg-slate-800 flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                <span class="text-xs text-slate-400 ml-2">.env — Configurações do módulo Ptah</span>
-            </div>
-            <div class="p-5 bg-slate-900 overflow-x-auto">
-                <pre class="text-sm leading-relaxed"><code><span class="text-slate-500"># Habilitar os módulos do Ptah</span>
-<span class="text-green-400">PTAH_MODULE_AUTH</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
-<span class="text-green-400">PTAH_MODULE_COMPANY</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
-<span class="text-green-400">PTAH_MODULE_PERMISSIONS</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
+        <div class="ptah-c-code rounded-md overflow-hidden border">
+            <div class="ptah-c-code_cap px-5 py-2 text-xs font-mono">.env — Configurações do módulo Ptah</div>
+            <pre class="p-5 overflow-x-auto text-sm leading-relaxed"><code># Habilitar os módulos do Ptah
+PTAH_MODULE_AUTH=true
+PTAH_MODULE_COMPANY=true
+PTAH_MODULE_PERMISSIONS=true
 
-<span class="text-slate-500"># Habilitar log de auditoria de permissões</span>
-<span class="text-green-400">PTAH_PERMISSION_AUDIT</span><span class="text-slate-300">=</span><span class="text-amber-300">true</span>
+# Auditoria de permissões — não existe "número máximo de registros": a
+# tabela ptah_permission_audits cresce sem teto até você agendar a poda.
+PTAH_PERMISSION_AUDIT=true                  # grava acessos CONCEDIDOS (default: false)
+PTAH_PERMISSION_AUDIT_DENIED=true           # também grava NEGADOS (default: true)
+PTAH_PERMISSION_AUDIT_MASTER=false          # grava acessos de MASTER (default: false)
+PTAH_PERMISSION_AUDIT_RETENTION_DAYS=90     # janela usada por "ptah:audit-prune"
 
-<span class="text-slate-500"># Número máximo de registros de auditoria (0 = sem limite)</span>
-<span class="text-green-400">PTAH_AUDIT_MAX_RECORDS</span><span class="text-slate-300">=</span><span class="text-blue-300">10000</span></code></pre>
-            </div>
+# Cache do mapa de permissões (recomendado ligado)
+PTAH_PERMISSION_CACHE=true
+PTAH_PERMISSION_CACHE_TTL=3600
+
+# Agende a poda (comando DESTRUTIVO — revise antes de rodar em produção):
+#   php artisan ptah:audit-prune --days=90</code></pre>
         </div>
 
     </div>
@@ -625,80 +600,51 @@
     @if ($activeTab === 'faq')
     <div class="space-y-4">
 
-        @foreach ([
-            [
-                'q' => 'O que acontece se o usuário não tiver nenhum Role?',
-                'a' => 'Sem nenhum Role, o usuário não terá acesso a nenhum objeto controlado. As verificações com <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_can()</code> retornam <strong>false</strong> e o middleware <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah.can</code> retorna HTTP 403.',
-            ],
-            [
-                'q' => 'Posso ter mais de um Role por usuário?',
-                'a' => 'Sim! Um usuário pode ter múltiplos Roles, inclusive em empresas diferentes. Se qualquer um dos Roles do usuário tiver a permissão solicitada, o acesso é concedido.',
-            ],
-            [
-                'q' => 'O que é o Role MASTER e quando usar?',
-                'a' => 'Um Role MASTER bypassa <strong>todas</strong> as verificações de permissão, concedendo acesso irrestrito. Use exclusivamente para superadministradores do sistema. Só pode existir 1 Role MASTER configurado.',
-            ],
-            [
-                'q' => 'Como funciona o escopo por empresa?',
-                'a' => 'Ao vincular um usuário a um Role, você pode especificar uma Empresa. A verificação considera apenas os Roles válidos para a empresa atual do contexto. Vínculos com empresa <code class="font-mono text-xs bg-slate-100 px-1 rounded">NULL</code> são válidos globalmente.',
-            ],
-            [
-                'q' => 'As permissões são cacheadas?',
-                'a' => 'Sim. O Ptah usa o cache do Laravel para evitar queries excessivas. O cache é invalidado automaticamente quando os vínculos de um usuário são alterados via interface. Você pode limpar com <code class="font-mono text-xs bg-slate-100 px-1 rounded">php artisan cache:clear</code>.',
-            ],
-            [
-                'q' => 'Posso criar Páginas e Objetos automaticamente via código?',
-                'a' => 'Sim. Use o seeder ou crie registros em <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\Page</code> e <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\PageObject</code> diretamente. É útil para popular via migration ao fazer deploy.',
-            ],
-            [
-                'q' => 'O que acontece se eu excluir um Objeto que já tem permissões definidas?',
-                'a' => 'As entradas da tabela de permissões associadas ao objeto são removidas em cascata. Os Roles que tinham aquele objeto perdem a permissão automaticamente. Usuários MASTER não são afetados (bypass).',
-            ],
-            [
-                'q' => 'Como auditar quem acessou o que?',
-                'a' => 'Habilite <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env. Cada verificação (concedida ou negada) será registrada na tabela <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code>. Acesse o log em <a href="' . route('ptah.acl.audit') . '" class="text-blue-600 underline">Auditoria</a>.',
-            ],
-        ] as $item)
-        <div x-data="{ open: false }" class="border border-slate-200 rounded-md overflow-hidden">
+        @foreach (range(1, 10) as $i)
+        <div x-data="{ open: false }" class="ptah-c-card rounded-md border overflow-hidden">
             <button
+                type="button"
                 @click="open = !open"
-                class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
-                :class="open ? 'bg-slate-50' : ''"
+                :aria-expanded="open"
+                class="ptah-c-acc_hd w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
             >
-                <span class="text-sm font-semibold text-slate-800">{{ $item['q'] }}</span>
-                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 text-slate-400 transition-transform shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span class="text-sm font-semibold">{{ __('ptah::ui.guide_faq_q'.$i) }}</span>
+                <svg class="ptah-c-acc_chevron w-4 h-4 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
             <div
                 x-show="open"
+                x-cloak
                 x-transition:enter="transition ease-out duration-150"
                 x-transition:enter-start="opacity-0 -translate-y-1"
                 x-transition:enter-end="opacity-100 translate-y-0"
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 -translate-y-1"
-                class="px-5 pb-4 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3"
-                style="display:none"
+                class="px-5 pb-4 text-sm leading-relaxed pt-1"
             >
-                {!! $item['a'] !!}
+                {!! $i === 8 ? __('ptah::ui.guide_faq_a8', ['audit_url' => route('ptah.acl.audit')]) : __('ptah::ui.guide_faq_a'.$i) !!}
             </div>
         </div>
         @endforeach
 
         {{-- Precisa de mais ajuda? --}}
-        <div class="bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-md p-5 flex items-center gap-4">
-            <div class="text-4xl">🙋</div>
-            <div>
-                <h3 class="text-sm font-bold text-blue-900 mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
-                <p class="text-xs text-blue-700">
-                    {!! __('ptah::ui.guide_faq_help_body') !!}
-                </p>
+        <x-forge-alert type="primary">
+            <div class="flex items-center gap-4">
+                <div class="text-4xl">🙋</div>
+                <div>
+                    <h3 class="font-bold mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
+                    <p>
+                        {!! __('ptah::ui.guide_faq_help_body') !!}
+                    </p>
+                </div>
             </div>
-        </div>
+        </x-forge-alert>
 
     </div>
     @endif
 
+    </x-forge-tabs>
 </div>
 

@@ -673,11 +673,15 @@ $service->hasRole($user, 'Vendas Externas'); // true
 $service->hasRole($user, ['RH', 'Vendas Externas']); // true — array is an OR
 ```
 
-Match is tolerant: case-insensitive/trimmed, OR equal once both sides go
-through `Str::slug()` — so `'Vendas Externas'`, `'VENDAS EXTERNAS'` and
-`'vendas-externas'` all match each other. Only an active `UserRole` (in the
-given/resolved company scope) bound to an active `Role` counts — the same
-activity rule the permission maps apply.
+Match is tolerant: case-insensitive and trimmed — and nothing looser.
+Separators are **not** an equivalence class: `'Vendas Externas'` and
+`'VENDAS EXTERNAS'` match each other, but `'vendas-externas'` does **not**
+match either of them (an earlier version matched via `Str::slug()`, which
+collapsed separators into an equivalence class and could make two distinct
+role names collide — since `hasRole()` is identity that host apps branch on,
+that was fixed). Only an active `UserRole` (in the given/resolved company
+scope) bound to an active `Role` counts — the same activity rule the
+permission maps apply.
 
 > ⚠️ **MASTER does not satisfy `hasRole()` for an unrelated role name.**
 > Unlike `check()`, there is deliberately **no MASTER short-circuit** here —
@@ -1048,10 +1052,10 @@ Interactive documentation screen for the permissions system. Displayed in the na
 
 | Tab | `$activeTab` | Content |
 |---|---|---|
-| Overview | `overview` | Architecture diagram, core concepts (Role, Page, Object, MASTER, Company, Audit) and visual decision flow |
-| Step by Step | `setup` | 5 guided steps with direct links to each ACL module screen |
-| Code Examples | `code` | Highlighted snippets: `ptah_can()` in Blade, `ptah.can` middleware, `PermissionService`, `HasPermission` in Livewire and `.env` variables |
-| FAQ | `faq` | 8 Alpine accordions with frequently asked questions |
+| Overview | `overview` | Architecture diagram, core concepts (Role, Page, Object, MASTER, Company, Audit) and the real 6-node decision flow |
+| Step by Step | `setup` | 5 guided steps with direct links to each ACL module screen, plus `colsPermission` |
+| Code Examples | `code` | Plain, escaped snippets: `ptah_can()` in Blade (including a qualified key), `ptah.can` middleware, `PermissionServiceContract::check()`, a plain Livewire component (no dedicated trait exists) and the real `.env` audit/cache variables |
+| FAQ | `faq` | 10 Alpine accordions with frequently asked questions, sourced from `guide_faq_*` in both locales |
 
 **Livewire property:**
 

@@ -405,6 +405,16 @@ class BaseCrud extends Component
 
     public function render()
     {
+        $effectivePerms = $this->getEffectivePermissions();
+
+        // Read gate: `read` is the whole screen's permission, not a single
+        // button — when it is denied, the listing must not disclose any data
+        // at all. Fail-closed, aborting 403 the same way PtahPermission (the
+        // route middleware) does for every other read entry point, instead of
+        // silently rendering an empty table (which would still leak the
+        // screen's existence/shape via headers, filters and totals).
+        abort_unless($effectivePerms['canRead'], 403, trans('ptah::ui.permission_denied'));
+
         // Computed property — memoized per request, so reusing it below (for the
         // export-limit badge) does not trigger a second query.
         $rows = $this->rows;
@@ -419,7 +429,7 @@ class BaseCrud extends Component
             'visibleCols' => $this->getVisibleColumns(),
             'formCols' => $this->getFormCols(),
             'permissions' => $this->crudConfig['permissions'] ?? [],
-            'effectivePerms' => $this->getEffectivePermissions(),
+            'effectivePerms' => $effectivePerms,
             'exportCfg' => $this->crudConfig['exportConfig'] ?? [],
             'totData' => $this->totalizadoresData,
             'crudTitle' => $this->crudConfig['displayName']
@@ -444,6 +454,15 @@ class BaseCrud extends Component
      * `permissionIdentifier` may itself be a QUALIFIED key
      * (`page::obj_key` / `page::section::obj_key`, see
      * `PermissionService::KEY_QUALIFIER`) — it passes through unchanged.
+     *
+     * `canRead` has no `show*Button`/Gate counterpart — unlike create/update/
+     * delete, "read" is not a single button, it is whether the screen may
+     * exist at all — so it is `ptahCheck('read')` alone. `can_read` defaults
+     * to `true` in both the schema (`ptah_role_permissions.can_read`) and
+     * `RoleService::bindPageObject()`'s defaults, so an existing grant never
+     * silently starts denying reads; only a host that explicitly unchecked
+     * `read` sees this take effect. render() enforces it (aborts 403) before
+     * any query runs.
      */
     protected function getEffectivePermissions(): array
     {
@@ -470,6 +489,7 @@ class BaseCrud extends Component
         };
 
         return [
+            'canRead' => $ptahCheck('read'),
             'canCreate' => ($p['showCreateButton'] ?? true) && $gateCheck($p['create'] ?? null) && $ptahCheck('create'),
             'canUpdate' => ($p['showEditButton'] ?? true) && $gateCheck($p['edit'] ?? null) && $ptahCheck('update'),
             'canDelete' => ($p['showDeleteButton'] ?? true) && $gateCheck($p['delete'] ?? null) && $ptahCheck('delete'),

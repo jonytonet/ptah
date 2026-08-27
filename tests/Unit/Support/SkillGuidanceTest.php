@@ -107,4 +107,32 @@ class SkillGuidanceTest extends TestCase
             );
         }
     }
+
+    #[Test]
+    public function the_skill_stays_lean_and_defers_the_heavy_reference(): void
+    {
+        $skill = self::skill();
+
+        // The skill is loaded on EVERY task in a host project; a reference file
+        // is read only when the task calls for it. Performance guidance was 34%
+        // of this file (~4.1k tokens) and is needed in a minority of tasks, so
+        // it moved out. This ceiling exists to stop the file re-absorbing it:
+        // the number is the budget, not a measurement to update upward.
+        $this->assertLessThan(
+            40000,
+            strlen($skill),
+            'SKILL.md passou de ~10k tokens. Conteudo pesado e de uso ocasional vai para references/, nao para o corpo da skill.'
+        );
+
+        $this->assertStringContainsString(
+            'references/performance.md',
+            $skill,
+            'A skill precisa APONTAR para a referencia extraida, senao o conteudo simplesmente desapareceu para o agente.'
+        );
+
+        $this->assertFileExists(
+            dirname(__DIR__, 3).'/resources/boost/skills/ptah-development/references/performance.md',
+            'A referencia apontada pela skill nao existe — um ponteiro quebrado e pior que texto inline.'
+        );
+    }
 }

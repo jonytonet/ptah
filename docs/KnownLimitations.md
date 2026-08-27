@@ -355,17 +355,51 @@ measure of theming debt** — it counts both the debt and the keys of the very
 mechanism that fixes it. Use `HardcodedPaletteCeilingTest` (below) for the
 ratchet and this section for the qualitative picture.
 
+**Correction: `permission-guide.blade.php` is no longer excluded from either
+axis of this section.** It used to carry 279 fixed-palette utilities with
+zero `dark:` pairs (the manual screen behind `/ptah-permission-guide`) and was
+scheduled for "its own wave" — this is that wave. It now uses the same
+`ptah-c-*` component classes as every other module screen (`forge-page-header`,
+`forge-tabs`, `forge-card`, `forge-alert`, plus 8 new classes:
+`.ptah-c-code`/`.ptah-c-code_cap` for the code-examples tab,
+`.ptah-c-step_num` for the setup steps, and
+`.ptah-c-guide_node`/`_q`/`_ok`/`_no`/`.ptah-c-guide_conn` for the architecture
+and decision-flow diagrams — no new `--ptah-*` token). Its own
+hardcoded-palette count reached 0 and its fixture entry was removed. The same
+wave also corrected the screen's TEXT: it used to teach a nonexistent trait
+(`Ptah\Traits\HasPermission`), a nonexistent contract method
+(`PermissionServiceContract::can()`), a nonexistent model
+(`Ptah\Models\Page`), a nonexistent env var (`PTAH_AUDIT_MAX_RECORDS`), and
+said nothing about qualified keys (v1.19) or `colsPermission` (v1.20). See
+`tests/Unit/Support/PermissionGuideClaimsTest.php`.
+
 ### What ptah does not cover yet
 
-Measured on 1.26.0, normalised to exclude Blade/HTML comments and `<style>`
-blocks: **1097 occurrences across 46 Blade files** (down from 1416 across 52 at
-the start of the wave). Of these:
+**Scope correction — the count below now includes CHROMATIC utilities.** From
+1.15.0 through the permission-guide truth+theme wave, this section's number
+and `HardcodedPaletteCeilingTest`'s two regexes only ever matched the NEUTRAL
+Tailwind families (gray/slate/zinc/neutral/stone, plus `bg-white`/
+`text-white`/`text-black`). A rendered-DOM contrast audit (all 6 tone
+presets) caught a chromatic site — `bg-indigo-50`/`bg-red-50`/`bg-green-100`/
+`bg-amber-50` and 188 more across the package's views, none of them in the
+guide fixed by this wave — rendering as low as 1.17:1, invisible to the
+guard because neither pattern ever looked at that palette. Both regexes now
+cover the full Tailwind chromatic set (red/orange/amber/yellow/lime/green/
+emerald/teal/cyan/sky/blue/indigo/violet/purple/fuchsia/pink/rose) too. **Do
+not compare the number below against any figure from before this
+correction — it is a different, wider scope, not new debt or a regression.**
+The 45 files' ceilings were raised in the same commit to match their
+already-existing chromatic counts, per the ratchet's own contract: freeze
+what exists, never let it grow, never pretend to shrink debt nobody fixed.
+
+Measured after the scope correction, normalised to exclude Blade/HTML
+comments and `<style>` blocks: **1010 occurrences across 45 Blade files**
+(818 of those neutral, unchanged from right after the permission-guide
+wave — which itself brought that file from 279 to 0, since removed from the
+fixture; the wave before it started this document's tracking at 1416 across
+52, neutral-only). Of these:
 
 - **439 are not debt** — the CrudConfig editor repaint keys described above.
-- **`permission-guide.blade.php` — 279 occurrences, zero `dark:` variants.**
-  Genuinely outside the tokenised surface: the screen renders light-mode ink in
-  dark mode. The route is `ptah.master`-only, so the audience is developers and
-  admins. Scheduled for its own wave.
 - **~112 faint-glyph utilities** (`text-gray-400`, `text-slate-400` and
   neighbours). No `--ptah-*` token has those hexes as its **light** value; the
   closest, `--ptah-icon-muted` (#64748b), is two tiers darker, and routing them
@@ -412,8 +446,6 @@ a 1.00:1 chart title and a 1.9:1 switch track ship with a green suite.
 
 ### Developer responsibility
 
-- Treat `permission-guide` as **not theme-aware**; a custom dark or light-tone
-  preset will look inconsistent there.
 - Do not add fixed-palette `text-*`/`bg-*` utilities to package views. Put the
   colour in a `ptah-c-*` class in `resources/css/ptah-components.css` using
   `var(--ptah-*)` — that is the package's single convention. The
