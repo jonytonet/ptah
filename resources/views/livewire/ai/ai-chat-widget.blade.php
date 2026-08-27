@@ -170,7 +170,7 @@
                     wire:model.live="userInput"
                     rows="1"
                     placeholder="{{ __('ptah::ui.ai_widget_placeholder') }}"
-                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input dark:placeholder-slate-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
+                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
                     style="min-height: 38px; height: 38px;"
                     @keydown.enter.prevent="
                         if (!$wire.loading && !$event.shiftKey) {

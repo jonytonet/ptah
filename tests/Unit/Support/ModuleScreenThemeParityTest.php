@@ -66,7 +66,7 @@ class ModuleScreenThemeParityTest extends TestCase
     {
         return [
             '.ptah-module-toolbar' => ['.ptah-module-toolbar'],
-            '.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input), .ptah-module-toolbar select' => ['.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input), .ptah-module-toolbar select'],
+            '.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field), .ptah-module-toolbar select:not(.ptah-c-mod_field)' => ['.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field), .ptah-module-toolbar select:not(.ptah-c-mod_field)'],
             '.ptah-module-toolbar input[type="search"]::placeholder' => ['.ptah-module-toolbar input[type="search"]::placeholder'],
             '.ptah-module-table' => ['.ptah-module-table'],
             '.ptah-module-table thead tr' => ['.ptah-module-table thead tr'],

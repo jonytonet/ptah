@@ -170,7 +170,7 @@
                     @foreach ($sessions as $session)
                     <div class="flex items-center justify-between py-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full ptah-c-prof_chip flex items-center justify-center text-gray-400">
+                            <div class="w-9 h-9 rounded-full ptah-c-prof_chip flex items-center justify-center ptah-c-prof_icon">
                                 @if (str_contains(strtolower($session['platform'] ?? ''), 'mobile') || in_array($session['platform'] ?? '', ['Android','iPhone','iPad']))
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

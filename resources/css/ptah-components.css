@@ -771,13 +771,18 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* Revisao adversarial (grupo 3d): o utilitario original era text-gray-600
    (#4b5563) — --ptah-text-secondary (#475569 claro) fica muito mais perto
    disso que --ptah-text (#374151), e no escuro e byte-identico a
-   dark:text-slate-300 (#cbd5e1) em vez de aproximado. */
-.ptah-c-pag_btn                 { color: var(--ptah-text-secondary); border-color: var(--ptah-line-strong); }
+   dark:text-slate-300 (#cbd5e1) em vez de aproximado.
+   Revisao adversarial (grupo 4e): a borda contra --ptah-canvas cai a
+   1.30:1 em nevoa (piso 3:1, borda de componente de UI — ja falhava antes
+   da migracao com o border-gray-200 original, entao esta e uma correcao de
+   falha herdada, nao uma regressao desta onda). --ptah-line-field-hover
+   (invariante) da 3.72-4.76:1 contra --ptah-canvas nos 6 tons. */
+.ptah-c-pag_btn                 { color: var(--ptah-text-secondary); border-color: var(--ptah-line-field-hover); }
 .ptah-c-pag_btn:hover           { background-color: var(--ptah-surface-hover); }
-.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text-secondary); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text-secondary); border-color: var(--ptah-line-field-hover); }
 
-.ptah-c-pag_btn_off             { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
-.ptah-dark .ptah-c-pag_btn_off  { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
+.ptah-c-pag_btn_off             { color: var(--ptah-text-faint); border-color: var(--ptah-line-field-hover); }
+.ptah-dark .ptah-c-pag_btn_off  { color: var(--ptah-text-faint); border-color: var(--ptah-line-field-hover); }
 
 /* Mesmo caso de .ptah-c-pag_btn acima (grupo 3d). */
 .ptah-c-pag_num                 { color: var(--ptah-text-secondary); }
@@ -1890,10 +1895,14 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-c-muted_link:hover { color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
 
+/* Revisao adversarial (grupo 4c): --ptah-text-secondary sobre
+   --ptah-control-ghost-hover cai a 4.47:1 em papel/suave (abaixo do piso).
+   --ptah-text no :hover sobe a margem (o icone-only <svg> desse botao usa a
+   propria cor via currentColor). */
 .ptah-c-phdr_back             { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
-.ptah-c-phdr_back:hover       { background-color: var(--ptah-control-ghost-hover); }
+.ptah-c-phdr_back:hover       { color: var(--ptah-text); background-color: var(--ptah-control-ghost-hover); }
 .ptah-dark .ptah-c-phdr_back  { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
-.ptah-dark .ptah-c-phdr_back:hover { background-color: var(--ptah-control-ghost-hover); }
+.ptah-dark .ptah-c-phdr_back:hover { color: var(--ptah-text); background-color: var(--ptah-control-ghost-hover); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */
@@ -2295,14 +2304,14 @@ main { background-color: var(--ptah-canvas); }
    que a do wrapper (.ptah-input-wrapper input) e a venceria, trocando a borda
    --ptah-line-field (3:1) por --ptah-line (~1,1:1) — borda invisível, regressão
    real pega em revisão. O :not() remove o match em vez de disputar a cascata. */
-.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
-.ptah-module-toolbar select {
+.ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field),
+.ptah-module-toolbar select:not(.ptah-c-mod_field) {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line);
     color: var(--ptah-text-field);
 }
-.ptah-dark .ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input),
-.ptah-dark .ptah-module-toolbar select {
+.ptah-dark .ptah-module-toolbar input[type="search"]:not(.ptah-input-wrapper input):not(.ptah-c-mod_field),
+.ptah-dark .ptah-module-toolbar select:not(.ptah-c-mod_field) {
     background-color: var(--ptah-field);
     border-color: var(--ptah-line);
     color: var(--ptah-text-field);
@@ -2323,7 +2332,16 @@ main { background-color: var(--ptah-canvas); }
    branco" symptom, still live with the guard green. --ptah-field-muted/
    --ptah-field are opaque by contract, so this loses the translucency on
    purpose (that /60 was never reachable in dark mode anyway, since Tailwind
-   opacity modifiers don't compose with dark: the way this markup assumed). */
+   opacity modifiers don't compose with dark: the way this markup assumed).
+
+   Revisao adversarial (grupo 4a): .ptah-c-mod_field sozinho (0,1,0) perdia
+   para .ptah-module-toolbar select (0,1,1) e para o seletor composto de
+   input[type="search"] acima (0,3,2) em repouso — inerte em 3 dos 5
+   controles de audit-list (as 2 selects + a busca; os 2 <input type="date">
+   nunca colidiam, pois nenhuma das duas regras acima casa com type="date").
+   Em vez de brigar por especificidade, as duas regras acima agora tem
+   :not(.ptah-c-mod_field) — o elemento marcado sai do escopo delas e so
+   .ptah-c-mod_field o estiliza, em repouso e em foco. */
 .ptah-c-mod_field                 { background-color: var(--ptah-field-muted); }
 .ptah-c-mod_field:focus           { background-color: var(--ptah-field); }
 .ptah-dark .ptah-c-mod_field      { background-color: var(--ptah-field-muted); }
@@ -2350,6 +2368,13 @@ main { background-color: var(--ptah-canvas); }
 
 .ptah-c-prof_chip             { background-color: var(--ptah-control-ghost); }
 .ptah-dark .ptah-c-prof_chip  { background-color: var(--ptah-control-ghost); }
+
+/* Revisao adversarial (grupo 4f): o glifo do tipo de sessao ficou para tras
+   como text-gray-400 bruto quando o fundo do chip escureceu — 1.86:1 no
+   escuro. --ptah-text-muted resolve por tom, >=4.72:1 contra
+   --ptah-control-ghost nos 6 tons x 3 escalas. */
+.ptah-c-prof_icon             { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-prof_icon  { color: var(--ptah-text-muted); }
 
 .ptah-c-prof_panel            { background-color: var(--ptah-panel); }
 .ptah-dark .ptah-c-prof_panel { background-color: var(--ptah-panel); }
@@ -2387,8 +2412,17 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_dot                   { background-color: var(--ptah-text-muted); }
 .ptah-dark .ptah-c-chat_dot        { background-color: var(--ptah-text-muted); }
 
-.ptah-c-chat_input                 { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
-.ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
+/* Revisao adversarial (grupo 4d): a caixa de mensagem e um campo de
+   formulario — todo campo do pacote usa --ptah-field*, nao
+   --ptah-surface-hover (papel de hover, nao de campo). Mesmo par
+   claro/escuro que .ptah-textarea-wrapper textarea ja usa (field no claro,
+   field-muted no escuro). O placeholder ganha regra propria (invariante,
+   mesmo idioma de .ptah-textarea-wrapper textarea::placeholder), entao o
+   dark:placeholder-slate-400 orfao sai da view. */
+.ptah-c-chat_input                 { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-field-muted); color: var(--ptah-text-field); }
+.ptah-c-chat_input::placeholder            { color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-chat_input::placeholder { color: var(--ptah-icon-muted); }
 
 /* ── exports-panel (batch 7) — a standalone table, not one of the 7
    .ptah-module-table screens, so it gets its own thin set of classes
@@ -2800,6 +2834,11 @@ main { background-color: var(--ptah-canvas); }
 .ptah-dark .ptah-textarea-wrapper textarea::placeholder { color: var(--ptah-icon-muted); }
 .ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-textarea-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
+/* Revisao adversarial (grupo 4b): forge-textarea nunca ganhou o par
+   :disabled que forge-input ja tem acima — mesmos valores, mesma logica
+   ("recua" mais fundo em ambas as direcoes). */
+.ptah-textarea-wrapper textarea:disabled { background-color: var(--ptah-field-muted); }
+.ptah-dark .ptah-textarea-wrapper textarea:disabled { background-color: var(--ptah-field); }
 
 .ptah-select-wrapper > label { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-select-wrapper > label { color: var(--ptah-text-muted); }
