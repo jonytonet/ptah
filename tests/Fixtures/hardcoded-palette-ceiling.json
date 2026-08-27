@@ -42,7 +42,6 @@
     "livewire/permission/audit-list.blade.php": 30,
     "livewire/permission/department-list.blade.php": 21,
     "livewire/permission/page-list.blade.php": 44,
-    "livewire/permission/permission-guide.blade.php": 13,
     "livewire/permission/role-list.blade.php": 22,
     "livewire/permission/user-permission-list.blade.php": 22
 }

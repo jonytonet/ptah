@@ -600,77 +600,47 @@ PTAH_PERMISSION_CACHE_TTL=3600
     @if ($activeTab === 'faq')
     <div class="space-y-4">
 
-        @foreach ([
-            [
-                'q' => 'O que acontece se o usuário não tiver nenhum Role?',
-                'a' => 'Sem nenhum Role, o usuário não terá acesso a nenhum objeto controlado. As verificações com <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_can()</code> retornam <strong>false</strong> e o middleware <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah.can</code> retorna HTTP 403.',
-            ],
-            [
-                'q' => 'Posso ter mais de um Role por usuário?',
-                'a' => 'Sim! Um usuário pode ter múltiplos Roles, inclusive em empresas diferentes. Se qualquer um dos Roles do usuário tiver a permissão solicitada, o acesso é concedido.',
-            ],
-            [
-                'q' => 'O que é o Role MASTER e quando usar?',
-                'a' => 'Um Role MASTER bypassa <strong>todas</strong> as verificações de permissão, concedendo acesso irrestrito. Use exclusivamente para superadministradores do sistema. Só pode existir 1 Role MASTER configurado.',
-            ],
-            [
-                'q' => 'Como funciona o escopo por empresa?',
-                'a' => 'Ao vincular um usuário a um Role, você pode especificar uma Empresa. A verificação considera apenas os Roles válidos para a empresa atual do contexto. Vínculos com empresa <code class="font-mono text-xs bg-slate-100 px-1 rounded">NULL</code> são válidos globalmente.',
-            ],
-            [
-                'q' => 'As permissões são cacheadas?',
-                'a' => 'Sim. O Ptah usa o cache do Laravel para evitar queries excessivas. O cache é invalidado automaticamente quando os vínculos de um usuário são alterados via interface. Você pode limpar com <code class="font-mono text-xs bg-slate-100 px-1 rounded">php artisan cache:clear</code>.',
-            ],
-            [
-                'q' => 'Posso criar Páginas e Objetos automaticamente via código?',
-                'a' => 'Sim. Use o seeder ou crie registros em <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\Page</code> e <code class="font-mono text-xs bg-slate-100 px-1 rounded">Ptah\Models\PageObject</code> diretamente. É útil para popular via migration ao fazer deploy.',
-            ],
-            [
-                'q' => 'O que acontece se eu excluir um Objeto que já tem permissões definidas?',
-                'a' => 'As entradas da tabela de permissões associadas ao objeto são removidas em cascata. Os Roles que tinham aquele objeto perdem a permissão automaticamente. Usuários MASTER não são afetados (bypass).',
-            ],
-            [
-                'q' => 'Como auditar quem acessou o que?',
-                'a' => 'Habilite <code class="font-mono text-xs bg-slate-100 px-1 rounded">PTAH_PERMISSION_AUDIT=true</code> no .env. Cada verificação (concedida ou negada) será registrada na tabela <code class="font-mono text-xs bg-slate-100 px-1 rounded">ptah_permission_audits</code>. Acesse o log em <a href="' . route('ptah.acl.audit') . '" class="text-blue-600 underline">Auditoria</a>.',
-            ],
-        ] as $item)
-        <div x-data="{ open: false }" class="border border-slate-200 rounded-md overflow-hidden">
+        @foreach (range(1, 10) as $i)
+        <div x-data="{ open: false }" class="ptah-c-card rounded-md border overflow-hidden">
             <button
+                type="button"
                 @click="open = !open"
-                class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
-                :class="open ? 'bg-slate-50' : ''"
+                :aria-expanded="open"
+                class="ptah-c-acc_hd w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
             >
-                <span class="text-sm font-semibold text-slate-800">{{ $item['q'] }}</span>
-                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 text-slate-400 transition-transform shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span class="text-sm font-semibold">{{ __('ptah::ui.guide_faq_q'.$i) }}</span>
+                <svg class="ptah-c-acc_chevron w-4 h-4 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
             <div
                 x-show="open"
+                x-cloak
                 x-transition:enter="transition ease-out duration-150"
                 x-transition:enter-start="opacity-0 -translate-y-1"
                 x-transition:enter-end="opacity-100 translate-y-0"
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 -translate-y-1"
-                class="px-5 pb-4 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3"
-                style="display:none"
+                class="px-5 pb-4 text-sm leading-relaxed pt-1"
             >
-                {!! $item['a'] !!}
+                {!! $i === 8 ? __('ptah::ui.guide_faq_a8', ['audit_url' => route('ptah.acl.audit')]) : __('ptah::ui.guide_faq_a'.$i) !!}
             </div>
         </div>
         @endforeach
 
         {{-- Precisa de mais ajuda? --}}
-        <div class="bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-md p-5 flex items-center gap-4">
-            <div class="text-4xl">🙋</div>
-            <div>
-                <h3 class="text-sm font-bold text-blue-900 mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
-                <p class="text-xs text-blue-700">
-                    {!! __('ptah::ui.guide_faq_help_body') !!}
-                </p>
+        <x-forge-alert type="primary">
+            <div class="flex items-center gap-4">
+                <div class="text-4xl">🙋</div>
+                <div>
+                    <h3 class="font-bold mb-1">{{ __('ptah::ui.guide_faq_help_title') }}</h3>
+                    <p>
+                        {!! __('ptah::ui.guide_faq_help_body') !!}
+                    </p>
+                </div>
             </div>
-        </div>
+        </x-forge-alert>
 
     </div>
     @endif
