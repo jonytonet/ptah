@@ -1,22 +1,25 @@
 {{-- ptah::livewire.ai.ai-model-config-list --}}
-<div class="ptah-page-header p-6">
-
-    {{-- ─── Page header ──────────────────────────────────────────────────── --}}
-    <div class="mb-6 flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold">{{ __('ptah::ui.ai_config_title') }}</h1>
-            <p class="mt-1 text-sm">{{ __('ptah::ui.ai_config_subtitle') }}</p>
-        </div>
-        <x-forge-button wire:click="create" size="sm">
-            <x-slot:icon><i class="bx bx-plus text-base"></i></x-slot:icon>
-            {{ __('ptah::ui.btn_new') }}
-        </x-forge-button>
-    </div>
+<div>
+    {{-- Header --}}
+    <x-forge-page-header
+        :title="__('ptah::ui.ai_config_title')"
+        :subtitle="__('ptah::ui.ai_config_subtitle')"
+    />
 
     {{-- ─── How-to guide ─────────────────────────────────────────────────── --}}
-    <div x-data="{ open: false }" class="mb-6 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 p-4">
+    {{--
+        forge-alert does not fit here: it renders a single static message, not
+        a collapsible disclosure with a chevron toggle and a 6-card provider
+        grid. Kept as hand-rolled markup, but repainted onto the same primary
+        accent tokens forge-alert itself uses for its "primary" variant
+        (border-primary/bg-primary-light/text-primary-*, see forge-alert.blade.php)
+        instead of a raw blue-* palette — the crud-config "Guia de uso" accordion
+        (same disclosure shape) follows the same border-primary/bg-primary-light
+        convention.
+    --}}
+    <div x-data="{ open: false }" class="mb-6 rounded-lg border border-primary dark:border-primary-400 bg-primary-light dark:bg-slate-800/60 p-4">
         <button @click="open = !open"
-                class="flex w-full items-center justify-between gap-2 text-sm font-medium text-blue-800 dark:text-blue-300">
+                class="flex w-full items-center justify-between gap-2 text-sm font-medium text-primary-dark dark:text-primary-300">
             <span class="flex items-center gap-2">
                 <i class="bx bx-info-circle text-lg"></i>
                 {{ __('ptah::ui.ai_config_how_to_title') }}
@@ -24,7 +27,7 @@
             <i :class="open ? 'bx-chevron-up' : 'bx-chevron-down'" class="bx text-lg transition-transform"></i>
         </button>
 
-        <div x-show="open" x-collapse class="mt-3 space-y-3 text-sm text-blue-900 dark:text-blue-200">
+        <div x-show="open" x-collapse class="mt-3 space-y-3 text-sm text-primary dark:text-primary-200">
             <p>{{ __('ptah::ui.ai_config_how_to_intro') }}</p>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -60,7 +63,7 @@
                 </div>
             </div>
 
-            <p class="text-xs text-blue-700 dark:text-blue-400">{{ __('ptah::ui.ai_config_how_to_note') }}</p>
+            <p class="text-xs text-primary-dark dark:text-primary-300">{{ __('ptah::ui.ai_config_how_to_note') }}</p>
         </div>
     </div>
 
@@ -76,108 +79,118 @@
         </div>
     @endif
 
-    {{-- ─── Table section ─────────────────────────────────────────────────── --}}
-    <div class="ptah-table-wrapper">
+    {{-- Toolbar --}}
+    <div class="ptah-module-toolbar flex flex-wrap items-center gap-2 px-4 py-3 mb-4 border rounded-md">
+        <x-forge-button wire:click="create" color="primary" size="sm">
+            <x-slot name="icon">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </x-slot>
+            {{ __('ptah::ui.btn_new') }}
+        </x-forge-button>
 
-        {{-- Search --}}
-        <div class="mb-4">
-            <input type="search"
-                   wire:model.live.debounce.300ms="search"
-                   placeholder="{{ __('ptah::ui.search_placeholder') }}"
-                   class="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-        </div>
-
-        {{-- Table --}}
-        <div class="overflow-x-auto rounded-md bg-white shadow-sm border border-gray-200">
-            <table class="min-w-full text-sm">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text cursor-pointer" wire:click="sort('name')">
-                            {{ __('ptah::ui.ai_config_name') }}
-                            @if($sort === 'name') <i class="bx bx-{{ $direction === 'asc' ? 'up' : 'down' }}-arrow-alt text-xs"></i> @endif
-                        </th>
-                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_provider') }}</th>
-                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_model') }}</th>
-                        <th class="px-4 py-3 text-center font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_status') }}</th>
-                        <th class="px-4 py-3 text-center font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_default') }}</th>
-                        <th class="px-4 py-3 text-right font-medium ptah-c-th_text">{{ __('ptah::ui.col_actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    @forelse($rows as $row)
-                        <tr class="transition-colors">
-                            <td class="whitespace-nowrap px-4 py-3 font-medium text-dark">
-                                {{ $row->name }}
-                                @if($row->notes)
-                                    <p class="text-xs text-gray-400 font-normal">{{ Str::limit($row->notes, 60) }}</p>
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-3">
-                                <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium ptah-c-ai_chip_text">
-                                    <i class="bx bx-chip"></i>
-                                    {{ $providers[$row->provider] ?? $row->provider }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-gray-500">{{ $row->model }}</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-center">
-                                @if($row->is_active)
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                        {{ __('ptah::ui.ai_config_active') }}
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium text-gray-500">
-                                        <span class="h-1.5 w-1.5 rounded-full ptah-c-ai_dot"></span>
-                                        {{ __('ptah::ui.ai_config_inactive') }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-3 text-center">
-                                @if($row->is_default)
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                        <i class="bx bx-star text-blue-500"></i>
-                                        {{ __('ptah::ui.ai_config_is_default') }}
-                                    </span>
-                                @else
-                                    <button wire:click="setDefault({{ $row->id }})"
-                                            class="text-xs text-gray-400 hover:text-primary transition-colors">
-                                        {{ __('ptah::ui.ai_config_set_default') }}
-                                    </button>
-                                @endif
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-3">
-                                <div class="flex justify-end gap-2">
-                                    <button wire:click="edit({{ $row->id }})"
-                                            title="{{ __('ptah::ui.btn_edit_title') }}"
-                                            class="rounded p-1 text-gray-400 ptah-c-ai_icon_btn hover:text-primary transition-colors">
-                                        <i class="bx bx-pencil text-base"></i>
-                                    </button>
-                                    <button wire:click="confirmDelete({{ $row->id }})"
-                                            title="{{ __('ptah::ui.btn_delete_title') }}"
-                                            class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-danger transition-colors">
-                                        <i class="bx bx-trash text-base"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-sm text-gray-400">
-                                <i class="bx bx-bot text-3xl block mb-2 text-gray-300"></i>
-                                {{ __('ptah::ui.empty_title') }}
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-
-            @if($rows->hasPages())
-                <div class="border-t px-4 py-3">
-                    {{ $rows->links() }}
-                </div>
-            @endif
+        <div class="flex-1 min-w-[180px] max-w-xs">
+            <x-forge-input
+                wire:model.live.debounce.300ms="search"
+                type="search"
+                :placeholder="__('ptah::ui.search_placeholder')"
+                iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
+            />
         </div>
     </div>
+
+    {{-- ─── Table section ─────────────────────────────────────────────────── --}}
+    <div class="ptah-module-table overflow-x-auto border rounded-md">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b-2 border-slate-200">
+                <tr>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-th_text cursor-pointer" wire:click="sort('name')">
+                        {{ __('ptah::ui.ai_config_name') }}
+                        @if($sort === 'name') <i class="bx bx-{{ $direction === 'asc' ? 'up' : 'down' }}-arrow-alt text-xs"></i> @endif
+                    </th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-th_text">{{ __('ptah::ui.ai_config_provider') }}</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ptah-c-th_text">{{ __('ptah::ui.ai_config_model') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider ptah-c-th_text">{{ __('ptah::ui.ai_config_status') }}</th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider ptah-c-th_text">{{ __('ptah::ui.ai_config_default') }}</th>
+                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider ptah-c-th_text">{{ __('ptah::ui.col_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($rows as $row)
+                    <tr class="transition-colors ptah-c-mod_row">
+                        <td class="whitespace-nowrap px-3 py-2.5 font-medium text-dark">
+                            {{ $row->name }}
+                            @if($row->notes)
+                                <p class="text-xs ptah-c-ai_hint font-normal">{{ Str::limit($row->notes, 60) }}</p>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-2.5">
+                            <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium ptah-c-ai_chip_text">
+                                <i class="bx bx-chip"></i>
+                                {{ $providers[$row->provider] ?? $row->provider }}
+                            </span>
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-2.5 font-mono text-xs ptah-c-ai_hint">{{ $row->model }}</td>
+                        <td class="whitespace-nowrap px-3 py-2.5 text-center">
+                            @if($row->is_active)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                    {{ __('ptah::ui.ai_config_active') }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium ptah-c-ai_hint">
+                                    <span class="h-1.5 w-1.5 rounded-full ptah-c-ai_dot"></span>
+                                    {{ __('ptah::ui.ai_config_inactive') }}
+                                </span>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-2.5 text-center">
+                            @if($row->is_default)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                    <i class="bx bx-star text-blue-500"></i>
+                                    {{ __('ptah::ui.ai_config_is_default') }}
+                                </span>
+                            @else
+                                <button wire:click="setDefault({{ $row->id }})"
+                                        class="text-xs ptah-c-ai_hint hover:text-primary transition-colors">
+                                    {{ __('ptah::ui.ai_config_set_default') }}
+                                </button>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-2.5">
+                            <div class="flex justify-end gap-2">
+                                <button wire:click="edit({{ $row->id }})"
+                                        title="{{ __('ptah::ui.btn_edit_title') }}"
+                                        class="rounded p-1 ptah-c-ai_hint ptah-c-ai_icon_btn hover:text-primary transition-colors">
+                                    <i class="bx bx-pencil text-base"></i>
+                                </button>
+                                <button wire:click="confirmDelete({{ $row->id }})"
+                                        title="{{ __('ptah::ui.btn_delete_title') }}"
+                                        class="rounded p-1 ptah-c-ai_hint hover:bg-red-50 hover:text-danger transition-colors">
+                                    <i class="bx bx-trash text-base"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex items-center justify-center w-16 h-16 rounded-md ptah-c-ai_chip">
+                                    <i class="bx bx-bot text-3xl ptah-c-ai_hint"></i>
+                                </div>
+                                <p class="text-sm font-semibold ptah-c-ai_card_ttl">{{ __('ptah::ui.empty_title') }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- Paginação --}}
+    @if ($rows->hasPages())
+        <div class="mt-4">{{ $rows->links('ptah::components.forge-pagination') }}</div>
+    @endif
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- Create / Edit modal                                                    --}}
