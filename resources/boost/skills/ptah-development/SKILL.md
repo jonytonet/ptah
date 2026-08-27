@@ -402,7 +402,7 @@ class Product extends Model
    literal. `forge-dashboard-layout.blade.php` still carries a legacy inline `<style>`
    block for a shrinking set of chrome rules; it is being dismantled, not extended —
    `LayoutStyleBaselineTest` fails the build if it gains a single color literal or rule
-   (see [KnownLimitations.md §6](../../../../docs/KnownLimitations.md#6-theming--partial-coverage-1150))
+   (see [KnownLimitations.md §6](../../../../docs/KnownLimitations.md#6-theming--partial-coverage-1260))
 3. Dark mode always via a `.ptah-dark` ancestor
 4. The 6 per-user appearance axes (light/dark tone, accent, text weight, density, font
    size) are selected via `data-ptah-*` attributes on `<html>`, resolved by

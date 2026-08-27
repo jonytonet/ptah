@@ -16,7 +16,7 @@
 3. [Namespace Imports in Generated Models](#3-namespace-imports-in-generated-models)
 4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
 5. [`ptah:config` CLI — Column Types and Renderers](#5-ptahconfig-cli--column-types-and-renderers)
-6. [Theming — Partial Coverage (1.15.0)](#6-theming--partial-coverage-1150)
+6. [Theming — Partial Coverage (1.26.0)](#6-theming--partial-coverage-1260)
 7. [Post-Forge Checklist](#post-forge-checklist)
 
 ---
@@ -330,119 +330,99 @@ command and the renderer itself.
 
 ---
 
-## 6. Theming — Partial Coverage (1.15.0)
+## 6. Theming — Partial Coverage (1.26.0)
 
 ### What ptah covers
 
-As of `1.15.0`, the per-user Appearance preset (see the "Per-user Appearance" section in
-[`Configuration.md`](Configuration.md)) and the underlying `--ptah-*` neutral tokens
-reach BaseCrud screens, the Forge components (`<x-forge-*>`) and most of the dashboard
-chrome (sidebar, navbar, company switcher, page header, tabs).
+The per-user Appearance preset (see "Per-user Appearance" in
+[`Configuration.md`](Configuration.md)) and the `--ptah-*` neutral tokens reach
+BaseCrud screens (table, cards, modal, pagination, sort bar), the Forge
+components (button, table, stepper, switch, progress, avatar, badge, select,
+chart-card, stat-card, page-header, pagination and the rest), the dashboard
+chrome (sidebar, navbar, company switcher, tabs), the module/admin screens
+(audit, menu, pages, departments, roles, users, company, exports, AI providers,
+profile, AI chat widget) and — since 1.21 — the visual CrudConfig editor.
+
+**Correction to the 1.15.0–1.25.0 text of this section:** it claimed
+`crud-config` was "not yet theme-aware". That has been wrong since 1.21.
+`crud-config.blade.php` and `partials/_config-form-preview.blade.php` do carry
+439 fixed-palette utilities, but every one of them is *repainted* through a
+token by a scoped rule in `resources/css/ptah-components.css`
+(`.ptah-cfg .bg-white`, `.ptah-cfg-content .text-slate-500`, and ~90 more),
+which works because that stylesheet is unlayered and therefore beats Tailwind
+utilities. **A raw grep count of `bg-*`/`text-*` in the package views is not a
+measure of theming debt** — it counts both the debt and the keys of the very
+mechanism that fixes it. Use `HardcodedPaletteCeilingTest` (below) for the
+ratchet and this section for the qualitative picture.
 
 ### What ptah does not cover yet
 
-Two areas are known to be **outside** the tokenised surface, measured directly against
-this release's sources rather than estimated:
+Measured on 1.26.0, normalised to exclude Blade/HTML comments and `<style>`
+blocks: **1097 occurrences across 46 Blade files** (down from 1416 across 52 at
+the start of the wave). Of these:
 
-- **The dashboard layout's inline `<style>` block**
-  (`resources/views/components/forge-dashboard-layout.blade.php`) still carries
-  **36 hardcoded color literals across 39 CSS rules** (down from 153/127 when the
-  tokenisation work started; `LayoutStyleBaselineTest`'s ceiling caps it at 36/39 and
-  only ever shrinks). These rules retrofit dark mode onto a handful of remaining
-  screens (module toolbars/tables, generic modal text, stat cards, badges/alerts) and
-  do not react to the user's chosen tone.
-- **Views still hardcode Tailwind text-color utilities** (`text-gray-*`,
-  `text-slate-*`, `text-zinc-*`, `text-neutral-*`, `text-stone-*`, `text-white`,
-  `text-black`, including their `dark:` variants) instead of the `--ptah-text-*`
-  tokens — **1019 occurrences across 53 Blade files**, re-measured on 1.25.0 with
-  `grep -rEo "text-(gray|slate|zinc|neutral|stone|white|black)(-[0-9]+)?"` over
-  `resources/views`. The count **grew** since the 1.15.0 measurement (999/52):
-  features shipped in between added hardcodes before this rule hardened — an
-  honest data point about why a doc rule alone does not hold the line. The two
-  dominant screens are unchanged:
-  - `crud-config.blade.php` (the visual CrudConfig editor) — 275 occurrences.
-  - `permission-guide.blade.php` — 144 occurrences (down from 228).
+- **439 are not debt** — the CrudConfig editor repaint keys described above.
+- **`permission-guide.blade.php` — 279 occurrences, zero `dark:` variants.**
+  Genuinely outside the tokenised surface: the screen renders light-mode ink in
+  dark mode. The route is `ptah.master`-only, so the audience is developers and
+  admins. Scheduled for its own wave.
+- **~112 faint-glyph utilities** (`text-gray-400`, `text-slate-400` and
+  neighbours). No `--ptah-*` token has those hexes as its **light** value; the
+  closest, `--ptah-icon-muted` (#64748b), is two tiers darker, and routing them
+  there would change every icon glyph globally. This is a decision about a
+  *missing token tier* (see the golden rule in
+  [CustomScreens.md §1](CustomScreens.md)), not a mechanical conversion.
+- **~70 `text-white` / `bg-white/NN` on accent or permanently-dark surfaces.**
+  Correct as-is: `--ptah-text-on-accent` is #ffffff in every preset, so
+  converting them would not change a pixel. These will never reach zero, and
+  that is the intended end state.
+- **`forge-alert` dark backgrounds** (4 sites). `AlertContrastTest` proves
+  WCAG AA by compositing the literal #1e293b at 60% over #0f172a; tokenising
+  the background invalidates that proof and requires re-deriving it across the
+  3 dark tone presets. Deferred deliberately, not overlooked.
+- **The dashboard layout inline `<style>` block** is down to **20 color
+  literals across 28 rules** (from 36/39 at the start of the wave;
+  `LayoutStyleBaselineTest` caps it and it only ever shrinks). Every rule left
+  is either dark-only or repaints a utility class from a distance; a rule
+  leaves the block only when the view it repaints is migrated.
+- **The whole Appearance feature is inert under the Tailwind CDN fallback.**
+  The layout only loads `resources/css/ptah-components.css` when a Vite build
+  exists (`public/build/manifest.json`); otherwise it falls back to
+  `cdn.tailwindcss.com`, which never loads that stylesheet. **1.26.0 makes this
+  stricter, on purpose:** views that used to paint via `bg-white` now delegate
+  to a `ptah-c-*` rule in that stylesheet, so on a host with no Vite build
+  those surfaces render with **no background at all** instead of white. If you
+  cannot guarantee a Vite build in every environment, do not upgrade past
+  1.25.0 without testing.
 
-  A user who picks a non-default font-colour preset will see it applied almost
-  everywhere on a BaseCrud screen, but largely **not** on `crud-config` or
-  `permission-guide`.
+### The ratchet
 
-### Package views with fixed-palette surfaces
+`tests/Unit/Support/HardcodedPaletteCeilingTest.php` plus
+`tests/Fixtures/hardcoded-palette-ceiling.json` hold a **per-file ceiling**
+that may only ever go down, and require the fixture to be tightened in the
+same commit that reduces a count. It exists because between 1.15.0 and 1.25.0
+the `text-*` count **grew** (999 → 1019) while this document already forbade
+it: a doc rule alone does not hold a line. A new view shipping fixed-palette
+utilities fails the fixture-coverage test instead of passing unnoticed.
 
-The complaint this section exists for, reported from a production host: *"I
-switch the light tone to **papel** and some items stay white."* Measured on
-1.25.0: **420 fixed-palette `bg-*` utilities across 39 package views**
-(`grep -rEo "bg-(white|slate|gray|zinc|neutral|stone)(-[0-9]+(/[0-9]+)?)?"`).
-These backgrounds do not read any `--ptah-*` token, so no tone preset can
-reach them.
-
-Where an **end user** (not just a developer in the config editor) actually
-sees it:
-
-| View | Hits | User-visible as |
-|---|---|---|
-| `base-crud/partials/_cards.blade.php` | 1 (grep counts the line; it carries `bg-white dark:bg-slate-800`, the card's whole surface) | **The card view** — the mobile default since 1.25.0, so under *papel* every card is a white rectangle on a paper page. The most visible case. |
-| `base-crud/partials/_modal-form.blade.php` | 12 | Parts of the create/edit modal. |
-| `ai/ai-chat-widget.blade.php` | 13 | The AI chat widget. |
-| `crud-config.blade.php` | 122 | Dev-only (the config editor). |
-| `permission-guide.blade.php` | 48 | Dev/admin-only. |
-
-**Workarounds until fixed:** pin the light tone to **puro** (which matches the
-hardcoded white), or accept the mismatch on the affected pieces. Do **not**
-patch over package views with host CSS — your selectors will break the day the
-package migrates them to tokens.
-
-**For host projects:** the same class of bug in *your own* views is yours to
-fix, and the recipe (grep patterns + token conversion table) is in
-[CustomScreens.md §6](CustomScreens.md#6-diagnóstico-troquei-o-tom-para-papel-e-um-item-ficou-branco).
-
-- **The whole Appearance feature is inert under the Tailwind CDN fallback.** The
-  layout only loads `resources/css/ptah-components.css` (via `app.css`'s `@import`,
-  injected by `ptah:install`) when a Vite build exists
-  (`public/build/manifest.json`); otherwise it falls back to the
-  `cdn.tailwindcss.com` script, which never loads that stylesheet at all. Every
-  `--ptah-*` token, every `data-ptah-*` preset block, and therefore the entire
-  Appearance tab, has **no visual effect** on a host running without a Vite build —
-  it silently does nothing rather than erroring.
+The wave's contrast lesson is pinned too: `AppearancePresetContrastTest` now
+reads the token **actually declared** in each migrated rule and proves the
+resulting text/background pairs across all 6 tone presets — the gap that let
+a 1.00:1 chart title and a 1.9:1 switch track ship with a green suite.
 
 ### Developer responsibility
 
-- Treat `crud-config` and `permission-guide` as **not yet theme-aware**: a custom dark
-  or light-tone preset will look inconsistent there until they are migrated.
-- If your host cannot guarantee a Vite build in every environment (e.g. a `sync`/no-op
-  deployment step), do not advertise the Appearance tab to end users — it will appear
-  to do nothing.
-- Do not add new hardcoded `text-*`/`bg-*` color utilities to package views; use the
-  `--ptah-*` tokens (see the token table earlier in `Configuration.md`) so new code
-  does not add to the counts above.
-
----
-
-Apply this checklist **immediately after each `ptah:forge`**, before running
-`php artisan migrate`:
-
-```
-[ ] decimal precision      — verify each decimal field uses the correct (p,s)
-[ ] FK constraints         — unsignedBigInteger/_id has index() only, no constrained()
-                             → add foreign key constraint manually if required,
-                               only AFTER the referenced table has been created
-[ ] composite indexes      — required indexes for search/filter queries
-[ ] long index names       — composite index names < 60 chars (MySQL limit: 64)
-[ ] boolean defaults       — add ->default(true/false) where applicable
-                             or use :default(true) in --fields
-[ ] integer defaults       — add ->default(0) for counters/sort fields
-                             or use :default(0) in --fields
-[ ] status/enum defaults   — add ->default('pending') or similar where applicable
-[ ] softDeletes in ledgers — if migration pre-existed and --no-soft-deletes was passed:
-                             use --force to strip softDeletes() automatically, OR remove manually.
-                             Also remove `use SoftDeletes` from the Model.
-[ ] TODO namespaces        — replace all `// TODO: use ...` in Models with correct imports
-[ ] FK non-standard names  — fields like applied_by_user_id, veterinarian_id, parent_record_id:
-                             use unsignedBigInteger type + add ->foreign() manually
-[ ] unique constraints     — add ->unique() for natural keys (email, slug, code, etc.)
-```
-
----
+- Treat `permission-guide` as **not theme-aware**; a custom dark or light-tone
+  preset will look inconsistent there.
+- Do not add fixed-palette `text-*`/`bg-*` utilities to package views. Put the
+  colour in a `ptah-c-*` class in `resources/css/ptah-components.css` using
+  `var(--ptah-*)` — that is the package's single convention. The
+  `style="... var(--ptah-*) ..."` recipe in
+  [CustomScreens.md §6](CustomScreens.md) is guidance for **host** projects,
+  which cannot edit the package stylesheet. `HardcodedPaletteCeilingTest`
+  enforces this.
+- Do not patch over package views with host CSS: your selectors break the day
+  the package migrates the view.
 
 ## Summary: What ptah does vs. what the developer does
 

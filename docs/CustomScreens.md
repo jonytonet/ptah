@@ -492,6 +492,13 @@ class TaskList extends Component
 
 ---
 
+**Paleta fixa em view do pacote é barrada por teste.** `HardcodedPaletteCeilingTest`
+mantém um teto POR ARQUIVO de utilitários `bg-*`/`text-*` de paleta fixa que só
+pode diminuir — a contagem cresceu 999→1019 entre 1.15.0 e 1.25.0 enquanto a
+regra só existia em prosa, e é por isso que agora existe catraca.
+
+---
+
 ## 6. Diagnóstico: "troquei o tom para *papel* e um item ficou branco"
 
 O sintoma mais comum de tela fora do tema, visto em projeto real: o usuário
@@ -532,6 +539,13 @@ texto** em classe de paleta fixa são exatamente o que não acompanha.
 O par `claro + dark:` é o caso que mais engana: ele *parece* cuidar de tema,
 mas cuida só do eixo claro/escuro e ignora os outros cinco. Um token cuida dos
 seis de uma vez — o `.ptah-dark` e cada preset reescrevem o MESMO nome.
+
+> **Escopo desta receita: o SEU projeto (host).** Dentro do pacote ptah a
+> convenção é outra — classe nomeada `ptah-c-*` com par de regras (claro e
+> `.ptah-dark`) em `resources/css/ptah-components.css`, nunca `style=""` inline.
+> O host usa `style=""`/token porque não pode editar o stylesheet do pacote;
+> quem contribui para o pacote segue a convenção dele, e o
+> `HardcodedPaletteCeilingTest` a aplica.
 
 ### Se o infrator for do próprio ptah
 
