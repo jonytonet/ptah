@@ -30,7 +30,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="w-80 sm:w-96 rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
+        class="w-80 sm:w-96 rounded-2xl ptah-c-chat_panel shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
         style="max-height: min(560px, calc(100vh - 100px));"
     >
         {{-- Panel header --}}
@@ -64,7 +64,7 @@
         @if($showHistory)
         <div class="flex-1 overflow-y-auto flex flex-col">
             <div class="px-3 pt-3 pb-1">
-                <p class="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wide">
+                <p class="text-xs font-medium ptah-c-chat_label uppercase tracking-wide">
                     {{ __('ptah::ui.ai_widget_history') }}
                 </p>
             </div>
@@ -78,12 +78,12 @@
                     @foreach($conversations as $conv)
                         <button
                             wire:click="loadConversation({{ $conv['id'] }})"
-                            class="w-full text-left rounded-lg px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group {{ $conv['id'] === $conversationId ? 'bg-primary/10 dark:bg-primary/20' : '' }}"
+                            class="w-full text-left rounded-lg px-3 py-2.5 ptah-c-chat_hist_item transition-colors group {{ $conv['id'] === $conversationId ? 'bg-primary/10 dark:bg-primary/20' : '' }}"
                         >
-                            <p class="text-sm font-medium text-gray-800 dark:text-slate-200 truncate group-hover:text-primary {{ $conv['id'] === $conversationId ? 'text-primary' : '' }}">
+                            <p class="text-sm font-medium ptah-c-chat_hist_title truncate group-hover:text-primary {{ $conv['id'] === $conversationId ? 'text-primary' : '' }}">
                                 {{ $conv['title'] }}
                             </p>
-                            <p class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{{ $conv['date'] }}</p>
+                            <p class="text-xs ptah-c-chat_label mt-0.5">{{ $conv['date'] }}</p>
                         </button>
                     @endforeach
                     @if(count($conversations) >= $historyLimit)
@@ -123,10 +123,10 @@
                     @else
                         {{-- Assistant message --}}
                         <div class="flex items-start gap-2">
-                            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center mt-0.5">
+                            <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                                 <i class="bx bx-bot text-sm text-primary"></i>
                             </div>
-                            <div class="max-w-[85%] rounded-2xl rounded-tl-sm bg-gray-100 dark:bg-slate-700 px-3 py-2 text-sm text-gray-800 dark:text-slate-200 shadow-sm">
+                            <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
                                 {!! nl2br(e($msg['content'])) !!}
                             </div>
                         </div>
@@ -139,15 +139,15 @@
                  dots and is replaced by the streamed answer as tokens arrive. --}}
             @if($loading)
                 <div class="flex items-start gap-2">
-                    <div class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center mt-0.5">
+                    <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                         <i class="bx bx-bot text-sm text-primary"></i>
                     </div>
-                    <div class="max-w-[85%] rounded-2xl rounded-tl-sm bg-gray-100 dark:bg-slate-700 px-3 py-2 text-sm text-gray-800 dark:text-slate-200 shadow-sm">
+                    <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
                         <div wire:stream="ai-stream">
                             <span class="inline-flex items-center gap-1 py-1">
-                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 0ms"></span>
-                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 150ms"></span>
-                                <span class="block w-2 h-2 rounded-full bg-gray-400 dark:bg-slate-400 animate-wave" style="animation-delay: 300ms"></span>
+                                <span class="block w-2 h-2 rounded-full ptah-c-chat_dot animate-wave" style="animation-delay: 0ms"></span>
+                                <span class="block w-2 h-2 rounded-full ptah-c-chat_dot animate-wave" style="animation-delay: 150ms"></span>
+                                <span class="block w-2 h-2 rounded-full ptah-c-chat_dot animate-wave" style="animation-delay: 300ms"></span>
                             </span>
                         </div>
                     </div>
@@ -170,7 +170,7 @@
                     wire:model.live="userInput"
                     rows="1"
                     placeholder="{{ __('ptah::ui.ai_widget_placeholder') }}"
-                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 dark:text-slate-200 dark:placeholder-slate-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
+                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input dark:placeholder-slate-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
                     style="min-height: 38px; height: 38px;"
                     @keydown.enter.prevent="
                         if (!$wire.loading && !$event.shiftKey) {

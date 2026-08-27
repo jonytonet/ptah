@@ -22,7 +22,7 @@
     "errors/403.blade.php": 10,
     "forge-demo.blade.php": 17,
     "layouts/forge-auth.blade.php": 1,
-    "livewire/ai/ai-chat-widget.blade.php": 52,
+    "livewire/ai/ai-chat-widget.blade.php": 21,
     "livewire/ai/ai-model-config-list.blade.php": 67,
     "livewire/auth/profile.blade.php": 4,
     "livewire/base-crud/base-crud.blade.php": 9,

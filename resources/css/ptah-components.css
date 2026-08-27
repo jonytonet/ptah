@@ -2305,6 +2305,39 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-prof_panel            { background-color: var(--ptah-panel); }
 .ptah-dark .ptah-c-prof_panel { background-color: var(--ptah-panel); }
 
+/* ── ai-chat-widget (batch 7) — zero dark: coverage before this except the
+   panel surface/border, which already carried a dark: pair (just not a
+   token). The header icon buttons, the send button, the user bubble and the
+   floating toggle keep their text-white/bg-white translucent overlays: they
+   all sit on bg-primary, and --ptah-text-on-accent is #ffffff invariant, so
+   converting them would not change a pixel (D1 exception 5). The two
+   empty-state icon+caption pairs (history/messages) and the keyboard-hint
+   caption (tier 300, no --ptah-* token has that light value) stay deferred —
+   same faint-glyph tier as everywhere else in this wave. ── */
+.ptah-c-chat_panel                 { background-color: var(--ptah-surface-raised); }
+.ptah-dark .ptah-c-chat_panel      { background-color: var(--ptah-surface-raised); }
+
+.ptah-c-chat_label                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chat_label       { color: var(--ptah-text-faint); }
+
+.ptah-c-chat_hist_item:hover              { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-chat_hist_item:hover   { background-color: var(--ptah-surface-hover); }
+
+.ptah-c-chat_hist_title            { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chat_hist_title { color: var(--ptah-text-strong); }
+
+.ptah-c-chat_avatar                { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-chat_avatar     { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-chat_bubble                { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chat_bubble     { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
+
+.ptah-c-chat_dot                   { background-color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-chat_dot        { background-color: var(--ptah-icon-muted); }
+
+.ptah-c-chat_input                 { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
