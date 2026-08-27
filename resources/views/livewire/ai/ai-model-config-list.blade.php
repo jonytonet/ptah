@@ -28,35 +28,35 @@
             <p>{{ __('ptah::ui.ai_config_how_to_intro') }}</p>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">OpenAI</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_openai') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">platform.openai.com/api-keys</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">OpenAI</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_openai') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">platform.openai.com/api-keys</p>
                 </div>
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">Anthropic (Claude)</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_anthropic') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">console.anthropic.com/settings/keys</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">Anthropic (Claude)</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_anthropic') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">console.anthropic.com/settings/keys</p>
                 </div>
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">Google Gemini</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_gemini') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">aistudio.google.com/app/apikey</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">Google Gemini</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_gemini') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">aistudio.google.com/app/apikey</p>
                 </div>
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">Ollama (Local)</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_ollama') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">ollama.com — {{ __('ptah::ui.ai_config_api_key_optional') }}</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">Ollama (Local)</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_ollama') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">ollama.com — {{ __('ptah::ui.ai_config_api_key_optional') }}</p>
                 </div>
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">Groq</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_groq') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">console.groq.com/keys</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">Groq</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_groq') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">console.groq.com/keys</p>
                 </div>
-                <div class="rounded-md bg-white dark:bg-slate-800 p-3 shadow-sm">
-                    <p class="font-semibold dark:text-slate-200">Mistral</p>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-slate-400">{{ __('ptah::ui.ai_config_how_to_mistral') }}</p>
-                    <p class="mt-1 text-xs font-mono text-gray-400 dark:text-slate-500">console.mistral.ai/api-keys</p>
+                <div class="rounded-md ptah-c-ai_card p-3 shadow-sm">
+                    <p class="font-semibold ptah-c-ai_card_ttl">Mistral</p>
+                    <p class="mt-1 text-xs ptah-c-ai_card_desc">{{ __('ptah::ui.ai_config_how_to_mistral') }}</p>
+                    <p class="mt-1 text-xs font-mono ptah-c-ai_card_url">console.mistral.ai/api-keys</p>
                 </div>
             </div>
 
@@ -92,15 +92,15 @@
             <table class="min-w-full text-sm">
                 <thead>
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer" wire:click="sort('name')">
+                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text cursor-pointer" wire:click="sort('name')">
                             {{ __('ptah::ui.ai_config_name') }}
                             @if($sort === 'name') <i class="bx bx-{{ $direction === 'asc' ? 'up' : 'down' }}-arrow-alt text-xs"></i> @endif
                         </th>
-                        <th class="px-4 py-3 text-left font-medium text-gray-600">{{ __('ptah::ui.ai_config_provider') }}</th>
-                        <th class="px-4 py-3 text-left font-medium text-gray-600">{{ __('ptah::ui.ai_config_model') }}</th>
-                        <th class="px-4 py-3 text-center font-medium text-gray-600">{{ __('ptah::ui.ai_config_status') }}</th>
-                        <th class="px-4 py-3 text-center font-medium text-gray-600">{{ __('ptah::ui.ai_config_default') }}</th>
-                        <th class="px-4 py-3 text-right font-medium text-gray-600">{{ __('ptah::ui.col_actions') }}</th>
+                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_provider') }}</th>
+                        <th class="px-4 py-3 text-left font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_model') }}</th>
+                        <th class="px-4 py-3 text-center font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_status') }}</th>
+                        <th class="px-4 py-3 text-center font-medium ptah-c-th_text">{{ __('ptah::ui.ai_config_default') }}</th>
+                        <th class="px-4 py-3 text-right font-medium ptah-c-th_text">{{ __('ptah::ui.col_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -113,7 +113,7 @@
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-3">
-                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                                <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium ptah-c-ai_chip_text">
                                     <i class="bx bx-chip"></i>
                                     {{ $providers[$row->provider] ?? $row->provider }}
                                 </span>
@@ -126,8 +126,8 @@
                                         {{ __('ptah::ui.ai_config_active') }}
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                                    <span class="inline-flex items-center gap-1 rounded-full ptah-c-ai_chip px-2 py-0.5 text-xs font-medium text-gray-500">
+                                        <span class="h-1.5 w-1.5 rounded-full ptah-c-ai_dot"></span>
                                         {{ __('ptah::ui.ai_config_inactive') }}
                                     </span>
                                 @endif
@@ -149,7 +149,7 @@
                                 <div class="flex justify-end gap-2">
                                     <button wire:click="edit({{ $row->id }})"
                                             title="{{ __('ptah::ui.btn_edit_title') }}"
-                                            class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-primary transition-colors">
+                                            class="rounded p-1 text-gray-400 ptah-c-ai_icon_btn hover:text-primary transition-colors">
                                         <i class="bx bx-pencil text-base"></i>
                                     </button>
                                     <button wire:click="confirmDelete({{ $row->id }})"
@@ -222,12 +222,12 @@
 
                 {{-- API Key --}}
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                    <label class="block text-xs font-medium ptah-c-form_lbl mb-1">
                         {{ __('ptah::ui.ai_config_api_key') }}
                         @if($isEditing)
-                            <span class="font-normal text-gray-400">({{ __('ptah::ui.ai_config_api_key_leave_blank') }})</span>
+                            <span class="font-normal ptah-c-ai_hint">({{ __('ptah::ui.ai_config_api_key_leave_blank') }})</span>
                         @elseif($provider === 'ollama')
-                            <span class="font-normal text-gray-400">({{ __('ptah::ui.ai_config_api_key_optional') }})</span>
+                            <span class="font-normal ptah-c-ai_hint">({{ __('ptah::ui.ai_config_api_key_optional') }})</span>
                         @else
                             <span class="text-red-500">*</span>
                         @endif
@@ -285,11 +285,11 @@
 
                 {{-- Flags --}}
                 <div class="flex items-center gap-6 text-sm">
-                    <label class="flex items-center gap-2 cursor-pointer text-gray-700">
+                    <label class="flex items-center gap-2 cursor-pointer ptah-c-ai_checkbox_label">
                         <input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-primary">
                         {{ __('ptah::ui.ai_config_active') }}
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer text-gray-700">
+                    <label class="flex items-center gap-2 cursor-pointer ptah-c-ai_checkbox_label">
                         <input type="checkbox" wire:model="is_default" class="rounded border-gray-300 text-primary">
                         {{ __('ptah::ui.ai_config_is_default') }}
                     </label>

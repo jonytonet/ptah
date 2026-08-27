@@ -2350,6 +2350,47 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-exp_muted                 { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-c-exp_muted      { color: var(--ptah-text-muted); }
 
+/* ── ai-model-config-list (batch 7) — the how-to-guide cards sit outside
+   .ptah-table-wrapper and had zero coverage of their own (the title had no
+   light color at all, dark:text-slate-200 with nothing to pair against).
+   Table header text reuses .ptah-c-th_text. The provider/inactive-status
+   chip backgrounds and the edit-icon hover get their own classes.
+   text-gray-400/text-gray-500 inside .ptah-table-wrapper are NOT touched
+   here: they are live repaint hooks
+   (.ptah-dark .ptah-table-wrapper .text-gray-400/.text-gray-500 in
+   forge-dashboard-layout.blade.php's <style>), and .bg-white on the desktop
+   table wrapper div is the shared .bg-white.rounded-md hook forge-table.blade.php's
+   mobile card still needs — same deviation as batch 4's forge-table commit. ── */
+.ptah-c-ai_card                 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-ai_card      { background-color: var(--ptah-surface); }
+
+.ptah-c-ai_card_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-ai_card_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-ai_card_desc            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-ai_card_desc { color: var(--ptah-text-muted); }
+
+.ptah-c-ai_card_url             { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-ai_card_url  { color: var(--ptah-text-faint); }
+
+.ptah-c-ai_chip                 { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-ai_chip      { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-ai_chip_text            { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ai_chip_text { color: var(--ptah-text); }
+
+.ptah-c-ai_icon_btn:hover              { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-ai_icon_btn:hover   { background-color: var(--ptah-surface-hover); }
+
+.ptah-c-ai_dot                  { background-color: var(--ptah-icon-muted); }
+.ptah-dark .ptah-c-ai_dot       { background-color: var(--ptah-icon-muted); }
+
+.ptah-c-ai_hint                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-ai_hint      { color: var(--ptah-text-faint); }
+
+.ptah-c-ai_checkbox_label            { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ai_checkbox_label { color: var(--ptah-text); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
