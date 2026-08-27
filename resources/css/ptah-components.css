@@ -812,6 +812,22 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-stat_muted              { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-stat_muted   { color: var(--ptah-text-faint); }
 
+/* ── forge-table (standalone component, distinct from the BaseCrud _table.blade.php
+   partial that already uses .ptah-c-thead/.ptah-c-th_text) — zero dark: before
+   this. Header text reuses .ptah-c-th_text, same role, single declaration.
+   The mobile card's bg-white/text-gray-500 are NOT touched here: they are live
+   repaint hooks for forge-dashboard-layout.blade.php's
+   ".ptah-table-wrapper .bg-white.rounded-md" / ".text-gray-500" (shared with
+   ai-model-config-list.blade.php's desktop wrapper, not migrated in this
+   batch) — .ptah-table-wrapper IS applied by package views (forge-table.blade.php
+   itself, plus ai-model-config-list.blade.php), contrary to what the migration
+   plan assumed when sizing this batch's target count. */
+.ptah-c-tbl_surface             { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-tbl_surface  { background-color: var(--ptah-surface); }
+
+.ptah-c-tbl_head_row            { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-tbl_head_row { background-color: var(--ptah-panel); }
+
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
 .ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }

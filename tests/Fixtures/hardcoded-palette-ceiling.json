@@ -22,7 +22,7 @@
     "components/forge-stat-card.blade.php": 1,
     "components/forge-stepper.blade.php": 4,
     "components/forge-switch.blade.php": 3,
-    "components/forge-table.blade.php": 9,
+    "components/forge-table.blade.php": 5,
     "components/forge-textarea.blade.php": 2,
     "components/forge-toast-host.blade.php": 5,
     "errors/403.blade.php": 10,

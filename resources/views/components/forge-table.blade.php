@@ -94,11 +94,11 @@
     <div class="hidden md:block overflow-x-auto rounded-md border border-gray-200">
         <table class="w-full">
             <thead>
-                <tr class="bg-gray-50 border-b border-gray-100">
+                <tr class="ptah-c-tbl_head_row border-b border-gray-100">
                     @foreach($headers as $header)
                         <th
                             @if($sortable) @click="toggleSort('{{ $header['key'] }}')" @endif
-                            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider
+                            class="px-4 py-3 text-left text-xs font-semibold ptah-c-th_text uppercase tracking-wider
                                    {{ $sortable ? 'cursor-pointer hover:text-primary select-none' : '' }}"
                         >
                             <span class="flex items-center gap-1">
@@ -113,11 +113,11 @@
                         </th>
                     @endforeach
                     @isset($actions)
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold ptah-c-th_text uppercase tracking-wider">Actions</th>
                     @endisset
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-50">
+            <tbody class="ptah-c-tbl_surface divide-y divide-gray-50">
                 <template x-for="(row, rowIndex) in filteredRows" :key="rowIndex">
                     <tr class="ptah-tbl-tr hover:bg-blue-50/60 transition-colors"
                         style="position:relative"
