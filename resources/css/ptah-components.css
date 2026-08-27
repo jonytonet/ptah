@@ -2773,9 +2773,18 @@ main { background-color: var(--ptah-canvas); }
    against --ptah-surface/transparent and that differs per tone). Reusing an
    already-provable recipe on purpose — the module's own generic contrast
    helpers cannot resolve a color-mix() token (see the note left where
-   .ptah-c-step_num was tried the same way and reverted). .ptah-c-guide_conn
-   is the connecting line/arrow between nodes; it doubles as `color` for a
-   text arrow glyph and `background-color` for a line <div>. */
+   .ptah-c-step_num was tried the same way and reverted).
+
+   .ptah-c-guide_conn is the connecting line between nodes in BOTH diagrams
+   — a small filled <div> (never text content), background-color only. It
+   used to ALSO declare `color: var(--ptah-line-field)` for a text arrow
+   glyph (→/↔/←) in the architecture diagram; that made the glyph's ink and
+   its own background-color identical (1.00:1 in all 6 tones — invisible,
+   not merely low-contrast), a defect a per-pair contrast test cannot catch
+   because it proves --ptah-line-field against --ptah-surface, never against
+   itself. Fixed by dropping the glyph entirely in favour of the same
+   filled-line connector the decision-flow diagram already used — one
+   connector idiom, one declared property, nothing to accidentally erase. */
 .ptah-c-guide_node            { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text); }
 .ptah-dark .ptah-c-guide_node { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text); }
 
@@ -2788,8 +2797,8 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-guide_node_no            { background-color: var(--ptah-danger-soft); border-color: var(--ptah-danger-strong); color: var(--ptah-danger-strong); }
 .ptah-dark .ptah-c-guide_node_no { background-color: var(--ptah-danger-soft); border-color: var(--ptah-danger-lite); color: var(--ptah-danger-lite); }
 
-.ptah-c-guide_conn            { background-color: var(--ptah-line-field); color: var(--ptah-line-field); }
-.ptah-dark .ptah-c-guide_conn { background-color: var(--ptah-line-field); color: var(--ptah-line-field); }
+.ptah-c-guide_conn            { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-guide_conn { background-color: var(--ptah-line-field); }
 
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,

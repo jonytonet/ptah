@@ -51,7 +51,7 @@
                         <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_dept_ex') }}</p>
                     </div>
 
-                    <div class="ptah-c-guide_conn flex items-center px-2 text-2xl font-thin">→</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Roles --}}
                     <div class="flex flex-col items-center gap-2">
@@ -63,7 +63,7 @@
                         <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_roles_ex') }}</p>
                     </div>
 
-                    <div class="ptah-c-guide_conn flex items-center px-2 text-2xl font-thin">↔</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Páginas/Objetos --}}
                     <div class="flex flex-col items-center gap-2">
@@ -75,7 +75,7 @@
                         <p class="ptah-c-mod_subttl text-xs text-center max-w-[140px]">{{ __('ptah::ui.guide_ov_pages_ex') }}</p>
                     </div>
 
-                    <div class="ptah-c-guide_conn flex items-center px-2 text-2xl font-thin">←</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Usuários --}}
                     <div class="flex flex-col items-center gap-2">
@@ -87,7 +87,7 @@
                         <p class="ptah-c-mod_subttl text-xs text-center max-w-[120px]">{{ __('ptah::ui.guide_ov_users_ex') }}</p>
                     </div>
 
-                    <div class="ptah-c-guide_conn flex items-center px-2 text-2xl font-thin">←</div>
+                    <div class="ptah-c-guide_conn w-6 h-0.5 mx-2 shrink-0" aria-hidden="true"></div>
 
                     {{-- Empresas --}}
                     <div class="flex flex-col items-center gap-2">
@@ -207,39 +207,39 @@
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q1') }}</div>
                     <span class="ptah-c-guide_node_no rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_no') }}</span>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3">
                     <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">2</span>
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q2') }}</div>
                     <span class="ptah-c-guide_node_no rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_no') }}</span>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3">
                     <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">3</span>
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q3') }}</div>
                     <span class="ptah-c-guide_node_ok rounded-full border px-2 py-0.5 text-xs font-bold shrink-0">{{ __('ptah::ui.guide_flow_granted') }}</span>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3">
                     <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">4</span>
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q4') }}</div>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3">
                     <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">5</span>
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q5') }}</div>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3">
                     <span class="ptah-c-guide_node w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center shrink-0">6</span>
                     <div class="ptah-c-guide_node rounded-md border px-3 py-1.5 text-xs flex-1">{{ __('ptah::ui.guide_flow_q6') }}</div>
                 </div>
-                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5"></div>
+                <div class="ptah-c-guide_conn w-0.5 h-3 ml-3.5" aria-hidden="true"></div>
 
                 <div class="flex items-center gap-3 pl-10">
                     <span class="ptah-c-guide_node_ok rounded-md border px-3 py-1.5 text-xs font-bold">{{ __('ptah::ui.guide_flow_granted') }}</span>
