@@ -17,6 +17,58 @@ Use this skill when:
 
 ---
 
+## Decision map — configure before you code
+
+The most expensive mistake an agent makes here is **rebuilding something the
+package already ships**. Read this table before writing any file; each row
+names the ready-made path and what NOT to do.
+
+| You need | Do this | Do NOT |
+|---|---|---|
+| A new entity + full CRUD screen | `php artisan ptah:forge Name --fields="..."` then configure via `ptah:config` or the visual editor (gear icon on the screen) | Hand-write a Livewire listing/form component |
+| Columns, filters, badges, row styles, actions, modal fields on an existing CRUD | `ptah:config` flags or the visual editor — it is all JSON in `crud_configs` | Edit Blade views or create custom components |
+| A listing of an existing table | A `crud_configs` row is enough — BaseCrud renders from config; no view, no component, no controller beyond the thin generated one | Build a table view by hand |
+| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate) | Write Eloquent queries in Livewire/controllers |
+| Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
+| Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
+| A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
+
+### What BaseCrud already does (do not rebuild any of this)
+
+Global search + per-column search · custom filters with operators · date-range
+and quick-date filters · saved filters · sorting (table headers + card-view
+sort bar) · pagination with per-page control · export XLSX/CSV/PDF + print ·
+bulk actions (delete/restore/export + custom, permission-gated) · row styles
+by condition · badges with value→color maps · relation columns via JOIN ·
+SearchDropdown fields (model or service mode, masks, filters) · master-detail ·
+group break with subtotals · totalizers · soft deletes + trash view + restore ·
+audit fields (created/updated/deleted_by) · column-level permissions · ACL
+integration · per-CRUD event notifications · responsive card layout (auto on
+mobile) with its own sorting · per-user preferences (columns, widths, order,
+view mode, density) · keyboard shortcuts · CSV/JSON config import/export ·
+lifecycle hooks for custom logic around save/delete.
+
+If the request maps to anything above, the answer is **configuration**, not
+code. When in doubt: `php artisan ptah:config "App\Models\X" --list` shows
+what a screen already has.
+
+### Where to read more (token budget guide)
+
+Read the SMALLEST document that answers the question — in this order:
+
+| Question | Read |
+|---|---|
+| Any config flag / column type / option syntax | This skill's "Configuring BaseCrud" sections below |
+| Full BaseCrud runtime behaviour | `docs/BaseCrud.md` |
+| Every `ptah:*` command | `docs/Commands.md` |
+| Repository/Service/DTO contracts | `ptah-data-layer` skill, then `docs/BaseLayer.md` |
+| Custom screens, tokens, theming | `docs/CustomScreens.md` |
+| Permissions/ACL | `docs/Permissions.md` |
+| Notifications | `docs/Notifications.md` |
+| What is known-broken or deliberate | `docs/KnownLimitations.md` |
+
+---
+
 ## SOLID Architecture — Layer Rules (NEVER violate)
 
 ### Layer map
@@ -115,25 +167,74 @@ public function existsBySku(string $sku): bool
 
 ---
 
-## Design Tokens — always use, never hardcode
+## Colors & Theming — the rule that keeps screens on-theme
 
-| Token | Hex | Tailwind / component prop |
-|---|---|---|
-| `primary` | `#5b21b6` | `bg-primary` `text-primary` `color="primary"` |
-| `success` | `#10b981` | `bg-success` `text-success` `color="success"` |
-| `danger` | `#ef4444` | `bg-danger` `text-danger` `color="danger"` |
-| `warn` | `#f59e0b` | `bg-warn` `text-warn` `color="warn"` |
-| `dark` | `#1e293b` | `bg-dark` `text-dark` |
-| `light` | `#f8fafc` | `bg-light` `color="light"` |
+Ptah has 6 per-user appearance axes (light tone, dark tone, accent, text
+weight, density, font size). The user can switch the light tone to **papel**
+(warm paper) or **nevoa** at any time, and every ptah screen follows. A screen
+follows the theme **only** if every color in it resolves through a CSS custom
+property the presets rewrite. A fixed Tailwind palette class does not.
+
+**The failure this rule prevents, seen in production:** a screen built with
+`bg-white` / `bg-light` stays literally white when the user switches the tone
+to *papel* — it is the one white rectangle on a warm-paper page.
+
+### The 3 layers, in order of preference
+
+1. **`<x-forge-*>` component props** — zero theming work, always safe:
 
 ```blade
-{{-- ✅ Always use color props --}}
 <x-forge-button color="primary">Salvar</x-forge-button>
 <x-forge-button color="danger" flat>Excluir</x-forge-button>
 <x-forge-alert type="success">Salvo!</x-forge-alert>
+```
 
-{{-- ❌ Never hardcode --}}
-<button style="background:#5b21b6">Salvar</button>
+2. **Semantic Tailwind classes that are theme-safe** — safe because their
+   `--color-*` variable is rewritten by a preset (accent axis) or is a
+   deliberate constant (status colors mean the same thing in every theme):
+
+   `bg-primary` `text-primary` · `bg-success` `text-success` ·
+   `bg-danger` `text-danger` · `bg-warn` `text-warn`
+
+3. **`var(--ptah-*)` tokens for any custom surface/text/border** — the full
+   contract (~30 tokens with usage notes) is
+   [CustomScreens.md §1](../../../../docs/CustomScreens.md); the ones you will
+   need constantly:
+
+| Need | Token |
+|---|---|
+| Page-flush background (toolbar, filter panel) | `--ptah-canvas` |
+| Card / button / modal surface | `--ptah-surface` |
+| Elevated surface (dropdown menu) | `--ptah-surface-raised` |
+| Recessed panel (modal body) | `--ptah-surface-sunken` |
+| Hover tint | `--ptah-surface-hover` |
+| Default / secondary / faint text | `--ptah-text` / `--ptah-text-secondary` / `--ptah-text-faint` |
+| Border / stronger border | `--ptah-line` / `--ptah-line-strong` |
+| Control height & font (density axis) | `--ptah-control-h` / `--ptah-control-fs` |
+
+### Forbidden in any view or CSS you write
+
+- `bg-white`, `bg-light`, `bg-dark`, `bg-slate-*`, `bg-gray-*`, `text-slate-*`
+  and every other fixed-palette class used for **surfaces or text** — they
+  ignore the tone presets.
+- `dark:` Tailwind variants — dark mode here is `.ptah-dark` redefining the
+  SAME tokens; markup never branches on the mode.
+- Hex/rgb literals in views or in per-view `<style>` blocks (which are
+  themselves forbidden — see CSS Architecture Rules).
+
+```blade
+{{-- ❌ stays white under the papel tone --}}
+<div class="bg-white dark:bg-slate-800 border rounded-lg p-4">
+
+{{-- ✅ follows every axis with zero extra work --}}
+<div class="rounded-lg p-4 border"
+     style="background: var(--ptah-surface); border-color: var(--ptah-line);">
+```
+
+To find offenders in an existing project:
+
+```bash
+grep -rnE 'bg-(white|light|slate|gray)|dark:|#[0-9a-fA-F]{3,6}' resources/views --include='*.blade.php'
 ```
 
 ---

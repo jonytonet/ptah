@@ -354,21 +354,47 @@ this release's sources rather than estimated:
 - **Views still hardcode Tailwind text-color utilities** (`text-gray-*`,
   `text-slate-*`, `text-zinc-*`, `text-neutral-*`, `text-stone-*`, `text-white`,
   `text-black`, including their `dark:` variants) instead of the `--ptah-text-*`
-  tokens — **999 occurrences across 52 Blade files**, measured with
+  tokens — **1019 occurrences across 53 Blade files**, re-measured on 1.25.0 with
   `grep -rEo "text-(gray|slate|zinc|neutral|stone|white|black)(-[0-9]+)?"` over
-  `resources/views`. Two screens concentrate the largest share by far:
-  - `resources/views/livewire/base-crud/crud-config.blade.php` (the visual CrudConfig
-    editor) — 271 occurrences.
-  - `resources/views/livewire/permission/permission-guide.blade.php` — 228
-    occurrences.
+  `resources/views`. The count **grew** since the 1.15.0 measurement (999/52):
+  features shipped in between added hardcodes before this rule hardened — an
+  honest data point about why a doc rule alone does not hold the line. The two
+  dominant screens are unchanged:
+  - `crud-config.blade.php` (the visual CrudConfig editor) — 275 occurrences.
+  - `permission-guide.blade.php` — 144 occurrences (down from 228).
 
-  Together these two views alone account for ~50% of all remaining hardcoded
-  text-color classes. Every other module screen (`page-list`, `menu-list`,
-  `audit-list`, `role-list`, `company-list`, `user-permission-list`,
-  `department-list`, `exports-panel`, `ai-model-config-list`, …) has a smaller but
-  non-trivial share. A user who picks a non-default font-colour preset will see it
-  applied almost everywhere on a BaseCrud screen, but largely **not** on `crud-config`
-  or `permission-guide`.
+  A user who picks a non-default font-colour preset will see it applied almost
+  everywhere on a BaseCrud screen, but largely **not** on `crud-config` or
+  `permission-guide`.
+
+### Package views with fixed-palette surfaces
+
+The complaint this section exists for, reported from a production host: *"I
+switch the light tone to **papel** and some items stay white."* Measured on
+1.25.0: **420 fixed-palette `bg-*` utilities across 39 package views**
+(`grep -rEo "bg-(white|slate|gray|zinc|neutral|stone)(-[0-9]+(/[0-9]+)?)?"`).
+These backgrounds do not read any `--ptah-*` token, so no tone preset can
+reach them.
+
+Where an **end user** (not just a developer in the config editor) actually
+sees it:
+
+| View | Hits | User-visible as |
+|---|---|---|
+| `base-crud/partials/_cards.blade.php` | 1 (grep counts the line; it carries `bg-white dark:bg-slate-800`, the card's whole surface) | **The card view** — the mobile default since 1.25.0, so under *papel* every card is a white rectangle on a paper page. The most visible case. |
+| `base-crud/partials/_modal-form.blade.php` | 12 | Parts of the create/edit modal. |
+| `ai/ai-chat-widget.blade.php` | 13 | The AI chat widget. |
+| `crud-config.blade.php` | 122 | Dev-only (the config editor). |
+| `permission-guide.blade.php` | 48 | Dev/admin-only. |
+
+**Workarounds until fixed:** pin the light tone to **puro** (which matches the
+hardcoded white), or accept the mismatch on the affected pieces. Do **not**
+patch over package views with host CSS — your selectors will break the day the
+package migrates them to tokens.
+
+**For host projects:** the same class of bug in *your own* views is yours to
+fix, and the recipe (grep patterns + token conversion table) is in
+[CustomScreens.md §6](CustomScreens.md#6-diagnóstico-troquei-o-tom-para-papel-e-um-item-ficou-branco).
 
 - **The whole Appearance feature is inert under the Tailwind CDN fallback.** The
   layout only loads `resources/css/ptah-components.css` (via `app.css`'s `@import`,
