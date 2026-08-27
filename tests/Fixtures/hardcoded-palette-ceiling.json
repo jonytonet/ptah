@@ -33,7 +33,7 @@
     "livewire/auth/profile.blade.php": 16,
     "livewire/base-crud/base-crud.blade.php": 9,
     "livewire/base-crud/crud-config.blade.php": 408,
-    "livewire/base-crud/partials/_cards.blade.php": 12,
+    "livewire/base-crud/partials/_cards.blade.php": 10,
     "livewire/base-crud/partials/_config-form-preview.blade.php": 31,
     "livewire/base-crud/partials/_filter-panel.blade.php": 1,
     "livewire/base-crud/partials/_modal-delete.blade.php": 2,

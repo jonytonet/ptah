@@ -31,7 +31,7 @@
                  @click="ptahRowNav($event, '{{ $rowLink }}')"
                  @auxclick="ptahRowNav($event, '{{ $rowLink }}')"
              @endif
-             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card bg-white dark:bg-slate-800 hover:shadow-md
+             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card hover:shadow-md
                     {{ $rowLink ? 'cursor-pointer' : '' }}
                     {{ $isSelected ? 'ptah-c-tr_selected' : '' }}">
 
