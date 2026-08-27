@@ -6,6 +6,7 @@ namespace Ptah\Services\Permission;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Models\PageObject;
 use Ptah\Models\PermissionAudit;
 use Ptah\Models\PtahPage;
+use Ptah\Models\Role;
 use Ptah\Models\UserRole;
 use Ptah\Traits\ResolvesUser;
 
@@ -385,6 +387,27 @@ class PermissionService implements PermissionServiceContract
         });
     }
 
+    /**
+     * MASTER is GLOBAL by definition — this query deliberately does NOT filter
+     * by `company_id`. A `UserRole` binding's `company_id` is irrelevant to
+     * whether that user is MASTER: holding a `role.is_master = true`
+     * assignment in ANY company (or none) grants MASTER everywhere, for
+     * every company, in this and every other check()/getPermissions() call.
+     *
+     * This was a deliberate ratification, not an oversight: scoping MASTER by
+     * company_id would be a breaking change that revokes access for every
+     * existing MASTER binding created for a single company under the
+     * (incorrect) assumption that it scoped anything — including this
+     * package's own reference environment (`user=1, company_id=1,
+     * role=MASTER`). Hosts who need a company-scoped "super admin" should
+     * model it as a REGULAR role with every object granted, not MASTER.
+     *
+     * Because a `company_id` on a MASTER binding is silently ignored here,
+     * `upsertUserRole()` below normalises new/updated MASTER bindings to
+     * `company_id = null` at write time (so the stored data matches what this
+     * method actually does), and `ptah:config:doctor` flags any PRE-EXISTING
+     * MASTER binding that still carries a company_id as a security alert.
+     */
     protected function queryIsMaster(int $userId): bool
     {
         return UserRole::query()
@@ -593,9 +616,30 @@ class PermissionService implements PermissionServiceContract
      * soft-deleted. Uses the SoftDeletes API (restore) rather than a mass-assigned
      * `deleted_at => null` — the latter is silently dropped (not fillable), leaving
      * the assignment trashed.
+     *
+     * MASTER is global (see `queryIsMaster()`) — a `company_id` on a MASTER
+     * binding is never actually enforced, it only misleads whoever created it
+     * into believing access is scoped to that company. Rather than throwing
+     * (which would break an existing seeder that happens to pass a
+     * `company_id` alongside a MASTER role), the scope is silently normalised
+     * to `null` here — matching what `queryIsMaster()` already does in
+     * practice — and logged, so the caller has a trail explaining why the
+     * stored row differs from what was requested.
      */
     protected function upsertUserRole(int $userId, int $roleId, ?int $companyId): void
     {
+        $role = $companyId !== null ? Role::find($roleId) : null;
+
+        if ($role !== null && $role->is_master) {
+            Log::warning('Ptah: company_id ignored for a MASTER role binding — MASTER is global by definition.', [
+                'user_id' => $userId,
+                'role_id' => $roleId,
+                'company_id' => $companyId,
+            ]);
+
+            $companyId = null;
+        }
+
         $ur = UserRole::withTrashed()->firstOrNew([
             'user_id' => $userId,
             'role_id' => $roleId,

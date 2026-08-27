@@ -302,6 +302,51 @@ class PermissionServiceStateTest extends TestCase
         $this->assertTrue($this->service->check($this->userId, 'products.index', 'read', 9));
     }
 
+    // ── MASTER is global — company_id normalisation ─────────────────────────────
+
+    #[Test]
+    public function sync_role_normalises_a_master_bindings_company_id_to_null(): void
+    {
+        $master = $this->makeRole(master: true);
+
+        // A caller (e.g. a host seeder) passes a company_id for a MASTER role —
+        // queryIsMaster() would ignore it anyway; upsertUserRole() must store
+        // the binding as global (company_id null) so the DATA matches what
+        // actually happens, instead of silently keeping a misleading scope.
+        $this->service->syncRole($this->userId, $master->id, [5]);
+
+        $binding = UserRole::where('user_id', $this->userId)->where('role_id', $master->id)->sole();
+        $this->assertNull($binding->company_id);
+    }
+
+    #[Test]
+    public function a_master_binding_still_resolves_globally_after_normalisation(): void
+    {
+        $master = $this->makeRole(master: true);
+
+        $this->service->syncRole($this->userId, $master->id, [5]);
+
+        // Global — passes for the company it was "assigned" to AND any other.
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read', 5));
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read', 9));
+    }
+
+    #[Test]
+    public function a_regular_roles_company_id_is_left_untouched(): void
+    {
+        $role = $this->makeRole(master: false);
+        $this->grant($role, ['can_read' => true]);
+
+        $this->service->syncRole($this->userId, $role->id, [5]);
+
+        $binding = UserRole::where('user_id', $this->userId)->where('role_id', $role->id)->sole();
+        $this->assertSame(5, $binding->company_id);
+
+        // And the scope IS enforced for a non-MASTER role.
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read', 5));
+        $this->assertFalse($this->service->check($this->userId, 'products.index', 'read', 9));
+    }
+
     // ── Cache scope ─────────────────────────────────────────────────────────────
 
     #[Test]

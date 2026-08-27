@@ -11,6 +11,7 @@ use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\Role;
+use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ModelKey;
@@ -76,6 +77,15 @@ use Throwable;
  *                        not `sync`, which means delivery only happens while a
  *                        worker is running — the silent-nothing this check
  *                        exists to make visible.
+ *   - MASTER scoped by company_id → a `ptah_user_roles` binding for a MASTER
+ *                        role that still carries a `company_id`. Security
+ *                        alert (not a config problem): `PermissionService::
+ *                        queryIsMaster()` resolves MASTER globally regardless
+ *                        of `company_id`, so the binding is not actually
+ *                        scoped to that company — whoever created it believes
+ *                        it is. Warning-only (does not change how MASTER
+ *                        resolves); guarded against the permissions module
+ *                        being uninstalled.
  *
  * Both collision checks are diagnostic only — they do not change how permissions
  * resolve, they only surface the pre-existing global-key sharing risk.
@@ -475,6 +485,31 @@ class ConfigDoctorCommand extends Command
             if ($pageSlugs->count() > 1) {
                 $qualifiedForms = $pageSlugs->map(fn ($slug) => "{$slug}::{$key}")->implode(', ');
                 $this->line("🟡 <fg=yellow>obj_key collision</> '{$key}': compartilhado pelas páginas ".implode(', ', $pageSlugs->all())." — a resolução do mapa bare é global por obj_key (crossgrant entre páginas); use a chave qualificada para desambiguar: {$qualifiedForms}");
+                $warnings++;
+            }
+        }
+
+        // 10. MASTER role scoped by company_id — PermissionService::queryIsMaster()
+        //     resolves MASTER globally and never looks at the binding's
+        //     company_id (see that method's docblock), so a company_id here
+        //     scopes nothing; it only misleads whoever created the binding
+        //     into believing access is limited to that company. Security
+        //     alert, not a config defect — does not change how MASTER
+        //     resolves. Guarded against the permissions module being
+        //     uninstalled (same pattern as rolesAreQueryable()).
+        if ($this->rolesAreQueryable()) {
+            try {
+                $scopedMasterBindings = UserRole::query()
+                    ->whereNotNull('company_id')
+                    ->whereHas('role', fn ($q) => $q->where('is_master', true))
+                    ->with('role:id,name')
+                    ->get();
+            } catch (Throwable) {
+                $scopedMasterBindings = collect();
+            }
+
+            foreach ($scopedMasterBindings as $binding) {
+                $this->line("🔴 <fg=red>SECURITY ALERT — MASTER scoped by company_id</> user_id={$binding->user_id} role='{$binding->role?->name}' company_id={$binding->company_id}: MASTER é global (PermissionService::queryIsMaster() ignora company_id) — este vínculo NÃO restringe o acesso à empresa indicada, embora pareça que sim");
                 $warnings++;
             }
         }
