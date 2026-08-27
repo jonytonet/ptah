@@ -7,6 +7,116 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.26.0] — 2026-08-26
+
+The theming wave. The package starts obeying its own rule — *every color
+through a token* — after its author switched a production host to the **papel**
+light tone and watched parts of the UI stay white. No migrations, no schema
+change; two upgrade warnings below deserve reading before `composer update`.
+
+### Changed — 291 fixed-palette utilities migrated to `--ptah-*` tokens
+
+Across the BaseCrud partials (cards, modal form, pagination, print), 17
+`forge-*` components and 13 module/admin screens, `bg-white` / `bg-slate-*` /
+`text-gray-*` / `dark:` pairs became named `ptah-c-*` classes backed by token
+rules in `resources/css/ptah-components.css`. Every surface now follows all 6
+appearance axes — the card view under *papel* paints `#fffaf0` instead of
+staying white, measured in a real browser across every tone preset.
+
+The migration ran through the full pipeline: an engineering plan (which also
+disproved two of our own beliefs — see Fixed below), 18 implementation commits,
+two adversarial reviews that found **14 real defects behind a green suite**,
+and 6 fix commits each born from a failing test.
+
+### Added — two guards for the two failure classes this wave exposed
+
+- **`HardcodedPaletteCeilingTest`** — a per-file ratchet on fixed-palette
+  utilities that may only ever go down, fixture tightened in the same commit
+  that reduces a count. It exists because the count **grew** 999 → 1019
+  between 1.15.0 and 1.25.0 while the prose rule already forbade it.
+- **`AppearancePresetContrastTest` extension** — reads the token *actually
+  declared* in each migrated rule and proves the resulting text/background
+  pairs across all 6 tone presets. This is the gap that let a 1.00:1 chart
+  title and a 1.9:1 switch track ship green.
+
+### Fixed — found by the reviews, invisible to the suite
+
+- **Three migrations were inert in dark mode**: the dashboard layout's legacy
+  `<style>` block still overrode them — `!important` on the light/secondary
+  buttons, higher-specificity rules on pagination and the page-header back
+  link. The legacy rules are deleted (the layout block shrinks to 20 literals
+  / 28 rules, from 36/39).
+- **Contrast regressions in dark tones**: chart-card title at 1.00:1
+  (`text-dark` on a now-dark surface), switch OFF track at ~1.9:1 with the
+  knob darker than the track, progress/stepper/avatar-badge tracks at ~1.4:1.
+  Root cause was semantic: `--ptah-line-strong` is a *decorative separator*
+  token; information-bearing elements now use `--ptah-line-field`, calibrated
+  at 3:1.
+- **Wrong-value token picks**: badge `light` used the hover token in light
+  mode; three status/loading dots darkened in both modes; `relief` buttons
+  were byte-identical to solid in dark. Pagination text now maps
+  `text-gray-600` → `--ptah-text-secondary` (the closest value), not
+  `--ptah-text`.
+- **`focus:bg-white` on the audit screen's filter field** beat the tokenized
+  toolbar rule by specificity — focusing the field painted it white under
+  *papel*, with the whole suite green. The literal reported symptom.
+- **The menu editor's icon field** (and its preview chip and example chips)
+  ignored the theme, and two of its strings were hardcoded pt-BR — now
+  tokenized and translated (`menu_form_icon_*` keys in both languages).
+- `forge-textarea` regained its `:disabled` background, lost in migration.
+
+### Deliberate visual changes (declared, not regressions)
+
+- Light/secondary buttons in dark mode now follow the dark **tone** (zinc
+  under *carvão*, navy under *meia-noite*) instead of pinned slate, gain the
+  same shadow as the other variants, and `flat` is finally transparent there.
+- Pagination: enabled text `#94a3b8 → #cbd5e1` in dark; border moves to
+  `--ptah-line-field-hover`, fixing an inherited sub-3:1 failure the old
+  `border-gray-200` always had.
+- Status/loading dots are lighter in both modes (back to their pre-wave
+  visibility, now token-driven).
+
+### Docs — agent-first routing, and the skill stops teaching the bug
+
+- The shipped `ptah-development` skill is now **entirely in English**, opens
+  with a *configure-before-you-code* decision map (including the row that was
+  missing: a complete Swagger-annotated REST API is one flag,
+  `ptah:forge Name --api`), and its Design Tokens section teaches the token
+  contract instead of the fixed-hex table that caused the papel bug in the
+  first place. `SkillGuidanceTest` keeps the poison rows from returning.
+- **`AGENTS.md`** at the package root: a one-page router for AI agents and
+  busy humans — which document answers which question, and the two rules that
+  prevent the most wasted work.
+- `KnownLimitations.md` §6 rewritten from fresh measurements, **correcting a
+  five-release-old false claim of ours**: `crud-config` has been fully
+  theme-aware since 1.21 via scoped repaint rules — a raw grep of palette
+  utilities counts both the debt and the keys of the mechanism that fixes it.
+  Honest decomposition of the 1097 remaining occurrences (439 are not debt,
+  279 are `permission-guide` — the real worst offender, scheduled for its own
+  wave, ~112 await a missing faint-glyph token tier, ~70 are correct forever).
+
+### Upgrade warnings
+
+- **Hosts without a guaranteed Vite build**: the CDN fallback gets stricter on
+  purpose. Surfaces that used to paint via `bg-white` now delegate to the
+  package stylesheet, which the CDN fallback never loads — they render with
+  **no background at all**. Do not upgrade past 1.25.0 without a build.
+- **Hosts that wrote CSS over package-view utilities** (selectors targeting
+  `bg-white`/`text-gray-*` inside package views) lose those anchors on this
+  release, as the docs always warned.
+
+### Deferred, documented
+
+`permission-guide` (279 occurrences, zero `dark:`), the faint-glyph token tier
+decision, `forge-alert` (its AA proof composites literals — tokenising it
+invalidates the proof), `forge-demo` (standalone showcase, never loads the
+package stylesheet).
+
+**Suite:** 1831 passing (+29 since 1.25.0), 11049 assertions. PHPStan clean,
+no new baseline entries. No migrations.
+
+---
+
 ## [1.25.0] — 2026-08-25
 
 The mobile round. Every item here came from a production ERP's first day on a
@@ -2888,7 +2998,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.25.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.26.0...HEAD
+[1.26.0]: https://github.com/jonytonet/ptah/compare/v1.25.0...v1.26.0
 [1.25.0]: https://github.com/jonytonet/ptah/compare/v1.24.0...v1.25.0
 [1.24.0]: https://github.com/jonytonet/ptah/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/jonytonet/ptah/compare/v1.22.0...v1.23.0
