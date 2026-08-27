@@ -273,7 +273,11 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 - **Without Ptah:** AI needs to generate model + migration + repository + service + controller + requests + resource + view + routes for each entity — dozens of files, thousands of tokens, high risk of inconsistency
 - **With Ptah:** AI runs `ptah:forge MyEntity --fields="..."`, the structure is ready, and it spends its tokens only on the business logic — fewer tokens, architecture guaranteed by the package
 
-> For prompts, templates and AI workflow, see the **[AI Guide →](docs/AI_Guide.md)**
+> For prompts, templates and AI workflow, see the **[AI Guide →](docs/AI_Guide.md)**.
+> Agents reading this repo (or `vendor/jonytonet/ptah`) should start at
+> **[AGENTS.md](AGENTS.md)** — a one-page router that says which document
+> answers which question, and the two rules that prevent the most wasted work:
+> *configure before you code* and *every color through a token*.
 
 ---
 
@@ -335,6 +339,14 @@ layout `<head>`; every tint, focus ring and hover is derived from them via
 font size — from a 6th tab at `/profile`, persisted server-side and applied on `<html>`
 with no flash. See
 [Configuration.md — Per-user Appearance](docs/Configuration.md#per-user-appearance-profile--6th-tab).
+
+**Building your own screens on the theme.** Anything you build yourself follows
+all 6 axes automatically **if** every color resolves through a token — `<x-forge-*>`
+props, `bg-primary`-style semantic classes, or `var(--ptah-*)`. Fixed-palette
+classes (`bg-white`, `bg-slate-*`, `dark:` variants) produce elements that stay
+white when a user switches the light tone to *papel*. The full token contract,
+the conversion table for existing screens, and a troubleshooting recipe live in
+**[CustomScreens.md](docs/CustomScreens.md)**.
 
 **Customizing views — publish only what you edit.** Most customization is done
 through the CrudConfig modal (database-driven), so you rarely need to touch a Blade
