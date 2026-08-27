@@ -12,9 +12,12 @@ use RecursiveIteratorIterator;
 use RuntimeException;
 
 /**
- * Per-file ratchet on fixed-palette Tailwind utilities (`bg-*` / `text-*` from
- * the gray/slate/zinc/neutral/stone families, plus `bg-white` / `text-white` /
- * `text-black`) in package Blade views.
+ * Per-file ratchet on fixed-palette Tailwind utilities (`bg-*` / `text-*`) in
+ * package Blade views — BOTH the neutral families (gray/slate/zinc/neutral/
+ * stone, plus `bg-white`/`text-white`/`text-black`) and, since the
+ * permission-guide truth+theme wave's adversarial review, the full CHROMATIC
+ * palette (red/orange/amber/yellow/lime/green/emerald/teal/cyan/sky/blue/
+ * indigo/violet/purple/fuchsia/pink/rose).
  *
  * Why this exists: `docs/KnownLimitations.md` has forbidden new fixed-palette
  * utilities in package views since 1.15.0, but the count grew anyway (999 to
@@ -24,6 +27,17 @@ use RuntimeException;
  * reduces a count (see `ceilings_are_tight`), and a sweep that fails the
  * moment a new view ships hardcoded utilities without an entry at all (see
  * `every_view_with_a_hardcoded_utility_is_in_the_fixture`).
+ *
+ * Scope correction: this guard was neutral-only for its entire life (see the
+ * commit that added the chromatic families) — `bg-indigo-50`, `bg-red-50`,
+ * `bg-green-100`, `bg-amber-50` and 88 more chromatic sites across the
+ * package's views passed it silently, one of which measured 1.17:1 in a
+ * rendered-DOM contrast audit. None of that debt belongs to any one screen
+ * fixed by this wave; extending the two patterns here only makes the existing
+ * ratchet see what was always there. The fixture's per-file ceilings were
+ * raised to match the CURRENT (now fully counted) totals in the same commit —
+ * this is a scope widening, not new debt, and per the ratchet's own contract
+ * (`ceilings_are_tight`) existing counts are frozen, not reduced to zero.
  *
  * A hardcoded utility is not automatically a bug: 78 of them are repainted
  * through a token from a distance by an unlayered selector in
@@ -38,9 +52,11 @@ class HardcodedPaletteCeilingTest extends TestCase
 {
     private const FIXTURE_PATH = __DIR__.'/../../Fixtures/hardcoded-palette-ceiling.json';
 
-    private const BG_PATTERN = '/bg-(white|slate|gray|zinc|neutral|stone)(-\d+(\/\d+)?)?/';
+    private const CHROMATIC_FAMILIES = 'red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose';
 
-    private const TEXT_PATTERN = '/text-(gray|slate|zinc|neutral|stone|white|black)(-\d+(\/\d+)?)?/';
+    private const BG_PATTERN = '/bg-(white|slate|gray|zinc|neutral|stone|'.self::CHROMATIC_FAMILIES.')(-\d+(\/\d+)?)?/';
+
+    private const TEXT_PATTERN = '/text-(gray|slate|zinc|neutral|stone|white|black|'.self::CHROMATIC_FAMILIES.')(-\d+(\/\d+)?)?/';
 
     #[Test]
     public function no_view_gained_a_hardcoded_palette_utility(): void

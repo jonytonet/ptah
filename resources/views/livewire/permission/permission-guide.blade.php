@@ -371,7 +371,7 @@
                             @foreach ([$r, $c, $u, $d] as $check)
                             <td class="px-3 py-2 text-center">
                                 @if ($check)
-                                    <span class="text-green-600 font-bold">✓</span>
+                                    <span class="ptah-c-guide_node_ok rounded px-1 font-bold">✓</span>
                                 @else
                                     <span>—</span>
                                 @endif

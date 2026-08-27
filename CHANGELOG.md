@@ -88,6 +88,34 @@ reads lang files.
 **Compatibility:** no PHP API changes. A host that published/overrode the
 guide's view keeps its own copy and does not receive these corrections.
 
+### Fixed — two defects found by a rendered-DOM contrast audit (all 6 tones)
+
+- **Invisible architecture-diagram arrows.** `.ptah-c-guide_conn` declared
+  `color` and `background-color` with the same token
+  (`--ptah-line-field`) — 1.00:1 in every tone, because the class served two
+  jobs (a filled connector `<div>` in the decision-flow diagram, and a text
+  arrow glyph `→`/`↔`/`←` in the architecture diagram) with one declaration
+  each. `AppearancePresetContrastTest`'s pair helpers could not catch this:
+  they prove a token against ANOTHER selector/token or an ambient
+  background, never a rule against its own color/background-color pair. The
+  4 arrow glyphs are now plain filled connectors (`aria-hidden`, no text
+  content), matching the flow diagram's existing idiom; `.ptah-c-guide_conn`
+  declares `background-color` only. New guard:
+  `tests/Unit/Support/CssNoSelfPairedTokenTest.php` — fails any `.ptah-c-*`
+  rule that pairs `color`/`background-color` on the identical token; a
+  one-off repo-wide scan confirmed this was the only rule affected.
+- **`HardcodedPaletteCeilingTest` was blind to chromatic colors.** Its two
+  regexes only ever matched the neutral Tailwind families (gray/slate/zinc/
+  neutral/stone); `bg-indigo-50`/`bg-red-50`/`bg-green-100`/`bg-amber-50` and
+  188 more chromatic sites across the package's views passed it silently —
+  none in the guide this wave fixed, one of them measured at 1.17:1 by the
+  same audit. Both patterns now cover the full chromatic palette too; the 45
+  affected files' ceilings were raised in the same commit to their
+  already-existing (now fully counted) totals — per the ratchet's own
+  contract, existing debt is frozen, not silently reduced to zero. See
+  `docs/KnownLimitations.md` §6 for the corrected, wider-scope total (1010
+  across 45 files, up from 818 — a scope widening, not a regression).
+
 ## [1.26.0] — 2026-08-26
 
 The theming wave. The package starts obeying its own rule — *every color

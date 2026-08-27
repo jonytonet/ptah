@@ -375,10 +375,29 @@ said nothing about qualified keys (v1.19) or `colsPermission` (v1.20). See
 
 ### What ptah does not cover yet
 
-Measured after the permission-guide truth+theme wave, normalised to exclude
-Blade/HTML comments and `<style>` blocks: **818 occurrences across 45 Blade
-files** (down from 1416 across 52 at the start of the 1.26.0 wave; the
-permission-guide wave alone removed 279 sites — see below). Of these:
+**Scope correction — the count below now includes CHROMATIC utilities.** From
+1.15.0 through the permission-guide truth+theme wave, this section's number
+and `HardcodedPaletteCeilingTest`'s two regexes only ever matched the NEUTRAL
+Tailwind families (gray/slate/zinc/neutral/stone, plus `bg-white`/
+`text-white`/`text-black`). A rendered-DOM contrast audit (all 6 tone
+presets) caught a chromatic site — `bg-indigo-50`/`bg-red-50`/`bg-green-100`/
+`bg-amber-50` and 188 more across the package's views, none of them in the
+guide fixed by this wave — rendering as low as 1.17:1, invisible to the
+guard because neither pattern ever looked at that palette. Both regexes now
+cover the full Tailwind chromatic set (red/orange/amber/yellow/lime/green/
+emerald/teal/cyan/sky/blue/indigo/violet/purple/fuchsia/pink/rose) too. **Do
+not compare the number below against any figure from before this
+correction — it is a different, wider scope, not new debt or a regression.**
+The 45 files' ceilings were raised in the same commit to match their
+already-existing chromatic counts, per the ratchet's own contract: freeze
+what exists, never let it grow, never pretend to shrink debt nobody fixed.
+
+Measured after the scope correction, normalised to exclude Blade/HTML
+comments and `<style>` blocks: **1010 occurrences across 45 Blade files**
+(818 of those neutral, unchanged from right after the permission-guide
+wave — which itself brought that file from 279 to 0, since removed from the
+fixture; the wave before it started this document's tracking at 1416 across
+52, neutral-only). Of these:
 
 - **439 are not debt** — the CrudConfig editor repaint keys described above.
 - **~112 faint-glyph utilities** (`text-gray-400`, `text-slate-400` and
