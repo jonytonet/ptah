@@ -2762,6 +2762,35 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-step_num            { background-color: var(--ptah-primary); color: var(--ptah-text-on-accent); }
 .ptah-dark .ptah-c-step_num { background-color: var(--ptah-primary); color: var(--ptah-text-on-accent); }
 
+/* ── permission-guide "Overview" tab — architecture diagram + decision flow.
+   .ptah-c-guide_node is the neutral box (both diagrams' default node);
+   _q/_ok/_no are the flow diagram's question/granted/denied nodes. Their
+   ink/background pair reuses EXACTLY the -strong(light)/-lite(dark) ink over
+   -soft background recipe ModuleScreenSemanticChipContrastTest already
+   proves for the module-table status chips (see
+   AppearancePresetContrastTest::guide_node_semantic_ink_clears_aa_text_contrast_on_its_own_soft_background()
+   for the same proof extended across all 6 tone presets, since -soft mixes
+   against --ptah-surface/transparent and that differs per tone). Reusing an
+   already-provable recipe on purpose — the module's own generic contrast
+   helpers cannot resolve a color-mix() token (see the note left where
+   .ptah-c-step_num was tried the same way and reverted). .ptah-c-guide_conn
+   is the connecting line/arrow between nodes; it doubles as `color` for a
+   text arrow glyph and `background-color` for a line <div>. */
+.ptah-c-guide_node            { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text); }
+.ptah-dark .ptah-c-guide_node { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); color: var(--ptah-text); }
+
+.ptah-c-guide_node_q            { background-color: var(--ptah-warn-soft); border-color: var(--ptah-warn-strong); color: var(--ptah-warn-strong); }
+.ptah-dark .ptah-c-guide_node_q { background-color: var(--ptah-warn-soft); border-color: var(--ptah-warn-lite); color: var(--ptah-warn-lite); }
+
+.ptah-c-guide_node_ok            { background-color: var(--ptah-success-soft); border-color: var(--ptah-success-strong); color: var(--ptah-success-strong); }
+.ptah-dark .ptah-c-guide_node_ok { background-color: var(--ptah-success-soft); border-color: var(--ptah-success-lite); color: var(--ptah-success-lite); }
+
+.ptah-c-guide_node_no            { background-color: var(--ptah-danger-soft); border-color: var(--ptah-danger-strong); color: var(--ptah-danger-strong); }
+.ptah-dark .ptah-c-guide_node_no { background-color: var(--ptah-danger-soft); border-color: var(--ptah-danger-lite); color: var(--ptah-danger-lite); }
+
+.ptah-c-guide_conn            { background-color: var(--ptah-line-field); color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-guide_conn { background-color: var(--ptah-line-field); color: var(--ptah-line-field); }
+
 /* ── Card (default variant) ──────────────────────────────────────────── */
 /* Migrated from forge-card.blade.php's `bg-white border-gray-100` (light,
    never tokenized) and from the layout's inline <style> `.ptah-card-default`

@@ -775,7 +775,7 @@ return [
 
     // Overview — Intro
     'guide_ov_title' => "What is Ptah's permission system?",
-    'guide_ov_body' => 'The Ptah ACL (Access Control List) is an access control system based on <strong>Roles</strong>, inspired by the RBAC standard. It allows you to define <em>who can do what</em> in each part of the system, with granularity down to a button or individual field level.<br><br>Unlike Laravel\'s simple <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code>, Ptah ACL is <strong>dynamic and manageable via interface</strong> — no need to change code to add new permissions.',
+    'guide_ov_body' => 'The Ptah ACL (Access Control List) is an access control system based on <strong>Roles</strong>, inspired by the RBAC standard. It allows you to define <em>who can do what</em> in each part of the system, with granularity down to a button or individual field level.<br><br>Unlike Laravel\'s simple <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code>, Ptah ACL is <strong>dynamic and manageable via interface</strong> as far as Pages/Objects/Roles/bindings go — but the CHECK POINT is still code (<code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">ptah_can()</code>, the <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">ptah.can</code> middleware, <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">permissionIdentifier</code>). The 4 actions (Read/Create/Edit/Delete) are fixed; a new capability is modeled as a new OBJECT (e.g. <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">crud.config</code>), not as a new verb — a new verb would require a new column (a migration).',
 
     // Overview — Architecture
     'guide_ov_arch_title' => 'Architecture — How concepts relate',
@@ -808,24 +808,24 @@ return [
     'guide_con_perms_edit' => 'Edit',
     'guide_con_perms_delete' => 'Delete',
     'guide_con_master_title' => 'MASTER Role',
-    'guide_con_master_body' => 'A Role marked as MASTER has unrestricted access to <strong>all resources</strong>, bypassing checks. Only 1 MASTER Role can exist. Use only for superadmins.',
-    'guide_con_master_warn' => '⚠️ Use with care — bypasses all checks',
+    'guide_con_master_body' => 'A Role marked as MASTER has unrestricted access to <strong>all resources</strong>, bypassing checks — and is <strong>GLOBAL by definition</strong>: a MASTER binding with a company set restricts nothing, the company is simply ignored when resolving (silently normalised to NULL on save, and flagged by <code class="font-mono bg-slate-100 px-1 rounded text-xs">ptah:config:doctor</code> if one already exists that way in the database). The "only 1 MASTER" rule is enforced by the interface, not the database — it is a possible race (check-then-act, no transaction), not a schema guarantee.',
+    'guide_con_master_warn' => '⚠️ Use with care — bypasses all checks and is global; there is no "MASTER for Company X"',
     'guide_con_scope_title' => 'Company Scope',
-    'guide_con_scope_body' => 'A user can have different Roles in different companies. Example: John is Admin in Company A and only Reader in Company B. Set <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code> for global access.',
+    'guide_con_scope_body' => 'A user can have different Roles in different companies. With an active company in the session, the check considers that company\'s grants <strong>plus the global ones</strong> (a binding with company <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code>). <strong>Without</strong> a selected company — or with <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_MULTI_COMPANY=false</code> — only global grants count; a grant scoped to one specific company denies everything in that case. MASTER (above) follows neither rule: it is always global.',
     'guide_con_audit_title' => 'Audit',
-    'guide_con_audit_body' => 'When enabled, each permission check is logged with user, resource, action and result (granted/denied). Enable with <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code> in .env.',
+    'guide_con_audit_body' => 'When <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code>, every GRANTED check is logged. Denied ones are only logged with <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT_DENIED=true</code> (default: true); MASTER accesses only with <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT_MASTER=true</code> (default: <strong>false</strong>). Column-level checks (<code class="font-mono bg-slate-100 px-1 rounded text-xs">colsPermission</code>) are never audited. A logging failure never brings the request down.',
 
     // Overview — Flow
     'guide_ov_flow_title' => 'Access verification flow',
-    'guide_flow_start' => 'User tries to access resource',
-    'guide_flow_q1' => '① Is user authenticated?',
-    'guide_flow_q2' => '② Does any user Role have MASTER?',
-    'guide_flow_q3' => '③ Does Role have permission (e.g.: can_read) for this object?',
-    'guide_flow_yes' => 'Yes',
-    'guide_flow_no' => 'No',
+    'guide_flow_q1' => '① Is the user authenticated?',
+    'guide_flow_q2' => '② Is the requested action create, read, update or delete?',
+    'guide_flow_q3' => '③ Does any of the user\'s Roles have MASTER?',
+    'guide_flow_q4' => '④ Resolve the scope: active company in the session (that company\'s grants + globals) — or, with no company/multi-company off, only globals',
+    'guide_flow_q5' => '⑤ Does the obj_key exist in the BARE map, with can_{action} = true on some active Role?',
+    'guide_flow_q6' => '⑥ Missed the bare map and the key is qualified (contains "::")? Consult the QUALIFIED map (page::obj_key)',
+    'guide_flow_no' => 'DENIED',
     'guide_flow_granted' => '✅ ACCESS GRANTED',
     'guide_flow_denied' => '🚫 ACCESS DENIED',
-    'guide_flow_login' => '🚫 Redirect to login',
 
     // Setup tab - Prerequisite
     'guide_setup_prereq' => '<strong>Prerequisite (human execution — do not automate on deploy):</strong> Run <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> to create the Ptah tables, and <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> to create the default company.',

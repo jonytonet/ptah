@@ -154,6 +154,13 @@ class ModuleScreenThemeParityTest extends TestCase
 
             // permission-guide "Step by Step" tab — step-number badge.
             '.ptah-c-step_num' => ['.ptah-c-step_num'],
+
+            // permission-guide "Overview" tab — architecture diagram + flow nodes.
+            '.ptah-c-guide_node' => ['.ptah-c-guide_node'],
+            '.ptah-c-guide_node_q' => ['.ptah-c-guide_node_q'],
+            '.ptah-c-guide_node_ok' => ['.ptah-c-guide_node_ok'],
+            '.ptah-c-guide_node_no' => ['.ptah-c-guide_node_no'],
+            '.ptah-c-guide_conn' => ['.ptah-c-guide_conn'],
         ];
     }
 

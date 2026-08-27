@@ -776,7 +776,7 @@ return [
 
     // Visão Geral — Introdução
     'guide_ov_title' => 'O que é o sistema de permissões do Ptah?',
-    'guide_ov_body' => 'O ACL (Access Control List) do Ptah é um sistema de controle de acesso baseado em <strong>Roles (perfis)</strong>, inspirado no padrão RBAC. Ele permite definir <em>quem pode fazer o quê</em> em cada parte do sistema, com granularidade até o nível de botão ou campo individual.<br><br>Ao contrário do simples <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code> do Laravel, o Ptah ACL é <strong>dinâmico e gerenciável pela interface</strong> — sem necessidade de alterar código para adicionar novas permissões.',
+    'guide_ov_body' => 'O ACL (Access Control List) do Ptah é um sistema de controle de acesso baseado em <strong>Roles (perfis)</strong>, inspirado no padrão RBAC. Ele permite definir <em>quem pode fazer o quê</em> em cada parte do sistema, com granularidade até o nível de botão ou campo individual.<br><br>Ao contrário do simples <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">Gate/Policy</code> do Laravel, o Ptah ACL é <strong>dinâmico e gerenciável pela interface</strong> quanto a Páginas/Objetos/Roles/vínculos — mas o PONTO DE VERIFICAÇÃO continua sendo código (<code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">ptah_can()</code>, middleware <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">ptah.can</code>, <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">permissionIdentifier</code>). As 4 ações (Ler/Criar/Editar/Excluir) são fixas; uma capacidade nova se modela como um OBJETO novo (ex.: <code class="bg-indigo-100 px-1.5 py-0.5 rounded text-xs font-mono">crud.config</code>), não como um verbo novo — um verbo novo exigiria uma coluna (migration).',
 
     // Visão Geral — Arquitetura
     'guide_ov_arch_title' => 'Arquitetura — Como os conceitos se relacionam',
@@ -809,24 +809,24 @@ return [
     'guide_con_perms_edit' => 'Editar',
     'guide_con_perms_delete' => 'Excluir',
     'guide_con_master_title' => 'Role MASTER',
-    'guide_con_master_body' => 'Um Role marcado como MASTER tem acesso irrestrito a <strong>todos os recursos</strong>, ignorando verificações. Só pode existir 1 Role MASTER. Use apenas para superadmins.',
-    'guide_con_master_warn' => '⚠️ Use com cuidado — bypassa todas as verificações',
+    'guide_con_master_body' => 'Um Role marcado como MASTER tem acesso irrestrito a <strong>todos os recursos</strong>, ignorando verificações — e é <strong>GLOBAL por definição</strong>: um vínculo MASTER com empresa preenchida não restringe nada, a empresa é simplesmente ignorada na resolução (silenciosamente normalizada para NULL ao salvar, e sinalizada pelo <code class="font-mono bg-slate-100 px-1 rounded text-xs">ptah:config:doctor</code> se já existir assim no banco). A unicidade de "só 1 MASTER" é validada pela interface, não pelo banco — é uma corrida possível (check-then-act sem transação), não uma garantia de schema.',
+    'guide_con_master_warn' => '⚠️ Use com cuidado — bypassa todas as verificações e é global; não existe "MASTER da Empresa X"',
     'guide_con_scope_title' => 'Escopo por Empresa',
-    'guide_con_scope_body' => 'Um usuário pode ter Roles diferentes em empresas diferentes. Ex: João é Admin na Empresa A e apenas Leitor na Empresa B. Defina <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code> para acesso global.',
+    'guide_con_scope_body' => 'Um usuário pode ter Roles diferentes em empresas diferentes. Com empresa ativa na sessão, a verificação considera os grants daquela empresa <strong>+ os globais</strong> (vínculo com empresa <code class="font-mono bg-slate-100 px-1 rounded text-xs">NULL</code>). <strong>Sem</strong> empresa selecionada — ou com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_MULTI_COMPANY=false</code> — só os grants globais contam; um grant escopado a uma empresa específica nega tudo nesse caso. MASTER (acima) não segue nenhuma dessas regras: é sempre global.',
     'guide_con_audit_title' => 'Auditoria',
-    'guide_con_audit_body' => 'Quando habilitada, cada verificação de permissão é registrada em log com usuário, recurso, ação e resultado (concedido/negado). Ative com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code> no .env.',
+    'guide_con_audit_body' => 'Quando <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT=true</code>, cada verificação CONCEDIDA é registrada. Negadas só entram com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT_DENIED=true</code> (padrão: true); acessos de MASTER só com <code class="font-mono bg-slate-100 px-1 rounded text-xs">PTAH_PERMISSION_AUDIT_MASTER=true</code> (padrão: <strong>false</strong>). Verificação por coluna (<code class="font-mono bg-slate-100 px-1 rounded text-xs">colsPermission</code>) nunca é auditada. Uma falha ao gravar o log nunca derruba a requisição.',
 
     // Visão Geral — Fluxo
     'guide_ov_flow_title' => 'Fluxo de verificação de acesso',
-    'guide_flow_start' => 'Usuário tenta acessar recurso',
-    'guide_flow_q1' => '① Usuário está autenticado?',
-    'guide_flow_q2' => '② Algum Role do usuário é MASTER?',
-    'guide_flow_q3' => '③ Role possui permissão (ex: can_read) para este objeto?',
-    'guide_flow_yes' => 'Sim',
-    'guide_flow_no' => 'Não',
+    'guide_flow_q1' => '① O usuário está autenticado?',
+    'guide_flow_q2' => '② A ação pedida é create, read, update ou delete?',
+    'guide_flow_q3' => '③ Algum Role do usuário é MASTER?',
+    'guide_flow_q4' => '④ Resolve o escopo: empresa ativa na sessão (grants da empresa + globais) — ou, sem empresa/com multi-empresa desligado, só grants globais',
+    'guide_flow_q5' => '⑤ O obj_key existe no mapa BARE, com can_{ação} = true em algum Role ativo?',
+    'guide_flow_q6' => '⑥ Não achou no mapa bare e a chave é qualificada (contém "::")? Consulta o mapa QUALIFICADO (page::obj_key)',
+    'guide_flow_no' => 'NEGADO',
     'guide_flow_granted' => '✅ ACESSO LIBERADO',
     'guide_flow_denied' => '🚫 ACESSO NEGADO',
-    'guide_flow_login' => '🚫 Redireciona para login',
 
     // Passo a Passo — Pré-requisito
     'guide_setup_prereq' => '<strong>Pré-requisito (execução humana — não automatize em deploy):</strong> Execute <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan migrate</code> para criar as tabelas do Ptah, e <code class="font-mono text-xs bg-indigo-100 px-1.5 rounded">php artisan db:seed --class=Ptah\\Seeders\\DefaultCompanySeeder</code> para criar a empresa padrão.',
