@@ -19,7 +19,7 @@
     "components/forge-select.blade.php": 6,
     "components/forge-sidebar.blade.php": 2,
     "components/forge-spinner.blade.php": 2,
-    "components/forge-stat-card.blade.php": 4,
+    "components/forge-stat-card.blade.php": 1,
     "components/forge-stepper.blade.php": 4,
     "components/forge-switch.blade.php": 3,
     "components/forge-table.blade.php": 9,
