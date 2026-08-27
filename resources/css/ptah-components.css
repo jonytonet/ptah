@@ -2286,6 +2286,25 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-mod_row:hover              { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
 .ptah-dark .ptah-c-mod_row:hover   { background-color: color-mix(in srgb, var(--ptah-surface-hover) 70%, transparent); }
 
+/* ── profile.blade.php (Onda A UX-ACL, batch 7) — zero dark: coverage before
+   this. The QR-code white background (2FA setup) and the profile-photo
+   fallback's text-white (ink on bg-primary) are untouched by design: a QR
+   code needs a real white quiet zone to stay scannable in every theme, and
+   the accent-ink rule (D1 exception 5) is unaffected either way. Faint icon
+   glyphs (empty-sessions message, session-type icon) are also untouched —
+   deferred faint-glyph tier, see KnownLimitations section 6. ── */
+.ptah-c-prof_body             { color: var(--ptah-text); }
+.ptah-dark .ptah-c-prof_body  { color: var(--ptah-text); }
+
+.ptah-c-prof_hint             { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-prof_hint  { color: var(--ptah-text-faint); }
+
+.ptah-c-prof_chip             { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-prof_chip  { background-color: var(--ptah-control-ghost); }
+
+.ptah-c-prof_panel            { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-prof_panel { background-color: var(--ptah-panel); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
