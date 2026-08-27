@@ -19,8 +19,6 @@
     ".ptah-page-header a|dark|color": "#cbd5e1",
     ".ptah-page-header h1|dark|color": "#e2e8f0",
     ".ptah-page-header p|dark|color": "#94a3b8",
-    ".ptah-pagination .text-gray-400|dark|color": "#64748b",
-    ".ptah-pagination .text-gray-500|dark|color": "#94a3b8",
     ".ptah-pagination button:not(.bg-primary):hover|dark|background-color": "#334155",
     ".ptah-pagination button:not(.bg-primary):hover|dark|color": "#e2e8f0",
     ".ptah-pagination button:not(.bg-primary)|dark|border-color": "#475569",

@@ -764,7 +764,26 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
    still reads from `cursor-not-allowed` plus the absence of the hover
    background, not from a near-invisible icon. */
 .ptah-c-pag_icon            { color: var(--ptah-icon-muted); }
+.ptah-c-pag_icon:hover      { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-pag_icon { color: var(--ptah-icon-muted); }
+
+/* ── forge-pagination: prev/next text button, numbered button, gap, summary ── */
+.ptah-c-pag_btn                 { color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+.ptah-c-pag_btn:hover           { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+
+.ptah-c-pag_btn_off             { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-pag_btn_off  { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
+
+.ptah-c-pag_num                 { color: var(--ptah-text); }
+.ptah-c-pag_num:hover           { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-pag_num      { color: var(--ptah-text); }
+
+.ptah-c-pag_gap                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-pag_gap      { color: var(--ptah-text-faint); }
+
+.ptah-c-pag_sum                 { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-pag_sum      { color: var(--ptah-text-faint); }
 
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */

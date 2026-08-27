@@ -13,7 +13,7 @@
     "components/forge-navbar.blade.php": 4,
     "components/forge-notification.blade.php": 1,
     "components/forge-page-header.blade.php": 2,
-    "components/forge-pagination.blade.php": 27,
+    "components/forge-pagination.blade.php": 3,
     "components/forge-progress.blade.php": 3,
     "components/forge-radio.blade.php": 1,
     "components/forge-select.blade.php": 6,

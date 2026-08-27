@@ -175,8 +175,6 @@
         /* ─── Pagination ──────────────────────────────────────── */
         .ptah-dark .ptah-pagination button:not(.bg-primary)      { color: #94a3b8; border-color: #475569; }
         .ptah-dark .ptah-pagination button:not(.bg-primary):hover { background-color: #334155; color: #e2e8f0; }
-        .ptah-dark .ptah-pagination .text-gray-500 { color: #94a3b8; }
-        .ptah-dark .ptah-pagination .text-gray-400 { color: #64748b; }
 
         /* ─── Badge light ────────────────────────────────────── */
         .ptah-dark .ptah-badge-light { background-color: #475569; color: #e2e8f0; }
