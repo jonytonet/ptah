@@ -42,16 +42,16 @@
             {{ $attributes->class(['sr-only']) }}
         />
         <div
-            :class="checked ? '{{ $activeColor }}' : 'bg-gray-300'"
+            :class="checked ? '{{ $activeColor }}' : 'ptah-c-switch_track_off'"
             class="{{ $sz['track'] }} rounded-full transition-colors duration-200"
         ></div>
         <div
             :class="checked ? '{{ $sz['translate'] }}' : 'translate-x-1'"
-            class="{{ $sz['thumb'] }} bg-white rounded-full absolute top-1/2 -translate-y-1/2 left-0 shadow-sm transition-transform duration-200"
+            class="{{ $sz['thumb'] }} ptah-c-switch_thumb rounded-full absolute top-1/2 -translate-y-1/2 left-0 shadow-sm transition-transform duration-200"
         ></div>
     </div>
 
     @if($label)
-        <span class="text-sm text-gray-700 select-none">{{ $label }}</span>
+        <span class="text-sm ptah-c-ctrl_label select-none">{{ $label }}</span>
     @endif
 </label>

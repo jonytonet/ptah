@@ -36,13 +36,13 @@
     @if($label)
         <div class="flex items-center justify-between mb-1">
             @isset($labelText)
-                <span class="text-xs font-medium text-gray-700">{{ $labelText }}</span>
+                <span class="text-xs font-medium ptah-c-progress_label">{{ $labelText }}</span>
             @endisset
-            <span class="text-xs font-medium text-gray-500 ml-auto">{{ $value }}%</span>
+            <span class="text-xs font-medium ptah-c-progress_value ml-auto">{{ $value }}%</span>
         </div>
     @endif
 
-    <div class="w-full bg-gray-200 rounded-full {{ $sizeClass }} overflow-hidden">
+    <div class="w-full ptah-c-progress_track rounded-full {{ $sizeClass }} overflow-hidden">
         <div
             class="{{ $colorClass }} {{ $sizeClass }} rounded-full transition-all duration-500 {{ $animatedClass }}"
             style="width: {{ $value }}%"

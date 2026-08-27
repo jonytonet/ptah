@@ -73,7 +73,7 @@
 
 <div class="ptah-select-wrapper w-full">
     @if ($label)
-        <label class="block text-xs font-medium text-gray-600 mb-1">
+        <label class="block text-xs font-medium mb-1">
             {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif
         </label>
     @endif
@@ -224,7 +224,7 @@
             :aria-expanded="open"
             aria-controls="{{ $uniqueId }}-list"
             :class="open ? '{{ $borderOpen }} {{ $ringOpen }}' : '{{ $borderNormal }}'"
-            class="ptah-select-trigger relative flex w-full items-center justify-between rounded-md border bg-white px-3 py-2.5 text-left cursor-pointer select-none transition-colors duration-150 focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            class="ptah-select-trigger relative flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left cursor-pointer select-none transition-colors duration-150 focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
         >
             <span
                 :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'ptah-c-sel_val' : 'text-gray-400'"
@@ -250,7 +250,7 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md overflow-hidden"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full border border-gray-200 rounded-md overflow-hidden"
         >
             <div class="p-1.5 border-b ptah-c-dd_sep">
                 <input
@@ -301,7 +301,7 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md overflow-auto max-h-48"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full border border-gray-200 rounded-md overflow-auto max-h-48"
         >
             <ul class="py-1" role="listbox" id="{{ $uniqueId }}-list" :aria-multiselectable="multiple">
                 <template x-for="(option, idx) in options" :key="option.value">

@@ -12,7 +12,7 @@
     'color'    => 'primary',
 ])
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-md border border-gray-200 overflow-hidden']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-c-chart_surface rounded-md border border-gray-200 overflow-hidden']) }}>
     @if($title || isset($header))
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             @isset($header)
@@ -23,7 +23,7 @@
                         <h3 class="text-base font-semibold text-dark">{{ $title }}</h3>
                     @endif
                     @if($subtitle)
-                        <p class="text-sm text-gray-500 mt-0.5">{{ $subtitle }}</p>
+                        <p class="text-sm ptah-c-chart_subtitle mt-0.5">{{ $subtitle }}</p>
                     @endif
                 </div>
             @endisset
@@ -36,7 +36,7 @@
     <div class="p-5">{{ $slot }}</div>
 
     @isset($footer)
-        <div class="px-5 py-3 border-t border-gray-100 bg-gray-50">
+        <div class="px-5 py-3 border-t border-gray-100 ptah-c-chart_footer">
             {{ $footer }}
         </div>
     @endisset

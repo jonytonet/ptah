@@ -25,7 +25,7 @@
                     <p class="text-sm font-medium text-dark truncate">{{ $item['name'] }}</p>
                 @endif
                 @if(isset($item['description']))
-                    <p class="text-xs text-gray-500 truncate">{{ $item['description'] }}</p>
+                    <p class="text-xs ptah-c-list_desc truncate">{{ $item['description'] }}</p>
                 @endif
             </div>
 

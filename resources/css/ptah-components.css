@@ -846,6 +846,46 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-badge-light               { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-badge-light    { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
 
+/* ── forge-switch: zero dark: before this. Active/checked track already rides
+   bg-primary/success/danger/warn (theme-aware); only the "off" track, the
+   knob and the label were fixed-palette. ── */
+.ptah-c-switch_track_off             { background-color: var(--ptah-line-control); }
+.ptah-dark .ptah-c-switch_track_off  { background-color: var(--ptah-line-control); }
+
+.ptah-c-switch_thumb                 { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-switch_thumb      { background-color: var(--ptah-surface); }
+
+/* Shared inline label for switch/checkbox/radio — same "text-sm text-gray-700
+   select-none" pattern in all three, zero dark: before this. */
+.ptah-c-ctrl_label                   { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ctrl_label        { color: var(--ptah-text); }
+
+/* ── forge-progress: zero dark: before this. The fill bar already rides
+   bg-primary/success/danger/warn/dark (theme-aware). ── */
+.ptah-c-progress_track               { background-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-progress_track    { background-color: var(--ptah-line-strong); }
+
+.ptah-c-progress_label               { color: var(--ptah-text); }
+.ptah-dark .ptah-c-progress_label    { color: var(--ptah-text); }
+
+.ptah-c-progress_value               { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-progress_value    { color: var(--ptah-text-faint); }
+
+/* ── forge-chart-card: zero dark: before this. ── */
+.ptah-c-chart_surface                { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-chart_surface     { background-color: var(--ptah-surface); }
+
+.ptah-c-chart_subtitle               { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chart_subtitle    { color: var(--ptah-text-faint); }
+
+.ptah-c-chart_footer                 { background-color: var(--ptah-panel); }
+.ptah-dark .ptah-c-chart_footer      { background-color: var(--ptah-panel); }
+
+/* ── forge-list: zero dark: before this. Empty-state text-gray-400 is
+   deferred (faint-glyph tier, see KnownLimitations section 6). ── */
+.ptah-c-list_desc                    { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-list_desc         { color: var(--ptah-text-faint); }
+
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
 .ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }
@@ -1737,8 +1777,10 @@ mark.ptah-hl                      { background-color: #fef08a; color: inherit; b
 .ptah-dark .ptah-c-muted_link:hover { color: var(--ptah-primary-lite); }
 .ptah-dark .ptah-c-phdr_sub  { color: var(--ptah-text-muted); }
 
-.ptah-c-phdr_back            { color: var(--ptah-text-secondary); }
-.ptah-dark .ptah-c-phdr_back { color: var(--ptah-text-secondary); }
+.ptah-c-phdr_back             { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
+.ptah-c-phdr_back:hover       { background-color: var(--ptah-control-ghost-hover); }
+.ptah-dark .ptah-c-phdr_back  { color: var(--ptah-text-secondary); background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-phdr_back:hover { background-color: var(--ptah-control-ghost-hover); }
 
 /* ── Print-friendly view ─────────────────────────────────────── */
 /* Triggered by the Print option in the export menu (window.print()). */
