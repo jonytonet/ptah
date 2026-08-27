@@ -2391,6 +2391,20 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-ai_checkbox_label            { color: var(--ptah-text); }
 .ptah-dark .ptah-c-ai_checkbox_label { color: var(--ptah-text); }
 
+/* ── _cards.blade.php — closing the gap batch 1 (card surface only) left
+   between its own narrow scope and the plan's own conversion table, which
+   already names these exact sites/tokens. The dt uppercase caption + the
+   duplicate-icon/empty-state glyphs (text-slate-400, cited in the same
+   table under "Glifo/ícone tier 400") stay deferred. ── */
+.ptah-c-card_ttl             { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-card_ttl  { color: var(--ptah-text-strong); }
+
+.ptah-c-card_id              { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-card_id   { color: var(--ptah-text-muted); }
+
+.ptah-c-card_val             { color: var(--ptah-text); }
+.ptah-dark .ptah-c-card_val  { color: var(--ptah-text); }
+
 .ptah-module-table { border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-module-table { border-color: var(--ptah-line-strong); }
 
