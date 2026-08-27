@@ -37,6 +37,13 @@ trait HasCrudExport
             return;
         }
 
+        // Read gate (see HasCrudForm::authorizeCrudAction / BaseCrud::render()):
+        // export reads the exact same rows the listing shows — gating render()
+        // alone would still let this action hand out every row while read=false.
+        if (! $this->authorizeCrudAction('read')) {
+            return;
+        }
+
         $modelInstance = $this->resolveEloquentModel();
 
         if (! $modelInstance) {
@@ -72,6 +79,11 @@ trait HasCrudExport
     public function bulkExport(string $format = 'excel'): void
     {
         if (empty($this->selectedRows)) {
+            return;
+        }
+
+        // Read gate — see export() above.
+        if (! $this->authorizeCrudAction('read')) {
             return;
         }
 
@@ -138,6 +150,11 @@ trait HasCrudExport
         $exportConfig = $this->crudConfig['exportConfig'] ?? [];
 
         if (empty($exportConfig['enabled']) || empty($exportConfig['asyncExport']['enabled'])) {
+            return;
+        }
+
+        // Read gate — see export() above.
+        if (! $this->authorizeCrudAction('read')) {
             return;
         }
 
@@ -251,6 +268,11 @@ trait HasCrudExport
 
         // Same gate as export — the print button lives in the export menu.
         if (empty($exportConfig['enabled'])) {
+            return;
+        }
+
+        // Read gate — see export() above.
+        if (! $this->authorizeCrudAction('read')) {
             return;
         }
 
