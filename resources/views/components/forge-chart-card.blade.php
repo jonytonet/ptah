@@ -20,7 +20,7 @@
             @else
                 <div>
                     @if($title)
-                        <h3 class="text-base font-semibold text-dark">{{ $title }}</h3>
+                        <h3 class="text-base font-semibold ptah-c-chart_ttl">{{ $title }}</h3>
                     @endif
                     @if($subtitle)
                         <p class="text-sm ptah-c-chart_subtitle mt-0.5">{{ $subtitle }}</p>

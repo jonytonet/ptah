@@ -788,11 +788,21 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* ── forge-stepper: zero dark: variant before this — the idle/neutral states
    (active/completed already ride bg-primary/bg-success, both theme-aware)
    are the only ones that needed a token pair. ── */
-.ptah-c-step_circle_idle             { background-color: var(--ptah-line-strong); color: var(--ptah-text-faint); }
-.ptah-dark .ptah-c-step_circle_idle  { background-color: var(--ptah-line-strong); color: var(--ptah-text-faint); }
+/* Revisao adversarial (grupo 2d): --ptah-text-faint sobre --ptah-line-strong
+   cai a 3.68:1 em papel/suave (piso de texto 4.5:1 — o numero do passo e
+   texto 14px semibold, nao um icone). --ptah-text resolve 4.84:1 no pior
+   caso (mesma combinacao). O fundo do circulo (line-strong) e um chip, nao
+   um divisor informativo — fica como esta (fora do grupo 2c). */
+.ptah-c-step_circle_idle             { background-color: var(--ptah-line-strong); color: var(--ptah-text); }
+.ptah-dark .ptah-c-step_circle_idle  { background-color: var(--ptah-line-strong); color: var(--ptah-text); }
 
-.ptah-c-step_line                    { background-color: var(--ptah-line-strong); }
-.ptah-dark .ptah-c-step_line         { background-color: var(--ptah-line-strong); }
+/* Revisao adversarial (grupo 2c): a linha conectora carrega informacao
+   (progresso completado/pendente), nao e um separador decorativo — precisa
+   do piso de 3:1 de componente de UI. --ptah-line-strong caiu para ~1.4:1
+   no escuro (mesmo tom do --ptah-surface ao redor); --ptah-line-field da
+   ~3:1 nos 6 tons. */
+.ptah-c-step_line                    { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-step_line         { background-color: var(--ptah-line-field); }
 
 .ptah-c-step_label_done              { color: var(--ptah-text); }
 .ptah-dark .ptah-c-step_label_done   { color: var(--ptah-text); }
@@ -833,8 +843,10 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-avatar_light                    { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-c-avatar_light         { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 
-.ptah-c-avatar_badge_light              { background-color: var(--ptah-line-strong); }
-.ptah-dark .ptah-c-avatar_badge_light   { background-color: var(--ptah-line-strong); }
+/* Revisao adversarial (grupo 2c): o badge "light" e um indicador de status,
+   nao decoracao — mesmo piso de 3:1 do step_line acima. */
+.ptah-c-avatar_badge_light              { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-avatar_badge_light   { background-color: var(--ptah-line-field); }
 
 .ptah-c-avatar_badge_offline            { background-color: var(--ptah-icon-muted); }
 .ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-icon-muted); }
@@ -849,11 +861,19 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* ── forge-switch: zero dark: before this. Active/checked track already rides
    bg-primary/success/danger/warn (theme-aware); only the "off" track, the
    knob and the label were fixed-palette. ── */
-.ptah-c-switch_track_off             { background-color: var(--ptah-line-control); }
-.ptah-dark .ptah-c-switch_track_off  { background-color: var(--ptah-line-control); }
+/* Revisao adversarial (grupo 2b): --ptah-line-field e calibrado a 3:1 contra
+   --ptah-surface nos 6 tons (piso de componente de UI) — o token anterior
+   nao tinha essa garantia. O knob (thumb) claro continua --ptah-surface
+   (branco/quase-branco, >=3:1 contra o trilho nos 3 tons claros); no escuro
+   --ptah-surface ficava MAIS ESCURO que o proprio trilho (thumb-vs-trilho
+   <1:1 de diferenca real). --ptah-text-on-accent (#ffffff invariante) da
+   4.85-5.62:1 contra --ptah-line-field nos 3 tons escuros — conhecido, nao
+   precisa de nova prova por tom×escala de texto (nao e um token de texto). */
+.ptah-c-switch_track_off             { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-switch_track_off  { background-color: var(--ptah-line-field); }
 
 .ptah-c-switch_thumb                 { background-color: var(--ptah-surface); }
-.ptah-dark .ptah-c-switch_thumb      { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-c-switch_thumb      { background-color: var(--ptah-text-on-accent); }
 
 /* Shared inline label for switch/checkbox/radio — same "text-sm text-gray-700
    select-none" pattern in all three, zero dark: before this. */
@@ -862,8 +882,10 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 
 /* ── forge-progress: zero dark: before this. The fill bar already rides
    bg-primary/success/danger/warn/dark (theme-aware). ── */
-.ptah-c-progress_track               { background-color: var(--ptah-line-strong); }
-.ptah-dark .ptah-c-progress_track    { background-color: var(--ptah-line-strong); }
+/* Revisao adversarial (grupo 2c): o trilho da progress bar carrega
+   informacao (parte "faltando" do progresso) — mesmo piso de 3:1 acima. */
+.ptah-c-progress_track               { background-color: var(--ptah-line-field); }
+.ptah-dark .ptah-c-progress_track    { background-color: var(--ptah-line-field); }
 
 .ptah-c-progress_label               { color: var(--ptah-text); }
 .ptah-dark .ptah-c-progress_label    { color: var(--ptah-text); }
@@ -874,6 +896,12 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* ── forge-chart-card: zero dark: before this. ── */
 .ptah-c-chart_surface                { background-color: var(--ptah-surface); }
 .ptah-dark .ptah-c-chart_surface     { background-color: var(--ptah-surface); }
+
+/* Revisao adversarial (grupo 2a): text-dark (--color-dark, #1e293b invariant)
+   sobre .ptah-c-chart_surface no escuro = 1.00:1 (grafite: #1e293b sobre
+   #1e293b, o mesmo tom). --ptah-text-strong resolve por tom/escala de texto. */
+.ptah-c-chart_ttl                    { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-chart_ttl         { color: var(--ptah-text-strong); }
 
 .ptah-c-chart_subtitle               { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-chart_subtitle    { color: var(--ptah-text-faint); }
