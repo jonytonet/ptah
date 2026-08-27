@@ -129,6 +129,36 @@
         ".ptah-badge-light|dark|color": "#e2e8f0"
     },
     "changed": {
+        ".ptah-btn-light|dark|background-color": {
+            "from": "#334155 !important",
+            "to": "#334155",
+            "reason": "Revisao adversarial (grupo 1a): mesmo valor de cor computado, so o !important sai — a sucessora .ptah-dark .ptah-btn-light (var(--ptah-control-ghost)) em ptah-components.css nao precisa de !important porque a regra do layout que a anulava foi apagada."
+        },
+        ".ptah-btn-light|dark|color": {
+            "from": "#e2e8f0 !important",
+            "to": "#cbd5e1",
+            "reason": "Acompanha a unificacao do batch 5: textSolid (dark:text-slate-200, #e2e8f0) e text (dark:text-slate-300, #cbd5e1) viraram um so token, --ptah-text, na sucessora .ptah-dark .ptah-btn-light — Delta ja documentado no commit do batch 5, so agora visivel porque o !important do layout parou de mascarar."
+        },
+        ".ptah-btn-light:hover|dark|background-color": {
+            "from": "#475569 !important",
+            "to": "#475569",
+            "reason": "Mesmo caso de .ptah-btn-light|dark|background-color acima — valor identico, so o !important sai."
+        },
+        ".ptah-btn-secondary|dark|background-color": {
+            "from": "#334155 !important",
+            "to": "#334155",
+            "reason": "Mesmo caso de .ptah-btn-light|dark|background-color (regra combinada, mesmo seletor duplo)."
+        },
+        ".ptah-btn-secondary|dark|color": {
+            "from": "#e2e8f0 !important",
+            "to": "#cbd5e1",
+            "reason": "Mesmo caso de .ptah-btn-light|dark|color acima (regra combinada, mesmo seletor duplo)."
+        },
+        ".ptah-btn-secondary:hover|dark|background-color": {
+            "from": "#475569 !important",
+            "to": "#475569",
+            "reason": "Mesmo caso de .ptah-btn-light:hover|dark|background-color acima (regra combinada, mesmo seletor duplo)."
+        },
         ".ptah-switcher-tab--active|dark|background-color": {
             "from": "#1e40af !important",
             "to": "var(--color-primary, #5b21b6) !important",
@@ -228,6 +258,16 @@
         ".ptah-module-toolbar input[type=\"search\"]|dark|color": "Seletor estreitado com :not(.ptah-input-wrapper input): a regra original (mais especifica que a do forge-input) clobberava a borda --ptah-line-field do campo embrulhado, deixando-a ~1.1:1. Os valores seguem byte-identicos na regra sucessora \".ptah-module-toolbar input[type=\\\"search\\\"]:not(.ptah-input-wrapper input)\" em ptah-components.css, coberta por ModuleScreenThemeParityTest.",
         ".ptah-pagination .text-gray-400|dark|color": "Batch 3 da migracao de tokens (forge-pagination.blade.php) removeu a ultima ocorrencia da classe .text-gray-400 do componente (linhas 53 e 92, agora .ptah-c-pag_gap/.ptah-c-pag_sum), entao o seletor nunca mais casa com nenhum elemento; grep em resources/views confirma zero ocorrencias restantes de text-gray-400 no arquivo.",
         ".ptah-pagination .text-gray-500|dark|color": "Batch 3 da migracao de tokens: o unico elemento que ainda carrega .text-gray-500 dentro de .ptah-pagination (indicador mobile 'pagina atual/total', _pagination nao migrado neste batch) tambem carrega dark:text-slate-400, que e byte-identico (#94a3b8) ao valor desta regra removida — zero mudanca visual, a regra so duplicava o que o utilitario Tailwind ja pinta no escuro.",
-        ".ptah-stat-card .text-gray-500|dark|color": "Batch 4 da migracao de tokens (forge-stat-card.blade.php): o titulo do card e o trend neutro trocaram text-gray-500 por .ptah-c-stat_muted (--ptah-text-faint, byte-identico #94a3b8 no escuro), entao nenhum elemento do componente carrega mais a classe .text-gray-500; grep em forge-stat-card.blade.php confirma zero ocorrencias restantes."
+        ".ptah-stat-card .text-gray-500|dark|color": "Batch 4 da migracao de tokens (forge-stat-card.blade.php): o titulo do card e o trend neutro trocaram text-gray-500 por .ptah-c-stat_muted (--ptah-text-faint, byte-identico #94a3b8 no escuro), entao nenhum elemento do componente carrega mais a classe .text-gray-500; grep em forge-stat-card.blade.php confirma zero ocorrencias restantes.",
+
+        ".ptah-btn-light|dark|box-shadow": "Revisao adversarial (grupo 1a): o !important desta regra vencia sempre a sucessora (0,2,0) em ptah-components.css, entao o forge-button color=light/secondary nunca ficava sem sombra no escuro como a regra pretendia — so agora, com a regra apagada. Nenhuma sucessora declara box-shadow: as variantes light/secondary passam a mostrar a mesma shadow-sm que primary/success/danger/warn/dark ja mostram no escuro (nunca tiveram essa excecao) — consistencia, nao regressao.",
+        ".ptah-btn-secondary|dark|box-shadow": "Mesmo caso de .ptah-btn-light|dark|box-shadow acima (regra combinada, mesmo seletor duplo).",
+        ".ptah-page-header a|dark|background-color": "Revisao adversarial (grupo 1c): especificidade (0,3,1) contra a sucessora .ptah-dark .ptah-c-phdr_back (0,2,0) em ptah-components.css, que ja declara background-color: var(--ptah-control-ghost) desde o batch 4 — a regra do layout sempre vencia e a migracao nunca renderizava. Valor preservado sob a chave nova: .ptah-c-phdr_back|dark|background-color = #334155, identico.",
+        ".ptah-page-header a|dark|color": "Mesmo caso acima. Valor preservado sob a chave nova: .ptah-c-phdr_back|dark|color = #cbd5e1, identico.",
+        ".ptah-page-header a:hover|dark|background-color": "Mesmo caso acima. Valor preservado sob a chave nova: .ptah-c-phdr_back:hover|dark|background-color = #475569, identico.",
+        ".ptah-pagination button:not(.bg-primary)|dark|color": "Revisao adversarial (grupo 1b): especificidade (0,3,1) contra as sucessoras .ptah-dark .ptah-c-pag_btn/_btn_off/_pag_icon (0,2,0) em ptah-components.css, que ja declaram var(--ptah-text)/var(--ptah-text-faint)/var(--ptah-icon-muted) desde o batch 3 — a regra do layout sempre vencia e a migracao nunca renderizava no escuro. A regra generica pintava TODO botao (habilitado ou nao) do mesmo #94a3b8; as sucessoras diferenciam: .ptah-c-pag_btn (habilitado) sobe para --ptah-text (#cbd5e1, mais legivel), .ptah-c-pag_btn_off (desabilitado) mantem --ptah-text-faint (#94a3b8, identico).",
+        ".ptah-pagination button:not(.bg-primary)|dark|border-color": "Mesmo caso acima. Valor na chave nova (.ptah-c-pag_btn/_btn_off|dark|border-color) e #334155 nesta commit (--ptah-line-strong, escolha do batch 3, agora finalmente visivel); corrigido para --ptah-line-field-hover no grupo 4e desta mesma rodada de revisao por outro motivo (contraste borda-vs-canvas), sem precisar de nova entrada aqui — .ptah-c-pag_btn nao faz parte do conjunto congelado de origem.",
+        ".ptah-pagination button:not(.bg-primary):hover|dark|background-color": "Mesmo caso acima. Valor preservado sob as chaves novas: .ptah-c-pag_btn:hover/_num:hover/_icon:hover|dark|background-color, todas var(--ptah-surface-hover).",
+        ".ptah-pagination button:not(.bg-primary):hover|dark|color": "Mesmo caso acima — a sucessora nao redeclara color no :hover (permanece herdado do elemento), entao esta declaracao some sem substituta direta; o valor herdado (var(--ptah-text)/var(--ptah-text-faint)/var(--ptah-icon-muted), conforme o elemento) e igual ou mais correto que o #e2e8f0 fixo que ela sobrescrevia."
     }
 }
