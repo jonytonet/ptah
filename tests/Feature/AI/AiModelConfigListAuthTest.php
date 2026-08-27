@@ -8,11 +8,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\AI\AiModelConfigList;
+use Ptah\Models\AiModelConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
 use Ptah\Models\Role;
 use Ptah\Models\RolePermission;
 use Ptah\Models\UserRole;
+use Ptah\Services\Permission\PermissionService;
 use Ptah\Tests\TestCase;
 
 /** Minimal Authenticatable backed by the shared `users` table (see tests/migrations). */
@@ -68,5 +70,46 @@ class AiModelConfigListAuthTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(AiModelConfigList::class)->assertStatus(200);
+    }
+
+    /**
+     * Renders the table with two rows exercising both branches of every
+     * status/default badge (active+default vs inactive+non-default) — a
+     * regression net for the module-screen-consistency pass that swapped
+     * several raw gray/slate text utilities on those badges for the
+     * ptah-c-ai_ token classes: a typo'd class name wouldn't break the
+     * Blade compile, but a broken if/else branch would.
+     */
+    #[Test]
+    public function it_renders_the_table_with_active_and_inactive_rows(): void
+    {
+        $stub = new class extends PermissionService
+        {
+            public function isMaster(mixed $user = null): bool
+            {
+                return true;
+            }
+        };
+        $this->app->instance(PermissionService::class, $stub);
+
+        AiModelConfig::create([
+            'name' => 'Prod OpenAI', 'provider' => 'openai', 'model' => 'gpt-4o-mini',
+            'api_key' => 'sk-secret', 'max_tokens' => 1024, 'temperature' => 0.7,
+            'is_active' => true, 'is_default' => true,
+        ]);
+        AiModelConfig::create([
+            'name' => 'Backup Groq', 'provider' => 'groq', 'model' => 'llama-3.1-70b',
+            'api_key' => 'sk-secret-2', 'max_tokens' => 1024, 'temperature' => 0.7,
+            'is_active' => false, 'is_default' => false,
+        ]);
+
+        Livewire::test(AiModelConfigList::class)
+            ->assertStatus(200)
+            ->assertSee('Prod OpenAI')
+            ->assertSee('Backup Groq')
+            ->assertSee(__('ptah::ui.ai_config_active'))
+            ->assertSee(__('ptah::ui.ai_config_inactive'))
+            ->assertSee(__('ptah::ui.ai_config_is_default'))
+            ->assertSee(__('ptah::ui.ai_config_set_default'));
     }
 }

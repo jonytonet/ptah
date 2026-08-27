@@ -2377,12 +2377,11 @@ main { background-color: var(--ptah-canvas); }
 .ptah-dark .ptah-c-prof_icon  { color: var(--ptah-text-muted); }
 
 /* ── menu-list "Novo Item de Menu" modal, campo Icone (adendo ao grupo 4,
-   reportado pelo autor testando em producao) — a unica parte do modal fora
-   do .ptah-c-form_lbl/x-forge-input ja tokenizados, porque usa <input>/
-   <span>/<code> crus em vez dos componentes forge-*. ── */
-.ptah-c-menu_icon_input             { background-color: var(--ptah-field); color: var(--ptah-text-field); }
-.ptah-dark .ptah-c-menu_icon_input  { background-color: var(--ptah-field); color: var(--ptah-text-field); }
-
+   reportado pelo autor testando em producao). O campo agora usa
+   <x-forge-input> como os vizinhos do modal (borda/foco no eixo de accent,
+   ja tokenizados no proprio componente) — .ptah-c-menu_icon_input, que
+   pintava so o fundo do <input> cru anterior, foi removida por ficar orfa.
+   O chip de preview/exemplos abaixo continua cru e usa .ptah-c-menu_icon_chip. ── */
 .ptah-c-menu_icon_chip              { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-menu_icon_chip   { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
 
