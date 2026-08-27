@@ -2376,6 +2376,19 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-prof_icon             { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-c-prof_icon  { color: var(--ptah-text-muted); }
 
+/* ── menu-list "Novo Item de Menu" modal, campo Icone (adendo ao grupo 4,
+   reportado pelo autor testando em producao) — a unica parte do modal fora
+   do .ptah-c-form_lbl/x-forge-input ja tokenizados, porque usa <input>/
+   <span>/<code> crus em vez dos componentes forge-*. ── */
+.ptah-c-menu_icon_input             { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-menu_icon_input  { background-color: var(--ptah-field); color: var(--ptah-text-field); }
+
+.ptah-c-menu_icon_chip              { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-menu_icon_chip   { background-color: var(--ptah-control-ghost); color: var(--ptah-text-secondary); }
+
+.ptah-c-menu_icon_hint              { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-menu_icon_hint   { color: var(--ptah-text-faint); }
+
 .ptah-c-prof_panel            { background-color: var(--ptah-panel); }
 .ptah-dark .ptah-c-prof_panel { background-color: var(--ptah-panel); }
 

@@ -148,7 +148,7 @@
 
                 {{-- Tipo --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_form_type') }} <span class="text-danger">*</span></label>
+                    <label class="block text-xs font-semibold ptah-c-form_lbl mb-1.5">{{ __('ptah::ui.menu_form_type') }} <span class="text-danger">*</span></label>
                     <div class="flex gap-3">
                         <x-forge-radio wire:model.live="type" value="menuLink" :label="__('ptah::ui.menu_form_direct_link')" />
                         <x-forge-radio wire:model.live="type" value="menuGroup" :label="__('ptah::ui.menu_form_group_type')" />
@@ -178,21 +178,21 @@
 
                 {{-- Ícone --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                    <label class="block text-xs font-semibold ptah-c-form_lbl mb-1.5">
                         {{ __('ptah::ui.menu_form_icon_label') }}
-                        <span class="font-normal text-slate-400 dark:text-slate-500">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
+                        <span class="font-normal ptah-c-menu_icon_hint">{{ __('ptah::ui.menu_form_icon_hint') }}</span>
                     </label>
                     <div class="flex gap-2 items-center">
                         <input wire:model.live="icon" type="text" placeholder="{{ __('ptah::ui.menu_form_icon_ph') }}"
-                            class="flex-1 px-3 py-2 text-sm rounded border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all font-mono"/>
-                        <span class="flex items-center justify-center w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl flex-shrink-0" title="Preview">
+                            class="flex-1 px-3 py-2 text-sm rounded border border-slate-200 dark:border-slate-600 ptah-c-menu_icon_input focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all font-mono"/>
+                        <span class="flex items-center justify-center w-9 h-9 rounded-md ptah-c-menu_icon_chip text-xl flex-shrink-0" title="{{ __('ptah::ui.menu_form_icon_preview') }}">
                             <i class="{{ $icon ?: 'bx bx-circle' }}"></i>
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        Exemplos: <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">bx bx-home</code>
-                        <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">fas fa-cog</code>
-                        <code class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-1 rounded">bx bxs-shopping-bag</code>
+                    <p class="text-xs ptah-c-menu_icon_hint mt-1">
+                        {{ __('ptah::ui.menu_form_icon_examples') }} <code class="ptah-c-menu_icon_chip px-1 rounded">bx bx-home</code>
+                        <code class="ptah-c-menu_icon_chip px-1 rounded">fas fa-cog</code>
+                        <code class="ptah-c-menu_icon_chip px-1 rounded">bx bxs-shopping-bag</code>
                     </p>
                     @error('icon') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -230,7 +230,7 @@
                         ]"
                     />
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">{{ __('ptah::ui.menu_col_status') }}</label>
+                        <label class="block text-xs font-semibold ptah-c-form_lbl mb-1.5">{{ __('ptah::ui.menu_col_status') }}</label>
                         <div class="mt-2">
                             <x-forge-checkbox
                                 wire:model="is_active"
@@ -258,7 +258,7 @@
     {{-- ===== Modal confirmação de exclusão ===== --}}
     <div x-data="{ open: @entangle('showDeleteModal') }">
         <x-forge-modal :title="__('ptah::ui.menu_delete_title')" size="sm">
-            <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('ptah::ui.menu_delete_text') }}</p>
+            <p class="text-sm ptah-c-mod_subttl">{{ __('ptah::ui.menu_delete_text') }}</p>
             <x-slot name="footer">
                 <x-forge-button @click="open = false" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
                 <x-forge-button wire:click="delete" color="danger">{{ __('ptah::ui.menu_delete_confirm') }}</x-forge-button>
