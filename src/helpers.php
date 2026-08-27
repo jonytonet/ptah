@@ -134,8 +134,9 @@ if (! function_exists('ptah_companies')) {
 if (! function_exists('ptah_has_role')) {
     /**
      * Checks whether the user holds (at least one of) the given role name(s).
-     * Tolerant match: case-insensitive/trimmed, or equal once both sides go
-     * through `Str::slug()` (so "Vendas Externas" matches "vendas-externas").
+     * Tolerant match: case-insensitive and trimmed — nothing looser. Separators
+     * are NOT an equivalence class: "Vendas Externas" does NOT match
+     * "vendas-externas" (see `PermissionService::roleNamesMatch()`).
      *
      * This is IDENTITY, not a GATE — for authorization use ptah_can(). A
      * MASTER user does NOT automatically "have" every role name here; they

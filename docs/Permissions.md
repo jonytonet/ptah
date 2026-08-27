@@ -673,11 +673,15 @@ $service->hasRole($user, 'Vendas Externas'); // true
 $service->hasRole($user, ['RH', 'Vendas Externas']); // true — array is an OR
 ```
 
-Match is tolerant: case-insensitive/trimmed, OR equal once both sides go
-through `Str::slug()` — so `'Vendas Externas'`, `'VENDAS EXTERNAS'` and
-`'vendas-externas'` all match each other. Only an active `UserRole` (in the
-given/resolved company scope) bound to an active `Role` counts — the same
-activity rule the permission maps apply.
+Match is tolerant: case-insensitive and trimmed — and nothing looser.
+Separators are **not** an equivalence class: `'Vendas Externas'` and
+`'VENDAS EXTERNAS'` match each other, but `'vendas-externas'` does **not**
+match either of them (an earlier version matched via `Str::slug()`, which
+collapsed separators into an equivalence class and could make two distinct
+role names collide — since `hasRole()` is identity that host apps branch on,
+that was fixed). Only an active `UserRole` (in the given/resolved company
+scope) bound to an active `Role` counts — the same activity rule the
+permission maps apply.
 
 > ⚠️ **MASTER does not satisfy `hasRole()` for an unrelated role name.**
 > Unlike `check()`, there is deliberately **no MASTER short-circuit** here —

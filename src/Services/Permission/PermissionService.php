@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
 use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Models\PageObject;
 use Ptah\Models\PermissionAudit;
@@ -319,9 +318,10 @@ class PermissionService implements PermissionServiceContract
 
     /**
      * Checks whether the user holds (at least one of) the given role name(s)
-     * — a tolerant string match (case-insensitive, trimmed, and also compared
-     * via `Str::slug()` on both sides so "Vendas Externas" matches
-     * "vendas-externas"). `$roles` as an array is an OR.
+     * — a tolerant string match (case-insensitive and trimmed, nothing looser:
+     * see `roleNamesMatch()` for why separators are NOT collapsed into an
+     * equivalence class — "Vendas Externas" does NOT match "vendas-externas").
+     * `$roles` as an array is an OR.
      *
      * This is IDENTITY, not a GATE: unlike `check()`, MASTER does **not**
      * short-circuit here — a master user does not "have" every role name,
