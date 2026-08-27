@@ -768,16 +768,21 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-c-pag_icon { color: var(--ptah-icon-muted); }
 
 /* ── forge-pagination: prev/next text button, numbered button, gap, summary ── */
-.ptah-c-pag_btn                 { color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+/* Revisao adversarial (grupo 3d): o utilitario original era text-gray-600
+   (#4b5563) — --ptah-text-secondary (#475569 claro) fica muito mais perto
+   disso que --ptah-text (#374151), e no escuro e byte-identico a
+   dark:text-slate-300 (#cbd5e1) em vez de aproximado. */
+.ptah-c-pag_btn                 { color: var(--ptah-text-secondary); border-color: var(--ptah-line-strong); }
 .ptah-c-pag_btn:hover           { background-color: var(--ptah-surface-hover); }
-.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-pag_btn      { color: var(--ptah-text-secondary); border-color: var(--ptah-line-strong); }
 
 .ptah-c-pag_btn_off             { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-c-pag_btn_off  { color: var(--ptah-text-faint); border-color: var(--ptah-line-strong); }
 
-.ptah-c-pag_num                 { color: var(--ptah-text); }
+/* Mesmo caso de .ptah-c-pag_btn acima (grupo 3d). */
+.ptah-c-pag_num                 { color: var(--ptah-text-secondary); }
 .ptah-c-pag_num:hover           { background-color: var(--ptah-surface-hover); }
-.ptah-dark .ptah-c-pag_num      { color: var(--ptah-text); }
+.ptah-dark .ptah-c-pag_num      { color: var(--ptah-text-secondary); }
 
 .ptah-c-pag_gap                 { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-pag_gap      { color: var(--ptah-text-faint); }
@@ -848,14 +853,24 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-avatar_badge_light              { background-color: var(--ptah-line-field); }
 .ptah-dark .ptah-c-avatar_badge_light   { background-color: var(--ptah-line-field); }
 
-.ptah-c-avatar_badge_offline            { background-color: var(--ptah-icon-muted); }
-.ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-icon-muted); }
+/* Revisao adversarial (grupo 3b): --ptah-icon-muted (#64748b invariante) e
+   MAIS ESCURO que os originais (#9ca3af/#94a3b8) e caiu para ~2.2:1 contra
+   o fundo do chip no escuro — reduziu a visibilidade do indicador de status
+   em vez de so trocar a familia de cor. --ptah-text-muted resolve por
+   tom, >=4.72:1 contra --ptah-control-ghost em todos os 6 tons x 3 escalas. */
+.ptah-c-avatar_badge_offline            { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-text-muted); }
 
 /* ── forge-badge "light" color variant — background/text move in from
    forge-dashboard-layout.blade.php's <style> (dark-only, #475569/#e2e8f0,
    byte-identical to --ptah-control-ghost-hover/--ptah-text-strong dark — see
    css-layout-ledger.json "migrated"); light-mode pair is new. ── */
-.ptah-badge-light               { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
+/* Revisao adversarial (grupo 3a): bg-gray-100 (o utilitario original no
+   claro) mapeia para --ptah-control-ghost, nao --ptah-control-ghost-hover —
+   compare com .ptah-c-avatar_light acima, que fez esse mapeamento certo. O
+   lado escuro fica: era literalmente #475569 no <style> do layout
+   (verificado no ledger), byte-identico a --ptah-control-ghost-hover dark. */
+.ptah-badge-light               { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-badge-light    { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
 
 /* ── forge-switch: zero dark: before this. Active/checked track already rides
@@ -1576,9 +1591,15 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-btn-secondary:hover {
     background-color: var(--ptah-control-ghost-hover);
 }
+/* Revisao adversarial (grupo 3c): --ptah-line-strong dark e byte-identico a
+   --ptah-control-ghost dark nos 3 tons escuros (mesmo valor por definicao —
+   ver preset), entao relief ficava indistinguivel do solido. Light nao tem
+   esse problema (--ptah-line-strong claro ja difere de --ptah-control-ghost
+   claro nos 3 tons), entao so o escuro muda, para --ptah-line-field-hover
+   (invariante, difere do solido em 2.18-2.63x nos 3 tons escuros). */
 .ptah-dark .ptah-btn-light.ptah-btn-relief,
 .ptah-dark .ptah-btn-secondary.ptah-btn-relief {
-    background-color: var(--ptah-line-strong);
+    background-color: var(--ptah-line-field-hover);
 }
 .ptah-dark .ptah-btn-light.ptah-btn-flat,
 .ptah-dark .ptah-btn-secondary.ptah-btn-flat {
@@ -2360,8 +2381,11 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_bubble                { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-c-chat_bubble     { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 
-.ptah-c-chat_dot                   { background-color: var(--ptah-icon-muted); }
-.ptah-dark .ptah-c-chat_dot        { background-color: var(--ptah-icon-muted); }
+/* Revisao adversarial (grupo 3b): mesmo caso de .ptah-c-avatar_badge_offline
+   — o dot vive dentro de .ptah-c-chat_bubble (--ptah-control-ghost), nao da
+   superficie; --ptah-text-muted da >=4.72:1 contra --ptah-control-ghost. */
+.ptah-c-chat_dot                   { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-chat_dot        { background-color: var(--ptah-text-muted); }
 
 .ptah-c-chat_input                 { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-chat_input      { background-color: var(--ptah-surface-hover); color: var(--ptah-text-field); }
@@ -2410,8 +2434,10 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-ai_icon_btn:hover              { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-ai_icon_btn:hover   { background-color: var(--ptah-surface-hover); }
 
-.ptah-c-ai_dot                  { background-color: var(--ptah-icon-muted); }
-.ptah-dark .ptah-c-ai_dot       { background-color: var(--ptah-icon-muted); }
+/* Revisao adversarial (grupo 3b): mesmo caso acima — o dot vive dentro de
+   .ptah-c-ai_chip (--ptah-control-ghost), nao da superficie da tabela. */
+.ptah-c-ai_dot                  { background-color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-ai_dot       { background-color: var(--ptah-text-muted); }
 
 .ptah-c-ai_hint                 { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-ai_hint      { color: var(--ptah-text-faint); }
