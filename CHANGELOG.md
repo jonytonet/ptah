@@ -7,7 +7,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.27.0] - 2026-08-27
+
+The screen that teaches permissions stops teaching code that does not run, and
+the verb it teaches starts working. Plus two UI bugs reported from production,
+a leaner agent skill, and the first measurements this package has ever
+published about its own cost.
+
 
 ### Changed — `read` is now a real gate on BaseCrud, MASTER ratified as global
 
@@ -115,6 +121,76 @@ guide's view keeps its own copy and does not receive these corrections.
   contract, existing debt is frozen, not silently reduced to zero. See
   `docs/KnownLimitations.md` §6 for the corrected, wider-scope total (1010
   across 45 files, up from 818 — a scope widening, not a regression).
+
+### Fixed - two UI bugs reported from production
+
+- **The menu editor's icon field** was the only one of eight not using
+  `<x-forge-input>`, so it reimplemented border and focus by hand with fixed
+  blue - visibly wrong beside its siblings on a host whose accent is teal.
+- **The AI models screen's modal would not reopen** after being closed, with
+  nothing in the console. It kept two sources of truth for the open state
+  (`@if($showModal)` plus a literal Alpine `x-data="{ open: true }"`) and
+  Livewire's morph preserved the stale one - the modal existed in the DOM and
+  stayed invisible. Aligned to the `@entangle` pattern the other three module
+  screens already used, with a structural guard against the combination. That
+  screen also moved onto `forge-page-header`, `.ptah-module-toolbar` and
+  `.ptah-module-table` (fixed palette 9 to 2).
+
+### Changed - the agent skill lost a third of its weight
+
+The skill is loaded on **every** task in a host project, and performance
+guidance (caching, queues, indexes, N+1, chunking) was 34% of it while being
+needed in a minority of tasks. It moved to `references/performance.md`, read on
+demand. **12.2k to 8.2k tokens, nothing deleted.** A size ceiling in
+`SkillGuidanceTest` keeps it from re-absorbing the weight, and also asserts the
+pointer resolves - a broken pointer is worse than inline text.
+
+### Measured - two claims that were only ever adjectives
+
+**Token economy.** One entity with full CRUD + API, run for real and measured
+file by file: **~250 tokens with ptah against ~10,460 without**. The 14
+generated files are ~5,071 tokens; a hand-written CRUD screen averages ~5,391,
+measured across four of this package's own module screens, which *are*
+hand-written CRUDs. **~42x, and the skill's fixed cost pays for itself on the
+first entity.** Caveats so nobody over-claims: those module screens may be more
+complete than what an agent writes in a hurry, and exploration tokens are
+counted on neither side. Halve it and it is still ~20x.
+
+**Runtime cost.** sqlite in memory, 5,000 rows, 20 repetitions, warm-up
+discarded:
+
+| operation | queries | time |
+|---|---|---|
+| plain Eloquent `where+like+order+paginate` | 2 | 7.63 ms |
+| `BaseService::getData()` AND + order + paginate | **2** | 6.70 ms |
+| `getData()` searchLike | 1 | 12.05 ms |
+| `getData()` search (OR across `$fillable`) | 4 | 20.01 ms |
+| reading a screen's CrudConfig | 1 | 0.49 ms |
+
+**The abstraction charges no toll** - the main listing path emits the same
+queries as hand-written Eloquent, and being config-driven costs one query and
+half a millisecond per screen. These numbers now open
+`references/performance.md`, so an agent does not optimise the base layer on
+suspicion.
+
+### Known, not fixed (found while measuring, scheduled)
+
+- **`ptah:config --filter=` is inoperative**, and the docs say it works. Three
+  layers disagree: `FilterParser` emits `field`, `ConfigSchemaValidator`
+  requires `colsNomeFisico`, and the runtime reads `customFilters` while the
+  command writes `filters`. The literal examples in `Commands.md` and
+  `KnownLimitations.md` all fail. Same shape as the `--style=` debt closed in
+  1.24.0.
+- **`BaseRepository::advancedSearch()` re-introspects the schema on every
+  call** - `Schema::getColumnListing()` direct, ignoring the cached
+  `getTableColumns()` in the same file, which is why `getData(search)` shows 4
+  queries above instead of 2. A sibling method's comment claims a cache it does
+  not implement.
+
+**Suite:** 1881 passing (+36 since 1.26.0), 11358 assertions. PHPStan clean.
+No migrations.
+
+---
 
 ## [1.26.0] — 2026-08-26
 
@@ -3107,7 +3183,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.26.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.27.0...HEAD
+[1.27.0]: https://github.com/jonytonet/ptah/compare/v1.26.0...v1.27.0
 [1.26.0]: https://github.com/jonytonet/ptah/compare/v1.25.0...v1.26.0
 [1.25.0]: https://github.com/jonytonet/ptah/compare/v1.24.0...v1.25.0
 [1.24.0]: https://github.com/jonytonet/ptah/compare/v1.23.0...v1.24.0
