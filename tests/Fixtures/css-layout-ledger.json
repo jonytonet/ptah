@@ -124,7 +124,9 @@
         ".ptah-module-toolbar select|dark|color": "#e2e8f0",
         ".ptah-module-toolbar|dark|background-color": "#1e293b",
         ".ptah-module-toolbar|dark|border-color": "#334155",
-        ".ptah-stat-card|dark|background-color": "#1e293b"
+        ".ptah-stat-card|dark|background-color": "#1e293b",
+        ".ptah-badge-light|dark|background-color": "#475569",
+        ".ptah-badge-light|dark|color": "#e2e8f0"
     },
     "changed": {
         ".ptah-switcher-tab--active|dark|background-color": {

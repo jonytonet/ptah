@@ -839,6 +839,13 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-avatar_badge_offline            { background-color: var(--ptah-icon-muted); }
 .ptah-dark .ptah-c-avatar_badge_offline { background-color: var(--ptah-icon-muted); }
 
+/* ── forge-badge "light" color variant — background/text move in from
+   forge-dashboard-layout.blade.php's <style> (dark-only, #475569/#e2e8f0,
+   byte-identical to --ptah-control-ghost-hover/--ptah-text-strong dark — see
+   css-layout-ledger.json "migrated"); light-mode pair is new. ── */
+.ptah-badge-light               { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
+.ptah-dark .ptah-badge-light    { background-color: var(--ptah-control-ghost-hover); color: var(--ptah-text-strong); }
+
 /* ── Dropdowns (export, col visibility etc.) ── */
 /* Layered shadow + hairline ring lifts the menu off the page. */
 .ptah-c-dd                 { background-color: var(--ptah-surface-raised); border-color: var(--ptah-line); box-shadow: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04); }

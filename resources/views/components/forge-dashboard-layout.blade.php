@@ -179,7 +179,9 @@
         .ptah-dark .ptah-pagination button:not(.bg-primary):hover { background-color: #334155; color: #e2e8f0; }
 
         /* ─── Badge light ────────────────────────────────────── */
-        .ptah-dark .ptah-badge-light { background-color: #475569; color: #e2e8f0; }
+        /* Migrado para resources/css/ptah-components.css (secao "forge-badge"),
+           la ganhou o par claro que faltava aqui. Ver
+           tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
 
         /* ─── Alert ──────────────────────────────────────────── */
         .ptah-dark .ptah-alert-primary { background-color: rgba(91,33,182,.18); }

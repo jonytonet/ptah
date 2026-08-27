@@ -4,8 +4,6 @@
     ".ptah-alert-primary|dark|background-color": "rgba(91, 33, 182, 0.18)",
     ".ptah-alert-success|dark|background-color": "rgba(16, 185, 129, 0.15)",
     ".ptah-alert-warn|dark|background-color": "rgba(245, 158, 11, 0.15)",
-    ".ptah-badge-light|dark|background-color": "#475569",
-    ".ptah-badge-light|dark|color": "#e2e8f0",
     ".ptah-btn-light:hover|dark|background-color": "#475569 !important",
     ".ptah-btn-light|dark|background-color": "#334155 !important",
     ".ptah-btn-light|dark|box-shadow": "none !important",
