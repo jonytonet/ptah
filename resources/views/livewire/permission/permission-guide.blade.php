@@ -1,33 +1,22 @@
 {{-- ptah::livewire.permission.permission-guide --}}
 <div>
-    <div class="mb-5 flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800 ptah-page-title">{{ __('ptah::ui.guide_title') }}</h1>
-            <p class="text-sm text-slate-500 mt-0.5">{{ __('ptah::ui.guide_subtitle') }}</p>
-        </div>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full shrink-0">
-            {{ __('ptah::ui.guide_badge') }}
-        </span>
-    </div>
+    <x-forge-page-header :title="__('ptah::ui.guide_title')" :subtitle="__('ptah::ui.guide_subtitle')">
+        <span class="ptah-c-chip">{{ __('ptah::ui.guide_badge') }}</span>
+    </x-forge-page-header>
 
-    {{-- Navegação de abas --}}
-    <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 pb-0">
-        @foreach ([
-            ['key' => 'overview',  'label' => __('ptah::ui.guide_tab_overview')],
-            ['key' => 'setup',     'label' => __('ptah::ui.guide_tab_setup')],
-            ['key' => 'code',      'label' => __('ptah::ui.guide_tab_code')],
-            ['key' => 'faq',       'label' => __('ptah::ui.guide_tab_faq')],
-        ] as $tab)
-            <button
-                wire:click="$set('activeTab', '{{ $tab['key'] }}')"
-                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap
-                    {{ $activeTab === $tab['key']
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
-                {{ $tab['label'] }}
-            </button>
-        @endforeach
-    </div>
+    <x-forge-tabs>
+        <x-slot name="tabs">
+            @foreach ([
+                ['key' => 'overview',  'label' => __('ptah::ui.guide_tab_overview')],
+                ['key' => 'setup',     'label' => __('ptah::ui.guide_tab_setup')],
+                ['key' => 'code',      'label' => __('ptah::ui.guide_tab_code')],
+                ['key' => 'faq',       'label' => __('ptah::ui.guide_tab_faq')],
+            ] as $tab)
+                <x-forge-tab :key="$tab['key']" :active="$activeTab === $tab['key']" wire:click="$set('activeTab', '{{ $tab['key'] }}')">
+                    {{ $tab['label'] }}
+                </x-forge-tab>
+            @endforeach
+        </x-slot>
 
     {{-- ═══════════════════════════════════════════════════════════
          ABA 1 — VISÃO GERAL
@@ -700,5 +689,6 @@
     </div>
     @endif
 
+    </x-forge-tabs>
 </div>
 
