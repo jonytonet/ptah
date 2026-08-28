@@ -7,6 +7,91 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.28.0] - 2026-08-28
+
+Closes the two defects 1.27.0 shipped as *known, not fixed*. Both were found by
+**using** the package rather than reading it: setting out to measure what it
+costs to configure a screen, the command failed four times - three were my own
+syntax, the fourth was the package.
+
+### Fixed - `ptah:config --filter=` had never worked, and the docs said it had
+
+**Four** layers disagreed about what a custom filter looks like (1.27.0's
+changelog said three; the interactive wizard was the fourth, found while
+fixing):
+
+- `FilterParser` (`--filter=`) emitted `field` / `colsFilterType` /
+  `defaultOperator` - which the runtime does accept;
+- `FilterWizard` (interactive) emitted `colsFilterField` / `colsFilterLabel` /
+  `colsFilterOperator` - which the runtime reads as nothing, so **every filter
+  added interactively was inert too**, silently;
+- `ConfigSchemaValidator` required `colsNomeFisico`, a key neither writer
+  produced, so the command failed validation on **every single call**;
+- and `ConfigCommand` wrote all of it to `config['filters']`, a section no
+  runtime code reads - the runtime reads `customFilters` - so even a filter
+  that had somehow passed validation would never have been applied.
+
+`Ptah\Support\FilterRule` is now the single normaliser every writer funnels
+through, in the shape `StyleRule` took for the identical defect in 1.24.0. The
+canonical vocabulary is the **runtime's**, not the prettiest one: whatever
+`FilterService::processCustomFilters()` reads is what a filter has to look like.
+
+Two smaller things went with it:
+
+- the empty `'filters' => []` seeded into every new config is gone - the same
+  trap `'styles' => []` was, a key existing only to be migrated later, inviting
+  whoever opens the JSON to write rules that never apply;
+- the legacy section is no longer validated. Its rules required
+  `colsNomeFisico` while the command that wrote the section produced `field`,
+  so validation only ever reported "malformed" against configs the package
+  itself had created, on top of the doctor error that already says to migrate.
+
+`ptah:config:doctor` gains **check 8b**: `filters` to `customFilters`,
+normalised, under `--fix`.
+
+### Fixed - `advancedSearch()` re-introspected the schema on every call
+
+`getData(search)` emitted 4 queries where plain Eloquent emits 2. The two
+extras were schema introspection, repeated per call because `advancedSearch()`
+called `Schema::getColumnListing()` directly while a cached `getTableColumns()`
+sat in the same class. The relation-search path did the same - under a comment
+that **claimed** a per-table cache it did not implement.
+
+Both now go through `columnsForTable()`, static so a relation search caches the
+*related* table too. Measured after the fix: call 1 pays 4 queries (the
+introspection, once per process), calls 2 and 3 pay **2** - the same as
+hand-written Eloquent. On MySQL those two hit `information_schema`, slow on a
+database with many tables.
+
+### Added - two guards, both of a kind a green suite cannot produce
+
+- **`ConfigFilterCliTest`** asserts the entire chain rather than a JSON blob:
+  the command writes, the section is the one the runtime reads, the legacy
+  section is absent, and `FilterService` produces a filter DTO from what was
+  stored. It executes the **literal examples** from `Commands.md` and
+  `KnownLimitations.md` - a doc example that merely looks right is exactly how
+  this went unnoticed for releases.
+- **`BaseRepositorySchemaCacheTest`** is a *source* guard, not a runtime one:
+  wasted queries succeed, so no assertion about behaviour can see them. It
+  fails if `Schema::getColumnListing()` is called anywhere but inside the
+  cache. Verified by reintroducing the direct call.
+
+### Upgrade note
+
+**If a screen has a `filters` section, those filters were never applied.**
+Running `ptah:config:doctor --fix` moves them to `customFilters` and they
+**start filtering** - a listing that shows everything today may show less
+tomorrow. Read the doctor's output before running it against production.
+
+The docs that claimed the flag worked are corrected, and `KnownLimitations.md`
+now states plainly that `--filter` only began working in this release.
+
+**Suite:** 1889 passing (+8 since 1.27.0), 11378 assertions. PHPStan clean -
+it caught a redundant `is_array()` the parameter's own type already guaranteed,
+removed rather than suppressed. No migrations.
+
+---
+
 ## [1.27.0] - 2026-08-27
 
 The screen that teaches permissions stops teaching code that does not run, and
@@ -3183,7 +3268,8 @@ serve). Two real bugs surfaced and were fixed:
 
 ---
 
-[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.27.0...HEAD
+[Unreleased]: https://github.com/jonytonet/ptah/compare/v1.28.0...HEAD
+[1.28.0]: https://github.com/jonytonet/ptah/compare/v1.27.0...v1.28.0
 [1.27.0]: https://github.com/jonytonet/ptah/compare/v1.26.0...v1.27.0
 [1.26.0]: https://github.com/jonytonet/ptah/compare/v1.25.0...v1.26.0
 [1.25.0]: https://github.com/jonytonet/ptah/compare/v1.24.0...v1.25.0
