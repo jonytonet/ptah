@@ -14,6 +14,7 @@ use Ptah\Models\Role;
 use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
+use Ptah\Support\FilterRule;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
@@ -370,6 +371,32 @@ class ConfigDoctorCommand extends Command
 
             if ($sdConfigChanged) {
                 $row->update(['config' => $config]);
+            }
+
+            // 8b. Legacy `filters` section — written by ptah:config before
+            //     1.28.0, read by NO runtime code (the runtime reads
+            //     `customFilters` via FilterService::processCustomFilters), so
+            //     every filter stored there is inert. --fix normalises each
+            //     entry through FilterRule and folds the usable ones into
+            //     `customFilters`, then drops the legacy key. Same shape as the
+            //     `styles` -> `contitionStyles` migration above.
+            $legacyFilters = $config[FilterRule::LEGACY_SECTION] ?? [];
+            if (! empty($legacyFilters) && is_array($legacyFilters)) {
+                if ($this->option('fix')) {
+                    $migrated = array_values(array_filter(array_map(
+                        static fn ($filter): ?array => is_array($filter) ? FilterRule::normalize($filter) : null,
+                        $legacyFilters
+                    )));
+
+                    $config[FilterRule::SECTION] = array_merge($config[FilterRule::SECTION] ?? [], $migrated);
+                    unset($config[FilterRule::LEGACY_SECTION]);
+                    $row->update(['config' => $config]);
+                    $this->line("🔧 <fg=green>fixed</> legacy filters key [{$label}]: 'filters' → 'customFilters' (".count($migrated).' filter(s) migrated)');
+                    $fixed++;
+                } else {
+                    $this->line("🔴 <fg=red>legacy filters key</> [{$label}]: chave 'filters' gravada (legado); o runtime lê 'customFilters' — estes filtros NÃO são aplicados. Rode --fix");
+                    $errors++;
+                }
             }
 
             // 9. Notification delivery. Rules configured here are inert unless

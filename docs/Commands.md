@@ -449,7 +449,7 @@ php artisan ptah:config "App\Models\Product" \
 - ``{model}`` — Full model class name (e.g., ``App\Models\Product``)
 - ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
 - ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
-- ``--filter=*`` — Add custom filter: ``field:type:label=Label:operator==:options=value``  (no positional operator — everything after ``field:type`` is ``key=value``)
+- ``--filter=*`` — Add custom filter: ``field:type:label=Label:operator==:options=value``  (no positional operator — everything after ``field:type`` is ``key=value``). Persisted under ``customFilters``, the section ``FilterService::processCustomFilters()`` reads; every writer is normalised through ``Ptah\Support\FilterRule``. Configs still carrying the pre-1.28.0 ``filters`` section are inert until ``ptah:config:doctor --fix`` migrates them.
 - ``--style=*`` — Add style rule: ``field:condition:value:style`` (``condition`` is ``==``/``!=``/``>``/``<``/``>=``/``<=`` or the aliases ``eq``/``ne``/``lt``/``gt``/``lte``/``gte``/``=``; ``style`` is an inline CSS declaration list, e.g. ``background:#FEE2E2;color:#991B1B;``). **If the VALUE contains a ``:``**, use the long form ``field:condition:value:style=<css>`` — the ``style=`` marker ends the value explicitly, e.g. ``start_at:==:12:30:style=background:#eee;``. Without it the value is cut at its first colon and the remainder leaks into the CSS, silently.
 - ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
 - ``--set=*`` — Set general config: ``key=value``

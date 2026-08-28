@@ -21,6 +21,7 @@ use Ptah\Commands\Config\Wizards\StyleWizard;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Services\Validation\Formatters\CliErrorFormatter;
+use Ptah\Support\FilterRule;
 use Ptah\Support\ModelKey;
 
 class ConfigCommand extends Command
@@ -194,7 +195,11 @@ class ConfigCommand extends Command
             $this->info('Processing filters...');
             foreach ($this->option('filter') as $filterConfig) {
                 $parsed = $this->parseFilterOption($filterConfig);
-                $this->config['filters'][] = $parsed;
+                // FilterRule::SECTION, not 'filters': the runtime reads
+                // `customFilters` (FilterService::processCustomFilters via
+                // HasCrudQuery) and never looks at `filters`, so every filter
+                // this command ever wrote was inert. See FilterRule.
+                $this->config[FilterRule::SECTION][] = $parsed;
             }
         }
 
@@ -288,8 +293,20 @@ class ConfigCommand extends Command
                 $filter = $filterWizard->run();
 
                 if ($filter) {
-                    $this->config['filters'][] = $filter;
-                    $this->info("✓ Filter '{$filter['colsFilterField']}' added.");
+                    // The wizard's own vocabulary (colsFilterField/…) is not
+                    // what the runtime reads — normalise before storing, and
+                    // report the canonical field name rather than a key that
+                    // may not survive normalisation.
+                    $normalized = FilterRule::normalize($filter);
+
+                    if ($normalized === null) {
+                        $this->warn('Filter skipped: no field name given.');
+
+                        continue;
+                    }
+
+                    $this->config[FilterRule::SECTION][] = $normalized;
+                    $this->info("✓ Filter '{$normalized['field']}' added.");
                 }
             }
         }
@@ -432,8 +449,8 @@ class ConfigCommand extends Command
     /**
      * Get default configuration
      *
-     * No 'styles' key on purpose. It used to be seeded empty here, and nothing
-     * reads it at render time — getRowStyle() reads 'contitionStyles'. A key
+     * No 'styles' and no 'filters' key on purpose. Both used to be seeded empty
+     * here, and nothing reads either at render time — getRowStyle() reads 'contitionStyles'. A key
      * that exists only so ptah:config:doctor can migrate it later is an
      * invitation: whoever opens the JSON (person or agent) writes rules into
      * 'styles', because that is where the name makes sense, and those rules
@@ -445,7 +462,6 @@ class ConfigCommand extends Command
         return [
             'cols' => [],
             'actions' => [],
-            'filters' => [],
             'joins' => [],
             'permissions' => [],
             'cacheEnabled' => true,
@@ -578,7 +594,7 @@ class ConfigCommand extends Command
         $this->info('Configuration Summary:');
         $this->line('- Columns: '.count($this->config['cols'] ?? []));
         $this->line('- Actions: '.count($this->config['actions'] ?? []));
-        $this->line('- Filters: '.count($this->config['filters'] ?? []));
+        $this->line('- Filters: '.count($this->config[FilterRule::SECTION] ?? []));
         $this->line('- Styles: '.count($this->config['contitionStyles'] ?? []));
         $this->line('- Joins: '.count($this->config['joins'] ?? []));
         $this->newLine();

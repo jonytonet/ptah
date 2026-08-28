@@ -56,9 +56,26 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function getTableColumns(): array
     {
-        static $cache = [];
+        return self::columnsForTable($this->model->getTable());
+    }
 
-        $table = $this->model->getTable();
+    /**
+     * Column listing for any table, cached per table for the life of the
+     * process. Shared (not per-instance) because the schema does not change
+     * between requests and a relation search needs the RELATED table's columns,
+     * not this repository's.
+     *
+     * Measured before this existed (1.27.0 benchmark, sqlite in memory):
+     * `getData(search)` emitted 4 queries where plain Eloquent emits 2 — the
+     * two extras were schema introspection, repeated on every single call
+     * because `advancedSearch()` called Schema directly and skipped the cache
+     * sitting in this same class.
+     *
+     * @return array<int, string>
+     */
+    protected static function columnsForTable(string $table): array
+    {
+        static $cache = [];
 
         if (! isset($cache[$table])) {
             $cache[$table] = Schema::getColumnListing($table);
@@ -226,7 +243,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
         // 'Search' is the UI sentinel/default — it must not apply any filter.
         if (! empty($input) && $input !== 'Search') {
             $terms = explode(',', $input);
-            $columns = Schema::getColumnListing($this->model->getTable());
+            $columns = $this->getTableColumns();
 
             $query->where(function (Builder $q) use ($terms, $columns): void {
                 foreach ($terms as $term) {
@@ -499,8 +516,11 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
         foreach ($relations as $relation) {
             $baseModel->{$method}($relation, function (Builder $q) use ($term): void {
-                // Use the related model's column listing — stored per-table for efficiency.
-                $columns = Schema::getColumnListing($q->getModel()->getTable());
+                // Per-table static cache — the comment here used to CLAIM
+                // this and call Schema directly, so every relation term paid a
+                // schema round-trip. On MySQL that is information_schema,
+                // which is slow on a database with many tables.
+                $columns = self::columnsForTable($q->getModel()->getTable());
                 $q->where(function (Builder $inner) use ($term, $columns): void {
                     foreach ($columns as $col) {
                         $inner->orWhere($col, 'LIKE', "%{$term}%");
