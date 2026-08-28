@@ -7,6 +7,7 @@ namespace Ptah\Services\Validation;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Enums\CrudConfigEnums;
 use Ptah\Exceptions\ConfigValidationException;
+use Ptah\Support\FilterRule;
 use Ptah\Support\StyleRule;
 
 /**
@@ -37,9 +38,21 @@ class ConfigSchemaValidator
         }
 
         // Validate filters section
-        if (isset($config['filters']) && is_array($config['filters'])) {
-            $this->validateFilters($config['filters']);
+        // `customFilters` is the section the runtime reads
+        // (FilterService::processCustomFilters). Validated through the single
+        // normaliser so the CLI, the interactive wizard and the visual editor
+        // are held to the same contract — see FilterRule.
+        if (isset($config[FilterRule::SECTION]) && is_array($config[FilterRule::SECTION])) {
+            $this->validateCustomFilters($config[FilterRule::SECTION]);
         }
+
+        // The legacy `filters` section is deliberately NOT validated. It is an
+        // orphan (no runtime code reads it) AND its old rules required
+        // `colsNomeFisico`, a key the command that wrote the section never
+        // produced — it wrote `field`. So validating it only ever reported
+        // "malformed" against configs the package itself had created, on top of
+        // the separate doctor error that already tells the user to migrate.
+        // Same treatment `contitionStyles`/`styles` got in 1.24.0.
 
         // Validate styles section
         if (isset($config['styles']) && is_array($config['styles'])) {
@@ -248,6 +261,28 @@ class ConfigSchemaValidator
      *
      * @throws ConfigValidationException
      */
+    /**
+     * Validates the section the runtime actually reads. The only hard
+     * requirement is a field name, because that is the only thing
+     * `FilterService::processCustomFilters()` cannot default — rejecting more
+     * than this would refuse configs the runtime handles fine.
+     *
+     * @param  array<int, array<string, mixed>>  $filters
+     *
+     * @throws ConfigValidationException
+     */
+    protected function validateCustomFilters(array $filters): void
+    {
+        foreach ($filters as $index => $filter) {
+            if (FilterRule::normalize($filter) === null) {
+                throw ConfigValidationException::missingRequiredField(
+                    'field',
+                    'customFilters'
+                )->withJsonPath("$.customFilters[{$index}].field");
+            }
+        }
+    }
+
     protected function validateFilters(array $filters): void
     {
         foreach ($filters as $index => $filter) {

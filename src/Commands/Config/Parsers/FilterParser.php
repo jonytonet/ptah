@@ -3,6 +3,7 @@
 namespace Ptah\Commands\Config\Parsers;
 
 use Illuminate\Support\Str;
+use Ptah\Support\FilterRule;
 
 class FilterParser
 {
@@ -41,7 +42,10 @@ class FilterParser
             }
         }
 
-        return $config;
+        // Funnels through the single normaliser so `--filter=`, the interactive
+        // wizard and older saved configs cannot drift into different shapes
+        // again — see FilterRule for the three dialects this closed.
+        return FilterRule::normalize($config) ?? $config;
     }
 
     /**

@@ -274,7 +274,19 @@ byte-for-byte compatible.
 
 ### `--filter` and `--style` via CLI
 
-These flags now work correctly via CLI:
+Both work. `--filter` only started working in **1.28.0** — this section claimed
+otherwise for several releases while every call failed, because four layers
+disagreed about what a filter looks like: `FilterParser` emitted `field`, the
+interactive wizard emitted `colsFilterField`, the schema validator required
+`colsNomeFisico`, and the command wrote all of it to a `filters` section no
+runtime code reads (the runtime reads `customFilters`). `Ptah\Support\FilterRule`
+is now the single normaliser every writer funnels through, and
+`ptah:config:doctor --fix` migrates configs still carrying the legacy section.
+
+Examples below are executed by `ConfigFilterCliTest`, which asserts the whole
+chain — command writes, validator accepts, and `FilterService` produces a
+filter DTO from what was stored. A doc example that only "looks right" is how
+this went unnoticed for so long.
 
 ```bash
 # Filter
