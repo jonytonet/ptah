@@ -31,7 +31,6 @@
     "livewire/base-crud/partials/_config-form-preview.blade.php": 35,
     "livewire/base-crud/partials/_filter-panel.blade.php": 1,
     "livewire/base-crud/partials/_modal-delete.blade.php": 5,
-    "livewire/base-crud/partials/_modal-form.blade.php": 41,
     "livewire/base-crud/partials/_pagination.blade.php": 5,
     "livewire/base-crud/partials/_table.blade.php": 7,
     "livewire/base-crud/partials/_toolbar.blade.php": 8,
