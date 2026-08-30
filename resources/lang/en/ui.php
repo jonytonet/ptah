@@ -198,6 +198,20 @@ return [
     // -------------------------------------------------------------------------
     // 403 Error Page
     // -------------------------------------------------------------------------
+    'error_btn_back' => 'Go back',
+    'error_btn_home' => 'Go to start',
+    'error_btn_reload' => 'Reload the page',
+    'error_404_title' => 'Page not found',
+    'error_404_body' => 'The address you opened does not exist, or the record it pointed to was removed. Check the link, or go back to where you were.',
+    'error_419_title' => 'Your session expired',
+    'error_419_body' => 'The page sat idle long enough for the security token to lapse. Nothing was lost — reload and try again.',
+    'error_429_title' => 'Too many requests',
+    'error_429_body' => 'You hit the rate limit for this action. Wait a moment and try again; repeating it now will only extend the wait.',
+    'error_500_title' => 'Something broke on our side',
+    'error_500_body' => 'This is not your fault and nothing you typed caused it. The failure was recorded; try again in a moment, and if it persists, send the reference below to whoever supports this system.',
+    'error_500_reference' => 'Reference for support:',
+    'error_503_title' => 'Under maintenance',
+    'error_503_body' => 'The system is briefly offline for an update. It should be back shortly — no action is needed on your side.',
     'error_403_title' => 'Access Denied',
     'error_403_heading' => 'You don\'t have permission to access this page.',
     'error_403_body' => 'Your current access profile does not include this resource. Contact the system administrator if you believe this is an error.',

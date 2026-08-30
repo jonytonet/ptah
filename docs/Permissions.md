@@ -848,7 +848,7 @@ Route::get('/finance/export', FinanceController::class . '@export')
 | Context | Response on denial |
 |---|---|
 | Request accepts JSON (`Accept: application/json`) | `HTTP 403` with `{"message":"Access denied.","object":"...","action":"..."}` |
-| Web request | `abort(403)` — Laravel's default error page |
+| Web request | `abort(403)` — rendered by Ptah's themed 403 page (see [Configuration.md](Configuration.md#error-pages-errors)); the host's own `resources/views/errors/403.blade.php` wins if it exists |
 
 ### Parameter syntax
 
