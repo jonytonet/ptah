@@ -313,8 +313,12 @@ class ContrastGuardTest extends TestCase
         if (! preg_match('/text-white bg-danger-dark hover:opacity-90/', $baseCrud)) {
             throw new RuntimeException('ContrastGuardTest: base-crud.blade.php bulk-delete confirm button no longer uses bg-danger-dark (AA regression).');
         }
+        // ptah-c-ink_on_accent replaced the raw text-white utility (hardcoded-palette-ceiling
+        // ratchet, base-crud/partials/_modal-form.blade.php: 41 -> 0) — it resolves to the
+        // SAME invariant --ptah-text-on-accent (#ffffff) in both scopes, so this is a like-for-
+        // like rename, not an AA regression; bg-danger-dark itself is untouched.
         $modalForm = self::modalFormBlade();
-        if (! preg_match('/text-white bg-danger-dark hover:opacity-90/', $modalForm)) {
+        if (! preg_match('/ptah-c-ink_on_accent bg-danger-dark hover:opacity-90/', $modalForm)) {
             throw new RuntimeException('ContrastGuardTest: _modal-form.blade.php discard-changes button no longer uses bg-danger-dark (AA regression).');
         }
 

@@ -199,6 +199,20 @@ return [
     // -------------------------------------------------------------------------
     // Página de Erro 403
     // -------------------------------------------------------------------------
+    'error_btn_back' => 'Voltar',
+    'error_btn_home' => 'Ir para o início',
+    'error_btn_reload' => 'Recarregar a página',
+    'error_404_title' => 'Página não encontrada',
+    'error_404_body' => 'O endereço que você abriu não existe, ou o registro para o qual ele apontava foi removido. Confira o link, ou volte para onde você estava.',
+    'error_419_title' => 'Sua sessão expirou',
+    'error_419_body' => 'A página ficou parada tempo suficiente para o token de segurança vencer. Nada foi perdido — recarregue e tente de novo.',
+    'error_429_title' => 'Requisições demais',
+    'error_429_body' => 'Você atingiu o limite para esta ação. Espere um instante e tente novamente; repetir agora só aumenta a espera.',
+    'error_500_title' => 'Algo quebrou do nosso lado',
+    'error_500_body' => 'A culpa não é sua e nada do que você digitou causou isso. A falha foi registrada; tente de novo em instantes e, se persistir, envie a referência abaixo para quem dá suporte a este sistema.',
+    'error_500_reference' => 'Referência para o suporte:',
+    'error_503_title' => 'Em manutenção',
+    'error_503_body' => 'O sistema está fora do ar por pouco tempo para uma atualização. Deve voltar em breve — não é preciso fazer nada.',
     'error_403_title' => 'Acesso Negado',
     'error_403_heading' => 'Você não tem permissão para acessar esta página.',
     'error_403_body' => 'Seu perfil de acesso atual não inclui este recurso. Entre em contato com o administrador do sistema se acredita que isso é um engano.',

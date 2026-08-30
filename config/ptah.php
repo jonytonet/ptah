@@ -153,6 +153,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Error pages
+    |--------------------------------------------------------------------------
+    |
+    | Themed pages for 404, 419, 429, 500 and 503. They follow the user's
+    | appearance settings when the package stylesheet is loaded and stay
+    | readable when it is not (see resources/views/errors/layout.blade.php).
+    |
+    | A view the host publishes at resources/views/errors/{code}.blade.php
+    | always wins, so overriding one page never means giving up the others.
+    | JSON requests are never answered with HTML, and 500 is skipped entirely
+    | while APP_DEBUG is on so the stack trace survives.
+    |
+    | 403 is not governed here: it belongs to the permissions module and
+    | follows `ptah.modules.permissions`.
+    |
+    */
+    'errors' => [
+        'enabled' => env('PTAH_ERROR_PAGES', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Scaffold
     |--------------------------------------------------------------------------
     */

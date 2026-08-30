@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -176,19 +177,91 @@ class PtahServiceProvider extends ServiceProvider
         // Render a friendly 403 page when the host app has no custom one.
         // Only activates when the permissions module is enabled; falls back to
         // Laravel's default handler otherwise.
-        if (config('ptah.modules.permissions')) {
-            $exceptionHandler = $this->app->make(ExceptionHandler::class);
-            if (method_exists($exceptionHandler, 'renderable')) {
-                $exceptionHandler->renderable(
-                    function (HttpException $e, Request $request) {
-                        if ($e->getStatusCode() === 403
-                            && ! $request->expectsJson()
-                            && ! file_exists(resource_path('views/errors/403.blade.php'))) {
-                            return response()->view('ptah::errors.403', ['exception' => $e], 403);
-                        }
-                    }
-                );
+        $exceptionHandler = $this->app->make(ExceptionHandler::class);
+
+        if (method_exists($exceptionHandler, 'renderable')) {
+            // Themed error pages for the statuses a user can actually land on.
+            //
+            // 403 stays gated behind the permissions module (it is that
+            // module's own denial screen); the rest are useful to every host
+            // and are gated by `ptah.errors.enabled` instead.
+            //
+            // Three conditions guard EVERY page, and each one matters:
+            //   - the host's own `resources/views/errors/{code}.blade.php`
+            //     always wins, because Laravel's convention is that a view
+            //     there is the last word;
+            //   - JSON requests fall through, or an API would answer HTML;
+            //   - 500 additionally falls through while APP_DEBUG is on, so a
+            //     developer keeps the stack trace instead of a pretty page
+            //     that hides it.
+            $renderable = function (HttpException $e, Request $request) {
+                $status = $e->getStatusCode();
+
+                if ($status === 403 && ! config('ptah.modules.permissions')) {
+                    return null;
+                }
+
+                if ($status !== 403 && ! config('ptah.errors.enabled', true)) {
+                    return null;
+                }
+
+                if (! in_array($status, [403, 404, 419, 429, 503], true)) {
+                    return null;
+                }
+
+                if ($request->expectsJson()
+                    || file_exists(resource_path("views/errors/{$status}.blade.php"))) {
+                    return null;
+                }
+
+                return response()->view("ptah::errors.{$status}", ['exception' => $e], $status);
+            };
+
+            $exceptionHandler->renderable($renderable);
+
+            // The reference shown on the 500 page is stamped into the log
+            // record for the SAME exception, and that ordering is the whole
+            // point: Laravel runs report() before render(), so an id minted
+            // where it is displayed would already be too late to appear in any
+            // log line. `buildContextUsing` runs inside report(), so the id is
+            // written to the log first and merely read back at render time.
+            //
+            // A reference the support team cannot grep is worse than none at
+            // all — it promises a correlation that does not exist — so the
+            // view prints the line only when an id was actually logged.
+            //
+            // The callback is additive (Laravel keeps a list of them), so a
+            // host that registers its own context builder is not displaced.
+            if (method_exists($exceptionHandler, 'buildContextUsing')) {
+                $exceptionHandler->buildContextUsing(function (Throwable $e): array {
+                    Context::add('ptahErrorId', $id = bin2hex(random_bytes(6)));
+
+                    return ['ptahErrorId' => $id];
+                });
             }
+
+            // 500 is registered apart because it is NOT an HttpException: it is
+            // whatever blew up.
+            $exceptionHandler->renderable(function (Throwable $e, Request $request) {
+                if (! config('ptah.errors.enabled', true)
+                    || config('app.debug')
+                    || $e instanceof HttpException
+                    || $request->expectsJson()
+                    || file_exists(resource_path('views/errors/500.blade.php'))) {
+                    return null;
+                }
+
+                return response()->view('ptah::errors.500', [
+                    'exception' => $e,
+                    // Read back, never minted here: null when the exception was
+                    // not reported (a `dontReport` class, say), and the view
+                    // then omits the reference line rather than showing an id
+                    // that appears in no log. Deliberately not the exception
+                    // message, which can leak a query, a path or a credential
+                    // to whoever triggered the error.
+                    'errorId' => Context::get('ptahErrorId'),
+                ], 500);
+            });
         }
 
         // Informs Laravel's Authenticate middleware where to redirect
@@ -471,7 +544,13 @@ class PtahServiceProvider extends ServiceProvider
 
             // Publish 403 error view (allows per-project customisation)
             $this->publishes([
+                __DIR__.'/../resources/views/errors/layout.blade.php' => resource_path('views/errors/layout.blade.php'),
                 __DIR__.'/../resources/views/errors/403.blade.php' => resource_path('views/errors/403.blade.php'),
+                __DIR__.'/../resources/views/errors/404.blade.php' => resource_path('views/errors/404.blade.php'),
+                __DIR__.'/../resources/views/errors/419.blade.php' => resource_path('views/errors/419.blade.php'),
+                __DIR__.'/../resources/views/errors/429.blade.php' => resource_path('views/errors/429.blade.php'),
+                __DIR__.'/../resources/views/errors/500.blade.php' => resource_path('views/errors/500.blade.php'),
+                __DIR__.'/../resources/views/errors/503.blade.php' => resource_path('views/errors/503.blade.php'),
             ], 'ptah-errors');
 
             // Publish agent skills into the app's .claude/skills so Claude Code

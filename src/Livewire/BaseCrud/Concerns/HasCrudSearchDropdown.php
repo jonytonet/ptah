@@ -116,9 +116,27 @@ trait HasCrudSearchDropdown
     /**
      * Livewire hook: fires when any formData entry changes through wire:model
      * (e.g. the parent is a plain select instead of a searchdropdown).
+     *
+     * `$key` is NULLABLE and that is load-bearing. Livewire passes the changed
+     * sub-key ("formData.status" arrives as "status"), but when the WHOLE
+     * `formData` array is replaced at once it passes null. With a non-nullable
+     * signature that threw a TypeError — which Livewire converts to a bare
+     * HTTP 419 "This page has expired" once APP_DEBUG is off. So the bug only
+     * appeared in production, on every plain `<x-forge-select>` in every
+     * BaseCrud form, while dev showed a TypeError nobody connected to it.
+     * Reported from a production host running 1.28.0.
+     *
+     * Searchdropdowns never hit this: they write through
+     * selectDropdownOption(), which always passes an explicit string field.
      */
-    public function updatedFormData(mixed $value, string $key): void
+    public function updatedFormData(mixed $value, ?string $key = null): void
     {
+        // Whole-array update with no sub-key: there is no single field whose
+        // dependents could be reset or whose formula could run.
+        if ($key === null) {
+            return;
+        }
+
         $this->resetSdDependents($key);
 
         // Calculated fields: run this column's onChange formula (HasCrudForm).

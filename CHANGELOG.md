@@ -7,6 +7,102 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.29.0] - 2026-08-29
+
+Three defects reported from the ERP running in production, plus the screens
+that were missing behind them.
+
+### Fixed - every plain `<select>` in a BaseCrud form threw HTTP 419, and only in production
+
+`updatedFormData()` declared `string $key`. Livewire passes the changed sub-key
+for `formData.status`, but passes **null** when the whole `formData` array is
+replaced at once - which is exactly what a plain select's `wire:model` does.
+The non-nullable signature turned that into a `TypeError`, and Livewire renders
+an unhandled `TypeError` during an update as a bare `419 This page has expired`
+once `APP_DEBUG` is off. With debug on it surfaced as a `TypeError` that looked
+unrelated to the select, which is how it reached a production host.
+
+Searchdropdowns were never affected: they write through
+`selectDropdownOption()`, which always passes an explicit string field. That
+asymmetry is what made the report hard to read, and it is now pinned by a test
+of its own.
+
+The signature is asserted directly through reflection, because the signature
+*is* the bug - the test keeps failing for the real reason even if a later
+refactor changes what the method body does with the key.
+
+### Fixed - the BaseCrud form modal ignored the chosen theme
+
+`_modal-form.blade.php` carried **41** fixed-palette Tailwind utilities
+(slate/gray/red neutrals, several with no `dark:` counterpart at all) across its
+selects, searchdropdown, image field, help text and unsaved-changes dialog. So
+changing the tone or accent in `/profile` never reached the form modal - which
+is most of what a user actually types into.
+
+All 41 are gone, replaced by `.ptah-c-*` classes backed by `var(--ptah-*)`. No
+new colour was introduced; every new class reuses an already-verified token.
+The per-file ceiling in `HardcodedPaletteCeilingTest` dropped 41 -> 0 and the
+entry was removed from the fixture, so the sweep now fails on the first
+hardcoded utility that comes back.
+
+One class the view had been referencing, `.ptah-c-form_hint`, turned out never
+to have existed in the CSS at all.
+
+### Added - themed error pages for 403, 404, 419, 429, 500 and 503
+
+The old 403 was a standalone document with its own Tailwind CDN fallback and
+~13 hardcoded hex values, so it ignored the theme entirely - the report that
+started this. It also carried a per-page `.auto-dark-*` mechanism that would
+have had to be copied into every new error page.
+
+All six now share one shell, `ptah::errors.layout`, whose colours chain
+`var(--ptah-token, literal-fallback)`. That chain is the whole design: the
+token wins when `ptah-components.css` is loaded, so the page follows all six
+appearance axes like any other screen; the literal takes over when it is not,
+because an error page has to survive the failure that produced it. For the same
+reason the shell inlines its own CSS and uses the system font stack - no JS, no
+CDN, no webfont, nothing that can fail while the site is already failing.
+
+Each page steps aside when the host has its own
+`resources/views/errors/{code}.blade.php`, and when the request expects JSON.
+500 additionally steps aside while `APP_DEBUG` is on, so a developer keeps the
+stack trace instead of a pretty page hiding it. 403 stays gated behind
+`modules.permissions`; the other five are controlled by the new top-level
+`errors.enabled` (`PTAH_ERROR_PAGES`), top-level because `mergeConfigFrom` is
+shallow and a nested key would never reach a host that already published
+`config/ptah.php`.
+
+**The reference id on the 500 page is stamped into the log.** The first version
+of this minted it in the renderable - which Laravel runs *after* `report()`, so
+the user was handed a code that appeared in no log line anywhere. A reference
+support cannot grep is worse than no reference, because it promises a lookup
+that cannot succeed. It is now minted inside `buildContextUsing()`, which runs
+during `report()`, and merely read back at render time; a test asserts the
+string on the page is the same string in the log context. It is deliberately
+not the exception message, which can leak a query, a path or a credential to
+whoever triggered the error. When an exception is not reported at all, the page
+omits the line rather than inventing an id.
+
+Publish them with `php artisan vendor:publish --tag=ptah-errors`.
+
+### Docs
+
+- `Configuration.md` gains an **Error pages (`errors.*`)** section: the key, the
+  three non-configurable step-aside rules and why each would be a bug otherwise,
+  and how the 500 reference correlates with the log.
+- `Permissions.md` said a denied web request got "Laravel's default error page".
+  It has not for some time; the row now names Ptah's themed 403 and the host
+  override that beats it.
+
+### Tests
+
+1893 -> 1917. The new `ErrorPagesTest` asserts the things that make an error
+page dangerous rather than ugly: that every `var(--ptah-*)` usage has a
+fallback, that no page pulls a webfont, CDN or script, that 500 never prints
+the exception message, and that the reference matches the log.
+
+---
+
 ## [1.28.0] - 2026-08-28
 
 Closes the two defects 1.27.0 shipped as *known, not fixed*. Both were found by

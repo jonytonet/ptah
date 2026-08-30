@@ -105,7 +105,7 @@
                         x-on:mouseenter="activeIndex = i"
                         x-on:mousedown.prevent="select(item)"
                         :class="activeIndex === i ? 'ptah-select-active' : ''"
-                        class="flex w-full px-3 py-2 text-left text-xs cursor-pointer transition-colors border-b border-slate-100 last:border-b-0 ptah-c-dd_opt"
+                        class="flex w-full px-3 py-2 text-left text-xs cursor-pointer transition-colors border-b last:border-b-0 ptah-c-dd_opt ptah-c-dd_sep"
                     >
                         <strong x-text="item._value"></strong>
                         <span x-text="' - ' + item._label"></span>

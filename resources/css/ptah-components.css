@@ -1074,6 +1074,25 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-form_sel           { background-color: var(--ptah-field); border-color: var(--ptah-line-control); color: var(--ptah-text-field); padding: .625rem .75rem; cursor: pointer; }
 .ptah-dark .ptah-c-form_sel { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
 
+/* _modal-form.blade.php already referenced this class name next to its own
+   `text-slate-500 dark:text-slate-400` utilities, but no rule for it ever
+   existed here — the color came entirely from those two raw utilities, so
+   the help text under a field silently ignored every tone/text-scale preset
+   other than the two literal defaults. Fixed in the same pass that removed
+   the utilities themselves (see hardcoded-palette-ceiling.json). */
+.ptah-c-form_hint            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-form_hint { color: var(--ptah-text-muted); }
+
+/* ── Form-block heading (section divider above a group of fields) ── */
+.ptah-c-form_block_lbl            { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-form_block_lbl { color: var(--ptah-text-muted); }
+.ptah-c-form_block_sep            { background-color: var(--ptah-line); }
+.ptah-dark .ptah-c-form_block_sep { background-color: var(--ptah-line); }
+
+/* ── Image field: stored-preview frame ── */
+.ptah-c-img_preview            { background-color: var(--ptah-surface-sunken); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-c-img_preview { background-color: var(--ptah-surface-sunken); border-color: var(--ptah-line-strong); }
+
 /* ── Modal confirmação de exclusão ── */
 .ptah-c-del_card           { background-color: var(--ptah-surface); }
 .ptah-dark .ptah-c-del_card { background-color: var(--ptah-surface); }
@@ -1090,6 +1109,22 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* ── Clear-filters icon button ── */
 .ptah-c-clear_btn            { background-color: var(--ptah-surface); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
 .ptah-dark .ptah-c-clear_btn { background-color: var(--ptah-surface); color: var(--ptah-text-muted); border-color: var(--ptah-line-strong); }
+
+/* ── Unsaved-changes confirmation dialog (_modal-form.blade.php) ──
+   Literal values preserved 1:1 through tokens: light hover bg-slate-100 /
+   dark hover bg-slate-700 are --ptah-control-ghost's own light/dark defaults
+   (#f1f5f9 / #334155) — same idiom as .ptah-c-modal_close:hover, one token
+   instead of a color-mix() since here the original had no translucency. */
+.ptah-c-discard_keep            { color: var(--ptah-text-secondary); }
+.ptah-c-discard_keep:hover      { background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-discard_keep { color: var(--ptah-text-secondary); }
+.ptah-dark .ptah-c-discard_keep:hover { background-color: var(--ptah-control-ghost); }
+
+/* White ink on the solid danger-dark "discard" button — same invariant
+   token/recipe already used by forge-toast-host's danger toast and
+   base-crud.blade.php's own delete-confirmation button. */
+.ptah-c-ink_on_accent            { color: var(--ptah-text-on-accent); }
+.ptah-dark .ptah-c-ink_on_accent { color: var(--ptah-text-on-accent); }
 
 /* ── Modal close button ── */
 /* Fase 2: fora da escala — light-only, sem contrapartida .ptah-dark para a cor base (so :hover tem

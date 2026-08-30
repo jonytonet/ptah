@@ -69,8 +69,8 @@
                         @endphp
                         @if ($fBlock !== '' && $fBlock !== $prevFormBlock)
                             <div class="flex items-center gap-3 {{ $loop->first ? '' : 'mt-3' }}">
-                                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ $fBlock }}</span>
-                                <div class="flex-1 h-px bg-slate-100 dark:bg-slate-700"></div>
+                                <span class="text-[11px] font-semibold uppercase tracking-wider ptah-c-form_block_lbl">{{ $fBlock }}</span>
+                                <div class="flex-1 h-px ptah-c-form_block_sep"></div>
                             </div>
                         @endif
                         @php $prevFormBlock = $fBlock; @endphp
@@ -119,7 +119,7 @@
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                        {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
                                     <div
                                         wire:key="ptah-select-{{ $fField }}-{{ $editingId ?? 'new' }}"
@@ -170,11 +170,11 @@
                                             class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 ptah-c-form_sel"
                                         >
                                             <span
-                                                :class="(selected !== null && selected !== '') ? 'ptah-c-sel_val' : 'text-gray-400'"
+                                                :class="(selected !== null && selected !== '') ? 'ptah-c-sel_val' : 'ptah-c-fp_muted'"
                                                 class="pr-4 truncate"
                                                 x-text="displayLabel"
                                             ></span>
-                                            <span class="absolute text-gray-400 transition-transform duration-200 -translate-y-1/2 right-3 top-1/2" :class="open ? 'rotate-180' : ''">
+                                            <span class="absolute ptah-c-fp_chevron transition-transform duration-200 -translate-y-1/2 right-3 top-1/2" :class="open ? 'rotate-180' : ''">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                                 </svg>
@@ -223,7 +223,7 @@
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                        {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
                                     <div
                                         x-data="{
@@ -262,7 +262,7 @@
                                                 tabindex="-1"
                                                 @if ($sdParentEmpty) disabled @endif
                                                 @mousedown.prevent="open = !open; if (open) $wire.openDropdown('{{ $fField }}')"
-                                                class="absolute right-2.5 text-gray-400 hover:text-gray-600 transition-transform duration-200 disabled:opacity-40 disabled:pointer-events-none"
+                                                class="absolute right-2.5 ptah-c-fp_chevron transition-transform duration-200 disabled:opacity-40 disabled:pointer-events-none"
                                                 :class="open ? 'rotate-180' : ''">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -286,7 +286,7 @@
                                                     @endif
                                                 </button>
                                             @empty
-                                                <p class="px-4 py-3 text-xs italic text-gray-400">{{ __('ptah::ui.no_results') }}</p>
+                                                <p class="px-4 py-3 text-xs italic ptah-c-fp_muted">{{ __('ptah::ui.no_results') }}</p>
                                             @endforelse
                                         </div>
                                     </div>
@@ -341,12 +341,12 @@
                                         }
                                     }">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                        {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                        {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
 
                                     {{-- File upload button --}}
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <label class="inline-flex items-center gap-1.5 cursor-pointer rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer rounded-md border px-3 py-2 text-sm transition-colors ptah-c-btn">
                                             <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                             </svg>
@@ -363,20 +363,20 @@
                                         <span
                                             wire:loading
                                             wire:target="imageUploads.{{ $fField }}"
-                                            class="text-xs text-slate-500 dark:text-slate-400 animate-pulse">
+                                            class="text-xs animate-pulse ptah-c-form_hint">
                                             {{ __('ptah::ui.image_uploading') }}
                                         </span>
                                         <button x-show="hasFile" x-cloak
                                             type="button"
                                             @click="clearFile()"
-                                            class="text-xs text-red-500 hover:text-red-700 transition-colors">
+                                            class="text-xs transition-colors ptah-c-field_err hover:opacity-80">
                                             {{ __('ptah::ui.image_remove_file') }}
                                         </button>
                                     </div>
 
                                     {{-- URL fallback --}}
                                     <div class="mt-2">
-                                        <p class="mb-1 text-xs text-slate-400 dark:text-slate-500">{{ __('ptah::ui.image_or_url') }}</p>
+                                        <p class="mb-1 text-xs ptah-c-form_hint">{{ __('ptah::ui.image_or_url') }}</p>
                                         <input type="text"
                                             wire:model.live="formData.{{ $fField }}"
                                             @input="updateFromUrl($event.target.value)"
@@ -390,7 +390,7 @@
                                     {{-- Preview --}}
                                     <div x-show="previewUrl" x-cloak class="mt-3">
                                         <img :src="previewUrl" alt="{{ __('ptah::ui.image_preview_label') }}"
-                                             class="max-h-48 rounded-md border border-slate-200 dark:border-slate-600 object-contain bg-slate-50 dark:bg-slate-800"
+                                             class="max-h-48 rounded-md border object-contain ptah-c-img_preview"
                                              @@error="previewUrl = ''" />
                                     </div>
 
@@ -451,7 +451,7 @@
                                         }"
                                     >
                                         <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                            {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                            {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                         </label>
                                         <input
                                             type="text"
@@ -489,7 +489,7 @@
                                             }"
                                         >
                                             <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
-                                                {{ $fLabel }}@if($fRequired)<span class="text-red-500 ml-0.5">*</span>@endif
+                                                {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                             </label>
                                             <input
                                                 type="text"
@@ -537,7 +537,7 @@
                             @endif
 
                             @if (!empty($fHelpText))
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 ptah-c-form_hint">{{ $fHelpText }}</p>
+                                <p class="mt-1 text-xs ptah-c-form_hint">{{ $fHelpText }}</p>
                             @endif
 
                         </div>
@@ -567,21 +567,21 @@
         <div x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
-             class="relative w-full max-w-sm rounded-lg shadow-2xl bg-white dark:bg-slate-800 p-5"
+             class="relative w-full max-w-sm rounded-lg shadow-2xl p-5 ptah-c-modal_card"
              role="alertdialog" aria-modal="true">
-            <p class="text-sm font-semibold text-slate-800 dark:text-white">
+            <p class="text-sm font-semibold ptah-c-modal_ttl">
                 {{ __('ptah::ui.modal_unsaved_title') }}
             </p>
-            <p class="text-xs mt-1 text-slate-500 dark:text-slate-400">
+            <p class="text-xs mt-1 ptah-c-modal_sub">
                 {{ __('ptah::ui.modal_unsaved_confirm') }}
             </p>
             <div class="flex justify-end gap-2 mt-5">
                 <button @click="_confirmDiscard = false"
-                    class="px-4 py-2 text-sm font-semibold rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    class="px-4 py-2 text-sm font-semibold rounded-md ptah-c-discard_keep">
                     {{ __('ptah::ui.modal_unsaved_keep') }}
                 </button>
                 <button @click="_forceClose()"
-                    class="px-4 py-2 text-sm font-semibold rounded-md text-white bg-danger-dark hover:opacity-90">
+                    class="px-4 py-2 text-sm font-semibold rounded-md ptah-c-ink_on_accent bg-danger-dark hover:opacity-90">
                     {{ __('ptah::ui.modal_unsaved_discard') }}
                 </button>
             </div>

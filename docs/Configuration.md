@@ -286,6 +286,44 @@ device/browser; it never leaks credentials or any other account data.
 | `export.ttl_hours` | `PTAH_EXPORT_TTL_HOURS` | `48` | [BaseCrud.md](BaseCrud.md) |
 | `export.async_max_rows` | `PTAH_EXPORT_ASYNC_MAX_ROWS` | `0` (unlimited) | [BaseCrud.md](BaseCrud.md) |
 
+### Error pages (`errors.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `errors.enabled` | `PTAH_ERROR_PAGES` | `true` | this section |
+
+Ptah ships themed pages for **403, 404, 419, 429, 500 and 503**. They follow all
+six appearance axes, because their colours read `var(--ptah-token, literal)`:
+the token wins when `ptah-components.css` is loaded, and the literal keeps the
+page readable when it is not — which is the likely state during a 500.
+
+Each page steps aside in three situations, and none of them are configurable
+because each one would be a bug:
+
+| Situation | Why Ptah does not render |
+|---|---|
+| The host has `resources/views/errors/{code}.blade.php` | Laravel's convention is that a view there is the last word. |
+| The request expects JSON | An API must not be answered with HTML. |
+| 500 while `APP_DEBUG=true` | A developer needs the stack trace, not a pretty page hiding it. |
+
+403 is additionally gated behind `modules.permissions`, since it is that
+module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
+five and fall back to Laravel's defaults.
+
+**The reference on the 500 page.** The page shows a short id the user can hand
+to whoever reads the logs. It is minted inside the exception handler's
+`report()` (via `buildContextUsing`), so it is written to the log record for
+that same exception **before** the page renders — grep the id and the entry is
+there. It is never the exception message, which can carry a query, a filesystem
+path or a credential. When an exception is not reported at all the page omits
+the line entirely rather than showing an id that correlates with nothing.
+
+To take the pages over, publish and edit them:
+
+```bash
+php artisan vendor:publish --tag=ptah-errors
+```
+
 ### Optional modules (`modules.*`)
 
 | Key | ENV | Default | Reference |
