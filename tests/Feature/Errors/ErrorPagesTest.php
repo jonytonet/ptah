@@ -55,6 +55,7 @@ class ErrorPagesTest extends TestCase
         return [
             '403' => ['403'],
             '404' => ['404'],
+            '405' => ['405'],
             '419' => ['419'],
             '429' => ['429'],
             '500' => ['500'],
@@ -164,6 +165,7 @@ class ErrorPagesTest extends TestCase
         $keys = [
             'error_btn_back', 'error_btn_home', 'error_btn_reload',
             'error_404_title', 'error_404_body',
+            'error_405_title', 'error_405_body',
             'error_419_title', 'error_419_body',
             'error_429_title', 'error_429_body',
             'error_500_title', 'error_500_body', 'error_500_reference',

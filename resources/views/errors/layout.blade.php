@@ -30,8 +30,38 @@
     @section('actions')  optional; the shell renders Back + Home by default
     @section('glyph')    optional inline SVG, drawn in the accent tint
 --}}
+@php
+    // ── Why the appearance is resolved HERE and not by a script ────────────
+    // The dashboard and auth layouts paint `.ptah-dark` from
+    // `ptah::partials.appearance-boot`, a blocking script in <head>. This page
+    // cannot use it: it carries no JS by design, and it has no theme toggle to
+    // keep in sync — so the class is stamped straight into the tag below,
+    // server-side, which also makes a flash structurally impossible.
+    //
+    // Without this the page ignored a deliberate dark choice entirely
+    // (reported against 1.29.0): the `--ptah-*` tokens resolved fine, but
+    // nothing ever put `.ptah-dark` on <html>, so every error page fell to the
+    // `:root` light tokens even for a user whose profile says dark.
+    //
+    // Resolution lives in AppearancePresets::resolveForStandalonePage() rather
+    // than here, because an error page cannot assume it is inside the `web`
+    // middleware group: an unmatched URI (404) and maintenance mode (503) never
+    // enter it, so there is no session and `request()->cookie()` still holds
+    // the raw ENCRYPTED value. Reading it the way the other layouts do worked
+    // for the 403 and silently failed for the 404 — see the method's docblock
+    // for the full account and for why every step there is individually
+    // guarded.
+    $ptahAppearance = \Ptah\Support\AppearancePresets::resolveForStandalonePage();
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @class(['ptah-dark' => $ptahAppearance['mode'] === 'dark'])
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}"
+    data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

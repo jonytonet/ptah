@@ -203,6 +203,8 @@ return [
     'error_btn_reload' => 'Reload the page',
     'error_404_title' => 'Page not found',
     'error_404_body' => 'The address you opened does not exist, or the record it pointed to was removed. Check the link, or go back to where you were.',
+    'error_405_title' => 'This address does not accept that action',
+    'error_405_body' => 'The page exists, but it cannot be reached the way it was requested — usually an old form or a saved link. Go back and try again from the start.',
     'error_419_title' => 'Your session expired',
     'error_419_body' => 'The page sat idle long enough for the security token to lapse. Nothing was lost — reload and try again.',
     'error_429_title' => 'Too many requests',

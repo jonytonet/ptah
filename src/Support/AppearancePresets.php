@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Ptah\Support;
 
+use Illuminate\Cookie\CookieValuePrefix;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Crypt;
+use Ptah\Models\UserPreference;
+use Throwable;
 
 /**
  * Whitelist + defaults for the appearance presets exposed in the "Aparência"
@@ -179,6 +184,100 @@ final class AppearancePresets
         $decoded = json_decode($raw, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Resolves the appearance for a page that may be rendering OUTSIDE the
+     * `web` middleware group — the error pages, above all.
+     *
+     * The other layouts can read `auth()` and `request()->cookie()` directly
+     * because they only ever render from inside a routed request: the session
+     * has started and `EncryptCookies` has already decrypted every cookie in
+     * place. Error pages have no such guarantee, and this is exactly where the
+     * 404 diverged from the 403 in 1.29.1:
+     *
+     *   403  thrown by middleware/component INSIDE the group → session and
+     *        decrypted cookie both available → the chosen theme was applied.
+     *   404  an unmatched URI never enters the group at all → no session, and
+     *        `request()->cookie()` still holds the RAW ENCRYPTED payload, so
+     *        json_decode failed, the preference looked absent, and a user on
+     *        dark got a white page.
+     *
+     * The same applies to 503 (maintenance runs before the group) and to any
+     * 500 thrown early in the stack. So the decryption `EncryptCookies` would
+     * have done is done here instead, prefix validation included — the same
+     * check the middleware performs, so a cookie encrypted under a rotated or
+     * foreign key is rejected rather than half-trusted.
+     *
+     * Every step is individually guarded: a 500 may be rendering *because* the
+     * database, session store or encrypter is unreachable, and an error page
+     * that throws while explaining an error leaves the user with Laravel's bare
+     * handler. Any failure degrades to the next source, and finally to
+     * `sanitize(null)` — defaults, with `mode` null, which lets the page's
+     * `prefers-color-scheme` fallback decide.
+     *
+     * @return array{mode: string|null, light: string, dark: string, accent: string, text: string, density: string, fontsize: string}
+     */
+    public static function resolveForStandalonePage(): array
+    {
+        // 1. Database — authoritative, but only reachable with a session. Note
+        //    that `Auth::check()` itself throws outside the group ("Session
+        //    store not set on request"), which is why even this is wrapped.
+        try {
+            if (Auth::check()) {
+                $stored = UserPreference::get(Auth::id(), 'theme');
+
+                if (\is_array($stored) && $stored !== []) {
+                    return self::sanitize($stored);
+                }
+            }
+        } catch (Throwable) {
+            // No session, no database, or no auth module: fall through.
+        }
+
+        // 2. Cookie — the only source left for an unmatched URI.
+        try {
+            $raw = request()->cookie(self::COOKIE);
+
+            if (\is_string($raw) && $raw !== '') {
+                return self::sanitize(self::decodeCookie($raw) ?? self::decodeCookie(self::decryptCookieValue($raw)));
+            }
+        } catch (Throwable) {
+            // Unreadable request, or an encrypter that cannot answer.
+        }
+
+        return self::sanitize(null);
+    }
+
+    /**
+     * Undoes what `EncryptCookies` would have done, for a request that never
+     * reached it. Returns null whenever the value is not a cookie this
+     * application encrypted — a plaintext value (already decrypted upstream, so
+     * `decodeCookie` handled it), a payload under a different key, or garbage.
+     */
+    private static function decryptCookieValue(string $raw): ?string
+    {
+        try {
+            $decrypted = Crypt::decrypt($raw, false);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! \is_string($decrypted)) {
+            return null;
+        }
+
+        // Same prefix validation as the middleware, and via the same accessor:
+        // `getAllKeys()` returns the current key plus any rotated ones, already
+        // decoded — `config('app.key')` is still base64-prefixed and would
+        // never match the HMAC.
+        $encrypter = app('encrypter');
+
+        $keys = method_exists($encrypter, 'getAllKeys')
+            ? $encrypter->getAllKeys()
+            : [$encrypter->getKey()];
+
+        return CookieValuePrefix::validate(self::COOKIE, $decrypted, $keys);
     }
 
     /**

@@ -204,6 +204,8 @@ return [
     'error_btn_reload' => 'Recarregar a página',
     'error_404_title' => 'Página não encontrada',
     'error_404_body' => 'O endereço que você abriu não existe, ou o registro para o qual ele apontava foi removido. Confira o link, ou volte para onde você estava.',
+    'error_405_title' => 'Este endereço não aceita essa ação',
+    'error_405_body' => 'A página existe, mas não pode ser acessada da forma como foi solicitada — normalmente um formulário antigo ou um link salvo. Volte e tente de novo a partir do início.',
     'error_419_title' => 'Sua sessão expirou',
     'error_419_body' => 'A página ficou parada tempo suficiente para o token de segurança vencer. Nada foi perdido — recarregue e tente de novo.',
     'error_429_title' => 'Requisições demais',

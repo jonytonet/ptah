@@ -7,6 +7,104 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.29.1] - 2026-08-31
+
+Three defects in the error pages 1.29.0 had just shipped, all reported from the
+ERP within a day, plus the status that was missing from the set.
+
+### Fixed - the error pages ignored a deliberate dark choice
+
+With dark selected in `/profile`, the 403 still rendered white.
+
+The tokens were never the problem: `--ptah-canvas` resolved correctly. Nothing
+ever put `.ptah-dark` on `<html>`. The dashboard and auth layouts paint that
+class from `ptah::partials.appearance-boot`, a blocking script in `<head>`, and
+the error shell has no JS by design, so it inherited none of that and every page
+fell to the `:root` light tokens no matter what the user had chosen.
+
+The shell now resolves the appearance itself and stamps the class plus all six
+`data-ptah-*` attributes server-side, in the tag. For these pages that beats the
+script: nothing is left to resolve after first paint, so a flash is structurally
+impossible.
+
+### Fixed - and then the 403 followed the theme while the 404 did not
+
+The first fix read `auth()` and `request()->cookie()` the way every other layout
+does. That works only from inside the `web` middleware group, and an error page
+cannot assume it is:
+
+| status | path | before |
+|---|---|---|
+| 403 | thrown by middleware/component inside the group | session + decrypted cookie → themed |
+| 404 | an unmatched URI never enters the group | no session, cookie still **encrypted** → white |
+
+`request()->cookie()` returned the raw encrypted payload, `json_decode` failed,
+the preference looked absent. The same applies to 503 (maintenance runs before
+the group) and to any 500 thrown early in the stack.
+
+Resolution moved to `AppearancePresets::resolveForStandalonePage()`, which does
+the decryption `EncryptCookies` would have done — prefix validation included, so
+a cookie encrypted under a rotated or foreign key is rejected rather than
+half-trusted. Every step is individually guarded: a 500 may be rendering
+*because* the database, session store or encrypter is unreachable, and an error
+page that throws while explaining an error leaves the user with Laravel's bare
+handler.
+
+**The test that was missing is the lesson.** Every appearance test rendered the
+view directly, which quietly supplies a fully booted request — session started,
+cookies already decrypted. They all passed while the real 404 was broken.
+`ErrorPageRealRequestTest` now walks each status through an actual request, in
+the harsher environment (no session, encrypted cookie): if it works there it
+works inside the group too.
+
+### Fixed - selects and searchdropdowns clashed with the inputs beside them in dark
+
+In the BaseCrud form modal the selects rendered on a different surface than the
+text inputs next to them. Measured in the built stylesheet:
+
+| palette | text input | select / searchdropdown |
+|---|---|---|
+| `meianoite` | `rgb(17,28,51)` | `rgb(8,14,28)` |
+| `carvao` | `rgb(39,39,42)` | `rgb(24,24,27)` |
+| `grafite` | `rgb(30,41,59)` | `rgb(15,23,42)` |
+
+Light hid it completely, which is why it survived: `--ptah-field` is `#ffffff`
+and `--ptah-field-muted` `#f8fafc`, indistinguishable there and ~12 RGB steps
+apart in dark. The tokens' own definitions say which is correct - `--ptah-field`
+is documented "active/focused input bg", `--ptah-field-muted` "resting
+(unfocused) input bg" - and a select sitting untouched is resting. `forge-input`
+had it right; `.ptah-c-form_in` and `.ptah-c-form_sel` used the focus token at
+rest.
+
+All three now share one recipe. The border is aligned for the same reason plus a
+contrast one: `--ptah-line-control` against a white field is ~1.3:1, under the
+3:1 floor this stylesheet applies to component boundaries elsewhere.
+
+`FieldSurfaceParityTest` pins the *equality* of the three, which is what no
+existing guard could see - both sides used valid tokens, contrast passed, the
+palette ceiling passed, nothing was hardcoded. Only their agreement was wrong.
+
+### Added - a themed 405 page
+
+Found by sweeping every status live rather than trusting the list: 403, 404, 419,
+429 and 503 had a page and 405 fell through to Laravel's default. It is
+reachable with no developer mistake at all - an old form re-submitted after a
+route changed verb, or a bookmarked POST - so it is now in the set, in both
+languages. No "reload" action on it, deliberately: retrying the same verb on the
+same URL produces the same 405.
+
+### Docs
+
+`Configuration.md`'s error-pages section gains the appearance precedence, why the
+resolution is server-side here and script-based everywhere else, and what happens
+outside the `web` group.
+
+### Tests
+
+1917 -> 1942.
+
+---
+
 ## [1.29.0] - 2026-08-29
 
 Three defects reported from the ERP running in production, plus the screens
