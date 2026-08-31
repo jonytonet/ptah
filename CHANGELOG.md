@@ -7,6 +7,52 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.29.1] - 2026-08-31
+
+### Fixed - the error pages ignored a deliberate dark choice
+
+Reported against 1.29.0 within hours of the release: with dark selected in
+`/profile`, the 403 still rendered white.
+
+The tokens were never the problem - `--ptah-canvas` resolved correctly. Nothing
+ever put `.ptah-dark` on `<html>`. The dashboard and auth layouts paint that
+class from `ptah::partials.appearance-boot`, a blocking script in `<head>`, and
+the error shell has no JS by design, so it inherited none of that and every
+page fell to the `:root` light tokens no matter what the user had chosen.
+
+The shell now resolves the appearance itself and stamps the class plus all six
+`data-ptah-*` attributes server-side, in the tag. For these pages that is
+strictly better than the script: there is nothing left to resolve after first
+paint, so a flash is structurally impossible. Precedence is unchanged from the
+other layouts - database for an authenticated user, then the `ptah_appearance`
+cookie, which the theme-mode endpoint writes alongside it. A visitor whose only
+record is `localStorage` cannot be reached without JS and still falls back to
+`prefers-color-scheme`.
+
+The whole lookup sits in a `try`/`catch` that drops to that same media-query
+fallback, and this is the part that matters rather than being defensive habit:
+resolving a preference touches the database, and a 500 may be rendering
+*because* the database is unreachable. An error page that throws while
+explaining an error takes Laravel down to its bare handler and the user sees
+nothing useful at all. `ErrorPageAppearanceTest` drops the `user_preferences`
+table and asserts the page still renders, degraded.
+
+Verified live as well as in tests: the 403 renders in `meianoite` with the
+`teal` accent for a session carrying that preference.
+
+### Docs
+
+`Configuration.md`'s error-pages section gains the appearance precedence and why
+the resolution is server-side here and script-based everywhere else.
+
+### Tests
+
+1917 -> 1922. Three of the five new tests fail without the fix; the other two
+pin the invariants it must not break (no script added, and the page survives a
+failing lookup).
+
+---
+
 ## [1.29.0] - 2026-08-29
 
 Three defects reported from the ERP running in production, plus the screens

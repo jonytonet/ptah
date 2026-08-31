@@ -30,8 +30,58 @@
     @section('actions')  optional; the shell renders Back + Home by default
     @section('glyph')    optional inline SVG, drawn in the accent tint
 --}}
+@php
+    // ── Why the appearance is resolved HERE and not by a script ────────────
+    // The dashboard and auth layouts paint `.ptah-dark` from
+    // `ptah::partials.appearance-boot`, a blocking script in <head>. This page
+    // cannot use it: it carries no JS by design, and it has no theme toggle to
+    // keep in sync — so the class is stamped straight into the tag below,
+    // server-side, which also makes a flash structurally impossible.
+    //
+    // Without this the page ignored a deliberate dark choice entirely
+    // (reported against 1.29.0): the `--ptah-*` tokens resolved fine, but
+    // nothing ever put `.ptah-dark` on <html>, so every error page fell to the
+    // `:root` light tokens even for a user whose profile says dark.
+    //
+    // Precedence matches the other layouts: database for an authenticated
+    // user, then the `ptah_appearance` cookie (the theme-mode endpoint writes
+    // both, see routes/ptah-auth.php). A visitor whose only record is
+    // localStorage is not reachable from here and falls back to
+    // `prefers-color-scheme` below - the honest answer without JS.
+    //
+    // The try/catch is not defensive habit, it is the point: a 500 may be
+    // rendering *because* the database or session store is unreachable, and an
+    // error page that throws while explaining an error is the worst possible
+    // outcome - Laravel would fall back to its bare handler. Any failure here
+    // silently drops to the media-query fallback, which needs nothing.
+    $ptahAppearance = null;
+
+    try {
+        $ptahErrTheme = auth()->check()
+            ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme')
+            : null;
+
+        $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
+            $ptahErrTheme ?? \Ptah\Support\AppearancePresets::decodeCookie(
+                request()->cookie(\Ptah\Support\AppearancePresets::COOKIE)
+            )
+        );
+    } catch (\Throwable) {
+        $ptahAppearance = null;
+    }
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @if ($ptahAppearance !== null)
+        @class(['ptah-dark' => $ptahAppearance['mode'] === 'dark'])
+        data-ptah-light="{{ $ptahAppearance['light'] }}"
+        data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+        data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+        data-ptah-text="{{ $ptahAppearance['text'] }}"
+        data-ptah-density="{{ $ptahAppearance['density'] }}"
+        data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}"
+    @endif
+>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

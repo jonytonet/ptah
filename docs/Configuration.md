@@ -310,6 +310,21 @@ because each one would be a bug:
 module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
 five and fall back to Laravel's defaults.
 
+**How the pages follow the chosen theme.** The dashboard and auth layouts paint
+`.ptah-dark` from a blocking script in `<head>`
+(`ptah::partials.appearance-boot`). The error pages carry no JS at all, so they
+stamp the class and the six `data-ptah-*` attributes **server-side**, straight
+into the `<html>` tag — which also makes a flash structurally impossible, since
+there is nothing to resolve after first paint.
+
+Precedence is the same as everywhere else: the database for an authenticated
+user, then the `ptah_appearance` cookie (the theme-mode endpoint writes both).
+A visitor whose only record is `localStorage` is not reachable without JS and
+falls back to `prefers-color-scheme`. If reading the preference fails for any
+reason — and a 500 may be rendering precisely because the database is gone —
+the page drops silently to that same media-query fallback rather than throwing
+while trying to explain an error.
+
 **The reference on the 500 page.** The page shows a short id the user can hand
 to whoever reads the logs. It is minted inside the exception handler's
 `report()` (via `buildContextUsing`), so it is written to the log record for
