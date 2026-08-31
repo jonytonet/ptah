@@ -1062,17 +1062,46 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-form_lbl           { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-form_lbl { color: var(--ptah-text-muted); }
 
+/* ── One resting-field recipe, shared by all three field surfaces ──────────
+   `.ptah-input-wrapper input` (forge-input), `.ptah-c-form_in` (the BaseCrud
+   inline text/searchdropdown input) and `.ptah-c-form_sel` (the select and
+   searchdropdown trigger) sit side by side in the same modal form, so they
+   must resolve to the SAME background and border in every scope. They did not:
+
+     resting bg     forge-input          form_in / form_sel
+     light          --ptah-field         --ptah-field          → matched
+     dark           --ptah-field-muted   --ptah-field          → CLASHED
+
+   Measured in the built stylesheet: the select rendered rgb(8,14,28) next to
+   an input at rgb(17,28,51) in `meianoite`, rgb(24,24,27) vs rgb(39,39,42) in
+   `carvao`, rgb(15,23,42) vs rgb(30,41,59) in `grafite` — reported against
+   1.29.1 as "the selects clash with the other inputs in dark".
+
+   Light hid it: --ptah-field is #ffffff and --ptah-field-muted #f8fafc, so the
+   wrong token was invisible there and only separated in dark, where the two
+   are ~12 RGB steps apart. The tokens' own definitions say which is correct —
+   --ptah-field is documented "active/focused input bg", --ptah-field-muted
+   "resting (unfocused) input bg" — and a select sitting untouched is resting.
+
+   The border is aligned for the same reason plus a contrast one:
+   --ptah-line-control is #d4d4d8 against a white field, ~1.3:1, under the 3:1
+   floor this file applies to UI-component boundaries elsewhere (see the
+   aria-invalid block). --ptah-line-field is the border every other field
+   already uses in both scopes.
+
+   Guarded by tests/Unit/Css/FieldSurfaceParityTest.php — extend that fixture
+   rather than letting one of the three drift again. */
 .ptah-c-form_in            { background-color: var(--ptah-field); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
 .ptah-c-form_in:focus      { border-color: var(--ptah-primary); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 .ptah-c-form_in::placeholder { color: var(--ptah-text-muted); }
 .ptah-c-form_in:disabled  { background-color: var(--ptah-surface-sunken); }
-.ptah-dark .ptah-c-form_in { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-form_in { background-color: var(--ptah-field-muted); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
 .ptah-dark .ptah-c-form_in:focus { border-color: var(--ptah-primary-lite); box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 .ptah-dark .ptah-c-form_in::placeholder { color: var(--ptah-text-muted); }
 .ptah-dark .ptah-c-form_in:disabled { background-color: var(--ptah-surface-sunken); }
 
-.ptah-c-form_sel           { background-color: var(--ptah-field); border-color: var(--ptah-line-control); color: var(--ptah-text-field); padding: .625rem .75rem; cursor: pointer; }
-.ptah-dark .ptah-c-form_sel { background-color: var(--ptah-field); border-color: var(--ptah-line); color: var(--ptah-text-field); }
+.ptah-c-form_sel           { background-color: var(--ptah-field); border-color: var(--ptah-line-field); color: var(--ptah-text-field); padding: .625rem .75rem; cursor: pointer; }
+.ptah-dark .ptah-c-form_sel { background-color: var(--ptah-field-muted); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
 
 /* _modal-form.blade.php already referenced this class name next to its own
    `text-slate-500 dark:text-slate-400` utilities, but no rule for it ever

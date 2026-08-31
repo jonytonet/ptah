@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\Errors;
 
+use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -157,9 +159,11 @@ class ErrorPageAppearanceTest extends TestCase
         $this->assertStringContainsString('500', $html);
         $this->assertStringContainsString('err-title', $html);
 
-        // Degraded, not broken: no appearance attributes, and the shell's
-        // prefers-color-scheme fallback carries the colours instead.
-        $this->assertStringNotContainsString('data-ptah-dark=', $html);
+        // Degraded, not broken. The six axes still carry their defaults (the
+        // resolver returns sanitize(null), never null), but `mode` stays unknown
+        // so no dark class is claimed and the shell's prefers-color-scheme
+        // fallback is what decides the colours.
+        $this->assertStringNotContainsString('class="ptah-dark"', $html);
         $this->assertStringContainsString('prefers-color-scheme', $html);
     }
 
@@ -176,5 +180,60 @@ class ErrorPageAppearanceTest extends TestCase
         $html = $this->renderError('403');
 
         $this->assertStringNotContainsString('<script', $html);
+    }
+
+    #[Test]
+    public function a_real_404_request_outside_the_web_group_still_follows_the_theme(): void
+    {
+        // THE test this feature was missing. Every earlier appearance test
+        // rendered the view directly, which quietly supplies a fully-booted
+        // request: session started, cookies already decrypted by
+        // `EncryptCookies`. A 404 for an unmatched URI gets none of that — the
+        // route never enters the `web` group — so `request()->cookie()` returns
+        // the RAW ENCRYPTED payload and the old code read it as "no preference".
+        //
+        // Result: the 403 honoured dark and the 404 did not, reported from the
+        // ERP. Rendering the view could never have caught it; only a request
+        // through the real path can.
+        $response = $this
+            // Plain JSON on purpose: `withCookie` encrypts it with the correct
+            // prefix itself (MakesHttpRequests::prepareCookiesForRequest), which
+            // is precisely what a browser sends. Encrypting it here as well
+            // would double-wrap it and stop testing the real shape.
+            ->withCookie(
+                AppearancePresets::COOKIE,
+                (string) json_encode(['mode' => 'dark', 'dark' => 'meianoite', 'accent' => 'teal'])
+            )
+            ->get('/uma-rota-que-nao-existe-'.uniqid());
+
+        $response->assertNotFound();
+        $response->assertSee('class="ptah-dark"', false);
+        $response->assertSee('data-ptah-dark="meianoite"', false);
+        $response->assertSee('data-ptah-accent="teal"', false);
+    }
+
+    #[Test]
+    public function a_cookie_encrypted_under_a_foreign_key_is_rejected_not_half_trusted(): void
+    {
+        // The prefix check is the same one EncryptCookies performs. Without it,
+        // decrypting whatever arrives would let a value minted elsewhere steer
+        // the attributes — sanitize() would still bound them to the whitelist,
+        // but the page would be honouring a cookie this app never issued.
+        $foreign = Crypt::encrypt(
+            CookieValuePrefix::create(AppearancePresets::COOKIE, str_repeat('x', 32))
+            .json_encode(['mode' => 'dark', 'dark' => 'carvao']),
+            false
+        );
+
+        // `withUnencryptedCookie`, not `withCookie`: the value must reach the
+        // request exactly as built, since `withCookie` would re-encrypt it with
+        // a VALID prefix and the foreign one would never be the prefix under
+        // test.
+        $response = $this
+            ->withUnencryptedCookie(AppearancePresets::COOKIE, $foreign)
+            ->get('/outra-rota-inexistente-'.uniqid());
+
+        $response->assertNotFound();
+        $response->assertDontSee('class="ptah-dark"', false);
     }
 }

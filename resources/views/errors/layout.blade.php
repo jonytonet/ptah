@@ -43,45 +43,25 @@
     // nothing ever put `.ptah-dark` on <html>, so every error page fell to the
     // `:root` light tokens even for a user whose profile says dark.
     //
-    // Precedence matches the other layouts: database for an authenticated
-    // user, then the `ptah_appearance` cookie (the theme-mode endpoint writes
-    // both, see routes/ptah-auth.php). A visitor whose only record is
-    // localStorage is not reachable from here and falls back to
-    // `prefers-color-scheme` below - the honest answer without JS.
-    //
-    // The try/catch is not defensive habit, it is the point: a 500 may be
-    // rendering *because* the database or session store is unreachable, and an
-    // error page that throws while explaining an error is the worst possible
-    // outcome - Laravel would fall back to its bare handler. Any failure here
-    // silently drops to the media-query fallback, which needs nothing.
-    $ptahAppearance = null;
-
-    try {
-        $ptahErrTheme = auth()->check()
-            ? \Ptah\Models\UserPreference::get(auth()->id(), 'theme')
-            : null;
-
-        $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize(
-            $ptahErrTheme ?? \Ptah\Support\AppearancePresets::decodeCookie(
-                request()->cookie(\Ptah\Support\AppearancePresets::COOKIE)
-            )
-        );
-    } catch (\Throwable) {
-        $ptahAppearance = null;
-    }
+    // Resolution lives in AppearancePresets::resolveForStandalonePage() rather
+    // than here, because an error page cannot assume it is inside the `web`
+    // middleware group: an unmatched URI (404) and maintenance mode (503) never
+    // enter it, so there is no session and `request()->cookie()` still holds
+    // the raw ENCRYPTED value. Reading it the way the other layouts do worked
+    // for the 403 and silently failed for the 404 — see the method's docblock
+    // for the full account and for why every step there is individually
+    // guarded.
+    $ptahAppearance = \Ptah\Support\AppearancePresets::resolveForStandalonePage();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    @if ($ptahAppearance !== null)
-        @class(['ptah-dark' => $ptahAppearance['mode'] === 'dark'])
-        data-ptah-light="{{ $ptahAppearance['light'] }}"
-        data-ptah-dark="{{ $ptahAppearance['dark'] }}"
-        data-ptah-accent="{{ $ptahAppearance['accent'] }}"
-        data-ptah-text="{{ $ptahAppearance['text'] }}"
-        data-ptah-density="{{ $ptahAppearance['density'] }}"
-        data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}"
-    @endif
->
+    @class(['ptah-dark' => $ptahAppearance['mode'] === 'dark'])
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}"
+    data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

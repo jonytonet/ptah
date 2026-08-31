@@ -320,7 +320,17 @@ there is nothing to resolve after first paint.
 Precedence is the same as everywhere else: the database for an authenticated
 user, then the `ptah_appearance` cookie (the theme-mode endpoint writes both).
 A visitor whose only record is `localStorage` is not reachable without JS and
-falls back to `prefers-color-scheme`. If reading the preference fails for any
+falls back to `prefers-color-scheme`.
+
+One subtlety these pages cannot ignore: **an error page is not always inside the
+`web` middleware group.** An unmatched URI (404), maintenance mode (503) and any
+exception thrown early never enter it, so there is no session and
+`request()->cookie()` still holds the raw *encrypted* value. That is why
+resolution goes through `AppearancePresets::resolveForStandalonePage()`, which
+performs the decryption `EncryptCookies` would have done — prefix validation
+included, so a cookie encrypted under a rotated or foreign key is rejected
+rather than half-trusted. Reading the cookie the way the other layouts do made
+the 403 follow the theme while the 404 silently did not. If reading the preference fails for any
 reason — and a 500 may be rendering precisely because the database is gone —
 the page drops silently to that same media-query fallback rather than throwing
 while trying to explain an error.

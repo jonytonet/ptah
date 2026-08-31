@@ -205,7 +205,7 @@ class PtahServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                if (! in_array($status, [403, 404, 419, 429, 503], true)) {
+                if (! in_array($status, [403, 404, 405, 419, 429, 503], true)) {
                     return null;
                 }
 
@@ -547,6 +547,7 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views/errors/layout.blade.php' => resource_path('views/errors/layout.blade.php'),
                 __DIR__.'/../resources/views/errors/403.blade.php' => resource_path('views/errors/403.blade.php'),
                 __DIR__.'/../resources/views/errors/404.blade.php' => resource_path('views/errors/404.blade.php'),
+                __DIR__.'/../resources/views/errors/405.blade.php' => resource_path('views/errors/405.blade.php'),
                 __DIR__.'/../resources/views/errors/419.blade.php' => resource_path('views/errors/419.blade.php'),
                 __DIR__.'/../resources/views/errors/429.blade.php' => resource_path('views/errors/429.blade.php'),
                 __DIR__.'/../resources/views/errors/500.blade.php' => resource_path('views/errors/500.blade.php'),
