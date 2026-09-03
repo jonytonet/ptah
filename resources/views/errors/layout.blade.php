@@ -52,6 +52,29 @@
     // for the full account and for why every step there is individually
     // guarded.
     $ptahAppearance = \Ptah\Support\AppearancePresets::resolveForStandalonePage();
+
+    // Whether it is safe to call @vite below. Checking that build/manifest.json
+    // EXISTS is not enough: @vite throws ViteException when the entry is absent
+    // from it, and a host whose stylesheet is not named resources/css/app.css
+    // (renamed, split per area, a different bundler layout) has a perfectly
+    // valid manifest without that key. The throw would then happen while
+    // rendering the page that exists to explain a failure, turning a tidy 500
+    // into Laravel's bare handler — the one outcome this shell must never
+    // produce. So the entry is confirmed before asking Vite for it.
+    $ptahErrCssEntry = 'resources/css/app.css';
+    $ptahErrHasCss = false;
+
+    try {
+        $ptahErrManifest = public_path('build/manifest.json');
+
+        if (is_file($ptahErrManifest)) {
+            $ptahErrDecoded = json_decode((string) file_get_contents($ptahErrManifest), true);
+            $ptahErrHasCss = is_array($ptahErrDecoded)
+                && array_key_exists($ptahErrCssEntry, $ptahErrDecoded);
+        }
+    } catch (\Throwable) {
+        $ptahErrHasCss = false;
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
@@ -71,9 +94,11 @@
     {{-- The package stylesheet is loaded when the host has a build, purely so
          the tokens resolve and the page picks up the chosen theme. It is never
          required: every rule below has a literal fallback. No JS, no CDN, no
-         webfont — this page must render when the rest of the app cannot. --}}
-    @if (file_exists(public_path('build/manifest.json')))
-        @vite(['resources/css/app.css'])
+         webfont — this page must render when the rest of the app cannot.
+         See the @php block above for why the manifest ENTRY, not just the
+         manifest file, has to be confirmed first. --}}
+    @if ($ptahErrHasCss)
+        @vite([$ptahErrCssEntry])
     @endif
 
     <style>

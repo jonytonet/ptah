@@ -231,4 +231,55 @@ class ErrorPagesTest extends TestCase
 
         $this->assertStringNotContainsString('class="err-ref"', $html);
     }
+
+    #[Test]
+    public function a_manifest_without_the_expected_entry_does_not_take_the_page_down(): void
+    {
+        // A host is free to name its stylesheet something other than
+        // resources/css/app.css — renamed, split per area, a different bundler
+        // layout. Its manifest is then perfectly valid and simply lacks that
+        // key, and @vite throws ViteException for a missing entry.
+        //
+        // The first version of this shell only checked that manifest.json
+        // EXISTED, so on such a host the throw happened while rendering the page
+        // that exists to explain a failure — turning a tidy 500 into Laravel's
+        // bare handler, the one outcome this shell must never produce.
+        $manifest = public_path('build/manifest.json');
+        $created = [];
+
+        if (! is_dir(dirname($manifest))) {
+            mkdir(dirname($manifest), 0777, true);
+            $created[] = dirname($manifest);
+        }
+
+        $previous = is_file($manifest) ? file_get_contents($manifest) : null;
+
+        // Valid manifest, real entries, just not the one the shell asks for.
+        file_put_contents($manifest, (string) json_encode([
+            'resources/css/painel.css' => ['file' => 'assets/painel-abc123.css', 'isEntry' => true],
+        ]));
+
+        try {
+            $html = $this->renderError('500', ['errorId' => 'abc123']);
+
+            $this->assertStringContainsString('>500</p>', $html);
+            $this->assertStringContainsString('err-title', $html);
+
+            // Degraded exactly as intended: no stylesheet link, and the shell's
+            // own literal fallbacks carry the colours.
+            $this->assertStringNotContainsString('painel-abc123.css', $html);
+            $this->assertStringNotContainsString('app.css', $html);
+            $this->assertStringContainsString('--err-canvas', $html);
+        } finally {
+            if ($previous !== null) {
+                file_put_contents($manifest, $previous);
+            } else {
+                @unlink($manifest);
+            }
+
+            foreach (array_reverse($created) as $dir) {
+                @rmdir($dir);
+            }
+        }
+    }
 }

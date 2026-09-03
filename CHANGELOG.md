@@ -7,6 +7,135 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.29.2] - 2026-09-03
+
+Documentation only, plus the tests that hold it. Reported from PetPlace while
+moving a "my attendances" screen (appointments scoped to the logged-in
+professional) from a custom Livewire component to BaseCrud.
+
+### Fixed - the logout label disappeared on hover in dark
+
+Reported from the ERP. Two things went wrong together, which is why neither
+looked like a bug on its own:
+
+1. `.ptah-dark … .ptah-user-dropdown a, … button` painted the button
+   `var(--ptah-text)` - a LIGHT ink - overriding its `text-danger`.
+2. `hover:bg-danger-light` is `#fee2e2`, a near-white wash in **every** scope.
+
+Light ink on a near-white background measured **1.21:1**, so the label simply
+vanished. The `button` in that selector was a known quirk, described in the
+stylesheet as "left as-is"; it is now removed and that comment corrected.
+
+The sidebar footer logout already had the right recipe (`--ptah-danger-strong` /
+`--ptah-danger-lite` plus a per-scope hover wash) - the two are the same
+affordance in two places and had drifted. They now share one rule. Measured in
+the built stylesheet, both places, both scopes:
+
+| | at rest | on hover |
+|---|---|---|
+| light | 6.10:1 | 5.35:1 |
+| dark | 7.98:1 | 6.72:1 |
+
+The sidebar's light hover moved off the `hover:bg-danger-light` utility onto the
+same token-derived wash, so no scope keeps a fixed light tint any more. Three
+guards had to be updated rather than worked around, each earning its keep:
+`ContrastGuardTest` (now covers both selectors, and refuses to let `button`
+declare a colour there again), `ThemeChromeOrphanTokenGuardTest` (the exception
+for that selector is obsolete and was deleted, per its own contract), and
+`LayoutMigrationLedgerTest` (the site moved from *migrated* to *deleted* with a
+reason).
+
+### Fixed - the error pages could throw while explaining an error
+
+The shell called `@vite(['resources/css/app.css'])` behind a check that
+`build/manifest.json` **exists**. That is not sufficient: `@vite` throws
+`ViteException` when the *entry* is missing, and a host whose stylesheet is
+named anything else - renamed, split per area, a different bundler layout - has
+a perfectly valid manifest without that key.
+
+The throw then happened while rendering the page that exists to explain a
+failure, turning a tidy 500 into Laravel's bare handler: the one outcome this
+shell is built to prevent. The manifest entry is now confirmed before Vite is
+asked for it, and the page degrades to its own literal fallbacks instead.
+Reverting the guard makes the new test fail with the real `ViteException`.
+
+### Docs - `lockedFilters` was undocumented, and it is the security-relevant one
+
+`mount()` has accepted `lockedFilters` for a long time and the docs never
+mentioned it, so the natural path was `initialFilter` - which the user can
+simply clear. The two look identical on screen right up to the moment someone
+presses "clear filters" and sees every row in the table.
+
+`docs/BaseCrud.md` now documents it in the parameter table and in a new section,
+**Locking rows to a fixed scope**, with the comparison that actually matters:
+
+| Parameter | Can the user change/clear it? |
+|---|---|
+| `initialFilter` | **Yes** - it writes into `$filters`, a client-writable property |
+| `companyFilter` | No (server-set), `company_id` only |
+| `lockedFilters` | **No** - re-applied on every query, `#[Locked]` |
+
+The section also states where the lock is enforced, verified against the code
+rather than assumed: `buildBaseQuery()` covers the listing, the totalizadores
+and export/print; `scopedQuery()` / `recordInScope()` cover bulk actions, edit,
+delete and restore.
+
+### Docs - three corrections found while auditing the parameter table 1:1
+
+- **Every Blade example used `@livewire('ptah::base-crud', ...)`** - 7
+  occurrences in `BaseCrud.md` and 2 in `Permissions.md`. The registered alias
+  is `ptah-base-crud`; the namespaced form throws
+  `ComponentNotFoundException`, confirmed by probing both. Every copy-pasted
+  example from the docs failed.
+- **`companyFilter`'s documented default named the wrong session key.** The docs
+  said `session('company_id', 0)`; `ptah_company_id()` reads the key from
+  `config('ptah.permissions.company_session_key')`, whose default is
+  `ptah_company_id`. Anyone following the doc and setting `company_id` got
+  nothing.
+- **`initialFilter` silently discards the operator.** Each triple is read as
+  `[$field, , $value]`; the operator applied comes from that column's own filter
+  config. `['price', '>', 100]` does not produce `price > 100`.
+
+A dead table-of-contents entry ("Simplified Internal Flow", a section that does
+not exist) was removed and the list renumbered. All 40 internal anchors now
+resolve.
+
+### Docs - three flows that were only obvious to whoever wrote them
+
+- **Deploying a screen:** a `crud_configs` row is data, not a file, so deploying
+  code does not carry it. Documents the export-all -> commit -> import-all
+  cycle, and the safe single-config pattern: `ptah:config:import-all {path?}`
+  imports every `*.json` in the given directory with an upsert per file and
+  never truncates, so a directory holding only the new config ships it without
+  reverting anything edited through the visual modal in production.
+- **Menu:** `database/seeders/MenuRegistry.php` is canonical and a new screen
+  stays invisible until it is synced. Documented with plain `ptah:menu-sync`,
+  **not** `--fresh`: the command's own help marks `--fresh` destructive (it
+  clears the `menus` table), which is right for a rebuild and wrong for adding
+  one screen to a live system, where it discards every row created or reordered
+  through the UI.
+- **Testing a BaseCrud screen:** the render is data-driven, so a component
+  mounted against an empty `crud_configs` renders almost nothing. Documents both
+  approaches - seed the config, or assert on the returned rows instead of the
+  markup.
+
+### Tests - the scope is inescapable, proven rather than promised
+
+`CrudLockedFiltersScopeTest` covers the four escape routes a client can actually
+attempt: filtering the locked column to another owner, clearing every filter,
+writing `lockedFilters` over the wire, and asking for an out-of-scope record by
+id (IDOR). The totalizador is asserted separately and deliberately - it runs its
+own aggregate query, so a lock enforced only on the listing would show a
+filtered table above the true total of every row, which is a disclosure of its
+own.
+
+Removing the enforcement fails 5 of the 8 tests, checked.
+
+1942 -> 1951. The shared `items` stub table gains a nullable `owner_id`,
+additive per that migration's existing convention.
+
+---
+
 ## [1.29.1] - 2026-08-31
 
 Three defects in the error pages 1.29.0 had just shipped, all reported from the

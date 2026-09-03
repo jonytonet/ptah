@@ -1277,7 +1277,7 @@ When both `auth` and `permissions` are active, `PermissionService` resolves the 
 To add permission control to a BaseCrud screen, use the `readOnly` parameter combined with view-level checks:
 
 ```blade
-@livewire('ptah::base-crud', [
+@livewire('ptah-base-crud', [
     'model'    => 'Product',
     'canCreate' => ptah_can('products.store', 'create'),
     'canEdit'   => ptah_can('products.store', 'update'),
@@ -1289,7 +1289,7 @@ To add permission control to a BaseCrud screen, use the `readOnly` parameter com
 Or full control via `readOnly` for read-only screens:
 
 ```blade
-@livewire('ptah::base-crud', [
+@livewire('ptah-base-crud', [
     'model'    => 'Product',
     'readOnly' => !ptah_can('products.store', 'update'),
 ])
