@@ -396,7 +396,7 @@ class ContrastGuardTest extends TestCase
         }
         $colorDanger = self::extractHex($forge, '/--color-danger:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger');
 
-        // --- 22. Sidebar logout button label — vs its own resting and hover backgrounds ---
+        // --- 22. Logout button label (sidebar footer AND navbar dropdown) ---
         // The button has a text label, so the floor is 4.5:1, and by that measure the label
         // never passed: raw text-danger was 4.29:1 on the old frozen #450a0a and 3.08:1 on the
         // light bg-danger-light. Tokenising the dark background made it worse (3.27:1), which is
@@ -408,12 +408,42 @@ class ContrastGuardTest extends TestCase
         // digests "color-mix(..." into a meaningless RGB and the assertion would PASS on a
         // colour that does not exist. So assert the declarations point at the right tokens, then
         // recompute both mixes here, reading the percentages from the CSS.
-        if (! preg_match('/\.ptah-sidebar \.ptah-logout-btn\s*\{[^}]*color:\s*var\(--ptah-danger-strong\)/', $css)
-            || ! preg_match('/\.ptah-dark \.ptah-sidebar \.ptah-logout-btn\s*\{[^}]*color:\s*var\(--ptah-danger-lite\)/', $css)) {
+        // The two logout affordances share one rule, written as a selector list, so each
+        // check below has to accept the sidebar selector appearing anywhere in that list
+        // rather than immediately before the `{`. The navbar dropdown row is required too:
+        // it was the one that broke. It carried `text-danger hover:bg-danger-light` while
+        // `.ptah-dark … .ptah-user-dropdown a, … button` repainted it var(--ptah-text), so
+        // in dark a light ink landed on a near-white hover wash and measured 1.21:1 — the
+        // label simply vanished. Both selectors are pinned here so neither can drift off
+        // the recipe again.
+        foreach ([
+            ['\.ptah-sidebar \.ptah-logout-btn', '--ptah-danger-strong', 'light', ''],
+            ['\.ptah-navbar \.ptah-user-dropdown \.ptah-logout-btn', '--ptah-danger-strong', 'light', ''],
+            ['\.ptah-sidebar \.ptah-logout-btn', '--ptah-danger-lite', 'dark', '\.ptah-dark '],
+            ['\.ptah-navbar \.ptah-user-dropdown \.ptah-logout-btn', '--ptah-danger-lite', 'dark', '\.ptah-dark '],
+        ] as [$selector, $token, $scope, $darkPrefix]) {
+            // `[^{}]*` between the selector and the brace is what lets the selector sit
+            // anywhere inside a selector list instead of only immediately before `{`.
+            $pattern = '/'.$darkPrefix.$selector.'[^{}]*\{[^}]*color:\s*var\('.$token.'\)/';
+
+            if (! preg_match($pattern, $css)) {
+                throw new RuntimeException(sprintf(
+                    'ContrastGuardTest: the logout label at [%s] (%s) no longer takes its ink from '.
+                    'var(%s). Raw --color-danger fails 4.5:1 against this button\'s backgrounds.',
+                    str_replace('\\', '', $selector),
+                    $scope,
+                    $token
+                ));
+            }
+        }
+
+        // `button` must NOT come back into the dropdown's dark ink rule: it would override
+        // the danger colour again and reintroduce the 1.21:1 hover.
+        if (preg_match('/\.ptah-dark \.ptah-navbar \.ptah-user-dropdown button\s*\{[^}]*color:/', $css)) {
             throw new RuntimeException(
-                'ContrastGuardTest: the sidebar logout label no longer takes its ink from '.
-                '--ptah-danger-strong (light) / --ptah-danger-lite (dark). Raw --color-danger '.
-                'fails 4.5:1 against both of this button\'s backgrounds.'
+                'ContrastGuardTest: `.ptah-dark .ptah-navbar .ptah-user-dropdown button` declares a '.
+                'color again. That selector repaints the logout label with var(--ptah-text), which '.
+                'on the hover tint measured 1.21:1 — invisible. Style the button via .ptah-logout-btn.'
             );
         }
 
@@ -430,11 +460,23 @@ class ContrastGuardTest extends TestCase
         $logoutInkDark = self::mixWithWhite($colorDanger, ((int) $liteMatch[1]) / 100);
 
         if (! preg_match(
-            '/\.ptah-dark \.ptah-sidebar \.ptah-logout-btn:hover\s*\{[^}]*background-color:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, transparent\)/',
+            '/\.ptah-dark \.ptah-sidebar \.ptah-logout-btn:hover[^{}]*\{[^}]*background-color:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, transparent\)/',
             $css,
             $logoutHoverMatch
         )) {
-            throw new RuntimeException('ContrastGuardTest: could not read the sidebar logout hover tint from ptah-components.css.');
+            throw new RuntimeException('ContrastGuardTest: could not read the dark logout hover tint from ptah-components.css.');
+        }
+
+        // The LIGHT hover tint used to come from the view's `hover:bg-danger-light` utility.
+        // It no longer does: that utility is a fixed near-white wash in every scope, which is
+        // half of what made the dark label disappear, so both scopes now derive the tint from
+        // --color-danger here in the stylesheet. Read the light percentage the same way.
+        if (! preg_match(
+            '/(?<!ptah-dark )\.ptah-sidebar \.ptah-logout-btn:hover[^{}]*\{[^}]*background-color:\s*color-mix\(in srgb, var\(--color-danger[^)]*\) (\d+)%, transparent\)/',
+            $css,
+            $logoutHoverLightMatch
+        )) {
+            throw new RuntimeException('ContrastGuardTest: could not read the light logout hover tint from ptah-components.css.');
         }
 
         $logoutHoverDarkBg = self::compositeHex(
@@ -443,9 +485,13 @@ class ContrastGuardTest extends TestCase
             // --ptah-surface in dark: the sidebar's own background.
             '#1e293b'
         );
-        // Light hover comes from the view's `hover:bg-danger-light` utility, i.e. the host's
-        // --color-danger-light token — read it rather than assuming Tailwind's red-100.
-        $dangerLightBg = self::extractHex($forge, '/--color-danger-light:\s*(#[0-9a-fA-F]{6})/', 'forge.css --color-danger-light');
+        // Composited over the light surface the button actually sits on: #ffffff for the
+        // sidebar footer and the dropdown panel alike (--ptah-surface-raised in light).
+        $logoutHoverLightBg = self::compositeHex(
+            $colorDanger,
+            ((int) $logoutHoverLightMatch[1]) / 100,
+            '#ffffff'
+        );
 
         // --- 23. Navbar user chip, hovered, dark ---
         // The chip's button had only `hover:bg-gray-100` and no dark rule, so hovering it in dark
@@ -596,10 +642,13 @@ class ContrastGuardTest extends TestCase
             '20. act_del (dark) vs sticky cell dark bg — icon' => [$colorDanger, '#0f172a', 3.0],
             '23. navbar username (dark) vs the chip HOVER background — text' => [$navUsernameDark, $navHoverBg, 4.5],
             '23. navbar avatar initial (dark) vs its opaque tint — text' => [$avatarInkDark, $avatarBgDark, 4.5],
-            '22. sidebar logout label (light) at rest vs white sidebar — text' => [$logoutInkLight, '#ffffff', 4.5],
-            '22. sidebar logout label (light) on hover vs --color-danger-light — text' => [$logoutInkLight, $dangerLightBg, 4.5],
-            '22. sidebar logout label (dark) at rest vs --ptah-surface — text' => [$logoutInkDark, '#1e293b', 4.5],
-            '22. sidebar logout label (dark) on hover vs composited tint — text' => [$logoutInkDark, $logoutHoverDarkBg, 4.5],
+            // One recipe, so one set of pairs covers the sidebar footer and the navbar
+            // dropdown row. All four states stay pinned: fixing hover while leaving rest
+            // broken (or the reverse) is the easy mistake here.
+            '22. logout label (light) at rest vs white surface — text' => [$logoutInkLight, '#ffffff', 4.5],
+            '22. logout label (light) on hover vs composited tint — text' => [$logoutInkLight, $logoutHoverLightBg, 4.5],
+            '22. logout label (dark) at rest vs --ptah-surface — text' => [$logoutInkDark, '#1e293b', 4.5],
+            '22. logout label (dark) on hover vs composited tint — text' => [$logoutInkDark, $logoutHoverDarkBg, 4.5],
             // 24. --ptah-line-field FALLBACK. A field border is a UI component boundary,
             // so 3:1 applies. Every tone preset already solves this token to 3:1 against
             // its own surface and the layout always emits data-ptah-light, so a preset was

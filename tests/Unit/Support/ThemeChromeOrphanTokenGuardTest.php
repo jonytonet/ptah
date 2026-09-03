@@ -75,11 +75,13 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
             'in forge-navbar.blade.php — same reasoning as the sidebar active pill above.',
         '.ptah-navbar .ptah-user-avatar-text' => 'Light styling is the accent utility `text-primary` directly '.
             'in forge-navbar.blade.php — same reasoning as the sidebar active pill above.',
-        '.ptah-navbar .ptah-user-dropdown button' => 'The only <button> here is the logout action, which keeps '.
-            'its own `text-danger` accent utility in light (forge-navbar.blade.php). A var(--ptah-text) rule on '.
-            'this selector would win the cascade over that utility and repaint the logout button neutral gray '.
-            'in light mode — a regression, not a fix. `.ptah-navbar .ptah-user-dropdown a` (the profile link) '.
-            'IS tokenized; `button` deliberately is not.',
+        // `.ptah-navbar .ptah-user-dropdown button` was excepted here while the logout
+        // action kept a `text-danger` utility in light and the dark rule repainted it
+        // var(--ptah-text). That combination is gone: the button now carries
+        // `.ptah-logout-btn` and shares the sidebar's per-scope danger recipe, and the
+        // dark rule no longer names `button` at all. The selector declares no colour in
+        // either scope, so it is not an orphan and the exception was removed rather than
+        // left behind — this guard's own contract.
         '.ptah-cfg-content .cfg-ink-warn' => 'Light rule exists (color: #b45309) but is an intentional literal — '.
             'the exact hex of the text-amber-700 utility it replaces, same "keep the original value" idiom as '.
             '.ptah-c-fp_cancel_btn:hover above — not a var(--ptah-*), by design (see '.

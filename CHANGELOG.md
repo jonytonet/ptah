@@ -13,6 +13,52 @@ Documentation only, plus the tests that hold it. Reported from PetPlace while
 moving a "my attendances" screen (appointments scoped to the logged-in
 professional) from a custom Livewire component to BaseCrud.
 
+### Fixed - the logout label disappeared on hover in dark
+
+Reported from the ERP. Two things went wrong together, which is why neither
+looked like a bug on its own:
+
+1. `.ptah-dark … .ptah-user-dropdown a, … button` painted the button
+   `var(--ptah-text)` - a LIGHT ink - overriding its `text-danger`.
+2. `hover:bg-danger-light` is `#fee2e2`, a near-white wash in **every** scope.
+
+Light ink on a near-white background measured **1.21:1**, so the label simply
+vanished. The `button` in that selector was a known quirk, described in the
+stylesheet as "left as-is"; it is now removed and that comment corrected.
+
+The sidebar footer logout already had the right recipe (`--ptah-danger-strong` /
+`--ptah-danger-lite` plus a per-scope hover wash) - the two are the same
+affordance in two places and had drifted. They now share one rule. Measured in
+the built stylesheet, both places, both scopes:
+
+| | at rest | on hover |
+|---|---|---|
+| light | 6.10:1 | 5.35:1 |
+| dark | 7.98:1 | 6.72:1 |
+
+The sidebar's light hover moved off the `hover:bg-danger-light` utility onto the
+same token-derived wash, so no scope keeps a fixed light tint any more. Three
+guards had to be updated rather than worked around, each earning its keep:
+`ContrastGuardTest` (now covers both selectors, and refuses to let `button`
+declare a colour there again), `ThemeChromeOrphanTokenGuardTest` (the exception
+for that selector is obsolete and was deleted, per its own contract), and
+`LayoutMigrationLedgerTest` (the site moved from *migrated* to *deleted* with a
+reason).
+
+### Fixed - the error pages could throw while explaining an error
+
+The shell called `@vite(['resources/css/app.css'])` behind a check that
+`build/manifest.json` **exists**. That is not sufficient: `@vite` throws
+`ViteException` when the *entry* is missing, and a host whose stylesheet is
+named anything else - renamed, split per area, a different bundler layout - has
+a perfectly valid manifest without that key.
+
+The throw then happened while rendering the page that exists to explain a
+failure, turning a tidy 500 into Laravel's bare handler: the one outcome this
+shell is built to prevent. The manifest entry is now confirmed before Vite is
+asked for it, and the page degrades to its own literal fallbacks instead.
+Reverting the guard makes the new test fail with the real `ViteException`.
+
 ### Docs - `lockedFilters` was undocumented, and it is the security-relevant one
 
 `mount()` has accepted `lockedFilters` for a long time and the docs never
@@ -85,7 +131,7 @@ own.
 
 Removing the enforcement fails 5 of the 8 tests, checked.
 
-1942 -> 1950. The shared `items` stub table gains a nullable `owner_id`,
+1942 -> 1951. The shared `items` stub table gains a nullable `owner_id`,
 additive per that migration's existing convention.
 
 ---

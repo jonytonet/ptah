@@ -2111,13 +2111,41 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
    the dark case worse still (3.27:1), so the ink is now per-scope as well: -strong on
    light, -lite on dark. All four states clear the floor — light 6.11:1 at rest / 5.00:1
    on hover, dark 6.87:1 / 5.79:1. */
-.ptah-sidebar .ptah-logout-btn {
+/* ── Logout, one recipe for both places it appears ─────────────────────────
+   The sidebar footer button and the user-dropdown row are the same
+   affordance, and they had drifted: the sidebar got the strong/lite pair
+   plus a dark hover wash, while the dropdown was left on Tailwind's
+   `text-danger hover:bg-danger-light`. In dark that combination made the
+   label vanish on hover, reported from the ERP.
+
+   Two things went wrong together there, which is why neither alone looked
+   like a bug:
+
+     1. `.ptah-dark … .ptah-user-dropdown a, … button` painted the button
+        var(--ptah-text) — a LIGHT ink — overriding its `text-danger`. (The
+        `button` in that selector was a known quirk, described in the comment
+        above it as "left as-is"; it is now removed, and that comment updated.)
+     2. `hover:bg-danger-light` is #fee2e2, a NEAR-WHITE wash in every scope.
+
+   Light ink on a near-white background is invisible. The hover tint must be
+   derived per scope, never a fixed light one, so both are declared here as a
+   wash over whatever surface the control sits on. 10% in light keeps the
+   dark-red label well clear of it; 18% in dark reads as a tint without
+   approaching the lite ink's luminance. */
+.ptah-sidebar .ptah-logout-btn,
+.ptah-navbar .ptah-user-dropdown .ptah-logout-btn {
     color: var(--ptah-danger-strong);
 }
-.ptah-dark .ptah-sidebar .ptah-logout-btn {
+.ptah-sidebar .ptah-logout-btn:hover,
+.ptah-navbar .ptah-user-dropdown .ptah-logout-btn:hover {
+    background-color: color-mix(in srgb, var(--color-danger, #ef4444) 10%, transparent);
+}
+.ptah-dark .ptah-sidebar .ptah-logout-btn,
+.ptah-dark .ptah-navbar .ptah-user-dropdown .ptah-logout-btn {
     color: var(--ptah-danger-lite);
 }
-.ptah-dark .ptah-sidebar .ptah-logout-btn:hover {
+.ptah-dark .ptah-sidebar .ptah-logout-btn:hover,
+.ptah-dark .ptah-navbar .ptah-user-dropdown .ptah-logout-btn:hover {
     background-color: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
 }
 
@@ -2224,17 +2252,17 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
 /* Only `a`, NOT `button`: the profile link (text-gray-700, delta vs
    --ptah-text tom "puro"+"neutra": 4/4/15) is the only element this should
    touch. The dropdown's other row is a <button> carrying `text-danger`
-   (semantic, accent) for the logout action — the .ptah-dark rule below
-   applies var(--ptah-text) to BOTH `a` and `button` and so already
-   overrides that button's red in dark mode (a pre-existing scope quirk,
-   left as-is); mirroring it in light would newly break the logout button's
-   danger color for every light-mode user, which is a regression this pass
-   will not introduce. */
+   (semantic, accent) for the logout action, and it is styled by
+   `.ptah-logout-btn` further down — the same recipe the sidebar footer uses.
+   The dark rule below used to include `button`, which painted that red
+   label with var(--ptah-text) and, combined with a near-white hover wash,
+   made it disappear on hover; `button` was removed for that reason. Do not
+   add it back, and do not mirror this rule in light either, which would
+   break the logout button's danger color for every light-mode user. */
 .ptah-navbar .ptah-user-dropdown a {
     color: var(--ptah-text);
 }
-.ptah-dark .ptah-navbar .ptah-user-dropdown a,
-.ptah-dark .ptah-navbar .ptah-user-dropdown button {
+.ptah-dark .ptah-navbar .ptah-user-dropdown a {
     color: var(--ptah-text);
 }
 /* Delta vs --ptah-menu-hover (tom "puro"): 5/4/2 off gray-50. */

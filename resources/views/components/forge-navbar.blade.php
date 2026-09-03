@@ -372,7 +372,7 @@
                         <form method="POST" action="{{ $logoutAction }}">
                             @csrf
                             <button type="submit"
-                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-danger-light transition-colors">
+                                class="ptah-logout-btn w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
