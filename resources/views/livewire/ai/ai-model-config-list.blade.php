@@ -17,9 +17,9 @@
         (same disclosure shape) follows the same border-primary/bg-primary-light
         convention.
     --}}
-    <div x-data="{ open: false }" class="mb-6 rounded-lg border border-primary dark:border-primary-400 bg-primary-light dark:bg-slate-800/60 p-4">
+    <div x-data="{ open: false }" class="ptah-c-ai_panel mb-6 rounded-lg border bg-primary-light dark:bg-slate-800/60 p-4">
         <button @click="open = !open"
-                class="flex w-full items-center justify-between gap-2 text-sm font-medium text-primary-dark dark:text-primary-300">
+                class="ptah-c-ai_panel_ttl flex w-full items-center justify-between gap-2 text-sm font-medium">
             <span class="flex items-center gap-2">
                 <i class="bx bx-info-circle text-lg"></i>
                 {{ __('ptah::ui.ai_config_how_to_title') }}
@@ -27,7 +27,7 @@
             <i :class="open ? 'bx-chevron-up' : 'bx-chevron-down'" class="bx text-lg transition-transform"></i>
         </button>
 
-        <div x-show="open" x-collapse class="mt-3 space-y-3 text-sm text-primary dark:text-primary-200">
+        <div x-show="open" x-collapse class="ptah-c-ai_panel_txt mt-3 space-y-3 text-sm">
             <p>{{ __('ptah::ui.ai_config_how_to_intro') }}</p>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -63,7 +63,7 @@
                 </div>
             </div>
 
-            <p class="text-xs text-primary-dark dark:text-primary-300">{{ __('ptah::ui.ai_config_how_to_note') }}</p>
+            <p class="ptah-c-ai_panel_ttl text-xs">{{ __('ptah::ui.ai_config_how_to_note') }}</p>
         </div>
     </div>
 
