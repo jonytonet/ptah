@@ -15,6 +15,8 @@
 - [Admin Screen — Configuring a Provider](#admin-screen--configuring-a-provider)
 - [Customising the System Prompt](#customising-the-system-prompt)
 - [Custom Tools (Function Calling)](#custom-tools-function-calling)
+  - [When your tools are actually built](#when-your-tools-are-actually-built)
+  - [Describing a tool without building it (`AiToolSchemaInterface`)](#describing-a-tool-without-building-it-aitoolschemainterface)
 - [Rate Limiting](#rate-limiting)
 - [Conversation History](#conversation-history)
 - [Extending with Custom Providers](#extending-with-custom-providers)
@@ -380,6 +382,106 @@ In `config/ptah.php`, add the class name (string) to the `tools` array — **do 
 > **Important:** Register tools as class strings (`::class`), not instances (`new`). The service provider instantiates them via the Laravel container, which enables dependency injection if needed.
 
 > **Authorization:** Tool `execute()` methods run with the same user context as the Livewire request. Apply your own authorization logic inside `execute()` as needed (e.g. `abort_if(!auth()->user()->can(...))`).
+
+### When your tools are actually built
+
+A registered class name stays a string until a message is sent. The chat widget
+lives in the authenticated layout, so it is constructed on every page of your
+application; resolving your tools at that point would mean every screen paying
+for every tool — and would put your constructors inside the page's render, where
+a failure is a 500 for the whole application rather than a broken chat.
+
+So resolution happens at send time, one tool at a time, each isolated:
+
+| What goes wrong | What happens |
+|---|---|
+| The class no longer exists | Logged as a warning, tool left out of that turn |
+| It does not implement `AiToolInterface` | Logged as a warning, left out |
+| Its constructor throws (DI cycle, missing binding, …) | Logged as an **error with the class name**, left out |
+| `execute()` throws | Logged as an error; the **model** receives `{"error": true, …}` and can say so |
+
+In every case the rest of the chat keeps working and the page is untouched. The
+class name in the log is the point: without it a broken chat in an app with
+twenty tools has twenty suspects.
+
+The resolved list is memoised per request, so a turn that consults it more than
+once builds nothing twice.
+
+### Describing a tool without building it (`AiToolSchemaInterface`)
+
+`AiToolInterface` declares `name()`, `description()` and `parameters()` as
+instance methods, so describing a tool to the model means constructing it. Every
+turn sends the full list of schemas and calls at most one or two of them — which
+is fine for two tools and wasteful for twenty-six.
+
+A tool that also implements `Ptah\Contracts\AiToolSchemaInterface` is described
+from a static method and constructed **only if the model actually calls it**:
+
+```php
+<?php
+
+namespace App\Services\AI\Tools;
+
+use App\Contracts\Repositories\OrderRepositoryContract;
+use Ptah\Contracts\AiToolInterface;
+use Ptah\Contracts\AiToolSchemaInterface;
+
+class ListOpenOrdersTool implements AiToolInterface, AiToolSchemaInterface
+{
+    // Injected by the container — but only when the model calls the tool.
+    public function __construct(
+        private readonly OrderRepositoryContract $orders,
+    ) {}
+
+    public static function toolSchema(): array
+    {
+        return [
+            'name' => 'list_open_orders',
+            'description' => 'Lists orders that are still open.',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'limit' => ['type' => 'integer', 'description' => 'Max rows'],
+                ],
+                'required' => ['limit'],
+            ],
+        ];
+    }
+
+    public function name(): string
+    {
+        return self::toolSchema()['name'];
+    }
+
+    public function description(): string
+    {
+        return self::toolSchema()['description'];
+    }
+
+    public function parameters(): array
+    {
+        return self::toolSchema()['parameters'];
+    }
+
+    public function execute(array $arguments): array
+    {
+        return $this->orders->open(limit: (int) ($arguments['limit'] ?? 10))->toArray();
+    }
+}
+```
+
+Notes:
+
+- The interface is **optional**. A tool without it works exactly as before — the
+  registry constructs it to read its schema, and that construction is still
+  isolated by the try/catch above.
+- The static schema and the instance methods must agree. The registry does not
+  reconcile them, because reconciling would mean constructing the tool, which is
+  the cost the interface exists to avoid. Delegating the instance methods to
+  `toolSchema()`, as above, keeps them honest.
+- Worth it when a tool's constructor is expensive or has a deep dependency
+  graph, and when you have many tools. For a handful of cheap tools it buys
+  little.
 
 ### Real-world example — Helpdesk stats tool
 

@@ -928,6 +928,14 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-pag_sum                 { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-pag_sum      { color: var(--ptah-text-faint); }
 
+/* ── Rodape de versao (guia de ACL) ───────────────────────────────────────
+   Tinta tokenizada, nao um tom numerico da marca: uma view do pacote nao pode
+   depender de cor que o app.css do host precisa declarar (ver
+   HostThemeScaleDependencyTest). Mesmo token do resumo da paginacao, que e a
+   outra informacao "de canto de tela" do pacote. */
+.ptah-c-ver                     { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-ver          { color: var(--ptah-text-faint); }
+
 /* ── forge-stepper: zero dark: variant before this — the idle/neutral states
    (active/completed already ride bg-primary/bg-success, both theme-aware)
    are the only ones that needed a token pair. ── */

@@ -1019,6 +1019,8 @@
     ".ptah-c-tr|dark|border-bottom": "1px solid rgba(51, 65, 85, 0.4)",
     ".ptah-c-tr|light|background-color": "#ffffff",
     ".ptah-c-tr|light|border-bottom": "1px solid #f1f5f9",
+    ".ptah-c-ver|dark|color": "#a3b0c0",
+    ".ptah-c-ver|light|color": "#5e636a",
     ".ptah-card-default .border-b|dark|border-color": "#334155",
     ".ptah-card-default .border-b|light|border-color": "#f1f5f9",
     ".ptah-card-default .border-t|dark|border-color": "#334155",

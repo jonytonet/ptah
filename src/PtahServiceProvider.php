@@ -28,7 +28,6 @@ use Ptah\Commands\Permission\AuditPruneCommand;
 use Ptah\Commands\Permission\PermissionSyncCommand;
 use Ptah\Commands\Permission\PermissionWhyCommand;
 use Ptah\Commands\ScaffoldCommand;
-use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Events\PtahNotificationCreated;
@@ -63,8 +62,6 @@ use Ptah\Models\UserRole;
 use Ptah\Services\AI\AiChatService;
 use Ptah\Services\AI\AiProviderConfigService;
 use Ptah\Services\AI\AiToolRegistry;
-use Ptah\Services\AI\Tools\GetCurrentDateTimeTool;
-use Ptah\Services\AI\Tools\GetSystemInfoTool;
 use Ptah\Services\Auth\SessionService;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Services\Cache\CacheService;
@@ -126,23 +123,16 @@ class PtahServiceProvider extends ServiceProvider
 
         // AI Agent module
         if (config('ptah.modules.ai_agent')) {
-            $this->app->singleton(AiToolRegistry::class, function () {
-                $registry = new AiToolRegistry;
-                $registry->register(new GetSystemInfoTool);
-                $registry->register(new GetCurrentDateTimeTool);
-                foreach (config('ptah.ai_agent.tools', []) as $tool) {
-                    if (is_string($tool) && class_exists($tool)) {
-                        $instance = app($tool);
-                        if ($instance instanceof AiToolInterface) {
-                            $registry->register($instance);
-                        }
-                    } elseif ($tool instanceof AiToolInterface) {
-                        $registry->register($tool);
-                    }
-                }
-
-                return $registry;
-            });
+            // Nomes de classe, nao instancias — a montagem vive em
+            // AiToolRegistry::fromConfig(). Este closure roda quando o
+            // AiChatService e resolvido, e o AiChatService e resolvido no boot()
+            // do widget de chat, que vive no layout autenticado, ou seja em toda
+            // tela do sistema. Instanciar as tools aqui fazia cada page-load
+            // pagar por todas elas (26, no ERP que reportou isso) e, pior, punha
+            // o construtor de codigo do host dentro do render da pagina: uma
+            // tool com ciclo de DI derrubava o sistema inteiro com 500, nao so o
+            // chat.
+            $this->app->singleton(AiToolRegistry::class, static fn (): AiToolRegistry => AiToolRegistry::fromConfig());
             $this->app->singleton(AiProviderConfigService::class);
             $this->app->singleton(AiChatService::class);
         }

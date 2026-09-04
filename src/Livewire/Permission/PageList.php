@@ -304,7 +304,12 @@ class PageList extends Component
                     ->orWhere('obj_label', 'like', "%{$this->objSearch}%");
             }))
             ->orderBy('obj_order')
-            ->paginate(20);
+            // Nome de pagina proprio: esta tela tem DUAS listagens paginadas
+            // (paginas a esquerda, objetos a direita) e ambas usavam o padrao
+            // `page`, entao navegar numa mexia na outra. Ficou invisivel
+            // enquanto a paginacao inteira devolvia 500; passa a aparecer agora
+            // que os botoes funcionam.
+            ->paginate(20, ['*'], 'objPage');
     }
 
     public function render()

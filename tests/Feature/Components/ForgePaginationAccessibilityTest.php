@@ -56,13 +56,19 @@ class ForgePaginationAccessibilityTest extends TestCase
         );
     }
 
+    // Estas duas casavam pelo `$set('page', N)` que os botoes usavam. O `$set`
+    // era o bug do 500 (WithPagination nao tem propriedade publica `page`) e
+    // saiu; casar pelo `gotoPage(N, ...)` mantem a asserticao sobre o que ela
+    // realmente quer dizer — qual botao leva o aria-current — sem repetir a
+    // forma exata da expressao, que PaginationClickTest ja vigia.
+
     #[Test]
     public function current_page_button_carries_aria_current(): void
     {
         $html = $this->render(currentPage: 3);
 
         $this->assertMatchesRegularExpression(
-            '/wire:click="\$set\(.page., 3\)"\s+aria-current="page"/',
+            '/wire:click="gotoPage\(3,[^"]*\)"\s+aria-current="page"/',
             $html
         );
     }
@@ -72,8 +78,11 @@ class ForgePaginationAccessibilityTest extends TestCase
     {
         $html = $this->render(currentPage: 3);
 
+        // Sem a ancora do numero isto passaria a vazio: casa o botao 2 e exige
+        // que o que vem depois dele NAO seja aria-current.
+        $this->assertMatchesRegularExpression('/wire:click="gotoPage\(2,[^"]*\)"/', $html);
         $this->assertDoesNotMatchRegularExpression(
-            '/wire:click="\$set\(.page., 2\)"\s+aria-current="page"/',
+            '/wire:click="gotoPage\(2,[^"]*\)"\s+aria-current="page"/',
             $html
         );
     }

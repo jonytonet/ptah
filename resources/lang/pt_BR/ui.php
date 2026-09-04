@@ -927,6 +927,9 @@ return [
     'guide_faq_help_title' => 'Precisa de mais ajuda?',
     'guide_faq_help_body' => 'Consulte a <strong>Visão Geral</strong> para entender a arquitetura, o <strong>Passo a Passo</strong> para configurar e os <strong>Exemplos de Código</strong> para integrar no seu projeto.',
 
+    // Rodape do guia. O numero em si nao e traduzivel; a chave e para o tooltip.
+    'guide_version_title' => 'Versão do Ptah instalada',
+
     /*
     |--------------------------------------------------------------------------
     | CRUD Config (crud-config.blade.php)
@@ -1556,6 +1559,10 @@ return [
     'ai_error_overloaded' => 'O provedor de IA está indisponível agora. Tente novamente em instantes.',
     'ai_error_rejected' => 'O provedor de IA recusou a requisição. Os detalhes estão no log da aplicação.',
     'ai_error_generic' => 'Não foi possível concluir a requisição de IA. Os detalhes estão no log da aplicação.',
+    // Devolvido ao MODELO, nao ao usuario: e o que a tool responde quando
+    // nao pode ser construida ou estoura, para o assistente poder dizer
+    // que aquela capacidade caiu em vez de o turno morrer.
+    'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
     'ai_widget_provider' => 'Provedor de IA',
     'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',
