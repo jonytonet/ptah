@@ -37,6 +37,14 @@
     $ptahCookieTheme = \Ptah\Support\AppearancePresets::decodeCookie(request()->cookie(\Ptah\Support\AppearancePresets::COOKIE));
     $ptahAppearance = \Ptah\Support\AppearancePresets::sanitize($ptahDbTheme ?? $ptahCookieTheme);
     $theme = $theme ?? $ptahAppearance['mode'];
+
+    // Uma condicao, dois consumidores: o widget flutuante e a classe no <body>
+    // que reserva o espaco dele no fim da listagem. Se ficassem separadas, um
+    // host poderia terminar com o espaco reservado sem botao (rodape morto) ou
+    // com botao sem espaco (o defeito que isto corrige).
+    $ptahHasAiLauncher = auth()->check()
+        && config('ptah.modules.ai_agent')
+        && class_exists(\Livewire\Livewire::class);
 @endphp
 
 <!DOCTYPE html>
@@ -210,7 +218,7 @@
          partial for the full precedence rules. --}}
     @include('ptah::partials.appearance-boot')
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased {{ $ptahHasAiLauncher ? 'ptah-has-ai-launcher' : '' }}">
 
     {{--
         x-data raiz:
@@ -343,11 +351,9 @@
     {{-- Notification area --}}
     <x-forge-notification />
 
-    @auth
-        @if(config('ptah.modules.ai_agent') && class_exists(\Livewire\Livewire::class))
-            <livewire:ptah-ai-chat-widget />
-        @endif
-    @endauth
+    @if ($ptahHasAiLauncher)
+        <livewire:ptah-ai-chat-widget />
+    @endif
 
     @if(class_exists(\Livewire\Livewire::class))
         @livewireScripts

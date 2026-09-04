@@ -1664,6 +1664,8 @@ return [
     'print_btn_close' => 'Close',
     'print_copy_success' => 'Copied!',
     'print_copy_failed' => 'Failed',
+    'toolbar_more' => 'More actions',
+    'toolbar_more_hide' => 'Fewer actions',
     'btn_view_mode' => 'View mode',
     'view_mode_table' => 'Table view',
     'view_mode_cards' => 'Card view',

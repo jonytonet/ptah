@@ -166,6 +166,61 @@ class ConfigCommand extends Command
     }
 
     /**
+     * Adds a column, or merges into the one already configured for that field.
+     *
+     * Both call sites used to `$this->config['cols'][] = $parsed` — a blind
+     * append. Re-running `ptah:config --column="status:select:…"` on a model
+     * whose config already had a `status` column therefore produced TWO entries
+     * for the same field, and the command still reported success. The listing
+     * then rendered the column twice, and which definition won depended on
+     * iteration order.
+     *
+     * Merging (rather than replacing) keeps the keys this invocation did not
+     * mention — a label set through the visual editor survives a CLI call that
+     * only changes the type. Keys the new definition does set always win.
+     *
+     * @param  array<string, mixed>  $column
+     * @return string 'added' or 'updated', for the caller to report
+     */
+    protected function upsertColumn(array $column): string
+    {
+        $explicit = $column[ColumnParser::EXPLICIT_KEYS] ?? null;
+        unset($column[ColumnParser::EXPLICIT_KEYS]);
+
+        $field = $column['colsNomeFisico'] ?? null;
+
+        if ($field === null) {
+            $this->config['cols'][] = $column;
+
+            return 'added';
+        }
+
+        foreach ($this->config['cols'] ?? [] as $i => $existing) {
+            if (($existing['colsNomeFisico'] ?? null) !== $field) {
+                continue;
+            }
+
+            // Merge only what the definition actually said. Merging everything
+            // let the parser's own DEFAULTS win — most visibly the humanised
+            // label, which overwrote whatever the user had set in the visual
+            // editor. The interactive wizard supplies no such list, so it
+            // merges in full, which is correct there: every value it wrote was
+            // answered by the user.
+            $incoming = $explicit === null
+                ? $column
+                : array_intersect_key($column, array_flip($explicit));
+
+            $this->config['cols'][$i] = array_merge($existing, $incoming);
+
+            return 'updated';
+        }
+
+        $this->config['cols'][] = $column;
+
+        return 'added';
+    }
+
+    /**
      * Process declarative mode using command options
      */
     protected function processDeclarativeMode(string $modelClass): void
@@ -177,7 +232,8 @@ class ConfigCommand extends Command
             $this->info('Processing columns...');
             foreach ($this->option('column') as $columnConfig) {
                 $parsed = $this->parseColumnOption($columnConfig);
-                $this->config['cols'][] = $parsed;
+                $outcome = $this->upsertColumn($parsed);
+                $this->line("  <fg=green>{$outcome}</> column '{$parsed['colsNomeFisico']}'");
             }
         }
 
@@ -261,8 +317,8 @@ class ConfigCommand extends Command
                 $column = $columnWizard->run($modelClass);
 
                 if ($column) {
-                    $this->config['cols'][] = $column;
-                    $this->info("✓ Column '{$column['colsNomeFisico']}' added.");
+                    $outcome = $this->upsertColumn($column);
+                    $this->info("✓ Column '{$column['colsNomeFisico']}' {$outcome}.");
                 }
             }
         }

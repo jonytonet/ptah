@@ -449,6 +449,30 @@ php artisan ptah:config "App\Models\Product" \
 - ``{model}`` — Full model class name (e.g., ``App\Models\Product``)
 - ``--column=*`` — Add/update column: ``field:type:modifier:option=value``
 - ``--action=*`` — Add custom action: ``name:type:value:icon=icon:color=color``
+- ``--column=*`` — Add **or update** a column. Matching is by field name, so
+  re-running it for a field that already has a column MERGES into that column
+  instead of appending a second one (which is what it did before 1.30.2, leaving
+  two entries for the same field and letting iteration order decide which won).
+  A merge only applies the keys the definition actually names, so a label set
+  through the visual editor survives a CLI call that changes only the type. The
+  command reports ``added`` or ``updated`` per column.
+
+  **``options=`` for a select** accepts either form, and both normalise to the
+  ``colsSelect`` map (``label => value``) that the modal form and the filter
+  panel read:
+
+  | Form | Result |
+  |---|---|
+  | ``options=open:Aberto,closed:Fechado`` | ``{"Aberto":"open","Fechado":"closed"}`` |
+  | ``options=open,in_progress,resolved`` | ``{"Open":"open","In Progress":"in_progress",…}`` — label humanised |
+
+  Only the FIRST colon in an entry splits, so a label may contain one
+  (``urgent:Urgente: agora``). ``|`` is **not** an options separator — that
+  character belongs to ``badges=``, where it means ``value|color|label``. Until
+  1.30.2 the raw string was stored instead of the map, so a CLI-configured
+  select rendered a single option labelled ``0``; ``ptah:config:doctor --fix``
+  migrates configs saved before that.
+
 - ``--filter=*`` — Add custom filter: ``field:type:label=Label:operator==:options=value``  (no positional operator — everything after ``field:type`` is ``key=value``). Persisted under ``customFilters``, the section ``FilterService::processCustomFilters()`` reads; every writer is normalised through ``Ptah\Support\FilterRule``. Configs still carrying the pre-1.28.0 ``filters`` section are inert until ``ptah:config:doctor --fix`` migrates them.
 - ``--style=*`` — Add style rule: ``field:condition:value:style`` (``condition`` is ``==``/``!=``/``>``/``<``/``>=``/``<=`` or the aliases ``eq``/``ne``/``lt``/``gt``/``lte``/``gte``/``=``; ``style`` is an inline CSS declaration list, e.g. ``background:#FEE2E2;color:#991B1B;``). **If the VALUE contains a ``:``**, use the long form ``field:condition:value:style=<css>`` — the ``style=`` marker ends the value explicitly, e.g. ``start_at:==:12:30:style=background:#eee;``. Without it the value is cut at its first colon and the remainder leaks into the CSS, silently.
 - ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``

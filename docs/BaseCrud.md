@@ -2663,7 +2663,7 @@ php artisan ptah:config "App\Models\Product" --route="admin/products" --list
 php artisan ptah:config "App\Models\Ticket" \
   --route="admin/tickets" \
   --column="title:text:required" \
-  --column="status:select:options=open,in_progress,resolved:renderer=badge" \
+  --column="status:select:options=open:Aberto,in_progress:Em andamento,resolved:Resolvido:renderer=badge" \
   --column="priority:select:options=low,medium,high,urgent:renderer=badge" \
   --column="agent_id:searchdropdown:relation=agent:sdSelectColumn=name"
 
@@ -2674,6 +2674,13 @@ php artisan ptah:config "App\Models\Ticket" \
   --column="status:select:readonly" \
   --column="priority:select:readonly"
 ```
+
+> **`options=` accepts two forms.** `value:Label` pairs set the label explicitly
+> (`open:Aberto`); a bare list uses each value as its own option and humanises the
+> label (`low` becomes "Low"). Both are stored as the `colsSelect` map that the
+> modal form and the filter panel read. `|` is **not** an options separator — it
+> belongs to `badges=`, where it means `value|color|label`. Full syntax in
+> [Commands.md](Commands.md).
 
 ### Blade usage
 

@@ -96,9 +96,15 @@
                             $fHelpText = $col['colsHelpText'] ?? null;
                             $tabIdx    = 0; // natural DOM order — a positive tabindex jumped fields ahead of the footer/close
 
-            $fBorderClass  = $fError
-                                ? 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-300'
-                                : 'border-slate-200 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/15 dark:focus:ring-primary/30';
+            // A borda destes campos vem inteira de `.ptah-c-form_in` em
+                            // ptah-components.css: repouso, `:focus` e
+                            // `[aria-invalid="true"]`, nos dois escopos. Este helper
+                            // carregava as mesmas tres coisas em utilitarios Tailwind,
+                            // que NUNCA aplicaram — regra sem layer vence utilitario
+                            // com layer, e a cor computada foi medida identica com e
+                            // sem eles. Mantido como string vazia para nao mexer nas
+                            // quatro interpolacoes abaixo.
+                            $fBorderClass = '';
                         @endphp
 
                         <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
@@ -113,8 +119,15 @@
                                     // Handle PHP booleans (cast:boolean): false → '0', true → '1'
                                     $fValSel  = is_bool($fValue) ? ($fValue ? '1' : '0') : $fValue;
                                     $fInitSel = ($fValSel !== '' && $fValSel !== null) ? json_encode((string)$fValSel) : 'null';
-                                    $fBorderNormal = $fError ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600';
-                                    $fBorderOpen   = $fError ? 'border-red-500' : 'border-primary dark:border-primary';
+                                    // Repouso e erro vem de `.ptah-c-form_sel` /
+                                    // `.ptah-c-form_sel[aria-invalid]` — os utilitarios
+                                    // de paleta fixa que ficavam aqui eram inertes pelo
+                                    // mesmo motivo do $fBorderClass acima.
+                                    $fBorderNormal = '';
+                                    // O estado ABERTO nao tem regra em CSS, entao segue
+                                    // no Blade; `primary` e `danger` sao tokens de acento,
+                                    // nao paleta fixa.
+                                    $fBorderOpen   = $fError ? 'border-danger' : 'border-primary dark:border-primary';
                                     $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-primary/15 dark:ring-primary/30';
                                 @endphp
                                 <div class="w-full">
@@ -186,7 +199,7 @@
                                             x-transition:enter="transition ease-out duration-150"
                                             x-transition:enter-start="opacity-0 -translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                            class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 border-slate-200 dark:border-slate-600 ptah-c-dd">
+                                            class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 ptah-c-dd">
                                             <ul class="py-1">
                                                 <template x-for="option in options" :key="option.value">
                                                     <li

@@ -58,6 +58,31 @@ class HardcodedPaletteCeilingTest extends TestCase
 
     private const TEXT_PATTERN = '/text-(gray|slate|zinc|neutral|stone|white|black|'.self::CHROMATIC_FAMILIES.')(-\d+(\/\d+)?)?/';
 
+    /*
+     * BORDERS — the third scope widening, and the one that mattered most.
+     *
+     * This guard counted only `bg-` and `text-` for its entire life, so 235
+     * fixed-palette BORDER utilities across 31 views were invisible to it. That
+     * is how the BaseCrud selects kept a slate border in every theme while their
+     * fill and ink were correctly tokenised: the wave that fixed those two
+     * properties could not see the third, and the ceiling stayed green.
+     *
+     * A border carries real information — it is the visible boundary of every
+     * control — and it has its own contrast floor (3:1 for UI components), so
+     * leaving it out of the ratchet left a whole property class unmeasured.
+     *
+     * The optional `[xylrtbse]-` group catches the directional forms
+     * (border-t-slate-200, border-l-red-500, border-s-gray-300); without it the
+     * count would have been silently short again.
+     *
+     * As with the chromatic widening, existing counts are FROZEN, not reduced to
+     * zero: the fixture records what is there today so nothing can grow, and
+     * each file comes down on its own commit. `_modal-form` and `forge-select`
+     * came down in the same pass that added this, because their borders were the
+     * reported symptom.
+     */
+    private const BORDER_PATTERN = '/border-([xylrtbse]-)?(white|black|slate|gray|zinc|neutral|stone|'.self::CHROMATIC_FAMILIES.')(-\d+(\/\d+)?)?/';
+
     #[Test]
     public function no_view_gained_a_hardcoded_palette_utility(): void
     {
@@ -197,8 +222,9 @@ class HardcodedPaletteCeilingTest extends TestCase
 
         preg_match_all(self::BG_PATTERN, $normalized, $bgMatches);
         preg_match_all(self::TEXT_PATTERN, $normalized, $textMatches);
+        preg_match_all(self::BORDER_PATTERN, $normalized, $borderMatches);
 
-        return count($bgMatches[0]) + count($textMatches[0]);
+        return count($bgMatches[0]) + count($textMatches[0]) + count($borderMatches[0]);
     }
 
     /**

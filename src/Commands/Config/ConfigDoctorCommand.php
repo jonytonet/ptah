@@ -17,6 +17,7 @@ use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\FilterRule;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SearchDropdownMask;
+use Ptah\Support\SelectOptions;
 use Ptah\Support\SqlIdentifier;
 use Ptah\Support\StyleRule;
 use Ptah\Traits\SendsCrudNotifications;
@@ -39,6 +40,16 @@ use Throwable;
  *                        write; the runtime only reads 'contitionStyles'/'conditionStyles',
  *                        so any rule stored there silently never applies. `--fix`
  *                        normalises each item and folds it into 'contitionStyles'.
+ *   - unrenderable select → a column (or custom filter) whose 'colsSelect' is a
+ *                        STRING instead of the label => value map both the modal
+ *                        form and the filter panel read. `ptah:config --column=`
+ *                        wrote the raw definition there until 1.30.2, so the
+ *                        select rendered a single option labelled '0' whose value
+ *                        was the whole unparsed string. `--fix` normalises it.
+ *   - filter options key → a custom filter carrying its options under 'options',
+ *                        the key `--filter=` used to write; the panel reads
+ *                        'colsSelect', so the select rendered empty. `--fix`
+ *                        migrates the value.
  *   - unusable row style → a 'contitionStyles' item that StyleRule::normalize()
  *                        rejects (empty field/style, unrecognised condition) — it
  *                        will never apply at render time. Warning only.
@@ -192,6 +203,75 @@ class ConfigDoctorCommand extends Command
                 } else {
                     $this->line("🔴 <fg=red>legacy RBAC key</> [{$label}]: chave RBAC gravada em 'identifier' (legado); o runtime lê 'permissionIdentifier' — esta tela NÃO é gateada. Rode --fix");
                     $errors++;
+                }
+            }
+
+            // 5b. Select options stored in a shape nothing can render.
+            //
+            //     colsSelect must be a label => value MAP: both the modal form
+            //     and the filter panel build their <option> list from
+            //     array_keys()/array_values() of it. `ptah:config --column=`
+            //     stored the raw definition string there, and collect() on a
+            //     scalar yields [0 => "…"] — one option, labelled '0', whose
+            //     value was the entire unparsed string.
+            //
+            //     A custom filter has the same problem one key over: `--filter=`
+            //     wrote its options under 'options', which the panel never reads.
+            $selectFixes = [];
+
+            foreach ($config['cols'] ?? [] as $i => $col) {
+                if (($col['colsTipo'] ?? '') !== 'select') {
+                    continue;
+                }
+
+                $raw = $col['colsSelect'] ?? null;
+
+                if ($raw === null || $raw === '' || $raw === []) {
+                    continue;
+                }
+
+                $normalized = SelectOptions::normalize($raw);
+
+                if ($normalized !== $raw && $normalized !== []) {
+                    $selectFixes[] = ['cols', $i, 'colsSelect', $normalized, $col['colsNomeFisico'] ?? '?'];
+                }
+            }
+
+            foreach ($config['customFilters'] ?? [] as $i => $cf) {
+                $field = $cf['field'] ?? '?';
+                $current = $cf['colsSelect'] ?? null;
+                $legacy = $cf['options'] ?? null;
+
+                // The legacy key wins only when the canonical one is absent: a
+                // config already migrated must not be overwritten by a stale
+                // leftover.
+                $raw = ($current === null || $current === '' || $current === []) ? $legacy : $current;
+
+                if ($raw === null || $raw === '' || $raw === []) {
+                    continue;
+                }
+
+                $normalized = SelectOptions::normalize($raw);
+
+                if ($normalized !== [] && ($normalized !== $current || $legacy !== null)) {
+                    $selectFixes[] = ['customFilters', $i, 'colsSelect', $normalized, $field];
+                }
+            }
+
+            if ($selectFixes !== []) {
+                if ($this->option('fix')) {
+                    foreach ($selectFixes as [$section, $i, $key, $value, $field]) {
+                        $config[$section][$i][$key] = $value;
+                        unset($config[$section][$i]['options']);
+                        $this->line("🔧 <fg=green>fixed</> select options [{$label}] {$section}.{$field}: ".count($value).' opcao(oes) normalizada(s)');
+                    }
+                    $row->update(['config' => $config]);
+                    $fixed += count($selectFixes);
+                } else {
+                    foreach ($selectFixes as [$section, $i, $key, $value, $field]) {
+                        $this->line("🔴 <fg=red>unrenderable select</> [{$label}] {$section}.{$field}: as opcoes nao estao no mapa label => value que a view le — o select renderiza vazio ou com uma opcao '0'. Rode --fix");
+                    }
+                    $errors += count($selectFixes);
                 }
             }
 

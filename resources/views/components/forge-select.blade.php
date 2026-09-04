@@ -48,9 +48,24 @@
     $wireModelAttr   = collect($attributes->whereStartsWith('wire:model')->getAttributes())->first() ?? '';
     $uniqueId        = 'forge-select-' . substr(md5($label.'|'.($name ?? '').'|'.$placeholder.'|'.$wireModelAttr), 0, 12);
     $disabledClass   = $disabled ? 'opacity-50 pointer-events-none' : '';
-    $borderNormal    = $error ? 'border-red-400' : 'border-gray-300';
-    $borderOpen      = $error ? 'border-red-500' : 'border-primary';
-    $ringOpen        = $error ? 'ring-2 ring-red-200' : 'ring-2 ring-primary/20';
+    // The resting and error borders both come from `.ptah-select-trigger` in
+    // ptah-components.css. The fixed-palette utilities that used to live here
+    // NEVER applied — an unlayered rule beats a layered utility — which is why
+    // an errored forge-select rendered the SAME border as a valid one: measured
+    // rgb(143,149,160) in both cases. The error state was invisible, and no
+    // `aria-invalid` was set either, so assistive technology got nothing.
+    //
+    // `.ptah-select-trigger[aria-invalid="true"]` now carries it, mirroring the
+    // rule forge-input already had, and `$isInvalid` below drives the attribute.
+    $borderNormal    = '';
+    // The OPEN state has no CSS rule, so it stays here — `primary` and `danger`
+    // are accent tokens, not fixed palette.
+    $borderOpen      = $error ? 'border-danger' : 'border-primary';
+    $ringOpen        = $error ? 'ring-2 ring-danger/20' : 'ring-2 ring-primary/20';
+    // Same guard forge-input uses: only a REAL validation message marks the
+    // control invalid, never a purely decorative danger state.
+    $isInvalid       = $error !== null && $error !== '';
+    $errorMessageId  = $isInvalid ? $uniqueId.'-error' : null;
     // Exact "wire:model" ou "wire:model.<mod>" — NÃO "wire:modelable"
     // (whereStartsWith('wire:model') casaria com 'wire:modelable'; ver forge-modal.blade.php).
     $hasWireModel = $attributes->has('wire:model')
@@ -74,7 +89,7 @@
 <div class="ptah-select-wrapper w-full">
     @if ($label)
         <label class="block text-xs font-medium mb-1">
-            {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif
+            {{ $label }}@if ($required) <span class="ptah-c-field_err ml-0.5">*</span>@endif
         </label>
     @endif
 
@@ -224,15 +239,17 @@
             :aria-expanded="open"
             aria-controls="{{ $uniqueId }}-list"
             :class="open ? '{{ $borderOpen }} {{ $ringOpen }}' : '{{ $borderNormal }}'"
+            @if ($isInvalid) aria-invalid="true" @endif
+            @if ($errorMessageId) aria-describedby="{{ $errorMessageId }}" @endif
             class="ptah-select-trigger relative flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left cursor-pointer select-none transition-colors duration-150 focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
         >
             <span
-                :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'ptah-c-sel_val' : 'text-gray-400'"
+                :class="(selected !== null && selected !== '' && selected !== undefined && (!Array.isArray(selected) || selected.length > 0)) ? 'ptah-c-sel_val' : 'ptah-c-fp_muted'"
                 class="text-sm truncate pr-4"
                 x-text="displayLabel"
             ></span>
 
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 ptah-c-fp_chevron transition-transform duration-200" :class="open ? 'rotate-180' : ''">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
@@ -250,7 +267,7 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full border border-gray-200 rounded-md overflow-hidden"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full border rounded-md overflow-hidden"
         >
             <div class="p-1.5 border-b ptah-c-dd_sep">
                 <input
@@ -301,7 +318,7 @@
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full border border-gray-200 rounded-md overflow-auto max-h-48"
+            class="ptah-select-dropdown absolute z-20 mt-1 w-full border rounded-md overflow-auto max-h-48"
         >
             <ul class="py-1" role="listbox" id="{{ $uniqueId }}-list" :aria-multiselectable="multiple">
                 <template x-for="(option, idx) in options" :key="option.value">
@@ -325,6 +342,6 @@
     </div>
 
     @if ($error)
-        <p class="mt-1 text-xs text-red-500">{{ $error }}</p>
+        <p @if ($errorMessageId) id="{{ $errorMessageId }}" @endif class="mt-1 text-xs ptah-c-field_err">{{ $error }}</p>
     @endif
 </div>

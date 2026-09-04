@@ -4,6 +4,7 @@ namespace Ptah\Commands\Config\Parsers;
 
 use Illuminate\Support\Str;
 use Ptah\Support\FilterRule;
+use Ptah\Support\SelectOptions;
 
 class FilterParser
 {
@@ -33,9 +34,14 @@ class FilterParser
             if (str_contains($part, '=')) {
                 [$k, $v] = explode('=', $part, 2);
 
-                // Handle options key
                 if ($k === 'options') {
-                    $config['options'] = $v;
+                    // `colsSelect`, not `options`: the filter panel reads
+                    // `$cf['colsSelect']` for a select filter (see
+                    // _filter-panel.blade.php), so a value stored under
+                    // `options` was never read and every `--filter=…:options=`
+                    // select rendered empty. Same normaliser as the column
+                    // parser, so the two cannot drift apart again.
+                    $config['colsSelect'] = SelectOptions::normalize($v);
                 } else {
                     $config[$k] = $v;
                 }

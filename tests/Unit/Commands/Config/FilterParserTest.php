@@ -55,11 +55,16 @@ class FilterParserTest extends TestCase
     }
 
     #[Test]
-    public function routes_the_options_key_to_the_options_config_slot(): void
+    public function routes_the_options_key_to_the_slot_the_filter_panel_reads(): void
     {
         $c = $this->parser->parse('status:select:options=active:Active,inactive:Inactive');
 
-        $this->assertSame('active:Active,inactive:Inactive', $c['options']);
+        // Was `$c['options']` — a key the filter panel never reads, so every
+        // `--filter=…:options=` select rendered empty. The panel builds its
+        // <option> list from `$cf['colsSelect']` (see _filter-panel.blade.php),
+        // normalised to label => value by Ptah\Support\SelectOptions.
+        $this->assertSame(['Active' => 'active', 'Inactive' => 'inactive'], $c['colsSelect']);
+        $this->assertArrayNotHasKey('options', $c, 'A chave legada nao deve ser gravada por um writer novo.');
     }
 
     /**
@@ -76,7 +81,13 @@ class FilterParserTest extends TestCase
     {
         $c = $this->parser->parse('status:select:options=active:Active,inactive:Inactive,pending:Pending');
 
-        $this->assertSame('active:Active,inactive:Inactive,pending:Pending', $c['options']);
+        // All three pairs present proves nothing was truncated at a ':' — the
+        // property this test was written for. The assertion moved to the
+        // normalised map because that is now what is stored.
+        $this->assertSame(
+            ['Active' => 'active', 'Inactive' => 'inactive', 'Pending' => 'pending'],
+            $c['colsSelect']
+        );
     }
 
     #[Test]

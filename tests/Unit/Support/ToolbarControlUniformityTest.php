@@ -51,7 +51,14 @@ class ToolbarControlUniformityTest extends TestCase
     public static function toolbarControlProvider(): array
     {
         return [
-            '+ Novo (x-forge-button)' => ['/<x-forge-button @click="\$wire\.showModal = true; \$wire\.prepareCreate\(\)"[^>]*class="ptah-c-control"/'],
+            // `class="[^"]*ptah-c-control`, como todas as outras entradas — nao
+            // `class="ptah-c-control"` exato. O que este guard existe para
+            // garantir e que o controle CARREGUE a classe de altura
+            // compartilhada; casar o atributo inteiro tornava a assercao
+            // sensivel a qualquer classe vizinha, e falhou quando o Novo
+            // recebeu `order-2 sm:order-1` para a reordenacao no celular — uma
+            // mudanca que nao tem nada a ver com altura.
+            '+ Novo (x-forge-button)' => ['/<x-forge-button @click="\$wire\.showModal = true; \$wire\.prepareCreate\(\)"[^>]*class="[^"]*ptah-c-control/'],
             'Busca (x-forge-input)' => ['/iconBefore=\'[^\']*\'\s*\n\s*class="ptah-c-search ptah-c-control"/'],
             'Filtros' => ['/wire:click="toggleFilters"\s*\n\s*class="[^"]*ptah-c-control/'],
             'Lixeira' => ['/wire:click="toggleTrashed"\s*\n\s*class="[^"]*ptah-c-control/'],

@@ -39,21 +39,17 @@
         ".ptah-switcher-sep|light|height": "1.1em",
         ".ptah-switcher-sep|light|width": "1px",
         ".ptah-switcher-tab--active|light|box-shadow": "0 1px 5px rgba(30, 64, 175, 0.35)",
-        ".ptah-switcher-tab|dark|color": "#94a3b8",
         ".ptah-switcher-tab|light|background": "transparent",
-        ".ptah-switcher-tab|light|color": "#64748b",
         ".ptah-sidebar|dark|background-color": "#1e293b",
         ".ptah-sidebar|dark|border-color": "#334155",
         ".ptah-sidebar .ptah-sidebar-logo-wrapper|dark|border-color": "#334155",
         ".ptah-sidebar .ptah-sidebar-app-name|dark|color": "#e2e8f0",
-        ".ptah-sidebar .ptah-nav-item|dark|color": "#94a3b8",
         ".ptah-sidebar .ptah-nav-item:hover|dark|background-color": "#334155",
         ".ptah-sidebar .ptah-nav-item:hover|dark|color": "#e2e8f0",
         ".ptah-sidebar .ptah-sidebar-footer|dark|border-color": "#334155",
         ".ptah-navbar|dark|background-color": "#1e293b",
         ".ptah-navbar|dark|border-color": "#334155",
         ".ptah-navbar|dark|box-shadow": "0 1px 3px rgba(0, 0, 0, 0.4)",
-        ".ptah-navbar .ptah-navbar-icon-btn|dark|color": "#94a3b8",
         ".ptah-navbar .ptah-navbar-icon-btn:hover|dark|background-color": "#334155",
         ".ptah-navbar .ptah-navbar-icon-btn:hover|dark|color": "#e2e8f0",
         ".ptah-navbar .ptah-navbar-app-name|dark|color": "#e2e8f0",
@@ -70,21 +66,16 @@
         ".ptah-navbar .ptah-admin-dropdown a:hover|dark|background-color": "#334155",
         ".ptah-navbar .ptah-admin-dropdown svg|dark|color": "#64748b",
         ".ptah-navbar .ptah-admin-dropdown hr|dark|border-color": "#334155",
-        ".ptah-navbar .ptah-mobile-toggle|dark|color": "#94a3b8",
         ".ptah-navbar .ptah-mobile-toggle:hover|dark|background-color": "#334155",
         ".ptah-navbar .ptah-mobile-toggle:hover|dark|color": "#e2e8f0",
-        ".ptah-input-wrapper label|dark|color": "#94a3b8",
         ".ptah-input-wrapper input|dark|background-color": "#1e293b",
         ".ptah-input-wrapper input|dark|color": "#e2e8f0",
         ".ptah-input-wrapper input::placeholder|dark|color": "#64748b",
         ".ptah-input-wrapper input:disabled|dark|background-color": "#0f172a",
         ".ptah-input-wrapper .text-gray-400|dark|color": "#64748b",
-        ".ptah-textarea-wrapper label|dark|color": "#94a3b8",
         ".ptah-textarea-wrapper textarea|dark|background-color": "#1e293b",
         ".ptah-textarea-wrapper textarea|dark|color": "#e2e8f0",
         ".ptah-textarea-wrapper textarea::placeholder|dark|color": "#64748b",
-        ".ptah-textarea-wrapper .text-gray-500|dark|color": "#94a3b8",
-        ".ptah-select-wrapper > label|dark|color": "#94a3b8",
         ".ptah-select-trigger|dark|background-color": "#1e293b",
         ".ptah-select-trigger|dark|color": "#e2e8f0",
         ".ptah-select-dropdown|dark|background-color": "#1e293b",
@@ -98,22 +89,18 @@
         ".ptah-modal-panel .border-t|dark|border-color": "#334155",
         ".ptah-modal-panel h3|dark|color": "#e2e8f0",
         ".ptah-modal-panel .text-gray-700|dark|color": "#cbd5e1",
-        ".ptah-modal-panel .text-gray-600|dark|color": "#94a3b8",
         ".ptah-modal-panel button.text-gray-400:hover|dark|color": "#e2e8f0",
-        ".ptah-modal-panel .text-slate-600|dark|color": "#94a3b8",
         ".ptah-modal-panel .text-slate-700|dark|color": "#cbd5e1",
         ".ptah-module-table .bg-slate-100|dark|background-color": "#334155",
         ".ptah-module-table .bg-slate-50|dark|background-color": "#1e293b",
         ".ptah-module-table .text-slate-300|dark|color": "#475569",
         ".ptah-module-table .text-slate-400|dark|color": "#64748b",
-        ".ptah-module-table .text-slate-500|dark|color": "#94a3b8",
         ".ptah-module-table .text-slate-700|dark|color": "#cbd5e1",
         ".ptah-module-table .text-slate-800|dark|color": "#e2e8f0",
         ".ptah-module-table tbody td|dark|color": "#cbd5e1",
         ".ptah-module-table tbody tr:hover|dark|background-color": "#1e293b",
         ".ptah-module-table tbody tr|dark|border-color": "#334155",
         ".ptah-module-table tbody|dark|background-color": "#0f172a",
-        ".ptah-module-table thead th|dark|color": "#94a3b8",
         ".ptah-module-table thead tr|dark|background-color": "#1e293b",
         ".ptah-module-table thead tr|dark|border-color": "#475569",
         ".ptah-module-table|dark|border-color": "#334155",
@@ -237,8 +224,73 @@
         },
         ".ptah-modal-panel .text-gray-400|dark|color": {
             "from": "#64748b",
-            "to": "#94a3b8",
-            "reason": "subtitulo do forge-modal usava o mesmo hex do modo claro (#64748b) tambem no escuro, sem clarear para o fundo escuro; passa a usar --ptah-text-muted, o mesmo token que .ptah-c-modal_sub/.ptah-c-fp_muted/.ptah-c-tab_idle ja usam para o papel de 'texto apagado', alinhando as duas implementacoes de modal do pacote. Contraste ja coberto por ContrastGuardTest::case 15 (tab_idle dark: --ptah-text-muted #94a3b8 sobre --ptah-surface-raised #1e293b, a mesma dupla desta regra)"
+            "to": "#a3b0c0",
+            "reason": "subtitulo do forge-modal usava o mesmo hex do modo claro (#64748b) tambem no escuro, sem clarear para o fundo escuro; passa a usar --ptah-text-muted, o mesmo token que .ptah-c-modal_sub/.ptah-c-fp_muted/.ptah-c-tab_idle ja usam para o papel de 'texto apagado', alinhando as duas implementacoes de modal do pacote. Contraste ja coberto por ContrastGuardTest::case 15 (tab_idle dark: --ptah-text-muted #94a3b8 sobre --ptah-surface-raised #1e293b, a mesma dupla desta regra). Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-switcher-tab|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-switcher-tab|light|color": {
+            "from": "#64748b",
+            "to": "#5a5f65",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-sidebar .ptah-nav-item|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-navbar .ptah-navbar-icon-btn|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-navbar .ptah-mobile-toggle|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-input-wrapper label|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-textarea-wrapper label|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-textarea-wrapper .text-gray-500|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-select-wrapper > label|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-modal-panel .text-gray-600|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-modal-panel .text-slate-600|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-module-table .text-slate-500|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
+        },
+        ".ptah-module-table thead th|dark|color": {
+            "from": "#94a3b8",
+            "to": "#a3b0c0",
+            "reason": "Recalibracao dos tokens de fallback --ptah-text-muted/--ptah-text-faint: os valores base de :root (#64748b/#6b7280) e de .ptah-dark (#94a3b8) so passavam AA contra branco/quase-branco, e reprovavam contra todo tom que tinge suas superficies — 34 pares no claro (pior 3.62:1) e 12 no escuro (4.04:1) quando um tom e estampado SEM data-ptah-text, o que um layout proprio do host faz. Este sitio herda o token e acompanhou; a cor mudou, a funcao nao."
         }
     },
     "deleted": {

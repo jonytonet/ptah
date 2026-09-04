@@ -99,7 +99,14 @@ class ColumnParserTest extends TestCase
         $c = $this->parser->parse('status:select:options=active:Active,inactive:Inactive');
 
         $this->assertSame('select', $c['colsTipo']);
-        $this->assertSame('active:Active,inactive:Inactive', $c['colsSelect']);
+
+        // This used to assert the raw string, which was the observable at the
+        // time only because parseOptions() returned it untouched — a shape the
+        // views cannot render (collect() on a scalar yields one option labelled
+        // '0'). It now asserts the normalised label => value map, which proves
+        // the same thing more strongly: every colon-separated pair arrived
+        // intact, so nothing was truncated at the first ':'.
+        $this->assertSame(['Active' => 'active', 'Inactive' => 'inactive'], $c['colsSelect']);
     }
 
     #[Test]

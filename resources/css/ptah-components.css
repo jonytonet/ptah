@@ -136,8 +136,26 @@
     --ptah-text-field:     #1f2937; /* text typed/selected inside inputs and selects */
     --ptah-text:           #374151; /* default body text: filter-panel copy, empty-state title, table footer, dropdown items */
     --ptah-text-secondary: #475569; /* icon-button text, form labels */
-    --ptah-text-muted:     #64748b; /* muted text: helper copy, idle sort arrows, subtitles */
-    --ptah-text-faint:     #6b7280; /* faintest text: pagination summary, small field labels */
+    /* These two carry the ONLY :root text values that were not calibrated
+       against a tinted background. They were slate (#64748b / #6b7280), which
+       clears 4.5:1 against pure white and fails against every tone that tints
+       its surfaces: 34 combinations of tone x background dropped under AA, the
+       worst at 3.62:1 (muted on papel's --ptah-surface-hover).
+
+       Those values never render on a ptah screen — every package layout stamps
+       `data-ptah-text`, and all three scales override both tokens with darker
+       grays — so this was invisible from inside the package. It is reachable
+       from OUTSIDE it: a host writing its own layout (see docs/CustomScreens.md)
+       that stamps a tone without a text scale gets exactly these.
+
+       Set to the `suave` scale's own values rather than to newly invented ones:
+       suave is the package's mildest calibrated scale, so the fallback now
+       behaves like the gentlest supported configuration instead of like a
+       fourth, uncalibrated one. Monotonic order against --ptah-text-secondary
+       is preserved (L 0.0886 < 0.1130 < 0.1234), which
+       AppearancePresetContrastTest enforces. */
+    --ptah-text-muted:     #5a5f65; /* muted text: helper copy, idle sort arrows, subtitles */
+    --ptah-text-faint:     #5e636a; /* faintest text: pagination summary, small field labels */
     --ptah-icon-muted:     #64748b; /* toolbar icon glyphs — invariant across scope ON PURPOSE: .ptah-c-fp_chevron and
                                         .ptah-c-search_x use the exact same hex in light and dark today */
     --ptah-text-on-accent: #ffffff; /* white ink on solid accent/strong backgrounds — invariant across scope */
@@ -244,8 +262,16 @@
     --ptah-text-field:     #e2e8f0;
     --ptah-text:           #cbd5e1;
     --ptah-text-secondary: #cbd5e1;
-    --ptah-text-muted:     #94a3b8;
-    --ptah-text-faint:     #94a3b8;
+    /* Same miscalibration the light fallback had, mirrored: #94a3b8 measured
+       4.04:1 against the --ptah-surface-hover / --ptah-menu-hover of every dark
+       tone (#334155), so 12 pairs failed AA whenever a dark tone was stamped
+       WITHOUT a `data-ptah-text` scale. Invisible from inside the package for
+       the same reason — every layout stamps the scale — and reachable the same
+       way, from a host's own layout.
+       #a3b0c0 clears 4.70:1 there while staying darker than --ptah-text /
+       --ptah-text-secondary (#cbd5e1), so the scale keeps its order. */
+    --ptah-text-muted:     #a3b0c0;
+    --ptah-text-faint:     #a3b0c0;
 
     /* Dark override of the -soft tokens above — mixed against `transparent`
        instead of --ptah-surface, same idiom as --ptah-primary-soft-d: the chip
@@ -363,6 +389,63 @@
    O default é COLAPSADO de propósito. Começar expandido e colapsar depois faria a toolbar
    aparecer em duas linhas por um frame e pular para uma — salto de altura bem mais
    perceptível que ícones virando texto no mesmo lugar. */
+/* ── Toolbar no celular: duas linhas ──────────────────────────────────────
+   Em um telefone a toolbar ficava com QUATRO linhas mais a de ordenacao — a
+   busca e `w-full` abaixo de `sm`, entao ela sozinha ocupa uma; o botao Novo
+   vinha antes dela e ocupava outra; e os 12 controles restantes quebravam em
+   duas ou tres. O primeiro registro comecava na metade da tela.
+
+   Nada e escondido de forma permanente e nada e duplicado: os controles
+   secundarios sao os MESMOS elementos, apenas recolhidos atras do `⋯`. Isso
+   importa porque tres deles (exportar, colunas, densidade) sao dropdowns com
+   painel proprio — uma copia deles no menu teria de reimplementar cada painel,
+   e divergiria.
+
+   `640px` e o mesmo ponto do `sm:` do Tailwind, para o botao `⋯` (que e
+   `sm:hidden` pelo mesmo breakpoint) e estas regras nunca discordarem. */
+@media (max-width: 639px) {
+    .ptah-c-toolbar_more_item { display: none !important; }
+
+    /* `!important` porque os controles carregam `inline-flex`/`flex` de
+       utilitarios, que sao mais especificos que uma classe sozinha. E a unica
+       regra deste arquivo que precisa dele; o alternativa seria duplicar cada
+       seletor de controle aqui, que e pior. */
+    .ptah-c-toolbar_more_open .ptah-c-toolbar_more_item { display: inline-flex !important; }
+    .ptah-c-toolbar_more_open select.ptah-c-toolbar_more_item { display: inline-block !important; }
+}
+
+/* De `sm` para cima o `⋯` nao existe: todos os controles cabem na linha e
+   recolher qualquer um seria esconder funcao sem motivo. */
+@media (min-width: 640px) {
+    .ptah-c-toolbar_more_toggle { display: none !important; }
+}
+
+/* ── Espaco para o launcher do chat de IA ─────────────────────────────────
+   O launcher e `fixed bottom-6 right-6` com `w-14 h-14`: 56px de botao a 24px
+   da borda, ou seja 80px permanentes no canto inferior direito, em `z-50`. A
+   listagem nao reservava nada, e como a linha de acoes do card e alinhada a
+   direita, editar/duplicar/excluir do ULTIMO card caiam sempre embaixo dele.
+   No desktop passa batido porque a lista e larga; no celular o botao fica sobre
+   a unica coluna que existe.
+
+   Condicionado a `.ptah-has-ai-launcher`, que o layout so estampa quando o
+   widget de fato vai renderizar. Reservar 80px de rodape em todo host que nunca
+   ligou o modulo seria trocar divida velha por divida nova.
+
+   `env(safe-area-inset-bottom)` cobre a barra de gestos do iPhone, que come
+   mais alguns pixels por baixo do viewport. */
+.ptah-has-ai-launcher .ptah-crud-list-end {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+    /* Acima do celular a lista e larga o suficiente para o conteudo nunca
+       passar por baixo do botao; a folga volta a ser a normal. */
+    .ptah-has-ai-launcher .ptah-crud-list-end {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .ptah-c-btn_label { display: none; }
 .ptah-c-toolbar_labels .ptah-c-btn_label { display: inline; }
 
@@ -3033,6 +3116,21 @@ main { background-color: var(--ptah-canvas); }
     border-color: var(--ptah-line-field);
     color: var(--ptah-text-field);
 }
+/* The error border forge-select never actually had.
+   `$borderNormal = 'border-red-400'` in the Blade was a layered utility and lost
+   to the unlayered rules above, so an errored select rendered a border
+   indistinguishable from a valid one — measured identical, rgb(143,149,160), in
+   both states. The same defect forge-input had and got fixed for; this mirrors
+   that fix, including the token split: --ptah-danger-strong reads fine on a light
+   field (6.11:1) but fails the 3:1 component floor on a dark one, where raw
+   --color-danger does not. */
+.ptah-select-trigger[aria-invalid="true"] {
+    border-color: var(--ptah-danger-strong);
+}
+.ptah-dark .ptah-select-trigger[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
 .ptah-select-trigger > span:first-child { font-size: var(--ptah-field-fs, .875rem); }
 
 .ptah-select-dropdown {
