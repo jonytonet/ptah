@@ -208,59 +208,10 @@
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') === 'action')
                             <td class="px-3 py-(--ptah-row-py) text-center whitespace-nowrap">
-                                @php
-                                    $actionType  = $col['actionType']  ?? 'javascript';
-                                    $actionValue = $col['actionValue'] ?? ($col['actionCall'] ?? '');
-                                    $actionIcon  = $col['actionIcon']  ?: ($col['actionIcone'] ?? '');
-                                    $actionColor = $col['actionColor'] ?? 'primary';
-                                    $rowId       = $row->id ?? 0;
-                                    $actionStr   = str_replace(['%id%', '"id%'], [$rowId, $rowId], $actionValue);
-                                    // Block dangerous URL schemes on link actions (HTML escaping
-                                    // does NOT neutralise javascript:/data:/vbscript: in href).
-                                    $isUnsafeHref = ($actionType === 'link')
-                                        && preg_match('/^\s*(javascript|data|vbscript):/i', $actionStr);
-                                    if ($isUnsafeHref) {
-                                        $actionStr = '#';
-                                    }
-                                @endphp
-
-                                @if ($actionStr)
-                                    @if ($actionType === 'link')
-                                        <a href="{{ $actionStr }}"
-                                            @click.stop
-                                            class="transition-colors text-{{ $actionColor }} hover:opacity-75"
-                                            title="{{ $col['colsNomeLogico'] ?? '' }}">
-                                            @if ($actionIcon)
-                                                <i class="{{ $actionIcon }} text-base"></i>
-                                            @else
-                                                {{ $col['colsNomeLogico'] ?? '→' }}
-                                            @endif
-                                        </a>
-                                    @elseif ($actionType === 'livewire')
-                                        <button wire:click="{{ $actionStr }}"
-                                            @click.stop
-                                            class="transition-colors text-{{ $actionColor }} hover:opacity-75"
-                                            title="{{ $col['colsNomeLogico'] ?? '' }}">
-                                            @if ($actionIcon)
-                                                <i class="{{ $actionIcon }} text-base"></i>
-                                            @else
-                                                {{ $col['colsNomeLogico'] ?? '▶' }}
-                                            @endif
-                                        </button>
-                                    @else
-                                        {{-- javascript (default) --}}
-                                        <button onclick="{{ $actionStr }}"
-                                            @click.stop
-                                            class="transition-colors text-{{ $actionColor }} hover:opacity-75"
-                                            title="{{ $col['colsNomeLogico'] ?? '' }}">
-                                            @if ($actionIcon)
-                                                <i class="{{ $actionIcon }} text-base"></i>
-                                            @else
-                                                {{ $col['colsNomeLogico'] ?? '▶' }}
-                                            @endif
-                                        </button>
-                                    @endif
-                                @endif
+                                {{-- Shared with the card view: see
+                                     _row-action.blade.php for why this is a
+                                     partial and not two copies. --}}
+                                @include('ptah::livewire.base-crud.partials._row-action', ['col' => $col, 'row' => $row])
                             </td>
                         @endif
                     @endforeach

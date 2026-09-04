@@ -67,9 +67,22 @@
                 @endforeach
             </dl>
 
-            {{-- Footer: ações padrão --}}
-            @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
+            {{-- Footer: ações padrão + as configuradas.
+                 As colunas `action` do config eram ignoradas aqui, e desde a
+                 1.25.0 (cards viraram a visão padrão no celular) isso deixava
+                 toda ação customizada inalcançável no mobile. --}}
+            @php
+                $cardActionCols = collect($visibleCols)
+                    ->filter(fn (array $c): bool => ($c['colsTipo'] ?? '') === 'action')
+                    ->all();
+            @endphp
+            @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || $cardActionCols !== [])
                 <div class="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-slate-100 dark:border-slate-700">
+                    @foreach ($cardActionCols as $col)
+                        <span class="p-2 -m-1">
+                            @include('ptah::livewire.base-crud.partials._row-action', ['col' => $col, 'row' => $row])
+                        </span>
+                    @endforeach
                     @if ($effectivePerms['canUpdate'] && !$showTrashed)
                         <button wire:click="openEdit({{ $row->id ?? 0 }})" wire:loading.attr="disabled" @click.stop
                             class="p-2 -m-1 rounded transition-colors text-primary hover:text-primary/80"
