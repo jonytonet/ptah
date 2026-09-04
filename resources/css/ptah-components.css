@@ -712,6 +712,37 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-tbl_wrap           { border-color: var(--ptah-line-strong); box-shadow: 0 1px 2px rgba(15,23,42,.04); scrollbar-width: thin; scrollbar-color: var(--ptah-line-control) transparent; }
 .ptah-dark .ptah-c-tbl_wrap { border-color: var(--ptah-line-strong); box-shadow: none; scrollbar-color: var(--ptah-line-control) transparent; }
 
+/* ── Arrastar para rolar ──────────────────────────────────────────────────
+   `.ptah-is-pannable` só é aplicada quando a tabela realmente transborda na
+   horizontal (ver initPan em _scripts.blade.php), então o cursor de mãozinha
+   nunca promete um gesto que não faria nada.
+
+   Os descendentes interativos recuperam o cursor deles: `grab` no wrapper
+   herdaria para dentro dos botões e do checkbox, sugerindo arraste onde o
+   gesto é clique. O pan também não começa neles, então cursor e comportamento
+   dizem a mesma coisa. */
+.ptah-c-tbl_wrap.ptah-is-pannable { cursor: grab; }
+
+/* Listas de seletores, nao `:is()`. O parser das fixtures golden deste projeto
+   (NeutralTokenBaselineTest / LayoutStyleBaselineTest) divide seletores por
+   virgula e nao conhece `:is()`, entao a forma compacta virava chaves sem
+   sentido no baseline — `a|light|cursor`, `select)|light|cursor` — e uma delas
+   poderia colidir com um seletor real no futuro e mascarar uma mudanca de cor.
+   Mais verboso, mas conversa com a ferramenta que protege o tema. */
+.ptah-c-tbl_wrap.ptah-is-pannable button,
+.ptah-c-tbl_wrap.ptah-is-pannable a,
+.ptah-c-tbl_wrap.ptah-is-pannable label,
+.ptah-c-tbl_wrap.ptah-is-pannable summary,
+.ptah-c-tbl_wrap.ptah-is-pannable [draggable="true"] { cursor: pointer; }
+.ptah-c-tbl_wrap.ptah-is-pannable input,
+.ptah-c-tbl_wrap.ptah-is-pannable textarea,
+.ptah-c-tbl_wrap.ptah-is-pannable select { cursor: auto; }
+
+/* Durante o arraste: mãozinha fechada, e seleção desligada para o gesto não
+   pintar meia tabela de azul. Volta ao normal no pointerup. */
+.ptah-c-tbl_wrap.ptah-is-panning { cursor: grabbing; user-select: none; }
+.ptah-c-tbl_wrap.ptah-is-panning * { cursor: grabbing !important; }
+
 /* Thin styled scrollbar (WebKit) — the native Windows bar breaks the look */
 .ptah-c-tbl_wrap::-webkit-scrollbar              { height: 8px; width: 8px; }
 .ptah-c-tbl_wrap::-webkit-scrollbar-track        { background: transparent; }

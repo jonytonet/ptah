@@ -26,6 +26,139 @@
         window.location = url;
     };
 
+    /* ─── arrastar para rolar a tabela na horizontal ──────────────────
+       Uma tabela larga é difícil de rolar com mouse: a maioria não tem roda
+       horizontal, e shift+roda quase ninguém conhece. Arrastar resolve, mas o
+       wrapper já é território disputado — o <th> tem drag HTML5 para reordenar
+       coluna, a alça tem mousedown para redimensionar, e a linha pode ter
+       clique de navegação (ptahRowNav). Daí as quatro regras abaixo.
+
+       1. Só mouse. `pointerType` filtra toque e caneta, onde a rolagem nativa
+          é melhor do que qualquer coisa que este código faria — e onde
+          sequestrar o gesto quebraria o scroll da página.
+
+       2. Só fora dos elementos que já reagem a ponteiro. Começar um pan em
+          cima do <th> roubaria o drag de reorder; em cima de um botão,
+          checkbox ou input, roubaria o clique.
+
+       3. Limiar de 5px antes de considerar que é um arraste. Abaixo disso o
+          gesto segue sendo seleção de texto — copiar o valor de uma célula é
+          coisa que as pessoas fazem, e suprimir seleção sempre teria tirado
+          isso sem avisar.
+
+       4. Depois de arrastar de verdade, o `click` que o navegador dispara no
+          mouseup é engolido UMA vez. Sem isso, arrastar uma tabela com
+          `configLinkLinha` navegaria para o registro no fim do gesto.
+
+       O cursor de mãozinha só aparece quando a tabela realmente transborda —
+       oferecer o affordance numa tabela que não rola seria mentir sobre o que
+       o gesto faz. */
+    const PAN_THRESHOLD = 5;
+
+    function panIgnoresTarget(el) {
+        return !!el.closest(
+            'th, button, a, input, select, textarea, label, summary, ' +
+            '[draggable="true"], [contenteditable="true"], [data-ptah-no-pan]'
+        );
+    }
+
+    function markPannable(wrap) {
+        /* scrollWidth arredonda para inteiro; a folga de 1px evita ligar o
+           cursor por causa de meio pixel de borda. */
+        const can = wrap.scrollWidth - wrap.clientWidth > 1;
+        wrap.classList.toggle('ptah-is-pannable', can);
+    }
+
+    function initPan(wrap) {
+        if (wrap.__ptahPan) return;
+        wrap.__ptahPan = true;
+
+        markPannable(wrap);
+
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(() => markPannable(wrap));
+            ro.observe(wrap);
+        }
+
+        let startX = 0, startScroll = 0, panning = false, armed = false;
+
+        wrap.addEventListener('pointerdown', (e) => {
+            if (e.pointerType !== 'mouse' || e.button !== 0) return;
+            if (panIgnoresTarget(e.target)) return;
+            if (wrap.scrollWidth - wrap.clientWidth <= 1) return;
+
+            armed = true;
+            panning = false;
+            startX = e.clientX;
+            startScroll = wrap.scrollLeft;
+        });
+
+        wrap.addEventListener('pointermove', (e) => {
+            if (!armed) return;
+
+            const dx = e.clientX - startX;
+
+            if (!panning) {
+                if (Math.abs(dx) < PAN_THRESHOLD) return;
+                /* Cruzou o limiar: só agora isto é um arraste. */
+                panning = true;
+                wrap.classList.add('ptah-is-panning');
+                /* setPointerCapture mantém os eventos vindo mesmo quando o
+                   cursor sai do wrapper — sem isso o pan travava ao passar
+                   sobre a coluna sticky de ações. */
+                if (wrap.setPointerCapture) {
+                    try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+                }
+                /* Limpa a seleção que os primeiros pixels possam ter criado. */
+                const sel = window.getSelection && window.getSelection();
+                if (sel && sel.removeAllRanges) sel.removeAllRanges();
+            }
+
+            e.preventDefault();
+            wrap.scrollLeft = startScroll - dx;
+        });
+
+        function endPan(e) {
+            if (!armed) return;
+            armed = false;
+
+            if (!panning) return;
+            panning = false;
+            wrap.classList.remove('ptah-is-panning');
+
+            if (wrap.releasePointerCapture && e && e.pointerId !== undefined) {
+                try { wrap.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+
+            /* Engole o clique deste gesto, uma vez, na fase de captura — antes
+               que ele chegue ao @click da linha. */
+            wrap.addEventListener('click', function swallow(ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+                wrap.removeEventListener('click', swallow, true);
+            }, true);
+        }
+
+        wrap.addEventListener('pointerup', endPan);
+        wrap.addEventListener('pointercancel', endPan);
+        /* Se o botão for solto fora da janela, o pointerup não chega. */
+        window.addEventListener('blur', () => endPan(null));
+    }
+
+    function initAllPans() {
+        document.querySelectorAll('.ptah-c-tbl_wrap').forEach(initPan);
+    }
+
+    document.addEventListener('DOMContentLoaded', initAllPans);
+    /* Livewire troca o DOM da tabela a cada render (paginar, filtrar, ordenar);
+       o hook reinstala o comportamento nos wrappers novos. `__ptahPan` evita
+       ligar duas vezes no mesmo elemento. */
+    document.addEventListener('livewire:navigated', initAllPans);
+    if (window.Livewire && window.Livewire.hook) {
+        window.Livewire.hook('morphed', initAllPans);
+    }
+    initAllPans();
+
     /* ─── estado global ─────────────────────────────────────── */
     let _draggedTh = null, _draggedIdx = null, _dragCrudId = null;
     let _resizeTh = null, _resizeStart = 0, _resizeStartW = 0, _resizeField = null, _resizeCrud = null;
