@@ -1547,6 +1547,8 @@ return [
     // -------------------------------------------------------------------------
     // Módulo AI Agent
     // -------------------------------------------------------------------------
+    'ai_widget_provider' => 'Provedor de IA',
+    'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',
     'ai_widget_placeholder' => 'Digite uma mensagem…',
     'ai_widget_send' => 'Enviar',

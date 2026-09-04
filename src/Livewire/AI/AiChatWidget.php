@@ -61,6 +61,27 @@ class AiChatWidget extends Component
 
     public int $historyLimit = 5;
 
+    /**
+     * The provider the next turn should use.
+     *
+     * Deliberately NOT #[Locked]: choosing a provider is the point, so this is
+     * client-writable. The safety is on the read side —
+     * AiProviderConfigService::resolveForTurn() only accepts an id that names an
+     * ACTIVE config and otherwise falls back to the default, so a forged or
+     * stale value degrades instead of reaching a provider an administrator
+     * switched off.
+     */
+    public ?int $selectedConfigId = null;
+
+    /**
+     * Active providers for the picker. The picker only renders when there is
+     * more than one — a single provider needs no choice, and the control would
+     * be noise in a widget this small.
+     *
+     * @var array<int, array{id: int, name: string, provider: string, model: string, is_default: bool}>
+     */
+    public array $providerOptions = [];
+
     private const HISTORY_MAX = 100;
 
     private const HISTORY_STEP = 5;
@@ -97,6 +118,12 @@ class AiChatWidget extends Component
                 fn ($m) => in_array($m['role'] ?? '', ['user', 'assistant'], true)
             ));
         }
+
+        // The picker starts on the default, which is what a user who never
+        // touches it keeps getting.
+        $this->providerOptions = $this->configService->listActive();
+        $this->selectedConfigId = $this->configService->findDefault()?->id
+            ?? ($this->providerOptions[0]['id'] ?? null);
 
         if ($userId) {
             $this->refreshConversations();
@@ -151,6 +178,7 @@ class AiChatWidget extends Component
                             replace: true,
                         );
                     },
+                    configId: $this->selectedConfigId,
                 );
             } else {
                 $result = $this->chatService->send(
@@ -158,6 +186,7 @@ class AiChatWidget extends Component
                     session()->getId(),
                     auth()->id(),
                     $conversationId,
+                    $this->selectedConfigId,
                 );
             }
 

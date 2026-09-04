@@ -1546,6 +1546,8 @@ return [
     // -------------------------------------------------------------------------
     // AI Agent Module
     // -------------------------------------------------------------------------
+    'ai_widget_provider' => 'AI provider',
+    'ai_widget_provider_default' => 'default',
     'ai_widget_title' => 'AI Assistant',    'ai_widget_placeholder' => 'Type a message…',
     'ai_widget_send' => 'Send',
     'ai_widget_new_chat' => 'New conversation',

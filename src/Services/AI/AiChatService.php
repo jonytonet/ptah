@@ -119,17 +119,16 @@ class AiChatService
         string $sessionId,
         ?int $userId = null,
         ?int $conversationId = null,
+        ?int $configId = null,
     ): array {
-        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId);
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId);
 
         try {
             $response = $this->buildRequest($ctx)->asText();
         } catch (\Throwable $e) {
             $this->logProviderFailure($ctx['config'], $e);
-            throw new AiProviderException(
-                trans('ptah::ui.ai_widget_error').' '.$e->getMessage(),
-                previous: $e
-            );
+
+            throw $this->providerException($e);
         } finally {
             // Always restore the shared config (Octane / long-lived workers).
             $this->restoreConfig($ctx['restoreConfig']);
@@ -159,8 +158,9 @@ class AiChatService
         ?int $userId = null,
         ?int $conversationId = null,
         ?callable $onDelta = null,
+        ?int $configId = null,
     ): array {
-        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId);
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId);
 
         $full = '';
         $inputTokens = 0;
@@ -185,10 +185,8 @@ class AiChatService
             }
         } catch (\Throwable $e) {
             $this->logProviderFailure($ctx['config'], $e);
-            throw new AiProviderException(
-                trans('ptah::ui.ai_widget_error').' '.$e->getMessage(),
-                previous: $e
-            );
+
+            throw $this->providerException($e);
         } finally {
             $this->restoreConfig($ctx['restoreConfig']);
         }
@@ -226,7 +224,7 @@ class AiChatService
      *
      * @throws AiRateLimitException|AiProviderException
      */
-    private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId): array
+    private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId, ?int $configId = null): array
     {
         // Guests may only use the chat when explicitly allowed.
         if (! $userId && ! config('ptah.ai_agent.allow_guests', false)) {
@@ -246,7 +244,10 @@ class AiChatService
         // Optional per-user daily token budget.
         $this->assertWithinDailyTokenBudget($userId);
 
-        $config = $this->configService->findDefault();
+        // An explicit choice from the widget's provider picker, falling back to
+        // the default. The id is client-supplied, so the service validates that
+        // it names an ACTIVE config — see AiProviderConfigService::resolveForTurn().
+        $config = $this->configService->resolveForTurn($configId);
         if (! $config) {
             throw new AiProviderException(trans('ptah::ui.ai_widget_no_provider'));
         }
@@ -366,14 +367,84 @@ class AiChatService
         return ['text' => $finalText, 'conversationId' => $conversation->id];
     }
 
+    /**
+     * The exception the caller (widget, controller) receives.
+     *
+     * The provider's raw body goes to the log unconditionally, but it is only
+     * appended to the MESSAGE while `APP_DEBUG` is on: this message reaches the
+     * chat widget, and a body can carry internal detail an end user has no
+     * business seeing. A developer chasing a provider rejection gets it inline;
+     * everyone else gets the translated sentence.
+     */
+    private function providerException(\Throwable $e): AiProviderException
+    {
+        $message = trans('ptah::ui.ai_widget_error').' '.$e->getMessage();
+
+        if (config('app.debug')) {
+            $body = self::providerResponseBody($e);
+
+            if ($body !== null) {
+                $message .= ' — '.$body;
+            }
+        }
+
+        return new AiProviderException($message, previous: $e);
+    }
+
     private function logProviderFailure(AiModelConfig $config, \Throwable $e): void
     {
-        Log::error('[Ptah AI] Provider call failed', [
+        Log::error('[Ptah AI] Provider call failed', array_filter([
             'provider' => $config->provider,
             'model' => $config->model,
             'exception' => $e::class,
             'message' => $e->getMessage(),
-        ]);
+            'response_body' => self::providerResponseBody($e),
+        ], static fn (mixed $v): bool => $v !== null));
+    }
+
+    /**
+     * Digs the provider's raw response body out of the throwable chain.
+     *
+     * Prism formats its message as "%s Error [%d]: %s" and fills the last part
+     * from `error.message` in the JSON body — so a provider that reports the
+     * problem anywhere else produces the literal "Unknown error" and the actual
+     * explanation is discarded. That is not hypothetical: x.ai rejects a tool
+     * whose schema says `"properties": []` with
+     *
+     *     Schema validation failed: /properties: [] is not of type "object"
+     *
+     * and all ptah logged was `OpenAI Error [422]: Unknown error`. Hours of
+     * guesswork for a message the response already contained.
+     *
+     * Prism does pass the original `RequestException` as `previous`
+     * (PrismException::providerRequestErrorWithDetails), so the body is right
+     * there. The chain is walked because the wrapping depth varies by provider,
+     * and both client shapes are handled: Laravel's RequestException exposes a
+     * `$response` property, Guzzle's a `getResponse()` method.
+     *
+     * This is the RESPONSE body, never the request, so it cannot leak the API
+     * key that was sent. It is truncated because some providers echo the whole
+     * payload back.
+     */
+    private static function providerResponseBody(\Throwable $e): ?string
+    {
+        for ($current = $e; $current !== null; $current = $current->getPrevious()) {
+            $body = null;
+
+            if (property_exists($current, 'response') && $current->response !== null) {
+                $response = $current->response;
+                $body = method_exists($response, 'body') ? $response->body() : null;
+            } elseif (method_exists($current, 'getResponse')) {
+                $response = $current->getResponse();
+                $body = $response !== null ? (string) $response->getBody() : null;
+            }
+
+            if (is_string($body) && trim($body) !== '') {
+                return Str::limit($body, 2000);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -411,33 +482,48 @@ class AiChatService
         $provider = strtolower($config->provider);
         $applied = [];
 
-        $keyMap = [
-            'openai' => 'prism.providers.openai.api_key',
-            'anthropic' => 'prism.providers.anthropic.api_key',
-            'gemini' => 'prism.providers.gemini.api_key',
-            'groq' => 'prism.providers.groq.api_key',
-            'mistral' => 'prism.providers.mistral.api_key',
-        ];
+        // Both maps this method used to carry are gone, and that is the fix.
+        //
+        // Every provider block in Prism's own config uses the SAME two keys —
+        // `api_key` and `url` (see vendor/prism-php/prism/config/prism.php:
+        // openai, anthropic, ollama, mistral, groq, xai, gemini, deepseek,
+        // openrouter, perplexity, z … all `url`). The old endpoint map wrote
+        // `prism.providers.openai.base_url` and `…anthropic.base_url`, keys
+        // NOTHING reads, so the `api_endpoint` a user typed into /ptah-ai/models
+        // was silently discarded for those two providers and Prism kept calling
+        // api.openai.com. Only `ollama` worked, because it happened to be
+        // spelled `.url`.
+        //
+        // Deriving the paths from the provider name instead of listing them
+        // also means a provider added to Prism upstream works here with no
+        // change — which is how the key map had drifted behind the roster.
+        if (config()->has("prism.providers.{$provider}")) {
+            // Only overwrite when this config actually carries a key: writing
+            // null would blank out the host's env credential for providers that
+            // legitimately have none saved (Ollama), and the env fallback is the
+            // correct value in that case.
+            if ($config->api_key !== null && $config->api_key !== '') {
+                $keyPath = "prism.providers.{$provider}.api_key";
+                $applied[$keyPath] = config($keyPath);
+                config([$keyPath => $config->api_key]);
+            }
 
-        if (isset($keyMap[$provider])) {
-            $applied[$keyMap[$provider]] = config($keyMap[$provider]);
-            config([$keyMap[$provider] => $config->api_key]);
+            if ($config->api_endpoint) {
+                $urlPath = "prism.providers.{$provider}.url";
+                $applied[$urlPath] = config($urlPath);
+                config([$urlPath => $config->api_endpoint]);
+            }
         }
 
-        if ($config->api_endpoint) {
-            $endpointMap = [
-                'openai' => 'prism.providers.openai.base_url',
-                'anthropic' => 'prism.providers.anthropic.base_url',
-                'ollama' => 'prism.providers.ollama.url',
-            ];
-
-            if (isset($endpointMap[$provider])) {
-                $applied[$endpointMap[$provider]] = config($endpointMap[$provider]);
-                config([$endpointMap[$provider] => $config->api_endpoint]);
-            }
-        } elseif ($provider === 'ollama') {
+        // Ollama with no endpoint saved: fall back to the default, WITHOUT the
+        // `/api` suffix this line used to add. Prism's Ollama handlers post to
+        // the relative path `api/chat` on top of the base url, so
+        // `http://localhost:11434/api` produced `…/api/api/chat` and every
+        // default Ollama install failed until the host set OLLAMA_URL by hand.
+        // This matches Prism's own default for the same key.
+        if (! $config->api_endpoint && $provider === 'ollama') {
             $applied['prism.providers.ollama.url'] = config('prism.providers.ollama.url');
-            config(['prism.providers.ollama.url' => env('OLLAMA_URL', 'http://localhost:11434/api')]);
+            config(['prism.providers.ollama.url' => env('OLLAMA_URL', 'http://localhost:11434')]);
         }
 
         // Original values, so the caller can restore them after the request.
@@ -485,14 +571,20 @@ class AiChatService
     /** Maps our provider string to Prism's Provider enum. */
     private function resolveProvider(string $provider): Provider
     {
-        return match (strtolower($provider)) {
-            'anthropic' => Provider::Anthropic,
-            'gemini' => Provider::Gemini,
-            'ollama' => Provider::Ollama,
-            'groq' => Provider::Groq,
-            'mistral' => Provider::Mistral,
-            default => Provider::OpenAI,
-        };
+        // `Provider` is a string-backed enum whose values are exactly the
+        // provider slugs stored in ai_model_configs, so tryFrom() resolves the
+        // whole roster — including the ones the old match() had fallen behind
+        // (xai, deepseek, openrouter, perplexity, z, voyageai) and any provider
+        // Prism adds later.
+        //
+        // Falling through to OpenAI is not a harmless default: the OpenAI
+        // handler posts to `responses` (the Responses API), which
+        // OpenAI-compatible providers generally do not implement. x.ai answered
+        // that with a 422 and no explanation, which is what made Grok look
+        // unsupportable — while Prism has had a dedicated Provider::XAI, posting
+        // to `chat/completions`, all along. OpenAI remains the fallback only for
+        // a slug Prism does not know at all.
+        return Provider::tryFrom(strtolower($provider)) ?? Provider::OpenAI;
     }
 
     /**

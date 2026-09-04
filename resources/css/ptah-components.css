@@ -2495,6 +2495,18 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_panel                 { background-color: var(--ptah-surface-raised); }
 .ptah-dark .ptah-c-chat_panel      { background-color: var(--ptah-surface-raised); }
 
+/* Provider picker bar in the chat widget. The <select> follows the SAME
+   resting-field recipe as every other field surface in the package —
+   --ptah-field in light, --ptah-field-muted in dark, --ptah-line-field for the
+   border in both — because a control that invents its own pair is exactly how
+   the BaseCrud selects ended up clashing with the inputs beside them in dark.
+   See the note above .ptah-c-form_in. */
+.ptah-c-chat_provider_bar            { background-color: var(--ptah-panel); border-color: var(--ptah-line); }
+.ptah-dark .ptah-c-chat_provider_bar { background-color: var(--ptah-panel); border-color: var(--ptah-line); }
+
+.ptah-c-chat_provider_select            { background-color: var(--ptah-field); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
+.ptah-dark .ptah-c-chat_provider_select { background-color: var(--ptah-field-muted); border-color: var(--ptah-line-field); color: var(--ptah-text-field); }
+
 .ptah-c-chat_label                 { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-chat_label       { color: var(--ptah-text-faint); }
 

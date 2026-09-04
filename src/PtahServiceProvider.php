@@ -78,6 +78,7 @@ use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
+use Ptah\Support\AI\ToolSchemaNormalizer;
 use Ptah\Support\SchemaInspector;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
@@ -173,6 +174,18 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerLivewire();
         $this->registerPermissionCacheInvalidation();
         $this->registerNotificationBroadcastChannel();
+
+        // Makes tool payloads valid JSON Schema on the way out. A no-argument
+        // tool serialises its empty parameter list as `"properties": []`, which
+        // strict providers (x.ai, OpenAI's structured mode, most self-hosted
+        // OpenAI-compatible servers) reject — and both of ptah's built-in tools
+        // take no arguments, so the package failed on its own tools. Gated on
+        // the module so a host that never uses the AI agent registers nothing.
+        // See the class for why the trigger is the malformed shape rather than
+        // the destination host.
+        if (config('ptah.modules.ai_agent') && config('ptah.ai_agent.normalize_tool_schema', true)) {
+            ToolSchemaNormalizer::register();
+        }
 
         // Render a friendly 403 page when the host app has no custom one.
         // Only activates when the permissions module is enabled; falls back to

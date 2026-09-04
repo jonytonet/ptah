@@ -106,14 +106,30 @@ class AiModelConfigList extends Component
 
     public string $errorMsg = '';
 
-    /** Supported providers (value => label) */
+    /**
+     * Supported providers (value => label).
+     *
+     * Each key must be a `Prism\Prism\Enums\Provider` value, because
+     * AiChatService::resolveProvider() resolves it with `Provider::tryFrom()`.
+     * Only text-capable providers belong here — Prism also ships ElevenLabs
+     * (speech) and VoyageAI (embeddings), which have no chat handler.
+     *
+     * xAI is listed explicitly: routing Grok through the OpenAI provider sends
+     * it to the Responses API (`/v1/responses`), which x.ai does not implement,
+     * and the 422 that comes back explains nothing. Prism's dedicated XAI
+     * provider posts to `chat/completions`.
+     */
     public const PROVIDERS = [
         'openai' => 'OpenAI',
         'anthropic' => 'Anthropic (Claude)',
         'gemini' => 'Google Gemini',
-        'ollama' => 'Ollama (Local)',
+        'xai' => 'xAI (Grok)',
+        'deepseek' => 'DeepSeek',
         'groq' => 'Groq',
         'mistral' => 'Mistral',
+        'openrouter' => 'OpenRouter',
+        'perplexity' => 'Perplexity',
+        'ollama' => 'Ollama (Local)',
     ];
 
     // ── Rules ──────────────────────────────────────────────────────────

@@ -59,6 +59,32 @@
             </div>
         </div>
 
+        {{--
+            Provider picker — only when there is an actual choice to make.
+            With a single configured provider the control is pure noise in a
+            panel this narrow, so it does not render at all.
+
+            The selected id is client-writable on purpose (choosing is the
+            point); AiProviderConfigService::resolveForTurn() validates that it
+            names an ACTIVE config and falls back to the default otherwise, so a
+            stale value in a long-open tab degrades instead of failing.
+        --}}
+        @if(!$showHistory && count($providerOptions) > 1)
+        <div class="flex items-center gap-2 px-3 py-2 border-b ptah-c-chat_provider_bar flex-shrink-0">
+            <i class="bx bx-chip text-base ptah-c-chat_label" aria-hidden="true"></i>
+            <label for="ptah-ai-provider" class="sr-only">{{ __('ptah::ui.ai_widget_provider') }}</label>
+            <select id="ptah-ai-provider"
+                    wire:model.live="selectedConfigId"
+                    class="flex-1 min-w-0 rounded-md border px-2 py-1 text-xs ptah-c-chat_provider_select">
+                @foreach($providerOptions as $option)
+                    <option value="{{ $option['id'] }}">
+                        {{ $option['name'] }} — {{ $option['model'] }}@if($option['is_default']) ({{ __('ptah::ui.ai_widget_provider_default') }})@endif
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+
         {{-- History panel (authenticated users only) --}}
         @auth
         @if($showHistory)

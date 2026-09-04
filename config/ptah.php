@@ -476,6 +476,20 @@ return [
         'daily_token_limit' => (int) env('PTAH_AI_DAILY_TOKEN_LIMIT', 0),
         'allow_guests' => (bool) env('PTAH_AI_ALLOW_GUESTS', false),
         'expose_system_details' => (bool) env('PTAH_AI_EXPOSE_SYSTEM_DETAILS', false),
+
+        /*
+         * Rewrites `"properties": []` to `"properties": {}` in outgoing tool
+         * payloads. A tool with no arguments serialises its empty parameter list
+         * as a JSON array, which is invalid JSON Schema; strict providers (x.ai,
+         * OpenAI's structured mode, most self-hosted OpenAI-compatible servers)
+         * reject the request, and ptah's own built-in tools take no arguments.
+         *
+         * Leave this on unless Prism has fixed the serialisation upstream for
+         * your provider — the rewrite is a correctness fix, so a lenient
+         * provider sees no difference. See Ptah\Support\AI\ToolSchemaNormalizer.
+         */
+        'normalize_tool_schema' => (bool) env('PTAH_AI_NORMALIZE_TOOL_SCHEMA', true),
+
         'tools' => [],
     ],
 
