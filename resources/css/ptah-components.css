@@ -3059,6 +3059,21 @@ main { background-color: var(--ptah-canvas); }
     border-color: var(--ptah-line-field);
     color: var(--ptah-text-field);
 }
+/* The error border forge-select never actually had.
+   `$borderNormal = 'border-red-400'` in the Blade was a layered utility and lost
+   to the unlayered rules above, so an errored select rendered a border
+   indistinguishable from a valid one — measured identical, rgb(143,149,160), in
+   both states. The same defect forge-input had and got fixed for; this mirrors
+   that fix, including the token split: --ptah-danger-strong reads fine on a light
+   field (6.11:1) but fails the 3:1 component floor on a dark one, where raw
+   --color-danger does not. */
+.ptah-select-trigger[aria-invalid="true"] {
+    border-color: var(--ptah-danger-strong);
+}
+.ptah-dark .ptah-select-trigger[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
 .ptah-select-trigger > span:first-child { font-size: var(--ptah-field-fs, .875rem); }
 
 .ptah-select-dropdown {
