@@ -10,6 +10,7 @@
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Providers](#providers)
+  - [OpenAI-compatible platforms (`openai_compatible`)](#openai-compatible-platforms-openai_compatible)
 - [Configuration Reference](#configuration-reference)
 - [Admin Screen — Configuring a Provider](#admin-screen--configuring-a-provider)
 - [Customising the System Prompt](#customising-the-system-prompt)
@@ -82,14 +83,66 @@ That's it — the chat widget appears automatically for authenticated users.
 
 ## Providers
 
-| Provider | `provider` value | Requires |
-|---|---|---|
-| **OpenAI** | `openai` | API key from [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `anthropic` | API key from [console.anthropic.com](https://console.anthropic.com/account/keys) |
-| **Google Gemini** | `gemini` | API key from [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **Ollama** | `ollama` | Local Ollama running at `http://localhost:11434` — no API key needed |
-| **Groq** | `groq` | API key from [console.groq.com/keys](https://console.groq.com/keys) — free tier available |
-| **Mistral** | `mistral` | API key from [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
+| Provider | `provider` value | Streaming | Requires |
+|---|---|---|---|
+| **OpenAI** | `openai` | yes | API key from [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic** | `anthropic` | yes | API key from [console.anthropic.com](https://console.anthropic.com/account/keys) |
+| **Google Gemini** | `gemini` | yes | API key from [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **xAI (Grok)** | `xai` | yes | API key from [console.x.ai](https://console.x.ai) |
+| **DeepSeek** | `deepseek` | yes | API key from [platform.deepseek.com](https://platform.deepseek.com) |
+| **Groq** | `groq` | yes | API key from [console.groq.com/keys](https://console.groq.com/keys) — free tier available |
+| **Mistral** | `mistral` | yes | API key from [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
+| **OpenRouter** | `openrouter` | yes | API key from [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **Perplexity** | `perplexity` | yes | API key from [perplexity.ai](https://www.perplexity.ai/settings/api) |
+| **z.ai (GLM)** | `z` | **no** | API key from [z.ai](https://z.ai) |
+| **Ollama** | `ollama` | yes | Local Ollama running at `http://localhost:11434` — no API key needed |
+| **OpenAI-compatible** | `openai_compatible` | yes | An **API Endpoint is required** — see below |
+
+**Streaming** is a capability of the provider, not a setting. `PTAH_AI_STREAM`
+defaults to `true`, but the widget checks whether the resolved provider can
+actually stream and silently uses the non-streaming path when it cannot. Today
+`z` is the only provider in that position; you do not need to configure anything
+for it, and the answer simply arrives at once instead of token by token.
+
+### OpenAI-compatible platforms (`openai_compatible`)
+
+Many services and self-hosted servers speak the OpenAI **chat completions** API
+without being OpenAI. They do **not** work under the `openai` provider, because
+that one targets OpenAI's newer *Responses* API (`/v1/responses`), which they do
+not implement — the request fails with an unexplained 400/422.
+
+Use `openai_compatible` for all of these, with the **API Endpoint** pointing at
+the server's OpenAI-compatible base URL:
+
+| Platform | Endpoint |
+|---|---|
+| Together AI | `https://api.together.xyz/v1` |
+| Fireworks AI | `https://api.fireworks.ai/inference/v1` |
+| Cerebras | `https://api.cerebras.ai/v1` |
+| SambaNova | `https://api.sambanova.ai/v1` |
+| vLLM (self-hosted) | `http://your-server:8000/v1` |
+| LM Studio | `http://localhost:1234/v1` |
+| llama.cpp server | `http://localhost:8080/v1` |
+| LocalAI | `http://localhost:8080/v1` |
+
+The endpoint is mandatory for this option: there is no sensible default for
+somebody else's server, and the admin screen rejects the form without it.
+
+> **Azure OpenAI is NOT covered by this option.** It authenticates with an
+> `api-key` header (or an Entra ID token) rather than
+> `Authorization: Bearer`, and requires an `api-version` query parameter — so
+> pointing `openai_compatible` at an Azure resource fails on authentication.
+> Everything in the table above uses Bearer auth, which is why it works.
+> Azure needs a dedicated provider; if you need it, open an issue.
+
+> **How it works, and its one rough edge.** `openai_compatible` is a ptah alias,
+> not a Prism provider: it is resolved onto a Prism provider whose handler posts
+> to plain `chat/completions` with the vanilla payload (`model`, `messages`,
+> `max_tokens`, `temperature`, `top_p`, `tools`, `tool_choice`). For the duration
+> of a request it borrows that provider's configuration slot, restored
+> afterwards. This works and is tested, but it is a workaround for Prism having
+> no generic OpenAI-compatible provider; if that lands upstream, this alias goes
+> away and existing configs will need their `provider` value updated.
 
 ---
 
@@ -108,6 +161,15 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
     // Max requests per minute per session
     'rate_limit'    => (int) env('PTAH_AI_RATE_LIMIT', 30),
 
+    // Rewrites `"properties": []` to `{}` in outgoing tool payloads. A tool
+    // with no arguments serialises its empty parameter list as a JSON array,
+    // which is invalid JSON Schema; strict providers (x.ai, OpenAI's structured
+    // mode, most self-hosted OpenAI-compatible servers) reject the whole
+    // request for it — and ptah's own built-in tools take no arguments.
+    // Leave it on: the rewrite is a correctness fix, so a lenient provider sees
+    // no difference.
+    'normalize_tool_schema' => (bool) env('PTAH_AI_NORMALIZE_TOOL_SCHEMA', true),
+
     // Custom tools (instances of AiToolInterface)
     'tools'         => [],
 ],
@@ -121,6 +183,8 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_SYSTEM_PROMPT` | `You are a helpful assistant.` | Default system prompt |
 | `PTAH_AI_MAX_HISTORY` | `20` | Max messages kept in session history |
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
+| `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
+| `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | Fix `"properties": []` in tool payloads for strict providers — see the config block above |
 | `PRISM_REQUEST_TIMEOUT` | `30` | HTTP timeout in seconds for AI provider requests — increase for slow local models (e.g. Ollama on CPU) |
 
 ---
@@ -157,11 +221,52 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 - Get your API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 - Recommended models: `gemini-1.5-pro`, `gemini-1.5-flash`
 
+#### xAI (Grok)
+- Get your API key at [console.x.ai](https://console.x.ai)
+- Recommended models: `grok-2`, `grok-2-mini`
+- Leave **API Endpoint** empty — the default (`https://api.x.ai/v1`) is correct
+- Select the provider **xAI (Grok)**, not OpenAI: routing Grok through the OpenAI
+  provider sends it to the Responses API, which x.ai does not implement
+
+#### DeepSeek
+- Get your API key at [platform.deepseek.com](https://platform.deepseek.com)
+- Recommended models: `deepseek-chat`, `deepseek-reasoner`
+
+#### OpenRouter
+- Get your API key at [openrouter.ai/keys](https://openrouter.ai/keys)
+- The model is the full slug, e.g. `anthropic/claude-3.5-sonnet`, `meta-llama/llama-3.1-70b-instruct`
+
+#### Perplexity
+- Get your API key at [perplexity.ai](https://www.perplexity.ai/settings/api)
+- Recommended models: `sonar`, `sonar-pro`
+
+#### z.ai (GLM)
+- Get your API key at [z.ai](https://z.ai)
+- Recommended models: `glm-4`, `glm-4-flash`
+- **No streaming**: this provider ships no streaming handler, so the answer
+  arrives all at once even with `PTAH_AI_STREAM=true`. Nothing to configure —
+  ptah detects it and takes the non-streaming path.
+
+#### OpenAI-compatible (custom endpoint)
+- Use this for Together, Fireworks, Cerebras, SambaNova, vLLM, LM Studio,
+  llama.cpp, LocalAI — see the endpoint table under **Providers**
+- **Not** for Azure OpenAI, which uses a different auth header (see the note there)
+- **API Endpoint is required** and must be the OpenAI-compatible base URL,
+  usually ending in `/v1`
+- The model is whatever that platform calls it, e.g.
+  `meta-llama/Llama-3-70b-chat-hf` on Together
+- Do **not** pick OpenAI with a custom endpoint: it targets the Responses API,
+  which these platforms do not implement
+
 #### Ollama (local / self-hosted)
 - Install Ollama: [ollama.com](https://ollama.com)
 - Pull a model: `ollama pull qwen2.5:3b`
 - Set **API Endpoint** to `http://localhost:11434` (or your server's URL)
 - No API key required — leave the API key field empty or enter any value
+
+> **Do not add `/api` to the endpoint.** Prism appends the `api/chat` path
+> itself, so `http://localhost:11434/api` becomes `.../api/api/chat` and every
+> request 404s. Leaving the endpoint empty is also fine — the default is correct.
 
 > **Running inside Docker?** If your Laravel application runs inside a Docker container, `localhost` resolves to the container itself — not your host machine. Use `http://host.docker.internal:11434` as the endpoint instead.
 
@@ -446,11 +551,60 @@ Refer to the [prism-php/prism documentation](https://prism.echolabs.dev) for the
 
 ### API errors
 
-- Verify your API key is correct
-- Check that the selected model name is valid for your provider
+The chat now names the cause rather than showing a raw provider string, so start
+from the message on screen:
+
+| Message says | What to change |
+|---|---|
+| the credential was rejected | the **API Key** for this provider |
+| the address was not found | the **API Endpoint** — check for a typo or a missing `/v1` |
+| could not reach the provider | the endpoint, and whether the server is running (self-hosted / Ollama) |
+| the provider is throttling | nothing — wait and retry |
+| does not serve the configured model | the **Model** field; the name must be exactly what that platform calls it |
+| refused the request format | nothing you did — a configuration problem; the log has the detail |
+| unavailable right now | nothing — the provider is down, retry shortly |
+
+Every failure is also logged with the classified `reason`, the HTTP `status` and
+the provider's **raw response body**:
+
+```
+[Ptah AI] Provider call failed {"provider":"xai","model":"grok-2",
+  "reason":"schema","status":422,"response_body":"{\"error\":\"Schema validation failed…\"}"}
+```
+
+Read that `response_body` first — it is the provider's own explanation, and it is
+usually far more specific than anything else available. With `APP_DEBUG=true` it
+is also appended to the message shown in the chat widget; with debug off it stays
+in the log only, because a response body can carry internal detail.
+
+Other things worth checking:
+
 - For Ollama, ensure the server is running and the model is pulled: `ollama pull qwen2.5:3b`
 - For Ollama inside Docker, use `http://host.docker.internal:11434` as the API endpoint instead of `localhost`
 - Review Laravel logs: `storage/logs/laravel.log`
+
+### "Unknown error", 400 or 422 from an OpenAI-compatible provider
+
+Two causes, both fixed in 1.30.0 — if you see this on an older version, upgrade:
+
+1. **The provider was set to `openai` with a custom endpoint.** That targets
+   OpenAI's Responses API (`/v1/responses`), which other platforms do not
+   implement. Use the matching provider (`xai`, `deepseek`, …) or
+   `openai_compatible`.
+2. **A tool with no arguments.** Its empty parameter list serialised as
+   `"properties": []`, which strict providers reject as invalid JSON Schema.
+   `PTAH_AI_NORMALIZE_TOOL_SCHEMA` (on by default) fixes this on the way out.
+
+### Choosing between several providers
+
+With more than one **active** provider configured, the chat panel shows a picker
+above the message list. It starts on the provider flagged as default, so a user
+who ignores it gets the same behaviour as before; the control does not render at
+all when only one provider is configured.
+
+The choice applies to the next message and is validated server-side: a provider
+that has been switched off cannot be used even by a client still holding its id —
+the request falls back to the default instead.
 
 ### Ollama returns JSON text instead of calling tools
 

@@ -7,6 +7,55 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.30.1] - 2026-09-04
+
+Documentation only. 1.30.0 shipped the providers and the error handling without
+the instructions for either, which is half a feature.
+
+### Docs - `AiAgent.md` covers everything 1.30.0 added
+
+- **The provider table** now lists all twelve options the admin screen offers
+  (it had six), with a **streaming** column — because streaming is a provider
+  capability, not a setting, and `z.ai` is the one that lacks it.
+- **A new section on OpenAI-compatible platforms**, with the endpoint for each
+  of Together, Fireworks, Cerebras, SambaNova, vLLM, LM Studio, llama.cpp and
+  LocalAI, and an explanation of why `openai` with a custom endpoint does not
+  work for them (it targets the Responses API).
+- **Per-provider setup blocks** for xAI/Grok, DeepSeek, OpenRouter, Perplexity,
+  z.ai and the OpenAI-compatible option — including "select xAI, not OpenAI",
+  which is the mistake that made Grok look unsupportable.
+- **Troubleshooting rewritten around the new messages**: a table mapping what
+  the chat says to what to change, plus how to read the `reason`/`status`/
+  `response_body` now in the log, and a dedicated entry for the
+  "Unknown error / 400 / 422 from an OpenAI-compatible provider" case.
+- **The provider picker** is documented: when it appears, that it starts on the
+  default, and that the choice is validated server-side.
+- `PTAH_AI_STREAM` and `PTAH_AI_NORMALIZE_TOOL_SCHEMA` added to the `.env` table
+  and the config block.
+- **Ollama:** an explicit warning not to add `/api` to the endpoint. Prism
+  appends `api/chat` itself, so `…:11434/api` becomes `…/api/api/chat` — the
+  defect fixed in 1.30.0, now documented so nobody re-creates it by hand.
+
+### Docs - one claim removed for being wrong
+
+The first draft listed **Azure OpenAI** among the platforms the
+`openai_compatible` option covers. It does not: the carrier provider
+authenticates with `Authorization: Bearer` (verified in Prism's source), while
+Azure requires an `api-key` header and an `api-version` query parameter. Azure
+is now named explicitly as *not* supported, with the reason — more useful than
+silence, since someone would otherwise spend an afternoon on it.
+
+### Tests
+
+2044 -> 2048. `AiAgentDocTest` pins the provider table against
+`AiModelConfigList::PROVIDERS` in both directions, requires the non-streaming
+provider to be marked as such, and fails when the docs name a `PTAH_*` variable
+the config never reads. The provider key map inside the code had already drifted
+six providers behind Prism's roster once — a documentation table is at least as
+prone to it.
+
+---
+
 ## [1.30.0] - 2026-09-04
 
 The AI agent could not be made to talk to Grok (x.ai) at all. Five defects, four
