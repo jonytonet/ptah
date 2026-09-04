@@ -136,8 +136,26 @@
     --ptah-text-field:     #1f2937; /* text typed/selected inside inputs and selects */
     --ptah-text:           #374151; /* default body text: filter-panel copy, empty-state title, table footer, dropdown items */
     --ptah-text-secondary: #475569; /* icon-button text, form labels */
-    --ptah-text-muted:     #64748b; /* muted text: helper copy, idle sort arrows, subtitles */
-    --ptah-text-faint:     #6b7280; /* faintest text: pagination summary, small field labels */
+    /* These two carry the ONLY :root text values that were not calibrated
+       against a tinted background. They were slate (#64748b / #6b7280), which
+       clears 4.5:1 against pure white and fails against every tone that tints
+       its surfaces: 34 combinations of tone x background dropped under AA, the
+       worst at 3.62:1 (muted on papel's --ptah-surface-hover).
+
+       Those values never render on a ptah screen — every package layout stamps
+       `data-ptah-text`, and all three scales override both tokens with darker
+       grays — so this was invisible from inside the package. It is reachable
+       from OUTSIDE it: a host writing its own layout (see docs/CustomScreens.md)
+       that stamps a tone without a text scale gets exactly these.
+
+       Set to the `suave` scale's own values rather than to newly invented ones:
+       suave is the package's mildest calibrated scale, so the fallback now
+       behaves like the gentlest supported configuration instead of like a
+       fourth, uncalibrated one. Monotonic order against --ptah-text-secondary
+       is preserved (L 0.0886 < 0.1130 < 0.1234), which
+       AppearancePresetContrastTest enforces. */
+    --ptah-text-muted:     #5a5f65; /* muted text: helper copy, idle sort arrows, subtitles */
+    --ptah-text-faint:     #5e636a; /* faintest text: pagination summary, small field labels */
     --ptah-icon-muted:     #64748b; /* toolbar icon glyphs — invariant across scope ON PURPOSE: .ptah-c-fp_chevron and
                                         .ptah-c-search_x use the exact same hex in light and dark today */
     --ptah-text-on-accent: #ffffff; /* white ink on solid accent/strong backgrounds — invariant across scope */
@@ -244,8 +262,16 @@
     --ptah-text-field:     #e2e8f0;
     --ptah-text:           #cbd5e1;
     --ptah-text-secondary: #cbd5e1;
-    --ptah-text-muted:     #94a3b8;
-    --ptah-text-faint:     #94a3b8;
+    /* Same miscalibration the light fallback had, mirrored: #94a3b8 measured
+       4.04:1 against the --ptah-surface-hover / --ptah-menu-hover of every dark
+       tone (#334155), so 12 pairs failed AA whenever a dark tone was stamped
+       WITHOUT a `data-ptah-text` scale. Invisible from inside the package for
+       the same reason — every layout stamps the scale — and reachable the same
+       way, from a host's own layout.
+       #a3b0c0 clears 4.70:1 there while staying darker than --ptah-text /
+       --ptah-text-secondary (#cbd5e1), so the scale keeps its order. */
+    --ptah-text-muted:     #a3b0c0;
+    --ptah-text-faint:     #a3b0c0;
 
     /* Dark override of the -soft tokens above — mixed against `transparent`
        instead of --ptah-surface, same idiom as --ptah-primary-soft-d: the chip

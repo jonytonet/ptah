@@ -212,6 +212,28 @@ class AppearancePresetContrastTest extends TestCase
         return $presets;
     }
 
+    /**
+     * The six text tokens as `:root` declares them — what renders when no
+     * `data-ptah-text` is stamped.
+     *
+     * @return array<string, string>
+     */
+    private static function rootTokens(): array
+    {
+        return self::block(':root', 'root default');
+    }
+
+    /**
+     * The same, for dark: the first bare `.ptah-dark { … }` block carries the
+     * dark mode's own base scale.
+     *
+     * @return array<string, string>
+     */
+    private static function darkRootTokens(): array
+    {
+        return self::block('\.ptah-dark', 'dark base');
+    }
+
     /** @return array<string, string> 8 background-role => hex */
     private static function backgroundsOf(array $toneTokens): array
     {
@@ -277,6 +299,41 @@ class AppearancePresetContrastTest extends TestCase
                 }
             }
         }
+    }
+
+    // ── 1c. O FALLBACK: um tom estampado SEM escala de texto. ──────────────
+    //
+    //    Os testes acima cruzam tom x escala, e por isso nunca leem os valores
+    //    de texto de `:root` — todo layout do pacote estampa `data-ptah-text`,
+    //    entao as tres escalas sempre sobrescrevem os seis tokens.
+    //
+    //    Isso deixou um buraco fora do pacote. Um host que escreve o proprio
+    //    layout (docs/CustomScreens.md) pode estampar so o tom, e ai o texto vem
+    //    de `:root`. Nessa combinacao 34 pares reprovavam AA, o pior a 3.62:1
+    //    (--ptah-text-muted sobre o --ptah-surface-hover do papel), porque os
+    //    dois ultimos tokens de `:root` eram slate calibrado contra branco puro
+    //    e nenhum tom tingido e branco puro.
+
+    #[Test]
+    public function a_tone_stamped_without_a_text_scale_still_passes_aa_in_light_mode(): void
+    {
+        $this->assertToneXTextScaleContrast(
+            self::lightTonePresets(),
+            [':root (nenhuma escala estampada)' => self::rootTokens()],
+            'claro/fallback'
+        );
+    }
+
+    #[Test]
+    public function a_tone_stamped_without_a_text_scale_still_passes_aa_in_dark_mode(): void
+    {
+        // O escuro tem o mesmo furo em potencial: `.ptah-dark` traz sua propria
+        // escala base, e um tom escuro sem `data-ptah-text` cai nela.
+        $this->assertToneXTextScaleContrast(
+            self::darkTonePresets(),
+            [':root (nenhuma escala estampada)' => self::darkRootTokens()],
+            'escuro/fallback'
+        );
     }
 
     // ── 2b. Separação perceptível entre tons: dois tons do mesmo modo não podem
