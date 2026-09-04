@@ -462,7 +462,8 @@ return [
     |                          to authenticated users.
     | expose_system_details  : when false (default), the built-in getSystemInfo tool
     |                          hides framework/PHP versions and the environment name.
-    | tools                  : array of AiToolInterface classes to register globally.
+    | tools                  : array of AiToolInterface CLASS NAMES to register
+    |                          globally; resolved lazily, at send time.
     |                          Example: [\App\AI\Tools\MyCustomTool::class]
     |
     | Requires: composer require prism-php/prism
@@ -490,6 +491,17 @@ return [
          */
         'normalize_tool_schema' => (bool) env('PTAH_AI_NORMALIZE_TOOL_SCHEMA', true),
 
+        /*
+         * Class names, never instances. Registration resolves nothing: a tool
+         * is built at send time, one at a time, each inside its own try/catch —
+         * so a tool with a bad constructor is logged with its class name and
+         * left out of that turn instead of returning 500 for every page of the
+         * application (the chat widget lives in the authenticated layout).
+         *
+         * A tool that also implements Ptah\Contracts\AiToolSchemaInterface is
+         * described from its static schema and constructed only if the model
+         * actually calls it. See docs/AiAgent.md.
+         */
         'tools' => [],
     ],
 

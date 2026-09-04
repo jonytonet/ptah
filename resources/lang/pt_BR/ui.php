@@ -1559,6 +1559,10 @@ return [
     'ai_error_overloaded' => 'O provedor de IA está indisponível agora. Tente novamente em instantes.',
     'ai_error_rejected' => 'O provedor de IA recusou a requisição. Os detalhes estão no log da aplicação.',
     'ai_error_generic' => 'Não foi possível concluir a requisição de IA. Os detalhes estão no log da aplicação.',
+    // Devolvido ao MODELO, nao ao usuario: e o que a tool responde quando
+    // nao pode ser construida ou estoura, para o assistente poder dizer
+    // que aquela capacidade caiu em vez de o turno morrer.
+    'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
     'ai_widget_provider' => 'Provedor de IA',
     'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',
