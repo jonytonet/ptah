@@ -40,7 +40,13 @@
     // their own .ptah-dark override — see the CSS comment for the measured pairs.
     // primary/dark are unaffected: both already pass (7.15:1+/always-white title).
     $colorMap = [
-        'primary' => ['bg' => 'bg-primary-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-primary dark:border-primary-400', 'title' => 'text-primary-dark dark:text-primary-300', 'text' => 'text-primary dark:text-primary-200', 'icon' => 'text-primary dark:text-primary-400'],
+        // Titulo, corpo, borda e icone alinhados as outras tres variantes. Os
+        // utilitarios que estavam aqui usavam `primary-200/300/400`, tons de uma
+        // escala numerica que o app.css do host nao declara — no build do host
+        // nao geravam regra alguma e o texto herdava tinta escura sobre painel
+        // escuro. `.ptah-c-alert_title`/`_text` sao pintados por
+        // `.ptah-alert-primary` em ptah-components.css.
+        'primary' => ['bg' => 'bg-primary-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-primary dark:border-primary', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-primary dark:text-primary'],
         'success' => ['bg' => 'bg-success-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-success dark:border-success', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-success dark:text-success'],
         'danger'  => ['bg' => 'bg-danger-light dark:bg-slate-800/60',  'border' => 'border-l-4 border-danger dark:border-danger',  'title' => 'ptah-c-alert_title',  'text' => 'ptah-c-alert_text',  'icon' => 'text-danger dark:text-danger'],
         'warn'    => ['bg' => 'bg-warn-light dark:bg-slate-800/60',    'border' => 'border-l-4 border-warn dark:border-warn',    'title' => 'ptah-c-alert_title',    'text' => 'ptah-c-alert_text',    'icon' => 'text-warn dark:text-warn'],

@@ -129,12 +129,25 @@ class AlertContrastTest extends TestCase
     }
 
     /**
-     * forge-alert.blade.php must apply the new tokenised classes to
-     * success/warn/danger only — primary/dark already pass AA and are out of
-     * scope for this fix (see the class docblock for the measured ratios).
+     * All FOUR variants must apply the tokenised classes.
+     *
+     * This test used to assert that `primary` stayed OFF them, on the grounds
+     * that it "already passes AA". That measurement was right about the colour
+     * and wrong about the screen: the ratio was computed for
+     * `text-primary-300` / `text-primary-200` as declared in the package's own
+     * forge.css, and those are numeric shades of the brand colour that a HOST's
+     * app.css does not declare. In a host build the utilities generate no rule
+     * at all, so the ink never had that ratio — it inherited the ancestor's
+     * colour, which on a dark alert is dark. Reported from the AI config screen
+     * as "no contrast in dark"; it was no colour at all.
+     *
+     * Same shape as measuring a `:root` fallback that never renders, inverted:
+     * there a value that never renders looked broken, here one that never
+     * renders looked fine. See HostThemeScaleDependencyTest, which now forbids
+     * the whole class of dependency.
      */
     #[Test]
-    public function blade_applies_the_alert_title_and_text_classes_to_success_warn_and_danger_only(): void
+    public function blade_applies_the_alert_title_and_text_classes_to_every_variant(): void
     {
         if (! preg_match("/'success' => \[(.*?)\],/s", self::alertBlade(), $success)) {
             throw new RuntimeException('AlertContrastTest: could not locate the success color-map entry.');
@@ -149,13 +162,10 @@ class AlertContrastTest extends TestCase
             throw new RuntimeException('AlertContrastTest: could not locate the primary color-map entry.');
         }
 
-        foreach (['success' => $success, 'danger' => $danger, 'warn' => $warn] as $label => $m) {
+        foreach (['success' => $success, 'danger' => $danger, 'warn' => $warn, 'primary' => $primary] as $label => $m) {
             $this->assertStringContainsString('ptah-c-alert_title', $m[1], "forge-alert '{$label}' title no longer uses .ptah-c-alert_title.");
             $this->assertStringContainsString('ptah-c-alert_text', $m[1], "forge-alert '{$label}' text no longer uses .ptah-c-alert_text.");
         }
-
-        $this->assertStringNotContainsString('ptah-c-alert_title', $primary[1], 'forge-alert primary should stay on its own (already-passing) utilities.');
-        $this->assertStringNotContainsString('ptah-c-alert_text', $primary[1], 'forge-alert primary should stay on its own (already-passing) utilities.');
     }
 
     public static function contrastPairsProvider(): array

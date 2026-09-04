@@ -7,6 +7,88 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.31.1] - 2026-09-04
+
+### Fixed - the AI config panel and the `primary` alert had no colour in dark
+
+Reported as "no contrast in dark mode" on the AI config screen. It was not poor
+contrast: it was **no colour at all**.
+
+The panel painted its header, intro and footer with `dark:text-primary-300` /
+`dark:text-primary-200`, and its border with `dark:border-primary-400`. Those are
+numeric shades of the brand colour, and the package's own `forge.css` declares
+that scale while the `app.css` a host gets from `ptah:install` declares only
+three names per family — `--color-primary`, `--color-primary-light`,
+`--color-primary-dark`. In a host build those utilities generate no rule at all
+(grep of the test app's compiled bundle: zero occurrences), so the text fell back
+to inheriting its ancestor's colour, which on a dark panel is dark ink.
+
+`forge-alert` had the identical defect in its `primary` variant — which is also
+where `info` maps. The other three variants had already been migrated to
+`.ptah-c-alert_title` / `_text` and this one was missed, leaving it as the only
+one of four depending on a colour the host does not supply. Four alerts in the
+package were affected, three of them in the permissions guide.
+
+Both now paint through a class backed by `var(--ptah-*)`, which ships with the
+package. Measured afterwards in a browser with the real background stacking: the
+corrected variant reads **identically to the already-proven `success`** one —
+19.83:1 title and 13.36:1 body in dark, 5.72:1 in light.
+
+An existing guard was pinning the defective state, and its name said so:
+`..._to_success_warn_and_danger_only`, with a docblock asserting that "primary
+already passes AA". The ratio was right and the conclusion wrong — it had been
+computed for `text-primary-300` as declared in `forge.css`, a colour that never
+reaches a host's screen. Updated to require all four variants.
+
+`HostThemeScaleDependencyTest` now forbids the whole class of dependency: no
+package view may use a numeric shade of a brand family, because the failure mode
+is invisible from inside the package, where the scale does exist. Second instance
+of this shape, after the error page calling `@vite` on an entry a host need not
+have.
+
+### Added - drag the table sideways to scroll it
+
+A wide listing is genuinely hard to scroll horizontally with a mouse: most have
+no horizontal wheel and shift+wheel is folklore. Grabbing the table fixes it, and
+a grab cursor appears only when the table actually overflows — offering the
+affordance on one that fits would promise a gesture that does nothing.
+
+The work was not the scrolling. The table wrapper is already contested: the
+`<th>` owns HTML5 drag for column reorder, the resize handle owns `mousedown`,
+and the row may own a click for navigation. So the pan arms only for a mouse
+(touch and pen scroll natively, and hijacking that would break the page's own
+scrolling on a phone), never on an element that already reacts, only after 5 px
+of movement — under that it stays a text selection, because copying a value out
+of a cell is something people do — and it swallows exactly one click afterwards,
+in the capture phase, or dragging a table with `configLinkLinha` would navigate
+to whichever record ended up under the cursor.
+
+Verified in a browser with the code extracted from the shipped file rather than
+retyped: 3 px does not scroll and keeps the selection, 80 px scrolls exactly
+80 px, and `pointerdown` on a `<th>`, on a button, or by touch arms nothing.
+
+**Vertical dragging is deliberately not included.** The wrapper only has
+`overflow-x-auto`, so dragging upward would move the window rather than the
+table — which fights the page's own scrollbar and, more importantly, is the
+gesture people use to select several rows of text. Making it work would mean
+giving the listing its own height, which is a product decision rather than an
+addition.
+
+Two tooling corrections came out of it. The new rules first used `:is(a, b, c)`,
+which this project's golden-fixture parser does not understand — it splits on
+commas and recorded meaningless baseline keys (`a|light|cursor`,
+`select)|light|cursor`), one of which could later collide with a real selector
+and mask a colour change. Rewritten as selector lists. And a `@media (hover:
+none)` block made the baseline record `auto` where the correct value is `grab`,
+since that parser is not media-aware; removed, because the JS already refuses to
+arm for touch and on a touch-only device there is no cursor to correct.
+
+### Tests
+
+2078 -> 2099.
+
+---
+
 ## [1.31.0] - 2026-09-04
 
 The backlog of items left open from real ERP use. Four of the five turned out to
