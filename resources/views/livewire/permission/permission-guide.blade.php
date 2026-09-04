@@ -646,5 +646,13 @@ PTAH_PERMISSION_CACHE_TTL=3600
     @endif
 
     </x-forge-tabs>
+
+    {{-- Versao instalada. Fora das abas, para responder em qualquer uma. Vem do
+         lock do Composer via PtahVersion, nao de uma constante que ficaria
+         defasada logo depois de uma release. --}}
+    <p class="ptah-c-ver mt-6 text-center text-[11px] tracking-wide"
+       title="{{ __('ptah::ui.guide_version_title') }}">
+        ptah v{{ \Ptah\Support\PtahVersion::current() }}
+    </p>
 </div>
 

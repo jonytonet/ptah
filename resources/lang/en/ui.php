@@ -926,6 +926,9 @@ return [
     'guide_faq_help_title' => 'Need more help?',
     'guide_faq_help_body' => 'Check the <strong>Overview</strong> to understand the architecture, the <strong>Step by Step</strong> to configure, and the <strong>Code Examples</strong> to integrate into your project.',
 
+    // Rodape do guia. O numero em si nao e traduzivel; a chave e para o tooltip.
+    'guide_version_title' => 'Installed Ptah version',
+
     /*
     |--------------------------------------------------------------------------
     | CRUD Config (crud-config.blade.php)
