@@ -7,6 +7,142 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.31.0] - 2026-09-04
+
+The backlog of items left open from real ERP use. Four of the five turned out to
+be different — or larger — than reported, because each was measured before being
+fixed rather than after.
+
+### Fixed - `ptah:config` could not produce a working select, and duplicated columns
+
+Three defects of one family: several writers, one reader, no shared normaliser.
+The fifth instance of this shape after `--style=` and `--filter=`.
+
+- `--column="…:select:options=…"` stored the RAW STRING under `colsSelect`, which
+  has to be a `label => value` MAP — both the modal form and both branches of the
+  filter panel build their `<option>` list from `array_keys()`/`array_values()`
+  of it. `collect()` on a scalar yields `[0 => "…"]`, so a CLI-configured select
+  rendered exactly ONE option, labelled `0`, whose value was the whole unparsed
+  definition. The command reported success.
+- `--filter="…:options=…"` stored its options under `options` — a key the filter
+  panel never reads — so every custom select filter rendered empty. Found while
+  fixing the first.
+- `--column=` APPENDED unconditionally, so re-running it for a field that already
+  had a column produced two entries for the same field, with iteration order
+  deciding which won.
+
+`Ptah\Support\SelectOptions` is now the single normaliser both parsers funnel
+through. It ratifies the two forms the docs already promised rather than
+inventing a third: `value:Label` pairs and a bare list (label humanised). `|` is
+deliberately not accepted — `badges=` already owns it with the opposite order.
+
+The upsert has a subtlety: merging the whole parsed array let the parser's own
+DEFAULTS win, most visibly the humanised `colsNomeLogico`, which silently
+overwrote a label set in the visual editor on every CLI call that changed
+something else. `ColumnParser` now reports which keys the definition actually
+named, and an update merges only those.
+
+`ptah:config:doctor` gains two `--fix` migrations for configs already saved in
+the broken shapes. Run against the test app it found three, including one nobody
+had planted.
+
+### Fixed - the fallback text scale failed AA against every tinted tone
+
+The reported item was "mod_subttl/phdr_sub at 4.16-4.18:1 in papel/nevoa". **That
+is not a defect:** both read `--ptah-text-muted`, every package layout stamps
+`data-ptah-text`, and all three scales override it with darker values. The worst
+ratio that actually renders is 5.54:1.
+
+Measuring it exposed a real hole one level down. The 4.11:1 figure comes from the
+`:root` FALLBACK, used when no text scale is stamped, and those two tokens were
+never calibrated against a tinted background: **34 failing pairs in light** (worst
+3.62:1) and **12 in dark** (4.04:1). Invisible from inside the package; reachable
+from outside it, because a host writing its own layout can stamp a tone without a
+scale.
+
+Light now takes the `suave` scale's own values, dark `#a3b0c0`. Zero failing
+pairs, worst case 4.61:1. `AppearancePresetContrastTest` gains the case that was
+missing — tone stamped WITHOUT a scale — and its dark half found the dark half of
+the hole on its first run.
+
+### Fixed - the ratchet did not scan borders, and forge-select had no error state
+
+The reported item was "12 borders in _modal-form and 9 in forge-select". The
+guard counted only `bg-` and `text-`, and the real total is **235 fixed-palette
+border utilities across 31 views** — the earlier figure was the two files that
+had been opened. The ratchet now scans borders, directional forms included, with
+existing counts frozen per its own contract for a scope widening.
+
+Taking the two reported files down surfaced a defect: **forge-select had no
+visible error state at all.** It set `border-red-400` on a validation error and
+that utility never applied — an unlayered rule beats a layered one whatever the
+specificity. Measured: an errored trigger and a valid one rendered the same
+border. No `aria-invalid` either. forge-input had the identical defect, got fixed,
+and the fix was never mirrored. Now 6.10:1 in light and 3.96:1 in dark, and the
+two states are distinguishable.
+
+Every border removed was proven inert first — computed colour measured identical
+with and without each class, in both scopes and both states.
+
+### Fixed - configured actions were unreachable in the card view
+
+`_cards` never handled `colsTipo === 'action'`. A gap while cards were opt-in; a
+real hole since 1.25.0 made them the DEFAULT on a phone, where every custom
+action an integrator had configured was simply unreachable.
+
+The block moved into a shared partial rather than being copied — copying would
+have meant copying the `javascript:`/`data:`/`vbscript:` href guard, and the
+value comes from `crud_configs`, which the visual modal edits.
+
+Extracting it surfaced a defect the original carried: `$col['actionIcon'] ?: …`
+guarded against the key being EMPTY but not ABSENT, so an action configured with
+no icon raised "Undefined array key" — an ErrorException, i.e. **a 500 on the
+whole listing**.
+
+### Added - the toolbar fits two rows on a phone
+
+It was FOUR rows plus the sort bar: the search is `w-full` below `sm` and took one
+alone, the New button came before it and took another, and the twelve remaining
+controls wrapped into two or three. The first record started halfway down the
+screen.
+
+Nothing is permanently hidden and nothing is duplicated. A mobile-only visual
+reorder (`order-2 sm:order-1`) puts the search alone on row one and New with the
+actions on row two; above `sm` the original order returns and the desktop is
+byte-identical. A new `⋯` reveals the secondary controls, which are the SAME DOM
+elements — three of them are dropdowns with their own panels, and a menu that
+reimplemented those would diverge from them exactly as the table and cards
+diverged over actions.
+
+Marked by class rather than a wrapper for a concrete reason: a wrapper would need
+`display: contents` on desktop to keep the flex row intact, and such an element
+has no `offsetParent` — hiding its children from the Alpine that measures
+wrapping to collapse the labels, in the same file.
+
+### Added - space reserved for the AI chat launcher
+
+The launcher is `fixed bottom-6 right-6` with `w-14 h-14`: 56 px of button 24 px
+from the edge, 80 px permanently in the corner at `z-50`. The listing reserved
+nothing, and since a card's action row is right-aligned, edit/duplicate/delete on
+the LAST card always fell underneath it. Invisible on desktop, where the list is
+wide; on a phone the button sits over the only column there is.
+
+`.ptah-crud-list-end` reserves it, gated on `.ptah-has-ai-launcher` — reserving
+80 px of footer on every host that never enabled the module would trade old debt
+for new. The condition became one variable used by BOTH consumers, since separate
+copies could leave a host with dead footer and no button, or a button and no
+space. Includes `env(safe-area-inset-bottom)` for the iPhone gesture bar.
+
+### Tests
+
+2062 -> 2078, and three existing guards earned their keep rather than being
+worked around: `LayoutMigrationLedgerTest` caught 13 sites whose colour changed
+under a regenerated baseline, `ThemeChromeOrphanTokenGuardTest` demanded an
+obsolete exception be deleted, and `ToolbarControlUniformityTest` failed on a
+class it should never have been asserting.
+
+---
+
 ## [1.30.1] - 2026-09-04
 
 Documentation only. 1.30.0 shipped the providers and the error handling without
