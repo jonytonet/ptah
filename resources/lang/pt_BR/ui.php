@@ -1666,6 +1666,8 @@ return [
     'print_btn_close' => 'Fechar',
     'print_copy_success' => 'Copiado!',
     'print_copy_failed' => 'Falhou',
+    'toolbar_more' => 'Mais ações',
+    'toolbar_more_hide' => 'Menos ações',
     'btn_view_mode' => 'Modo de visualização',
     'view_mode_table' => 'Visão em tabela',
     'view_mode_cards' => 'Visão em cards',

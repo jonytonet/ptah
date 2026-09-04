@@ -389,6 +389,63 @@
    O default é COLAPSADO de propósito. Começar expandido e colapsar depois faria a toolbar
    aparecer em duas linhas por um frame e pular para uma — salto de altura bem mais
    perceptível que ícones virando texto no mesmo lugar. */
+/* ── Toolbar no celular: duas linhas ──────────────────────────────────────
+   Em um telefone a toolbar ficava com QUATRO linhas mais a de ordenacao — a
+   busca e `w-full` abaixo de `sm`, entao ela sozinha ocupa uma; o botao Novo
+   vinha antes dela e ocupava outra; e os 12 controles restantes quebravam em
+   duas ou tres. O primeiro registro comecava na metade da tela.
+
+   Nada e escondido de forma permanente e nada e duplicado: os controles
+   secundarios sao os MESMOS elementos, apenas recolhidos atras do `⋯`. Isso
+   importa porque tres deles (exportar, colunas, densidade) sao dropdowns com
+   painel proprio — uma copia deles no menu teria de reimplementar cada painel,
+   e divergiria.
+
+   `640px` e o mesmo ponto do `sm:` do Tailwind, para o botao `⋯` (que e
+   `sm:hidden` pelo mesmo breakpoint) e estas regras nunca discordarem. */
+@media (max-width: 639px) {
+    .ptah-c-toolbar_more_item { display: none !important; }
+
+    /* `!important` porque os controles carregam `inline-flex`/`flex` de
+       utilitarios, que sao mais especificos que uma classe sozinha. E a unica
+       regra deste arquivo que precisa dele; o alternativa seria duplicar cada
+       seletor de controle aqui, que e pior. */
+    .ptah-c-toolbar_more_open .ptah-c-toolbar_more_item { display: inline-flex !important; }
+    .ptah-c-toolbar_more_open select.ptah-c-toolbar_more_item { display: inline-block !important; }
+}
+
+/* De `sm` para cima o `⋯` nao existe: todos os controles cabem na linha e
+   recolher qualquer um seria esconder funcao sem motivo. */
+@media (min-width: 640px) {
+    .ptah-c-toolbar_more_toggle { display: none !important; }
+}
+
+/* ── Espaco para o launcher do chat de IA ─────────────────────────────────
+   O launcher e `fixed bottom-6 right-6` com `w-14 h-14`: 56px de botao a 24px
+   da borda, ou seja 80px permanentes no canto inferior direito, em `z-50`. A
+   listagem nao reservava nada, e como a linha de acoes do card e alinhada a
+   direita, editar/duplicar/excluir do ULTIMO card caiam sempre embaixo dele.
+   No desktop passa batido porque a lista e larga; no celular o botao fica sobre
+   a unica coluna que existe.
+
+   Condicionado a `.ptah-has-ai-launcher`, que o layout so estampa quando o
+   widget de fato vai renderizar. Reservar 80px de rodape em todo host que nunca
+   ligou o modulo seria trocar divida velha por divida nova.
+
+   `env(safe-area-inset-bottom)` cobre a barra de gestos do iPhone, que come
+   mais alguns pixels por baixo do viewport. */
+.ptah-has-ai-launcher .ptah-crud-list-end {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+    /* Acima do celular a lista e larga o suficiente para o conteudo nunca
+       passar por baixo do botao; a folga volta a ser a normal. */
+    .ptah-has-ai-launcher .ptah-crud-list-end {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .ptah-c-btn_label { display: none; }
 .ptah-c-toolbar_labels .ptah-c-btn_label { display: inline; }
 

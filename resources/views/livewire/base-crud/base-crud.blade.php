@@ -156,7 +156,15 @@
             </div>
         @endif
 
-        @include('ptah::livewire.base-crud.partials._pagination')
+        {{-- `.ptah-crud-list-end` marca o fim da area de listagem. O CSS reserva
+             ai o espaco do launcher do chat de IA, que e `fixed bottom-6 right-6`
+             (56px de botao a 24px da borda) e cobria a linha de acoes do ULTIMO
+             card no celular — a linha e alinhada a direita, entao caia sempre
+             debaixo dele. A reserva vale so quando `.ptah-has-ai-launcher` esta
+             no <body>, ou seja quando o widget de fato renderiza. --}}
+        <div class="ptah-crud-list-end">
+            @include('ptah::livewire.base-crud.partials._pagination')
+        </div>
 
         {{-- Bulk actions floating bar --}}
         @if (count($selectedRows) > 0)

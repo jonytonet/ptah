@@ -26,7 +26,9 @@
      depois faria a toolbar aparecer em duas linhas por um frame e pular para uma — salto
      de altura mais perceptivel que icone virando texto no mesmo lugar. --}}
 <div class="flex flex-wrap items-center gap-2 px-4 py-3"
+     x-bind:class="moreOpen ? 'ptah-c-toolbar_more_open' : ''"
      x-data="{
+        moreOpen: false,
         _lastWidth: -1,
         _wrapped(el) {
             if (!el) return false;
@@ -69,9 +71,14 @@
         }
      }">
 
-    {{-- Botão Novo --}}
+    {{-- Botão Novo.
+         `order-2 sm:order-1` — a ordem do DOM nao muda, so a visual, e so no
+         celular. A busca e `w-full` abaixo de `sm`, entao sozinha ela ocupa a
+         primeira linha; com o Novo reordenado para depois dela, ele desce e
+         divide a segunda linha com as demais acoes. De `sm` para cima a ordem
+         original volta e o desktop fica identico ao que era. --}}
     @if ($effectivePerms['canCreate'])
-        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm" class="ptah-c-control">
+        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm" class="ptah-c-control order-2 sm:order-1">
             <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -86,7 +93,7 @@
          grupo de ações vai para a segunda linha e um flex-1 aqui faria a busca inflar para
          ocupar a primeira linha inteira — o campo virava um retângulo de ~400px e a
          quebra parecia defeito. Largura estável: full no mobile, fixa a partir de sm. --}}
-    <div class="relative w-full sm:w-60 md:w-72 shrink">
+    <div class="relative w-full sm:w-60 md:w-72 shrink order-1 sm:order-2">
         <x-forge-input
             wire:model.live.debounce.400ms="search"
             type="text"
@@ -114,7 +121,7 @@
          no container acima procura: este grupo e um flex proprio com flex-wrap, entao
          pode quebrar internamente SEM a linha externa quebrar. Medir so a externa
          deixaria passar exatamente o caso reportado. --}}
-    <div class="ptah-c-toolbar_actions flex items-center gap-1.5 ml-auto flex-wrap">
+    <div class="ptah-c-toolbar_actions flex items-center gap-1.5 ml-auto flex-wrap order-3">
 
         {{-- Botão Filtros --}}
         @php
@@ -145,7 +152,7 @@
         {{-- Lixeira --}}
         @if ($permissions['showTrashButton'] ?? true)
             <button wire:click="toggleTrashed"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
+                class="ptah-c-toolbar_more_item inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showTrashed ? 'ptah-c-btn_trash_on' : 'ptah-c-btn' }}"
                 title="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}"
                 aria-label="{{ $showTrashed ? __('ptah::ui.btn_view_active') : __('ptah::ui.btn_view_trash') }}">
@@ -166,7 +173,7 @@
 
         {{-- Exportação --}}
         @if (!empty($exportCfg['enabled']))
-            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <div class="ptah-c-toolbar_more_item relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                     title="{{ __('ptah::ui.btn_export') }}"
@@ -256,7 +263,7 @@
 
         {{-- Colunas (visibilidade) --}}
         @if (!empty($formDataColumns))
-            <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <div class="ptah-c-toolbar_more_item relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                            {{ $hiddenColumnsCount > 0 ? 'ptah-c-btn_col_on' : 'ptah-c-btn' }}"
@@ -318,6 +325,24 @@
              escolher nada. Os outros dois sao fixacoes explicitas que valem em
              qualquer largura — quem quer o mosaico no monitor grande, ou a
              tabela no telefone com rolagem horizontal, continua podendo. --}}
+        {{-- `⋯` — revela os controles secundarios, que sao os MESMOS elementos
+             do DOM e nao uma copia. Nada aqui reimplementa o painel de colunas,
+             o de densidade ou o menu de exportacao, entao nao ha como divergir
+             deles. Abaixo de `sm` os secundarios ficam `display:none` e este
+             botao alterna a classe que os revela; de `sm` para cima ele
+             desaparece e a barra volta a ser uma linha de icones. --}}
+        <button type="button"
+            @click="moreOpen = !moreOpen"
+            class="ptah-c-toolbar_more_toggle inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-control"
+            x-bind:class="moreOpen ? 'ptah-c-btn_on' : 'ptah-c-btn'"
+            x-bind:aria-expanded="moreOpen ? 'true' : 'false'"
+            :title="moreOpen ? @js(__('ptah::ui.toolbar_more_hide')) : @js(__('ptah::ui.toolbar_more'))"
+            :aria-label="moreOpen ? @js(__('ptah::ui.toolbar_more_hide')) : @js(__('ptah::ui.toolbar_more'))">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 12h.01M12 12h.01M18 12h.01"/>
+            </svg>
+        </button>
+
         <div class="inline-flex border rounded-md overflow-hidden ptah-c-btn" role="group" aria-label="{{ __('ptah::ui.btn_view_mode') }}">
             <button wire:click="setViewMode('auto')"
                 class="p-2 transition-colors ptah-c-control {{ $viewMode === 'auto' ? 'ptah-c-btn_on' : '' }}"
@@ -351,7 +376,7 @@
                 'spacious'    => ['icon' => '⊟', 'label' => __('ptah::ui.density_spacious')],
             ];
         @endphp
-        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+        <div class="ptah-c-toolbar_more_item relative" x-data="{ open: false }" @keydown.escape.window="open = false">
             <button @click="open = !open"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
                 title="{{ __('ptah::ui.btn_density') }}"
@@ -394,7 +419,7 @@
 
         {{-- Atualizar --}}
         <button wire:click="$refresh"
-            class="inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn ptah-c-control"
+            class="ptah-c-toolbar_more_item inline-flex items-center justify-center p-2 transition-colors border rounded-md focus:outline-none ptah-c-btn ptah-c-control"
             title="{{ __('ptah::ui.btn_refresh') }}"
             aria-label="{{ __('ptah::ui.btn_refresh') }}">
             <svg class="w-4 h-4" wire:loading.class="animate-spin" wire:target="$refresh"
@@ -419,7 +444,7 @@
         {{-- Per page --}}
         <select wire:model.live="perPage"
             aria-label="{{ __('ptah::ui.per_page_label') }}"
-            class="text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage ptah-c-control">
+            class="ptah-c-toolbar_more_item text-sm border rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 ptah-c-perpage ptah-c-control">
             @foreach ([10, 15, 25, 50, 100] as $n)
                 <option value="{{ $n }}">{{ $n }} {{ __('ptah::ui.per_page_suffix') }}</option>
             @endforeach
