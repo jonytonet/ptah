@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
+use Prism\Prism\PrismManager;
 use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
@@ -19,6 +20,7 @@ use Ptah\Exceptions\AiProviderException;
 use Ptah\Exceptions\AiRateLimitException;
 use Ptah\Models\AiConversation;
 use Ptah\Models\AiModelConfig;
+use Ptah\Support\AI\ProviderFailure;
 
 /**
  * Core AI chat service: builds the message thread, calls the Prism provider,
@@ -378,13 +380,22 @@ class AiChatService
      */
     private function providerException(\Throwable $e): AiProviderException
     {
-        $message = trans('ptah::ui.ai_widget_error').' '.$e->getMessage();
+        $failure = ProviderFailure::from($e);
 
+        // The actionable sentence, not the provider's raw string. `OpenAI Error
+        // [422]: Unknown error` told a user nothing and an administrator nothing;
+        // "the provider rejected the request" plus a log line naming the reason
+        // and carrying the body tells both of them where to look.
+        $message = $failure->message();
+
+        // The technical detail is appended for a developer only: this message is
+        // rendered in the chat widget, and a response body can carry internal
+        // detail an end user has no business seeing. The log gets it either way.
         if (config('app.debug')) {
-            $body = self::providerResponseBody($e);
+            $detail = trim($e->getMessage().' '.($failure->body ?? ''));
 
-            if ($body !== null) {
-                $message .= ' — '.$body;
+            if ($detail !== '') {
+                $message .= ' — '.$detail;
             }
         }
 
@@ -393,58 +404,12 @@ class AiChatService
 
     private function logProviderFailure(AiModelConfig $config, \Throwable $e): void
     {
-        Log::error('[Ptah AI] Provider call failed', array_filter([
+        Log::error('[Ptah AI] Provider call failed', array_merge([
             'provider' => $config->provider,
             'model' => $config->model,
             'exception' => $e::class,
             'message' => $e->getMessage(),
-            'response_body' => self::providerResponseBody($e),
-        ], static fn (mixed $v): bool => $v !== null));
-    }
-
-    /**
-     * Digs the provider's raw response body out of the throwable chain.
-     *
-     * Prism formats its message as "%s Error [%d]: %s" and fills the last part
-     * from `error.message` in the JSON body — so a provider that reports the
-     * problem anywhere else produces the literal "Unknown error" and the actual
-     * explanation is discarded. That is not hypothetical: x.ai rejects a tool
-     * whose schema says `"properties": []` with
-     *
-     *     Schema validation failed: /properties: [] is not of type "object"
-     *
-     * and all ptah logged was `OpenAI Error [422]: Unknown error`. Hours of
-     * guesswork for a message the response already contained.
-     *
-     * Prism does pass the original `RequestException` as `previous`
-     * (PrismException::providerRequestErrorWithDetails), so the body is right
-     * there. The chain is walked because the wrapping depth varies by provider,
-     * and both client shapes are handled: Laravel's RequestException exposes a
-     * `$response` property, Guzzle's a `getResponse()` method.
-     *
-     * This is the RESPONSE body, never the request, so it cannot leak the API
-     * key that was sent. It is truncated because some providers echo the whole
-     * payload back.
-     */
-    private static function providerResponseBody(\Throwable $e): ?string
-    {
-        for ($current = $e; $current !== null; $current = $current->getPrevious()) {
-            $body = null;
-
-            if (property_exists($current, 'response') && $current->response !== null) {
-                $response = $current->response;
-                $body = method_exists($response, 'body') ? $response->body() : null;
-            } elseif (method_exists($current, 'getResponse')) {
-                $response = $current->getResponse();
-                $body = $response !== null ? (string) $response->getBody() : null;
-            }
-
-            if (is_string($body) && trim($body) !== '') {
-                return Str::limit($body, 2000);
-            }
-        }
-
-        return null;
+        ], ProviderFailure::from($e)->logContext()));
     }
 
     /**
@@ -479,7 +444,11 @@ class AiChatService
      */
     private function applyConfig(AiModelConfig $config): array
     {
-        $provider = strtolower($config->provider);
+        // Through the alias map, so `openai_compatible` writes into the Prism
+        // provider that actually carries it — otherwise there is no
+        // `prism.providers.openai_compatible` block and neither the key nor the
+        // endpoint would land anywhere. See prismProviderSlug().
+        $provider = $this->prismProviderSlug($config->provider);
         $applied = [];
 
         // Both maps this method used to carry are gone, and that is the fix.
@@ -571,6 +540,8 @@ class AiChatService
     /** Maps our provider string to Prism's Provider enum. */
     private function resolveProvider(string $provider): Provider
     {
+        $slug = $this->prismProviderSlug($provider);
+
         // `Provider` is a string-backed enum whose values are exactly the
         // provider slugs stored in ai_model_configs, so tryFrom() resolves the
         // whole roster — including the ones the old match() had fallen behind
@@ -584,7 +555,81 @@ class AiChatService
         // unsupportable — while Prism has had a dedicated Provider::XAI, posting
         // to `chat/completions`, all along. OpenAI remains the fallback only for
         // a slug Prism does not know at all.
-        return Provider::tryFrom(strtolower($provider)) ?? Provider::OpenAI;
+        return Provider::tryFrom($slug) ?? Provider::OpenAI;
+    }
+
+    /**
+     * ptah provider slug => the Prism provider slug that carries it.
+     *
+     * Only one entry, and it exists because Prism has no generic
+     * OpenAI-compatible provider. Together, Fireworks, Cerebras, SambaNova,
+     * Azure OpenAI, vLLM, LM Studio, llama.cpp and LocalAI all speak plain
+     * `chat/completions`, and Prism's `openai` provider posts to `responses`
+     * (the Responses API), which none of them implement — so pointing `openai`
+     * at a custom endpoint fails with the same unexplained 422 that made Grok
+     * look unsupportable.
+     *
+     * `xai` is the vehicle because its handler builds the vanilla payload —
+     * model, messages, max_tokens, temperature, top_p, tools, tool_choice — with
+     * no provider-specific field or header, and posts to `chat/completions`. The
+     * `api_endpoint` is required for this slug (enforced in AiModelConfigList),
+     * since there is no sensible default for "somebody else's server".
+     *
+     * The cost, stated plainly: a config using this slug writes its key and url
+     * into `prism.providers.xai.*` for the duration of the turn (restored
+     * afterwards by restoreConfig(), like every other provider). A host holding
+     * both an `openai_compatible` and an `xai` config is unaffected because only
+     * one config is active per turn. The clean fix is upstream — a
+     * `Provider::OpenAICompatible`, or a flag on the OpenAI provider to use
+     * `chat/completions` — and this alias should be deleted when it lands.
+     */
+    private const PROVIDER_ALIASES = [
+        'openai_compatible' => 'xai',
+    ];
+
+    private function prismProviderSlug(string $provider): string
+    {
+        $slug = strtolower($provider);
+
+        return self::PROVIDER_ALIASES[$slug] ?? $slug;
+    }
+
+    /**
+     * Whether the provider behind this config can stream.
+     *
+     * `ptah.ai_agent.stream` defaults to true, and Prism's base provider throws
+     * `unsupportedProviderAction` from `stream()` — so a provider that ships no
+     * Stream handler breaks the chat outright under the package's own default.
+     * Today `z` is the only text-capable provider in that position, but the
+     * check is on the class rather than a hardcoded list so a provider that
+     * loses (or gains) streaming in a Prism release is handled without a change
+     * here.
+     *
+     * Detection is a reflection on the resolved provider instance: if `stream()`
+     * is still the base class's, it can only throw.
+     */
+    public function supportsStreaming(?int $configId = null): bool
+    {
+        $config = $this->configService->resolveForTurn($configId);
+
+        if (! $config) {
+            return false;
+        }
+
+        try {
+            $instance = app(PrismManager::class)
+                ->resolve($this->resolveProvider($config->provider));
+
+            $declaring = (new \ReflectionMethod($instance, 'stream'))
+                ->getDeclaringClass()
+                ->getName();
+
+            return $declaring !== \Prism\Prism\Providers\Provider::class;
+        } catch (\Throwable) {
+            // Cannot tell — assume no, so the caller takes the non-streaming
+            // path that every text provider supports.
+            return false;
+        }
     }
 
     /**

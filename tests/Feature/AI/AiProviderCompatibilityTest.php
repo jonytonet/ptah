@@ -210,6 +210,12 @@ class AiProviderCompatibilityTest extends TestCase
         // fall back to OpenAI — reintroducing exactly the xai bug for a new
         // provider.
         foreach (array_keys(AiModelConfigList::PROVIDERS) as $slug) {
+            // ptah's own aliases are resolved by prismProviderSlug() before they
+            // ever reach the enum, and are asserted separately below.
+            if (in_array($slug, AiModelConfigList::ALIAS_PROVIDERS, true)) {
+                continue;
+            }
+
             $this->assertNotNull(
                 Provider::tryFrom((string) $slug),
                 "'{$slug}' esta na lista da UI mas nao e um valor de Prism\\Prism\\Enums\\Provider — ".

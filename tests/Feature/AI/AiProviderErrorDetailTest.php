@@ -10,6 +10,7 @@ use Illuminate\Http\Client\Response as ClientResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Prism\Prism\Exceptions\PrismException;
 use Ptah\Services\AI\AiChatService;
+use Ptah\Support\AI\ProviderFailure;
 use Ptah\Tests\TestCase;
 use ReflectionMethod;
 
@@ -36,9 +37,9 @@ class AiProviderErrorDetailTest extends TestCase
 {
     private function providerResponseBody(\Throwable $e): ?string
     {
-        $method = new ReflectionMethod(AiChatService::class, 'providerResponseBody');
-
-        return $method->invoke(null, $e);
+        // Moved out of AiChatService into ProviderFailure when the failure
+        // started being classified rather than just logged.
+        return ProviderFailure::from($e)->body;
     }
 
     /**

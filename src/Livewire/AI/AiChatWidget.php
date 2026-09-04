@@ -164,7 +164,14 @@ class AiChatWidget extends Component
         }
 
         try {
-            if (config('ptah.ai_agent.stream', true)) {
+            // `stream` is a preference, not a capability: Prism's base provider
+            // throws unsupportedProviderAction from stream(), so a provider that
+            // ships no Stream handler (today: z.ai) would break the chat outright
+            // under the package's own default. Ask before assuming.
+            $canStream = config('ptah.ai_agent.stream', true)
+                && $this->chatService->supportsStreaming($this->selectedConfigId);
+
+            if ($canStream) {
                 // Stream the answer token-by-token into the wire:stream region.
                 $result = $this->chatService->stream(
                     $message,

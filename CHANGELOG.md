@@ -87,6 +87,62 @@ post to the **relative** path `api/chat`, and Prism's own default base url has n
 `/api`. ptah forced `http://localhost:11434/api`, producing `…/api/api/chat`, so
 a default Ollama install failed until the host set `OLLAMA_URL` by hand.
 
+### Added - two platform gaps closed, found by auditing the roster
+
+A sweep of Prism's providers against what the UI offered turned up exactly two
+holes:
+
+**`z.ai` (GLM)** was the only text-capable provider not offered — and the only
+one with **no Stream handler**. Since `ptah.ai_agent.stream` defaults to true and
+Prism's base provider throws `unsupportedProviderAction` from `stream()`,
+offering it as-is would have shipped a provider that breaks the chat outright.
+So `AiChatService::supportsStreaming()` now asks the resolved provider class
+whether it declares its own `stream()`, and the widget consults that before
+choosing a path. Detection rather than a hardcoded list, so a provider that
+gains or loses streaming in a Prism release is handled with no change here.
+
+**Every OpenAI-compatible platform without a dedicated Prism provider** had no
+working option at all — Together, Fireworks, Cerebras, SambaNova, Azure OpenAI,
+vLLM, LM Studio, llama.cpp, LocalAI. Prism's `openai` provider posts to
+`responses`, which none of them implement, so pointing it at a custom endpoint
+produced the same unexplained 422 that made Grok look unsupportable.
+
+The new **OpenAI-compatible (custom endpoint)** option is a ptah alias resolved
+onto a Prism provider whose handler speaks plain `chat/completions` with the
+vanilla payload. `api_endpoint` is required for it, because there is no sensible
+default for somebody else's server. Stated plainly: this rides on another
+provider's config block for the duration of a turn, which is less clean than the
+rest of this release — the proper fix is upstream (a
+`Provider::OpenAICompatible`, or a flag on the OpenAI provider), and the alias
+should be deleted when that lands.
+
+A test now walks Prism's roster and fails when a provider ships a Text handler
+the UI does not offer, so the next gap is a decision rather than a discovery.
+
+### Changed - provider errors say what to do about them
+
+Every failure used to surface as the translated sentence plus Prism's raw string,
+typically `OpenAI Error [422]: Unknown error`. That leaves both audiences stuck: a
+user cannot tell whether to retry, and an administrator cannot tell whether to
+fix a key, an endpoint, a model name, or nothing at all.
+
+`Ptah\Support\AI\ProviderFailure` classifies the failure once and each class
+carries an actionable sentence:
+
+| Cause | What the user is told |
+|---|---|
+| 401/403 | the credential was rejected — check the API key |
+| 404 | the address was not found — check the endpoint |
+| DNS/refused/timeout | could not reach the provider — check the endpoint and whether it is running |
+| 429 | the provider is throttling — wait and retry |
+| model not found | the provider does not serve this model — check the name |
+| schema/tool rejection | the request format was refused; **not your fault**, details in the log |
+| 5xx | the provider is unavailable — retry shortly |
+
+The raw body never reaches that sentence (it can carry internal detail, and it is
+already in the log, which now also records the classified reason and the status);
+it is appended to the message only while `APP_DEBUG` is on.
+
 ### Added - a provider picker in the chat widget
 
 With more than one active provider configured, the chat panel offers a choice;
@@ -108,7 +164,7 @@ its own colour pair is exactly how the BaseCrud selects drifted in 1.29.1.
 
 ### Tests
 
-1951 -> 2000, including an end-to-end assertion on the real request Prism builds
+1951 -> 2044, including an end-to-end assertion on the real request Prism builds
 for x.ai: it goes to `chat/completions`, not `responses`, and the no-argument
 tool carries `"properties": {}`. Each fix was also verified by reintroducing it
 and watching the right tests fail.

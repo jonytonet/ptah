@@ -1547,6 +1547,15 @@ return [
     // -------------------------------------------------------------------------
     // Módulo AI Agent
     // -------------------------------------------------------------------------
+    'ai_error_auth' => 'O provedor de IA recusou a credencial. Verifique a chave de API salva para este provedor.',
+    'ai_error_endpoint' => 'O endereço do provedor de IA não foi encontrado. Verifique o endpoint salvo para este provedor.',
+    'ai_error_rate_limit' => 'O provedor de IA está limitando as requisições. Aguarde um instante e tente de novo.',
+    'ai_error_model' => 'O provedor de IA não atende o modelo configurado. Verifique o nome do modelo.',
+    'ai_error_schema' => 'O provedor de IA recusou o formato da requisição. É problema de configuração, não algo que você fez — os detalhes estão no log da aplicação.',
+    'ai_error_unreachable' => 'Não foi possível alcançar o provedor de IA. Verifique o endpoint e se o serviço está no ar.',
+    'ai_error_overloaded' => 'O provedor de IA está indisponível agora. Tente novamente em instantes.',
+    'ai_error_rejected' => 'O provedor de IA recusou a requisição. Os detalhes estão no log da aplicação.',
+    'ai_error_generic' => 'Não foi possível concluir a requisição de IA. Os detalhes estão no log da aplicação.',
     'ai_widget_provider' => 'Provedor de IA',
     'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',
