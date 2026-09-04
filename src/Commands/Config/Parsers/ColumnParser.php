@@ -4,9 +4,18 @@ namespace Ptah\Commands\Config\Parsers;
 
 use Illuminate\Support\Str;
 use Ptah\Support\LabelHumanizer;
+use Ptah\Support\SelectOptions;
 
 class ColumnParser
 {
+    /**
+     * Transient key listing which config keys the definition actually set.
+     *
+     * Stripped by ConfigCommand::upsertColumn() before anything is persisted —
+     * it never reaches crud_configs.
+     */
+    public const EXPLICIT_KEYS = '__explicit';
+
     /**
      * Parse column definition string
      *
@@ -31,6 +40,14 @@ class ColumnParser
             'colsEditableForm' => true,
         ];
 
+        // Which keys this definition SET, as opposed to the defaults seeded
+        // above. ConfigCommand::upsertColumn() merges only these when a column
+        // for the field already exists: without the distinction, the humanised
+        // `colsNomeLogico` default silently overwrote a label the user had set
+        // in the visual editor every time they ran `--column=` to change
+        // something else.
+        $before = $config;
+
         foreach ($parts as $part) {
             if (str_contains($part, '=')) {
                 [$key, $value] = explode('=', $part, 2);
@@ -39,6 +56,16 @@ class ColumnParser
                 $config = $this->applyModifier($config, $part);
             }
         }
+
+        $explicit = ['colsNomeFisico', 'colsTipo'];
+
+        foreach ($config as $key => $value) {
+            if (! array_key_exists($key, $before) || $before[$key] !== $value) {
+                $explicit[] = $key;
+            }
+        }
+
+        $config[self::EXPLICIT_KEYS] = array_values(array_unique($explicit));
 
         return $config;
     }
@@ -176,9 +203,17 @@ class ColumnParser
      * Parse select options
      * Format: active:Active,inactive:Inactive,pending:Pending
      */
-    protected function parseOptions(string $value): string
+    /**
+     * @return array<string, string> label => value
+     */
+    protected function parseOptions(string $value): array
     {
-        return $value; // Keep original format
+        // Used to `return $value` — the raw string — under the right key. The
+        // views do `collect($col['colsSelect'])->map(...)`, and collect() on a
+        // scalar yields `[0 => "…"]`, so a select configured through the CLI
+        // rendered exactly ONE option, labelled `0`, whose value was the whole
+        // unparsed definition. See Ptah\Support\SelectOptions.
+        return SelectOptions::normalize($value);
     }
 
     /**

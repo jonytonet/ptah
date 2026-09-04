@@ -101,7 +101,12 @@ final class FilterRule
         // options list and the searchdropdown source columns, which the filter
         // panel renders straight from the config. Dropping them would silently
         // empty a select the user had configured.
-        foreach (['options', 'colsFilterSdTable', 'colsFilterSdValueColumn', 'colsFilterSdSelectColumn'] as $passthrough) {
+        //
+        // `colsSelect` is the key the panel actually reads (`$cf['colsSelect']`
+        // in _filter-panel.blade.php); `options` is kept alongside it only so a
+        // config saved before that was corrected still round-trips through here
+        // untouched, ready for `ptah:config:doctor --fix` to migrate.
+        foreach (['colsSelect', 'options', 'colsFilterSdTable', 'colsFilterSdValueColumn', 'colsFilterSdSelectColumn'] as $passthrough) {
             if (isset($filter[$passthrough]) && $filter[$passthrough] !== '') {
                 $normalized[$passthrough] = $filter[$passthrough];
             }
