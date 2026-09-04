@@ -7,6 +7,111 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.32.0] - 2026-09-04
+
+### Fixed - clicking a page number returned 500 on every listing
+
+Reported as a bug on the menu screen. It was not one: `forge-pagination` is the
+package's only pagination, shared by eleven screens, and it wired its buttons to
+`$set('page', N)`. `Livewire\WithPagination` declares no public `page` property —
+it keeps the state in `public $paginators = []` and exposes `gotoPage()`,
+`nextPage()` and `previousPage()`. So the update landed in
+`HandleComponents::updateProperty()`, which rejects any property absent from
+`getPublicPropertiesDefinedOnSubclass()`, and the Livewire request died with
+`PublicPropertyNotFoundException`.
+
+The menu is simply the first listing a fresh install pushes past twenty rows,
+because `ptah:menu-sync` fills the table. Everything else paginated was equally
+broken on page two and nobody had got there.
+
+`base-crud.blade.php` had been declaring
+`wire:target="...,gotoPage,nextPage,previousPage,..."` on its loading indicator
+all along — the rest of the package always assumed those names, and the
+pagination view was the piece outside the contract.
+
+The view now also reads the page name off the paginator. The permissions
+pages/objects screen has two paginated listings and both used the default
+`page`, so moving one moved the other; invisible while every click returned 500.
+
+**Nothing in the suite clicked a page button.** The existing pagination tests all
+assert markup, and two of them pinned the defective `$set` itself — one asserting
+the absence of `aria-current` on an expression that no longer exists in any
+form, which would have passed vacuously; it got an anchor. The new test does not
+hardcode an expression at all: it reads whatever `wire:click` the shipped view
+emits and CALLS it on a real component. Without the fix, four of its five cases
+fail.
+
+### Added - the installed ptah version, discreetly
+
+At the foot of the ACL guide (`/ptah-permission-guide`), outside the tabs so it
+answers on any of them. It comes from Composer's lock data via
+`Ptah\Support\PtahVersion::current()`, not from a constant in the package: a
+constant is a second source of truth that goes stale exactly when it matters,
+in the commit right after a release. A released install reports the tag
+(`1.32.0`); inside this repo, where ptah is the root package, it reports the
+branch. Both answer "which ptah is this?", so neither is hidden.
+
+If Composer cannot answer — Composer 1 with no `InstalledVersions`, a package
+required by path and absent from the lock — it degrades to `unknown`. A version
+label is decoration; it must never be what breaks a page. `PtahVersion::for()`
+exists so that branch is reachable from a test rather than asserted by reading
+the source.
+
+`current()` is public, for a host that wants the number somewhere else.
+
+### Changed - AI tools are resolved when a message is sent, one at a time, isolated
+
+The registry was handed ready-made objects, assembled inside the container
+closure. That closure runs when `AiChatService` is resolved, and `AiChatService`
+is resolved in `AiChatWidget::boot()` — a widget that lives in the authenticated
+layout, so it is constructed on every page of the application. Two consequences,
+both reported from an ERP running twenty-six domain tools:
+
+**Cost.** Every screen built twenty-six objects and their whole dependency
+graphs to serve a chat nobody had opened.
+
+**Blast radius.** That construction happened inside the page's render, so one
+tool with a DI cycle or a heavy constructor did not break the chat — it returned
+500 for the entire application. A tool is host code the package cannot vet; it
+must not be able to take the page down.
+
+`registerClass()` now stores the string and nothing else — not even
+`class_exists()`, which would trigger the autoloader. Resolution happens in
+`getPrismTools()`, at send time, one tool at a time inside its own try/catch: a
+class that no longer exists, a class that does not implement the interface, a
+constructor that throws, a dependency that cannot be built — each ends as a log
+line carrying THE CLASS NAME and one missing capability for that turn. Without
+the name in the log, a broken chat in an app with twenty-six tools has
+twenty-six suspects. The resolved list is memoised per request.
+
+An `execute()` that throws stops there too: the model receives
+`{"error": true, ...}` and can say that one capability is down, instead of the
+whole turn dying over a tool it chose to try.
+
+New optional contract `Ptah\Contracts\AiToolSchemaInterface` closes the rest. A
+tool that implements it is described from a static `toolSchema()` and constructed
+only if the model actually calls it — describing a tool through the instance
+methods requires building it, and every turn sends the full schema list to call
+at most one or two. Tools without the interface behave exactly as before.
+
+The two built-in tools go in by class name as well: a privileged eager path for
+them would be a path the laziness tests do not cover.
+
+The assembly moved from a closure in the provider to
+`AiToolRegistry::fromConfig()`, for a reason worth recording. Under Testbench,
+`getEnvironmentSetUp()` runs AFTER the package provider's `register()`, so the
+module gate reads false, `AiToolRegistry::class` is never bound, and the
+container hands back a bare autowired instance with no tools in it. The first
+version of these tests passed green while proving nothing; the sanity assertion
+is what caught it. A named factory gives the test the exact code the application
+runs.
+
+### Tests
+
+2099 -> 2126.
+
+---
+
 ## [1.31.1] - 2026-09-04
 
 ### Fixed - the AI config panel and the `primary` alert had no colour in dark
