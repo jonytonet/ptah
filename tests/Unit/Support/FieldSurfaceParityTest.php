@@ -49,11 +49,16 @@ class FieldSurfaceParityTest extends TestCase
                 '.ptah-input-wrapper input',
                 '.ptah-c-form_in',
                 '.ptah-c-form_sel',
+                // The chat widget's provider picker, added with that feature:
+                // a <select> is a field surface too, and giving it its own pair
+                // is exactly how the BaseCrud selects drifted.
+                '.ptah-c-chat_provider_select',
             ]],
             'dark' => ['dark', [
                 '.ptah-dark .ptah-input-wrapper input',
                 '.ptah-dark .ptah-c-form_in',
                 '.ptah-dark .ptah-c-form_sel',
+                '.ptah-dark .ptah-c-chat_provider_select',
             ]],
         ];
     }
@@ -104,7 +109,12 @@ class FieldSurfaceParityTest extends TestCase
         // roles ("active/focused input bg" vs "resting (unfocused) input bg"),
         // so three surfaces agreeing on the focus token would satisfy the test
         // above while still being wrong.
-        foreach (['.ptah-dark .ptah-input-wrapper input', '.ptah-dark .ptah-c-form_in', '.ptah-dark .ptah-c-form_sel'] as $selector) {
+        foreach ([
+            '.ptah-dark .ptah-input-wrapper input',
+            '.ptah-dark .ptah-c-form_in',
+            '.ptah-dark .ptah-c-form_sel',
+            '.ptah-dark .ptah-c-chat_provider_select',
+        ] as $selector) {
             $this->assertSame(
                 '--ptah-field-muted',
                 self::tokenFor($selector, 'background-color'),

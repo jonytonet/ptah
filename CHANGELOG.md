@@ -7,6 +7,170 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.30.0] - 2026-09-04
+
+The AI agent could not be made to talk to Grok (x.ai) at all. Five defects, four
+reported from the integration and one found while fixing them — each masking the
+next, which is why the whole thing looked unsupportable rather than broken.
+
+Every claim below was checked against Prism's shipped source before any code
+changed.
+
+### Fixed - the endpoint a user typed was written to a key nothing reads
+
+`applyConfig()` set `prism.providers.openai.base_url`. **Prism reads `.url`** —
+every provider block in its config uses that key, with no `base_url` anywhere.
+So the `api_endpoint` saved in `/ptah-ai/models` was silently discarded for
+`openai` and `anthropic`, and the request still went to api.openai.com. The 401
+that came back even named platform.openai.com, which sent the investigation the
+wrong way. Only `ollama` worked, because it happened to be spelled `.url`.
+
+Both hardcoded maps are gone. The paths are derived from the provider name, so a
+provider added to Prism upstream works here with no change — which is how the
+key map had drifted behind the roster in the first place.
+
+### Fixed - xai was routed through the OpenAI provider
+
+`resolveProvider()` sent every unknown slug to `Provider::OpenAI`, whose handler
+posts to `responses` — the Responses API, which x.ai does not implement. The
+answer was a bare 422. Prism has had a dedicated `Provider::XAI` posting to
+`chat/completions` all along.
+
+The `match` is replaced by `Provider::tryFrom()`, which resolves the whole
+roster including the six the list had fallen behind (xai, deepseek, openrouter,
+perplexity, z, voyageai) and anything Prism adds later. OpenAI stays the fallback
+only for a slug Prism does not know at all. The UI provider list gains xAI,
+DeepSeek, OpenRouter and Perplexity, and a test asserts every slug it offers is a
+real `Provider` value — a label added without one would silently reintroduce this
+exact bug for a new provider.
+
+### Fixed - tools with no arguments broke strict providers
+
+A no-argument tool serialises its empty parameter list as `"properties": []` — a
+JSON *array* where JSON Schema requires an *object*. Strict providers reject the
+whole request:
+
+    Schema validation failed: /properties: [] is not of type "object"
+
+Both of ptah's built-in tools (`getSystemInfo`, `getCurrentDateTime`) take no
+arguments, so every install talking to a strict provider failed on the package's
+own tools. This is a Prism bug, and Prism has already fixed it for **two** of its
+providers (Anthropic and OpenRouter emit `new stdClass` when empty) while OpenAI,
+XAI, Groq, Mistral and DeepSeek still pass the raw array.
+
+`Ptah\Support\AI\ToolSchemaNormalizer` rewrites the shape on the way out. It
+deliberately does **not** sniff the destination host: that would miss every other
+strict endpoint (OpenAI's structured mode, a self-hosted vLLM, Together) and need
+a list maintained forever. `"properties": []` is invalid for any provider, so the
+trigger is the malformed shape itself and a well-formed payload comes back
+byte-identical. Gated on the AI module, and disableable with
+`ptah.ai_agent.normalize_tool_schema`.
+
+### Fixed - the provider's real complaint was being thrown away
+
+`OpenAI Error [422]: Unknown error`. Prism formats its message from
+`error.message` in the body, so a provider that reports the problem anywhere else
+yields the literal "Unknown error" — and the schema message above, the entire
+diagnosis of the previous item, took hours to find by tapping the HTTP client by
+hand.
+
+Nothing needed intercepting: Prism passes the original `RequestException` as
+`previous`, so the body was always reachable. It now goes to the log
+unconditionally, and is appended to the user-facing message only while
+`APP_DEBUG` is on — that message reaches the chat widget, and a body can carry
+internal detail an end user has no business seeing. No debug flag was needed.
+
+### Fixed - Ollama's default base url had one path segment too many
+
+Not in the report; found while generalising the maps. Prism's Ollama handlers
+post to the **relative** path `api/chat`, and Prism's own default base url has no
+`/api`. ptah forced `http://localhost:11434/api`, producing `…/api/api/chat`, so
+a default Ollama install failed until the host set `OLLAMA_URL` by hand.
+
+### Added - two platform gaps closed, found by auditing the roster
+
+A sweep of Prism's providers against what the UI offered turned up exactly two
+holes:
+
+**`z.ai` (GLM)** was the only text-capable provider not offered — and the only
+one with **no Stream handler**. Since `ptah.ai_agent.stream` defaults to true and
+Prism's base provider throws `unsupportedProviderAction` from `stream()`,
+offering it as-is would have shipped a provider that breaks the chat outright.
+So `AiChatService::supportsStreaming()` now asks the resolved provider class
+whether it declares its own `stream()`, and the widget consults that before
+choosing a path. Detection rather than a hardcoded list, so a provider that
+gains or loses streaming in a Prism release is handled with no change here.
+
+**Every OpenAI-compatible platform without a dedicated Prism provider** had no
+working option at all — Together, Fireworks, Cerebras, SambaNova, Azure OpenAI,
+vLLM, LM Studio, llama.cpp, LocalAI. Prism's `openai` provider posts to
+`responses`, which none of them implement, so pointing it at a custom endpoint
+produced the same unexplained 422 that made Grok look unsupportable.
+
+The new **OpenAI-compatible (custom endpoint)** option is a ptah alias resolved
+onto a Prism provider whose handler speaks plain `chat/completions` with the
+vanilla payload. `api_endpoint` is required for it, because there is no sensible
+default for somebody else's server. Stated plainly: this rides on another
+provider's config block for the duration of a turn, which is less clean than the
+rest of this release — the proper fix is upstream (a
+`Provider::OpenAICompatible`, or a flag on the OpenAI provider), and the alias
+should be deleted when that lands.
+
+A test now walks Prism's roster and fails when a provider ships a Text handler
+the UI does not offer, so the next gap is a decision rather than a discovery.
+
+### Changed - provider errors say what to do about them
+
+Every failure used to surface as the translated sentence plus Prism's raw string,
+typically `OpenAI Error [422]: Unknown error`. That leaves both audiences stuck: a
+user cannot tell whether to retry, and an administrator cannot tell whether to
+fix a key, an endpoint, a model name, or nothing at all.
+
+`Ptah\Support\AI\ProviderFailure` classifies the failure once and each class
+carries an actionable sentence:
+
+| Cause | What the user is told |
+|---|---|
+| 401/403 | the credential was rejected — check the API key |
+| 404 | the address was not found — check the endpoint |
+| DNS/refused/timeout | could not reach the provider — check the endpoint and whether it is running |
+| 429 | the provider is throttling — wait and retry |
+| model not found | the provider does not serve this model — check the name |
+| schema/tool rejection | the request format was refused; **not your fault**, details in the log |
+| 5xx | the provider is unavailable — retry shortly |
+
+The raw body never reaches that sentence (it can carry internal detail, and it is
+already in the log, which now also records the classified reason and the status);
+it is appended to the message only while `APP_DEBUG` is on.
+
+### Added - a provider picker in the chat widget
+
+With more than one active provider configured, the chat panel offers a choice;
+the default is pre-selected, so a user who never touches it sees no change. The
+control does not render at all for a single provider.
+
+The picker's value is client-writable — that is the feature — so the validation
+is on the read side: `AiProviderConfigService::resolveForTurn()` accepts an id
+only when it names an **active** config and otherwise falls back to the default.
+An administrator switching a provider off is a deliberate act (a rotated key,
+stopped billing), and a client still holding the id must not be able to spend
+against it; a stale picker in a long-open tab degrades instead of failing. The
+list never carries `api_key`, which is an encrypted attribute with no business
+being decrypted for a dropdown label.
+
+The `<select>` follows the same resting-field recipe as every other field surface
+in the package and is pinned by `FieldSurfaceParityTest` — giving a new control
+its own colour pair is exactly how the BaseCrud selects drifted in 1.29.1.
+
+### Tests
+
+1951 -> 2044, including an end-to-end assertion on the real request Prism builds
+for x.ai: it goes to `chat/completions`, not `responses`, and the no-argument
+tool carries `"properties": {}`. Each fix was also verified by reintroducing it
+and watching the right tests fail.
+
+---
+
 ## [1.29.2] - 2026-09-03
 
 Documentation only, plus the tests that hold it. Reported from PetPlace while

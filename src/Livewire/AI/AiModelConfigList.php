@@ -106,15 +106,48 @@ class AiModelConfigList extends Component
 
     public string $errorMsg = '';
 
-    /** Supported providers (value => label) */
+    /**
+     * Supported providers (value => label).
+     *
+     * Each key must be a `Prism\Prism\Enums\Provider` value, because
+     * AiChatService::resolveProvider() resolves it with `Provider::tryFrom()`.
+     * Only text-capable providers belong here — Prism also ships ElevenLabs
+     * (speech) and VoyageAI (embeddings), which have no chat handler.
+     *
+     * xAI is listed explicitly: routing Grok through the OpenAI provider sends
+     * it to the Responses API (`/v1/responses`), which x.ai does not implement,
+     * and the 422 that comes back explains nothing. Prism's dedicated XAI
+     * provider posts to `chat/completions`.
+     */
     public const PROVIDERS = [
         'openai' => 'OpenAI',
         'anthropic' => 'Anthropic (Claude)',
         'gemini' => 'Google Gemini',
-        'ollama' => 'Ollama (Local)',
+        'xai' => 'xAI (Grok)',
+        'deepseek' => 'DeepSeek',
         'groq' => 'Groq',
         'mistral' => 'Mistral',
+        'openrouter' => 'OpenRouter',
+        'perplexity' => 'Perplexity',
+        'z' => 'z.ai (GLM)',
+        'ollama' => 'Ollama (Local)',
+        // Not a Prism provider: an alias resolved by
+        // AiChatService::prismProviderSlug() onto a handler that speaks plain
+        // `chat/completions`. This is the only option that works for the many
+        // OpenAI-compatible platforms with no dedicated Prism provider —
+        // Together, Fireworks, Cerebras, SambaNova, Azure OpenAI, vLLM,
+        // LM Studio, llama.cpp, LocalAI — because Prism's `openai` provider
+        // posts to `responses`, which none of them implement.
+        'openai_compatible' => 'OpenAI-compatible (custom endpoint)',
     ];
+
+    /**
+     * Slugs that are ptah aliases rather than Prism providers, so the
+     * "every UI slug is a real Provider value" guard knows to skip them.
+     *
+     * @var list<string>
+     */
+    public const ALIAS_PROVIDERS = ['openai_compatible'];
 
     // ── Rules ──────────────────────────────────────────────────────────
 
@@ -125,7 +158,10 @@ class AiModelConfigList extends Component
             'provider' => 'required|in:'.implode(',', array_keys(self::PROVIDERS)),
             'model' => 'required|string|max:100',
             'api_key' => ($this->isEditing || $this->provider === 'ollama') ? 'nullable|string' : 'required|string',
-            'api_endpoint' => 'nullable|url|max:500',
+            // Required for the OpenAI-compatible alias: there is no sensible
+            // default for somebody else's server, and without it the request
+            // would silently go to the carrier provider's own endpoint.
+            'api_endpoint' => ($this->provider === 'openai_compatible' ? 'required' : 'nullable').'|url|max:500',
             'max_tokens' => 'required|integer|min:1|max:128000',
             'temperature' => 'required|numeric|min:0|max:2',
             'system_prompt' => 'nullable|string|max:5000',

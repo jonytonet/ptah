@@ -1546,6 +1546,17 @@ return [
     // -------------------------------------------------------------------------
     // AI Agent Module
     // -------------------------------------------------------------------------
+    'ai_error_auth' => 'The AI provider rejected the credential. Check the API key saved for this provider.',
+    'ai_error_endpoint' => 'The AI provider address was not found. Check the endpoint saved for this provider.',
+    'ai_error_rate_limit' => 'The AI provider is throttling requests. Wait a moment and try again.',
+    'ai_error_model' => 'The AI provider does not serve the configured model. Check the model name.',
+    'ai_error_schema' => 'The AI provider refused the request format. This is a configuration problem, not something you did — the details are in the application log.',
+    'ai_error_unreachable' => 'Could not reach the AI provider. Check the endpoint and whether the service is running.',
+    'ai_error_overloaded' => 'The AI provider is unavailable right now. Try again in a moment.',
+    'ai_error_rejected' => 'The AI provider refused the request. The details are in the application log.',
+    'ai_error_generic' => 'The AI request could not be completed. The details are in the application log.',
+    'ai_widget_provider' => 'AI provider',
+    'ai_widget_provider_default' => 'default',
     'ai_widget_title' => 'AI Assistant',    'ai_widget_placeholder' => 'Type a message…',
     'ai_widget_send' => 'Send',
     'ai_widget_new_chat' => 'New conversation',
