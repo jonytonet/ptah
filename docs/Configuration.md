@@ -434,6 +434,21 @@ php artisan vendor:publish --tag=ptah-errors
 | `ai_agent.allow_guests` | `PTAH_AI_ALLOW_GUESTS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.normalize_tool_schema` | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_files` | `PTAH_AI_ATTACH_MAX_FILES` | `4` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.allowed_extensions` | — | images + `pdf docx txt md csv tsv json log` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_extracted_chars` | `PTAH_AI_ATTACH_MAX_CHARS` | `60000` | [AiAgent.md](AiAgent.md) |
+
+> The `attachments.*` defaults live in `Ptah\Services\AI\AiAttachmentService`,
+> not only in `config/ptah.php`. `mergeConfigFrom` is shallow, so a host that
+> published the config file owns the whole `ptah.ai_agent` array and would never
+> receive a nested key a later version adds — reading `allowed_extensions` with
+> `[]` as the fallback made an absent block indistinguishable from "allow
+> nothing", and hid the whole feature. Nothing to add to a published config
+> unless you want to restrict something.
+
 
 ---
 
