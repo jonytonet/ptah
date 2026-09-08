@@ -9,7 +9,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.33.0] - 2026-09-08
 
-A chat-widget release, driven almost entirely by live use.
+Driven almost entirely by live use: the chat widget end to end, the themed 500,
+and a jump box for long menus that the AI can read too.
 
 ### Fixed - the draft was server state, and an arriving answer erased it
 
