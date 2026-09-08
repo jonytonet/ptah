@@ -2708,6 +2708,50 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_avatar                { background-color: var(--ptah-control-ghost); }
 .ptah-dark .ptah-c-chat_avatar     { background-color: var(--ptah-control-ghost); }
 
+/* ── Ocultar o lancador ───────────────────────────────────────────────────
+   Um circulo de 56px no canto inferior direito cai exatamente sobre a
+   paginacao e a ultima coluna de uma listagem larga. O "esconder" nao apaga o
+   lancador: transforma numa alca fina na borda direita — um elemento em dois
+   estados, nao dois elementos — porque apagar de vez deixaria o chat sem
+   caminho de volta.
+
+   O dispensar fica sobre o botao roxo, entao a tinta e --ptah-text-on-accent
+   (branco invariante) sobre a superficie do painel, e nao um cinza fixo. */
+.ptah-c-chat_dismiss {
+    background-color: var(--ptah-surface-raised);
+    color: var(--ptah-text-secondary);
+    border: 1px solid var(--ptah-line);
+}
+.ptah-c-chat_dismiss:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+.ptah-dark .ptah-c-chat_dismiss {
+    background-color: var(--ptah-surface-raised);
+    color: var(--ptah-text-secondary);
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-c-chat_dismiss:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* Discreta de proposito: ela existe para NAO atrapalhar. Opacidade baixa em
+   repouso, cheia no hover e no foco — e o foco importa, porque em opacidade
+   baixa e 10px de largura ela seria invisivel para quem chega por Tab. */
+.ptah-c-chat_handle {
+    background-color: var(--ptah-primary);
+    opacity: 0.35;
+}
+.ptah-c-chat_handle:hover,
+.ptah-c-chat_handle:focus-visible {
+    opacity: 1;
+}
+.ptah-dark .ptah-c-chat_handle {
+    background-color: var(--ptah-primary);
+    opacity: 0.45;
+}
+
 /* ── Anexos do chat ───────────────────────────────────────────────────────
    Superficie e linha por token. O alvo do arraste usa a cor de acento porque e
    um estado momentaneo e precisa ser inequivoco, e o fundo e translucido para a

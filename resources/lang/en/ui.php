@@ -1562,6 +1562,8 @@ return [
     // when it cannot be built or blows up, so the assistant can say that
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
+    'ai_widget_hide_launcher' => 'Hide the assistant button',
+    'ai_widget_show_launcher' => 'Show the assistant',
     'ai_widget_expand' => 'Expand to full screen',
     'ai_widget_collapse' => 'Back to the corner',
     // Attachments. The `ai_attach_note_*` strings go into the PROMPT, not

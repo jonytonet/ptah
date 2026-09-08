@@ -26,9 +26,18 @@
            campo no snapshot para algo que a CSS resolve. */
         expanded: false,
 
+        /* Lancador escondido. Um circulo de 56px no canto inferior direito fica
+           exatamente sobre a paginacao e a ultima coluna de uma listagem larga,
+           e nem sempre a pessoa quer o chat por perto.
+           Escondido, ele nao desaparece: virou uma alca fina na borda direita,
+           que e um elemento em dois estados e nao dois elementos. Desaparecer de
+           vez deixaria o chat sem caminho de volta. */
+        launcherHidden: false,
+
         init() {
             try {
                 this.expanded = localStorage.getItem('ptah:ai:expanded') === '1';
+                this.launcherHidden = localStorage.getItem('ptah:ai:launcher-hidden') === '1';
             } catch (e) {
                 /* janela privada, cookies bloqueados: segue no modo compacto */
             }
@@ -37,6 +46,18 @@
             this.$watch('expanded', value => {
                 try { localStorage.setItem('ptah:ai:expanded', value ? '1' : '0'); } catch (e) {}
                 this.scrollToBottom();
+            });
+
+            this.$watch('launcherHidden', value => {
+                try { localStorage.setItem('ptah:ai:launcher-hidden', value ? '1' : '0'); } catch (e) {}
+
+                /* A reserva de espaco no fim da listagem existe para o botao
+                   nao cobrir a paginacao. Escondido o botao, a reserva passa a
+                   ser um buraco sem motivo, entao a classe que o layout estampa
+                   no <body> sai junto. */
+                try {
+                    document.body.classList.toggle('ptah-has-ai-launcher', !value);
+                } catch (e) {}
             });
         },
 
@@ -94,7 +115,10 @@
         dragging: false,
         uploading: 0,
 
-        maxFiles: {{ (int) config('ptah.ai_agent.attachments.max_files', 4) }},
+        {{-- Do servico, que carrega os defaults do pacote: `mergeConfigFrom` e
+             raso e um host com config publicada nao recebe chave nova
+             aninhada. --}}
+        maxFiles: {{ app(\Ptah\Services\AI\AiAttachmentService::class)->maxFiles() }},
 
         /* Estreitada pelo provedor selecionado, no servidor. Num provedor que
            nao aceita documento esta lista nao tem pdf, entao um PDF arrastado e
@@ -215,8 +239,12 @@
         </div>
         @endif
 
-        {{-- Panel header --}}
-        <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0">
+        {{-- Panel header. Duplo clique alterna a tela cheia: o botao no canto e
+             pequeno e branco a 70% sobre o roxo, e duplo clique na barra de
+             titulo e o gesto que as pessoas ja tentam. `sm:` porque no celular
+             ja e tela cheia e nao ha estado para alternar. --}}
+        <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0"
+             @dblclick="if (window.innerWidth >= 640) expanded = !expanded">
             <div class="flex items-center gap-2">
                 <i class="bx bx-bot text-xl"></i>
                 <span class="font-semibold text-sm">{{ __('ptah::ui.ai_widget_title') }}</span>
@@ -507,16 +535,47 @@
          celular, onde tela cheia e o unico modo. Um botao flutuante sobre um
          painel de tela cheia cobre conteudo e passa a ser um segundo "fechar"
          concorrendo com o do cabecalho. --}}
-    <button
-        @click="open = !open"
-        x-show="!(expanded && open)"
-        :class="open ? 'max-sm:hidden' : ''"
-        class="group w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:bg-primary-dark hover:scale-105 transition-all duration-200 active:scale-95"
-        :title="open ? '{{ __('ptah::ui.ai_widget_close') }}' : '{{ __('ptah::ui.ai_widget_open') }}'"
-        :aria-expanded="open ? 'true' : 'false'"
-    >
-        <i x-show="!open" class="bx bx-bot text-2xl"></i>
-        <i x-show="open" x-cloak class="bx bx-x text-2xl"></i>
+    {{-- Envelope so para pendurar o "esconder" no canto do botao. --}}
+    <div class="group relative" x-show="!launcherHidden" x-cloak>
+        <button
+            @click="open = !open"
+            x-show="!(expanded && open)"
+            :class="open ? 'max-sm:hidden' : ''"
+            class="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:bg-primary-dark hover:scale-105 transition-all duration-200 active:scale-95"
+            :title="open ? '{{ __('ptah::ui.ai_widget_close') }}' : '{{ __('ptah::ui.ai_widget_open') }}'"
+            :aria-expanded="open ? 'true' : 'false'"
+        >
+            <i x-show="!open" class="bx bx-bot text-2xl"></i>
+            <i x-show="open" x-cloak class="bx bx-x text-2xl"></i>
+        </button>
+
+        {{-- Aparece ao passar o mouse ou ao receber foco pelo teclado —
+             `focus-within` no envelope, senao o controle nao existiria para quem
+             navega sem mouse. So com o painel fechado: com ele aberto o botao ja
+             e o "fechar", e esconder o lancador debaixo de um painel aberto
+             deixaria a pessoa sem entender para onde ele foi. --}}
+        <button type="button"
+                x-show="!open"
+                @click.stop="launcherHidden = true"
+                class="ptah-c-chat_dismiss absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100"
+                title="{{ __('ptah::ui.ai_widget_hide_launcher') }}"
+                aria-label="{{ __('ptah::ui.ai_widget_hide_launcher') }}">
+            <i class="bx bx-x text-sm"></i>
+        </button>
+    </div>
+
+    {{-- O caminho de volta. Alca fina colada na borda direita: continua
+         alcancavel e para de cobrir a esquina da tabela, que era a reclamacao.
+         Fixa na propria janela, e nao dentro do envelope do canto, para nao
+         herdar o afastamento de 24px que a poria sobre o conteudo de novo. --}}
+    <button type="button"
+            x-show="launcherHidden"
+            x-cloak
+            @click="launcherHidden = false; open = true"
+            class="ptah-c-chat_handle fixed right-0 top-1/2 -translate-y-1/2 flex h-16 w-2.5 items-center justify-center rounded-l-md transition-all hover:w-4"
+            title="{{ __('ptah::ui.ai_widget_show_launcher') }}"
+            aria-label="{{ __('ptah::ui.ai_widget_show_launcher') }}">
+        <span class="sr-only">{{ __('ptah::ui.ai_widget_show_launcher') }}</span>
     </button>
 </div>
 @endif

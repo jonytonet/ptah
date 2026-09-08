@@ -19,6 +19,7 @@
   - [What each provider can actually receive](#what-each-provider-can-actually-receive)
   - [Formatted answers](#formatted-answers)
   - [Full screen](#full-screen)
+  - [Getting the button out of the way](#getting-the-button-out-of-the-way)
   - [The draft lives in the browser](#the-draft-lives-in-the-browser)
 - [Custom Tools (Function Calling)](#custom-tools-function-calling)
   - [When your tools are actually built](#when-your-tools-are-actually-built)
@@ -338,6 +339,12 @@ Everything is validated server-side — extension, size and count. The client-si
 filter exists to save bandwidth and to tell you early; `$wire.upload` is a public
 call and does not have to go through it.
 
+> **If you published `config/ptah.php` before this version**, you do not need to
+> touch it. `mergeConfigFrom` is shallow, so a nested key the package adds later
+> never reaches a published file — which is why the defaults below live in
+> `AiAttachmentService`, not only in the config. Add the block only to restrict
+> something.
+
 ```php
 'ai_agent' => [
     'attachments' => [
@@ -432,7 +439,32 @@ On the desktop the header has an expand button, and the choice is remembered in
 `localStorage`. It is a per-device preference that CSS resolves; putting it in the
 component would buy a request and a round trip for a class toggle.
 
+**Double-clicking the header** toggles full screen too. The button is 20px of
+white at 70% opacity on purple, and double-clicking a title bar is the gesture
+people try first.
+
 `Esc` closes the panel, and opening it puts the caret in the box.
+
+### Getting the button out of the way
+
+A 56px circle in the bottom-right corner sits exactly over a listing's
+pagination and its last column. The package already reserves space at the end of
+a BaseCrud listing for it, and that does not help someone who simply does not
+want the chat nearby.
+
+Hover the launcher and a small **×** appears; clicking it hides the button. It
+does not disappear — it becomes a thin handle flush against the right edge, so
+the affordance is one element in two states rather than two elements, and there
+is always a way back for someone who does not remember hiding it. Clicking the
+handle restores the launcher *and* opens the chat, because that is what someone
+reaching for it wants.
+
+The reserved space at the end of the listing goes away with the button
+(`.ptah-has-ai-launcher` comes off `<body>`), or it would be a gap with nothing
+in it. The choice is remembered per device in `localStorage`, like the
+full-screen one, and the dismiss control is reachable by keyboard —
+`focus-within` on the wrapper, since a control that only exists on hover does not
+exist for everyone.
 
 ### The draft lives in the browser
 

@@ -75,6 +75,68 @@ final class AiAttachmentService
     public const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
 
     /**
+     * Defaults in CODE, with the config file as an override — and this is a
+     * correctness requirement, not tidiness.
+     *
+     * `mergeConfigFrom` is SHALLOW. A host that published `config/ptah.php`
+     * owns the whole `ptah.ai_agent` array, so a NESTED key added by a later
+     * version of the package never reaches them: `ptah.ai_agent.attachments`
+     * simply does not exist there. Reading `allowed_extensions` with `[]` as
+     * the fallback made that absence indistinguishable from "allow nothing",
+     * and the entire attachment UI — paperclip, paste handler, drop target,
+     * all behind the same condition — vanished on every host with a published
+     * config. Reported as "nao achei como enviar documentos, nem o print com
+     * Ctrl+V funcionou".
+     *
+     * So the package's own defaults live here, where a stale published config
+     * cannot erase them, and a host that wants to restrict adds the block.
+     *
+     * @var list<string>
+     */
+    public const DEFAULT_EXTENSIONS = [
+        'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp',
+        'pdf', 'docx',
+        'txt', 'md', 'csv', 'tsv', 'json', 'log',
+    ];
+
+    public const DEFAULT_MAX_FILES = 4;
+
+    public const DEFAULT_MAX_SIZE_KB = 8192;
+
+    public const DEFAULT_MAX_EXTRACTED_CHARS = 60000;
+
+    /**
+     * One accessor for the whole block, so there is a single place where the
+     * shallow-merge fallback is decided.
+     */
+    public function option(string $key, mixed $default = null): mixed
+    {
+        $value = config('ptah.ai_agent.attachments.'.$key);
+
+        return $value === null ? $default : $value;
+    }
+
+    public function enabled(): bool
+    {
+        return (bool) $this->option('enabled', true);
+    }
+
+    public function maxFiles(): int
+    {
+        return max(1, (int) $this->option('max_files', self::DEFAULT_MAX_FILES));
+    }
+
+    public function maxSizeKb(): int
+    {
+        return max(1, (int) $this->option('max_size_kb', self::DEFAULT_MAX_SIZE_KB));
+    }
+
+    public function maxExtractedChars(): int
+    {
+        return max(1000, (int) $this->option('max_extracted_chars', self::DEFAULT_MAX_EXTRACTED_CHARS));
+    }
+
+    /**
      * @return array{images: bool, documents: bool}
      */
     public function capabilities(string $provider): array
@@ -101,7 +163,7 @@ final class AiAttachmentService
     {
         $configured = array_values(array_unique(array_map(
             static fn ($e): string => strtolower(ltrim(trim((string) $e), '.')),
-            (array) config('ptah.ai_agent.attachments.allowed_extensions', [])
+            (array) $this->option('allowed_extensions', self::DEFAULT_EXTENSIONS)
         )));
 
         $documents = $this->capabilities($provider)['documents'];
@@ -134,7 +196,7 @@ final class AiAttachmentService
     {
         $configured = array_map(
             static fn ($e): string => strtolower(ltrim(trim((string) $e), '.')),
-            (array) config('ptah.ai_agent.attachments.allowed_extensions', [])
+            (array) $this->option('allowed_extensions', self::DEFAULT_EXTENSIONS)
         );
 
         $allowed = $this->allowedExtensions($provider);
@@ -240,7 +302,7 @@ final class AiAttachmentService
             $raw = (string) mb_convert_encoding($raw, 'UTF-8', ['UTF-8', 'ISO-8859-1', 'Windows-1252']);
         }
 
-        $limit = max(1000, (int) config('ptah.ai_agent.attachments.max_extracted_chars', 60000));
+        $limit = $this->maxExtractedChars();
 
         // Truncation is MARKED, not silent: a model handed a fragment with no
         // sign that it is a fragment summarises it as the whole document.

@@ -171,12 +171,16 @@ class AiChatWidget extends Component
             return;
         }
 
-        if (! config('ptah.ai_agent.attachments.enabled', true)) {
+        if (! $this->attachmentService()->enabled()) {
             return;
         }
 
-        $maxFiles = max(1, (int) config('ptah.ai_agent.attachments.max_files', 4));
-        $maxKb = max(1, (int) config('ptah.ai_agent.attachments.max_size_kb', 8192));
+        // Pelo servico, nao por config() direto: os defaults do pacote vivem no
+        // codigo porque `mergeConfigFrom` e RASO — um host que publicou
+        // config/ptah.php nao recebe chave NOVA aninhada, e ler daqui com
+        // fallback proprio faria o widget e o servico discordarem.
+        $maxFiles = $this->attachmentService()->maxFiles();
+        $maxKb = $this->attachmentService()->maxSizeKb();
 
         // A lista vem ESTREITADA pelo provedor selecionado: num provedor que
         // nao aceita documento, PDF nao entra. Mesma fonte que alimenta o
@@ -531,7 +535,7 @@ class AiChatWidget extends Component
 
     public function render()
     {
-        $enabled = (bool) config('ptah.ai_agent.attachments.enabled', true);
+        $enabled = $this->attachmentService()->enabled();
         $extensions = [];
         $blocked = [];
 
