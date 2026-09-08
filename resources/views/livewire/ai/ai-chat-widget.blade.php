@@ -73,11 +73,82 @@
 
         submit() {
             const text = this.draft.trim();
-            if (text === '' || this.$wire.loading) return;
+            const hasFiles = (this.$wire.attachments || []).length > 0;
+
+            /* Com anexo, texto vazio ainda e um envio valido: o arquivo e a
+               mensagem. E nao envia enquanto um upload esta no ar, senao a
+               mensagem sai sem o anexo que a pessoa acabou de soltar. */
+            if ((text === '' && !hasFiles) || this.$wire.loading || this.uploading > 0) return;
 
             this.draft = '';
             this.resetGrow();
             this.$wire.send(text);
+        },
+
+        /* ── Anexos ────────────────────────────────────────────────────
+           Um `$wire.upload` por arquivo. `uploadMultiple` substituiria o array
+           inteiro, e colar/arrastar chegam de um em um — o segundo arquivo
+           apagaria o primeiro. O servidor acumula e valida; aqui so filtramos
+           antes de gastar banda, e o filtro do cliente e conveniencia, nunca
+           garantia. */
+        dragging: false,
+        uploading: 0,
+
+        maxFiles: {{ (int) config('ptah.ai_agent.attachments.max_files', 4) }},
+
+        /* Estreitada pelo provedor selecionado, no servidor. Num provedor que
+           nao aceita documento esta lista nao tem pdf, entao um PDF arrastado e
+           filtrado aqui antes de gastar banda — e recusado de novo no servidor,
+           que e quem decide. */
+        allowed: @js($attachmentExtensions),
+
+        accepted(file) {
+            if (this.allowed.length === 0) return true;
+            const ext = (file.name || '').split('.').pop().toLowerCase();
+            return this.allowed.includes(ext);
+        },
+
+        take(files) {
+            const list = Array.from(files || []);
+            if (list.length === 0) return;
+
+            /* Espaco restante contado com o que o servidor ja tem MAIS o que
+               esta subindo: sem o `uploading`, colar quatro prints de uma vez
+               passaria os quatro pelo teto, porque nenhum deles teria chegado
+               ainda quando o proximo e avaliado. */
+            let room = this.maxFiles - (this.$wire.attachments || []).length - this.uploading;
+
+            for (const file of list) {
+                if (room <= 0) break;
+                if (!this.accepted(file)) continue;
+
+                room--;
+                this.uploading++;
+                this.$wire.upload(
+                    'incoming',
+                    file,
+                    () => { this.uploading = Math.max(0, this.uploading - 1); },
+                    () => { this.uploading = Math.max(0, this.uploading - 1); }
+                );
+            }
+        },
+
+        onPaste(e) {
+            /* Print de tela colado com Ctrl+V chega em clipboardData.files como
+               um image/png sem nome de arquivo. Se houver arquivo no
+               clipboard, ele ganha do texto; senao nao interceptamos nada e a
+               colagem de texto segue normal. */
+            const files = e.clipboardData && e.clipboardData.files;
+            if (!files || files.length === 0) return;
+
+            e.preventDefault();
+            this.take(files);
+        },
+
+        onDrop(e) {
+            e.preventDefault();
+            this.dragging = false;
+            this.take(e.dataTransfer && e.dataTransfer.files);
         },
 
         onEnter(e) {
@@ -113,14 +184,37 @@
              cima. Utilitarios `max-sm:` em vez de uma media query no
              ptah-components.css de proposito — o parser das fixtures golden
              nao e ciente de media query e ja gravou valor errado por isso. --}}
-        class="ptah-c-chat_panel shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden
+        class="ptah-c-chat_panel relative shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden
                w-80 sm:w-96 rounded-2xl max-h-[min(560px,calc(100vh_-_100px))]
                max-sm:fixed max-sm:inset-0 max-sm:w-full max-sm:max-h-none max-sm:rounded-none max-sm:border-0"
         :class="expanded ? 'sm:fixed sm:inset-0 sm:w-full sm:max-w-none sm:max-h-none sm:rounded-none' : ''"
         role="dialog"
         aria-modal="false"
         aria-label="{{ __('ptah::ui.ai_widget_title') }}"
+        @if($attachmentsEnabled && $attachmentExtensions !== [])
+        {{-- No painel inteiro, nao so no input: a pessoa arrasta para "o chat",
+             e mira no meio da conversa. `dragover` precisa de preventDefault ou
+             o navegador abre o arquivo numa aba. --}}
+        @paste="onPaste($event)"
+        @dragover.prevent="dragging = true"
+        @dragenter.prevent="dragging = true"
+        @dragleave="if ($event.target === $el) dragging = false"
+        @drop="onDrop($event)"
+        @endif
     >
+        @if($attachmentsEnabled && $attachmentExtensions !== [])
+        {{-- Alvo visivel do arraste. `pointer-events-none` para nao roubar o
+             proprio evento de drop do painel que o desenha. --}}
+        <div x-show="dragging"
+             x-cloak
+             class="ptah-c-chat_drop absolute inset-0 z-10 m-2 flex items-center justify-center rounded-xl border-2 border-dashed text-sm font-medium pointer-events-none">
+            <span class="flex items-center gap-2">
+                <i class="bx bx-cloud-upload text-xl"></i>
+                {{ __('ptah::ui.ai_attach_drop') }}
+            </span>
+        </div>
+        @endif
+
         {{-- Panel header --}}
         <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0">
             <div class="flex items-center gap-2">
@@ -241,7 +335,24 @@
                         {{-- User message --}}
                         <div class="flex justify-end">
                             <div class="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-white shadow-sm">
-                                {!! nl2br(e($msg['content'])) !!}
+                                @if(! empty($msg['attachments']))
+                                    {{-- So os NOMES: os arquivos eram
+                                         temporarios e ja nao existem quando a
+                                         conversa e reaberta. Mas sem eles a
+                                         pessoa le "analisa isso" sem saber o
+                                         que era "isso". --}}
+                                    <span class="mb-1 flex flex-wrap gap-1">
+                                        @foreach($msg['attachments'] as $attachedName)
+                                            <span class="ptah-c-chat_umsg_chip inline-flex max-w-full items-center gap-1 rounded px-1.5 py-0.5 text-[11px]">
+                                                <i class="bx bx-paperclip shrink-0"></i>
+                                                <span class="truncate">{{ $attachedName }}</span>
+                                            </span>
+                                        @endforeach
+                                    </span>
+                                @endif
+                                @if(trim((string) $msg['content']) !== '')
+                                    {!! nl2br(e($msg['content'])) !!}
+                                @endif
                             </div>
                         </div>
                     @else
@@ -250,8 +361,11 @@
                             <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                                 <i class="bx bx-bot text-sm text-primary"></i>
                             </div>
-                            <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
-                                {!! nl2br(e($msg['content'])) !!}
+                            {{-- Markdown so na resposta. A bolha do usuario
+                                 continua texto escapado: o que a pessoa digitou
+                                 nao deve virar HTML so porque parecia markdown. --}}
+                            <div class="ptah-c-chat_md max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
+                                {!! \Ptah\Support\AI\ChatMarkdown::render($msg['content']) !!}
                             </div>
                         </div>
                     @endif
@@ -266,7 +380,7 @@
                     <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                         <i class="bx bx-bot text-sm text-primary"></i>
                     </div>
-                    <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
+                    <div class="ptah-c-chat_md max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
                         <div wire:stream="ai-stream">
                             <span class="inline-flex items-center gap-1 py-1">
                                 <span class="block w-2 h-2 rounded-full ptah-c-chat_dot animate-wave" style="animation-delay: 0ms"></span>
@@ -289,7 +403,48 @@
         {{-- Input area --}}
         @if(!$showHistory)
         <div class="border-t border-gray-100 dark:border-slate-700 px-3 py-3 flex-shrink-0">
+            @if($attachmentsEnabled && $attachments !== [])
+                {{-- Chips dos anexos, desenhados a partir da lista do SERVIDOR:
+                     e ela que o envio usa, entao e ela que a tela tem de
+                     mostrar. Um chip vindo de estado do cliente poderia
+                     prometer um arquivo que nao vai. --}}
+                <div class="mb-2 flex flex-wrap gap-1.5">
+                    @foreach($attachments as $i => $file)
+                        <span class="ptah-c-chat_chip inline-flex max-w-full items-center gap-1 rounded-lg border px-2 py-1 text-xs">
+                            <i class="bx {{ str_starts_with((string) $file->getMimeType(), 'image/') ? 'bx-image' : 'bx-file' }} shrink-0"></i>
+                            <span class="truncate">{{ $file->getClientOriginalName() }}</span>
+                            <button type="button"
+                                    wire:click="removeAttachment({{ $i }})"
+                                    class="ptah-c-chat_chip_x shrink-0 rounded"
+                                    title="{{ __('ptah::ui.ai_attach_remove', ['name' => $file->getClientOriginalName()]) }}"
+                                    aria-label="{{ __('ptah::ui.ai_attach_remove', ['name' => $file->getClientOriginalName()]) }}">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </span>
+                    @endforeach
+                </div>
+            @endif
+
             <div class="flex items-end gap-2">
+                @if($attachmentsEnabled && $attachmentExtensions !== [])
+                    {{-- O input existe para o clique no clipe. Colar e arrastar
+                         nao passam por ele: vao direto pelo $wire.upload. --}}
+                    <input type="file"
+                           x-ref="file"
+                           multiple
+                           class="hidden"
+                           accept="{{ $attachmentAccept }}"
+                           @change="take($event.target.files); $event.target.value = ''">
+                    <button type="button"
+                            @click="$refs.file.click()"
+                            class="ptah-c-chat_attach shrink-0 flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            x-bind:disabled="($wire.attachments || []).length + uploading >= maxFiles"
+                            title="{{ __('ptah::ui.ai_attach_btn') }}"
+                            aria-label="{{ __('ptah::ui.ai_attach_btn') }}">
+                        <i class="bx bx-paperclip text-lg" x-show="uploading === 0"></i>
+                        <i class="bx bx-loader-alt bx-spin text-lg" x-show="uploading > 0" x-cloak></i>
+                    </button>
+                @endif
                 {{-- Sem wire:model: o rascunho e local (ver o x-data da raiz e
                      o docblock de AiChatWidget::send). `wire:ignore` para que
                      nem o morph do Livewire toque neste no — e o morph, com um
@@ -313,7 +468,7 @@
                 <button
                     type="button"
                     @click="submit()"
-                    x-bind:disabled="draft.trim() === '' || $wire.loading"
+                    x-bind:disabled="(draft.trim() === '' && ($wire.attachments || []).length === 0) || $wire.loading || uploading > 0"
                     class="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="{{ __('ptah::ui.ai_widget_send') }}"
                 >
@@ -330,8 +485,16 @@
                  cerca de 1,5:1 sobre branco — texto que existe e nao se le.
                  Tokenizado, como o resto do pacote. --}}
             <p class="ptah-c-chat_hint mt-1.5 text-center text-[10px]">
-                {{ __('ptah::ui.ai_widget_keyboard_hint') }}
+                {{ __('ptah::ui.ai_widget_keyboard_hint') }}@if($attachmentsEnabled && $attachmentExtensions !== []) · {{ __('ptah::ui.ai_attach_hint') }}@endif
             </p>
+            @if($attachmentsEnabled && $attachmentBlocked !== [])
+                {{-- Dito antes de a pessoa tentar. O provedor esta escolhido no
+                     seletor do cabecalho, entao isto e acionavel: trocar de
+                     provedor libera o formato. --}}
+                <p class="ptah-c-chat_hint mt-0.5 text-center text-[10px]">
+                    {{ __('ptah::ui.ai_attach_blocked_hint', ['formats' => implode(', ', $attachmentBlocked)]) }}
+                </p>
+            @endif
         </div>
         @endif
         {{-- /Input area --}}

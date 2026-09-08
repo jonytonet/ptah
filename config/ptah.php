@@ -492,6 +492,48 @@ return [
         'normalize_tool_schema' => (bool) env('PTAH_AI_NORMALIZE_TOOL_SCHEMA', true),
 
         /*
+         * Anexos no chat: arquivo escolhido, colado (Ctrl+V, inclusive print de
+         * tela) ou arrastado para o painel.
+         *
+         * IMAGEM funciona em todo provedor que o Prism suporta. DOCUMENTO nao:
+         * so anthropic, gemini, mistral, openai, openrouter, perplexity e z
+         * serializam essa parte da mensagem — em xai/Grok, groq, deepseek e
+         * ollama ela e DESCARTADA EM SILENCIO, e o modelo responde sobre um
+         * arquivo que nunca recebeu.
+         *
+         * Por isso esta lista e ESTREITADA pelo provedor selecionado: onde
+         * documento nao chega, pdf e docx nao aparecem no seletor de arquivos,
+         * um pdf arrastado e recusado, e a recusa diz o motivo. Nao se oferece o
+         * que nao funciona.
+         *
+         * A excecao nao e concessao: txt, md, csv, tsv, json e log SAO texto, e
+         * mandar como texto nao perde nada — nao ha layout nem imagem de pagina
+         * para perder. Esses viajam embutidos em qualquer provedor. Pdf e docx
+         * nao sao texto, entao convertir perderia justamente o que os faz
+         * documento: vao nativos ou nao vao.
+         */
+        'attachments' => [
+            'enabled' => (bool) env('PTAH_AI_ATTACHMENTS', true),
+
+            /* Por arquivo, em kilobytes. O teto real ainda e o do PHP
+               (upload_max_filesize / post_max_size) e o do servidor web. */
+            'max_size_kb' => (int) env('PTAH_AI_ATTACH_MAX_KB', 8192),
+
+            /* Por mensagem. Cada anexo custa tokens de entrada. */
+            'max_files' => (int) env('PTAH_AI_ATTACH_MAX_FILES', 4),
+
+            /* Extensoes aceitas. Mantenha curto: o que entra aqui vira custo de
+               token e, no caminho de extracao, parsing de arquivo do usuario. */
+            'allowed_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'csv', 'json', 'docx'],
+
+            /* Teto de caracteres extraidos por arquivo no caminho de fallback.
+               Truncar e marcado no texto: o modelo precisa saber que o
+               documento nao terminou, senao resume um fragmento como se fosse o
+               todo. */
+            'max_extracted_chars' => (int) env('PTAH_AI_ATTACH_MAX_CHARS', 60000),
+        ],
+
+        /*
          * Class names, never instances. Registration resolves nothing: a tool
          * is built at send time, one at a time, each inside its own try/catch —
          * so a tool with a bad constructor is logged with its class name and

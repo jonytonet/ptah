@@ -195,13 +195,19 @@ class AiChatInputTest extends TestCase
     #[Test]
     public function the_send_button_waits_for_the_answer_and_for_a_non_empty_draft(): void
     {
+        // Casado pelas CONDICOES, nao pela expressao inteira: a lista cresceu
+        // quando os anexos entraram — rascunho vazio passou a ser envio valido
+        // se houver arquivo, e um upload no ar bloqueia — e fixar o texto
+        // completo transformava cada acrescimo numa falha espuria.
         $html = $this->html();
 
-        $this->assertMatchesRegularExpression(
-            '/x-bind:disabled="draft\.trim\(\) === \'\' \|\| \$wire\.loading"/',
-            $html,
-            'O envio precisa esperar a resposta e recusar rascunho vazio — do lado do cliente, que e quem tem o rascunho.'
-        );
+        if (! preg_match('/<button\b(?:(?!<button).)*?ai_widget_send/s', $html, $button)
+            && ! preg_match('/x-bind:disabled="([^"]*draft\.trim\(\)[^"]*)"/', $html, $button)) {
+            $this->fail('Nao achei o botao de enviar no HTML renderizado.');
+        }
+
+        $this->assertMatchesRegularExpression('/x-bind:disabled="[^"]*draft\.trim\(\)/', $html);
+        $this->assertMatchesRegularExpression('/x-bind:disabled="[^"]*\$wire\.loading/', $html);
     }
 
     #[Test]

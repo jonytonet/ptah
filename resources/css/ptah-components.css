@@ -2708,6 +2708,132 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_avatar                { background-color: var(--ptah-control-ghost); }
 .ptah-dark .ptah-c-chat_avatar     { background-color: var(--ptah-control-ghost); }
 
+/* ── Anexos do chat ───────────────────────────────────────────────────────
+   Superficie e linha por token. O alvo do arraste usa a cor de acento porque e
+   um estado momentaneo e precisa ser inequivoco, e o fundo e translucido para a
+   conversa continuar visivel por baixo — quem arrasta esta mirando um lugar. */
+.ptah-c-chat_drop {
+    border-color: var(--ptah-primary);
+    background-color: color-mix(in srgb, var(--ptah-surface) 88%, transparent);
+    color: var(--ptah-primary-strong);
+}
+.ptah-dark .ptah-c-chat_drop {
+    background-color: color-mix(in srgb, var(--ptah-surface) 88%, transparent);
+    color: var(--ptah-text-strong);
+}
+
+.ptah-c-chat_chip {
+    background-color: var(--ptah-surface-sunken);
+    border-color: var(--ptah-line);
+    color: var(--ptah-text-strong);
+    /* O nome do arquivo e truncado; sem teto, um nome longo empurra o botao de
+       remover fora do painel. */
+    max-width: 14rem;
+}
+.ptah-dark .ptah-c-chat_chip {
+    background-color: var(--ptah-surface-sunken);
+    border-color: var(--ptah-line);
+    color: var(--ptah-text-strong);
+}
+
+/* --color-danger, como .ptah-c-act_del (o "excluir" das linhas do BaseCrud) —
+   e nao --ptah-danger, que nao existe: --ptah-danger-lite e -strong sao
+   derivados para fundo tingido, nao tinta de icone. O CssTokenResolver das
+   fixtures golden apontou o token inventado. */
+/* Chip do anexo DENTRO da bolha do usuario, que e bg-primary: tinta e veu por
+   --ptah-text-on-accent (branco invariante), a mesma razao dos botoes do
+   cabecalho. Era `bg-white/20`, que a catraca de paleta fixa conta e que nao
+   diz a quem le que aquele branco e proposital. */
+.ptah-c-chat_umsg_chip {
+    background-color: color-mix(in srgb, var(--ptah-text-on-accent) 20%, transparent);
+    color: var(--ptah-text-on-accent);
+}
+
+.ptah-c-chat_chip_x          { color: var(--ptah-text-faint); }
+.ptah-c-chat_chip_x:hover    { color: var(--color-danger); }
+.ptah-dark .ptah-c-chat_chip_x       { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chat_chip_x:hover { color: var(--color-danger); }
+
+.ptah-c-chat_attach              { color: var(--ptah-text-secondary); background-color: transparent; }
+.ptah-c-chat_attach:hover        { color: var(--ptah-primary-strong); background-color: var(--ptah-control-ghost); }
+.ptah-dark .ptah-c-chat_attach       { color: var(--ptah-text-secondary); background-color: transparent; }
+.ptah-dark .ptah-c-chat_attach:hover { color: var(--ptah-text-strong); background-color: var(--ptah-control-ghost); }
+
+/* ── Resposta formatada (.ptah-c-chat_md) ─────────────────────────────────
+   A bolha era `nl2br(e($conteudo))`, entao um modelo que respondia com tabela,
+   lista numerada ou bloco de codigo colocava `**negrito**`, `| a | b |` e
+   cercas de crase na tela como caractere literal. Modelo responde em markdown
+   quer o cliente renderize ou nao, e um assistente de ERP que lista registros
+   responde em tabela na maior parte do tempo.
+
+   Espacamento em vez de margem por elemento: a bolha e estreita, e uma pilha
+   de margens colapsadas dentro dela desalinhava a primeira e a ultima linha do
+   padding da bolha. Superficie e linha por token, nunca tom numerico de marca
+   (o app.css do host nao declara essa escala — ver
+   HostThemeScaleDependencyTest). */
+.ptah-c-chat_md > * + *            { margin-top: 0.5rem; }
+.ptah-c-chat_md > :first-child     { margin-top: 0; }
+
+.ptah-c-chat_md ul,
+.ptah-c-chat_md ol                 { padding-left: 1.15rem; }
+.ptah-c-chat_md ul                 { list-style: disc; }
+.ptah-c-chat_md ol                 { list-style: decimal; }
+.ptah-c-chat_md li + li            { margin-top: 0.15rem; }
+.ptah-c-chat_md li > ul,
+.ptah-c-chat_md li > ol            { margin-top: 0.15rem; }
+
+.ptah-c-chat_md strong             { font-weight: 600; }
+.ptah-c-chat_md h1,
+.ptah-c-chat_md h2,
+.ptah-c-chat_md h3,
+.ptah-c-chat_md h4                 { font-weight: 600; line-height: 1.3; }
+.ptah-c-chat_md h1                 { font-size: 1.05rem; }
+.ptah-c-chat_md h2                 { font-size: 1rem; }
+.ptah-c-chat_md h3,
+.ptah-c-chat_md h4                 { font-size: 0.9375rem; }
+
+/* Link: sublinhado sempre. So a cor distinguindo link de texto falha para quem
+   nao distingue essa cor, e a bolha ja e uma superficie tingida. */
+.ptah-c-chat_md a                  { color: var(--ptah-primary-strong); text-decoration: underline; }
+.ptah-dark .ptah-c-chat_md a       { color: var(--ptah-text-strong); text-decoration: underline; }
+
+.ptah-c-chat_md code               {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    background-color: var(--ptah-surface-sunken);
+    border: 1px solid var(--ptah-line);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.25rem;
+}
+.ptah-c-chat_md pre                {
+    background-color: var(--ptah-surface-sunken);
+    border: 1px solid var(--ptah-line);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    /* A bolha e estreita e a linha de codigo nao quebra: rola dentro do
+       proprio bloco, senao o painel inteiro rola de lado. */
+    overflow-x: auto;
+}
+.ptah-c-chat_md pre code           { background: none; border: 0; padding: 0; font-size: 0.75rem; }
+
+.ptah-c-chat_md blockquote         {
+    border-left: 3px solid var(--ptah-line-strong);
+    padding-left: 0.5rem;
+    color: var(--ptah-text-secondary);
+}
+
+/* Tabela: o formato em que um assistente de ERP responde quase sempre. Rola no
+   proprio container pelo mesmo motivo do <pre>. */
+.ptah-c-chat_md table              { width: 100%; border-collapse: collapse; font-size: 0.8125rem; display: block; overflow-x: auto; }
+.ptah-c-chat_md th,
+.ptah-c-chat_md td                 { border: 1px solid var(--ptah-line); padding: 0.2rem 0.4rem; text-align: left; }
+.ptah-c-chat_md th                 { background-color: var(--ptah-surface-sunken); font-weight: 600; }
+
+.ptah-c-chat_md hr                 { border: 0; border-top: 1px solid var(--ptah-line); }
+
+/* Numero em coluna alinha por baixo — o caso e listagem de valores. */
+.ptah-c-chat_md td                 { font-variant-numeric: tabular-nums; }
+
 .ptah-c-chat_bubble                { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 .ptah-dark .ptah-c-chat_bubble     { background-color: var(--ptah-control-ghost); color: var(--ptah-text-strong); }
 

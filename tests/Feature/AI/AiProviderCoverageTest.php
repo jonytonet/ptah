@@ -292,14 +292,14 @@ class AiProviderCoverageTest extends TestCase
                 return false;   // what z.ai really reports
             }
 
-            public function stream(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?callable $onDelta = null, ?int $configId = null): array
+            public function stream(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?callable $onDelta = null, ?int $configId = null, array $attachments = []): array
             {
                 $this->calls[] = 'stream';
 
                 return ['text' => 'streamed', 'conversationId' => 1];
             }
 
-            public function send(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?int $configId = null): array
+            public function send(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?int $configId = null, array $attachments = []): array
             {
                 $this->calls[] = 'send';
 
@@ -338,14 +338,14 @@ class AiProviderCoverageTest extends TestCase
                 return true;
             }
 
-            public function stream(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?callable $onDelta = null, ?int $configId = null): array
+            public function stream(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?callable $onDelta = null, ?int $configId = null, array $attachments = []): array
             {
                 $this->calls[] = 'stream';
 
                 return ['text' => 'streamed', 'conversationId' => 1];
             }
 
-            public function send(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?int $configId = null): array
+            public function send(string $message, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?int $configId = null, array $attachments = []): array
             {
                 $this->calls[] = 'send';
 

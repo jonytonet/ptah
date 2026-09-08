@@ -7,10 +7,14 @@ namespace Ptah\Livewire\AI;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Ptah\Exceptions\AiProviderException;
 use Ptah\Exceptions\AiRateLimitException;
+use Ptah\Services\AI\AiAttachmentService;
 use Ptah\Services\AI\AiChatService;
 use Ptah\Services\AI\AiProviderConfigService;
+use Ptah\Support\AI\ChatMarkdown;
 
 /**
  * Floating AI chat widget — injected globally into the Forge Dashboard layout.
@@ -27,6 +31,8 @@ use Ptah\Services\AI\AiProviderConfigService;
  */
 class AiChatWidget extends Component
 {
+    use WithFileUploads;
+
     protected AiChatService $chatService;
 
     protected AiProviderConfigService $configService;
@@ -58,6 +64,24 @@ class AiChatWidget extends Component
     public array $conversations = [];
 
     public int $historyLimit = 5;
+
+    /**
+     * Arquivos que vao com a proxima mensagem.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
+    public array $attachments = [];
+
+    /**
+     * Rascunho de upload: UM arquivo por vez.
+     *
+     * Colar e arrastar chegam de um em um, e `uploadMultiple` SUBSTITUI o array
+     * inteiro — o segundo arquivo apagaria o primeiro, ou o cliente teria de
+     * reenviar todos a cada adicao. Um slot de entrada, com o servidor
+     * acumulando em `$attachments`, deixa a lista do servidor ser a autoridade,
+     * e é ela que o `removeAttachment` mexe e a que os chips desenham.
+     */
+    public mixed $incoming = null;
 
     /**
      * The provider the next turn should use.
@@ -128,6 +152,163 @@ class AiChatWidget extends Component
         }
     }
 
+    // ── Anexos ─────────────────────────────────────────────────────────
+
+    /**
+     * Aceita (ou recusa) o arquivo que acabou de subir.
+     *
+     * A validacao e toda aqui, no servidor, porque a checagem do cliente e
+     * conveniencia: o `accept` do input e o filtro do drop informam a pessoa
+     * antes do upload, e nao impedem nada — `$wire.upload` e uma chamada
+     * publica. Extensao, tamanho e quantidade sao decididos deste lado.
+     */
+    public function updatedIncoming(): void
+    {
+        $file = $this->incoming;
+        $this->incoming = null;
+
+        if ($file === null) {
+            return;
+        }
+
+        if (! config('ptah.ai_agent.attachments.enabled', true)) {
+            return;
+        }
+
+        $maxFiles = max(1, (int) config('ptah.ai_agent.attachments.max_files', 4));
+        $maxKb = max(1, (int) config('ptah.ai_agent.attachments.max_size_kb', 8192));
+
+        // A lista vem ESTREITADA pelo provedor selecionado: num provedor que
+        // nao aceita documento, PDF nao entra. Mesma fonte que alimenta o
+        // `accept` do input e o filtro do cliente — tres lugares que nao podem
+        // discordar sobre o que e permitido.
+        $allowed = $this->attachmentService()->allowedExtensions($this->currentProvider());
+
+        $name = method_exists($file, 'getClientOriginalName')
+            ? (string) $file->getClientOriginalName()
+            : 'arquivo';
+
+        if (count($this->attachments) >= $maxFiles) {
+            $this->errorMsg = trans('ptah::ui.ai_attach_too_many', ['max' => $maxFiles]);
+            $this->discard($file);
+
+            return;
+        }
+
+        $ext = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+
+        if ($allowed !== [] && ! in_array($ext, $allowed, true)) {
+            // Recusado porque o PROVEDOR nao aceita, e nao porque a extensao
+            // esta fora da configuracao: sao motivos diferentes e a pessoa pode
+            // agir sobre o primeiro trocando o provedor no seletor.
+            $blocked = $this->attachmentService()->blockedExtensions($this->currentProvider());
+
+            $this->errorMsg = in_array($ext, $blocked, true)
+                ? trans('ptah::ui.ai_attach_provider_no_docs', [
+                    'name' => $name,
+                    'provider' => $this->currentProvider(),
+                ])
+                : trans('ptah::ui.ai_attach_bad_type', [
+                    'name' => $name,
+                    'allowed' => implode(', ', $allowed),
+                ]);
+
+            $this->discard($file);
+
+            return;
+        }
+
+        // Em kilobytes, como o limite. getSize() devolve bytes.
+        if ((int) ceil(((int) $file->getSize()) / 1024) > $maxKb) {
+            $this->errorMsg = trans('ptah::ui.ai_attach_too_big', ['name' => $name, 'max' => $maxKb]);
+            $this->discard($file);
+
+            return;
+        }
+
+        $this->errorMsg = '';
+        $this->attachments[] = $file;
+    }
+
+    public function removeAttachment(int $index): void
+    {
+        if (! array_key_exists($index, $this->attachments)) {
+            return;
+        }
+
+        $this->discard($this->attachments[$index]);
+        unset($this->attachments[$index]);
+        $this->attachments = array_values($this->attachments);
+        $this->errorMsg = '';
+    }
+
+    /**
+     * Apaga o temporario agora em vez de esperar a limpeza do Livewire.
+     *
+     * Um print de tela recusado por tamanho ficaria horas no disco temporario
+     * sem que nada mais fosse apontar para ele.
+     */
+    private function discard(mixed $file): void
+    {
+        try {
+            if (is_object($file) && method_exists($file, 'delete')) {
+                $file->delete();
+            }
+        } catch (\Throwable) {
+            // Limpeza; o disco temporario do Livewire tem a dele.
+        }
+    }
+
+    /**
+     * Os anexos no formato que o AiAttachmentService espera.
+     *
+     * @return array<int, array{path: string, name: string, mime: string}>
+     */
+    private function attachmentPayload(): array
+    {
+        $out = [];
+
+        foreach ($this->attachments as $file) {
+            try {
+                $path = (string) $file->getRealPath();
+
+                if ($path === '' || ! is_file($path)) {
+                    continue;
+                }
+
+                $out[] = [
+                    'path' => $path,
+                    'name' => (string) $file->getClientOriginalName(),
+                    'mime' => (string) $file->getMimeType(),
+                ];
+            } catch (\Throwable $e) {
+                Log::warning('[Ptah AI] anexo ilegivel na hora do envio', [
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * O provedor que o proximo turno vai usar.
+     *
+     * Passa pelo resolveForTurn de proposito: `selectedConfigId` vem do cliente,
+     * e um id que nao nomeia config ATIVA cai no padrao. Sem isso, a lista de
+     * extensoes seria calculada para um provedor que o turno nao vai usar.
+     */
+    private function currentProvider(): string
+    {
+        return (string) ($this->configService->resolveForTurn($this->selectedConfigId)->provider ?? '');
+    }
+
+    private function attachmentService(): AiAttachmentService
+    {
+        return app(AiAttachmentService::class);
+    }
+
     // ── Actions ────────────────────────────────────────────────────────
 
     /**
@@ -152,11 +333,27 @@ class AiChatWidget extends Component
     {
         $message = trim($message);
 
-        if ($message === '' || ! $this->available || $this->loading) {
+        // Com anexo, um texto vazio ainda e um envio valido: "analisa isso" e o
+        // proprio arquivo. Sem anexo, nao ha o que enviar.
+        if (($message === '' && $this->attachments === []) || ! $this->available || $this->loading) {
             return;
         }
 
-        $this->messages[] = ['role' => 'user', 'content' => $message];
+        $names = array_values(array_map(
+            fn ($f) => (string) $f->getClientOriginalName(),
+            $this->attachments
+        ));
+
+        // Os NOMES vao para a lista agora; os ARQUIVOS ficam em $attachments
+        // ate o processAiMessage, que roda numa requisicao separada. Limpar aqui
+        // esvaziaria o anexo antes de ele ser enviado.
+        $userMessage = ['role' => 'user', 'content' => $message];
+
+        if ($names !== []) {
+            $userMessage['attachments'] = $names;
+        }
+
+        $this->messages[] = $userMessage;
         $this->errorMsg = '';
         $this->loading = true;
         $this->showHistory = false;
@@ -186,6 +383,8 @@ class AiChatWidget extends Component
             $canStream = config('ptah.ai_agent.stream', true)
                 && $this->chatService->supportsStreaming($this->selectedConfigId);
 
+            $attachments = $this->attachmentPayload();
+
             if ($canStream) {
                 // Stream the answer token-by-token into the wire:stream region.
                 $result = $this->chatService->stream(
@@ -194,13 +393,19 @@ class AiChatWidget extends Component
                     auth()->id(),
                     $conversationId,
                     onDelta: function (string $delta, string $accumulated): void {
+                        // Mesmo renderizador da bolha final, para o texto nao
+                        // mudar de aparencia quando o streaming termina. O
+                        // CommonMark aceita documento inacabado — cerca de
+                        // codigo sem fechar sai como bloco de codigo aberto, nao
+                        // como erro.
                         $this->stream(
                             to: 'ai-stream',
-                            content: nl2br(e($accumulated)),
+                            content: ChatMarkdown::render($accumulated),
                             replace: true,
                         );
                     },
                     configId: $this->selectedConfigId,
+                    attachments: $attachments,
                 );
             } else {
                 $result = $this->chatService->send(
@@ -209,6 +414,7 @@ class AiChatWidget extends Component
                     auth()->id(),
                     $conversationId,
                     $this->selectedConfigId,
+                    $attachments,
                 );
             }
 
@@ -233,6 +439,16 @@ class AiChatWidget extends Component
                 : trans('ptah::ui.ai_widget_error');
         } finally {
             $this->loading = false;
+
+            // Descartados haja o que houver, inclusive em erro de provedor: o
+            // temporario ja foi lido, e manter os chips na tela depois do envio
+            // faria a proxima mensagem levar o arquivo de novo sem a pessoa
+            // pedir.
+            foreach ($this->attachments as $file) {
+                $this->discard($file);
+            }
+
+            $this->attachments = [];
         }
 
         $this->dispatch('ai-message-sent');
@@ -272,6 +488,11 @@ class AiChatWidget extends Component
             $this->conversationId = null;
         }
 
+        foreach ($this->attachments as $file) {
+            $this->discard($file);
+        }
+
+        $this->attachments = [];
         $this->messages = [];
         $this->errorMsg = '';
         $this->showHistory = false;
@@ -310,7 +531,29 @@ class AiChatWidget extends Component
 
     public function render()
     {
-        return view('ptah::livewire.ai.ai-chat-widget');
+        $enabled = (bool) config('ptah.ai_agent.attachments.enabled', true);
+        $extensions = [];
+        $blocked = [];
+
+        if ($enabled && $this->available) {
+            $provider = $this->currentProvider();
+            $extensions = $this->attachmentService()->allowedExtensions($provider);
+            $blocked = $this->attachmentService()->blockedExtensions($provider);
+        }
+
+        return view('ptah::livewire.ai.ai-chat-widget', [
+            'attachmentsEnabled' => $enabled,
+            'attachmentExtensions' => $extensions,
+            // O que a configuracao permite mas ESTE provedor nao recebe. Vai
+            // para a tela: a recusa fica legivel antes de acontecer, e a pessoa
+            // pode trocar o provedor no seletor logo acima.
+            'attachmentBlocked' => $blocked,
+            // `accept` do input: dica para o seletor de arquivos do sistema, e
+            // nada mais. Quem decide e updatedIncoming().
+            'attachmentAccept' => $extensions === []
+                ? ''
+                : implode(',', array_map(fn (string $e): string => '.'.$e, $extensions)),
+        ]);
     }
 
     // ── Private ────────────────────────────────────────────────────────
