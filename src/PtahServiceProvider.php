@@ -92,6 +92,23 @@ class PtahServiceProvider extends ServiceProvider
             'ptah'
         );
 
+        // Arquivo SEPARADO, e nao uma chave dentro de ptah.php, por dois
+        // motivos que se reforcam.
+        //
+        // `mergeConfigFrom` e RASO: um host que publicou config/ptah.php passa a
+        // ser dono do array inteiro, entao uma chave aninhada nova nunca chega
+        // ate ele — armadilha em que este pacote ja caiu duas vezes. Com um
+        // arquivo proprio, `ptah-masks` ou existe no host ou vem daqui, sem
+        // meio-termo.
+        //
+        // E as mascaras sao a coisa do pacote que mais muda por fora dele:
+        // formato de documento muda por lei. Um arquivo dedicado e menor para
+        // rever num diff que um ptah.php de seiscentas linhas.
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/ptah-masks.php',
+            'ptah-masks'
+        );
+
         // SchemaInspector is only needed during Artisan code-generation commands.
         // Binding it as a singleton in every HTTP request wastes memory.
         if ($this->app->runningInConsole()) {
@@ -447,7 +464,14 @@ class PtahServiceProvider extends ServiceProvider
             // Publish configuration
             $this->publishes([
                 __DIR__.'/../config/ptah.php' => config_path('ptah.php'),
+                __DIR__.'/../config/ptah-masks.php' => config_path('ptah-masks.php'),
             ], 'ptah-config');
+
+            // E sozinho, para quem so quer as mascaras sem republicar o ptah.php
+            // inteiro por cima do que ja ajustou.
+            $this->publishes([
+                __DIR__.'/../config/ptah-masks.php' => config_path('ptah-masks.php'),
+            ], 'ptah-masks');
 
             // Publish migrations
             $this->publishes([

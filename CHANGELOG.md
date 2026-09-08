@@ -7,6 +7,177 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.0] - 2026-09-08
+
+Three BaseCrud requests from live use, with one idea in common: the host extends,
+and the package stops embedding rules that change by country and by law.
+
+### Added - masks are a registry the host owns, not a list the package ships
+
+`CrudConfigEnums::MASKS` had shipped `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`,
+`cep`, `plate`, `credit_card` and more since long before this release. All
+Brazilian, all accepted by the validator, all documented in a nineteen-row table
+in `BaseCrud.md` — and **only two of them ever did anything**. The form
+implemented `money_brl` and `uppercase`; every other name rendered a plain text
+input and stored whatever was typed, punctuation included. So the package carried
+a country's document formats as a maintenance liability while delivering none of
+the behaviour, and the documentation promised what did not exist.
+
+And those formats move. Brazil's CNPJ became alphanumeric in 2026, which would
+have been a breaking change inside a package used outside Brazil, on a release
+cadence that has nothing to do with the law that moved.
+
+The package now ships two masks, and they are the two that are nobody's law:
+`digits` and `decimal`. Everything else is declared, three ways that compose:
+
+```php
+// config/ptah-masks.php — a new, separate file
+'presets' => ['br'],                       // shipped as DATA, activated by you
+'cpf' => ['pattern' => '000.000.000-00', 'store' => 'digits'],
+
+// or from a provider, where a closure store rule also works
+PtahMask::define('sku', ['pattern' => 'AAA-0000', 'store' => fn ($v) => …]);
+```
+
+`colsMask` still refers to a mask by name, so nothing in a `crud_config`
+changes — and a host that enables the `br` preset gets the behaviour its live
+configs were always promised, with nothing else to change. A name nobody defined
+falls back to a plain input and stores the value untouched, exactly as before, so
+a host that has not declared its masks sees no difference. The CLI validator, on
+the other hand, now *says* the name is unknown instead of accepting it silently.
+
+**Presets are not activated by the locale, and that is a decision.** A locale is
+an interface language, not a jurisdiction: a Brazilian company running its ERP in
+English still needs CPF, and a Portuguese company running `pt_BR` has NIF. A
+locale also changes per request, so a user switching language would lose the mask
+mid-session and a stored document would stop being formatted on the edit screen.
+Which masks exist is a property of the application, not of who is looking at it.
+A host that wants the language to decide writes that condition itself, with its
+own criteria — one line, and the criterion belongs to whoever is affected by it.
+
+The pattern language is `0` a digit, `A` a letter, `*` either, everything else a
+literal. A literal only appears once something follows it, so a half-typed CPF
+reads `055` and not `055.`; characters that cannot fill a slot are skipped
+rather than consuming it, so pasting `(11) 98765-4321` into `(00) 00000-0000`
+keeps the digits. A mask may carry several shapes and the **smallest that still
+fits** wins, which is the only way a phone field works in a country with both
+eight- and nine-digit numbers.
+
+The `store` rule runs on the SERVER, in `save()`. The client-side mask is
+convenience; what lands in the column cannot depend on it. `colsMaskTransform`
+still wins when set, because live configs use it and changing what they store
+would alter production data on a package upgrade — but `colsMask` alone now
+normalises, which is what makes the mask declarative.
+
+`config/ptah-masks.php` is a separate file rather than a key inside `ptah.php`
+for two reasons that reinforce each other: `mergeConfigFrom` is shallow, so a
+nested key added later never reaches a host that published `ptah.php` — a trap
+this package fell into twice in the previous release — and masks are the part of
+ptah most likely to change from outside it.
+
+### Added - a conditional style can read a value from the row
+
+```json
+{ "field": "color", "condition": "always", "style": "background-color: {{color}}1a; color: {{color}}" }
+```
+
+One rule, every colour. The case is a Tags table where each tag carries its own
+hex and the badge has to be that hex; the old model needed one rule per known
+colour, which does not scale past a handful. The workaround was
+`colsMetodoCustom` + `colsMetodoRaw` returning pre-coloured HTML from a
+presenter — it works, and it pushes presentation out of the declarative config
+into host code for something the config should be able to say.
+
+The same placeholders work in `colsCellStyle`, which is usually what is actually
+wanted: the colour belongs to the badge, not to the whole row.
+
+`condition: "*"` (aliases `always`, `any`) is new and exists for the same reason.
+"Paint each tag in its own colour" is not a condition, and expressing it with the
+old vocabulary meant `!=` against a value the column never holds — a lie that
+happens to work.
+
+**What a placeholder may resolve to is deliberately narrow.** The value comes
+from a database column, which in a CRUD means a user typed it, and it lands
+inside a `style` attribute. Blade escapes the attribute so quotes cannot break
+out, but that is not the whole risk: a CSS value is its own language, and
+`url(https://tracker/x)` inside a `background-color` is a request to a third
+party made from an authenticated page. So a placeholder resolves only to a hex
+colour or to **letters only** (2–24), which covers the CSS colour keywords and
+cannot contain `:`, `;`, `(`, `)`, `/` or a space — the characters you would need
+to say anything else. Anything else drops the **whole** style, because a
+half-substituted declaration is a rule the author never wrote. A dropped rule
+falls through to the next one, so a tag with no colour still gets whatever plain
+rule follows.
+
+### Added - `color` in the form, and the rest of the HTML5 types
+
+The listing has had a `color` renderer for a long time — it draws the swatch —
+and the form had no way to enter one, so a Tags screen made the user type the hex
+by hand.
+
+`colsTipo: "color"` renders the native picker **and** an editable hex field, not
+just the picker: `<input type="color">` is a small square that does not say which
+colour is in it, and in a Tags screen the hex is the data. It accepts `#abc`,
+`abc` and `#AABBCC` and normalises on blur; while typing, the raw value is kept,
+because normalising every keystroke makes the third character of `#abc`
+unreachable. An empty field shows a neutral grey in the picker rather than black
+— black looks like a choice — and that grey is not stored. An optional colour
+gets a clear button; a required one does not.
+
+`time`, `datetime-local`, `range`, `email`, `url` and `tel` come with it, since
+they are the same `type=` dispatch.
+
+**`datetime` was in `CrudConfigEnums::TYPES` all along and fell through to a
+plain text input**, so a column configured as datetime never had the native
+control either. Fixed by the same change.
+
+### Known rough edge
+
+The CrudConfig editor's style preview prints the style exactly as configured, so
+a templated one previews as `border-left: 3px solid {{color}}` — inert, and not
+what a row will look like. The preview has no row to read a value from, so the
+literal is the honest option until it grows a sample. Verified on real data that
+the listing itself substitutes correctly, for hex, for a keyword and for an empty
+column.
+
+### Notes on the tests
+
+Four defects in this release were found by its own tests rather than in a
+browser, and three of them were in code I had just written:
+
+- `PtahMask::format()` counted every character of the input, punctuation
+  included, so a pasted `(11) 3322-4455` looked like fifteen characters and
+  overflowed a ten-slot pattern; and it returned the FIRST fit while the pattern
+  list is ordered largest-first, so it always chose the longest shape. A
+  ten-digit phone came out as `(11) 33224-455`.
+- The browser twin had a hand-written token extractor with a condition I wrote
+  confused. It lost the last digit when pasting an already-formatted value and
+  mixed letters with digits. The two sides were supposed to be twins and were
+  not; the JS probe caught all three cases at once. The client now mirrors
+  `applyPattern` line for line.
+- A CSS insertion landed inside an existing comment and truncated it, orphaning
+  the `.ptah-c-form_in` rule from its dark counterpart. `ThemeChromeOrphanTokenGuardTest`
+  named the orphan immediately.
+
+And two test-harness lessons worth keeping:
+
+- Asserting the absence of a value across a whole rendered page is unsound when
+  the value is legitimately displayed. Two data sets proved it: the colour column
+  is a visible column, so `url(https://tracker/x)` appears as the cell's text —
+  escaped, inert, correct. The assertion now inspects `style` attributes only,
+  with an anchor so an empty result cannot pass as a success.
+- `@js` emits `JSON.parse` with `"` escapes, not HTML entities. Two versions
+  of one regex miscounted the backslashes while the rendered order was right; it
+  asserts by position now, which says what it means without depending on how
+  Blade escaped.
+
+### Tests
+
+2291 -> 2400. Plus a Node probe covering 38 behaviours of the mask and colour
+inputs, run against the shipped `_modal-form.blade.php` rather than retyped.
+
+---
+
 ## [1.33.0] - 2026-09-08
 
 Driven almost entirely by live use: the chat widget end to end, the themed 500,

@@ -1544,6 +1544,8 @@ return [
     'navbar_admin_menu' => 'Manage Menu',
     'navbar_admin_ai_models' => 'AI Models',
     'navbar_user_profile' => 'Profile',
+    'crud_color_pick' => 'Pick a colour for :field',
+    'crud_color_clear' => 'Clear the colour',
     'sidebar_jump_placeholder' => 'Jump to a screen',
     'sidebar_jump_clear' => 'Clear',
     'sidebar_jump_empty' => 'No screen matches that.',

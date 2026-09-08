@@ -4,6 +4,7 @@ namespace Ptah\Commands\Config\Validators;
 
 use Ptah\Enums\CrudConfigEnums;
 use Ptah\Services\Validation\ConfigSchemaValidator;
+use Ptah\Support\PtahMask;
 
 /**
  * @deprecated since 1.24.0 — superseded by {@see ConfigSchemaValidator},
@@ -57,8 +58,16 @@ class ConfigValidator
         }
 
         // 7. Validate mask if present
-        if (! empty($config['colsMask']) && ! in_array($config['colsMask'], CrudConfigEnums::MASKS)) {
-            throw new \InvalidArgumentException("Invalid mask: {$config['colsMask']}. Valid masks: ".implode(', ', CrudConfigEnums::MASKS));
+        // Do REGISTRO, nao de uma constante congelada — e essa e a diferenca
+        // toda. Um host que define `cpf` tem `colsMask: "cpf"` aceito; um que
+        // nao define ouve que o nome e desconhecido, em vez de ganhar um input
+        // de texto que silenciosamente nao faz nada, que era o comportamento
+        // antigo para os oito nomes brasileiros que a constante listava.
+        if (! empty($config['colsMask']) && ! in_array($config['colsMask'], PtahMask::names(), true)) {
+            throw new \InvalidArgumentException(
+                "Invalid mask: {$config['colsMask']}. Registered masks: ".implode(', ', PtahMask::names())
+                .'. Define your own in config/ptah-masks.php or with PtahMask::define().'
+            );
         }
     }
 

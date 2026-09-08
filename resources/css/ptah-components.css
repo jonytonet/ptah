@@ -1203,6 +1203,37 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-form_lbl           { color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-form_lbl { color: var(--ptah-text-muted); }
 
+/* ── Campo de cor no form ─────────────────────────────────────────────────
+   O seletor nativo desenha o proprio swatch; o que o tema controla e a moldura
+   em volta, para ele nao ser o unico controle do form com borda de outra cor. */
+.ptah-c-color_pick {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+}
+.ptah-dark .ptah-c-color_pick {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+}
+
+.ptah-c-color_clear {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-faint);
+}
+.ptah-c-color_clear:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+.ptah-dark .ptah-c-color_clear {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-faint);
+}
+.ptah-dark .ptah-c-color_clear:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
 /* ── One resting-field recipe, shared by all three field surfaces ──────────
    `.ptah-input-wrapper input` (forge-input), `.ptah-c-form_in` (the BaseCrud
    inline text/searchdropdown input) and `.ptah-c-form_sel` (the select and

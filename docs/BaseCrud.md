@@ -465,6 +465,39 @@ Value of `colsTipo`:
 | `array` | List of values |
 | `relation` | Filter via `whereHas` |
 | `image` | Image with live preview (URL or local file) |
+| `color` | Native colour picker **plus an editable hex field** |
+| `time` | Time only |
+| `datetime-local` | Date with time (same as `datetime`) |
+| `range` | Slider |
+| `email` / `url` / `tel` | Text with the matching HTML5 keyboard and validation |
+
+### The `color` type
+
+The **listing** has had a `color` renderer for a long time — it draws the swatch
+— and the form had no way to enter one, so a Tags screen made the user type the
+hex by hand.
+
+It renders two controls, not just the native picker, because
+`<input type="color">` is a small square that does not say *which* colour is in
+it — and in a Tags screen the hex is the data, it goes into CSS. The text field
+beside it shows the value and accepts one, so someone who already has the hex
+(copied from a design) pastes it instead of hunting in a gradient.
+
+It accepts `#abc`, `abc` and `#AABBCC`, and normalises to lowercase six-digit hex
+when the field loses focus. While you are typing, the raw value is kept — it has
+to be, or the third character of `#abc` could never be reached. Something that is
+not a colour stays as you typed it: the server refuses it and shows the error,
+which is better than silently erasing what you wrote.
+
+An empty field shows a neutral grey in the picker rather than black — black looks
+like a choice — and that grey is **not** stored. Only a real interaction writes.
+An optional colour gets a clear button; a required one does not, since offering a
+control that empties a field the form will then refuse is an invitation to a
+validation error.
+
+> `datetime` was in this list all along and fell through to a plain text input,
+> so a column configured as datetime never had the native control either. Fixed
+> with the same change.
 
 ---
 
@@ -587,40 +620,142 @@ Full column styling example:
 
 ### Masks (`colsMask`)
 
-| Mask | Visual format | Group |
+A mask is referenced by NAME, and the names are defined by your application.
+
+> **This section used to list nineteen masks — `cpf`, `cnpj`, `rg`, `pis`, `ncm`,
+> `ean13`, `cep`, `plate`, `credit_card` and more.** Only two of them ever did
+> anything. The validator accepted every name, the form implemented `money_brl`
+> and `uppercase`, and every other name rendered a plain text input and stored
+> whatever was typed. So the table promised behaviour that did not exist, and the
+> package carried a country's document formats as a maintenance liability while
+> delivering none of it. Brazil's CNPJ going alphanumeric in 2026 would have been
+> a breaking change in a package used outside Brazil.
+
+The package now ships two masks, and they are the two that are nobody's law:
+
+| Mask | What it does | Display |
 |---|---|---|
-| `cpf` | `000.000.000-00` | Documents |
-| `cnpj` | `00.000.000/0000-00` | Documents |
-| `rg` | `00.000.000-0` | Documents |
-| `pis` | `000.00000.00-0` | Documents |
-| `ncm` | `0000.00.00` | Documents |
-| `ean13` | `0000000000000` (13 digits) | Documents |
-| `phone` | `(00) 0 0000-0000` | Contact |
-| `cep` | `00000-000` | Contact |
-| `plate` | `ABC-1234` / Mercosul `ABC1A23` | Vehicles |
-| `credit_card` | `0000 0000 0000 0000` | Payment |
-| `date` | `00/00/0000` | Date/Time |
-| `datetime` | `00/00/0000 00:00` | Date/Time |
-| `time` | `00:00` | Date/Time |
-| `money_brl` | `R$ 1,253.08` | Monetary |
-| `money_usd` | `$ 1,253.08` | Monetary |
-| `percent` | `99.99%` | Monetary |
-| `integer` | Integers only | Text |
-| `uppercase` | Automatic UPPERCASE | Text |
-| `custom_regex` | Custom IMask pattern (`colsMaskRegex`) | Text |
+| `digits` | Stores only the digits | none — plain input |
+| `decimal` | Stores a float, reading either `1.234,56` or `1,234.56` | none — plain input |
 
-### Save Transforms (`colsMaskTransform`)
+Everything else you declare. There are three ways in, and they compose.
 
-| Transform | Description |
+#### 1. A shipped preset
+
+```php
+// config/ptah-masks.php
+'presets' => ['br'],
+```
+
+`br` gives you `cpf`, `cnpj` (the 2026 alphanumeric format), `documento` (takes
+either a CPF or a CNPJ in one field), `cep`, `telefone`, `placa`, `pis` and
+`inscricao_estadual`. The names match what the old table listed, so a live
+`crud_config` with `colsMask: "cpf"` starts working with nothing else to change.
+
+**It is not activated by the locale, and that is a decision.** A locale is an
+interface *language*, not a jurisdiction: a Brazilian company running its ERP in
+English still needs CPF, and a Portuguese company running `pt_BR` has NIF, not
+CPF. A locale also changes per request, so a user switching language would lose
+the mask mid-session and a stored document would stop being formatted on the
+edit screen. Which masks exist is a property of the application, not of who is
+looking at it.
+
+If you want the language to decide, the criterion is yours:
+
+```php
+// A service provider
+if (app()->getLocale() === 'pt_BR') {
+    \Ptah\Support\PtahMask::preset('br');
+}
+```
+
+A preset is best-effort data about someone else's law. What you define yourself
+overrides it, so when a format moves before the next ptah release you override
+the one mask you care about.
+
+#### 2. `config/ptah-masks.php`
+
+```php
+return [
+    'presets' => ['br'],
+
+    // Wins over the preset and over the built-ins.
+    'cpf' => [
+        'pattern' => '000.000.000-00',
+        'store' => 'digits',
+    ],
+
+    // More than one shape: the SMALLEST that still holds what was typed wins,
+    // which is the only way a phone field works in a country with both eight-
+    // and nine-digit numbers.
+    'telefone' => [
+        'pattern' => ['(00) 0000-0000', '(00) 00000-0000'],
+        'store' => 'digits',
+    ],
+];
+```
+
+#### 3. `PtahMask::define()`
+
+```php
+use Ptah\Support\PtahMask;
+
+PtahMask::define('sku', [
+    'pattern' => 'AAA-0000',
+    'store' => fn (mixed $v): string => strtoupper(preg_replace('/\W/', '', (string) $v)),
+]);
+```
+
+A **closure** `store` works only here, not in the config file: `php artisan
+config:cache` serialises that file and a closure is not serialisable.
+
+#### The pattern language
+
+| Token | Accepts |
 |---|---|
-| `money_to_float` | `"R$ 1,253.08"` → `1253.08` |
-| `digits_only` | `"055.465.309-52"` → `"05546530952"` |
-| `plate_clean` | `"ABC-1234"` → `"ABC1234"` (uppercase + alphanumeric) |
-| `date_br_to_iso` | `"01/12/2024"` → `"2024-12-01"` |
-| `date_iso_to_br` | `"2024-12-01"` → `"01/12/2024"` |
-| `uppercase` | `"text"` → `"TEXT"` |
-| `lowercase` | `"TEXT"` → `"text"` |
-| `trim` | Removes leading/trailing spaces |
+| `0` | a digit |
+| `A` | a letter |
+| `*` | a letter or a digit |
+
+Every other character is a literal the mask inserts. A literal only appears once
+there is something after it, so a half-typed CPF reads `055` and not `055.`.
+
+Characters that cannot fill the current slot are skipped rather than consuming
+it, so pasting `(11) 98765-4321` into `(00) 00000-0000` keeps the digits and
+discards the punctuation, and pasting a letter into a digit position discards the
+letter.
+
+#### `store` — what reaches the database
+
+| Rule | Result |
+|---|---|
+| `digits` | `055.465.309-52` → `05546530952` |
+| `alnum` | `12.ABC.345/01DE-35` → `12ABC34501DE35` |
+| `upper` / `lower` | trimmed and cased |
+| `trim` | trimmed |
+| `decimal` | `R$ 1.253,08` → `1253.08`, and `$1,253.08` → `1253.08` |
+| `raw` | untouched |
+
+The store rule runs on the **server**, in `save()`. The client-side mask is
+convenience; what lands in the column cannot depend on it.
+
+`colsMaskTransform` still exists and still wins when set, because live configs
+use it and changing what they store would alter production data on a package
+upgrade. With a registered `colsMask` and no transform, the mask's own `store`
+rule applies — which is the point: `colsMask: "cpf"` alone now normalises.
+
+#### Precedence
+
+Weakest first: the built-ins, then `presets`, then `PtahMask::preset()`, then
+`config/ptah-masks.php`, then `PtahMask::define()`. The built-ins are a floor,
+not a fence — redefine `decimal` if your application means something else by it.
+
+#### A name nobody defined
+
+Falls back to a plain input and stores the value untouched — exactly what
+`colsMask: "cpf"` did before any of this existed, so a host that has not declared
+its masks yet sees no change. The CLI validator, on the other hand, now *tells*
+you the name is unknown instead of accepting it silently.
 
 ### Nested relations (`colsRelacaoNested`)
 
@@ -670,12 +805,78 @@ Configured in `contitionStyles` of CrudConfig. Applies inline CSS to the `<tr>` 
 | `<` | Less than (cast to float) |
 | `>=` | Greater than or equal (cast to float) |
 | `<=` | Less than or equal (cast to float) |
+| `*` | **No test — the rule applies to every row.** Aliases: `always`, `any` |
+
+### Using a value from the row (`{{column}}`)
+
+A `style` can read a value out of the row it is painting:
+
+```json
+"contitionStyles": [
+  {
+    "field": "color",
+    "condition": "always",
+    "style": "background-color: {{color}}1a; color: {{color}}"
+  }
+]
+```
+
+One rule, every colour. This is what a Tags table needs — each tag carries its
+own hex and the badge has to be that hex — and the old model could only do it
+with one rule per known colour, which does not scale past a handful. The
+workaround was `colsMetodoCustom` + `colsMetodoRaw` returning pre-coloured HTML
+from a presenter, which works and pushes presentation out of the declarative
+config into host code for something the config should be able to say.
+
+`*` (or `always`) exists for the same reason: "paint each tag in its own colour"
+is not a condition, and expressing it with the old vocabulary meant `!=` against
+a value the column never holds.
+
+The same placeholders work in **`colsCellStyle`**, which is usually what you
+actually want — the colour belongs to the badge, not to the whole row:
+
+```json
+{
+  "colsNomeFisico": "name",
+  "colsCellStyle": "background-color: {{color}}1a; color: {{color}}; padding: 2px 8px; border-radius: 6px"
+}
+```
+
+#### What a placeholder is allowed to resolve to
+
+The value comes from a database column — which in a CRUD means a user typed it —
+and it lands inside a `style` attribute. Blade escapes the attribute so quotes
+cannot break out of it, but that is not the whole risk: a CSS value is its own
+language, and `url(https://tracker/x)` inside a `background-color` is a request
+to a third party made from an authenticated page.
+
+So a placeholder resolves only to a value that cannot carry a payload:
+
+- a hex colour, `#rgb` through `#rrggbbaa`;
+- or **letters only**, 2 to 24 of them, which covers the CSS colour keywords
+  (`teal`, `rebeccapurple`) and cannot contain `:`, `;`, `(`, `)`, `/` or a
+  space — the characters you would need to say anything else.
+
+Anything else and the **whole style is dropped**, not just the placeholder. A
+half-substituted declaration is a rule the author never wrote, and applying it
+silently is worse than applying nothing.
+
+A dropped rule falls through to the next one, so a tag whose colour column is
+empty still gets whatever plain rule comes after it.
+
+> **Known rough edge.** The CrudConfig editor's style preview prints the style
+> exactly as you typed it, so a templated style previews as
+> `border-left: 3px solid {{color}}` — inert, and not what a row will look like.
+> The preview has no row to read from, so showing the literal is the honest
+> option until it grows a sample value. The listing itself substitutes
+> correctly; verified on real data, hex and keyword and empty alike.
 
 ### Security behaviour
 
 If the field in `field` **does not exist** in the model attributes (`getAttributes()`), the rule is **silently ignored** — no error, no false match. This prevents a typo in the field name from causing incorrect styles across the entire table.
 
 Returned by `getRowStyle($row)`, applied via `style="{{ $this->getRowStyle($row) }}"`.
+
 
 ---
 

@@ -92,6 +92,10 @@
                             $fRequired = in_array($col['colsRequired'] ?? false, [true, 'S', 1, '1'], true);
                             $fError    = $formErrors[$fField] ?? null;
                             $fMask     = $col['colsMask'] ?? null;
+                            // Resolvido do registro (PtahMask). null quando o nome nao
+                            // esta registrado — e ai o campo cai no input comum, que e
+                            // exatamente o que "cpf" e companhia sempre fizeram.
+                            $fMaskDef  = \Ptah\Support\PtahMask::get($fMask);
                             $fValue    = $formData[$fField] ?? '';
                             $fHelpText = $col['colsHelpText'] ?? null;
                             $tabIdx    = 0; // natural DOM order — a positive tabindex jumped fields ahead of the footer/close
@@ -413,16 +417,174 @@
                             @else
                                 {{-- ── Input inline (text / number / date / masked) ── --}}
                                 @php
+                                    // `datetime` estava nesta lista de tipos desde
+                                    // sempre e caia no default `text`: um campo
+                                    // configurado como datetime nunca teve o
+                                    // controle nativo. Vai junto com os novos.
                                     $fInputType = match($fTipo) {
-                                        'date'   => 'date',
-                                        'number' => 'number',
-                                        default  => 'text',
+                                        'date'            => 'date',
+                                        'datetime',
+                                        'datetime-local'  => 'datetime-local',
+                                        'time'            => 'time',
+                                        'number'          => 'number',
+                                        'range'           => 'range',
+                                        'email'           => 'email',
+                                        'url'             => 'url',
+                                        'tel'             => 'tel',
+                                        default           => 'text',
                                     };
                                     // Masked inputs must always be type=text
                                     if ($fMask) $fInputType = 'text';
                                 @endphp
 
-                                @if($fMask === 'money_brl')
+                                @if($fTipo === 'color')
+                                    {{-- ── Color: seletor nativo + hex editavel ──
+                                         O renderer `color` da LISTAGEM ja existia; no
+                                         form a pessoa digitava o hex na mao.
+
+                                         Os dois controles, e nao so o nativo, porque o
+                                         `<input type="color">` e um quadradinho que nao
+                                         diz QUAL cor esta ali — e num cadastro de Tags o
+                                         hex e o dado, ele vai para o CSS. Um campo de
+                                         texto ao lado mostra e aceita o valor, e quem
+                                         tem o hex na mao (copiado do design) cola em vez
+                                         de caçar no seletor.
+
+                                         `wire:key` no envelope pelo mesmo motivo do
+                                         money: create<->edit precisa destruir e recriar,
+                                         senao o Alpine carrega o display antigo. --}}
+                                    <div
+                                        class="w-full"
+                                        wire:key="ptah-color-{{ $fField }}-{{ $editingId ?? 'new' }}"
+                                        x-data="{
+                                            hex: '',
+
+                                            /* O seletor nativo EXIGE um valor valido, senao
+                                               desenha preto — e preto parece uma escolha.
+                                               Quando o campo esta vazio ele mostra um cinza
+                                               neutro que NAO e gravado: so uma interacao
+                                               real escreve no modelo. */
+                                            get swatch() {
+                                                return this.normalize(this.hex) ?? '#9ca3af';
+                                            },
+
+                                            normalize(v) {
+                                                let s = String(v ?? '').trim();
+                                                if (s === '') return null;
+                                                if (s[0] !== '#') s = '#' + s;
+                                                /* #abc -> #aabbcc: o seletor nativo so aceita
+                                                   a forma de seis digitos. */
+                                                if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+                                                    s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+                                                }
+                                                return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : null;
+                                            },
+
+                                            init() {
+                                                const raw = this.$wire.formData?.['{{ $fField }}'] ?? '';
+                                                this.hex = this.normalize(raw) ?? String(raw ?? '');
+
+                                                this.$wire.$watch('formData.{{ $fField }}', (val) => {
+                                                    if (val === null || val === undefined) return;
+                                                    this.hex = this.normalize(val) ?? String(val);
+                                                });
+                                            },
+
+                                            /* Escreve o valor CRU enquanto se digita, sem
+                                               normalizar: normalizar a cada tecla impede
+                                               chegar ao terceiro caractere de `#abc`. */
+                                            onText(e) {
+                                                this.hex = e.target.value;
+                                                this.push(this.hex);
+                                            },
+
+                                            /* Ao sair do campo, normaliza o que der. O que
+                                               nao for cor fica como a pessoa digitou: o
+                                               servidor e quem recusa, e apagar em silencio
+                                               o que ela escreveu e pior que mostrar o erro. */
+                                            onTextBlur() {
+                                                const n = this.normalize(this.hex);
+                                                if (n !== null) {
+                                                    this.hex = n;
+                                                    this.push(n);
+                                                }
+                                            },
+
+                                            onPick(e) {
+                                                this.hex = e.target.value.toLowerCase();
+                                                this.push(this.hex);
+                                            },
+
+                                            clear() {
+                                                this.hex = '';
+                                                this.push('');
+                                            },
+
+                                            push(v) {
+                                                const h = this.$refs.colorHidden;
+                                                h.value = v;
+                                                h.dispatchEvent(new Event('input', { bubbles: true }));
+                                            }
+                                        }"
+                                    >
+                                        <label for="ptah-color-in-{{ $fField }}" class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
+                                        </label>
+
+                                        <div class="flex items-stretch gap-2">
+                                            {{-- O seletor. `aria-label` proprio: o <label>
+                                                 acima aponta para o campo de texto, e um
+                                                 controle sem nome e invisivel para leitor
+                                                 de tela. --}}
+                                            <input
+                                                type="color"
+                                                class="ptah-c-color_pick h-[42px] w-12 shrink-0 cursor-pointer rounded-md border p-1"
+                                                :value="swatch"
+                                                @input="onPick($event)"
+                                                tabindex="{{ $tabIdx }}"
+                                                aria-label="{{ __('ptah::ui.crud_color_pick', ['field' => $fLabel]) }}"
+                                            />
+
+                                            <input
+                                                id="ptah-color-in-{{ $fField }}"
+                                                type="text"
+                                                x-bind:value="hex"
+                                                @input="onText($event)"
+                                                @blur="onTextBlur()"
+                                                @if($fRequired) required @endif
+                                                tabindex="{{ $tabIdx }}"
+                                                placeholder="#3b82f6"
+                                                spellcheck="false"
+                                                autocomplete="off"
+                                                inputmode="text"
+                                                maxlength="7"
+                                                @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
+                                                class="block w-full rounded-md border outline-none px-3 py-2.5 text-sm font-mono transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                            />
+
+                                            @if(! $fRequired)
+                                                <button
+                                                    type="button"
+                                                    @click="clear()"
+                                                    x-show="hex !== ''"
+                                                    x-cloak
+                                                    class="ptah-c-color_clear shrink-0 rounded-md border px-2"
+                                                    title="{{ __('ptah::ui.crud_color_clear') }}"
+                                                    aria-label="{{ __('ptah::ui.crud_color_clear') }}"
+                                                >
+                                                    <i class="bx bx-x text-lg leading-none"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        <input type="hidden" x-ref="colorHidden" wire:model="formData.{{ $fField }}" />
+
+                                        @if ($fError)
+                                            <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
+                                        @endif
+                                    </div>
+
+                                @elseif($fMask === 'money_brl')
                                     {{-- ── Money BRL: Alpine inline mask ── --}}
                                     {{-- wire:key on the outer div forces full destroy+recreate on create↔edit switch --}}
                                     <div
@@ -522,8 +684,174 @@
                                         @endif
                                     </div>
 
+                                @elseif($fMaskDef !== null && $fMaskDef['patterns'] !== [])
+                                    {{-- ── Campo com mascara registrada ──
+                                         O pattern vem do registro (PtahMask), que o HOST
+                                         define. O pacote nao sabe o que e um CPF; ele sabe
+                                         aplicar `000.000.000-00`.
+
+                                         O valor exibido e formatado no SERVIDOR ao abrir
+                                         (PtahMask::format), senao editar um registro cujo
+                                         banco guarda so digitos abriria com onze numeros
+                                         crus no campo.
+
+                                         O que vai para o Livewire e o valor com mascara; a
+                                         regra de gravacao (`store`) roda no save, do lado
+                                         do servidor — o cliente pode ser contornado, e o
+                                         que chega ao banco nao pode depender dele. --}}
+                                    <div
+                                        class="w-full"
+                                        wire:key="ptah-mask-{{ $fField }}-{{ $editingId ?? 'new' }}"
+                                        x-data="{
+                                            patterns: @js($fMaskDef['patterns']),
+                                            display: @js(\Ptah\Support\PtahMask::format($fMask, $fValue)),
+
+                                            fits(token, ch) {
+                                                if (token === '0') return /^[0-9]$/.test(ch);
+                                                if (token === 'A') return /^[A-Za-z]$/.test(ch);
+                                                if (token === '*') return /^[A-Za-z0-9]$/.test(ch);
+                                                return false;
+                                            },
+
+                                            isSlot(t) { return t === '0' || t === 'A' || t === '*'; },
+
+                                            capacity(p) {
+                                                return (p.match(/[0A*]/g) || []).length;
+                                            },
+
+                                            /* O MENOR pattern que ainda acomoda o que foi
+                                               digitado — como em telefone de 8 e 9 digitos.
+                                               So caracteres que preenchem slot contam: com a
+                                               pontuacao na conta, colar '(11) 3322-4455'
+                                               parece quinze caracteres e transborda um
+                                               pattern de dez slots.
+                                               `patterns` vem do servidor em ordem de maior
+                                               capacidade primeiro, entao sobrescrever ate o
+                                               fim termina no menor que serve. O gemeo em PHP
+                                               (PtahMask::pick) errou as duas coisas e os
+                                               testes pegaram; este e o mesmo algoritmo. */
+                                            pick(value) {
+                                                const tokens = (String(value ?? '').match(/[A-Za-z0-9]/g) || []).length;
+                                                let chosen = this.patterns[0];
+                                                for (const p of this.patterns) {
+                                                    if (this.capacity(p) >= tokens) chosen = p;
+                                                }
+                                                return chosen;
+                                            },
+
+                                            /* Aplica o pattern ao valor CRU, pulando o que
+                                               nao cabe no slot atual em vez de gastar o slot
+                                               com ele: colar '(11) 98765-4321' aproveita os
+                                               digitos e descarta a pontuacao.
+
+                                               Espelha PtahMask::applyPattern de proposito. A
+                                               versao anterior tinha um `tokensOf` proprio,
+                                               com uma condicao que eu escrevi confuso, e ele
+                                               perdia o ultimo digito ao colar valor ja
+                                               formatado e embaralhava letra com numero. Os
+                                               dois lados tinham de ser gemeos e nao eram; o
+                                               probe pegou as tres. */
+                                            apply(pattern, value) {
+                                                const chars = Array.from(String(value ?? ''));
+                                                let out = '';
+                                                let i = 0;
+
+                                                for (const t of pattern) {
+                                                    if (!this.isSlot(t)) {
+                                                        /* Literal so entra quando ha algo depois
+                                                           dele; senao o campo termina com um
+                                                           ponto solto enquanto se digita. */
+                                                        if (i < chars.length) out += t;
+                                                        continue;
+                                                    }
+
+                                                    while (i < chars.length && !this.fits(t, chars[i])) i++;
+                                                    if (i >= chars.length) break;
+
+                                                    out += chars[i];
+                                                    i++;
+                                                }
+
+                                                return out;
+                                            },
+
+                                            format(value) {
+                                                return this.apply(this.pick(value), value);
+                                            },
+
+                                            /* Reformatar reposiciona o cursor, e sem isto
+                                               editar o meio de um CPF joga o cursor para o
+                                               fim a cada tecla. Conta quantos caracteres
+                                               UTEIS existem antes do cursor e recoloca depois
+                                               do enesimo caractere util do texto formatado. */
+                                            caretAfter(formatted, wantedTokens) {
+                                                if (wantedTokens <= 0) return 0;
+                                                let seen = 0;
+                                                for (let i = 0; i < formatted.length; i++) {
+                                                    if (/[A-Za-z0-9]/.test(formatted[i])) {
+                                                        seen++;
+                                                        if (seen === wantedTokens) return i + 1;
+                                                    }
+                                                }
+                                                return formatted.length;
+                                            },
+
+                                            onInput(e) {
+                                                const el = e.target;
+                                                const before = el.value.slice(0, el.selectionStart ?? el.value.length);
+                                                const tokensBefore = (before.match(/[A-Za-z0-9]/g) || []).length;
+
+                                                const formatted = this.format(el.value);
+
+                                                this.display = formatted;
+                                                el.value = formatted;
+
+                                                const pos = this.caretAfter(formatted, tokensBefore);
+                                                el.setSelectionRange(pos, pos);
+
+                                                this.push(formatted);
+                                            },
+
+                                            init() {
+                                                this.$wire.$watch('formData.{{ $fField }}', (val) => {
+                                                    if (val === null || val === undefined) return;
+                                                    const f = this.format(val);
+                                                    if (f !== this.display) this.display = f;
+                                                });
+                                            },
+
+                                            push(v) {
+                                                const h = this.$refs.maskHidden;
+                                                h.value = v;
+                                                h.dispatchEvent(new Event('input', { bubbles: true }));
+                                            }
+                                        }"
+                                    >
+                                        <label for="ptah-mask-in-{{ $fField }}" class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
+                                        </label>
+                                        <input
+                                            id="ptah-mask-in-{{ $fField }}"
+                                            type="text"
+                                            x-bind:value="display"
+                                            @input="onInput($event)"
+                                            @if($fRequired) required @endif
+                                            tabindex="{{ $tabIdx }}"
+                                            placeholder="{{ $fMaskDef['placeholder'] }}"
+                                            inputmode="{{ $fMaskDef['inputmode'] }}"
+                                            @if($fMaskDef['maxlength']) maxlength="{{ $fMaskDef['maxlength'] }}" @endif
+                                            autocomplete="off"
+                                            @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
+                                            class="block w-full rounded-md border outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
+                                        />
+                                        <input type="hidden" x-ref="maskHidden" wire:model="formData.{{ $fField }}" />
+                                        @if ($fError)
+                                            <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
+                                        @endif
+                                    </div>
+
                                 @else
-                                    {{-- ── Regular input (text / number / date / other masks via server-side transform) ── --}}
+                                    {{-- ── Regular input (text / number / date / sem mascara registrada) ── --}}
                                     @if (!empty($col['colsOnChange']))
                                         {{-- Trigger of a calculated-field formula: live binding so the recalc runs while typing --}}
                                         <x-forge-input

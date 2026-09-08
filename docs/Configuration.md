@@ -422,6 +422,36 @@ php artisan vendor:publish --tag=ptah-errors
 | `permissions.admin_email` | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | [Permissions.md](Permissions.md) |
 | `permissions.admin_password` | `PTAH_ADMIN_PASSWORD` | `null` (a strong random password is generated and shown once if unset — no insecure hardcoded fallback) | [Permissions.md](Permissions.md) |
 
+### Field masks (`config/ptah-masks.php`)
+
+A **separate file**, not a key inside `ptah.php`, for two reasons that reinforce
+each other. `mergeConfigFrom` is shallow, so a host that published `ptah.php`
+owns that whole array and a nested key added later never reaches it — a trap this
+package has fallen into twice. And masks are the part of ptah most likely to
+change from outside it, because document formats change by law; a dedicated file
+is smaller to review in a diff.
+
+```bash
+php artisan vendor:publish --tag=ptah-masks
+```
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `presets` | `[]` | Shipped sets to activate. Available: `br` |
+| *(any other key)* | — | One mask definition, which overrides a preset |
+
+The package ships only `digits` and `decimal` — the two masks that are nobody's
+law. Everything with a check digit or a legal format is yours, either through a
+preset or written out. Full reference, including the pattern language and the
+`store` rules, in [BaseCrud.md](BaseCrud.md#masks-colsmask).
+
+**Presets are not activated by the locale**, deliberately: a locale is an
+interface language, not a jurisdiction, and it changes per request. See the
+comment at the top of the published file for the one-line form if you want the
+language to decide.
+
+---
+
 ### Sidebar jump box (`forge.sidebar_jump*`)
 
 Type part of a screen's name in the sidebar and go straight to it. It renders at
