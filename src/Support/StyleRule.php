@@ -23,7 +23,18 @@ final class StyleRule
      * list (CrudConfigEnums::OPERATORS) — '=' and 'LIKE' have no arm there and
      * would silently never match at render time.
      */
-    public const CONDITIONS = ['==', '!=', '>', '<', '>=', '<='];
+    public const CONDITIONS = ['==', '!=', '>', '<', '>=', '<=', '*'];
+
+    /**
+     * `*` is "no test": the rule applies to every row.
+     *
+     * It exists because a style that reads its colour FROM the row (see
+     * StyleTemplate) usually has nothing to compare — "paint each tag in its own
+     * colour" is not a condition. Expressing that with the old vocabulary meant
+     * `!=` against a value the column never holds, which is a lie that happens
+     * to work.
+     */
+    public const CONDITION_ALWAYS = '*';
 
     /**
      * Aliased condition tokens mapped onto the canonical symbol above.
@@ -37,6 +48,9 @@ final class StyleRule
         'lte' => '<=',
         'gte' => '>=',
         '=' => '==',
+        'always' => '*',
+        'any' => '*',
+        'true' => '*',
     ];
 
     /**

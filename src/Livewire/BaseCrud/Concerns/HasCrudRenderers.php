@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Ptah\Support\StyleRule;
+use Ptah\Support\StyleTemplate;
 
 /**
  * Cell rendering, row styling, helper formatters and custom method resolution.
@@ -78,7 +79,20 @@ trait HasCrudRenderers
 
         // Optional icon and style wrappers configurable per column
         $cellIcon = ! empty($col['colsCellIcon']) ? '<span class="'.e($col['colsCellIcon']).' mr-1"></span>' : '';
-        $cellStyle = ! empty($col['colsCellStyle']) ? ' style="'.e($col['colsCellStyle']).'"' : '';
+        // The cell style takes the same `{{column}}` placeholders as a row rule —
+        // and this is the one the Tags case actually wants, because the colour
+        // belongs to the badge, not to the whole row. An unsafe or missing value
+        // drops the style and keeps the icon and class: those carry no value
+        // from the row and have nothing to be wrong about.
+        $cellStyle = '';
+
+        if (! empty($col['colsCellStyle'])) {
+            $resolvedCellStyle = StyleTemplate::resolve((string) $col['colsCellStyle'], $row);
+
+            if ($resolvedCellStyle !== null && $resolvedCellStyle !== '') {
+                $cellStyle = ' style="'.e($resolvedCellStyle).'"';
+            }
+        }
         $cellClass = ! empty($col['colsCellClass']) ? ' '.e($col['colsCellClass']) : '';
 
         if ($cellIcon || $cellStyle || $cellClass) {
@@ -121,6 +135,8 @@ trait HasCrudRenderers
             }
 
             $match = match ($condition) {
+                // No test: the rule paints every row. See StyleRule::CONDITION_ALWAYS.
+                StyleRule::CONDITION_ALWAYS => true,
                 '==' => (string) $rowValue == (string) $target,
                 '!=' => (string) $rowValue != (string) $target,
                 '>' => (float) $rowValue > (float) $target,
@@ -130,9 +146,23 @@ trait HasCrudRenderers
                 default => false,
             };
 
-            if ($match) {
-                return $css;
+            if (! $match) {
+                continue;
             }
+
+            // `{{column}}` in the style reads from THIS row. A placeholder that
+            // cannot be resolved to a safe colour drops the rule rather than the
+            // placeholder: a half-substituted declaration is a rule the author
+            // never wrote. Falling through to the next rule is deliberate — a
+            // row whose colour column is empty should still get whatever plain
+            // rule comes after.
+            $resolved = StyleTemplate::resolve($css, $row);
+
+            if ($resolved === null) {
+                continue;
+            }
+
+            return $resolved;
         }
 
         return '';

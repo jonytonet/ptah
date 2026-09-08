@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Ptah\Support\PtahMask;
 use Ptah\Support\SearchDropdownMask;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
@@ -649,6 +650,28 @@ trait HasCrudForm
      */
     protected function applyMaskTransforms(array $data, array $formCols): array
     {
+        // A regra de gravacao da MASCARA vem primeiro, e e a razao de a mascara
+        // ser declarativa: `colsMask: "cpf"` sozinho ja normaliza, sem exigir um
+        // `colsMaskTransform` combinando ao lado. Antes disto, quem configurava
+        // a mascara e esquecia o transform gravava a pontuacao no banco — e a
+        // mascara nem chegava a aparecer no input.
+        //
+        // Um `colsMaskTransform` explicito continua ganhando: e o que os configs
+        // existentes usam, e mudar o que eles gravam seria alterar dados em
+        // producao por causa de um upgrade de pacote.
+        foreach ($formCols as $col) {
+            $field = $col['colsNomeFisico'] ?? null;
+            $maskName = $col['colsMask'] ?? null;
+
+            if ($field
+                && $maskName
+                && empty($col['colsMaskTransform'])
+                && array_key_exists($field, $data)
+                && PtahMask::has($maskName)) {
+                $data[$field] = PtahMask::store($maskName, $data[$field]);
+            }
+        }
+
         foreach ($formCols as $col) {
             $field = $col['colsNomeFisico'] ?? null;
             $transform = $col['colsMaskTransform'] ?? null;

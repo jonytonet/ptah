@@ -20,6 +20,17 @@ class CrudConfigEnums
         'boolean',
         'file',
         'image',
+        // Tipos HTML5. O `color` era o que faltava mais: o renderer da LISTAGEM
+        // ja mostrava o swatch, e no FORM a pessoa tinha de digitar o hex na
+        // mao. Os outros vem no mesmo pacote porque sao o mesmo despacho de
+        // `type=` num input — deixar de fora seria arbitrario.
+        'color',
+        'time',
+        'datetime-local',
+        'range',
+        'email',
+        'url',
+        'tel',
     ];
 
     /**
