@@ -218,6 +218,7 @@ final class AiAttachmentService
         $caps = $this->capabilities($provider);
         $parts = [];
         $notes = [];
+        $delivered = [];
 
         foreach ($files as $file) {
             $path = (string) ($file['path'] ?? '');
@@ -234,6 +235,7 @@ final class AiAttachmentService
             try {
                 if (str_starts_with($mime, 'image/') || in_array($ext, self::IMAGE_EXTENSIONS, true)) {
                     $parts[] = Image::fromLocalPath($path);
+                    $delivered[] = trans('ptah::ui.ai_attach_manifest_image', ['name' => $name]);
 
                     continue;
                 }
@@ -250,12 +252,14 @@ final class AiAttachmentService
                     $parts[] = new Text(
                         trans('ptah::ui.ai_attach_inline_header', ['name' => $name])."\n\n".$text
                     );
+                    $delivered[] = trans('ptah::ui.ai_attach_manifest_text', ['name' => $name]);
 
                     continue;
                 }
 
                 if ($caps['documents']) {
                     $parts[] = Document::fromLocalPath($path, $name);
+                    $delivered[] = trans('ptah::ui.ai_attach_manifest_document', ['name' => $name]);
 
                     continue;
                 }
@@ -279,6 +283,26 @@ final class AiAttachmentService
 
                 $notes[] = trans('ptah::ui.ai_attach_note_unreadable', ['name' => $name]);
             }
+        }
+
+        // Um manifesto do que FOI, em texto, na frente das proprias partes.
+        //
+        // Isto nasceu de uma confusao real: uma imagem foi anexada, chegou ao
+        // corpo da requisicao (verificado interceptando o cliente HTTP) e o
+        // modelo respondeu "nao consigo ver imagens anexadas". Um modelo sem
+        // visao nao distingue, para quem le a resposta, de um anexo que se
+        // perdeu no caminho — e as duas causas pedem acoes opostas: trocar o
+        // modelo, ou abrir um bug.
+        //
+        // Com o manifesto, um modelo sem visao responde sobre o arquivo que
+        // sabe ter recebido ("me disseram que ha uma imagem image.png, mas nao
+        // processo imagens"), que e uma resposta diagnosticavel. E para um
+        // modelo com visao a linha nao custa nada: e o nome do arquivo que ele
+        // esta vendo.
+        if ($delivered !== []) {
+            array_unshift($parts, new Text(
+                trans('ptah::ui.ai_attach_manifest', ['list' => implode('; ', $delivered)])
+            ));
         }
 
         return ['parts' => $parts, 'notes' => $notes];

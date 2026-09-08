@@ -51,6 +51,25 @@ class AiAttachmentPartsTest extends TestCase
         return $this->app->make(AiAttachmentService::class);
     }
 
+    /**
+     * As partes de um tipo, sem a linha do manifesto.
+     *
+     * O manifesto ("o usuario anexou X") entra como a PRIMEIRA parte, entao
+     * afirmar sobre `parts[0]` passou a depender de uma decisao de ordem que
+     * nada aqui quer fixar. Selecionar por tipo diz o que estes testes querem
+     * dizer de verdade.
+     *
+     * @param  array{parts: array<int, mixed>, notes: list<string>}  $built
+     * @return list<mixed>
+     */
+    private function partsOfType(array $built, string $class): array
+    {
+        return array_values(array_filter(
+            $built['parts'],
+            fn ($part): bool => $part instanceof $class
+        ));
+    }
+
     /** A 1x1 PNG, so Image::fromLocalPath has a real file to read. */
     private function png(string $name = 'print.png'): array
     {
@@ -68,8 +87,7 @@ class AiAttachmentPartsTest extends TestCase
         // where the report came from.
         $built = $this->service()->toPrismParts([$this->png()], 'xai');
 
-        $this->assertCount(1, $built['parts']);
-        $this->assertInstanceOf(Image::class, $built['parts'][0]);
+        $this->assertCount(1, $this->partsOfType($built, Image::class));
         $this->assertSame([], $built['notes']);
     }
 
@@ -81,8 +99,7 @@ class AiAttachmentPartsTest extends TestCase
             'openai'
         );
 
-        $this->assertCount(1, $built['parts']);
-        $this->assertInstanceOf(Document::class, $built['parts'][0]);
+        $this->assertCount(1, $this->partsOfType($built, Document::class));
         $this->assertSame([], $built['notes']);
     }
 
@@ -95,11 +112,16 @@ class AiAttachmentPartsTest extends TestCase
                 $provider
             );
 
-            $this->assertCount(1, $built['parts'], "Falhou em {$provider}.");
-            $this->assertInstanceOf(Text::class, $built['parts'][0]);
-            $this->assertStringContainsString('Acme;1200', $built['parts'][0]->text);
+            $texts = $this->partsOfType($built, Text::class);
+
+            // Manifesto + conteudo.
+            $this->assertCount(2, $texts, "Falhou em {$provider}.");
+
+            $joined = implode(PHP_EOL, array_map(fn ($t): string => $t->text, $texts));
+
+            $this->assertStringContainsString('Acme;1200', $joined);
             // The model must know which file the text came from.
-            $this->assertStringContainsString('dados.csv', $built['parts'][0]->text);
+            $this->assertStringContainsString('dados.csv', $joined);
         }
     }
 
@@ -154,7 +176,7 @@ class AiAttachmentPartsTest extends TestCase
             $this->file('notas.txt', 'conteudo real', 'text/plain'),
         ], 'xai');
 
-        $this->assertCount(2, $built['parts'], 'Os arquivos bons tinham de passar.');
+        $this->assertCount(1, $this->partsOfType($built, Image::class), 'A imagem boa tinha de passar.');
         $this->assertCount(1, $built['notes']);
     }
 
@@ -170,7 +192,8 @@ class AiAttachmentPartsTest extends TestCase
             'xai'
         );
 
-        $text = $built['parts'][0]->text;
+        $texts = $this->partsOfType($built, Text::class);
+        $text = end($texts)->text;
 
         $this->assertLessThan(5000, mb_strlen($text));
         $this->assertStringContainsString(trans('ptah::ui.ai_attach_truncated'), $text);
@@ -190,9 +213,11 @@ class AiAttachmentPartsTest extends TestCase
             'xai'
         );
 
-        $this->assertCount(1, $built['parts']);
-        $this->assertTrue(mb_check_encoding($built['parts'][0]->text, 'UTF-8'));
-        $this->assertStringContainsString('acentuação', $built['parts'][0]->text);
+        $texts = $this->partsOfType($built, Text::class);
+        $joined = implode(PHP_EOL, array_map(fn ($t): string => $t->text, $texts));
+
+        $this->assertTrue(mb_check_encoding($joined, 'UTF-8'));
+        $this->assertStringContainsString('acentuação', $joined);
     }
 
     #[Test]
@@ -205,7 +230,7 @@ class AiAttachmentPartsTest extends TestCase
 
         $built = $this->service()->toPrismParts([$png], 'xai');
 
-        $this->assertInstanceOf(Image::class, $built['parts'][0]);
+        $this->assertCount(1, $this->partsOfType($built, Image::class));
     }
 
     #[Test]

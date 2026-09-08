@@ -17,6 +17,7 @@
 - [The Chat Widget](#the-chat-widget)
   - [Attachments](#attachments)
   - [What each provider can actually receive](#what-each-provider-can-actually-receive)
+  - [When the model says it cannot see the image](#when-the-model-says-it-cannot-see-the-image)
   - [Formatted answers](#formatted-answers)
   - [Full screen](#full-screen)
   - [Getting the button out of the way](#getting-the-button-out-of-the-way)
@@ -399,6 +400,26 @@ If you upgrade Prism and a provider gains document support, add it to
 `Ptah\Services\AI\AiAttachmentService::DOCUMENT_PROVIDERS`.
 `AiAttachmentCapabilityTest` checks that list against Prism's own source in both
 directions, so it fails if the list drifts either way.
+
+### When the model says it cannot see the image
+
+`Image` is mapped by every provider Prism supports, so an attached image does
+reach the request body — verified by intercepting the HTTP client, not inferred.
+If the answer is still "I cannot see images", the attachment arrived and the
+**model** did not process it: on xAI that means a non-vision Grok, and the model
+name is a field on the provider config, not something the package chooses.
+
+That case used to be indistinguishable, for whoever read the answer, from an
+attachment lost on the way — and the two causes call for opposite actions
+(change the model, or report a bug). So every turn with an attachment now
+carries a short manifest in the prompt naming what was sent:
+
+> The user attached the following to this message: image.png (image).
+
+A vision model gains the filename it is looking at. A model without vision
+answers about the file it knows it received — "I was told image.png is attached,
+but I cannot process images" — which is a diagnosable answer. The manifest lists
+only what actually went; a file that could not be delivered has its own note.
 
 ### Formatted answers
 
