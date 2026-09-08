@@ -1544,6 +1544,9 @@ return [
     'navbar_admin_menu' => 'Manage Menu',
     'navbar_admin_ai_models' => 'AI Models',
     'navbar_user_profile' => 'Profile',
+    'sidebar_jump_placeholder' => 'Jump to a screen',
+    'sidebar_jump_clear' => 'Clear',
+    'sidebar_jump_empty' => 'No screen matches that.',
     'navbar_user_logout' => 'Log out',
 
     // -------------------------------------------------------------------------

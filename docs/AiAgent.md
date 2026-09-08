@@ -23,6 +23,7 @@
   - [Getting the button out of the way](#getting-the-button-out-of-the-way)
   - [The draft lives in the browser](#the-draft-lives-in-the-browser)
 - [Custom Tools (Function Calling)](#custom-tools-function-calling)
+  - [Built-in tools](#built-in-tools)
   - [When your tools are actually built](#when-your-tools-are-actually-built)
   - [Describing a tool without building it (`AiToolSchemaInterface`)](#describing-a-tool-without-building-it-aitoolschemainterface)
 - [Rate Limiting](#rate-limiting)
@@ -511,12 +512,59 @@ send waits.
 
 ## Custom Tools (Function Calling)
 
-The AI Agent supports function calling via tools. Built-in tools are automatically registered:
+The AI Agent supports function calling via tools.
 
-| Tool | Description |
+### Built-in tools
+
+| Tool | What it answers |
 |---|---|
-| `get_system_info` | Returns app name, Laravel version, PHP version and environment |
-| `get_current_datetime` | Returns the current date and time |
+| `getSystemInfo` | Laravel and PHP version, environment, timezone — gated by `expose_system_details` |
+| `getCurrentDateTime` | The server's current date and time |
+| `find_menu` | **Where a screen lives in the navigation menu** |
+
+`find_menu` deserves a note. "Where is X?" is the most common question anyone
+asks about a system they did not build, and in an ERP with a few hundred screens
+it is asked constantly. The answer is already in the application — the sidebar
+renders it on every page — so the assistant should not have to guess, and an
+assistant that guesses navigation is worse than one that declines: the person
+follows the invented path, finds nothing, and stops trusting the answers that
+were right.
+
+It reads `Ptah\Support\MenuResolver`, which is also what the sidebar and its jump
+box read. That single source is the point: if the tool had its own idea of what
+the menu is, the two would drift, and the assistant would send people to paths
+the sidebar does not have.
+
+What it returns:
+
+```json
+{
+  "query": "cotacao",
+  "found": 2,
+  "results": [
+    { "screen": "Cotação", "path": "Compras > Cotação", "url": "/compras/cotacao" },
+    { "screen": "Divergências Cotação", "path": "Compras > Divergências Cotação", "url": "/compras/divergencias" }
+  ]
+}
+```
+
+The `path` runs root to leaf, which is the order someone has to click. Accents
+and case are ignored, and the words match in any order — "compras cotacao" finds
+`Compras > Cotação`. Groups are never returned: a `menuGroup` has no URL in ptah,
+so it is not somewhere to be sent; it only appears inside a path. Entries
+switched off in the menu admin are never offered, because the sidebar does not
+render them either.
+
+A miss returns `found: 0` and an instruction to say so rather than guess — a
+model handed an empty list tends to fill it in. A browse with no query is capped
+and says `truncated: true` with the real total, because silent truncation would
+let the model conclude a screen does not exist.
+
+**It answers only for a signed-in user.** The chat can be opened to guests
+(`allow_guests`), and a guest never sees the sidebar; the whole internal
+structure of the application is not something to hand an anonymous session just
+because the chat is reachable.
+
 
 ### Creating a custom tool
 

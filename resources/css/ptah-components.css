@@ -2247,6 +2247,125 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
     background-color: var(--ptah-primary-soft-d);
     color: var(--ptah-primary-lite);
 }
+/* ── Atalho de menu (topo da sidebar) ─────────────────────────────────────
+   Tudo por token: a sidebar tem seis eixos de aparencia, e uma cor fixa aqui
+   seria a unica coisa na barra que ignora o tom escolhido em /profile.
+
+   A borda de baixo usa a mesma migracao do logo e do footer (--ptah-line no
+   claro, --ptah-line-strong no escuro), para as tres divisorias horizontais da
+   barra terem o mesmo peso. */
+.ptah-sidebar .ptah-sidebar-jump {
+    border-color: var(--ptah-line);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump {
+    border-color: var(--ptah-line-strong);
+}
+
+/* O campo usa a receita de campo em repouso do pacote — a mesma dos inputs de
+   formulario — para nao virar um controle com aparencia propria dentro de uma
+   barra que ja tem a sua. */
+.ptah-sidebar .ptah-sidebar-jump-input {
+    background-color: var(--ptah-field);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-input {
+    background-color: var(--ptah-field-muted);
+    border-color: var(--ptah-line-field);
+    color: var(--ptah-text-strong);
+}
+.ptah-sidebar .ptah-sidebar-jump-input::placeholder {
+    color: var(--ptah-text-faint);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-input::placeholder {
+    color: var(--ptah-text-faint);
+}
+
+.ptah-sidebar .ptah-sidebar-jump-glyph {
+    color: var(--ptah-text-faint);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-glyph {
+    color: var(--ptah-text-faint);
+}
+
+.ptah-sidebar .ptah-sidebar-jump-clear {
+    color: var(--ptah-text-faint);
+}
+.ptah-sidebar .ptah-sidebar-jump-clear:hover {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-clear {
+    color: var(--ptah-text-faint);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-clear:hover {
+    color: var(--ptah-text-strong);
+}
+
+/* Lupa do modo colapsado: mesma tinta dos itens do menu, para ela nao parecer
+   um controle estranho na coluna de icones. */
+.ptah-sidebar .ptah-sidebar-jump-icon {
+    color: var(--ptah-text-secondary);
+}
+.ptah-sidebar .ptah-sidebar-jump-icon:hover {
+    color: var(--ptah-text-strong);
+    background-color: var(--ptah-control-ghost);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-icon {
+    color: var(--ptah-text-secondary);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-icon:hover {
+    color: var(--ptah-text-strong);
+    background-color: var(--ptah-control-ghost);
+}
+
+/* A lista flutua sobre a navegacao: superficie elevada, nao a da barra, senao
+   os itens do menu apareceriam por tras dela. */
+.ptah-sidebar .ptah-sidebar-jump-results,
+.ptah-sidebar .ptah-sidebar-jump-empty {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line);
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-results,
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-empty {
+    background-color: var(--ptah-surface-raised);
+    border-color: var(--ptah-line-strong);
+    color: var(--ptah-text-strong);
+}
+
+.ptah-sidebar .ptah-sidebar-jump-empty {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-empty {
+    color: var(--ptah-text-muted);
+}
+
+/* O realce do teclado e do mouse e o MESMO estado (`ptah-is-hi`), de proposito:
+   duas aparencias diferentes para "o item que o Enter vai abrir" seria uma
+   promessa contraditoria. */
+.ptah-sidebar .ptah-sidebar-jump-item.ptah-is-hi {
+    background-color: var(--ptah-control-ghost);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-item.ptah-is-hi {
+    background-color: var(--ptah-control-ghost);
+}
+
+.ptah-sidebar .ptah-sidebar-jump-label {
+    color: var(--ptah-text-strong);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-label {
+    color: var(--ptah-text-strong);
+}
+
+/* O caminho e contexto, nao o alvo: tinta secundaria para o olho pousar
+   primeiro no nome da tela, que e o que a pessoa digitou. */
+.ptah-sidebar .ptah-sidebar-jump-path {
+    color: var(--ptah-text-muted);
+}
+.ptah-dark .ptah-sidebar .ptah-sidebar-jump-path {
+    color: var(--ptah-text-muted);
+}
+
 /* Footer divider — same border migration as the logo wrapper above (delta
    vs --ptah-line, tom "puro": 9/6/2 per channel). */
 .ptah-sidebar .ptah-sidebar-footer {

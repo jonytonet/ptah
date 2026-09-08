@@ -1545,6 +1545,9 @@ return [
     'navbar_admin_menu' => 'Gerenciar Menu',
     'navbar_admin_ai_models' => 'Modelos de IA',
     'navbar_user_profile' => 'Perfil',
+    'sidebar_jump_placeholder' => 'Ir para uma tela',
+    'sidebar_jump_clear' => 'Limpar',
+    'sidebar_jump_empty' => 'Nenhuma tela corresponde.',
     'navbar_user_logout' => 'Sair',
 
     // -------------------------------------------------------------------------

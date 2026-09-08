@@ -118,6 +118,23 @@ return [
     'forge' => [
         'prefix' => 'forge',
         'tailwind' => 'v4',
+
+        /*
+         * Atalho de menu na sidebar: digite parte do nome de uma tela e va
+         * direto. Aparece no TOPO, entre o logo e a navegacao.
+         *
+         * O gatilho e QUANTIDADE de links, nao a existencia de scroll. Scroll
+         * depende da altura da janela, entao o campo apareceria e desapareceria
+         * ao redimensionar; um limite de itens e estavel e previsivel.
+         *
+         * A filtragem e no cliente: os links ja estao nesta pagina, foi a
+         * propria sidebar que os renderizou. E a mesma fonte
+         * (Ptah\Support\MenuResolver) que alimenta a tool `find_menu` do
+         * agente de IA, para o assistente nunca descrever um menu diferente do
+         * que a pessoa ve.
+         */
+        'sidebar_jump' => (bool) env('PTAH_SIDEBAR_JUMP', true),
+        'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 12),
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],

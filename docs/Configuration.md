@@ -422,6 +422,27 @@ php artisan vendor:publish --tag=ptah-errors
 | `permissions.admin_email` | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | [Permissions.md](Permissions.md) |
 | `permissions.admin_password` | `PTAH_ADMIN_PASSWORD` | `null` (a strong random password is generated and shown once if unset — no insecure hardcoded fallback) | [Permissions.md](Permissions.md) |
 
+### Sidebar jump box (`forge.sidebar_jump*`)
+
+Type part of a screen's name in the sidebar and go straight to it. It renders at
+the **top**, between the logo and the navigation, and appears once the menu holds
+`sidebar_jump_min_items` links or more.
+
+The trigger is item **count**, not the presence of a scrollbar. Scroll depends on
+window height, so a scroll-driven control would appear and disappear as you
+resize; a count is stable and predictable.
+
+Filtering happens in the browser. The links are already on the page — the sidebar
+rendered them — so a request per keystroke would be searching the browser's own
+memory the slow way. It reads `Ptah\Support\MenuResolver`, the same source that
+feeds the AI agent's `find_menu` tool, so the assistant can never describe a menu
+different from the one on screen.
+
+When the sidebar is collapsed to icons the field becomes a magnifier that expands
+the bar and focuses the input — the same gesture the menu groups already use.
+
+---
+
 ### AI Agent module (`ai_agent.*`)
 
 | Key | ENV | Default | Reference |
@@ -434,6 +455,8 @@ php artisan vendor:publish --tag=ptah-errors
 | `ai_agent.allow_guests` | `PTAH_AI_ALLOW_GUESTS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
+| `forge.sidebar_jump` | `PTAH_SIDEBAR_JUMP` | `true` | this section |
+| `forge.sidebar_jump_min_items` | `PTAH_SIDEBAR_JUMP_MIN` | `12` | this section |
 | `ai_agent.normalize_tool_schema` | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |
