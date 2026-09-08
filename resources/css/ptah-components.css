@@ -2671,6 +2671,34 @@ main { background-color: var(--ptah-canvas); }
 .ptah-c-chat_label                 { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-chat_label       { color: var(--ptah-text-faint); }
 
+/* Dica de teclado sob o input. Estava em `text-gray-300 dark:text-slate-600`:
+   no claro, cinza 300 sobre branco da cerca de 1,5:1 — a dica existia e nao se
+   lia. Mesmo token do rotulo acima, que e a outra legenda miuda do painel. */
+.ptah-c-chat_hint                  { color: var(--ptah-text-faint); }
+.ptah-dark .ptah-c-chat_hint        { color: var(--ptah-text-faint); }
+
+/* Botoes do cabecalho do chat (historico, nova conversa, expandir, fechar).
+   Os quatro repetiam `text-white/70 hover:text-white hover:bg-white/10` — a
+   mesma trinca copiada, e cada copia contava no teto de paleta fixa deste
+   arquivo. Uma classe deixa os quatro iguais por construcao e tira ~12
+   utilitarios da view.
+
+   A tinta e --ptah-text-on-accent (#ffffff invariante em todo escopo) porque o
+   cabecalho e sempre bg-primary: aqui branco nao e cor fixa por descuido, e a
+   tinta correta sobre um fundo de acento. */
+.ptah-c-chat_hdr_btn {
+    color: color-mix(in srgb, var(--ptah-text-on-accent) 70%, transparent);
+    background-color: transparent;
+}
+.ptah-c-chat_hdr_btn:hover {
+    color: var(--ptah-text-on-accent);
+    background-color: color-mix(in srgb, var(--ptah-text-on-accent) 12%, transparent);
+}
+.ptah-c-chat_hdr_btn.is-active {
+    color: var(--ptah-text-on-accent);
+    background-color: color-mix(in srgb, var(--ptah-text-on-accent) 22%, transparent);
+}
+
 .ptah-c-chat_hist_item:hover              { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-chat_hist_item:hover   { background-color: var(--ptah-surface-hover); }
 

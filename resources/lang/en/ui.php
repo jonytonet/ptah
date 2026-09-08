@@ -1562,6 +1562,8 @@ return [
     // when it cannot be built or blows up, so the assistant can say that
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
+    'ai_widget_expand' => 'Expand to full screen',
+    'ai_widget_collapse' => 'Back to the corner',
     'ai_widget_provider' => 'AI provider',
     'ai_widget_provider_default' => 'default',
     'ai_widget_title' => 'AI Assistant',    'ai_widget_placeholder' => 'Type a message…',

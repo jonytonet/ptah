@@ -1563,6 +1563,8 @@ return [
     // nao pode ser construida ou estoura, para o assistente poder dizer
     // que aquela capacidade caiu em vez de o turno morrer.
     'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
+    'ai_widget_expand' => 'Expandir para tela cheia',
+    'ai_widget_collapse' => 'Voltar ao canto',
     'ai_widget_provider' => 'Provedor de IA',
     'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',

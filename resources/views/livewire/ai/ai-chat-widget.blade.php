@@ -8,15 +8,93 @@
 <div
     x-data="{
         open: @entangle('isOpen'),
+
+        /*
+            O rascunho e local de proposito. Enquanto era `wire:model.live`, o
+            valor do textarea era estado do SERVIDOR, e o servidor zerava esse
+            valor ao enviar. Como `processAiMessage` e uma requisicao separada e
+            lenta (espera o modelo), tudo que o usuario digitava durante a
+            espera existia so no navegador — e quando aquela resposta chegava, o
+            Livewire remoldava o textarea para a string vazia do snapshot e o
+            texto desaparecia. Rascunho que so o navegador conhece nao pode ser
+            sobrescrito por um snapshot velho.
+        */
+        draft: '',
+
+        /* Tela cheia no desktop. Fica no localStorage: e preferencia de
+           dispositivo, e mandar isso pro servidor custaria uma requisicao e um
+           campo no snapshot para algo que a CSS resolve. */
+        expanded: false,
+
+        init() {
+            try {
+                this.expanded = localStorage.getItem('ptah:ai:expanded') === '1';
+            } catch (e) {
+                /* janela privada, cookies bloqueados: segue no modo compacto */
+            }
+
+            this.$watch('open', value => { if (value) { this.scrollToBottom(); this.focusInput(); } });
+            this.$watch('expanded', value => {
+                try { localStorage.setItem('ptah:ai:expanded', value ? '1' : '0'); } catch (e) {}
+                this.scrollToBottom();
+            });
+        },
+
         scrollToBottom() {
             this.$nextTick(() => {
                 const el = this.$refs.msgList;
                 if (el) el.scrollTop = el.scrollHeight;
             });
+        },
+
+        focusInput() {
+            this.$nextTick(() => { if (this.$refs.ta) this.$refs.ta.focus(); });
+        },
+
+        /* Cresce com o conteudo e para no teto, onde passa a rolar. O
+           `overflow` alterna junto: preso em `hidden`, o texto alem do teto
+           ficava invisivel E inalcancavel. */
+        grow() {
+            const ta = this.$refs.ta;
+            if (!ta) return;
+            const max = this.expanded || window.innerWidth < 640 ? 220 : 128;
+            ta.style.height = 'auto';
+            const next = Math.min(ta.scrollHeight, max);
+            ta.style.height = next + 'px';
+            ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
+        },
+
+        resetGrow() {
+            const ta = this.$refs.ta;
+            if (!ta) return;
+            ta.style.height = '';
+            ta.style.overflowY = 'hidden';
+        },
+
+        submit() {
+            const text = this.draft.trim();
+            if (text === '' || this.$wire.loading) return;
+
+            this.draft = '';
+            this.resetGrow();
+            this.$wire.send(text);
+        },
+
+        onEnter(e) {
+            /* Shift+Enter e nova linha: nao intercepta, deixa o navegador
+               inserir no lugar do cursor. O codigo anterior dava .prevent em
+               toda tecla Enter e depois concatenava '
+' no FIM do texto,
+               ignorando onde o cursor estava. */
+            if (e.shiftKey) return;
+
+            e.preventDefault();
+            this.submit();
         }
     }"
-    x-init="$watch('open', value => { if (value) scrollToBottom() })"
     @ai-message-sent.window="scrollToBottom()"
+    @ai-draft-clear.window="draft = ''; resetGrow()"
+    @keydown.escape.window="if (open) open = false"
     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
 >
 
@@ -30,8 +108,18 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="w-80 sm:w-96 rounded-2xl ptah-c-chat_panel shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
-        style="max-height: min(560px, calc(100vh - 100px));"
+        {{-- No celular e sempre tela cheia: um painel de 320px numa tela de 360
+             deixava a conversa numa coluna estreita com o teclado virtual por
+             cima. Utilitarios `max-sm:` em vez de uma media query no
+             ptah-components.css de proposito — o parser das fixtures golden
+             nao e ciente de media query e ja gravou valor errado por isso. --}}
+        class="ptah-c-chat_panel shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden
+               w-80 sm:w-96 rounded-2xl max-h-[min(560px,calc(100vh_-_100px))]
+               max-sm:fixed max-sm:inset-0 max-sm:w-full max-sm:max-h-none max-sm:rounded-none max-sm:border-0"
+        :class="expanded ? 'sm:fixed sm:inset-0 sm:w-full sm:max-w-none sm:max-h-none sm:rounded-none' : ''"
+        role="dialog"
+        aria-modal="false"
+        aria-label="{{ __('ptah::ui.ai_widget_title') }}"
     >
         {{-- Panel header --}}
         <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0">
@@ -43,17 +131,27 @@
                 @auth
                 <button wire:click="toggleHistory"
                         title="{{ __('ptah::ui.ai_widget_history') }}"
-                        class="rounded p-1 transition-colors {{ $showHistory ? 'text-white bg-white/20' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
+                        @class(['ptah-c-chat_hdr_btn rounded p-1 transition-colors', 'is-active' => $showHistory])>
                     <i class="bx bx-history text-lg"></i>
                 </button>
                 @endauth
                 <button wire:click="newConversation"
                         title="{{ __('ptah::ui.ai_widget_new_chat') }}"
-                        class="rounded p-1 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                        class="ptah-c-chat_hdr_btn rounded p-1 transition-colors">
                     <i class="bx bx-edit text-lg"></i>
                 </button>
+                {{-- Escondido no celular: la o painel ja ocupa a tela toda, e o
+                     controle nao teria estado para alternar. --}}
+                <button @click="expanded = !expanded"
+                        type="button"
+                        class="ptah-c-chat_hdr_btn hidden sm:block rounded p-1 transition-colors"
+                        :title="expanded ? '{{ __('ptah::ui.ai_widget_collapse') }}' : '{{ __('ptah::ui.ai_widget_expand') }}'"
+                        :aria-label="expanded ? '{{ __('ptah::ui.ai_widget_collapse') }}' : '{{ __('ptah::ui.ai_widget_expand') }}'">
+                    <i class="bx text-lg" :class="expanded ? 'bx-collapse-alt' : 'bx-expand-alt'"></i>
+                </button>
                 <button @click="open = false"
-                        class="rounded p-1 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                        aria-label="{{ __('ptah::ui.ai_widget_close') }}"
+                        class="ptah-c-chat_hdr_btn rounded p-1 transition-colors">
                     <i class="bx bx-x text-xl"></i>
                 </button>
             </div>
@@ -192,29 +290,30 @@
         @if(!$showHistory)
         <div class="border-t border-gray-100 dark:border-slate-700 px-3 py-3 flex-shrink-0">
             <div class="flex items-end gap-2">
+                {{-- Sem wire:model: o rascunho e local (ver o x-data da raiz e
+                     o docblock de AiChatWidget::send). `wire:ignore` para que
+                     nem o morph do Livewire toque neste no — e o morph, com um
+                     snapshot velho, que apagava o texto.
+
+                     Tambem NAO fica desabilitado durante a resposta: digitar a
+                     proxima pergunta enquanto a IA responde e justamente o que
+                     as pessoas fazem. So o envio e que espera. --}}
                 <textarea
-                    wire:model.live="userInput"
+                    wire:ignore
+                    x-ref="ta"
+                    x-model="draft"
                     rows="1"
                     placeholder="{{ __('ptah::ui.ai_widget_placeholder') }}"
-                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
-                    style="min-height: 38px; height: 38px;"
-                    @keydown.enter.prevent="
-                        if (!$wire.loading && !$event.shiftKey) {
-                            $wire.set('userInput', $event.target.value);
-                            $wire.send();
-                        } else if ($event.shiftKey) {
-                            $event.target.value += '\n';
-                            $wire.set('userInput', $event.target.value);
-                        }
-                    "
-                    @input="$event.target.style.height = 'auto'; $event.target.style.height = Math.min($event.target.scrollHeight, 128) + 'px';"
-                    wire:loading.attr="disabled"
-                    wire:target="send,processAiMessage"
+                    aria-label="{{ __('ptah::ui.ai_widget_placeholder') }}"
+                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
+                    style="min-height: 38px; overflow-y: hidden;"
+                    @input="grow()"
+                    @keydown.enter="onEnter($event)"
                 ></textarea>
                 <button
-                    wire:click="send"
-                    wire:loading.attr="disabled"
-                    wire:target="send,processAiMessage"
+                    type="button"
+                    @click="submit()"
+                    x-bind:disabled="draft.trim() === '' || $wire.loading"
                     class="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="{{ __('ptah::ui.ai_widget_send') }}"
                 >
@@ -227,7 +326,10 @@
                     </svg>
                 </button>
             </div>
-            <p class="mt-1.5 text-center text-[10px] text-gray-300 dark:text-slate-600">
+            {{-- Era `text-gray-300 dark:text-slate-600`: cor fixa e, no claro,
+                 cerca de 1,5:1 sobre branco — texto que existe e nao se le.
+                 Tokenizado, como o resto do pacote. --}}
+            <p class="ptah-c-chat_hint mt-1.5 text-center text-[10px]">
                 {{ __('ptah::ui.ai_widget_keyboard_hint') }}
             </p>
         </div>
@@ -237,11 +339,18 @@
         {{-- /Message list --}}
     </div>
 
-    {{-- ─── Floating toggle button ─────────────────────────────────────── --}}
+    {{-- ─── Floating toggle button ───────────────────────────────────────
+         Some quando o painel toma a tela — expandido no desktop, ou aberto no
+         celular, onde tela cheia e o unico modo. Um botao flutuante sobre um
+         painel de tela cheia cobre conteudo e passa a ser um segundo "fechar"
+         concorrendo com o do cabecalho. --}}
     <button
         @click="open = !open"
+        x-show="!(expanded && open)"
+        :class="open ? 'max-sm:hidden' : ''"
         class="group w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:bg-primary-dark hover:scale-105 transition-all duration-200 active:scale-95"
         :title="open ? '{{ __('ptah::ui.ai_widget_close') }}' : '{{ __('ptah::ui.ai_widget_open') }}'"
+        :aria-expanded="open ? 'true' : 'false'"
     >
         <i x-show="!open" class="bx bx-bot text-2xl"></i>
         <i x-show="open" x-cloak class="bx bx-x text-2xl"></i>

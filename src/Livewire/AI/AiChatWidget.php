@@ -47,8 +47,6 @@ class AiChatWidget extends Component
 
     public bool $showHistory = false;
 
-    public string $userInput = '';
-
     public string $errorMsg = '';
 
     public ?int $conversationId = null;
@@ -132,16 +130,33 @@ class AiChatWidget extends Component
 
     // ── Actions ────────────────────────────────────────────────────────
 
-    public function send(): void
+    /**
+     * Sends a message. The text arrives as an argument, and that is the fix for
+     * a bug, not a stylistic choice.
+     *
+     * The draft used to be a public property bound with `wire:model.live`. So
+     * the textarea's value was server state, and the server's copy went to ''
+     * the moment send() ran. `processAiMessage` is a SEPARATE request — often a
+     * slow one, since it waits on the model — and whatever the user typed while
+     * it was in flight lived only in the browser. When that response landed,
+     * Livewire morphed the textarea back to the snapshot's empty string and the
+     * typed text vanished. "As vezes estou digitando e o texto se apaga
+     * sozinho, talvez seja por conta de uma resposta sendo recebida" — exactly
+     * that, and the diagnosis was right.
+     *
+     * A draft nobody but the browser owns cannot be overwritten by a stale
+     * snapshot. It also stops costing one request per keystroke, each one
+     * re-rendering the whole message list.
+     */
+    public function send(string $message = ''): void
     {
-        $message = trim($this->userInput);
+        $message = trim($message);
 
         if ($message === '' || ! $this->available || $this->loading) {
             return;
         }
 
         $this->messages[] = ['role' => 'user', 'content' => $message];
-        $this->userInput = '';
         $this->errorMsg = '';
         $this->loading = true;
         $this->showHistory = false;
@@ -259,8 +274,11 @@ class AiChatWidget extends Component
 
         $this->messages = [];
         $this->errorMsg = '';
-        $this->userInput = '';
         $this->showHistory = false;
+
+        // O rascunho vive no navegador (ver send()), entao limpar e um aviso,
+        // nao uma atribuicao.
+        $this->dispatch('ai-draft-clear');
     }
 
     public function toggleHistory(): void
