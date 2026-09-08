@@ -14,6 +14,7 @@ use Prism\Prism\Facades\Prism;
 use Prism\Prism\PrismManager;
 use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Prism\Prism\Text\PendingRequest;
+use Prism\Prism\ValueObjects\Media\Text;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Ptah\Exceptions\AiProviderException;
@@ -116,14 +117,18 @@ class AiChatService
      * @throws AiRateLimitException When the session exceeds the configured rate limit
      * @throws AiProviderException When no active provider is configured or the API call fails
      */
+    /**
+     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     */
     public function send(
         string $message,
         string $sessionId,
         ?int $userId = null,
         ?int $conversationId = null,
         ?int $configId = null,
+        array $attachments = [],
     ): array {
-        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId);
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId, $attachments);
 
         try {
             $response = $this->buildRequest($ctx)->asText();
@@ -154,6 +159,9 @@ class AiChatService
      *
      * @throws AiRateLimitException|AiProviderException
      */
+    /**
+     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     */
     public function stream(
         string $message,
         string $sessionId,
@@ -161,8 +169,9 @@ class AiChatService
         ?int $conversationId = null,
         ?callable $onDelta = null,
         ?int $configId = null,
+        array $attachments = [],
     ): array {
-        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId);
+        $ctx = $this->prepareTurn($message, $sessionId, $userId, $conversationId, $configId, $attachments);
 
         $full = '';
         $inputTokens = 0;
@@ -226,7 +235,10 @@ class AiChatService
      *
      * @throws AiRateLimitException|AiProviderException
      */
-    private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId, ?int $configId = null): array
+    /**
+     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     */
+    private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId, ?int $configId = null, array $attachments = []): array
     {
         // Guests may only use the chat when explicitly allowed.
         if (! $userId && ! config('ptah.ai_agent.allow_guests', false)) {
@@ -300,7 +312,34 @@ class AiChatService
         }
 
         $prismMessages = $this->buildPrismMessages($history);
-        $prismMessages[] = new UserMessage($message);
+
+        // Anexos entram como partes ADICIONAIS da mensagem do usuario, nao como
+        // uma mensagem separada: o modelo tem de ver o arquivo junto da pergunta
+        // que fala dele.
+        //
+        // As `notes` sao o cuidado que separa resposta honesta de resposta
+        // inventada. Se um arquivo nao pudo ser enviado nem extraido (PDF em
+        // provedor que nao aceita documento e sem smalot/pdfparser instalado), o
+        // turno leva um aviso EM TEXTO dizendo isso. Sem essa nota, o modelo
+        // recebe uma pergunta sobre um arquivo que nunca chegou e responde com
+        // toda a confianca sobre um conteudo que imaginou.
+        $attachmentParts = [];
+        $attachmentNames = [];
+
+        if ($attachments !== []) {
+            $built = app(AiAttachmentService::class)->toPrismParts($attachments, (string) $config->provider);
+            $attachmentParts = $built['parts'];
+            $attachmentNames = array_values(array_filter(array_map(
+                fn (array $a): string => (string) ($a['name'] ?? ''),
+                $attachments
+            )));
+
+            foreach ($built['notes'] as $note) {
+                $attachmentParts[] = new Text($note);
+            }
+        }
+
+        $prismMessages[] = new UserMessage($message, $attachmentParts);
 
         $systemPrompt = $config->system_prompt
             ?: config('ptah.ai_agent.system_prompt', 'You are a helpful assistant.');
@@ -313,6 +352,7 @@ class AiChatService
             'systemPrompt' => $systemPrompt,
             'tools' => $this->toolRegistry->getPrismTools(),
             'restoreConfig' => $restoreConfig,
+            'attachmentNames' => $attachmentNames,
         ];
     }
 
@@ -354,8 +394,18 @@ class AiChatService
         /** @var AiModelConfig $config */
         $config = $ctx['config'];
 
+        // Os NOMES dos anexos ficam no historico para a conversa reaberta
+        // mostrar o que foi anexado. Os arquivos em si nao: eram temporarios e
+        // ja nao existem. buildPrismMessages() le apenas `content`, entao esta
+        // chave extra nao volta para o modelo em turnos seguintes.
+        $userMessage = ['role' => 'user', 'content' => $message];
+
+        if (($ctx['attachmentNames'] ?? []) !== []) {
+            $userMessage['attachments'] = $ctx['attachmentNames'];
+        }
+
         $newMessages = array_merge($ctx['history'], [
-            ['role' => 'user',      'content' => $message],
+            $userMessage,
             ['role' => 'assistant', 'content' => $finalText],
         ]);
 

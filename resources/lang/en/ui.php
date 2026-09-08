@@ -1544,6 +1544,9 @@ return [
     'navbar_admin_menu' => 'Manage Menu',
     'navbar_admin_ai_models' => 'AI Models',
     'navbar_user_profile' => 'Profile',
+    'sidebar_jump_placeholder' => 'Jump to a screen',
+    'sidebar_jump_clear' => 'Clear',
+    'sidebar_jump_empty' => 'No screen matches that.',
     'navbar_user_logout' => 'Log out',
 
     // -------------------------------------------------------------------------
@@ -1562,6 +1565,32 @@ return [
     // when it cannot be built or blows up, so the assistant can say that
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
+    'ai_widget_hide_launcher' => 'Hide the assistant button',
+    'ai_widget_show_launcher' => 'Show the assistant',
+    'ai_widget_expand' => 'Expand to full screen',
+    'ai_widget_collapse' => 'Back to the corner',
+    // Attachments. The `ai_attach_note_*` strings go into the PROMPT, not
+    // on screen: they tell the model a file did not make it, so it says so
+    // instead of inventing content it was never given.
+    'ai_attach_provider_no_docs' => ':name was refused: the provider :provider cannot receive documents. Attach an image or a text file, or pick another provider above.',
+    'ai_attach_blocked_hint' => 'This provider does not take :formats.',
+    'ai_attach_note_unsupported' => 'NOTE: :name could not be sent to :provider, which does not receive documents; say so instead of guessing its content.',
+    'ai_attach_manifest' => 'The user attached the following to this message: :list.',
+    'ai_attach_manifest_image' => ':name (image)',
+    'ai_attach_manifest_document' => ':name (document)',
+    'ai_attach_manifest_text' => ':name (text file, content included below)',
+    'ai_attach_btn' => 'Attach a file',
+    'ai_attach_hint' => 'Attach, paste (Ctrl+V) or drop a file',
+    'ai_attach_drop' => 'Drop the file to attach it',
+    'ai_attach_remove' => 'Remove :name',
+    'ai_attach_too_many' => 'At most :max files per message.',
+    'ai_attach_too_big' => ':name is over the :max KB limit.',
+    'ai_attach_bad_type' => ':name is not an accepted type (:allowed).',
+    'ai_attach_note_missing' => 'NOTE: the file :name did not arrive; do not answer about its content.',
+    'ai_attach_note_unreadable' => 'NOTE: :name could not be read on this provider; say so instead of guessing its content.',
+    'ai_attach_note_empty' => 'NOTE: :name yielded no readable text; say so instead of guessing.',
+    'ai_attach_inline_header' => 'Content of the attached file :name:',
+    'ai_attach_truncated' => '[... document truncated, it continues beyond this point ...]',
     'ai_widget_provider' => 'AI provider',
     'ai_widget_provider_default' => 'default',
     'ai_widget_title' => 'AI Assistant',    'ai_widget_placeholder' => 'Type a message…',

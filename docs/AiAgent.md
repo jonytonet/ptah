@@ -14,7 +14,16 @@
 - [Configuration Reference](#configuration-reference)
 - [Admin Screen — Configuring a Provider](#admin-screen--configuring-a-provider)
 - [Customising the System Prompt](#customising-the-system-prompt)
+- [The Chat Widget](#the-chat-widget)
+  - [Attachments](#attachments)
+  - [What each provider can actually receive](#what-each-provider-can-actually-receive)
+  - [When the model says it cannot see the image](#when-the-model-says-it-cannot-see-the-image)
+  - [Formatted answers](#formatted-answers)
+  - [Full screen](#full-screen)
+  - [Getting the button out of the way](#getting-the-button-out-of-the-way)
+  - [The draft lives in the browser](#the-draft-lives-in-the-browser)
 - [Custom Tools (Function Calling)](#custom-tools-function-calling)
+  - [Built-in tools](#built-in-tools)
   - [When your tools are actually built](#when-your-tools-are-actually-built)
   - [Describing a tool without building it (`AiToolSchemaInterface`)](#describing-a-tool-without-building-it-aitoolschemainterface)
 - [Rate Limiting](#rate-limiting)
@@ -306,14 +315,256 @@ PTAH_AI_SYSTEM_PROMPT="You are Aria, a helpful assistant for Acme Corp's interna
 
 ---
 
+## The Chat Widget
+
+### Attachments
+
+Three ways in, all landing in the same place:
+
+| How | Notes |
+|---|---|
+| The paperclip | Opens the system file picker, filtered by what the selected provider accepts |
+| **Ctrl+V** | Pastes a file from the clipboard — including a **screenshot**, which arrives as a nameless `image/png` |
+| **Drag and drop** | Anywhere on the panel, not only over the input: people aim at "the chat" |
+
+Pasting plain text is untouched — the paste is only intercepted when the
+clipboard actually carries a file.
+
+Each file is uploaded on its own (`$wire.upload`, one call per file) because
+pasting and dropping happen one file at a time, and Livewire's `uploadMultiple`
+replaces the whole array — the second screenshot would erase the first. The
+server accumulates the list, and **the server's list is the authority**: the
+chips you see on screen are drawn from it, so a chip can never promise a file
+that is not going to be sent.
+
+Everything is validated server-side — extension, size and count. The client-side
+filter exists to save bandwidth and to tell you early; `$wire.upload` is a public
+call and does not have to go through it.
+
+> **If you published `config/ptah.php` before this version**, you do not need to
+> touch it. `mergeConfigFrom` is shallow, so a nested key the package adds later
+> never reaches a published file — which is why the defaults below live in
+> `AiAttachmentService`, not only in the config. Add the block only to restrict
+> something.
+
+```php
+'ai_agent' => [
+    'attachments' => [
+        'enabled' => true,
+        'max_size_kb' => 8192,   // per file; PHP's upload_max_filesize still applies
+        'max_files' => 4,        // per message — each attachment costs input tokens
+        'allowed_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'csv', 'json', 'docx'],
+        'max_extracted_chars' => 60000,
+    ],
+],
+```
+
+A message with an attachment and no text is a valid message: "analyse this" is
+often just the file.
+
+### What each provider can actually receive
+
+**This is the part worth reading.** Prism's providers do not all understand the
+same message parts, and the mismatch is silent: a part a provider's message map
+does not handle is simply not serialised. The request succeeds, the model answers
+about a document it never received, and nothing anywhere says so.
+
+Measured against the installed Prism rather than assumed:
+
+| Part | Providers |
+|---|---|
+| **Image** | every one — `openai`, `anthropic`, `gemini`, `xai`, `groq`, `deepseek`, `mistral`, `openrouter`, `perplexity`, `z`, `ollama` |
+| **Document** | `anthropic`, `gemini`, `mistral`, `openai`, `openrouter`, `perplexity`, `z` |
+| | **not** `xai` (Grok), `groq`, `deepseek`, `ollama` |
+
+So the allowlist is **narrowed by the selected provider**. On a document-blind
+provider the file picker does not offer a PDF, a dropped PDF is refused, and the
+refusal names the provider — which is actionable, because the provider is chosen
+in the picker at the top of the same panel. Nothing is offered that would be
+dropped in transit.
+
+One exception, and it is not a compromise: a `.txt`, `.md`, `.csv`, `.tsv`,
+`.json` or `.log` **is** text. Sending it as a text part loses nothing — there is
+no layout, no page image, no embedded object to lose — so those travel inline on
+every provider instead of being refused on four of them. Truncation at
+`max_extracted_chars` is **marked in the text**, because a model handed a
+fragment with no sign that it is a fragment will summarise it as the whole
+document.
+
+A PDF or a DOCX is not text. Converting one would lose the thing that makes it a
+document, so those go native or not at all — which is also why this package has
+**no PDF parser dependency**. Extracting text from a PDF to fake support on a
+provider that cannot take one would be exactly the silent degradation the refusal
+exists to prevent.
+
+If you upgrade Prism and a provider gains document support, add it to
+`Ptah\Services\AI\AiAttachmentService::DOCUMENT_PROVIDERS`.
+`AiAttachmentCapabilityTest` checks that list against Prism's own source in both
+directions, so it fails if the list drifts either way.
+
+### When the model says it cannot see the image
+
+`Image` is mapped by every provider Prism supports, so an attached image does
+reach the request body — verified by intercepting the HTTP client, not inferred.
+If the answer is still "I cannot see images", the attachment arrived and the
+**model** did not process it: on xAI that means a non-vision Grok, and the model
+name is a field on the provider config, not something the package chooses.
+
+That case used to be indistinguishable, for whoever read the answer, from an
+attachment lost on the way — and the two causes call for opposite actions
+(change the model, or report a bug). So every turn with an attachment now
+carries a short manifest in the prompt naming what was sent:
+
+> The user attached the following to this message: image.png (image).
+
+A vision model gains the filename it is looking at. A model without vision
+answers about the file it knows it received — "I was told image.png is attached,
+but I cannot process images" — which is a diagnosable answer. The manifest lists
+only what actually went; a file that could not be delivered has its own note.
+
+### Formatted answers
+
+Assistant answers are rendered as Markdown: tables, lists, headings, code
+blocks, links. Models answer in Markdown whether or not the client renders it,
+and an assistant that lists records answers in tables most of the time — before
+this, `| Cliente | Total |` reached the screen as literal characters.
+
+No new dependency: `laravel/framework` requires `league/commonmark`, so
+`Str::markdown()` is present in every host.
+
+The input is text a remote model produced, steered by whatever the user typed and
+by whatever a tool returned, so it is treated as untrusted:
+
+- **HTML is escaped, not executed** — and escaped rather than stripped, so you
+  see what the model actually said.
+- **`javascript:`, `data:` and `vbscript:` links are refused.** HTML escaping
+  does *not* close this: the scheme sits inside an attribute value that escaping
+  leaves intact.
+- A rendering failure degrades to escaped plain text with its line breaks.
+
+**The user's own bubble is not rendered as Markdown.** What a person typed must
+not become HTML because it looked like markup, and their message is the one input
+an attacker controls directly.
+
+The streamed answer uses the same renderer, so the text does not change
+appearance the instant streaming ends.
+
+### Full screen
+
+On a phone the panel always takes the whole screen — a 320px panel in the corner
+of a 360px screen left the conversation in a narrow column with the virtual
+keyboard over it. There is no "corner" worth keeping there, so the toggle that
+would switch between the two does not render: a control with one reachable state
+is worse than no control.
+
+On the desktop the header has an expand button, and the choice is remembered in
+`localStorage`. It is a per-device preference that CSS resolves; putting it in the
+component would buy a request and a round trip for a class toggle.
+
+**Double-clicking the header** toggles full screen too. The button is 20px of
+white at 70% opacity on purple, and double-clicking a title bar is the gesture
+people try first.
+
+`Esc` closes the panel, and opening it puts the caret in the box.
+
+### Getting the button out of the way
+
+A 56px circle in the bottom-right corner sits exactly over a listing's
+pagination and its last column. The package already reserves space at the end of
+a BaseCrud listing for it, and that does not help someone who simply does not
+want the chat nearby.
+
+Hover the launcher and a small **×** appears; clicking it hides the button. It
+does not disappear — it becomes a thin handle flush against the right edge, so
+the affordance is one element in two states rather than two elements, and there
+is always a way back for someone who does not remember hiding it. Clicking the
+handle restores the launcher *and* opens the chat, because that is what someone
+reaching for it wants.
+
+The reserved space at the end of the listing goes away with the button
+(`.ptah-has-ai-launcher` comes off `<body>`), or it would be a gap with nothing
+in it. The choice is remembered per device in `localStorage`, like the
+full-screen one, and the dismiss control is reachable by keyboard —
+`focus-within` on the wrapper, since a control that only exists on hover does not
+exist for everyone.
+
+### The draft lives in the browser
+
+Worth knowing if you extend the widget: the textarea is **not** bound with
+`wire:model`, and `AiChatWidget` has no draft property. `send()` takes the text as
+an argument.
+
+That is the fix for a real bug rather than a preference. While the draft was a
+public property, the textarea's value was server state, and the server set it to
+`''` the moment a message was sent. `processAiMessage` runs as a separate, slow
+request — it waits on the model — so anything typed during that wait existed only
+in the browser, and when the slow response landed Livewire morphed the textarea
+back to the snapshot's empty string. The text vanished mid-sentence.
+
+A draft nobody but the browser owns cannot be overwritten by a stale snapshot. It
+also stops costing one request per burst of typing, each re-rendering the whole
+message list. The node carries `wire:ignore` so no future re-render can touch it,
+and the textarea is deliberately **never disabled while the model answers** —
+typing the next question while the answer streams is what people do. Only the
+send waits.
+
+---
+
 ## Custom Tools (Function Calling)
 
-The AI Agent supports function calling via tools. Built-in tools are automatically registered:
+The AI Agent supports function calling via tools.
 
-| Tool | Description |
+### Built-in tools
+
+| Tool | What it answers |
 |---|---|
-| `get_system_info` | Returns app name, Laravel version, PHP version and environment |
-| `get_current_datetime` | Returns the current date and time |
+| `getSystemInfo` | Laravel and PHP version, environment, timezone — gated by `expose_system_details` |
+| `getCurrentDateTime` | The server's current date and time |
+| `find_menu` | **Where a screen lives in the navigation menu** |
+
+`find_menu` deserves a note. "Where is X?" is the most common question anyone
+asks about a system they did not build, and in an ERP with a few hundred screens
+it is asked constantly. The answer is already in the application — the sidebar
+renders it on every page — so the assistant should not have to guess, and an
+assistant that guesses navigation is worse than one that declines: the person
+follows the invented path, finds nothing, and stops trusting the answers that
+were right.
+
+It reads `Ptah\Support\MenuResolver`, which is also what the sidebar and its jump
+box read. That single source is the point: if the tool had its own idea of what
+the menu is, the two would drift, and the assistant would send people to paths
+the sidebar does not have.
+
+What it returns:
+
+```json
+{
+  "query": "cotacao",
+  "found": 2,
+  "results": [
+    { "screen": "Cotação", "path": "Compras > Cotação", "url": "/compras/cotacao" },
+    { "screen": "Divergências Cotação", "path": "Compras > Divergências Cotação", "url": "/compras/divergencias" }
+  ]
+}
+```
+
+The `path` runs root to leaf, which is the order someone has to click. Accents
+and case are ignored, and the words match in any order — "compras cotacao" finds
+`Compras > Cotação`. Groups are never returned: a `menuGroup` has no URL in ptah,
+so it is not somewhere to be sent; it only appears inside a path. Entries
+switched off in the menu admin are never offered, because the sidebar does not
+render them either.
+
+A miss returns `found: 0` and an instruction to say so rather than guess — a
+model handed an empty list tends to fill it in. A browse with no query is capped
+and says `truncated: true` with the real total, because silent truncation would
+let the model conclude a screen does not exist.
+
+**It answers only for a signed-in user.** The chat can be opened to guests
+(`allow_guests`), and a guest never sees the sidebar; the whole internal
+structure of the application is not something to hand an anonymous session just
+because the chat is reachable.
+
 
 ### Creating a custom tool
 
@@ -629,6 +880,9 @@ Refer to the [prism-php/prism documentation](https://prism.echolabs.dev) for the
 - **Access control** — the admin config screen (`/ptah-ai/models`) requires the user to pass `ptah_can('ai.config', 'read') || ptah_is_master()`. Register the `ai.config` page object in the permissions module and grant `read` on it, or ensure only master users access it.
 - **Rate limiting** — the built-in session-based rate limit protects against accidental cost spikes. For production, tune `PTAH_AI_RATE_LIMIT` to match your expected usage.
 - **Tool execution** — custom tool `execute()` methods run with the same user context as the Livewire request. Apply your own authorization checks inside `execute()` as needed.
+- **Attachments** are validated on the server, never on the client: extension against a provider-narrowed allowlist, size against `max_size_kb`, count against `max_files`. `$wire.upload` is a public call, so the client-side filter is a convenience only. A refused file is deleted from the temporary disk immediately rather than left for Livewire's scheduled cleanup, and the files for a sent message are deleted once read.
+- **Assistant answers are untrusted text.** They are rendered as Markdown with HTML escaped rather than executed, and with `javascript:`, `data:` and `vbscript:` link schemes refused — escaping alone does not close that, because the scheme sits inside an attribute value. If you render conversation content anywhere else, use `Ptah\Support\AI\ChatMarkdown::render()` rather than your own converter, and never print it raw.
+- **An attachment that could not be delivered adds a note to the prompt**, so the model says so instead of answering about content it never received. That matters most on a provider that silently drops the part — which is why the widget refuses the file up front instead.
 
 ---
 

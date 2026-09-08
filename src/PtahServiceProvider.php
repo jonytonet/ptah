@@ -246,8 +246,18 @@ class PtahServiceProvider extends ServiceProvider
             // 500 is registered apart because it is NOT an HttpException: it is
             // whatever blew up.
             $exceptionHandler->renderable(function (Throwable $e, Request $request) {
+                // Com APP_DEBUG ligado o trace vale mais que a pagina bonita, e
+                // esconde-lo seria hostil com quem esta depurando. Mas a
+                // consequencia era que ninguem conseguia VER a propria 500 em
+                // desenvolvimento sem desligar o debug e com ele um monte de
+                // outros comportamentos — e um comportamento deliberado que
+                // parece defeito, sem nada em lugar nenhum dizendo o porque.
+                // `ptah.errors.themed_500_in_debug` e a saida explicita.
+                $hiddenByDebug = config('app.debug')
+                    && ! config('ptah.errors.themed_500_in_debug', false);
+
                 if (! config('ptah.errors.enabled', true)
-                    || config('app.debug')
+                    || $hiddenByDebug
                     || $e instanceof HttpException
                     || $request->expectsJson()
                     || file_exists(resource_path('views/errors/500.blade.php'))) {

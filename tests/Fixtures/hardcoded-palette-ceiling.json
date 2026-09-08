@@ -24,7 +24,7 @@
     "components/forge-toast-host.blade.php": 5,
     "forge-demo.blade.php": 20,
     "layouts/forge-auth.blade.php": 1,
-    "livewire/ai/ai-chat-widget.blade.php": 33,
+    "livewire/ai/ai-chat-widget.blade.php": 20,
     "livewire/ai/ai-model-config-list.blade.php": 23,
     "livewire/auth/profile.blade.php": 12,
     "livewire/base-crud/base-crud.blade.php": 13,

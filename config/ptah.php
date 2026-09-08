@@ -118,6 +118,28 @@ return [
     'forge' => [
         'prefix' => 'forge',
         'tailwind' => 'v4',
+
+        /*
+         * Atalho de menu na sidebar: digite parte do nome de uma tela e va
+         * direto. Aparece no TOPO, entre o logo e a navegacao.
+         *
+         * Aparece por DUAS razoes, e o aninhamento e a mais forte: uma tela
+         * dentro de um grupo fechado nao esta visivel para quem varre o menu com
+         * o olho, por poucas que sejam — e e ai que digitar ganha,
+         * independentemente de quantidade. A outra razao e o total de links
+         * chegar a `sidebar_jump_min_items`.
+         *
+         * Nao depende de haver scroll: scroll depende da altura da janela, e o
+         * campo apareceria e desapareceria ao redimensionar.
+         *
+         * A filtragem e no cliente: os links ja estao nesta pagina, foi a
+         * propria sidebar que os renderizou. E a mesma fonte
+         * (Ptah\Support\MenuResolver) que alimenta a tool `find_menu` do
+         * agente de IA, para o assistente nunca descrever um menu diferente do
+         * que a pessoa ve.
+         */
+        'sidebar_jump' => (bool) env('PTAH_SIDEBAR_JUMP', true),
+        'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 8),
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],
@@ -171,6 +193,21 @@ return [
     */
     'errors' => [
         'enabled' => env('PTAH_ERROR_PAGES', true),
+
+        /*
+         * Mostrar a pagina 500 do ptah mesmo com APP_DEBUG ligado.
+         *
+         * Com debug ligado, a 500 tematizada NAO aparece por padrao: o
+         * desenvolvedor fica com o stack trace, que e a informacao util quando
+         * algo acaba de estourar. So que isso tem um efeito colateral: nao ha
+         * como VER a propria pagina de erro em desenvolvimento sem desligar o
+         * APP_DEBUG, que muda um monte de outros comportamentos ao mesmo tempo.
+         *
+         * Ligue esta chave para ver a pagina tematizada localmente. As outras
+         * (403, 404, 405, 419, 429, 503) nunca dependeram disto — sao
+         * HttpException, nao "algo estourou", e nao ha trace para preservar.
+         */
+        'themed_500_in_debug' => (bool) env('PTAH_ERROR_500_IN_DEBUG', false),
     ],
 
     /*
@@ -490,6 +527,48 @@ return [
          * provider sees no difference. See Ptah\Support\AI\ToolSchemaNormalizer.
          */
         'normalize_tool_schema' => (bool) env('PTAH_AI_NORMALIZE_TOOL_SCHEMA', true),
+
+        /*
+         * Anexos no chat: arquivo escolhido, colado (Ctrl+V, inclusive print de
+         * tela) ou arrastado para o painel.
+         *
+         * IMAGEM funciona em todo provedor que o Prism suporta. DOCUMENTO nao:
+         * so anthropic, gemini, mistral, openai, openrouter, perplexity e z
+         * serializam essa parte da mensagem — em xai/Grok, groq, deepseek e
+         * ollama ela e DESCARTADA EM SILENCIO, e o modelo responde sobre um
+         * arquivo que nunca recebeu.
+         *
+         * Por isso esta lista e ESTREITADA pelo provedor selecionado: onde
+         * documento nao chega, pdf e docx nao aparecem no seletor de arquivos,
+         * um pdf arrastado e recusado, e a recusa diz o motivo. Nao se oferece o
+         * que nao funciona.
+         *
+         * A excecao nao e concessao: txt, md, csv, tsv, json e log SAO texto, e
+         * mandar como texto nao perde nada — nao ha layout nem imagem de pagina
+         * para perder. Esses viajam embutidos em qualquer provedor. Pdf e docx
+         * nao sao texto, entao convertir perderia justamente o que os faz
+         * documento: vao nativos ou nao vao.
+         */
+        'attachments' => [
+            'enabled' => (bool) env('PTAH_AI_ATTACHMENTS', true),
+
+            /* Por arquivo, em kilobytes. O teto real ainda e o do PHP
+               (upload_max_filesize / post_max_size) e o do servidor web. */
+            'max_size_kb' => (int) env('PTAH_AI_ATTACH_MAX_KB', 8192),
+
+            /* Por mensagem. Cada anexo custa tokens de entrada. */
+            'max_files' => (int) env('PTAH_AI_ATTACH_MAX_FILES', 4),
+
+            /* Extensoes aceitas. Mantenha curto: o que entra aqui vira custo de
+               token e, no caminho de extracao, parsing de arquivo do usuario. */
+            'allowed_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md', 'csv', 'json', 'docx'],
+
+            /* Teto de caracteres extraidos por arquivo no caminho de fallback.
+               Truncar e marcado no texto: o modelo precisa saber que o
+               documento nao terminou, senao resume um fragmento como se fosse o
+               todo. */
+            'max_extracted_chars' => (int) env('PTAH_AI_ATTACH_MAX_CHARS', 60000),
+        ],
 
         /*
          * Class names, never instances. Registration resolves nothing: a tool

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Prism\Prism\Tool;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\AiToolSchemaInterface;
+use Ptah\Services\AI\Tools\FindMenuTool;
 use Ptah\Services\AI\Tools\GetCurrentDateTimeTool;
 use Ptah\Services\AI\Tools\GetSystemInfoTool;
 use Throwable;
@@ -84,6 +85,12 @@ class AiToolRegistry
         // would be a path the laziness tests do not cover.
         $registry->registerClass(GetSystemInfoTool::class);
         $registry->registerClass(GetCurrentDateTimeTool::class);
+        // "Onde fica X?" e a pergunta mais comum de quem usa um sistema que nao
+        // construiu, e a resposta ja esta na aplicacao — a sidebar a desenha em
+        // toda pagina. Sem esta tool o assistente adivinha caminho de menu, o
+        // que e pior que nao responder: a pessoa segue o caminho inventado, nao
+        // acha a tela, e para de confiar nas respostas que estavam certas.
+        $registry->registerClass(FindMenuTool::class);
         $registry->registerMany(config('ptah.ai_agent.tools', []));
 
         return $registry;

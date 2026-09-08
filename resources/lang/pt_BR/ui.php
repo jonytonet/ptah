@@ -1545,6 +1545,9 @@ return [
     'navbar_admin_menu' => 'Gerenciar Menu',
     'navbar_admin_ai_models' => 'Modelos de IA',
     'navbar_user_profile' => 'Perfil',
+    'sidebar_jump_placeholder' => 'Ir para uma tela',
+    'sidebar_jump_clear' => 'Limpar',
+    'sidebar_jump_empty' => 'Nenhuma tela corresponde.',
     'navbar_user_logout' => 'Sair',
 
     // -------------------------------------------------------------------------
@@ -1563,6 +1566,32 @@ return [
     // nao pode ser construida ou estoura, para o assistente poder dizer
     // que aquela capacidade caiu em vez de o turno morrer.
     'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
+    'ai_widget_hide_launcher' => 'Ocultar o botão do assistente',
+    'ai_widget_show_launcher' => 'Mostrar o assistente',
+    'ai_widget_expand' => 'Expandir para tela cheia',
+    'ai_widget_collapse' => 'Voltar ao canto',
+    // Anexos. As `ai_attach_note_*` vao para o PROMPT, nao para a tela:
+    // avisam o modelo de que um arquivo nao chegou, para ele dizer isso em
+    // vez de inventar conteudo que nunca recebeu.
+    'ai_attach_provider_no_docs' => ':name foi recusado: o provedor :provider não recebe documentos. Anexe imagem ou arquivo de texto, ou escolha outro provedor acima.',
+    'ai_attach_blocked_hint' => 'Este provedor não aceita :formats.',
+    'ai_attach_note_unsupported' => 'OBSERVAÇÃO: :name não pôde ser enviado ao :provider, que não recebe documentos; diga isso em vez de supor o conteúdo.',
+    'ai_attach_manifest' => 'O usuário anexou o seguinte a esta mensagem: :list.',
+    'ai_attach_manifest_image' => ':name (imagem)',
+    'ai_attach_manifest_document' => ':name (documento)',
+    'ai_attach_manifest_text' => ':name (arquivo de texto, conteúdo incluído abaixo)',
+    'ai_attach_btn' => 'Anexar arquivo',
+    'ai_attach_hint' => 'Anexe, cole (Ctrl+V) ou arraste um arquivo',
+    'ai_attach_drop' => 'Solte o arquivo para anexar',
+    'ai_attach_remove' => 'Remover :name',
+    'ai_attach_too_many' => 'No máximo :max arquivos por mensagem.',
+    'ai_attach_too_big' => ':name passa do limite de :max KB.',
+    'ai_attach_bad_type' => ':name não é de um tipo aceito (:allowed).',
+    'ai_attach_note_missing' => 'OBSERVAÇÃO: o arquivo :name não chegou; não responda sobre o conteúdo dele.',
+    'ai_attach_note_unreadable' => 'OBSERVAÇÃO: :name não pôde ser lido neste provedor; diga isso em vez de supor o conteúdo.',
+    'ai_attach_note_empty' => 'OBSERVAÇÃO: :name não rendeu texto legível; diga isso em vez de supor.',
+    'ai_attach_inline_header' => 'Conteúdo do arquivo anexado :name:',
+    'ai_attach_truncated' => '[... documento truncado, ele continua além deste ponto ...]',
     'ai_widget_provider' => 'Provedor de IA',
     'ai_widget_provider_default' => 'padrão',
     'ai_widget_title' => 'Assistente IA',

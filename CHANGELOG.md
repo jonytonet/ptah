@@ -7,6 +7,325 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.33.0] - 2026-09-08
+
+Driven almost entirely by live use: the chat widget end to end, the themed 500,
+and a jump box for long menus that the AI can read too.
+
+### Fixed - the draft was server state, and an arriving answer erased it
+
+Reported as "às vezes estou digitando e o texto se apaga sozinho, talvez seja por
+conta de uma resposta sendo recebida". The diagnosis was right.
+
+The textarea carried `wire:model.live="userInput"`, so its value was **server**
+state — and `send()` set that property to `''`. `processAiMessage` runs as a
+separate request, a slow one because it waits on the model, so anything typed
+during that wait existed only in the browser. When the slow response landed,
+Livewire morphed the component from a snapshot whose `userInput` was empty, and
+the text vanished mid-sentence.
+
+No amount of care inside `send()` fixes that. The bug is that a value the user is
+actively editing was being round-tripped through a server that had already
+decided it was empty. So the draft stopped being server state: it lives in
+Alpine, `send()` takes the text as an argument, the property is gone, and the
+node carries `wire:ignore`. It also stops costing one request per burst of
+typing, each re-rendering the whole message list.
+
+The textarea is now deliberately **never disabled while the model answers** —
+typing the next question while the answer streams is what people do, and it is
+how this bug was found. Only the send waits.
+
+### Fixed - the input box grew into a hidden gutter
+
+The ceiling was `max-h-32 overflow-hidden`, so text past 128px was invisible
+**and** unreachable. The overflow now flips with the height, the ceiling rises to
+220px in full screen, and the box returns to its natural size after sending.
+
+Shift+Enter stopped preventing every Enter and then appending `\n` to the END of
+the value, which ignored where the caret was; the browser now inserts the newline
+where the person actually is.
+
+### Added - full screen, always on a phone
+
+A 320px panel in the corner of a 360px screen left the conversation in a narrow
+column with the virtual keyboard over it. There is no "corner" worth keeping
+there, so the panel takes the screen and the toggle that would switch between the
+two does not render — a control with one reachable state is worse than no
+control.
+
+On the desktop there is a button in the header, **double-clicking the header**
+does it too (the gesture people try first), and the choice is remembered in
+`localStorage`: a per-device preference that CSS resolves, where putting it in
+the component would buy a request and a round trip for a class toggle. `Esc`
+closes the panel, and opening it puts the caret in the box.
+
+The geometry is Tailwind `max-sm:` utilities in the view rather than a media
+query in `ptah-components.css`, deliberately: this project's golden-fixture CSS
+parser is not media-query aware and has already recorded a wrong value because of
+one.
+
+### Added - attachments: the paperclip, Ctrl+V, drag and drop
+
+Three ways in, one destination. **Ctrl+V pastes a file from the clipboard,
+including a screenshot**, which arrives as a nameless `image/png`. Dropping works
+anywhere on the panel, not only over the input — people aim at "the chat".
+Pasting plain text is untouched; the paste is only intercepted when the clipboard
+actually carries a file.
+
+One `$wire.upload` per file, because pasting and dropping happen one file at a
+time and `uploadMultiple` replaces the whole array — the second screenshot would
+erase the first. The server accumulates the list and **the server's list is the
+authority**: the chips are drawn from it, so a chip can never promise a file that
+is not going to be sent. Extension, size and count are validated server-side; the
+client filter saves bandwidth and tells you early, and `$wire.upload` is a public
+call that does not have to go through it.
+
+A message with an attachment and no text is a valid message.
+
+### Added - the attachment allowlist is narrowed by the selected provider
+
+**The part worth reading.** Prism's providers do not all understand the same
+message parts, and the mismatch is silent: a part a provider's message map does
+not handle is simply not serialised. The request succeeds, the model answers
+about a document it never received, and nothing anywhere says so. A confidently
+wrong answer is the worst thing this feature could produce.
+
+Measured against the installed Prism rather than assumed — `Image` is mapped by
+every text provider, xAI included; `Document` only by anthropic, gemini, mistral,
+openai, openrouter, perplexity and z. **Not** xai, groq, deepseek or ollama.
+
+So nothing is offered that would be dropped in transit. On a document-blind
+provider the file picker does not offer a PDF, a dropped PDF is refused, and the
+refusal names the provider — which is actionable, because the provider is chosen
+in the picker at the top of the same panel.
+
+One exception, and it is not a compromise: a `.txt`, `.md`, `.csv`, `.tsv`,
+`.json` or `.log` **is** text, so sending it as text loses nothing — no layout,
+no page image, no embedded object to lose. Those travel inline on every provider.
+A PDF or a DOCX is not text, and converting one would lose the thing that makes
+it a document, so those go native or not at all. Which is why there is **no PDF
+parser dependency**: extracting text from a PDF to fake support where it does not
+exist would be exactly the silent degradation the refusal prevents.
+
+Truncation of inlined text is **marked in the prompt**, because a model handed a
+fragment with no sign that it is a fragment summarises it as the whole document.
+A file that could not be delivered produces a **note**, never silence.
+
+`AiAttachmentCapabilityTest` checks the provider list against Prism's own source
+in both directions, so it fails whether the list gains a provider that cannot
+take documents or misses one that can.
+
+### Fixed - the attachment UI was invisible on every host with a published config
+
+Reported as "não achei como enviar documentos, nem o print com Ctrl+V
+funcionou". It was not the provider.
+
+`mergeConfigFrom` is **shallow**. A host that published `config/ptah.php` owns
+the whole `ptah.ai_agent` array from that moment on, so a nested key a later
+version adds never reaches it — `ptah.ai_agent.attachments` simply is not there.
+Reading `allowed_extensions` with `[]` as the fallback made "the key is absent"
+indistinguishable from "allow nothing", and the paperclip, the paste handler and
+the drop target all sit behind that one condition. The entire feature was
+invisible.
+
+This is a trap this project has documented and walked into again. The package's
+defaults now live in `AiAttachmentService`, where a stale published config cannot
+erase them, with one accessor for the block so the widget and the view cannot
+disagree with the service. An explicit `[]` still means "allow nothing": the fix
+is about an absent key, not about ignoring the host. The test forces the harshest
+shape — the block removed entirely.
+
+### Added - a manifest of what was actually sent
+
+An image was attached, the chip appeared, and Grok answered "não consigo ver
+imagens anexadas". A model that receives an image it cannot read normally errors;
+a model that receives none answers exactly like that.
+
+The image did reach the request. `AiAttachmentWirePayloadTest` intercepts the
+HTTP client and asserts on the bytes Prism puts in the body: base64, in the same
+message as the question, on xai, openrouter and anthropic. The package's side was
+correct — the model was one without vision.
+
+But that case was indistinguishable, for whoever read the answer, from an
+attachment lost on the way, and the two causes call for opposite actions. So a
+turn with attachments now carries a short manifest in the prompt naming what was
+sent. A vision model gains the filename it is looking at; a model without vision
+answers about the file it knows it received, which is a diagnosable answer.
+
+**Three green tests could not settle that question**, because each stopped one
+layer short of the wire. The missing layers now exist: the HTTP body, and the
+hand-off between `send()` and `processAiMessage()` in both the streaming and
+non-streaming branches — where an empty list would mean no note either.
+
+### Added - assistant answers are rendered as Markdown
+
+Tables, lists, headings, code blocks, links. Models answer in Markdown whether or
+not the client renders it, and an assistant that lists records answers in tables
+most of the time — before this, `| Cliente | Total |` reached the screen as
+literal characters. No new dependency: `laravel/framework` requires
+`league/commonmark`.
+
+The text comes from a remote model, steered by whatever the user typed and
+whatever a tool returned, and it is printed with `{!! !!}`. So HTML is escaped
+rather than executed — escaped, not stripped, so you see what the model actually
+said — and `javascript:`, `data:` and `vbscript:` link schemes are refused, which
+escaping does **not** close because the scheme sits inside an attribute value. A
+rendering failure degrades to escaped plain text.
+
+**The user's own bubble is not rendered as Markdown.** What a person typed must
+not become HTML because it looked like markup, and their message is the one input
+an attacker controls directly. The streamed answer uses the same renderer, so the
+text does not change appearance the instant streaming ends.
+
+One of this suite's own tests caught a regression introduced with the feature:
+CommonMark's GFM does not turn a single newline into `<br>`, and models answer in
+short lines separated by one newline constantly.
+
+### Added - the floating button can be put away
+
+A 56px circle in the bottom-right corner sits exactly over a listing's
+pagination and its last column. Hovering the launcher reveals a small **×**;
+hiding it does not remove it — it becomes a thin handle flush against the right
+edge, one element in two states rather than two elements, because a launcher that
+vanishes entirely leaves the chat with no way back for someone who does not
+remember hiding it. Clicking the handle restores the launcher **and** opens the
+chat.
+
+The reserved space at the end of a BaseCrud listing goes away with the button, or
+it would be a gap with nothing in it. The dismiss control is reachable by
+keyboard — `focus-within` on the wrapper, since a control that only exists on
+hover does not exist for everyone.
+
+### Fixed - the themed 500 could not be seen in development
+
+Reported as "a página de erro 500 não está pegando o tema do ptah". The code was
+right, and that is exactly why the test had to exist: the claim could not be
+settled either way from the suite.
+
+`ErrorPageRealRequestTest` walks 403, 404, 405, 419 and 429 — every status that
+arrives as an `HttpException` — and the 500 is not one of them: it is registered
+on a separate `renderable` because it is not an HttpException, it is whatever
+broke. So there were two tests about the 500's **guards** and none about the
+page. Nobody had ever asserted that a real 500 renders the themed shell and
+follows the theme. Now one does, through a request that really blew up.
+
+Doing that uncovered a design fault next door. With `APP_DEBUG` on the themed 500
+steps aside on purpose — when something has just blown up the trace is worth more
+than the design — but the consequence was that there was no way to **see** your
+own error page in development without turning `APP_DEBUG` off and a dozen other
+behaviours with it. A deliberate behaviour that looks exactly like a bug, with
+nothing saying why. `ptah.errors.themed_500_in_debug`
+(`PTAH_ERROR_500_IN_DEBUG`) is the explicit way out, off by default, and a test
+pins that it is opt-in.
+
+It applies to the 500 alone. The other statuses never depended on `APP_DEBUG`:
+they are HttpExceptions — "this request cannot have that" rather than "the
+application broke" — so there is no trace to preserve. Pinned too, because
+extending the debug gate to the shared renderable would silently unstyle five
+pages in development.
+
+### Fixed - two contrast and consistency items in the chat
+
+The keyboard hint was `text-gray-300 dark:text-slate-600` — about 1.5:1 on white
+in light mode. A hint that cannot be read is not a hint.
+
+The four header buttons repeated `text-white/70 hover:text-white
+hover:bg-white/10`. One class (`.ptah-c-chat_hdr_btn`, ink from
+`--ptah-text-on-accent`, which is white invariant and is the correct ink on an
+accent background) makes the four identical by construction and drops this file's
+fixed-palette ratchet from 33 to 20.
+
+### Added - a jump box in the sidebar, and the AI knows where every screen is
+
+Two halves of the same problem: a menu with a few hundred entries is faster to
+type than to scan, and "where is X?" is the most common question anyone asks
+about a system they did not build.
+
+**The jump box** sits at the top of the sidebar, between the logo and the
+navigation. Type part of a screen's name and the trail appears — leaf first, then
+its ancestors, because you typed the leaf and that is what the eye is looking
+for. Enter opens the first result, the arrows move, Escape clears. It appears
+for either of two reasons — see below — and when the sidebar is collapsed to
+icons it becomes a magnifier that expands the bar and focuses the field.
+
+Two decisions in it diverge from what was asked for, and both were deliberate:
+
+*Top, not bottom.* The reference implementation this came from puts it in a page
+footer, but this sidebar's bottom already belongs to **Sign out** — a rare,
+careful action that a frequent one must not sit on top of. And the whole point is
+a menu long enough to scroll, so a control inside the scrolling area would
+disappear exactly when it is needed. A control that filters a list belongs before
+the list.
+
+*Client-side, not `SearchDropdown`.* The package's own SearchDropdown queries
+Eloquent per keystroke — for data that is already on the page, because the
+sidebar just rendered it. A round trip per keystroke to search the browser's own
+memory is slower and costs more with nothing in return.
+
+*Not driven by the scrollbar.* Scroll depends on window height, so a
+scroll-driven control would appear and disappear as you resize the window.
+
+But the first rule chosen instead of it — twelve links — was arbitrary AND
+silent, and that was found the only way it could be: by someone shrinking the
+window waiting for the field, on an app with eight links, with nothing anywhere
+saying why it never came. It now appears for either of two reasons, and
+**nesting is the stronger one**: a screen inside a closed group is not visible to
+someone scanning the menu, however few entries there are, and that is exactly
+where typing wins — it does not depend on a count at all. The other reason is the
+link total reaching `forge.sidebar_jump_min_items`, now 8. Below three links it
+never appears.
+
+**`find_menu`** is a new built-in tool. It answers where a screen lives, with the
+trail to click and the URL. Accents and case are ignored and the words match in
+any order, so "compras cotacao" finds `Compras > Cotação`. Groups are never
+returned — a `menuGroup` has no URL in ptah, so it is not somewhere to be sent —
+and neither is anything switched off in the menu admin, because the sidebar does
+not render those either. A miss returns `found: 0` plus an instruction to say so
+rather than guess, since a model handed an empty list tends to fill it in, and a
+capped browse says `truncated: true` with the real total rather than letting the
+model conclude a screen does not exist. It answers only for a signed-in user: the
+chat can be opened to guests, and a guest never sees the sidebar.
+
+The tool implements `AiToolSchemaInterface` — not for its own sake, it has no
+dependencies, but because a built-in that skipped the package's own interface
+would leave that path untested by the package's use of it.
+
+**The reason both halves work is `Ptah\Support\MenuResolver`.** The menu's
+resolution chain — an explicit `items` prop, then MenuService on the database
+driver, then `forge.sidebar_items`, plus the fixed Dashboard and the empty-menu
+fallback — used to live in a `@php` block inside the sidebar view. It moved to a
+class because it gained a second and a third consumer, and they must not be able
+to disagree: an assistant that answers "Cotação is under Compras" while the
+sidebar says otherwise is worse than one that cannot answer, and a second
+implementation of "what is the menu" is exactly how that happens.
+
+### Notes on the tests
+
+Several of this wave's findings came from tests being wrong rather than the code:
+
+- A `assertDontSee` of a literal the test file itself contains is unsound
+  whenever the response can echo source — and an error page is exactly such a
+  response. Two versions of one assertion failed against correct code, the second
+  finding its own literal in the comment explaining the first. It asserts
+  structurally now, on the `<html>` tag alone.
+- A JS probe passed with `$wire` used bare inside an `x-data` method, where
+  Alpine's magic only exists as `this.$wire` — because the probe itself declared
+  a global `$wire`. Fixed in the code and the probe hardened so the error
+  surfaces.
+- An HTTP fake that mixed every provider's response keys into one body made three
+  cases blow up in Prism's parser rather than measure the product.
+- Two assertions compared `base64_encode('%PDF')` against the base64 of a whole
+  file, which is not a prefix of it because of 3-byte alignment: the positive
+  failed against a correct body and the negative passed vacuously.
+
+### Tests
+
+2126 -> 2287. Plus two Node probes — 29 behaviours of the chat widget's
+JavaScript and 29 of the sidebar jump box's — both run against the shipped
+files rather than retyped.
+
+---
+
 ## [1.32.0] - 2026-09-04
 
 ### Fixed - clicking a page number returned 500 on every listing

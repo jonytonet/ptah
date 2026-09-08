@@ -291,20 +291,33 @@ device/browser; it never leaks credentials or any other account data.
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
 | `errors.enabled` | `PTAH_ERROR_PAGES` | `true` | this section |
+| `errors.themed_500_in_debug` | `PTAH_ERROR_500_IN_DEBUG` | `false` | this section |
 
 Ptah ships themed pages for **403, 404, 419, 429, 500 and 503**. They follow all
 six appearance axes, because their colours read `var(--ptah-token, literal)`:
 the token wins when `ptah-components.css` is loaded, and the literal keeps the
 page readable when it is not — which is the likely state during a 500.
 
-Each page steps aside in three situations, and none of them are configurable
-because each one would be a bug:
+Each page steps aside in three situations:
 
-| Situation | Why Ptah does not render |
-|---|---|
-| The host has `resources/views/errors/{code}.blade.php` | Laravel's convention is that a view there is the last word. |
-| The request expects JSON | An API must not be answered with HTML. |
-| 500 while `APP_DEBUG=true` | A developer needs the stack trace, not a pretty page hiding it. |
+| Situation | Why Ptah does not render | Configurable |
+|---|---|---|
+| The host has `resources/views/errors/{code}.blade.php` | Laravel's convention is that a view there is the last word. | No — it would be a bug. |
+| The request expects JSON | An API must not be answered with HTML. | No — it would be a bug. |
+| 500 while `APP_DEBUG=true` | A developer needs the stack trace, not a pretty page hiding it. | `errors.themed_500_in_debug` |
+
+**Why that last one became configurable.** The rule is right — when something has
+just blown up, the trace is worth more than the design — but it had a
+consequence nobody had accounted for: there was no way to *see* your own 500
+page in development without turning `APP_DEBUG` off, and a dozen other
+behaviours with it. A deliberate behaviour that looks exactly like a bug, with
+nothing anywhere saying why. Set `PTAH_ERROR_500_IN_DEBUG=true` while you are
+looking at the page, and leave it off otherwise.
+
+It applies to the 500 alone. The other statuses never depended on `APP_DEBUG`:
+they arrive as `HttpException` — "this request cannot have that" rather than
+"the application broke" — so there is no trace to preserve, and a 404 in
+development is the themed page either way.
 
 403 is additionally gated behind `modules.permissions`, since it is that
 module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
@@ -409,6 +422,32 @@ php artisan vendor:publish --tag=ptah-errors
 | `permissions.admin_email` | `PTAH_ADMIN_EMAIL` | `admin@admin.com` | [Permissions.md](Permissions.md) |
 | `permissions.admin_password` | `PTAH_ADMIN_PASSWORD` | `null` (a strong random password is generated and shown once if unset — no insecure hardcoded fallback) | [Permissions.md](Permissions.md) |
 
+### Sidebar jump box (`forge.sidebar_jump*`)
+
+Type part of a screen's name in the sidebar and go straight to it. It renders at
+the **top**, between the logo and the navigation.
+
+It appears for either of two reasons, and **nesting is the stronger one**: a
+screen inside a closed group is not visible to someone scanning the menu, however
+few entries there are, and that is exactly where typing wins. The other reason is
+the total number of links reaching `sidebar_jump_min_items` (default 8). Below
+three links it never appears — there it would be decoration.
+
+It does **not** key off the presence of a scrollbar. Scroll depends on window
+height, so a scroll-driven control would appear and disappear as you resize the
+window.
+
+Filtering happens in the browser. The links are already on the page — the sidebar
+rendered them — so a request per keystroke would be searching the browser's own
+memory the slow way. It reads `Ptah\Support\MenuResolver`, the same source that
+feeds the AI agent's `find_menu` tool, so the assistant can never describe a menu
+different from the one on screen.
+
+When the sidebar is collapsed to icons the field becomes a magnifier that expands
+the bar and focuses the input — the same gesture the menu groups already use.
+
+---
+
 ### AI Agent module (`ai_agent.*`)
 
 | Key | ENV | Default | Reference |
@@ -421,6 +460,23 @@ php artisan vendor:publish --tag=ptah-errors
 | `ai_agent.allow_guests` | `PTAH_AI_ALLOW_GUESTS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
+| `forge.sidebar_jump` | `PTAH_SIDEBAR_JUMP` | `true` | this section |
+| `forge.sidebar_jump_min_items` | `PTAH_SIDEBAR_JUMP_MIN` | `8` | this section |
+| `ai_agent.normalize_tool_schema` | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_files` | `PTAH_AI_ATTACH_MAX_FILES` | `4` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.allowed_extensions` | — | images + `pdf docx txt md csv tsv json log` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.max_extracted_chars` | `PTAH_AI_ATTACH_MAX_CHARS` | `60000` | [AiAgent.md](AiAgent.md) |
+
+> The `attachments.*` defaults live in `Ptah\Services\AI\AiAttachmentService`,
+> not only in `config/ptah.php`. `mergeConfigFrom` is shallow, so a host that
+> published the config file owns the whole `ptah.ai_agent` array and would never
+> receive a nested key a later version adds — reading `allowed_extensions` with
+> `[]` as the fallback made an absent block indistinguishable from "allow
+> nothing", and hid the whole feature. Nothing to add to a published config
+> unless you want to restrict something.
+
 
 ---
 

@@ -19,46 +19,47 @@
 ])
 
 @php
-    $usingDatabase = (config('ptah.modules.menu') && config('ptah.menu.driver') === 'database');
+    // A resolucao do menu — cadeia de prioridade, Dashboard fixo do driver de
+    // banco, fallback de demonstracao — mora em MenuResolver, e nao mais aqui.
+    // Ela ganhou consumidores: o atalho de busca abaixo e a tool `find_menu`,
+    // que diz a IA onde cada tela fica. Um assistente que responde "Cotacao
+    // esta em Compras" enquanto a sidebar diz outra coisa e pior que um
+    // assistente que nao sabe responder — a pessoa segue a instrucao, nao acha
+    // a tela, e para de confiar nos dois. Uma segunda implementacao de "o que e
+    // o menu" e exatamente como isso acontece.
+    $menuItems = \Ptah\Support\MenuResolver::tree($items);
 
-    // Prioridade: prop > MenuService (driver=database) > config
-    if ($items !== null) {
-        $menuItems = $items;
-    } elseif ($usingDatabase) {
-        $menuItems = app(\Ptah\Services\Menu\MenuService::class)->getTree();
-    } else {
-        $rawConfig = config('ptah.forge.sidebar_items', []);
-        $menuItems = array_map(fn($i) => array_merge(['children' => [], 'type' => 'menuLink'], $i), $rawConfig);
+    // Os LINKS achatados, com a trilha que leva a cada um. Subproduto da arvore
+    // que esta sendo renderizada de qualquer forma, entao o atalho nao custa
+    // consulta nenhuma.
+    $menuFlat = \Ptah\Support\MenuResolver::flatLinks($items);
+
+    // Quando o atalho aparece.
+    //
+    // NAO quando ha scroll: scroll depende da altura da janela, e o campo
+    // apareceria e desapareceria ao redimensionar. Mas o primeiro limite que
+    // escolhi — 12 links — era arbitrario E silencioso: diminuir a janela
+    // esperando o campo aparecer nao funcionava, e nada dizia por que. Um app
+    // com 8 links nunca o veria, e foi exatamente isso que aconteceu.
+    //
+    // Duas razoes, entao, e o ANINHAMENTO e a mais forte: uma tela dentro de um
+    // grupo fechado nao esta visivel para quem varre o menu com o olho, por
+    // poucas que sejam. E exatamente ai que digitar ganha, e nao depende de
+    // quantidade nenhuma.
+    $menuJumpMin = (int) config('ptah.forge.sidebar_jump_min_items', 8);
+    $menuIsNested = false;
+
+    foreach ($menuFlat as $flatLink) {
+        if (count($flatLink['breadcrumb']) > 1) {
+            $menuIsNested = true;
+            break;
+        }
     }
 
-    // Quando usa banco de dados: injeta Dashboard fixo no topo
-    if ($usingDatabase) {
-        $dashUrl   = \Illuminate\Support\Facades\Route::has('ptah.dashboard') ? route('ptah.dashboard') : '/dashboard';
-        $dashFixed = [
-            'id'        => null,
-            'label'     => 'Dashboard',
-            'text'      => 'Dashboard',
-            'url'       => $dashUrl,
-            'icon'      => 'bx bx-home-alt',
-            'type'      => 'menuLink',
-            'target'    => '_self',
-            'is_active' => true,
-            'match'     => 'dashboard',
-            'children'  => [],
-        ];
-        array_unshift($menuItems, $dashFixed);
-    }
-
-    // Fallback quando vazio
-    if (empty($menuItems)) {
-        $menuItems = [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'type' => 'menuLink', 'match' => 'dashboard', 'children' => []],
-            ['label' => 'Users',     'url' => '/users',     'icon' => 'bx bx-user',       'type' => 'menuLink', 'match' => 'users*',    'children' => []],
-            ['label' => 'Products',  'url' => '/products',  'icon' => 'bx bx-cube',       'type' => 'menuLink', 'match' => 'products*', 'children' => []],
-            ['label' => 'Reports',   'url' => '/reports',   'icon' => 'bx bx-bar-chart',  'type' => 'menuLink', 'match' => 'reports*',  'children' => []],
-            ['label' => 'Settings',  'url' => '/settings',  'icon' => 'bx bx-cog',        'type' => 'menuLink', 'match' => 'settings*', 'children' => []],
-        ];
-    }
+    // O piso de 3 evita o campo num menu de demonstracao onde ele seria enfeite.
+    $showMenuJump = config('ptah.forge.sidebar_jump', true)
+        && count($menuFlat) >= 3
+        && (count($menuFlat) >= max(2, $menuJumpMin) || $menuIsNested);
 
     /**
      * Renderiza ícone: aceita classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").
@@ -144,6 +145,159 @@
             {{ $appName }}
         </span>
     </div>
+
+    {{-- ─── Atalho: digite e vá direto ───────────────────────────────────
+         Posicao: TOPO, entre o logo e a nav, e isso foi decidido, nao herdado.
+         Tres razoes:
+
+           1. A parte de baixo ja e do Sair. Encostar uma busca — acao
+              frequente — em cima de um sair — acao rara e cuidadosa — convida
+              ao clique errado.
+           2. O caso de uso e menu longo, que rola. No topo o campo fica sempre
+              visivel e a nav rola por baixo dele; dentro da area que rola ele
+              sumiria justo quando e necessario.
+           3. Controle que filtra uma lista vem ANTES da lista.
+
+         Custa ~44px de altura da nav, menos que empurrar o Sair.
+
+         Filtragem no CLIENTE, de proposito. O SearchDropdown do pacote consulta
+         Eloquent a cada tecla; aqui os dados ja estao nesta pagina — foi a
+         propria sidebar que os renderizou. Um round-trip por tecla para
+         procurar o que ja esta na memoria do navegador seria mais lento e mais
+         caro sem nada em troca.
+    --}}
+    @if($showMenuJump)
+    <div
+        x-data="{
+            q: '',
+            hi: -1,
+            items: @js($menuFlat),
+
+            /* Mesma dobra do MenuResolver::fold — minusculas sem acento, para
+               'cotacao' achar 'Cotação'. As duas pontas tem de concordar: esta
+               busca e a da tool `find_menu` que a IA usa. */
+            fold(v) {
+                return (v || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            },
+
+            get results() {
+                const words = this.fold(this.q).split(/\s+/).filter(w => w !== '');
+                if (words.length === 0) return [];
+
+                /* Palavra por palavra, em qualquer ordem: 'cotacao compras' acha
+                   'Compras > Cotação' mesmo sem essa ordem na trilha. */
+                return this.items
+                    .filter(it => words.every(w => it.search.includes(w)))
+                    .slice(0, 12);
+            },
+
+            /* Folha primeiro, depois o caminho: voce digitou a folha, e e ela
+               que o olho procura na lista. */
+            trail(it) {
+                return it.breadcrumb.slice(0, -1).reverse();
+            },
+
+            go(it) {
+                if (!it) return;
+                if (it.target === '_blank') { window.open(it.url, '_blank'); return; }
+                window.location.href = it.url;
+            },
+
+            move(delta) {
+                const n = this.results.length;
+                if (n === 0) return;
+                this.hi = (this.hi + delta + n) % n;
+            },
+
+            reset() { this.q = ''; this.hi = -1; },
+        }"
+        class="ptah-sidebar-jump flex-shrink-0 border-b px-2 py-2"
+    >
+        {{-- Colapsada nao cabe input: vira lupa que expande e foca, o mesmo
+             gesto que os grupos ja fazem hoje. --}}
+        <button
+            x-show="iconOnly()"
+            type="button"
+            @click="if (isLg) { sidebarCollapsed = false; localStorage.setItem('ptah_sidebar_collapsed', 'false'); } else { peek = true; } $nextTick(() => $refs.jump && $refs.jump.focus())"
+            :title="@js(__('ptah::ui.sidebar_jump_placeholder'))"
+            :aria-label="@js(__('ptah::ui.sidebar_jump_placeholder'))"
+            class="ptah-sidebar-jump-icon w-full flex items-center justify-center h-9 rounded-md transition-colors"
+        >
+            <i class="bx bx-search text-xl leading-none"></i>
+        </button>
+
+        <div x-show="!iconOnly()" class="relative">
+            <label for="ptah-sidebar-jump" class="sr-only">{{ __('ptah::ui.sidebar_jump_placeholder') }}</label>
+            <i class="bx bx-search ptah-sidebar-jump-glyph pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-base leading-none"></i>
+            <input
+                id="ptah-sidebar-jump"
+                x-ref="jump"
+                x-model="q"
+                type="text"
+                autocomplete="off"
+                role="combobox"
+                :aria-expanded="results.length > 0 ? 'true' : 'false'"
+                aria-controls="ptah-sidebar-jump-list"
+                placeholder="{{ __('ptah::ui.sidebar_jump_placeholder') }}"
+                @keydown.arrow-down.prevent="move(1)"
+                @keydown.arrow-up.prevent="move(-1)"
+                @keydown.enter.prevent="go(results[hi] || results[0])"
+                @keydown.escape.stop="reset()"
+                @input="hi = -1"
+                class="ptah-sidebar-jump-input w-full rounded-md border pl-7 pr-7 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+            <button
+                x-show="q !== ''"
+                x-cloak
+                type="button"
+                @click="reset(); $refs.jump.focus()"
+                class="ptah-sidebar-jump-clear absolute right-1.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded"
+                :aria-label="@js(__('ptah::ui.sidebar_jump_clear'))"
+                :title="@js(__('ptah::ui.sidebar_jump_clear'))"
+            >
+                <i class="bx bx-x text-base leading-none"></i>
+            </button>
+
+            {{-- Resultados. `absolute` sobre a nav: a lista NAO empurra o menu
+                 para baixo enquanto se digita, senao o painel inteiro se mexe a
+                 cada tecla. --}}
+            <ul
+                id="ptah-sidebar-jump-list"
+                x-show="results.length > 0"
+                x-cloak
+                role="listbox"
+                class="ptah-sidebar-jump-results absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-md border py-1 shadow-lg"
+            >
+                <template x-for="(it, i) in results" :key="it.url + i">
+                    <li role="option" :aria-selected="i === hi ? 'true' : 'false'">
+                        <button
+                            type="button"
+                            @click="go(it)"
+                            @mouseenter="hi = i"
+                            :class="i === hi ? 'ptah-is-hi' : ''"
+                            class="ptah-sidebar-jump-item w-full px-2.5 py-1.5 text-left text-sm"
+                        >
+                            <span class="ptah-sidebar-jump-label block truncate font-medium" x-text="it.label"></span>
+                            <span
+                                x-show="trail(it).length > 0"
+                                class="ptah-sidebar-jump-path block truncate text-xs"
+                                x-text="trail(it).join(' · ')"
+                            ></span>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+
+            {{-- Nada encontrado: dito, nao silencioso. Uma lista que nao abre
+                 nao distingue "nao existe" de "quebrou". --}}
+            <p
+                x-show="q.trim() !== '' && results.length === 0"
+                x-cloak
+                class="ptah-sidebar-jump-empty absolute left-0 right-0 top-full z-50 mt-1 rounded-md border px-2.5 py-2 text-xs shadow-lg"
+            >{{ __('ptah::ui.sidebar_jump_empty') }}</p>
+        </div>
+    </div>
+    @endif
 
     {{-- Nav --}}
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2 scrollbar-none">

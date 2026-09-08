@@ -8,15 +8,188 @@
 <div
     x-data="{
         open: @entangle('isOpen'),
+
+        /*
+            O rascunho e local de proposito. Enquanto era `wire:model.live`, o
+            valor do textarea era estado do SERVIDOR, e o servidor zerava esse
+            valor ao enviar. Como `processAiMessage` e uma requisicao separada e
+            lenta (espera o modelo), tudo que o usuario digitava durante a
+            espera existia so no navegador — e quando aquela resposta chegava, o
+            Livewire remoldava o textarea para a string vazia do snapshot e o
+            texto desaparecia. Rascunho que so o navegador conhece nao pode ser
+            sobrescrito por um snapshot velho.
+        */
+        draft: '',
+
+        /* Tela cheia no desktop. Fica no localStorage: e preferencia de
+           dispositivo, e mandar isso pro servidor custaria uma requisicao e um
+           campo no snapshot para algo que a CSS resolve. */
+        expanded: false,
+
+        /* Lancador escondido. Um circulo de 56px no canto inferior direito fica
+           exatamente sobre a paginacao e a ultima coluna de uma listagem larga,
+           e nem sempre a pessoa quer o chat por perto.
+           Escondido, ele nao desaparece: virou uma alca fina na borda direita,
+           que e um elemento em dois estados e nao dois elementos. Desaparecer de
+           vez deixaria o chat sem caminho de volta. */
+        launcherHidden: false,
+
+        init() {
+            try {
+                this.expanded = localStorage.getItem('ptah:ai:expanded') === '1';
+                this.launcherHidden = localStorage.getItem('ptah:ai:launcher-hidden') === '1';
+            } catch (e) {
+                /* janela privada, cookies bloqueados: segue no modo compacto */
+            }
+
+            this.$watch('open', value => { if (value) { this.scrollToBottom(); this.focusInput(); } });
+            this.$watch('expanded', value => {
+                try { localStorage.setItem('ptah:ai:expanded', value ? '1' : '0'); } catch (e) {}
+                this.scrollToBottom();
+            });
+
+            this.$watch('launcherHidden', value => {
+                try { localStorage.setItem('ptah:ai:launcher-hidden', value ? '1' : '0'); } catch (e) {}
+
+                /* A reserva de espaco no fim da listagem existe para o botao
+                   nao cobrir a paginacao. Escondido o botao, a reserva passa a
+                   ser um buraco sem motivo, entao a classe que o layout estampa
+                   no <body> sai junto. */
+                try {
+                    document.body.classList.toggle('ptah-has-ai-launcher', !value);
+                } catch (e) {}
+            });
+        },
+
         scrollToBottom() {
             this.$nextTick(() => {
                 const el = this.$refs.msgList;
                 if (el) el.scrollTop = el.scrollHeight;
             });
+        },
+
+        focusInput() {
+            this.$nextTick(() => { if (this.$refs.ta) this.$refs.ta.focus(); });
+        },
+
+        /* Cresce com o conteudo e para no teto, onde passa a rolar. O
+           `overflow` alterna junto: preso em `hidden`, o texto alem do teto
+           ficava invisivel E inalcancavel. */
+        grow() {
+            const ta = this.$refs.ta;
+            if (!ta) return;
+            const max = this.expanded || window.innerWidth < 640 ? 220 : 128;
+            ta.style.height = 'auto';
+            const next = Math.min(ta.scrollHeight, max);
+            ta.style.height = next + 'px';
+            ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
+        },
+
+        resetGrow() {
+            const ta = this.$refs.ta;
+            if (!ta) return;
+            ta.style.height = '';
+            ta.style.overflowY = 'hidden';
+        },
+
+        submit() {
+            const text = this.draft.trim();
+            const hasFiles = (this.$wire.attachments || []).length > 0;
+
+            /* Com anexo, texto vazio ainda e um envio valido: o arquivo e a
+               mensagem. E nao envia enquanto um upload esta no ar, senao a
+               mensagem sai sem o anexo que a pessoa acabou de soltar. */
+            if ((text === '' && !hasFiles) || this.$wire.loading || this.uploading > 0) return;
+
+            this.draft = '';
+            this.resetGrow();
+            this.$wire.send(text);
+        },
+
+        /* ── Anexos ────────────────────────────────────────────────────
+           Um `$wire.upload` por arquivo. `uploadMultiple` substituiria o array
+           inteiro, e colar/arrastar chegam de um em um — o segundo arquivo
+           apagaria o primeiro. O servidor acumula e valida; aqui so filtramos
+           antes de gastar banda, e o filtro do cliente e conveniencia, nunca
+           garantia. */
+        dragging: false,
+        uploading: 0,
+
+        {{-- Do servico, que carrega os defaults do pacote: `mergeConfigFrom` e
+             raso e um host com config publicada nao recebe chave nova
+             aninhada. --}}
+        maxFiles: {{ app(\Ptah\Services\AI\AiAttachmentService::class)->maxFiles() }},
+
+        /* Estreitada pelo provedor selecionado, no servidor. Num provedor que
+           nao aceita documento esta lista nao tem pdf, entao um PDF arrastado e
+           filtrado aqui antes de gastar banda — e recusado de novo no servidor,
+           que e quem decide. */
+        allowed: @js($attachmentExtensions),
+
+        accepted(file) {
+            if (this.allowed.length === 0) return true;
+            const ext = (file.name || '').split('.').pop().toLowerCase();
+            return this.allowed.includes(ext);
+        },
+
+        take(files) {
+            const list = Array.from(files || []);
+            if (list.length === 0) return;
+
+            /* Espaco restante contado com o que o servidor ja tem MAIS o que
+               esta subindo: sem o `uploading`, colar quatro prints de uma vez
+               passaria os quatro pelo teto, porque nenhum deles teria chegado
+               ainda quando o proximo e avaliado. */
+            let room = this.maxFiles - (this.$wire.attachments || []).length - this.uploading;
+
+            for (const file of list) {
+                if (room <= 0) break;
+                if (!this.accepted(file)) continue;
+
+                room--;
+                this.uploading++;
+                this.$wire.upload(
+                    'incoming',
+                    file,
+                    () => { this.uploading = Math.max(0, this.uploading - 1); },
+                    () => { this.uploading = Math.max(0, this.uploading - 1); }
+                );
+            }
+        },
+
+        onPaste(e) {
+            /* Print de tela colado com Ctrl+V chega em clipboardData.files como
+               um image/png sem nome de arquivo. Se houver arquivo no
+               clipboard, ele ganha do texto; senao nao interceptamos nada e a
+               colagem de texto segue normal. */
+            const files = e.clipboardData && e.clipboardData.files;
+            if (!files || files.length === 0) return;
+
+            e.preventDefault();
+            this.take(files);
+        },
+
+        onDrop(e) {
+            e.preventDefault();
+            this.dragging = false;
+            this.take(e.dataTransfer && e.dataTransfer.files);
+        },
+
+        onEnter(e) {
+            /* Shift+Enter e nova linha: nao intercepta, deixa o navegador
+               inserir no lugar do cursor. O codigo anterior dava .prevent em
+               toda tecla Enter e depois concatenava '
+' no FIM do texto,
+               ignorando onde o cursor estava. */
+            if (e.shiftKey) return;
+
+            e.preventDefault();
+            this.submit();
         }
     }"
-    x-init="$watch('open', value => { if (value) scrollToBottom() })"
     @ai-message-sent.window="scrollToBottom()"
+    @ai-draft-clear.window="draft = ''; resetGrow()"
+    @keydown.escape.window="if (open) open = false"
     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
 >
 
@@ -30,11 +203,48 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="w-80 sm:w-96 rounded-2xl ptah-c-chat_panel shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
-        style="max-height: min(560px, calc(100vh - 100px));"
+        {{-- No celular e sempre tela cheia: um painel de 320px numa tela de 360
+             deixava a conversa numa coluna estreita com o teclado virtual por
+             cima. Utilitarios `max-sm:` em vez de uma media query no
+             ptah-components.css de proposito — o parser das fixtures golden
+             nao e ciente de media query e ja gravou valor errado por isso. --}}
+        class="ptah-c-chat_panel relative shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden
+               w-80 sm:w-96 rounded-2xl max-h-[min(560px,calc(100vh_-_100px))]
+               max-sm:fixed max-sm:inset-0 max-sm:w-full max-sm:max-h-none max-sm:rounded-none max-sm:border-0"
+        :class="expanded ? 'sm:fixed sm:inset-0 sm:w-full sm:max-w-none sm:max-h-none sm:rounded-none' : ''"
+        role="dialog"
+        aria-modal="false"
+        aria-label="{{ __('ptah::ui.ai_widget_title') }}"
+        @if($attachmentsEnabled && $attachmentExtensions !== [])
+        {{-- No painel inteiro, nao so no input: a pessoa arrasta para "o chat",
+             e mira no meio da conversa. `dragover` precisa de preventDefault ou
+             o navegador abre o arquivo numa aba. --}}
+        @paste="onPaste($event)"
+        @dragover.prevent="dragging = true"
+        @dragenter.prevent="dragging = true"
+        @dragleave="if ($event.target === $el) dragging = false"
+        @drop="onDrop($event)"
+        @endif
     >
-        {{-- Panel header --}}
-        <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0">
+        @if($attachmentsEnabled && $attachmentExtensions !== [])
+        {{-- Alvo visivel do arraste. `pointer-events-none` para nao roubar o
+             proprio evento de drop do painel que o desenha. --}}
+        <div x-show="dragging"
+             x-cloak
+             class="ptah-c-chat_drop absolute inset-0 z-10 m-2 flex items-center justify-center rounded-xl border-2 border-dashed text-sm font-medium pointer-events-none">
+            <span class="flex items-center gap-2">
+                <i class="bx bx-cloud-upload text-xl"></i>
+                {{ __('ptah::ui.ai_attach_drop') }}
+            </span>
+        </div>
+        @endif
+
+        {{-- Panel header. Duplo clique alterna a tela cheia: o botao no canto e
+             pequeno e branco a 70% sobre o roxo, e duplo clique na barra de
+             titulo e o gesto que as pessoas ja tentam. `sm:` porque no celular
+             ja e tela cheia e nao ha estado para alternar. --}}
+        <div class="flex items-center justify-between bg-primary px-4 py-3 text-white flex-shrink-0"
+             @dblclick="if (window.innerWidth >= 640) expanded = !expanded">
             <div class="flex items-center gap-2">
                 <i class="bx bx-bot text-xl"></i>
                 <span class="font-semibold text-sm">{{ __('ptah::ui.ai_widget_title') }}</span>
@@ -43,17 +253,27 @@
                 @auth
                 <button wire:click="toggleHistory"
                         title="{{ __('ptah::ui.ai_widget_history') }}"
-                        class="rounded p-1 transition-colors {{ $showHistory ? 'text-white bg-white/20' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
+                        @class(['ptah-c-chat_hdr_btn rounded p-1 transition-colors', 'is-active' => $showHistory])>
                     <i class="bx bx-history text-lg"></i>
                 </button>
                 @endauth
                 <button wire:click="newConversation"
                         title="{{ __('ptah::ui.ai_widget_new_chat') }}"
-                        class="rounded p-1 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                        class="ptah-c-chat_hdr_btn rounded p-1 transition-colors">
                     <i class="bx bx-edit text-lg"></i>
                 </button>
+                {{-- Escondido no celular: la o painel ja ocupa a tela toda, e o
+                     controle nao teria estado para alternar. --}}
+                <button @click="expanded = !expanded"
+                        type="button"
+                        class="ptah-c-chat_hdr_btn hidden sm:block rounded p-1 transition-colors"
+                        :title="expanded ? '{{ __('ptah::ui.ai_widget_collapse') }}' : '{{ __('ptah::ui.ai_widget_expand') }}'"
+                        :aria-label="expanded ? '{{ __('ptah::ui.ai_widget_collapse') }}' : '{{ __('ptah::ui.ai_widget_expand') }}'">
+                    <i class="bx text-lg" :class="expanded ? 'bx-collapse-alt' : 'bx-expand-alt'"></i>
+                </button>
                 <button @click="open = false"
-                        class="rounded p-1 text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                        aria-label="{{ __('ptah::ui.ai_widget_close') }}"
+                        class="ptah-c-chat_hdr_btn rounded p-1 transition-colors">
                     <i class="bx bx-x text-xl"></i>
                 </button>
             </div>
@@ -143,7 +363,24 @@
                         {{-- User message --}}
                         <div class="flex justify-end">
                             <div class="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-white shadow-sm">
-                                {!! nl2br(e($msg['content'])) !!}
+                                @if(! empty($msg['attachments']))
+                                    {{-- So os NOMES: os arquivos eram
+                                         temporarios e ja nao existem quando a
+                                         conversa e reaberta. Mas sem eles a
+                                         pessoa le "analisa isso" sem saber o
+                                         que era "isso". --}}
+                                    <span class="mb-1 flex flex-wrap gap-1">
+                                        @foreach($msg['attachments'] as $attachedName)
+                                            <span class="ptah-c-chat_umsg_chip inline-flex max-w-full items-center gap-1 rounded px-1.5 py-0.5 text-[11px]">
+                                                <i class="bx bx-paperclip shrink-0"></i>
+                                                <span class="truncate">{{ $attachedName }}</span>
+                                            </span>
+                                        @endforeach
+                                    </span>
+                                @endif
+                                @if(trim((string) $msg['content']) !== '')
+                                    {!! nl2br(e($msg['content'])) !!}
+                                @endif
                             </div>
                         </div>
                     @else
@@ -152,8 +389,11 @@
                             <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                                 <i class="bx bx-bot text-sm text-primary"></i>
                             </div>
-                            <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
-                                {!! nl2br(e($msg['content'])) !!}
+                            {{-- Markdown so na resposta. A bolha do usuario
+                                 continua texto escapado: o que a pessoa digitou
+                                 nao deve virar HTML so porque parecia markdown. --}}
+                            <div class="ptah-c-chat_md max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
+                                {!! \Ptah\Support\AI\ChatMarkdown::render($msg['content']) !!}
                             </div>
                         </div>
                     @endif
@@ -168,7 +408,7 @@
                     <div class="flex-shrink-0 w-7 h-7 rounded-full ptah-c-chat_avatar flex items-center justify-center mt-0.5">
                         <i class="bx bx-bot text-sm text-primary"></i>
                     </div>
-                    <div class="max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
+                    <div class="ptah-c-chat_md max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
                         <div wire:stream="ai-stream">
                             <span class="inline-flex items-center gap-1 py-1">
                                 <span class="block w-2 h-2 rounded-full ptah-c-chat_dot animate-wave" style="animation-delay: 0ms"></span>
@@ -191,30 +431,72 @@
         {{-- Input area --}}
         @if(!$showHistory)
         <div class="border-t border-gray-100 dark:border-slate-700 px-3 py-3 flex-shrink-0">
+            @if($attachmentsEnabled && $attachments !== [])
+                {{-- Chips dos anexos, desenhados a partir da lista do SERVIDOR:
+                     e ela que o envio usa, entao e ela que a tela tem de
+                     mostrar. Um chip vindo de estado do cliente poderia
+                     prometer um arquivo que nao vai. --}}
+                <div class="mb-2 flex flex-wrap gap-1.5">
+                    @foreach($attachments as $i => $file)
+                        <span class="ptah-c-chat_chip inline-flex max-w-full items-center gap-1 rounded-lg border px-2 py-1 text-xs">
+                            <i class="bx {{ str_starts_with((string) $file->getMimeType(), 'image/') ? 'bx-image' : 'bx-file' }} shrink-0"></i>
+                            <span class="truncate">{{ $file->getClientOriginalName() }}</span>
+                            <button type="button"
+                                    wire:click="removeAttachment({{ $i }})"
+                                    class="ptah-c-chat_chip_x shrink-0 rounded"
+                                    title="{{ __('ptah::ui.ai_attach_remove', ['name' => $file->getClientOriginalName()]) }}"
+                                    aria-label="{{ __('ptah::ui.ai_attach_remove', ['name' => $file->getClientOriginalName()]) }}">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </span>
+                    @endforeach
+                </div>
+            @endif
+
             <div class="flex items-end gap-2">
+                @if($attachmentsEnabled && $attachmentExtensions !== [])
+                    {{-- O input existe para o clique no clipe. Colar e arrastar
+                         nao passam por ele: vao direto pelo $wire.upload. --}}
+                    <input type="file"
+                           x-ref="file"
+                           multiple
+                           class="hidden"
+                           accept="{{ $attachmentAccept }}"
+                           @change="take($event.target.files); $event.target.value = ''">
+                    <button type="button"
+                            @click="$refs.file.click()"
+                            class="ptah-c-chat_attach shrink-0 flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            x-bind:disabled="($wire.attachments || []).length + uploading >= maxFiles"
+                            title="{{ __('ptah::ui.ai_attach_btn') }}"
+                            aria-label="{{ __('ptah::ui.ai_attach_btn') }}">
+                        <i class="bx bx-paperclip text-lg" x-show="uploading === 0"></i>
+                        <i class="bx bx-loader-alt bx-spin text-lg" x-show="uploading > 0" x-cloak></i>
+                    </button>
+                @endif
+                {{-- Sem wire:model: o rascunho e local (ver o x-data da raiz e
+                     o docblock de AiChatWidget::send). `wire:ignore` para que
+                     nem o morph do Livewire toque neste no — e o morph, com um
+                     snapshot velho, que apagava o texto.
+
+                     Tambem NAO fica desabilitado durante a resposta: digitar a
+                     proxima pergunta enquanto a IA responde e justamente o que
+                     as pessoas fazem. So o envio e que espera. --}}
                 <textarea
-                    wire:model.live="userInput"
+                    wire:ignore
+                    x-ref="ta"
+                    x-model="draft"
                     rows="1"
                     placeholder="{{ __('ptah::ui.ai_widget_placeholder') }}"
-                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 max-h-32 overflow-hidden"
-                    style="min-height: 38px; height: 38px;"
-                    @keydown.enter.prevent="
-                        if (!$wire.loading && !$event.shiftKey) {
-                            $wire.set('userInput', $event.target.value);
-                            $wire.send();
-                        } else if ($event.shiftKey) {
-                            $event.target.value += '\n';
-                            $wire.set('userInput', $event.target.value);
-                        }
-                    "
-                    @input="$event.target.style.height = 'auto'; $event.target.style.height = Math.min($event.target.scrollHeight, 128) + 'px';"
-                    wire:loading.attr="disabled"
-                    wire:target="send,processAiMessage"
+                    aria-label="{{ __('ptah::ui.ai_widget_placeholder') }}"
+                    class="flex-1 resize-none rounded-xl border border-gray-200 dark:border-slate-600 ptah-c-chat_input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
+                    style="min-height: 38px; overflow-y: hidden;"
+                    @input="grow()"
+                    @keydown.enter="onEnter($event)"
                 ></textarea>
                 <button
-                    wire:click="send"
-                    wire:loading.attr="disabled"
-                    wire:target="send,processAiMessage"
+                    type="button"
+                    @click="submit()"
+                    x-bind:disabled="(draft.trim() === '' && ($wire.attachments || []).length === 0) || $wire.loading || uploading > 0"
                     class="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="{{ __('ptah::ui.ai_widget_send') }}"
                 >
@@ -227,9 +509,20 @@
                     </svg>
                 </button>
             </div>
-            <p class="mt-1.5 text-center text-[10px] text-gray-300 dark:text-slate-600">
-                {{ __('ptah::ui.ai_widget_keyboard_hint') }}
+            {{-- Era `text-gray-300 dark:text-slate-600`: cor fixa e, no claro,
+                 cerca de 1,5:1 sobre branco — texto que existe e nao se le.
+                 Tokenizado, como o resto do pacote. --}}
+            <p class="ptah-c-chat_hint mt-1.5 text-center text-[10px]">
+                {{ __('ptah::ui.ai_widget_keyboard_hint') }}@if($attachmentsEnabled && $attachmentExtensions !== []) · {{ __('ptah::ui.ai_attach_hint') }}@endif
             </p>
+            @if($attachmentsEnabled && $attachmentBlocked !== [])
+                {{-- Dito antes de a pessoa tentar. O provedor esta escolhido no
+                     seletor do cabecalho, entao isto e acionavel: trocar de
+                     provedor libera o formato. --}}
+                <p class="ptah-c-chat_hint mt-0.5 text-center text-[10px]">
+                    {{ __('ptah::ui.ai_attach_blocked_hint', ['formats' => implode(', ', $attachmentBlocked)]) }}
+                </p>
+            @endif
         </div>
         @endif
         {{-- /Input area --}}
@@ -237,14 +530,52 @@
         {{-- /Message list --}}
     </div>
 
-    {{-- ─── Floating toggle button ─────────────────────────────────────── --}}
-    <button
-        @click="open = !open"
-        class="group w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:bg-primary-dark hover:scale-105 transition-all duration-200 active:scale-95"
-        :title="open ? '{{ __('ptah::ui.ai_widget_close') }}' : '{{ __('ptah::ui.ai_widget_open') }}'"
-    >
-        <i x-show="!open" class="bx bx-bot text-2xl"></i>
-        <i x-show="open" x-cloak class="bx bx-x text-2xl"></i>
+    {{-- ─── Floating toggle button ───────────────────────────────────────
+         Some quando o painel toma a tela — expandido no desktop, ou aberto no
+         celular, onde tela cheia e o unico modo. Um botao flutuante sobre um
+         painel de tela cheia cobre conteudo e passa a ser um segundo "fechar"
+         concorrendo com o do cabecalho. --}}
+    {{-- Envelope so para pendurar o "esconder" no canto do botao. --}}
+    <div class="group relative" x-show="!launcherHidden" x-cloak>
+        <button
+            @click="open = !open"
+            x-show="!(expanded && open)"
+            :class="open ? 'max-sm:hidden' : ''"
+            class="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:bg-primary-dark hover:scale-105 transition-all duration-200 active:scale-95"
+            :title="open ? '{{ __('ptah::ui.ai_widget_close') }}' : '{{ __('ptah::ui.ai_widget_open') }}'"
+            :aria-expanded="open ? 'true' : 'false'"
+        >
+            <i x-show="!open" class="bx bx-bot text-2xl"></i>
+            <i x-show="open" x-cloak class="bx bx-x text-2xl"></i>
+        </button>
+
+        {{-- Aparece ao passar o mouse ou ao receber foco pelo teclado —
+             `focus-within` no envelope, senao o controle nao existiria para quem
+             navega sem mouse. So com o painel fechado: com ele aberto o botao ja
+             e o "fechar", e esconder o lancador debaixo de um painel aberto
+             deixaria a pessoa sem entender para onde ele foi. --}}
+        <button type="button"
+                x-show="!open"
+                @click.stop="launcherHidden = true"
+                class="ptah-c-chat_dismiss absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100"
+                title="{{ __('ptah::ui.ai_widget_hide_launcher') }}"
+                aria-label="{{ __('ptah::ui.ai_widget_hide_launcher') }}">
+            <i class="bx bx-x text-sm"></i>
+        </button>
+    </div>
+
+    {{-- O caminho de volta. Alca fina colada na borda direita: continua
+         alcancavel e para de cobrir a esquina da tabela, que era a reclamacao.
+         Fixa na propria janela, e nao dentro do envelope do canto, para nao
+         herdar o afastamento de 24px que a poria sobre o conteudo de novo. --}}
+    <button type="button"
+            x-show="launcherHidden"
+            x-cloak
+            @click="launcherHidden = false; open = true"
+            class="ptah-c-chat_handle fixed right-0 top-1/2 -translate-y-1/2 flex h-16 w-2.5 items-center justify-center rounded-l-md transition-all hover:w-4"
+            title="{{ __('ptah::ui.ai_widget_show_launcher') }}"
+            aria-label="{{ __('ptah::ui.ai_widget_show_launcher') }}">
+        <span class="sr-only">{{ __('ptah::ui.ai_widget_show_launcher') }}</span>
     </button>
 </div>
 @endif
