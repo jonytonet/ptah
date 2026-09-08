@@ -425,12 +425,17 @@ php artisan vendor:publish --tag=ptah-errors
 ### Sidebar jump box (`forge.sidebar_jump*`)
 
 Type part of a screen's name in the sidebar and go straight to it. It renders at
-the **top**, between the logo and the navigation, and appears once the menu holds
-`sidebar_jump_min_items` links or more.
+the **top**, between the logo and the navigation.
 
-The trigger is item **count**, not the presence of a scrollbar. Scroll depends on
-window height, so a scroll-driven control would appear and disappear as you
-resize; a count is stable and predictable.
+It appears for either of two reasons, and **nesting is the stronger one**: a
+screen inside a closed group is not visible to someone scanning the menu, however
+few entries there are, and that is exactly where typing wins. The other reason is
+the total number of links reaching `sidebar_jump_min_items` (default 8). Below
+three links it never appears — there it would be decoration.
+
+It does **not** key off the presence of a scrollbar. Scroll depends on window
+height, so a scroll-driven control would appear and disappear as you resize the
+window.
 
 Filtering happens in the browser. The links are already on the page — the sidebar
 rendered them — so a request per keystroke would be searching the browser's own
@@ -456,7 +461,7 @@ the bar and focuses the input — the same gesture the menu groups already use.
 | `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
 | `forge.sidebar_jump` | `PTAH_SIDEBAR_JUMP` | `true` | this section |
-| `forge.sidebar_jump_min_items` | `PTAH_SIDEBAR_JUMP_MIN` | `12` | this section |
+| `forge.sidebar_jump_min_items` | `PTAH_SIDEBAR_JUMP_MIN` | `8` | this section |
 | `ai_agent.normalize_tool_schema` | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |

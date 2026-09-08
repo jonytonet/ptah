@@ -111,37 +111,102 @@ class SidebarMenuJumpTest extends TestCase
         $this->assertLessThan($footer, $jump, 'E muito antes do Sair, que e acao rara e cuidadosa.');
     }
 
-    #[Test]
-    public function it_does_not_appear_on_a_short_menu(): void
+    /**
+     * A FLAT menu, so nesting is not what decides the case.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function flatMenu(int $links): array
     {
-        // The trigger is item COUNT, not the presence of a scrollbar: scroll
-        // depends on window height, so the field would appear and disappear on
-        // resize.
-        config(['ptah.forge.sidebar_jump_min_items' => 12]);
+        $out = [];
 
-        $html = $this->render($this->menu(links: 4));
+        for ($i = 1; $i <= $links; $i++) {
+            $out[] = [
+                'label' => "Tela {$i}",
+                'text' => "Tela {$i}",
+                'url' => "/tela-{$i}",
+                'icon' => 'bx bx-circle',
+                'type' => 'menuLink',
+                'target' => '_self',
+                'is_active' => true,
+                'children' => [],
+            ];
+        }
 
-        $this->assertStringNotContainsString('ptah-sidebar-jump', $html);
+        return $out;
     }
 
     #[Test]
-    public function it_appears_once_the_menu_is_long_enough(): void
+    public function a_short_flat_menu_does_not_get_it(): void
     {
-        config(['ptah.forge.sidebar_jump_min_items' => 12]);
+        // Five links you can see all at once: the field would be decoration.
+        config(['ptah.forge.sidebar_jump_min_items' => 8]);
+
+        $this->assertStringNotContainsString('ptah-sidebar-jump', $this->render($this->flatMenu(5)));
+    }
+
+    #[Test]
+    public function a_nested_menu_gets_it_regardless_of_how_few_links_there_are(): void
+    {
+        // The correction that matters, and the reason a threshold alone was
+        // wrong: a screen inside a closed group is not visible to someone
+        // scanning the menu, however few there are. That is exactly where typing
+        // wins, and it does not depend on a count.
+        //
+        // The first version keyed only on a count of 12, which was arbitrary AND
+        // silent: a test app with 8 links never showed the field, shrinking the
+        // window did nothing, and nothing said why.
+        config(['ptah.forge.sidebar_jump_min_items' => 99]);
+
+        $this->assertStringContainsString('ptah-sidebar-jump', $this->render($this->menu(links: 4)));
+    }
+
+    #[Test]
+    public function a_long_flat_menu_gets_it_too(): void
+    {
+        // The other reason, on its own: no nesting, but too many to scan.
+        config(['ptah.forge.sidebar_jump_min_items' => 8]);
+
+        $this->assertStringContainsString('ptah-sidebar-jump', $this->render($this->flatMenu(20)));
+    }
+
+    #[Test]
+    public function a_trivial_menu_never_gets_it(): void
+    {
+        // The floor. Two links, nested or not, is not a menu you search.
+        config(['ptah.forge.sidebar_jump_min_items' => 1]);
+
+        $this->assertStringNotContainsString('ptah-sidebar-jump', $this->render([
+            ['label' => 'Um', 'url' => '/um', 'type' => 'menuLink', 'is_active' => true, 'children' => []],
+            ['label' => 'Dois', 'url' => '/dois', 'type' => 'menuLink', 'is_active' => true, 'children' => []],
+        ]));
+    }
+
+    #[Test]
+    public function it_appears_on_a_real_menu(): void
+    {
+        config(['ptah.forge.sidebar_jump_min_items' => 8]);
 
         $this->assertStringContainsString('ptah-sidebar-jump', $this->render($this->menu(links: 20)));
     }
 
     #[Test]
-    public function the_threshold_is_configurable_and_the_feature_can_be_turned_off(): void
+    public function the_threshold_is_configurable(): void
     {
+        // Exercised on a FLAT menu: with nesting the threshold is irrelevant,
+        // so an earlier version of this test could not actually see it move.
         config(['ptah.forge.sidebar_jump_min_items' => 50]);
-        $this->assertStringNotContainsString('ptah-sidebar-jump', $this->render($this->menu(links: 20)));
+        $this->assertStringNotContainsString('ptah-sidebar-jump', $this->render($this->flatMenu(20)));
 
-        config(['ptah.forge.sidebar_jump_min_items' => 3]);
-        $this->assertStringContainsString('ptah-sidebar-jump', $this->render($this->menu(links: 20)));
+        config(['ptah.forge.sidebar_jump_min_items' => 4]);
+        $this->assertStringContainsString('ptah-sidebar-jump', $this->render($this->flatMenu(20)));
+    }
 
+    #[Test]
+    public function the_feature_can_be_turned_off_entirely(): void
+    {
         config(['ptah.forge.sidebar_jump' => false]);
+
         $this->assertStringNotContainsString('ptah-sidebar-jump', $this->render($this->menu(links: 20)));
     }
 

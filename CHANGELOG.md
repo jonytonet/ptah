@@ -244,9 +244,8 @@ about a system they did not build.
 navigation. Type part of a screen's name and the trail appears — leaf first, then
 its ancestors, because you typed the leaf and that is what the eye is looking
 for. Enter opens the first result, the arrows move, Escape clears. It appears
-once the menu holds twelve links or more (`forge.sidebar_jump_min_items`), and
-when the sidebar is collapsed to icons it becomes a magnifier that expands the
-bar and focuses the field.
+for either of two reasons — see below — and when the sidebar is collapsed to
+icons it becomes a magnifier that expands the bar and focuses the field.
 
 Two decisions in it diverge from what was asked for, and both were deliberate:
 
@@ -262,9 +261,18 @@ Eloquent per keystroke — for data that is already on the page, because the
 sidebar just rendered it. A round trip per keystroke to search the browser's own
 memory is slower and costs more with nothing in return.
 
-The trigger is item **count**, not the presence of a scrollbar, for the same kind
-of reason: scroll depends on window height, so a scroll-driven control would
-appear and disappear as you resize.
+*Not driven by the scrollbar.* Scroll depends on window height, so a
+scroll-driven control would appear and disappear as you resize the window.
+
+But the first rule chosen instead of it — twelve links — was arbitrary AND
+silent, and that was found the only way it could be: by someone shrinking the
+window waiting for the field, on an app with eight links, with nothing anywhere
+saying why it never came. It now appears for either of two reasons, and
+**nesting is the stronger one**: a screen inside a closed group is not visible to
+someone scanning the menu, however few entries there are, and that is exactly
+where typing wins — it does not depend on a count at all. The other reason is the
+link total reaching `forge.sidebar_jump_min_items`, now 8. Below three links it
+never appears.
 
 **`find_menu`** is a new built-in tool. It answers where a screen lives, with the
 trail to click and the URL. Accents and case are ignored and the words match in

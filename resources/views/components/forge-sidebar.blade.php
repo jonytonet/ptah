@@ -34,11 +34,32 @@
     // consulta nenhuma.
     $menuFlat = \Ptah\Support\MenuResolver::flatLinks($items);
 
-    // O atalho aparece quando a lista e grande o bastante para valer. NAO
-    // quando ha scroll: isso depende da altura da janela, e o campo apareceria
-    // e desapareceria ao redimensionar.
-    $menuJumpMin = (int) config('ptah.forge.sidebar_jump_min_items', 12);
-    $showMenuJump = config('ptah.forge.sidebar_jump', true) && count($menuFlat) >= max(2, $menuJumpMin);
+    // Quando o atalho aparece.
+    //
+    // NAO quando ha scroll: scroll depende da altura da janela, e o campo
+    // apareceria e desapareceria ao redimensionar. Mas o primeiro limite que
+    // escolhi — 12 links — era arbitrario E silencioso: diminuir a janela
+    // esperando o campo aparecer nao funcionava, e nada dizia por que. Um app
+    // com 8 links nunca o veria, e foi exatamente isso que aconteceu.
+    //
+    // Duas razoes, entao, e o ANINHAMENTO e a mais forte: uma tela dentro de um
+    // grupo fechado nao esta visivel para quem varre o menu com o olho, por
+    // poucas que sejam. E exatamente ai que digitar ganha, e nao depende de
+    // quantidade nenhuma.
+    $menuJumpMin = (int) config('ptah.forge.sidebar_jump_min_items', 8);
+    $menuIsNested = false;
+
+    foreach ($menuFlat as $flatLink) {
+        if (count($flatLink['breadcrumb']) > 1) {
+            $menuIsNested = true;
+            break;
+        }
+    }
+
+    // O piso de 3 evita o campo num menu de demonstracao onde ele seria enfeite.
+    $showMenuJump = config('ptah.forge.sidebar_jump', true)
+        && count($menuFlat) >= 3
+        && (count($menuFlat) >= max(2, $menuJumpMin) || $menuIsNested);
 
     /**
      * Renderiza ícone: aceita classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").

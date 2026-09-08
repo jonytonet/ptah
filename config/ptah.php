@@ -123,9 +123,14 @@ return [
          * Atalho de menu na sidebar: digite parte do nome de uma tela e va
          * direto. Aparece no TOPO, entre o logo e a navegacao.
          *
-         * O gatilho e QUANTIDADE de links, nao a existencia de scroll. Scroll
-         * depende da altura da janela, entao o campo apareceria e desapareceria
-         * ao redimensionar; um limite de itens e estavel e previsivel.
+         * Aparece por DUAS razoes, e o aninhamento e a mais forte: uma tela
+         * dentro de um grupo fechado nao esta visivel para quem varre o menu com
+         * o olho, por poucas que sejam — e e ai que digitar ganha,
+         * independentemente de quantidade. A outra razao e o total de links
+         * chegar a `sidebar_jump_min_items`.
+         *
+         * Nao depende de haver scroll: scroll depende da altura da janela, e o
+         * campo apareceria e desapareceria ao redimensionar.
          *
          * A filtragem e no cliente: os links ja estao nesta pagina, foi a
          * propria sidebar que os renderizou. E a mesma fonte
@@ -134,7 +139,7 @@ return [
          * que a pessoa ve.
          */
         'sidebar_jump' => (bool) env('PTAH_SIDEBAR_JUMP', true),
-        'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 12),
+        'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 8),
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],
