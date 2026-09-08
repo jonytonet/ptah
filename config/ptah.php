@@ -171,6 +171,21 @@ return [
     */
     'errors' => [
         'enabled' => env('PTAH_ERROR_PAGES', true),
+
+        /*
+         * Mostrar a pagina 500 do ptah mesmo com APP_DEBUG ligado.
+         *
+         * Com debug ligado, a 500 tematizada NAO aparece por padrao: o
+         * desenvolvedor fica com o stack trace, que e a informacao util quando
+         * algo acaba de estourar. So que isso tem um efeito colateral: nao ha
+         * como VER a propria pagina de erro em desenvolvimento sem desligar o
+         * APP_DEBUG, que muda um monte de outros comportamentos ao mesmo tempo.
+         *
+         * Ligue esta chave para ver a pagina tematizada localmente. As outras
+         * (403, 404, 405, 419, 429, 503) nunca dependeram disto — sao
+         * HttpException, nao "algo estourou", e nao ha trace para preservar.
+         */
+        'themed_500_in_debug' => (bool) env('PTAH_ERROR_500_IN_DEBUG', false),
     ],
 
     /*

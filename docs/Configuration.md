@@ -291,20 +291,33 @@ device/browser; it never leaks credentials or any other account data.
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
 | `errors.enabled` | `PTAH_ERROR_PAGES` | `true` | this section |
+| `errors.themed_500_in_debug` | `PTAH_ERROR_500_IN_DEBUG` | `false` | this section |
 
 Ptah ships themed pages for **403, 404, 419, 429, 500 and 503**. They follow all
 six appearance axes, because their colours read `var(--ptah-token, literal)`:
 the token wins when `ptah-components.css` is loaded, and the literal keeps the
 page readable when it is not — which is the likely state during a 500.
 
-Each page steps aside in three situations, and none of them are configurable
-because each one would be a bug:
+Each page steps aside in three situations:
 
-| Situation | Why Ptah does not render |
-|---|---|
-| The host has `resources/views/errors/{code}.blade.php` | Laravel's convention is that a view there is the last word. |
-| The request expects JSON | An API must not be answered with HTML. |
-| 500 while `APP_DEBUG=true` | A developer needs the stack trace, not a pretty page hiding it. |
+| Situation | Why Ptah does not render | Configurable |
+|---|---|---|
+| The host has `resources/views/errors/{code}.blade.php` | Laravel's convention is that a view there is the last word. | No — it would be a bug. |
+| The request expects JSON | An API must not be answered with HTML. | No — it would be a bug. |
+| 500 while `APP_DEBUG=true` | A developer needs the stack trace, not a pretty page hiding it. | `errors.themed_500_in_debug` |
+
+**Why that last one became configurable.** The rule is right — when something has
+just blown up, the trace is worth more than the design — but it had a
+consequence nobody had accounted for: there was no way to *see* your own 500
+page in development without turning `APP_DEBUG` off, and a dozen other
+behaviours with it. A deliberate behaviour that looks exactly like a bug, with
+nothing anywhere saying why. Set `PTAH_ERROR_500_IN_DEBUG=true` while you are
+looking at the page, and leave it off otherwise.
+
+It applies to the 500 alone. The other statuses never depended on `APP_DEBUG`:
+they arrive as `HttpException` — "this request cannot have that" rather than
+"the application broke" — so there is no trace to preserve, and a 404 in
+development is the themed page either way.
 
 403 is additionally gated behind `modules.permissions`, since it is that
 module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
