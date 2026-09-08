@@ -864,6 +864,13 @@ silently is worse than applying nothing.
 A dropped rule falls through to the next one, so a tag whose colour column is
 empty still gets whatever plain rule comes after it.
 
+> **Known rough edge.** The CrudConfig editor's style preview prints the style
+> exactly as you typed it, so a templated style previews as
+> `border-left: 3px solid {{color}}` — inert, and not what a row will look like.
+> The preview has no row to read from, so showing the literal is the honest
+> option until it grows a sample value. The listing itself substitutes
+> correctly; verified on real data, hex and keyword and empty alike.
+
 ### Security behaviour
 
 If the field in `field` **does not exist** in the model attributes (`getAttributes()`), the rule is **silently ignored** — no error, no false match. This prevents a typo in the field name from causing incorrect styles across the entire table.

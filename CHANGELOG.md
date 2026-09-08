@@ -131,6 +131,15 @@ they are the same `type=` dispatch.
 plain text input**, so a column configured as datetime never had the native
 control either. Fixed by the same change.
 
+### Known rough edge
+
+The CrudConfig editor's style preview prints the style exactly as configured, so
+a templated one previews as `border-left: 3px solid {{color}}` — inert, and not
+what a row will look like. The preview has no row to read a value from, so the
+literal is the honest option until it grows a sample. Verified on real data that
+the listing itself substitutes correctly, for hex, for a keyword and for an empty
+column.
+
 ### Notes on the tests
 
 Four defects in this release were found by its own tests rather than in a
