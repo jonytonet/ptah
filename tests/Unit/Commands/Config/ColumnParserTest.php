@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Unit\Commands\Config;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Commands\Config\Parsers\ColumnParser;
 use Ptah\Tests\TestCase;
@@ -164,6 +165,76 @@ class ColumnParserTest extends TestCase
 
         $this->assertSame(['Aberto' => 'open', 'Fechado' => 'closed'], $c['colsSelect']);
         $this->assertTrue($c['colsRequired'], 'O `required` no fim tambem e um modificador.');
+    }
+
+    #[Test]
+    public function an_unknown_option_is_collected_for_the_command_to_report(): void
+    {
+        // A chave continua GRAVADA — um host pode guardar chave própria e
+        // lê-la num hook, e tirar isso para consertar uma mensagem seria
+        // quebrar algo para relatar algo. O que faltava era o aviso.
+        $c = $this->parser->parse('name:text:label=Nome:sortable=true:width=80');
+
+        $this->assertSame(['sortable', 'width'], $c[ColumnParser::UNKNOWN_KEYS] ?? null);
+        $this->assertTrue($c['sortable'] ?? null, 'A chave desconhecida continua sendo gravada.');
+        $this->assertSame('Nome', $c['colsNomeLogico']);
+    }
+
+    #[Test]
+    public function a_definition_of_known_options_collects_nothing(): void
+    {
+        // Se o aviso disparasse em definição correta, a primeira coisa que
+        // alguém faria é ignorá-lo.
+        $c = $this->parser->parse('name:text:label=Nome:sortable:min_width=80px:renderer=truncate:max_chars=20');
+
+        $this->assertArrayNotHasKey(ColumnParser::UNKNOWN_KEYS, $c);
+    }
+
+    #[Test]
+    public function a_config_key_written_out_in_full_is_known(): void
+    {
+        // Saída de escape deliberada: quem sabe o nome real da chave escreve.
+        $c = $this->parser->parse('name:text:colsMinWidth=120px:totalizadorLabel=Total');
+
+        $this->assertArrayNotHasKey(ColumnParser::UNKNOWN_KEYS, $c);
+        $this->assertSame('120px', $c['colsMinWidth']);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string|null}>
+     */
+    public static function suggestionProvider(): array
+    {
+        return [
+            // O erro que mais vale nomear: parece funcionar, e o interruptor
+            // de verdade é o modificador nu.
+            'a modifier written as a value' => ['sortable', ':sortable'],
+            // Levenshtein não alcança (distância 4); `min_width` CONTÉM
+            // `width`.
+            'width' => ['width', 'min_width='],
+            // Nem este (distância 3); os dois compartilham o prefixo `badge`.
+            'badgeMap' => ['badgeMap', 'badges='],
+            'a plain typo' => ['renderr', 'renderer='],
+            'another typo' => ['min_widht', 'min_width='],
+            // O vocabulario e snake_case, e a variante camelCase e o segundo
+            // erro mais frequente: estas tres estavam em Configuration.md.
+            'camelCase' => ['uploadPath', 'upload_path='],
+            'camelCase, longer' => ['uploadAllowedTypes', 'upload_allowed_types='],
+            // Esta contem DUAS opcoes conhecidas — `renderer` e `image_width`
+            // — e o desempate por proximidade de tamanho escolhe a certa.
+            'camelCase with a prefix that also matches' => ['rendererImageWidth', 'image_width='],
+            // `searchable` não corresponde a nada — não existe chave de busca
+            // configurável — e inventar um vizinho seria pior que o silêncio.
+            'no plausible match' => ['searchable', null],
+            'nothing like it' => ['foo_bar', null],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('suggestionProvider')]
+    public function suggests_the_option_that_was_probably_meant(string $key, ?string $expected): void
+    {
+        $this->assertSame($expected, ColumnParser::suggestionFor($key));
     }
 
     #[Test]

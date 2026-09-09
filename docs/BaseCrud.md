@@ -2646,7 +2646,7 @@ The renderer resolves relative paths via `asset('storage/{path}')`, and passes H
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
-  --column="photo:image:required:label=Product Photo:upload_path=products/photos:upload_max_size=1024:upload_allowed_types=jpg,png,webp:renderer=image:rendererImageWidth=60"
+  --column="photo:image:required:label=Product Photo:upload_path=products/photos:upload_max_size=1024:upload_allowed_types=jpg,png,webp:renderer=image:image_width=60"
 ```
 
 ### Translation keys

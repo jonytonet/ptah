@@ -7,6 +7,86 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.4] - 2026-09-09
+
+### Added - `ptah:config --column=` reports an option it does not recognise
+
+An unknown `key=` was written into the config verbatim and read by nobody,
+while the command printed "✓ Configuration saved". That is how a set of
+invented options survived in documented examples for releases:
+
+| Written | Reality |
+|---|---|
+| `sortable=true` | the switch is the **bare** modifier `:sortable` |
+| `searchable=true` | there is no searchable flag at all — `getSearchableFields()` infers it from `colsTipo === 'text'` |
+| `width=80` | the option is `min_width=80px` |
+| `badgeMap=…` | the option is `badges=`, with `|` inside each entry |
+| `uploadPath=`, `uploadMaxSize=`, `uploadAllowedTypes=`, `rendererImageWidth=` | the vocabulary is snake_case: `upload_path=`, `upload_max_size=`, `upload_allowed_types=`, `image_width=` |
+
+```
+  unknown option 'sortable' on column 'name' — it is stored but nothing reads it; did you mean `:sortable`?
+```
+
+The suggestion is the useful half, and it took three rules to get right: a
+modifier written as a value is named as one; the key is scored in both its
+literal and snake_case forms, so `uploadPath` finds `upload_path` instead of a
+neighbour; and a tie goes to the candidate of the closest LENGTH, because
+`rendererImageWidth` contains both `renderer` and `image_width` while `width`
+must still find `min_width` and not `image_width`. An option with no plausible
+match — `searchable` corresponds to nothing — is reported with no guess rather
+than with an invented one.
+
+**Nothing was taken away.** The key is still stored and the definition still
+applies: a host may keep a private key in the config and read it from a hook,
+and breaking that to fix a message would be the wrong trade. Writing a real
+config key out in full (`colsMinWidth=120px`, `totalizadorLabel=Total`) is a
+deliberate escape hatch and is never reported.
+
+### Fixed - documented `--column=` definitions that used options that do not exist
+
+`docs/Configuration.md` (`uploadPath=`, `uploadMaxSize=`,
+`uploadAllowedTypes=`), `docs/BaseCrud.md` (`rendererImageWidth=`) and
+`docs/Validation-System.md` (`sortable=true`). Found by the guard below rather
+than by reading.
+
+### Fixed - the interactive wizard discarded the column width you typed
+
+It asked "Column width (e.g., 120px, 20%, auto)" and stored the answer in
+`colsWidth`, which nothing reads — the table renders `colsMinWidth`
+(`_table.blade.php:198`), which is also where the CLI's `min_width=` goes. The
+answer now reaches that key; an existing `colsWidth` value is still read as the
+prompt's default so it is not lost, and `auto` (the old default answer) becomes
+empty instead of `min-width: auto`.
+
+### Added - two guards that close the family
+
+- `DocumentedColumnDefinitionTest` gained the option-name check, reading the
+  vocabulary from `ColumnParser::knowsKey()` — never restated in the test. It
+  found four more invented options immediately. Where the tokenizer decides
+  whether a fragment is an option or part of a value (`options=open:Aberto`),
+  the guard asks the parser instead of guessing.
+- `WizardKeyReachabilityTest` asserts that every `cols*` key the interactive
+  wizard writes is read by something outside it. It froze eleven that are not,
+  each with its reason, as a ratchet that may only shrink — **the relationship
+  block is the one that matters**: answering "Related table name", "Join
+  column" and "Display column" writes `colsRelationTable`,
+  `colsRelationJoinColumn` and `colsRelationDisplayColumn`, while the runtime
+  reads `colsRelacao` and `colsRelacaoExibe`, so the wizard's relationship
+  configuration does nothing end to end. Also frozen: the default value (no
+  default-value mechanism exists anywhere), `colsValidation` (the runtime key is
+  PLURAL), and four renderer options that were never implemented. `--column=`
+  is unaffected — it goes through `KEY_MAP`.
+
+### Changed - `ColumnParser`'s option map is a constant
+
+`KEY_MAP`, `SPECIAL_KEYS` and `MODIFIERS` were a local array and two implicit
+lists inside methods. They are now public constants, because the unknown-key
+check, the tokenizer's modifier disambiguation and two guard tests all need to
+read the same vocabulary — and the previous arrangement had
+`ColumnParserDocsParityTest` mining the map out of a method body with a regex.
+
+---
+
 ## [1.34.3] - 2026-09-09
 
 ### Added - a lifecycle hook can now refuse the save

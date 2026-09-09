@@ -242,6 +242,43 @@ and `,` to separate multiple badge definitions. Do **not** use `:` inside badge 
 --column="status:select:renderer=badge:badges=active|green,inactive|gray"
 ```
 
+### An unrecognised `--column=` option is now reported
+
+Since **1.34.4**. An option the DSL does not know used to be written into the
+config verbatim and read by nobody, with the command reporting success — which
+is how three invented options survived in documented examples:
+
+| Written | Reality |
+|---|---|
+| `sortable=true` | the switch is the **bare** modifier `:sortable` |
+| `searchable=true` | there is no searchable flag — search covers every text column automatically |
+| `width=80` | the option is `min_width=80px` |
+| `badgeMap=…` | the option is `badges=`, with `|` inside each entry |
+| `uploadPath=`, `uploadMaxSize=`, `rendererImageWidth=` | the vocabulary is snake_case: `upload_path=`, `upload_max_size=`, `image_width=` |
+
+```
+$ php artisan ptah:config "App\Models\Product" --column="name:text:sortable=true"
+  unknown option 'sortable' on column 'name' — it is stored but nothing reads it; did you mean `:sortable`?
+  added column 'name'
+```
+
+**The key is still stored, and the definition still applies.** A host may keep
+a private key in the config and read it from a hook, so nothing was taken away
+— the only change is that the CLI says what it did not recognise. Writing a
+real config key out in full (`colsMinWidth=120px`, `totalizadorLabel=Total`) is
+a deliberate escape hatch and is never reported.
+
+**Known gap — the interactive wizard.** `ptah:config` without
+`--non-interactive` asks questions whose answers reach keys nothing reads,
+including the whole relationship block (it writes `colsRelationTable` /
+`colsRelationJoinColumn` / `colsRelationDisplayColumn`, while the runtime reads
+`colsRelacao` / `colsRelacaoExibe`), the default value, and several renderer
+options. `--column=` is unaffected. The list is frozen and enumerated in
+`tests/Unit/Commands/Config/WizardKeyReachabilityTest.php`, which stops it from
+growing; use `--column=` for those settings until it is closed.
+
+---
+
 ### `select` + `renderer=badge` — what matches what
 
 Fixed in **1.34.3**. Two things are worth knowing, because both used to bite:

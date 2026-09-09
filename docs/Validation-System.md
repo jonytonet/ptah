@@ -383,7 +383,7 @@ $validator = app(CommandInputValidator::class);
 
 // Validar formato de coluna
 try {
-    $parsed = $validator->validateColumnOption('name:text:label=Nome:sortable=true');
+    $parsed = $validator->validateColumnOption('name:text:label=Nome:sortable');
     // ['field' => 'name', 'type' => 'text', 'modifiers' => []]
     
 } catch (CommandValidationException $e) {

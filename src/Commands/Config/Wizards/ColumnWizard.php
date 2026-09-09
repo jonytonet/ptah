@@ -102,7 +102,16 @@ class ColumnWizard
             $existing['colsAlign'] ?? 'text-start'
         );
 
-        $width = $this->command->ask('Column width (e.g., 120px, 20%, auto)', $existing['colsWidth'] ?? 'auto');
+        // Gravava `colsWidth`, que NADA le: a tabela renderiza
+        // `colsMinWidth` (_table.blade.php:198) e o CLI mapeia `min_width=`
+        // para ela. A largura respondida aqui era descartada em silencio —
+        // mesma familia da opcao inventada que o `--column=` agora denuncia.
+        // O valor legado continua sendo lido como default da pergunta, para
+        // nao sumir da tela de quem ja respondeu.
+        $width = $this->command->ask(
+            'Column min-width (e.g., 120px, 20%, blank for none)',
+            $existing['colsMinWidth'] ?? $existing['colsWidth'] ?? ''
+        );
         $placeholder = $this->command->ask('Placeholder text', $existing['colsPlaceholder'] ?? '');
         $helpText = $this->command->ask('Help text', $existing['colsHelpText'] ?? '');
         $defaultValue = $this->command->ask('Default value', $existing['colsDefaultValue'] ?? '');
@@ -112,7 +121,9 @@ class ColumnWizard
             'colsNomeLogico' => $label,
             'colsTipo' => $type,
             'colsAlign' => $align,
-            'colsWidth' => $width,
+            // `auto` era o default antigo da pergunta e nao significa nada como
+            // min-width, entao vira vazio em vez de virar `min-width: auto`.
+            'colsMinWidth' => in_array(strtolower(trim((string) $width)), ['', 'auto'], true) ? '' : $width,
             'colsPlaceholder' => $placeholder,
             'colsHelpText' => $helpText,
             'colsDefaultValue' => $defaultValue,

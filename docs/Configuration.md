@@ -2760,7 +2760,7 @@ php artisan ptah:config "App\Models\Post" \
   --column="slug:text:required:label=Slug:validation=required|unique:posts,slug" \
   --column="excerpt:textarea:label=Excerpt:validation=max:500" \
   --column="content:textarea:required:label=Content:validation=required" \
-  --column="featured_image:image:label=Featured Image:uploadPath=posts:uploadMaxSize=2048:uploadAllowedTypes=jpg,png,webp" \
+  --column="featured_image:image:label=Featured Image:upload_path=posts:upload_max_size=2048:upload_allowed_types=jpg,png,webp" \
   --column="author_id:searchdropdown:required:label=Author:relation=author:sd_model=App\Models\User:sd_value=id:sd_label=name" \
   --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --column="status:select:required:options=draft:Draft,published:Published,scheduled:Scheduled:renderer=badge:badges=draft|gray,published|green,scheduled|blue" \

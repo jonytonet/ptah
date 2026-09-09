@@ -17,6 +17,109 @@ class ColumnParser
     public const EXPLICIT_KEYS = '__explicit';
 
     /**
+     * Transient key listing option names the DSL does not know.
+     *
+     * Stripped by ConfigCommand::upsertColumn(), which warns about them first.
+     * Like EXPLICIT_KEYS, it never reaches crud_configs.
+     */
+    public const UNKNOWN_KEYS = '__unknown';
+
+    /**
+     * Keys the definition DSL parses itself, without going through KEY_MAP.
+     *
+     * Their values are structures, not scalars, so each has its own parser.
+     */
+    public const SPECIAL_KEYS = [
+        'validation',
+        'options',
+        'badges',
+        // Este nao esta no KEY_MAP: existe apenas no ramo especial.
+        'sd_array_search',
+    ];
+
+    /**
+     * The option vocabulary: `key=` shortcut => the config key it writes.
+     *
+     * Was a local array inside `applyKeyValue()`. Lifted out because it is the
+     * only definition of what the CLI understands, and an unknown key used to
+     * be written to the config verbatim and read by nobody — `sortable=true`
+     * stored a dead `sortable` key while the real switch is the bare
+     * `sortable` modifier, and `searchable=true` stored a key that has no
+     * runtime at all. Both appeared in documented examples for releases.
+     */
+    public const KEY_MAP = [
+        'label' => 'colsNomeLogico',
+        'placeholder' => 'colsPlaceholder',
+        'align' => 'colsAlign',
+        'renderer' => 'colsRenderer',
+        'mask' => 'colsMask',
+        'relation' => 'colsRelacao',
+        'relation_display' => 'colsRelacaoExibe',
+        'relation_nested' => 'colsRelacaoNested',
+        'min_width' => 'colsMinWidth',
+        'cell_style' => 'colsCellStyle',
+        'cell_class' => 'colsCellClass',
+        'cell_icon' => 'colsCellIcon',
+        'source' => 'colsSource',
+        'method' => 'colsMetodoCustom',
+        'method_raw' => 'colsMetodoRaw',
+        'order_by' => 'colsOrderBy',
+        'permission' => 'colsPermission',
+
+        // SearchDropdown
+        'sd_mode' => 'colsSDMode',
+        'sd_model' => 'colsSDModel',
+        'sd_service' => 'colsSDService',
+        'sd_service_method' => 'colsSDServiceMethod',
+        'sd_value' => 'colsSDValor',
+        'sd_label' => 'colsSDLabel',
+        'sd_label_two' => 'colsSDLabelTwo',
+        'sd_order_by' => 'colsSDOrder',
+        'sd_limit' => 'colsSDLimit',
+        'sd_placeholder' => 'colsSDPlaceholder',
+        'sd_filters' => 'colsSDFilters',
+        'sd_init_with_data' => 'colsSDInitWithData',
+        'sd_label_three' => 'colsSDLabelThree',
+        'sd_mask_one' => 'colsSDMaskOne',
+        'sd_mask_two' => 'colsSDMaskTwo',
+        'sd_mask_three' => 'colsSDMaskThree',
+        'sd_start_list' => 'colsSDStartList',
+        'sd_depends_on' => 'colsSDDependsOn',
+        'sd_filter_column' => 'colsSDFilterColumn',
+
+        // Renderer specific
+        'currency' => 'colsRendererCurrency',
+        'decimals' => 'colsRendererDecimals',
+        'bool_true' => 'colsRendererBoolTrue',
+        'bool_false' => 'colsRendererBoolFalse',
+        'link_template' => 'colsRendererLinkTemplate',
+        'link_label' => 'colsRendererLinkLabel',
+        'link_new_tab' => 'colsRendererLinkNewTab',
+        'image_width' => 'colsRendererImageWidth',
+        'image_height' => 'colsRendererImageHeight',
+        'upload_path' => 'colsUploadPath',
+        'upload_max_size' => 'colsUploadMaxSize',
+        'upload_allowed_types' => 'colsUploadAllowedTypes',
+        'max_chars' => 'colsRendererMaxChars',
+        'locale' => 'colsRendererLocale',
+        'progress_max' => 'colsRendererMax',
+        'progress_color' => 'colsRendererColor',
+        'rating_max' => 'colsRendererMax',
+        'duration_unit' => 'colsRendererDurationUnit',
+        'qr_size' => 'colsRendererQrSize',
+
+        // Mask
+        'mask_regex' => 'colsMaskRegex',
+        'mask_transform' => 'colsMaskTransform',
+
+        // Totalizer
+        'totalizer' => 'totalizadorType',
+        'totalizer_format' => 'totalizadorFormat',
+        'totalizer_label' => 'totalizadorLabel',
+        'totalizer_enabled' => 'totalizadorEnabled',
+    ];
+
+    /**
      * The bare, closed list of boolean modifiers.
      *
      * One list, read by three places: `applyModifier()` applies them,
@@ -94,6 +197,28 @@ class ColumnParser
             $config['colsSelect'] = self::selectFromBadges($config['colsRendererBadges']);
         }
 
+        // Toda opcao que o DSL nao conhece, para o comando avisar. A gravacao
+        // continua acontecendo: um host pode guardar uma chave propria na
+        // config e le-la num hook, e tirar isso agora seria quebrar sem
+        // necessidade. O que faltava era o aviso — `sortable=true` gravava um
+        // `sortable` que nada le (o interruptor e o modificador nu), e
+        // `searchable=true` gravava uma chave que nao tem runtime nenhum.
+        // Ambos apareciam em exemplos documentados havia releases, e o silencio
+        // e o que os manteve la.
+        $unknown = [];
+
+        foreach ($parts as $part) {
+            if (! str_contains($part, '=')) {
+                continue;
+            }
+
+            [$key] = explode('=', $part, 2);
+
+            if (! self::knowsKey($key)) {
+                $unknown[] = $key;
+            }
+        }
+
         $explicit = ['colsNomeFisico', 'colsTipo'];
 
         foreach ($config as $key => $value) {
@@ -103,6 +228,10 @@ class ColumnParser
         }
 
         $config[self::EXPLICIT_KEYS] = array_values(array_unique($explicit));
+
+        if ($unknown !== []) {
+            $config[self::UNKNOWN_KEYS] = array_values(array_unique($unknown));
+        }
 
         return $config;
     }
@@ -137,6 +266,103 @@ class ColumnParser
     }
 
     /**
+     * Is this a `key=` the DSL understands?
+     *
+     * Three ways to be known: a shortcut in KEY_MAP, one of the structured
+     * SPECIAL_KEYS, or a real config key written out in full — `colsMinWidth=`
+     * and `totalizadorLabel=` reach the config untouched, and that escape
+     * hatch is deliberate.
+     */
+    public static function knowsKey(string $key): bool
+    {
+        return array_key_exists($key, self::KEY_MAP)
+            || in_array($key, self::SPECIAL_KEYS, true)
+            || str_starts_with($key, 'cols')
+            || str_starts_with($key, 'totalizador');
+    }
+
+    /**
+     * The likeliest thing the writer meant, or null.
+     *
+     * A modifier written as `key=value` is the mistake worth naming out loud:
+     * `sortable=true` looks like it works, and the flag it means is the bare
+     * `sortable`. Beyond that, the nearest shortcut within two edits — enough
+     * for `min_widht` or `renderr`, not enough to invent a match for
+     * `searchable`, which corresponds to nothing.
+     */
+    public static function suggestionFor(string $key): ?string
+    {
+        if (in_array($key, self::MODIFIERS, true)) {
+            return ':'.$key;
+        }
+
+        // O vocabulario e snake_case, e a variante camelCase e o erro mais
+        // frequente depois do modificador: `uploadPath`, `uploadMaxSize` e
+        // `rendererImageWidth` estavam nos exemplos de Configuration.md e
+        // BaseCrud.md. Pontuar as duas formas e o que faz a sugestao acertar o
+        // nome em vez de apontar o vizinho.
+        $needles = array_unique([
+            strtolower($key),
+            strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $key)),
+        ]);
+
+        $best = null;
+        // 3 e o teto: a partir dai o palpite erra mais do que acerta, e
+        // `searchable` — que nao corresponde a nada — tem de sair sem sugestao
+        // em vez de sair com uma inventada.
+        $bestScore = 3;
+        $bestGap = PHP_INT_MAX;
+
+        foreach ([...array_keys(self::KEY_MAP), ...self::SPECIAL_KEYS, ...self::MODIFIERS] as $candidate) {
+            $lower = strtolower((string) $candidate);
+
+            foreach ($needles as $needle) {
+                $score = match (true) {
+                    // `width` dentro de `min_width`. Exige quatro caracteres,
+                    // senao uma chave curta casaria com meio mapa.
+                    strlen($needle) >= 4 && (str_contains($lower, $needle) || str_contains($needle, $lower)) => 0,
+                    // `badgeMap` e `badges` compartilham `badge` — perto o
+                    // bastante para nomear, longe demais para o levenshtein.
+                    self::sharedPrefix($needle, $lower) >= 4 => 1,
+                    default => levenshtein($needle, $lower),
+                };
+
+                // Empate vai para o candidato de tamanho mais PROXIMO, que e
+                // o mais parecido: `rendererImageWidth` contem `renderer` e
+                // `image_width`, os dois com score 0, e o mapa lista `renderer`
+                // primeiro — sem desempate a sugestao apontava o errado dos
+                // dois. "O mais longo" tambem resolveria esse, e estragava
+                // `width`, que passava a sugerir `image_width` em vez de
+                // `min_width`.
+                $gap = abs(strlen($lower) - strlen($needle));
+
+                if ($score < $bestScore || ($score === $bestScore && $gap < $bestGap)) {
+                    $best = in_array($candidate, self::MODIFIERS, true) ? ':'.$candidate : $candidate.'=';
+                    $bestScore = $score;
+                    $bestGap = $gap;
+                }
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * How many leading characters two names share.
+     */
+    private static function sharedPrefix(string $a, string $b): int
+    {
+        $limit = min(strlen($a), strlen($b));
+        $shared = 0;
+
+        while ($shared < $limit && $a[$shared] === $b[$shared]) {
+            $shared++;
+        }
+
+        return $shared;
+    }
+
+    /**
      * Apply boolean modifiers
      */
     protected function applyModifier(array $config, string $modifier): array
@@ -162,80 +388,8 @@ class ColumnParser
      */
     protected function applyKeyValue(array $config, string $key, string $value): array
     {
-        // Mapping shortcuts to full property names
-        $keyMap = [
-            'label' => 'colsNomeLogico',
-            'placeholder' => 'colsPlaceholder',
-            'align' => 'colsAlign',
-            'renderer' => 'colsRenderer',
-            'mask' => 'colsMask',
-            'relation' => 'colsRelacao',
-            'relation_display' => 'colsRelacaoExibe',
-            'relation_nested' => 'colsRelacaoNested',
-            'min_width' => 'colsMinWidth',
-            'cell_style' => 'colsCellStyle',
-            'cell_class' => 'colsCellClass',
-            'cell_icon' => 'colsCellIcon',
-            'source' => 'colsSource',
-            'method' => 'colsMetodoCustom',
-            'method_raw' => 'colsMetodoRaw',
-            'order_by' => 'colsOrderBy',
-            'permission' => 'colsPermission',
 
-            // SearchDropdown
-            'sd_mode' => 'colsSDMode',
-            'sd_model' => 'colsSDModel',
-            'sd_service' => 'colsSDService',
-            'sd_service_method' => 'colsSDServiceMethod',
-            'sd_value' => 'colsSDValor',
-            'sd_label' => 'colsSDLabel',
-            'sd_label_two' => 'colsSDLabelTwo',
-            'sd_order_by' => 'colsSDOrder',
-            'sd_limit' => 'colsSDLimit',
-            'sd_placeholder' => 'colsSDPlaceholder',
-            'sd_filters' => 'colsSDFilters',
-            'sd_init_with_data' => 'colsSDInitWithData',
-            'sd_label_three' => 'colsSDLabelThree',
-            'sd_mask_one' => 'colsSDMaskOne',
-            'sd_mask_two' => 'colsSDMaskTwo',
-            'sd_mask_three' => 'colsSDMaskThree',
-            'sd_start_list' => 'colsSDStartList',
-            'sd_depends_on' => 'colsSDDependsOn',
-            'sd_filter_column' => 'colsSDFilterColumn',
-
-            // Renderer specific
-            'currency' => 'colsRendererCurrency',
-            'decimals' => 'colsRendererDecimals',
-            'bool_true' => 'colsRendererBoolTrue',
-            'bool_false' => 'colsRendererBoolFalse',
-            'link_template' => 'colsRendererLinkTemplate',
-            'link_label' => 'colsRendererLinkLabel',
-            'link_new_tab' => 'colsRendererLinkNewTab',
-            'image_width' => 'colsRendererImageWidth',
-            'image_height' => 'colsRendererImageHeight',
-            'upload_path' => 'colsUploadPath',
-            'upload_max_size' => 'colsUploadMaxSize',
-            'upload_allowed_types' => 'colsUploadAllowedTypes',
-            'max_chars' => 'colsRendererMaxChars',
-            'locale' => 'colsRendererLocale',
-            'progress_max' => 'colsRendererMax',
-            'progress_color' => 'colsRendererColor',
-            'rating_max' => 'colsRendererMax',
-            'duration_unit' => 'colsRendererDurationUnit',
-            'qr_size' => 'colsRendererQrSize',
-
-            // Mask
-            'mask_regex' => 'colsMaskRegex',
-            'mask_transform' => 'colsMaskTransform',
-
-            // Totalizer
-            'totalizer' => 'totalizadorType',
-            'totalizer_format' => 'totalizadorFormat',
-            'totalizer_label' => 'totalizadorLabel',
-            'totalizer_enabled' => 'totalizadorEnabled',
-        ];
-
-        $mappedKey = $keyMap[$key] ?? $key;
+        $mappedKey = self::KEY_MAP[$key] ?? $key;
 
         // Special parsing for complex fields
         if ($key === 'validation') {
