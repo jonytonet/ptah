@@ -182,10 +182,46 @@ class ConfigCommand extends Command
      * @param  array<string, mixed>  $column
      * @return string 'added' or 'updated', for the caller to report
      */
+    /**
+     * Say something when a `--column=` option is not one the DSL knows.
+     *
+     * It used to be written to the config verbatim and read by nobody, and the
+     * command reported success — which is how `sortable=true`,
+     * `searchable=true` and `badgeMap=` survived in documented examples for
+     * releases. The definition is still applied exactly as before; the only
+     * change is that the CLI now says which key it did not recognise.
+     *
+     * @param  array<string, mixed>  $column
+     */
+    protected function warnUnknownColumnOptions(array $column): void
+    {
+        $unknown = $column[ColumnParser::UNKNOWN_KEYS] ?? [];
+
+        if (! is_array($unknown) || $unknown === []) {
+            return;
+        }
+
+        $field = $column['colsNomeFisico'] ?? '?';
+
+        foreach ($unknown as $key) {
+            $suggestion = ColumnParser::suggestionFor((string) $key);
+
+            $this->warn(sprintf(
+                "  unknown option '%s' on column '%s' — it is stored but nothing reads it%s",
+                $key,
+                $field,
+                $suggestion === null ? '' : "; did you mean `{$suggestion}`?"
+            ));
+        }
+    }
+
     protected function upsertColumn(array $column): string
     {
         $explicit = $column[ColumnParser::EXPLICIT_KEYS] ?? null;
         unset($column[ColumnParser::EXPLICIT_KEYS]);
+
+        $this->warnUnknownColumnOptions($column);
+        unset($column[ColumnParser::UNKNOWN_KEYS]);
 
         $field = $column['colsNomeFisico'] ?? null;
 

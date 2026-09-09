@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Tests\Unit\Commands\Config;
 
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Commands\Config\Parsers\ColumnParser;
 use Ptah\Tests\TestCase;
 use RuntimeException;
 
@@ -81,16 +82,14 @@ class ColumnParserDocsParityTest extends TestCase
     {
         $source = $this->columnParserSource();
 
-        if (! preg_match('/\$keyMap\s*=\s*\[(.*?)\n\s*\];/s', $source, $m)) {
-            throw new RuntimeException('Could not locate $keyMap in ColumnParser::applyKeyValue()');
-        }
-
-        preg_match_all("/'([a-z0-9_]+)'\s*=>\s*'([A-Za-z0-9_]+)'/", $m[1], $pairs, PREG_SET_ORDER);
-
-        $result = [];
-        foreach ($pairs as $pair) {
-            $result[$pair[1]] = $pair[2];
-        }
+        // Lido da constante, nao mais garimpado do corpo do metodo por regex.
+        // O mapa era um array local dentro de `applyKeyValue()` e este teste o
+        // extraia procurando a atribuicao; quando ele virou
+        // `ColumnParser::KEY_MAP` — para que a deteccao de opcao desconhecida
+        // pudesse consulta-lo — a regex parou de achar e os tres testes deste
+        // arquivo erraram de uma vez. Refletir e mais curto, e nao volta a
+        // quebrar quando alguem mexe na formatacao.
+        $result = ColumnParser::KEY_MAP;
 
         // A few keys ('validation', 'options', 'badges', …) bypass $keyMap entirely —
         // applyKeyValue() special-cases them with their own `if ($key === '...')`

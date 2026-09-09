@@ -52,6 +52,8 @@ class DocumentedColumnDefinitionTest extends TestCase
         // `Validation-System.md` mostra a saida de erro do proprio validador,
         // e para isso precisa de uma definicao invalida.
         'error example', 'exemplo de erro',
+        // A saida do proprio comando quando encontra a opcao inventada.
+        'unknown option',
     ];
 
     /**
@@ -93,7 +95,12 @@ class DocumentedColumnDefinitionTest extends TestCase
      */
     private static function negatedNearby(array $lines, int $index): bool
     {
-        for ($i = max(0, $index - 3); $i <= $index; $i++) {
+        // Duas linhas ADIANTE tambem, e por um motivo concreto: o exemplo que
+        // documenta o proprio aviso do CLI escreve a definicao errada numa
+        // linha e a mensagem de aviso na seguinte, entao a marca de
+        // contra-exemplo vem DEPOIS da definicao. Este guard reportou a nota
+        // que explica o defeito que ele existe para pegar.
+        for ($i = max(0, $index - 3); $i <= $index + 2; $i++) {
             $haystack = mb_strtolower($lines[$i] ?? '');
 
             foreach (self::NEGATIONS as $needle) {
@@ -193,6 +200,78 @@ class DocumentedColumnDefinitionTest extends TestCase
             $offenders,
             "Definicao documentada com colsTipo inexistente:\n".implode("\n", $offenders)
         );
+    }
+
+    #[Test]
+    public function no_documented_column_definition_uses_an_option_that_does_not_exist(): void
+    {
+        // A quinta forma da mesma família, e a que o aviso do CLI tornou
+        // verificável: uma opção que o DSL não conhece era gravada na config e
+        // lida por ninguém, com o comando reportando sucesso. Foi assim que
+        // `sortable=true` (o interruptor é o modificador NU), `searchable=true`
+        // (não existe chave de busca configurável) e `badgeMap=` (a opção é
+        // `badges=`) sobreviveram em exemplos por releases.
+        //
+        // O vocabulário vem de `ColumnParser::knowsKey()`, nunca reescrito
+        // aqui: um guard que repete a expectativa é uma segunda fonte de
+        // verdade, que é justamente o que ele existe para impedir.
+        $offenders = [];
+
+        foreach (self::definitions() as $case) {
+            $parts = explode(':', $case['definition']);
+
+            // O campo e o tipo não são opções.
+            foreach (array_slice($parts, 2) as $part) {
+                if (! str_contains($part, '=')) {
+                    continue;
+                }
+
+                [$key] = explode('=', $part, 2);
+
+                if (ColumnParser::knowsKey($key)) {
+                    continue;
+                }
+
+                // Um fragmento de VALOR também chega aqui — `badges=a|b,c|d`
+                // não tem ':' mas `options=open:Aberto` tem, e "Aberto" não é
+                // uma opção. O tokenizer é quem sabe a diferença, então
+                // pergunte a ele em vez de adivinhar.
+                if (! self::isTokenizedAsOption($case['definition'], $key)) {
+                    continue;
+                }
+
+                $suggestion = ColumnParser::suggestionFor($key);
+
+                $offenders[] = sprintf(
+                    '  %s:%d  opcao `%s=` nao existe%s — em `%s`',
+                    $case['path'],
+                    $case['line'],
+                    $key,
+                    $suggestion === null ? '' : ", talvez `{$suggestion}`",
+                    $case['definition']
+                );
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $offenders,
+            "Definicao documentada com opcao inexistente:\n".implode("\n", $offenders)
+        );
+    }
+
+    /**
+     * Did the tokenizer read this `key=` as an option, or as part of a value?
+     *
+     * `options=open:Aberto` is one token, and splitting the definition on ':'
+     * would offer `Aberto` as if it were an option name. The parser already
+     * settles this, and asking it is the only way not to re-implement it here.
+     */
+    private static function isTokenizedAsOption(string $definition, string $key): bool
+    {
+        $parsed = (new ColumnParser)->parse($definition);
+
+        return in_array($key, $parsed[ColumnParser::UNKNOWN_KEYS] ?? [], true);
     }
 
     #[Test]
