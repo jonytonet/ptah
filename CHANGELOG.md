@@ -7,6 +7,67 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.2] - 2026-09-09
+
+### Fixed - `--permission="showCreateButton=false"` reported success and changed nothing
+
+`ptah:config --permission=` wrote the RAW string. Nine lines above, in the same
+method, `--set` runs its value through `castValue()`, which turns `'false'` into
+`false`; `--permission` skipped it. So the config stored the string `"false"`,
+and every consumer treats the key as a boolean:
+
+```php
+CrudConfig.php:431   (bool) ($perms['showCreateButton'] ?? true)
+BaseCrud.php:493     ($p['showCreateButton'] ?? true) && …
+```
+
+`(bool) "false"` is `true` in PHP, and a non-empty string is truthy in an `&&`.
+The command printed "✓ Configuration saved", the screen kept the button, and
+nothing appeared in any log. `showEditButton`, `showDeleteButton` and
+`showTrashButton` were unreachable the same way — all four, from the CLI.
+
+**Why it survived:** the same flag writes nine keys, and five of them —
+`create`, `edit`, `delete`, `export`, `restore` — hold a gate NAME, a string,
+and worked perfectly through the same broken line. A flag that works in five of
+nine cases looks like a flag that works. That is how `--filter` survived several
+releases documented as functional while every call failed (see
+`ConfigFilterCliTest`, and §5 of KnownLimitations).
+
+The fix is one line: `--permission` now goes through `castValue()` too.
+`castValue()` returns anything that is not `true`/`false`/`null`/numeric
+unchanged, so the five gate names keep their exact behaviour — and there is now a
+test for that half as well, because "should be unaffected" is a claim.
+
+`--import` was the only path that worked, since `json_decode($json, true)`
+delivers a typed boolean. It keeps working, and is pinned.
+
+`ConfigPermissionCliTest` asserts the stored type for all four flags in both
+directions, that the five gate names are still strings, that both paths use the
+same caster, and — the part that matters — that the button actually leaves the
+rendered screen. 12 of its 18 cases fail without the fix.
+
+### Notes on the tests
+
+Three faults in the test arrangement, all mine, all found by running it:
+
+- A helper named `run()` collided with PHPUnit's `final TestCase::run()` and
+  killed the file before any test executed. **Second time in this codebase.**
+- The screen assertion had no config with a column, and the toolbar does not
+  render for a model with none — so "the button disappeared" would have passed
+  on a screen that never had a button. It now asserts the button is present
+  first.
+- It mounted the component with the FQCN while `ModelKey::canonical()` swaps the
+  backslashes, so the lookup missed a row that had just been written. Not a
+  product bug: a real route mounts BaseCrud with the KEY
+  (`Catalog/Product`), which is what the command writes under. The arrangement
+  now does the same.
+
+### Tests
+
+2415 -> 2433.
+
+---
+
 ## [1.34.1] - 2026-09-09
 
 Two doc-versus-code divergences, reported from a consumer app. Neither is a
