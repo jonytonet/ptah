@@ -74,9 +74,9 @@ when driving it as an agent, and prefer `--dry-run` first to preview.
 
 ```bash
 php artisan ptah:config "App\Models\Catalog\Product" --non-interactive \
-  --column="name:text:label=Nome:sortable=true:searchable=true" \
-  --column="price:money:label=Preço:sortable=true" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
+  --column="name:text:label=Nome:sortable" \
+  --column="price:number:label=Preço:renderer=money:sortable" \
+  --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
   --filter="is_active:boolean:eq:Ativos" \
   --set="itemsPerPage=15"
 
@@ -92,7 +92,11 @@ them verbatim rather than guessing.
 
 For an FK column (e.g. `category_id`), configure it as a relation/searchdropdown
 so the form shows a picker and the listing shows the related label:
-`--column="category_id:relation:label=Categoria:relation=category.name"`.
+`--column="category_id:text:label=Categoria:relation=category:relation_display=name"`
+para exibir o rótulo na listagem, ou
+`--column="category_id:searchdropdown:label=Categoria:sd_model=App\Models\Catalog\Category:sd_value=id:sd_label=name"`
+para ter o picker no formulário — `searchdropdown` sem `sd_model` (ou
+`sd_service`) é recusado pelo validador.
 Confirm the relation name and display column against the actual model before
 committing — the inference is heuristic.
 
@@ -118,8 +122,8 @@ php artisan ptah:forge Catalog/Supplier --fields="name:string,cnpj:string,is_act
 # fix FK TODO imports (none here) → pint → migrate → clears
 ./vendor/bin/pint && php artisan migrate && php artisan view:clear && php artisan config:clear
 php artisan ptah:config "App\Models\Catalog\Supplier" --non-interactive \
-  --column="name:text:label=Nome:sortable=true:searchable=true" \
-  --column="cnpj:text:label=CNPJ:searchable=true" \
-  --column="is_active:badge:label=Status:badgeMap=1:success:Ativo,0:danger:Inativo" \
+  --column="name:text:label=Nome:sortable" \
+  --column="cnpj:text:label=CNPJ" \
+  --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
   --filter="is_active:boolean:eq:Ativos"
 ```

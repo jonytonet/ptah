@@ -416,10 +416,10 @@ class CrudConfig extends Component
 
         // Lifecycle Hooks
         $hooks = $cfg['lifecycleHooks'] ?? [];
-        $this->hookBeforeCreate = $hooks['beforeCreate'] ?? '';
-        $this->hookAfterCreate = $hooks['afterCreate'] ?? '';
-        $this->hookBeforeUpdate = $hooks['beforeUpdate'] ?? '';
-        $this->hookAfterUpdate = $hooks['afterUpdate'] ?? '';
+        $this->hookBeforeCreate = self::hookText($hooks['beforeCreate'] ?? '');
+        $this->hookAfterCreate = self::hookText($hooks['afterCreate'] ?? '');
+        $this->hookBeforeUpdate = self::hookText($hooks['beforeUpdate'] ?? '');
+        $this->hookAfterUpdate = self::hookText($hooks['afterUpdate'] ?? '');
 
         // Permissions
         $perms = $cfg['permissions'] ?? [];
@@ -1065,6 +1065,26 @@ class CrudConfig extends Component
         $this->dispatch('ptah:crud-config-updated');
 
         session()->flash('crud-success', 'Configuration saved successfully!');
+    }
+
+    /**
+     * A hook declaration as the editor's text field can hold it.
+     *
+     * The declaration is normally a string. It may also arrive as the object
+     * form `{"handler": "…", "critical": true}` — tolerated by
+     * `HasCrudForm::hookHandler()` — and assigning an array to a
+     * `public string` property is a TypeError that takes the whole config
+     * modal down before it renders. Whoever declares criticality in the object
+     * form should know the editor keeps only the handler on save;
+     * `lifecycleHooksCritical` is the form that round-trips.
+     */
+    private static function hookText(mixed $declaration): string
+    {
+        if (is_array($declaration)) {
+            $declaration = $declaration['handler'] ?? $declaration['code'] ?? '';
+        }
+
+        return is_string($declaration) ? $declaration : '';
     }
 
     protected function buildConfigArray(array $existing = []): array

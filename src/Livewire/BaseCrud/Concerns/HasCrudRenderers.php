@@ -62,15 +62,22 @@ trait HasCrudRenderers
                 : ($row->{$rel}?->{$exibe} ?? $value);
         }
 
-        // O renderer boolean decide o próprio rótulo a partir do valor CRU
-        // (1/0/true/false). Aplicar o mapa colsSelect antes dele entregaria
-        // "Sim"/"Não" ao teste estrito de renderBoolean() → sempre "Não".
+        // Um renderer que decide o próprio rótulo tem de receber o valor CRU.
+        // O caso boolean já estava resolvido aqui: aplicar o mapa colsSelect
+        // antes dele entregaria "Sim"/"Não" ao teste estrito de
+        // renderBoolean() → sempre "Não". O diagnóstico valia igual para badge
+        // e pill, que casam por `colsRendererBadges[].value` e trazem o
+        // próprio `label`, e ninguém tinha estendido: numa coluna
+        // `select` + `renderer=badge` — a combinação mais comum de qualquer
+        // CRUD — o flip entregava "Ativo" onde o badge procurava "active",
+        // nada casava, e a célula saía num badge CINZA com o rótulo certo. Sem
+        // erro e sem log, que é o pior desfecho possível: a coluna está lá.
         // Espelha o mapa legado de applyCellRenderer() (colsHelper 'yesOrNot').
-        $booleanRenderer = ($col['colsRenderer'] ?? '') === 'boolean'
+        $rendererOwnsLabel = in_array($col['colsRenderer'] ?? '', ['boolean', 'badge', 'pill'], true)
             || (empty($col['colsRenderer']) && ($col['colsHelper'] ?? '') === 'yesOrNot');
 
         // Select: convert value to mapped label
-        if (($col['colsTipo'] ?? '') === 'select' && ! empty($col['colsSelect']) && ! $booleanRenderer) {
+        if (($col['colsTipo'] ?? '') === 'select' && ! empty($col['colsSelect']) && ! $rendererOwnsLabel) {
             $flip = array_flip($col['colsSelect']);
             $value = $flip[(string) $value] ?? $value;
         }
@@ -230,30 +237,110 @@ trait HasCrudRenderers
      */
     protected function renderBadge(array $col, mixed $value): string
     {
+        return $this->renderBadgeShape($col, $value, 'rounded-md px-2 py-0.5 text-xs font-medium');
+    }
+
+    /**
+     * The badge entry that describes a value, or null when none does.
+     *
+     * Matched against the RAW column value first — that is what
+     * `colsRendererBadges[].value` means, and what every documented example
+     * configures. Then, as a SECOND pass, against the value's `colsSelect`
+     * label: while the flip above was still applied to badges, the only
+     * configuration that worked on a select column was one keyed by the label,
+     * and that is what hosts wrote (and what
+     * `badge_on_a_select_column_still_uses_the_mapped_label()` pinned down as
+     * the contract). Widening the match keeps both alive. Narrowing it to the
+     * raw value alone would turn their coloured badges grey with no error —
+     * the same silent failure, in the opposite direction.
+     *
+     * @param  array<string, mixed>  $col
+     * @return array<string, mixed>|null
+     */
+    protected function findBadgeEntry(array $col, mixed $value): ?array
+    {
         $badges = $col['colsRendererBadges'] ?? [];
-        $valueStr = strtolower((string) ($value ?? ''));
 
-        foreach ($badges as $badge) {
-            if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
-                $label = e($badge['label'] ?? $value);
-                $colorVal = $badge['color'] ?? 'gray';
-                $icon = ! empty($badge['icon'])
-                    ? '<span class="'.e($badge['icon']).' mr-1 text-[10px]"></span>'
-                    : '';
+        if (! is_array($badges) || $badges === []) {
+            return null;
+        }
 
-                if (str_starts_with($colorVal, '#')) {
-                    $hex = e($colorVal);
+        $candidates = [strtolower((string) ($value ?? ''))];
+        $label = $this->selectLabelFor($col, $value);
 
-                    return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium\" style=\"background-color:{$hex}14;color:{$hex};box-shadow: inset 0 0 0 1px {$hex}40\">{$icon}{$label}</span>";
+        if ($label !== null) {
+            $candidates[] = strtolower($label);
+        }
+
+        foreach ($candidates as $candidate) {
+            foreach ($badges as $badge) {
+                if (! is_array($badge)) {
+                    continue;
                 }
 
-                $color = $this->badgeColorClasses($colorVal);
-
-                return "<span class=\"inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {$color}\">{$icon}{$label}</span>";
+                if (strtolower((string) ($badge['value'] ?? '')) === $candidate) {
+                    return $badge;
+                }
             }
         }
 
-        return '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium '.$this->badgeColorClasses('gray').'">'.e((string) ($value ?? '')).'</span>';
+        return null;
+    }
+
+    /**
+     * The `colsSelect` label for a value, or null when the column has no map.
+     *
+     * The renderers now receive the raw value, so the label they DISPLAY has
+     * to be looked up here — otherwise a select column would go from showing
+     * "Ativo" to showing "active" the moment its badge stopped matching.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    protected function selectLabelFor(array $col, mixed $value): ?string
+    {
+        $map = $col['colsSelect'] ?? [];
+
+        if (! is_array($map) || $map === []) {
+            return null;
+        }
+
+        $label = array_flip(array_map(static fn (mixed $v): string => (string) $v, $map))[(string) $value] ?? null;
+
+        return $label === null ? null : (string) $label;
+    }
+
+    /**
+     * Badge and pill markup, which differed only in the shape classes.
+     *
+     * They were two copies of the same twenty lines, and so they carried the
+     * same defect twice. One body, two shapes.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    protected function renderBadgeShape(array $col, mixed $value, string $shape): string
+    {
+        $badge = $this->findBadgeEntry($col, $value);
+        $text = $this->selectLabelFor($col, $value) ?? (string) ($value ?? '');
+
+        if ($badge === null) {
+            return '<span class="inline-flex items-center '.$shape.' '.$this->badgeColorClasses('gray').'">'.e($text).'</span>';
+        }
+
+        $label = e((string) ($badge['label'] ?? $text));
+        $colorVal = (string) ($badge['color'] ?? 'gray');
+        $icon = ! empty($badge['icon'])
+            ? '<span class="'.e((string) $badge['icon']).' mr-1 text-[10px]"></span>'
+            : '';
+
+        if (str_starts_with($colorVal, '#')) {
+            $hex = e($colorVal);
+
+            return '<span class="inline-flex items-center '.$shape.'" style="background-color:'.$hex.'14;color:'.$hex.';box-shadow: inset 0 0 0 1px '.$hex.'40">'.$icon.$label.'</span>';
+        }
+
+        $color = $this->badgeColorClasses($colorVal);
+
+        return '<span class="inline-flex items-center '.$shape.' '.$color.'">'.$icon.$label.'</span>';
     }
 
     /**
@@ -280,30 +367,7 @@ trait HasCrudRenderers
      */
     protected function renderPill(array $col, mixed $value): string
     {
-        $badges = $col['colsRendererBadges'] ?? [];
-        $valueStr = strtolower((string) ($value ?? ''));
-
-        foreach ($badges as $badge) {
-            if (strtolower((string) ($badge['value'] ?? '')) === $valueStr) {
-                $label = e($badge['label'] ?? $value);
-                $colorVal = $badge['color'] ?? 'gray';
-                $icon = ! empty($badge['icon'])
-                    ? '<span class="'.e($badge['icon']).' mr-1 text-[10px]"></span>'
-                    : '';
-
-                if (str_starts_with($colorVal, '#')) {
-                    $hex = e($colorVal);
-
-                    return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold\" style=\"background-color:{$hex}14;color:{$hex};box-shadow: inset 0 0 0 1px {$hex}40\">{$icon}{$label}</span>";
-                }
-
-                $color = $this->badgeColorClasses($colorVal);
-
-                return "<span class=\"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {$color}\">{$icon}{$label}</span>";
-            }
-        }
-
-        return '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold '.$this->badgeColorClasses('gray').'">'.e((string) ($value ?? '')).'</span>';
+        return $this->renderBadgeShape($col, $value, 'rounded-full px-2.5 py-0.5 text-xs font-semibold');
     }
 
     /**

@@ -17,6 +17,23 @@ class ColumnParser
     public const EXPLICIT_KEYS = '__explicit';
 
     /**
+     * The bare, closed list of boolean modifiers.
+     *
+     * One list, read by three places: `applyModifier()` applies them,
+     * `tokenize()` needs them to tell a modifier from the tail of a value, and
+     * the documentation guard needs them to tell an option from a typo.
+     */
+    public const MODIFIERS = [
+        'required',
+        'nullable',
+        'readonly',
+        'hidden',
+        'sortable',
+        'filterable',
+        'not_filterable',
+    ];
+
+    /**
      * Parse column definition string
      *
      * Format: field:type:modifier1:modifier2:option1=value1:option2=value2
@@ -57,6 +74,26 @@ class ColumnParser
             }
         }
 
+        // `select` + `badges=` sem `options=` era um beco sem saída: o
+        // ConfigSchemaValidator exige colsSelect para todo colsTipo `select`
+        // (ConfigSchemaValidator.php:162), então a definição morria com
+        // "requires colsSelect to be configured" e nada era gravado — e é
+        // exatamente assim que os exemplos da documentação estão escritos
+        // (ptah-development/SKILL.md:431 e :481, KnownLimitations.md:219, esse
+        // último apresentado como "CORRECT"). Não havia caminho documentado
+        // que funcionasse: quem passasse `options=` também salvava e ficava
+        // com o badge cinza, pelo defeito do flip em HasCrudRenderers.
+        //
+        // As entradas de badge JÁ são pares valor/rótulo, que é precisamente a
+        // forma de colsSelect (label => value), então derive uma da outra. Um
+        // `options=` explícito continua vencendo: quem quer as opções do form
+        // diferentes das cores da listagem escreve as duas.
+        if (($config['colsTipo'] ?? '') === 'select'
+            && empty($config['colsSelect'])
+            && ! empty($config['colsRendererBadges'])) {
+            $config['colsSelect'] = self::selectFromBadges($config['colsRendererBadges']);
+        }
+
         $explicit = ['colsNomeFisico', 'colsTipo'];
 
         foreach ($config as $key => $value) {
@@ -71,10 +108,43 @@ class ColumnParser
     }
 
     /**
+     * The `colsSelect` map implied by a badge list.
+     *
+     * @param  array<int, mixed>  $badges
+     * @return array<string, string> label => value, a forma que colsSelect usa
+     */
+    public static function selectFromBadges(array $badges): array
+    {
+        $options = [];
+
+        foreach ($badges as $badge) {
+            if (! is_array($badge)) {
+                continue;
+            }
+
+            $value = (string) ($badge['value'] ?? '');
+
+            if ($value === '') {
+                continue;
+            }
+
+            $label = trim((string) ($badge['label'] ?? ''));
+
+            $options[$label !== '' ? $label : LabelHumanizer::make($value)] = $value;
+        }
+
+        return $options;
+    }
+
+    /**
      * Apply boolean modifiers
      */
     protected function applyModifier(array $config, string $modifier): array
     {
+        if (! in_array($modifier, self::MODIFIERS, true)) {
+            return $config;
+        }
+
         return match ($modifier) {
             'required' => array_merge($config, ['colsRequired' => true]),
             'nullable' => array_merge($config, ['colsRequired' => false]),
@@ -284,10 +354,23 @@ class ColumnParser
                     $result[] = $buffer;
                 }
                 $buffer = $part;
-            } elseif ($buffer !== null) {
+            } elseif ($buffer !== null && ! in_array($part, self::MODIFIERS, true)) {
                 // No '=' and we have an open buffer → this fragment is a
                 // continuation of the previous value (value contained ':')
                 $buffer .= ':'.$part;
+            } elseif ($buffer !== null) {
+                // Um modificador conhecido fecha o valor aberto em vez de
+                // entrar nele. Sem esta ressalva,
+                // `price:number:renderer=money:sortable` — o exemplo de
+                // ptah-development/SKILL.md:430 — virava
+                // `renderer = "money:sortable"`, um renderer inexistente, e o
+                // ConfigSchemaValidator recusava a coluna inteira. A ambiguidade
+                // e real (um valor PODE conter ':', e e por isso que o buffer
+                // existe), mas a lista de modificadores e fechada e nenhuma
+                // delas e um rotulo plausivel.
+                $result[] = $buffer;
+                $buffer = null;
+                $result[] = $part;
             } else {
                 // Standalone modifier (e.g. 'required', 'hidden')
                 $result[] = $part;

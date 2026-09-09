@@ -194,6 +194,8 @@ return [
     'crud_load_error' => 'Falha ao carregar os dados. Preferências redefinidas.',
     'export_processing' => 'Processando... você receberá uma notificação.',
     'crud_save_error' => 'Erro ao salvar: :message',
+    'crud_hook_aborted' => 'Operação cancelada: :message',
+    'crud_hook_after_failed' => 'O registro foi salvo, mas um passo pós-gravação falhou: :message',
     'crud_permission_denied' => 'Você não tem permissão para realizar esta ação.',
 
     // -------------------------------------------------------------------------

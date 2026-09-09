@@ -40,7 +40,8 @@ class ProductRepository extends BaseRepository
     // add only entity-specific queries here; generic CRUD is inherited.
     public function existsBySku(string $sku): bool
     {
-        return $this->findBy('sku', $sku) !== null;
+        // `findBy()` devolve um Builder, nunca null — termine a consulta.
+        return $this->findBy('sku', $sku)->exists();
     }
 }
 
@@ -85,8 +86,8 @@ reference is for extending or reviewing it.
 | `create(array $data): Model` | Insert (fires events) |
 | `update($id, array $data): Model` | Update by id |
 | `delete($id): bool` | Delete by id |
-| `findBy($column, $value, ...)` | First match by column |
-| `findByBuilder(Closure $cb)` | Custom builder, first/get |
+| `findBy($column, $value, ...): Builder` | Where clause, **not** a result — termine com `->first()`, `->get()` ou `->exists()` |
+| `findByBuilder(Builder $query, string $column, string $operator = '=', mixed $value = null): Builder` | Adiciona um where a um Builder existente (ex.: vindo de `useIndex()`) |
 | `findByIn(string $column, array $values, array $with = [])` | `whereIn` + eager load |
 | `updateBatch(array $ids, array $data): int` | Mass update by ids |
 | `updateQuietly(array $data, $id)` / `createQuietly(array $data)` | No model events (⚠️ skips HasAuditFields) |

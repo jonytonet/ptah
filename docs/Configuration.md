@@ -1076,6 +1076,73 @@ Or with full namespace:
 
 ---
 
+### ⛔ **When a hook fails — swallowed by default, abortable on demand**
+
+A hook that throws is **logged and the save continues**. That is deliberate: a
+hook that sends a notification or writes an audit line must not take the whole
+form down with it.
+
+It is the wrong default for a hook that is a **barrier**. A `beforeUpdate` that
+stops a password hash from being re-hashed, or a `beforeCreate` that generates
+a temporary password, fails and the row is written anyway — without its guard,
+or with an empty password — while the user is told it worked. Since **1.34.3**
+there are three ways to say *not this one*:
+
+**1. Throw `CrudHookAbort` (no configuration).** Never swallowed.
+
+```php
+use Ptah\Exceptions\CrudHookAbort;
+
+public function beforeCreate(array &$data, ?Model $record, object $component): void
+{
+    if (! $this->vault->available()) {
+        // A mensagem chega ao usuário, não só ao log.
+        throw new CrudHookAbort('A senha temporária não pôde ser gerada.');
+    }
+}
+```
+
+**2. Throw `ValidationException`.** Laravel's own way to reject input, and the
+one exception swallowing can never be right for — a hook that validates and is
+ignored lets the save proceed with the data it refused. It reaches Livewire
+untouched and renders as a **field** error:
+
+```php
+throw ValidationException::withMessages(['sku' => 'Este SKU já existe.']);
+```
+
+**3. Declare the hook critical** — for a hook whose code you cannot change, or
+one that throws a plain exception. Both shapes work:
+
+```json
+{
+  "lifecycleHooks": { "beforeCreate": "@ProductHooks::beforeCreate" },
+  "lifecycleHooksCritical": { "beforeCreate": true }
+}
+```
+
+```json
+{ "lifecycleHooksCritical": ["beforeCreate", "beforeUpdate"] }
+```
+
+> **Why a sibling key and not `{"handler": …, "critical": true}` inside the
+> hook?** The object form is accepted, but the visual config editor rebuilds
+> `lifecycleHooks` as plain strings whenever it saves, so criticality declared
+> *inside* the hook is lost on the next edit from the UI.
+> `lifecycleHooksCritical` is a top-level key the editor leaves untouched.
+
+**`before*` and `after*` abort differently.** A `before*` hook runs before
+anything is written, so aborting leaves nothing behind. An `after*` hook runs
+after the row is committed and there is **no transaction** around the save — so
+the abort reports the failure and the record **stays**. The message says which
+happened (`crud_hook_aborted` vs `crud_hook_after_failed`); put anything that
+must be able to refuse the write in a `before*` hook.
+
+Every failure is logged either way, with the hook name, the model and the hook
+source.
+
+---
+
 ### 🚀 **Quick Start: Creating your first hooks class**
 
 **Option A — Artisan (recommended):**
