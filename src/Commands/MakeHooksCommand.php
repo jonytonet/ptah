@@ -82,7 +82,15 @@ namespace {$namespace};
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Ptah\Contracts\CrudHooksInterface;
+use Ptah\Exceptions\CrudHookAbort;
 
+/**
+ * A hook that throws is LOGGED AND THE SAVE CONTINUES — which is what you want
+ * for a notification, and not what you want for a barrier. To make a failure
+ * abort the save, throw CrudHookAbort (its message reaches the user), or throw
+ * a ValidationException to get a field error. An after* hook cannot roll the
+ * record back: there is no transaction around the save.
+ */
 class {$className} implements CrudHooksInterface
 {
     /**
@@ -93,6 +101,9 @@ class {$className} implements CrudHooksInterface
     {
         // Example: set a default value
         // \$data['status'] = 'pending';
+
+        // Example: refuse the save (never swallowed)
+        // throw new CrudHookAbort('Não foi possível gerar a senha temporária.');
     }
 
     /**

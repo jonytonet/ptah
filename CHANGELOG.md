@@ -7,6 +7,156 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.3] - 2026-09-09
+
+### Added - a lifecycle hook can now refuse the save
+
+`executeDynamicHook()` caught `\Throwable`, logged it, and let the save
+continue. That is right for a hook that sends a notification or writes an audit
+line — one flaky side effect must not take the form down. It is wrong for a
+hook that is a **barrier**, and there the silence *is* the defect:
+
+- a `beforeUpdate` that stops a password hash from being re-hashed fails, and
+  the row is written without its guard;
+- a `beforeCreate` that generates a temporary password fails, and the row is
+  written with an **empty password**.
+
+Both reported success, with nothing but a line in the log. Not a bug — a
+decision, stated in the code. What was missing was a way to say *not this one*.
+There are now three, and the default is unchanged:
+
+1. **the hook throws `Ptah\Exceptions\CrudHookAbort`** — never swallowed, no
+   configuration, and its message reaches the user rather than only the log;
+2. **the hook throws a `ValidationException`** (see *Changed* below);
+3. **the config declares the hook critical**, for a hook whose code you cannot
+   change: `"lifecycleHooksCritical": {"beforeCreate": true}`, or the list form
+   `["beforeCreate"]`. A sibling key rather than `{"handler": …, "critical":
+   true}` inside the hook, because the visual editor rebuilds `lifecycleHooks`
+   as plain strings on every save and would drop a nested flag — a top-level
+   key it does not build survives untouched. The object form is still accepted
+   for the hook value, and the editor no longer dies with a `TypeError` when it
+   meets one.
+
+**`before*` and `after*` abort differently.** A `before*` hook runs before
+anything is written, so aborting leaves nothing behind. An `after*` hook runs
+after the row is committed and there is no transaction around the save, so the
+record **stays** — the user-facing message says so (`crud_hook_after_failed`
+instead of `crud_hook_aborted`), because "error saving" would be a lie about a
+record that exists. Anything that must be able to refuse the write belongs in a
+`before*` hook.
+
+Every failure is still logged, aborting or not, with the hook name, the model
+and the hook source.
+
+### Changed - a `ValidationException` from a hook is no longer swallowed
+
+It propagates untouched, so Livewire renders it as a **field** error like any
+other rule. This is the one behavioural change in this release: a hook that
+validates and is ignored lets the save proceed with the data it refused, which
+cannot be what anybody configured. A hook that relied on the old silence can
+restore it by catching its own exception.
+
+### Fixed - `colsTipo: select` with `renderer: badge` worked through no documented path
+
+The most common column in any CRUD, and it had two outcomes, neither of them
+the intended one:
+
+| Path | Result |
+|---|---|
+| `select` + `badges=` (as the docs show) | `ConfigValidationException` — nothing saved |
+| `select` + `badges=` + `options=` | saves, validates, badge never coloured |
+
+The second was the dangerous one. `HasCrudRenderers` mapped the value to its
+`colsSelect` label *before* calling the renderer, so `renderBadge()` received
+`"Ativo"` and looked for `"active"`; nothing matched, and the fallback drew a
+GREY badge carrying the right text. No error, no log, and a column that is
+visibly present — so nobody investigates it.
+
+The cure was already written eleven lines above, for `boolean`, with the
+reasoning spelled out; it had simply never been extended to the two renderers
+that decide their own label the same way. `$rendererOwnsLabel` now covers
+`badge` and `pill`.
+
+**Configurations written against the old behaviour keep working.** Hosts keyed
+their badges by the LABEL, because that was the only thing that coloured, and a
+test had written that down as the contract. So `findBadgeEntry()` tries the raw
+value first and the `colsSelect` label second: the documented configuration is
+now primary, and the workaround still paints. Narrowing the match instead would
+have turned their badges grey with no error — the same silent failure in the
+opposite direction.
+
+`renderBadge()` and `renderPill()` were two copies of the same twenty lines, and
+carried the defect twice; they now share one body with two shape classes.
+
+### Fixed - `select` + `badges=` without `options=` was refused outright
+
+`ConfigSchemaValidator` requires `colsSelect` for every `colsTipo: select`, and
+`badges=` does not create it — so the definition every document teaches
+(`ptah-development/SKILL.md:431`, `KnownLimitations.md:219`, the latter
+presented as *CORRECT*) died with "requires colsSelect to be configured".
+
+Badge entries already are `value|color|label` triples, which is exactly the
+shape of `colsSelect`, so the parser now derives one from the other. An
+explicit `options=` still wins, for when the form's options must differ from
+the listing's colours.
+
+### Fixed - a bare modifier after an option was swallowed into its value
+
+`price:number:label=Price:renderer=money:sortable` — written that way in
+`ptah-development/SKILL.md:430` — produced `colsRenderer = "money:sortable"`,
+an invalid renderer, and the column was refused. The tokenizer treats a
+fragment without `=` as the continuation of the open value, which is what makes
+`options=open:Aberto` work; the list of modifiers is closed, so a fragment that
+IS one now closes the value instead of joining it. A trailing `required` after
+`options=` never applied either, and now does.
+
+### Fixed - documentation that contradicted the code
+
+- `ptah-data-layer/SKILL.md:41` taught `return $this->findBy('sku', $sku) !== null;`
+  as the canonical repository example. `findBy()` returns a `Builder`, which is
+  never null, so `existsBySku()` answered **true for every SKU** and the
+  duplicate guard three blocks below refused every creation. It reads
+  correctly, passes review, and is only wrong at runtime — and it is the first
+  code block of the skill, the one an agent copies before reading anything
+  else. Now `->exists()`, with the two reference-table rows corrected.
+- `docs/Permissions.md:720` documented `getWithPermissions(Role $role)`; the
+  method takes `int $roleId`.
+- `resources/boost/skills/ptah-scaffold/SKILL.md` taught syntax that never
+  existed — `badge` and `money` and `relation` as `colsTipo` values (all three
+  are refused by the validator; `badge` and `money` are RENDERERS), `badgeMap=`
+  (the option is `badges=`, with `|` inside each entry), `sortable=true` (the
+  modifier is bare `sortable`; with `=true` it wrote a dead key nothing reads)
+  and `searchable=true` (not configurable anywhere — search covers every text
+  column automatically). `KnownLimitations.md:212` documents that exact badge
+  pattern as WRONG, and the scaffold skill is the one an agent reads FIRST.
+- `docs/BaseCrud.md` and `docs/Commands.md` configured `renderer=badge` with no
+  `badges=`, which the validator refuses, and `sdSelectColumn=` on a
+  searchdropdown, which is not an option (and left it without `sd_model`).
+
+### Added - two guards for the class of defect these four reports share
+
+Four consecutive reports had one shape: a document asserting something the code
+contradicts. Both guards read the code by reflection and never restate the
+expectation, because a guard that hardcodes it is a second source of truth —
+the very thing it exists to prevent.
+
+- `DocumentedColumnDefinitionTest` parses every `--column="…"` in `docs/**` and
+  `resources/boost/**` and puts it through the real parser and validator.
+  Definitions introduced as counter-examples are skipped, on a three-line
+  window. This gap existed because tests configure columns as PHP arrays while
+  documents write CLI strings; the string a reader copies is now the string a
+  test parses.
+- `DocSignatureParityTest` gained the return type and the first parameter type
+  written in reference TABLES, attributed to the class the section declares
+  (`**Namespace:**`) rather than matched by method name — indexing by name
+  reported `create(array $data): Role` on `RoleService`, which is correct, only
+  because `BaseService::create()` returns `Model`. It reports only what it can
+  prove: a builtin against a class, or two classes it can resolve that are
+  unrelated. Ten rows of `enableTotp(User $user)` against the real
+  `Authenticatable` are the document simplifying, not lying.
+
+---
+
 ## [1.34.2] - 2026-09-09
 
 ### Fixed - `--permission="showCreateButton=false"` reported success and changed nothing

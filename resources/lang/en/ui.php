@@ -193,6 +193,8 @@ return [
     'crud_load_error' => 'Failed to load data. Preferences reset.',
     'export_processing' => 'Processing... you will receive a notification.',
     'crud_save_error' => 'Error saving: :message',
+    'crud_hook_aborted' => 'Operation cancelled: :message',
+    'crud_hook_after_failed' => 'The record was saved, but a post-save step failed: :message',
     'crud_permission_denied' => 'You do not have permission to perform this action.',
 
     // -------------------------------------------------------------------------

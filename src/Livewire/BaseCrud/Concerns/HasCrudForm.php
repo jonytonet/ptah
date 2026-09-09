@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Ptah\Exceptions\CrudHookAbort;
 use Ptah\Support\PtahMask;
 use Ptah\Support\SearchDropdownMask;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
@@ -249,6 +251,18 @@ trait HasCrudForm
 
                 return;
             }
+        } catch (ValidationException $e) {
+            // Vinda de um hook que valida: devolvida ao Livewire, que a
+            // renderiza como erro de campo. Cair no `_general` abaixo
+            // transformaria uma regra de campo numa faixa de erro genérica.
+            $this->creating = false;
+
+            throw $e;
+        } catch (CrudHookAbort $e) {
+            $this->formErrors['_general'] = trans(
+                $e->persisted() ? 'ptah::ui.crud_hook_after_failed' : 'ptah::ui.crud_hook_aborted',
+                ['message' => $e->getMessage()]
+            );
         } catch (\Throwable $e) {
             $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]);
         }
@@ -337,9 +351,10 @@ trait HasCrudForm
      */
     protected function executeDynamicHook(string $hookName, array &$data, ?Model $record = null): void
     {
-        $hookCode = $this->crudConfig['lifecycleHooks'][$hookName] ?? null;
+        $declaration = $this->crudConfig['lifecycleHooks'][$hookName] ?? null;
+        $hookCode = $this->hookHandler($declaration);
 
-        if (empty($hookCode) || ! is_string($hookCode)) {
+        if ($hookCode === null) {
             return;
         }
 
@@ -351,24 +366,113 @@ trait HasCrudForm
                 $this->executeInlineHook($hookCode, $hookName, $data, $record);
             }
 
-        } catch (\Throwable $e) {
-            // Log error with full context but don't break execution
-            Log::error(
-                "[BaseCrud] Lifecycle hook '{$hookName}' failed for model {$this->model}",
-                [
-                    'hook' => $hookName,
-                    'model' => $this->model,
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString(),
-                    'code' => $hookCode,
-                ]
-            );
+        } catch (ValidationException $e) {
+            // Laravel's canonical "reject this input", and the one exception
+            // that swallowing can never be right for: a hook that validates
+            // and is ignored lets the save proceed with the data it refused.
+            // Propagated untouched so `save()` can hand it to Livewire, which
+            // renders it as field errors like any other rule.
+            $this->logHookFailure($hookName, $hookCode, $e);
 
-            // Optionally notify user (commented out to avoid UI clutter)
-            // $this->formErrors['_lifecycle_hook'] = "Hook {$hookName} error: " . $e->getMessage();
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->logHookFailure($hookName, $hookCode, $e);
+
+            // Swallowing is still the DEFAULT, and deliberately so: a hook
+            // that sends a notification or writes an audit line must not take
+            // the form down with it. But the same swallow applied to a hook
+            // that is a BARRIER, and there the silence IS the defect — a
+            // `beforeUpdate` guarding a password hash, or a `beforeCreate`
+            // generating a temporary password, would fail and the row would be
+            // written anyway, reporting success with only a log line.
+            //
+            // Two ways out, both explicit: the hook throws CrudHookAbort, or
+            // the config declares the hook critical.
+            if ($e instanceof CrudHookAbort || $this->hookIsCritical($hookName, $declaration)) {
+                throw $this->asAbort($e, $hookName);
+            }
         }
+    }
+
+    /**
+     * The handler string of a hook declaration.
+     *
+     * A declaration is normally the code itself, as a string. The inline
+     * object form — `{"handler": "@Class::method", "critical": true}` — is
+     * tolerated because a host WILL write it after reading about criticality,
+     * and an array reaching the editor's `public string` property is a
+     * TypeError that takes the whole config modal down. Note that the visual
+     * editor writes hooks back as plain strings, so `lifecycleHooksCritical`
+     * is the form that survives a round trip through it.
+     */
+    private function hookHandler(mixed $declaration): ?string
+    {
+        if (is_array($declaration)) {
+            $declaration = $declaration['handler'] ?? $declaration['code'] ?? null;
+        }
+
+        return is_string($declaration) && trim($declaration) !== '' ? $declaration : null;
+    }
+
+    /**
+     * Must a failure of this hook abort the save?
+     *
+     * Declared in a SIBLING key rather than inside the hook value, because
+     * `CrudConfig::buildConfigArray()` rebuilds `lifecycleHooks` wholesale on
+     * every save from the visual editor (it merges what it did not build, so a
+     * top-level key survives untouched while a nested one would be dropped):
+     *
+     *     "lifecycleHooksCritical": { "beforeCreate": true }
+     *     "lifecycleHooksCritical": [ "beforeCreate" ]
+     */
+    private function hookIsCritical(string $hookName, mixed $declaration): bool
+    {
+        if (is_array($declaration) && array_key_exists('critical', $declaration)) {
+            return (bool) $declaration['critical'];
+        }
+
+        $critical = $this->crudConfig['lifecycleHooksCritical'] ?? [];
+
+        if (! is_array($critical)) {
+            return false;
+        }
+
+        return (bool) ($critical[$hookName] ?? in_array($hookName, $critical, true));
+    }
+
+    /**
+     * The failure, as an abort that carries which half of the cycle it hit.
+     *
+     * `after*` hooks run once the row is committed, and there is no
+     * transaction around the save — so the abort reports the failure but the
+     * record stays. The user-facing message has to say so.
+     */
+    private function asAbort(\Throwable $e, string $hookName): CrudHookAbort
+    {
+        $persisted = str_starts_with($hookName, 'after');
+
+        return $e instanceof CrudHookAbort
+            ? $e->mergeContext(['hook' => $hookName, 'persisted' => $persisted])
+            : CrudHookAbort::from($e, $hookName, $persisted);
+    }
+
+    /**
+     * @param  string  $hookCode  the hook source, logged so a failure can be traced to what ran
+     */
+    private function logHookFailure(string $hookName, string $hookCode, \Throwable $e): void
+    {
+        Log::error(
+            "[BaseCrud] Lifecycle hook '{$hookName}' failed for model {$this->model}",
+            [
+                'hook' => $hookName,
+                'model' => $this->model,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'code' => $hookCode,
+            ]
+        );
     }
 
     /**

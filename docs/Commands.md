@@ -905,7 +905,7 @@ php artisan ptah:config "App\Models\Product" \
   --route="admin/products" \
   --column="name:text:required" \
   --column="price:number:required" \
-  --column="status:select:options=active,inactive:renderer=badge"
+  --column="status:select:options=active,inactive:renderer=badge:badges=active|green|Active,inactive|gray|Inactive"
 
 # 9. Read-only variant for another route
 php artisan ptah:config "App\Models\Product" \

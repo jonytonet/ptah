@@ -2369,6 +2369,13 @@ if RedirectResponse returned → redirect
 closeModal() + dispatch('crud-saved')
 ```
 
+> **A hook that throws is logged and the save continues** — right for a
+> notification, wrong for a barrier. To make a failure abort the save, throw
+> `Ptah\Exceptions\CrudHookAbort` (or a `ValidationException`, which renders as
+> a field error), or declare the hook in `lifecycleHooksCritical`. An `after*`
+> hook cannot roll the record back: there is no transaction around the save.
+> See [Configuration.md](Configuration.md#lifecycle-hooks-dynamic-code).
+
 ### Example — beforeCreate
 
 ```php
@@ -2864,9 +2871,9 @@ php artisan ptah:config "App\Models\Product" --route="admin/products" --list
 php artisan ptah:config "App\Models\Ticket" \
   --route="admin/tickets" \
   --column="title:text:required" \
-  --column="status:select:options=open:Aberto,in_progress:Em andamento,resolved:Resolvido:renderer=badge" \
-  --column="priority:select:options=low,medium,high,urgent:renderer=badge" \
-  --column="agent_id:searchdropdown:relation=agent:sdSelectColumn=name"
+  --column="status:select:options=open:Aberto,in_progress:Em andamento,resolved:Resolvido:renderer=badge:badges=open|yellow|Aberto,in_progress|blue|Em andamento,resolved|green|Resolvido" \
+  --column="priority:select:options=low,medium,high,urgent:renderer=badge:badges=low|gray|Low,medium|yellow|Medium,high|orange|High,urgent|red|Urgent" \
+  --column="agent_id:searchdropdown:sd_model=App\Models\User:sd_value=id:sd_label=name"
 
 # Read-only view for agents (/helpdesk/tickets) — no agent assignment column
 php artisan ptah:config "App\Models\Ticket" \

@@ -717,7 +717,7 @@ if (ptah_has_role('Vendas Externas')) {
 | `delete(Role $role): void` | Soft-delete. Throws `ValidationException` for MASTER role |
 | `bindPageObject(Role $role, int $pageObjectId, array $perms): RolePermission` | Upsert permission for an object (uses `withTrashed`) |
 | `syncPageBindings(Role $role, array $bindings): void` | Replaces all role permissions. Removes objects not present in the array; creates/updates those present |
-| `getWithPermissions(Role $role): Role` | Eager loads: `permissions.pageObject.page` + `department` |
+| `getWithPermissions(int $roleId): Role` | Eager loads: `permissions.pageObject.page` + `department` |
 
 ### `syncPageBindings` — array format
 

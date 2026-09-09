@@ -137,4 +137,43 @@ class ColumnParserTest extends TestCase
 
         $this->assertSame('page::viewCost', $c['colsPermission']);
     }
+
+    #[Test]
+    public function a_bare_modifier_after_an_option_is_a_modifier_and_not_part_of_its_value(): void
+    {
+        // `price:number:label=Price:renderer=money:sortable` — ptah-development
+        // /SKILL.md:430, written that way for several releases. The tokenizer
+        // treats a fragment without '=' as the continuation of the open value
+        // (which is what makes `options=open:Aberto` work), so `renderer`
+        // became the string "money:sortable": an invalid renderer, and the
+        // whole column was refused by ConfigSchemaValidator. The list of
+        // modifiers is closed, so a fragment that IS one closes the value.
+        $c = $this->parser->parse('price:number:label=Price:renderer=money:sortable');
+
+        $this->assertSame('money', $c['colsRenderer'], 'O modificador foi engolido pelo valor do renderer.');
+        $this->assertSame('price', $c['colsOrderBy'] ?? null, 'E o `sortable` tem de ter sido aplicado.');
+        $this->assertSame('Price', $c['colsNomeLogico']);
+    }
+
+    #[Test]
+    public function a_value_that_really_contains_a_colon_is_still_kept_whole(): void
+    {
+        // A contrapartida, e o motivo de o buffer existir: nenhum fragmento
+        // destes e um modificador, entao todos continuam entrando no valor.
+        $c = $this->parser->parse('status:select:options=open:Aberto,closed:Fechado:required');
+
+        $this->assertSame(['Aberto' => 'open', 'Fechado' => 'closed'], $c['colsSelect']);
+        $this->assertTrue($c['colsRequired'], 'O `required` no fim tambem e um modificador.');
+    }
+
+    #[Test]
+    public function badges_alone_imply_the_select_options(): void
+    {
+        // `select` + `badges=` sem `options=` era recusado pelo validador, que
+        // exige colsSelect — e e assim que a documentacao escreve o exemplo.
+        // As entradas de badge ja sao pares valor/rotulo.
+        $c = $this->parser->parse('is_active:select:renderer=badge:badges=1|success|Ativo,0|danger|Inativo');
+
+        $this->assertSame(['Ativo' => '1', 'Inativo' => '0'], $c['colsSelect']);
+    }
 }

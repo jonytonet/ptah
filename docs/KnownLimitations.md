@@ -242,6 +242,27 @@ and `,` to separate multiple badge definitions. Do **not** use `:` inside badge 
 --column="status:select:renderer=badge:badges=active|green,inactive|gray"
 ```
 
+### `select` + `renderer=badge` — what matches what
+
+Fixed in **1.34.3**. Two things are worth knowing, because both used to bite:
+
+- **`badges=` alone is enough on a `select` column.** `colsSelect` is derived
+  from the badge entries (they already are `value|color|label` triples), so the
+  form gets its options and the validator stops asking for `options=`. Pass
+  `options=` as well only when the form's options must differ from the
+  listing's colours — an explicit `options=` always wins.
+- **`badges[].value` matches the RAW column value**, not its label. Before
+  1.34.3 the `colsSelect` label was applied *before* the renderer ran, so a
+  badge configured as documented never matched and the cell fell back to a grey
+  badge — no error, no log, and a column that looks present. Configurations
+  written against that behaviour (badge `value` holding the *label*) keep
+  working: the raw value is tried first, the label second.
+
+```bash
+# Enough on its own — colsSelect is derived from the badges:
+--column="status:select:renderer=badge:badges=active|green|Ativo,inactive|red|Inativo"
+```
+
 ### `options=` values support `:` as separator
 
 `ColumnParser` uses a smart tokenizer, so option values that contain `:` are
