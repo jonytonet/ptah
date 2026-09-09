@@ -222,10 +222,20 @@ class InstallCommand extends Command
 
             $themeTokens = <<<'CSS'
 
-    /* ── Ptah Forge design tokens ── */
-    --color-primary:       #1e40af;
-    --color-primary-light: #dbeafe;
-    --color-primary-dark:  #1e3a8a;
+    /* ── Ptah Forge design tokens ──
+       Estes literais sao o PONTO DE PARTIDA do app.css. Em runtime o
+       `partials.theme-colors` injeta um :root depois do @vite, com os valores de
+       `ptah.colors` — entao o que vale na tela e o config, nao o que esta aqui.
+
+       Mesmo assim eles precisam bater com os defaults do config, e por muito
+       tempo o primary nao batia: aqui #1e40af (azul) contra #5b21b6 (violeta) em
+       config/ptah.php e em core.md. Nao era bug funcional, porque o :root do
+       config vence por ordem — era pior: um valor inalcancavel gravado no
+       app.css de todo projeto novo, e quem abrisse aquele arquivo concluiria que
+       a cor da marca e azul. InstallStubColorParityTest agora casa os dois. */
+    --color-primary:       #5b21b6;
+    --color-primary-light: #ede9fe;
+    --color-primary-dark:  #4c1d95;
     --color-success:       #10b981;
     --color-success-light: #d1fae5;
     --color-success-dark:  #059669;

@@ -774,7 +774,7 @@ return $item ? BaseResponse::ok($item) : BaseResponse::notFound('Product not fou
 return BaseResponse::created($this->service->create($request->validated()));
 
 // update
-return BaseResponse::ok($this->service->update($request->validated(), $id));
+return BaseResponse::ok($this->service->update($id, $request->validated()));
 
 // destroy
 return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();

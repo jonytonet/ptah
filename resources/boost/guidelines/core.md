@@ -116,10 +116,38 @@ resources/views/product/index.blade.php
 ```
 Libraries auto-loaded by `forge-dashboard-layout`: Boxicons 2.1.4 + FontAwesome 6.7.2 (CDN).
 
-**Dark mode — class `.ptah-dark` on root, CSS centralized:**
-- All CSS (including dark overrides) lives in `forge-dashboard-layout.blade.php`
-- Never add `<style>` blocks inside view components
-- Dark variant pattern: `.ptah-dark .my-component { background: #1e293b; }`
+**Dark mode and theming — never write a colour, read a token:**
+
+Where new CSS goes depends on which side you are on, and this guideline is for
+the HOST side:
+
+| You are… | New CSS goes | How it follows the theme |
+|---|---|---|
+| Writing a screen in **your app** | `resources/css/app.css`, or the element itself | `var(--ptah-surface)`, `var(--ptah-text-strong)`, … |
+| Contributing to **the ptah package** | `resources/css/ptah-components.css`, as a `.ptah-c-*` class | same tokens |
+
+```blade
+{{-- ✅ Correct — follows every appearance axis the user picks --}}
+<div style="background: var(--ptah-surface); color: var(--ptah-text-strong)">
+
+{{-- ❌ Wrong — stays this colour when the user switches tone --}}
+<div style="background: #1e293b">
+```
+
+- **Never** add `<style>` blocks inside view components.
+- **Never** write CSS into `forge-dashboard-layout.blade.php`. It carries a
+  legacy inline block that is being **dismantled, not extended**:
+  `LayoutStyleBaselineTest` fails the build if it gains a single rule or colour
+  literal, and `HardcodedPaletteCeilingTest` is a per-file ratchet that only
+  goes down. In a consumer app that file lives inside `vendor/` anyway — editing
+  it means publishing the view, and then you own it and stop receiving updates.
+- A component does **not** branch on `.ptah-dark`. The token is redefined by the
+  active preset; that is what the token is for. Reach for `.ptah-dark .my-thing`
+  only for something a token genuinely cannot express, and then define BOTH
+  scopes.
+- The six per-user axes (light/dark tone, accent, text weight, density, font
+  size) are `data-ptah-*` attributes on `<html>`, resolved by
+  `Ptah\Support\AppearancePresets`. Full recipe: `docs/CustomScreens.md`.
 
 **Forge component color convention:**
 ```blade
@@ -162,10 +190,10 @@ Never enable modules by editing PHP — always use `ptah:module`.
 | Eloquent query inside a Service | Move to Repository method |
 | Business logic inside Livewire/Controller | Move to Service layer |
 | `new ProductService()` or `new ProductRepository()` | Inject `ProductServiceContract` via constructor |
-| `<style>` block inside a view | CSS in `forge-dashboard-layout.blade.php` |
+| `<style>` block inside a view | `resources/css/app.css` (host) or `ptah-components.css` (package) — never the layout |
 | Inline SVG as icon | `<i class="bx bx-...">` or `<i class="fas fa-...">` |
 | `wire:model.live` on text input | `wire:model.blur` |
-| Hardcoded colors like `#5b21b6` in Blade/CSS | Design token classes (`text-primary`, `bg-success`) |
+| Hardcoded colors like `#5b21b6` in Blade/CSS | Design token classes (`text-primary`, `bg-success`) or `var(--ptah-*)` |
 | `php artisan ptah:module company` skipped, manually set in config | Always run the Artisan command |
 | Creating Model/Service/Repository files manually | Always run `ptah:forge` |
 
