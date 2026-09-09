@@ -291,7 +291,21 @@ class ConfigCommand extends Command
             $this->info('Processing permissions...');
             foreach ($this->option('permission') as $permission) {
                 [$action, $perm] = explode('=', $permission, 2);
-                $this->config['permissions'][$action] = $perm;
+                // Pelo castValue, como o --set nove linhas acima. Sem isto o
+                // valor era gravado como STRING, e as quatro chaves booleanas
+                // (showCreateButton, showEditButton, showDeleteButton,
+                // showTrashButton) ficavam inalcancaveis pela CLI: `(bool)
+                // "false"` em PHP e true, e string nao vazia e verdadeira num
+                // `&&`. O comando dizia "Configuration saved" e o botao
+                // continuava na tela.
+                //
+                // As outras cinco chaves deste mesmo bloco guardam nome de gate
+                // — string — e funcionavam pela mesma linha quebrada. Uma flag
+                // que funciona em cinco de nove casos parece uma flag que
+                // funciona, e foi assim que isso passou. castValue devolve
+                // intacto tudo que nao e true/false/null/numerico, entao as
+                // cinco nao mudam de comportamento.
+                $this->config['permissions'][$action] = $this->castValue($perm);
             }
         }
 

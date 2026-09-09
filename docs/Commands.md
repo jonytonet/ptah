@@ -839,13 +839,31 @@ inner:categories:products.category_id=categories.id:select=name
 
 **Permissions (--permission):**
 
+The flag writes two kinds of value, and the difference matters when reading the
+examples below: five keys hold a **gate name** (a string), and four hold a
+**boolean** that hides a button outright.
+
 ```bash
-# Examples
---permission="list=product.index"
+# Gate names — the permission checked before the action is allowed
 --permission="create=product.create"
 --permission="edit=product.update"
 --permission="delete=product.destroy"
+--permission="export=product.export"
+--permission="restore=product.restore"
+
+# Buttons — hidden regardless of any gate
+--permission="showCreateButton=false"
+--permission="showEditButton=false"
+--permission="showDeleteButton=false"
+--permission="showTrashButton=false"
 ```
+
+`true` and `false` are stored as booleans, `null` as null, and a number as a
+number — the same casting `--set` uses. Until 1.34.2 the value was stored as a
+raw string, which made the four boolean keys unreachable from the CLI: `(bool)
+"false"` is `true` in PHP, so the command reported success and the button stayed
+on screen. The five gate names were unaffected, which is why a flag that worked
+in five of nine cases looked like a flag that worked.
 
 **Workflow Examples:**
 
