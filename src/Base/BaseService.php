@@ -276,6 +276,20 @@ abstract class BaseService
     /**
      * Updates without firing model events or observers.
      *
+     * ⚠ THE ARGUMENT ORDER IS THE REVERSE OF `update()`.
+     *
+     * `update(int|string $id, array $data)` but `updateQuietly(array $data,
+     * int|string $id)`. Two orders for the same operation in the same class is
+     * a permanent trap: every doc, example and wrapper written against it has a
+     * coin-flip chance of picking the wrong one, and one of them already did —
+     * SKILL.md shipped `update($request->validated(), $id)` for several
+     * releases. It fails loudly (a TypeError on an int|string parameter), so
+     * nothing corrupts; the cost is the time and the trust.
+     *
+     * Kept as-is because changing it silently would break every existing
+     * caller. It is on the list for the next major, where `update()`'s order
+     * wins and this signature stays for one release as @deprecated.
+     *
      * @param  array<string, mixed>  $data
      */
     public function updateQuietly(array $data, int|string $id): bool

@@ -7,6 +7,122 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.1] - 2026-09-09
+
+Two doc-versus-code divergences, reported from a consumer app. Neither is a
+runtime bug; both are documentation that leads the reader into the error — and
+in a package whose stated differentiator is "built for AI agents", guidance that
+points the wrong way is a product defect, not a typo.
+
+### Fixed - the Boost guideline taught what the build forbids
+
+`resources/boost/guidelines/core.md` said:
+
+> All CSS (including dark overrides) lives in `forge-dashboard-layout.blade.php`
+> Dark variant pattern: `.ptah-dark .my-component { background: #1e293b; }`
+
+Both are the opposite of what this repository enforces. `LayoutStyleBaselineTest`
+is a golden master over that inline block precisely because it retrofits dark
+mode onto the chrome with no tokens, so the user-selectable theme cannot reach
+any of it — the guideline was pointing consumers at the debt the package is
+paying off. `HardcodedPaletteCeilingTest` is a per-file ratchet that only goes
+down. And the hex in the example contradicted core.md's OWN anti-pattern table
+forty-six lines below, which lists a hex in Blade/CSS as a thing not to do.
+
+The precedence made it worse: core.md is published to Boost and is in an agent's
+context on **every** request, while `SKILL.md` — which had the right answer,
+naming the guard — is loaded on demand. The wrong advice outranked the right one.
+
+There was a scope fault underneath it too. The advice was written for someone
+editing ptah; core.md's audience is someone consuming it, and in a consumer app
+that layout is inside `vendor/`. Following it meant either editing a vendored
+file, lost on the next `composer update`, or publishing the view and never
+receiving an update to it again. `CustomScreens.md` distinguishes the two
+audiences; core.md did not.
+
+Rewritten as a table that says which side you are on: host → `var(--ptah-*)` on
+the element or in `resources/css/app.css`; package → a `.ptah-c-*` class in
+`resources/css/ptah-components.css`. Never the layout. The example now shows the
+token, and the wrong way is marked as wrong. It also states that a component does
+not branch on `.ptah-dark` at all — the preset redefines the token, which is what
+the token is for.
+
+### Fixed - a documented call had its arguments the wrong way round
+
+`SKILL.md` shipped `$this->service->update($request->validated(), $id)` while
+`BaseService::update()` is `update(int|string $id, array $data)`. The generator's
+stubs had it right, and so did `BaseLayer.md`; the document that was wrong is the
+one an agent reads in order to write code.
+
+**The cause is the API, not the typo.** The same class exposes both orders:
+
+```php
+public function update(int|string $id, array $data): Model
+public function updateQuietly(array $data, int|string $id): bool
+```
+
+Two conventions for one operation in one class is a permanent trap: every doc,
+example and wrapper written against it has a coin-flip chance of picking the
+wrong one, and one of them did. It fails loudly — a TypeError on the first run,
+nothing corrupted — so the cost is time and the trust in everything else the
+document says.
+
+`updateQuietly()` and `createQuietly()` now carry an explicit warning in their
+docblocks saying the order is reversed and why it has not been changed:
+realigning it silently would break every existing caller. It goes on the list
+for the next major, where `update()`'s order wins and the old signature stays one
+release as `@deprecated`.
+
+### Fixed - the installer wrote a colour the config contradicts
+
+`ptah:install` wrote `--color-primary: #1e40af` (blue) into a host's `app.css`
+while `config/ptah.php` defaults to `#5b21b6` (violet), which is also what
+core.md documents. Success, danger and warn all matched, which is what makes the
+odd one out a slip.
+
+Not a functional bug: the layout includes `@vite` and then the `theme-colors`
+partial, so the `:root` built from `ptah.colors` comes later and wins by order.
+Arguably worse than a bug — the value was unreachable, sitting in the `app.css`
+of every new project, and anyone opening that file would conclude the brand
+colour is blue.
+
+### Added - three guards, because prose has already failed here once
+
+The fixes above are the smaller half. A written rule on its own did not hold:
+`HardcodedPaletteCeilingTest` exists because `KnownLimitations.md` forbade new
+fixed-palette utilities from 1.15.0 and the count grew from 999 to 1019 anyway.
+
+- **`GuidelinesCssParityTest`** — fails if either document names the layout as a
+  destination for CSS, or teaches a hex as a component colour.
+- **`DocSignatureParityTest`** — reads the real parameter list of every public
+  `BaseService`/`BaseRepository` method by reflection, then checks every
+  `->method(...)` call in `docs/**` and `resources/boost/**` for an array where
+  an id belongs, or an id where an array belongs. It catches the whole class,
+  wherever it is written, including in a document nobody has thought of yet.
+- **`InstallStubColorParityTest`** — matches what the installer writes against
+  the `env(..., '#hex')` defaults in the config source, for all four accents.
+
+`DocSignatureParityTest` was verified by putting the shipped bug back: it fails,
+naming the file, the line and the offending argument, and passes once removed.
+
+Three of the guards' own heuristics were wrong first and got caught the same way.
+The CSS guard read one line at a time and reported correct text three times over
+— a sentence about the legacy block wraps, so its negation lands on the previous
+line, and a deliberate counter-example carries its marker on the comment above.
+It reads a three-line window now. And it flagged the hexes in `contitionStyles`
+examples, which was a class the first version had not anticipated: that feature
+TAKES a CSS string, so a hex there is the documented contract rather than advice.
+Exempted, with the note that those examples would still read better with
+`var(--ptah-*)` — a row highlight in a fixed hex ignores the chosen tone just as
+much, but that is an improvement to the examples, not a contradiction between
+documents.
+
+### Tests
+
+2400 -> 2415.
+
+---
+
 ## [1.34.0] - 2026-09-08
 
 Three BaseCrud requests from live use, with one idea in common: the host extends,
