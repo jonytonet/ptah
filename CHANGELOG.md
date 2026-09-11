@@ -7,6 +7,65 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.5] - 2026-09-11
+
+### Fixed - the jump-to-page field took the whole screen down past two pages
+
+`_pagination.blade.php` watched `$wire.page`, and there is no `page`:
+`WithPagination` keeps its state in `public $paginators = []`
+(`HandlesPagination.php:10`) and declares neither a `page` property nor a
+`page()` method. Three mechanisms then line up:
+
+1. the `$wire` proxy answers an unknown name through `getFallback()`, which
+   returns a **function** that calls that method on the server;
+2. Alpine's evaluator invokes any function an expression produces
+   (`runIfTypeOfFunction`);
+3. `HandleComponents` rejects the call.
+
+So the `$watch` fired a request for a method that does not exist and the whole
+Livewire update died with `MethodNotFoundException` — HTTP 500 on the first
+update of the screen, whatever triggered it. Not the field: the listing.
+
+The block renders only when `lastPage() > 2`, so a screen worked on day one and
+broke when its table grew. It now watches `$wire.paginators.<page name>`, which
+is real public state, guarded for the first render before the key exists.
+
+**Two related fixes in the same block.** The field called `gotoPage(pg)` without
+a page name, so on a listing with a custom `pageName` it moved the wrong
+paginator — the same defect `forge-pagination` was fixed for in 1.32.0. And the
+label and input carried a fixed palette (`text-gray-400`, `border-slate-200`,
+`bg-white`, `dark:bg-slate-700`), which on a host that switches the six
+appearance axes at runtime left a white field on a paper ground; both now ride
+`--ptah-text-muted` / `--ptah-field` / `--ptah-text-field` / `--ptah-line-field`
+through `.ptah-c-pag_jump_lbl` and `.ptah-c-pag_jump_in`, and the file's entry
+in the hardcoded-palette ratchet went from 7 to 0.
+
+### Added - the guard that should have caught it, generalised
+
+`PaginationClickTest` was written for a defect **identical in cause** — the page
+buttons used `$set('page', N)` — and its header spells out that
+`WithPagination` "declares no public `page` property". But it covers
+`forge-pagination` (the buttons), while the broken `$watch` was in
+`_pagination` (the field), one file away. Same root, next door, no coverage.
+
+So this closes the general case rather than the one line:
+
+- `WireExpressionParityTest` follows `@include` from each root view to learn
+  which component renders which partial, then checks every `$wire.name` in the
+  package's views against that component's real public properties, read by
+  reflection. A name that resolves to a public **method** is reported with its
+  own message, because that is precisely the trap: without parentheses it
+  evaluates to a function and Alpine calls it. It also names the two literals
+  that have now broken a screen twice (`$wire.page`, `$set('page'`), so the
+  failure message says what happened.
+- `PaginationJumpTest` covers what a static scan cannot: it seeds three pages,
+  takes the expressions off the **shipped** html, checks the watched name
+  against the real component, and calls the field's action on it. One test pins
+  that the block is absent with two pages — the reason a test that seeded less
+  would have passed without touching the broken code at all.
+
+---
+
 ## [1.34.4] - 2026-09-09
 
 ### Added - `ptah:config --column=` reports an option it does not recognise

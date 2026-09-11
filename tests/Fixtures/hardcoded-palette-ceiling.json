@@ -33,7 +33,7 @@
     "livewire/base-crud/partials/_config-form-preview.blade.php": 44,
     "livewire/base-crud/partials/_filter-panel.blade.php": 1,
     "livewire/base-crud/partials/_modal-delete.blade.php": 5,
-    "livewire/base-crud/partials/_pagination.blade.php": 7,
+    "livewire/base-crud/partials/_pagination.blade.php": 0,
     "livewire/base-crud/partials/_table.blade.php": 7,
     "livewire/base-crud/partials/_toolbar.blade.php": 9,
     "livewire/company/company-list.blade.php": 32,
