@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Ptah;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Ptah\Commands\Config\ConfigDoctorCommand;
 use Ptah\Commands\Config\ConfigExportAllCommand;
@@ -27,6 +30,7 @@ use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\Permission\AuditPruneCommand;
 use Ptah\Commands\Permission\PermissionSyncCommand;
 use Ptah\Commands\Permission\PermissionWhyCommand;
+use Ptah\Commands\PreferencesRealignCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
@@ -82,6 +86,42 @@ use Throwable;
 
 class PtahServiceProvider extends ServiceProvider
 {
+    /**
+     * Exceptions the framework renders ITSELF, which the themed 500 must not take.
+     *
+     * The handler's `render()` special-cases these AFTER running the render
+     * callbacks:
+     *
+     *     $e = $this->prepareException($e);
+     *     if ($response = $this->renderViaCallbacks($request, $e)) { return … }
+     *     return match (true) {
+     *         $e instanceof HttpResponseException   => $e->getResponse(),
+     *         $e instanceof AuthenticationException => $this->unauthenticated(…),
+     *         $e instanceof ValidationException     => $this->convertValidation…(…),
+     *         default => $this->renderExceptionResponse($request, $e),
+     *     };
+     *
+     * So a callback typed `Throwable` sees them first, and answering 500 there
+     * replaces a login redirect, a validation redirect, or a response the
+     * exception is carrying. Both of the first two are in Laravel's
+     * `dontReport` list, so that 500 also went out with nothing in the log.
+     *
+     * `HttpException` is here for the arms `prepareException()` has ALREADY
+     * converted by this point — `AuthorizationException`,
+     * `ModelNotFoundException`, `TokenMismatchException` and friends all become
+     * one before any callback runs, which is why they were never affected.
+     *
+     * `ExceptionRenderableScopeTest` reads the framework's own match arms and
+     * fails if this list stops covering them — the answer to "a hand-written
+     * list goes stale as Laravel evolves".
+     */
+    public const FRAMEWORK_RENDERED_EXCEPTIONS = [
+        HttpException::class,
+        HttpResponseException::class,
+        AuthenticationException::class,
+        ValidationException::class,
+    ];
+
     /**
      * Register any application services.
      */
@@ -273,9 +313,21 @@ class PtahServiceProvider extends ServiceProvider
                 $hiddenByDebug = config('app.debug')
                     && ! config('ptah.errors.themed_500_in_debug', false);
 
+                // A guarda por tipo era so `HttpException`, e o tipo do
+                // parametro e `Throwable` — entao TODA excecao passava por aqui.
+                // Uma AuthenticationException virava 500 no lugar do redirect
+                // para o login, e uma ValidationException virava 500 no lugar do
+                // "credenciais invalidas" de volta no formulario. So com
+                // APP_DEBUG desligado, e as duas estao no dontReport do Laravel:
+                // 500 em producao, sem uma linha de log.
+                foreach (self::FRAMEWORK_RENDERED_EXCEPTIONS as $handledByLaravel) {
+                    if ($e instanceof $handledByLaravel) {
+                        return null;
+                    }
+                }
+
                 if (! config('ptah.errors.enabled', true)
                     || $hiddenByDebug
-                    || $e instanceof HttpException
                     || $request->expectsJson()
                     || file_exists(resource_path('views/errors/500.blade.php'))) {
                     return null;
@@ -321,7 +373,8 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigExportAllCommand::class,  // ptah:config:export-all
                 ConfigImportAllCommand::class,  // ptah:config:import-all
                 ConfigRelabelCommand::class,    // ptah:config:relabel
-                MakeHooksCommand::class,     // ptah:hooks
+                MakeHooksCommand::class,
+                PreferencesRealignCommand::class,     // ptah:hooks
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune

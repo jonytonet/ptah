@@ -286,6 +286,85 @@ device/browser; it never leaks credentials or any other account data.
 | `export.ttl_hours` | `PTAH_EXPORT_TTL_HOURS` | `48` | [BaseCrud.md](BaseCrud.md) |
 | `export.async_max_rows` | `PTAH_EXPORT_ASYNC_MAX_ROWS` | `0` (unlimited) | [BaseCrud.md](BaseCrud.md) |
 
+### User preferences (`preferences.*`)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `preferences.foreign_key` | `PTAH_PREFERENCES_FK` | `auto` | this section |
+
+`user_preferences.user_id` points at **the identity the host configured**, not
+at `users`. The table is resolved from `ptah.permissions.user_model`, then
+`auth.providers.users.model`, then the historical default — the same chain the
+rest of the package already used — and the column takes the type of that
+model's key: `bigint`, `uuid`, `ulid`, or `string` for a key scheme of your own.
+
+| Value | Behaviour |
+|---|---|
+| `auto` (default) | creates the constraint when the resolved table exists on the same connection |
+| `true` | demands it, and fails the migration loudly when it cannot be made |
+| `false` | never creates it — only an index |
+
+Set `PTAH_PREFERENCES_FK=false` when **more than one identity** writes
+preferences (an internal panel and a customer area, say): no single table is a
+valid target, and a constraint would lock the column to whichever one migrated
+first. `auto` already declines by itself when the identity lives on another
+connection, where a foreign key cannot reach.
+
+**Deleting a user still clears their preferences**, with or without the
+constraint: `HasUserPreferences` does it on the model's `deleted` event. A soft
+delete does not — the row is coming back, and so should the theme the person
+chose. Doing it in the model rather than in the engine also makes it visible to
+the application; a database cascade passes underneath Eloquent and fires no
+events at all.
+
+**On a fresh install the defect cannot happen** — the column always gets the
+type of the configured identity's key, so the insert that used to fail no longer
+can. Whether the CONSTRAINT comes with it depends on migration order, because
+package migrations join the host's queue sorted by timestamp and this one is
+dated `2024_01_01_000000`:
+
+| Fresh install | Column | Foreign key |
+|---|---|---|
+| Identity is Laravel's `users` | correct | created |
+| `PTAH_USER_MODEL` set before `migrate`, identity table created by a migration dated **before** `2024_01_01_000000` | correct | created |
+| Identity table created by a migration dated **after** it — the ordinary case for a new table | correct | **not created**: an index instead |
+| `migrate` run before `PTAH_USER_MODEL` was set | `bigint` | points at `users` |
+
+Row three is the one to know about: the identity table does not exist yet when
+the package's migration runs, so `auto` declines the constraint rather than
+failing. Nothing breaks — preferences save correctly — but there is no
+referential integrity until you run the realign command below, which is one
+extra line in an install script. Row four takes the same cure.
+
+Renaming the migration to a later timestamp would fix the ordering and is not
+available: it is a removal plus an addition, and `SchemaIsFrozenTest` blocks
+both — rightly, since it would break every installation made from that point on.
+
+**Upgrading an existing installation.** Databases built before 1.34.6 carry a
+constraint to `users`, inferred from the column name. Point it at the configured
+identity with:
+
+```bash
+php artisan ptah:preferences:realign --dry-run   # relatório, sem alterar nada
+php artisan ptah:preferences:realign             # pede confirmação
+```
+
+A command and not a migration on purpose: a package migration is auto-discovered
+and would run during the next `php artisan migrate` you happen to execute — and
+this operation can legitimately refuse, which as a migration would mean failing
+a deploy you did not intend to involve it in.
+
+It deletes nothing. Preferences whose user no longer exists in the resolved
+table stop the run with a count and the query to inspect them. It also leaves
+the column type alone: moving a populated `bigint` column to `uuid` is a data
+migration, not a schema tweak.
+
+> **`driver`, `cache` and `ttl` used to live in this block and were never read
+> by anything** — `UserPreference` goes straight to the database, always. They
+> were removed in 1.34.6 rather than left promising a way out that did not
+> exist. If preference caching is built one day, the keys come back with the
+> code that reads them.
+
 ### Error pages (`errors.*`)
 
 | Key | ENV | Default | Reference |
@@ -322,6 +401,30 @@ development is the themed page either way.
 403 is additionally gated behind `modules.permissions`, since it is that
 module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
 five and fall back to Laravel's defaults.
+
+**What the themed 500 will NEVER claim.** The 500 is registered on its own
+callback because it is not an `HttpException` — it is whatever broke. That
+callback is typed `Throwable`, so Laravel offers it *every* exception, and it
+must step aside for the ones the framework answers itself:
+
+| Exception | What Laravel does with it |
+|---|---|
+| `AuthenticationException` | redirects to the login screen |
+| `ValidationException` | redirects back with the errors in the session |
+| `HttpResponseException` | returns the response it carries |
+| `HttpException` and everything `prepareException()` converts into one — `AuthorizationException`, `ModelNotFoundException`, `TokenMismatchException` | the themed page for that status |
+
+Until **1.34.6** only the last row was excluded, so the first two came out as a
+themed 500 instead: a logged-out visitor got an error page instead of the login
+screen, and a wrong password got one instead of "invalid credentials". Both
+only with `APP_DEBUG=false` — the 500 steps aside in debug, so the defect
+existed in production alone — and both are in Laravel's `dontReport` list, so
+the 500 went out with nothing in the log.
+
+The exclusion list lives in `PtahServiceProvider::FRAMEWORK_RENDERED_EXCEPTIONS`
+and is checked against the framework's own `render()` by
+`ExceptionRenderableScopeTest`, which fails if Laravel gains an arm the list
+does not cover.
 
 **How the pages follow the chosen theme.** The dashboard and auth layouts paint
 `.ptah-dark` from a blocking script in `<head>`

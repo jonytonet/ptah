@@ -7,6 +7,165 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.6] - 2026-09-17
+
+### Fixed - `user_preferences` assumed the host keeps its users in `users`
+
+The one foreign key in the package that did not name its target:
+
+```php
+$table->foreignId('user_id')->constrained();   // Laravel infers `users`
+```
+
+Every other `user_id` column in the package — `ptah_user_roles`,
+`ptah_permission_audits`, `ptah_exports`, `ptah_ai_conversations` — is an
+unconstrained `unsignedBigInteger` with an index, and every INTERNAL foreign key
+names its table (`constrained('ptah_roles')`). The bare `constrained()` appeared
+exactly once in the whole package, and it contradicted a promise the config file
+makes out loud next to `user_model`: *"host application's User model (no
+hard-coded FK)"*.
+
+So a host pointing `PTAH_USER_MODEL` at its own identity model could not save a
+preference. Changing theme, accent, density or font size failed with
+`SQLSTATE[23000] … 1452` against a `users` table the application does not use.
+The PHP side was already agnostic — `UserPreference::user()` resolves the model
+from config — so only the schema had been left behind.
+
+**The identity is now resolved, not assumed** (`Ptah\Support\UserIdentity`):
+the table and key come from `ptah.permissions.user_model`, then
+`auth.providers.users.model`, then the historical default, and the column takes
+that model's key type — `bigint`, `uuid`, `ulid`, or `string` for a key scheme
+of the host's own. `ptah.permissions.user_id_field` wins when it is set to
+anything but the default, because that is the column `ResolvesUser` actually
+writes.
+
+| Host | Before | Now |
+|---|---|---|
+| Laravel's `users` | FK to `users` | **identical** |
+| Own identity model | broken | FK to the right table |
+| UUID or ULID key | broken | right column type, and the FK |
+| Two or more identities | impossible | index, no FK (`PTAH_PREFERENCES_FK=false`) |
+| Identity on another connection | broken | index, no FK (declined automatically) |
+
+Nothing that worked before changes. `PTAH_PREFERENCES_FK` accepts `auto` (the
+default — constrain when the table is reachable), `true` (demand it, and fail
+the migration loudly) and `false` (never).
+
+**Existing databases** get a command, `ptah:preferences:realign` (with
+`--dry-run`), which moves the constraint to the resolved identity.
+
+It is deliberately **not** an upgrade migration, and `SchemaIsFrozenTest` is
+what made that clear: `loadMigrationsFrom()` makes a package migration
+auto-discovered, so it runs on the consumer's next `php artisan migrate`,
+executed for their own unrelated reasons. That matters more than usual here,
+because this operation can legitimately REFUSE — a database with preferences
+whose user no longer exists needs a person to look at it. As a migration, that
+refusal would fail somebody's deploy for a change they never asked for; as a
+command, it runs when the operator is ready and reading the output.
+
+It deletes nothing: orphans stop the run with a count and the query to inspect
+them. It leaves the column type alone for the same reason — moving a populated
+`bigint` to `uuid` is a data migration, not a schema tweak. And it asks before
+touching the schema, unless `--force` says a deploy script owns the decision.
+
+**Deleting a user still clears their preferences.** That used to be the foreign
+key's `ON DELETE CASCADE`, which a host without a constraint no longer has, so
+`HasUserPreferences` now does it on the model's `deleted` event — and skips a
+SOFT delete, because the row is coming back and so should the theme the person
+chose. It is also strictly better than the engine doing it: a database cascade
+passes underneath Eloquent, firing no events and leaving nothing for an observer
+or an audit trail to see.
+
+`UserPreference::user()` was reading `auth.providers.users.model` alone, so a
+host that set only the Ptah key had the schema pointing at one identity and the
+relationship at another. It now uses the same chain.
+
+### Removed - three `preferences.*` keys that nothing ever read
+
+`driver`, `cache` and `ttl` announced "Supported drivers: database" and a cache
+with a TTL; a grep of the package finds no reader for any of them —
+`UserPreference` goes straight to the database, always. Configuration nobody
+reads is worse than configuration absent: it promises a way out that does not
+exist and costs the time of whoever goes looking for it. Removed rather than
+left standing, so that the block the new `foreign_key` joins tells the truth. If
+preference caching is built one day, the keys come back with the code that reads
+them.
+
+### Fixed - the themed 500 swallowed the login redirect and the validation errors
+
+**Every host running 1.34.5 with `APP_DEBUG=false` had this**, which is the only
+condition it appears in.
+
+The 500 is registered on its own `renderable` because it is not an
+`HttpException` — it is whatever broke. But the callback is typed `Throwable`,
+so Laravel offers it *every* exception, and its only exclusion by type was
+`HttpException`. The handler's own `render()` special-cases three more classes
+**after** the render callbacks have run:
+
+```php
+$e = $this->prepareException($e);
+if ($response = $this->renderViaCallbacks($request, $e)) { return … }
+return match (true) {
+    $e instanceof HttpResponseException   => $e->getResponse(),
+    $e instanceof AuthenticationException => $this->unauthenticated($request, $e),
+    $e instanceof ValidationException     => $this->convertValidationExceptionToResponse($e, $request),
+    default => $this->renderExceptionResponse($request, $e),
+};
+```
+
+So the package got there first and answered 500:
+
+| Exception | Should have | Did |
+|---|---|---|
+| `AuthenticationException` | redirect to the login screen | themed 500 |
+| `ValidationException` | redirect back with the errors in session | themed 500 |
+
+A logged-out visitor got an error page instead of the login form, and a wrong
+password got one instead of "invalid credentials".
+
+**Why it stayed hidden, twice over.** The callback steps aside while
+`APP_DEBUG=true` — so turning debug on to investigate made the defect vanish,
+and development was always clean. And both classes are in Laravel's
+`dontReport` list, so the 500 went out **with nothing in the log**: the symptom
+a support team would see is "clients report errors on the site" with no trace
+to follow.
+
+The exclusion list is now `PtahServiceProvider::FRAMEWORK_RENDERED_EXCEPTIONS`,
+covering `HttpException`, `HttpResponseException`, `AuthenticationException` and
+`ValidationException`.
+
+**Two things the report named that were already safe**, both verified rather
+than assumed. `AuthorizationException` never reached the callback:
+`prepareException()` runs BEFORE `renderViaCallbacks()` and converts it to
+`AccessDeniedHttpException` — as it does `ModelNotFoundException` and
+`TokenMismatchException` — all of which the original `HttpException` guard
+already excluded. And `HttpResponseException` never reaches the exception
+handler at all, because `Illuminate\Routing\Pipeline` returns the response it
+carries first; it is in the list anyway, for the paths outside that pipeline.
+
+**Hosts working around this with `PTAH_ERROR_PAGES=false` can turn it back on.**
+That switch also disabled the themed 404, 405, 419, 429 and 503; none of that
+trade is needed any more. Publishing `resources/views/errors/500.blade.php`
+still works as an escape hatch, and is no longer a workaround for anything.
+
+### Added - the exclusion list is checked against the framework, not trusted
+
+The report's closing objection was that a hand-written list of exception classes
+"goes stale as Laravel evolves". It is right, so the list is not trusted:
+`ExceptionRenderableScopeTest` reads the arms of the `match (true)` that follows
+`renderViaCallbacks()` in the **installed** framework, resolves each short name
+through that file's own `use` statements, and fails naming any class the list
+does not cover. An arm added upstream breaks the suite instead of production.
+
+Alongside it, six tests through real requests with `APP_DEBUG=false`: the login
+redirect, the validation redirect with its session errors, the response an
+`HttpResponseException` carries, the themed 403 for an authorization denial, the
+themed 500 for a genuine unhandled exception (the counterpart — narrowing the
+scope too far would have deleted the page this whole feature exists for), and a
+JSON request answered 422 rather than HTML.
+
+---
+
 ## [1.34.5] - 2026-09-11
 
 ### Fixed - the jump-to-page field took the whole screen down past two pages
