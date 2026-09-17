@@ -310,6 +310,24 @@ valid target, and a constraint would lock the column to whichever one migrated
 first. `auto` already declines by itself when the identity lives on another
 connection, where a foreign key cannot reach.
 
+> **What `false` does not solve.** Dropping the constraint lets two identities
+> share the table; it does not let the table tell them apart. The unique key is
+> `['user_id', 'key']`, so user 1 of one identity and user 1 of the other
+> compete for the same row — **the last write wins, with no error** — and the
+> cleanup on delete matches on `user_id` alone, so removing user 1 from one
+> identity takes the other's preferences with it.
+>
+> It is only safe when the id spaces are **disjoint**. The complete answer is a
+> polymorphic owner (`user_id` + `user_type`, with the unique becoming
+> `['user_type', 'user_id', 'key']`), which is a schema change too large for a
+> patch release and is recorded rather than done.
+>
+> In practice the second owner arrives by accident: a host that switched
+> identity leaves `HasUserPreferences` on the `App\Models\User` that came with
+> the scaffold, alongside the model it actually uses. Nothing collides while
+> `users` is empty — and one row in it is enough to start. **Apply the trait to
+> one identity only.**
+
 **Deleting a user still clears their preferences**, with or without the
 constraint: `HasUserPreferences` does it on the model's `deleted` event. A soft
 delete does not — the row is coming back, and so should the theme the person

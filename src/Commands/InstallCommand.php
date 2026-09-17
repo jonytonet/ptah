@@ -63,7 +63,7 @@ class InstallCommand extends Command
         $adminEmail = config('ptah.permissions.admin_email', 'admin@admin.com');
         $this->line('  <fg=blue>Next steps:</>');
         $this->line('  1. Review the <fg=yellow>config/ptah.php</> file');
-        $this->line('  2. Optional: add <fg=yellow>HasUserPreferences</> to your User model for the $user->getPreference()/setPreference() API');
+        $this->line('  2. Optional: add <fg=yellow>HasUserPreferences</> to your IDENTITY model (one only) for the $user->getPreference()/setPreference() API');
         $this->line('     <fg=gray>use Ptah\\Traits\\HasUserPreferences;</> (BaseCrud persists preferences without it)');
         $this->line('  3. Enable required modules:');
         $this->line('     <fg=green>php artisan ptah:module auth</>  <fg=gray>(login, 2FA, profile)</>');
