@@ -6,11 +6,18 @@ namespace Ptah\Traits;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Ptah\Models\UserPreference;
+use Ptah\Support\PreferenceOwners;
 
 /**
- * Trait to add user preference support to the User model.
+ * Trait to add user preference support to the host's identity model.
  *
- * Usage: add `use HasUserPreferences;` to the App\Models\User model
+ * Usage: add `use HasUserPreferences;` to the model you authenticate — which is
+ * not necessarily `App\Models\User`.
+ *
+ * Apply it to ONE identity. `user_preferences` keys rows by `user_id` alone and
+ * its unique is `['user_id', 'key']`, so two identities with overlapping ids
+ * silently share rows; see Ptah\Support\PreferenceOwners, which says so in the
+ * log when it happens.
  */
 trait HasUserPreferences
 {
@@ -30,6 +37,12 @@ trait HasUserPreferences
      */
     public static function bootHasUserPreferences(): void
     {
+        // O registro vive num objeto proprio, e nao numa estatica deste trait:
+        // estatica declarada em TRAIT e por classe que o usa, entao um contador
+        // aqui leria sempre 1 e o aviso nunca dispararia. Foi assim que a
+        // primeira versao disto saiu — sem efeito nenhum.
+        PreferenceOwners::register(static::class);
+
         static::deleted(function ($model): void {
             if (method_exists($model, 'isForceDeleting') && ! $model->isForceDeleting()) {
                 return;
@@ -44,7 +57,21 @@ trait HasUserPreferences
      */
     public function preferences(): HasMany
     {
-        return $this->hasMany(UserPreference::class);
+        // A coluna e NOMEADA, nunca inferida. Sem o segundo argumento o
+        // Eloquent a monta a partir do nome da CLASSE pai —
+        // `Str::snake(class_basename($this)).'_'.$this->getKeyName()` — entao
+        // num host cujo model de identidade e `PortalStaffUser` ele procurava
+        // `user_preferences.portal_staff_user_id`, coluna que nao existe (e
+        // com chave propria seria pior: `portal_staff_user_codigo`).
+        //
+        // Mesma familia da FK que a 1.34.6 corrigiu no esquema — algo deduzido
+        // de um nome em vez de declarado — e sobreviveu aquela release porque
+        // `UserPreference::user()` foi corrigido e isto nao.
+        //
+        // So a chave estrangeira precisa ser dita: a local key padrao do
+        // hasMany ja e `$this->getKeyName()`, correta para qualquer tipo de
+        // chave.
+        return $this->hasMany(UserPreference::class, 'user_id');
     }
 
     /**

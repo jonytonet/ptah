@@ -361,7 +361,7 @@ class ModuleCommand extends Command
         $this->line('  <fg=blue>Next steps:</>');
 
         if ($module === 'auth') {
-            $this->line('  1. Optional: add <fg=yellow>HasUserPreferences</> to your User model for the $user->getPreference()/setPreference() API — BaseCrud persists preferences without it');
+            $this->line('  1. Optional: add <fg=yellow>HasUserPreferences</> to your IDENTITY model (one only) for the $user->getPreference()/setPreference() API — BaseCrud persists preferences without it');
             $this->line('  2. Configure <fg=yellow>config/ptah.php</> (auth section)');
             $this->line('  3. Add the authentication middleware to desired routes');
             $this->line('  4. For TOTP 2FA install: <fg=green>composer require pragmarx/google2fa-laravel bacon/bacon-qr-code</>');

@@ -7,6 +7,66 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.7] - 2026-09-17
+
+### Fixed - `$user->preferences` guessed its column from the model's class name
+
+`HasUserPreferences::preferences()` was `hasMany(UserPreference::class)` with no
+foreign key, so Eloquent built one from the parent model:
+`Str::snake(class_basename($this)).'_'.$this->getKeyName()`. On a host whose
+identity is `PortalStaffUser`, that is `portal_staff_user_id`:
+
+```
+SQLSTATE[42S22]: Unknown column 'user_preferences.portal_staff_user_id'
+```
+
+Same shape as the foreign key 1.34.6 fixed in the schema — something inferred
+from a name instead of stated — and it survived that release because
+`UserPreference::user()` was corrected and this was not. With a model whose key
+is not `id` it was worse still: `portal_staff_user_codigo`.
+
+Now `hasMany(UserPreference::class, 'user_id')`. Only the foreign column needs
+naming; `hasMany`'s local key already defaults to `getKeyName()`, which is right
+for any key type.
+
+**Why nothing caught it:** no test used the trait at all, and neither does the
+package — `setPreference()`, `getPreference()`, `getPreferenceGroup()` and
+`removePreference()` all go through `UserPreference`'s statics with an explicit
+`user_id`, and those worked. The broken member was the one part of a public
+trait nobody exercised. It now has a test file of its own, which also covers the
+delete cleanup added in 1.34.6 — that had shipped untested.
+
+### Added - a second owner of `user_preferences` is said out loud
+
+The table cannot tell two identities apart: its unique is `['user_id', 'key']`,
+so user 1 of one identity and user 1 of another compete for the same row — **the
+last write wins, with no error** — and the cleanup on delete matches `user_id`
+alone, so removing one identity's user takes the other's preferences with it.
+
+The way a host gets there is ordinary rather than exotic: it switches identity
+and leaves the trait on the `App\Models\User` that came with the scaffold,
+beside the model it actually uses. Nothing collides while `users` is empty, and
+one row in it is enough to start.
+
+`Ptah\Support\PreferenceOwners` now logs a warning the first time a second
+model registers — unless `ptah.preferences.foreign_key` is `false`, which is the
+host DECLARING it runs more than one identity and is taken to know its id spaces
+are disjoint. The limitation is also written beside the option in `config/ptah.php`
+and in `Configuration.md`, and the installer's hint now says "your IDENTITY
+model (one only)" instead of "your User model".
+
+The complete answer is a polymorphic owner (`user_id` + `user_type`, unique
+becoming `['user_type', 'user_id', 'key']`) — a schema change too large for a
+patch, recorded rather than done.
+
+**The registry is a class, not a static in the trait**, and that is the whole
+reason it works: a static property declared in a TRAIT is per using-class, so
+every model gets its own copy and a counter kept there would always read 1. The
+first version did exactly that and could never have fired; a test now pins the
+arrangement and not only the effect.
+
+---
+
 ## [1.34.6] - 2026-09-17
 
 ### Fixed - `user_preferences` assumed the host keeps its users in `users`

@@ -98,6 +98,16 @@ return [
          *           identidade gravando preferencia, onde nenhuma tabela
          *           unica e destino valido
          *
+         * ATENCAO ao usar `false` com duas identidades: a tabela nao tem como
+         * distinguir os donos. O unique e ['user_id','key'], entao o usuario 1
+         * de uma identidade e o 1 da outra disputam a MESMA linha — quem
+         * gravar por ultimo sobrescreve, sem erro —, e a limpeza no delete do
+         * trait apaga por `user_id` sem discriminar. So e seguro quando os
+         * espacos de id sao DISJUNTOS. A saida completa seria uma relacao
+         * polimorfica (user_id + user_type, com o unique passando a
+         * ['user_type','user_id','key']); ate la, aplique o trait a UMA
+         * identidade so.
+         *
          * A identidade sai de `ptah.permissions.user_model`, depois de
          * `auth.providers.users.model`. Ver Ptah\Support\UserIdentity.
          */
