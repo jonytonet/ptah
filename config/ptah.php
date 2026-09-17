@@ -87,9 +87,30 @@ return [
     |
     */
     'preferences' => [
-        'driver' => 'database',
-        'cache' => true,
-        'ttl' => 3600,
+        /*
+         * Chave estrangeira de `user_preferences.user_id` para a tabela de
+         * identidade do host.
+         *
+         *   'auto'  cria quando a tabela resolvida existe e esta na mesma
+         *           conexao (recomendado, e o que sempre se quis)
+         *   true    exige, e falha alto na migration se nao for possivel
+         *   false   nunca cria, so indice — para host com MAIS DE UMA
+         *           identidade gravando preferencia, onde nenhuma tabela
+         *           unica e destino valido
+         *
+         * A identidade sai de `ptah.permissions.user_model`, depois de
+         * `auth.providers.users.model`. Ver Ptah\Support\UserIdentity.
+         */
+        'foreign_key' => env('PTAH_PREFERENCES_FK', 'auto'),
+
+        /*
+         * `driver`, `cache` e `ttl` viviam aqui e NUNCA foram lidos por nada:
+         * `UserPreference` vai direto ao banco, sempre. Configuracao que
+         * ninguem le e pior que configuracao ausente — promete uma saida que
+         * nao existe e custa o tempo de quem a procura. Removidas na 1.34.6,
+         * para que este bloco diga a verdade. Se o cache de preferencias for
+         * implementado um dia, as chaves voltam junto com o codigo que as le.
+         */
     ],
 
     /*

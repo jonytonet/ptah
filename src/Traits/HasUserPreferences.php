@@ -15,6 +15,31 @@ use Ptah\Models\UserPreference;
 trait HasUserPreferences
 {
     /**
+     * Clean up preferences when the user is really gone.
+     *
+     * The foreign key carried `ON DELETE CASCADE`, and a host whose identity
+     * lives outside a constrainable table — more than one identity, another
+     * connection, `PTAH_PREFERENCES_FK=false` — no longer has it. So the
+     * cleanup moves here, where it works for every host alike.
+     *
+     * Two deliberate choices. A SOFT delete is not a deletion: the row is
+     * coming back, and so should the theme the person chose. And doing it in
+     * the model rather than in the engine makes it visible to the application —
+     * a database cascade passes underneath Eloquent, firing no events and
+     * leaving nothing for an observer or an audit trail to see.
+     */
+    public static function bootHasUserPreferences(): void
+    {
+        static::deleted(function ($model): void {
+            if (method_exists($model, 'isForceDeleting') && ! $model->isForceDeleting()) {
+                return;
+            }
+
+            UserPreference::where('user_id', $model->getKey())->delete();
+        });
+    }
+
+    /**
      * Relationship with user preferences.
      */
     public function preferences(): HasMany

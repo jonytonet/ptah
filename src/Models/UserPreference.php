@@ -48,7 +48,16 @@ class UserPreference extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model', 'App\\Models\\User'));
+        // Mesma cadeia da migration: `ptah.permissions.user_model` primeiro,
+        // que e o que o resto do pacote le. Antes esta relacao consultava
+        // apenas `auth.providers.users.model`, entao um host que apontasse so
+        // a chave do Ptah tinha o esquema apontando para uma identidade e a
+        // relacao para outra.
+        return $this->belongsTo(
+            config('ptah.permissions.user_model')
+                ?: config('auth.providers.users.model')
+                ?: 'App\\Models\\User'
+        );
     }
 
     /**
