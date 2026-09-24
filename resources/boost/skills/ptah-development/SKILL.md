@@ -63,10 +63,16 @@ reads. Prefer them — they read the same truth the runtime reads.
 | To know | Run |
 |---|---|
 | What exists (entities, fields, relations, screens, menu, TODOs) | `php artisan ptah:map` |
+| What one screen has, before editing it | `php artisan ptah:screen Entity` — not the JSON |
+| Why a screen is empty for a user | `php artisan ptah:why-empty Entity --as=<id>` |
 | The exact syntax of a `--column` / `--filter` / `--style` / `--action` / `--join` / mask | `php artisan ptah:docs column` (or `filter`, `style`, …) |
 | Whether every screen still works after a change | `php artisan ptah:check` (`--write` also round-trips a save, rolled back) |
 | Why something broke | `php artisan ptah:last-error` — never `tail` the log |
 | What an update of ptah needs in this project | `php artisan ptah:upgrade-check` |
+
+With Laravel Boost connected, the same are MCP tools: `ptah-map`,
+`ptah-screen`, `ptah-check`, `ptah-docs`, `ptah-why-empty`, `ptah-last-error`,
+`ptah-upgrade-check`.
 
 `ptah:forge … --factory` also writes a factory and a demo seeder from the
 field types.
@@ -446,8 +452,7 @@ php artisan ptah:config "App\Models\Product" \
   --style="stock:<:5:background:#FEFCE8;color:#A16207;" \
   --filter="is_active:select:label=Ativos:operator==:options=1:Ativo,0:Inativo" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info:confirm=true" \
-  --set="itemsPerPage=15" \
-  --set="cacheEnabled=true"
+  --set="itemsPerPage=15"
 
 # List current configuration
 php artisan ptah:config "App\Models\Product" --list
@@ -529,7 +534,7 @@ Format: `name:type:value:option=value:option=value` (`ActionParser`)
 
 Format: `key=value`
 
-**Settings:** `itemsPerPage=15`, `cacheEnabled=true`, `cacheTime=30`, `paginationEnabled=true`, `exportEnabled=true`
+**Settings:** `itemsPerPage=15` (→ `uiPreferences.perPage`), `exportEnabled=true` (→ `exportConfig.enabled`), `displayName=Produtos`, or any dotted path (`--set="exportConfig.maxRows=5000"`). Cache and pagination switches do not exist — the command refuses them.
 
 ### UI helpers agents reach for often
 
@@ -578,8 +583,7 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
       "first": "products.category_id", "second": "categories.id" }
   ],
   "permissions": { "permissionIdentifier": "products.index" },
-  "itemsPerPage": 25,
-  "cacheEnabled": true
+  "uiPreferences": { "perPage": 25 }
 }
 ```
 

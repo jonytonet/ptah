@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\CrudConfig;
 use Ptah\Support\ProjectMap;
 use Ptah\Tests\TestCase;
+use Ptah\Traits\HasAuditFields;
 
 class MapCategory extends Model
 {
@@ -28,7 +29,9 @@ class MapCategory extends Model
 
 class MapProduct extends Model
 {
-    use SoftDeletes;
+    // HasAuditFields traz createdBy/updatedBy/deletedBy: estariam em toda
+    // entidade e o mapa os omite (a asserção de relações exatas pega).
+    use HasAuditFields, SoftDeletes;
 
     protected $table = 'map_products';
 

@@ -15,84 +15,44 @@ class GeneralWizard
     }
 
     /**
-     * Run interactive wizard for general settings
+     * Interactive general settings — only what BaseCrud reads.
+     *
+     * This wizard used to ask fifteen questions (cache, pagination on/off,
+     * search on/off and placeholder, striped, hover, row numbers, soft
+     * deletes…) and write every answer to a top-level key no code reads: the
+     * session looked like configuration and changed nothing. It now asks for
+     * the settings that exist, and returns them as dotted paths
+     * (`uiPreferences.perPage`) for the caller to data_set().
+     *
+     * @return array<string, mixed> path => value
      */
     public function runGeneralSettings(?array $existingConfig = null): array
     {
+        $existingConfig ??= [];
         $this->command->info('=== General Settings Configuration ===');
         $this->command->newLine();
 
         $config = [];
 
-        // Cache settings
-        $this->command->info('--- Cache Settings ---');
-        $config['cacheEnabled'] = $this->command->confirm('Enable cache?', $existingConfig['cacheEnabled'] ?? true);
-
-        if ($config['cacheEnabled']) {
-            $config['cacheTime'] = (int) $this->command->ask('Cache time (minutes)', $existingConfig['cacheTime'] ?? 60);
+        $config['displayName'] = (string) $this->command->ask('Screen title (displayName)', $existingConfig['displayName'] ?? null);
+        if ($config['displayName'] === '') {
+            unset($config['displayName']);
         }
 
-        // Pagination settings
-        $this->command->newLine();
-        $this->command->info('--- Pagination Settings ---');
-        $config['paginationEnabled'] = $this->command->confirm('Enable pagination?', $existingConfig['paginationEnabled'] ?? true);
+        $config['uiPreferences.perPage'] = (int) $this->command->ask('Default rows per page', (string) data_get($existingConfig, 'uiPreferences.perPage', config('ptah.crud.per_page', 25)));
+        $config['uiPreferences.compactMode'] = $this->command->confirm('Compact rows by default?', (bool) data_get($existingConfig, 'uiPreferences.compactMode', false));
 
-        if ($config['paginationEnabled']) {
-            $config['itemsPerPage'] = (int) $this->command->ask('Items per page', $existingConfig['itemsPerPage'] ?? 10);
-            $config['paginationOptions'] = $this->command->ask(
-                'Page size options (comma-separated)',
-                $existingConfig['paginationOptions'] ?? '10,25,50,100'
-            );
-            $config['paginationOptions'] = array_map('intval', explode(',', str_replace(' ', '', $config['paginationOptions'])));
-        }
+        $config['exportConfig.enabled'] = $this->command->confirm('Enable export?', (bool) data_get($existingConfig, 'exportConfig.enabled', false));
 
-        // Search settings
-        $this->command->newLine();
-        $this->command->info('--- Search Settings ---');
-        $config['searchEnabled'] = $this->command->confirm('Enable global search?', $existingConfig['searchEnabled'] ?? true);
-
-        if ($config['searchEnabled']) {
-            $config['searchPlaceholder'] = $this->command->ask('Search placeholder', $existingConfig['searchPlaceholder'] ?? 'Search...');
-        }
-
-        // Export settings
-        $this->command->newLine();
-        $this->command->info('--- Export Settings ---');
-        $config['exportEnabled'] = $this->command->confirm('Enable export?', $existingConfig['exportEnabled'] ?? true);
-
-        if ($config['exportEnabled']) {
-            $formats = ['pdf', 'excel', 'csv'];
-            $selectedFormats = [];
-
-            foreach ($formats as $format) {
-                if ($this->command->confirm("  Enable {$format} export?", true)) {
-                    $selectedFormats[] = $format;
-                }
-            }
-
-            $config['exportFormats'] = $selectedFormats;
-
-            $config['exportOrientation'] = $this->command->choice(
+        if ($config['exportConfig.enabled']) {
+            $formats = $this->command->choice('Export formats (comma-separated)', ['excel', 'pdf'], 0, null, true);
+            $config['exportConfig.formats'] = array_values((array) $formats);
+            $config['exportConfig.orientation'] = $this->command->choice(
                 'PDF orientation',
                 CrudConfigEnums::ORIENTATIONS,
-                $existingConfig['exportOrientation'] ?? 'landscape'
+                data_get($existingConfig, 'exportConfig.orientation', 'landscape')
             );
-        }
-
-        // UI Settings
-        $this->command->newLine();
-        $this->command->info('--- UI Settings ---');
-        $config['showRowNumbers'] = $this->command->confirm('Show row numbers?', $existingConfig['showRowNumbers'] ?? true);
-        $config['compactMode'] = $this->command->confirm('Compact mode?', $existingConfig['compactMode'] ?? false);
-        $config['striped'] = $this->command->confirm('Striped rows?', $existingConfig['striped'] ?? true);
-        $config['hover'] = $this->command->confirm('Hover effect?', $existingConfig['hover'] ?? true);
-
-        // Soft deletes
-        $this->command->newLine();
-        $config['softDeletes'] = $this->command->confirm('Use soft deletes?', $existingConfig['softDeletes'] ?? false);
-
-        if ($config['softDeletes']) {
-            $config['showTrashed'] = $this->command->confirm('Show trashed items by default?', $existingConfig['showTrashed'] ?? false);
+            $config['exportConfig.maxRows'] = (int) $this->command->ask('Maximum exportable rows', (string) data_get($existingConfig, 'exportConfig.maxRows', 10000));
         }
 
         $this->previewGeneralSettings($config);
@@ -109,7 +69,9 @@ class GeneralWizard
         $this->command->newLine();
 
         $permissions = [];
-        $actions = ['list', 'view', 'create', 'edit', 'delete', 'export', 'import', 'restore', 'forceDelete'];
+        // As que HasCrudForm::getEffectivePermissions() le; 'list', 'view', 'import'
+        // e 'forceDelete' eram perguntadas e ignoradas.
+        $actions = ['create', 'edit', 'delete', 'export', 'restore'];
 
         foreach ($actions as $action) {
             if ($this->command->confirm("Set permission for '{$action}' action?", false)) {

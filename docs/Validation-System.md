@@ -359,9 +359,8 @@ $config = [
             'colsTipo' => 'text',
         ],
     ],
-    'general' => [
-        'itemsPerPage' => 15,
-        'cacheEnabled' => true,
+    'uiPreferences' => [
+        'perPage' => 15,
     ],
 ];
 

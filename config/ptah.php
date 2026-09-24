@@ -100,6 +100,19 @@ return [
     */
     'structure_editor' => env('PTAH_STRUCTURE_EDITOR', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Agent tools in Laravel Boost's MCP server
+    |--------------------------------------------------------------------------
+    |
+    | When laravel/boost (laravel/mcp) is installed, ptah adds its read-only
+    | agent tools — ptah-map, ptah-screen, ptah-check, ptah-docs,
+    | ptah-why-empty, ptah-last-error, ptah-upgrade-check — to Boost's MCP
+    | server, so a connected agent calls them directly. Nothing happens
+    | without Boost. See docs/AgentTools.md.
+    */
+    'mcp_tools' => env('PTAH_MCP_TOOLS', true),
+
     'preferences' => [
         /*
          * Chave estrangeira de `user_preferences.user_id` para a tabela de

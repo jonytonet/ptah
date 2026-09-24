@@ -24,7 +24,8 @@
         "laravel/pint": "^1.13",
         "larastan/larastan": "^2.9|^3.0",
         "prism-php/prism": "^0.100",
-        "orchestra/testbench-dusk": "^10.11"
+        "orchestra/testbench-dusk": "^10.11",
+        "laravel/mcp": "^0.8"
     },
     "suggest": {
         "pragmarx/google2fa-laravel": "Required for 2FA via authenticator app (TOTP) — auth module",

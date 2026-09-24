@@ -86,6 +86,21 @@ class ConfigSchemaValidator
     protected function validateColumns(array $columns, string $model): void
     {
         foreach ($columns as $index => $column) {
+            // Uma acao de linha E uma coluna `action` em `cols` — e onde a
+            // tabela e o editor visual a leem. O validador so a aceitava na
+            // secao `actions`, que nada le; aqui ela era recusada como "tipo
+            // de coluna invalido", e qualquer save validado (ptah:config,
+            // ptah:field) falhava numa tela que tivesse um botao.
+            if (($column['colsTipo'] ?? '') === 'action') {
+                try {
+                    $this->validateActions([$index => $column]);
+                } catch (ConfigValidationException $e) {
+                    throw $e->withJsonPath("$.cols[{$index}]")->withModel($model);
+                }
+
+                continue;
+            }
+
             $this->validateColumn($column, $index, $model);
         }
     }

@@ -9,6 +9,8 @@ window, and says what is still left to do instead of leaving it to be noticed.
 |---|---|---|
 | reading `docs/BaseCrud.md` / `docs/Configuration.md` for one option | `ptah:docs <topic>` | 60–760 tokens |
 | opening every model, migration and config at the start of a session | `ptah:map` | ~1–2k tokens for a module |
+| reading a screen's JSON config (3–10k tokens) before editing it | `ptah:screen <model>` | ~20 lines |
+| reading half of BaseCrud to find out why a screen is empty for someone | `ptah:why-empty <model> --as=<id>` | one line per layer |
 | `tail -300 storage/logs/laravel.log` | `ptah:last-error` | ~100 tokens |
 | opening each screen in a browser after a change | `ptah:check` | one line per screen |
 | five hand edits to add a column | `ptah:field <Entity> add <field>` | one line per file |
@@ -17,6 +19,9 @@ window, and says what is still left to do instead of leaving it to be noticed.
 
 All of them are read-only unless the name says otherwise (`field`, `blueprint`,
 `check --write`), and every one that reports takes `--json`.
+
+**With Laravel Boost installed**, the read-only ones are also MCP tools in
+Boost's server — see [MCP tools](#mcp-tools-in-laravel-boost).
 
 ---
 
@@ -67,6 +72,74 @@ Catalog/Product  route=(global)  perm=pageProduct  cols=6  filters=1
   type. Calling an undeclared method to see what it returns is a side effect
   the map refuses to cause.
 - `[NO TABLE]` marks a model whose migration has not run.
+
+---
+
+## ptah:screen
+
+One screen, in the lines that decide an edit — instead of `ptah:config
+--list` or the JSON, whose columns carry thirty keys each, mostly defaults.
+
+```bash
+php artisan ptah:screen Product                 # key, FQCN or a unique short name
+php artisan ptah:screen Catalog/Product --route=admin/products
+php artisan ptah:screen Product --json
+```
+
+```
+Catalog/Product  [global]  "Produtos"
+permission: pageProduct  gates: delete=product.delete  off: showTrashButton
+columns (4):
+  name  text  "Nome"  [form,required,filter]
+  price  number  "Preço"  [form]  renderer=money mask=money_brl
+  category_id  searchdropdown  "Categoria"  [form]  sd=Category.name
+  cost  number  "Custo"  [hidden]  perm=product.cost
+filters (1):
+  status select "Status"
+actions (1):
+  "Abrir" link /products/%id%
+hooks: beforeCreate=App\Hooks\ProductHooks@beforeCreate
+settings: perPage=50  export=on
+```
+
+A short name that matches two models (`Catalog/Product` and
+`Legacy/Product`) is refused, not guessed.
+
+---
+
+## ptah:why-empty
+
+"The screen is empty for Maria" — answered without reading BaseCrud.
+
+```bash
+php artisan ptah:why-empty Catalog/Order --as=5
+php artisan ptah:why-empty Catalog/Order --as=5 --guard=portal --route=admin/orders
+```
+
+```
+Catalog/Order as user 5
+    table orders                                    5  every row, no scope
+  ↓ model global scopes                             4  SoftDeletingScope
+    screen base (locked, whereHas, custom)          4  soft deletes hidden
+  ↓ company filter                                  3  company_id = 1 (the user's active company)
+  ← column filters                                  0  status='cancelled' (saved or URL filters)
+  rows on screen: 0
+  SQL: select * from "orders" where "orders"."company_id" = 1 and LOWER(status) LIKE '%cancelled%' …
+```
+
+It mounts the **real** screen as the user — their saved preferences, their
+active company, the same config — and counts the rows after each layer by
+switching the component's own state back on, one layer at a time, through
+the component's own query builder. Nothing is re-implemented, so it cannot
+disagree with the screen. The layer marked `←` is where the rows went.
+
+It also reports two cases that look like "empty" and are not:
+
+- the user cannot **read** the screen (the listing is hidden) — see
+  `ptah:permission:why`;
+- the listing **query fails**: BaseCrud turns a `QueryException` into an
+  empty page and clears the user's preferences, so the only trace is a log
+  line. `why-empty` runs the query and prints the error.
 
 ---
 
@@ -262,13 +335,40 @@ php artisan ptah:upgrade-check --json
 
 ---
 
+## MCP tools in Laravel Boost
+
+When the host has `laravel/boost` (which brings `laravel/mcp`), ptah adds its
+read-only tools to Boost's MCP server — an agent connected to Boost sees them
+next to Boost's own and calls them directly, with no shell and no skill
+telling it they exist.
+
+| MCP tool | Same as | Arguments |
+|---|---|---|
+| `ptah-map` | `ptah:map` | — |
+| `ptah-screen` | `ptah:screen` | `model`, `route` |
+| `ptah-check` | `ptah:check` (read-only; never `--write`) | `model`, `user_id`, `guard` |
+| `ptah-docs` | `ptah:docs` | `topic` |
+| `ptah-why-empty` | `ptah:why-empty` | `model`, `user_id`, `guard`, `route` |
+| `ptah-last-error` | `ptah:last-error` | `frames` |
+| `ptah-upgrade-check` | `ptah:upgrade-check` | — |
+
+Each answers with the command's own text, so the tool and the CLI cannot
+drift. A non-zero exit that produced output (a `ptah-check` with a failing
+screen) is an answer, not a tool error. Registration appends to
+`boost.mcp.tools.include` and keeps whatever the host listed there;
+`PTAH_MCP_TOOLS=false` turns it off. Nothing happens without Boost.
+
+---
+
 ## Recommended session flow for an agent
 
 ```bash
 php artisan ptah:upgrade-check     # after an update
 php artisan ptah:map               # what exists
 php artisan ptah:docs column       # before writing a --column
+php artisan ptah:screen Product    # before editing a screen
 # … ptah:blueprint / ptah:forge / ptah:field / ptah:config …
 php artisan ptah:check             # does every screen still work?
 php artisan ptah:last-error        # when something broke
+php artisan ptah:why-empty X --as=5  # "the screen is empty for user 5"
 ```

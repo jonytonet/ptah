@@ -7,6 +7,98 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.36.0] - 2026-09-24
+
+More of the agent toolkit, and a class of CLI configuration that "saved
+successfully" and changed nothing on the screen.
+
+### Added - the agent tools as MCP tools in Laravel Boost
+
+When the host has `laravel/boost` (it brings `laravel/mcp`), ptah appends its
+read-only tools to Boost's MCP server: `ptah-map`, `ptah-screen`,
+`ptah-check`, `ptah-docs`, `ptah-why-empty`, `ptah-last-error`,
+`ptah-upgrade-check`. An agent connected to Boost sees and calls them directly
+— no shell, and no skill needed to tell it they exist. Each answers with the
+command's own text, so tool and CLI cannot drift; `ptah-check` never writes.
+Registration appends to `boost.mcp.tools.include` and keeps the host's own
+entries; `PTAH_MCP_TOOLS=false` turns it off; without Boost nothing happens
+(the package does not require `laravel/mcp`). Verified in a host with Boost:
+its ToolRegistry lists the tools and its ToolExecutor runs them in its
+subprocess.
+
+### Added - `ptah:screen`: one screen in about twenty lines
+
+Columns (type, label, form/required/filter/hidden, renderer, mask, relation,
+searchdropdown, rules, column permission), filters, row actions, styles,
+joins, non-empty hooks, permission, gates, hidden buttons and the settings the
+runtime reads — instead of the JSON, where every column carries thirty keys of
+defaults. Finds a screen by key, FQCN or a unique short name (an ambiguous one
+is refused); `--route`, `--json`. Tested to cost under half the JSON.
+
+### Added - `ptah:why-empty`: why a screen lists no rows for a user
+
+Mounts the real BaseCrud as the user — their saved preferences, their active
+company, the same config — and counts the rows after each layer the listing
+applies (table, global scopes, locked/whereHas/custom, trash view, company,
+search, column filters, date ranges, quick date), by switching the
+component's own state back on one layer at a time through its own
+`buildBaseQuery()`. The layer where the count drops to zero is marked, and the
+final SQL is printed with bindings. It also says when the user cannot read the
+screen, and when the listing query fails — BaseCrud turns that into an empty
+page and clears the user's preferences, leaving only a log line.
+
+### Fixed - `ptah:config --action` never reached the screen
+
+The command appended actions to a top-level `actions` section; the table
+reads row actions as columns of type `action` inside `cols`, which is where
+the visual editor writes them. "Actions: 1", "saved successfully", and no
+button. Actions now go into `cols` in the editor's shape
+(`ActionParser::asColumn()`), upserted by label.
+
+Fixing it surfaced that the validator rejected `colsTipo: action` inside
+`cols` as an invalid column type — so any validated save (`ptah:config`,
+`ptah:field`) of a screen that had a button failed. It now validates an
+action column as an action.
+
+### Fixed - `ptah:config --set` wrote settings BaseCrud never reads
+
+The documented keys — `itemsPerPage`, `exportEnabled`, `cacheEnabled`,
+`cacheTime`, `paginationEnabled` — were written to the top of the config. The
+screen reads its page size from `uiPreferences.perPage` and its export switch
+from `exportConfig.enabled`; nothing reads the rest. The same was true of the
+interactive general-settings wizard, which asked fifteen questions (cache,
+pagination and search on/off, striped, hover, row numbers, soft deletes…) and
+stored every answer where no code looks.
+
+- `--set` translates the old names to the real paths
+  (`itemsPerPage`/`perPage` → `uiPreferences.perPage`, `compactMode`,
+  `exportEnabled`/`exportMaxRows`/`exportFormats`/`pdfOrientation` →
+  `exportConfig.*`, `broadcastEnabled`/`Channel`/`Event` → `broadcast.*`),
+  accepts any dotted path, and refuses with a warning the keys no code reads.
+- The wizard asks only what the runtime reads; the permissions wizard only the
+  five keys `getEffectivePermissions()` checks (it also asked `list`, `view`,
+  `import`, `forceDelete`).
+- `ptah:config:doctor` reports configs saved before this version with a dead
+  `actions` section or the old top-level settings, and `--fix` moves them.
+- `docs/Configuration.md`'s settings and permissions reference is rewritten
+  to the real paths, dead `--set` examples are gone, and
+  `DocumentedSetKeyTest` keeps them out. KnownLimitations lists what is stored
+  and still not applied (`cacheStrategy`, some `uiPreferences` flags).
+
+### Fixed - `ptah:config` killed the process on a validation error
+
+`saveConfiguration()` called `exit(1)`. From a shell that is an exit code;
+from `Artisan::call()` — `ptah:blueprint`, a queued job, a test runner — it
+ended the whole PHP process silently, with nothing saved. It returns a
+failure now.
+
+### Changed - `ptah:map` omits the package's own relations
+
+`createdBy`/`updatedBy`/`deletedBy` from `HasAuditFields` were listed on every
+entity; methods coming from ptah's own traits are skipped.
+
+---
+
 ## [1.35.0] - 2026-09-24
 
 A release about **what it costs an agent to build with ptah** — fewer tokens

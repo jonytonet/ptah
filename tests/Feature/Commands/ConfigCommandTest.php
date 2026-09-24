@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Commands;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Support\ModelKey;
 use Ptah\Tests\TestCase;
@@ -78,14 +81,97 @@ class ConfigCommandTest extends TestCase
         $this->artisan('ptah:config', [
             'model' => ConfigCmdStub::class,
             '--column' => ['name:text:label=Nome'],
-            '--set' => ['itemsPerPage=15', 'cacheEnabled=true'],
+            '--set' => ['itemsPerPage=15', 'exportEnabled=true', 'displayName=Itens'],
             '--non-interactive' => true,
         ])->assertExitCode(0);
 
         $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first()->config;
 
-        $this->assertSame(15, $cfg['itemsPerPage']); // numeric cast
-        $this->assertTrue($cfg['cacheEnabled']);      // 'true' → bool
+        // Antes: gravado no topo como `itemsPerPage`, que o BaseCrud nunca leu.
+        $this->assertSame(15, $cfg['uiPreferences']['perPage']); // numeric cast, onde o runtime le
+        $this->assertTrue($cfg['exportConfig']['enabled']);      // 'true' → bool
+        $this->assertSame('Itens', $cfg['displayName']);         // chave real passa direto
+        $this->assertArrayNotHasKey('itemsPerPage', $cfg);
+    }
+
+    #[Test]
+    public function items_per_page_from_the_cli_is_the_page_size_the_screen_uses(): void
+    {
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--column' => ['name:text:label=Nome'],
+            '--set' => ['itemsPerPage=15'],
+            '--non-interactive' => true,
+        ])->assertExitCode(0);
+
+        Livewire::test(BaseCrud::class, ['model' => ModelKey::canonical(ConfigCmdStub::class)])
+            ->assertSet('perPage', 15);
+    }
+
+    #[Test]
+    public function settings_the_runtime_never_reads_are_refused_with_a_warning(): void
+    {
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--column' => ['name:text:label=Nome'],
+            '--set' => ['cacheEnabled=true'],
+            '--non-interactive' => true,
+        ])
+            ->expectsOutputToContain('not read by BaseCrud')
+            ->assertExitCode(0);
+
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first()->config;
+        $this->assertArrayNotHasKey('cacheEnabled', $cfg);
+    }
+
+    #[Test]
+    public function a_cli_action_is_a_button_on_the_screen(): void
+    {
+        // Antes: gravada numa secao `actions` que nada le — "Actions: 1",
+        // "saved successfully", e nenhum botao na tela.
+        $args = [
+            'model' => ConfigCmdStub::class,
+            '--column' => ['name:text:label=Nome'],
+            '--action' => ['Abrir:link:/itens/%id%/abrir:icon=bx bx-show'],
+            '--non-interactive' => true,
+        ];
+        $this->artisan('ptah:config', $args)->assertExitCode(0);
+        $this->artisan('ptah:config', $args)->assertExitCode(0);
+
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first()->config;
+        $actions = array_values(array_filter($cfg['cols'], fn ($c) => ($c['colsTipo'] ?? '') === 'action'));
+
+        $this->assertArrayNotHasKey('actions', $cfg);
+        $this->assertCount(1, $actions, 'Rodar de novo deveria atualizar a acao, nao duplicar.');
+        $this->assertSame('/itens/%id%/abrir', $actions[0]['actionValue']);
+
+        DB::table('items')->insert(['name' => 'linha-1']);
+        $html = Livewire::test(BaseCrud::class, ['model' => ModelKey::canonical(ConfigCmdStub::class)])->html();
+        $this->assertStringContainsString('/itens/', $html, 'A acao configurada pela CLI nao aparece na tela.');
+    }
+
+    #[Test]
+    public function the_doctor_moves_dead_actions_and_legacy_settings_where_the_runtime_reads(): void
+    {
+        CrudConfig::create(['model' => ModelKey::canonical(ConfigCmdStub::class), 'route' => '', 'config' => [
+            'cols' => [['colsNomeFisico' => 'name', 'colsNomeLogico' => 'Nome', 'colsTipo' => 'text']],
+            'actions' => [['colsNomeLogico' => 'Abrir', 'colsTipo' => 'action', 'actionType' => 'link', 'actionValue' => '/a/%id%']],
+            'itemsPerPage' => 50,
+            'cacheEnabled' => true,
+        ]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('dead actions section')
+            ->assertExitCode(1);
+
+        $this->artisan('ptah:config:doctor', ['--fix' => true]);
+
+        $cfg = CrudConfig::where('model', ModelKey::canonical(ConfigCmdStub::class))->first()->config;
+        $this->assertArrayNotHasKey('actions', $cfg);
+        $this->assertArrayNotHasKey('itemsPerPage', $cfg);
+        $this->assertArrayNotHasKey('cacheEnabled', $cfg);
+        $this->assertSame(50, $cfg['uiPreferences']['perPage']);
+        $this->assertSame('/a/%id%', collect($cfg['cols'])->firstWhere('colsTipo', 'action')['actionValue']);
     }
 
     #[Test]

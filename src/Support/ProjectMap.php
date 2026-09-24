@@ -155,9 +155,20 @@ final class ProjectMap
     {
         $out = [];
 
+        // Metodo de trait aparece como declarado pela classe que o usa; os do
+        // pacote (createdBy/updatedBy/deletedBy do HasAuditFields) estariam em
+        // toda entidade e nao dizem nada sobre ela.
+        $packageTraitMethods = [];
+        foreach (class_uses_recursive($model) as $trait) {
+            if (str_starts_with($trait, 'Ptah\\')) {
+                array_push($packageTraitMethods, ...get_class_methods($trait));
+            }
+        }
+
         foreach ((new ReflectionClass($model))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             // So as relacoes da propria app: nada herdado do Eloquent ou de traits do pacote.
-            if ($method->getDeclaringClass()->getName() !== $model::class || $method->getNumberOfRequiredParameters() > 0 || $method->isStatic()) {
+            if ($method->getDeclaringClass()->getName() !== $model::class || $method->getNumberOfRequiredParameters() > 0 || $method->isStatic()
+                || in_array($method->getName(), $packageTraitMethods, true)) {
                 continue;
             }
 

@@ -300,12 +300,14 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | `php artisan ptah:menu-sync` | Syncs the sidebar menu from the MenuRegistry |
 | `php artisan ptah:hooks {Entity}` | Scaffolds a lifecycle-hooks class for an entity |
 
-**Agent tools** — one call instead of reading files ([Agent Tools](docs/AgentTools.md)):
+**Agent tools** — one call instead of reading files ([Agent Tools](docs/AgentTools.md)). With Laravel Boost they are also MCP tools (`ptah-map`, `ptah-screen`, `ptah-check`, `ptah-why-empty`…):
 
 | Command | Description |
 |---|---|
 | `php artisan ptah:docs {topic}` | Option reference for `ptah:config` (column, filter, style, action, join, mask), from the parser itself |
 | `php artisan ptah:map` | Compact project map: entities, fields, relations, screens, menu, pending TODOs (`--write` → `.ptah/map.md`) |
+| `php artisan ptah:screen {model}` | One screen in ~20 lines: columns, filters, actions, styles, hooks, permission |
+| `php artisan ptah:why-empty {model} --as={id}` | Why a screen lists no rows for a user: row count after each layer, final SQL |
 | `php artisan ptah:check` | Renders every configured screen and checks its config against model and table (`--write` round-trip, rolled back) |
 | `php artisan ptah:field {Entity} add {field}` | Adds a field everywhere: migration, `$fillable`/`$casts`, rules, DTO, crud config |
 | `php artisan ptah:blueprint {spec.json}` | A whole module from one spec: forge in FK order, migrate, config, menu, permissions, seed |
