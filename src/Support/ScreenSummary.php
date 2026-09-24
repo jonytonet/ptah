@@ -59,6 +59,7 @@ final class ScreenSummary
             'settings' => array_filter([
                 'perPage' => $config['uiPreferences']['perPage'] ?? null,
                 'export' => isset($config['exportConfig']['enabled']) ? (bool) $config['exportConfig']['enabled'] : null,
+                'import' => ! empty($config['importConfig']['enabled']) ? ($config['importConfig']['mode'] ?? 'create') : null,
                 'groupBy' => $config['groupBy'] ?? null,
                 'companyField' => $config['companyField'] ?? null,
                 'rowLink' => $config['configLinkLinha'] ?? null,

@@ -17,6 +17,7 @@ use Ptah\Livewire\BaseCrud\Concerns\HasCrudDeletion;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudExport;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudFilters;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudForm;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudImport;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudLifecycle;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudPreferences;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudQuery;
@@ -65,6 +66,9 @@ class BaseCrud extends Component
 
     // Create / edit modal and cell helpers
     use HasCrudForm;
+
+    // Spreadsheet import (upload → map → preview → import)
+    use HasCrudImport;
 
     // Lifecycle, configuration reload
     use HasCrudLifecycle;

@@ -29,7 +29,7 @@
 18. [WhereHas — Parent Entity Filter](#wherehas--parent-entity-filter)
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
 20. [Totalisers](#totalisers)
-21. [Export](#export)
+21. [Export](#export) · [Import](#import)
 22. [User Preferences (V2.1)](#user-preferences-v21)
 23. [Livewire Events](#livewire-events)
 24. [Permissions](#permissions)
@@ -1893,6 +1893,66 @@ Use translation keys in labels:
     </div>
 @endif
 ```
+
+---
+
+## Import
+
+Spreadsheet import into a screen — the counterpart of export, **off by
+default**:
+
+```json
+"importConfig": {
+  "enabled": true,
+  "mode": "create",
+  "key": "sku",
+  "maxRows": 2000,
+  "maxKb": 10240
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `false` | Shows **Import** in the toolbar |
+| `mode` | `create` | `create` inserts every row; `upsert` updates the record whose `key` matches (inside the screen's scope) and inserts the rest |
+| `key` | — | Field that identifies an existing record in `upsert` mode |
+| `maxRows` | `2000` | Rows per file |
+| `maxKb` | `10240` | File size limit |
+
+The user uploads a CSV or XLSX, matches its columns to the form's fields
+(pre-matched by field name or label, accents and case ignored), reviews the
+result and imports. What the import accepts:
+
+- **CSV as Excel saves it in Brazil** — `;` separator, Windows-1252, BOM.
+- **Labels** where the form sends keys: `Ativo` in a select column becomes its
+  value; `sim`/`não`, `yes`/`no`, `1`/`0`, `x` in a boolean.
+- **Names** where the form sends ids: `Parafusos` in a searchdropdown column
+  (with `colsSDModel`) becomes the category id — looked up **inside the
+  active company**, so a name never resolves to another tenant's record. A
+  name that matches two records is an error asking for the id.
+- **`1.234,56`** in a number column, and Excel date serials in date columns.
+
+What it guarantees:
+
+- **Only the form's fields.** The fields a file may fill are exactly the
+  savable form columns (no image, no audit or primary-key column, no column
+  the user's column permissions deny). The mapping is client state and is
+  checked again on import.
+- **The form's rules.** Each row runs through the same `FormValidatorService`
+  rules and mask transforms as a save, and through the lifecycle hooks and
+  audit stamps. Created rows get the active company and the screen's locked
+  filters, like a record created from the screen.
+- **All or nothing.** While any row has a problem the review lists it by
+  spreadsheet line and field, and the import button does not appear. The
+  import runs in one transaction; a row the database refuses (a duplicate
+  unique key, a constraint) rolls the whole file back and is named by line.
+- **The screen's gates.** Import requires what **New** requires
+  (`showCreateButton`, `permissions.create`, the Permissions module's
+  `create`) plus the optional `permissions.import` gate; `upsert` also
+  requires update.
+
+Large files are imported synchronously; a queued import is not implemented
+yet (see KnownLimitations.md).
 
 ---
 

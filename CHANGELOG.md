@@ -7,6 +7,44 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.37.0] - 2026-09-24
+
+### Added - spreadsheet import on any BaseCrud screen
+
+The counterpart of export, off by default:
+`--set="importConfig.enabled=true"` (optionally `importConfig.mode=upsert`
+with `importConfig.key=sku`, `maxRows`, `maxKb`). The user uploads a CSV or
+XLSX, matches its columns to the form's fields — pre-matched by name or label,
+accents and case ignored — reviews the rows and imports.
+
+Built for the files people actually send: a CSV saved by Excel in Brazil
+(`;`, Windows-1252, BOM), labels where the form sends keys (`Ativo` in a
+select, `sim`/`não` in a boolean), names where the form sends ids
+(`Parafusos` in a searchdropdown becomes the category id), `1.234,56` in a
+number column, Excel date serials.
+
+And held to the screen's own rules:
+
+- only the form's savable fields can be filled — the mapping is client state
+  and is re-checked on import, so a forged mapping cannot write `company_id`
+  or any column outside the form;
+- every row runs through the same validation rules, mask transforms,
+  lifecycle hooks and audit stamps as a save; created rows land in the active
+  company and the screen's locked filters;
+- a relation looked up by name stays inside the active company — "Porcas" in
+  company 1 never resolves to company 2's "Porcas";
+- all or nothing: while any row has a problem the review lists it by line and
+  field and there is nothing to confirm; the import runs in one transaction,
+  and a row the database refuses rolls the whole file back, named by line;
+- the same gates as **New**, plus the optional `permissions.import`; upsert
+  also needs update, and matches only records inside the screen's scope.
+
+Synchronous, capped by `maxRows` (default 2000); a queued import for very
+large files is listed in KnownLimitations. `ptah:screen` shows whether a
+screen imports.
+
+---
+
 ## [1.36.0] - 2026-09-24
 
 More of the agent toolkit, and a class of CLI configuration that "saved

@@ -2646,6 +2646,9 @@ ignored by the screen.
 | `exportConfig.orientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
 | `exportConfig.formats` | list | `['excel', 'pdf']` | Enabled formats |
 | `exportConfig.asyncThreshold` | int | `1000` | Rows above which export is queued |
+| `importConfig.enabled` | bool | `false` | Spreadsheet import button (see BaseCrud.md § Import) |
+| `importConfig.mode` / `importConfig.key` | string | `create` / — | `upsert` updates the record whose `key` matches |
+| `importConfig.maxRows` / `importConfig.maxKb` | int | `2000` / `10240` | Limits per file |
 | `broadcast.enabled` | bool | `false` | Echo listener that refreshes the screen |
 | `broadcast.channel` | string | `'page-{model}-observer'` | Channel name |
 | `broadcast.event` | string | `'.page{Model}Observer'` | Event name |
