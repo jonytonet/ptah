@@ -156,6 +156,20 @@ class BaseCrud extends Component
      * arguments — never from the client — and the name is checked against the
      * model's real relations there (see Ptah\Support\RelationPath).
      */
+    /**
+     * Fields the HOST put into `$filters` through `initialFilter` at mount.
+     *
+     * A filter on a column outside the config is refused when it comes from
+     * the client — see `fieldIsFilterable()` — but `initialFilter` is the
+     * host's own code and may legitimately name one. Recording which fields it
+     * named, #[Locked], is what lets the rule tell the two apart without
+     * silently dropping a filter a host already relies on.
+     *
+     * @var list<string>
+     */
+    #[Locked]
+    public array $hostFilterFields = [];
+
     #[Locked]
     public string $whereHasFilter = '';
 

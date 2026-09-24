@@ -198,6 +198,7 @@ trait HasCrudLifecycle
                 if (is_array($filterItem) && count($filterItem) >= 3) {
                     [$field, , $value] = $filterItem;
                     $this->filters[$field] = $value;
+                    $this->hostFilterFields[] = (string) $field;
                 }
             }
         }

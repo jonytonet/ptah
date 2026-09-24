@@ -171,7 +171,12 @@ class CrudBuildFiltersTest extends TestCase
     #[Test]
     public function is_not_null_operator_is_preserved(): void
     {
-        $dtos = $this->build([], ['status' => 'IS NOT NULL']);
+        // `name`, uma coluna da config. Antes da 1.34.9 isto usava `status`,
+        // que a config deste teste NAO declara — e passava, porque o laco
+        // aceitava filtro em qualquer coluna. Era o oraculo booleano
+        // (`two_factor_secret IS NOT NULL`) registrado como teste; o que ele
+        // mede e a preservacao do operador, que independe da coluna.
+        $dtos = $this->build([], ['name' => 'IS NOT NULL']);
 
         $this->assertCount(1, $dtos);
         $this->assertSame('IS NOT NULL', $dtos[0]->operator);

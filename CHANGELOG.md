@@ -7,6 +7,57 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.9] - 2026-09-23
+
+**Security release. Upgrade every host**, in particular any that has a BaseCrud
+screen over its users table.
+
+### Security - HIGH: a filter read the value of any column out of the database
+
+`$filters` is public and client-writable, and `buildActiveFilters()` accepted
+ANY key in it — the only barrier was `deniedColumns`. On a screen over the users
+table, a forged
+
+```
+filters[password] = '$2y$10$a'
+```
+
+filtered the listing by the password hash, and whether a row survived said
+whether the hash began that way. One character at a time: the whole hash. The
+same for `remember_token` and `two_factor_secret` — and with the TOTP secret,
+the second factor stops protecting anything. Reproduced against 1.34.8: two
+users, one prefix, one of them left on screen. Anyone with read access to such
+a screen could do it.
+
+It had four doors, all closed:
+
+- the filter panel's plain-column branch;
+- the `IS NULL` / `IS NOT NULL` branch, which ran without a configured column
+  and gave a boolean oracle (`two_factor_secret IS NOT NULL` — who has 2FA on);
+- the advanced search, which took its field name straight from the client;
+- the global search box, whose `LIKE %x%` included a configured text column
+  even when the model hid it.
+
+**The rule now:** the client may filter by a column the config declares, or by
+a field the HOST named in `initialFilter` — its own code, recorded at mount in
+the `#[Locked]` `$hostFilterFields`. And nobody may filter, search or sort by an
+attribute in the model's `$hidden`: that list is the application's own
+statement that the value never leaves the server, and a filter leaks it through
+the row count. That holds even for a host's `initialFilter`, because once
+mounted the client can change a filter's value. The URL filters (`?f[...]`)
+follow the same `$hidden` rule.
+
+### Changed - what a host may notice
+
+- **A filter on a column outside the config is ignored** when it comes from the
+  client. A filter the host sets with `initialFilter` still applies, config or
+  not.
+- **An attribute in the model's `$hidden` can no longer be filtered, searched
+  or sorted**, even when the config declares it as a column — for example a
+  password field configured for the form.
+
+---
+
 ## [1.34.8] - 2026-09-23
 
 **Security release. Upgrade every host.** Found by a read-only audit of the
