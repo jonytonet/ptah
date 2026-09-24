@@ -129,8 +129,8 @@ final class ProjectMap
                     continue;
                 }
 
-                $type = strtolower((string) ($column['type_name'] ?? 'unknown'));
-                $fields[] = $name.':'.$type.(($column['nullable'] ?? false) ? '?' : '')
+                $type = strtolower($column['type_name']);
+                $fields[] = $name.':'.$type.($column['nullable'] ? '?' : '')
                     .(isset($fkTargets[$name]) ? '→'.$fkTargets[$name] : '');
             }
         } catch (\Throwable) {
@@ -199,7 +199,7 @@ final class ProjectMap
             }
 
             return CrudConfig::query()->orderBy('model')->orderBy('route')->get()->map(function (CrudConfig $c): array {
-                $config = is_array($c->config) ? $c->config : [];
+                $config = $c->config;
                 $cols = is_array($config['cols'] ?? null) ? $config['cols'] : [];
 
                 return [

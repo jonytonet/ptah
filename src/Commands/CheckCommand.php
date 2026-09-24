@@ -88,7 +88,7 @@ class CheckCommand extends Command
      */
     private function checkScreen(CrudConfig $row): array
     {
-        $config = is_array($row->config) ? $row->config : [];
+        $config = $row->config;
         $route = (string) ($row->route ?? '');
         $findings = [];
 

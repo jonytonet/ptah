@@ -277,7 +277,7 @@ final class CrudScreenInspector
             return true;
         }
 
-        return method_exists($model, 'getAppends') && in_array($field, $model->getAppends(), true);
+        return in_array($field, $model->getAppends(), true);
     }
 
     private static function flag(mixed $value): bool

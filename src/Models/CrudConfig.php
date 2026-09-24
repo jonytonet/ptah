@@ -16,6 +16,7 @@ use Ptah\Traits\HasAuditFields;
  * @property int $id
  * @property string $model
  * @property array $config
+ * @property string|null $route screen path; empty = the global config
  */
 class CrudConfig extends Model
 {

@@ -218,7 +218,7 @@ PHP;
         $service = app(CrudConfigService::class);
 
         foreach ($rows as $row) {
-            $config = is_array($row->config) ? $row->config : [];
+            $config = $row->config;
             $label = "crud_config {$key}".($row->route ? " [{$row->route}]" : '');
 
             if (in_array($field->name, array_column($config['cols'] ?? [], 'colsNomeFisico'), true)) {
