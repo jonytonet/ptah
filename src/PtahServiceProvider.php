@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Ptah\Commands\BlueprintCommand;
 use Ptah\Commands\CheckCommand;
 use Ptah\Commands\Config\ConfigDoctorCommand;
 use Ptah\Commands\Config\ConfigExportAllCommand;
@@ -385,6 +386,7 @@ class PtahServiceProvider extends ServiceProvider
                 CheckCommand::class,          // ptah:check
                 MapCommand::class,            // ptah:map
                 FieldCommand::class,          // ptah:field
+                BlueprintCommand::class,      // ptah:blueprint
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
