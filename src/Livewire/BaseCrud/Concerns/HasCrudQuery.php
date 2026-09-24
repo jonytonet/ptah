@@ -184,8 +184,19 @@ trait HasCrudQuery
 
         // Global search with OR across text fields and relations
         if ($this->search !== '') {
-            $searchFilters = $this->filterService->buildGlobalSearchFilters(
+            // Sem as colunas em `$hidden`: a senha configurada como coluna de
+            // formulario entrava no `LIKE %x%` da caixa de busca, e a busca
+            // virava o mesmo oraculo dos filtros. (Nao e o getSearchableFields()
+            // que alimenta esta busca — a primeira versao da correcao foi la, e
+            // o teste pegou.)
+            $hidden = $this->hiddenModelAttributes();
+            $searchCols = array_values(array_filter(
                 $this->crudConfig['cols'] ?? [],
+                static fn (array $col): bool => ! in_array($col['colsNomeFisico'] ?? '', $hidden, true),
+            ));
+
+            $searchFilters = $this->filterService->buildGlobalSearchFilters(
+                $searchCols,
                 $this->search
             );
 
@@ -442,6 +453,48 @@ trait HasCrudQuery
     }
 
     /**
+     * May the CLIENT filter by this field?
+     *
+     * `$filters` is a public, client-writable property, and the plain-column
+     * branch below used to accept ANY key in it: the only barrier was
+     * `deniedColumns`. So on a screen over the users table, a forged
+     * `filters[password] = '$2y$10$a'` filtered the listing by a column that no
+     * config mentioned, and whether a row survived told you whether the hash
+     * started that way — one character at a time. The same for
+     * `remember_token` and `two_factor_secret`, and with the TOTP secret in
+     * hand, the second factor stops protecting anything. Reproduced before the
+     * fix: two users, one prefix, one of them left on screen.
+     *
+     * Allowed: a column the config declares, or a field the HOST named in
+     * `initialFilter` (its own code — see `$hostFilterFields`).
+     *
+     * Never allowed, whoever asks: an attribute in the model's `$hidden`. That
+     * list is precisely "never let this leave the server", and a filter on it
+     * leaks the value through the row count. It applies even to a host field,
+     * because once mounted the client can change a filter's VALUE.
+     */
+    protected function fieldIsFilterable(string $field): bool
+    {
+        if (in_array($field, $this->hiddenModelAttributes(), true)) {
+            return false;
+        }
+
+        return $this->findColByField($field) !== null
+            || in_array($field, $this->hostFilterFields, true);
+    }
+
+    /**
+     * The model's `$hidden` attributes — never filterable, searchable or
+     * sortable from the client.
+     *
+     * @return list<string>
+     */
+    protected function hiddenModelAttributes(): array
+    {
+        return array_values($this->resolveEloquentModel()?->getHidden() ?? []);
+    }
+
+    /**
      * Converts a camelCase relation name to a snake_plural table name.
      * e.g. "businessPartner" → "business_partners"
      */
@@ -481,6 +534,13 @@ trait HasCrudQuery
             // "plain column" branch below, which would otherwise infer its
             // value straight from $this->filters — a client-writable property.
             if (in_array($field, $this->deniedColumns, true)) {
+                continue;
+            }
+
+            // No topo do laco, e nao so no ramo de coluna simples: o ramo de
+            // IS NULL tambem roda sem coluna configurada, e da um oraculo
+            // booleano (`two_factor_secret IS NOT NULL` revela quem tem 2FA).
+            if (! $this->fieldIsFilterable((string) $field)) {
                 continue;
             }
 
@@ -623,6 +683,12 @@ trait HasCrudQuery
                 // used here without any findColByField() lookup, so a denied
                 // column must be rejected explicitly.
                 if (in_array($field, $this->deniedColumns, true)) {
+                    continue;
+                }
+
+                // A mesma regra dos filtros: sem ela, a busca avancada era a
+                // segunda porta para o mesmo oraculo.
+                if (! $this->fieldIsFilterable((string) $field)) {
                     continue;
                 }
 
@@ -840,9 +906,15 @@ trait HasCrudQuery
     {
         $fields = [];
 
+        // Um atributo em `$hidden` configurado como coluna de texto — a senha
+        // num formulario de usuarios, por exemplo — entrava na busca global
+        // `LIKE %x%`, e a caixa de busca virava o mesmo oraculo dos filtros.
+        $hidden = $this->hiddenModelAttributes();
+
         foreach ($this->crudConfig['cols'] ?? [] as $col) {
             $tipo = $col['colsTipo'] ?? 'text';
-            if ($tipo === 'text' && empty($col['colsRelacao'])) {
+            if ($tipo === 'text' && empty($col['colsRelacao'])
+                && ! in_array($col['colsNomeFisico'] ?? '', $hidden, true)) {
                 $fields[] = $col['colsNomeFisico'];
             }
         }

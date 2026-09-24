@@ -48,6 +48,11 @@ trait HasCrudFilters
      */
     protected function sortColumnIsAllowed(string $column): bool
     {
+        // Ordenar por um atributo `$hidden` revela o valor pela ordem das linhas.
+        if (in_array($column, $this->hiddenModelAttributes(), true)) {
+            return false;
+        }
+
         return $column === 'id'
             || in_array($column, array_column($this->sortableColumns(), 'sortBy'), true);
     }
@@ -507,7 +512,7 @@ trait HasCrudFilters
             }
         }
 
-        return array_values(array_unique($fields));
+        return array_values(array_diff(array_unique($fields), $this->hiddenModelAttributes()));
     }
 
     /**
