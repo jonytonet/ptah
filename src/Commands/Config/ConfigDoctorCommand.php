@@ -7,6 +7,8 @@ namespace Ptah\Commands\Config;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Commands\Config\Parsers\ActionParser;
+use Ptah\Commands\Config\Parsers\GeneralParser;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
@@ -297,6 +299,61 @@ class ConfigDoctorCommand extends Command
                 } else {
                     $this->line("🔴 <fg=red>legacy styles key</> [{$label}]: chave 'styles' gravada (legado); o runtime lê 'contitionStyles' — estas regras de estilo NÃO são aplicadas. Rode --fix");
                     $errors++;
+                }
+            }
+
+            // 5b'. Dead 'actions' section — where `ptah:config --action` wrote
+            //      until 1.36.0. The table reads row actions as columns of type
+            //      `action` inside 'cols', so these buttons never appeared.
+            //      --fix moves each one into 'cols' in the editor's shape.
+            $deadActions = array_values(array_filter((array) ($config['actions'] ?? []), 'is_array'));
+            if (array_key_exists('actions', $config)) {
+                if ($deadActions === []) {
+                    if ($this->option('fix')) {
+                        unset($config['actions']);
+                        $row->update(['config' => $config]);
+                    }
+                } elseif ($this->option('fix')) {
+                    $labels = array_column(array_filter($config['cols'] ?? [], fn ($c) => ($c['colsTipo'] ?? '') === 'action'), 'colsNomeLogico');
+
+                    foreach ($deadActions as $action) {
+                        $column = ActionParser::asColumn($action);
+                        if (! in_array($column['colsNomeLogico'], $labels, true)) {
+                            $config['cols'][] = $column;
+                        }
+                    }
+
+                    unset($config['actions']);
+                    $row->update(['config' => $config]);
+                    $this->line("🔧 <fg=green>fixed</> dead actions section [{$label}]: ".count($deadActions)." action(s) moved into 'cols'");
+                    $fixed++;
+                } else {
+                    $this->line("🔴 <fg=red>dead actions section</> [{$label}]: ".count($deadActions)." ação(ões) em 'actions' (gravadas pelo ptah:config --action antigo); a tabela lê ações como colunas 'action' em 'cols' — os botões NÃO aparecem. Rode --fix");
+                    $errors++;
+                }
+            }
+
+            // 5b''. Top-level --set keys the runtime never read (itemsPerPage,
+            //       exportEnabled → their real paths; cache/pagination → dropped).
+            $legacySet = array_values(array_filter(
+                array_merge(array_keys(GeneralParser::ALIASES), GeneralParser::UNREAD),
+                fn (string $k) => array_key_exists($k, $config)
+            ));
+            if ($legacySet !== []) {
+                if ($this->option('fix')) {
+                    foreach ($legacySet as $key) {
+                        $target = GeneralParser::targetKey($key);
+                        if ($target !== null && data_get($config, $target) === null) {
+                            data_set($config, $target, $config[$key]);
+                        }
+                        unset($config[$key]);
+                    }
+                    $row->update(['config' => $config]);
+                    $this->line("🔧 <fg=green>fixed</> legacy settings [{$label}]: ".implode(', ', $legacySet));
+                    $fixed++;
+                } else {
+                    $this->line("🟡 <fg=yellow>legacy settings</> [{$label}]: ".implode(', ', $legacySet).' no topo da config — o runtime não lê (itemsPerPage → uiPreferences.perPage, exportEnabled → exportConfig.enabled; cache/paginação não existem). Rode --fix');
+                    $warnings++;
                 }
             }
 

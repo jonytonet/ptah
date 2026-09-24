@@ -355,6 +355,19 @@ php artisan ptah:config "App\Models\Product" --filter="status:select:options=act
 php artisan ptah:config "App\Models\Product" --style="status:==:inactive:background:#FEE2E2;color:#991B1B;"
 ```
 
+### Settings the screen does not apply
+
+`cacheStrategy` (the editor's cache toggle and TTL) and
+`uiPreferences.stickyHeader` / `highlightOnHover` / `showTotalizador` are
+stored but no BaseCrud code reads them. Until they are wired, setting them
+changes nothing; `ptah:config --set` refuses the flat cache/pagination names
+for that reason.
+
+Before 1.36.0, `ptah:config --action` wrote to a top-level `actions` section
+the table never read, and `--set itemsPerPage`/`exportEnabled` to top-level
+keys it never read either. `ptah:config:doctor --fix` moves both where they
+belong.
+
 ### `--action` via CLI — valid action types
 
 Valid `actionType` values are: **`link`**, **`livewire`**, **`javascript`**

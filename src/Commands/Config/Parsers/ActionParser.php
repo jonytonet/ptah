@@ -51,4 +51,34 @@ class ActionParser
 
         return $config;
     }
+
+    /**
+     * An action in the shape the runtime reads: a column of type `action`
+     * inside `cols` — the same one the visual editor writes
+     * (CrudConfig::addAction). Accepts parse() output and ActionWizard output
+     * (`actionName`/`actionLabel`).
+     *
+     * @param  array<string, mixed>  $action
+     * @return array<string, mixed>
+     */
+    public static function asColumn(array $action): array
+    {
+        $label = (string) ($action['colsNomeLogico'] ?? $action['actionLabel'] ?? $action['actionName'] ?? '');
+        unset($action['actionName'], $action['actionLabel']);
+
+        return array_merge([
+            'actionType' => 'link',
+            'actionValue' => '',
+            'actionIcon' => 'bx bx-link',
+            'actionColor' => 'primary',
+            'actionPermission' => '',
+        ], array_filter($action, fn ($v) => $v !== '' && $v !== null), [
+            'colsNomeLogico' => $label,
+            'colsNomeFisico' => 'id',
+            'colsTipo' => 'action',
+            'colsGravar' => false,
+            'colsRequired' => false,
+            'colsIsFilterable' => false,
+        ]);
+    }
 }

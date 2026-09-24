@@ -446,8 +446,7 @@ php artisan ptah:config "App\Models\Product" \
   --style="stock:<:5:background:#FEFCE8;color:#A16207;" \
   --filter="is_active:select:label=Ativos:operator==:options=1:Ativo,0:Inativo" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info:confirm=true" \
-  --set="itemsPerPage=15" \
-  --set="cacheEnabled=true"
+  --set="itemsPerPage=15"
 
 # List current configuration
 php artisan ptah:config "App\Models\Product" --list
@@ -529,7 +528,7 @@ Format: `name:type:value:option=value:option=value` (`ActionParser`)
 
 Format: `key=value`
 
-**Settings:** `itemsPerPage=15`, `cacheEnabled=true`, `cacheTime=30`, `paginationEnabled=true`, `exportEnabled=true`
+**Settings:** `itemsPerPage=15` (→ `uiPreferences.perPage`), `exportEnabled=true` (→ `exportConfig.enabled`), `displayName=Produtos`, or any dotted path (`--set="exportConfig.maxRows=5000"`). Cache and pagination switches do not exist — the command refuses them.
 
 ### UI helpers agents reach for often
 
@@ -578,8 +577,7 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
       "first": "products.category_id", "second": "categories.id" }
   ],
   "permissions": { "permissionIdentifier": "products.index" },
-  "itemsPerPage": 25,
-  "cacheEnabled": true
+  "uiPreferences": { "perPage": 25 }
 }
 ```
 

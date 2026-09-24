@@ -406,7 +406,6 @@ php artisan ptah:config "App\Models\Product" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --action="approve:livewire:approve(%id%):icon=bx-check:color=success" \
   --filter="status:select:label=Status:operator==:options=active,inactive" \
-  --set="cacheEnabled=true" \
   --set="itemsPerPage=25"
 
 # List current configuration
@@ -823,18 +822,16 @@ left:users:products.user_id=users.id:select=name,email
 inner:categories:products.category_id=categories.id:select=name
 ```
 
-**General Settings (--set):**
+**General Settings (--set):** any config path, dotted for nested keys
+(`--set="exportConfig.maxRows=5000"`). The short names below are translated
+to the paths BaseCrud reads; keys it never reads (`cacheEnabled`,
+`paginationEnabled`, `searchEnabled`, `softDeletes`…) are refused with a
+warning. Full list: [Configuration.md § General Settings](Configuration.md#general-settings).
 
 ```bash
 # Examples
---set="cacheEnabled=true"
---set="cacheTime=60"
---set="paginationEnabled=true"
 --set="itemsPerPage=25"
---set="searchEnabled=true"
 --set="exportEnabled=true"
---set="softDeletes=true"
---set="theme=dark"
 --set="compactMode=false"
 ```
 
@@ -881,8 +878,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="stock:number:label=Stock:renderer=number:decimals=0" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:sd_model=App\Models\Category" \
-  --set="itemsPerPage=25" \
-  --set="cacheEnabled=true"
+  --set="itemsPerPage=25"
 
 # 3. View current config
 php artisan ptah:config "App\Models\Product" --list

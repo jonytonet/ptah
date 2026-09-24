@@ -868,18 +868,17 @@ The modal has **9 main tabs**:
    - `tableClass` — Extra CSS classes for the table
 
 3. **Cache:**
-   - `cacheEnabled` — Enable cache (true/false)
-   - `cacheTtl` — Cache time-to-live (seconds)
+   - Stored in `cacheStrategy.enabled` / `cacheStrategy.ttl`. **Not applied by
+     BaseCrud today** — see [KnownLimitations.md](KnownLimitations.md).
 
 4. **Export:**
-   - `exportMaxRows` — Maximum exportable rows
-   - `pdfOrientation` — PDF orientation (landscape/portrait)
-   - `pdfPaperSize` — Paper size (A4, Letter, etc)
+   - `exportConfig.maxRows` — Maximum exportable rows
+   - `exportConfig.orientation` — PDF orientation (landscape/portrait)
 
 5. **Broadcast (Real-time):**
-   - `broadcastEnabled` — Enable Echo listener
-   - `broadcastChannel` — Channel name (default: `page-{model}-observer`)
-   - `broadcastEvent` — Event name (default: `.page{Model}Observer`)
+   - `broadcast.enabled` — Enable Echo listener
+   - `broadcast.channel` — Channel name (default: `page-{model}-observer`)
+   - `broadcast.event` — Event name (default: `.page{Model}Observer`)
 
 #### 7️⃣ Permissions
 
@@ -1558,9 +1557,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="stock:number:label=Stock:renderer=number:decimals=0" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:sd_model=App\Models\Category" \
-  --set="itemsPerPage=25" \
-  --set="cacheEnabled=true" \
-  --set="cacheTtl=3600"
+  --set="itemsPerPage=25"
 ```
 
 ### Option Syntax
@@ -1811,14 +1808,9 @@ key=value
 **Examples:**
 
 ```bash
---set="cacheEnabled=true"
---set="cacheTtl=3600"
 --set="itemsPerPage=25"
---set="paginationEnabled=true"
---set="searchEnabled=true"
 --set="exportEnabled=true"
 --set="exportMaxRows=10000"
---set="softDeletes=true"
 --set="compactMode=false"
 --set="displayName=Products"
 ```
@@ -1933,14 +1925,12 @@ php artisan ptah:config "App\Models\Product" --import=product-config.json
 ```json
 {
   "cols": [...],
-  "actions": [...],
-  "filters": [...],
+  "customFilters": [...],
   "contitionStyles": [...],
   "joins": [...],
   "permissions": {...},
-  "cacheEnabled": true,
-  "cacheTtl": 3600,
-  "itemsPerPage": 25
+  "uiPreferences": { "perPage": 25 },
+  "exportConfig": { "enabled": true }
 }
 ```
 
@@ -2232,13 +2222,12 @@ Full configuration saved in the `crud_configs.config` table:
     }
   ],
   "permissions": {
-    "list": "product.index",
-    "view": "product.show",
+    "permissionIdentifier": "product",
     "create": "product.create",
     "edit": "product.update",
     "delete": "product.destroy",
     "export": "product.export",
-    "import": "product.import"
+    "restore": "product.restore"
   },
   "notifications": {
     "rules": [
@@ -2257,26 +2246,12 @@ Full configuration saved in the `crud_configs.config` table:
       }
     ]
   },
-  "cacheEnabled": true,
-  "cacheTtl": 3600,
-  "paginationEnabled": true,
-  "itemsPerPage": 25,
-  "searchEnabled": true,
-  "exportEnabled": true,
-  "exportMaxRows": 10000,
-  "softDeletes": true,
-  "showTrashed": false,
+  "displayName": "Products",
   "companyField": "company_id",
-  "compactMode": false,
-  "striped": true,
-  "hover": true,
-  "showRowNumbers": true,
   "quickDateColumn": "created_at",
-  "broadcastEnabled": false,
-  "broadcastChannel": "page-product-observer",
-  "broadcastEvent": ".pageProductObserver",
-  "pdfOrientation": "landscape",
-  "pdfPaperSize": "A4",
+  "uiPreferences": { "perPage": 25, "compactMode": false },
+  "exportConfig": { "enabled": true, "maxRows": 10000, "orientation": "landscape", "formats": ["excel", "pdf"] },
+  "broadcast": { "enabled": false, "channel": "page-product-observer", "event": ".pageProductObserver" },
   "tableClass": ""
 }
 ```
@@ -2648,94 +2623,55 @@ SELECT categories.name as category_name, categories.slug as category_slug
 
 ## General Settings
 
-Properties at the root level of the config:
+What BaseCrud reads outside `cols`, `customFilters`, `contitionStyles`,
+`joins`, `permissions` and `notifications`. Anything else in the JSON is
+ignored by the screen.
 
-### Identification
+| Path | Type | Default | Description |
+|------|------|---------|-------------|
+| `displayName` | string | `class_basename($model)` | Screen title |
+| `companyField` | string | `'company_id'` | Column for the multi-tenant filter |
+| `quickDateColumn` | string | `'created_at'` | Column the quick date filter uses |
+| `tableClass` / `theadClass` | string | `''` | Extra CSS classes |
+| `configLinkLinha` | string | — | Row link template (`/products/%id%`) |
+| `groupBy` / `groupBreak` | string | `null` | Group rows / group break with subtotals |
+| `totalizadores` | object | disabled | Footer totals |
+| `masterDetail` | list | `null` | Detail grid under a row |
+| `bulkActions` | list | `[]` | Custom bulk actions |
+| `lifecycleHooks` | object | `{}` | `beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate` |
+| `uiPreferences.perPage` | int | `ptah.crud.per_page` (25) | Default rows per page (until the user picks one) |
+| `uiPreferences.compactMode` | bool | `false` | Compact rows by default |
+| `exportConfig.enabled` | bool | `false` | Export button |
+| `exportConfig.maxRows` | int | `10000` | Maximum exportable rows |
+| `exportConfig.orientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
+| `exportConfig.formats` | list | `['excel', 'pdf']` | Enabled formats |
+| `exportConfig.asyncThreshold` | int | `1000` | Rows above which export is queued |
+| `broadcast.enabled` | bool | `false` | Echo listener that refreshes the screen |
+| `broadcast.channel` | string | `'page-{model}-observer'` | Channel name |
+| `broadcast.event` | string | `'.page{Model}Observer'` | Event name |
 
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `displayName` | string | `class_basename($model)` | CRUD display name |
+Pagination and global search are always on; soft deletes come from the
+model's `SoftDeletes` trait, not from the config. `cacheStrategy` is stored by
+the editor but not applied (see KnownLimitations.md).
 
-### Cache
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `cacheEnabled` | bool | `true` | Enable cache |
-| `cacheTtl` | int | `3600` | Cache lifetime (seconds) |
-
-### Pagination
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `paginationEnabled` | bool | `true` | Enable pagination |
-| `itemsPerPage` | int | `25` | Items per page |
-| `paginationOptions` | array | `[10, 25, 50, 100]` | Items per page options |
-
-### Search
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `searchEnabled` | bool | `true` | Enable global search |
-| `searchPlaceholder` | string | `'Search...'` | Search field placeholder |
-
-### Export
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `exportEnabled` | bool | `true` | Enable export |
-| `exportMaxRows` | int | `10000` | Maximum exportable rows |
-| `exportFormats` | array | `['pdf', 'excel', 'csv']` | Enabled formats |
-| `pdfOrientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
-| `pdfPaperSize` | string | `'A4'` | Paper size: `A4`, `Letter`, etc |
-
-### Appearance
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `compactMode` | bool | `false` | Compact mode |
-| `striped` | bool | `true` | Striped rows |
-| `hover` | bool | `true` | Hover effect on rows |
-| `showRowNumbers` | bool | `true` | Show row number |
-| `tableClass` | string | `''` | Extra CSS classes for the table |
-
-### Multi-tenant
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `companyField` | string | `'company_id'` | Company field for multi-tenant filter |
-
-### Soft Deletes
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `softDeletes` | bool | `false` | Use soft deletes |
-| `showTrashed` | bool | `false` | Show deleted records by default |
-
-### Quick Date Filter
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `quickDateColumn` | string | `'created_at'` | Column for quick date filter |
-
-### Broadcast (Real-time)
-
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `broadcastEnabled` | bool | `false` | Enable Echo listener |
-| `broadcastChannel` | string | `'page-{model}-observer'` | Channel name |
-| `broadcastEvent` | string | `'.page{Model}Observer'` | Event name |
+`ptah:config --set` writes any of these paths (`--set="uiPreferences.perPage=50"`)
+and still accepts the older names it used to document, translating them:
+`itemsPerPage`/`perPage` → `uiPreferences.perPage`, `compactMode` →
+`uiPreferences.compactMode`, `exportEnabled`/`exportMaxRows`/`exportFormats`/
+`pdfOrientation` → `exportConfig.*`, `broadcastEnabled`/`Channel`/`Event` →
+`broadcast.*`. Keys no code reads (`cacheEnabled`, `cacheTtl`,
+`paginationEnabled`, `searchEnabled`, `softDeletes`, `striped`, `hover`…) are
+refused with a warning. `ptah:config:doctor --fix` moves the old names out of
+configs saved before 1.36.0.
 
 **Usage example:**
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
   --set="displayName=Products" \
-  --set="cacheEnabled=true" \
-  --set="cacheTtl=7200" \
   --set="itemsPerPage=50" \
   --set="exportMaxRows=50000" \
-  --set="compactMode=true" \
-  --set="softDeletes=true"
+  --set="compactMode=true"
 ```
 
 ---
@@ -2746,37 +2682,31 @@ Properties in `permissions`:
 
 | Key | Type | Default | Description |
 |-------|------|--------|----------|
-| `list` | string | `''` | Gate to list records |
-| `view` | string | `''` | Gate to view a record |
-| `create` | string | `''` | Gate to create record |
-| `edit` | string | `''` | Gate to edit record |
-| `delete` | string | `''` | Gate to delete record |
+| `permissionIdentifier` | string | `'page{Entity}'` | Page object key checked by the Permissions module (`ptah_can`) |
+| `create` | string | `''` | Gate to create a record |
+| `edit` | string | `''` | Gate to edit a record |
+| `delete` | string | `''` | Gate to delete a record |
 | `export` | string | `''` | Gate to export |
-| `import` | string | `''` | Gate to import |
-| `restore` | string | `''` | Gate to restore soft-deleted |
-| `forceDelete` | string | `''` | Gate to permanently delete |
+| `restore` | string | `''` | Gate to restore a soft-deleted record |
+| `showCreateButton` / `showEditButton` / `showDeleteButton` / `showTrashButton` | bool | `true` | Hide a button — and refuse the action server-side |
+
+A gate name is checked with `Auth::user()->can()` (guests are refused); an empty value means no gate.
+The flags are enforced on the server too (`crudConfigAllows()`), not only as
+hidden buttons.
 
 **Example:**
 
 ```json
 {
   "permissions": {
-    "list": "product.index",
-    "view": "product.show",
+    "permissionIdentifier": "product",
     "create": "product.create",
     "edit": "product.update",
     "delete": "product.destroy",
     "export": "product.export",
-    "restore": "product.restore"
+    "restore": "product.restore",
+    "showTrashButton": false
   }
-}
-```
-
-**Usage in BaseCrud:**
-
-```php
-if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
-    abort(403, 'Unauthorized');
 }
 ```
 
@@ -2848,7 +2778,6 @@ php artisan ptah:config "App\Models\Product" \
   --style="stock:<:10:background:#FEF3C7;color:#92400E;font-weight:bold;" \
   --set="displayName=Products" \
   --set="itemsPerPage=25" \
-  --set="cacheEnabled=true" \
   --set="exportEnabled=true"
 ```
 

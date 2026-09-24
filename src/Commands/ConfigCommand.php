@@ -156,7 +156,9 @@ class ConfigCommand extends Command
 
         // Save if not dry-run
         if (! $this->option('dry-run')) {
-            $this->saveConfiguration($modelKey, $this->config, $route ?? '');
+            if (! $this->saveConfiguration($modelKey, $this->config, $route ?? '')) {
+                return 1;
+            }
             $this->info('✓ Configuration saved successfully!');
         } else {
             $this->warn('Dry-run mode: No changes were saved.');
@@ -213,6 +215,34 @@ class ConfigCommand extends Command
                 $suggestion === null ? '' : "; did you mean `{$suggestion}`?"
             ));
         }
+    }
+
+    /**
+     * A row action is a COLUMN of type `action` — that is where the table
+     * (`_row-action`) and the visual editor read it. This command used to
+     * append it to a top-level `actions` section nothing reads: "Actions: 1",
+     * "saved successfully", and no button on the screen. Same shape the editor
+     * writes (CrudConfig::addAction), upserted by label so a re-run replaces
+     * instead of duplicating.
+     *
+     * @param  array<string, mixed>  $action  ActionParser or ActionWizard output
+     */
+    protected function upsertAction(array $action): string
+    {
+        $column = ActionParser::asColumn($action);
+        $label = $column['colsNomeLogico'];
+
+        foreach ($this->config['cols'] ?? [] as $i => $existing) {
+            if (($existing['colsTipo'] ?? '') === 'action' && ($existing['colsNomeLogico'] ?? '') === $label) {
+                $this->config['cols'][$i] = $column;
+
+                return 'updated';
+            }
+        }
+
+        $this->config['cols'][] = $column;
+
+        return 'added';
     }
 
     protected function upsertColumn(array $column): string
@@ -278,7 +308,7 @@ class ConfigCommand extends Command
             $this->info('Processing actions...');
             foreach ($this->option('action') as $actionConfig) {
                 $parsed = $this->parseActionOption($actionConfig);
-                $this->config['actions'][] = $parsed;
+                $this->line('  <fg=green>'.$this->upsertAction($parsed)."</> action '{$parsed['colsNomeLogico']}'");
             }
         }
 
@@ -326,7 +356,19 @@ class ConfigCommand extends Command
             $this->info('Processing general settings...');
             foreach ($this->option('set') as $setting) {
                 [$key, $value] = explode('=', $setting, 2);
-                $this->config[$key] = $this->castValue($value);
+                $target = GeneralParser::targetKey($key);
+
+                if ($target === null) {
+                    $this->warn("  --set \"{$key}\": not read by BaseCrud (no per-screen cache or pagination switch) — ignored.");
+
+                    continue;
+                }
+
+                if ($target !== $key) {
+                    $this->line("  <fg=gray>--set {$key} → {$target}</>");
+                }
+
+                data_set($this->config, $target, $this->castValue($value));
             }
         }
 
@@ -391,7 +433,7 @@ class ConfigCommand extends Command
                 $action = $actionWizard->run();
 
                 if ($action) {
-                    $this->config['actions'][] = $action;
+                    $this->upsertAction($action);
                     $this->info("✓ Action '{$action['actionName']}' added.");
                 }
             }
@@ -462,7 +504,9 @@ class ConfigCommand extends Command
             $this->newLine();
             $generalWizard = new GeneralWizard($this);
             $generalSettings = $generalWizard->runGeneralSettings($this->config);
-            $this->config = array_merge($this->config, $generalSettings);
+            foreach ($generalSettings as $path => $value) {
+                data_set($this->config, $path, $value);
+            }
             $this->info('✓ General settings configured.');
         }
 
@@ -575,20 +619,21 @@ class ConfigCommand extends Command
     {
         return [
             'cols' => [],
-            'actions' => [],
             'joins' => [],
             'permissions' => [],
-            'cacheEnabled' => true,
-            'cacheTime' => 60,
-            'paginationEnabled' => true,
-            'itemsPerPage' => 10,
         ];
     }
 
     /**
      * Save configuration to database
      */
-    protected function saveConfiguration(string $modelClass, array $config, string $route = ''): void
+    /**
+     * False when the config fails validation (the error is printed). It used
+     * to `exit(1)`, which ends the whole PHP process: fine from a shell, fatal
+     * from `Artisan::call()` — ptah:blueprint, a queued job, a test runner all
+     * died with it, silently and with nothing saved.
+     */
+    protected function saveConfiguration(string $modelClass, array $config, string $route = ''): bool
     {
         try {
             // Validate configuration before saving
@@ -607,11 +652,14 @@ class ConfigCommand extends Command
                 ? 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass).".{$route}"
                 : 'ptah.crud.'.str_replace(['/', '\\'], '.', $modelClass);
             cache()->forget($cacheKey);
+
+            return true;
         } catch (ConfigValidationException $e) {
             $this->newLine();
             $this->line($this->errorFormatter->format($e));
             $this->newLine();
-            exit(1);
+
+            return false;
         }
     }
 
@@ -678,7 +726,9 @@ class ConfigCommand extends Command
         }
 
         $route = (string) ($this->option('route') ?? '');
-        $this->saveConfiguration($modelClass, $config, $route);
+        if (! $this->saveConfiguration($modelClass, $config, $route)) {
+            return 1;
+        }
         $this->info("✓ Configuration imported successfully from {$file}");
 
         return 0;
@@ -707,7 +757,7 @@ class ConfigCommand extends Command
         $this->newLine();
         $this->info('Configuration Summary:');
         $this->line('- Columns: '.count($this->config['cols'] ?? []));
-        $this->line('- Actions: '.count($this->config['actions'] ?? []));
+        $this->line('- Actions: '.count(array_filter($this->config['cols'] ?? [], fn ($c) => ($c['colsTipo'] ?? '') === 'action')));
         $this->line('- Filters: '.count($this->config[FilterRule::SECTION] ?? []));
         $this->line('- Styles: '.count($this->config['contitionStyles'] ?? []));
         $this->line('- Joins: '.count($this->config['joins'] ?? []));
