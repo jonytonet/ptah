@@ -134,7 +134,7 @@ class CrudConfigGenerator extends AbstractGenerator
     /**
      * Converts a FieldDefinition into a CrudConfig col entry.
      */
-    private function buildColFromField(FieldDefinition $field): array
+    public function buildColFromField(FieldDefinition $field): array
     {
         $tipo = $this->mapTipo($field);
         $gravar = true;

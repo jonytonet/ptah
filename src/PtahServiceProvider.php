@@ -25,6 +25,7 @@ use Ptah\Commands\Config\ConfigRelabelCommand;
 use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\DocsCommand;
 use Ptah\Commands\ExportPruneCommand;
+use Ptah\Commands\FieldCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
@@ -383,6 +384,7 @@ class PtahServiceProvider extends ServiceProvider
                 LastErrorCommand::class,      // ptah:last-error
                 CheckCommand::class,          // ptah:check
                 MapCommand::class,            // ptah:map
+                FieldCommand::class,          // ptah:field
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
