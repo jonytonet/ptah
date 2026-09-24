@@ -63,10 +63,16 @@ reads. Prefer them — they read the same truth the runtime reads.
 | To know | Run |
 |---|---|
 | What exists (entities, fields, relations, screens, menu, TODOs) | `php artisan ptah:map` |
+| What one screen has, before editing it | `php artisan ptah:screen Entity` — not the JSON |
+| Why a screen is empty for a user | `php artisan ptah:why-empty Entity --as=<id>` |
 | The exact syntax of a `--column` / `--filter` / `--style` / `--action` / `--join` / mask | `php artisan ptah:docs column` (or `filter`, `style`, …) |
 | Whether every screen still works after a change | `php artisan ptah:check` (`--write` also round-trips a save, rolled back) |
 | Why something broke | `php artisan ptah:last-error` — never `tail` the log |
 | What an update of ptah needs in this project | `php artisan ptah:upgrade-check` |
+
+With Laravel Boost connected, the same are MCP tools: `ptah-map`,
+`ptah-screen`, `ptah-check`, `ptah-docs`, `ptah-why-empty`, `ptah-last-error`,
+`ptah-upgrade-check`.
 
 `ptah:forge … --factory` also writes a factory and a demo seeder from the
 field types.

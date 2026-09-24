@@ -948,6 +948,8 @@ left to do. Full reference, options and sample output: **[AgentTools.md](AgentTo
 |---|---|
 | `ptah:docs {topic} [--json]` | `ptah:config` option reference generated from the parser (column, filter, style, action, join, mask) |
 | `ptah:map [--json] [--write] [--models=]` | Entities, typed fields, FK targets, relations, screens, menu, TODOs |
+| `ptah:screen {model} [--route=] [--json]` | One screen summarized: columns, filters, actions, styles, joins, hooks, permission |
+| `ptah:why-empty {model} [--as=] [--guard=] [--route=] [--json]` | Row count after each listing layer for a user, final SQL, failing query |
 | `ptah:check [model] [--as=] [--guard=] [--write] [--force] [--json]` | Render every screen + config vs model/table; `--write` round-trip rolled back |
 | `ptah:field {Entity} add {field…} [--dry-run] [--no-migration] [--no-config]` | One field into migration, model, requests, DTO, crud configs |
 | `ptah:forge … --factory` | Also a model factory + demo seeder from field types |
