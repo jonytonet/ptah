@@ -38,6 +38,7 @@ use Ptah\Commands\Permission\PermissionSyncCommand;
 use Ptah\Commands\Permission\PermissionWhyCommand;
 use Ptah\Commands\PreferencesRealignCommand;
 use Ptah\Commands\ScaffoldCommand;
+use Ptah\Commands\ScreenCommand;
 use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
@@ -389,6 +390,7 @@ class PtahServiceProvider extends ServiceProvider
                 FieldCommand::class,          // ptah:field
                 BlueprintCommand::class,      // ptah:blueprint
                 UpgradeCheckCommand::class,   // ptah:upgrade-check
+                ScreenCommand::class,         // ptah:screen
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
