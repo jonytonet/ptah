@@ -164,6 +164,18 @@ class CrudHistoryTest extends TestCase
     }
 
     #[Test]
+    public function the_history_gate_is_enforced(): void
+    {
+        $config = CrudConfig::where('model', HistProduct::class)->first();
+        $config->update(['config' => array_merge($config->config, ['permissions' => ['history' => 'products.history']])]);
+        $p = HistProduct::create(['name' => 'Porca', 'status' => 'active', 'company_id' => 1]);
+
+        Livewire::test(BaseCrud::class, ['model' => HistProduct::class])
+            ->call('openHistory', $p->id)
+            ->assertSet('showHistoryModal', false);
+    }
+
+    #[Test]
     public function ptah_check_warns_when_the_trait_has_no_table(): void
     {
         Schema::drop(RecordHistory::TABLE);

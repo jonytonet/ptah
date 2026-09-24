@@ -42,7 +42,7 @@ trait HasCrudHistory
         return $model !== null
             && in_array(RecordsHistory::class, class_uses_recursive($model), true)
             && RecordHistory::tableExists()
-            && $this->authorizeCrudAction('read');
+            && $this->authorizeCrudAction('read') && $this->crudConfigAllows('history');
     }
 
     public function openHistory(int|string $id): void

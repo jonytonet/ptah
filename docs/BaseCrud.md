@@ -1991,7 +1991,7 @@ class Product extends Model
   configured on the screen are listed — with select labels and yes/no — minus
   those the user's column permissions deny; any other changed field is
   counted, not shown. `"history": {"enabled": false}` hides the button on one
-  screen.
+  screen; `permissions.history` puts it behind a gate.
 
 The migration is written into the app instead of shipped with the package on
 purpose: package migrations run on the host's next `migrate` without being

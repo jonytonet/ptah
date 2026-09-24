@@ -2691,6 +2691,8 @@ Properties in `permissions`:
 | `delete` | string | `''` | Gate to delete a record |
 | `export` | string | `''` | Gate to export |
 | `restore` | string | `''` | Gate to restore a soft-deleted record |
+| `import` | string | `''` | Gate to import a spreadsheet (on top of what **New** requires) |
+| `history` | string | `''` | Gate to open a record's change history |
 | `showCreateButton` / `showEditButton` / `showDeleteButton` / `showTrashButton` | bool | `true` | Hide a button — and refuse the action server-side |
 
 A gate name is checked with `Auth::user()->can()` (guests are refused); an empty value means no gate.

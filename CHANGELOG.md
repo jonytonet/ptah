@@ -75,7 +75,7 @@ The History button shows only what the screen may show: the record is loaded
 through the screen's scope, so another company's record is unreachable; only
 the screen's configured fields are listed (select labels, yes/no), minus the
 columns the user's permissions deny; other changed fields are counted, not
-shown.
+shown. An optional `permissions.history` gate restricts it.
 
 ---
 
