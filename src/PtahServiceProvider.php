@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Ptah\Commands\CheckCommand;
 use Ptah\Commands\Config\ConfigDoctorCommand;
 use Ptah\Commands\Config\ConfigExportAllCommand;
 use Ptah\Commands\Config\ConfigImportAllCommand;
@@ -375,10 +376,11 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigExportAllCommand::class,  // ptah:config:export-all
                 ConfigImportAllCommand::class,  // ptah:config:import-all
                 ConfigRelabelCommand::class,    // ptah:config:relabel
-                MakeHooksCommand::class,
+                MakeHooksCommand::class,      // ptah:hooks
                 PreferencesRealignCommand::class,
-                DocsCommand::class,
-                LastErrorCommand::class,     // ptah:hooks
+                DocsCommand::class,           // ptah:docs
+                LastErrorCommand::class,      // ptah:last-error
+                CheckCommand::class,          // ptah:check
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
