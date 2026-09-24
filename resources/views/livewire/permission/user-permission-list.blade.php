@@ -14,6 +14,9 @@
                 iconBefore='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>'
             />
         </div>
+        <div class="ml-auto order-last shrink-0">
+            <x-forge-button wire:click="newUser" color="primary" size="sm">{{ __('ptah::ui.users_new') }}</x-forge-button>
+        </div>
         <div class="flex items-center gap-2 shrink-0">
             <span class="text-xs font-medium text-slate-500 whitespace-nowrap">{{ __('ptah::ui.user_perm_filter_role') }}</span>
             <div class="w-44">
@@ -69,10 +72,21 @@
                             </div>
                         </td>
                         <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                            <button wire:click="editUser({{ (int) $user->getKey() }})"
+                                class="ptah-c-mod_btn_soft inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-colors">
+                                {{ __('ptah::ui.users_edit') }}
+                            </button>
                             <button wire:click="openUserModal({{ $user->id }}, '{{ addslashes($user->name) }}')"
                                 class="ptah-c-mod_btn_soft inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-colors">
                                 {{ __('ptah::ui.user_perm_manage_btn') }}
                             </button>
+                            @if ($this->canSendPasswordLink())
+                                <button wire:click="sendPasswordLink({{ (int) $user->getKey() }})"
+                                    wire:confirm="{{ __('ptah::ui.users_link_confirm', ['email' => $user->email]) }}"
+                                    class="ptah-c-mod_btn_soft inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('ptah::ui.users_send_link') }}
+                                </button>
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -101,6 +115,26 @@
         <span>{{ __('ptah::ui.company_pagination', ['first' => $rows->firstItem(), 'last' => $rows->lastItem(), 'total' => $rows->total()]) }}</span>
         <div>{{ $rows->links('ptah::components.forge-pagination') }}</div>
     </div>
+    @endif
+
+    {{-- Modal criar / editar usuário --}}
+    @if ($showUserForm)
+        <x-forge-modal wire:model="showUserForm" :title="$editingUserId ? __('ptah::ui.users_edit_title') : __('ptah::ui.users_new_title')" size="md">
+            <div class="space-y-4">
+                <x-forge-input wire:model.blur="userForm.name" name="userForm.name" :label="__('ptah::ui.users_field_name')" :error="$userFormErrors['name'] ?? null" required />
+                <x-forge-input wire:model.blur="userForm.email" name="userForm.email" type="email" :label="__('ptah::ui.users_field_email')" :error="$userFormErrors['email'] ?? null" required />
+                <x-forge-input wire:model.blur="userForm.password" name="userForm.password" type="password" autocomplete="new-password"
+                    :label="__('ptah::ui.users_field_password')" :error="$userFormErrors['password'] ?? null" />
+                <p class="text-xs ptah-c-muted">{{ $editingUserId ? __('ptah::ui.users_password_hint_edit') : __('ptah::ui.users_password_hint_new') }}</p>
+                @if ($this->canSendPasswordLink())
+                    <x-forge-switch wire:model.live="userForm.send_link" name="userForm.send_link" :label="__('ptah::ui.users_send_link_on_save')" />
+                @endif
+            </div>
+            <x-slot name="footer">
+                <x-forge-button wire:click="$set('showUserForm', false)" color="dark" flat>{{ __('ptah::ui.btn_cancel') }}</x-forge-button>
+                <x-forge-button wire:click="saveUser" wire:loading.attr="disabled" color="primary">{{ __('ptah::ui.btn_save') }}</x-forge-button>
+            </x-slot>
+        </x-forge-modal>
     @endif
 
     {{-- Modal de gestão de roles do usuário --}}

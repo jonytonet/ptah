@@ -809,6 +809,22 @@ return [
     'user_perm_global' => 'Global (no company)',
     'user_perm_add_btn' => 'Add',
     'user_perm_close_btn' => 'Close',
+    'users_new' => 'New user',
+    'users_new_title' => 'New user',
+    'users_edit' => 'Edit',
+    'users_edit_title' => 'Edit user',
+    'users_field_name' => 'Name',
+    'users_field_email' => 'E-mail',
+    'users_field_password' => 'Password',
+    'users_password_hint_new' => 'Leave blank to let the person choose it: they receive a link to set their password.',
+    'users_password_hint_edit' => 'Leave blank to keep the current password.',
+    'users_send_link_on_save' => 'Send a link to set the password',
+    'users_send_link' => 'Send password link',
+    'users_link_confirm' => 'Send a link to set the password to :email?',
+    'users_created' => 'User created.',
+    'users_saved' => 'User saved.',
+    'users_link_sent' => 'Password link sent.',
+    'users_link_failed' => 'The password link could not be sent — check the mail settings.',
 
     /*
     |--------------------------------------------------------------------------

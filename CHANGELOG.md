@@ -43,6 +43,18 @@ Synchronous, capped by `maxRows` (default 2000); a queued import for very
 large files is listed in KnownLimitations. `ptah:screen` shows whether a
 screen imports.
 
+### Added - create and edit users on the users screen
+
+`/ptah-users-acl` (master-only) could only bind roles; every project wrote its
+own users CRUD. It now has **New user**, **Edit** and **Send password link**:
+name, unique e-mail, optional password (hashed). A user created without one
+gets an unknown random password and the same reset e-mail "forgot password"
+sends — nobody but the person knows the password. Name, e-mail and password
+are written with `forceFill`, so the host's `$fillable` does not block it.
+Every action goes through the list's query, `user_query_scope` included. No
+"deactivate" yet: the login does not read an active flag, and a switch that
+changes nothing would mislead. A failed link is reported and its cause logged.
+
 ### Added - record history, with a History button in the edit modal
 
 `php artisan ptah:history:install` writes the migration into the app (the

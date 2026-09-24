@@ -810,6 +810,22 @@ return [
     'user_perm_global' => 'Global (sem empresa)',
     'user_perm_add_btn' => 'Adicionar',
     'user_perm_close_btn' => 'Fechar',
+    'users_new' => 'Novo usuário',
+    'users_new_title' => 'Novo usuário',
+    'users_edit' => 'Editar',
+    'users_edit_title' => 'Editar usuário',
+    'users_field_name' => 'Nome',
+    'users_field_email' => 'E-mail',
+    'users_field_password' => 'Senha',
+    'users_password_hint_new' => 'Deixe em branco para a pessoa escolher: ela recebe um link para definir a senha.',
+    'users_password_hint_edit' => 'Deixe em branco para manter a senha atual.',
+    'users_send_link_on_save' => 'Enviar link para definir a senha',
+    'users_send_link' => 'Enviar link de senha',
+    'users_link_confirm' => 'Enviar um link para definir a senha para :email?',
+    'users_created' => 'Usuário criado.',
+    'users_saved' => 'Usuário salvo.',
+    'users_link_sent' => 'Link de senha enviado.',
+    'users_link_failed' => 'Não foi possível enviar o link de senha — confira a configuração de e-mail.',
 
     /*
     |--------------------------------------------------------------------------
