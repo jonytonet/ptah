@@ -887,6 +887,11 @@
         </div>
 
         <x-slot name="footer">
+            @if ($editingId && $this->historyEnabled())
+                <x-forge-button wire:click="openHistory({{ json_encode($editingId) }})" color="dark" flat class="mr-auto">
+                    {{ __('ptah::ui.btn_history') }}
+                </x-forge-button>
+            @endif
             <x-forge-button @click="_tryClose()" color="dark" flat :disabled="$creating">
                 {{ __('ptah::ui.btn_cancel') }}
             </x-forge-button>

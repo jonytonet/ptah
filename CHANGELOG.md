@@ -43,6 +43,28 @@ Synchronous, capped by `maxRows` (default 2000); a queued import for very
 large files is listed in KnownLimitations. `ptah:screen` shows whether a
 screen imports.
 
+### Added - record history, with a History button in the edit modal
+
+`php artisan ptah:history:install` writes the migration into the app (the
+package does not ship it: package migrations run on the host's next
+`migrate` unasked), then `use Ptah\Traits\RecordsHistory;` on a model. Every
+create, update, delete and restore records the fields that changed as
+`[old, new]`, the user, the guard (two guards reuse ids — a portal user 5 is
+not staff user 5, and names are resolved through each guard's own model) and
+the active company. It hooks the model, so imports, API calls and jobs are
+recorded like the form.
+
+`$hidden` attributes, timestamps, audit stamps and `$historyExcept` are never
+recorded. A missing table or a failed insert never breaks the save — history
+is auxiliary — and `ptah:check` reports a model using the trait without the
+table.
+
+The History button shows only what the screen may show: the record is loaded
+through the screen's scope, so another company's record is unreachable; only
+the screen's configured fields are listed (select labels, yes/no), minus the
+columns the user's permissions deny; other changed fields are counted, not
+shown.
+
 ---
 
 ## [1.36.0] - 2026-09-24

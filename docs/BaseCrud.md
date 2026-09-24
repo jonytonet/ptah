@@ -29,7 +29,7 @@
 18. [WhereHas — Parent Entity Filter](#wherehas--parent-entity-filter)
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
 20. [Totalisers](#totalisers)
-21. [Export](#export) · [Import](#import)
+21. [Export](#export) · [Import](#import) · [Record History](#record-history)
 22. [User Preferences (V2.1)](#user-preferences-v21)
 23. [Livewire Events](#livewire-events)
 24. [Permissions](#permissions)
@@ -1953,6 +1953,49 @@ What it guarantees:
 
 Large files are imported synchronously; a queued import is not implemented
 yet (see KnownLimitations.md).
+
+---
+
+## Record History
+
+Who changed what, and when — shown by a **History** button in the edit modal.
+
+```bash
+php artisan ptah:history:install   # writes the migration into database/migrations
+php artisan migrate
+```
+
+```php
+use Ptah\Traits\RecordsHistory;
+
+class Product extends Model
+{
+    use HasAuditFields, RecordsHistory;
+
+    // optional: fields never recorded, besides $hidden
+    protected array $historyExcept = ['search_index'];
+}
+```
+
+- Recorded on the **model**: a change from a spreadsheet import, the API or a
+  queued job is recorded like one from the form. Each create, update, delete
+  and restore writes the fields that changed (`[old, new]`), the user, the
+  guard that user signed in with (two guards reuse ids) and the active company.
+- Never recorded: `$hidden` attributes, timestamps, audit stamps,
+  `$historyExcept`. Long values are truncated at 500 characters.
+- Auxiliary by design: without the table, or if the insert fails, the save
+  goes on and a warning is logged. `ptah:check` reports a model using the trait
+  without the table.
+- The screen shows what the screen may show. The record is loaded through
+  the screen's scope (another company's record is not reachable); only fields
+  configured on the screen are listed — with select labels and yes/no — minus
+  those the user's column permissions deny; any other changed field is
+  counted, not shown. `"history": {"enabled": false}` hides the button on one
+  screen.
+
+The migration is written into the app instead of shipped with the package on
+purpose: package migrations run on the host's next `migrate` without being
+asked for (see SchemaIsFrozenTest).
 
 ---
 

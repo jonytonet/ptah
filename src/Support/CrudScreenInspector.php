@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Ptah\Models\RecordHistory;
+use Ptah\Traits\RecordsHistory;
 
 /**
  * What a BaseCrud screen's config claims, checked against the model and the table.
@@ -65,6 +67,12 @@ final class CrudScreenInspector
         $columns = [];
         foreach (Schema::connection($connection)->getColumns($table) as $column) {
             $columns[(string) $column['name']] = $column;
+        }
+
+        // O trait nao quebra o save sem a tabela (historico e auxiliar) — por
+        // isso o aviso precisa vir de algum lugar.
+        if (in_array(RecordsHistory::class, class_uses_recursive($model), true) && ! RecordHistory::tableExists()) {
+            $findings[] = ['level' => 'warning', 'message' => class_basename($model).' uses RecordsHistory but table ptah_record_history does not exist — nothing is recorded; run ptah:history:install and migrate'];
         }
 
         $cols = is_array($config['cols'] ?? null) ? $config['cols'] : [];
