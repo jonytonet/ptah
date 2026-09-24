@@ -7,6 +7,69 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.35.0] - 2026-09-23
+
+A release about **what it costs an agent to build with ptah** — fewer tokens
+read, fewer tool calls, fewer attempts that fail.
+
+### Added - `ptah:docs <topic>`: the option reference, from the parser itself
+
+The question asked most while configuring a screen is "what is the option for
+X?", and the answer lived in `docs/BaseCrud.md` (~29k tokens) and
+`docs/Configuration.md` (~30k). One lookup could cost as much as the screen.
+
+```
+php artisan ptah:docs            # topics: column, filter, style, action, join, mask
+php artisan ptah:docs column     # ~760 tokens
+php artisan ptah:docs filter     # ~120 tokens
+php artisan ptah:docs join --json
+```
+
+Everything that can come from a constant does — column types, renderers,
+modifiers, the option → config-key map, operators, action and join types — and
+the `mask` topic reads the runtime registry, so it lists the masks the HOST
+registered, which no document can. The one hand-written part, each topic's
+format line, is guarded: every topic's example runs through the real parser in
+`CliReferenceTest`, and a token budget test fails if a topic grows past ~1,000
+tokens — a reference that costs as much as the document it replaces has failed.
+
+### Added - `ptah:forge` resolves foreign-key imports itself
+
+Every `belongsTo(Category::class)` used to come with
+`// TODO: use App\Models\Category;`, and the package's skill made fixing them a
+MANDATORY step after every scaffold: open each model, find where each related
+class lives, write the import — a read and an edit per foreign key, for every
+entity of a module.
+
+The TODO was deliberate, because an import guessed from a convention looks right
+and fails at runtime, and that rule stays: `Ptah\Support\ModelLocator` resolves
+only when exactly ONE class of that name exists under the models directory,
+reading the namespace from the file's own declaration rather than its path.
+None yet, or more than one, keeps the TODO — now saying which. And the command
+says what it did:
+
+```
+Relationship imports:
+   ✔ category_id → App\Models\Catalog\Category
+   ⚠ supplier_id → Supplier not found in app/Models yet — generate it, then fix the TODO in the model
+```
+
+Scaffold related entities in dependency order and there is nothing left to fix.
+Both skills now describe the step as conditional instead of mandatory.
+
+### Fixed - documented `--filter` examples that meant something else
+
+The filter parser reads `field:type` and then `key=value` only. A positional
+operator — `name:text:LIKE:…`, `score:number:>=:…` — was silently dropped and
+the filter fell back to equality, and `docs/Configuration.md` documented the
+format as `field:type:operator:…` while the skill said "no positional operator".
+`boolean` is not a type the filter panel handles: it falls back to a text box.
+Eight examples fixed — the scaffold skill's among them — and
+`DocumentedFilterDefinitionTest` now runs every documented `--filter` through the
+parser's rule, the way `DocumentedColumnDefinitionTest` does for columns.
+
+---
+
 ## [1.34.9] - 2026-09-23
 
 **Security release. Upgrade every host**, in particular any that has a BaseCrud

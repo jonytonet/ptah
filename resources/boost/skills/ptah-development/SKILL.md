@@ -284,30 +284,25 @@ php artisan ptah:forge Health/Test --fields="..." --no-menu
 
 ---
 
-## Post-scaffold Checklist (MANDATORY after every ptah:forge)
+## Post-scaffold Checklist (after every ptah:forge)
 
 After running `ptah:forge` and `php artisan migrate`, **always** perform these steps:
 
-### 1. Fix FK `use` imports in every generated Model
+### 1. FK imports — only if `ptah:forge` reported a ⚠
 
-The generator intentionally leaves `// TODO:` comments for FK relationships
-because it cannot know which sub-folder the related model lives in:
+The generator resolves each foreign key's `use` itself when exactly one class
+of that name exists in `app/Models`, and its output says what it did:
 
-```php
-// Generated (NEEDS to be fixed):
-// TODO: use App\Models\Category; // verifique o namespace real — ajuste se Category estiver em sub-pasta
-
-// ✅ If Category is in App\Models\Catalog\ :
-use App\Models\Catalog\Category;
-
-// ✅ If Category is in the root App\Models\ :
-use App\Models\Category;
+```
+Relationship imports:
+   ✔ category_id → App\Models\Catalog\Category
+   ⚠ supplier_id → Supplier not found in app/Models yet — generate it, then fix the TODO in the model
 ```
 
-**Rule:** For every `// TODO: use` line in a generated model:
-- Find where the related model file actually lives (`find app/Models -name 'Category.php'`)
-- Replace the TODO comment with the correct `use` statement
-- Never leave `// TODO:` lines in committed code
+Only a `⚠` line needs you: the related model was not generated yet, or more
+than one class has that name (the TODO lists them). **Generate entities in
+dependency order** — `Category` before `Product` — and there is nothing to fix.
+Never leave a `// TODO:` line in committed code.
 
 ### 2. Run Pint to format all generated files
 

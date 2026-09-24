@@ -22,6 +22,7 @@ use Ptah\Commands\Config\ConfigExportAllCommand;
 use Ptah\Commands\Config\ConfigImportAllCommand;
 use Ptah\Commands\Config\ConfigRelabelCommand;
 use Ptah\Commands\ConfigCommand;
+use Ptah\Commands\DocsCommand;
 use Ptah\Commands\ExportPruneCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\MakeHooksCommand;
@@ -374,7 +375,8 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigImportAllCommand::class,  // ptah:config:import-all
                 ConfigRelabelCommand::class,    // ptah:config:relabel
                 MakeHooksCommand::class,
-                PreferencesRealignCommand::class,     // ptah:hooks
+                PreferencesRealignCommand::class,
+                DocsCommand::class,     // ptah:hooks
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune

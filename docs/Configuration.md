@@ -1699,14 +1699,20 @@ name:type:value:icon=icon:color=color:confirm=bool
 
 **Format:**
 ```
-field:type:operator:label=Label:options=opt1,opt2
+field:type:key=value:key=value
 ```
+
+Everything after `field:type` is `key=value` — **there is no positional operator**:
+`name:text:LIKE:label=…` stores nothing for `LIKE` and filters by equality.
+Write `operator=LIKE`. Types: `text`, `number`, `date`, `select`,
+`searchdropdown` (a boolean is a `select` with `options=1:Yes,0:No`). Run
+`php artisan ptah:docs filter` for the options the parser reads.
 
 **Examples:**
 
 ```bash
 # Simple select
---filter="status:select:=:label=Status:options=active,inactive,pending"
+--filter="status:select:label=Status:options=active,inactive,pending"
 
 # Number with minimum
 --filter="price:number:operator=>=:label=Minimum Price"
@@ -1718,7 +1724,7 @@ field:type:operator:label=Label:options=opt1,opt2
 --filter="user_id:searchdropdown:label=User:sd_model=App\Models\User:sd_value=id:sd_label=name"
 
 # Text with LIKE
---filter="name:text:LIKE:label=Search Name"
+--filter="name:text:operator=LIKE:label=Search Name"
 ```
 
 #### --style (Styles)
@@ -2863,8 +2869,8 @@ php artisan ptah:config "App\Models\Contact" \
   --column="notes:textarea:label=Notes" \
   --action="sendEmail:livewire:sendEmail(%id%):icon=bx-envelope:color=primary" \
   --action="scheduleCall:livewire:scheduleCall(%id%):icon=bx-phone:color=info" \
-  --filter="lead_status:select:=:options=new,contacted,qualified,lost" \
-  --filter="lead_score:number:>=:label=Minimum Score" \
+  --filter="lead_status:select:options=new,contacted,qualified,lost" \
+  --filter="lead_score:number:operator=>=:label=Minimum Score" \
   --style="lead_status:==:lost:background:#FEE2E2;color:#991B1B;" \
   --style="lead_score:>:80:background:#D1FAE5;color:#065F46;font-weight:bold;" \
   --set="displayName=Contacts" \
@@ -2890,7 +2896,7 @@ php artisan ptah:config "App\Models\Post" \
   --column="views:number:readonly:label=Views:renderer=number:decimals=0" \
   --action="preview:link:https://blog.com/posts/%slug%:icon=bx-show:color=info" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=secondary" \
-  --filter="status:select:=:options=draft,published,scheduled" \
+  --filter="status:select:options=draft,published,scheduled" \
   --filter="category_id:searchdropdown:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --filter="author_id:searchdropdown:sd_model=App\Models\User:sd_value=id:sd_label=name" \
   --style="status:==:draft:background:#F3F4F6;color:#6B7280;" \

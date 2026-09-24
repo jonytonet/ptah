@@ -53,13 +53,13 @@ Web + API together:
 php artisan ptah:forge Catalog/Product --fields="..." --api
 ```
 
-## Step 2 — Post-scaffold fixes (MANDATORY, in order)
+## Step 2 — Post-scaffold fixes (in order)
 
-1. **Fix FK `use` imports.** The generator leaves `// TODO: use App\Models\...`
-   lines for FK relationships because it can't know the related model's subfolder.
-   For every `// TODO: use` in a generated model: locate the real model
-   (`find app/Models -name 'Category.php'`), replace with the correct `use`, and
-   remove the TODO. Never commit `// TODO:` lines.
+1. **FK imports — only if `ptah:forge` printed a ⚠.** The generator resolves a
+   foreign key's `use` itself when exactly one class of that name exists in
+   `app/Models`, and lists each FK as `✔` (done) or `⚠` (not generated yet, or
+   ambiguous). Scaffold related entities in dependency order and there is
+   nothing to fix. Never commit a `// TODO:` line.
 2. **Format:** `./vendor/bin/pint`
 3. **Migrate:** `php artisan migrate`  ⚠️ plain `migrate` only — see Guardrails.
 4. **Clear caches:** `php artisan view:clear && php artisan config:clear`
@@ -77,7 +77,7 @@ php artisan ptah:config "App\Models\Catalog\Product" --non-interactive \
   --column="name:text:label=Nome:sortable" \
   --column="price:number:label=Preço:renderer=money:sortable" \
   --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
-  --filter="is_active:boolean:eq:Ativos" \
+  --filter="is_active:select:label=Ativos:options=1:Ativo,0:Inativo" \
   --set="itemsPerPage=15"
 
 # preview / inspect:
@@ -119,11 +119,11 @@ committing — the inference is heuristic.
 ```bash
 cd petplace
 php artisan ptah:forge Catalog/Supplier --fields="name:string,cnpj:string,is_active:boolean"
-# fix FK TODO imports (none here) → pint → migrate → clears
+# pint → migrate → clears (FK imports resolved by the generator)
 ./vendor/bin/pint && php artisan migrate && php artisan view:clear && php artisan config:clear
 php artisan ptah:config "App\Models\Catalog\Supplier" --non-interactive \
   --column="name:text:label=Nome:sortable" \
   --column="cnpj:text:label=CNPJ" \
   --column="is_active:select:label=Status:renderer=badge:badges=1|success|Ativo,0|danger|Inativo" \
-  --filter="is_active:boolean:eq:Ativos"
+  --filter="is_active:select:label=Ativos:options=1:Ativo,0:Inativo"
 ```
