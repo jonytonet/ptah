@@ -105,50 +105,6 @@ class DocumentedFilterDefinitionTest extends TestCase
         return false;
     }
 
-    /**
-     * Tokens after `field:type` that the parser would silently discard.
-     *
-     * Mirrors FilterParser::tokenize(): a `key=value` token opens a value that
-     * may continue across `:` (`options=1:Ativo,0:Inativo`); a token without
-     * `=` is only legal as that continuation. A bare token with no value open,
-     * or a "key" that is not an identifier (`=`, `>=`), is a positional operator
-     * the parser drops.
-     *
-     * @return list<string>
-     */
-    private static function discardedTokens(string $definition): array
-    {
-        $parts = explode(':', $definition);
-        array_shift($parts); // field
-        array_shift($parts); // type
-
-        $discarded = [];
-        $open = false;
-
-        foreach ($parts as $part) {
-            if (str_contains($part, '=')) {
-                $key = explode('=', $part, 2)[0];
-
-                if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key) === 1) {
-                    $open = true;
-
-                    continue;
-                }
-
-                $discarded[] = $part;
-                $open = false;
-
-                continue;
-            }
-
-            if (! $open) {
-                $discarded[] = $part;
-            }
-        }
-
-        return $discarded;
-    }
-
     #[Test]
     public function the_documents_do_teach_filters(): void
     {
@@ -182,7 +138,7 @@ class DocumentedFilterDefinitionTest extends TestCase
         $offenders = [];
 
         foreach (self::definitions() as $case) {
-            $discarded = self::discardedTokens($case['definition']);
+            $discarded = FilterParser::discardedTokens($case['definition']);
 
             if ($discarded !== []) {
                 $offenders[] = "  {$case['path']}:{$case['line']}  descartado: ".implode(', ', $discarded)." — em `{$case['definition']}`";

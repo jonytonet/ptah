@@ -27,6 +27,31 @@ class ConfigCmdStub extends Model
 class ConfigCommandTest extends TestCase
 {
     #[Test]
+    public function a_positional_filter_operator_is_warned_not_silently_dropped(): void
+    {
+        // `LIKE` posicional era descartado e o filtro virava igualdade, calado.
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--filter' => ['name:text:LIKE:label=Nome'],
+            '--non-interactive' => true,
+        ])
+            ->expectsOutputToContain('ignored "LIKE"')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_well_formed_filter_raises_no_warning(): void
+    {
+        $this->artisan('ptah:config', [
+            'model' => ConfigCmdStub::class,
+            '--filter' => ['status:select:operator=LIKE:options=1:Ativo,0:Inativo'],
+            '--non-interactive' => true,
+        ])
+            ->doesntExpectOutputToContain('ignored')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
     public function declarative_column_option_is_parsed_and_persisted(): void
     {
         $this->artisan('ptah:config', [

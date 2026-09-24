@@ -286,6 +286,14 @@ class ConfigCommand extends Command
         if (in_array('filters', $sections) && $this->option('filter')) {
             $this->info('Processing filters...');
             foreach ($this->option('filter') as $filterConfig) {
+                // Falha alto: um operador posicional sumia em silencio e o
+                // filtro virava igualdade sem ninguem saber.
+                $discarded = FilterParser::discardedTokens($filterConfig);
+                if ($discarded !== []) {
+                    $this->warn("  --filter \"{$filterConfig}\": ignored ".implode(', ', array_map(fn ($t) => "\"{$t}\"", $discarded))
+                        .' — after field:type only key=value is read (operator=LIKE, label=…). See: php artisan ptah:docs filter');
+                }
+
                 $parsed = $this->parseFilterOption($filterConfig);
                 // FilterRule::SECTION, not 'filters': the runtime reads
                 // `customFilters` (FilterService::processCustomFilters via
