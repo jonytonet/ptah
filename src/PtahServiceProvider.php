@@ -25,6 +25,7 @@ use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\DocsCommand;
 use Ptah\Commands\ExportPruneCommand;
 use Ptah\Commands\InstallCommand;
+use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
@@ -376,7 +377,8 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigRelabelCommand::class,    // ptah:config:relabel
                 MakeHooksCommand::class,
                 PreferencesRealignCommand::class,
-                DocsCommand::class,     // ptah:hooks
+                DocsCommand::class,
+                LastErrorCommand::class,     // ptah:hooks
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
