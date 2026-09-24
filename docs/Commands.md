@@ -20,6 +20,7 @@ This document lists all Artisan commands available in the Ptah package.
 12. [ptah:hooks](#ptahhooks)
 13. [ptah:menu-sync](#ptahmenu-sync)
 14. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+15. [Agent tools (ptah:map, ptah:check, ptah:field, ptah:blueprint, ptah:last-error, ptah:upgrade-check, ptah:docs)](#agent-tools)
 
 ---
 
@@ -942,6 +943,24 @@ Cache is automatically cleared after saving.
 
 ---
 
+## Agent tools
+
+Commands that replace reading files — each prints a short answer and what is
+left to do. Full reference, options and sample output: **[AgentTools.md](AgentTools.md)**.
+
+| Command | Purpose |
+|---|---|
+| `ptah:docs {topic} [--json]` | `ptah:config` option reference generated from the parser (column, filter, style, action, join, mask) |
+| `ptah:map [--json] [--write] [--models=]` | Entities, typed fields, FK targets, relations, screens, menu, TODOs |
+| `ptah:check [model] [--as=] [--guard=] [--write] [--force] [--json]` | Render every screen + config vs model/table; `--write` round-trip rolled back |
+| `ptah:field {Entity} add {field…} [--dry-run] [--no-migration] [--no-config]` | One field into migration, model, requests, DTO, crud configs |
+| `ptah:forge … --factory` | Also a model factory + demo seeder from field types |
+| `ptah:blueprint {spec} [--dry-run] [--no-migrate] [--force]` | Module from a JSON spec: forge (FK order), migrate, config, menu-sync, permission:sync, seed |
+| `ptah:last-error [--file=] [--frames=6] [--json]` | Last log error: exception, SQL, app frames only |
+| `ptah:upgrade-check [--strict] [--json]` | Post-update actions for this host |
+
+---
+
 ## vendor:publish (tags ptah)
 
 Ptah exposes several groups of publishable files via ``vendor:publish``. Each tag is independent and optional — publish only what you need.
@@ -1201,7 +1220,7 @@ These commands were discontinued and replaced by ``ptah:forge``:
 | Removed command | Replacement |
 |------------------|--------------|
 | ``ptah:make-api {Entity}`` | ``ptah:forge {Entity} --api-only`` |
-| ``ptah:docs {Entity}`` | Swagger gerado automaticamente via ``ptah:forge --api`` |
+| ``ptah:docs {Entity}`` (Swagger) | Swagger gerado automaticamente via ``ptah:forge --api``. Since 1.35.0 the name ``ptah:docs`` is the ``ptah:config`` option reference — see [Agent Tools](AgentTools.md) |
 
 **Migration:**
 

@@ -300,9 +300,21 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | `php artisan ptah:menu-sync` | Syncs the sidebar menu from the MenuRegistry |
 | `php artisan ptah:hooks {Entity}` | Scaffolds a lifecycle-hooks class for an entity |
 
+**Agent tools** — one call instead of reading files ([Agent Tools](docs/AgentTools.md)):
+
+| Command | Description |
+|---|---|
+| `php artisan ptah:docs {topic}` | Option reference for `ptah:config` (column, filter, style, action, join, mask), from the parser itself |
+| `php artisan ptah:map` | Compact project map: entities, fields, relations, screens, menu, pending TODOs (`--write` → `.ptah/map.md`) |
+| `php artisan ptah:check` | Renders every configured screen and checks its config against model and table (`--write` round-trip, rolled back) |
+| `php artisan ptah:field {Entity} add {field}` | Adds a field everywhere: migration, `$fillable`/`$casts`, rules, DTO, crud config |
+| `php artisan ptah:blueprint {spec.json}` | A whole module from one spec: forge in FK order, migrate, config, menu, permissions, seed |
+| `php artisan ptah:last-error` | The last log error, compact: exception, SQL, application frames only |
+| `php artisan ptah:upgrade-check` | After updating ptah: what this project must do (config keys, published views/stubs, FK, migrations) |
+
 > Full reference for every command and every flag: **[Commands.md](docs/Commands.md)**.
 > Swagger/OpenAPI docs are generated via `ptah:forge --api` (or `ptah:module api`) followed
-> by `php artisan l5-swagger:generate` — there is no standalone `ptah:docs` command.
+> by `php artisan l5-swagger:generate`. (`ptah:docs` is the option reference above, not Swagger.)
 
 ---
 
@@ -382,6 +394,7 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[Validation System](docs/Validation-System.md)** | `ConfigSchemaValidator` / `JsonSchemaBuilder` — how CRUD configs are validated and the JSON Schema they generate |
 | **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |
 | **[Custom Screens](docs/CustomScreens.md)** | Building your own screens outside BaseCrud — design tokens, the 6 appearance axes, the `<x-forge-*>` catalog and common pitfalls (pt-BR) |
+| **[Agent Tools](docs/AgentTools.md)** | `ptah:map`, `ptah:check`, `ptah:field`, `ptah:blueprint`, `ptah:last-error`, `ptah:upgrade-check`, `ptah:docs`, `ptah:forge --factory` — commands that replace reading files |
 | **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
 | **[AI Agent module](docs/AiAgent.md)** | The optional in-app AI chat widget module — providers, tools, rate limits and token budget |
 | **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |

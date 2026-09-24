@@ -32,6 +32,8 @@ names the ready-made path and what NOT to do.
 | A REST API for an entity | `php artisan ptah:module api` once, then `ptah:forge Name --fields="..." --api` — controller with full Swagger `@OA\*` annotations, Create/Update API requests, versioned `Route::prefix('v1')` routes and the `BaseResponse` envelope, all generated and working | Hand-write API controllers, resources or response envelopes |
 | Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
 | Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
+| A whole module (several related entities) | `php artisan ptah:blueprint spec.json --dry-run`, then without `--dry-run` — forge in FK order, migrate, config, menu, permissions, seed ([AgentTools.md](../../../../docs/AgentTools.md)) | Run a dozen commands by hand and get the parent/child order wrong |
+| A new column on an existing entity | `php artisan ptah:field Entity add name:type[:modifiers]` — migration, `$fillable`/`$casts`, rules, DTO and crud config in one call | Edit five files and forget `$fillable` (the field is then silently not saved) |
 | A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
 
 ### What BaseCrud already does (do not rebuild any of this)
@@ -53,13 +55,29 @@ If the request maps to anything above, the answer is **configuration**, not
 code. When in doubt: `php artisan ptah:config "App\Models\X" --list` shows
 what a screen already has.
 
+### Ask the project instead of reading it
+
+Each of these answers in one call what would otherwise take several file
+reads. Prefer them — they read the same truth the runtime reads.
+
+| To know | Run |
+|---|---|
+| What exists (entities, fields, relations, screens, menu, TODOs) | `php artisan ptah:map` |
+| The exact syntax of a `--column` / `--filter` / `--style` / `--action` / `--join` / mask | `php artisan ptah:docs column` (or `filter`, `style`, …) |
+| Whether every screen still works after a change | `php artisan ptah:check` (`--write` also round-trips a save, rolled back) |
+| Why something broke | `php artisan ptah:last-error` — never `tail` the log |
+| What an update of ptah needs in this project | `php artisan ptah:upgrade-check` |
+
+`ptah:forge … --factory` also writes a factory and a demo seeder from the
+field types.
+
 ### Where to read more (token budget guide)
 
 Read the SMALLEST document that answers the question — in this order:
 
 | Question | Read |
 |---|---|
-| Any config flag / column type / option syntax | This skill's "Configuring BaseCrud" sections below |
+| Any config flag / column type / option syntax | `php artisan ptah:docs <topic>`, then this skill's "Configuring BaseCrud" sections below |
 | Full BaseCrud runtime behaviour | `docs/BaseCrud.md` |
 | Every `ptah:*` command | `docs/Commands.md` |
 | Repository/Service/DTO contracts | `ptah-data-layer` skill, then `docs/BaseLayer.md` |

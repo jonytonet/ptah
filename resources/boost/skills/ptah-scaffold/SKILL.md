@@ -53,6 +53,14 @@ Web + API together:
 php artisan ptah:forge Catalog/Product --fields="..." --api
 ```
 
+Factory + demo seeder from the field types: add `--factory`.
+
+**Several related entities?** Write a spec and let `ptah:blueprint` order them
+by foreign key and run forge → migrate → config → menu → permissions → seed
+(`--dry-run` first). **A column on an existing entity?** `ptah:field Entity add
+name:type[:modifiers]` edits migration, model, rules, DTO and config at once.
+Both: `docs/AgentTools.md`.
+
 ## Step 2 — Post-scaffold fixes (in order)
 
 1. **FK imports — only if `ptah:forge` printed a ⚠.** The generator resolves a
@@ -65,6 +73,8 @@ php artisan ptah:forge Catalog/Product --fields="..." --api
 4. **Clear caches:** `php artisan view:clear && php artisan config:clear`
 5. If the entity has a subfolder and a menu entry, sync the sidebar:
    `php artisan ptah:menu-sync` (see Guardrails re: `--fresh`).
+6. **Verify:** `php artisan ptah:check` renders the screen and flags config
+   that does not match the model/table (ghost columns, non-fillable fields).
 
 ## Step 3 — Configure the BaseCrud listing
 
