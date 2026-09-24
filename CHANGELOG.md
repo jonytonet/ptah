@@ -7,6 +7,149 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.35.0] - 2026-09-24
+
+A release about **what it costs an agent to build with ptah** — fewer tokens
+read, fewer tool calls, fewer attempts that fail.
+
+### Added - `ptah:docs <topic>`: the option reference, from the parser itself
+
+The question asked most while configuring a screen is "what is the option for
+X?", and the answer lived in `docs/BaseCrud.md` (~29k tokens) and
+`docs/Configuration.md` (~30k). One lookup could cost as much as the screen.
+
+```
+php artisan ptah:docs            # topics: column, filter, style, action, join, mask
+php artisan ptah:docs column     # ~760 tokens
+php artisan ptah:docs filter     # ~120 tokens
+php artisan ptah:docs join --json
+```
+
+Everything that can come from a constant does — column types, renderers,
+modifiers, the option → config-key map, operators, action and join types — and
+the `mask` topic reads the runtime registry, so it lists the masks the HOST
+registered, which no document can. The one hand-written part, each topic's
+format line, is guarded: every topic's example runs through the real parser in
+`CliReferenceTest`, and a token budget test fails if a topic grows past ~1,000
+tokens — a reference that costs as much as the document it replaces has failed.
+
+### Added - `ptah:forge` resolves foreign-key imports itself
+
+Every `belongsTo(Category::class)` used to come with
+`// TODO: use App\Models\Category;`, and the package's skill made fixing them a
+MANDATORY step after every scaffold: open each model, find where each related
+class lives, write the import — a read and an edit per foreign key, for every
+entity of a module.
+
+The TODO was deliberate, because an import guessed from a convention looks right
+and fails at runtime, and that rule stays: `Ptah\Support\ModelLocator` resolves
+only when exactly ONE class of that name exists under the models directory,
+reading the namespace from the file's own declaration rather than its path.
+None yet, or more than one, keeps the TODO — now saying which. And the command
+says what it did:
+
+```
+Relationship imports:
+   ✔ category_id → App\Models\Catalog\Category
+   ⚠ supplier_id → Supplier not found in app/Models yet — generate it, then fix the TODO in the model
+```
+
+Scaffold related entities in dependency order and there is nothing left to fix.
+Both skills now describe the step as conditional instead of mandatory.
+
+### Fixed - documented `--filter` examples that meant something else
+
+The filter parser reads `field:type` and then `key=value` only. A positional
+operator — `name:text:LIKE:…`, `score:number:>=:…` — was silently dropped and
+the filter fell back to equality, and `docs/Configuration.md` documented the
+format as `field:type:operator:…` while the skill said "no positional operator".
+`boolean` is not a type the filter panel handles: it falls back to a text box.
+Eight examples fixed — the scaffold skill's among them — and
+`DocumentedFilterDefinitionTest` now runs every documented `--filter` through the
+parser's rule, the way `DocumentedColumnDefinitionTest` does for columns.
+
+### Added - the agent toolkit: ask the project instead of reading it
+
+Seven commands for the moments an agent would otherwise read files to find
+something out. Each prints a short answer and what is still left to do, takes
+`--json` where it reports, and is read-only unless its name says otherwise.
+Full reference with sample output: `docs/AgentTools.md`.
+
+| Command | Replaces |
+|---|---|
+| `ptah:map` | opening every model, migration and config at the start of a session |
+| `ptah:check` | opening each screen in a browser after a change |
+| `ptah:field Entity add field` | five hand edits to add a column |
+| `ptah:forge --factory` | writing a factory and a seeder by hand |
+| `ptah:blueprint spec.json` | a dozen commands, in the right order, for a module |
+| `ptah:last-error` | `tail -300 storage/logs/laravel.log` |
+| `ptah:upgrade-check` | reading the CHANGELOG to guess what an update needs here |
+
+- **`ptah:map`** — entities (table, typed fields, FK targets, relations),
+  configured screens (route, permission, columns, filters), the database menu
+  and the `TODO:` lines the generators left. A relation is listed only when its
+  method declares a Relation return type: calling an undeclared method to see
+  what it returns is a side effect the map refuses to cause. `--write` saves
+  `.ptah/map.md`.
+- **`ptah:check`** — renders every configured BaseCrud screen through Livewire
+  as a page mounts it, and compares its config with the model and the table.
+  It reports what renders without error and still does not work: a column
+  that is not in the table (empty cell), a form field outside `$fillable`
+  (silently not saved), a NOT NULL column without default that the form never
+  fills (every "New" fails), relations, sort and filter columns that do not
+  exist. `--write` adds a create → update → delete round-trip inside a
+  transaction that is always rolled back, with model events muted; refused in
+  production without `--force`. Exit 1 when a screen fails.
+- **`ptah:field Catalog/Product add discount:decimal(5,2) nullable`** — the
+  migration, `$fillable` and `$casts`, the Store/Update rules (web and API),
+  the DTO property and `fromArray()`, and a column in every crud_config of the
+  entity. Idempotent and `--dry-run`. A hand-edited file is reported with ⚠
+  and left alone — it never guesses where a line goes. Only `add`: renaming or
+  dropping a column destroys data and stays a hand-written migration; the
+  generated `down()` says it drops the column.
+- **`ptah:forge --factory`** — a model factory where `HasFactory` looks for it
+  and a demo seeder. Values fit the column (declared length, enum, decimal
+  precision) and the name (email, phone, cpf, cnpj, cep, url, code…); a foreign
+  key takes an existing row of the related model or creates one through its
+  factory. Proved by a test that forges two related entities, runs the
+  migrations the forge wrote and creates records through `Model::factory()`.
+- **`ptah:blueprint`** — a module from one JSON spec: forge each entity
+  parents-first (sorted by foreign keys whatever the spec order; a cycle is an
+  error naming its members), migrate, `ptah:config` with the spec's columns,
+  filters, actions, styles and settings, menu-sync, `permission:sync
+  --role/--grant`, seed. `--dry-run` prints the exact commands. Each step's
+  output is captured: one line per step, and only a failing step's tail; the
+  first failure stops the run and lists what did not run.
+- **`ptah:last-error`** — the last ERROR-or-worse entry, compact: exception and
+  code, message, the SQL separated from it (Laravel 11 and 12+ formats), where
+  it was thrown, the application's frames only (the framework pipeline is
+  counted, not printed) and the `ptahErrorId` the 500 page showed. Reads the
+  last 1 MB, so a multi-GB log costs the same as a small one.
+- **`ptah:upgrade-check`** — what an update needs in THIS project: nested keys
+  missing from a published `config/ptah.php` (`mergeConfigFrom` is shallow, so
+  they are not defaulted), keys this version no longer reads, published views
+  that shadow the package (differ), only freeze it (identical) or are dead,
+  published stubs that differ, the `user_preferences` FK vs the configured
+  identity, pending migrations, the structure editor closed since 1.34.8.
+  `--strict` exits 1 for CI.
+
+### Fixed - `ptah:config --filter` warns about tokens it discards
+
+The parser reads `field:type` and then `key=value` only; a positional operator
+(`name:text:LIKE:…`) was dropped without a word and the filter fell back to
+equality. The command now names every discarded token and points at
+`ptah:docs filter`. The rule lives in `FilterParser::discardedTokens()`, and
+`DocumentedFilterDefinitionTest` uses the same one instead of a copy.
+
+### Fixed - documentation that contradicted `ptah:docs`
+
+`README.md` said "there is no standalone `ptah:docs` command" and
+`docs/Commands.md` still listed a Swagger `ptah:docs {Entity}` removed in V2.2.
+Both now describe the option reference. The skills, `AGENTS.md` and the
+README point at the agent tools.
+
+---
+
 ## [1.34.9] - 2026-09-23
 
 **Security release. Upgrade every host**, in particular any that has a BaseCrud

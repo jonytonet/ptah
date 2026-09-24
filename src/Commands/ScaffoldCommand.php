@@ -13,6 +13,7 @@ use Ptah\Generators\ControllerApiGenerator;
 use Ptah\Generators\ControllerGenerator;
 use Ptah\Generators\CrudConfigGenerator;
 use Ptah\Generators\DtoGenerator;
+use Ptah\Generators\FactoryGenerator;
 use Ptah\Generators\GeneratorResult;
 use Ptah\Generators\MigrationGenerator;
 use Ptah\Generators\ModelGenerator;
@@ -60,6 +61,7 @@ class ScaffoldCommand extends Command
         {--api-only              : Generate ONLY the API structure, without web views (legacy behaviour of --api)}
         {--no-soft-deletes       : Do not add SoftDeletes to the model}
         {--no-menu               : Do not add entry to MenuRegistry (skip automatic menu generation)}
+        {--factory               : Also generate a model factory and a demo seeder from the field types}
         {--force                 : Overwrite existing files without confirmation}';
 
     protected $description = 'Forge — generates the complete structure for an entity (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
@@ -128,6 +130,7 @@ class ScaffoldCommand extends Command
             fields: $fields,
             subFolder: $subFolder,
             withApi: $withApi,
+            withFactory: (bool) $this->option('factory'),
         );
 
         // ── Header ──────────────────────────────────────────────────────
@@ -263,6 +266,13 @@ class ScaffoldCommand extends Command
                 continue;
             }
 
+            if ($generator instanceof FactoryGenerator) {
+                $results[] = $generator->generate($context);
+                $results[] = $generator->generateSeeder($context);
+
+                continue;
+            }
+
             if ($generator instanceof ViewGenerator) {
                 $results[] = $generator->generateView($context, 'index');
 
@@ -298,6 +308,7 @@ class ScaffoldCommand extends Command
             new CrudConfigGenerator($this->files),
             new ViewGenerator($this->files),
             new RouteGenerator($this->files),
+            new FactoryGenerator($this->files),
         ];
     }
 
@@ -367,6 +378,36 @@ class ScaffoldCommand extends Command
     }
 
     /**
+     * Says, per foreign key, whether the related model's import was resolved.
+     *
+     * The point is that whoever ran the command — very often an agent — learns
+     * what is left to do from three lines of output, instead of opening every
+     * generated model to look for TODOs. Before, every import was a TODO and
+     * nothing said so.
+     */
+    private function printRelationshipImports(EntityContext $context): void
+    {
+        $imports = $context->relationshipImports();
+
+        if ($imports === []) {
+            return;
+        }
+
+        $this->line('  <fg=yellow>Relationship imports:</>');
+
+        foreach ($imports as $i) {
+            $this->line(match ($i['status']) {
+                'resolved', 'package' => "     <fg=green>✔</> {$i['field']} → {$i['fqcn']}",
+                'same_namespace' => "     <fg=green>✔</> {$i['field']} → {$i['fqcn']} <fg=gray>(same namespace, no use needed)</>",
+                'ambiguous' => "     <fg=yellow>⚠</> {$i['field']} → {$i['model']} is ambiguous: ".implode(', ', $i['candidates']).' — fix the TODO in the model',
+                default => "     <fg=yellow>⚠</> {$i['field']} → {$i['model']} not found in app/Models yet — generate it, then fix the TODO in the model",
+            });
+        }
+
+        $this->newLine();
+    }
+
+    /**
      * Displays suggested next steps after generation.
      */
     private function printNextSteps(EntityContext $context): void
@@ -379,6 +420,8 @@ class ScaffoldCommand extends Command
 
         $this->line('  <fg=green>✔ Binding automatically registered in AppServiceProvider.</>');
         $this->newLine();
+
+        $this->printRelationshipImports($context);
 
         $this->line('  <fg=yellow>1. Run the migration:</>');
         $this->line('     <fg=gray>php artisan migrate</>');

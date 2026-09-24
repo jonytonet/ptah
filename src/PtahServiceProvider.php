@@ -17,14 +17,20 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Ptah\Commands\BlueprintCommand;
+use Ptah\Commands\CheckCommand;
 use Ptah\Commands\Config\ConfigDoctorCommand;
 use Ptah\Commands\Config\ConfigExportAllCommand;
 use Ptah\Commands\Config\ConfigImportAllCommand;
 use Ptah\Commands\Config\ConfigRelabelCommand;
 use Ptah\Commands\ConfigCommand;
+use Ptah\Commands\DocsCommand;
 use Ptah\Commands\ExportPruneCommand;
+use Ptah\Commands\FieldCommand;
 use Ptah\Commands\InstallCommand;
+use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
+use Ptah\Commands\MapCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\Permission\AuditPruneCommand;
@@ -32,6 +38,7 @@ use Ptah\Commands\Permission\PermissionSyncCommand;
 use Ptah\Commands\Permission\PermissionWhyCommand;
 use Ptah\Commands\PreferencesRealignCommand;
 use Ptah\Commands\ScaffoldCommand;
+use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Events\PtahNotificationCreated;
@@ -373,8 +380,15 @@ class PtahServiceProvider extends ServiceProvider
                 ConfigExportAllCommand::class,  // ptah:config:export-all
                 ConfigImportAllCommand::class,  // ptah:config:import-all
                 ConfigRelabelCommand::class,    // ptah:config:relabel
-                MakeHooksCommand::class,
-                PreferencesRealignCommand::class,     // ptah:hooks
+                MakeHooksCommand::class,      // ptah:hooks
+                PreferencesRealignCommand::class,
+                DocsCommand::class,           // ptah:docs
+                LastErrorCommand::class,      // ptah:last-error
+                CheckCommand::class,          // ptah:check
+                MapCommand::class,            // ptah:map
+                FieldCommand::class,          // ptah:field
+                BlueprintCommand::class,      // ptah:blueprint
+                UpgradeCheckCommand::class,   // ptah:upgrade-check
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune

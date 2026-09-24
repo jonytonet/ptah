@@ -348,7 +348,7 @@ this went unnoticed for so long.
 
 ```bash
 # Filter
-php artisan ptah:config "App\Models\Product" --filter="is_active:boolean:label=Active"
+php artisan ptah:config "App\Models\Product" --filter="is_active:select:label=Active:options=1:Active,0:Inactive"
 php artisan ptah:config "App\Models\Product" --filter="status:select:options=active,inactive:operator=="
 
 # Style

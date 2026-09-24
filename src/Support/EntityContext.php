@@ -50,6 +50,7 @@ readonly class EntityContext
         public array $fields,
         public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
         public bool $withApi = false,  // true quando --api ou --api-only
+        public bool $withFactory = false, // --factory: factory + seeder
     ) {
         $nsBase = rtrim($rootNamespace, '\\').'\\Models';
         $this->modelNamespace = $subFolder
@@ -197,6 +198,29 @@ readonly class EntityContext
     }
 
     /**
+     * The factory's definition() body: one Faker expression per field, FKs
+     * pointing at the related model when it resolved (see relationshipImports).
+     */
+    public function factoryDefinition(?string $modelsPath = null): string
+    {
+        if (empty($this->fields)) {
+            return "            // 'name' => fake()->words(2, true),";
+        }
+
+        $related = [];
+        foreach ($this->relationshipImports($modelsPath) as $import) {
+            $related[$import['field']] = $import['fqcn'];
+        }
+
+        return implode("\n", array_map(function (FieldDefinition $f) use ($related): string {
+            $expr = $f->fakerExpression($related[$f->name] ?? null);
+
+            // O TODO de FK ja traz a virgula antes do comentario.
+            return "            '{$f->name}' => {$expr}".(str_contains($expr, ', //') ? '' : ',');
+        }, $this->fields));
+    }
+
+    /**
      * Generates the DTO fromArray mapping.
      */
     public function dtoFromArray(): string
@@ -242,42 +266,110 @@ readonly class EntityContext
     }
 
     /**
-     * Generates `use` declarations for models related via FK.
+     * How each foreign key's related model was located.
      *
-     * Generates TODO comments instead of automatic imports to avoid
-     * incorrect namespaces when related models are in different sub-folders
-     * from the current entity.
+     * One entry per FK field, in field order:
      *
-     * The developer must adjust the namespace according to the real model location.
-     * Returns an empty string if there are no FKs.
+     *   status     'resolved'       exactly one class of that name exists
+     *              'same_namespace' resolved, and it lives in this model's own
+     *                               namespace — no `use` needed
+     *              'package'        a model the package ships (Company)
+     *              'missing'        no class of that name yet — the related
+     *                               entity has not been generated
+     *              'ambiguous'      more than one class of that name
+     *   candidates the FQCNs found (empty for 'missing' / 'package')
+     *
+     * The generator used to leave EVERY import as a TODO, and the package's
+     * skill made fixing them a mandatory manual step. See ModelLocator for why
+     * resolving only the unambiguous case keeps the original "never guess"
+     * rule intact.
+     *
+     * @param  string|null  $modelsPath  where the models live; defaults to
+     *                                   `ptah.paths.models`, the same directory the
+     *                                   generator writes to
+     * @return list<array{field: string, model: string, status: string, fqcn: string|null, candidates: list<string>}>
      */
-    public function relationshipsUse(): string
+    public function relationshipImports(?string $modelsPath = null): array
     {
-        $fkFields = array_values(array_filter(
-            $this->fields,
-            fn (FieldDefinition $f) => $f->isForeignKey()
-        ));
+        $modelsPath ??= (string) config('ptah.paths.models', '');
 
-        if (empty($fkFields)) {
+        $out = [];
+
+        foreach ($this->fields as $field) {
+            if (! $field->isForeignKey()) {
+                continue;
+            }
+
+            $model = $field->relatedModel();
+
+            // company_id → Ptah\Models\Company (well-known package model)
+            if ($model === 'Company') {
+                $out[] = ['field' => $field->name, 'model' => $model, 'status' => 'package', 'fqcn' => 'Ptah\\Models\\Company', 'candidates' => []];
+
+                continue;
+            }
+
+            $candidates = $modelsPath !== '' ? ModelLocator::find($model, $modelsPath) : [];
+
+            $status = match (count($candidates)) {
+                0 => 'missing',
+                1 => $this->namespaceOf($candidates[0]) === $this->modelNamespace ? 'same_namespace' : 'resolved',
+                default => 'ambiguous',
+            };
+
+            $out[] = [
+                'field' => $field->name,
+                'model' => $model,
+                'status' => $status,
+                'fqcn' => count($candidates) === 1 ? $candidates[0] : null,
+                'candidates' => $candidates,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * `use` declarations for models related via FK.
+     *
+     * Resolved when exactly one class of that name exists (see
+     * relationshipImports()); a TODO otherwise, now saying WHY — not generated
+     * yet, or which candidates compete — so whoever reads it knows what to do
+     * without searching. Returns an empty string if there are no FKs.
+     */
+    public function relationshipsUse(?string $modelsPath = null): string
+    {
+        $imports = $this->relationshipImports($modelsPath);
+
+        if ($imports === []) {
             return '';
         }
 
         $rootNs = rtrim($this->rootNamespace, '\\').'\\Models';
 
-        $lines = array_unique(array_map(
-            function (FieldDefinition $f) use ($rootNs): string {
-                // company_id → Ptah\Models\Company (well-known package model)
-                if ($f->relatedModel() === 'Company') {
-                    return 'use Ptah\\Models\\Company;';
-                }
-
-                return "// TODO: use {$rootNs}\\{$f->relatedModel()};".
-                    " // check the real namespace — adjust if {$f->relatedModel()} is in a sub-folder";
+        $lines = array_unique(array_filter(array_map(
+            function (array $i) use ($rootNs): ?string {
+                return match ($i['status']) {
+                    'package', 'resolved' => "use {$i['fqcn']};",
+                    // Mesmo namespace do model gerado: o PHP resolve sozinho.
+                    'same_namespace' => null,
+                    'ambiguous' => "// TODO: use ??\\{$i['model']}; // more than one {$i['model']} class: "
+                        .implode(', ', $i['candidates']).' — pick the right one',
+                    default => "// TODO: use {$rootNs}\\{$i['model']}; // {$i['model']} does not exist in app/Models yet"
+                        .' — generate it, or adjust the namespace',
+                };
             },
-            $fkFields
-        ));
+            $imports
+        )));
 
-        return implode("\n", $lines)."\n";
+        return $lines === [] ? '' : implode("\n", $lines)."\n";
+    }
+
+    private function namespaceOf(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? '' : substr($fqcn, 0, $pos);
     }
 
     /**

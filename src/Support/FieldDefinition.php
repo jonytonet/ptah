@@ -203,6 +203,66 @@ readonly class FieldDefinition
     /**
      * Tipo PHP para a propriedade do DTO.
      */
+    /**
+     * A Faker expression that produces a value the migration and the Store
+     * rules both accept: within the declared length, inside the enum, a real
+     * row for a foreign key. The name refines the type (email, phone, url…)
+     * because a factory full of lorem is useless for looking at a screen.
+     *
+     * @param  string|null  $relatedFqcn  the FK's model when it resolved; a
+     *                                    nullable FK without it is null, a required one a TODO
+     */
+    public function fakerExpression(?string $relatedFqcn = null): string
+    {
+        if ($this->isForeignKey() || ($this->type === 'foreignId' && str_ends_with($this->name, '_id'))) {
+            // Um registro que ja existe (semeie os pais primeiro); sem nenhum, a
+            // factory do pai. Company e do pacote e nao tem factory.
+            if ($relatedFqcn === 'Ptah\\Models\\Company') {
+                return 'fn () => \\Ptah\\Models\\Company::query()->value(\'id\')';
+            }
+
+            if ($relatedFqcn !== null) {
+                return "fn () => \\{$relatedFqcn}::query()->inRandomOrder()->first()?->getKey() ?? \\{$relatedFqcn}::factory()";
+            }
+
+            return $this->nullable ? 'null' : "null, // TODO: {$this->relatedModel()} ainda nao existe — gere-o e troque por {$this->relatedModel()}::factory()";
+        }
+
+        $unique = $this->unique ? 'unique()->' : '';
+        $name = strtolower($this->name);
+
+        $expr = match (true) {
+            $this->type === 'enum' && $this->enumValues !== [] => "fake()->randomElement(['".implode("', '", $this->enumValues)."'])",
+            $this->type === 'boolean' => 'fake()->boolean()',
+            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'smallInteger'], true) => "fake()->{$unique}numberBetween(1, 1000)",
+            $this->type === 'tinyInteger' => 'fake()->numberBetween(0, 100)',
+            in_array($this->type, ['decimal', 'float', 'double'], true) => 'fake()->randomFloat('.($this->type === 'decimal' ? $this->scale : 2).', 1, '.($this->type === 'decimal' ? min(99999, 10 ** max(1, $this->precision - $this->scale) - 1) : 1000).')',
+            $this->type === 'date' => "fake()->date('Y-m-d')",
+            in_array($this->type, ['datetime', 'timestamp'], true) => 'fake()->dateTime()',
+            $this->type === 'json' => '[]',
+            in_array($this->type, ['text', 'longText'], true) => 'fake()->paragraph()',
+            str_contains($name, 'email') => "fake()->{$unique}safeEmail()",
+            str_contains($name, 'phone') || str_contains($name, 'celular') || str_contains($name, 'telefone') => "fake()->{$unique}numerify('(##) 9####-####')",
+            str_contains($name, 'url') || str_contains($name, 'site') => "fake()->{$unique}url()",
+            str_contains($name, 'cpf') => "fake()->{$unique}numerify('###########')",
+            str_contains($name, 'cnpj') => "fake()->{$unique}numerify('##############')",
+            str_contains($name, 'cep') || str_contains($name, 'zip') => "fake()->{$unique}numerify('#####-###')",
+            in_array($name, ['city', 'cidade'], true) => 'fake()->city()',
+            in_array($name, ['name', 'nome', 'full_name'], true) => "fake()->{$unique}name()",
+            in_array($name, ['title', 'titulo'], true) => "fake()->{$unique}sentence(3)",
+            in_array($name, ['description', 'descricao'], true) => 'fake()->sentence()',
+            str_contains($name, 'code') || str_contains($name, 'codigo') || str_contains($name, 'sku') => "fake()->{$unique}bothify('??-####')",
+            default => "fake()->{$unique}words(2, true)",
+        };
+
+        // string(10)/char(2): o valor tem de caber na coluna.
+        if (in_array($this->type, ['string', 'char'], true) && $this->length !== null && $this->length < 40) {
+            $expr = "substr({$expr}, 0, {$this->length})";
+        }
+
+        return $expr;
+    }
+
     public function phpType(): string
     {
         $base = match (true) {

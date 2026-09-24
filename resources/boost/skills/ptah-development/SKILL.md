@@ -32,6 +32,8 @@ names the ready-made path and what NOT to do.
 | A REST API for an entity | `php artisan ptah:module api` once, then `ptah:forge Name --fields="..." --api` — controller with full Swagger `@OA\*` annotations, Create/Update API requests, versioned `Route::prefix('v1')` routes and the `BaseResponse` envelope, all generated and working | Hand-write API controllers, resources or response envelopes |
 | Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
 | Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
+| A whole module (several related entities) | `php artisan ptah:blueprint spec.json --dry-run`, then without `--dry-run` — forge in FK order, migrate, config, menu, permissions, seed ([AgentTools.md](../../../../docs/AgentTools.md)) | Run a dozen commands by hand and get the parent/child order wrong |
+| A new column on an existing entity | `php artisan ptah:field Entity add name:type[:modifiers]` — migration, `$fillable`/`$casts`, rules, DTO and crud config in one call | Edit five files and forget `$fillable` (the field is then silently not saved) |
 | A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
 
 ### What BaseCrud already does (do not rebuild any of this)
@@ -53,13 +55,29 @@ If the request maps to anything above, the answer is **configuration**, not
 code. When in doubt: `php artisan ptah:config "App\Models\X" --list` shows
 what a screen already has.
 
+### Ask the project instead of reading it
+
+Each of these answers in one call what would otherwise take several file
+reads. Prefer them — they read the same truth the runtime reads.
+
+| To know | Run |
+|---|---|
+| What exists (entities, fields, relations, screens, menu, TODOs) | `php artisan ptah:map` |
+| The exact syntax of a `--column` / `--filter` / `--style` / `--action` / `--join` / mask | `php artisan ptah:docs column` (or `filter`, `style`, …) |
+| Whether every screen still works after a change | `php artisan ptah:check` (`--write` also round-trips a save, rolled back) |
+| Why something broke | `php artisan ptah:last-error` — never `tail` the log |
+| What an update of ptah needs in this project | `php artisan ptah:upgrade-check` |
+
+`ptah:forge … --factory` also writes a factory and a demo seeder from the
+field types.
+
 ### Where to read more (token budget guide)
 
 Read the SMALLEST document that answers the question — in this order:
 
 | Question | Read |
 |---|---|
-| Any config flag / column type / option syntax | This skill's "Configuring BaseCrud" sections below |
+| Any config flag / column type / option syntax | `php artisan ptah:docs <topic>`, then this skill's "Configuring BaseCrud" sections below |
 | Full BaseCrud runtime behaviour | `docs/BaseCrud.md` |
 | Every `ptah:*` command | `docs/Commands.md` |
 | Repository/Service/DTO contracts | `ptah-data-layer` skill, then `docs/BaseLayer.md` |
@@ -284,30 +302,25 @@ php artisan ptah:forge Health/Test --fields="..." --no-menu
 
 ---
 
-## Post-scaffold Checklist (MANDATORY after every ptah:forge)
+## Post-scaffold Checklist (after every ptah:forge)
 
 After running `ptah:forge` and `php artisan migrate`, **always** perform these steps:
 
-### 1. Fix FK `use` imports in every generated Model
+### 1. FK imports — only if `ptah:forge` reported a ⚠
 
-The generator intentionally leaves `// TODO:` comments for FK relationships
-because it cannot know which sub-folder the related model lives in:
+The generator resolves each foreign key's `use` itself when exactly one class
+of that name exists in `app/Models`, and its output says what it did:
 
-```php
-// Generated (NEEDS to be fixed):
-// TODO: use App\Models\Category; // verifique o namespace real — ajuste se Category estiver em sub-pasta
-
-// ✅ If Category is in App\Models\Catalog\ :
-use App\Models\Catalog\Category;
-
-// ✅ If Category is in the root App\Models\ :
-use App\Models\Category;
+```
+Relationship imports:
+   ✔ category_id → App\Models\Catalog\Category
+   ⚠ supplier_id → Supplier not found in app/Models yet — generate it, then fix the TODO in the model
 ```
 
-**Rule:** For every `// TODO: use` line in a generated model:
-- Find where the related model file actually lives (`find app/Models -name 'Category.php'`)
-- Replace the TODO comment with the correct `use` statement
-- Never leave `// TODO:` lines in committed code
+Only a `⚠` line needs you: the related model was not generated yet, or more
+than one class has that name (the TODO lists them). **Generate entities in
+dependency order** — `Category` before `Product` — and there is nothing to fix.
+Never leave a `// TODO:` line in committed code.
 
 ### 2. Run Pint to format all generated files
 

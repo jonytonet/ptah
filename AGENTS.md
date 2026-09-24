@@ -38,7 +38,8 @@ table: `docs/CustomScreens.md`.
 | Question | Read | Size |
 |---|---|---|
 | How do I build anything here? (start) | `resources/boost/skills/ptah-development/SKILL.md` | ~1.4k lines, sectioned — read only the section you need |
-| Config flag / column type / CLI syntax | `docs/Commands.md` | reference |
+| Config flag / column type / CLI syntax | `php artisan ptah:docs <topic>` in a host app, else `docs/Commands.md` | 60–760 tokens / reference |
+| What a host project contains, whether its screens work, why it broke | `ptah:map`, `ptah:check`, `ptah:last-error` — see `docs/AgentTools.md` | small |
 | BaseCrud runtime behaviour in depth | `docs/BaseCrud.md` | large — search it, don't read it whole |
 | Repository / Service / DTO layer | `resources/boost/skills/ptah-data-layer/SKILL.md`, then `docs/BaseLayer.md` | small |
 | Scaffolding a new entity end-to-end | `resources/boost/skills/ptah-scaffold/SKILL.md` | small |

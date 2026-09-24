@@ -59,7 +59,7 @@ class PreferencesRealignCommand extends Command
         }
 
         $identity = UserIdentity::resolve();
-        $current = $this->currentTarget();
+        $current = self::currentTarget();
         $wanted = $identity->shouldConstrain() ? $identity->table : null;
 
         $this->components->twoColumnDetail('Identidade configurada', $identity->table.'.'.$identity->keyName);
@@ -128,7 +128,7 @@ class PreferencesRealignCommand extends Command
      *
      * `Schema::getForeignKeys()` is native since Laravel 11 — no Doctrine.
      */
-    private function currentTarget(): ?string
+    public static function currentTarget(): ?string
     {
         foreach (Schema::getForeignKeys('user_preferences') as $key) {
             if (in_array('user_id', $key['columns'] ?? [], true)) {

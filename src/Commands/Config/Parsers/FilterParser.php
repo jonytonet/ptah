@@ -55,6 +55,46 @@ class FilterParser
     }
 
     /**
+     * Tokens after `field:type` that parse() silently throws away.
+     *
+     * The format is `field:type` then `key=value` only. A positional operator
+     * — `name:text:LIKE:…`, `score:number:>=:…` — used to vanish without a word
+     * and the filter fell back to equality. A `key=value` opens a value that
+     * may continue across `:` (`options=1:Ativo,0:Inativo`); a bare token is
+     * legal only as that continuation, and a "key" that is not an identifier
+     * (`=`, `>=`) is an operator in disguise.
+     *
+     * @return list<string>
+     */
+    public static function discardedTokens(string $definition): array
+    {
+        $parts = explode(':', $definition);
+        array_shift($parts); // field
+        array_shift($parts); // type
+
+        $discarded = [];
+        $open = false;
+
+        foreach ($parts as $part) {
+            if (str_contains($part, '=')) {
+                $open = preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', explode('=', $part, 2)[0]) === 1;
+
+                if (! $open) {
+                    $discarded[] = $part;
+                }
+
+                continue;
+            }
+
+            if (! $open) {
+                $discarded[] = $part;
+            }
+        }
+
+        return $discarded;
+    }
+
+    /**
      * Smart tokenizer: splits field:type:key=value:key=value preserving ':'
      * that appear inside the VALUE side of a key=value pair (e.g. the
      * "options=active:Active,inactive:Inactive" select-options list).
