@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.35.0] - 2026-09-23
+## [1.35.0] - 2026-09-24
 
 A release about **what it costs an agent to build with ptah** — fewer tokens
 read, fewer tool calls, fewer attempts that fail.
