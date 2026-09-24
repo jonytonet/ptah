@@ -28,6 +28,7 @@ use Ptah\Commands\ExportPruneCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
+use Ptah\Commands\MapCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\Permission\AuditPruneCommand;
@@ -381,6 +382,7 @@ class PtahServiceProvider extends ServiceProvider
                 DocsCommand::class,           // ptah:docs
                 LastErrorCommand::class,      // ptah:last-error
                 CheckCommand::class,          // ptah:check
+                MapCommand::class,            // ptah:map
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
