@@ -86,6 +86,20 @@ return [
     | Supported drivers: database
     |
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Who may administer the menu (/ptah-menu) and the companies (/ptah-companies)
+    |--------------------------------------------------------------------------
+    |
+    | With the permissions module ACTIVE this flag is ignored: only master users
+    | may. With the module OFF the screens are DENIED by default — the package
+    | cannot tell an administrator from any other logged-in user without RBAC.
+    | Set PTAH_STRUCTURE_EDITOR=true to opt back in. See ptah_can_manage_structure().
+    |
+    | Until 1.34.8 both screens were open to every authenticated user.
+    */
+    'structure_editor' => env('PTAH_STRUCTURE_EDITOR', false),
+
     'preferences' => [
         /*
          * Chave estrangeira de `user_preferences.user_id` para a tabela de

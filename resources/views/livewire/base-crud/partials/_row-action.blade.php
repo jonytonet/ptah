@@ -33,8 +33,10 @@
     // Blocks dangerous URL schemes on link actions. HTML escaping does NOT
     // neutralise javascript:/data:/vbscript: inside an href, and the value comes
     // from crud_configs — editable through the visual modal.
+    // Mesmo normalizador do renderer `link` e da sidebar: a regex antiga nao
+    // lia a URL como o navegador (TAB/LF removidos de qualquer posicao).
     $isUnsafeHref = ($actionType === 'link')
-        && preg_match('/^\s*(javascript|data|vbscript):/i', $actionStr);
+        && ! \Ptah\Support\SafeUrl::isSafe($actionStr);
 
     if ($isUnsafeHref) {
         $actionStr = '#';

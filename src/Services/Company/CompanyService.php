@@ -6,6 +6,7 @@ namespace Ptah\Services\Company;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ptah\Contracts\CompanyServiceContract;
@@ -183,7 +184,11 @@ class CompanyService implements CompanyServiceContract
      */
     public function setActive(int $id): void
     {
-        if (! $this->getAll()->contains('id', $id)) {
+        // Antes conferia so se a empresa existia e estava ativa — nunca se o
+        // usuario PERTENCIA a ela. `switchTo(7)` punha qualquer usuario na
+        // empresa 7, e o BaseCrud usa `ptah_company_id()` como escopo de tenant:
+        // listagem e exportacao de outra empresa.
+        if (! $this->canSwitchTo($id)) {
             return;
         }
 
@@ -206,17 +211,86 @@ class CompanyService implements CompanyServiceContract
      */
     public function initSession(): void
     {
-        if ($this->activeId() > 0) {
+        $active = $this->activeId();
+        $switchable = $this->switchableCompanies();
+
+        if ($active > 0) {
+            // Sessao valida, ou nada melhor a oferecer: fica como esta.
+            if ($switchable->contains('id', $active) || $switchable->isEmpty()) {
+                return;
+            }
+
+            // A sessao aponta para uma empresa de que o usuario nao participa —
+            // gravada antes desta correcao, ou por um papel revogado. Move para
+            // uma dele, em vez de manter o acesso ao tenant errado.
+        }
+
+        // O fallback para TODAS as empresas e deliberado, e so vale para quem
+        // nao pertence a nenhuma. No BaseCrud `companyFilter = 0` significa SEM
+        // escopo de tenant, entao deixar a sessao vazia para esse usuario o faria
+        // ver os dados de todas as empresas — pior do que ver a padrao, que e o
+        // que acontecia antes. Nao alargamos.
+        $pool = $switchable->isNotEmpty() ? $switchable : $this->getAll();
+
+        if ($pool->isEmpty()) {
             return;
         }
 
-        $all = $this->getAll();
-        if ($all->isEmpty()) {
-            return;
-        }
-
-        $default = $all->firstWhere('is_default', true) ?? $all->first();
+        $default = $pool->firstWhere('is_default', true) ?? $pool->first();
         Session::put($this->sessionKey, $default->id);
+    }
+
+    /**
+     * The companies the given (or current) user may switch to.
+     *
+     * With the permissions module OFF there is no membership data at all, so
+     * every active company — the behaviour before this existed. With it ON:
+     * a master sees every company; so does a user holding an active GLOBAL role
+     * (`company_id` NULL), because `UserRole::scopeForCompany()` applies a
+     * global role in every company; everybody else sees the companies their
+     * own active roles are in.
+     *
+     * Deliberately NOT built on `getUserCompanies()` alone: that returns only
+     * roles with a non-null company, so a user whose only role is global would
+     * have been locked out of every company.
+     */
+    public function switchableCompanies(mixed $user = null): Collection
+    {
+        $all = $this->getAll();
+
+        if (! config('ptah.modules.permissions')) {
+            return $all;
+        }
+
+        $user ??= auth()->user();
+        $userId = $this->resolveUserId($user);
+
+        if ($userId === null) {
+            return new Collection;
+        }
+
+        if ($this->permission->isMaster($user) || $this->hasGlobalRole($userId)) {
+            return $all;
+        }
+
+        $mine = $this->getUserCompanies($userId)->pluck('id')->all();
+
+        return $all->whereIn('id', $mine)->values();
+    }
+
+    public function canSwitchTo(int $companyId, mixed $user = null): bool
+    {
+        return $this->switchableCompanies($user)->contains('id', $companyId);
+    }
+
+    private function hasGlobalRole(int $userId): bool
+    {
+        return DB::table('ptah_user_roles')
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->whereNull('company_id')
+            ->whereNull('deleted_at')
+            ->exists();
     }
 
     /**

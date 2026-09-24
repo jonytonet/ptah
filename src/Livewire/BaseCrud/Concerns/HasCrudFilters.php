@@ -23,6 +23,15 @@ trait HasCrudFilters
 
     public function sortBy(string $column): void
     {
+        // A allowlist do updatedSort() so roda quando a PROPRIEDADE e
+        // atualizada pelo cliente; um valor que entra por este metodo nao
+        // dispara o hook. Sem esta guarda, `sortBy('password')` ordenava por uma
+        // coluna fora da config — o oraculo que o comentario do updatedSort()
+        // descreve e que so estava fechado pela outra porta.
+        if (! $this->sortColumnIsAllowed($column)) {
+            return;
+        }
+
         if ($this->sort === $column) {
             $this->direction = $this->direction === 'ASC' ? 'DESC' : 'ASC';
         } else {
@@ -32,6 +41,15 @@ trait HasCrudFilters
 
         $this->resetPage();
         $this->savePreferences();
+    }
+
+    /**
+     * The one allowlist both entry points to `$sort` go through.
+     */
+    protected function sortColumnIsAllowed(string $column): bool
+    {
+        return $column === 'id'
+            || in_array($column, array_column($this->sortableColumns(), 'sortBy'), true);
     }
 
     /**
@@ -50,9 +68,7 @@ trait HasCrudFilters
      */
     public function updatedSort(): void
     {
-        $allowed = array_column($this->sortableColumns(), 'sortBy');
-
-        if (! in_array($this->sort, $allowed, true) && $this->sort !== 'id') {
+        if (! $this->sortColumnIsAllowed($this->sort)) {
             $this->sort = 'id';
         }
 

@@ -127,8 +127,8 @@ Passed to `@livewire(...)` or `<livewire ...>`.
 |---|---|---|---|
 | `model` | `string` | — | **Required.** Model identifier. Without subfolder: `'Product'`. With subfolder: `'Product/ProductStock'` (generated automatically by `ptah:forge Product/ProductStock`). The `/` is converted to `\` when resolving the namespace, e.g. `App\Models\Product\ProductStock` |
 | `initialFilter` | `array` | `[]` | **Default** filters the screen opens with: `[['field', 'op', 'value'], ...]`. The user can change or clear them. See the note below on the `op` element |
-| `whereHasFilter` | `string` | `''` | Relation name for pre-filtering |
-| `whereHasCondition` | `array` | `[]` | Relation condition: `['field', 'op', 'value']` |
+| `whereHasFilter` | `string` | `''` | Relation name for pre-filtering. `#[Locked]`, and checked at mount against the model's REAL relations (dotted paths walked segment by segment) — a name that is not a relation throws `InvalidArgumentException`. Never pass request input here |
+| `whereHasCondition` | `array` | `[]` | Relation condition: `['field', 'op', 'value']`. `#[Locked]`. The pre-filter applies to the listing AND to edit, save, delete and restore |
 | `companyFilter` | `int` | `ptah_company_id()` | Company ID for the multi-tenant filter. The default reads the session key named by `config('ptah.permissions.company_session_key')`, which is `ptah_company_id` — **not** `company_id` |
 | `lockedFilters` | `array` | `[]` | A **hard, immutable** row scope: `['column' => value, ...]`. Enforced on every query the screen runs — list, totalizadores, export, print and single-record reads — and `#[Locked]`, so a forged request cannot escape it. Use this, never `initialFilter`, for anything security-sensitive. See [Locking rows to a fixed scope](#locking-rows-to-a-fixed-scope-lockedfilters) |
 

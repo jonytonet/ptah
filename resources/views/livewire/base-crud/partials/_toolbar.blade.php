@@ -171,8 +171,10 @@
             </button>
         @endif
 
-        {{-- Exportação --}}
-        @if (!empty($exportCfg['enabled']))
+        {{-- Exportação — escondida quando `permissions.export` nega, com a mesma
+             funcao que a acao consulta (crudConfigAllows). Antes o botao aparecia
+             sempre e a chave nao era lida por nada. --}}
+        @if (!empty($exportCfg['enabled']) && ($effectivePerms['canExport'] ?? true))
             <div class="ptah-c-toolbar_more_item relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                 <button @click="open = !open"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"

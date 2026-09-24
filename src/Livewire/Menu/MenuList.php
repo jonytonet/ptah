@@ -9,12 +9,26 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Concerns\RequiresStructureAccess;
 use Ptah\Models\Menu;
 use Ptah\Services\Menu\MenuService;
+use Ptah\Support\SafeUrl;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class MenuList extends Component
 {
+    use RequiresStructureAccess;
+
+    /**
+     * Livewire runs boot() on the initial mount AND on every later action, so
+     * the check covers save/delete as well as the page. This screen used to be
+     * open to any authenticated user.
+     */
+    public function boot(): void
+    {
+        $this->assertStructureAccess();
+    }
+
     use WithPagination;
 
     // ── Filtros ────────────────────────────────────────────────────────
@@ -60,7 +74,16 @@ class MenuList extends Component
     {
         return [
             'text' => 'required|string|max:255',
-            'url' => 'nullable|string|max:2048',
+            // Escapar nao neutraliza esquema: `javascript:` numa URL de menu
+            // executava na sessao de quem clicasse — inclusive a de um master.
+            'url' => [
+                'nullable', 'string', 'max:2048',
+                static function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && ! SafeUrl::isSafe($value)) {
+                        $fail(trans('ptah::ui.menu_url_unsafe'));
+                    }
+                },
+            ],
             'icon' => 'nullable|string|max:100',
             'type' => 'required|in:menuLink,menuGroup',
             'target' => 'required|in:_self,_blank',

@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Ptah\Support\SafeUrl;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;
 
@@ -444,11 +445,11 @@ trait HasCrudRenderers
             }
         }
 
-        // Block dangerous URL schemes — HTML-escaping does NOT neutralise
-        // javascript:/data:/vbscript: in an href (same guard as link actions).
-        if (preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
-            $url = '#';
-        }
+        // Esquema perigoso — escapar HTML nao neutraliza `javascript:` num
+        // href. A regex que estava aqui (`/^\s*(javascript|data|vbscript):/i`)
+        // nao lia a URL como o navegador le: o parser WHATWG remove TAB e
+        // quebra de linha de QUALQUER posicao, entao `java\tscript:` passava.
+        $url = SafeUrl::sanitize($url);
 
         return '<a href="'.e($url).'"'.$newTab.' class="text-indigo-600 hover:text-indigo-800 hover:underline font-medium">'.e((string) $label).'</a>';
     }
@@ -707,7 +708,10 @@ trait HasCrudRenderers
         try {
             return Carbon::parse($value)->format('d/m/Y');
         } catch (\Throwable) {
-            return (string) $value;
+            // Escapado: a saida do formatCell vai para `{!! !!}`, e numa coluna
+            // de texto renderizada como data o parse falha com o valor cru —
+            // `<img src=x onerror=...>` saia como HTML.
+            return e((string) $value);
         }
     }
 
@@ -722,7 +726,10 @@ trait HasCrudRenderers
         try {
             return Carbon::parse($value)->format('d/m/Y H:i');
         } catch (\Throwable) {
-            return (string) $value;
+            // Escapado: a saida do formatCell vai para `{!! !!}`, e numa coluna
+            // de texto renderizada como data o parse falha com o valor cru —
+            // `<img src=x onerror=...>` saia como HTML.
+            return e((string) $value);
         }
     }
 

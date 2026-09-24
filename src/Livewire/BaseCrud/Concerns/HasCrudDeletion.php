@@ -33,7 +33,7 @@ trait HasCrudDeletion
         }
 
         // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
-        if (! $this->authorizeCrudAction('delete')) {
+        if (! $this->authorizeCrudAction('delete') || ! $this->crudConfigAllows('delete')) {
             $this->cancelDelete();
 
             return;
@@ -76,7 +76,9 @@ trait HasCrudDeletion
     public function restoreRecord(int $id): void
     {
         // Ptah permission check — restore requires update permission (fail-closed).
-        if (! $this->authorizeCrudAction('update')) {
+        // Restaurar e `update` para o RBAC, mas `showTrashButton` +
+        // `permissions.restore` para a config.
+        if (! $this->authorizeCrudAction('update') || ! $this->crudConfigAllows('restore')) {
             return;
         }
 

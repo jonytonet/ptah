@@ -7,6 +7,8 @@ namespace Ptah\Tests\Feature\Company;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Models\Role;
+use Ptah\Models\UserRole;
 use Ptah\Services\Company\CompanyService;
 use Ptah\Tests\Factories\CompanyFactory;
 use Ptah\Tests\TestCase;
@@ -46,6 +48,19 @@ class CompanyServiceTest extends TestCase
     {
         $company = CompanyFactory::new()->create();
         $user = $this->actingAsUser();
+
+        // O usuario PERTENCE a empresa. Antes da 1.34.8 este teste trocava um
+        // usuario sem papel nenhum para uma empresa qualquer — e passava,
+        // porque setActive() nao conferia pertencimento. Era o defeito de
+        // seguranca registrado como fixture. O que o teste mede e a invalidacao
+        // do cache numa troca LEGITIMA.
+        $role = Role::create(['name' => 'Operador', 'is_active' => true, 'is_master' => false]);
+        UserRole::create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'company_id' => $company->id,
+            'is_active' => true,
+        ]);
 
         // Seed the per-user generation counter so the bump is observable.
         Cache::forever("ptah_perm_uver:{$user->id}", 1);

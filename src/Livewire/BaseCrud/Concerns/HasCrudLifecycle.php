@@ -10,6 +10,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\RelationPath;
 use Ptah\Support\StyleRule;
 
 /**
@@ -166,7 +167,15 @@ trait HasCrudLifecycle
         $this->crudConfig = $this->applyColumnPermissions($config->config);
 
         // Resolve Eloquent model
-        $this->resolveEloquentModel();
+        $eloquent = $this->resolveEloquentModel();
+
+        // O nome vira CHAMADA de metodo no model dentro do whereHas(), entao e
+        // conferido contra as relacoes reais antes de qualquer query. Falha
+        // alto: um nome invalido aqui e erro de configuracao do host, e engolir
+        // em silencio significaria listar SEM o pre-filtro que ele pediu.
+        if ($this->whereHasFilter !== '' && $eloquent) {
+            RelationPath::assertValid($eloquent, $this->whereHasFilter);
+        }
 
         // Initialise default date column for quick date filter
         $this->quickDateColumn = $this->crudConfig['quickDateColumn'] ?? 'created_at';

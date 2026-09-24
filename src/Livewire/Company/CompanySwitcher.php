@@ -62,7 +62,10 @@ class CompanySwitcher extends Component
 
         $this->companyService->initSession();
 
-        $this->companies = $this->companyService->getAll();
+        // So as empresas do usuario. Antes, TODAS — e como `$companies` e
+        // publica, a lista inteira de tenants ia no snapshot para o navegador de
+        // qualquer usuario, alem de oferecer empresas que ele nao podia usar.
+        $this->companies = $this->companyService->switchableCompanies();
         $this->activeId = $this->companyService->activeId();
     }
 

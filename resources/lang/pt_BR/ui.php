@@ -268,6 +268,7 @@ return [
     | Permissions / Middleware
     |--------------------------------------------------------------------------
     */
+    'menu_url_unsafe' => 'A URL precisa ser http(s), mailto:, tel: ou um caminho relativo.',
     'permission_denied' => 'Você não tem permissão para realizar esta ação.',
 
     /*

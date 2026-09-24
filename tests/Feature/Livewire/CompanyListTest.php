@@ -8,6 +8,7 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Company\CompanyList;
 use Ptah\Tests\Factories\CompanyFactory;
+use Ptah\Tests\Support\ActsAsPtahUser;
 use Ptah\Tests\TestCase;
 
 /**
@@ -23,6 +24,21 @@ use Ptah\Tests\TestCase;
  */
 class CompanyListTest extends TestCase
 {
+    use ActsAsPtahUser;
+
+    /**
+     * Como master: desde a 1.34.8 esta tela exige master com o modulo de
+     * permissoes ativo. Antes, este teste a exercitava como usuario comum — o
+     * comportamento vulneravel, registrado como teste passando. A autorizacao
+     * em si tem teste proprio em StructureScreensAuthorizationTest.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actAsMaster();
+    }
+
     // ── Listagem ───────────────────────────────────────────────────────
 
     #[Test]
