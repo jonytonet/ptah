@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
+use Laravel\Mcp\Server\Tool;
 use Livewire\Livewire;
 use Ptah\Commands\BlueprintCommand;
 use Ptah\Commands\CheckCommand;
@@ -67,6 +68,7 @@ use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Livewire\SearchDropdown\SearchDropdown;
+use Ptah\Mcp\PtahMcpTools;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
 use Ptah\Models\Role;
@@ -230,6 +232,7 @@ class PtahServiceProvider extends ServiceProvider
         $this->registerLivewire();
         $this->registerPermissionCacheInvalidation();
         $this->registerNotificationBroadcastChannel();
+        $this->registerBoostTools();
 
         // Makes tool payloads valid JSON Schema on the way out. A no-argument
         // tool serialises its empty parameter list as `"properties": []`, which
@@ -503,6 +506,28 @@ class PtahServiceProvider extends ServiceProvider
     /**
      * Registers Ptah Forge views and Blade components.
      */
+    /**
+     * Offers the ptah agent tools to Laravel Boost's MCP server.
+     *
+     * Boost adds every class listed in `boost.mcp.tools.include` to the tools
+     * it exposes; appending ptah's there means an agent connected to Boost
+     * gets `ptah-map`, `ptah-screen`, `ptah-check`, `ptah-why-empty`… with no
+     * setup in the host. Done in boot(), after every provider registered its
+     * config, and only when laravel/mcp's base class exists — the tool classes
+     * extend it. `PTAH_MCP_TOOLS=false` turns it off.
+     */
+    protected function registerBoostTools(): void
+    {
+        if (! config('ptah.mcp_tools', true) || ! class_exists(Tool::class)) {
+            return;
+        }
+
+        config(['boost.mcp.tools.include' => array_values(array_unique(array_merge(
+            (array) config('boost.mcp.tools.include', []),
+            PtahMcpTools::CLASSES,
+        )))]);
+    }
+
     protected function registerViews(): void
     {
         $packagePath = __DIR__.'/../resources/views';
