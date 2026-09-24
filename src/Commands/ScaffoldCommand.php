@@ -13,6 +13,7 @@ use Ptah\Generators\ControllerApiGenerator;
 use Ptah\Generators\ControllerGenerator;
 use Ptah\Generators\CrudConfigGenerator;
 use Ptah\Generators\DtoGenerator;
+use Ptah\Generators\FactoryGenerator;
 use Ptah\Generators\GeneratorResult;
 use Ptah\Generators\MigrationGenerator;
 use Ptah\Generators\ModelGenerator;
@@ -60,6 +61,7 @@ class ScaffoldCommand extends Command
         {--api-only              : Generate ONLY the API structure, without web views (legacy behaviour of --api)}
         {--no-soft-deletes       : Do not add SoftDeletes to the model}
         {--no-menu               : Do not add entry to MenuRegistry (skip automatic menu generation)}
+        {--factory               : Also generate a model factory and a demo seeder from the field types}
         {--force                 : Overwrite existing files without confirmation}';
 
     protected $description = 'Forge — generates the complete structure for an entity (Model, Migration, DTO, Repository, Service, Controller, Requests, Resource, Views, Routes).';
@@ -128,6 +130,7 @@ class ScaffoldCommand extends Command
             fields: $fields,
             subFolder: $subFolder,
             withApi: $withApi,
+            withFactory: (bool) $this->option('factory'),
         );
 
         // ── Header ──────────────────────────────────────────────────────
@@ -263,6 +266,13 @@ class ScaffoldCommand extends Command
                 continue;
             }
 
+            if ($generator instanceof FactoryGenerator) {
+                $results[] = $generator->generate($context);
+                $results[] = $generator->generateSeeder($context);
+
+                continue;
+            }
+
             if ($generator instanceof ViewGenerator) {
                 $results[] = $generator->generateView($context, 'index');
 
@@ -298,6 +308,7 @@ class ScaffoldCommand extends Command
             new CrudConfigGenerator($this->files),
             new ViewGenerator($this->files),
             new RouteGenerator($this->files),
+            new FactoryGenerator($this->files),
         ];
     }
 

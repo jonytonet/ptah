@@ -50,6 +50,7 @@ readonly class EntityContext
         public array $fields,
         public string $subFolder = '',     // ex: 'Product' ou 'Catalog/Product'
         public bool $withApi = false,  // true quando --api ou --api-only
+        public bool $withFactory = false, // --factory: factory + seeder
     ) {
         $nsBase = rtrim($rootNamespace, '\\').'\\Models';
         $this->modelNamespace = $subFolder
@@ -194,6 +195,29 @@ readonly class EntityContext
                 ($f->nullable ? ' = null,' : ','),
             $ordered
         ));
+    }
+
+    /**
+     * The factory's definition() body: one Faker expression per field, FKs
+     * pointing at the related model when it resolved (see relationshipImports).
+     */
+    public function factoryDefinition(?string $modelsPath = null): string
+    {
+        if (empty($this->fields)) {
+            return "            // 'name' => fake()->words(2, true),";
+        }
+
+        $related = [];
+        foreach ($this->relationshipImports($modelsPath) as $import) {
+            $related[$import['field']] = $import['fqcn'];
+        }
+
+        return implode("\n", array_map(function (FieldDefinition $f) use ($related): string {
+            $expr = $f->fakerExpression($related[$f->name] ?? null);
+
+            // O TODO de FK ja traz a virgula antes do comentario.
+            return "            '{$f->name}' => {$expr}".(str_contains($expr, ', //') ? '' : ',');
+        }, $this->fields));
     }
 
     /**

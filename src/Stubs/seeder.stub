@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ model_fqcn }};
+use Illuminate\Database\Seeder;
+
+class {{ entity }}Seeder extends Seeder
+{
+    /**
+     * Demo/dev data. Never run against production data you care about.
+     */
+    public function run(): void
+    {
+        {{ entity }}::factory()->count(10)->create();
+    }
+}
