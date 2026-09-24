@@ -18,6 +18,7 @@ use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\RelationPath;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -179,14 +180,7 @@ trait HasCrudQuery
         }
 
         // External whereHas filter (pre-filtered by parent entity)
-        if ($this->whereHasFilter !== '') {
-            [$col, $op, $val] = array_pad($this->whereHasCondition, 3, null);
-            if ($col && $val !== null) {
-                $query->whereHas($this->whereHasFilter, function (Builder $q) use ($col, $op, $val) {
-                    $q->where($col, $op ?? '=', $val);
-                });
-            }
-        }
+        $this->applyWhereHasPreFilter($query);
 
         // Global search with OR across text fields and relations
         if ($this->search !== '') {
@@ -739,7 +733,43 @@ trait HasCrudQuery
             }
         }
 
+        // O pre-filtro do host tambem vale para editar/salvar/excluir. Antes so
+        // a LISTAGEM o aplicava, entao uma tela de detalhe filtrada pelo pai
+        // deixava editar, por id, um registro de outro pai.
+        $this->applyWhereHasPreFilter($query);
+
         return $query;
+    }
+
+    /**
+     * The host's `whereHas` pre-filter, applied in one place.
+     *
+     * Validated again here, and not only in `mount()`: `mount()` returns early
+     * when there is no config, and a code path that skipped the validation must
+     * not be the one that calls a method by name. On an invalid name this fails
+     * CLOSED — an empty result, never the unfiltered table.
+     */
+    protected function applyWhereHasPreFilter(Builder $query): void
+    {
+        if ($this->whereHasFilter === '') {
+            return;
+        }
+
+        [$col, $op, $val] = array_pad($this->whereHasCondition, 3, null);
+
+        if (! $col || $val === null) {
+            return;
+        }
+
+        if (! RelationPath::isValid($query->getModel(), $this->whereHasFilter)) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereHas($this->whereHasFilter, function (Builder $q) use ($col, $op, $val) {
+            $q->where($col, $op ?? '=', $val);
+        });
     }
 
     /**
@@ -761,6 +791,19 @@ trait HasCrudQuery
         foreach ($this->lockedFilters as $col => $val) {
             if (array_key_exists((string) $col, $record->getAttributes())
                 && $record->getAttribute((string) $col) != $val) {
+                return false;
+            }
+        }
+
+        // O pre-filtro por relacao nao se confere num model ja carregado — e
+        // uma subquery —, entao vira uma consulta pela chave. Sem os escopos
+        // globais, porque o unico chamador e o restore, cujo registro esta na
+        // lixeira e o escopo de soft delete o esconderia.
+        if ($this->whereHasFilter !== '') {
+            $check = $record->newQueryWithoutScopes()->whereKey($record->getKey());
+            $this->applyWhereHasPreFilter($check);
+
+            if (! $check->exists()) {
                 return false;
             }
         }

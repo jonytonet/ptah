@@ -307,7 +307,10 @@
                     $itemType   = $item['type'] ?? 'menuLink';
                     $itemLabel  = $item['label'] ?? ($item['text'] ?? '');
                     $itemIcon   = $item['icon'] ?? 'bx bx-circle';
-                    $itemUrl    = $item['url'] ?? '#';
+                    // Sanitizada na SAIDA e nao so na entrada: um item gravado
+                    // antes da 1.34.8 pode ja carregar `javascript:`, e validar
+                    // o formulario nao alcanca o que ja esta no banco.
+                    $itemUrl    = \Ptah\Support\SafeUrl::sanitize($item['url'] ?? '#');
                     $itemTarget = $item['target'] ?? '_self';
                     $itemMatch  = $item['match'] ?? ltrim($itemUrl, '/');
                     $children   = $item['children'] ?? [];

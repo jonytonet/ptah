@@ -9,6 +9,7 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Menu\MenuList;
 use Ptah\Models\Menu;
+use Ptah\Tests\Support\ActsAsPtahUser;
 use Ptah\Tests\TestCase;
 use RuntimeException;
 
@@ -38,6 +39,21 @@ use RuntimeException;
  */
 class PaginationClickTest extends TestCase
 {
+    use ActsAsPtahUser;
+
+    /**
+     * Como master: desde a 1.34.8 esta tela exige master com o modulo de
+     * permissoes ativo. Antes, este teste a exercitava como usuario comum — o
+     * comportamento vulneravel, registrado como teste passando. A autorizacao
+     * em si tem teste proprio em StructureScreensAuthorizationTest.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actAsMaster();
+    }
+
     /** Methods `WithPagination` actually provides. */
     private const TRAIT_METHODS = ['gotoPage', 'nextPage', 'previousPage'];
 

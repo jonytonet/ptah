@@ -89,7 +89,7 @@ trait HasCrudForm
      */
     public function duplicateRecord(int $id): void
     {
-        if (! $this->authorizeCrudAction('create')) {
+        if (! $this->authorizeCrudAction('create') || ! $this->crudConfigAllows('create')) {
             return;
         }
 
@@ -131,7 +131,8 @@ trait HasCrudForm
 
         // Ptah permission check — fail-closed (anonymous users are denied when a
         // permissionIdentifier is configured and the module is active).
-        if (! $this->authorizeCrudAction($this->editingId ? 'update' : 'create')) {
+        if (! $this->authorizeCrudAction($this->editingId ? 'update' : 'create')
+            || ! $this->crudConfigAllows($this->editingId ? 'update' : 'create')) {
             $this->formErrors['_general'] = trans('ptah::ui.crud_permission_denied');
 
             return;
@@ -633,6 +634,76 @@ trait HasCrudForm
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    /**
+     * What the CRUD config itself allows, independently of the RBAC module.
+     *
+     * The config carries two kinds of access control of its own: the
+     * `show*Button` flags, and Laravel Gate names in `permissions.create`,
+     * `.edit`, `.delete`, `.export` and `.restore`. Until 1.34.8 only the
+     * INTERFACE read them — `getEffectivePermissions()` hid the button — while
+     * the actions consulted `ptah_can()` alone. A host that configured
+     * `permissions.delete = 'delete-products'` or `showDeleteButton = false`,
+     * and no `permissionIdentifier`, believed deletion was protected; a forged
+     * `deleteRecord()` or `bulkForceDelete()` went through. `export` and
+     * `restore` were written by the editor and read by nothing at all.
+     *
+     * One function now decides this part, and BOTH the interface and every
+     * action call it, so the two cannot drift apart again.
+     *
+     * `$intent` is what the user is trying to do, which is finer than the RBAC
+     * verb: restoring is `update` to `ptah_can()` but `showTrashButton` here,
+     * exporting is `read` there and `permissions.export` here. It is a separate
+     * method, not a new parameter on `authorizeCrudAction()`, because adding a
+     * parameter to a protected method is a fatal error for any host subclass
+     * that overrides it with the old signature.
+     */
+    protected function crudConfigAllows(string $intent): bool
+    {
+        $p = $this->crudConfig['permissions'] ?? [];
+
+        [$flag, $gate] = match ($intent) {
+            'create' => ['showCreateButton', 'create'],
+            'update' => ['showEditButton', 'edit'],
+            'delete' => ['showDeleteButton', 'delete'],
+            'restore' => ['showTrashButton', 'restore'],
+            'export' => [null, 'export'],
+            default => [null, null],
+        };
+
+        if ($flag !== null && ! self::permissionFlagOn($p[$flag] ?? null)) {
+            return false;
+        }
+
+        $gateName = $gate !== null ? ($p[$gate] ?? null) : null;
+
+        if (is_string($gateName) && $gateName !== '') {
+            return Auth::check() && Auth::user()->can($gateName);
+        }
+
+        return true;
+    }
+
+    /**
+     * A `show*Button` flag, read strictly.
+     *
+     * Absent means on. Before 1.34.2, `ptah:config --permission=showX=false`
+     * stored the STRING "false", and `(bool) "false"` is true in PHP — so rows
+     * written then still carry a flag that says off and reads as on. Both the
+     * interface and the actions now read it the same, correct way.
+     */
+    private static function permissionFlagOn(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return ! in_array(strtolower(trim((string) $value)), ['false', '0', 'no', 'off'], true);
+    }
 
     /**
      * Centralised, fail-closed authorization for CRUD write actions

@@ -56,7 +56,7 @@ trait HasCrudBulkActions
         }
 
         // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
-        if (! $this->authorizeCrudAction('delete')) {
+        if (! $this->authorizeCrudAction('delete') || ! $this->crudConfigAllows('delete')) {
             return;
         }
 
@@ -102,7 +102,7 @@ trait HasCrudBulkActions
         }
 
         // Ptah permission check — restore requires update permission (fail-closed).
-        if (! $this->authorizeCrudAction('update')) {
+        if (! $this->authorizeCrudAction('update') || ! $this->crudConfigAllows('restore')) {
             return;
         }
 
@@ -142,7 +142,7 @@ trait HasCrudBulkActions
         }
 
         // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
-        if (! $this->authorizeCrudAction('delete')) {
+        if (! $this->authorizeCrudAction('delete') || ! $this->crudConfigAllows('delete')) {
             return;
         }
 

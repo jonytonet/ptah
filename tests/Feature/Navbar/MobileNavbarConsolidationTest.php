@@ -10,6 +10,8 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Company\CompanySwitcher;
 use Ptah\Models\Company;
+use Ptah\Models\Role;
+use Ptah\Models\UserRole;
 use Ptah\Tests\TestCase;
 
 /**
@@ -49,6 +51,20 @@ class MobileNavbarConsolidationTest extends TestCase
             'password' => bcrypt('secret'),
         ]);
 
+        // Master, para enxergar todas as empresas. Estes testes sao de LAYOUT
+        // (empilhado vs inline, aria-current), e antes da 1.34.8 rodavam com um
+        // usuario sem papel nenhum — que via todas as empresas porque o
+        // switcher listava todas para qualquer um. Era o vazamento de tenants,
+        // registrado como fixture. A regra de quem ve o que tem teste proprio
+        // em CompanySwitchMembershipTest.
+        $role = Role::create(['name' => 'Master', 'is_active' => true, 'is_master' => true]);
+        UserRole::create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'company_id' => null,
+            'is_active' => true,
+        ]);
+
         $this->actingAs($user);
     }
 
@@ -58,6 +74,8 @@ class MobileNavbarConsolidationTest extends TestCase
     public function the_switcher_defaults_to_the_inline_layout(): void
     {
         $this->seedCompanies();
+        // Logado: antes rodava ANONIMO e via todas as empresas.
+        $this->loginUser();
 
         Livewire::test(CompanySwitcher::class)
             ->assertSet('layout', 'inline')
@@ -68,6 +86,8 @@ class MobileNavbarConsolidationTest extends TestCase
     public function the_stacked_layout_renders_menu_items_instead_of_the_inline_group(): void
     {
         $this->seedCompanies();
+        // Logado: antes rodava ANONIMO e via todas as empresas.
+        $this->loginUser();
 
         Livewire::test(CompanySwitcher::class, ['layout' => 'stacked'])
             ->assertSet('layout', 'stacked')
@@ -81,6 +101,8 @@ class MobileNavbarConsolidationTest extends TestCase
     public function an_unknown_layout_falls_back_to_inline(): void
     {
         $this->seedCompanies();
+        // Logado: antes rodava ANONIMO e via todas as empresas.
+        $this->loginUser();
 
         Livewire::test(CompanySwitcher::class, ['layout' => 'carousel'])
             ->assertSet('layout', 'inline');
@@ -90,6 +112,8 @@ class MobileNavbarConsolidationTest extends TestCase
     public function the_stacked_layout_marks_the_active_company_with_more_than_colour(): void
     {
         $this->seedCompanies();
+        // Logado: antes rodava ANONIMO e via todas as empresas.
+        $this->loginUser();
 
         // WCAG 1.4.1: colour cannot be the only carrier of information, and the
         // dark navbar panel does not give two text colours enough separation to

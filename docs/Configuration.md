@@ -274,6 +274,7 @@ device/browser; it never leaks credentials or any other account data.
 | `crud.soft_deletes` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.confirm_delete` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |
+| `structure_editor` | `PTAH_STRUCTURE_EDITOR` | `false` | Who may administer `/ptah-menu` and `/ptah-companies`. With the permissions module ACTIVE this is ignored and only masters may; with it OFF the screens are denied unless this is `true`. Until 1.34.8 both were open to any authenticated user |
 | `crud.hook_namespaces` | — | `['App\CrudHooks']` | This document — § "Lifecycle Hooks" (PHP Classes syntax, `@Class::method`) |
 | `crud.label_dictionary` | — | `[]` | `config/ptah.php` comments (overrides the built-in pt-BR label dictionary) |
 

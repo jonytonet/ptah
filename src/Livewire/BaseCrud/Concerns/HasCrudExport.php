@@ -40,7 +40,7 @@ trait HasCrudExport
         // Read gate (see HasCrudForm::authorizeCrudAction / BaseCrud::render()):
         // export reads the exact same rows the listing shows — gating render()
         // alone would still let this action hand out every row while read=false.
-        if (! $this->authorizeCrudAction('read')) {
+        if (! $this->authorizeCrudAction('read') || ! $this->crudConfigAllows('export')) {
             return;
         }
 
@@ -83,7 +83,7 @@ trait HasCrudExport
         }
 
         // Read gate — see export() above.
-        if (! $this->authorizeCrudAction('read')) {
+        if (! $this->authorizeCrudAction('read') || ! $this->crudConfigAllows('export')) {
             return;
         }
 
@@ -154,7 +154,7 @@ trait HasCrudExport
         }
 
         // Read gate — see export() above.
-        if (! $this->authorizeCrudAction('read')) {
+        if (! $this->authorizeCrudAction('read') || ! $this->crudConfigAllows('export')) {
             return;
         }
 
@@ -272,7 +272,7 @@ trait HasCrudExport
         }
 
         // Read gate — see export() above.
-        if (! $this->authorizeCrudAction('read')) {
+        if (! $this->authorizeCrudAction('read') || ! $this->crudConfigAllows('export')) {
             return;
         }
 

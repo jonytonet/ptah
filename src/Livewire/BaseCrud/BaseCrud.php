@@ -99,6 +99,16 @@ class BaseCrud extends Component
     public string $model = '';
 
     /** Route path captured from request (e.g. 'categories') — used to load screen-specific config */
+    /**
+     * Which screen's config `boot()` loads, on every request.
+     *
+     * #[Locked]: assigned once in `mount()` from the current route and never
+     * from the client. Writable, it let a user of `/pedidos` point it at
+     * `admin/pedidos` and receive that screen's columns, actions and export —
+     * or at a route with no config of its own and fall back to the global one,
+     * dropping a `permissionIdentifier` that only the screen config carried.
+     */
+    #[Locked]
     public string $configRoute = '';
 
     /**
@@ -133,9 +143,23 @@ class BaseCrud extends Component
 
     // ── External whereHas ─────────────────────────────────────────────────────
 
-    /** Pre-filter the CRUD by a parent relation */
+    /**
+     * Pre-filter the CRUD by a parent relation.
+     *
+     * #[Locked], and it has to be: the name is handed to `whereHas()`, and
+     * Laravel resolves a relation by CALLING it — `$model->{$relation}()`, with
+     * no validation. Before this was locked, one forged Livewire request with
+     * `whereHasFilter = 'truncate'` from any user with read access ran
+     * `TRUNCATE` on the CRUD's table (`Model::__call` forwards the unknown name
+     * to the query builder). An empty value also dropped the host's pre-filter
+     * outright. Both are assigned once, in `mount()`, from the host's own
+     * arguments — never from the client — and the name is checked against the
+     * model's real relations there (see Ptah\Support\RelationPath).
+     */
+    #[Locked]
     public string $whereHasFilter = '';
 
+    #[Locked]
     public array $whereHasCondition = [];
 
     // ── Column visibility ─────────────────────────────────────────────────────
@@ -472,14 +496,6 @@ class BaseCrud extends Component
         // Only enforce ptah checks when module is active, a key is configured and user is authenticated
         $ptahActive = config('ptah.modules.permissions') && $key && Auth::check();
 
-        $gateCheck = function (?string $gate): bool {
-            if (! $gate) {
-                return true;
-            }
-
-            return Auth::check() && Auth::user()->can($gate);
-        };
-
         $ptahCheck = function (string $action) use ($ptahActive, $key): bool {
             if (! $ptahActive) {
                 return true;
@@ -488,12 +504,16 @@ class BaseCrud extends Component
             return ptah_can($key, $action);
         };
 
+        // A parte declarada na config (flags + Gate) vem de crudConfigAllows(),
+        // a MESMA funcao que as acoes chamam — antes as duas liam a config por
+        // caminhos diferentes e so a interface a respeitava.
         return [
             'canRead' => $ptahCheck('read'),
-            'canCreate' => ($p['showCreateButton'] ?? true) && $gateCheck($p['create'] ?? null) && $ptahCheck('create'),
-            'canUpdate' => ($p['showEditButton'] ?? true) && $gateCheck($p['edit'] ?? null) && $ptahCheck('update'),
-            'canDelete' => ($p['showDeleteButton'] ?? true) && $gateCheck($p['delete'] ?? null) && $ptahCheck('delete'),
-            'canRestore' => ($p['showTrashButton'] ?? true) && $ptahCheck('update'),
+            'canCreate' => $this->crudConfigAllows('create') && $ptahCheck('create'),
+            'canUpdate' => $this->crudConfigAllows('update') && $ptahCheck('update'),
+            'canDelete' => $this->crudConfigAllows('delete') && $ptahCheck('delete'),
+            'canRestore' => $this->crudConfigAllows('restore') && $ptahCheck('update'),
+            'canExport' => $this->crudConfigAllows('export') && $ptahCheck('read'),
         ];
     }
 }

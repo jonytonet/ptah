@@ -89,6 +89,34 @@ if (! function_exists('ptah_can_manage_config')) {
     }
 }
 
+if (! function_exists('ptah_can_manage_structure')) {
+    /**
+     * Whether the given/current user may administer the application's
+     * STRUCTURE — its menu (/ptah-menu) and its companies (/ptah-companies).
+     *
+     * Same shape as ptah_can_manage_config(), and for the same reason: both
+     * screens used to be reachable by ANY authenticated user.
+     *  - permissions module ACTIVE → master users only;
+     *  - module OFF               → config('ptah.structure_editor'), default deny.
+     *
+     * Default deny with the module off mirrors the CRUD config editor: without
+     * RBAC the package has no way to tell an administrator from anybody else,
+     * and "every authenticated user may delete companies" is not a default a
+     * package should choose on the host's behalf. PTAH_STRUCTURE_EDITOR=true
+     * opts back in.
+     *
+     * @param  mixed  $user  User (null = current auth)
+     */
+    function ptah_can_manage_structure(mixed $user = null): bool
+    {
+        if (config('ptah.modules.permissions')) {
+            return ptah_is_master($user);
+        }
+
+        return (bool) config('ptah.structure_editor', false);
+    }
+}
+
 if (! function_exists('ptah_company_id')) {
     /**
      * Returns the active company ID from the session.

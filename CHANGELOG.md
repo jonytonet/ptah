@@ -7,6 +7,140 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.34.8] - 2026-09-23
+
+**Security release. Upgrade every host.** Found by a read-only audit of the
+package; every item below was reproduced against 1.34.7 before it was fixed, and
+each fix ships with tests that fail on 1.34.7.
+
+### Security - CRITICAL: one forged request emptied the CRUD's table
+
+`whereHasFilter` and `whereHasCondition` were public and **not** `#[Locked]`,
+and `buildBaseQuery()` handed the name straight to `whereHas()`. Laravel
+resolves a relation by calling it — `$this->getModel()->{$relation}()` — with no
+validation, and a name that is not a real method falls through `Model::__call`
+to the query builder. So a single forged Livewire update:
+
+```
+whereHasFilter    = 'truncate'
+whereHasCondition = ['id', '=', 1]
+```
+
+ran `TRUNCATE` on the table behind the screen. The render then failed with a
+500 — after the rows were gone. **Anyone with read access to any BaseCrud
+screen could do it.** Reproduced: three rows, one request, zero rows.
+
+Both properties are now `#[Locked]` (they are only ever set in `mount()`, from
+the host's own arguments), and the name is checked at mount against the model's
+real relations by `Ptah\Support\RelationPath`: a method that really exists, is
+not part of Eloquent's own surface (`delete`, `save`…) or of a framework trait
+(`forceDelete`, `restore`…), takes no required argument and returns a
+`Relation`. Dotted paths are walked segment by segment. An invalid name throws
+at mount; at query time the pre-filter fails CLOSED, never open.
+
+Two related gaps closed in the same place: an empty `whereHasFilter` sent by the
+client dropped the host's pre-filter outright; and `scopedQuery()` — which edit,
+save, delete and restore run on — never applied the pre-filter, so a detail
+screen filtered by its parent let you edit or delete a record of another parent
+by id.
+
+### Security - the config's own access control was enforced by the interface only
+
+The `show*Button` flags and the Gate names in `permissions.create/edit/delete`
+hid the button; the actions consulted `ptah_can()` alone, which allows when
+there is no `permissionIdentifier` or the module is off. A host that configured
+`permissions.delete = 'delete-products'` or `showDeleteButton = false`
+believed deletion was protected, and a forged `deleteRecord()` or
+`bulkForceDelete()` went through. `permissions.export` and `.restore` were
+written by the config editor and read by nothing.
+
+One function, `crudConfigAllows()`, now decides that part, and BOTH the
+interface and every action call it — create, update, duplicate, delete, bulk
+delete, force delete, restore, bulk restore and all four export entry points. A
+source-level test fails if an action consults the RBAC without it. It is a new
+method rather than a parameter on `authorizeCrudAction()`, because adding a
+parameter to a protected method is a fatal error for any host subclass that
+overrides it.
+
+### Security - switching company did not check that the user belonged to it
+
+`CompanySwitcher::switchTo(7)` put any user in company 7, and `BaseCrud` takes
+the session company as its tenant scope — listing and export of another
+customer. `initSession()` did the same by another road, landing a user in the
+DEFAULT company whether or not they had a role there. And the switcher listed
+every company in a public property, so the whole tenant list went to every
+user's browser in the snapshot — including an **anonymous** visitor's: the
+component rendered the full list without anyone logged in.
+
+`CompanyService::switchableCompanies()` now answers who may go where: masters
+and holders of a GLOBAL role (`company_id` NULL) everywhere, everybody else the
+companies of their own roles; with the permissions module off, every active
+company as before. A session already pointing at a foreign company is moved to
+one of the user's own. A user with no company at all keeps the previous default
+rather than getting an empty session — in `BaseCrud`, `companyFilter = 0` means
+NO tenant scope, and clearing it would have widened that user to every company.
+
+### Security - the menu and the companies were administered by anyone logged in
+
+`/ptah-menu` and `/ptah-companies` were behind `['web', 'auth']` only, and the
+components checked nothing. Any authenticated user could create, edit and
+delete companies and menu items — and a menu item's URL was validated only as
+`string|max:2048` and rendered as `href="{{ $itemUrl }}"`. Escaping does not
+neutralise a scheme: an ordinary user could store `javascript:…` and wait for a
+master to click it in the sidebar.
+
+Both screens now check `ptah_can_manage_structure()` in `boot()`, which covers
+every action and not only the page. The URL is rejected on save AND neutralised
+on output in the sidebar, so a malicious item stored before this release is
+defused too.
+
+### Security - one URL normaliser instead of a bypassable regex
+
+The `link` renderer and link row actions blocked schemes with
+`/^\s*(javascript|data|vbscript):/i`, which does not read a URL the way a
+browser does: the WHATWG parser removes tab and newline from ANYWHERE and C0
+controls from the ends, so `java\tscript:` and `\x01javascript:` both passed.
+`Ptah\Support\SafeUrl` normalises the browser's way and ALLOWS a short list
+(`http`, `https`, `mailto`, `tel`, relative) instead of denying one. The menu,
+the sidebar, the `link` renderer and row actions all use it.
+
+### Security - smaller
+
+- **`configRoute` is `#[Locked]`**, in `BaseCrud` and in the config editor.
+  Writable, it pointed `boot()` at another screen's config — its columns,
+  actions and export — or at a missing one, falling back to the global config
+  and dropping a `permissionIdentifier` only the screen config carried.
+- **`sortBy()` goes through the same allowlist as `updatedSort()`.** The hook
+  only runs when the property is updated by the client, so `sortBy('password')`
+  ordered by a column outside the config — an oracle for its value.
+- **The date helpers escape what they cannot parse.** Their output reaches
+  `{!! formatCell() !!}`, and a text column rendered as a date returned the raw
+  value on a failed parse: `<img src=x onerror=…>` came out as HTML.
+
+### Changed - what a host may notice
+
+- **Without the permissions module, `/ptah-menu` and `/ptah-companies` are now
+  denied** unless `PTAH_STRUCTURE_EDITOR=true`. Without RBAC the package cannot
+  tell an administrator from anyone else, and "every logged-in user may delete
+  companies" is not a default a package should choose for a host. This mirrors
+  `PTAH_CONFIG_EDITOR`, the flag for the analogous config editor.
+- **A `show*Button` flag stored as the string `"false"` now reads as off**, in
+  the interface and in the actions. `ptah:config --permission` wrote strings
+  before 1.34.2, and `(bool) "false"` is true in PHP — those buttons were never
+  actually hidden.
+- **`permissions.export` and `permissions.restore` are now enforced**, and the
+  export button hides when the export gate denies. A gate name set there that
+  the host never defined now denies, as a gate name does everywhere else.
+- **An invalid `whereHasFilter` throws at mount** instead of being attempted.
+
+### Added
+
+- `tests/Support/ActsAsPtahUser` — deterministic `ptah_is_master()` /
+  `ptah_can()` for tests. Two screens' behaviour tests had been exercising them
+  as an ordinary user: the vulnerability, recorded as a passing test.
+
+---
+
 ## [1.34.7] - 2026-09-17
 
 ### Fixed - `$user->preferences` guessed its column from the model's class name

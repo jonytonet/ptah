@@ -10,12 +10,25 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Ptah\Livewire\Concerns\RequiresStructureAccess;
 use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class CompanyList extends Component
 {
+    use RequiresStructureAccess;
+
+    /**
+     * Livewire runs boot() on the initial mount AND on every later action, so
+     * the check covers save/delete as well as the page. This screen used to be
+     * open to any authenticated user.
+     */
+    public function boot(): void
+    {
+        $this->assertStructureAccess();
+    }
+
     use WithPagination;
 
     // ── Lista ──────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud;
 
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Ptah\Commands\Config\ModelIntrospector;
 use Ptah\Models\PageObject;
@@ -35,7 +36,10 @@ class CrudConfig extends Component
 
     public string $model = '';
 
-    public string $configRoute = ''; // request()->path() no mount, read-only na view
+    // request()->path() no mount, read-only na view — e #[Locked] para que
+    // fique assim: ela decide PARA QUAL rota a config e gravada.
+    #[Locked]
+    public string $configRoute = '';
 
     public bool $showModal = false;
 
