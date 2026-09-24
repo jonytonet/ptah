@@ -7,6 +7,78 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.37.0] - 2026-09-24
+
+### Added - spreadsheet import on any BaseCrud screen
+
+The counterpart of export, off by default:
+`--set="importConfig.enabled=true"` (optionally `importConfig.mode=upsert`
+with `importConfig.key=sku`, `maxRows`, `maxKb`). The user uploads a CSV or
+XLSX, matches its columns to the form's fields — pre-matched by name or label,
+accents and case ignored — reviews the rows and imports.
+
+Built for the files people actually send: a CSV saved by Excel in Brazil
+(`;`, Windows-1252, BOM), labels where the form sends keys (`Ativo` in a
+select, `sim`/`não` in a boolean), names where the form sends ids
+(`Parafusos` in a searchdropdown becomes the category id), `1.234,56` in a
+number column, Excel date serials.
+
+And held to the screen's own rules:
+
+- only the form's savable fields can be filled — the mapping is client state
+  and is re-checked on import, so a forged mapping cannot write `company_id`
+  or any column outside the form;
+- every row runs through the same validation rules, mask transforms,
+  lifecycle hooks and audit stamps as a save; created rows land in the active
+  company and the screen's locked filters;
+- a relation looked up by name stays inside the active company — "Porcas" in
+  company 1 never resolves to company 2's "Porcas";
+- all or nothing: while any row has a problem the review lists it by line and
+  field and there is nothing to confirm; the import runs in one transaction,
+  and a row the database refuses rolls the whole file back, named by line;
+- the same gates as **New**, plus the optional `permissions.import`; upsert
+  also needs update, and matches only records inside the screen's scope.
+
+Synchronous, capped by `maxRows` (default 2000); a queued import for very
+large files is listed in KnownLimitations. `ptah:screen` shows whether a
+screen imports.
+
+### Added - create and edit users on the users screen
+
+`/ptah-users-acl` (master-only) could only bind roles; every project wrote its
+own users CRUD. It now has **New user**, **Edit** and **Send password link**:
+name, unique e-mail, optional password (hashed). A user created without one
+gets an unknown random password and the same reset e-mail "forgot password"
+sends — nobody but the person knows the password. Name, e-mail and password
+are written with `forceFill`, so the host's `$fillable` does not block it.
+Every action goes through the list's query, `user_query_scope` included. No
+"deactivate" yet: the login does not read an active flag, and a switch that
+changes nothing would mislead. A failed link is reported and its cause logged.
+
+### Added - record history, with a History button in the edit modal
+
+`php artisan ptah:history:install` writes the migration into the app (the
+package does not ship it: package migrations run on the host's next
+`migrate` unasked), then `use Ptah\Traits\RecordsHistory;` on a model. Every
+create, update, delete and restore records the fields that changed as
+`[old, new]`, the user, the guard (two guards reuse ids — a portal user 5 is
+not staff user 5, and names are resolved through each guard's own model) and
+the active company. It hooks the model, so imports, API calls and jobs are
+recorded like the form.
+
+`$hidden` attributes, timestamps, audit stamps and `$historyExcept` are never
+recorded. A missing table or a failed insert never breaks the save — history
+is auxiliary — and `ptah:check` reports a model using the trait without the
+table.
+
+The History button shows only what the screen may show: the record is loaded
+through the screen's scope, so another company's record is unreachable; only
+the screen's configured fields are listed (select labels, yes/no), minus the
+columns the user's permissions deny; other changed fields are counted, not
+shown. An optional `permissions.history` gate restricts it.
+
+---
+
 ## [1.36.0] - 2026-09-24
 
 More of the agent toolkit, and a class of CLI configuration that "saved

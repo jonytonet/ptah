@@ -171,6 +171,23 @@
             </button>
         @endif
 
+        {{-- Importação (importConfig.enabled) — mesmos portões do "Novo" mais
+             permissions.import; HasCrudImport::importEnabled() é a mesma função
+             que as ações consultam no servidor. --}}
+        @if ($this->importEnabled())
+            <div class="ptah-c-toolbar_more_item">
+                <button type="button" wire:click="openImport"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-btn ptah-c-control"
+                    title="{{ __('ptah::ui.btn_import') }}"
+                    aria-label="{{ __('ptah::ui.btn_import') }}">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_import') }}</span>
+                </button>
+            </div>
+        @endif
+
         {{-- Exportação — escondida quando `permissions.export` nega, com a mesma
              funcao que a acao consulta (crudConfigAllows). Antes o botao aparecia
              sempre e a chave nao era lida por nada. --}}

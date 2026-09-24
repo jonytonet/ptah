@@ -28,6 +28,7 @@ use Ptah\Commands\ConfigCommand;
 use Ptah\Commands\DocsCommand;
 use Ptah\Commands\ExportPruneCommand;
 use Ptah\Commands\FieldCommand;
+use Ptah\Commands\HistoryInstallCommand;
 use Ptah\Commands\InstallCommand;
 use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
@@ -396,6 +397,7 @@ class PtahServiceProvider extends ServiceProvider
                 UpgradeCheckCommand::class,   // ptah:upgrade-check
                 ScreenCommand::class,         // ptah:screen
                 WhyEmptyCommand::class,       // ptah:why-empty
+                HistoryInstallCommand::class, // ptah:history:install
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune

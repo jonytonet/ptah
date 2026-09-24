@@ -976,6 +976,21 @@ Lists all users from the configured model (`config('ptah.permissions.user_model'
 
 **Filter by role:** select of all roles to filter the user list.
 
+**Create and edit users (1.37.0):**
+- **New user** / **Edit**: name, e-mail (unique), optional password (min 8).
+  Name, e-mail and password are written with `forceFill` — the host's
+  `$fillable` does not decide whether an administrator can create a user.
+- A user created **without** a password gets an unknown random one and, with
+  "Send a link to set the password" on, the same reset e-mail "forgot
+  password" sends. Nobody but the person ever knows the password.
+- **Send password link** on any row (needs the auth module, which registers
+  the `password.reset` page). A failure is reported, and its cause goes to the
+  log (`ptah:last-error`).
+- Every action goes through the same query as the list, `user_query_scope`
+  included: a user outside the scope is not reachable by id.
+- There is no "deactivate": the login does not read an active flag yet, and a
+  switch that changes nothing would be worse than none.
+
 ---
 
 ### Filtering Users in the Permissions Screen

@@ -2646,6 +2646,9 @@ ignored by the screen.
 | `exportConfig.orientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
 | `exportConfig.formats` | list | `['excel', 'pdf']` | Enabled formats |
 | `exportConfig.asyncThreshold` | int | `1000` | Rows above which export is queued |
+| `importConfig.enabled` | bool | `false` | Spreadsheet import button (see BaseCrud.md § Import) |
+| `importConfig.mode` / `importConfig.key` | string | `create` / — | `upsert` updates the record whose `key` matches |
+| `importConfig.maxRows` / `importConfig.maxKb` | int | `2000` / `10240` | Limits per file |
 | `broadcast.enabled` | bool | `false` | Echo listener that refreshes the screen |
 | `broadcast.channel` | string | `'page-{model}-observer'` | Channel name |
 | `broadcast.event` | string | `'.page{Model}Observer'` | Event name |
@@ -2688,6 +2691,8 @@ Properties in `permissions`:
 | `delete` | string | `''` | Gate to delete a record |
 | `export` | string | `''` | Gate to export |
 | `restore` | string | `''` | Gate to restore a soft-deleted record |
+| `import` | string | `''` | Gate to import a spreadsheet (on top of what **New** requires) |
+| `history` | string | `''` | Gate to open a record's change history |
 | `showCreateButton` / `showEditButton` / `showDeleteButton` / `showTrashButton` | bool | `true` | Hide a button — and refuse the action server-side |
 
 A gate name is checked with `Auth::user()->can()` (guests are refused); an empty value means no gate.

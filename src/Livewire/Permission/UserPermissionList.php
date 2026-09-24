@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Permission;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Ptah\Livewire\Permission\Concerns\RequiresMasterAccess;
@@ -55,6 +63,181 @@ class UserPermissionList extends Component
     public function updatingSearch(): void
     {
         $this->resetPage();
+    }
+
+    // ── User create / edit ─────────────────────────────────────────────
+    //
+    // Until 1.37.0 this screen could only bind roles; every project wrote its
+    // own "users" CRUD by hand. Create and edit go through userQuery() — the
+    // same query the list uses, `user_query_scope` included — so a master
+    // limited to a subset of users by that scope cannot reach the others by
+    // id. There is no "deactivate": the login does not read an active flag,
+    // and a switch that changes nothing would be worse than none.
+
+    public bool $showUserForm = false;
+
+    #[Locked]
+    public ?int $editingUserId = null;
+
+    /** @var array{name?: string, email?: string, password?: string, send_link?: bool} */
+    public array $userForm = [];
+
+    /** @var array<string, string> */
+    public array $userFormErrors = [];
+
+    public function newUser(): void
+    {
+        $this->editingUserId = null;
+        $this->userForm = ['name' => '', 'email' => '', 'password' => '', 'send_link' => $this->canSendPasswordLink()];
+        $this->userFormErrors = [];
+        $this->showUserForm = true;
+    }
+
+    public function editUser(int $userId): void
+    {
+        $user = $this->userQuery()?->find($userId);
+
+        if (! $user) {
+            return;
+        }
+
+        $this->editingUserId = (int) $user->getKey();
+        $this->userForm = ['name' => (string) $user->name, 'email' => (string) $user->email, 'password' => '', 'send_link' => false];
+        $this->userFormErrors = [];
+        $this->showUserForm = true;
+    }
+
+    public function saveUser(): void
+    {
+        $userModel = $this->userModel();
+
+        if ($userModel === null) {
+            return;
+        }
+
+        $instance = new $userModel;
+        $user = $this->editingUserId !== null ? $this->userQuery()?->find($this->editingUserId) : null;
+
+        if ($this->editingUserId !== null && ! $user) {
+            $this->showUserForm = false;
+
+            return;
+        }
+
+        $validator = Validator::make($this->userForm, [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique(($instance->getConnectionName() ? $instance->getConnectionName().'.' : '').$instance->getTable(), 'email')->ignore($user?->getKey(), $instance->getKeyName())],
+            'password' => ['nullable', 'string', 'min:8', 'max:255'],
+        ], [], [
+            'name' => __('ptah::ui.users_field_name'),
+            'email' => __('ptah::ui.users_field_email'),
+            'password' => __('ptah::ui.users_field_password'),
+        ]);
+
+        if ($validator->fails()) {
+            $this->userFormErrors = array_map(fn (array $m) => $m[0], $validator->errors()->toArray());
+
+            return;
+        }
+
+        $data = $validator->validated();
+        $user ??= new $userModel;
+
+        // forceFill: nome, e-mail e senha sao as colunas do contrato de auth do
+        // Laravel; o $fillable do host nao deveria decidir se o admin consegue
+        // criar um usuario.
+        $user->forceFill(['name' => $data['name'], 'email' => $data['email']]);
+
+        if (! empty($data['password'])) {
+            $user->forceFill(['password' => Hash::make($data['password'])]);
+        } elseif (! $user->exists) {
+            // Ninguem conhece esta senha: o acesso vem do link (ou do "esqueci").
+            $user->forceFill(['password' => Hash::make(Str::password(40))]);
+        }
+
+        $user->save();
+
+        $message = __($this->editingUserId !== null ? 'ptah::ui.users_saved' : 'ptah::ui.users_created');
+
+        if (! empty($this->userForm['send_link']) && ! $this->sendLinkTo((string) $user->email)) {
+            $message .= ' '.__('ptah::ui.users_link_failed');
+        } elseif (! empty($this->userForm['send_link'])) {
+            $message .= ' '.__('ptah::ui.users_link_sent');
+        }
+
+        $this->showUserForm = false;
+        $this->dispatch('ptah-toast', title: $message, color: 'success');
+    }
+
+    public function sendPasswordLink(int $userId): void
+    {
+        $user = $this->userQuery()?->find($userId);
+
+        if (! $user) {
+            return;
+        }
+
+        $ok = $this->sendLinkTo((string) $user->email);
+        $this->dispatch('ptah-toast', title: __($ok ? 'ptah::ui.users_link_sent' : 'ptah::ui.users_link_failed'), color: $ok ? 'success' : 'danger');
+    }
+
+    /**
+     * The reset link is the same one "forgot password" sends, so it only works
+     * where that page exists (auth module).
+     */
+    public function canSendPasswordLink(): bool
+    {
+        return Route::has('password.reset');
+    }
+
+    protected function sendLinkTo(string $email): bool
+    {
+        if (! $this->canSendPasswordLink()) {
+            return false;
+        }
+
+        try {
+            return Password::sendResetLink(['email' => $email]) === Password::RESET_LINK_SENT;
+        } catch (\Throwable $e) {
+            // Sem a tabela password_reset_tokens, sem mailer... a causa vai
+            // para o log (ptah:last-error), nao so "confira o e-mail".
+            report($e);
+
+            return false;
+        }
+    }
+
+    /**
+     * @return class-string<Model>|null
+     */
+    protected function userModel(): ?string
+    {
+        $model = config('ptah.permissions.user_model', 'App\\Models\\User');
+
+        return is_string($model) && class_exists($model) ? $model : null;
+    }
+
+    /**
+     * The users this screen may show and touch: the list's query, with the
+     * host's `user_query_scope`.
+     */
+    protected function userQuery(): ?Builder
+    {
+        $userModel = $this->userModel();
+
+        if ($userModel === null) {
+            return null;
+        }
+
+        $query = $userModel::query();
+
+        if ($scopeClass = config('ptah.permissions.user_query_scope')) {
+            if (class_exists($scopeClass)) {
+                $query->withGlobalScope('ptah_user_scope', new $scopeClass);
+            }
+        }
+
+        return $query;
     }
 
     // ── User role management modal ──────────────────────────────────────
@@ -131,19 +314,10 @@ class UserPermissionList extends Component
     #[Computed]
     public function rows(): LengthAwarePaginator
     {
-        /** @var class-string<Model> $userModel */
-        $userModel = config('ptah.permissions.user_model', 'App\Models\User');
+        $query = $this->userQuery();
 
-        if (! class_exists($userModel)) {
+        if ($query === null) {
             return new LengthAwarePaginator([], 0, 20);
-        }
-
-        $query = $userModel::query();
-
-        if ($scopeClass = config('ptah.permissions.user_query_scope')) {
-            if (class_exists($scopeClass)) {
-                $query->withGlobalScope('ptah_user_scope', new $scopeClass);
-            }
         }
 
         return $query

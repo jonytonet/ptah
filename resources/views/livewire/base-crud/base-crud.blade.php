@@ -325,6 +325,10 @@
 
     @include('ptah::livewire.base-crud.partials._modal-delete')
 
+    @include('ptah::livewire.base-crud.partials._modal-import')
+
+    @include('ptah::livewire.base-crud.partials._modal-history')
+
     {{-- Loading overlay apenas para ações pesadas (salvar, deletar, exportar) --}}
     <div wire:loading.delay.long wire:target="save,deleteRecord,export"
         class="fixed inset-0 z-40 flex items-center justify-center bg-black/20">

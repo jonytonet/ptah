@@ -668,6 +668,8 @@ trait HasCrudForm
             'delete' => ['showDeleteButton', 'delete'],
             'restore' => ['showTrashButton', 'restore'],
             'export' => [null, 'export'],
+            'import' => [null, 'import'],
+            'history' => [null, 'history'],
             default => [null, null],
         };
 

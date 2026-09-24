@@ -355,6 +355,12 @@ php artisan ptah:config "App\Models\Product" --filter="status:select:options=act
 php artisan ptah:config "App\Models\Product" --style="status:==:inactive:background:#FEE2E2;color:#991B1B;"
 ```
 
+### Spreadsheet import is synchronous
+
+`importConfig` imports in the request, capped by `maxRows` (default 2000) and
+`maxKb`. There is no queued import for very large files yet, and image columns
+are not importable.
+
 ### Settings the screen does not apply
 
 `cacheStrategy` (the editor's cache toggle and TTL) and
