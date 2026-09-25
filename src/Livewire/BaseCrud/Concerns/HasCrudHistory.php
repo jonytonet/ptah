@@ -65,7 +65,7 @@ trait HasCrudHistory
             }
         }
 
-        $entries = $record->historyEntries(50);
+        $entries = RecordHistory::forSubject($record, 50);
         $users = $this->historyUserNames($entries);
 
         $this->historyItems = $entries->map(function (RecordHistory $h) use ($cols, $users): array {

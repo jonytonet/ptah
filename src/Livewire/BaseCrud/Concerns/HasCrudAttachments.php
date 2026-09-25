@@ -154,7 +154,7 @@ trait HasCrudAttachments
     {
         $record = $this->attachmentsEnabled() ? $this->scopedQuery()?->find($id) : null;
 
-        return $record ? $record->attachmentsQuery()->count() : 0;
+        return $record ? Attachment::forSubject($record)->count() : 0;
     }
 
     protected function attachmentsRecord(): ?Model
@@ -174,12 +174,12 @@ trait HasCrudAttachments
     {
         $record = $this->attachmentsRecord();
 
-        return $record ? $record->attachmentsQuery()->whereKey($attachmentId)->first() : null;
+        return $record ? Attachment::forSubject($record)->whereKey($attachmentId)->first() : null;
     }
 
     protected function loadAttachmentItems(Model $record): void
     {
-        $this->attachmentItems = $record->attachmentsQuery()->orderByDesc('id')->limit(200)->get()
+        $this->attachmentItems = Attachment::forSubject($record)->orderByDesc('id')->limit(200)->get()
             ->map(fn (Attachment $a) => [
                 'id' => (int) $a->id,
                 'name' => $a->original_name,

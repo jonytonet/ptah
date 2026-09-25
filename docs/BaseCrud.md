@@ -29,7 +29,7 @@
 18. [WhereHas — Parent Entity Filter](#wherehas--parent-entity-filter)
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
 20. [Totalisers](#totalisers)
-21. [Export](#export) · [Import](#import) · [Record History](#record-history)
+21. [Export](#export) · [Import](#import) · [Record History](#record-history) · [Board and Calendar](#board-and-calendar-views) · [Attachments](#attachments)
 22. [User Preferences (V2.1)](#user-preferences-v21)
 23. [Livewire Events](#livewire-events)
 24. [Permissions](#permissions)
@@ -1996,6 +1996,64 @@ class Product extends Model
 The migration is written into the app instead of shipped with the package on
 purpose: package migrations run on the host's next `migrate` without being
 asked for (see SchemaIsFrozenTest).
+
+---
+
+## Board and Calendar views
+
+Two more view modes, next to table and cards, over the **same listing** —
+search, filters, the company scope and locked filters apply exactly as in the
+table. Turn them on in the editor (gear icon → General → Features) or:
+
+```json
+"kanbanConfig":   { "field": "status", "title": "name", "limit": 50 },
+"calendarConfig": { "start": "due_date", "end": "end_date", "title": "name" }
+```
+
+- **Board** — one column per option of `field` (a select column). Dragging a
+  card to another column, or its keyboard "Move to" select, updates the
+  record: the same update gates as the form (`showEditButton`,
+  `permissions.edit`, the Permissions module), the value checked against the
+  options, the record re-read through the screen's scope, the lifecycle hooks
+  and the audit stamp (and history, when the model records it). Each column
+  shows up to `limit` cards and counts the rest.
+- **Calendar** — a month grid (Sunday first) with each record on its `start`
+  day, spanning to `end` when set; clicking opens the edit modal. Up to 500
+  records per month; beyond that it asks to refine the filters.
+- Card titles use `title`, else the first visible text column; denied and
+  `$hidden` columns never appear.
+
+---
+
+## Attachments
+
+Files per record, from an **Attachments** button in the edit modal.
+
+```bash
+php artisan ptah:attachments:install   # writes the migration into database/migrations
+php artisan migrate
+```
+
+```php
+use Ptah\Traits\HasAttachments;
+
+class Order extends Model
+{
+    use HasAttachments;
+}
+```
+
+- Files go to `config('ptah.attachments.disk')` (`PTAH_ATTACHMENTS_DISK`,
+  default `local`, which is **private**) under a random name; the original
+  name is kept for the download. Type allowlist and size limit:
+  `ptah.attachments.mimes` / `max_kb` (`PTAH_ATTACHMENTS_MAX_KB`).
+- There is no public URL. Downloads stream through the screen, which re-reads
+  the record through its scope and looks the attachment up **under that
+  record** — another record's or company's file is never served.
+- Listing and downloading need read (plus the optional
+  `permissions.attachments` gate); uploading and deleting need update.
+- Deleting is a soft delete; the file stays on disk.
+- `"attachments": {"enabled": false}` hides it on one screen.
 
 ---
 

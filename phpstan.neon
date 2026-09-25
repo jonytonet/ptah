@@ -10,6 +10,15 @@ parameters:
         - src/Stubs/*
         - src/Migrations/*
     ignoreErrors:
+        # RecordsHistory and HasAttachments exist for the HOST's models; no class
+        # in the package uses them, so larastan reports them unused and skips
+        # them. They are covered by tests/Feature/Crud/CrudHistoryTest and
+        # CrudAttachmentsTest, which use them on fixture models.
+        -
+            identifier: trait.unused
+            paths:
+                - src/Traits/RecordsHistory.php
+                - src/Traits/HasAttachments.php
         # Structural false positive for packages: larastan cannot resolve the
         # 'ptah::' view namespace at analysis time (it is registered at runtime
         # by PtahServiceProvider), so every literal view('ptah::...') call is

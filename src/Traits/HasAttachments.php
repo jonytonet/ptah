@@ -21,8 +21,6 @@ trait HasAttachments
      */
     public function attachmentsQuery(): Builder
     {
-        return Attachment::query()
-            ->where('subject_type', $this->getMorphClass())
-            ->where('subject_id', (string) $this->getKey());
+        return Attachment::forSubject($this);
     }
 }

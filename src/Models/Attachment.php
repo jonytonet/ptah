@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -56,5 +57,17 @@ class Attachment extends Model
     public static function flushTableCache(): void
     {
         self::$tableExists = false;
+    }
+
+    /**
+     * The attachments of one record.
+     *
+     * @return Builder<self>
+     */
+    public static function forSubject(Model $subject): Builder
+    {
+        return self::query()
+            ->where('subject_type', $subject->getMorphClass())
+            ->where('subject_id', (string) $subject->getKey());
     }
 }
