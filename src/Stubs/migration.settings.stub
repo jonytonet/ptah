@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Values of the system settings declared in config/ptah-settings.php.
+ * Written by `php artisan ptah:settings:install`.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasTable('ptah_settings')) {
+            return;
+        }
+
+        Schema::create('ptah_settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('key', 100);
+            // 0 = global (vale para toda empresa sem valor proprio). Nao null:
+            // um UNIQUE com NULL deixaria duas linhas globais da mesma chave.
+            $table->unsignedBigInteger('company_id')->default(0);
+            $table->text('value')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->timestamps();
+
+            $table->unique(['key', 'company_id'], 'ptah_settings_key_company_unique');
+        });
+    }
+
+    /**
+     * ATENCAO: o rollback APAGA todos os valores configurados. Para
+     * preservar, esvazie este metodo antes de um rollback em producao.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('ptah_settings');
+    }
+};

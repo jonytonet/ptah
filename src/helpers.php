@@ -7,6 +7,7 @@ use Ptah\Models\Company;
 use Ptah\Services\Company\CompanyService;
 use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Services\SettingsService;
 use Ptah\Traits\ResolvesUser;
 
 if (! function_exists('ptah_can')) {
@@ -266,5 +267,16 @@ if (! function_exists('ptah_notify_all')) {
         $service = app(NotificationService::class);
 
         return $service->toAll($data, $companyId, $onlyStaff);
+    }
+}
+
+if (! function_exists('ptah_setting')) {
+    /**
+     * A system setting declared in config/ptah-settings.php: the active
+     * company's value, else the global one, else the declared default.
+     */
+    function ptah_setting(string $key, mixed $default = null, ?int $companyId = null): mixed
+    {
+        return app(SettingsService::class)->get($key, $default, $companyId);
     }
 }
