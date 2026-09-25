@@ -172,6 +172,11 @@ class PtahServiceProvider extends ServiceProvider
             'ptah-settings'
         );
 
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/ptah-dashboard.php',
+            'ptah-dashboard'
+        );
+
         // SchemaInspector is only needed during Artisan code-generation commands.
         // Binding it as a singleton in every HTTP request wastes memory.
         if ($this->app->runningInConsole()) {
@@ -578,6 +583,7 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/../config/ptah.php' => config_path('ptah.php'),
                 __DIR__.'/../config/ptah-masks.php' => config_path('ptah-masks.php'),
                 __DIR__.'/../config/ptah-settings.php' => config_path('ptah-settings.php'),
+                __DIR__.'/../config/ptah-dashboard.php' => config_path('ptah-dashboard.php'),
             ], 'ptah-config');
 
             // E sozinho, para quem so quer as mascaras sem republicar o ptah.php
