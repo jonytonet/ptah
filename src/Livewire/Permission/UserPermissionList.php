@@ -102,7 +102,7 @@ class UserPermissionList extends Component
         }
 
         $this->editingUserId = (int) $user->getKey();
-        $this->userForm = ['name' => (string) $user->name, 'email' => (string) $user->email, 'password' => '', 'send_link' => false];
+        $this->userForm = ['name' => (string) $user->getAttribute('name'), 'email' => (string) $user->getAttribute('email'), 'password' => '', 'send_link' => false];
         $this->userFormErrors = [];
         $this->showUserForm = true;
     }
@@ -159,7 +159,7 @@ class UserPermissionList extends Component
 
         $message = __($this->editingUserId !== null ? 'ptah::ui.users_saved' : 'ptah::ui.users_created');
 
-        if (! empty($this->userForm['send_link']) && ! $this->sendLinkTo((string) $user->email)) {
+        if (! empty($this->userForm['send_link']) && ! $this->sendLinkTo((string) $user->getAttribute('email'))) {
             $message .= ' '.__('ptah::ui.users_link_failed');
         } elseif (! empty($this->userForm['send_link'])) {
             $message .= ' '.__('ptah::ui.users_link_sent');
@@ -177,7 +177,7 @@ class UserPermissionList extends Component
             return;
         }
 
-        $ok = $this->sendLinkTo((string) $user->email);
+        $ok = $this->sendLinkTo((string) $user->getAttribute('email'));
         $this->dispatch('ptah-toast', title: __($ok ? 'ptah::ui.users_link_sent' : 'ptah::ui.users_link_failed'), color: $ok ? 'success' : 'danger');
     }
 

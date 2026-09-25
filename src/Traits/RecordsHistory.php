@@ -61,12 +61,7 @@ trait RecordsHistory
      */
     public function historyEntries(int $limit = 50): Collection
     {
-        return RecordHistory::query()
-            ->where('subject_type', $this->getMorphClass())
-            ->where('subject_id', (string) $this->getKey())
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
+        return RecordHistory::forSubject($this, $limit);
     }
 
     public static function historyTableExists(): bool

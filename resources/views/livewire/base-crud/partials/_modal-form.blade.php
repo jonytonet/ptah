@@ -887,6 +887,11 @@
         </div>
 
         <x-slot name="footer">
+            @if ($editingId && $this->attachmentsEnabled())
+                <x-forge-button wire:click="openAttachments({{ json_encode($editingId) }})" color="dark" flat>
+                    {{ __('ptah::ui.btn_attachments') }} ({{ $this->attachmentCount($editingId) }})
+                </x-forge-button>
+            @endif
             @if ($editingId && $this->historyEnabled())
                 <x-forge-button wire:click="openHistory({{ json_encode($editingId) }})" color="dark" flat class="mr-auto">
                     {{ __('ptah::ui.btn_history') }}

@@ -397,6 +397,8 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[Base Layer](docs/BaseLayer.md)** | BaseDTO, BaseRepository, BaseService — all methods, signatures, examples and REST API query parameters |
 | **[Custom Screens](docs/CustomScreens.md)** | Building your own screens outside BaseCrud — design tokens, the 6 appearance axes, the `<x-forge-*>` catalog and common pitfalls (pt-BR) |
 | **[Agent Tools](docs/AgentTools.md)** | `ptah:map`, `ptah:check`, `ptah:field`, `ptah:blueprint`, `ptah:last-error`, `ptah:upgrade-check`, `ptah:docs`, `ptah:forge --factory` — commands that replace reading files |
+| **[Dashboard](docs/Dashboard.md)** | Dashboard widgets (stat, trend, latest) from any model, per company and permission |
+| **[Settings](docs/Settings.md)** | System settings declared in code, edited at /ptah-settings, read with `ptah_setting()` |
 | **[AI Guide](docs/AI_Guide.md)** | AI agent integration — prompts, templates and workflow with Copilot, Claude and Cursor |
 | **[AI Agent module](docs/AiAgent.md)** | The optional in-app AI chat widget module — providers, tools, rate limits and token budget |
 | **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |

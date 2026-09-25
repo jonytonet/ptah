@@ -11,6 +11,8 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudAttachments;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudBoards;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudBulkActions;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudColumns;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudDeletion;
@@ -50,6 +52,12 @@ use Ptah\Services\Permission\ColumnPermissionService;
  */
 class BaseCrud extends Component
 {
+    // Files attached to a record (Ptah\Traits\HasAttachments)
+    use HasCrudAttachments;
+
+    // Kanban and calendar views of the same listing
+    use HasCrudBoards;
+
     // Bulk actions (select-all, bulk-delete, custom actions)
     use HasCrudBulkActions;
 

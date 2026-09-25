@@ -143,7 +143,11 @@
             $ptahViewMode = ($viewMode === 'auto' && ! $ptahResponsiveCards) ? 'table' : $viewMode;
         @endphp
 
-        @if ($ptahViewMode === 'cards')
+        @if ($ptahViewMode === 'kanban' && $this->kanbanEnabled())
+            @include('ptah::livewire.base-crud.partials._kanban')
+        @elseif ($ptahViewMode === 'calendar' && $this->calendarEnabled())
+            @include('ptah::livewire.base-crud.partials._calendar')
+        @elseif ($ptahViewMode === 'cards')
             @include('ptah::livewire.base-crud.partials._cards')
         @elseif ($ptahViewMode === 'table')
             @include('ptah::livewire.base-crud.partials._table')
@@ -163,7 +167,9 @@
              debaixo dele. A reserva vale so quando `.ptah-has-ai-launcher` esta
              no <body>, ou seja quando o widget de fato renderiza. --}}
         <div class="ptah-crud-list-end">
-            @include('ptah::livewire.base-crud.partials._pagination')
+            @unless (in_array($ptahViewMode, ['kanban', 'calendar'], true))
+                @include('ptah::livewire.base-crud.partials._pagination')
+            @endunless
         </div>
 
         {{-- Bulk actions floating bar --}}
@@ -328,6 +334,8 @@
     @include('ptah::livewire.base-crud.partials._modal-import')
 
     @include('ptah::livewire.base-crud.partials._modal-history')
+
+    @include('ptah::livewire.base-crud.partials._modal-attachments')
 
     {{-- Loading overlay apenas para ações pesadas (salvar, deletar, exportar) --}}
     <div wire:loading.delay.long wire:target="save,deleteRecord,export"

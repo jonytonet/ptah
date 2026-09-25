@@ -4,6 +4,10 @@
 @section('content')
 <x-forge-page-header title="Dashboard" :subtitle="__('ptah::ui.dashboard_subtitle')" />
 
+@if (! empty(config('ptah-dashboard.widgets')))
+    @include('ptah::dashboard.widgets')
+@else
+
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
     <x-forge-stat-card
         :title="__('ptah::ui.dashboard_welcome')"
@@ -30,4 +34,5 @@
         color="warning"
     />
 </div>
+@endif
 @endsection

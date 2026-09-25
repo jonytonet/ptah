@@ -33,6 +33,8 @@ names the ready-made path and what NOT to do.
 | Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
 | Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
 | A whole module (several related entities) | `php artisan ptah:blueprint spec.json --dry-run`, then without `--dry-run` — forge in FK order, migrate, config, menu, permissions, seed ([AgentTools.md](../../../../docs/AgentTools.md)) | Run a dozen commands by hand and get the parent/child order wrong |
+| Import, change history, attachments, board or calendar on a screen | Gear icon → General → Features (or `importConfig`/`kanbanConfig`/`calendarConfig`); history and attachments also need `RecordsHistory`/`HasAttachments` on the model and `ptah:history:install`/`ptah:attachments:install` | Build upload screens, audit tables or calendars by hand |
+| Dashboard numbers, or settings an admin changes | `config/ptah-dashboard.php` widgets; `config/ptah-settings.php` + `ptah_setting()` (`ptah:settings:install`) — docs/Dashboard.md, docs/Settings.md | A hand-made dashboard controller or a `settings` table |
 | A new column on an existing entity | `php artisan ptah:field Entity add name:type[:modifiers]` — migration, `$fillable`/`$casts`, rules, DTO and crud config in one call | Edit five files and forget `$fillable` (the field is then silently not saved) |
 | A screen that is genuinely not a CRUD | [CustomScreens.md](../../../../docs/CustomScreens.md): `<x-forge-*>` components + `--ptah-*` tokens only | Raw HTML with Tailwind palette colors |
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
@@ -50,6 +51,21 @@ class RecordHistory extends Model
     public static function flushTableCache(): void
     {
         self::$tableExists = false;
+    }
+
+    /**
+     * The history of one record, newest first.
+     *
+     * @return Collection<int, self>
+     */
+    public static function forSubject(Model $subject, int $limit = 50): Collection
+    {
+        return self::query()
+            ->where('subject_type', $subject->getMorphClass())
+            ->where('subject_id', (string) $subject->getKey())
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
     }
 
     protected $casts = [

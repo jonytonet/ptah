@@ -18,6 +18,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Server\Tool;
 use Livewire\Livewire;
+use Ptah\Commands\AttachmentsInstallCommand;
 use Ptah\Commands\BlueprintCommand;
 use Ptah\Commands\CheckCommand;
 use Ptah\Commands\Config\ConfigDoctorCommand;
@@ -41,6 +42,7 @@ use Ptah\Commands\Permission\PermissionWhyCommand;
 use Ptah\Commands\PreferencesRealignCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Commands\ScreenCommand;
+use Ptah\Commands\SettingsInstallCommand;
 use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Commands\WhyEmptyCommand;
 use Ptah\Contracts\CompanyServiceContract;
@@ -69,6 +71,7 @@ use Ptah\Livewire\Permission\PermissionGuide;
 use Ptah\Livewire\Permission\RoleList;
 use Ptah\Livewire\Permission\UserPermissionList;
 use Ptah\Livewire\SearchDropdown\SearchDropdown;
+use Ptah\Livewire\Settings\SettingsPage;
 use Ptah\Mcp\PtahMcpTools;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
@@ -91,6 +94,7 @@ use Ptah\Services\Notification\NotificationService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
+use Ptah\Services\SettingsService;
 use Ptah\Support\AI\ToolSchemaNormalizer;
 use Ptah\Support\SchemaInspector;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -161,6 +165,18 @@ class PtahServiceProvider extends ServiceProvider
             'ptah-masks'
         );
 
+        // Arquivo proprio pelo mesmo motivo do ptah-masks: e o host que declara
+        // as definicoes, e um merge raso de ptah.php nunca as traria.
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/ptah-settings.php',
+            'ptah-settings'
+        );
+
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/ptah-dashboard.php',
+            'ptah-dashboard'
+        );
+
         // SchemaInspector is only needed during Artisan code-generation commands.
         // Binding it as a singleton in every HTTP request wastes memory.
         if ($this->app->runningInConsole()) {
@@ -168,6 +184,7 @@ class PtahServiceProvider extends ServiceProvider
         }
         $this->app->singleton(CacheService::class);
         $this->app->singleton(CrudConfigService::class);
+        $this->app->singleton(SettingsService::class);
         $this->app->singleton(FilterService::class);
         $this->app->singleton(FormValidatorService::class);
         $this->app->singleton(MenuService::class);
@@ -398,6 +415,8 @@ class PtahServiceProvider extends ServiceProvider
                 ScreenCommand::class,         // ptah:screen
                 WhyEmptyCommand::class,       // ptah:why-empty
                 HistoryInstallCommand::class, // ptah:history:install
+                AttachmentsInstallCommand::class, // ptah:attachments:install
+                SettingsInstallCommand::class, // ptah:settings:install
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
@@ -563,6 +582,8 @@ class PtahServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/ptah.php' => config_path('ptah.php'),
                 __DIR__.'/../config/ptah-masks.php' => config_path('ptah-masks.php'),
+                __DIR__.'/../config/ptah-settings.php' => config_path('ptah-settings.php'),
+                __DIR__.'/../config/ptah-dashboard.php' => config_path('ptah-dashboard.php'),
             ], 'ptah-config');
 
             // E sozinho, para quem so quer as mascaras sem republicar o ptah.php
@@ -741,6 +762,7 @@ class PtahServiceProvider extends ServiceProvider
             Livewire::component('ptah-base-crud', BaseCrud::class);
             Livewire::component('ptah-search-dropdown', SearchDropdown::class);
             Livewire::component('ptah-crud-config', CrudConfig::class);
+            Livewire::component('ptah-settings', SettingsPage::class);
             Livewire::component('ptah-exports-panel', ExportsPanel::class);
 
             if (config('ptah.modules.auth')) {
@@ -804,6 +826,9 @@ class PtahServiceProvider extends ServiceProvider
 
         // Main Ptah routes (export, etc.)
         $this->loadRoutesFrom(__DIR__.'/../routes/ptah.php');
+
+        // /ptah-settings (the screen explains how to install when the table is missing)
+        $this->loadRoutesFrom(__DIR__.'/../routes/ptah-settings.php');
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-auth.php');

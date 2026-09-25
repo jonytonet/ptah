@@ -2746,6 +2746,85 @@
                             @endif
                         </div>
 
+                        {{-- Recursos (1.38.0) — tokens --ptah-* --}}
+                        @php
+                            $cfgFieldList = collect($formEditFields)->filter(fn ($c) => ! empty($c['colsNomeFisico']) && ($c['colsTipo'] ?? '') !== 'action');
+                            $cfgSelectFields = $cfgFieldList->filter(fn ($c) => ! empty($c['colsSelect']));
+                            $cfgDateFields = $cfgFieldList->filter(fn ($c) => in_array($c['colsTipo'] ?? '', ['date', 'datetime', 'datetime-local'], true) || str_ends_with((string) $c['colsNomeFisico'], '_at') || str_ends_with((string) $c['colsNomeFisico'], '_date'));
+                        @endphp
+                        <div class="p-5 space-y-4 border rounded-md" style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
+                            <h3 class="pb-2 text-sm font-semibold border-b" style="color: var(--ptah-text-strong); border-color: var(--ptah-line)">{{ __('ptah::ui.cfg_features') }}</h3>
+
+                            <div class="grid gap-4 sm:grid-cols-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="featureImport" title="{{ __('ptah::ui.cfg_feature_import') }}" class="rounded" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_import') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="featureHistory" title="{{ __('ptah::ui.cfg_feature_history') }}" class="rounded" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_history') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="featureAttachments" title="{{ __('ptah::ui.cfg_feature_attachments') }}" class="rounded" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_attachments') }}</span>
+                                </label>
+                            </div>
+                            <p class="text-[11px] ptah-c-muted">{{ __('ptah::ui.cfg_feature_model_hint') }}</p>
+
+                            @if ($featureImport)
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_feature_import_mode') }}</label>
+                                        <select wire:model.live="featureImportMode" title="{{ __('ptah::ui.cfg_feature_import_mode') }}" class="cfg-input">
+                                            <option value="create">{{ __('ptah::ui.cfg_feature_import_create') }}</option>
+                                            <option value="upsert">{{ __('ptah::ui.cfg_feature_import_upsert') }}</option>
+                                        </select>
+                                    </div>
+                                    @if ($featureImportMode === 'upsert')
+                                        <div>
+                                            <label class="cfg-label">{{ __('ptah::ui.cfg_feature_import_key') }}</label>
+                                            <select wire:model="featureImportKey" title="{{ __('ptah::ui.cfg_feature_import_key') }}" class="cfg-input">
+                                                <option value="">—</option>
+                                                @foreach ($cfgFieldList as $c)
+                                                    <option value="{{ $c['colsNomeFisico'] }}">{{ $c['colsNomeLogico'] ?? $c['colsNomeFisico'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
+                            <div class="grid gap-4 sm:grid-cols-3">
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_feature_kanban') }}</label>
+                                    <select wire:model="kanbanField" title="{{ __('ptah::ui.cfg_feature_kanban') }}" class="cfg-input">
+                                        <option value="">{{ __('ptah::ui.cfg_feature_off') }}</option>
+                                        @foreach ($cfgSelectFields as $c)
+                                            <option value="{{ $c['colsNomeFisico'] }}">{{ $c['colsNomeLogico'] ?? $c['colsNomeFisico'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_feature_calendar_start') }}</label>
+                                    <select wire:model="calendarStart" title="{{ __('ptah::ui.cfg_feature_calendar_start') }}" class="cfg-input">
+                                        <option value="">{{ __('ptah::ui.cfg_feature_off') }}</option>
+                                        @foreach ($cfgDateFields as $c)
+                                            <option value="{{ $c['colsNomeFisico'] }}">{{ $c['colsNomeLogico'] ?? $c['colsNomeFisico'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_feature_calendar_end') }}</label>
+                                    <select wire:model="calendarEnd" title="{{ __('ptah::ui.cfg_feature_calendar_end') }}" class="cfg-input">
+                                        <option value="">—</option>
+                                        @foreach ($cfgDateFields as $c)
+                                            <option value="{{ $c['colsNomeFisico'] }}">{{ $c['colsNomeLogico'] ?? $c['colsNomeFisico'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {{-- ═══════════════════════════════════════════════════ --}}

@@ -7,6 +7,64 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.38.0] - 2026-09-25
+
+Four ready-made pieces every business app asks for, and the switches for them
+(and for 1.37.0's import and history) in the visual editor.
+
+### Added - Features section in the visual config editor
+
+Import (mode and key), history, attachments, the board field and the calendar
+dates are now switched on from the gear icon → General → Features. Import and
+history were reachable only through `ptah:config --set`, and users could not
+find them.
+
+### Added - board (kanban) and calendar views
+
+`kanbanConfig {field}` groups the listing into one column per option of a
+select field; `calendarConfig {start, end}` lays it on a month grid. Both are
+built on the table's own query, so search, filters, the company scope and
+locked filters apply unchanged. Moving a card — by drag and drop or the
+keyboard "Move to" select — is an update held to an update's rules: the same
+gates as the form, the value checked against the options, the record re-read
+through the screen's scope, hooks and audit stamp. See BaseCrud.md § Board
+and Calendar.
+
+Records whose value is not one of the options (found running it on a real
+screen: statuses the select never declared) land in an "Other values"
+column instead of vanishing; from there a card moves to a real column.
+
+### Added - attachments per record
+
+`php artisan ptah:attachments:install` + `use HasAttachments;` adds an
+Attachments button to the edit modal. Files go to a private disk
+(`PTAH_ATTACHMENTS_DISK`, default `local`) under a random name, with a type
+allowlist and size limit, and never get a public URL: downloads stream through
+the screen, which re-reads the record through its scope and looks the file up
+under it, so another record's or company's file is never served. Read to list
+and download (optional `permissions.attachments` gate), update to upload and
+delete; delete is soft and keeps the file.
+
+### Added - configurable dashboard
+
+Widgets in `config/ptah-dashboard.php` — `stat` (count, sum, avg over a
+period), `trend` (per day, bar chart) and `latest` — from any model, inside
+the active company and the model's global scopes, each optionally behind a
+page object `read`. Columns and operators are guarded; a bad definition fails
+as that widget. Cached per company and user. `/dashboard` shows them when
+configured; `@include('ptah::dashboard.widgets')` puts them anywhere. See
+docs/Dashboard.md.
+
+### Added - system settings
+
+Declared in `config/ptah-settings.php` (type, label, group, default, rules),
+stored by `ptah:settings:install`'s table, resolved company → global →
+default, typed, cached, read with `ptah_setting('key')`, edited at
+`/ptah-settings` (the structure screens' access rule). Undeclared keys cannot
+be written. See docs/Settings.md.
+
+---
+
 ## [1.37.0] - 2026-09-24
 
 ### Added - spreadsheet import on any BaseCrud screen

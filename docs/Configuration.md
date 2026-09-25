@@ -2649,6 +2649,10 @@ ignored by the screen.
 | `importConfig.enabled` | bool | `false` | Spreadsheet import button (see BaseCrud.md § Import) |
 | `importConfig.mode` / `importConfig.key` | string | `create` / — | `upsert` updates the record whose `key` matches |
 | `importConfig.maxRows` / `importConfig.maxKb` | int | `2000` / `10240` | Limits per file |
+| `kanbanConfig.field` / `.title` / `.limit` | string / string / int | — / — / `50` | Board view by a select column (BaseCrud.md § Board and Calendar) |
+| `calendarConfig.start` / `.end` / `.title` | string | — | Calendar view by a date column |
+| `history.enabled` | bool | `true` | History button (model with RecordsHistory) |
+| `attachments.enabled` | bool | `true` | Attachments button (model with HasAttachments) |
 | `broadcast.enabled` | bool | `false` | Echo listener that refreshes the screen |
 | `broadcast.channel` | string | `'page-{model}-observer'` | Channel name |
 | `broadcast.event` | string | `'.page{Model}Observer'` | Event name |
@@ -2693,6 +2697,7 @@ Properties in `permissions`:
 | `restore` | string | `''` | Gate to restore a soft-deleted record |
 | `import` | string | `''` | Gate to import a spreadsheet (on top of what **New** requires) |
 | `history` | string | `''` | Gate to open a record's change history |
+| `attachments` | string | `''` | Gate to list and download a record's attachments |
 | `showCreateButton` / `showEditButton` / `showDeleteButton` / `showTrashButton` | bool | `true` | Hide a button — and refuse the action server-side |
 
 A gate name is checked with `Auth::user()->can()` (guests are refused); an empty value means no gate.

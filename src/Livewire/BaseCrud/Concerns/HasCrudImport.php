@@ -40,7 +40,7 @@ trait HasCrudImport
     /** @var mixed Livewire TemporaryUploadedFile */
     public $importFile = null;
 
-    /** @var array<int|string, string> header index => field (client-writable: checked on use) */
+    /** @var array<int|string, mixed> header index => field — client-writable, so anything; checked on use */
     public array $importMapping = [];
 
     /** @var list<string> */

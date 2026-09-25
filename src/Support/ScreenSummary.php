@@ -60,6 +60,8 @@ final class ScreenSummary
                 'perPage' => $config['uiPreferences']['perPage'] ?? null,
                 'export' => isset($config['exportConfig']['enabled']) ? (bool) $config['exportConfig']['enabled'] : null,
                 'import' => ! empty($config['importConfig']['enabled']) ? ($config['importConfig']['mode'] ?? 'create') : null,
+                'kanban' => $config['kanbanConfig']['field'] ?? null,
+                'calendar' => $config['calendarConfig']['start'] ?? null,
                 'groupBy' => $config['groupBy'] ?? null,
                 'companyField' => $config['companyField'] ?? null,
                 'rowLink' => $config['configLinkLinha'] ?? null,
