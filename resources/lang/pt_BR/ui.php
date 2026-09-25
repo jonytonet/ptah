@@ -1801,6 +1801,8 @@ return [
     'kanban_move_to' => 'Mover para',
     'kanban_more' => 'mais :count — refine os filtros para vê-los',
     'kanban_empty_column' => 'Nada aqui',
+    'kanban_other' => 'Outros valores',
+    'kanban_other_hint' => 'O valor destes não é uma das opções — mova para uma coluna.',
     'calendar_prev' => 'Mês anterior',
     'calendar_next' => 'Próximo mês',
     'calendar_today' => 'Hoje',

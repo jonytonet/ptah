@@ -1799,6 +1799,8 @@ return [
     'kanban_move_to' => 'Move to',
     'kanban_more' => ':count more — refine the filters to see them',
     'kanban_empty_column' => 'Nothing here',
+    'kanban_other' => 'Other values',
+    'kanban_other_hint' => 'Their value is not one of the options — move them to a column.',
     'calendar_prev' => 'Previous month',
     'calendar_next' => 'Next month',
     'calendar_today' => 'Today',

@@ -82,6 +82,36 @@ class CrudBoardsTest extends TestCase
     }
 
     #[Test]
+    public function a_record_whose_value_is_not_an_option_is_not_lost_from_the_board(): void
+    {
+        // Achado rodando no petplace: status "waiting" sem opcao no select.
+        BoardTask::create(['title' => 'Aguardando peça', 'status' => 'waiting', 'company_id' => 1]);
+
+        $crud = $this->crud();
+        $columns = collect($crud->instance()->kanbanColumns())->keyBy('value');
+        $other = $columns[BaseCrud::KANBAN_OTHER];
+
+        $this->assertSame(1, $other['total']);
+        $this->assertSame(['Aguardando peça'], array_column($other['cards'], 'title'));
+
+        // Dali sai para uma coluna valida; para ela ninguem entra.
+        $task = BoardTask::where('title', 'Aguardando peça')->first();
+        $crud->call('moveCard', $task->id, 'doing');
+        $this->assertSame('doing', $task->fresh()->status);
+
+        $crud->call('moveCard', $task->id, BaseCrud::KANBAN_OTHER);
+        $this->assertSame('doing', $task->fresh()->status);
+    }
+
+    #[Test]
+    public function the_other_column_does_not_exist_when_every_value_is_an_option(): void
+    {
+        $values = array_column($this->crud()->instance()->kanbanColumns(), 'value');
+
+        $this->assertNotContains(BaseCrud::KANBAN_OTHER, $values);
+    }
+
+    #[Test]
     public function the_board_follows_the_search_like_the_table(): void
     {
         $crud = $this->crud()->set('search', 'Entregar');

@@ -13,7 +13,8 @@
             class="flex flex-col shrink-0 w-72 rounded-md border"
             style="border-color: var(--ptah-line-strong); background: var(--ptah-surface-sunken)"
             :style="over === @js($column['value']) ? 'outline: 2px solid var(--ptah-primary); outline-offset: -2px' : ''"
-            @if ($kanbanCanMove)
+            @php $isOther = $column['value'] === \Ptah\Livewire\BaseCrud\BaseCrud::KANBAN_OTHER; @endphp
+            @if ($kanbanCanMove && ! $isOther)
                 @dragover.prevent="over = @js($column['value'])"
                 @dragleave="over = null"
                 @drop.prevent="over = null; $wire.moveCard($event.dataTransfer.getData('text/plain'), @js($column['value']))"
@@ -43,6 +44,9 @@
                             <select id="kanban-move-{{ $card['id'] }}"
                                 class="mt-2 w-full text-xs rounded-md px-1.5 py-1 ptah-c-fp_input ptah-c-control"
                                 x-on:change="$wire.moveCard(@js((string) $card['id']), $event.target.value)">
+                                @if ($isOther)
+                                    <option value="" selected disabled>{{ __('ptah::ui.kanban_move_to') }}…</option>
+                                @endif
                                 @foreach ($kanbanOptions as $optLabel => $optValue)
                                     <option value="{{ $optValue }}" @selected($optValue === $column['value'])>{{ __('ptah::ui.kanban_move_to') }}: {{ $optLabel }}</option>
                                 @endforeach
@@ -54,6 +58,9 @@
                 @endforelse
             </ul>
 
+            @if ($isOther)
+                <p class="px-3 pb-2 text-xs ptah-c-muted">{{ __('ptah::ui.kanban_other_hint') }}</p>
+            @endif
             @if ($column['total'] > count($column['cards']))
                 <p class="px-3 pb-2 text-xs ptah-c-muted">{{ __('ptah::ui.kanban_more', ['count' => $column['total'] - count($column['cards'])]) }}</p>
             @endif

@@ -32,6 +32,9 @@ trait HasCrudBoards
 
     private const KANBAN_LIMIT = 50;
 
+    /** The column of records whose value is not one of the options. Never a drop target. */
+    public const KANBAN_OTHER = '__ptah_other__';
+
     private const CALENDAR_LIMIT = 500;
 
     public function kanbanEnabled(): bool
@@ -94,6 +97,23 @@ trait HasCrudBoards
             $columns[] = [
                 'label' => (string) $label,
                 'value' => $value,
+                'total' => $total,
+                'cards' => $query->limit($limit)->get()->map(fn (Model $r) => $this->boardCard($r, 'kanbanConfig'))->all(),
+            ];
+        }
+
+        // Valor fora das opcoes (ou vazio): sem esta coluna o registro sumiria
+        // do quadro sem aviso — e quem olha acha que o ticket foi apagado.
+        [$query] = $this->buildBaseQuery($model);
+        $values = array_values($this->kanbanOptions());
+        $query->where(fn (Builder $q) => $q->whereNotIn($field, $values)->orWhereNull($field));
+        $total = (clone $query)->count();
+
+        if ($total > 0) {
+            $query->orderByDesc($model->getTable().'.'.$model->getKeyName());
+            $columns[] = [
+                'label' => (string) trans('ptah::ui.kanban_other'),
+                'value' => self::KANBAN_OTHER,
                 'total' => $total,
                 'cards' => $query->limit($limit)->get()->map(fn (Model $r) => $this->boardCard($r, 'kanbanConfig'))->all(),
             ];
