@@ -670,6 +670,7 @@ trait HasCrudForm
             'export' => [null, 'export'],
             'import' => [null, 'import'],
             'history' => [null, 'history'],
+            'attachments' => [null, 'attachments'],
             default => [null, null],
         };
 

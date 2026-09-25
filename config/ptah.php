@@ -113,6 +113,21 @@ return [
     */
     'mcp_tools' => env('PTAH_MCP_TOOLS', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Record attachments (Ptah\Traits\HasAttachments)
+    |--------------------------------------------------------------------------
+    |
+    | Disk the files go to — keep it PRIVATE (the default `local` is): files are
+    | streamed through the screen, which checks the record's scope, and never
+    | get a public URL. `php artisan ptah:attachments:install` creates the table.
+    */
+    'attachments' => [
+        'disk' => env('PTAH_ATTACHMENTS_DISK', 'local'),
+        'max_kb' => (int) env('PTAH_ATTACHMENTS_MAX_KB', 10240),
+        'mimes' => ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'txt', 'csv', 'xlsx', 'xls', 'doc', 'docx', 'zip'],
+    ],
+
     'preferences' => [
         /*
          * Chave estrangeira de `user_preferences.user_id` para a tabela de

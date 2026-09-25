@@ -18,6 +18,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Server\Tool;
 use Livewire\Livewire;
+use Ptah\Commands\AttachmentsInstallCommand;
 use Ptah\Commands\BlueprintCommand;
 use Ptah\Commands\CheckCommand;
 use Ptah\Commands\Config\ConfigDoctorCommand;
@@ -398,6 +399,7 @@ class PtahServiceProvider extends ServiceProvider
                 ScreenCommand::class,         // ptah:screen
                 WhyEmptyCommand::class,       // ptah:why-empty
                 HistoryInstallCommand::class, // ptah:history:install
+                AttachmentsInstallCommand::class, // ptah:attachments:install
                 PermissionSyncCommand::class, // ptah:permission:sync
                 PermissionWhyCommand::class,  // ptah:permission:why
                 AuditPruneCommand::class,     // ptah:audit-prune
