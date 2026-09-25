@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.38.0] - 2026-09-24
+## [1.38.0] - 2026-09-25
 
 Four ready-made pieces every business app asks for, and the switches for them
 (and for 1.37.0's import and history) in the visual editor.
@@ -29,6 +29,10 @@ keyboard "Move to" select — is an update held to an update's rules: the same
 gates as the form, the value checked against the options, the record re-read
 through the screen's scope, hooks and audit stamp. See BaseCrud.md § Board
 and Calendar.
+
+Records whose value is not one of the options (found running it on a real
+screen: statuses the select never declared) land in an "Other values"
+column instead of vanishing; from there a card moves to a real column.
 
 ### Added - attachments per record
 
