@@ -85,6 +85,26 @@ class CrudConfig extends Component
 
     public string $displayName = '';  // name displayed in modal and toolbar
 
+    // ── Features (1.38.0): import, history, attachments, kanban, calendar ──
+    // Were reachable only through `ptah:config --set`; a user of the visual
+    // editor could not find them at all.
+
+    public bool $featureImport = false;
+
+    public string $featureImportMode = 'create';
+
+    public string $featureImportKey = '';
+
+    public bool $featureHistory = true;
+
+    public bool $featureAttachments = true;
+
+    public string $kanbanField = '';
+
+    public string $calendarStart = '';
+
+    public string $calendarEnd = '';
+
     public string $configLinkLinha = '';
 
     public string $tableClass = '';
@@ -382,6 +402,14 @@ class CrudConfig extends Component
 
         // General
         $this->displayName = $cfg['displayName'] ?? '';
+        $this->featureImport = ! empty($cfg['importConfig']['enabled']);
+        $this->featureImportMode = ($cfg['importConfig']['mode'] ?? 'create') === 'upsert' ? 'upsert' : 'create';
+        $this->featureImportKey = (string) ($cfg['importConfig']['key'] ?? '');
+        $this->featureHistory = ($cfg['history']['enabled'] ?? true) !== false;
+        $this->featureAttachments = ($cfg['attachments']['enabled'] ?? true) !== false;
+        $this->kanbanField = (string) ($cfg['kanbanConfig']['field'] ?? '');
+        $this->calendarStart = (string) ($cfg['calendarConfig']['start'] ?? '');
+        $this->calendarEnd = (string) ($cfg['calendarConfig']['end'] ?? '');
         $this->configLinkLinha = $cfg['configLinkLinha'] ?? '';
         $this->tableClass = $cfg['tableClass'] ?? '';
         $this->theadClass = $cfg['theadClass'] ?? '';
@@ -1095,6 +1123,17 @@ class CrudConfig extends Component
     {
         return array_merge($existing, [
             'displayName' => $this->displayName,
+            'importConfig' => array_merge($existing['importConfig'] ?? [], [
+                'enabled' => $this->featureImport,
+                'mode' => $this->featureImportMode === 'upsert' ? 'upsert' : 'create',
+                'key' => $this->featureImportKey !== '' ? $this->featureImportKey : null,
+            ]),
+            'history' => ['enabled' => $this->featureHistory],
+            'attachments' => ['enabled' => $this->featureAttachments],
+            'kanbanConfig' => $this->kanbanField !== '' ? array_merge($existing['kanbanConfig'] ?? [], ['field' => $this->kanbanField]) : null,
+            'calendarConfig' => $this->calendarStart !== ''
+                ? array_merge($existing['calendarConfig'] ?? [], ['start' => $this->calendarStart, 'end' => $this->calendarEnd !== '' ? $this->calendarEnd : null])
+                : null,
             'crud' => $existing['crud'] ?? $this->model,
             'configLinkLinha' => $this->configLinkLinha,
             'configEsconderId' => $existing['configEsconderId'] ?? false,
