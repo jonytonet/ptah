@@ -168,6 +168,22 @@ class CrudImportTest extends TestCase
     }
 
     #[Test]
+    public function a_required_field_without_a_column_blocks_the_whole_import(): void
+    {
+        // A planilha nao tem a coluna "Nome" (obrigatoria): nada entra, e a
+        // revisao diz qual campo falta — mesmo com todas as linhas "validas".
+        $this->crud()
+            ->call('openImport')
+            ->set('importFile', $this->csv("SKU;Situação\nP-001;Ativo\nP-002;Inativo\n"))
+            ->call('previewImport')
+            ->assertSet('importPreview.unmapped_required', ['Nome'])
+            ->assertSee('Nome')
+            ->call('runImport');
+
+        $this->assertSame(0, ImpProduct::count());
+    }
+
+    #[Test]
     public function a_row_the_database_refuses_rolls_the_whole_file_back(): void
     {
         ImpProduct::create(['sku' => 'P-002', 'name' => 'Existente', 'status' => 'active', 'company_id' => 1]);
