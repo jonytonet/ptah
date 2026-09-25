@@ -198,7 +198,15 @@ trait HasCrudFilters
      */
     public function setViewMode(string $mode): void
     {
-        if (! in_array($mode, ['auto', 'table', 'cards'], true)) {
+        $allowed = ['auto', 'table', 'cards'];
+        if ($this->kanbanEnabled()) {
+            $allowed[] = 'kanban';
+        }
+        if ($this->calendarEnabled()) {
+            $allowed[] = 'calendar';
+        }
+
+        if (! in_array($mode, $allowed, true)) {
             return;
         }
         $this->viewMode = $mode;
