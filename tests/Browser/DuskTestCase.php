@@ -17,6 +17,7 @@ use Orchestra\Testbench\Dusk\TestCase as OrchestraDuskTestCase;
 use Prism\Prism\PrismServiceProvider;
 use Ptah\PtahServiceProvider;
 use Ptah\Tests\Browser\Fixtures\DuskCrudStub;
+use Ptah\Tests\Browser\Fixtures\DuskMaskStub;
 
 /**
  * Classe base dos testes de navegador (ONDA IV / Fase 2.5).
@@ -143,6 +144,7 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
         ]);
 
         DuskCrudStub::seedFixtures();
+        DuskMaskStub::seedFixtures();
     }
 
     /**
@@ -170,6 +172,10 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
         // BaseCrud e usar o histórico do navegador para voltar.
         $router->get('/dusk-test/other', function () {
             return view('dusk-other');
+        });
+
+        $router->get('/dusk-test/mask', function () {
+            return view('dusk-mask', ['model' => DuskMaskStub::class]);
         });
     }
 

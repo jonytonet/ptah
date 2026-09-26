@@ -590,6 +590,7 @@
                                     <div
                                         class="w-full"
                                         wire:key="ptah-money-{{ $fField }}-{{ $editingId ?? 'new' }}"
+                                        x-on:ptah-typed-restored="display = $event.detail.value; if ($refs.moneyVisible) $refs.moneyVisible.value = display"
                                         x-data="{
                                             display: '',
                                             fmt(n) {
@@ -622,6 +623,7 @@
                                                 // wire:model (deferred) syncs on save action in Livewire 4;
                                                 // dispatch 'input' to keep hidden input in sync during interaction
                                                 h.dispatchEvent(new Event('input', { bubbles: true }));
+                                                window.ptahKeepTyped?.(this.$wire.$id, '{{ $fField }}', f);
                                             }
                                         }"
                                     >
@@ -636,12 +638,14 @@
                                             @if($fRequired) required @endif
                                             tabindex="{{ $tabIdx }}"
                                             placeholder="R$ 0,00"
+                                            x-ref="moneyVisible"
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                         />
                                         <input
                                             type="hidden"
                                             x-ref="moneyHidden"
+                                            data-ptah-keep="{{ $this->getId() }}|{{ $fField }}"
                                             wire:model="formData.{{ $fField }}"
                                         />
                                         @if ($fError)
@@ -702,6 +706,7 @@
                                     <div
                                         class="w-full"
                                         wire:key="ptah-mask-{{ $fField }}-{{ $editingId ?? 'new' }}"
+                                        x-on:ptah-typed-restored="display = format($event.detail.value); if ($refs.maskVisible) $refs.maskVisible.value = display"
                                         x-data="{
                                             patterns: @js($fMaskDef['patterns']),
                                             display: @js(\Ptah\Support\PtahMask::format($fMask, $fValue)),
@@ -824,6 +829,8 @@
                                                 const h = this.$refs.maskHidden;
                                                 h.value = v;
                                                 h.dispatchEvent(new Event('input', { bubbles: true }));
+                                                /* Sobrevive a resposta de uma requisicao que ja estava em voo (_scripts). */
+                                                window.ptahKeepTyped?.(this.$wire.$id, '{{ $fField }}', v);
                                             }
                                         }"
                                     >
@@ -832,6 +839,7 @@
                                         </label>
                                         <input
                                             id="ptah-mask-in-{{ $fField }}"
+                                            x-ref="maskVisible"
                                             type="text"
                                             x-bind:value="display"
                                             @input="onInput($event)"
@@ -844,7 +852,7 @@
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             class="block w-full rounded-md border outline-none px-3 py-2.5 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in"
                                         />
-                                        <input type="hidden" x-ref="maskHidden" wire:model="formData.{{ $fField }}" />
+                                        <input type="hidden" x-ref="maskHidden" data-ptah-keep="{{ $this->getId() }}|{{ $fField }}" wire:model="formData.{{ $fField }}" />
                                         @if ($fError)
                                             <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
                                         @endif

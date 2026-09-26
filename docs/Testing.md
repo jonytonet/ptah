@@ -75,6 +75,18 @@ vendor/bin/phpunit -c phpunit.dusk.xml tests/Browser/CrudModalBrowserTest.php
 vendor/bin/phpunit -c phpunit.dusk.xml --filter n_opens_the_create_modal
 ```
 
+**ChromeDriver desatualizado** ("This version of ChromeDriver only supports
+Chrome version N"): o Chrome se atualiza sozinho e o driver não.
+`vendor/bin/dusk-updater detect --auto-update` baixa o driver da versão
+instalada.
+
+**Um `.env` no esqueleto do testbench quebra a suíte padrão.** Se
+`vendor/orchestra/testbench-core/laravel/.env` existir (a ferramenta de Dusk
+pode criá-lo), ele vale também para `vendor/bin/phpunit` — com
+`SESSION_DRIVER=cookie`, testes como `CrudReadGateTest` passam a falhar com
+"Invalid Livewire snapshot structure". Renomeie ou remova esse arquivo; ele
+não faz parte do pacote.
+
 ### Como a app de teste é montada
 
 `tests/Browser/DuskTestCase.php` espelha `tests/TestCase.php` (mesmos
