@@ -227,7 +227,7 @@ class CheckCommand extends Command
 
             foreach ($this->aiToolClasses() as $tool) {
                 $permission = is_subclass_of($tool, AiToolAuthorizable::class) ? $tool::permission() : null;
-                if (is_array($permission) && is_string($permission[0] ?? null) && $permission[0] !== '') {
+                if (is_array($permission) && $permission[0] !== '') {
                     $used[] = ['key' => $permission[0], 'file' => 'ai tool '.$tool, 'line' => 0];
                 }
             }

@@ -212,7 +212,7 @@ class AiToolRegistry
             return true;
         }
 
-        $key = (string) ($permission[0] ?? '');
+        $key = $permission[0];
         $action = (string) ($permission[1] ?? 'read');
 
         if ($key === '') {
