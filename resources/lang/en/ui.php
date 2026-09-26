@@ -1668,6 +1668,7 @@ return [
     // when it cannot be built or blows up, so the assistant can say that
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
+    'ai_tool_forbidden' => 'You do not have permission to use :tool. Tell the user instead of trying another tool.',
     'ai_widget_hide_launcher' => 'Hide the assistant button',
     'ai_widget_show_launcher' => 'Show the assistant',
     'ai_widget_expand' => 'Expand to full screen',

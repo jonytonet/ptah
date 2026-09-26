@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Services\AI\Tools;
 
+use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\AiToolSchemaInterface;
 use Ptah\Support\MenuResolver;
@@ -34,8 +35,14 @@ use Ptah\Support\MenuResolver;
  * whole internal structure of the application is not something to hand out to
  * an anonymous session just because the chat is reachable.
  */
-final class FindMenuTool implements AiToolInterface, AiToolSchemaInterface
+final class FindMenuTool implements AiToolAuthorizable, AiToolInterface, AiToolSchemaInterface
 {
+    /** Open to anyone who can use the chat: it reads nothing that is not already on screen. */
+    public static function permission(): ?array
+    {
+        return null;
+    }
+
     /** Cap on a browse (no query). A menu can hold hundreds of entries. */
     private const BROWSE_LIMIT = 60;
 

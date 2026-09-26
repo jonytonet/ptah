@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
+use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Services\Permission\PermissionService;
@@ -78,6 +79,11 @@ class CheckCommand extends Command
         if ($screens->isEmpty()) {
             $this->components->info($filter === '' ? 'No BaseCrud screen is configured (crud_configs is empty).' : "No configured screen matches \"{$filter}\".");
 
+            // Sem telas, as tools de IA ainda podem estar abertas a todos.
+            if ($filter === '' && ($ungatedTools = $this->ungatedAiTools()) !== []) {
+                return $this->report([], [], $ungatedTools);
+            }
+
             return self::SUCCESS;
         }
 
@@ -85,8 +91,9 @@ class CheckCommand extends Command
 
         // Uma varredura do projeto: so quando nao ha filtro de tela.
         $unknownKeys = $filter === '' ? $this->unknownPermissionKeys($screens) : [];
+        $ungatedTools = $filter === '' ? $this->ungatedAiTools() : [];
 
-        return $this->report($results, $unknownKeys);
+        return $this->report($results, $unknownKeys, $ungatedTools);
     }
 
     /**
@@ -158,12 +165,12 @@ class CheckCommand extends Command
     /**
      * @param  list<array{model: string, route: string, status: string, findings: list<array{level: string, message: string}>}>  $results
      */
-    private function report(array $results, array $unknownKeys = []): int
+    private function report(array $results, array $unknownKeys = [], array $ungatedTools = []): int
     {
         $counts = array_count_values(array_column($results, 'status')) + ['ok' => 0, 'warning' => 0, 'error' => 0];
 
         if ($this->option('json')) {
-            $this->line((string) json_encode(['screens' => $results, 'unknown_permission_keys' => $unknownKeys, 'summary' => $counts], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $this->line((string) json_encode(['screens' => $results, 'unknown_permission_keys' => $unknownKeys, 'ungated_ai_tools' => $ungatedTools, 'summary' => $counts], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
             return $counts['error'] > 0 ? self::FAILURE : self::SUCCESS;
         }
@@ -187,6 +194,15 @@ class CheckCommand extends Command
             $this->line('    <fg=gray>register them (ptah:permission:sync, /ptah-pages) or fix the key</>');
         }
 
+        if ($ungatedTools !== []) {
+            $this->newLine();
+            $this->line('<fg=yellow>⚠</> AI tools with no permission gate — offered to every chat user:');
+            foreach ($ungatedTools as $tool) {
+                $this->line("    {$tool}");
+            }
+            $this->line('    <fg=gray>implement Ptah\Contracts\AiToolAuthorizable (return null from permission() if it is meant to be open)</>');
+        }
+
         $this->newLine();
         $this->line(count($results)." screens: {$counts['ok']} ok, {$counts['warning']} with warnings, {$counts['error']} failing"
             .($this->option('write') ? ' (write round-trip rolled back)' : ''));
@@ -208,6 +224,13 @@ class CheckCommand extends Command
         try {
             $service = app(PermissionService::class);
             $used = PermissionKeyScanner::scan([app_path(), resource_path('views'), base_path('routes')], base_path());
+
+            foreach ($this->aiToolClasses() as $tool) {
+                $permission = is_subclass_of($tool, AiToolAuthorizable::class) ? $tool::permission() : null;
+                if (is_array($permission) && is_string($permission[0] ?? null) && $permission[0] !== '') {
+                    $used[] = ['key' => $permission[0], 'file' => 'ai tool '.$tool, 'line' => 0];
+                }
+            }
 
             foreach ($screens as $screen) {
                 $key = $screen->config['permissions']['permissionIdentifier'] ?? null;
@@ -233,6 +256,35 @@ class CheckCommand extends Command
             array_keys($unknown),
             $unknown
         );
+    }
+
+    /**
+     * Host AI tools (ptah.ai_agent.tools) that say nothing about who may use
+     * them. The built-ins declare themselves open; they are not listed.
+     *
+     * @return list<string>
+     */
+    private function ungatedAiTools(): array
+    {
+        return array_values(array_filter(
+            $this->aiToolClasses(),
+            fn (string $class) => ! is_subclass_of($class, AiToolAuthorizable::class)
+        ));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function aiToolClasses(): array
+    {
+        if (! config('ptah.modules.ai_agent')) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(fn ($t) => is_object($t) ? $t::class : $t, (array) config('ptah.ai_agent.tools', [])),
+            fn ($t) => is_string($t) && class_exists($t)
+        ));
     }
 
     private static function matches(string $model, string $filter): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Services\AI\Tools;
 
+use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Contracts\AiToolInterface;
 
 /**
@@ -13,8 +14,14 @@ use Ptah\Contracts\AiToolInterface;
  * and as a useful default capability — the assistant can answer questions
  * like "what system is this?" or "what Laravel version is running?" out of the box.
  */
-class GetSystemInfoTool implements AiToolInterface
+class GetSystemInfoTool implements AiToolAuthorizable, AiToolInterface
 {
+    /** Open to anyone who can use the chat: it reads nothing that is not already on screen. */
+    public static function permission(): ?array
+    {
+        return null;
+    }
+
     public function name(): string
     {
         return 'getSystemInfo';

@@ -6,11 +6,14 @@ namespace Ptah\Services\AI;
 
 use Illuminate\Support\Facades\Log;
 use Prism\Prism\Tool;
+use Ptah\Contracts\AiToolAuthorizable;
+use Ptah\Contracts\AiToolContextAware;
 use Ptah\Contracts\AiToolInterface;
 use Ptah\Contracts\AiToolSchemaInterface;
 use Ptah\Services\AI\Tools\FindMenuTool;
 use Ptah\Services\AI\Tools\GetCurrentDateTimeTool;
 use Ptah\Services\AI\Tools\GetSystemInfoTool;
+use Ptah\Support\AI\AiToolContext;
 use Throwable;
 
 /**
@@ -54,6 +57,13 @@ use Throwable;
  * A tool that also implements AiToolSchemaInterface is not constructed even
  * then: its schema is read statically and the object is built only if the model
  * actually calls it.
+ *
+ * ── Who may use a tool ─────────────────────────────────────────────────────
+ *
+ * A tool that implements AiToolAuthorizable is left out of the list when the
+ * user lacks its permission, and checked again when the model calls it. A tool
+ * that implements AiToolContextAware receives the user and active company
+ * right before `execute()`.
  */
 class AiToolRegistry
 {
@@ -65,6 +75,9 @@ class AiToolRegistry
 
     /** Memoised result of getPrismTools(). @var Tool[]|null */
     private ?array $prismTools = null;
+
+    /** User and company the memo was built for — the list depends on them. */
+    private ?string $prismFor = null;
 
     /**
      * The registry the service provider binds: the two built-ins plus whatever
@@ -155,25 +168,64 @@ class AiToolRegistry
      */
     public function getPrismTools(): array
     {
-        if ($this->prismTools !== null) {
+        $context = AiToolContext::current();
+        $for = $context->userId().'|'.$context->companyId;
+
+        if ($this->prismTools !== null && $this->prismFor === $for) {
             return $this->prismTools;
         }
 
         $prism = [];
 
         foreach ($this->tools as $tool) {
-            $prism[] = $this->convertToPrismTool($tool);
+            if (self::allows($tool::class, $context)) {
+                $prism[] = $this->convertToPrismTool($tool);
+            }
         }
 
         foreach ($this->pending as $class) {
-            $tool = $this->describe($class);
+            $tool = $this->describe($class, $context);
 
             if ($tool !== null) {
                 $prism[] = $tool;
             }
         }
 
+        $this->prismFor = $for;
+
         return $this->prismTools = $prism;
+    }
+
+    /**
+     * Whether the context's user may use the tool class. A tool that does not
+     * implement AiToolAuthorizable is open (the pre-1.40 behaviour, reported
+     * by `ptah:check`).
+     */
+    public static function allows(string $class, AiToolContext $context): bool
+    {
+        if (! is_subclass_of($class, AiToolAuthorizable::class)) {
+            return true;
+        }
+
+        $permission = $class::permission();
+        if ($permission === null) {
+            return true;
+        }
+
+        $key = (string) ($permission[0] ?? '');
+        $action = (string) ($permission[1] ?? 'read');
+
+        if ($key === '') {
+            return false;
+        }
+
+        // Sem o modulo de permissoes nao ha chave para conferir: a tool com
+        // permissao declarada ainda exige alguem autenticado.
+        if (! config('ptah.modules.permissions')) {
+            return $context->user !== null;
+        }
+
+        return ptah_can($key, $action, $context->user, $context->companyId > 0 ? $context->companyId : null);
     }
 
     /**
@@ -186,7 +238,7 @@ class AiToolRegistry
      * its static schema is malformed — ends here, as a log line and one missing
      * capability.
      */
-    private function describe(string $class): ?Tool
+    private function describe(string $class, AiToolContext $context): ?Tool
     {
         try {
             if (! class_exists($class)) {
@@ -202,6 +254,12 @@ class AiToolRegistry
             if (! is_subclass_of($class, AiToolInterface::class)) {
                 Log::warning('ptah: tool de IA nao implementa AiToolInterface.', ['tool' => $class]);
 
+                return null;
+            }
+
+            // Before constructing anything: a tool this user may not use is not
+            // described to the model at all.
+            if (! self::allows($class, $context)) {
                 return null;
             }
 
@@ -242,6 +300,7 @@ class AiToolRegistry
             $tool->description(),
             $tool->parameters(),
             static fn (): AiToolInterface => $tool,
+            $tool::class,
         );
     }
 
@@ -270,6 +329,7 @@ class AiToolRegistry
             // Resolved on the model's first call, not before. A failure here is
             // an error the model reads, not an exception that ends the turn.
             static fn (): AiToolInterface => app($class),
+            $class,
         );
     }
 
@@ -277,7 +337,7 @@ class AiToolRegistry
      * @param  array<string, mixed>  $schema
      * @param  callable(): AiToolInterface  $resolve
      */
-    private function buildPrismTool(string $name, string $description, array $schema, callable $resolve): Tool
+    private function buildPrismTool(string $name, string $description, array $schema, callable $resolve, string $class): Tool
     {
         $props = $schema['properties'] ?? [];
         $required = $schema['required'] ?? [];
@@ -304,9 +364,25 @@ class AiToolRegistry
 
         // PHP 8 variadic spread preserves named argument keys:
         // $fn(...['status' => 'active']) → $args = ['status' => 'active']
-        return $prismTool->using(static function (mixed ...$args) use ($name, $resolve): string {
+        return $prismTool->using(static function (mixed ...$args) use ($name, $resolve, $class): string {
+            // De novo na chamada: a lista foi montada antes, e a sessao pode
+            // ter mudado de usuario ou de empresa desde entao.
+            $context = AiToolContext::current();
+            if (! self::allows($class, $context)) {
+                return (string) json_encode([
+                    'error' => true,
+                    'code' => 'forbidden',
+                    'message' => trans('ptah::ui.ai_tool_forbidden', ['tool' => $name]),
+                ]);
+            }
+
             try {
-                return (string) json_encode($resolve()->execute($args));
+                $tool = $resolve();
+                if ($tool instanceof AiToolContextAware) {
+                    $tool->withContext($context);
+                }
+
+                return (string) json_encode($tool->execute($args));
             } catch (Throwable $e) {
                 Log::error('ptah: tool de IA falhou durante a execucao.', [
                     'tool' => $name,

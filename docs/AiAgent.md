@@ -26,6 +26,7 @@
   - [Built-in tools](#built-in-tools)
   - [When your tools are actually built](#when-your-tools-are-actually-built)
   - [Describing a tool without building it (`AiToolSchemaInterface`)](#describing-a-tool-without-building-it-aitoolschemainterface)
+  - [Who may use a tool (`AiToolAuthorizable`, `AiToolContextAware`)](#who-may-use-a-tool-aitoolauthorizable-aitoolcontextaware)
 - [Rate Limiting](#rate-limiting)
 - [Conversation History](#conversation-history)
 - [Extending with Custom Providers](#extending-with-custom-providers)
@@ -734,6 +735,55 @@ Notes:
   graph, and when you have many tools. For a handful of cheap tools it buys
   little.
 
+### Who may use a tool (`AiToolAuthorizable`, `AiToolContextAware`)
+
+A tool that says nothing about permissions is offered to **every** chat user,
+and it runs its query with no idea who is asking. In a real ERP that meant an
+attendant asking "who owes us money?" and getting the whole receivables ledger,
+summed across every branch. Declare the permission:
+
+```php
+use Ptah\Contracts\AiToolAuthorizable;
+use Ptah\Contracts\AiToolContextAware;
+use Ptah\Support\AI\AiToolContext;
+
+final class ListReceivablesTool implements AiToolInterface, AiToolAuthorizable, AiToolContextAware
+{
+    private AiToolContext $context;
+
+    public static function permission(): ?array
+    {
+        return ['financial.receivables', 'read']; // action defaults to 'read'
+    }
+
+    public function withContext(AiToolContext $context): void
+    {
+        $this->context = $context; // ->user, ->companyId
+    }
+
+    public function execute(array $arguments): array
+    {
+        return $this->receivables->openFor($this->context->companyId);
+    }
+}
+```
+
+- **Not offered** — the registry leaves the tool out of the list sent to the
+  model when `ptah_can(key, action)` is false for the user. A tool that is
+  offered and then refused invites the model to try another one.
+- **Checked again on the call** — a refused call returns
+  `{"error": true, "code": "forbidden"}` to the model, which is told to say so
+  instead of trying another tool.
+- `permission()` is static, so the decision is made before the tool is built.
+  Return `null` to declare a tool deliberately open (the built-ins do).
+- Without the permissions module, a tool with a declared permission still
+  requires a signed-in user.
+- **Context** — `AiToolContextAware::withContext()` runs right before each
+  `execute()` with the user and the active company (`ptah_company_id()`), so
+  the tool scopes its query without reaching for `session()`.
+- `ptah:check` lists the tools in `ptah.ai_agent.tools` that implement neither
+  answer, and reports a declared key that is not a registered page object.
+
 ### Real-world example — Helpdesk stats tool
 
 This example ships with the PetPlace demo app and provides the AI agent with live data:
@@ -879,7 +929,7 @@ Refer to the [prism-php/prism documentation](https://prism.echolabs.dev) for the
 - **API keys** are stored with Laravel's `encrypted` cast — they are AES-256 encrypted using your `APP_KEY`. Never commit `.env` to version control.
 - **Access control** — the admin config screen (`/ptah-ai/models`) requires the user to pass `ptah_can('ai.config', 'read') || ptah_is_master()`. Register the `ai.config` page object in the permissions module and grant `read` on it, or ensure only master users access it.
 - **Rate limiting** — the built-in session-based rate limit protects against accidental cost spikes. For production, tune `PTAH_AI_RATE_LIMIT` to match your expected usage.
-- **Tool execution** — custom tool `execute()` methods run with the same user context as the Livewire request. Apply your own authorization checks inside `execute()` as needed.
+- **Tool execution** — a tool without `AiToolAuthorizable` is offered to every chat user. Declare its permission (see [Who may use a tool](#who-may-use-a-tool-aitoolauthorizable-aitoolcontextaware)) and scope its queries to the context's company; `ptah:check` lists the tools that do neither.
 - **Attachments** are validated on the server, never on the client: extension against a provider-narrowed allowlist, size against `max_size_kb`, count against `max_files`. `$wire.upload` is a public call, so the client-side filter is a convenience only. A refused file is deleted from the temporary disk immediately rather than left for Livewire's scheduled cleanup, and the files for a sent message are deleted once read.
 - **Assistant answers are untrusted text.** They are rendered as Markdown with HTML escaped rather than executed, and with `javascript:`, `data:` and `vbscript:` link schemes refused — escaping alone does not close that, because the scheme sits inside an attribute value. If you render conversation content anywhere else, use `Ptah\Support\AI\ChatMarkdown::render()` rather than your own converter, and never print it raw.
 - **An attachment that could not be delivered adds a note to the prompt**, so the model says so instead of answering about content it never received. That matters most on a provider that silently drops the part — which is why the widget refuses the file up front instead.

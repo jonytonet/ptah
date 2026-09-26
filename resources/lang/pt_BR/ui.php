@@ -1669,6 +1669,7 @@ return [
     // nao pode ser construida ou estoura, para o assistente poder dizer
     // que aquela capacidade caiu em vez de o turno morrer.
     'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
+    'ai_tool_forbidden' => 'Sem permissão para usar :tool. Diga isso ao usuário em vez de tentar outra tool.',
     'ai_widget_hide_launcher' => 'Ocultar o botão do assistente',
     'ai_widget_show_launcher' => 'Mostrar o assistente',
     'ai_widget_expand' => 'Expandir para tela cheia',
