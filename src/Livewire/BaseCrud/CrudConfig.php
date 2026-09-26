@@ -86,6 +86,10 @@ class CrudConfig extends Component
 
     public string $displayName = '';  // name displayed in modal and toolbar
 
+    public string $displayNameSingular = '';  // one record, in the modal title
+
+    public string $displayNameGender = 'm';  // m | f — "Novo" / "Nova"
+
     // ── Features (1.38.0): import, history, attachments, kanban, calendar ──
     // Were reachable only through `ptah:config --set`; a user of the visual
     // editor could not find them at all.
@@ -407,6 +411,8 @@ class CrudConfig extends Component
 
         // General
         $this->displayName = $cfg['displayName'] ?? '';
+        $this->displayNameSingular = (string) ($cfg['displayNameSingular'] ?? '');
+        $this->displayNameGender = ($cfg['displayNameGender'] ?? 'm') === 'f' ? 'f' : 'm';
         $this->featureImport = ! empty($cfg['importConfig']['enabled']);
         $this->featureImportMode = ($cfg['importConfig']['mode'] ?? 'create') === 'upsert' ? 'upsert' : 'create';
         $this->featureImportKey = (string) ($cfg['importConfig']['key'] ?? '');
@@ -1131,6 +1137,8 @@ class CrudConfig extends Component
     {
         return array_merge($existing, [
             'displayName' => $this->displayName,
+            'displayNameSingular' => trim($this->displayNameSingular) !== '' ? trim($this->displayNameSingular) : null,
+            'displayNameGender' => $this->displayNameGender === 'f' ? 'f' : 'm',
             'importConfig' => array_merge($existing['importConfig'] ?? [], [
                 'enabled' => $this->featureImport,
                 'mode' => $this->featureImportMode === 'upsert' ? 'upsert' : 'create',

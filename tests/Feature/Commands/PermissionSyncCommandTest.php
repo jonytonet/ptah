@@ -69,6 +69,22 @@ class PermissionSyncCommandTest extends TestCase
     }
 
     #[Test]
+    public function the_fallback_label_is_a_name_never_the_model_path(): void
+    {
+        // Achado #13: o rotulo "Clients/Client" chegava ao titulo do modal.
+        CrudConfig::create([
+            'model' => 'Clients/PetOwner',
+            'route' => '',
+            'config' => ['cols' => [], 'permissions' => ['permissionIdentifier' => 'clients.owners']],
+        ]);
+
+        $this->artisan('ptah:permission:sync')->assertExitCode(0);
+
+        $this->assertDatabaseHas('ptah_pages', ['slug' => 'Clients/PetOwner', 'name' => 'Pet Owner']);
+        $this->assertDatabaseHas('ptah_page_objects', ['obj_key' => 'clients.owners', 'obj_label' => 'Pet Owner']);
+    }
+
+    #[Test]
     public function it_falls_back_to_the_legacy_identifier_key(): void
     {
         $this->seedConfig('Widget', '', ['permissions' => ['identifier' => 'pageWidgetLegacy']]);

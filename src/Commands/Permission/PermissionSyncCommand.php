@@ -6,6 +6,7 @@ namespace Ptah\Commands\Permission;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
@@ -110,7 +111,9 @@ class PermissionSyncCommand extends Command
 
                 $checked++;
                 $canonical = ModelKey::canonical((string) $row->model);
-                $label = ($config['displayName'] ?? '') ?: $canonical;
+                // Nunca o caminho do model como rotulo: ele aparece na tela de
+                // permissoes e, ate a 1.39, no titulo do modal.
+                $label = ($config['displayName'] ?? '') ?: Str::headline(class_basename(str_replace('/', '\\', $canonical)));
 
                 if ($dryRun) {
                     $pageExists = PtahPage::where('slug', $canonical)->exists();

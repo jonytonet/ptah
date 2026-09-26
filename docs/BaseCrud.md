@@ -2298,6 +2298,28 @@ $this->crudConfig['displayName']
 
 Leaving `displayName` empty uses the class name (unchanged previous behaviour).
 
+### Modal title (one record)
+
+The create/edit modal names **one** record: "New Business Partner". Set it in
+the same tab ("Name of one record" and "Title prefix") or in JSON:
+
+```json
+{ "displayName": "Contas bancárias", "displayNameSingular": "Conta bancária", "displayNameGender": "f" }
+```
+
+Fallback chain for the modal title:
+
+1. `displayNameSingular`, then `displayName`;
+2. the `obj_label` of the screen's `permissionIdentifier` — **only when no
+   other screen uses that key** and the label is not a model path (no `/`). An
+   area key shared by several screens (`financeiro`, `clientes`) carries the
+   label of whichever screen registered it first, so it never names a screen;
+3. the class name in words (`Clients/PetOwner` → "Pet Owner").
+
+`displayNameGender: "f"` switches the prefix to `modal_new_prefix_f` ("Nova" in
+pt_BR, "New" in English). `ptah:permission:sync` now labels a new page object
+with the class name in words instead of the model path.
+
 ---
 
 ## Broadcast / Real-time
