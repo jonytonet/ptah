@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.39.0] - 2026-09-25
+## [1.39.0] - 2026-09-26
 
 Twelve findings from the PetPlace test circuit, each reproduced and fixed with
 a test that fails on 1.38.0. Security first.
