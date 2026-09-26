@@ -1436,6 +1436,12 @@ return [
     'cfg_gen_display_name_ph' => 'Ex: Parceiros de Negócio',
     'cfg_gen_display_name_hint' => 'Aparece no cabeçalho do modal e na toolbar. Padrão: nome da model.',
     'cfg_gen_broadcast_off_hint' => 'Habilite para configurar o canal e o evento Echo que irá disparar a atualização automática da tabela.',
+    'cfg_gen_broadcast_type' => 'Canal',
+    'cfg_gen_broadcast_private' => 'Privado (autorizado por Broadcast::channel)',
+    'cfg_gen_broadcast_presence' => 'Presence (autorizado, sabe quem está conectado)',
+    'cfg_gen_broadcast_public' => 'Público (qualquer um com a chave assina)',
+    'cfg_gen_broadcast_per_company' => 'Um canal por empresa',
+    'cfg_gen_broadcast_public_warn' => 'Um canal público pode ser assinado por qualquer um que tenha a chave do websocket, que vai na página. Não envie dado do registro nele — só o aviso de que algo mudou.',
 
     // JOIN notice box list items
     'cfg_join_notice_phys' => '<strong>Nome Físico</strong> = o alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',

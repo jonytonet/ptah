@@ -6,7 +6,6 @@ namespace Ptah\Livewire\BaseCrud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -31,6 +30,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\BroadcastListener;
 
 /**
  * Livewire BaseCrud component.
@@ -432,15 +432,11 @@ class BaseCrud extends Component
     {
         $base = ['refreshData' => '$refresh'];
 
-        $bc = $this->crudConfig['broadcast'] ?? [];
-        if (! empty($bc['enabled'])) {
-            $baseName = class_basename(str_replace('/', '\\', $this->model));
-            // channel: page-product-observer (kebab)
-            $channel = $bc['channel'] ?? 'page-'.Str::kebab($baseName).'-observer';
-            // event: .pageProductObserver (must start with "." for private Echo events)
-            $event = $bc['event'] ?? '.page'.$baseName.'Observer';
-
-            $base["echo:{$channel},{$event}"] = 'handleBaseCrudUpdate';
+        // Publico, privado ou presence, e opcionalmente por empresa — ver
+        // BroadcastListener. Antes so existia o `echo:` publico.
+        $listener = BroadcastListener::key((array) ($this->crudConfig['broadcast'] ?? []), $this->model, $this->companyFilter);
+        if ($listener !== null) {
+            $base[$listener] = 'handleBaseCrudUpdate';
         }
 
         return $base;

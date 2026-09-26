@@ -2263,76 +2263,85 @@ Leaving `displayName` empty uses the class name (unchanged previous behaviour).
 
 ## Broadcast / Real-time
 
-BaseCrud can silently update the table via **Laravel Echo** when receiving a broadcast event, without any extra code in the parent component.
+BaseCrud refreshes itself through **Laravel Echo** when a broadcast event
+arrives — no extra code in the parent component. The event only has to say
+**"something changed"**: the screen then reloads the rows with the viewer's
+own permissions and scope.
 
 ### Activate
 
-**General** tab of the CrudConfig modal, **"Real-time (Broadcast)"** card, **Enabled** toggle.
-
-### Configuration
-
-| Field | Auto-generated default | Example for `Product` |
-|---|---|---|
-| Channel | `page-{kebab-model}-observer` | `page-product-observer` |
-| Event | `.page{Model}Observer` | `.pageProductObserver` |
-
-Both fields can be left empty to use the default, or filled when the backend Observer uses different names.
-
-### JSON key
+Gear icon → **General** → **Real-time (Broadcast)** → **Enabled**, or:
 
 ```json
 {
   "broadcast": {
     "enabled": true,
+    "type": "private",
+    "perCompany": true,
     "channel": null,
     "event": null
   }
 }
 ```
 
-`channel` and `event` `null` = use the auto-generated name based on the model.
+| Key | Default | Meaning |
+|---|---|---|
+| `type` | `public` (editor suggests `private`) | `private` / `presence` → `echo-private:` / `echo-presence:` (Echo authorises the subscription through your `Broadcast::channel()`); `public` → `echo:` |
+| `perCompany` | `false` | Appends the active company: `page-product-observer.3` — one branch's change does not refresh another's screens |
+| `channel` | `page-{kebab-model}-observer` | Channel name |
+| `event` | `.page{Model}Observer` | Event name (leading dot: no namespace) |
 
-### Auto-generated methods
+> **A public channel is readable by anyone who has the websocket key — and the
+> key ships in the page's JavaScript.** Never put record data on it. Prefer
+> `private`; on any channel, send an event with no payload (below).
+> `ptah:check` warns about screens broadcasting on a public channel.
 
-```php
-// Registered via getListeners() when broadcast.enabled = true:
-"echo:{channel},{event}" => 'handleBaseCrudUpdate'
-
-// Always registered (Livewire 4 built-in):
-"refreshData" => '$refresh'
-```
-
-`handleBaseCrudUpdate()` is an empty stub — Livewire re-renders the component automatically after the listener fires.
-
-### Backend Observer
-
-```php
-// app/Observers/ProductObserver.php
-public function created(Product $product): void
-{
-    broadcast(new PageProductObserver($product))->toOthers();
-}
-```
+### Backend: an event that carries nothing
 
 ```php
 // app/Events/PageProductObserver.php
 class PageProductObserver implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
-    public function __construct(public Product $product) {}
+    public function __construct(public int $companyId) {}
 
-    public function broadcastOn(): Channel
+    public function broadcastOn(): PrivateChannel
     {
-        return new Channel('page-product-observer');
+        // same name the screen listens on (perCompany: true → ".{companyId}")
+        return new PrivateChannel('page-product-observer.'.$this->companyId);
     }
 
     public function broadcastAs(): string
     {
         return 'pageProductObserver'; // without the dot; Echo adds it
     }
+
+    /** Only "it changed" — the screen reloads with the viewer's own permissions. */
+    public function broadcastWith(): array
+    {
+        return [];
+    }
 }
 ```
+
+```php
+// app/Observers/ProductObserver.php
+public function saved(Product $product): void
+{
+    broadcast(new PageProductObserver((int) $product->company_id))->toOthers();
+}
+```
+
+```php
+// routes/channels.php — who may listen
+Broadcast::channel('page-product-observer.{companyId}', function ($user, int $companyId) {
+    return ptah_can('pageProduct', 'read', $user, $companyId);
+});
+```
+
+`handleBaseCrudUpdate()` is an empty stub: Livewire re-renders after the
+listener fires, and the rows come from the viewer's own query.
 
 ---
 

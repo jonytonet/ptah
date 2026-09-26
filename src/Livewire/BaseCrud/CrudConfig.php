@@ -15,6 +15,7 @@ use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Notification\CrudNotificationDispatcher;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Support\BroadcastListener;
 use Ptah\Traits\SendsCrudNotifications;
 
 /**
@@ -134,6 +135,10 @@ class CrudConfig extends Component
     public string $broadcastChannel = ''; // empty = auto-generated
 
     public string $broadcastEvent = ''; // empty = auto-generated
+
+    public string $broadcastType = 'public'; // public | private | presence
+
+    public bool $broadcastPerCompany = false;
 
     // ── CRUD notifications (config-driven, see CrudNotificationDispatcher) ──
 
@@ -433,6 +438,9 @@ class CrudConfig extends Component
         $this->broadcastEnabled = (bool) ($bc['enabled'] ?? false);
         $this->broadcastChannel = $bc['channel'] ?? '';
         $this->broadcastEvent = $bc['event'] ?? '';
+        // Quem liga agora comeca no privado; quem ja tinha ligado mantem o que tinha.
+        $this->broadcastType = ! empty($bc['enabled']) ? BroadcastListener::type($bc) : 'private';
+        $this->broadcastPerCompany = ! empty($bc['perCompany']);
 
         // GroupBy
         $this->groupBy = $cfg['groupBy'] ?? '';
@@ -1185,6 +1193,8 @@ class CrudConfig extends Component
                 'enabled' => $this->broadcastEnabled,
                 'channel' => $this->broadcastChannel ?: null,
                 'event' => $this->broadcastEvent ?: null,
+                'type' => array_key_exists($this->broadcastType, BroadcastListener::TYPES) ? $this->broadcastType : 'public',
+                'perCompany' => $this->broadcastPerCompany,
             ],
             'groupBy' => $this->groupBy ?: null,
             'groupBreak' => $this->groupBreak ?: null,

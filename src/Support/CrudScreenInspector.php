@@ -75,6 +75,10 @@ final class CrudScreenInspector
             $findings[] = ['level' => 'warning', 'message' => class_basename($model).' uses RecordsHistory but table ptah_record_history does not exist — nothing is recorded; run ptah:history:install and migrate'];
         }
 
+        if (! empty($config['broadcast']['enabled']) && BroadcastListener::type((array) $config['broadcast']) === 'public') {
+            $findings[] = ['level' => 'warning', 'message' => 'broadcast on a PUBLIC channel — anyone with the websocket key (it is in the page) can subscribe; set broadcast.type to private, or send no record data on it'];
+        }
+
         $cols = is_array($config['cols'] ?? null) ? $config['cols'] : [];
         $formFields = [];
 
