@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -25,6 +26,7 @@ use Ptah\Livewire\BaseCrud\Concerns\HasCrudPreferences;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudQuery;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudRenderers;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudSearchDropdown;
+use Ptah\Models\PageObject;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
@@ -453,6 +455,41 @@ class BaseCrud extends Component
 
     // ── Render ────────────────────────────────────────────────────────────────
 
+    /**
+     * The screen's title as the USER reads it — the modal's "Novo {title}".
+     *
+     * The modal used $crudTitle, which falls back to `crud`, the model PATH:
+     * "Novo Clients/Pet" (achado #8). And an empty displayName ('' — what the
+     * editor saves for a blank field) passed `??` and showed nothing.
+     * $crudTitle itself stays as it is: it is also a DOM id and a JS argument.
+     * Order: displayNameSingular / displayName, the page object's label, the
+     * model's short name in words.
+     */
+    public function humanTitle(bool $singular = false): string
+    {
+        $cfg = $this->crudConfig;
+
+        foreach ($singular ? ['displayNameSingular', 'displayName'] : ['displayName'] as $key) {
+            if (is_string($cfg[$key] ?? null) && trim($cfg[$key]) !== '') {
+                return trim($cfg[$key]);
+            }
+        }
+
+        $objKey = $cfg['permissions']['permissionIdentifier'] ?? null;
+        if (is_string($objKey) && $objKey !== '' && config('ptah.modules.permissions')) {
+            try {
+                $label = PageObject::query()->where('obj_key', $objKey)->value('obj_label');
+                if (is_string($label) && trim($label) !== '') {
+                    return trim($label);
+                }
+            } catch (\Throwable) {
+                // Sem as tabelas do modulo, cai no nome do model.
+            }
+        }
+
+        return Str::headline(class_basename(str_replace('/', '\\', (string) ($cfg['crud'] ?? $this->model))));
+    }
+
     public function render()
     {
         $effectivePerms = $this->getEffectivePermissions();
@@ -485,6 +522,8 @@ class BaseCrud extends Component
             'crudTitle' => $this->crudConfig['displayName']
                                     ?? $this->crudConfig['crud']
                                     ?? class_basename(str_replace('/', '\\', $this->model)),
+            // Texto para o usuario (o $crudTitle acima tambem vira id/chave de JS).
+            'crudTitleSingular' => $this->humanTitle(singular: true),
             'bulkActions' => $this->crudConfig['bulkActions'] ?? [],
             'hasActiveFilters' => ! empty($this->textFilter)
                                     || $this->search !== ''
