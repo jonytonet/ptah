@@ -1156,6 +1156,8 @@ return [
     'cfg_col_align_right' => 'Direita',
     'cfg_col_cb_save' => 'Incluir no Formulário (Gravar)',
     'cfg_col_cb_required' => 'Obrigatório',
+    'cfg_col_default_value' => 'Valor padrão no Novo',
+    'cfg_tip_cols_default_value' => 'Já vem preenchido quando o usuário clica em Novo. Para booleano: 1 ou 0.',
     'cfg_col_cb_filterable' => 'Filtrável',
 
     // Aba Colunas — permissão por coluna (requer o módulo "permissions")

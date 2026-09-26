@@ -1155,6 +1155,8 @@ return [
     'cfg_col_align_right' => 'Right',
     'cfg_col_cb_save' => 'Include in Form (Save)',
     'cfg_col_cb_required' => 'Required',
+    'cfg_col_default_value' => 'Default value on New',
+    'cfg_tip_cols_default_value' => 'Pre-filled when the user clicks New. For a boolean: 1 or 0.',
     'cfg_col_cb_filterable' => 'Filterable',
 
     // Columns tab — column-level permission (requires the "permissions" module)

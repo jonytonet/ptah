@@ -464,6 +464,11 @@
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
                                     </div>
+                                    <div class="col-span-2">
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_default_value') }}</label>
+                                        <input type="text" wire:model="formDataField.colsDefaultValue"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_default_value') }}" class="cfg-input" />
+                                    </div>
                                     {{-- Column-level visibility permission (only when the "permissions" module is on) --}}
                                     @if (config('ptah.modules.permissions'))
                                     @php

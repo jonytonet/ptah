@@ -39,9 +39,6 @@ use RuntimeException;
  *
  * The rest, grouped by what each needs:
  *
- *   colsDefaultValue      no default-value mechanism exists anywhere — no
- *                         reader, nothing in the visual editor, nothing in the
- *                         form. Implementing the pre-fill is a feature.
  *   colsValidation        the runtime key is `colsValidations`, PLURAL. Close
  *   colsValidationMessage enough to look right in a diff, and the message has
  *                         no reader at all.
@@ -68,7 +65,6 @@ class WizardKeyReachabilityTest extends TestCase
      * away — which is the thing this test exists to stop.
      */
     private const EXEMPT = [
-        'colsDefaultValue',
         'colsRelationDisplayColumn',
         'colsRelationJoinColumn',
         'colsRelationTable',
