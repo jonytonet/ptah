@@ -118,6 +118,38 @@ class UpgradeCheckCommandTest extends TestCase
     }
 
     #[Test]
+    public function a_key_the_package_code_reads_is_not_called_dead(): void
+    {
+        // Achado #6: auth.route_prefix e lida em routes/ptah-auth.php; o
+        // conselho de remover movia o login do staff para /login.
+        $this->publishConfig(function (array &$c) {
+            $c['auth']['route_prefix'] = 'erp';
+            $c['permissions']['some_key_nobody_reads'] = true;
+        });
+
+        $messages = implode("\n", array_column($this->checks('config'), 'message'));
+
+        $this->assertStringNotContainsString('auth.route_prefix', $messages);
+        $this->assertStringContainsString('permissions.some_key_nobody_reads', $messages, 'A ancora: uma chave morta de verdade continua listada.');
+    }
+
+    #[Test]
+    public function an_intentional_override_is_information_not_an_action(): void
+    {
+        $vendor = $this->tmp.'/resources/views/vendor/ptah/livewire/auth';
+        $this->files->ensureDirectoryExists($vendor);
+        $this->files->put($vendor.'/dashboard.blade.php', "<div>meu dashboard</div>\n");
+        $this->files->put($this->tmp.'/resources/views/vendor/ptah/livewire/auth/profile.blade.php', "{{-- ptah:intentional-override --}}\n<div>meu perfil</div>\n");
+
+        config(['ptah.intentional_overrides' => ['livewire/auth/dashboard.blade.php']]);
+
+        $views = $this->checks('views');
+
+        $this->assertSame([], array_values(array_filter($views, fn ($f) => $f['level'] === 'warn')));
+        $this->assertStringContainsString('2 intentional override(s)', implode("\n", array_column($views, 'message')));
+    }
+
+    #[Test]
     public function a_published_stub_that_differs_is_named(): void
     {
         $this->files->ensureDirectoryExists($this->tmp.'/stubs/ptah');

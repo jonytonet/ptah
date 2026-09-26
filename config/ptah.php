@@ -114,6 +114,14 @@ return [
     'mcp_tools' => env('PTAH_MCP_TOOLS', true),
 
     /*
+    | Views you published ON PURPOSE (relative to resources/views/vendor/ptah),
+    | e.g. 'livewire/auth/dashboard.blade.php'. `ptah:upgrade-check` lists them
+    | as information instead of an action. A view can also say so itself with
+    | {{-- ptah:intentional-override --}}.
+    */
+    'intentional_overrides' => [],
+
+    /*
     |--------------------------------------------------------------------------
     | Record attachments (Ptah\Traits\HasAttachments)
     |--------------------------------------------------------------------------
@@ -459,6 +467,9 @@ return [
         'two_factor' => true,
         'remember_me' => true,
         'session_protection' => true,
+        // Prefix of the auth routes (/login, /logout…) — e.g. 'erp' → /erp/login,
+        // for a host whose storefront already owns /login.
+        'route_prefix' => env('PTAH_AUTH_ROUTE_PREFIX', ''),
     ],
 
     /*
