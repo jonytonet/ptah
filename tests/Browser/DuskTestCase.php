@@ -174,6 +174,10 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
             return view('dusk-other');
         });
 
+        $router->get('/dusk-test/header', function () {
+            return view('dusk-header');
+        });
+
         $router->get('/dusk-test/mask', function () {
             return view('dusk-mask', ['model' => DuskMaskStub::class]);
         });
