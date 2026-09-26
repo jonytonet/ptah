@@ -152,13 +152,25 @@ final class CrudScreenInspector
 
         // Uma coluna NOT NULL sem default que o formulario nao preenche faz todo
         // "Novo" falhar no banco — o erro so aparece quando alguem tenta salvar.
-        if ($formFields !== []) {
+        // Sem "Novo" nao ha o que falhar (o registro nasce por outro fluxo), e o
+        // que uma formula do beforeCreate preenche esta preenchido: os dois
+        // geravam 41 falsos avisos em 111 telas no PetPlace (achado #5).
+        $canCreate = ! in_array($config['permissions']['showCreateButton'] ?? true, [false, 0, '0', 'false', 'N'], true);
+        [$hookFills, $classHook] = self::beforeCreateFills($config);
+
+        if ($formFields !== [] && $canCreate) {
             foreach ($columns as $name => $column) {
-                if (in_array($name, self::MANAGED, true) || in_array($name, $formFields, true)) {
+                if (in_array($name, self::MANAGED, true) || in_array($name, $formFields, true) || in_array($name, $hookFills, true)) {
                     continue;
                 }
 
                 if (($column['nullable'] ?? true) || ($column['default'] ?? null) !== null || ($column['auto_increment'] ?? false)) {
+                    continue;
+                }
+
+                if ($classHook !== null) {
+                    $findings[] = ['level' => 'info', 'message' => "column \"{$name}\" is NOT NULL without a default and not in the form — confirm the beforeCreate hook {$classHook} fills it"];
+
                     continue;
                 }
 
@@ -281,6 +293,39 @@ final class CrudScreenInspector
         $message = trim((string) preg_replace('/\s+/', ' ', $message));
 
         return mb_strlen($message) > 300 ? mb_substr($message, 0, 300).'…' : $message;
+    }
+
+    /**
+     * What the beforeCreate hook fills, as far as the config says: the keys of
+     * an inline `merge(data, {'field': …})`, and the class hook's name when it
+     * is one (its body is not readable from here).
+     *
+     * @param  array<string, mixed>  $config
+     * @return array{0: list<string>, 1: string|null}
+     */
+    private static function beforeCreateFills(array $config): array
+    {
+        $hook = $config['lifecycleHooks']['beforeCreate'] ?? null;
+        if (is_array($hook)) {
+            $hook = $hook['handler'] ?? $hook['code'] ?? null;
+        }
+        if (! is_string($hook) || trim($hook) === '') {
+            return [[], null];
+        }
+
+        if (str_starts_with(trim($hook), '@')) {
+            return [[], trim($hook)];
+        }
+
+        $fields = [];
+        if (preg_match_all('/merge\s*\(\s*data\s*,\s*\{(.*?)\}\s*\)/s', $hook, $merges) > 0) {
+            foreach ($merges[1] as $body) {
+                preg_match_all('/[\'"]([A-Za-z_][A-Za-z0-9_]*)[\'"]\s*:/', $body, $keys);
+                array_push($fields, ...$keys[1]);
+            }
+        }
+
+        return [array_values(array_unique($fields)), null];
     }
 
     private static function isVirtualAttribute(Model $model, string $field): bool

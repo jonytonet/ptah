@@ -174,7 +174,7 @@ class CheckCommand extends Command
             $this->line($mark[$r['status']].' '.$r['model'].($r['route'] !== '' ? "  [{$r['route']}]" : ''));
 
             foreach ($r['findings'] as $f) {
-                $this->line('    '.($f['level'] === 'error' ? 'error' : 'warn ').'  '.$f['message']);
+                $this->line('    '.(['error' => 'error', 'warning' => 'warn '][$f['level']] ?? 'info ').'  '.$f['message']);
             }
         }
 
