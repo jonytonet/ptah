@@ -6,11 +6,14 @@ namespace Ptah\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
+use Ptah\Services\Permission\PermissionService;
 use Ptah\Support\CrudScreenInspector;
+use Ptah\Support\PermissionKeyScanner;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 /**
@@ -80,7 +83,10 @@ class CheckCommand extends Command
 
         $results = $screens->map(fn (CrudConfig $c) => $this->checkScreen($c))->all();
 
-        return $this->report($results);
+        // Uma varredura do projeto: so quando nao ha filtro de tela.
+        $unknownKeys = $filter === '' ? $this->unknownPermissionKeys($screens) : [];
+
+        return $this->report($results, $unknownKeys);
     }
 
     /**
@@ -152,12 +158,12 @@ class CheckCommand extends Command
     /**
      * @param  list<array{model: string, route: string, status: string, findings: list<array{level: string, message: string}>}>  $results
      */
-    private function report(array $results): int
+    private function report(array $results, array $unknownKeys = []): int
     {
         $counts = array_count_values(array_column($results, 'status')) + ['ok' => 0, 'warning' => 0, 'error' => 0];
 
         if ($this->option('json')) {
-            $this->line((string) json_encode(['screens' => $results, 'summary' => $counts], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $this->line((string) json_encode(['screens' => $results, 'unknown_permission_keys' => $unknownKeys, 'summary' => $counts], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
             return $counts['error'] > 0 ? self::FAILURE : self::SUCCESS;
         }
@@ -172,11 +178,61 @@ class CheckCommand extends Command
             }
         }
 
+        if ($unknownKeys !== []) {
+            $this->newLine();
+            $this->line('<fg=yellow>⚠</> Permission keys that are not registered page objects — denied to every user but master:');
+            foreach ($unknownKeys as $k) {
+                $this->line("    {$k['key']}  <fg=gray>{$k['where']}</>");
+            }
+            $this->line('    <fg=gray>register them (ptah:permission:sync, /ptah-pages) or fix the key</>');
+        }
+
         $this->newLine();
         $this->line(count($results)." screens: {$counts['ok']} ok, {$counts['warning']} with warnings, {$counts['error']} failing"
             .($this->option('write') ? ' (write round-trip rolled back)' : ''));
 
         return $counts['error'] > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Keys the code and the screens ask about that no active page object has.
+     *
+     * @return list<array{key: string, where: string}>
+     */
+    private function unknownPermissionKeys(Collection $screens): array
+    {
+        if (! config('ptah.modules.permissions')) {
+            return [];
+        }
+
+        try {
+            $service = app(PermissionService::class);
+            $used = PermissionKeyScanner::scan([app_path(), resource_path('views'), base_path('routes')], base_path());
+
+            foreach ($screens as $screen) {
+                $key = $screen->config['permissions']['permissionIdentifier'] ?? null;
+                if (is_string($key) && $key !== '') {
+                    $used[] = ['key' => $key, 'file' => 'crud_config '.$screen->model, 'line' => 0];
+                }
+            }
+
+            $unknown = [];
+            foreach ($used as $u) {
+                if (! $service->isKnownKey($u['key'])) {
+                    $unknown[$u['key']][] = $u['line'] > 0 ? "{$u['file']}:{$u['line']}" : $u['file'];
+                }
+            }
+        } catch (\Throwable) {
+            return [];
+        }
+
+        ksort($unknown);
+
+        return array_map(
+            fn (string $key, array $where) => ['key' => $key, 'where' => implode(', ', array_slice(array_unique($where), 0, 3)).(count(array_unique($where)) > 3 ? ' …' : '')],
+            array_keys($unknown),
+            $unknown
+        );
     }
 
     private static function matches(string $model, string $filter): bool
