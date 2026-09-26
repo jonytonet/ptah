@@ -213,6 +213,7 @@ return [
     */
     'modal_edit_prefix' => 'Editar',
     'modal_new_prefix' => 'Novo',
+    'modal_new_prefix_f' => 'Nova',
     'modal_edit_subtitle' => 'Altere os campos e salve',
     'modal_create_subtitle' => 'Preencha os campos abaixo',
     'select_placeholder' => 'Selecione...',
@@ -1568,6 +1569,11 @@ return [
     'cfg_gen_link_linha' => 'Link da Linha (colsLinkLinha)',
     'cfg_gen_broadcast_desc' => 'Atualiza a tabela silenciosamente quando um evento Echo é recebido.',
     'cfg_gen_display_name' => 'Nome de Exibição',
+    'cfg_gen_display_name_singular' => 'Nome de um registro',
+    'cfg_gen_display_name_singular_ph' => 'Ex: Conta bancária',
+    'cfg_gen_display_name_gender' => 'Prefixo do título',
+    'cfg_tip_gen_display_name_singular' => 'Usado no título do modal ("Nova conta bancária"). Sem ele, usa o nome de exibição e depois o nome do model.',
+    'cfg_tip_gen_display_name_gender' => 'Gênero do nome, para o título concordar: Novo cliente / Nova conta bancária.',
     'cfg_gen_table_class' => 'Classe da Tabela',
     'cfg_gen_thead_class' => 'Classe do Thead',
     'cfg_gen_compact' => 'Modo Compacto',
@@ -1663,6 +1669,7 @@ return [
     // nao pode ser construida ou estoura, para o assistente poder dizer
     // que aquela capacidade caiu em vez de o turno morrer.
     'ai_tool_failed' => 'A ferramenta :tool esta indisponivel neste momento.',
+    'ai_tool_forbidden' => 'Sem permissão para usar :tool. Diga isso ao usuário em vez de tentar outra tool.',
     'ai_widget_hide_launcher' => 'Ocultar o botão do assistente',
     'ai_widget_show_launcher' => 'Mostrar o assistente',
     'ai_widget_expand' => 'Expandir para tela cheia',

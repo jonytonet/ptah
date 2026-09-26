@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Services\AI\Tools;
 
 use Carbon\Carbon;
+use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Contracts\AiToolInterface;
 
 /**
@@ -13,8 +14,14 @@ use Ptah\Contracts\AiToolInterface;
  * Useful for grounding the assistant in the present — LLMs have a knowledge
  * cut-off date and may not know the current date without a tool like this.
  */
-class GetCurrentDateTimeTool implements AiToolInterface
+class GetCurrentDateTimeTool implements AiToolAuthorizable, AiToolInterface
 {
+    /** Open to anyone who can use the chat: it reads nothing that is not already on screen. */
+    public static function permission(): ?array
+    {
+        return null;
+    }
+
     public function name(): string
     {
         return 'getCurrentDateTime';

@@ -26,6 +26,7 @@ use Ptah\Livewire\BaseCrud\Concerns\HasCrudPreferences;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudQuery;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudRenderers;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudSearchDropdown;
+use Ptah\Models\CrudConfig as CrudConfigModel;
 use Ptah\Models\PageObject;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
@@ -475,12 +476,17 @@ class BaseCrud extends Component
             }
         }
 
+        // O rotulo da chave so nomeia a tela quando a chave e SO dela: uma chave
+        // de area (`financeiro`, `clientes`) e compartilhada por varias telas e
+        // leva o rotulo de quem a registrou primeiro — "Novo Clients/Client" na
+        // tela de Pets (achado #13 do PetPlace). Rotulo com "/" e caminho de
+        // model, nunca nome.
         $objKey = $cfg['permissions']['permissionIdentifier'] ?? null;
         if (is_string($objKey) && $objKey !== '' && config('ptah.modules.permissions')) {
             try {
-                $label = PageObject::query()->where('obj_key', $objKey)->value('obj_label');
-                if (is_string($label) && trim($label) !== '') {
-                    return trim($label);
+                $label = trim((string) PageObject::query()->where('obj_key', $objKey)->value('obj_label'));
+                if ($label !== '' && ! str_contains($label, '/') && $this->permissionKeyIsExclusive($objKey)) {
+                    return $label;
                 }
             } catch (\Throwable) {
                 // Sem as tabelas do modulo, cai no nome do model.
@@ -488,6 +494,34 @@ class BaseCrud extends Component
         }
 
         return Str::headline(class_basename(str_replace('/', '\\', (string) ($cfg['crud'] ?? $this->model))));
+    }
+
+    /**
+     * Whether exactly one screen config uses this permission key.
+     */
+    private function permissionKeyIsExclusive(string $objKey): bool
+    {
+        $screens = 0;
+
+        foreach (CrudConfigModel::query()->pluck('config') as $config) {
+            $config = is_array($config) ? $config : (array) json_decode((string) $config, true);
+            if (($config['permissions']['permissionIdentifier'] ?? null) === $objKey && ++$screens > 1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * "Novo"/"Nova" by `displayNameGender` — pt_BR needs the article to agree
+     * with the noun ("Nova conta bancaria").
+     */
+    public function modalNewPrefix(): string
+    {
+        return ($this->crudConfig['displayNameGender'] ?? 'm') === 'f'
+            ? __('ptah::ui.modal_new_prefix_f')
+            : __('ptah::ui.modal_new_prefix');
     }
 
     public function render()

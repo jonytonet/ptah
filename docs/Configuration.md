@@ -2630,6 +2630,7 @@ ignored by the screen.
 | Path | Type | Default | Description |
 |------|------|---------|-------------|
 | `displayName` | string | `class_basename($model)` | Screen title |
+| `displayNameSingular` / `displayNameGender` | string / `m`\|`f` | — / `m` | Modal title for one record; `f` → "Nova" (BaseCrud.md § Modal title) |
 | `companyField` | string | `'company_id'` | Column for the multi-tenant filter |
 | `quickDateColumn` | string | `'created_at'` | Column the quick date filter uses |
 | `tableClass` / `theadClass` | string | `''` | Extra CSS classes |

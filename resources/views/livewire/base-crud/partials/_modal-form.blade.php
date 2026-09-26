@@ -48,7 +48,7 @@
     "
 >
     <x-forge-modal
-        :title="($editingId ? __('ptah::ui.modal_edit_prefix') : __('ptah::ui.modal_new_prefix')) . ' ' . $crudTitleSingular"
+        :title="($editingId ? __('ptah::ui.modal_edit_prefix') : $this->modalNewPrefix()) . ' ' . $crudTitleSingular"
         :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
         size="2xl"
     >

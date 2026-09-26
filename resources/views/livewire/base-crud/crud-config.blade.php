@@ -2568,6 +2568,20 @@
                                         __('ptah::ui.cfg_gen_display_name_hint') }}</p>
                                 </div>
                                 <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_display_name_singular') }}</label>
+                                    <input type="text" wire:model="displayNameSingular"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_display_name_singular') }}"
+                                        placeholder="{{ __('ptah::ui.cfg_gen_display_name_singular_ph') }}" class="cfg-input" />
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_display_name_gender') }}</label>
+                                    <select wire:model="displayNameGender" class="cfg-input"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_display_name_gender') }}">
+                                        <option value="m">{{ __('ptah::ui.modal_new_prefix') }} …</option>
+                                        <option value="f">{{ __('ptah::ui.modal_new_prefix_f') }} …</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_link_linha') }}</label>
                                     <input type="text" wire:model="configLinkLinha" placeholder="/rota/%id%"
                                         title="{{ __('ptah::ui.cfg_tip_gen_link_linha') }}"

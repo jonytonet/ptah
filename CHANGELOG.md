@@ -7,6 +7,44 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.40.0] - 2026-09-26
+
+Two more findings from the PetPlace circuit, run against 1.39.0.
+
+### Security - AI tools declare who may use them (#14)
+
+Every registered tool was offered to the model for every chat user, and ran
+its query without knowing who asked — an attendant could read the whole
+receivables ledger, summed across branches. New optional contracts:
+
+- `Ptah\Contracts\AiToolAuthorizable::permission(): ?array` — `[key, action]`
+  checked with `ptah_can()`. The registry does not offer the tool to a user
+  without it, and checks again when the model calls it (`code: forbidden`).
+  Static, so the decision is made before the tool is built. `null` declares a
+  tool deliberately open; the three built-ins do.
+- `Ptah\Contracts\AiToolContextAware::withContext(AiToolContext)` — the user and
+  the active company, handed to the tool right before each `execute()`.
+- `ptah:check` lists host tools that declare neither, and reports a declared
+  key that is not a registered page object (`ungated_ai_tools` in `--json`).
+
+Tools that implement neither keep working as before. See AiAgent.md § Who may
+use a tool.
+
+### Fixed - modal title took the label of a shared permission key (#13)
+
+1.39.0's `humanTitle()` used the page object label of the screen's
+`permissionIdentifier`. An area key shared by several screens (`financeiro`,
+`clientes`) carries the label of whichever screen registered it first — often
+a model path — so the Pets screen said "Novo Clients/Client". The label is now
+used only when no other screen uses the key and it contains no `/`.
+
+- `displayNameSingular` and the new `displayNameGender` (`m`|`f`, "Novo" /
+  "Nova") are editable in the editor's General tab.
+- `ptah:permission:sync` labels new pages and page objects with the class name
+  in words instead of the model path. Existing labels are not rewritten.
+
+---
+
 ## [1.39.0] - 2026-09-26
 
 Twelve findings from the PetPlace test circuit, each reproduced and fixed with

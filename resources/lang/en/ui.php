@@ -212,6 +212,7 @@ return [
     */
     'modal_edit_prefix' => 'Edit',
     'modal_new_prefix' => 'New',
+    'modal_new_prefix_f' => 'New',
     'modal_edit_subtitle' => 'Change fields and save',
     'modal_create_subtitle' => 'Fill in the fields below',
     'select_placeholder' => 'Select...',
@@ -1567,6 +1568,11 @@ return [
     'cfg_gen_link_linha' => 'Row Link (colsLinkLinha)',
     'cfg_gen_broadcast_desc' => 'Silently updates the table when an Echo event is received.',
     'cfg_gen_display_name' => 'Display Name',
+    'cfg_gen_display_name_singular' => 'Name of one record',
+    'cfg_gen_display_name_singular_ph' => 'e.g. Business Partner',
+    'cfg_gen_display_name_gender' => 'Title prefix',
+    'cfg_tip_gen_display_name_singular' => 'Used in the modal title ("New Business Partner"). Falls back to the display name, then the model name.',
+    'cfg_tip_gen_display_name_gender' => 'Grammatical gender of the name, for languages where "New" agrees with the noun (pt_BR: Novo / Nova).',
     'cfg_gen_table_class' => 'Table Class',
     'cfg_gen_thead_class' => 'Thead Class',
     'cfg_gen_compact' => 'Compact Mode',
@@ -1662,6 +1668,7 @@ return [
     // when it cannot be built or blows up, so the assistant can say that
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
+    'ai_tool_forbidden' => 'You do not have permission to use :tool. Tell the user instead of trying another tool.',
     'ai_widget_hide_launcher' => 'Hide the assistant button',
     'ai_widget_show_launcher' => 'Show the assistant',
     'ai_widget_expand' => 'Expand to full screen',

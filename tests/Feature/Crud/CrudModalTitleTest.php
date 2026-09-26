@@ -50,6 +50,41 @@ class CrudModalTitleTest extends TestCase
     }
 
     #[Test]
+    public function a_permission_key_shared_by_several_screens_does_not_name_any_of_them(): void
+    {
+        // Achado #13: chave de area ("clientes") com o rotulo de quem a
+        // registrou primeiro, "Clients/Client", virava "Novo Clients/Client"
+        // na tela de Pets.
+        config(['ptah.modules.permissions' => true]);
+        $page = PtahPage::create(['slug' => 'clients', 'name' => 'Clients', 'is_active' => true]);
+        PageObject::create(['page_id' => $page->id, 'section' => 'main', 'obj_key' => 'clientes', 'obj_label' => 'Clientes', 'obj_type' => 'page', 'obj_order' => 1, 'is_active' => true]);
+        CrudConfig::create(['model' => 'Clients/Client', 'route' => '', 'config' => ['crud' => 'Clients/Client', 'cols' => [], 'permissions' => ['permissionIdentifier' => 'clientes']]]);
+
+        $this->assertSame('Pet Owner', $this->title(['permissions' => ['permissionIdentifier' => 'clientes']]));
+    }
+
+    #[Test]
+    public function a_label_that_is_a_model_path_is_never_a_title(): void
+    {
+        config(['ptah.modules.permissions' => true]);
+        $page = PtahPage::create(['slug' => 'clients', 'name' => 'Clients', 'is_active' => true]);
+        PageObject::create(['page_id' => $page->id, 'section' => 'main', 'obj_key' => 'clients.owners', 'obj_label' => 'Clients/PetOwner', 'obj_type' => 'page', 'obj_order' => 1, 'is_active' => true]);
+
+        $this->assertSame('Pet Owner', $this->title(['permissions' => ['permissionIdentifier' => 'clients.owners']]));
+    }
+
+    #[Test]
+    public function a_feminine_name_gets_the_feminine_prefix(): void
+    {
+        app()->setLocale('pt_BR');
+        CrudConfig::updateOrCreate(['model' => 'Clients/PetOwner', 'route' => ''], ['config' => ['crud' => 'Clients/PetOwner', 'cols' => [], 'displayNameSingular' => 'Conta bancária', 'displayNameGender' => 'f']]);
+
+        Livewire::test(BaseCrud::class, ['model' => 'Clients/PetOwner'])
+            ->assertSee('Nova Conta bancária')
+            ->assertDontSee('Novo Conta bancária');
+    }
+
+    #[Test]
     public function the_modal_renders_the_human_title(): void
     {
         CrudConfig::updateOrCreate(['model' => 'Clients/PetOwner', 'route' => ''], ['config' => ['crud' => 'Clients/PetOwner', 'cols' => []]]);

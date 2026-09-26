@@ -951,7 +951,7 @@ left to do. Full reference, options and sample output: **[AgentTools.md](AgentTo
 | `ptah:map [--json] [--write] [--models=]` | Entities, typed fields, FK targets, relations, screens, menu, TODOs |
 | `ptah:screen {model} [--route=] [--json]` | One screen summarized: columns, filters, actions, styles, joins, hooks, permission |
 | `ptah:why-empty {model} [--as=] [--guard=] [--route=] [--json]` | Row count after each listing layer for a user, final SQL, failing query |
-| `ptah:check [model] [--as=] [--guard=] [--write] [--force] [--json]` | Render every screen + config vs model/table; `--write` round-trip rolled back |
+| `ptah:check [model] [--as=] [--guard=] [--write] [--force] [--json]` | Render every screen + config vs model/table; `--write` round-trip rolled back. Without `model`, also lists unregistered permission keys and AI tools with no permission gate |
 | `ptah:field {Entity} add {field…} [--dry-run] [--no-migration] [--no-config]` | One field into migration, model, requests, DTO, crud configs |
 | `ptah:forge … --factory` | Also a model factory + demo seeder from field types |
 | `ptah:blueprint {spec} [--dry-run] [--no-migrate] [--force]` | Module from a JSON spec: forge (FK order), migrate, config, menu-sync, permission:sync, seed |
