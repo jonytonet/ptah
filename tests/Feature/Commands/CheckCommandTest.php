@@ -129,6 +129,16 @@ class CheckCommandTest extends TestCase
     }
 
     #[Test]
+    public function a_mask_that_is_not_registered_is_reported(): void
+    {
+        $this->screen(CheckBook::class, [self::col('title'), self::col('isbn', ['colsMask' => 'phone_typo'])]);
+
+        $this->artisan('ptah:check', ['model' => 'CheckBook'])
+            ->expectsOutputToContain('mask "phone_typo" is not registered')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
     public function not_null_is_not_reported_where_it_cannot_fail_or_is_filled(): void
     {
         // Achado #5: 41 falsos avisos em 111 telas no PetPlace.

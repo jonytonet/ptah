@@ -118,6 +118,13 @@ final class CrudScreenInspector
                 }
             }
 
+            // Mascara com nome que nao existe: o campo renderiza SEM mascara, e
+            // nada avisa (achado #9: `phone` com so `telefone` registrado).
+            $mask = (string) ($col['colsMask'] ?? '');
+            if ($mask !== '' && ! in_array($mask, PtahMask::names(), true)) {
+                $findings[] = ['level' => 'warning', 'message' => "col \"{$field}\": mask \"{$mask}\" is not registered — the field renders without a mask (register it in config/ptah-masks.php or enable a preset)"];
+            }
+
             $savable = self::flag($col['colsGravar'] ?? false) && self::flag($col['colsEditableForm'] ?? true);
 
             if ($savable && ! in_array($field, self::MANAGED, true)) {
