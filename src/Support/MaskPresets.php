@@ -85,6 +85,33 @@ final class MaskPresets
      */
     public static function br(): array
     {
+        $masks = self::brMasks();
+
+        // O mesmo formato pelo nome que um projeto escrito em ingles usa: com so
+        // `telefone`, um `colsMask: "phone"` renderizava SEM mascara e nada
+        // avisava (achado #9 do PetPlace).
+        foreach (self::BR_ALIASES as $alias => $name) {
+            $masks[$alias] ??= $masks[$name];
+        }
+
+        return $masks;
+    }
+
+    /** English (and common) names for the br masks. */
+    public const BR_ALIASES = [
+        'phone' => 'telefone',
+        'zipcode' => 'cep',
+        'zip' => 'cep',
+        'postal_code' => 'cep',
+        'document' => 'documento',
+        'plate' => 'placa',
+    ];
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private static function brMasks(): array
+    {
         return [
             'cpf' => [
                 'pattern' => '000.000.000-00',

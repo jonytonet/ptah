@@ -73,11 +73,11 @@ class CheckCommandTest extends TestCase
      */
     private function screen(string $class, array $cols, array $extra = []): void
     {
-        CrudConfig::updateOrCreate(['model' => $class, 'route' => ''], ['config' => [
+        CrudConfig::updateOrCreate(['model' => $class, 'route' => ''], ['config' => array_merge([
             'crud' => $class,
             'cols' => $cols,
             'permissions' => [],
-        ] + $extra]);
+        ], $extra)]);
     }
 
     private static function col(string $field, array $extra = []): array
@@ -125,6 +125,35 @@ class CheckCommandTest extends TestCase
 
         $this->artisan('ptah:check', ['model' => 'CheckBook'])
             ->expectsOutputToContain('column "title" is NOT NULL without a default and not in the form')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function a_mask_that_is_not_registered_is_reported(): void
+    {
+        $this->screen(CheckBook::class, [self::col('title'), self::col('isbn', ['colsMask' => 'phone_typo'])]);
+
+        $this->artisan('ptah:check', ['model' => 'CheckBook'])
+            ->expectsOutputToContain('mask "phone_typo" is not registered')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function not_null_is_not_reported_where_it_cannot_fail_or_is_filled(): void
+    {
+        // Achado #5: 41 falsos avisos em 111 telas no PetPlace.
+        $noNew = ['permissions' => ['showCreateButton' => false]];
+        $this->screen(CheckBook::class, [self::col('check_shelf_id')], $noNew);
+        $this->artisan('ptah:check', ['model' => 'CheckBook'])->doesntExpectOutputToContain('NOT NULL')->assertExitCode(0);
+
+        $formula = ['lifecycleHooks' => ['beforeCreate' => "merge(data, {'title': upper(data['isbn'] ?? 'x')})"]];
+        $this->screen(CheckBook::class, [self::col('check_shelf_id')], $formula);
+        $this->artisan('ptah:check', ['model' => 'CheckBook'])->doesntExpectOutputToContain('NOT NULL')->assertExitCode(0);
+
+        $classHook = ['lifecycleHooks' => ['beforeCreate' => '@App\\CrudHooks\\BookHooks::beforeCreate']];
+        $this->screen(CheckBook::class, [self::col('check_shelf_id')], $classHook);
+        $this->artisan('ptah:check', ['model' => 'CheckBook'])
+            ->expectsOutputToContain('info   column "title" is NOT NULL without a default and not in the form — confirm the beforeCreate hook @App\\CrudHooks\\BookHooks::beforeCreate fills it')
             ->assertExitCode(0);
     }
 

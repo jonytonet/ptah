@@ -369,6 +369,59 @@
 </script>
 
 {{-- ═══════════════════════════════════════════════════════
+     TYPED-VALUE KEEPER (mascara / dinheiro)
+     Um campo com mascara grava num <input hidden wire:model>. Se o usuario
+     digita ENQUANTO uma requisicao do componente esta em voo (escolheu um
+     item num searchdropdown e ja foi para o CPF), a resposta traz o valor
+     antigo do servidor e o Livewire o aplica por cima: o campo visivel segue
+     mostrando o CPF, o que vai para o servidor e vazio, e o toast diz
+     "salvo" (achado #1 do PetPlace). Aqui: cada campo registra o que foi
+     digitado e quando; ao fim de uma requisicao que SAIU ANTES da digitacao,
+     o valor digitado e reaplicado. Uma requisicao que saiu depois (uma
+     formula que limpa o campo) continua valendo.
+    ══════════════════════════════════════════════════════════ --}}
+<script>
+(function () {
+    if (window.ptahKeepTyped) return;
+
+    /* "componentId|field" => { componentId, value, at }. O ELEMENTO nao e
+       guardado: o morph substitui o <input hidden> por um novo (medido no
+       Dusk), e uma referencia ao antigo apontaria para fora da pagina. Ele e
+       relocalizado por data-ptah-keep na hora de restaurar. */
+    const typed = new Map();
+
+    window.ptahKeepTyped = function (componentId, field, value) {
+        typed.set(componentId + '|' + field, { componentId, value, at: performance.now() });
+    };
+
+    document.addEventListener('livewire:init', () => {
+        Livewire.hook('commit', ({ component, succeed }) => {
+            const startedAt = performance.now();
+            succeed(() => {
+                /* setTimeout, nao microtask: o succeed roda ANTES do morph, e o morph
+                   e quem limpa o campo. */
+                setTimeout(() => {
+                    typed.forEach((entry, key) => {
+                        if (entry.componentId !== component.id || entry.at <= startedAt) return;
+                        const el = document.querySelector('[data-ptah-keep="' + CSS.escape(key) + '"]');
+                        if (!el) { typed.delete(key); return; }
+                        /* Dois sintomas da mesma corrida, conforme a interacao: o valor
+                           ENVIADO volta vazio (o dado se perde), ou o que o campo MOSTRA
+                           e limpo pelo morph. Os dois sao desfeitos aqui. */
+                        if (el.value !== entry.value) {
+                            el.value = entry.value;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        el.dispatchEvent(new CustomEvent('ptah-typed-restored', { bubbles: true, detail: { value: entry.value } }));
+                    });
+                }, 0);
+            });
+        });
+    });
+})();
+</script>
+
+{{-- ═══════════════════════════════════════════════════════
      EXPORT LISTENERS (Excel/PDF Download)
     ══════════════════════════════════════════════════════════ --}}
 <script>

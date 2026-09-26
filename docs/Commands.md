@@ -670,6 +670,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 |---|---|---|
 | `label` | `colsNomeLogico` | `label=Product Name` |
 | `placeholder` | `colsPlaceholder` | `placeholder=Type here...` |
+| `default` | `colsDefaultValue` | `default=1` — pre-filled when the user clicks **New** (boolean: `1`/`0`) |
 | `align` | `colsAlign` | `align=text-end` |
 | `renderer` | `colsRenderer` | `renderer=money` (`text`,`badge`,`pill`,`boolean`,`money`,`date`,`datetime`,`link`,`image`,`truncate`,`number`,`filesize`,`duration`,`code`,`color`,`progress`,`rating`,`qrcode`) |
 | `mask` | `colsMask` | `mask=money_brl` |

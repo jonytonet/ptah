@@ -2021,7 +2021,46 @@ table. Turn them on in the editor (gear icon → General → Features) or:
   day, spanning to `end` when set; clicking opens the edit modal. Up to 500
   records per month; beyond that it asks to refine the filters.
 - Card titles use `title`, else the first visible text column; denied and
-  `$hidden` columns never appear.
+  `$hidden` columns never appear. `title` may name an **accessor**
+  (`getCardLabelAttribute` → `"title": "card_label"`) to compose a label such
+  as "10:30 · Rex · Banho". An accessor that reads a relation runs one query
+  per card — list the relations in `with` and they are eager-loaded (names
+  that are not relationships on the model are ignored):
+
+```json
+"kanbanConfig":   { "field": "status", "title": "card_label", "with": ["pet", "service"] },
+"calendarConfig": { "start": "starts_at", "title": "card_label", "with": ["pet"] }
+```
+
+### Workflow statuses: `locked` and `transitions`
+
+A status that **starts a workflow** must not be set by a drag. If concluding an
+appointment creates the service order, the pet's record and the charge, a free
+board lets anyone skip all three by dropping the card on "Concluded". Declare
+which moves exist:
+
+```json
+"kanbanConfig": {
+  "field": "status",
+  "locked": ["in_progress", "completed"],
+  "transitions": {
+    "pending":   ["confirmed", "cancelled"],
+    "confirmed": ["pending", "cancelled", "no_show"]
+  },
+  "lockedMessage": "Iniciar/concluir é feito pelo painel do setor."
+}
+```
+
+- `locked` — columns that accept no drop and let no card out. They render
+  dimmed with a lock and show `lockedMessage`.
+- `transitions` — origin → allowed destinations. Once the key is present, an
+  origin that is not listed moves nowhere. Without it, every move between
+  unlocked columns is allowed (the previous behaviour).
+- The board only offers the allowed destinations (drag targets and the "Move
+  to" select), and `moveCard()` checks the rule again on the server against
+  the record's current value — a hand-crafted request is refused with
+  `lockedMessage` as a toast.
+- Cards in the "Other values" column may go to any unlocked column.
 
 ---
 
@@ -2263,76 +2302,85 @@ Leaving `displayName` empty uses the class name (unchanged previous behaviour).
 
 ## Broadcast / Real-time
 
-BaseCrud can silently update the table via **Laravel Echo** when receiving a broadcast event, without any extra code in the parent component.
+BaseCrud refreshes itself through **Laravel Echo** when a broadcast event
+arrives — no extra code in the parent component. The event only has to say
+**"something changed"**: the screen then reloads the rows with the viewer's
+own permissions and scope.
 
 ### Activate
 
-**General** tab of the CrudConfig modal, **"Real-time (Broadcast)"** card, **Enabled** toggle.
-
-### Configuration
-
-| Field | Auto-generated default | Example for `Product` |
-|---|---|---|
-| Channel | `page-{kebab-model}-observer` | `page-product-observer` |
-| Event | `.page{Model}Observer` | `.pageProductObserver` |
-
-Both fields can be left empty to use the default, or filled when the backend Observer uses different names.
-
-### JSON key
+Gear icon → **General** → **Real-time (Broadcast)** → **Enabled**, or:
 
 ```json
 {
   "broadcast": {
     "enabled": true,
+    "type": "private",
+    "perCompany": true,
     "channel": null,
     "event": null
   }
 }
 ```
 
-`channel` and `event` `null` = use the auto-generated name based on the model.
+| Key | Default | Meaning |
+|---|---|---|
+| `type` | `public` (editor suggests `private`) | `private` / `presence` → `echo-private:` / `echo-presence:` (Echo authorises the subscription through your `Broadcast::channel()`); `public` → `echo:` |
+| `perCompany` | `false` | Appends the active company: `page-product-observer.3` — one branch's change does not refresh another's screens |
+| `channel` | `page-{kebab-model}-observer` | Channel name |
+| `event` | `.page{Model}Observer` | Event name (leading dot: no namespace) |
 
-### Auto-generated methods
+> **A public channel is readable by anyone who has the websocket key — and the
+> key ships in the page's JavaScript.** Never put record data on it. Prefer
+> `private`; on any channel, send an event with no payload (below).
+> `ptah:check` warns about screens broadcasting on a public channel.
 
-```php
-// Registered via getListeners() when broadcast.enabled = true:
-"echo:{channel},{event}" => 'handleBaseCrudUpdate'
-
-// Always registered (Livewire 4 built-in):
-"refreshData" => '$refresh'
-```
-
-`handleBaseCrudUpdate()` is an empty stub — Livewire re-renders the component automatically after the listener fires.
-
-### Backend Observer
-
-```php
-// app/Observers/ProductObserver.php
-public function created(Product $product): void
-{
-    broadcast(new PageProductObserver($product))->toOthers();
-}
-```
+### Backend: an event that carries nothing
 
 ```php
 // app/Events/PageProductObserver.php
 class PageProductObserver implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
-    public function __construct(public Product $product) {}
+    public function __construct(public int $companyId) {}
 
-    public function broadcastOn(): Channel
+    public function broadcastOn(): PrivateChannel
     {
-        return new Channel('page-product-observer');
+        // same name the screen listens on (perCompany: true → ".{companyId}")
+        return new PrivateChannel('page-product-observer.'.$this->companyId);
     }
 
     public function broadcastAs(): string
     {
         return 'pageProductObserver'; // without the dot; Echo adds it
     }
+
+    /** Only "it changed" — the screen reloads with the viewer's own permissions. */
+    public function broadcastWith(): array
+    {
+        return [];
+    }
 }
 ```
+
+```php
+// app/Observers/ProductObserver.php
+public function saved(Product $product): void
+{
+    broadcast(new PageProductObserver((int) $product->company_id))->toOthers();
+}
+```
+
+```php
+// routes/channels.php — who may listen
+Broadcast::channel('page-product-observer.{companyId}', function ($user, int $companyId) {
+    return ptah_can('pageProduct', 'read', $user, $companyId);
+});
+```
+
+`handleBaseCrudUpdate()` is an empty stub: Livewire re-renders after the
+listener fires, and the rows come from the viewer's own query.
 
 ---
 

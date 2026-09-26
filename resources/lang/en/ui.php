@@ -1155,6 +1155,8 @@ return [
     'cfg_col_align_right' => 'Right',
     'cfg_col_cb_save' => 'Include in Form (Save)',
     'cfg_col_cb_required' => 'Required',
+    'cfg_col_default_value' => 'Default value on New',
+    'cfg_tip_cols_default_value' => 'Pre-filled when the user clicks New. For a boolean: 1 or 0.',
     'cfg_col_cb_filterable' => 'Filterable',
 
     // Columns tab — column-level permission (requires the "permissions" module)
@@ -1435,6 +1437,12 @@ return [
     'cfg_gen_display_name_ph' => 'e.g. Business Partners',
     'cfg_gen_display_name_hint' => 'Appears in the modal header and toolbar. Default: model name.',
     'cfg_gen_broadcast_off_hint' => 'Enable to configure the Echo channel and event that will trigger automatic table update.',
+    'cfg_gen_broadcast_type' => 'Channel',
+    'cfg_gen_broadcast_private' => 'Private (authorised by Broadcast::channel)',
+    'cfg_gen_broadcast_presence' => 'Presence (authorised, knows who is connected)',
+    'cfg_gen_broadcast_public' => 'Public (anyone with the key can subscribe)',
+    'cfg_gen_broadcast_per_company' => 'One channel per company',
+    'cfg_gen_broadcast_public_warn' => 'A public channel can be subscribed by anyone who has the websocket key, which ships in the page. Send no record data on it — only "something changed".',
 
     // JOIN notice box list items
     'cfg_join_notice_phys' => '<strong>Physical Name</strong> = the alias (ex: <code class="px-1 rounded bg-amber-100">supplier_name</code>)',
@@ -1800,6 +1808,7 @@ return [
     'kanban_more' => ':count more — refine the filters to see them',
     'kanban_empty_column' => 'Nothing here',
     'kanban_other' => 'Other values',
+    'kanban_move_not_allowed' => 'This card cannot move to that column.',
     'kanban_other_hint' => 'Their value is not one of the options — move them to a column.',
     'calendar_prev' => 'Previous month',
     'calendar_next' => 'Next month',

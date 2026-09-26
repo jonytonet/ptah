@@ -50,6 +50,7 @@ class ColumnParser
     public const KEY_MAP = [
         'label' => 'colsNomeLogico',
         'placeholder' => 'colsPlaceholder',
+        'default' => 'colsDefaultValue',
         'align' => 'colsAlign',
         'renderer' => 'colsRenderer',
         'mask' => 'colsMask',

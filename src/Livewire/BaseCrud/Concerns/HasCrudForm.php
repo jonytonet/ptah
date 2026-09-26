@@ -36,6 +36,23 @@ trait HasCrudForm
         $this->sdLabels = [];
         $this->imageUploads = [];
         $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
+
+        // O padrao declarado na coluna. Era gravado pelo wizard e lido por
+        // ninguem: o "Novo" abria vazio e, numa coluna NOT NULL sem default no
+        // banco, salvar so com os obrigatorios dava erro SQL cru (achado #4).
+        foreach ($this->getFormCols() as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            $default = $col['colsDefaultValue'] ?? null;
+
+            if ($field === '' || $default === null || $default === '') {
+                continue;
+            }
+
+            $this->formData[$field] = ($col['colsTipo'] ?? '') === 'boolean'
+                ? in_array(is_string($default) ? strtolower($default) : $default, [true, 1, '1', 'true', 's', 'sim', 'yes', 'on'], true)
+                : $default;
+        }
+
         $this->dispatch('ptah:form-ready');
     }
 

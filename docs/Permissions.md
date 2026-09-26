@@ -159,6 +159,20 @@ is enough to bypass multi-company isolation for that user. Use `company_id = nul
 only for genuinely cross-tenant access (e.g. a support role); for per-company
 access, always bind the `UserRole` to a concrete `company_id`.
 
+### A key that does not exist denies — to everyone but master
+
+`ptah_can('sales.orders', …)`, `@ptahCan('sales.orders', …)` and the
+`ptah.can:sales.orders` middleware deny a key that is not an active page
+object, for every non-master user. Whoever tests is usually master, so a typo
+or an unregistered key hides buttons from everyone else without a sign. Two
+nets for it:
+
+- `php artisan ptah:check` scans `app/`, `resources/views/` and `routes/` for
+  literal keys (plus every screen's `permissionIdentifier`) and lists the ones
+  no active page object has, with file and line.
+- With `APP_DEBUG=true`, a denied unknown key writes one warning per key per
+  request to the log.
+
 ### Action whitelist
 
 Only `create`, `read`, `update` and `delete` are valid actions

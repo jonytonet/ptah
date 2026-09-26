@@ -82,9 +82,13 @@ final class UpgradeInspector
             ];
         }
 
+        // "Nao lida" so o que nem o config do pacote NEM o codigo dele consulta:
+        // `auth.route_prefix` nao estava no config e era lida em routes/, e
+        // quem seguiu o conselho de remover moveu o login (achado #6).
+        $readByCode = self::pathsReadByCode($packageRoot);
         $dead = array_values(array_filter(
             self::leafPaths($host),
-            fn (string $path) => ! Arr::has($defaults, $path) && self::isClosedSection($defaults, $path)
+            fn (string $path) => ! Arr::has($defaults, $path) && self::isClosedSection($defaults, $path) && ! self::isRead($path, $readByCode)
         ));
 
         if ($dead !== []) {
@@ -110,10 +114,19 @@ final class UpgradeInspector
             return [];
         }
 
-        $identical = $differs = $dead = [];
+        $identical = $differs = $dead = $intentional = [];
+        $declared = array_map(fn ($p) => ltrim(str_replace('\\', '/', (string) $p), '/'), (array) config('ptah.intentional_overrides', []));
 
         foreach (self::files($dir, '.blade.php') as $relative) {
             $package = $packageRoot.'/resources/views/'.$relative;
+
+            // Override de proposito (o dashboard real do app, por exemplo): fica
+            // como informacao, senao o resumo nunca fica verde (achado #7).
+            if (in_array($relative, $declared, true) || str_contains(self::normalized($dir.'/'.$relative), 'ptah:intentional-override')) {
+                $intentional[] = $relative;
+
+                continue;
+            }
 
             if (! is_file($package)) {
                 $dead[] = $relative;
@@ -134,6 +147,9 @@ final class UpgradeInspector
         }
         if ($dead !== []) {
             $out[] = ['check' => 'views', 'level' => 'info', 'message' => count($dead).' published view(s) no longer exist in the package: '.self::list($dead), 'action' => 'delete them'];
+        }
+        if ($intentional !== []) {
+            $out[] = ['check' => 'views', 'level' => 'info', 'message' => count($intentional).' intentional override(s), not checked: '.self::list($intentional), 'action' => 'review them yourself when the package view changes'];
         }
 
         return $out;
@@ -241,6 +257,48 @@ final class UpgradeInspector
     }
 
     // ── helpers ───────────────────────────────────────────────────────────
+
+    /**
+     * Every `ptah.*` path the package's own code passes to config().
+     *
+     * @return list<string>
+     */
+    private static function pathsReadByCode(string $packageRoot): array
+    {
+        $paths = [];
+
+        foreach (['src', 'routes', 'resources/views'] as $dir) {
+            if (! is_dir($packageRoot.'/'.$dir)) {
+                continue;
+            }
+
+            $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($packageRoot.'/'.$dir, \FilesystemIterator::SKIP_DOTS));
+            foreach ($it as $file) {
+                if ($file->isFile() && $file->getExtension() === 'php'
+                    && preg_match_all('/config\(\s*[\'"]ptah\.([A-Za-z0-9_.]+)[\'"]/', (string) file_get_contents($file->getPathname()), $m) > 0) {
+                    array_push($paths, ...$m[1]);
+                }
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
+     * A path is read when the code reads it, or reads a section containing it.
+     *
+     * @param  list<string>  $readByCode
+     */
+    private static function isRead(string $path, array $readByCode): bool
+    {
+        foreach ($readByCode as $read) {
+            if ($path === $read || str_starts_with($path, $read.'.')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Dotted paths of the leaves of an ASSOCIATIVE tree. A list, or an empty

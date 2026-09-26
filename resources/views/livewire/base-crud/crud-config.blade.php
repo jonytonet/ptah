@@ -464,6 +464,11 @@
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
                                     </div>
+                                    <div class="col-span-2">
+                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_default_value') }}</label>
+                                        <input type="text" wire:model="formDataField.colsDefaultValue"
+                                            title="{{ __('ptah::ui.cfg_tip_cols_default_value') }}" class="cfg-input" />
+                                    </div>
                                     {{-- Column-level visibility permission (only when the "permissions" module is on) --}}
                                     @if (config('ptah.modules.permissions'))
                                     @php
@@ -2731,10 +2736,31 @@
                                 </div>
                             </div>
 
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_gen_broadcast_type') }}</label>
+                                    <select wire:model.live="broadcastType" class="cfg-input" title="{{ __('ptah::ui.cfg_gen_broadcast_type') }}">
+                                        <option value="private">{{ __('ptah::ui.cfg_gen_broadcast_private') }}</option>
+                                        <option value="presence">{{ __('ptah::ui.cfg_gen_broadcast_presence') }}</option>
+                                        <option value="public">{{ __('ptah::ui.cfg_gen_broadcast_public') }}</option>
+                                    </select>
+                                </div>
+                                <label class="flex items-center gap-2 cursor-pointer self-end pb-2">
+                                    <input type="checkbox" wire:model.live="broadcastPerCompany" class="rounded" title="{{ __('ptah::ui.cfg_gen_broadcast_per_company') }}" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_gen_broadcast_per_company') }}</span>
+                                </label>
+                            </div>
+                            @if ($broadcastType === 'public')
+                                <x-forge-alert color="warn">{{ __('ptah::ui.cfg_gen_broadcast_public_warn') }}</x-forge-alert>
+                            @endif
+                            @php
+                                $bcKey = \Ptah\Support\BroadcastListener::key(['enabled' => true, 'type' => $broadcastType, 'perCompany' => $broadcastPerCompany, 'channel' => $broadcastChannel, 'event' => $broadcastEvent], $model, $broadcastPerCompany ? max(1, ptah_company_id()) : 0);
+                            @endphp
+
                             {{-- Preview do listener gerado --}}
                             <div class="mt-1 p-3 rounded-md bg-slate-900 text-[11px] font-mono leading-relaxed">
                                 <p class="text-slate-500 mb-1.5">// Listener auto-registrado no BaseCrud:</p>
-                                <p class="text-primary">&quot;echo:{{ $bcChannel }},{{ $bcEvent }}&quot; <span
+                                <p class="text-primary">&quot;{{ $bcKey }}&quot; <span
                                         class="text-slate-500">=&gt;</span> <span
                                         class="text-green-400">'handleBaseCrudUpdate'</span></p>
                                 <p class="text-slate-500 mt-1.5 text-[10px]">No Observer do Laravel, emita: <span

@@ -247,6 +247,13 @@ class PermissionService implements PermissionServiceContract
             $result = false;
         }
 
+        // Uma chave que nao existe nega para todo nao-master, e quem testa
+        // costuma ser master: 47 botoes sumiram assim no PetPlace sem ninguem
+        // ver. Em debug, diz no log — uma vez por chave por requisicao.
+        if (! $result && config('app.debug')) {
+            $this->warnIfUnknownKey($objectKey);
+        }
+
         // 3. Auditoria — grava acessos concedidos quando `audit` está ligado; os
         //    negados só quando `audit_denied` também está (conforme documentado).
         if (config('ptah.permissions.audit')) {
@@ -851,6 +858,37 @@ class PermissionService implements PermissionServiceContract
         }
 
         return $map;
+    }
+
+    /**
+     * Whether a key (bare `obj_key` or qualified `page::obj_key`) names an
+     * active page object. The same source as the MASTER maps, which list
+     * every active object.
+     */
+    public function isKnownKey(string $objectKey): bool
+    {
+        $keys = $this->requestMemo['__known_keys'] ??= array_fill_keys(array_merge(
+            array_keys($this->buildMasterPermissionMap()),
+            array_keys($this->buildMasterQualifiedPermissionMap()),
+        ), true);
+
+        return isset($keys[$objectKey]);
+    }
+
+    private function warnIfUnknownKey(string $objectKey): void
+    {
+        if (isset($this->requestMemo['__warned'][$objectKey])) {
+            return;
+        }
+        $this->requestMemo['__warned'][$objectKey] = true;
+
+        try {
+            if (! $this->isKnownKey($objectKey)) {
+                Log::warning("Ptah: permission key \"{$objectKey}\" is not a registered page object - ptah_can() denies it to every non-master user. Register it (ptah:permission:sync, /ptah-pages) or fix the key; `ptah:check` lists every unknown key in the code.");
+            }
+        } catch (\Throwable) {
+            // Sem as tabelas do modulo nao ha o que comparar.
+        }
     }
 
     /**

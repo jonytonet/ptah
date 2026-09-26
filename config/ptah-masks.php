@@ -50,6 +50,7 @@ return [
     | Conjuntos prontos que vêm no pacote como DADO, ativados por você.
     | Disponível: 'br' — cpf, cnpj (alfanumérico de 2026), documento (aceita os
     | dois no mesmo campo), cep, telefone, placa, pis, inscricao_estadual.
+    | Também pelos nomes em inglês: phone, zipcode/zip/postal_code, document, plate.
     |
     |     'presets' => ['br'],
     |
