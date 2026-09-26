@@ -2021,7 +2021,46 @@ table. Turn them on in the editor (gear icon → General → Features) or:
   day, spanning to `end` when set; clicking opens the edit modal. Up to 500
   records per month; beyond that it asks to refine the filters.
 - Card titles use `title`, else the first visible text column; denied and
-  `$hidden` columns never appear.
+  `$hidden` columns never appear. `title` may name an **accessor**
+  (`getCardLabelAttribute` → `"title": "card_label"`) to compose a label such
+  as "10:30 · Rex · Banho". An accessor that reads a relation runs one query
+  per card — list the relations in `with` and they are eager-loaded (names
+  that are not relationships on the model are ignored):
+
+```json
+"kanbanConfig":   { "field": "status", "title": "card_label", "with": ["pet", "service"] },
+"calendarConfig": { "start": "starts_at", "title": "card_label", "with": ["pet"] }
+```
+
+### Workflow statuses: `locked` and `transitions`
+
+A status that **starts a workflow** must not be set by a drag. If concluding an
+appointment creates the service order, the pet's record and the charge, a free
+board lets anyone skip all three by dropping the card on "Concluded". Declare
+which moves exist:
+
+```json
+"kanbanConfig": {
+  "field": "status",
+  "locked": ["in_progress", "completed"],
+  "transitions": {
+    "pending":   ["confirmed", "cancelled"],
+    "confirmed": ["pending", "cancelled", "no_show"]
+  },
+  "lockedMessage": "Iniciar/concluir é feito pelo painel do setor."
+}
+```
+
+- `locked` — columns that accept no drop and let no card out. They render
+  dimmed with a lock and show `lockedMessage`.
+- `transitions` — origin → allowed destinations. Once the key is present, an
+  origin that is not listed moves nowhere. Without it, every move between
+  unlocked columns is allowed (the previous behaviour).
+- The board only offers the allowed destinations (drag targets and the "Move
+  to" select), and `moveCard()` checks the rule again on the server against
+  the record's current value — a hand-crafted request is refused with
+  `lockedMessage` as a toast.
+- Cards in the "Other values" column may go to any unlocked column.
 
 ---
 

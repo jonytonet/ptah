@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Crud;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,7 +19,24 @@ class BoardTask extends Model
 {
     protected $table = 'board_tasks';
 
-    protected $fillable = ['title', 'status', 'due_date', 'end_date', 'company_id'];
+    protected $fillable = ['title', 'status', 'due_date', 'end_date', 'company_id', 'board_owner_id'];
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(BoardOwner::class, 'board_owner_id');
+    }
+
+    public function getOwnerLabelAttribute(): string
+    {
+        return $this->title.' — '.($this->owner?->name ?? '');
+    }
+}
+
+class BoardOwner extends Model
+{
+    protected $table = 'board_owners';
+
+    protected $fillable = ['name'];
 }
 
 /**
@@ -37,6 +56,13 @@ class CrudBoardsTest extends TestCase
             $t->date('due_date')->nullable();
             $t->date('end_date')->nullable();
             $t->unsignedBigInteger('company_id')->nullable();
+            $t->unsignedBigInteger('board_owner_id')->nullable();
+            $t->timestamps();
+        });
+
+        Schema::create('board_owners', function (Blueprint $t) {
+            $t->id();
+            $t->string('name');
             $t->timestamps();
         });
 
@@ -49,7 +75,7 @@ class CrudBoardsTest extends TestCase
         $this->configure();
     }
 
-    private function configure(array $permissions = []): void
+    private function configure(array $permissions = [], array $kanban = [], array $calendar = []): void
     {
         CrudConfig::updateOrCreate(['model' => BoardTask::class, 'route' => ''], ['config' => [
             'crud' => BoardTask::class,
@@ -58,8 +84,8 @@ class CrudBoardsTest extends TestCase
                 ['colsNomeFisico' => 'status', 'colsNomeLogico' => 'Situação', 'colsTipo' => 'select', 'colsGravar' => true, 'colsSelect' => ['A fazer' => 'todo', 'Fazendo' => 'doing', 'Feito' => 'done']],
             ],
             'permissions' => $permissions,
-            'kanbanConfig' => ['field' => 'status'],
-            'calendarConfig' => ['start' => 'due_date', 'end' => 'end_date'],
+            'kanbanConfig' => array_merge(['field' => 'status'], $kanban),
+            'calendarConfig' => array_merge(['start' => 'due_date', 'end' => 'end_date'], $calendar),
         ]]);
     }
 
@@ -154,6 +180,85 @@ class CrudBoardsTest extends TestCase
         $this->crud()->call('moveCard', $task->id, 'done');
 
         $this->assertSame('todo', $task->fresh()->status);
+    }
+
+    #[Test]
+    public function a_workflow_status_is_not_reachable_by_dragging(): void
+    {
+        // Achado #3 do PetPlace: arrastar para "Concluido" pulava a OS, o
+        // prontuario e a cobranca que o painel do setor cria.
+        $this->configure(kanban: [
+            'locked' => ['done'],
+            'transitions' => ['todo' => ['doing'], 'doing' => ['todo']],
+            'lockedMessage' => 'Concluir é feito pelo painel do setor.',
+        ]);
+        $todo = BoardTask::where('title', 'Orçar cliente A')->first();
+
+        $crud = $this->crud();
+        $crud->call('moveCard', $todo->id, 'done')->assertDispatched('ptah-toast', title: 'Concluir é feito pelo painel do setor.');
+        $this->assertSame('todo', $todo->fresh()->status, 'Coluna locked nao aceita card.');
+
+        $crud->call('moveCard', $todo->id, 'doing');
+        $this->assertSame('doing', $todo->fresh()->status, 'Transicao declarada passa.');
+
+        $todo->update(['status' => 'done']);
+        $crud->call('moveCard', $todo->id, 'todo');
+        $this->assertSame('done', $todo->fresh()->status, 'De coluna locked o card nao sai.');
+
+        $this->assertSame(['todo' => ['doing'], 'doing' => ['todo'], 'done' => [], BaseCrud::KANBAN_OTHER => ['todo', 'doing']], $crud->instance()->kanbanTargets());
+    }
+
+    #[Test]
+    public function an_origin_missing_from_transitions_moves_nowhere(): void
+    {
+        $this->configure(kanban: ['transitions' => ['todo' => ['doing']]]);
+        $doing = BoardTask::where('title', 'Entregar pedido B')->first();
+
+        $this->crud()->call('moveCard', $doing->id, 'todo')->call('moveCard', $doing->id, 'done');
+
+        $this->assertSame('doing', $doing->fresh()->status);
+    }
+
+    #[Test]
+    public function the_board_offers_only_the_allowed_destinations(): void
+    {
+        $this->configure(kanban: ['locked' => ['done'], 'transitions' => ['todo' => ['doing']], 'lockedMessage' => 'Pelo painel.']);
+
+        $html = $this->crud()->call('setViewMode', 'kanban')->html();
+
+        $this->assertStringContainsString('value="doing"', $html);
+        $this->assertStringNotContainsString('<option value="done"', $html, 'Destino locked nao pode ser oferecido.');
+        $this->assertStringContainsString('data-ptah-kanban-locked', $html);
+        $this->assertStringContainsString('Pelo painel.', $html);
+    }
+
+    #[Test]
+    public function with_eager_loads_the_relation_an_accessor_title_reads(): void
+    {
+        // Achado #10: title por accessor que le relacao = 1 query por card.
+        $owner = BoardOwner::create(['name' => 'Ana']);
+        foreach (range(1, 5) as $i) {
+            BoardTask::create(['title' => "Extra {$i}", 'status' => 'todo', 'company_id' => 1, 'board_owner_id' => $owner->id]);
+        }
+
+        $count = function (array $kanban): array {
+            $this->configure(kanban: $kanban);
+            $crud = $this->crud();
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $columns = collect($crud->instance()->kanbanColumns())->keyBy('value');
+            $queries = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return [$queries, array_column($columns['todo']['cards'], 'title')];
+        };
+
+        [$lazy, $titles] = $count(['title' => 'owner_label']);
+        [$eager, $eagerTitles] = $count(['title' => 'owner_label', 'with' => ['owner', 'notARelation']]);
+
+        $this->assertContains('Extra 1 — Ana', $titles);
+        $this->assertSame($titles, $eagerTitles);
+        $this->assertLessThan($lazy, $eager, "Sem o with: {$lazy} queries; com: {$eager}.");
     }
 
     #[Test]

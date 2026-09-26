@@ -1808,6 +1808,7 @@ return [
     'kanban_more' => ':count more — refine the filters to see them',
     'kanban_empty_column' => 'Nothing here',
     'kanban_other' => 'Other values',
+    'kanban_move_not_allowed' => 'This card cannot move to that column.',
     'kanban_other_hint' => 'Their value is not one of the options — move them to a column.',
     'calendar_prev' => 'Previous month',
     'calendar_next' => 'Next month',

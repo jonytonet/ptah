@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Support\RelationPath;
 
 /**
  * Kanban and calendar: two more ways to look at the SAME listing.
@@ -73,6 +74,68 @@ trait HasCrudBoards
     }
 
     /**
+     * Whether a card may move from one column to another under the config's
+     * `locked` columns and `transitions` map.
+     *
+     * A status that STARTS a workflow (concluding an appointment creates the
+     * service order, the pet's record and the charge) must not be set by a
+     * drag: `locked` columns accept no drop and let no card out, and when
+     * `transitions` is given only the listed moves exist — an origin that is
+     * not listed moves nowhere (achado #3 do PetPlace).
+     */
+    public function kanbanAllowed(string $from, string $to): bool
+    {
+        $cfg = (array) ($this->crudConfig['kanbanConfig'] ?? []);
+        $locked = array_map('strval', (array) ($cfg['locked'] ?? []));
+
+        if ($from === $to || in_array($to, $locked, true) || in_array($from, $locked, true) || ! in_array($to, $this->kanbanOptions(), true)) {
+            return false;
+        }
+
+        if (! array_key_exists('transitions', $cfg) || ! is_array($cfg['transitions'])) {
+            return true;
+        }
+
+        return in_array($to, array_map('strval', (array) ($cfg['transitions'][$from] ?? [])), true);
+    }
+
+    /**
+     * from => allowed destinations, for the board's drag and "Move to".
+     *
+     * @return array<string, list<string>>
+     */
+    public function kanbanTargets(): array
+    {
+        $values = array_values($this->kanbanOptions());
+        $map = [];
+
+        foreach (array_merge($values, [self::KANBAN_OTHER]) as $from) {
+            $map[$from] = array_values(array_filter($values, fn (string $to) => $from === self::KANBAN_OTHER
+                ? ! in_array($to, array_map('strval', (array) ($this->crudConfig['kanbanConfig']['locked'] ?? [])), true)
+                : $this->kanbanAllowed($from, $to)));
+        }
+
+        return $map;
+    }
+
+    /**
+     * Relations to eager-load for card titles built by an accessor
+     * (`kanbanConfig.with` / `calendarConfig.with`), each checked to be a real
+     * relationship — one query per card otherwise.
+     *
+     * @return list<string>
+     */
+    private function boardWith(string $section): array
+    {
+        $model = $this->resolveEloquentModel();
+
+        return $model === null ? [] : array_values(array_filter(
+            array_map('strval', (array) ($this->crudConfig[$section]['with'] ?? [])),
+            fn (string $rel) => RelationPath::isValid($model, $rel)
+        ));
+    }
+
+    /**
      * @return list<array{label: string, value: string, total: int, cards: list<array{id: mixed, title: string, subtitle: string}>}>
      */
     public function kanbanColumns(): array
@@ -89,7 +152,7 @@ trait HasCrudBoards
 
         foreach ($this->kanbanOptions() as $label => $value) {
             [$query] = $this->buildBaseQuery($model);
-            $query->where($field, $value);
+            $query->where($field, $value)->with($this->boardWith('kanbanConfig'));
             $total = (clone $query)->count();
             // Sem applyGroupingAndSort: um groupBy da tela viraria GROUP BY aqui.
             $query->orderByDesc($model->getTable().'.'.$model->getKeyName());
@@ -106,7 +169,7 @@ trait HasCrudBoards
         // do quadro sem aviso — e quem olha acha que o ticket foi apagado.
         [$query] = $this->buildBaseQuery($model);
         $values = array_values($this->kanbanOptions());
-        $query->where(fn (Builder $q) => $q->whereNotIn($field, $values)->orWhereNull($field));
+        $query->where(fn (Builder $q) => $q->whereNotIn($field, $values)->orWhereNull($field))->with($this->boardWith('kanbanConfig'));
         $total = (clone $query)->count();
 
         if ($total > 0) {
@@ -146,6 +209,16 @@ trait HasCrudBoards
         }
 
         $field = (string) $this->crudConfig['kanbanConfig']['field'];
+        $from = (string) $record->getAttribute($field);
+
+        // O destino vem do cliente: a regra de transicao vale aqui tambem.
+        $fromIsOption = in_array($from, $this->kanbanOptions(), true);
+        if (! in_array($value, $this->kanbanTargets()[$fromIsOption ? $from : self::KANBAN_OTHER] ?? [], true)) {
+            $this->dispatch('ptah-toast', title: (string) ($this->crudConfig['kanbanConfig']['lockedMessage'] ?? trans('ptah::ui.kanban_move_not_allowed')), color: 'warn');
+
+            return;
+        }
+
         $data = [$field => $value];
 
         try {
@@ -202,7 +275,7 @@ trait HasCrudBoards
                     // Um evento que comeca antes do mes e termina nele tambem aparece.
                     $q->orWhere(fn (Builder $o) => $o->where($start, '<', $gridStart->startOfDay())->where($end, '>=', $gridStart->startOfDay()));
                 }
-            })->orderBy($start);
+            })->orderBy($start)->with($this->boardWith('calendarConfig'));
 
             $records = $query->limit(self::CALENDAR_LIMIT + 1)->get();
             $overflow = $records->count() > self::CALENDAR_LIMIT;
