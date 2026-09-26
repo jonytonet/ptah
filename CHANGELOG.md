@@ -7,6 +7,88 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.39.0] - 2026-09-25
+
+Twelve findings from the PetPlace test circuit, each reproduced and fixed with
+a test that fails on 1.38.0. Security first.
+
+### Security - realtime broadcast no longer defaults to a public channel (#12)
+
+`broadcast.type` is `public` | `private` | `presence` (`private: true` still
+works) and `broadcast.perCompany` suffixes the channel with `.{companyId}`. The
+editor offers both, warns when the channel is public and previews the listener
+key; `ptah:check` warns too. BaseCrud.md § Broadcast was rewritten: the event
+should carry no payload, use a `PrivateChannel` and authorize it with
+`Broadcast::channel` + `ptah_can` — the previous example leaked record data to
+any visitor.
+
+### Fixed - a masked field kept its value through a searchdropdown round trip (#1)
+
+Typing into a masked or money field while another request was in flight lost
+the value when that request's response morphed the form. The typed value is
+now kept per component and field and re-applied after the morph.
+
+### Fixed - an unknown permission key no longer denies in silence (#2)
+
+A key that is not a registered page object logs a warning once per request in
+debug. `ptah:check` lists every `@ptahCan`, `ptah_can()`, `ptah.can:` and
+screen `permissionIdentifier` key that is not registered (`unknown_permission_keys`
+in `--json`).
+
+### Added - kanban `locked` columns and `transitions` (#3)
+
+`kanbanConfig.locked` columns accept no drop and let no card out;
+`kanbanConfig.transitions` lists origin → allowed destinations; `lockedMessage`
+is the toast and column hint. The board offers only allowed destinations and
+`moveCard()` checks the rule again on the server. See BaseCrud.md § Workflow
+statuses.
+
+### Fixed - `colsDefaultValue` fills the "New" form (#4)
+
+It was stored and ignored. Also reachable as `--column="...:default=x"` and in
+the editor ("Default value on New").
+
+### Fixed - `ptah:check` NOT NULL false positives (#5)
+
+Skipped when the screen has no "New" button; columns filled by a
+`merge(data, {...})` beforeCreate formula count as filled; a class hook
+(`@Class::method`) turns the warning into `info`.
+
+### Fixed - `ptah:upgrade-check` no longer asks to remove keys the code reads (#6)
+
+`auth.route_prefix` is back in the shipped config, and a key is reported as
+unused only when nothing in `src`, `routes` or the views reads it.
+
+### Added - intentional view overrides (#7)
+
+`ptah.intentional_overrides` (or a `ptah:intentional-override` comment in the
+view) marks a published view as deliberately diverged; upgrade-check counts it
+as info instead of flagging it on every release.
+
+### Fixed - modal title showed the model path (#8)
+
+The modal uses `displayNameSingular`, then the page object's label, then the
+headline of the class name — never `Inventory/ProductStock`.
+
+### Added - English aliases in the br mask preset (#9)
+
+`phone`, `zipcode`, `zip`, `postal_code`, `document`, `plate` resolve to the br
+masks; a host definition under the same name still wins. `ptah:check` warns on
+a `colsMask` that is not registered.
+
+### Added - board `with` and accessor titles documented (#10)
+
+`kanbanConfig.title` / `calendarConfig.title` may name an accessor;
+`kanbanConfig.with` / `calendarConfig.with` eager-load the relations it reads
+(names that are not relationships are ignored).
+
+### Fixed - `forge-page-header` on a phone (#11)
+
+Title and actions stack below `sm` and the actions wrap, instead of scrolling
+the whole page sideways.
+
+---
+
 ## [1.38.0] - 2026-09-25
 
 Four ready-made pieces every business app asks for, and the switches for them
