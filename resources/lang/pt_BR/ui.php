@@ -352,7 +352,7 @@ return [
     | Auth — páginas Livewire
     |--------------------------------------------------------------------------
     */
-    'auth_link_sent' => 'Link de recuperação enviado! Verifique seu e-mail.',
+    'auth_link_sent' => 'Se existir uma conta com este e-mail, o link de recuperação foi enviado.',
     'auth_too_many_attempts' => 'Muitas tentativas. Tente novamente em :seconds segundos.',
     'auth_invalid_credentials' => 'E-mail ou senha incorretos.',
     'auth_password_reset_ok' => 'Senha alterada com sucesso! Faça login.',
@@ -513,6 +513,7 @@ return [
     'profile_save_btn' => 'Salvar perfil',
     'profile_current_pw' => 'Senha atual',
     'profile_email_password' => 'Senha atual (necessária para trocar o e-mail)',
+    'profile_twofa_password' => 'Senha atual (necessária para qualquer mudança no 2FA)',
     'profile_new_pw' => 'Nova senha',
     'profile_confirm_pw' => 'Confirmar nova senha',
     'profile_change_pw_btn' => 'Alterar senha',

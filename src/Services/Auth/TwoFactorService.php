@@ -30,6 +30,29 @@ class TwoFactorService
      */
     public function enableTotp(Authenticatable $user): array
     {
+        $data = $this->startTotp($user);
+
+        // Saved temporarily — confirmed only after verification. Kept for
+        // hosts that call it; the profile uses startTotp() +
+        // confirmPendingTotp(), which write nothing until a code verifies.
+        $user->forceFill(['two_factor_secret' => encrypt($data['secret'])])->save();
+
+        return $data;
+    }
+
+    /**
+     * Starts a TOTP setup WITHOUT touching the user row.
+     *
+     * enableTotp() writes the new secret before the code is confirmed, so on a
+     * user who already has TOTP the working authenticator stops matching the
+     * moment someone opens the setup (and with a stolen session that someone is
+     * the attacker). Here the secret is returned for the caller to hold until
+     * confirmPendingTotp() verifies a code against it.
+     *
+     * @return array{secret: string, qr_image_uri: string, recovery_codes: list<string>}
+     */
+    public function startTotp(Authenticatable $user): array
+    {
         if (! class_exists(Google2FA::class)) {
             throw new \RuntimeException('Install pragmarx/google2fa-laravel to use TOTP.');
         }
@@ -38,22 +61,38 @@ class TwoFactorService
         $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
 
         $secret = $google2fa->generateSecretKey();
-        $recoveryCodes = $this->generateRecoveryCodes();
-        $appName = config('app.name', 'Ptah');
-        $email = $user->email ?? (string) $user->getKey();
-
-        $qrUrl = $google2fa->getQRCodeUrl($appName, $email, $secret);
-
-        // Saved temporarily — confirmed only after verification
-        $user->forceFill(['two_factor_secret' => encrypt($secret)])->save();
-
-        $qrImageUri = $this->qrCodeUri($qrUrl);
+        $qrUrl = $google2fa->getQRCodeUrl(config('app.name', 'Ptah'), $user->email ?? (string) $user->getKey(), $secret);
 
         return [
             'secret' => $secret,
-            'qr_image_uri' => $qrImageUri,
-            'recovery_codes' => $recoveryCodes,
+            'qr_image_uri' => $this->qrCodeUri($qrUrl),
+            'recovery_codes' => $this->generateRecoveryCodes(),
         ];
+    }
+
+    /**
+     * Saves a pending TOTP secret once a code generated from it verifies.
+     *
+     * @param  list<string>  $recoveryCodes
+     */
+    public function confirmPendingTotp(Authenticatable $user, string $secret, string $code, array $recoveryCodes): bool
+    {
+        if ($secret === '' || ! class_exists(\PragmaRX\Google2FA\Google2FA::class)) {
+            return false;
+        }
+
+        if (! app(\PragmaRX\Google2FA\Google2FA::class)->verifyKey($secret, $code)) {
+            return false;
+        }
+
+        $user->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_type' => 'totp',
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
+        ])->save();
+
+        return true;
     }
 
     /**

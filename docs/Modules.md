@@ -263,16 +263,24 @@ Profile page with 6 tabs:
 
 | Method | Description |
 |---|---|
-| `saveProfile()` | Persists name and email |
-| `savePassword()` | Validates current + saves new password |
-| `initTotp()` | Generates TOTP secret + QR code SVG, shows confirmation form |
-| `confirmTotp()` | Verifies code and activates TOTP 2FA |
+| `saveProfile()` | Persists name and email; a new e-mail needs the current password (`email_password`) and must be unique (1.41.7) |
+| `savePassword()` | Validates current + saves new password; ends the other sessions and rotates the remember-me token (1.41.8) |
+| `initTotp()` | Generates a PENDING TOTP secret + QR code (held in the locked `pendingTotpSecret`, nothing written until a code confirms it) |
+| `confirmTotp()` | Verifies the code against the pending secret and only then saves and activates it |
 | `enableEmailTwoFactor()` | Activates email 2FA immediately |
 | `disableTwoFactor()` | Deactivates and removes 2FA data |
 | `regenerateRecoveryCodes()` | Generates 8 new recovery codes |
 | `loadSessions()` | Loads active sessions via `SessionService` |
-| `revokeSession(string $sessionId, SessionService $sessionService)` | Revokes specific session (Livewire method-injects the service) |
+| `revokeSession(string $sessionId, SessionService $sessionService)` | Revokes specific session and rotates the remember-me token, so the revoked device's cookie stops working (Livewire method-injects the service) |
 | `revokeOtherSessions()` | Revokes all except the current one |
+
+Every 2FA change — `initTotp()`, `enableEmailTwoFactor()`, `disableTwoFactor()`,
+`loadRecoveryCodes()`, `regenerateRecoveryCodes()` — requires the current
+password in `twofa_password` (since 1.41.8): with a stolen session, turning 2FA
+off, swapping the secret or reading the recovery codes made the theft permanent.
+`TwoFactorService::startTotp()` / `confirmPendingTotp()` are the non-writing
+pair behind it; `enableTotp()` / `confirmTotp()` keep working for hosts that
+call them, but write the secret before it is confirmed.
 | `savePhoto()` | Saves photo to `profile-photos` disk |
 | `removePhoto()` | Removes photo and clears field in database |
 

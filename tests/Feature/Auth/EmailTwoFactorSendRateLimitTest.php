@@ -94,7 +94,8 @@ class EmailTwoFactorSendRateLimitTest extends TestCase
     {
         Mail::fake();
 
-        $user = SendRateLimitTestUser::create(['name' => 'Vic', 'email' => 'vic@example.com', 'password' => 'x']);
+        // Desde a 1.41.8 toda mudanca de 2FA pede a senha atual.
+        $user = SendRateLimitTestUser::create(['name' => 'Vic', 'email' => 'vic@example.com', 'password' => bcrypt('secret')]);
         $this->actingAs($user);
 
         $key = 'ptah-2fa-send|'.$user->id.'|'.request()->ip();
@@ -104,6 +105,7 @@ class EmailTwoFactorSendRateLimitTest extends TestCase
         }
 
         Livewire::test(ProfilePage::class)
+            ->set('twofa_password', 'secret')
             ->call('enableEmailTwoFactor')
             ->assertSet('errorMsg', fn ($v) => ! empty($v));
 
@@ -115,10 +117,12 @@ class EmailTwoFactorSendRateLimitTest extends TestCase
     {
         Mail::fake();
 
-        $user = SendRateLimitTestUser::create(['name' => 'Vic', 'email' => 'vic@example.com', 'password' => 'x']);
+        // Desde a 1.41.8 toda mudanca de 2FA pede a senha atual.
+        $user = SendRateLimitTestUser::create(['name' => 'Vic', 'email' => 'vic@example.com', 'password' => bcrypt('secret')]);
         $this->actingAs($user);
 
         Livewire::test(ProfilePage::class)
+            ->set('twofa_password', 'secret')
             ->call('enableEmailTwoFactor')
             ->assertSet('errorMsg', '');
 
