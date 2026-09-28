@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Ptah\Exceptions\CrudHookAbort;
@@ -183,6 +184,24 @@ trait HasCrudForm
             $this->formErrors = array_merge($this->formErrors, $uploadErrors);
         }
 
+        // Valor de searchdropdown escolhido pelo cliente: precisa ser um que o
+        // dropdown ofereceria (mesma empresa, mesmos filtros). Num update, o
+        // valor que o registro ja tinha segue valendo (1.41.7).
+        $current = $this->editingId ? $this->scopedQuery()?->find($this->editingId) : null;
+        foreach ($formCols as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            $value = $this->formData[$field] ?? null;
+            if (($col['colsTipo'] ?? '') !== 'searchdropdown' || $value === null || $value === '') {
+                continue;
+            }
+            if ($current && (string) $current->getAttribute($field) === (string) $value) {
+                continue;
+            }
+            if (! $this->sdValueInScope($col, $value)) {
+                $this->formErrors[$field] = trans('ptah::ui.sd_value_not_allowed');
+            }
+        }
+
         if (! empty($this->formErrors)) {
             $this->creating = false;
 
@@ -229,6 +248,10 @@ trait HasCrudForm
                 if ($userId && in_array('updated_by', $fillable, true)) {
                     $data['updated_by'] = $userId;
                 }
+                // Depois dos hooks: o formData pode trazer company_id ou a FK do
+                // detalhe (se forem colunas do form) e movia o registro para outra
+                // empresa ou outro pai (auditoria de 28/09/2026, 1.41.7).
+                $data = $this->applyWriteScope($data, $modelInstance);
                 $record->update($data);
                 // Hook: ação após atualizar (pode retornar redirect)
                 $redirect = $this->afterUpdate($record);
@@ -246,6 +269,7 @@ trait HasCrudForm
                 if ($userId && in_array('updated_by', $fillable, true)) {
                     $data['updated_by'] = $userId;
                 }
+                $data = $this->applyWriteScope($data, $modelInstance);
                 $record = $modelInstance->newQuery()->create($data);
                 // Hook: ação após criar (pode retornar redirect)
                 $redirect = $this->afterCreate($record);
@@ -626,16 +650,79 @@ trait HasCrudForm
         $expression = new ExpressionLanguage;
         $this->registerHookFunctions($expression);
 
+        // `record` e `user` entram como DADOS, nunca como objetos: o
+        // ExpressionLanguage chama metodo de objeto, e o `__call` do Eloquent
+        // repassa tudo ao query builder — `record.newQuery().update({...})`,
+        // `record.getConnection().select(...)` e `user.forceFill({...}).save()`
+        // rodavam SQL a partir da config (auditoria de 28/09/2026, 1.41.7).
+        // Um stdClass so com os atributos mantem `record.campo` funcionando e
+        // nao tem metodo nenhum para chamar.
         $result = $expression->evaluate($hookCode, [
             'data' => $data,
-            'record' => $record,
-            'user' => Auth::user(),
+            'record' => self::expressionData($record?->attributesToArray()),
+            'user' => self::expressionData(self::expressionUser()),
         ]);
 
         // Se a expressão retornar um array, ele passa a ser o novo conjunto de dados.
         if (is_array($result)) {
             $data = $result;
         }
+    }
+
+    /**
+     * Attributes as a method-less object: `x.field` reads, `x.method()` has
+     * nothing to call. Nested arrays stay arrays (read with `x.list['k']`).
+     */
+    private static function expressionData(?array $attributes): ?object
+    {
+        return $attributes === null ? null : (object) $attributes;
+    }
+
+    /**
+     * The signed-in user as data — id, name and e-mail, never the model.
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function expressionUser(): ?array
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        return [
+            'id' => $user->getAuthIdentifier(),
+            'name' => $user->name ?? null,
+            'email' => $user->email ?? null,
+        ];
+    }
+
+    /**
+     * Forces the screen's scope onto a write: the active company and every
+     * locked filter (the master-detail FK among them). A record the screen can
+     * only SEE inside that scope must not be WRITTEN outside it — the form data
+     * is client-writable, and a scope column that is also a form field let a
+     * save move the row to another company or another parent.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function applyWriteScope(array $data, Model $model): array
+    {
+        $companyField = (string) ($this->crudConfig['companyField'] ?? 'company_id');
+
+        if ($this->companyFilter > 0 && Schema::hasColumn($model->getTable(), $companyField)) {
+            $data[$companyField] = $this->companyFilter;
+        }
+
+        foreach ($this->lockedFilters as $column => $value) {
+            if (is_scalar($value) || $value === null) {
+                $data[(string) $column] = $value;
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -650,7 +737,9 @@ trait HasCrudForm
             fn (...$args) => sprintf('array_merge(%s)', implode(', ', $args)),
             fn (array $values, ...$arrays) => array_merge(...array_map(fn ($a) => (array) $a, $arrays)),
         );
-        $el->register('now', fn () => 'now()', fn () => now());
+        // Texto, nao Carbon: um objeto devolvido aqui teria os metodos dele
+        // chamaveis pela expressao (inclusive estaticos como setTestNow()).
+        $el->register('now', fn () => 'now()', fn () => now()->format('Y-m-d H:i:s'));
         $el->register('upper', fn ($s) => "mb_strtoupper({$s})", fn (array $v, $s) => mb_strtoupper((string) $s));
         $el->register('lower', fn ($s) => "mb_strtolower({$s})", fn (array $v, $s) => mb_strtolower((string) $s));
         $el->register('slug', fn ($s) => "Str::slug({$s})", fn (array $v, $s) => Str::slug((string) $s));

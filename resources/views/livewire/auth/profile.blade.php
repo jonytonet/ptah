@@ -20,6 +20,8 @@
             <form wire:submit="saveProfile" class="space-y-5 max-w-lg">
                 <x-forge-input name="name"  :label="__('ptah::ui.profile_name')"   wire:model="name"  :error="$errors->first('name')"  required />
                 <x-forge-input name="email" type="email" label="E-mail" wire:model="email" :error="$errors->first('email')" required />
+                <x-forge-input name="email_password" type="password" :label="__('ptah::ui.profile_email_password')"
+                    wire:model="email_password" :error="$errors->first('email_password')" autocomplete="current-password" />
 
                 <x-forge-button type="submit" color="primary">{{ __('ptah::ui.profile_save_btn') }}</x-forge-button>
             </form>

@@ -218,9 +218,20 @@ trait HasCrudQuery
         // entries whose base field (same suffix regex HasCrudFilters::buildTextFilter()
         // uses) is a denied column, so a stale dateRanges['cost_start'] left
         // over from before the column was gated cannot filter by it.
-        $dateRanges = empty($this->deniedColumns) ? $this->dateRanges : array_filter(
+        //
+        // And only a field the screen offers as a filter: `dateRanges` is
+        // client-writable, and a forged `password_start`/`password_end` made a
+        // range over the hash — the date strategy falls back to a raw
+        // whereBetween when the bounds do not parse, so counting the rows was a
+        // binary search over any column (audit of 28/09/2026, 1.41.7). The same
+        // gate `filters` and the advanced search already go through.
+        $dateRanges = array_filter(
             $this->dateRanges,
-            fn ($key) => ! in_array(preg_replace('/_(start|end|from|to)$/', '', (string) $key), $this->deniedColumns, true),
+            function ($key) {
+                $field = (string) preg_replace('/_(start|end|from|to)$/', '', (string) $key);
+
+                return ! in_array($field, $this->deniedColumns, true) && $this->fieldIsFilterable($field);
+            },
             ARRAY_FILTER_USE_KEY
         );
         $drFilters = $this->filterService->processDateRangeFilters($dateRanges, $this->dateRangeOperators);
@@ -232,8 +243,12 @@ trait HasCrudQuery
         // so guard it as an identifier before it reaches whereBetween, AND
         // reject a denied column (a forged wire:model could otherwise point
         // it at a column the user may not read).
-        if ($this->quickDateFilter !== '' && $this->quickDateColumn !== '' && SqlIdentifier::isSafe($this->quickDateColumn)
-            && ! in_array($this->quickDateColumn, $this->deniedColumns, true)) {
+        // Only the configured column (or created_at) or one the screen offers as
+        // a filter, and never a `$hidden` one (1.41.7).
+        $quickCol = $this->quickDateColumn;
+        $quickAllowed = $quickCol === ($this->crudConfig['quickDateColumn'] ?? 'created_at') || $this->fieldIsFilterable($quickCol);
+        if ($this->quickDateFilter !== '' && $quickCol !== '' && SqlIdentifier::isSafe($quickCol) && $quickAllowed
+            && ! in_array($quickCol, $this->deniedColumns, true) && ! in_array($quickCol, $this->hiddenModelAttributes(), true)) {
             [$from, $to] = $this->getQuickDateRange($this->quickDateFilter);
             if ($from && $to) {
                 $query->whereBetween($this->quickDateColumn, [$from, $to]);

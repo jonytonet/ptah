@@ -1100,6 +1100,12 @@ Or with full namespace:
 ✅ **Implemented protections:**
 - Evaluated with Symfony ExpressionLanguage — **no `eval()`, no arbitrary PHP, no RCE**
 - Only the whitelisted variables (`data`, `record`, `user`) and functions (`merge`, `now`, `upper`, `lower`, `slug`, `uuid`) are reachable
+- `record` and `user` are **data, not objects** (since 1.41.7): the record's
+  attributes and the user's `id`/`name`/`email` in a method-less object, so
+  `record.status` reads and `record.save()` / `record.newQuery()` have nothing
+  to call. Before 1.41.7 they were the Eloquent models, and ExpressionLanguage
+  calls methods on objects — `record.newQuery().update({...})` ran SQL.
+  `now()` returns `Y-m-d H:i:s` text, not a Carbon object, for the same reason.
 - Automatic try-catch — errors do not break the save()
 - Detailed error logging in `storage/logs/laravel.log`
 - Modal access restricted via `@ptahCan('configCrud', 'read')`
@@ -1148,7 +1154,7 @@ Or with full namespace:
 
 ✅ **Works:**
 - Reshape the form data on `before*` hooks: return an array (use `merge()`)
-- Read `record` and `user` properties (e.g. `record.status`, `user.id`)
+- Read `record` and `user` fields (e.g. `record.status`, `user.id`, `user.name`) — fields only, no methods
 - Conditionals via the ternary operator and `and`/`or`
 - Helpers: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`
 
