@@ -76,7 +76,7 @@
                     ->filter(fn (array $c): bool => ($c['colsTipo'] ?? '') === 'action')
                     ->all();
             @endphp
-            @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || $cardActionCols !== [])
+            @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || ($effectivePerms['canCreate'] && ! $showTrashed) || $cardActionCols !== [])
                 <div class="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-slate-100 dark:border-slate-700">
                     @foreach ($cardActionCols as $col)
                         <span class="p-2 -m-1">

@@ -2433,9 +2433,9 @@ Properties of each action in `actions[]`:
 | `actionIcon` | string | `''` | Button icon (e.g.: `bx-check`, `fa-check`) |
 | `actionColor` | string | `'primary'` | Button color: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
 | `actionPosition` | string | `'row'` | Position: `row` (per row), `bulk` (bulk action), `both` |
-| `actionConfirm` | bool | `false` | Require confirmation |
-| `actionConfirmMessage` | string | `''` | Confirmation message |
-| `actionPermission` | string | `''` | Required gate/ability |
+| `actionConfirm` | bool | `false` | Ask before running (`wire:confirm` on livewire actions, `confirm()` on link/javascript). Read since 1.41.1 |
+| `actionConfirmMessage` | string | `''` | Confirmation text; blank uses `row_action_confirm` ("Are you sure?") |
+| `actionPermission` | string | `''` | Gate the user needs to SEE the button (read since 1.41.1). A `livewire` action still reaches your method — check there too |
 
 **Supported placeholders in `actionValue`:**
 - `%id%` → Record ID

@@ -29,7 +29,7 @@
             <td></td>
         @endif
     @endforeach
-    @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
+    @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || ($effectivePerms['canCreate'] && ! $showTrashed))
         <td class="ptah-no-print"></td>
     @endif
 </tr>

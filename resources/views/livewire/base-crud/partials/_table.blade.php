@@ -94,7 +94,7 @@
                 @endforeach
 
                 {{-- Coluna de ações padrão (sticky: stays visible on horizontal scroll) --}}
-                @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
+                @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || ($effectivePerms['canCreate'] && ! $showTrashed))
                     {{-- width:1% + nowrap = shrink-to-fit dos ícones, sem sobra --}}
                     <th class="sticky right-0 z-[1] px-3 py-3 text-xs font-semibold tracking-wider text-center uppercase whitespace-nowrap ptah-c-th_text ptah-c-sticky_th ptah-no-print" style="width:1%">{{ __('ptah::ui.col_actions') }}</th>
                 @endif
@@ -219,7 +219,7 @@
                     {{-- Botões de ação padrão (sticky column; p-2 gives each a 32x32 touch target,
                          no negative margin — that used to make adjacent buttons overlap and eat
                          into the cell's own padding) --}}
-                    @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'])
+                    @if ($effectivePerms['canUpdate'] || $effectivePerms['canDelete'] || ($effectivePerms['canCreate'] && ! $showTrashed))
                         <td class="sticky right-0 z-[1] px-3 py-(--ptah-row-py) text-center whitespace-nowrap ptah-c-sticky_cell ptah-no-print" style="width:1%">
                             <div class="ptah-row-btns flex items-center justify-center gap-1">
 

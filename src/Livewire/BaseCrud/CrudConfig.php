@@ -1162,7 +1162,12 @@ class CrudConfig extends Component
             'customFilters' => array_values($this->customFilters),
             'contitionStyles' => array_values($this->conditionStyles),
             'joins' => array_values($this->joins),
-            'permissions' => [
+            // Merge, nao substituicao: `permissions.history`, `.attachments`,
+            // `.import` e as gates gravadas pela CLI nao tem campo no editor, e
+            // salvar a tela as apagava em silencio.
+            // (`identifier` e a chave legada da 1.6: o editor a migra para
+            // `permissionIdentifier` e ela nao pode sobreviver ao merge.)
+            'permissions' => array_merge(array_diff_key($existing['permissions'] ?? [], ['identifier' => true]), [
                 'create' => $this->permissionCreate ?: null,
                 'edit' => $this->permissionEdit ?: null,
                 'delete' => $this->permissionDelete ?: null,
@@ -1173,7 +1178,7 @@ class CrudConfig extends Component
                 'showDeleteButton' => $this->showDeleteButton,
                 'showTrashButton' => $this->showTrashButton,
                 'permissionIdentifier' => $this->permissionIdentifier ?: $this->getDefaultPermissionIdentifier(),
-            ],
+            ]),
             'cacheStrategy' => [
                 'enabled' => $this->cacheEnabled,
                 'ttl' => $this->cacheTtl,

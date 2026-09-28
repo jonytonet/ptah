@@ -43,12 +43,17 @@
     }
 
     $actionTitle = $col['colsNomeLogico'] ?? '';
+
+    // actionPermission / actionConfirm: gravados desde sempre, lidos so a partir
+    // da 1.41.1 (antes toda acao aparecia para todos e rodava sem confirmar).
+    $actionConfirm = $this->rowActionConfirm($col);
 @endphp
 
-@if ($actionStr)
+@if ($actionStr && $this->rowActionAllowed($col))
     @if ($actionType === 'link')
         <a href="{{ $actionStr }}"
             @click.stop
+            @if ($actionConfirm !== null) onclick="return confirm({{ json_encode($actionConfirm) }})" @endif
             class="transition-colors text-{{ $actionColor }} hover:opacity-75"
             title="{{ $actionTitle }}">
             @if ($actionIcon)
@@ -59,6 +64,7 @@
         </a>
     @elseif ($actionType === 'livewire')
         <button wire:click="{{ $actionStr }}"
+            @if ($actionConfirm !== null) wire:confirm="{{ $actionConfirm }}" @endif
             @click.stop
             class="transition-colors text-{{ $actionColor }} hover:opacity-75"
             title="{{ $actionTitle }}">
@@ -70,7 +76,7 @@
         </button>
     @else
         {{-- javascript (default) --}}
-        <button onclick="{{ $actionStr }}"
+        <button onclick="{{ $actionConfirm !== null ? 'if (!confirm('.json_encode($actionConfirm).')) return false; ' : '' }}{{ $actionStr }}"
             @click.stop
             class="transition-colors text-{{ $actionColor }} hover:opacity-75"
             title="{{ $actionTitle }}">

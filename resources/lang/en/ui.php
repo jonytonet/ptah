@@ -1504,6 +1504,10 @@ return [
     'cfg_act_icon_label' => 'Icon (Boxicons CSS class)',
     'cfg_act_color_label' => 'Color',
     'cfg_act_permission_label' => 'Gate Permission (optional)',
+    'cfg_act_confirm_label' => 'Ask for confirmation',
+    'cfg_act_confirm_message_label' => 'Confirmation message',
+    'cfg_tip_action_confirm' => 'Shows a confirmation before the action runs.',
+    'cfg_tip_action_confirm_message' => 'Text of the confirmation. Blank uses "Are you sure?".',
     'cfg_act_type_link' => 'link — Redirect URL',
     'cfg_act_type_livewire' => 'livewire — Call method',
     'cfg_act_type_js' => 'javascript — Execute JS',
@@ -1796,6 +1800,7 @@ return [
     // Power features (duplicate, print, cards, group break, master/detail, formulas)
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicate record',
+    'row_action_confirm' => 'Are you sure?',
     'btn_print' => 'Print',
 
     // Print screen (crud/print)

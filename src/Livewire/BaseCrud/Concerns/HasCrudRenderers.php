@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;
@@ -847,6 +848,43 @@ trait HasCrudRenderers
         }
 
         return e((string) $value);
+    }
+
+    // ── Row actions (colsTipo = action) ─────────────────────────────────────────
+
+    /**
+     * Whether the signed-in user may SEE this configured row action.
+     *
+     * `actionPermission` was written by the CLI, the wizard and the editor —
+     * whose tooltip promised "Gate name required to see this action" — and read
+     * by nothing: every action showed to everyone. A `livewire` action still
+     * reaches the host's method, which must check on its own; hiding the button
+     * is what the setting ever promised.
+     */
+    public function rowActionAllowed(array $col): bool
+    {
+        $gate = trim((string) ($col['actionPermission'] ?? ''));
+
+        // Gate::forUser e nao ->can(): um Authenticatable sem o trait
+        // Authorizable (GenericUser, guards customizados) nao tem can().
+        return $gate === '' || (auth()->check() && Gate::forUser(auth()->user())->allows($gate));
+    }
+
+    /**
+     * The confirmation text for a row action, or null when it runs directly.
+     * `actionConfirm` was stored and never read, like `actionPermission`.
+     */
+    public function rowActionConfirm(array $col): ?string
+    {
+        $confirm = $col['actionConfirm'] ?? false;
+
+        if (! ($this->ptahBool($confirm) || in_array(strtolower((string) (is_bool($confirm) ? '' : $confirm)), ['true', 'yes', 'sim'], true))) {
+            return null;
+        }
+
+        $message = trim((string) ($col['actionConfirmMessage'] ?? ''));
+
+        return $message !== '' ? $message : trans('ptah::ui.row_action_confirm');
     }
 
     // ── Utility ────────────────────────────────────────────────────────────────
