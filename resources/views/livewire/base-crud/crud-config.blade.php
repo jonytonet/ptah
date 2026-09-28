@@ -1720,6 +1720,19 @@
                                         title="{{ __('ptah::ui.cfg_tip_action_permission') }}"
                                         placeholder="ex: admin" class="font-mono cfg-input" />
                                 </div>
+                                <div>
+                                    <label class="cfg-label inline-flex items-center gap-2">
+                                        <input type="checkbox" wire:model="formDataAction.actionConfirm"
+                                            title="{{ __('ptah::ui.cfg_tip_action_confirm') }}" class="rounded text-primary" />
+                                        {{ __('ptah::ui.cfg_act_confirm_label') }}
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="cfg-label">{{ __('ptah::ui.cfg_act_confirm_message_label') }}</label>
+                                    <input type="text" wire:model="formDataAction.actionConfirmMessage"
+                                        title="{{ __('ptah::ui.cfg_tip_action_confirm_message') }}"
+                                        placeholder="{{ __('ptah::ui.row_action_confirm') }}" class="cfg-input" />
+                                </div>
                             </div>
                             <div class="flex justify-end pt-2 border-t border-slate-100">
                                 <button wire:click="addAction"

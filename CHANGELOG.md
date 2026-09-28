@@ -7,6 +7,40 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.1] - 2026-09-28
+
+Three published defects found while planning 1.42.
+
+### Security - saving in the visual editor erased permissions it has no field for
+
+`buildConfigArray()` rewrote the `permissions` block whole, so a save from the
+editor dropped `permissions.history`, `.attachments`, `.import` and any other
+gate set through `ptah:config --set` — the screen looked protected and was
+not. The block is now merged with what is stored.
+
+### Security - row actions ignored `actionPermission` and `actionConfirm`
+
+Both were written by the CLI, the wizard and the editor (whose tooltip says
+"Gate name required to see this action") and read by nothing: every custom
+action showed to every user and ran without asking. Now:
+
+- `actionPermission` hides the button from a user the gate refuses (checked
+  with `Gate::forUser`, so it works for any Authenticatable). A `livewire`
+  action still reaches the host's method, which must check on its own.
+- `actionConfirm` asks before running: `wire:confirm` on livewire actions,
+  `confirm()` on link and javascript ones, with `actionConfirmMessage` or
+  "Are you sure?". Both are now in the editor's action form.
+
+**Behaviour change:** an action that declares `actionPermission` disappears
+for users without that gate — which is what the setting always claimed.
+
+### Fixed - "Duplicate" was hidden from who can only create
+
+The actions column rendered only for users who can edit or delete, so a
+create-only role never saw the Duplicate button.
+
+---
+
 ## [1.41.0] - 2026-09-28
 
 ### Added - a delete can be refused, with a reason

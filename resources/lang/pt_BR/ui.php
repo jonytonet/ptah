@@ -1505,6 +1505,10 @@ return [
     'cfg_act_icon_label' => 'Ícone (classe CSS Boxicons)',
     'cfg_act_color_label' => 'Cor',
     'cfg_act_permission_label' => 'Permissão Gate (opcional)',
+    'cfg_act_confirm_label' => 'Pedir confirmação',
+    'cfg_act_confirm_message_label' => 'Mensagem de confirmação',
+    'cfg_tip_action_confirm' => 'Mostra uma confirmação antes de a ação rodar.',
+    'cfg_tip_action_confirm_message' => 'Texto da confirmação. Vazio usa "Tem certeza?".',
     'cfg_act_type_link' => 'link — Redirecionar URL',
     'cfg_act_type_livewire' => 'livewire — Chamar método',
     'cfg_act_type_js' => 'javascript — Executar JS',
@@ -1798,6 +1802,7 @@ return [
     // Power features (duplicar, imprimir, cards, quebra, mestre/detalhe, fórmulas)
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicar registro',
+    'row_action_confirm' => 'Tem certeza?',
     'btn_print' => 'Imprimir',
 
     // Print screen (crud/print)
