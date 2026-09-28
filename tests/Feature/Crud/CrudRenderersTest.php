@@ -230,6 +230,24 @@ class CrudRenderersTest extends TestCase
         $this->assertSame('not-a-date', $html);
     }
 
+    #[Test]
+    public function the_date_renderer_uses_the_configured_format(): void
+    {
+        // colsRendererFormat: perguntado pelo wizard, ignorado ate a 1.41.4.
+        $this->assertSame('2026-06-11', $this->format(['colsRenderer' => 'date', 'colsRendererFormat' => 'Y-m-d'], ['field' => '2026-06-11']));
+        $this->assertSame('11/06/2026 14:30', $this->format(['colsRenderer' => 'datetime'], ['field' => '2026-06-11 14:30:00']));
+        $this->assertSame('14h30', $this->format(['colsRenderer' => 'datetime', 'colsRendererFormat' => 'H\hi'], ['field' => '2026-06-11 14:30:00']));
+    }
+
+    #[Test]
+    public function a_configured_date_format_cannot_inject_html(): void
+    {
+        // O formato vem da config e a saida vai para {!! !!}.
+        $html = $this->format(['colsRenderer' => 'date', 'colsRendererFormat' => '\<\b\>Y'], ['field' => '2026-06-11']);
+
+        $this->assertSame('&lt;b&gt;2026', $html);
+    }
+
     // ── Select map / wrappers ─────────────────────────────────────────────────
 
     #[Test]

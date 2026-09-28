@@ -214,8 +214,10 @@ trait HasCrudRenderers
             'pill' => $this->renderPill($col, $value),
             'boolean' => $this->renderBoolean($col, $value),
             'money' => $this->renderMoney($col, $value),
-            'date' => $this->helperDateFormat($value),
-            'datetime' => $this->helperDateTimeFormat($value),
+            // colsRendererFormat: perguntado pelo wizard desde sempre, ignorado
+            // ate a 1.41.4 (a listagem usava d/m/Y fixo).
+            'date' => $this->helperDateFormat($value, $this->rendererDateFormat($col)),
+            'datetime' => $this->helperDateTimeFormat($value, $this->rendererDateFormat($col)),
             'link' => $this->renderLink($col, $value, $row),
             'image' => $this->renderImage($col, $value),
             'truncate' => $this->renderTruncate($col, $value),
@@ -701,13 +703,14 @@ trait HasCrudRenderers
     /**
      * Formats a value as a locale date (d/m/Y).
      */
-    protected function helperDateFormat(mixed $value): string
+    protected function helperDateFormat(mixed $value, ?string $format = null): string
     {
         if (! $value) {
             return '';
         }
         try {
-            return Carbon::parse($value)->format('d/m/Y');
+            // Escapado: o formato vem da config e a saida vai para `{!! !!}`.
+            return e(Carbon::parse($value)->format($format ?? 'd/m/Y'));
         } catch (\Throwable) {
             // Escapado: a saida do formatCell vai para `{!! !!}`, e numa coluna
             // de texto renderizada como data o parse falha com o valor cru —
@@ -719,13 +722,13 @@ trait HasCrudRenderers
     /**
      * Formats a value as a locale date-time (d/m/Y H:i).
      */
-    protected function helperDateTimeFormat(mixed $value): string
+    protected function helperDateTimeFormat(mixed $value, ?string $format = null): string
     {
         if (! $value) {
             return '';
         }
         try {
-            return Carbon::parse($value)->format('d/m/Y H:i');
+            return e(Carbon::parse($value)->format($format ?? 'd/m/Y H:i'));
         } catch (\Throwable) {
             // Escapado: a saida do formatCell vai para `{!! !!}`, e numa coluna
             // de texto renderizada como data o parse falha com o valor cru —
@@ -885,6 +888,16 @@ trait HasCrudRenderers
         $message = trim((string) ($col['actionConfirmMessage'] ?? ''));
 
         return $message !== '' ? $message : trans('ptah::ui.row_action_confirm');
+    }
+
+    /**
+     * The column's date format (`colsRendererFormat`), or null for the default.
+     */
+    private function rendererDateFormat(array $col): ?string
+    {
+        $format = trim((string) ($col['colsRendererFormat'] ?? ''));
+
+        return $format !== '' ? $format : null;
     }
 
     // ── Utility ────────────────────────────────────────────────────────────────

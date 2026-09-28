@@ -1297,7 +1297,6 @@ return [
     'cfg_col_renderer_opt_qrcode' => 'qrcode — QR Code (via JS)',
 
     // Columns > Mask extra
-    'cfg_col_mask_regex' => 'Regex Pattern (IMask)',
     'cfg_col_valid_hint' => 'Additional rules beyond <strong>Required</strong> (configured in Basic tab).',
 
     // Columns > SearchDropdown
@@ -1380,7 +1379,6 @@ return [
     'cfg_col_mask_ean13' => 'ean13 — 0000000000000 (13 digits)',
     'cfg_col_mask_grp_vehicle' => 'Vehicles',
     'cfg_col_mask_uppercase_opt' => 'uppercase — automatic UPPERCASE',
-    'cfg_col_mask_custom_regex_opt' => 'custom_regex — Custom expression',
     'cfg_col_mask_plate_sfx' => '(upper. + alphanum.)',
     'cfg_col_mask_trim_opt' => 'trim — Remove spaces from edges',
     'cfg_col_mask_transform_save' => '⚡ Transformation applied on save:',
@@ -1927,7 +1925,6 @@ return [
     // Columns > Mask
     'cfg_tip_cols_mask' => 'Input mask applied while typing in the form (visual formatting only — the stored value depends on the Transform option below).',
     'cfg_tip_cols_mask_transform' => 'Converts the masked display value into the format actually saved to the database (e.g. "R$ 1.253,08" → 1253.08).',
-    'cfg_tip_cols_mask_regex' => 'Custom mask pattern (IMask syntax, e.g. 000-000-A) or a full /regex/ used when Input Mask is set to Custom expression.',
 
     // Columns > Validation
     'cfg_tip_valid_email' => 'Rejects the value unless it is a syntactically valid e-mail address.',

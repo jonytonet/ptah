@@ -81,7 +81,6 @@ class CrudConfigGenerator extends AbstractGenerator
         return [
             'crud' => $crudIdentifier,
             'totalizador' => false,
-            'configEsconderId' => false,
             'configLinkLinha' => '/'.$context->entityPlural.'/%id%',
             'tableClass' => 'table table-hover table-condensed table-sm table-bordered table-nowrap align-middle',
             'theadClass' => '',

@@ -995,9 +995,6 @@
                                                     <option value="integer">integer — Somente inteiros</option>
                                                     <option value="uppercase">{{
                                                         __('ptah::ui.cfg_col_mask_uppercase_opt') }}</option>
-                                                    <option value="custom_regex">{{
-                                                        __('ptah::ui.cfg_col_mask_custom_regex_opt') }}
-                                                    </option>
                                                 </optgroup>
                                             </select>
                                         </div>
@@ -1022,15 +1019,6 @@
                                             </select>
                                         </div>
                                     </div>
-
-                                    @if (($formDataField['colsMask'] ?? '') === 'custom_regex')
-                                    <div>
-                                        <label class="cfg-label">{{ __('ptah::ui.cfg_col_mask_regex') }}</label>
-                                        <input type="text" wire:model="formDataField.colsMaskRegex"
-                                            title="{{ __('ptah::ui.cfg_tip_cols_mask_regex') }}"
-                                            placeholder="Ex: 000-000-A ou /^[A-Z]{3}$/" class="font-mono cfg-input" />
-                                    </div>
-                                    @endif
 
                                     {{-- Preview da transformação --}}
                                     @if (!empty($formDataField['colsMaskTransform']))

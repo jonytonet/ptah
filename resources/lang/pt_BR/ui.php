@@ -1298,7 +1298,6 @@ return [
     'cfg_col_renderer_opt_qrcode' => 'qrcode — QR Code (via JS)',
 
     // Columns > Mask extra
-    'cfg_col_mask_regex' => 'Padrão Regex (IMask)',
     'cfg_col_valid_hint' => 'Regras adicionais além do <strong>Obrigatório</strong> (configurado na aba Básico).',
 
     // Columns > SearchDropdown
@@ -1381,7 +1380,6 @@ return [
     'cfg_col_mask_ean13' => 'ean13 — 0000000000000 (13 dígitos)',
     'cfg_col_mask_grp_vehicle' => 'Veículos',
     'cfg_col_mask_uppercase_opt' => 'uppercase — MAIÚSCULAS automático',
-    'cfg_col_mask_custom_regex_opt' => 'custom_regex — Expressão personalizada',
     'cfg_col_mask_plate_sfx' => '(maiúsc. + alfanum.)',
     'cfg_col_mask_trim_opt' => 'trim — Remove espaços das bordas',
     'cfg_col_mask_transform_save' => '⚡ Transformação aplicada ao salvar:',
@@ -1929,7 +1927,6 @@ return [
     // Colunas > Máscara
     'cfg_tip_cols_mask' => 'Máscara aplicada durante a digitação no formulário (só formatação visual — o valor gravado depende da opção Transformar abaixo).',
     'cfg_tip_cols_mask_transform' => 'Converte o valor exibido com máscara para o formato realmente gravado no banco (ex: "R$ 1.253,08" → 1253.08).',
-    'cfg_tip_cols_mask_regex' => 'Padrão de máscara customizado (sintaxe IMask, ex: 000-000-A) ou um /regex/ completo, usado quando a Máscara é Expressão customizada.',
 
     // Colunas > Validação
     'cfg_tip_valid_email' => 'Rejeita o valor caso não seja um endereço de e-mail sintaticamente válido.',

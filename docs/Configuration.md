@@ -785,14 +785,14 @@ The modal has **9 main tabs**:
 
 ```json
 {
-  "colsFilterField": "status",
-  "colsFilterLabel": "Status",
+  "field": "status",
+  "label": "Status",
   "colsFilterType": "select",
-  "colsFilterOperator": "=",
-  "colsFilterOptions": {
-    "active": "Active",
-    "inactive": "Inactive",
-    "pending": "Pending"
+  "operator": "=",
+  "colsSelect": {
+    "Active": "active",
+    "Inactive": "inactive",
+    "Pending": "pending"
   }
 }
 ```
@@ -1499,7 +1499,7 @@ php artisan ptah:config "App\Models\Product"
    Decimal places: 2
 
 3. Configure input mask? [no] (yes)
-   Input mask: [none, money_brl, money_usd, percent, cpf, cnpj, rg, pis, ncm, ean13, phone, cep, plate, credit_card, date, datetime, time, integer, uppercase, custom_regex]
+   Input mask: [none, money_brl, money_usd, percent, cpf, cnpj, rg, pis, ncm, ean13, phone, cep, plate, credit_card, date, datetime, time, integer, uppercase]
    ├─ Selected: money_brl
    Decimal places: 2
    Transform on save: [money_to_float, digits_only, ...]
@@ -2094,7 +2094,6 @@ Full configuration saved in the `crud_configs.config` table:
       "colsRendererDecimals": 2,
       "colsMask": "money_brl",
       "colsMaskTransform": "money_to_float",
-      "colsMaskDecimalPlaces": 2,
       "colsGravar": true,
       "colsRequired": true,
       "colsIsFilterable": true,
@@ -2158,7 +2157,6 @@ Full configuration saved in the `crud_configs.config` table:
       "actionValue": "approve(%id%)",
       "actionIcon": "bx-check",
       "actionColor": "success",
-      "actionPosition": "row",
       "actionConfirm": true,
       "actionConfirmMessage": "Are you sure you want to approve this product?",
       "actionPermission": "product.approve"
@@ -2170,30 +2168,28 @@ Full configuration saved in the `crud_configs.config` table:
       "actionValue": "reject(%id%)",
       "actionIcon": "bx-x",
       "actionColor": "danger",
-      "actionPosition": "row",
       "actionConfirm": true,
       "actionConfirmMessage": "Are you sure you want to reject this product?",
       "actionPermission": "product.reject"
     }
   ],
-  "filters": [
+  "customFilters": [
     {
-      "colsFilterField": "status",
-      "colsFilterLabel": "Status",
+      "field": "status",
+      "label": "Status",
       "colsFilterType": "select",
-      "colsFilterOperator": "=",
-      "colsFilterOptions": {
-        "active": "Active",
-        "inactive": "Inactive",
-        "pending": "Pending"
+      "operator": "=",
+      "colsSelect": {
+        "Active": "active",
+        "Inactive": "inactive",
+        "Pending": "pending"
       }
     },
     {
-      "colsFilterField": "created_at",
-      "colsFilterLabel": "Creation Date",
+      "field": "created_at",
+      "label": "Creation Date",
       "colsFilterType": "date",
-      "colsFilterOperator": ">=",
-      "colsFilterPlaceholder": "From date"
+      "operator": ">="
     }
   ],
   "contitionStyles": [
@@ -2331,9 +2327,8 @@ Properties of each column in `cols[]`:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsMask` | string | `''` | Input mask: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase`, `custom_regex` |
+| `colsMask` | string | `''` | Input mask: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase` |
 | `colsMaskTransform` | string | `''` | Transform on save: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsMaskDecimalPlaces` | int | `2` | Decimal places for currency masks |
 | `colsMaskEmptyValue` | string | `''` | Value saved when field is empty |
 
 ### Validation
@@ -2432,7 +2427,6 @@ Properties of each action in `actions[]`:
 | `actionValue` | string | — | Action value/command (required) |
 | `actionIcon` | string | `''` | Button icon (e.g.: `bx-check`, `fa-check`) |
 | `actionColor` | string | `'primary'` | Button color: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
-| `actionPosition` | string | `'row'` | Position: `row` (per row), `bulk` (bulk action), `both` |
 | `actionConfirm` | bool | `false` | Ask before running (`wire:confirm` on livewire actions, `confirm()` on link/javascript). Read since 1.41.1 |
 | `actionConfirmMessage` | string | `''` | Confirmation text; blank uses `row_action_confirm` ("Are you sure?") |
 | `actionPermission` | string | `''` | Gate the user needs to SEE the button (read since 1.41.1). A `livewire` action still reaches your method — check there too |
@@ -2483,69 +2477,59 @@ Properties of each action in `actions[]`:
 
 ## Filter Configuration
 
-Properties of each filter in `filters[]`:
+Properties of each filter in `customFilters[]` — the keys the filter panel
+and `FilterService` read. (Before 1.41.4 this table listed a `colsFilter*`
+vocabulary the runtime never read; `ptah:config` and the wizard normalise the
+old names on write, but a hand-written config must use these.)
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsFilterField` | string | — | Field to filter (required) |
-| `colsFilterLabel` | string | `ucfirst(field)` | Filter label |
-| `colsFilterType` | string | `'text'` | Type: `text`, `number`, `date`, `select`, `searchdropdown` |
-| `colsFilterOperator` | string | `'='` | Operator: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
-| `colsFilterPlaceholder` | string | `''` | Input placeholder |
-| `colsFilterOptions` | array | `[]` | Options for `select` type: `{"value": "Label"}` |
-| `colsFilterWhereHas` | string | `''` | Relation name for `whereHas` |
-| `colsFilterRelationField` | string | `''` | Field in relation for `whereHas` |
-| `colsFilterAggregate` | string | `''` | Aggregate function: `SUM`, `COUNT`, `AVG`, `MAX`, `MIN` |
-| `colsFilterSdTable` | string | `''` | Table for SearchDropdown |
-| `colsFilterSdSelectColumn` | string | `'name'` | Display column for SearchDropdown |
-| `colsFilterSdValueColumn` | string | `'id'` | Value column for SearchDropdown |
+| `field` | string | — | Field to filter (required) |
+| `label` | string | `ucfirst(field)` | Filter label |
+| `colsFilterType` | string | `'text'` | Type: `text`, `number`, `date`, `select` |
+| `operator` | string | `'='` | Operator: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
+| `colsSelect` | object | `{}` | Options for `select`: `{"Label": "value"}` |
+| `whereHas` | string | `''` | Relation name for `whereHas` |
+| `field_relation` | string | `''` | Field in the related table |
+| `aggregate` | string | `''` | Aggregate over the relation: `SUM`, `COUNT`, `AVG`, `MAX`, `MIN` |
+| `logic` | string | `'AND'` | `AND` / `OR` with the other filters |
+
+A `searchdropdown` custom filter does not work yet: the panel renders the
+input, but the search never returns results (see KnownLimitations.md).
 
 **Examples:**
 
 ```json
 {
-  "colsFilterField": "status",
-  "colsFilterLabel": "Status",
+  "field": "status",
+  "label": "Status",
   "colsFilterType": "select",
-  "colsFilterOperator": "=",
-  "colsFilterOptions": {
-    "active": "Active",
-    "inactive": "Inactive"
+  "operator": "=",
+  "colsSelect": {
+    "Active": "active",
+    "Inactive": "inactive"
   }
 }
 ```
 
 ```json
 {
-  "colsFilterField": "price",
-  "colsFilterLabel": "Minimum Price",
+  "field": "price",
+  "label": "Minimum Price",
   "colsFilterType": "number",
-  "colsFilterOperator": ">=",
-  "colsFilterPlaceholder": "0.00"
+  "operator": ">="
 }
 ```
 
 ```json
 {
-  "colsFilterField": "user_id",
-  "colsFilterLabel": "User",
-  "colsFilterType": "searchdropdown",
-  "colsFilterOperator": "=",
-  "colsFilterSdTable": "users",
-  "colsFilterSdSelectColumn": "name",
-  "colsFilterSdValueColumn": "id"
-}
-```
-
-```json
-{
-  "colsFilterField": "orders.total",
-  "colsFilterLabel": "Total Orders",
+  "field": "orders_total",
+  "label": "Total Orders",
   "colsFilterType": "number",
-  "colsFilterOperator": ">",
-  "colsFilterWhereHas": "orders",
-  "colsFilterRelationField": "total",
-  "colsFilterAggregate": "SUM"
+  "operator": ">",
+  "whereHas": "orders",
+  "field_relation": "total",
+  "aggregate": "SUM"
 }
 ```
 
