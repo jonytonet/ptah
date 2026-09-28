@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Locked;
 use Ptah\Models\RecordHistory;
+use Ptah\Support\ServerOnly;
 use Ptah\Traits\RecordsHistory;
 
 /**
@@ -31,6 +32,7 @@ trait HasCrudHistory
     #[Locked]
     public array $historyItems = [];
 
+    #[ServerOnly]
     public function historyEnabled(): bool
     {
         if (($this->crudConfig['history']['enabled'] ?? true) === false) {

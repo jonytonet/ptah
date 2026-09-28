@@ -7,6 +7,42 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.6] - 2026-09-28
+
+**Security release — upgrade now.** Found by the surface audit of 28/09/2026.
+
+### Security - CRITICAL: two public Livewire methods executed code the browser chose
+
+Livewire lets the client call every public method a component declares, with
+arguments it picks, and returns the result. Two methods that are public only
+so views can call them turned out to dispatch to code named in their
+arguments. Any signed-in user on a screen that renders them could:
+
+- **`SearchDropdown::formatValue($value, $mask)`** — a mask of `Class@method`
+  resolved and called any class: `Illuminate\Filesystem\Filesystem@get` read
+  `../.env` (APP_KEY, database credentials), `DatabaseManager@unprepared` ran
+  arbitrary SQL, `Console\Kernel@call` ran artisan commands.
+- **`BaseCrud::formatCell($col, $row)`** — a forged `colsMetodoCustom` called
+  any method of any `App\Services` class with the caller's arguments —
+  including `BaseService::all()`, `find()`, `delete()` and `truncate()` on every
+  service `ptah:forge` generates.
+
+Both stay public (views and hosts call them) and are now refused to the
+browser: the new `#[Ptah\Support\ServerOnly]` attribute marks a method, and
+PtahServiceProvider answers a client call to it as "method not found". The
+same mark covers the other public methods that return data built from their
+arguments or outside the read gate (`getRowStyle`, `buildExportPayload`,
+`rowActionAllowed`, `kanbanColumns`, `calendarGrid`, `rows`,
+`totalizadoresData`, …). `ServerOnlyMethodTest` fails when a public method that
+returns data is left unmarked; with the hook disabled, the two exploit calls
+succeed and the test fails.
+
+**If you subclass BaseCrud:** every public method you add is callable from the
+browser with forged arguments. Mark helpers `#[\Ptah\Support\ServerOnly]` or
+make them protected (views can call protected methods through `$this`).
+
+---
+
 ## [1.41.5] - 2026-09-28
 
 ### Fixed - the `searchdropdown` custom filter never worked, and is no longer offered
