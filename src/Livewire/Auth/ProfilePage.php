@@ -307,7 +307,7 @@ class ProfilePage extends Component
     {
         $user = Auth::user();
 
-        if ($user !== null && method_exists($user, 'setRememberToken') && $user->getRememberTokenName() !== '') {
+        if ($user !== null && $user->getRememberTokenName() !== '') {
             $user->setRememberToken(Str::random(60));
             $user->save();
         }

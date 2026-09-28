@@ -30,30 +30,14 @@ class TwoFactorService
      */
     public function enableTotp(Authenticatable $user): array
     {
-        if (! class_exists(Google2FA::class)) {
-            throw new \RuntimeException('Install pragmarx/google2fa-laravel to use TOTP.');
-        }
+        $data = $this->startTotp($user);
 
-        /** @var \PragmaRX\Google2FA\Google2FA $google2fa */
-        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+        // Saved temporarily — confirmed only after verification. Kept for
+        // hosts that call it; the profile uses startTotp() +
+        // confirmPendingTotp(), which write nothing until a code verifies.
+        $user->forceFill(['two_factor_secret' => encrypt($data['secret'])])->save();
 
-        $secret = $google2fa->generateSecretKey();
-        $recoveryCodes = $this->generateRecoveryCodes();
-        $appName = config('app.name', 'Ptah');
-        $email = $user->email ?? (string) $user->getKey();
-
-        $qrUrl = $google2fa->getQRCodeUrl($appName, $email, $secret);
-
-        // Saved temporarily — confirmed only after verification
-        $user->forceFill(['two_factor_secret' => encrypt($secret)])->save();
-
-        $qrImageUri = $this->qrCodeUri($qrUrl);
-
-        return [
-            'secret' => $secret,
-            'qr_image_uri' => $qrImageUri,
-            'recovery_codes' => $recoveryCodes,
-        ];
+        return $data;
     }
 
     /**
