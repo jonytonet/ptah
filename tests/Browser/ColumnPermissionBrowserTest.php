@@ -145,7 +145,11 @@ class ColumnPermissionBrowserTest extends DuskTestCase
             // the /_dusk/login one) reseeds a brand-new in-memory DB and a
             // cross-process auto-increment ID is not a value this test should
             // depend on lining up.
-            $denied->loginAs(self::DENIED_EMAIL)
+            // Largura de desktop: numa janela estreita a tela abre em CARDS
+            // (padrao desde a 1.25.0) e nao existe <th> para conferir — foi
+            // isso, e nao a permissao, que deixou este teste vermelho.
+            $denied->resize(1280, 900)
+                ->loginAs(self::DENIED_EMAIL)
                 ->visit('/dusk-test/column-permission-crud')
                 ->waitForText('Dusk Alpha')
                 // The public column is unaffected — regression zero. Header
@@ -161,12 +165,28 @@ class ColumnPermissionBrowserTest extends DuskTestCase
                 ->assertDontSee('SECRET AMOUNT')
                 ->assertSourceMissing(self::SENSITIVE_AMOUNT);
 
-            $granted->loginAs(self::GRANTED_EMAIL)
+            $granted->resize(1280, 900)
+                ->loginAs(self::GRANTED_EMAIL)
                 ->visit('/dusk-test/column-permission-crud')
                 ->waitForText('Dusk Alpha')
                 ->assertPresent('th[data-column="amount"]')
                 ->assertSee('SECRET AMOUNT')
                 ->assertSee(self::SENSITIVE_AMOUNT);
+        });
+    }
+
+    #[Test]
+    public function on_a_phone_the_card_view_never_gets_the_gated_value_either(): void
+    {
+        // A visao em cards e o padrao numa tela estreita (1.25.0): a mesma
+        // garantia do <th> precisa valer ali, e e onde um celular a veria.
+        $this->browse(function (Browser $denied) {
+            $denied->resize(390, 844)
+                ->loginAs(self::DENIED_EMAIL)
+                ->visit('/dusk-test/column-permission-crud')
+                ->waitForText('Dusk Alpha')
+                ->assertDontSee('SECRET AMOUNT')
+                ->assertSourceMissing(self::SENSITIVE_AMOUNT);
         });
     }
 }

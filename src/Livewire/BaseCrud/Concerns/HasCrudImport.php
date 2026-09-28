@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Locked;
 use Ptah\Services\Crud\CrudImportReader;
+use Ptah\Support\ServerOnly;
 
 /**
  * Spreadsheet import into a BaseCrud screen: upload → map → preview → import.
@@ -57,6 +58,7 @@ trait HasCrudImport
 
     private const IMPORT_ERRORS_SHOWN = 50;
 
+    #[ServerOnly]
     public function importEnabled(): bool
     {
         return ! empty($this->crudConfig['importConfig']['enabled'])

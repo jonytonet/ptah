@@ -34,6 +34,7 @@ use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Support\BroadcastListener;
+use Ptah\Support\ServerOnly;
 
 /**
  * Livewire BaseCrud component.
@@ -466,6 +467,7 @@ class BaseCrud extends Component
      * Order: displayNameSingular / displayName, the page object's label, the
      * model's short name in words.
      */
+    #[ServerOnly]
     public function humanTitle(bool $singular = false): string
     {
         $cfg = $this->crudConfig;
@@ -517,6 +519,7 @@ class BaseCrud extends Component
      * "Novo"/"Nova" by `displayNameGender` — pt_BR needs the article to agree
      * with the noun ("Nova conta bancaria").
      */
+    #[ServerOnly]
     public function modalNewPrefix(): string
     {
         return ($this->crudConfig['displayNameGender'] ?? 'm') === 'f'

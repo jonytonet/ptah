@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Locked;
 use Ptah\Models\Attachment;
+use Ptah\Support\ServerOnly;
 use Ptah\Traits\HasAttachments;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -37,6 +38,7 @@ trait HasCrudAttachments
     #[Locked]
     public array $attachmentItems = [];
 
+    #[ServerOnly]
     public function attachmentsEnabled(): bool
     {
         if (($this->crudConfig['attachments']['enabled'] ?? true) === false) {
@@ -51,6 +53,7 @@ trait HasCrudAttachments
             && $this->authorizeCrudAction('read') && $this->crudConfigAllows('attachments');
     }
 
+    #[ServerOnly]
     public function attachmentsCanWrite(): bool
     {
         return $this->attachmentsEnabled()
@@ -150,6 +153,7 @@ trait HasCrudAttachments
         }
     }
 
+    #[ServerOnly]
     public function attachmentCount(int|string $id): int
     {
         $record = $this->attachmentsEnabled() ? $this->scopedQuery()?->find($id) : null;

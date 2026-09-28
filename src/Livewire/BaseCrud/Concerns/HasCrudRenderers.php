@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Ptah\Support\SafeUrl;
+use Ptah\Support\ServerOnly;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;
 
@@ -23,6 +24,7 @@ trait HasCrudRenderers
      * Returns the default permission identifier for the screen.
      * E.g. "products.index", "purchase.orders.index"
      */
+    #[ServerOnly]
     public function getDefaultPermissionIdentifier(): string
     {
         $model = str_replace(['/', '\\'], '.', strtolower($this->model));
@@ -38,6 +40,7 @@ trait HasCrudRenderers
      * colsRelacao/colsRelacaoExibe, colsHelper (legacy), colsMetodoCustom,
      * and select map in that order.
      */
+    #[ServerOnly]
     public function formatCell(array $col, mixed $row): string
     {
         $value = $this->getCellValue($col, $row);
@@ -118,6 +121,7 @@ trait HasCrudRenderers
      * Reads the persisted key (typo intentional — the runtime contract, see
      * StyleRule) with the correctly-spelled conditionStyles as a read alias.
      */
+    #[ServerOnly]
     public function getRowStyle(mixed $row): string
     {
         $styles = $this->crudConfig['contitionStyles'] ?? $this->crudConfig['conditionStyles'] ?? [];
@@ -864,6 +868,7 @@ trait HasCrudRenderers
      * reaches the host's method, which must check on its own; hiding the button
      * is what the setting ever promised.
      */
+    #[ServerOnly]
     public function rowActionAllowed(array $col): bool
     {
         $gate = trim((string) ($col['actionPermission'] ?? ''));
@@ -877,6 +882,7 @@ trait HasCrudRenderers
      * The confirmation text for a row action, or null when it runs directly.
      * `actionConfirm` was stored and never read, like `actionPermission`.
      */
+    #[ServerOnly]
     public function rowActionConfirm(array $col): ?string
     {
         $confirm = $col['actionConfirm'] ?? false;

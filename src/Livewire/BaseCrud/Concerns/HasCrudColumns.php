@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Ptah\Support\ServerOnly;
+
 /**
  * Handles column visibility, ordering, and width preferences.
  *
@@ -144,6 +146,7 @@ trait HasCrudColumns
      *
      * @return array<int, array{field: string, sortBy: string, label: string}>
      */
+    #[ServerOnly]
     public function sortableColumns(): array
     {
         $out = [];
@@ -173,6 +176,7 @@ trait HasCrudColumns
         return $out;
     }
 
+    #[ServerOnly]
     public function getVisibleColumns(): array
     {
         $cols = $this->crudConfig['cols'] ?? [];

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Support\RelationPath;
+use Ptah\Support\ServerOnly;
 
 /**
  * Kanban and calendar: two more ways to look at the SAME listing.
@@ -38,6 +39,7 @@ trait HasCrudBoards
 
     private const CALENDAR_LIMIT = 500;
 
+    #[ServerOnly]
     public function kanbanEnabled(): bool
     {
         $field = (string) ($this->crudConfig['kanbanConfig']['field'] ?? '');
@@ -45,6 +47,7 @@ trait HasCrudBoards
         return $field !== '' && $this->kanbanOptions() !== [] && ! in_array($field, $this->deniedColumns, true);
     }
 
+    #[ServerOnly]
     public function calendarEnabled(): bool
     {
         $start = (string) ($this->crudConfig['calendarConfig']['start'] ?? '');
@@ -60,6 +63,7 @@ trait HasCrudBoards
      *
      * @return array<string, string>
      */
+    #[ServerOnly]
     public function kanbanOptions(): array
     {
         $field = (string) ($this->crudConfig['kanbanConfig']['field'] ?? '');
@@ -83,6 +87,7 @@ trait HasCrudBoards
      * `transitions` is given only the listed moves exist — an origin that is
      * not listed moves nowhere (achado #3 do PetPlace).
      */
+    #[ServerOnly]
     public function kanbanAllowed(string $from, string $to): bool
     {
         $cfg = (array) ($this->crudConfig['kanbanConfig'] ?? []);
@@ -104,6 +109,7 @@ trait HasCrudBoards
      *
      * @return array<string, list<string>>
      */
+    #[ServerOnly]
     public function kanbanTargets(): array
     {
         $values = array_values($this->kanbanOptions());
@@ -138,6 +144,7 @@ trait HasCrudBoards
     /**
      * @return list<array{label: string, value: string, total: int, cards: list<array{id: mixed, title: string, subtitle: string}>}>
      */
+    #[ServerOnly]
     public function kanbanColumns(): array
     {
         $model = $this->resolveEloquentModel();
@@ -253,6 +260,7 @@ trait HasCrudBoards
      *
      * @return array{month: string, weeks: list<list<array{date: string, day: int, in_month: bool, today: bool, items: list<array{id: mixed, title: string, subtitle: string}>}>>, overflow: bool}
      */
+    #[ServerOnly]
     public function calendarGrid(): array
     {
         $model = $this->resolveEloquentModel();

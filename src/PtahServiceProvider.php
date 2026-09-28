@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Server\Tool;
+use Livewire\Exceptions\MethodNotFoundException;
 use Livewire\Livewire;
 use Ptah\Commands\AttachmentsInstallCommand;
 use Ptah\Commands\BlueprintCommand;
@@ -229,6 +230,17 @@ class PtahServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // A public method marked #[ServerOnly] is callable from PHP (views,
+        // host code) and refused to the browser — see Ptah\Support\ServerOnly
+        // for the two methods that executed code the client chose (1.41.6).
+        if (function_exists('Livewire\on')) {
+            \Livewire\on('call', function ($component, string $method): void {
+                if (Support\ServerOnly::marks($component, $method)) {
+                    throw new MethodNotFoundException($method);
+                }
+            });
+        }
+
         // Only override the host application's locale when explicitly requested.
         // Changing the locale globally in a ServiceProvider would silently
         // break Carbon formatting, validation messages and every package that

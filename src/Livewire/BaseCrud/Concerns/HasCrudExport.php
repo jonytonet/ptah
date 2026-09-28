@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Ptah\Jobs\GenerateCrudExportJob;
 use Ptah\Models\Export;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\ServerOnly;
 
 /**
  * Handles synchronous and asynchronous data export.
@@ -234,6 +235,7 @@ trait HasCrudExport
      * @param  array<int, int|string>  $ids
      * @return array{version: int, userId: int|null, model: string, route: string, companyId: int|null, ids: array<int, int|string>, columns: array<int, array{field: string, label: string, type: string}>, order: string, direction: string, format: string}
      */
+    #[ServerOnly]
     public function buildExportPayload(array $ids, string $format, string $modelClass): array
     {
         return [

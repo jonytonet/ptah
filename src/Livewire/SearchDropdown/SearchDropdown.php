@@ -13,6 +13,7 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use Ptah\DTO\SearchDropdownDTO;
 use Ptah\Support\SearchDropdownMask;
+use Ptah\Support\ServerOnly;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -503,6 +504,7 @@ class SearchDropdown extends Component
      *   5. public method name     → $this->{$mask}($v)
      *   6. fallback               → returns value as-is
      */
+    #[ServerOnly]
     public function formatValue(mixed $value, string $mask): string
     {
         if ($value === null) {

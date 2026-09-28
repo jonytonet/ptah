@@ -19,6 +19,7 @@ use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Support\RelationPath;
+use Ptah\Support\ServerOnly;
 use Ptah\Support\SqlIdentifier;
 
 /**
@@ -34,6 +35,7 @@ trait HasCrudQuery
      * Includes error recovery: clears corrupted preferences and returns an empty list.
      */
     #[Computed]
+    #[ServerOnly]
     public function rows(): LengthAwarePaginator
     {
         $modelInstance = $this->resolveEloquentModel();
@@ -82,6 +84,7 @@ trait HasCrudQuery
      * Each aggregate clones the query to avoid mutual interference.
      */
     #[Computed]
+    #[ServerOnly]
     public function totalizadoresData(): array
     {
         $totConfig = $this->crudConfig['totalizadores'] ?? [];
