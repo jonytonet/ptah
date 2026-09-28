@@ -3005,9 +3005,9 @@
                             <div>
                                 <div class="flex items-center gap-2 mb-2">
                                     <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_before_delete') }}</label>
-                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">function($record)</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ptah-c-muted" style="background: var(--ptah-surface-sunken)">function($record)</span>
                                 </div>
-                                <p class="text-[11px] text-slate-500 mb-2">{{ __('ptah::ui.cfg_hooks_before_delete_desc') }}</p>
+                                <p class="text-[11px] ptah-c-muted mb-2">{{ __('ptah::ui.cfg_hooks_before_delete_desc') }}</p>
                                 <textarea wire:model="hookBeforeDelete" rows="4"
                                     title="{{ __('ptah::ui.cfg_tip_hooks_before_delete') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@BrandHooks::beforeDelete"
