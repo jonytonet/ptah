@@ -141,7 +141,11 @@ class GenerateCrudExportJob implements ShouldQueue
 
         $disk = (string) config('ptah.export.disk', 'local');
         $basePath = trim((string) config('ptah.export.path', 'ptah-exports'), '/');
-        $fileName = Str::slug(class_basename($modelClass)).'-'.now()->format('Y-m-d-His');
+        // O id do export no nome: com so model + segundo, dois exports da mesma
+        // tela no mesmo segundo gravavam o MESMO arquivo, e o dono de um baixava
+        // os dados do outro (o gate confere o registro, nao o arquivo) —
+        // auditoria de 28/09/2026, 1.41.7. O sufixo aleatorio fecha o palpite.
+        $fileName = Str::slug(class_basename($modelClass)).'-'.$export->getKey().'-'.now()->format('Y-m-d-His').'-'.Str::lower(Str::random(8));
         $extension = $format === 'pdf' ? 'pdf' : 'xlsx';
         $path = $basePath.'/'.$fileName.'.'.$extension;
 

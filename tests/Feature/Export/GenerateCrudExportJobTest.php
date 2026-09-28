@@ -121,6 +121,32 @@ class GenerateCrudExportJobTest extends TestCase
     }
 
     #[Test]
+    public function two_exports_in_the_same_second_never_share_a_file(): void
+    {
+        // ALTO, auditoria de 28/09/2026 (1.41.7): o nome era model + segundo;
+        // dois donos no mesmo segundo gravavam o MESMO arquivo e um baixava os
+        // dados do outro.
+        Storage::fake('local');
+        $this->travelTo(now()->startOfSecond());
+
+        $row = JobExportStub::create(['name' => 'Alpha']);
+        $payload = fn (int $user) => ['payload' => [
+            'version' => 1, 'userId' => $user, 'model' => JobExportStub::class, 'route' => 'items',
+            'companyId' => null, 'ids' => [$row->id],
+            'columns' => [['field' => 'name', 'label' => 'Name', 'type' => 'text']],
+            'order' => 'id', 'direction' => 'DESC', 'format' => 'excel',
+        ]];
+
+        $first = $this->makeExport($payload(1));
+        $second = $this->makeExport($payload(2));
+        (new GenerateCrudExportJob($first->id))->handle();
+        (new GenerateCrudExportJob($second->id))->handle();
+
+        $this->assertNotSame($first->refresh()->file_path, $second->refresh()->file_path);
+        $this->assertStringContainsString('-'.$second->id.'-', $second->file_path);
+    }
+
+    #[Test]
     public function it_generates_a_pdf_file_and_marks_the_export_done(): void
     {
         Storage::fake('local');

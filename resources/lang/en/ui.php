@@ -511,6 +511,7 @@ return [
     'profile_name' => 'Name',
     'profile_save_btn' => 'Save profile',
     'profile_current_pw' => 'Current password',
+    'profile_email_password' => 'Current password (required to change the e-mail)',
     'profile_new_pw' => 'New password',
     'profile_confirm_pw' => 'Confirm new password',
     'profile_change_pw_btn' => 'Change password',
@@ -1798,6 +1799,7 @@ return [
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicate record',
     'row_action_confirm' => 'Are you sure?',
+    'sd_value_not_allowed' => 'Choose an option from the list.',
     'btn_print' => 'Print',
 
     // Print screen (crud/print)

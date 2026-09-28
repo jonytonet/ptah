@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
 
@@ -531,6 +532,65 @@ trait HasCrudSearchDropdown
      * @param  bool  $allowEmpty  When true, returns results even with an empty query
      * @return array<int, array{value: mixed, label: string}>
      */
+    /**
+     * Confines a searchdropdown query to the active company, when the related
+     * table has the screen's company column. Rows with no company (shared
+     * catalogues) stay visible.
+     */
+    protected function sdCompanyScope(Builder $q): void
+    {
+        if ($this->companyFilter <= 0) {
+            return;
+        }
+
+        $model = $q->getModel();
+        $column = (string) ($this->crudConfig['companyField'] ?? 'company_id');
+
+        if (! SqlIdentifier::isSafe($column) || ! Schema::hasColumn($model->getTable(), $column)) {
+            return;
+        }
+
+        $qualified = $model->getTable().'.'.$column;
+        $q->where(fn (Builder $w) => $w->where($qualified, $this->companyFilter)->orWhereNull($qualified));
+    }
+
+    /**
+     * Whether a value chosen in a searchdropdown is one the dropdown could
+     * have offered: same model, same static filters, same company.
+     * `selectDropdownOption()` takes the value from the client, so without
+     * this a save could point a foreign key at another company's record.
+     * Service-mode dropdowns cannot be re-queried and are trusted.
+     */
+    protected function sdValueInScope(array $col, mixed $value): bool
+    {
+        $settings = $this->sdSettings($col);
+
+        if ($settings['tipo'] !== 'model' || ! $settings['model']) {
+            return true;
+        }
+
+        $class = str_replace('/', '\\', (string) $settings['model']);
+        $fullClass = class_exists($class) ? $class : 'App\\Models\\'.$class;
+
+        if (! class_exists($fullClass) || ! SqlIdentifier::isSafe((string) $settings['value'])) {
+            return true;
+        }
+
+        try {
+            $q = app($fullClass)->newQuery()->where($settings['value'], $value);
+
+            foreach ($settings['filters'] as [$fcol, $op, $val]) {
+                $q->where($fcol, $op, $val);
+            }
+
+            $this->sdCompanyScope($q);
+
+            return $q->exists();
+        } catch (\Throwable) {
+            return true;
+        }
+    }
+
     protected function resolveSearchDropdownResults(
         array $settings,
         string $query,
@@ -593,6 +653,11 @@ trait HasCrudSearchDropdown
                     ->newQuery()
                     ->orderBy($orderCol, $orderDir)
                     ->limit($limit);
+
+                // A lista respeita a empresa ativa quando a tabela relacionada
+                // tem a coluna: antes listava (com label, labelTwo, CPF...) os
+                // registros de TODAS as empresas (auditoria de 28/09/2026, 1.41.7).
+                $this->sdCompanyScope($q);
 
                 if ($labelIsRelation) {
                     $q->with($relPath);

@@ -185,7 +185,8 @@ trait HasCrudImport
                         if ($userId && in_array('updated_by', $fillable, true)) {
                             $data['updated_by'] = $userId;
                         }
-                        $existing->update($data);
+                        // O upsert tambem nao move o registro de empresa/pai (1.41.7).
+                        $existing->update($this->applyWriteScope($data, $model));
                         $this->afterUpdate($existing);
                         $this->executeDynamicHook('afterUpdate', $data, $existing);
                         $updated++;
@@ -313,17 +314,7 @@ trait HasCrudImport
      */
     protected function applyImportScope(array $data, Model $model): array
     {
-        $companyField = (string) ($this->crudConfig['companyField'] ?? 'company_id');
-
-        if ($this->companyFilter > 0 && Schema::hasColumn($model->getTable(), $companyField)) {
-            $data[$companyField] = $this->companyFilter;
-        }
-
-        foreach ($this->lockedFilters as $column => $value) {
-            $data[(string) $column] = $value;
-        }
-
-        return $data;
+        return $this->applyWriteScope($data, $model);
     }
 
     /**

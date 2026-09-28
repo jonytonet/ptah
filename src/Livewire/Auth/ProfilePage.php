@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -31,6 +32,9 @@ class ProfilePage extends Component
 
     // ── Tab: Password ──────────────────────────────────────────────────
     public string $current_password = '';
+
+    /** Current password, asked only when the e-mail changes (1.41.7). */
+    public string $email_password = '';
 
     public string $password = '';
 
@@ -93,15 +97,31 @@ class ProfilePage extends Component
 
     public function saveProfile(): void
     {
+        $user = Auth::user();
+        $emailChanged = mb_strtolower(trim($this->email)) !== mb_strtolower((string) ($user->email ?? ''));
+
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            // unique: sem ele, dois usuarios com o mesmo e-mail (ou um 500 no
+            // indice unico), e o "esqueci a senha" iria para o errado.
+            'email' => ['required', 'email', 'max:255', Rule::unique($user->getTable(), 'email')->ignore($user->getKey(), $user->getKeyName())],
         ]);
 
-        Auth::user()->forceFill([
+        // Trocar o e-mail pede a senha atual: com o e-mail, quem esta com uma
+        // sessao roubada pedia "esqueci a senha" para si e tomava a conta —
+        // e o codigo do 2FA por e-mail passava a ir para ele (auditoria de
+        // 28/09/2026, 1.41.7).
+        if ($emailChanged && ! Hash::check($this->email_password, (string) $user->getAuthPassword())) {
+            $this->addError('email_password', trans('ptah::ui.profile_password_wrong'));
+
+            return;
+        }
+
+        $user->forceFill([
             'name' => $this->name,
             'email' => $this->email,
         ])->save();
+        $this->reset('email_password');
 
         $this->flash(trans('ptah::ui.profile_updated'));
     }

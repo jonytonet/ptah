@@ -512,6 +512,7 @@ return [
     'profile_name' => 'Nome',
     'profile_save_btn' => 'Salvar perfil',
     'profile_current_pw' => 'Senha atual',
+    'profile_email_password' => 'Senha atual (necessária para trocar o e-mail)',
     'profile_new_pw' => 'Nova senha',
     'profile_confirm_pw' => 'Confirmar nova senha',
     'profile_change_pw_btn' => 'Alterar senha',
@@ -1800,6 +1801,7 @@ return [
     // -------------------------------------------------------------------------
     'btn_duplicate_title' => 'Duplicar registro',
     'row_action_confirm' => 'Tem certeza?',
+    'sd_value_not_allowed' => 'Escolha uma opção da lista.',
     'btn_print' => 'Imprimir',
 
     // Print screen (crud/print)

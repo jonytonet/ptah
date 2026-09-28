@@ -1353,7 +1353,7 @@ class ProductHooks implements CrudHooksInterface
 
 > ⚠️ **Warning:** The `$component` parameter exposes the full Livewire component. Use it only for reading properties, never for dispatching arbitrary actions from external data.
 
-> **Inline hooks (no class):** besides class-based hooks, a CrudConfig field may hold a single inline *expression* (Symfony ExpressionLanguage). It is evaluated in a sandbox — it does **not** run arbitrary PHP (no `eval`). The expression receives `data`, `record` and `user`; if it returns an array, that array becomes the form data. Safe functions: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`. Example: `merge(data, {'status': 'pending'})`. For anything beyond a one-liner, use a hook class.
+> **Inline hooks (no class):** besides class-based hooks, a CrudConfig field may hold a single inline *expression* (Symfony ExpressionLanguage). It is evaluated in a sandbox — it does **not** run arbitrary PHP (no `eval`). The expression receives `data`, `record` and `user` (the last two as fields only — no method can be called on them); if it returns an array, that array becomes the form data. Safe functions: `merge()`, `now()`, `upper()`, `lower()`, `slug()`, `uuid()`. Example: `merge(data, {'status': 'pending'})`. For anything beyond a one-liner, use a hook class.
 
 ---
 

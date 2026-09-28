@@ -7,6 +7,62 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.7] - 2026-09-28
+
+**Security release.** The HIGH findings of the 28/09/2026 surface audit. Each
+fix has a test that fails on 1.41.6.
+
+### Security - inline hook expressions could run SQL
+
+`record` and `user` reached ExpressionLanguage as Eloquent models, and it calls
+methods on objects: `record.newQuery().update({...})`,
+`record.getConnection().select(...)` or `user.forceFill({...}).save()` in a
+hook ran against the database. They are now fields in a method-less object —
+`record.status` still reads, a method call has nothing to call — and `now()`
+returns text instead of a Carbon object. **Behaviour change:** an inline
+expression that called a method on `record`/`user` stops working; use a hook
+class (`@App\CrudHooks\X::beforeSave`) for logic.
+
+### Security - two queued exports in the same second shared a file
+
+The file name was the model plus the second, so two owners exporting the same
+screen in the same second wrote one file and one downloaded the other's data
+(the download gate checks the export record, not the file). The name now
+carries the export id and a random suffix.
+
+### Security - a date range on any column was a search oracle
+
+`dateRanges` is client-writable and was checked only against denied columns:
+a forged range on `password` made a `whereBetween` over the hash (the date
+strategy falls back to raw bounds when they do not parse), and counting rows
+extracted it. Date ranges now go through the same gate as `filters` — a field
+the screen offers, never a `$hidden` one — and `quickDateColumn` is limited to
+the configured column or a filterable one.
+
+### Security - a save could move a record to another company or parent
+
+When the company column or the master-detail FK was also a form field,
+`formData` could set it: an update moved the row to another company, a detail
+row was attached to another parent. `save()` and the import's upsert now force
+the active company and every locked filter onto the write.
+
+### Security - the searchdropdown crossed companies
+
+It listed the related table without the company scope (labels, `labelTwo`,
+`labelThree` — a customer's CPF, for instance), and the chosen value was
+accepted without a check. The list now keeps the active company (rows with no
+company stay, as shared catalogues), and `save()` refuses a searchdropdown
+value the dropdown could not have offered — an existing value on an update
+still passes.
+
+### Security - changing the profile e-mail did not ask for the password
+
+With a stolen session, changing the e-mail and asking for a password reset
+took the account for good (and moved the e-mail 2FA code to the attacker). The
+e-mail now changes only with the current password, and must be unique.
+
+---
+
 ## [1.41.6] - 2026-09-28
 
 **Security release — upgrade now.** Found by the surface audit of 28/09/2026.
