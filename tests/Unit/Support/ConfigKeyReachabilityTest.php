@@ -51,6 +51,9 @@ class ConfigKeyReachabilityTest extends TestCase
         'src/Support/ScreenSummary.php',
         'src/Support/CliReference.php',
         'src/Support/CrudScreenInspector.php',
+        // Normalises a filter on the WRITE path (CLI, wizard, doctor): its
+        // passthrough list mentions keys, it does not act on them.
+        'src/Support/FilterRule.php',
         'src/Support/ConfigSchemaValidator.php',
         'src/Services/Crud/ConfigValidator.php',
     ];
@@ -80,16 +83,13 @@ class ConfigKeyReachabilityTest extends TestCase
         'colsValidation' => 'runtime reads colsValidations (plural)',
         'colsValidationMessage' => 'no reader',
 
-        // Found by this guard on 28/09/2026 — to be fixed from 1.41.3 on:
-        'colsMaskRegex' => 'CLI mask_regex= and an editor field write it; the mask ignores it',
-        'actionPosition' => 'wizard and docs offer row/bulk/both; every action renders on the row',
-        'colsMaskDecimalPlaces' => 'wizard asks for decimal places and drops the answer',
-        'colsRendererFormat' => 'wizard asks for a date format and drops the answer',
-        'colsFilterAggregate' => 'FilterWizard writes it; nothing reads it',
-        'colsFilterOptions' => 'FilterWizard writes it; nothing reads it',
-        'colsFilterRelationField' => 'FilterWizard writes it; nothing reads it',
-        'colsFilterWhereHas' => 'FilterWizard writes it; nothing reads it',
-        'configEsconderId' => 'the editor saves it; the listing never hides the id for it',
+        // The custom-filter searchdropdown never resolves: the panel calls
+        // searchDropdown('cf_<field>'), findColByField() finds no such column
+        // and returns nothing, so these source keys have no reader. Recorded
+        // on 28/09/2026 (1.41.4); a fix of its own, not a rename.
+        'colsFilterSdTable' => 'custom-filter searchdropdown source; never resolved',
+        'colsFilterSdSelectColumn' => 'custom-filter searchdropdown label column; never resolved',
+        'colsFilterSdValueColumn' => 'custom-filter searchdropdown value column; never resolved',
     ];
 
     private static function read(string $path): string

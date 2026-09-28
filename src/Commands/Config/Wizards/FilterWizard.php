@@ -22,7 +22,7 @@ class FilterWizard
         $this->command->info('=== Filter Configuration Wizard ===');
         $this->command->newLine();
 
-        $field = $this->command->ask('Filter field name', $existingFilter['colsFilterField'] ?? null);
+        $field = $this->command->ask('Filter field name', $existingFilter['field'] ?? null);
 
         if (! $field) {
             $this->command->warn('Field name is required.');
@@ -30,7 +30,7 @@ class FilterWizard
             return null;
         }
 
-        $label = $this->command->ask('Filter label', $existingFilter['colsFilterLabel'] ?? ucfirst($field));
+        $label = $this->command->ask('Filter label', $existingFilter['label'] ?? ucfirst($field));
 
         $type = $this->command->choice(
             'Filter type',
@@ -41,20 +41,24 @@ class FilterWizard
         $operator = $this->command->choice(
             'Comparison operator',
             CrudConfigEnums::OPERATORS,
-            $existingFilter['colsFilterOperator'] ?? '='
+            $existingFilter['operator'] ?? '='
         );
 
+        // O vocabulario do runtime (FilterService / painel de filtros), o
+        // mesmo que FilterRule::normalize() produz.
         $filter = [
-            'colsFilterField' => $field,
-            'colsFilterLabel' => $label,
+            'field' => $field,
+            'label' => $label,
             'colsFilterType' => $type,
-            'colsFilterOperator' => $operator,
+            'operator' => $operator,
         ];
 
         // Type-specific options
         if (in_array($type, ['select', 'searchdropdown'])) {
             if ($type === 'select') {
-                $filter['colsFilterOptions'] = $this->askSelectOptions();
+                // `colsSelect` (label => value) e o que o painel de filtros
+                // le; `colsFilterOptions` era descartado pelo FilterRule.
+                $filter['colsSelect'] = $this->askSelectOptions();
             } else {
                 $filter = array_merge($filter, $this->askSearchDropdownOptions());
             }
@@ -62,8 +66,10 @@ class FilterWizard
 
         // Relation filter
         if ($this->command->confirm('Filter through relation (whereHas)?', false)) {
-            $filter['colsFilterWhereHas'] = $this->command->ask('Relation name');
-            $filter['colsFilterRelationField'] = $this->command->ask('Field in related table', $field);
+            // Os nomes que FilterRule::normalize() le — os `colsFilter*`
+            // antigos sumiam na normalizacao e o filtro ficava sem relacao.
+            $filter['whereHas'] = $this->command->ask('Relation name');
+            $filter['field_relation'] = $this->command->ask('Field in related table', $field);
 
             $aggregate = $this->command->choice(
                 'Aggregate function (optional)',
@@ -72,7 +78,7 @@ class FilterWizard
             );
 
             if ($aggregate !== 'none') {
-                $filter['colsFilterAggregate'] = $aggregate;
+                $filter['aggregate'] = $aggregate;
             }
         }
 
@@ -96,7 +102,7 @@ class FilterWizard
         while ($this->command->confirm('Add option?', true)) {
             $value = $this->command->ask('Value');
             $label = $this->command->ask('Label', ucfirst($value));
-            $options[$value] = $label;
+            $options[$label] = $value;
         }
 
         return $options;

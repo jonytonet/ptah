@@ -110,7 +110,6 @@ class ColumnParser
         'qr_size' => 'colsRendererQrSize',
 
         // Mask
-        'mask_regex' => 'colsMaskRegex',
         'mask_transform' => 'colsMaskTransform',
 
         // Totalizer

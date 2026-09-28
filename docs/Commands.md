@@ -725,7 +725,6 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `rating_max` | `colsRendererMax` | — |
 | `duration_unit` | `colsRendererDurationUnit` | — |
 | `qr_size` | `colsRendererQrSize` | — |
-| `mask_regex` | `colsMaskRegex` | — |
 | `mask_transform` | `colsMaskTransform` | `mask_transform=money_to_float` |
 | `totalizer` | `totalizadorType` (also sets `totalizadorEnabled=true`) | `totalizer=sum` |
 | `totalizer_format` | `totalizadorFormat` | `totalizer_format=currency` |

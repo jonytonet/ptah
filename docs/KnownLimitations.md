@@ -377,12 +377,14 @@ time. Until they are, these settings change nothing:
 
 | Key | Written by | What you would expect |
 |---|---|---|
-| `colsMaskRegex` | `--column="…:mask_regex=…"`, editor field | the mask to validate by that pattern |
-| `actionPosition` | wizard | `bulk` / `both` placement — every action renders on the row |
-| `colsMaskDecimalPlaces` | wizard | the decimal places typed in the wizard |
-| `colsRendererFormat` | wizard | the date format typed in the wizard |
-| `colsFilterAggregate`, `colsFilterOptions`, `colsFilterRelationField`, `colsFilterWhereHas` | filter wizard | those filter options |
-| `configEsconderId` | editor, `ptah:forge` | the id column hidden from the listing |
+| `colsFilterSdTable`, `colsFilterSdSelectColumn`, `colsFilterSdValueColumn` | filter wizard | a searchdropdown custom filter — the panel renders the input, but `searchDropdown('cf_<field>')` finds no column and never returns results |
+
+The other nine keys found on 28/09/2026 were fixed in 1.41.3 and 1.41.4:
+`colsPlaceholder` and `colsRendererFormat` now reach the screen; the filter
+wizard writes the keys the runtime reads; and `actionPosition`,
+`colsMaskDecimalPlaces`, `colsMaskRegex` (with the unregistered `custom_regex`
+mask) and `configEsconderId` are no longer written, because nothing ever
+implemented them.
 
 The guard matches key names, not nested paths: `cacheStrategy` and
 `uiPreferences` above have readers for some sub-keys, so it does not flag the

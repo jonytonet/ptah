@@ -1155,7 +1155,6 @@ class CrudConfig extends Component
                 : null,
             'crud' => $existing['crud'] ?? $this->model,
             'configLinkLinha' => $this->configLinkLinha,
-            'configEsconderId' => $existing['configEsconderId'] ?? false,
             'tableClass' => $this->tableClass,
             'theadClass' => $this->theadClass,
             'cols' => $this->formatFieldsForDb(),

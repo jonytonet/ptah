@@ -240,7 +240,8 @@ class ColumnWizard
         $config = ['colsMask' => $mask];
 
         if (str_contains($mask, 'money')) {
-            $config['colsMaskDecimalPlaces'] = (int) $this->command->ask('Decimal places', 2);
+            // Sem pergunta de casas decimais: quem define as casas e a mascara
+            // registrada (PtahMask); a resposta era gravada e descartada.
             $config['colsMaskTransform'] = $this->command->choice(
                 'Transform on save',
                 CrudConfigEnums::MASK_TRANSFORMS,

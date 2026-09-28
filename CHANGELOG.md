@@ -7,6 +7,53 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.4] - 2026-09-28
+
+The rest of the keys `ConfigKeyReachabilityTest` froze in 1.41.2: settings a
+writer stored and the screen ignored.
+
+### Fixed - wired to the runtime
+
+- **`colsRendererFormat`:** the wizard asked for a date format and the listing
+  always used `d/m/Y`. The `date` and `datetime` renderers now use it (the
+  output is escaped, since the format comes from the config); without it the
+  defaults are unchanged.
+- **The filter wizard** wrote `colsFilterOptions`, `colsFilterWhereHas`,
+  `colsFilterRelationField` and `colsFilterAggregate`, which the normaliser
+  dropped: a select filter built interactively had no options and a relation
+  filter had no relation. It now writes the runtime's own keys (`field`,
+  `label`, `operator`, `colsSelect` as label => value, `whereHas`,
+  `field_relation`, `aggregate`).
+
+### Removed - promises nothing implemented
+
+- **`actionPosition`** (`row`/`bulk`/`both`): every action renders on the row.
+  The wizard no longer asks, and the docs no longer offer it.
+- **`colsMaskDecimalPlaces`:** the registered mask owns its decimals; the
+  wizard's question was stored and dropped.
+- **`colsMaskRegex` and the `custom_regex` mask option** in the editor: the
+  mask was never registered, so the field was a plain input and the regex was
+  ignored. `--column="…:mask_regex=…"` is now reported as an unknown option.
+  Saved configs with `colsMask: custom_regex` still validate, and `ptah:check`
+  already warns that the mask is not registered.
+- **`configEsconderId`:** `ptah:forge` wrote it and nothing read it.
+
+### Docs - the custom-filter reference taught keys the runtime never read
+
+Configuration.md documented `filters[]` with `colsFilterField`/`colsFilterLabel`/
+`colsFilterOperator`/`colsFilterOptions`/…; the runtime reads `customFilters[]`
+with `field`/`label`/`operator`/`colsSelect`/`whereHas`/`field_relation`/
+`aggregate`. The table and the examples now show what works.
+
+### Known - a searchdropdown custom filter never returns results
+
+Found while fixing the above: the panel calls `searchDropdown('cf_<field>')`,
+which looks for a COLUMN of that name, finds none and returns nothing. Its
+source keys (`colsFilterSd*`) are frozen in the guard and listed in
+KnownLimitations.md; the fix is its own release.
+
+---
+
 ## [1.41.3] - 2026-09-28
 
 ### Fixed - `colsPlaceholder` never reached the form

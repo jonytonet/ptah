@@ -51,12 +51,6 @@ class ActionWizard
             $existingAction['actionColor'] ?? 'primary'
         );
 
-        $position = $this->command->choice(
-            'Action position',
-            ['row', 'bulk', 'both'],
-            $existingAction['actionPosition'] ?? 'row'
-        );
-
         $confirm = $this->command->confirm('Require confirmation?', $existingAction['actionConfirm'] ?? false);
         $confirmMessage = '';
 
@@ -76,7 +70,6 @@ class ActionWizard
             'actionValue' => $value,
             'actionIcon' => $icon,
             'actionColor' => $color,
-            'actionPosition' => $position,
             'actionConfirm' => $confirm,
             'actionConfirmMessage' => $confirmMessage,
             'actionPermission' => $permission,
