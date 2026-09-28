@@ -449,13 +449,20 @@ trait HasCrudForm
             return (bool) $declaration['critical'];
         }
 
+        // beforeDelete e barreira por natureza: se falhar, nao exclui (falhar
+        // em excluir e seguro; excluir apesar da guarda quebrada, nao).
+        $default = $hookName === 'beforeDelete';
         $critical = $this->crudConfig['lifecycleHooksCritical'] ?? [];
 
         if (! is_array($critical)) {
-            return false;
+            return $default;
         }
 
-        return (bool) ($critical[$hookName] ?? in_array($hookName, $critical, true));
+        if (array_key_exists($hookName, $critical)) {
+            return (bool) $critical[$hookName];
+        }
+
+        return in_array($hookName, $critical, true) || $default;
     }
 
     /**

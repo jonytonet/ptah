@@ -7,6 +7,41 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.0] - 2026-09-28
+
+### Added - a delete can be refused, with a reason
+
+Found in an ERP on 1.40.0: a brand, category, unit or supplier could be
+deleted while in use, leaving active products pointing at a deleted record.
+BaseCrud had no way to say "this one cannot go". Now, for single, bulk and
+force delete:
+
+- `Ptah\Contracts\GuardsDeletion::deletionBlockedReason(): ?string` on the
+  model — asked before the confirmation opens, and again on delete.
+- `lifecycleHooks.beforeDelete` (editor → Hooks → "Before Delete", and in the
+  `ptah:make-hooks` stub). Throw `CrudHookAbort` to give the reason. Unlike the
+  save hooks, any failure of `beforeDelete` refuses the delete
+  (`lifecycleHooksCritical.beforeDelete: false` opts out).
+- Bulk delete skips the refused rows, keeps them selected and says how many
+  were left out and why.
+
+See BaseCrud.md § Refusing a delete.
+
+### Fixed - "Deleted" was shown for a delete that did not happen
+
+- A `deleting` event returning `false` cancelled the delete, but the toast said
+  "Deleted", offered Undo and fired `crud-deleted`. Now it says it was not
+  deleted.
+- A `deleting` event that threw was a 500. Now it is an error toast.
+- `deleted_by` was written before `delete()`, so a refused delete left an
+  active row marked as deleted. It is now stamped only after the soft delete.
+- The bulk toast and `crud-bulk-deleted` counted the selection, not what was
+  deleted.
+- Bulk delete no longer runs in a single transaction: one refused row used to
+  roll back (or, with an exception, abort) the whole batch.
+
+---
+
 ## [1.40.0] - 2026-09-26
 
 Two more findings from the PetPlace circuit, run against 1.39.0.

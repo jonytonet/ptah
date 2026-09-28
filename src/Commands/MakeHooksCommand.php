@@ -135,6 +135,19 @@ class {$className} implements CrudHooksInterface
         // Example: clear cache
         // cache()->forget('{$className}_' . \$record->getKey());
     }
+
+    /**
+     * Runs before a record is deleted (single, bulk or force). Unlike the save
+     * hooks, ANY failure here refuses the delete; throw CrudHookAbort to show
+     * the user why.
+     */
+    public function beforeDelete(array &\$data, Model \$record, object \$component): void
+    {
+        // Example: refuse while the record is in use
+        // if (\$record->products()->exists()) {
+        //     throw new CrudHookAbort('Em uso por produtos ativos.');
+        // }
+    }
 }
 PHP;
     }

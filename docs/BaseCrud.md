@@ -1148,10 +1148,15 @@ The `bulkApprove` method will receive `(array $ids, string $model)`.
 
 ### Batch deletion (bulkDelete)
 
-The `bulkDelete()` method runs inside a `DB::transaction()` and uses `.each()` to iterate records one by one, ensuring that:
-- **Atomic transaction** — if a delete fails, all are rolled back
+`bulkDelete()` and `bulkForceDelete()` delete the selection **one record at a
+time, each in its own transaction**, through the same guards as a single delete
+(see [Refusing a delete](#refusing-a-delete)):
+- **Refused rows are skipped** — they stay selected, and a second toast says how
+  many were left out and the most common reason. One refused row never undoes
+  the others.
+- **The count is what really went** — `crud-bulk-deleted` carries the number
+  deleted, not the size of the selection, and is not fired when nothing was.
 - **Eloquent events fired** — `deleting`/`deleted` + `HasAuditFields` fill `deleted_by` correctly on each record
-- **SoftDelete respected** — each model goes through the normal Eloquent cycle
 
 ### Events fired by bulk
 
@@ -2657,6 +2662,39 @@ protected function afterUpdate(Model $record): mixed
 > **Note:** the `before*` hooks receive `$data` by reference — any changes to the array inside the hook are reflected in the persisted data. The `after*` hooks receive the already-persisted `Model` with `id` filled in.
 
 ---
+
+### Refusing a delete
+
+A delete — single, bulk or force — can be refused in three ways, checked in
+this order:
+
+1. **The model**, by implementing `Ptah\Contracts\GuardsDeletion`. It is asked
+   **before the confirmation opens**, so the user sees the reason at once, and
+   again on delete (the record may have come into use in between):
+
+   ```php
+   class Brand extends Model implements GuardsDeletion
+   {
+       public function deletionBlockedReason(): ?string
+       {
+           return $this->products()->exists() ? 'Marca em uso por produtos ativos.' : null;
+       }
+   }
+   ```
+
+2. **The `beforeDelete` hook** (editor → Hooks → "Before Delete", or
+   `lifecycleHooks.beforeDelete`), a hook class like the save hooks:
+   `beforeDelete(array &$data, Model $record, object $component)`. Throw
+   `CrudHookAbort('…')` and its message is the reason. Unlike the save hooks,
+   **any** failure of `beforeDelete` refuses the delete — failing to delete is
+   safe, deleting past a broken guard is not. Opt out with
+   `"lifecycleHooksCritical": {"beforeDelete": false}`.
+3. **A `deleting` model event** that returns `false` or throws (a
+   `ValidationException` shows its first message).
+
+A refused delete shows the reason as an error toast and leaves nothing behind:
+the row stays in the list, no "Deleted" toast or Undo, no `crud-deleted`, and
+no `deleted_by` — it is stamped only after the soft delete happened.
 
 ## CRUD Notifications
 
