@@ -369,6 +369,26 @@ stored but no BaseCrud code reads them. Until they are wired, setting them
 changes nothing; `ptah:config --set` refuses the flat cache/pagination names
 for that reason.
 
+Since 1.41.2, `ConfigKeyReachabilityTest` fails when a writer (a wizard, a
+CLI parser, the visual editor or `ptah:forge`'s config generator) stores a
+`cols*`, `action*` or top-level key that no runtime code reads. The keys that
+are knowingly unread today are frozen in that test and fixed one release at a
+time. Until they are, these settings change nothing:
+
+| Key | Written by | What you would expect |
+|---|---|---|
+| `colsPlaceholder` | `--column="…:placeholder=…"`, wizard | a placeholder in the form field |
+| `colsMaskRegex` | `--column="…:mask_regex=…"`, editor field | the mask to validate by that pattern |
+| `actionPosition` | wizard | `bulk` / `both` placement — every action renders on the row |
+| `colsMaskDecimalPlaces` | wizard | the decimal places typed in the wizard |
+| `colsRendererFormat` | wizard | the date format typed in the wizard |
+| `colsFilterAggregate`, `colsFilterOptions`, `colsFilterRelationField`, `colsFilterWhereHas` | filter wizard | those filter options |
+| `configEsconderId` | editor, `ptah:forge` | the id column hidden from the listing |
+
+The guard matches key names, not nested paths: `cacheStrategy` and
+`uiPreferences` above have readers for some sub-keys, so it does not flag the
+unread ones.
+
 Before 1.36.0, `ptah:config --action` wrote to a top-level `actions` section
 the table never read, and `--set itemsPerPage`/`exportEnabled` to top-level
 keys it never read either. `ptah:config:doctor --fix` moves both where they
