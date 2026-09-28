@@ -779,7 +779,7 @@ The modal has **9 main tabs**:
 
 2. **Custom Filters:**
    - List of additional filters for the toolbar
-   - Each filter has: field, label, type (text/number/date/select/searchdropdown), operator (=, !=, >, <, >=, <=, LIKE)
+   - Each filter has: field, label, type (text/number/date/select), operator (=, !=, >, <, >=, <=, LIKE)
 
 **Example of custom filter:**
 
@@ -1717,8 +1717,8 @@ Write `operator=LIKE`. Types: `text`, `number`, `date`, `select`,
 # Date
 --filter="created_at:date:operator=>=:label=From Date"
 
-# SearchDropdown
---filter="user_id:searchdropdown:label=User:sd_model=App\Models\User:sd_value=id:sd_label=name"
+# SearchDropdown: not a custom-filter type. Make the COLUMN a filterable
+# searchdropdown and the panel offers it (docs/BaseCrud.md § searchdropdown).
 
 # Text with LIKE
 --filter="name:text:operator=LIKE:label=Search Name"
@@ -2494,8 +2494,10 @@ old names on write, but a hand-written config must use these.)
 | `aggregate` | string | `''` | Aggregate over the relation: `SUM`, `COUNT`, `AVG`, `MAX`, `MIN` |
 | `logic` | string | `'AND'` | `AND` / `OR` with the other filters |
 
-A `searchdropdown` custom filter does not work yet: the panel renders the
-input, but the search never returns results (see KnownLimitations.md).
+There is no `searchdropdown` custom filter: a filterable column of type
+`searchdropdown` already gets one in the panel. (The custom-filter variant was
+offered until 1.41.4 and never worked; one saved with it renders as the text
+filter.)
 
 **Examples:**
 
@@ -2771,7 +2773,6 @@ php artisan ptah:config "App\Models\Product" \
   --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info" \
   --filter="status:select:options=active,inactive" \
-  --filter="category_id:searchdropdown:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --style="stock:<:10:background:#FEF3C7;color:#92400E;font-weight:bold;" \
   --set="displayName=Products" \
   --set="itemsPerPage=25" \
@@ -2823,8 +2824,6 @@ php artisan ptah:config "App\Models\Post" \
   --action="preview:link:https://blog.com/posts/%slug%:icon=bx-show:color=info" \
   --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=secondary" \
   --filter="status:select:options=draft,published,scheduled" \
-  --filter="category_id:searchdropdown:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
-  --filter="author_id:searchdropdown:sd_model=App\Models\User:sd_value=id:sd_label=name" \
   --style="status:==:draft:background:#F3F4F6;color:#6B7280;" \
   --set="displayName=Blog Posts" \
   --set="itemsPerPage=20" \

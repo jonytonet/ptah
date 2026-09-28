@@ -67,7 +67,9 @@
                     fn($c) => in_array($c['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true) && ($c['colsTipo'] ?? '') !== 'action'
                 ));
             @endphp
-            @if (!empty($filterableCfCols))
+            {{-- Os filtros customizados moram neste mesmo grid: sem o `||`, uma tela
+                 so com customFilters (nenhuma coluna filtravel) nao mostrava nenhum. --}}
+            @if (!empty($filterableCfCols) || !empty($crudConfig['customFilters']))
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
 
                     @foreach ($filterableCfCols as $col)
@@ -260,32 +262,19 @@
                         @php
                             $cfField = $cf['field'] ?? '';
                             $cfLabel = $cf['label'] ?? $cf['field'] ?? '';
-                            $cfType  = $cf['colsFilterType'] ?? (($cf['useSearchDropDown'] ?? 'N') === 'S' ? 'searchdropdown' : 'text');
+                            // Um filtro customizado `searchdropdown` nunca funcionou (a busca
+                            // procurava uma coluna `cf_<campo>`, e o clique gravava no
+                            // formulario, nao no filtro). Desde a 1.41.5 ele vira o filtro de
+                            // texto, que filtra de fato pelo valor digitado.
+                            $cfType  = $cf['colsFilterType'] ?? 'text';
+                            if ($cfType === 'searchdropdown') {
+                                $cfType = 'text';
+                            }
                         @endphp
                         @if ($cfField)
                             <div>
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
-                                @if ($cfType === 'searchdropdown')
-                                    <div class="relative" x-data="{ open: false }">
-                                        <input type="text"
-                                            wire:keyup="searchDropdown('cf_{{ $cfField }}', $event.target.value)"
-                                            @focus="open = true"
-                                            @click.outside="open = false"
-                                            placeholder="{{ __('ptah::ui.filters_search_label', ['label' => $cfLabel]) }}"
-                                            class="w-full text-sm rounded-md px-2.5 py-2 ptah-c-fp_input ptah-c-control" />
-                                        @if (!empty($sdResults['cf_' . $cfField]))
-                                            <div x-show="open" class="absolute z-30 w-full mt-1 overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
-                                                @foreach ($sdResults['cf_' . $cfField] as $opt)
-                                                    <button wire:click="selectDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
-                                                        @click="open = false"
-                                                        class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
-                                                        {{ $opt['label'] }}
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
-                                @elseif ($cfType === 'date')
+                                @if ($cfType === 'date')
                                     <x-forge-input
                                         type="date"
                                         wire:model.live="filters.{{ $cfField }}"

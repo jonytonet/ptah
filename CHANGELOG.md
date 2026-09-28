@@ -7,6 +7,37 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.5] - 2026-09-28
+
+### Fixed - the `searchdropdown` custom filter never worked, and is no longer offered
+
+It came in as a draft and never ran: the panel called
+`searchDropdown('cf_<field>')`, which looks for a COLUMN of that name and
+returns nothing; a click would have written the choice into the edit form,
+not the filter; and the wizard stored a table name, where the searchdropdown
+only resolves a model or a service. `--filter="…:searchdropdown:sd_model=…"`,
+documented with examples, dropped its `sd_*` options on normalisation.
+
+- `searchdropdown` is no longer a custom-filter type: the editor, the filter
+  wizard and `ptah:config --filter` no longer offer it (the CLI now refuses it
+  as an invalid filter type), and the docs' examples are gone.
+- A custom filter already saved with it renders as the text filter, which
+  filters for real by the value typed (the runtime already treated the type as
+  text).
+- The searchdropdown filter that works is the column's: a filterable column of
+  type `searchdropdown` gets one in the panel.
+
+With this, the list of written-and-unread keys frozen by
+`ConfigKeyReachabilityTest` in 1.41.2 is empty.
+
+### Fixed - custom filters were hidden on a screen with no filterable column
+
+The filter panel rendered its grid only when some column was filterable, and
+the custom filters live in that grid — a screen whose only filters were custom
+ones showed an empty panel.
+
+---
+
 ## [1.41.4] - 2026-09-28
 
 The rest of the keys `ConfigKeyReachabilityTest` froze in 1.41.2: settings a

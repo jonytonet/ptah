@@ -83,13 +83,6 @@ class ConfigKeyReachabilityTest extends TestCase
         'colsValidation' => 'runtime reads colsValidations (plural)',
         'colsValidationMessage' => 'no reader',
 
-        // The custom-filter searchdropdown never resolves: the panel calls
-        // searchDropdown('cf_<field>'), findColByField() finds no such column
-        // and returns nothing, so these source keys have no reader. Recorded
-        // on 28/09/2026 (1.41.4); a fix of its own, not a rename.
-        'colsFilterSdTable' => 'custom-filter searchdropdown source; never resolved',
-        'colsFilterSdSelectColumn' => 'custom-filter searchdropdown label column; never resolved',
-        'colsFilterSdValueColumn' => 'custom-filter searchdropdown value column; never resolved',
     ];
 
     private static function read(string $path): string

@@ -99,12 +99,15 @@ class CrudConfigEnums
     /**
      * Filter types for colsFilterType
      */
+    // Sem `searchdropdown`: o filtro customizado desse tipo nunca funcionou
+    // (a busca procurava uma coluna `cf_<campo>` e o clique gravava no
+    // formulario). Filtro searchdropdown vem da COLUNA searchdropdown
+    // filtravel. Removido na 1.41.5.
     public const FILTER_TYPES = [
         'text',
         'number',
         'date',
         'select',
-        'searchdropdown',
     ];
 
     /**

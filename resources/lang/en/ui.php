@@ -1529,7 +1529,6 @@ return [
     'cfg_filter_type_number' => 'number — numeric',
     'cfg_filter_type_date' => 'date — date',
     'cfg_filter_type_select' => 'select — fixed list',
-    'cfg_filter_type_sd' => 'searchdropdown — FK search',
 
     // Styles tab
     'cfg_style_guide_title' => 'How to use Conditional Styles',

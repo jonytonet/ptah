@@ -1897,7 +1897,6 @@
                                         <option value="number">{{ __('ptah::ui.cfg_filter_type_number') }}</option>
                                         <option value="date">{{ __('ptah::ui.cfg_filter_type_date') }}</option>
                                         <option value="select">{{ __('ptah::ui.cfg_filter_type_select') }}</option>
-                                        <option value="searchdropdown">{{ __('ptah::ui.cfg_filter_type_sd') }}</option>
                                     </select>
                                 </div>
 
