@@ -7,6 +7,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.2] - 2026-09-28
+
+### Added - a guard for config that is written and never read
+
+`actionPermission`, `actionConfirm` and the editor's `permissions` block (all
+fixed in 1.41.1) share one defect: a writer stores a key the runtime ignores,
+so the user configures something and nothing happens. `WizardKeyReachabilityTest`
+did not catch them because it only scanned the column wizard and counted any
+file under `src/` as a reader — including the parser, the wizard and the
+editor, which only write the key.
+
+`ConfigKeyReachabilityTest` scans every writer (the wizards, the CLI parsers,
+the visual editor and `ptah:forge`'s config generator) for `cols*`, `action*`
+and top-level keys, and accepts only runtime code as a reader. With the
+1.41.1 fix reverted, it names `actionPermission` and the three files that
+write it.
+
+It found ten keys that are written and unread today. They are frozen in the
+test (the list may only shrink) and listed in KnownLimitations.md § Settings
+the screen does not apply, to be fixed one release at a time:
+`colsPlaceholder`, `colsMaskRegex`, `actionPosition`, `colsMaskDecimalPlaces`,
+`colsRendererFormat`, four `colsFilter*` keys from the filter wizard, and
+`configEsconderId`.
+
+No runtime behaviour changes in this release.
+
+---
+
 ## [1.41.1] - 2026-09-28
 
 Three published defects found while planning 1.42.
