@@ -55,6 +55,12 @@
                 <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
             @endif
 
+            {{-- Toda mudanca de 2FA pede a senha atual (1.41.8). --}}
+            <div class="max-w-lg mb-5">
+                <x-forge-input name="twofa_password" type="password" :label="__('ptah::ui.profile_twofa_password')"
+                    wire:model="twofa_password" :error="$errors->first('twofa_password')" autocomplete="current-password" />
+            </div>
+
             {{-- Habilitar −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−--}}
             @if (!auth()->user()->two_factor_confirmed_at)
                 <div class="max-w-lg">

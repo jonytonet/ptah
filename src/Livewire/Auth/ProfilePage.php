@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Ptah\Models\UserPreference;
@@ -35,6 +37,16 @@ class ProfilePage extends Component
 
     /** Current password, asked only when the e-mail changes (1.41.7). */
     public string $email_password = '';
+
+    /** Current password for every 2FA change (1.41.8). */
+    public string $twofa_password = '';
+
+    /**
+     * The TOTP secret being set up, held here until a code confirms it —
+     * locked, so the browser cannot swap in a secret of its own choosing.
+     */
+    #[Locked]
+    public string $pendingTotpSecret = '';
 
     public string $password = '';
 
@@ -143,16 +155,44 @@ class ProfilePage extends Component
             return;
         }
 
-        $user->forceFill(['password' => Hash::make($this->password)])->save();
+        // Trocar a senha derruba as outras sessoes e o "lembrar-me": antes a
+        // sessao ja aberta de quem roubou a conta seguia valendo (1.41.8).
+        $user->forceFill(['password' => Hash::make($this->password)]);
+        $user->setRememberToken(Str::random(60));
+        $user->save();
+        app(SessionService::class)->revokeOtherSessions($user, session()->getId());
         $this->reset(['current_password', 'password', 'password_confirmation']);
         $this->flash(trans('ptah::ui.profile_password_updated'));
     }
 
     // ── 2FA ────────────────────────────────────────────────────────────────
 
+    /**
+     * Every 2FA change asks for the current password: with a stolen session,
+     * turning 2FA off, swapping the secret or reading the recovery codes made
+     * the theft permanent (audit of 28/09/2026, 1.41.8).
+     */
+    private function passwordConfirmed(): bool
+    {
+        if (Hash::check($this->twofa_password, (string) Auth::user()->getAuthPassword())) {
+            return true;
+        }
+
+        $this->addError('twofa_password', trans('ptah::ui.profile_password_wrong'));
+
+        return false;
+    }
+
     public function initTotp(TwoFactorService $twoFactor): void
     {
-        $data = $twoFactor->enableTotp(Auth::user());
+        if (! $this->passwordConfirmed()) {
+            return;
+        }
+
+        // Nada e gravado ate o codigo conferir: o enableTotp() gravava o
+        // segredo novo antes, e o autenticador que funcionava parava.
+        $data = $twoFactor->startTotp(Auth::user());
+        $this->pendingTotpSecret = $data['secret'];
 
         $this->totpSecret = $data['secret'];
         $this->qrCodeSvg = $data['qr_image_uri'];
@@ -165,9 +205,11 @@ class ProfilePage extends Component
     {
         $this->validate(['totp_code' => 'required|string|size:6']);
 
-        if ($twoFactor->confirmTotp(Auth::user(), $this->totp_code, $this->recoveryCodes)) {
+        if ($twoFactor->confirmPendingTotp(Auth::user(), $this->pendingTotpSecret, $this->totp_code, $this->recoveryCodes)) {
             $this->showSetup2fa = false;
             $this->recoveryCodes = [];
+            $this->pendingTotpSecret = '';
+            $this->reset('twofa_password');
             $this->flash(trans('ptah::ui.profile_totp_enabled'));
         } else {
             $this->errorMsg = trans('ptah::ui.profile_totp_invalid');
@@ -178,6 +220,10 @@ class ProfilePage extends Component
 
     public function enableEmailTwoFactor(TwoFactorService $twoFactor): void
     {
+        if (! $this->passwordConfirmed()) {
+            return;
+        }
+
         // Throttle code sends to prevent email bombing (an attacker repeatedly
         // triggering this action to flood the victim's inbox). Same key shape
         // as TwoFactorChallengePage::sendEmailCode(), scoped by user+IP.
@@ -199,18 +245,31 @@ class ProfilePage extends Component
 
     public function loadRecoveryCodes(TwoFactorService $twoFactor): void
     {
+        if (! $this->passwordConfirmed()) {
+            return;
+        }
+
         $this->recoveryCodes = $twoFactor->getRecoveryCodes(Auth::user());
     }
 
     public function regenerateRecoveryCodes(TwoFactorService $twoFactor): void
     {
+        if (! $this->passwordConfirmed()) {
+            return;
+        }
+
         $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(Auth::user());
         $this->flash(trans('ptah::ui.profile_recovery_regen'));
     }
 
     public function disableTwoFactor(TwoFactorService $twoFactor): void
     {
+        if (! $this->passwordConfirmed()) {
+            return;
+        }
+
         $twoFactor->disable(Auth::user());
+        $this->reset('twofa_password');
         $this->totpType = '';
         $this->showSetup2fa = false;
         $this->flash(trans('ptah::ui.profile_2fa_disabled'));
@@ -226,6 +285,9 @@ class ProfilePage extends Component
     public function revokeSession(string $sessionId, SessionService $sessionService): void
     {
         $sessionService->revokeSession($sessionId, Auth::user());
+        // O aparelho revogado com "lembrar-me" logava de novo sozinho: o cookie
+        // vale enquanto o remember_token nao muda (1.41.8).
+        self::cycleRememberToken();
         $this->loadSessions($sessionService);
         $this->flash(trans('ptah::ui.profile_session_revoked'));
     }
@@ -236,8 +298,19 @@ class ProfilePage extends Component
             Auth::user(),
             Request::session()->getId()
         );
+        self::cycleRememberToken();
         $this->loadSessions($sessionService);
         $this->flash(trans('ptah::ui.profile_sessions_revoked', ['count' => $count]));
+    }
+
+    private static function cycleRememberToken(): void
+    {
+        $user = Auth::user();
+
+        if ($user !== null && method_exists($user, 'setRememberToken') && $user->getRememberTokenName() !== '') {
+            $user->setRememberToken(Str::random(60));
+            $user->save();
+        }
     }
 
     // ── Photo ──────────────────────────────────────────────────────────────

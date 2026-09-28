@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Ptah\Services\Auth\SessionService;
 
 #[Layout('ptah::layouts.forge-auth')]
 class ResetPasswordPage extends Component
@@ -51,6 +52,10 @@ class ResetPasswordPage extends Component
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // Redefinir a senha encerra toda sessao aberta da conta — antes
+                // a de quem a tinha tomado seguia valendo (1.41.8).
+                app(SessionService::class)->revokeOtherSessions($user, '');
 
                 event(new PasswordReset($user));
             }

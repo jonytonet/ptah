@@ -57,6 +57,61 @@ class TwoFactorService
     }
 
     /**
+     * Starts a TOTP setup WITHOUT touching the user row.
+     *
+     * enableTotp() writes the new secret before the code is confirmed, so on a
+     * user who already has TOTP the working authenticator stops matching the
+     * moment someone opens the setup (and with a stolen session that someone is
+     * the attacker). Here the secret is returned for the caller to hold until
+     * confirmPendingTotp() verifies a code against it.
+     *
+     * @return array{secret: string, qr_image_uri: string, recovery_codes: list<string>}
+     */
+    public function startTotp(Authenticatable $user): array
+    {
+        if (! class_exists(Google2FA::class)) {
+            throw new \RuntimeException('Install pragmarx/google2fa-laravel to use TOTP.');
+        }
+
+        /** @var \PragmaRX\Google2FA\Google2FA $google2fa */
+        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+
+        $secret = $google2fa->generateSecretKey();
+        $qrUrl = $google2fa->getQRCodeUrl(config('app.name', 'Ptah'), $user->email ?? (string) $user->getKey(), $secret);
+
+        return [
+            'secret' => $secret,
+            'qr_image_uri' => $this->qrCodeUri($qrUrl),
+            'recovery_codes' => $this->generateRecoveryCodes(),
+        ];
+    }
+
+    /**
+     * Saves a pending TOTP secret once a code generated from it verifies.
+     *
+     * @param  list<string>  $recoveryCodes
+     */
+    public function confirmPendingTotp(Authenticatable $user, string $secret, string $code, array $recoveryCodes): bool
+    {
+        if ($secret === '' || ! class_exists(\PragmaRX\Google2FA\Google2FA::class)) {
+            return false;
+        }
+
+        if (! app(\PragmaRX\Google2FA\Google2FA::class)->verifyKey($secret, $code)) {
+            return false;
+        }
+
+        $user->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_type' => 'totp',
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
+        ])->save();
+
+        return true;
+    }
+
+    /**
      * Confirms TOTP activation after the user validates the code.
      */
     public function confirmTotp(Authenticatable $user, string $code, array $recoveryCodes): bool

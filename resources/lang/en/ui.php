@@ -351,7 +351,7 @@ return [
     | Auth — Livewire pages
     |--------------------------------------------------------------------------
     */
-    'auth_link_sent' => 'Recovery link sent! Check your email.',
+    'auth_link_sent' => 'If an account exists for this e-mail, a recovery link is on its way.',
     'auth_too_many_attempts' => 'Too many attempts. Try again in :seconds seconds.',
     'auth_invalid_credentials' => 'Invalid email or password.',
     'auth_password_reset_ok' => 'Password changed successfully! Please log in.',
@@ -512,6 +512,7 @@ return [
     'profile_save_btn' => 'Save profile',
     'profile_current_pw' => 'Current password',
     'profile_email_password' => 'Current password (required to change the e-mail)',
+    'profile_twofa_password' => 'Current password (required for any 2FA change)',
     'profile_new_pw' => 'New password',
     'profile_confirm_pw' => 'Confirm new password',
     'profile_change_pw_btn' => 'Change password',

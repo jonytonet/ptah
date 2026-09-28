@@ -7,6 +7,48 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.8] - 2026-09-28
+
+**Security release.** The auth findings of the 28/09/2026 surface audit: with a
+stolen session, each one turned a temporary theft into a permanent one. Each
+fix has a test that fails on 1.41.7.
+
+### Security - 2FA could be changed without the password
+
+`disableTwoFactor()`, `initTotp()`, `enableEmailTwoFactor()`,
+`loadRecoveryCodes()` and `regenerateRecoveryCodes()` ran on the session
+alone. They now require the current password (`twofa_password`, a field at the
+top of the 2FA tab).
+
+### Security - setting up TOTP overwrote the working secret
+
+`enableTotp()` wrote the new secret before any code was confirmed, so opening
+the setup on an account that already had TOTP broke the owner's authenticator.
+The profile now uses `TwoFactorService::startTotp()`, which writes nothing,
+holds the secret in a locked property, and `confirmPendingTotp()` saves it only
+when a code generated from it verifies.
+
+### Security - a new password did not end the other sessions
+
+Changing the password on the profile now deletes the other sessions and
+rotates the remember-me token; resetting it through the e-mail link ends every
+session of the account.
+
+### Security - revoking a device left its remember-me cookie working
+
+The revoked device signed itself back in on the next request. Revoking one
+session, or all the others, now rotates the remember-me token.
+
+### Security - "forgot password" told who has an account
+
+It answered "We can't find a user with that email address" for an unknown
+e-mail, and the broker's throttle (which only applies to real accounts) leaked
+the same. The answer is now always "If an account exists for this e-mail, a
+recovery link is on its way", and a per-IP limit (10 per 5 minutes) sits next
+to the per-e-mail one.
+
+---
+
 ## [1.41.7] - 2026-09-28
 
 **Security release.** The HIGH findings of the 28/09/2026 surface audit. Each

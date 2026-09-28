@@ -153,13 +153,10 @@ class AuthRateLimitTest extends TestCase
         // If throttled the status would be empty and errorMsg would be the throttle msg;
         // if not throttled the errorMsg is either empty (link sent) or the broker error.
         // Either way, the throttle message key must NOT appear here.
-        if (! empty($errorMsg)) {
-            $this->assertStringNotContainsString(
-                (string) trans('ptah::ui.auth_too_many_attempts', ['seconds' => 300]),
-                $errorMsg,
-                'Under the rate limit, the throttle message must not appear',
-            );
-        }
+        // Sem throttle, e com a resposta neutra da 1.41.8: nenhum erro, e o
+        // mesmo aviso exista ou nao o e-mail.
+        $this->assertSame('', $errorMsg);
+        $this->assertSame(trans('ptah::ui.auth_link_sent'), $component->get('status'));
     }
 
     // ── TwoFactorChallengePage ────────────────────────────────────────────────
