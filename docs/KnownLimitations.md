@@ -377,7 +377,6 @@ time. Until they are, these settings change nothing:
 
 | Key | Written by | What you would expect |
 |---|---|---|
-| `colsPlaceholder` | `--column="…:placeholder=…"`, wizard | a placeholder in the form field |
 | `colsMaskRegex` | `--column="…:mask_regex=…"`, editor field | the mask to validate by that pattern |
 | `actionPosition` | wizard | `bulk` / `both` placement — every action renders on the row |
 | `colsMaskDecimalPlaces` | wizard | the decimal places typed in the wizard |

@@ -306,4 +306,25 @@ class CrudFormInputTypesTest extends TestCase
 
         $this->assertStringContainsString('055.465.309-52', $html);
     }
+
+    // ── colsPlaceholder (1.41.3) ──────────────────────────────────────────
+
+    #[Test]
+    public function the_configured_placeholder_reaches_the_input(): void
+    {
+        // Gravado por `--column="...:placeholder=..."` e pelo wizard, ensinado
+        // na doc, e ignorado pelo formulario ate a 1.41.3.
+        $html = $this->openForm(['colsTipo' => 'text', 'colsPlaceholder' => 'Nome completo do tutor']);
+
+        $this->assertStringContainsString('placeholder="Nome completo do tutor"', $html);
+    }
+
+    #[Test]
+    public function a_masked_field_uses_the_configured_placeholder_and_falls_back_to_the_mask(): void
+    {
+        PtahMask::define('cep', ['pattern' => '00000-000', 'store' => 'digits']);
+
+        $this->assertStringContainsString('placeholder="CEP de entrega"', $this->openForm(['colsTipo' => 'text', 'colsMask' => 'cep', 'colsPlaceholder' => 'CEP de entrega']));
+        $this->assertStringContainsString('placeholder="'.PtahMask::get('cep')['placeholder'].'"', $this->openForm(['colsTipo' => 'text', 'colsMask' => 'cep']));
+    }
 }
