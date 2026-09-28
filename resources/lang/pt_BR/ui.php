@@ -1530,7 +1530,6 @@ return [
     'cfg_filter_type_number' => 'number — numérico',
     'cfg_filter_type_date' => 'date — data',
     'cfg_filter_type_select' => 'select — lista fixa',
-    'cfg_filter_type_sd' => 'searchdropdown — busca FK',
 
     // Aba Estilos
     'cfg_style_guide_title' => 'Como usar os Estilos Condicionais',

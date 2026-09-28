@@ -54,14 +54,10 @@ class FilterWizard
         ];
 
         // Type-specific options
-        if (in_array($type, ['select', 'searchdropdown'])) {
-            if ($type === 'select') {
-                // `colsSelect` (label => value) e o que o painel de filtros
-                // le; `colsFilterOptions` era descartado pelo FilterRule.
-                $filter['colsSelect'] = $this->askSelectOptions();
-            } else {
-                $filter = array_merge($filter, $this->askSearchDropdownOptions());
-            }
+        if ($type === 'select') {
+            // `colsSelect` (label => value) e o que o painel de filtros
+            // le; `colsFilterOptions` era descartado pelo FilterRule.
+            $filter['colsSelect'] = $this->askSelectOptions();
         }
 
         // Relation filter
@@ -106,18 +102,6 @@ class FilterWizard
         }
 
         return $options;
-    }
-
-    /**
-     * Ask SearchDropdown options
-     */
-    protected function askSearchDropdownOptions(): array
-    {
-        return [
-            'colsFilterSdTable' => $this->command->ask('Search table'),
-            'colsFilterSdSelectColumn' => $this->command->ask('Display column', 'name'),
-            'colsFilterSdValueColumn' => $this->command->ask('Value column', 'id'),
-        ];
     }
 
     /**

@@ -375,16 +375,13 @@ CLI parser, the visual editor or `ptah:forge`'s config generator) stores a
 are knowingly unread today are frozen in that test and fixed one release at a
 time. Until they are, these settings change nothing:
 
-| Key | Written by | What you would expect |
-|---|---|---|
-| `colsFilterSdTable`, `colsFilterSdSelectColumn`, `colsFilterSdValueColumn` | filter wizard | a searchdropdown custom filter — the panel renders the input, but `searchDropdown('cf_<field>')` finds no column and never returns results |
-
-The other nine keys found on 28/09/2026 were fixed in 1.41.3 and 1.41.4:
-`colsPlaceholder` and `colsRendererFormat` now reach the screen; the filter
-wizard writes the keys the runtime reads; and `actionPosition`,
-`colsMaskDecimalPlaces`, `colsMaskRegex` (with the unregistered `custom_regex`
-mask) and `configEsconderId` are no longer written, because nothing ever
-implemented them.
+All ten keys found on 28/09/2026 were fixed in 1.41.3–1.41.5: `colsPlaceholder`
+and `colsRendererFormat` now reach the screen; the filter wizard writes the
+keys the runtime reads; `actionPosition`, `colsMaskDecimalPlaces`,
+`colsMaskRegex` (with the unregistered `custom_regex` mask) and
+`configEsconderId` are no longer written; and the `searchdropdown` custom
+filter, which never returned results, is no longer offered (a saved one renders
+as the text filter — use a filterable `searchdropdown` column instead).
 
 The guard matches key names, not nested paths: `cacheStrategy` and
 `uiPreferences` above have readers for some sub-keys, so it does not flag the

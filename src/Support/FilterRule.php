@@ -106,7 +106,7 @@ final class FilterRule
         // in _filter-panel.blade.php); `options` is kept alongside it only so a
         // config saved before that was corrected still round-trips through here
         // untouched, ready for `ptah:config:doctor --fix` to migrate.
-        foreach (['colsSelect', 'options', 'colsFilterSdTable', 'colsFilterSdValueColumn', 'colsFilterSdSelectColumn'] as $passthrough) {
+        foreach (['colsSelect', 'options'] as $passthrough) {
             if (isset($filter[$passthrough]) && $filter[$passthrough] !== '') {
                 $normalized[$passthrough] = $filter[$passthrough];
             }
