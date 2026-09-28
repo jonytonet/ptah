@@ -98,6 +98,9 @@
                             $fMaskDef  = \Ptah\Support\PtahMask::get($fMask);
                             $fValue    = $formData[$fField] ?? '';
                             $fHelpText = $col['colsHelpText'] ?? null;
+                            // colsPlaceholder: gravado pela CLI (placeholder=) e pelo wizard
+                            // desde sempre, e ignorado ate a 1.41.3.
+                            $fPlaceholder = trim((string) ($col['colsPlaceholder'] ?? ''));
                             $tabIdx    = 0; // natural DOM order — a positive tabindex jumped fields ahead of the footer/close
 
             // A borda destes campos vem inteira de `.ptah-c-form_in` em
@@ -845,7 +848,7 @@
                                             @input="onInput($event)"
                                             @if($fRequired) required @endif
                                             tabindex="{{ $tabIdx }}"
-                                            placeholder="{{ $fMaskDef['placeholder'] }}"
+                                            placeholder="{{ $fPlaceholder !== '' ? $fPlaceholder : $fMaskDef['placeholder'] }}"
                                             inputmode="{{ $fMaskDef['inputmode'] }}"
                                             @if($fMaskDef['maxlength']) maxlength="{{ $fMaskDef['maxlength'] }}" @endif
                                             autocomplete="off"
@@ -870,6 +873,7 @@
                                             :error="$fError"
                                             :step="($fTipo === 'number' && !$fMask) ? 'any' : null"
                                             :tabindex="$tabIdx"
+                                            :placeholder="$fPlaceholder"
                                         />
                                     @else
                                         <x-forge-input
@@ -880,6 +884,7 @@
                                             :error="$fError"
                                             :step="($fTipo === 'number' && !$fMask) ? 'any' : null"
                                             :tabindex="$tabIdx"
+                                            :placeholder="$fPlaceholder"
                                         />
                                     @endif
                                 @endif

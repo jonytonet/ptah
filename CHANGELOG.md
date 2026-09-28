@@ -7,6 +7,18 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.3] - 2026-09-28
+
+### Fixed - `colsPlaceholder` never reached the form
+
+`--column="…:placeholder=…"` and the interactive wizard stored it, and the
+docs taught it, but the form rendered every field without a placeholder. It
+now reaches the regular input and the masked input; on a masked field with
+no placeholder configured, the mask's own placeholder still shows. First of
+the ten keys frozen by `ConfigKeyReachabilityTest` in 1.41.2.
+
+---
+
 ## [1.41.2] - 2026-09-28
 
 ### Added - a guard for config that is written and never read

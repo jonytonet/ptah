@@ -81,7 +81,6 @@ class ConfigKeyReachabilityTest extends TestCase
         'colsValidationMessage' => 'no reader',
 
         // Found by this guard on 28/09/2026 — to be fixed from 1.41.3 on:
-        'colsPlaceholder' => 'CLI placeholder= and the wizard write it, the docs teach it, the form never shows it',
         'colsMaskRegex' => 'CLI mask_regex= and an editor field write it; the mask ignores it',
         'actionPosition' => 'wizard and docs offer row/bulk/both; every action renders on the row',
         'colsMaskDecimalPlaces' => 'wizard asks for decimal places and drops the answer',
