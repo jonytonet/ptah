@@ -3001,6 +3001,19 @@
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 
+                            {{-- beforeDelete --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_before_delete') }}</label>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ptah-c-muted" style="background: var(--ptah-surface-sunken)">function($record)</span>
+                                </div>
+                                <p class="text-[11px] ptah-c-muted mb-2">{{ __('ptah::ui.cfg_hooks_before_delete_desc') }}</p>
+                                <textarea wire:model="hookBeforeDelete" rows="4"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_before_delete') }}"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@BrandHooks::beforeDelete"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
                             <div class="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                                 <svg class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

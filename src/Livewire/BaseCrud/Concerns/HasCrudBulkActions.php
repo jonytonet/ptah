@@ -60,39 +60,7 @@ trait HasCrudBulkActions
             return;
         }
 
-        $this->bulkActionInProgress = true;
-
-        // Scoped by company / master-detail lock (scopedQuery()) so a
-        // client-supplied id in selectedRows cannot delete a record outside the
-        // current scope (IDOR) — same guard as the single-record deleteRecord().
-        $query = $this->scopedQuery();
-
-        if ($query) {
-            // Match on the model's actual primary key, not a hardcoded 'id' —
-            // same as bulkExport() (HasCrudExport.php) — so CRUDs with a
-            // non-default key name are matched correctly instead of silently
-            // deleting nothing (or the wrong rows, if an unrelated 'id' column
-            // exists on the table).
-            $keyName = (new ($this->model))->getKeyName();
-
-            DB::transaction(function () use ($query, $keyName) {
-                // Use each() + delete() individually to fire Eloquent events
-                // and allow HasAuditFields trait to record deleted_by per record.
-                $query->whereIn($keyName, $this->selectedRows)->each(
-                    fn ($record) => $record->delete()
-                );
-            });
-            $this->cacheService->invalidateModel($this->model);
-            $this->updateTrashedCount();
-        }
-
-        $deletedCount = count($this->selectedRows);
-        $this->selectedRows = [];
-        $this->selectAll = false;
-        $this->bulkActionInProgress = false;
-
-        $this->dispatch('crud-bulk-deleted', model: $this->model, count: $deletedCount);
-        $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_deleted', ['n' => $deletedCount]), color: 'warn');
+        $this->runBulkDelete(force: false);
     }
 
     public function bulkRestore(): void
@@ -146,33 +114,74 @@ trait HasCrudBulkActions
             return;
         }
 
+        $this->runBulkDelete(force: true);
+    }
+
+    /**
+     * Deletes the selection one record at a time through attemptDelete(), so
+     * each row answers to the same guards as a single delete. A refused row is
+     * skipped — and stays selected — and the toast counts what really went,
+     * instead of the size of the selection.
+     */
+    private function runBulkDelete(bool $force): void
+    {
         $this->bulkActionInProgress = true;
 
-        // withTrashed() is chained onto the SCOPED query (never a raw
-        // newQuery()) so force-deleting still respects the company /
-        // master-detail lock (IDOR guard).
+        // Scoped by company / master-detail lock (scopedQuery()) so a
+        // client-supplied id in selectedRows cannot delete a record outside the
+        // current scope (IDOR) — same guard as the single-record deleteRecord().
+        // withTrashed() for force delete: it also empties the trash.
         $query = $this->scopedQuery();
+        $deleted = 0;
+        $refused = [];
 
         if ($query) {
             // Match on the model's actual primary key, not a hardcoded 'id' —
-            // same as bulkExport() (HasCrudExport.php).
+            // same as bulkExport() (HasCrudExport.php) — so CRUDs with a
+            // non-default key name are matched correctly.
             $keyName = (new ($this->model))->getKeyName();
 
-            DB::transaction(function () use ($query, $keyName) {
-                $query->withTrashed()
-                    ->whereIn($keyName, $this->selectedRows)
-                    ->each(fn ($record) => $record->forceDelete());
-            });
-            $this->cacheService->invalidateModel($this->model);
-            $this->updateTrashedCount();
+            if ($force && method_exists($query->getModel(), 'bootSoftDeletes')) {
+                $query->withTrashed();
+            }
+
+            // Uma transacao por registro, nao uma so: um registro barrado nao
+            // pode desfazer os outros, nem envenenar a transacao dos seguintes.
+            foreach ($query->whereIn($keyName, $this->selectedRows)->get() as $record) {
+                $reason = DB::transaction(fn () => $this->attemptDelete($record, $force));
+
+                if ($reason === null) {
+                    $deleted++;
+                } else {
+                    $refused[(string) $record->getKey()] = $reason;
+                }
+            }
+
+            if ($deleted > 0) {
+                $this->cacheService->invalidateModel($this->model);
+                $this->updateTrashedCount();
+            }
         }
 
-        $deletedCount = count($this->selectedRows);
-        $this->selectedRows = [];
+        $this->selectedRows = array_keys($refused);
         $this->selectAll = false;
         $this->bulkActionInProgress = false;
 
-        $this->dispatch('ptah-toast', title: trans('ptah::ui.bulk_toast_force_deleted', ['n' => $deletedCount]), color: 'danger');
+        if ($deleted > 0) {
+            $this->dispatch('crud-bulk-deleted', model: $this->model, count: $deleted);
+            $this->dispatch('ptah-toast',
+                title: trans($force ? 'ptah::ui.bulk_toast_force_deleted' : 'ptah::ui.bulk_toast_deleted', ['n' => $deleted]),
+                color: $force ? 'danger' : 'warn');
+        }
+
+        if ($refused !== []) {
+            $reasons = array_count_values($refused);
+            arsort($reasons);
+            $this->dispatch('ptah-toast',
+                title: trans('ptah::ui.bulk_toast_delete_refused', ['n' => count($refused), 'reason' => (string) array_key_first($reasons)])
+                    .(count($reasons) > 1 ? ' '.trans('ptah::ui.bulk_toast_delete_refused_more', ['n' => count($reasons) - 1]) : ''),
+                color: 'danger');
+        }
     }
 
     // ── Custom bulk actions ────────────────────────────────────────────────────

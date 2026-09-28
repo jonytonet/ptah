@@ -174,6 +174,8 @@ class CrudConfig extends Component
 
     public string $hookAfterUpdate = '';  // runs after UPDATE
 
+    public string $hookBeforeDelete = '';  // runs before DELETE — a failure refuses it
+
     // ── Permissions ─────────────────────────────────────────────────────────────
 
     public string $permissionCreate = '';
@@ -466,6 +468,7 @@ class CrudConfig extends Component
         $this->hookAfterCreate = self::hookText($hooks['afterCreate'] ?? '');
         $this->hookBeforeUpdate = self::hookText($hooks['beforeUpdate'] ?? '');
         $this->hookAfterUpdate = self::hookText($hooks['afterUpdate'] ?? '');
+        $this->hookBeforeDelete = self::hookText($hooks['beforeDelete'] ?? '');
 
         // Permissions
         $perms = $cfg['permissions'] ?? [];
@@ -1221,6 +1224,7 @@ class CrudConfig extends Component
                 'afterCreate' => $this->hookAfterCreate ?: null,
                 'beforeUpdate' => $this->hookBeforeUpdate ?: null,
                 'afterUpdate' => $this->hookAfterUpdate ?: null,
+                'beforeDelete' => $this->hookBeforeDelete ?: null,
             ],
             'notifications' => [
                 'rules' => array_values($this->notificationRules),
