@@ -22,7 +22,7 @@ signed-in user could edit the menu, or by a seeder. Both now use `SafeUrl`.
 ### Security - notification links used the bypassable regex
 
 `NotificationService::safeUrl()` still matched `^\s*javascript:`, which lets
-`java<TAB>script:` and `javascript:` through — the browser strips both.
+`java<TAB>script:` and `\x01javascript:` through — the browser strips both.
 It now uses `SafeUrl`, which reads the URL the way the browser does.
 
 ### Security - a searchdropdown value broke out of its JS string
