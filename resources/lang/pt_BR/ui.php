@@ -42,6 +42,7 @@ return [
     'cfg_features' => 'Recursos',
     'cfg_feature_import' => 'Importação de planilha',
     'cfg_feature_history' => 'Histórico de alterações',
+    'form_loading' => 'Carregando…',
     'form_draft_restored' => 'Seu rascunho não salvo foi restaurado.',
     'form_draft_discarded' => 'Este registro mudou desde o seu rascunho, e o rascunho foi descartado.',
     'btn_form_draft_clear' => 'Limpar tudo',

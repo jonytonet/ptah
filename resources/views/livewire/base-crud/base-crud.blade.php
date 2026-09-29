@@ -79,6 +79,7 @@
              if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                  e.preventDefault();
                  this.$wire.showModal = true;
+                 window.dispatchEvent(new CustomEvent('ptah-form-opening'));
                  this.$wire.prepareCreate();
              }
              @endif

@@ -31,7 +31,10 @@ class MaskTypedDuringRequestBrowserTest extends DuskTestCase
             $browser->visit('/dusk-test/mask')
                 ->waitFor(self::NEW_BUTTON)
                 ->click(self::NEW_BUTTON)
-                ->waitFor(self::CPF_INPUT);
+                ->waitFor(self::CPF_INPUT)
+                // Desde a 1.42.1 o formulario fica travado ate a resposta da
+                // abertura chegar (o que se digitasse antes ela apagaria).
+                ->waitUntil('![...document.querySelectorAll("[aria-busy=true]")].length', 30);
 
             // Dispara a requisicao lenta e NAO espera por ela.
             $browser->script(<<<'JS'

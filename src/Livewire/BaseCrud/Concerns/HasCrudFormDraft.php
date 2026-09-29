@@ -41,6 +41,17 @@ trait HasCrudFormDraft
     #[Locked]
     public array $formDraftOriginal = [];
 
+    /**
+     * The draft the browser read from localStorage and sent WITH the request
+     * that opens the modal ({target: 'new'|'edit:ID', values, version}), so
+     * the form comes back already restored — one round trip instead of two.
+     * Client-writable on purpose; only draftable fields of the matching
+     * target are taken, and it is emptied on every opening.
+     *
+     * @var array<string, mixed>
+     */
+    public array $formDraftIncoming = [];
+
     /** '' (off for this opening), 'new' or 'edit'. */
     #[Locked]
     public string $formDraftMode = '';
@@ -117,15 +128,67 @@ trait HasCrudFormDraft
 
         $this->formDraftMode = $mode;
         $this->formDraftOriginal = $original;
+        $version = $mode === 'edit' ? md5((string) json_encode($original)) : '';
+
+        // O rascunho que veio junto com a abertura: aplicado aqui mesmo, na
+        // mesma resposta. Na edicao, so se a impressao digital do registro
+        // ainda for a de quando o rascunho comecou.
+        [$restored, $discarded] = $this->applyIncomingDraft($mode, $version);
 
         $this->dispatch('ptah:form-draft',
             key: $this->formDraftKey(),
             user: $this->formDraftUser(),
             fields: $fields,
             original: $original,
-            version: $mode === 'edit' ? md5((string) json_encode($original)) : '',
+            version: $version,
             ttlDays: max(1, (int) ($this->crudConfig['formDraft']['ttlDays'] ?? 7)),
+            restored: $restored,
+            discarded: $discarded,
         );
+    }
+
+    /**
+     * @return array{0: bool, 1: bool} [restored, discarded]
+     */
+    private function applyIncomingDraft(string $mode, string $version): array
+    {
+        $incoming = $this->formDraftIncoming;
+        $this->formDraftIncoming = [];
+        $target = $mode === 'edit' ? 'edit:'.$this->editingId : 'new';
+
+        if (($incoming['target'] ?? null) !== $target || ! is_array($incoming['values'] ?? null)) {
+            return [false, false];
+        }
+
+        if ((string) ($incoming['version'] ?? '') !== $version) {
+            return [false, true];
+        }
+
+        $restored = false;
+        foreach ($this->formDraftFields() as $field) {
+            $value = $incoming['values'][$field] ?? null;
+            if (array_key_exists($field, $incoming['values']) && (is_scalar($value) || $value === null)
+                && self::draftValue($this->formData[$field] ?? null) !== $value) {
+                $this->formData[$field] = $value;
+                $restored = true;
+            }
+        }
+
+        if ($restored && ($model = $this->resolveEloquentModel()) !== null) {
+            $this->preloadSdLabels($model->newInstance()->forceFill(array_intersect_key($this->formData, array_flip($this->formDraftFields()))));
+        }
+
+        return [$restored, false];
+    }
+
+    /**
+     * The prefix of this user's drafts on this screen — the browser builds the
+     * key of the form it is about to open with it, before asking the server.
+     */
+    #[ServerOnly]
+    public function formDraftPrefix(): string
+    {
+        return 'ptah:draft:'.$this->formDraftUser().':'.substr(md5($this->model.'|'.$this->configRoute), 0, 12).':';
     }
 
     /**
@@ -162,6 +225,8 @@ trait HasCrudFormDraft
             return;
         }
 
+        // Voltar ao original e o registro, nunca um rascunho que viesse junto.
+        $this->formDraftIncoming = [];
         $this->openEdit((int) $this->editingId);
     }
 
@@ -172,6 +237,7 @@ trait HasCrudFormDraft
             return;
         }
 
+        $this->formDraftIncoming = [];
         $this->prepareCreate();
     }
 
@@ -190,10 +256,9 @@ trait HasCrudFormDraft
     #[ServerOnly]
     public function formDraftKey(): string
     {
-        $screen = substr(md5($this->model.'|'.$this->configRoute), 0, 12);
         $target = $this->formDraftMode === 'edit' ? 'edit:'.$this->editingId : 'new';
 
-        return 'ptah:draft:'.$this->formDraftUser().':'.$screen.':'.$target;
+        return $this->formDraftPrefix().$target;
     }
 
     /** Guard + id — the same id on two guards is two people. */

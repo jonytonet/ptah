@@ -19,7 +19,8 @@ class FormDraftBrowserTest extends DuskTestCase
 
     private function waitForDraft(Browser $b, string $suffix): void
     {
-        $b->waitUntil('(window.__ptahDraftKey() || "").endsWith('.json_encode($suffix).')', 30)->pause(500);
+        $b->waitUntil('(window.__ptahDraftKey() || "").endsWith('.json_encode($suffix).')', 30)
+            ->waitUntil('![...document.querySelectorAll("[aria-busy=true]")].length', 30)->pause(300);
     }
 
     private function openNew(Browser $b): void
@@ -32,6 +33,10 @@ class FormDraftBrowserTest extends DuskTestCase
     private function openEdit(Browser $b, int $id): void
     {
         $b->script('window.__ptahDraftReset()');
+        // Com uma requisicao em curso os botoes da linha ficam desabilitados
+        // (wire:loading.attr) e o clique se perderia.
+        $selector = 'button[wire\:click="openEdit('.$id.')"]';
+        $b->waitUntil('! document.querySelector('.json_encode($selector).').disabled', 30);
         $b->click('button[wire\:click="openEdit('.$id.')"]')->waitFor(self::NAME);
         $this->waitForDraft($b, ':edit:'.$id);
     }
@@ -99,6 +104,26 @@ class FormDraftBrowserTest extends DuskTestCase
             $this->typeName($b, 'Vai ser salvo');
             $b->press(__('ptah::ui.btn_create'))->waitUntilMissing(self::NAME, 30)->pause(500);
             $this->assertNull($b->script("return Object.keys(localStorage).find(k => k.endsWith(':new')) || null;")[0], 'O rascunho sobreviveu ao salvar.');
+        });
+    }
+
+    #[Test]
+    public function the_form_stays_locked_until_the_draft_is_back(): void
+    {
+        // 1.42.1: o modal do Novo abria vazio e editavel; o rascunho chegava
+        // depois — e o que se digitasse no intervalo, a restauracao apagava.
+        $this->browse(function (Browser $b) {
+            $b->resize(1280, 900)->visit('/dusk-test/draft')->waitForText('Bia')->script('localStorage.clear()');
+            $this->openNew($b);
+            $this->typeName($b, 'Rascunho travado');
+            $this->close($b);
+
+            $b->script('window.__ptahDraftReset()');
+            $b->press(__('ptah::ui.btn_new'))->waitFor(self::NAME);
+            $this->assertTrue((bool) $b->script('return !! document.querySelector("[aria-busy=true]");')[0], 'O formulario abriu destravado antes da resposta.');
+
+            $b->waitUntil('![...document.querySelectorAll("[aria-busy=true]")].length', 30);
+            $this->assertSame('Rascunho travado', $b->script('return window.__ptahVal("name");')[0], 'Destravou antes de o rascunho voltar.');
         });
     }
 

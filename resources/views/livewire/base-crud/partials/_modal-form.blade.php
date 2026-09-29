@@ -29,6 +29,38 @@
         // na edicao, a impressao digital do registro.
         _draft: null,
         _draftDirty: false,
+        {{-- O modal abre antes de a resposta chegar (o Novo abre pelo Alpine). Ate
+             o formulario estar pronto -- e o rascunho restaurado -- os campos
+             ficam travados: o que se digitasse ali a resposta apagaria. --}}
+        _formLoading: false,
+        _restorePending: false,
+        _draftOn: @js($this->formDraftEnabled()),
+        _draftPrefix: @js($this->formDraftPrefix()),
+        {{-- Le o rascunho NA HORA do clique e o manda junto com a abertura:
+             o servidor devolve o formulario ja restaurado, numa ida so. --}}
+        _draftStage(target) {
+            if (! this._draftOn) return;
+            let item = null;
+            try { item = JSON.parse(localStorage.getItem(this._draftPrefix + target) || 'null'); } catch (e) {}
+            const fresh = item && item.v && item.at && ! (item.ttl && Date.now() - item.at > item.ttl * 86400000);
+            $wire.$set('formDraftIncoming', fresh ? { target, values: item.v, version: item.version || '' } : [], false);
+        },
+        _loadingGuard: null,
+        _startLoading() {
+            this._formLoading = true;
+            clearTimeout(this._loadingGuard);
+            this._loadingGuard = setTimeout(() => this._endLoading(), 10000);
+        },
+        _endLoading() {
+            if (! this._formLoading) return;
+            clearTimeout(this._loadingGuard);
+            this._formLoading = false;
+            this._restorePending = false;
+            $nextTick(() => {
+                const f = $el.querySelector('input:not([type=hidden]):not([type=checkbox]):not([readonly]), textarea, select');
+                if (f && this.open) f.focus();
+            });
+        },
         _draftTimer: null,
         _draftText: {
             restored: @js(__('ptah::ui.form_draft_restored')),
@@ -70,21 +102,40 @@
         },
         _draftInit(d) {
             this._draftDirty = false;
+            {{-- O rascunho enviado ja foi usado: nao pode ir de novo na proxima requisicao. --}}
+            $wire.$set('formDraftIncoming', [], false);
             this._draft = d && d.key ? d : null;
             this._draftPurge(d ? d.user : null);
-            if (! this._draft) return;
+            if (! this._draft) { this._endLoading(); return; }
+            {{-- O servidor ja aplicou o rascunho que foi junto com a abertura. --}}
+            if (d.discarded) {
+                try { localStorage.removeItem(this._draft.key); } catch (e) {}
+                this._draftToast(this._draftText.discarded, 'warn');
+                this._endLoading();
+                return;
+            }
+            if (d.restored) {
+                this._draftDirty = true;
+                this._draftToast(this._draftText.restored, 'info');
+                this._endLoading();
+                return;
+            }
             let item = null;
             try { item = JSON.parse(localStorage.getItem(this._draft.key) || 'null'); } catch (e) {}
-            if (! item || ! item.v) return;
+            if (! item || ! item.v) { this._endLoading(); return; }
             // O registro mudou no banco desde o rascunho: descarta e avisa, em
             // vez de gravar por cima da alteracao de outra pessoa.
             if ((this._draft.version || '') !== (item.version || '')) {
                 try { localStorage.removeItem(this._draft.key); } catch (e) {}
                 this._draftToast(this._draftText.discarded, 'warn');
+                this._endLoading();
                 return;
             }
-            if (this._draftDiffers(item.v)) {
+            if (! this._draftDiffers(item.v)) { this._endLoading(); return; }
+            {
                 this._draftDirty = true;
+                this._restorePending = true;
+                this._startLoading();
                 $wire.restoreFormDraft(item.v);
                 this._draftToast(this._draftText.restored, 'info');
             }
@@ -144,15 +195,29 @@
             _confirmDiscard = false;
         }
     "
-    @ptah:form-ready.window="_focusFirst()"
+    @ptah:form-ready.window="_focusFirst(); if (! _draftOn) _endLoading()"
     @ptah:form-draft.window="_draftInit($event.detail)"
+    @ptah-form-opening.window="_draftStage('new'); _startLoading()"
     @ptah:form-draft-saved.window="_draftSaved($event.detail.key)"
     x-init="
         _draftPurge(@js($this->formDraftUser()));
+        {{-- Editar: o botao e wire:click, que dispara na fase normal; este ouvinte
+             de captura roda antes e deixa o rascunho do id pronto para ir junto. --}}
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest && e.target.closest('[wire\\:click^=&quot;openEdit(&quot;]');
+            if (! btn || ! btn.closest('[wire\\:id=&quot;' + $wire.$id + '&quot;]')) return;
+            const m = /^openEdit\((\d+)\)$/.exec(btn.getAttribute('wire:click') || '');
+            if (m) _draftStage('edit:' + m[1]);
+        }, true);
         {{-- selecionar um searchdropdown muda o formData pelo servidor, sem evento de input: depois de cada commit deste componente, o rascunho se atualiza --}}
-        Livewire.hook('commit', ({ component, succeed }) => {
+        Livewire.hook('commit', ({ component, commit, succeed, fail }) => {
             if (component.id !== $wire.$id) return;
-            succeed(() => setTimeout(() => _draftTouch(), 0));
+            const restoring = ((commit && commit.calls) || []).some((c) => c.method === 'restoreFormDraft');
+            succeed(() => setTimeout(() => {
+                _draftTouch();
+                if (restoring) _endLoading();
+            }, 0));
+            fail(() => _endLoading());
         });
     "
     @keydown.escape.window="
@@ -172,7 +237,14 @@
             </div>
         @endif
 
-        <div class="flex flex-col gap-4" wire:key="crud-form-fields-{{ $formInstanceKey }}" @input="_markDirty(); _draftTouch()" @change="_markDirty(); _draftTouch()">
+        <div class="relative flex flex-col gap-4" wire:key="crud-form-fields-{{ $formInstanceKey }}" @input="_markDirty(); _draftTouch()" @change="_markDirty(); _draftTouch()"
+            :inert="_formLoading" :aria-busy="_formLoading ? 'true' : 'false'">
+            <div x-show="_formLoading" x-cloak role="status"
+                class="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-md text-sm ptah-c-muted"
+                style="background: color-mix(in srgb, var(--ptah-surface) 75%, transparent)">
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                <span>{{ __('ptah::ui.form_loading') }}</span>
+            </div>
 
                     @php $prevFormBlock = null; @endphp
                     @foreach ($formCols as $col)
