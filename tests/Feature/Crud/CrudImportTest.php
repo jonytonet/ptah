@@ -106,6 +106,26 @@ class CrudImportTest extends TestCase
     }
 
     #[Test]
+    public function a_file_refused_by_the_limits_cannot_be_imported_by_calling_run_directly(): void
+    {
+        // MEDIO, auditoria de 28/09/2026 (1.41.10): o arquivo reprovado ficava
+        // em `importFile`, e chamar runImport() pulava tamanho e maxRows.
+        $this->configure(['enabled' => true, 'maxRows' => 1]);
+
+        $this->crud()
+            ->call('openImport')
+            ->set('importFile', $this->brazilianCsv(
+                'P-001;Parafuso;1,00;Ativo;sim;Parafusos',
+                'P-002;Porca;2,00;Ativo;sim;Porcas',
+            ))
+            ->assertHasErrors('importFile')
+            ->set('importMapping', ['sku', 'name', 'price', 'status', 'active', 'imp_category_id'])
+            ->call('runImport');
+
+        $this->assertSame(0, ImpProduct::count());
+    }
+
+    #[Test]
     public function import_is_off_unless_the_screen_enables_it(): void
     {
         $this->configure(import: []);

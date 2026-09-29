@@ -4,7 +4,6 @@ namespace Ptah\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +14,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\ExportOwner;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SqlIdentifier;
 
@@ -29,7 +29,10 @@ class ExportController
      */
     public function file(Export $export)
     {
-        if (Auth::id() !== $export->user_id) {
+        // Dono = id + guard, e visitante nao e dono de nada: user_id sozinho
+        // deixava o usuario 7 de um guard baixar os exports do 7 do outro, e
+        // todo visitante via os exports de todo visitante (1.41.10).
+        if (! ExportOwner::owns($export->user_id, $export->payload['guard'] ?? null)) {
             abort(403);
         }
 
@@ -82,7 +85,7 @@ class ExportController
 
         // Snapshot is bound to the user who generated it (null = public listing).
         $owner = $payload['userId'] ?? null;
-        if ($owner !== null && $owner !== Auth::id()) {
+        if ($owner !== null && ! ExportOwner::owns($owner, $payload['guard'] ?? null)) {
             abort(403);
         }
 

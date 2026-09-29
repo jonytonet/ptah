@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Ptah\Jobs\GenerateCrudExportJob;
 use Ptah\Models\Export;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\ExportOwner;
 use Ptah\Support\ServerOnly;
 
 /**
@@ -116,6 +117,9 @@ trait HasCrudExport
         $payload = [
             'version' => 1,
             'userId' => Auth::id(),
+            // O guard do dono: user_id sozinho confundia identidades de guards
+            // diferentes com o mesmo id (1.41.10).
+            'guard' => ExportOwner::guard(),
             'model' => $this->model,
             'ids' => array_values($ids),
             'columns' => $this->getVisibleColumnsForExport(),
@@ -241,6 +245,9 @@ trait HasCrudExport
         return [
             'version' => 1,
             'userId' => Auth::id(),
+            // O guard do dono: user_id sozinho confundia identidades de guards
+            // diferentes com o mesmo id (1.41.10).
+            'guard' => ExportOwner::guard(),
             'model' => $modelClass,
             'route' => request()->path(),
             'companyId' => $this->companyFilter ?: null,
@@ -340,6 +347,9 @@ trait HasCrudExport
         $payload = [
             'version' => 1,
             'userId' => Auth::id(),
+            // O guard do dono: user_id sozinho confundia identidades de guards
+            // diferentes com o mesmo id (1.41.10).
+            'guard' => ExportOwner::guard(),
             'model' => $this->model,
             'title' => $this->crudConfig['displayName']
                 ?? $this->crudConfig['crud']

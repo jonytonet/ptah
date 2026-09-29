@@ -458,9 +458,13 @@ class PtahServiceProvider extends ServiceProvider
         foreach (['saved', 'deleted', 'restored'] as $event) {
             Role::{$event}(fn () => $service()->bumpGlobalVersion());
             RolePermission::{$event}(fn () => $service()->bumpGlobalVersion());
-            UserRole::{$event}(
-                fn (UserRole $ur) => $service()->clearCache((int) $ur->user_id)
-            );
+            UserRole::{$event}(function (UserRole $ur) use ($service): void {
+                $service()->clearCache((int) $ur->user_id);
+                // As empresas do usuario saem dos papeis dele: sem isto, quem
+                // perdia o papel na empresa B ainda trocava para B por ate 1h
+                // (auditoria de 28/09/2026, 1.41.10).
+                app(CompanyService::class)->clearCache((int) $ur->user_id);
+            });
         }
 
         // PageObject / PtahPage are hard-deleted (no SoftDeletes trait — see their

@@ -78,7 +78,18 @@ trait HasCrudForm
         }
 
         $this->editingId = $id;
-        $this->formData = $record->toArray();
+        // So o que a tela configurou: toArray() mandava ao navegador TODO
+        // atributo nao-$hidden (custo, limite de credito...) de uma tela que
+        // nem o mostra (auditoria de 28/09/2026, 1.41.10). Coluna de relacao
+        // (`cliente.nome`) leva a relacao carregada, como antes.
+        $configured = [$record->getKeyName() => true];
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            if ($field !== '') {
+                $configured[explode('.', $field)[0]] = true;
+            }
+        }
+        $this->formData = array_intersect_key($record->toArray(), $configured);
 
         // formData is a public property (part of the Livewire payload sent
         // to the browser) — a denied column (see ColumnPermissionService)

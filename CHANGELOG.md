@@ -7,6 +7,69 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.10] - 2026-09-28
+
+**Security release.** The BaseCrud and permission MEDIUM findings of the
+28/09/2026 surface audit. Each fix has a test that fails on 1.41.9.
+
+### Security - "show all columns" listed attributes the model hides
+
+`colsVisibleList: false` is a default the user can undo from the column
+chooser, so a form-only `password` column showed its hash in the table, the
+cards, the export and the print — the cell reads through `getAttribute()`,
+which ignores `$hidden`. A `$hidden` attribute is now never a list column.
+
+### Security - opening a record sent every attribute to the browser
+
+`openEdit()` filled `formData` with `toArray()`: every non-`$hidden` attribute
+reached the Livewire payload, including ones the screen never configured
+(cost, credit limit). Only the configured fields (and the key) go now; a
+relation column keeps its loaded relation, as before.
+
+### Security - bulk force delete erased live records
+
+It used `withTrashed()`, so a user allowed to send rows to the trash could
+delete ACTIVE rows permanently, with no undo. It now deletes only what is
+already in the trash.
+
+### Security - custom bulk actions skipped the config gate
+
+`executeBulkAction()` checked the RBAC but not `showEditButton` /
+`permissions.edit`, and its `crud-bulk-action` event carried the client's
+selection instead of the ids in scope. Both fixed.
+
+### Security - the import limits could be skipped
+
+A file refused for its size or row count stayed in `importFile`, and calling
+`previewImport()` / `runImport()` directly imported it anyway — a million rows
+in one transaction. A locked `importAccepted` flag, set only when the file
+passes, now gates both.
+
+### Security - exports were owned by a user id alone
+
+On a host with two guards, user 7 of one listed and downloaded the exports of
+user 7 of the other; every guest shared every guest's queued exports. An
+export now records its guard in the payload (no schema change) and is owned by
+the id ON that guard, in the download, the print, the file route and the
+exports panel; a guest owns none. Exports written before 1.41.10 belong to the
+default guard.
+
+### Security - losing a role kept the company for an hour
+
+The user's companies are cached for 3600 s and the `UserRole` observer cleared
+only the permission cache, so a user who lost their role in company B could
+still switch to it. Role changes now clear the companies cache too.
+
+### Security - the users screen ignored `user_query_scope` in the role modal
+
+`bindingUserId` was client-writable and `openUserModal()` / `addRole()`
+accepted any id, so a master limited by the scope could grant roles (MASTER
+included) outside it; `removeRole()` deleted any user's role by id. The modal
+user is now locked, resolved through the scope, and roles are removed only
+from that user.
+
+---
+
 ## [1.41.9] - 2026-09-28
 
 **Security release.** The XSS and link findings of the 28/09/2026 surface
