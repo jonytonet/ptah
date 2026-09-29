@@ -7,6 +7,24 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.42.0] - 2026-09-29
+
+### Added - form draft kept in the browser (`formDraft`)
+
+Opt-in per screen (editor → General → Features, or `formDraft.enabled`): what
+the user types in the create/edit modal survives closing it, in the browser's
+`localStorage`. One draft per user + screen + mode + record, so "New" never
+shows an edit's values and each record id keeps its own; an edit draft is
+dropped, with a notice, when the record changed in the database since. "Clear
+all" (New) and "Revert to original" (edit) appear when a field differs; a
+successful save deletes the draft. Passwords, uploads, `$hidden` and denied
+columns, audit fields and `formDraft.exclude` never go into it. Drafts are
+cleared on logout through the package's forms, when another user's page loads
+in the same browser, and after `formDraft.ttlDays` (7). See BaseCrud.md § Form
+draft.
+
+---
+
 ## [1.41.11] - 2026-09-28
 
 **Security release.** The LOW findings of the 28/09/2026 surface audit — with

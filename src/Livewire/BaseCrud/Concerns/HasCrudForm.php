@@ -55,6 +55,7 @@ trait HasCrudForm
         }
 
         $this->dispatch('ptah:form-ready');
+        $this->announceFormDraft('new');
     }
 
     /**
@@ -109,6 +110,7 @@ trait HasCrudForm
 
         $this->showModal = true;
         $this->dispatch('ptah:form-ready');
+        $this->announceFormDraft('edit');
     }
 
     /**
@@ -129,7 +131,9 @@ trait HasCrudForm
             return;
         }
 
+        $this->formDraftSuppressed = true;
         $this->prepareCreate();
+        $this->formDraftSuppressed = false;
 
         $savable = array_column($this->getFormCols(), 'colsNomeFisico');
         $data = array_intersect_key($record->toArray(), array_flip($savable));
@@ -141,6 +145,9 @@ trait HasCrudForm
         $this->formData = $data;
         $this->preloadSdLabels($record);
         $this->showModal = true;
+        // Uma copia nao e o rascunho do "Novo": sem rascunho nesta abertura,
+        // para nao restaurar por cima da copia nem gravar a copia como rascunho.
+        $this->announceFormDraft('off');
     }
 
     public function closeModal(): void
@@ -305,6 +312,7 @@ trait HasCrudForm
             // Invalidate cache
             $this->cacheService->invalidateModel($this->model);
 
+            $this->forgetFormDraftAfterSave();
             $this->closeModal();
             $this->dispatch('crud-saved', model: $this->model);
             $this->dispatch('ptah-toast', title: trans('ptah::ui.toast_saved'), color: 'success');

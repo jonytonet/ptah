@@ -9,7 +9,8 @@
         _markDirty() { this._dirty = true; },
         closeModal() { this._tryClose(); },
         _tryClose() {
-            if (this._dirty) {
+            // Com rascunho ativo, fechar nao perde nada: sem o aviso de descarte.
+            if (this._dirty && ! (this._draft && this._draft.key)) {
                 this._confirmDiscard = true;
 
                 return;
@@ -21,6 +22,108 @@
             this._dirty = false;
             this.open = false;
             $wire.closeModal();
+        },
+        // ── Rascunho no navegador (formDraft) ──────────────────────
+        // Contexto vem do servidor a cada abertura (ptah:form-draft): chave
+        // usuario+tela+modo+registro, campos permitidos, valores originais e,
+        // na edicao, a impressao digital do registro.
+        _draft: null,
+        _draftDirty: false,
+        _draftTimer: null,
+        _draftText: {
+            restored: @js(__('ptah::ui.form_draft_restored')),
+            discarded: @js(__('ptah::ui.form_draft_discarded')),
+        },
+        _draftToast(title, color) {
+            window.dispatchEvent(new CustomEvent('ptah-toast', { detail: { title, color } }));
+        },
+        _draftNorm(v) {
+            return v === null || v === undefined ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+        },
+        _draftPick() {
+            {{-- Campo a campo, sem JSON: um formData vazio chega do PHP como [] e
+                 o Livewire grava formData.nome como propriedade desse ARRAY, que o
+                 JSON.stringify descarta. --}}
+            const data = $wire.formData || {};
+            const out = {};
+            (this._draft ? this._draft.fields : []).forEach((f) => {
+                const v = data[f];
+                out[f] = v === undefined ? null : (v !== null && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v);
+            });
+            return out;
+        },
+        _draftDiffers(values) {
+            const o = this._draft ? this._draft.original : {};
+            return (this._draft ? this._draft.fields : []).some((f) => this._draftNorm(values[f]) !== this._draftNorm(o[f]));
+        },
+        _draftPurge(user) {
+            try {
+                const now = Date.now();
+                Object.keys(localStorage).forEach((k) => {
+                    if (k.indexOf('ptah:draft:') !== 0) return;
+                    // Rascunho de outro usuario neste navegador: fora.
+                    if (user && k.indexOf('ptah:draft:' + user + ':') !== 0) { localStorage.removeItem(k); return; }
+                    const item = JSON.parse(localStorage.getItem(k) || 'null');
+                    if (! item || ! item.at || (item.ttl && now - item.at > item.ttl * 86400000)) localStorage.removeItem(k);
+                });
+            } catch (e) {}
+        },
+        _draftInit(d) {
+            this._draftDirty = false;
+            this._draft = d && d.key ? d : null;
+            this._draftPurge(d ? d.user : null);
+            if (! this._draft) return;
+            let item = null;
+            try { item = JSON.parse(localStorage.getItem(this._draft.key) || 'null'); } catch (e) {}
+            if (! item || ! item.v) return;
+            // O registro mudou no banco desde o rascunho: descarta e avisa, em
+            // vez de gravar por cima da alteracao de outra pessoa.
+            if ((this._draft.version || '') !== (item.version || '')) {
+                try { localStorage.removeItem(this._draft.key); } catch (e) {}
+                this._draftToast(this._draftText.discarded, 'warn');
+                return;
+            }
+            if (this._draftDiffers(item.v)) {
+                this._draftDirty = true;
+                $wire.restoreFormDraft(item.v);
+                this._draftToast(this._draftText.restored, 'info');
+            }
+        },
+        _draftTouch() {
+            {{-- Modal fechado nao grava: o commit do save volta com o formData
+                 ainda cheio e regravaria o rascunho que acabou de ser apagado. --}}
+            if (! this._draft || ! this._draft.key || ! this.open) return;
+            clearTimeout(this._draftTimer);
+            this._draftTimer = setTimeout(() => {
+                if (! this._draft) return;
+                const values = this._draftPick();
+                this._draftDirty = this._draftDiffers(values);
+                try {
+                    if (this._draftDirty) {
+                        localStorage.setItem(this._draft.key, JSON.stringify({ v: values, version: this._draft.version || '', at: Date.now(), ttl: this._draft.ttlDays }));
+                    } else {
+                        localStorage.removeItem(this._draft.key);
+                    }
+                } catch (e) {}
+            }, 400);
+        },
+        _draftForget(key) {
+            try { localStorage.removeItem(key); } catch (e) {}
+            if (this._draft && this._draft.key === key) this._draftDirty = false;
+        },
+        _draftSaved(key) {
+            {{-- Salvou: este rascunho acabou; a proxima abertura manda contexto novo. --}}
+            clearTimeout(this._draftTimer);
+            this._draftForget(key);
+            if (this._draft && this._draft.key === key) this._draft = null;
+        },
+        _draftClear() {
+            if (this._draft) this._draftForget(this._draft.key);
+            $wire.clearFormDraft();
+        },
+        _draftRevert() {
+            if (this._draft) this._draftForget(this._draft.key);
+            $wire.revertFormToOriginal();
         },
         _focusFirst() {
             this._dirty = false;
@@ -42,6 +145,16 @@
         }
     "
     @ptah:form-ready.window="_focusFirst()"
+    @ptah:form-draft.window="_draftInit($event.detail)"
+    @ptah:form-draft-saved.window="_draftSaved($event.detail.key)"
+    x-init="
+        _draftPurge(@js($this->formDraftUser()));
+        {{-- selecionar um searchdropdown muda o formData pelo servidor, sem evento de input: depois de cada commit deste componente, o rascunho se atualiza --}}
+        Livewire.hook('commit', ({ component, succeed }) => {
+            if (component.id !== $wire.$id) return;
+            succeed(() => setTimeout(() => _draftTouch(), 0));
+        });
+    "
     @keydown.escape.window="
         if (_confirmDiscard) { _confirmDiscard = false; }
         else if (open) { _tryClose(); }
@@ -59,7 +172,7 @@
             </div>
         @endif
 
-        <div class="flex flex-col gap-4" wire:key="crud-form-fields-{{ $formInstanceKey }}" @input="_markDirty()" @change="_markDirty()">
+        <div class="flex flex-col gap-4" wire:key="crud-form-fields-{{ $formInstanceKey }}" @input="_markDirty(); _draftTouch()" @change="_markDirty(); _draftTouch()">
 
                     @php $prevFormBlock = null; @endphp
                     @foreach ($formCols as $col)
@@ -908,6 +1021,17 @@
             @if ($editingId && $this->historyEnabled())
                 <x-forge-button wire:click="openHistory({{ json_encode($editingId) }})" color="dark" flat class="mr-auto">
                     {{ __('ptah::ui.btn_history') }}
+                </x-forge-button>
+            @endif
+            {{-- Rascunho: "Limpar tudo" no Novo e "Voltar ao original" na edicao,
+                 so quando algum campo difere do que o modal abriu. --}}
+            @if ($formDraftMode === 'new')
+                <x-forge-button x-show="_draftDirty" x-cloak @click="_draftClear()" color="dark" flat :disabled="$creating">
+                    {{ __('ptah::ui.btn_form_draft_clear') }}
+                </x-forge-button>
+            @elseif ($formDraftMode === 'edit')
+                <x-forge-button x-show="_draftDirty" x-cloak @click="_draftRevert()" color="dark" flat :disabled="$creating">
+                    {{ __('ptah::ui.btn_form_draft_revert') }}
                 </x-forge-button>
             @endif
             <x-forge-button @click="_tryClose()" color="dark" flat :disabled="$creating">

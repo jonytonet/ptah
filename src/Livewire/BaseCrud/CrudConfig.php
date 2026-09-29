@@ -102,6 +102,9 @@ class CrudConfig extends Component
 
     public bool $featureHistory = true;
 
+    /** Form draft kept in the browser (formDraft.enabled) — opt-in. */
+    public bool $featureFormDraft = false;
+
     public bool $featureAttachments = true;
 
     public string $kanbanField = '';
@@ -419,6 +422,7 @@ class CrudConfig extends Component
         $this->featureImportMode = ($cfg['importConfig']['mode'] ?? 'create') === 'upsert' ? 'upsert' : 'create';
         $this->featureImportKey = (string) ($cfg['importConfig']['key'] ?? '');
         $this->featureHistory = ($cfg['history']['enabled'] ?? true) !== false;
+        $this->featureFormDraft = ($cfg['formDraft']['enabled'] ?? false) === true;
         $this->featureAttachments = ($cfg['attachments']['enabled'] ?? true) !== false;
         $this->kanbanField = (string) ($cfg['kanbanConfig']['field'] ?? '');
         $this->calendarStart = (string) ($cfg['calendarConfig']['start'] ?? '');
@@ -1148,6 +1152,8 @@ class CrudConfig extends Component
                 'key' => $this->featureImportKey !== '' ? $this->featureImportKey : null,
             ]),
             'history' => ['enabled' => $this->featureHistory],
+            // Merge: `exclude` e `ttlDays` vem da CLI e nao tem campo aqui.
+            'formDraft' => array_merge((array) ($existing['formDraft'] ?? []), ['enabled' => $this->featureFormDraft]),
             'attachments' => ['enabled' => $this->featureAttachments],
             'kanbanConfig' => $this->kanbanField !== '' ? array_merge($existing['kanbanConfig'] ?? [], ['field' => $this->kanbanField]) : null,
             'calendarConfig' => $this->calendarStart !== ''

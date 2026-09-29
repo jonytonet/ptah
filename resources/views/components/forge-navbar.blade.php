@@ -369,7 +369,7 @@
                             {{ __('ptah::ui.navbar_user_profile') }}
                         </a>
                         <hr class="my-1">
-                        <form method="POST" action="{{ $logoutAction }}">
+                        <form method="POST" action="{{ $logoutAction }}" onsubmit="try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('ptah:draft:')===0)localStorage.removeItem(k)})}catch(e){}">
                             @csrf
                             <button type="submit"
                                 class="ptah-logout-btn w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors">

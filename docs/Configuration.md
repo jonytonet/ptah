@@ -2646,6 +2646,7 @@ ignored by the screen.
 | `kanbanConfig.field` / `.title` / `.limit` | string / string / int | — / — / `50` | Board view by a select column (BaseCrud.md § Board and Calendar) |
 | `kanbanConfig.locked` / `.transitions` / `.lockedMessage` | list / object / string | — | Columns with no drop and no exit; origin → allowed destinations; toast and column hint (BaseCrud.md § Workflow statuses) |
 | `kanbanConfig.with` / `calendarConfig.with` | list | `[]` | Relations eager-loaded for an accessor `title` |
+| `formDraft.enabled` / `.exclude` / `.ttlDays` | bool / list / int | `false` / `[]` / `7` | Keep the modal's typed values in the browser (BaseCrud.md § Form draft) |
 | `calendarConfig.start` / `.end` / `.title` | string | — | Calendar view by a date column |
 | `history.enabled` | bool | `true` | History button (model with RecordsHistory) |
 | `attachments.enabled` | bool | `true` | Attachments button (model with HasAttachments) |
