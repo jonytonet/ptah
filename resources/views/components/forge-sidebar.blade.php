@@ -371,7 +371,10 @@
                                 @php
                                     $childLabel  = $child['label'] ?? ($child['text'] ?? '');
                                     $childIcon   = $child['icon'] ?? 'bx bx-circle';
-                                    $childUrl    = $child['url'] ?? '#';
+                                    // SafeUrl como no item de primeiro nivel: uma linha gravada
+                                    // antes da 1.34.8 (quando qualquer logado gravava menu) ou por
+                                    // seeder ainda podia trazer `javascript:` (1.41.9).
+                                    $childUrl    = \Ptah\Support\SafeUrl::sanitize($child['url'] ?? '#');
                                     $childTarget = $child['target'] ?? '_self';
                                     $childMatch  = $child['match'] ?? ltrim($childUrl, '/');
                                     $childActive = $childMatch ? request()->is($childMatch) : false;

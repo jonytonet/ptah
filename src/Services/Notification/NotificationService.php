@@ -13,6 +13,7 @@ use Ptah\Events\PtahNotificationCreated;
 use Ptah\Models\Notification;
 use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Support\SafeUrl;
 use Ptah\Traits\ResolvesUser;
 use Throwable;
 
@@ -443,11 +444,9 @@ class NotificationService
             return null;
         }
 
-        if (preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
-            return null;
-        }
-
-        return $url;
+        // SafeUrl le a URL como o navegador: a regex antiga deixava passar
+        // `java\tscript:` e `\x01javascript:` (auditoria de 28/09/2026, 1.41.9).
+        return SafeUrl::isSafe($url) ? $url : null;
     }
 
     /**

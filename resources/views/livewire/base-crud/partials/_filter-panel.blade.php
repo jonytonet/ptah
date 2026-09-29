@@ -196,7 +196,7 @@
                                         class="absolute z-30 w-full {{ $cfSdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
                                         @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                             <button type="button"
-                                                wire:click="selectFilterDropdownOption('{{ $cfField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                wire:click="selectFilterDropdownOption({{ \Illuminate\Support\Js::from($cfField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"
                                                 @click="open = false"
                                                 class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
                                                 {{ $opt['label'] }}
@@ -318,11 +318,11 @@
                     <span class="text-xs font-medium ptah-c-fp_label">{{ __('ptah::ui.filters_saved') }}</span>
                     @foreach (array_keys($savedFilters) as $sfName)
                         <div class="flex items-center">
-                            <button wire:click="loadNamedFilter('{{ $sfName }}')"
+                            <button wire:click="loadNamedFilter({{ \Illuminate\Support\Js::from((string) $sfName) }})"
                                 class="text-xs px-2.5 py-1 rounded-l-md transition-colors border border-r-0 ptah-c-saved_filter_btn">
                                 {{ $sfName }}
                             </button>
-                            <button wire:click="deleteNamedFilter('{{ $sfName }}')"
+                            <button wire:click="deleteNamedFilter({{ \Illuminate\Support\Js::from((string) $sfName) }})"
                                 class="text-xs px-1.5 py-1 rounded-r-lg transition-colors border ptah-c-saved_filter_del">
                                 &times;
                             </button>

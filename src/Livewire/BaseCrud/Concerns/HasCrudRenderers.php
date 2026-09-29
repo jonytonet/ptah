@@ -340,7 +340,7 @@ trait HasCrudRenderers
             ? '<span class="'.e((string) $badge['icon']).' mr-1 text-[10px]"></span>'
             : '';
 
-        if (str_starts_with($colorVal, '#')) {
+        if (str_starts_with($colorVal, '#') && self::isCssColor($colorVal)) {
             $hex = e($colorVal);
 
             return '<span class="inline-flex items-center '.$shape.'" style="background-color:'.$hex.'14;color:'.$hex.';box-shadow: inset 0 0 0 1px '.$hex.'40">'.$icon.$label.'</span>';
@@ -585,7 +585,15 @@ trait HasCrudRenderers
         if (! $value) {
             return '';
         }
+        // e() impede sair do atributo, nao impede declarar CSS: um valor de
+        // coluna `#000;position:fixed;inset:0;background:url(...)` cobria a
+        // pagina inteira (auditoria de 28/09/2026, 1.41.9). So uma cor entra
+        // no style; o resto sai so como texto.
         $hex = e((string) $value);
+
+        if (! self::isCssColor((string) $value)) {
+            return '<code class="text-xs font-mono text-gray-700">'.$hex.'</code>';
+        }
 
         return '<span class="inline-flex items-center gap-1.5">'
             ."<span class=\"inline-block rounded border border-gray-300\" style=\"width:16px;height:16px;background:{$hex};flex-shrink:0\"></span>"
@@ -894,6 +902,19 @@ trait HasCrudRenderers
         $message = trim((string) ($col['actionConfirmMessage'] ?? ''));
 
         return $message !== '' ? $message : trans('ptah::ui.row_action_confirm');
+    }
+
+    /**
+     * A single CSS colour value and nothing else: `#rgb[a]`/`#rrggbb[aa]`,
+     * `rgb()`/`rgba()`/`hsl()`/`hsla()` with numbers, or a named colour.
+     */
+    private static function isCssColor(string $value): bool
+    {
+        $value = trim($value);
+
+        return preg_match('/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $value) === 1
+            || preg_match('/^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.%]+(?:\s*[,\/ ]\s*[0-9.%]+){2,3}\s*\)$/i', $value) === 1
+            || preg_match('/^[a-z]{3,20}$/i', $value) === 1;
     }
 
     /**
