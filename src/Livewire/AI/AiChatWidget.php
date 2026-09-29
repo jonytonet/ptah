@@ -263,6 +263,11 @@ class AiChatWidget extends Component
         }
     }
 
+    private function maxMessageChars(): int
+    {
+        return max(1, (int) config('ptah.ai_agent.max_message_chars', 8000));
+    }
+
     /**
      * Os anexos no formato que o AiAttachmentService espera.
      *
@@ -272,8 +277,20 @@ class AiChatWidget extends Component
     {
         $out = [];
 
-        foreach ($this->attachments as $file) {
+        // Revalida aqui: `attachments` recebe upload direto
+        // (`$wire.uploadMultiple('attachments', ...)`), que pula a checagem de
+        // quantidade, tipo e tamanho do updatedIncoming() (1.41.11).
+        $maxFiles = $this->attachmentService()->maxFiles();
+        $maxKb = $this->attachmentService()->maxSizeKb();
+        $allowed = $this->attachmentService()->allowedExtensions($this->currentProvider());
+
+        foreach (array_slice($this->attachments, 0, max(0, $maxFiles)) as $file) {
             try {
+                $ext = strtolower((string) pathinfo((string) $file->getClientOriginalName(), PATHINFO_EXTENSION));
+                if (($allowed !== [] && ! in_array($ext, $allowed, true)) || (int) ceil(((int) $file->getSize()) / 1024) > $maxKb) {
+                    continue;
+                }
+
                 $path = (string) $file->getRealPath();
 
                 if ($path === '' || ! is_file($path)) {
@@ -337,6 +354,14 @@ class AiChatWidget extends Component
     {
         $message = trim($message);
 
+        // Um teto de tamanho: o orcamento diario e conferido antes do turno, e
+        // uma mensagem de 1 MB estourava o custo de entrada de uma vez (1.41.11).
+        if (mb_strlen($message) > $this->maxMessageChars()) {
+            $this->errorMsg = trans('ptah::ui.ai_message_too_long', ['max' => $this->maxMessageChars()]);
+
+            return;
+        }
+
         // Com anexo, um texto vazio ainda e um envio valido: "analisa isso" e o
         // proprio arquivo. Sem anexo, nao ha o que enviar.
         if (($message === '' && $this->attachments === []) || ! $this->available || $this->loading) {
@@ -369,6 +394,15 @@ class AiChatWidget extends Component
     #[On('ai-process-message')]
     public function processAiMessage(string $message, ?int $conversationId = null): void
     {
+        // O listener e publico: o mesmo teto do send().
+        if (mb_strlen($message) > $this->maxMessageChars()) {
+            $this->loading = false;
+            $this->errorMsg = trans('ptah::ui.ai_message_too_long', ['max' => $this->maxMessageChars()]);
+            $this->dispatch('ai-message-sent');
+
+            return;
+        }
+
         // Re-check availability — this is a public Livewire listener and can be
         // dispatched directly, bypassing the guards in send().
         if (! $this->configService->hasActiveProvider()) {

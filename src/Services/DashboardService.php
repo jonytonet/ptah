@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\SqlIdentifier;
@@ -73,7 +74,15 @@ final class DashboardService
             return $base + $data;
         } catch (\Throwable $e) {
             // array_merge, nao `+`: `$base` ja tem 'error' => null e o `+` o manteria.
-            return array_merge($base, ['error' => $e->getMessage()]);
+            // A mensagem crua (SQL, tabela, conexao de uma QueryException) so
+            // em debug; em producao vai para o log (1.41.11).
+            Log::warning('[ptah] dashboard widget failed', ['widget' => $w['title'] ?? $index, 'error' => $e->getMessage()]);
+
+            // A validacao da definicao (InvalidArgumentException) e texto do
+            // proprio pacote, sem SQL, e ajuda quem configura: continua.
+            $safe = $e instanceof \InvalidArgumentException || config('app.debug');
+
+            return array_merge($base, ['error' => $safe ? $e->getMessage() : trans('ptah::ui.dashboard_widget_error')]);
         }
     }
 

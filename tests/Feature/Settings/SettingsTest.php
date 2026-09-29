@@ -126,6 +126,24 @@ class SettingsTest extends TestCase
     }
 
     #[Test]
+    public function a_secret_setting_never_reaches_the_browser_and_survives_a_save(): void
+    {
+        // BAIXO, auditoria de 28/09/2026 (1.41.11): `values` e publica, e o
+        // segredo ia em texto puro no snapshot — a tela so mascarava o input.
+        config(['ptah-settings.definitions.api_token' => ['label' => 'Token', 'type' => 'text', 'secret' => true, 'default' => '']]);
+        $this->actAsMaster();
+        config(['ptah.modules.permissions' => true]);
+        $this->settings()->set('api_token', 'tok-super-secreto', 7);
+
+        $page = Livewire::test(SettingsPage::class);
+        $this->assertSame('', $page->get('values.api_token'));
+        $this->assertStringNotContainsString('tok-super-secreto', $page->html());
+
+        $page->set('values.carrier', 'jadlog')->call('save');
+        $this->assertSame('tok-super-secreto', ptah_setting('api_token', null, 7), 'Salvar com o segredo em branco nao pode apaga-lo.');
+    }
+
+    #[Test]
     public function a_select_value_outside_its_options_is_refused(): void
     {
         $this->actAsMaster();

@@ -274,7 +274,10 @@ trait HasCrudBoards
             $cfg = $this->crudConfig['calendarConfig'];
             $table = $model->getTable();
             $start = $table.'.'.$cfg['start'];
-            $end = ! empty($cfg['end']) && Schema::hasColumn($table, (string) $cfg['end']) ? $table.'.'.$cfg['end'] : null;
+            // O fim tambem nao pode ser coluna negada: a extensao do evento no
+            // calendario revelava a data (1.41.11).
+            $end = ! empty($cfg['end']) && Schema::hasColumn($table, (string) $cfg['end'])
+                && ! in_array((string) $cfg['end'], $this->deniedColumns, true) ? $table.'.'.$cfg['end'] : null;
 
             [$query] = $this->buildBaseQuery($model);
             $query->where(function (Builder $q) use ($start, $end, $gridStart, $gridEnd): void {

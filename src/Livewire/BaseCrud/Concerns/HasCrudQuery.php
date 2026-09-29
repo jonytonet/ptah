@@ -41,7 +41,7 @@ trait HasCrudQuery
         $modelInstance = $this->resolveEloquentModel();
 
         if (! $modelInstance) {
-            return new LengthAwarePaginator([], 0, $this->perPage);
+            return new LengthAwarePaginator([], 0, $this->safePerPage());
         }
 
         try {
@@ -55,7 +55,7 @@ trait HasCrudQuery
 
             $this->applyGroupingAndSort($query, $modelInstance, $joinedTables);
 
-            return $query->paginate($this->perPage);
+            return $query->paginate($this->safePerPage());
 
         } catch (QueryException $e) {
             // Clear potentially corrupted preferences
@@ -73,7 +73,7 @@ trait HasCrudQuery
 
             session()->flash('error', trans('ptah::ui.crud_load_error'));
 
-            return new LengthAwarePaginator([], 0, $this->perPage, 1, [
+            return new LengthAwarePaginator([], 0, $this->safePerPage(), 1, [
                 'path' => request()->url(),
             ]);
         }
@@ -155,7 +155,9 @@ trait HasCrudQuery
 
         // Soft delete
         $usesSoftDeletes = in_array(SoftDeletes::class, class_uses_recursive($modelInstance));
-        if ($usesSoftDeletes && $this->showTrashed) {
+        // A lixeira so onde a tela a oferece: `showTrashed` e gravavel pelo
+        // cliente e mostrava os excluidos a qualquer leitor (1.41.11).
+        if ($usesSoftDeletes && $this->showTrashed && $this->crudConfigAllows('restore')) {
             $query->onlyTrashed();
         }
 
@@ -491,6 +493,16 @@ trait HasCrudQuery
      * leaks the value through the row count. It applies even to a host field,
      * because once mounted the client can change a filter's VALUE.
      */
+    /**
+     * `perPage` is client-writable: `set('perPage', 1000000)` dumped the whole
+     * table past the export gate and its maxRows, and was a DoS on its own
+     * (audit of 28/09/2026, 1.41.11). Clamped to 1..`ptah.crud.max_per_page`.
+     */
+    protected function safePerPage(): int
+    {
+        return max(1, min($this->perPage, (int) config('ptah.crud.max_per_page', 200)));
+    }
+
     protected function fieldIsFilterable(string $field): bool
     {
         if (in_array($field, $this->hiddenModelAttributes(), true)) {

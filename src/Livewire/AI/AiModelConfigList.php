@@ -22,6 +22,9 @@ class AiModelConfigList extends Component
     public function boot(AiProviderConfigService $configService): void
     {
         $this->configService = $configService;
+        // A cada requisicao, nao so no mount: quem perdia `ai.config` no meio
+        // da sessao ainda listava as configs por sort/search (1.41.11).
+        $this->authorizeAiConfig();
     }
 
     public function mount(): void

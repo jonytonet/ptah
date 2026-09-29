@@ -67,6 +67,14 @@ class SettingsPage extends Component
         }
 
         $input = array_intersect_key($this->values, $defs);
+
+        // Um segredo vazio no formulario e "nao mudou": o valor nunca vai ao
+        // navegador (load() o esvazia), entao salvar nao pode apaga-lo.
+        foreach ($defs as $key => $def) {
+            if (! empty($def['secret']) && ($input[$key] ?? '') === '') {
+                unset($input[$key]);
+            }
+        }
         $validator = Validator::make($input, $rules, [], array_map(fn (array $d) => (string) $d['label'], $defs));
 
         if ($validator->fails()) {
@@ -113,7 +121,13 @@ class SettingsPage extends Component
 
     private function load(SettingsService $settings): void
     {
-        $this->values = array_map(fn (array $v) => $v['value'], $settings->all($this->editingGlobal ? 0 : null));
+        // `values` e publica: um setting `secret` ia em texto puro no snapshot,
+        // a tela so mascarava o input (1.41.11).
+        $defs = $settings->definitions();
+        $this->values = [];
+        foreach ($settings->all($this->editingGlobal ? 0 : null) as $key => $v) {
+            $this->values[$key] = ! empty($defs[$key]['secret']) ? '' : $v['value'];
+        }
     }
 
     /**

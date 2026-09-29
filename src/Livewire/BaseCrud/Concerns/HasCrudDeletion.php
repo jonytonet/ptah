@@ -208,6 +208,10 @@ trait HasCrudDeletion
 
     public function toggleTrashed(): void
     {
+        if (! $this->showTrashed && ! $this->crudConfigAllows('restore')) {
+            return;
+        }
+
         $this->showTrashed = ! $this->showTrashed;
         $this->resetPage();
     }
@@ -229,7 +233,9 @@ trait HasCrudDeletion
         }
 
         try {
-            $this->trashedCount = (int) $modelInstance->newQuery()->onlyTrashed()->count();
+            // Pelo escopo da tela: sem ele, o contador revelava quantos
+            // excluidos as OUTRAS empresas tinham (1.41.11).
+            $this->trashedCount = (int) ($this->scopedQuery()?->onlyTrashed()->count() ?? 0);
         } catch (\Throwable) {
             $this->trashedCount = 0;
         }

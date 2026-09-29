@@ -1679,6 +1679,7 @@ return [
     // one capability is down instead of the turn dying.
     'ai_tool_failed' => 'The tool :tool is unavailable right now.',
     'ai_tool_forbidden' => 'You do not have permission to use :tool. Tell the user instead of trying another tool.',
+    'ai_message_too_long' => 'The message is too long (max. :max characters).',
     'ai_widget_hide_launcher' => 'Hide the assistant button',
     'ai_widget_show_launcher' => 'Show the assistant',
     'ai_widget_expand' => 'Expand to full screen',
@@ -1801,6 +1802,7 @@ return [
     'btn_duplicate_title' => 'Duplicate record',
     'row_action_confirm' => 'Are you sure?',
     'sd_value_not_allowed' => 'Choose an option from the list.',
+    'dashboard_widget_error' => 'This widget could not be loaded.',
     'btn_print' => 'Print',
 
     // Print screen (crud/print)

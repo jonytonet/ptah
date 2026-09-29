@@ -325,6 +325,8 @@ return [
         'cache_enabled' => true,
         'cache_ttl' => 3600,
         'per_page' => 25,
+        // Teto do `perPage` (gravavel pelo cliente): 1.41.11.
+        'max_per_page' => 200,
         'soft_deletes' => true,
         'confirm_delete' => true,
 
@@ -595,6 +597,7 @@ return [
         'max_history' => (int) env('PTAH_AI_MAX_HISTORY', 20),
         'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
         'stream' => (bool) env('PTAH_AI_STREAM', true),
+        'max_message_chars' => (int) env('PTAH_AI_MAX_MESSAGE_CHARS', 8000),
         'daily_token_limit' => (int) env('PTAH_AI_DAILY_TOKEN_LIMIT', 0),
         'allow_guests' => (bool) env('PTAH_AI_ALLOW_GUESTS', false),
         'expose_system_details' => (bool) env('PTAH_AI_EXPOSE_SYSTEM_DETAILS', false),

@@ -168,6 +168,12 @@ class TwoFactorService
         return false;
     }
 
+    /** Invalidates a pending e-mail code (too many wrong attempts). */
+    public function forgetEmailCode(Authenticatable $user): void
+    {
+        Cache::forget(self::EMAIL_PREFIX.$user->getKey());
+    }
+
     // ── Recovery ───────────────────────────────────────────────────────────
 
     /**

@@ -196,6 +196,7 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_MAX_HISTORY` | `20` | Max messages kept in session history |
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
 | `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
+| `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
 | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | Fix `"properties": []` in tool payloads for strict providers — see the config block above |
 | `PRISM_REQUEST_TIMEOUT` | `30` | HTTP timeout in seconds for AI provider requests — increase for slow local models (e.g. Ollama on CPU) |
 

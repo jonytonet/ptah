@@ -273,6 +273,13 @@ trait HasCrudImport
                 if ($error !== null) {
                     $rowErrors[$field] = $error;
                 }
+                // Um id numerico de searchdropdown passava direto, apontando a FK
+                // para registro de outra empresa — a mesma regra do formulario
+                // (sdValueInScope, 1.41.7) vale para a planilha (1.41.11).
+                if ($error === null && $value !== null && $value !== '' && ($colsByField[$field]['colsTipo'] ?? '') === 'searchdropdown'
+                    && ! $this->sdValueInScope($colsByField[$field], $value)) {
+                    $rowErrors[$field] = trans('ptah::ui.sd_value_not_allowed');
+                }
                 $data[$field] = $value;
             }
 

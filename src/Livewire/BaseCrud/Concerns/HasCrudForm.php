@@ -195,6 +195,20 @@ trait HasCrudForm
             $this->formErrors = array_merge($this->formErrors, $uploadErrors);
         }
 
+        // Select: o valor precisa ser uma das opcoes. So era conferido com uma
+        // regra `in:` explicita, e o formData e do cliente (1.41.11).
+        foreach ($formCols as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            $value = $this->formData[$field] ?? null;
+            $options = $col['colsSelect'] ?? null;
+            if (($col['colsTipo'] ?? '') !== 'select' || ! is_array($options) || $options === [] || $value === null || $value === '') {
+                continue;
+            }
+            if (! in_array((string) $value, array_map('strval', array_values($options)), true)) {
+                $this->formErrors[$field] = trans('ptah::ui.sd_value_not_allowed');
+            }
+        }
+
         // Valor de searchdropdown escolhido pelo cliente: precisa ser um que o
         // dropdown ofereceria (mesma empresa, mesmos filtros). Num update, o
         // valor que o registro ja tinha segue valendo (1.41.7).
