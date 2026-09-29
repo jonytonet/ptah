@@ -115,7 +115,12 @@ final class MenuResolver
 
             $label = trim((string) ($node['label'] ?? $node['text'] ?? ''));
             $children = is_array($node['children'] ?? null) ? $node['children'] : [];
+            // A busca rapida da sidebar faz `window.location.href = it.url`: um
+            // `javascript:` aqui executava ao escolher o item (1.41.9).
             $url = trim((string) ($node['url'] ?? ''));
+            if (! SafeUrl::isSafe($url)) {
+                $url = '';
+            }
             $isGroup = ($node['type'] ?? 'menuLink') === 'menuGroup';
 
             if ($label === '') {

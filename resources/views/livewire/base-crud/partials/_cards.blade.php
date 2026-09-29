@@ -20,7 +20,8 @@
             $rowLink  = null;
             if (!empty($crudConfig['configLinkLinha'])) {
                 $id = $row->id ?? null;
-                $rowLink = $id ? str_replace('%id%', $id, $crudConfig['configLinkLinha']) : null;
+                $rowLink = $id ? \Ptah\Support\SafeUrl::sanitize(str_replace('%id%', (string) $id, $crudConfig['configLinkLinha']), '') : null;
+                        $rowLink = $rowLink !== '' ? $rowLink : null;
             }
             $isSelected = in_array($row->id ?? 0, $selectedRows);
         @endphp
@@ -28,8 +29,8 @@
         <div wire:key="card-{{ $row->id ?? $loop->index }}"
              style="{{ $rowStyle }}"
              @if($rowLink)
-                 @click="ptahRowNav($event, '{{ $rowLink }}')"
-                 @auxclick="ptahRowNav($event, '{{ $rowLink }}')"
+                 @click="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
+                 @auxclick="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
              @endif
              class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card hover:shadow-md
                     {{ $rowLink ? 'cursor-pointer' : '' }}

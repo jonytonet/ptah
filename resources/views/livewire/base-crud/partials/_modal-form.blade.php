@@ -294,7 +294,7 @@
                                             class="absolute z-30 w-full {{ $sdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md max-h-48 ptah-c-dd">
                                             @forelse ($sdResults[$fField] ?? [] as $opt)
                                                 <button type="button"
-                                                    wire:click="selectDropdownOption('{{ $fField }}', '{{ $opt['value'] }}', '{{ addslashes($opt['label']) }}')"
+                                                    wire:click="selectDropdownOption({{ \Illuminate\Support\Js::from($fField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"
                                                     @click="open = false"
                                                     class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
                                                     {{ $opt['label'] }}

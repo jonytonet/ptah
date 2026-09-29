@@ -7,6 +7,42 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.9] - 2026-09-28
+
+**Security release.** The XSS and link findings of the 28/09/2026 surface
+audit. Each fix has a test that fails on 1.41.8.
+
+### Security - menu children and the sidebar's quick jump ran `javascript:` URLs
+
+Only the first-level sidebar item went through `SafeUrl`. A child item, and
+the quick jump (which does `window.location.href = item.url`), rendered or
+followed a stored `javascript:` URL — a row written before 1.34.8, when any
+signed-in user could edit the menu, or by a seeder. Both now use `SafeUrl`.
+
+### Security - notification links used the bypassable regex
+
+`NotificationService::safeUrl()` still matched `^\s*javascript:`, which lets
+`java<TAB>script:` and `\x01javascript:` through — the browser strips both.
+It now uses `SafeUrl`, which reads the URL the way the browser does.
+
+### Security - a searchdropdown value broke out of its JS string
+
+The option's value went into `wire:click="selectDropdownOption('…', '{{ value }}', …)"`
+unescaped for JavaScript: a text value column (a code, a SKU) holding a quote
+ran script for whoever opened the dropdown. Every argument is now a JS literal
+(`Js::from`), in the form and in the filter panel, and so are the saved-filter
+names and the row link (`configLinkLinha`, which also goes through `SafeUrl`).
+
+### Security - the colour renderer accepted CSS
+
+`e()` keeps a value inside the attribute, not out of the declaration: a value
+like `#000;position:fixed;inset:0;background:url(…)` in a `color` column
+covered the whole page. Only a colour (`#hex`, `rgb()`/`hsl()`, a named colour)
+reaches `style=""` now — anything else shows as text — and a badge's `#hex`
+colour from the config is held to the same rule.
+
+---
+
 ## [1.41.8] - 2026-09-28
 
 **Security release.** The auth findings of the 28/09/2026 surface audit: with a
