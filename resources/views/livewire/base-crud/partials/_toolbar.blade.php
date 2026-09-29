@@ -78,7 +78,7 @@
          divide a segunda linha com as demais acoes. De `sm` para cima a ordem
          original volta e o desktop fica identico ao que era. --}}
     @if ($effectivePerms['canCreate'])
-        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" color="primary" size="sm" class="ptah-c-control order-2 sm:order-1">
+        <x-forge-button @click="$wire.showModal = true; $wire.prepareCreate()" x-on:click.capture="window.dispatchEvent(new CustomEvent('ptah-form-opening'))" color="primary" size="sm" class="ptah-c-control order-2 sm:order-1">
             <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>

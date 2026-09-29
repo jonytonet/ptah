@@ -41,6 +41,7 @@ return [
     'cfg_features' => 'Features',
     'cfg_feature_import' => 'Spreadsheet import',
     'cfg_feature_history' => 'Change history',
+    'form_loading' => 'Loading…',
     'form_draft_restored' => 'Your unsaved draft was restored.',
     'form_draft_discarded' => 'This record changed since your draft, so the draft was discarded.',
     'btn_form_draft_clear' => 'Clear all',

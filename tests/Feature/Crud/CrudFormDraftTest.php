@@ -182,6 +182,59 @@ class CrudFormDraftTest extends TestCase
     }
 
     #[Test]
+    public function a_draft_sent_with_the_opening_comes_back_restored_in_one_round_trip(): void
+    {
+        // 1.42.1: o navegador le o rascunho no clique e o manda junto — antes
+        // era uma segunda ida so para restaurar.
+        $crud = $this->crud()
+            ->set('formDraftIncoming', ['target' => 'new', 'values' => ['name' => 'Do rascunho', 'document' => '123'], 'version' => ''])
+            ->call('openCreate')
+            ->assertDispatched('ptah:form-draft', fn ($n, $p) => $p['restored'] === true && $p['discarded'] === false);
+
+        $this->assertSame('Do rascunho', $crud->get('formData.name'));
+        $this->assertArrayNotHasKey('document', $crud->get('formData'), 'Campo excluido nao entra nem pelo envio.');
+        $this->assertSame([], $crud->get('formDraftIncoming'), 'Usado uma vez e esvaziado.');
+    }
+
+    #[Test]
+    public function an_edit_draft_from_an_older_record_is_discarded_not_applied(): void
+    {
+        $a = DraftContact::create(['name' => 'Ana']);
+
+        $crud = $this->crud()
+            ->set('formDraftIncoming', ['target' => 'edit:'.$a->id, 'values' => ['name' => 'Velho'], 'version' => 'outra-versao'])
+            ->call('openEdit', $a->id)
+            ->assertDispatched('ptah:form-draft', fn ($n, $p) => $p['discarded'] === true && $p['restored'] === false);
+
+        $this->assertSame('Ana', $crud->get('formData.name'));
+    }
+
+    #[Test]
+    public function a_draft_for_another_target_is_ignored(): void
+    {
+        $a = DraftContact::create(['name' => 'Ana']);
+
+        $crud = $this->crud()
+            ->set('formDraftIncoming', ['target' => 'new', 'values' => ['name' => 'Do novo'], 'version' => ''])
+            ->call('openEdit', $a->id);
+
+        $this->assertSame('Ana', $crud->get('formData.name'), 'O rascunho do Novo nao pode entrar numa edicao.');
+    }
+
+    #[Test]
+    public function revert_ignores_a_draft_that_came_along(): void
+    {
+        $a = DraftContact::create(['name' => 'Ana']);
+        $version = md5((string) json_encode(['name' => 'Ana', 'phone' => null, 'status' => null]));
+
+        $crud = $this->crud()->call('openEdit', $a->id)
+            ->set('formDraftIncoming', ['target' => 'edit:'.$a->id, 'values' => ['name' => 'Rascunho'], 'version' => $version])
+            ->call('revertFormToOriginal');
+
+        $this->assertSame('Ana', $crud->get('formData.name'));
+    }
+
+    #[Test]
     public function the_original_and_the_mode_cannot_be_forged(): void
     {
         $this->expectException(CannotUpdateLockedPropertyException::class);

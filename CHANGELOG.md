@@ -7,6 +7,35 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.42.1] - 2026-09-29
+
+### Fixed - the form opened editable before it was loaded
+
+Reported on the first real use of 1.42.0: the "New" modal opens at once (in the
+browser) and the server's answer arrives after, so the fields showed empty and
+editable, and the draft appeared only later — anything typed in that gap was
+overwritten when the answer (or the draft restore) arrived. The same gap
+existed before drafts, on every screen: the answer to "New" reset what had
+already been typed.
+
+The fields now stay locked with a "Loading…" overlay (`inert`, `aria-busy`)
+from the click until the form is ready — including the draft restore — and
+then the first field gets the focus. A 10 s guard unlocks it if an answer never
+comes.
+
+### Changed - the draft comes back in the same round trip as the form
+
+Restoring took two requests: open the form, then (once the key arrived)
+restore the draft and redraw. The browser now builds the draft key itself —
+the page carries the user/screen prefix — reads localStorage at the click, and
+sends the draft WITH the request that opens the form (`formDraftIncoming`).
+The server applies it in that same answer; on an edit it first checks the
+record's fingerprint and, if the record changed, drops the draft and says so.
+One round trip, as fast as opening the form without a draft. The old
+two-request path stays as a fallback.
+
+---
+
 ## [1.42.0] - 2026-09-29
 
 ### Added - form draft kept in the browser (`formDraft`)
