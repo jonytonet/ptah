@@ -17,6 +17,7 @@ use Orchestra\Testbench\Dusk\TestCase as OrchestraDuskTestCase;
 use Prism\Prism\PrismServiceProvider;
 use Ptah\PtahServiceProvider;
 use Ptah\Tests\Browser\Fixtures\DuskCrudStub;
+use Ptah\Tests\Browser\Fixtures\DuskDraftContact;
 use Ptah\Tests\Browser\Fixtures\DuskMaskStub;
 
 /**
@@ -145,6 +146,7 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
 
         DuskCrudStub::seedFixtures();
         DuskMaskStub::seedFixtures();
+        DuskDraftContact::seedFixtures();
     }
 
     /**
@@ -180,6 +182,10 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
 
         $router->get('/dusk-test/mask', function () {
             return view('dusk-mask', ['model' => DuskMaskStub::class]);
+        });
+
+        $router->get('/dusk-test/draft', function () {
+            return view('dusk-draft', ['model' => DuskDraftContact::class]);
         });
     }
 

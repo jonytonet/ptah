@@ -2069,6 +2069,40 @@ which moves exist:
 
 ---
 
+## Form draft (kept in the browser)
+
+Off by default. When a screen turns it on, what the user types in the create
+or edit modal survives closing it — kept in the browser's `localStorage`, never
+on the server.
+
+```json
+"formDraft": { "enabled": true, "exclude": ["document", "card_number"], "ttlDays": 7 }
+```
+
+Editor: gear → General → Features → "Keep a form draft in the browser". CLI:
+`--set="formDraft.enabled=true"`.
+
+- **One draft per user + screen + mode + record.** "New" only ever restores the
+  create draft — never values from an edit. An edit restores the draft of THAT
+  record id; opening another id shows that record (or its own draft).
+- **An edit draft is dropped if the record changed** in the database since the
+  draft began (a fingerprint of the original values), with a notice — it never
+  writes over someone else's change.
+- **Buttons.** "Clear all" on "New" and "Revert to original" on an edit appear
+  when a field differs from what the modal opened with. A successful save
+  deletes the draft. With a draft active, closing the modal no longer asks to
+  discard.
+- **Never stored** (localStorage is plain text on disk): password fields,
+  uploads, `$hidden` attributes, denied columns, audit fields and the fields in
+  `exclude` (use it for CPF, card numbers and the like).
+- **Cleared** on logout through the package's navbar/sidebar form, when another
+  user's page loads in the same browser, and after `ttlDays` (default 7). A
+  session that merely expires keeps the draft, so the user can sign in again
+  and continue. A host with its own logout can clear them with
+  `Object.keys(localStorage).filter(k => k.startsWith('ptah:draft:')).forEach(k => localStorage.removeItem(k))`.
+- A duplicated record ("Duplicate") opens without a draft, so the copy is
+  neither overwritten by nor saved as the create draft.
+
 ## Attachments
 
 Files per record, from an **Attachments** button in the edit modal.

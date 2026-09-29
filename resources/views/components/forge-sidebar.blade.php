@@ -456,7 +456,7 @@
             : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
     @endphp
     <div class="ptah-sidebar-footer p-2 border-t flex-shrink-0">
-        <form method="POST" action="{{ $logoutAction }}">
+        <form method="POST" action="{{ $logoutAction }}" onsubmit="try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('ptah:draft:')===0)localStorage.removeItem(k)})}catch(e){}">
             @csrf
             <button
                 type="submit"

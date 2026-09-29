@@ -2801,6 +2801,10 @@
                                     <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_import') }}</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="featureFormDraft" title="{{ __('ptah::ui.cfg_feature_form_draft') }}" class="rounded" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_form_draft') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model="featureHistory" title="{{ __('ptah::ui.cfg_feature_history') }}" class="rounded" />
                                     <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_feature_history') }}</span>
                                 </label>

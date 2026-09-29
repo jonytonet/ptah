@@ -19,6 +19,7 @@ use Ptah\Livewire\BaseCrud\Concerns\HasCrudDeletion;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudExport;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudFilters;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudForm;
+use Ptah\Livewire\BaseCrud\Concerns\HasCrudFormDraft;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudHistory;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudImport;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudLifecycle;
@@ -79,6 +80,7 @@ class BaseCrud extends Component
 
     // Create / edit modal and cell helpers
     use HasCrudForm;
+    use HasCrudFormDraft;
 
     // Record history (Ptah\Traits\RecordsHistory) in the edit modal
     use HasCrudHistory;
