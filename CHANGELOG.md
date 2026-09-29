@@ -7,6 +7,57 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.41.11] - 2026-09-28
+
+**Security release.** The LOW findings of the 28/09/2026 surface audit — with
+this, every finding of that audit is closed. Each behaviour fix has a test that
+fails on 1.41.10.
+
+### Security - listing and trash
+
+- `perPage` is client-writable and had no ceiling: `set('perPage', 1000000)`
+  dumped the table past the export gate. Clamped to `ptah.crud.max_per_page`
+  (default 200).
+- `showTrashed` showed the deleted rows to any reader; the trash now answers to
+  `showTrashButton` / `permissions.restore`, and its counter stays inside the
+  screen's scope (it counted every company's deleted rows).
+- The calendar's `end` column was not checked against the denied columns — an
+  event's length revealed the date.
+
+### Security - form and import values
+
+- A `select` value was checked against its options only with an explicit
+  `in:` rule; it now must be one of `colsSelect` on save.
+- A numeric searchdropdown id in a spreadsheet passed straight through; the
+  import now applies the same in-scope check as the form (1.41.7).
+- Bulk export ignores no limit any more: it honours `exportConfig.maxRows`.
+
+### Security - auth, AI and settings
+
+- The 2FA challenge had a per-user+IP limit only (multiplied by rotating IPs):
+  there is now a per-user ceiling too, and an e-mail code dies after five
+  wrong attempts (`TwoFactorService::forgetEmailCode()`).
+- The AI config screen re-checks `ai.config` on every request, not only on
+  mount.
+- The chat caps the message length (`PTAH_AI_MAX_MESSAGE_CHARS`, 8000) in
+  `send()` and in the public `processAiMessage()` listener, and re-checks the
+  attachments' count, type and size when sending — a direct
+  `$wire.uploadMultiple('attachments', …)` skipped the checks.
+- A `secret` setting no longer reaches the browser (the screen only masked the
+  input; the value was in the snapshot), and saving with it blank keeps it.
+- A dashboard widget that throws shows its raw message only in debug — a
+  `QueryException` exposed SQL, table and connection to every viewer. The
+  package's own definition errors still show.
+
+### Known, by design
+
+`crudConfig` is `#[Locked]` but public, so the whole screen config (hook
+expressions, gate names, joins) is in the Livewire snapshot. Since 1.41.6 no
+public method dispatches on it and since 1.41.7 hooks cannot reach objects, so
+it discloses configuration, not capability.
+
+---
+
 ## [1.41.10] - 2026-09-28
 
 **Security release.** The BaseCrud and permission MEDIUM findings of the

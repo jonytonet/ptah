@@ -97,7 +97,10 @@ trait HasCrudExport
 
         [$query] = $this->buildBaseQuery($modelInstance);
         $pk = $modelInstance->getKeyName();
-        $ids = $query->whereIn($pk, $this->selectedRows)->pluck($pk)->all();
+        // O mesmo teto do export normal: `selectedRows` e do cliente, e toda a
+        // tabela selecionada gerava um PDF sincrono sem limite (1.41.11).
+        $maxRows = (int) (($this->crudConfig['exportConfig'] ?? [])['maxRows'] ?? 5000);
+        $ids = $query->whereIn($pk, $this->selectedRows)->limit(max(1, $maxRows))->pluck($pk)->all();
 
         if (empty($ids)) {
             return;

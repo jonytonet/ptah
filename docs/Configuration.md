@@ -271,6 +271,7 @@ device/browser; it never leaks credentials or any other account data.
 | `crud.cache_enabled` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |
 | `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |
+| `crud.max_per_page` | — | `200` | Ceiling for the client-writable `perPage` (1.41.11) |
 | `crud.soft_deletes` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.confirm_delete` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |

@@ -42,8 +42,12 @@ class TwoFactorChallengePage extends Component
         // Throttle code attempts to prevent brute-forcing the 6-digit code.
         $throttleKey = 'ptah-2fa|'.$userId.'|'.request()->ip();
 
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
+        // Um teto por usuario tambem: o limite por usuario+IP se multiplicava
+        // com rotacao de IP (1.41.11).
+        $userKey = 'ptah-2fa-user|'.$userId;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5) || RateLimiter::tooManyAttempts($userKey, 10)) {
+            $seconds = max(RateLimiter::availableIn($throttleKey), RateLimiter::availableIn($userKey));
             $this->errorMsg = trans('ptah::ui.auth_too_many_attempts', ['seconds' => $seconds]);
 
             return;
@@ -64,6 +68,13 @@ class TwoFactorChallengePage extends Component
 
         if (! $valid) {
             RateLimiter::hit($throttleKey);
+            RateLimiter::hit($userKey, 900);
+
+            // O codigo por e-mail morre depois de 5 erros: sem isso, seguia
+            // valendo ate expirar enquanto alguem tentava (1.41.11).
+            if ($user->two_factor_type === 'email' && RateLimiter::attempts($userKey) >= 5) {
+                $twoFactor->forgetEmailCode($user);
+            }
             $this->errorMsg = trans('ptah::ui.two_fa_code_invalid');
             $this->reset('code');
 
@@ -71,6 +82,7 @@ class TwoFactorChallengePage extends Component
         }
 
         RateLimiter::clear($throttleKey);
+        RateLimiter::clear($userKey);
         Session::forget('ptah.2fa.user_id');
         Auth::loginUsingId($userId);
         event(new Login('web', $user, false));
