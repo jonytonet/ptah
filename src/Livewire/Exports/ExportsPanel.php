@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Exports;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Ptah\Models\Export;
+use Ptah\Support\ExportOwner;
 
 /**
  * "Exportações" panel (Fase 3 — "grande volume"): lists the current user's
@@ -22,11 +24,33 @@ class ExportsPanel extends Component
 {
     use WithPagination;
 
+    /**
+     * Exports of the signed-in user on the CURRENT guard. A guest owns none
+     * (user_id null matched every guest's), and an export written before
+     * 1.41.10 (no guard in the payload) belongs to the default guard.
+     */
+    private static function ownedByMe(Builder $q): void
+    {
+        if (! Auth::check()) {
+            $q->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $guard = ExportOwner::guard();
+        $q->where('user_id', Auth::id())->where(function ($w) use ($guard) {
+            $w->where('payload->guard', $guard);
+            if ($guard === (string) config('auth.defaults.guard')) {
+                $w->orWhereNull('payload->guard');
+            }
+        });
+    }
+
     #[Computed]
     public function exports(): LengthAwarePaginator
     {
         return Export::query()
-            ->where('user_id', Auth::id())
+            ->tap(fn ($q) => self::ownedByMe($q))
             ->latest()
             ->paginate(10);
     }
@@ -39,7 +63,7 @@ class ExportsPanel extends Component
     public function hasPending(): bool
     {
         return Export::query()
-            ->where('user_id', Auth::id())
+            ->tap(fn ($q) => self::ownedByMe($q))
             ->whereIn('status', ['queued', 'processing'])
             ->exists();
     }
@@ -50,7 +74,7 @@ class ExportsPanel extends Component
      */
     public function remove(int $exportId): void
     {
-        $export = Export::query()->where('user_id', Auth::id())->find($exportId);
+        $export = Export::query()->tap(fn ($q) => self::ownedByMe($q))->find($exportId);
 
         if (! $export) {
             return;

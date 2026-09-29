@@ -7,6 +7,7 @@ namespace Ptah\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Ptah\Support\ExportOwner;
 
 /**
  * Renders the BaseCrud print screen.
@@ -30,7 +31,7 @@ class CrudPrintController
         // The snapshot is bound to the user who generated it. A null userId means
         // the listing was public (no auth); only then is an anonymous view allowed.
         $owner = $payload['userId'] ?? null;
-        if ($owner !== null && $owner !== Auth::id()) {
+        if ($owner !== null && ! ExportOwner::owns($owner, $payload['guard'] ?? null)) {
             abort(403);
         }
 

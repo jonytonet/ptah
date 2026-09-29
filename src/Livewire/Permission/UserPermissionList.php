@@ -48,6 +48,10 @@ class UserPermissionList extends Component
     // ── Modal de bind user-role ────────────────────────────────────────
     public bool $showModal = false;
 
+    // Locked: o id do usuario do modal de papeis chegava do cliente e addRole()
+    // concedia papel (MASTER inclusive) a qualquer id, fora do
+    // `user_query_scope` que a lista e o formulario respeitam (1.41.10).
+    #[Locked]
     public ?int $bindingUserId = null;
 
     public string $bindingUserName = '';
@@ -244,8 +248,14 @@ class UserPermissionList extends Component
 
     public function openUserModal(int $userId, string $userName): void
     {
-        $this->bindingUserId = $userId;
-        $this->bindingUserName = $userName;
+        // O mesmo escopo da lista: um id fora dele nao abre o modal.
+        $user = $this->userQuery()?->find($userId);
+        if ($user === null) {
+            return;
+        }
+
+        $this->bindingUserId = (int) $user->getKey();
+        $this->bindingUserName = (string) ($user->name ?? $userName);
         $this->newRoleId = 0;
         $this->newCompanyId = 0;
         $this->loadAssignedRoles();
@@ -277,6 +287,10 @@ class UserPermissionList extends Component
             return;
         }
 
+        if ($this->bindingUserId === null || $this->userQuery()?->find($this->bindingUserId) === null) {
+            return;
+        }
+
         try {
             $companyIds = $this->newCompanyId ? [$this->newCompanyId] : [];
             $this->permissionService->syncRole($this->bindingUserId, $this->newRoleId, $companyIds);
@@ -292,7 +306,9 @@ class UserPermissionList extends Component
     public function removeRole(int $userRoleId): void
     {
         try {
-            $ur = UserRole::findOrFail($userRoleId);
+            // Amarrado ao usuario do modal: por id solto, apagava o papel de
+            // qualquer usuario (1.41.10).
+            $ur = UserRole::query()->where('user_id', $this->bindingUserId)->findOrFail($userRoleId);
 
             if ($ur->role?->is_master) {
                 $this->dispatch('ptah-toast', title: 'Cannot remove the MASTER role from a user directly.', color: 'danger');

@@ -141,8 +141,11 @@ trait HasCrudBulkActions
             // non-default key name are matched correctly.
             $keyName = (new ($this->model))->getKeyName();
 
+            // Exclusao definitiva so do que ja esta na lixeira: com withTrashed()
+            // quem so podia mandar para a lixeira apagava para sempre linhas
+            // ATIVAS, sem Desfazer (auditoria de 28/09/2026, 1.41.10).
             if ($force && method_exists($query->getModel(), 'bootSoftDeletes')) {
-                $query->withTrashed();
+                $query->onlyTrashed();
             }
 
             // Uma transacao por registro, nao uma so: um registro barrado nao
@@ -198,7 +201,7 @@ trait HasCrudBulkActions
 
         // Ptah permission check — custom bulk actions mutate records, so they
         // require the same guard as save()/restore() (fail-closed).
-        if (! $this->authorizeCrudAction('update')) {
+        if (! $this->authorizeCrudAction('update') || ! $this->crudConfigAllows('update')) {
             return;
         }
 
@@ -249,7 +252,9 @@ trait HasCrudBulkActions
             }
         }
 
-        $this->dispatch('crud-bulk-action', model: $this->model, action: $action, ids: $this->selectedRows);
+        // Os ids escopados, nao a selecao crua do cliente: um listener do host
+        // recebia ids de outra empresa (1.41.10).
+        $this->dispatch('crud-bulk-action', model: $this->model, action: $action, ids: $scopedIds);
 
         $this->selectedRows = [];
         $this->selectAll = false;

@@ -41,6 +41,15 @@ trait HasCrudImport
     /** @var mixed Livewire TemporaryUploadedFile */
     public $importFile = null;
 
+    /**
+     * Set only when the file passed updatedImportFile() — size, type and row
+     * limit. A file that failed stayed in `importFile`, and calling
+     * previewImport()/runImport() directly skipped every limit (a million
+     * rows in one transaction). Locked: the browser cannot set it.
+     */
+    #[Locked]
+    public bool $importAccepted = false;
+
     /** @var array<int|string, mixed> header index => field — client-writable, so anything; checked on use */
     public array $importMapping = [];
 
@@ -85,6 +94,8 @@ trait HasCrudImport
 
     public function updatedImportFile(): void
     {
+        $this->importAccepted = false;
+
         if (! $this->importEnabled()) {
             $this->resetImport();
 
@@ -121,11 +132,12 @@ trait HasCrudImport
         $this->importHeaders = $table['headers'];
         $this->importMapping = CrudImportReader::autoMap($table['headers'], $this->importFormCols());
         $this->importStep = 2;
+        $this->importAccepted = true;
     }
 
     public function previewImport(): void
     {
-        if (! $this->importEnabled() || $this->importFile === null) {
+        if (! $this->importEnabled() || $this->importFile === null || ! $this->importAccepted) {
             return;
         }
 
@@ -143,7 +155,7 @@ trait HasCrudImport
 
     public function runImport(): void
     {
-        if (! $this->importEnabled() || $this->importFile === null) {
+        if (! $this->importEnabled() || $this->importFile === null || ! $this->importAccepted) {
             return;
         }
 
@@ -356,6 +368,7 @@ trait HasCrudImport
     {
         $this->importStep = 1;
         $this->importFile = null;
+        $this->importAccepted = false;
         $this->importMapping = [];
         $this->importHeaders = [];
         $this->importPreview = [];

@@ -181,6 +181,16 @@ trait HasCrudColumns
     {
         $cols = $this->crudConfig['cols'] ?? [];
 
+        // 0. Never an attribute the model hides: `colsVisibleList=false` is a
+        // default the user can undo ("show all columns"), and a form-only
+        // `password` column then listed the hash — the cell reads through
+        // getAttribute(), which ignores $hidden (audit of 28/09/2026, 1.41.10).
+        $hidden = $this->hiddenModelAttributes();
+        if ($hidden !== []) {
+            $cols = array_values(array_filter($cols, fn ($col) => ($col['colsTipo'] ?? '') === 'action'
+                || ! in_array((string) ($col['colsNomeFisico'] ?? ''), $hidden, true)));
+        }
+
         // 1. Filter by visibility map
         if (! empty($this->formDataColumns)) {
             $cols = array_values(array_filter($cols, function ($col) {
