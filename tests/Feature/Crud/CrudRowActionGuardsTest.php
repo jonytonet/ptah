@@ -78,6 +78,47 @@ class CrudRowActionGuardsTest extends TestCase
     }
 
     #[Test]
+    public function an_action_permission_can_be_a_ptah_acl_key(): void
+    {
+        // 1.43.0: "objeto:acao" e o ACL do ptah (ptah_can), com o modulo
+        // ligado — quem so usa o ACL do ptah nao tem Gates.
+        config(['ptah.modules.permissions' => true]);
+        $this->screen(['actionPermission' => 'agenda:update']);
+        $this->actingAs(new GenericUser(['id' => 2]));
+
+        $asked = [];
+        $acl = function (bool $can) use (&$asked) {
+            $this->app->instance(PermissionService::class, new class($can, $asked) extends PermissionService
+            {
+                public function __construct(private bool $can, private array &$asked) {}
+
+                public function isMaster(mixed $user = null): bool
+                {
+                    return false;
+                }
+
+                public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
+                {
+                    $this->asked[] = $objectKey.':'.$action;
+
+                    return $this->can;
+                }
+            });
+        };
+
+        $acl(false);
+        $this->assertStringNotContainsString('approve(1)', $this->html());
+        $this->assertContains('agenda:update', $asked);
+
+        $acl(true);
+        $this->assertStringContainsString('approve(1)', $this->html());
+
+        // Modulo desligado: o mesmo texto volta a ser um Gate, como antes.
+        config(['ptah.modules.permissions' => false]);
+        $this->assertStringNotContainsString('approve(1)', $this->html());
+    }
+
+    #[Test]
     public function an_action_without_a_permission_shows_to_everyone_as_before(): void
     {
         $this->screen();

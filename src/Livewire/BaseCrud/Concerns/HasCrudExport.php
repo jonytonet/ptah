@@ -319,7 +319,7 @@ trait HasCrudExport
         // Totals keyed by physical column name (respect the active filters).
         // Called as a method (not the computed property) to recompute against the
         // current filter state without relying on Livewire's per-request cache.
-        $totals = $this->totalizadoresData();
+        $totals = $this->totalizadoresItems();
 
         // Pre-render rows: each cell as the same HTML the listing produces.
         $renderedRows = [];
@@ -338,12 +338,16 @@ trait HasCrudExport
         $columnDescriptors = [];
         foreach ($columns as $col) {
             $field = $col['colsNomeFisico'] ?? '';
-            $hasTotal = array_key_exists($field, $totals) && $totals[$field] !== null;
+            // Todos os totais do campo (soma E media): com mais de um, cada
+            // valor leva o nome do que ele e — como no rodape da tela.
+            $here = array_values(array_filter($totals, fn (array $t) => $t['field'] === $field && $t['value'] !== null));
+            $parts = array_map(fn (array $t) => (count($here) > 1 ? trans('ptah::ui.export_'.$t['aggregate']).' ' : '')
+                .$this->formatTotalForColumn($col, $t['value'], $t['aggregate']), $here);
             $columnDescriptors[] = [
                 'label' => $col['colsNomeLogico'] ?? $field,
                 'field' => $field,
                 'align' => $col['colsAlign'] ?? 'text-start',
-                'total' => $hasTotal ? $this->formatTotalForColumn($col, $totals[$field]) : null,
+                'total' => $parts !== [] ? implode(' · ', $parts) : null,
             ];
         }
 
@@ -403,14 +407,15 @@ trait HasCrudExport
      * Formats a totalizador value the same way the listing footer does:
      * currency renderers/helpers → "R$ 1.234,56", numeric otherwise.
      */
-    protected function formatTotalForColumn(array $col, mixed $value): string
+    protected function formatTotalForColumn(array $col, mixed $value, string $aggregate = 'sum'): string
     {
         if ($value === null) {
             return '';
         }
 
-        $isCurrency = ($col['colsHelper'] ?? '') === 'currencyFormat'
-            || ($col['colsRenderer'] ?? '') === 'money';
+        // Uma contagem nunca e dinheiro, mesmo sob a coluna de valor.
+        $isCurrency = $aggregate !== 'count' && (($col['colsHelper'] ?? '') === 'currencyFormat'
+            || ($col['colsRenderer'] ?? '') === 'money');
 
         if ($isCurrency) {
             return trans('ptah::ui.currency_prefix')

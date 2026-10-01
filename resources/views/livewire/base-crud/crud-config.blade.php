@@ -1598,7 +1598,7 @@
                                             class="px-4 py-2 font-mono text-[11px] text-slate-500 max-w-[200px] truncate">
                                             {{ $col['actionValue'] ?? '' }}</td>
                                         <td class="px-4 py-2">
-                                            @php $icon = $col['actionIcon'] ?: 'bx bx-link'; @endphp
+                                            @php $icon = ($col['actionIcon'] ?? '') ?: 'bx bx-link'; @endphp
                                             <div class="flex items-center gap-1.5">
                                                 <i class="{{ $icon }} text-base text-slate-500"></i>
                                                 <span class="font-mono text-[10px] text-slate-400">{{ $icon }}</span>
@@ -1608,7 +1608,7 @@
                                                 class="bg-{{ $col['actionColor'] ?? 'slate' }}-100 text-{{ $col['actionColor'] ?? 'slate' }}-700 px-1.5 py-0.5 rounded text-[11px]">{{
                                                 $col['actionColor'] ?? 'primary' }}</span></td>
                                         <td class="px-4 py-2 font-mono text-[11px] text-slate-400">{{
-                                            $col['actionPermission'] ?: '—' }}</td>
+                                            ($col['actionPermission'] ?? '') ?: '—' }}</td>
                                         <td class="px-4 py-2">
                                             <div class="flex items-center gap-1">
                                                 <button wire:click="editAction({{ $i }})" title="Editar"
@@ -1706,7 +1706,7 @@
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_act_permission_label') }}</label>
                                     <input type="text" wire:model="formDataAction.actionPermission"
                                         title="{{ __('ptah::ui.cfg_tip_action_permission') }}"
-                                        placeholder="ex: admin" class="font-mono cfg-input" />
+                                        placeholder="ex: agenda:update" class="font-mono cfg-input" />
                                 </div>
                                 <div>
                                     <label class="cfg-label inline-flex items-center gap-2">

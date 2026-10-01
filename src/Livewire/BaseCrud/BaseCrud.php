@@ -557,7 +557,10 @@ class BaseCrud extends Component
             'permissions' => $this->crudConfig['permissions'] ?? [],
             'effectivePerms' => $effectivePerms,
             'exportCfg' => $this->crudConfig['exportConfig'] ?? [],
-            'totData' => $this->totalizadoresData,
+            // Uma consulta por total: os itens (todos, para o rodape) e o mapa
+            // por campo (subtotal da quebra, views do host) saem da mesma lista.
+            'totItems' => $totItems = $this->totalizadoresItems(),
+            'totData' => self::totalsByField($totItems),
             'crudTitle' => $this->crudConfig['displayName']
                                     ?? $this->crudConfig['crud']
                                     ?? class_basename(str_replace('/', '\\', $this->model)),

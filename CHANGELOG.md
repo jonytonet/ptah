@@ -7,6 +7,56 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.43.0] - 2026-09-30
+
+From the PetPlace ERP reports on 1.42.1.
+
+### Fixed - the config editor was a 500 for the admin
+
+A `colsTipo: action` column written by hand (or imported) with only the
+essential keys passes the validator and works on the listing, but the editor
+read `actionIcon` / `actionPermission` without a default: "Undefined array
+key", and since the editor is drawn on the page of whoever may configure, the
+whole screen was a 500 for master/admin only. A new test opens the editor with
+a minimal column of every type (and opens each one for editing).
+
+### Fixed - two totals of one field: the last overwrote the others
+
+`totalizadores` with sum AND avg of the same field — the docs' own example —
+kept only the average, and the footer showed it under "Total" as if it were
+the total. Every aggregate is now kept (`$totItems`); the footer and the print
+screen show all of them under the column, each named when there is more than
+one. `$totData` stays one value per field (now the FIRST declared). A `count`
+is no longer formatted as money under a currency column.
+
+### Fixed - `period` of a dashboard widget had only a start
+
+`period('month')` was `>= first day` with no end, so a future date (an
+appointment) counted "this month". Now closed at both ends.
+
+### Added - `actionPermission` accepts a ptah ACL key
+
+`"actionPermission": "agenda:update"` → `ptah_can('agenda', 'update')`, with
+the Permissions module on — the same check the dashboard `permission` uses.
+Any other value, or the module off, is a Gate as before.
+
+### Added - dashboard: value trends, `breakdown`, groups
+
+- `trend` takes `aggregate` (`count`/`sum`/`avg`), `field`, `format` and
+  `group` (`day`/`week`/`month`); `days` is the window (`'group' => 'month',
+  'days' => 365` = 12 bars). Grouped in the database (it fetched the date of
+  every row of the window before); an average is sum ÷ count.
+- New `breakdown` widget: totals per category (`group_by` a column or
+  `relation.column` of a belongsTo), top `limit` plus one "Others" bar,
+  optional `labels`, same `where`/`period`/`permission`/company as the rest.
+- `widgets` may hold named groups next to the flat list (the default group,
+  shown on /dashboard): `@include('ptah::dashboard.widgets', ['group' => 'financeiro'])`.
+
+Points of `trend` keep `date` and `count`, and gain `label`, `value` and
+`display`.
+
+---
+
 ## [1.42.1] - 2026-09-29
 
 ### Fixed - the form opened editable before it was loaded

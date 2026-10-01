@@ -82,12 +82,23 @@ class DashboardWidgetsTest extends TestCase
     }
 
     #[Test]
+    public function a_period_is_closed_at_its_end(): void
+    {
+        // Uma data futura (agendamento) nao entra "no mes".
+        DashOrder::query()->forceCreate(['code' => 'F1', 'status' => 'open', 'total' => 1, 'company_id' => 1, 'created_at' => '2026-10-05 08:00:00', 'updated_at' => '2026-10-05 08:00:00']);
+
+        $this->assertSame(3, $this->widget(['type' => 'stat', 'period' => 'month'])['raw'], 'O F1 (outubro) entrou no mes.');
+        $this->assertSame(2, $this->widget(['type' => 'stat', 'period' => 'today'])['raw']);
+    }
+
+    #[Test]
     public function a_trend_counts_per_day(): void
     {
         $trend = $this->widget(['type' => 'trend', 'days' => 7]);
 
         $this->assertCount(7, $trend['points']);
-        $this->assertSame(['date' => '2026-09-24', 'count' => 2], end($trend['points']));
+        // date e count seguem como eram (views do host os leem); value/label/display vieram com o 1.43.0.
+        $this->assertSame(['date' => '2026-09-24', 'count' => 2], array_intersect_key(end($trend['points']), ['date' => 1, 'count' => 1]));
         $this->assertSame(3, $trend['total']);
     }
 
