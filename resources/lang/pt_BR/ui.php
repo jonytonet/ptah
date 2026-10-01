@@ -1510,7 +1510,7 @@ return [
     'cfg_act_value_label' => 'Valor',
     'cfg_act_icon_label' => 'Ícone (classe CSS Boxicons)',
     'cfg_act_color_label' => 'Cor',
-    'cfg_act_permission_label' => 'Permissão Gate (opcional)',
+    'cfg_act_permission_label' => 'Permissão (opcional)',
     'cfg_act_confirm_label' => 'Pedir confirmação',
     'cfg_act_confirm_message_label' => 'Mensagem de confirmação',
     'cfg_tip_action_confirm' => 'Mostra uma confirmação antes de a ação rodar.',
@@ -1810,6 +1810,8 @@ return [
     'btn_duplicate_title' => 'Duplicar registro',
     'row_action_confirm' => 'Tem certeza?',
     'sd_value_not_allowed' => 'Escolha uma opção da lista.',
+    'dashboard_others' => 'Outros',
+    'dashboard_no_value' => 'Sem valor',
     'dashboard_widget_error' => 'Não foi possível carregar este indicador.',
     'btn_print' => 'Imprimir',
 
@@ -2004,7 +2006,7 @@ return [
     'cfg_tip_action_value' => 'Alvo da ação, de acordo com o tipo acima: uma URL para link, uma chamada de método para livewire, ou uma expressão JS para javascript. Use %id% ou %campo% como placeholders da linha.',
     'cfg_tip_action_icon' => 'Classe CSS do Boxicons exibida no botão da ação (ex: bx bx-edit).',
     'cfg_tip_action_color' => 'Tema de cor aplicado ao botão da ação.',
-    'cfg_tip_action_permission' => 'Nome do gate necessário para ver esta ação — deixe em branco para exibir a todos.',
+    'cfg_tip_action_permission' => 'Quem pode ver esta ação: o nome de um Gate, ou a chave do ACL do ptah "objeto:ação" (ex.: agenda:update) com o módulo de permissões ligado. Em branco, todos veem.',
 
     // Aba Filtros
     'cfg_tip_filter_field' => 'Identificador interno único deste filtro. Não precisa existir como coluna no banco.',

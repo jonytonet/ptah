@@ -4,7 +4,7 @@
 @section('content')
 <x-forge-page-header title="Dashboard" :subtitle="__('ptah::ui.dashboard_subtitle')" />
 
-@if (! empty(config('ptah-dashboard.widgets')))
+@if (app(\Ptah\Services\DashboardService::class)->hasWidgets())
     @include('ptah::dashboard.widgets')
 @else
 

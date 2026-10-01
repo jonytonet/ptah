@@ -1371,7 +1371,15 @@ If not passed, falls back to `session('company_id', 0)`.
 | `max` | Maximum |
 | `min` | Minimum |
 
-Accessible in the view via `$totData`:
+The same field can be totalled more than once (above: sum AND average of
+`total_value`). The footer shows every value under its column, each named
+("Sum", "Average") when there is more than one; the print screen does the
+same. A `count` is never formatted as money, even under a currency column.
+(Until 1.43.0 the last aggregate of a field overwrote the others.)
+
+Accessible in the view via `$totData` — one value per field, the FIRST
+aggregate declared for it — and `$totItems`, every total in order
+(`[['field' => ..., 'aggregate' => ..., 'value' => ...], ...]`):
 
 ```blade
 Total: $ {{ number_format($totData['total_value'] ?? 0, 2, '.', ',') }}

@@ -881,9 +881,21 @@ trait HasCrudRenderers
     {
         $gate = trim((string) ($col['actionPermission'] ?? ''));
 
+        if ($gate === '') {
+            return true;
+        }
+
+        // "objeto:acao" (agenda:update) e a chave do ACL do proprio ptah, com
+        // o modulo de permissoes ligado — o mesmo ptah_can do `permission`
+        // dos widgets. Qualquer outro valor (ou modulo desligado) e um Gate.
+        if (config('ptah.modules.permissions') && function_exists('ptah_can')
+            && preg_match('/^([A-Za-z0-9_.\-]+):(create|read|update|delete)$/', $gate, $m)) {
+            return auth()->check() && ptah_can($m[1], $m[2]);
+        }
+
         // Gate::forUser e nao ->can(): um Authenticatable sem o trait
         // Authorizable (GenericUser, guards customizados) nao tem can().
-        return $gate === '' || (auth()->check() && Gate::forUser(auth()->user())->allows($gate));
+        return auth()->check() && Gate::forUser(auth()->user())->allows($gate);
     }
 
     /**

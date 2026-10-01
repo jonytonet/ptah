@@ -349,20 +349,30 @@
         </tbody>
 
         {{-- Totalizadores --}}
-        @if (!empty($totData))
+        @if (!empty($totItems ?? $totData))
             <tfoot class="ptah-c-tfoot">
                 <tr>
                     @foreach ($visibleCols as $col)
                         @if (($col['colsTipo'] ?? '') !== 'action')
-                            @php $totVal = $totData[$col['colsNomeFisico'] ?? ''] ?? null; @endphp
+                            @php
+                                // Todos os totais da coluna (soma E media do mesmo campo): com
+                                // mais de um, cada valor leva o nome do que ele e.
+                                $totHere = array_values(array_filter($totItems ?? [], fn ($t) => $t['field'] === ($col['colsNomeFisico'] ?? '') && $t['value'] !== null));
+                            @endphp
                                 <td class="px-3 py-2.5 whitespace-nowrap ptah-c-tfoot_td {{ $col['colsAlign'] ?? 'text-start' }}">
-                                @if ($totVal !== null)
-                                    @if (($col['colsHelper'] ?? '') === 'currencyFormat')
-                                    {{ __('ptah::ui.currency_prefix') }}{{ number_format((float)$totVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
-                                    @else
-                                        {{ $totVal }}
-                                    @endif
-                                @endif
+                                @foreach ($totHere as $tot)
+                                    <div>
+                                        @if (count($totHere) > 1)
+                                            <span class="text-xs font-normal opacity-70">{{ __('ptah::ui.export_'.$tot['aggregate']) }}</span>
+                                        @endif
+                                        {{-- Uma contagem nunca e dinheiro, mesmo sob a coluna de valor. --}}
+                                        @if (($col['colsHelper'] ?? '') === 'currencyFormat' && $tot['aggregate'] !== 'count')
+                                            {{ __('ptah::ui.currency_prefix') }}{{ number_format((float) $tot['value'], 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
+                                        @else
+                                            {{ $tot['value'] }}
+                                        @endif
+                                    </div>
+                                @endforeach
                             </td>
                         @endif
                     @endforeach

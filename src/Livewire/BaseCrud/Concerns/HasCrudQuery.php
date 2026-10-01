@@ -80,12 +80,31 @@ trait HasCrudQuery
     }
 
     /**
-     * Column totals (sums / counts / averages).
-     * Each aggregate clones the query to avoid mutual interference.
+     * Column totals keyed by field — what `$totData` has always been, for the
+     * group-break subtotals and host views (`$totData['total_value']`).
+     *
+     * A field declared twice (sum AND avg of `total_value`, the docs' own
+     * example) keeps its FIRST aggregate here; until 1.43.0 the last one
+     * overwrote it, and the footer showed the average under "Total" as if it
+     * were the total. Every aggregate is in totalizadoresItems().
+     *
+     * @return array<string, mixed>
      */
     #[Computed]
     #[ServerOnly]
     public function totalizadoresData(): array
+    {
+        return self::totalsByField($this->totalizadoresItems());
+    }
+
+    /**
+     * Every configured total, in order — one entry per field + aggregate.
+     *
+     * @return list<array{field: string, aggregate: string, value: mixed}>
+     */
+    #[Computed]
+    #[ServerOnly]
+    public function totalizadoresItems(): array
     {
         $totConfig = $this->crudConfig['totalizadores'] ?? [];
 
@@ -104,11 +123,12 @@ trait HasCrudQuery
         // the rows the user is actually seeing. No grouping/sort needed here.
         [$baseQuery] = $this->buildBaseQuery($modelInstance);
 
-        $result = [];
+        $items = [];
+        $seen = [];
 
         foreach ($totConfig['columns'] as $totCol) {
             $field = $totCol['field'] ?? null;
-            $aggregate = $totCol['aggregate'] ?? 'sum';
+            $aggregate = (string) ($totCol['aggregate'] ?? 'sum');
 
             // Column comes from config → guard before it reaches the aggregate
             // (sum/avg/… interpolate it as an identifier).
@@ -116,20 +136,46 @@ trait HasCrudQuery
                 continue;
             }
 
+            // O mesmo par declarado duas vezes e um so.
+            if (isset($seen[$field.':'.$aggregate])) {
+                continue;
+            }
+            $seen[$field.':'.$aggregate] = true;
+
             // Clone the query for each aggregate (avoids accumulated SELECTs)
             $cloned = clone $baseQuery;
 
-            $result[$field] = match ($aggregate) {
-                'sum' => $cloned->sum($field),
-                'count' => $cloned->count($field),
-                'avg' => round((float) $cloned->avg($field), 2),
-                'max' => $cloned->max($field),
-                'min' => $cloned->min($field),
-                default => null,
-            };
+            $items[] = [
+                'field' => (string) $field,
+                'aggregate' => $aggregate,
+                'value' => match ($aggregate) {
+                    'sum' => $cloned->sum($field),
+                    'count' => $cloned->count($field),
+                    'avg' => round((float) $cloned->avg($field), 2),
+                    'max' => $cloned->max($field),
+                    'min' => $cloned->min($field),
+                    default => null,
+                },
+            ];
         }
 
-        return $result;
+        return $items;
+    }
+
+    /**
+     * @param  list<array{field: string, aggregate: string, value: mixed}>  $items
+     * @return array<string, mixed>
+     */
+    protected static function totalsByField(array $items): array
+    {
+        $out = [];
+        foreach ($items as $item) {
+            if (! array_key_exists($item['field'], $out)) {
+                $out[$item['field']] = $item['value'];
+            }
+        }
+
+        return $out;
     }
 
     // ── Shared query building ───────────────────────────────────────────────────

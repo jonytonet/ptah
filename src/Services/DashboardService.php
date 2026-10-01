@@ -7,6 +7,7 @@ namespace Ptah\Services;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -29,18 +30,51 @@ final class DashboardService
 {
     private const OPERATORS = ['=', '!=', '<>', '>', '>=', '<', '<=', 'like', 'in', 'not in', 'null', 'not null'];
 
+    /** The group /dashboard shows — and the one a flat `widgets` list is. */
+    public const DEFAULT_GROUP = 'dashboard';
+
     /**
      * @return list<array<string, mixed>>
      */
-    public function visibleWidgets(): array
+    public function visibleWidgets(?string $group = null): array
     {
         $out = [];
 
-        foreach ((array) config('ptah-dashboard.widgets', []) as $i => $widget) {
+        foreach ($this->widgetsOf($group ?? self::DEFAULT_GROUP) as $i => $widget) {
             if (! is_array($widget) || ! $this->canSee($widget)) {
                 continue;
             }
             $out[] = $this->compute($widget, (int) $i);
+        }
+
+        return $out;
+    }
+
+    public function hasWidgets(?string $group = null): bool
+    {
+        return $this->widgetsOf($group ?? self::DEFAULT_GROUP) !== [];
+    }
+
+    /**
+     * The widgets of one group. `widgets` may mix both forms: the numbered
+     * entries (the flat list it always was) are the default group, and a
+     * named entry holding a list is a group of its own —
+     * `'financeiro' => [...]`, placed with
+     * `@include('ptah::dashboard.widgets', ['group' => 'financeiro'])`.
+     *
+     * @return list<mixed>
+     */
+    private function widgetsOf(string $group): array
+    {
+        $all = (array) config('ptah-dashboard.widgets', []);
+        $out = [];
+
+        foreach ($all as $key => $entry) {
+            if (is_int($key) && $group === self::DEFAULT_GROUP) {
+                $out[] = $entry;
+            } elseif ($key === $group && is_array($entry) && array_is_list($entry)) {
+                array_push($out, ...$entry);
+            }
         }
 
         return $out;
@@ -96,7 +130,8 @@ final class DashboardService
             'stat' => $this->stat($w),
             'trend' => $this->trend($w),
             'latest' => $this->latest($w),
-            default => throw new \InvalidArgumentException('Unknown widget type "'.($w['type'] ?? '').'" (stat, trend, latest).'),
+            'breakdown' => $this->breakdown($w),
+            default => throw new \InvalidArgumentException('Unknown widget type "'.($w['type'] ?? '').'" (stat, trend, breakdown, latest).'),
         };
     }
 
@@ -120,34 +155,199 @@ final class DashboardService
     }
 
     /**
+     * Bars over a window of `days`, one per day, week or month (`group`), of
+     * the count — or the sum/avg of `field` (`aggregate`): revenue per day,
+     * receivables per month.
+     *
+     * Grouped by DAY in the database (at most 366 rows come back, not every
+     * row of the window — 1.43.0), then folded into weeks/months here, which
+     * keeps the SQL the same on every driver. An average is folded as
+     * sum / count, never as an average of averages.
+     *
      * @param  array<string, mixed>  $w
-     * @return array{points: list<array{date: string, count: int}>, total: int, max: int}
+     * @return array<string, mixed>
      */
     private function trend(array $w): array
     {
+        $group = (string) ($w['group'] ?? 'day');
         $days = max(2, min(366, (int) ($w['days'] ?? 30)));
-        $from = CarbonImmutable::today()->subDays($days - 1);
+        $today = CarbonImmutable::today();
+
+        // `days` e a janela; agrupado, ela vira o numero de semanas/meses
+        // mais proximo (365 dias por mes = 12 barras), do inicio do periodo.
+        [$from, $step, $bucket, $label] = match ($group) {
+            'day' => [$today->subDays($days - 1), fn ($d) => $d->addDay(), fn ($d) => $d, 'd/m'],
+            'week' => [$today->startOfWeek()->subWeeks(max(2, (int) round($days / 7)) - 1), fn ($d) => $d->addWeek(), fn ($d) => $d->startOfWeek(), 'd/m'],
+            'month' => [$today->startOfMonth()->subMonthsNoOverflow(max(2, (int) round($days / 30.4375)) - 1), fn ($d) => $d->addMonthNoOverflow(), fn ($d) => $d->startOfMonth(), 'm/Y'],
+            default => throw new \InvalidArgumentException("Unknown group \"{$group}\" (day, week, month)."),
+        };
+
         $query = $this->query($w);
         $dateCol = $this->column($query, (string) ($w['date_field'] ?? 'created_at'));
+        [$aggregate, $field] = $this->aggregateOf($query, $w);
 
-        $counts = [];
-        foreach ((clone $query)->where($dateCol, '>=', $from)->pluck($dateCol) as $value) {
+        $base = (clone $query)->where($dateCol, '>=', $from)->where($dateCol, '<=', $today->endOfDay())->toBase();
+        $grammar = $base->getGrammar();
+        $day = $query->getModel()->getConnection()->getDriverName() === 'sqlsrv'
+            ? 'CAST('.$grammar->wrap($dateCol).' AS date)'
+            : 'DATE('.$grammar->wrap($dateCol).')';
+        $base->columns = null;
+        $base->reorder()->selectRaw($day.' as ptah_day, COUNT(*) as ptah_n'.($field ? ', SUM('.$grammar->wrap($field).') as ptah_s' : ''))
+            ->groupByRaw($day);
+
+        $n = [];
+        $s = [];
+        foreach ($base->get() as $row) {
             try {
-                $day = CarbonImmutable::parse((string) $value)->format('Y-m-d');
-                $counts[$day] = ($counts[$day] ?? 0) + 1;
+                $key = $bucket(CarbonImmutable::parse((string) $row->ptah_day))->format('Y-m-d');
             } catch (\Throwable) {
                 continue;
             }
+            $n[$key] = ($n[$key] ?? 0) + (int) $row->ptah_n;
+            $s[$key] = ($s[$key] ?? 0) + (float) ($row->ptah_s ?? 0);
         }
 
+        $format = (string) ($w['format'] ?? 'number');
         $points = [];
-        for ($d = $from; $d <= CarbonImmutable::today(); $d = $d->addDay()) {
-            $points[] = ['date' => $d->format('Y-m-d'), 'count' => $counts[$d->format('Y-m-d')] ?? 0];
+        for ($d = $from; $d <= $today; $d = $step($d)) {
+            $key = $d->format('Y-m-d');
+            $value = $this->fold($aggregate, $n[$key] ?? 0, $s[$key] ?? 0.0);
+            $points[] = ['date' => $key, 'label' => $d->format($label), 'count' => $n[$key] ?? 0, 'value' => $value, 'display' => $this->format($value, $format)];
         }
 
-        $values = array_column($points, 'count');
+        $total = $this->fold($aggregate, array_sum($n), (float) array_sum($s));
+        $values = array_column($points, 'value');
 
-        return ['points' => $points, 'total' => array_sum($values), 'max' => max(1, ...$values)];
+        return ['points' => $points, 'total' => $total, 'display_total' => $this->format($total, $format), 'max' => max(1, ...$values), 'group' => $group];
+    }
+
+    /**
+     * Totals per category (`group_by` a column, or `relation.column` of a
+     * belongsTo): sales of the month per payment method. The top `limit`, and
+     * the rest as one "Others" bar so the bars still add up to the total.
+     *
+     * @param  array<string, mixed>  $w
+     * @return array<string, mixed>
+     */
+    private function breakdown(array $w): array
+    {
+        $query = $this->query($w);
+        $this->period($query, $w, (string) ($w['period'] ?? 'all'));
+        [$aggregate, $field] = $this->aggregateOf($query, $w);
+        $groupCol = $this->groupColumn($query, (string) ($w['group_by'] ?? ''));
+        $limit = max(1, min(20, (int) ($w['limit'] ?? 5)));
+        $format = (string) ($w['format'] ?? 'number');
+
+        $base = (clone $query)->toBase();
+        $grammar = $base->getGrammar();
+        $sum = $field ? 'SUM('.$grammar->wrap($field).')' : '0';
+        $order = match ($aggregate) {
+            'sum' => $sum,
+            'avg' => 'AVG('.$grammar->wrap((string) $field).')',
+            default => 'COUNT(*)',
+        };
+        $base->columns = null;
+        $rows = $base->reorder()->selectRaw($grammar->wrap($groupCol).' as ptah_g, COUNT(*) as ptah_n, '.$sum.' as ptah_s')
+            ->groupBy($groupCol)->orderByRaw($order.' desc')->limit($limit)->get();
+
+        $all = (clone $query)->toBase();
+        $all->columns = null;
+        $totals = $all->reorder()->selectRaw('COUNT(*) as ptah_n, '.$sum.' as ptah_s')->first();
+        $totalN = (int) ($totals->ptah_n ?? 0);
+        $totalS = (float) ($totals->ptah_s ?? 0);
+
+        $labels = (array) ($w['labels'] ?? []);
+        $items = [];
+        $topN = 0;
+        $topS = 0.0;
+        foreach ($rows as $row) {
+            $raw = $row->ptah_g;
+            $value = $this->fold($aggregate, (int) $row->ptah_n, (float) $row->ptah_s);
+            $items[] = [
+                'label' => $raw === null || $raw === '' ? trans('ptah::ui.dashboard_no_value') : (string) ($labels[(string) $raw] ?? $raw),
+                'value' => $value,
+                'display' => $this->format($value, $format),
+            ];
+            $topN += (int) $row->ptah_n;
+            $topS += (float) $row->ptah_s;
+        }
+
+        if ($totalN > $topN) {
+            $value = $this->fold($aggregate, $totalN - $topN, $totalS - $topS);
+            $items[] = ['label' => trans('ptah::ui.dashboard_others'), 'value' => $value, 'display' => $this->format($value, $format), 'others' => true];
+        }
+
+        $total = $this->fold($aggregate, $totalN, $totalS);
+
+        return ['items' => $items, 'total' => $total, 'display_total' => $this->format($total, $format), 'max' => max(1, ...(array_column($items, 'value') ?: [0]))];
+    }
+
+    /**
+     * `aggregate` (count|sum|avg) and the qualified `field` it needs.
+     *
+     * @param  array<string, mixed>  $w
+     * @return array{0: string, 1: ?string}
+     */
+    private function aggregateOf(Builder $query, array $w): array
+    {
+        $aggregate = (string) ($w['aggregate'] ?? 'count');
+
+        return match ($aggregate) {
+            'count' => ['count', null],
+            'sum', 'avg' => [$aggregate, $this->column($query, (string) ($w['field'] ?? ''))],
+            default => throw new \InvalidArgumentException("Unknown aggregate \"{$aggregate}\" (count, sum, avg)."),
+        };
+    }
+
+    private function fold(string $aggregate, int $count, float $sum): float|int
+    {
+        return match ($aggregate) {
+            'sum' => round($sum, 2),
+            'avg' => $count > 0 ? round($sum / $count, 2) : 0,
+            default => $count,
+        };
+    }
+
+    /**
+     * A column of the model, or `relation.column` of one of its belongsTo
+     * relations (joined) — never a `$hidden` attribute.
+     */
+    private function groupColumn(Builder $query, string $groupBy): string
+    {
+        $model = $query->getModel();
+
+        if ($groupBy === '') {
+            throw new \InvalidArgumentException('A breakdown widget needs "group_by".');
+        }
+
+        if (str_contains($groupBy, '.')) {
+            [$name, $column] = explode('.', $groupBy, 2);
+
+            // So um metodo do proprio model: nunca save/delete/... do Model.
+            if (method_exists($model, $name) && ! method_exists(Model::class, $name)) {
+                $relation = $model->{$name}();
+
+                if (! $relation instanceof BelongsTo) {
+                    throw new \InvalidArgumentException("\"{$name}\" is not a belongsTo relation (breakdown groups by a belongsTo).");
+                }
+
+                $related = $relation->getRelated();
+                if (! SqlIdentifier::isSafe($column) || str_contains($column, '.') || in_array($column, $related->getHidden(), true)) {
+                    throw new \InvalidArgumentException("\"{$column}\" cannot be grouped by.");
+                }
+
+                $query->leftJoin($related->getTable().' as ptah_bd', 'ptah_bd.'.$relation->getOwnerKeyName(), '=', $relation->getQualifiedForeignKeyName());
+
+                return 'ptah_bd.'.$column;
+            }
+        }
+
+        $qualified = $this->column($query, $groupBy);
+        if (in_array(str_contains($groupBy, '.') ? substr($groupBy, strrpos($groupBy, '.') + 1) : $groupBy, $model->getHidden(), true)) {
+            throw new \InvalidArgumentException("\"{$groupBy}\" cannot be grouped by.");
+        }
+
+        return $qualified;
     }
 
     /**
@@ -228,15 +428,18 @@ final class DashboardService
         }
 
         $today = CarbonImmutable::today();
-        $from = match ($period) {
-            'today' => $today,
-            'week' => $today->startOfWeek(),
-            'month' => $today->startOfMonth(),
-            'year' => $today->startOfYear(),
+        [$from, $to] = match ($period) {
+            'today' => [$today, $today->endOfDay()],
+            'week' => [$today->startOfWeek(), $today->endOfWeek()],
+            'month' => [$today->startOfMonth(), $today->endOfMonth()],
+            'year' => [$today->startOfYear(), $today->endOfYear()],
             default => throw new \InvalidArgumentException("Unknown period \"{$period}\" (today, week, month, year, all)."),
         };
 
-        $query->where($this->column($query, (string) ($w['date_field'] ?? 'created_at')), '>=', $from);
+        // Fechado nos dois lados: com uma data futura (a data agendada), "no
+        // mes" somava tambem os meses seguintes.
+        $column = $this->column($query, (string) ($w['date_field'] ?? 'created_at'));
+        $query->where($column, '>=', $from)->where($column, '<=', $to);
     }
 
     private function column(Builder $query, string $column): string

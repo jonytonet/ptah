@@ -1509,7 +1509,7 @@ return [
     'cfg_act_value_label' => 'Value',
     'cfg_act_icon_label' => 'Icon (Boxicons CSS class)',
     'cfg_act_color_label' => 'Color',
-    'cfg_act_permission_label' => 'Gate Permission (optional)',
+    'cfg_act_permission_label' => 'Permission (optional)',
     'cfg_act_confirm_label' => 'Ask for confirmation',
     'cfg_act_confirm_message_label' => 'Confirmation message',
     'cfg_tip_action_confirm' => 'Shows a confirmation before the action runs.',
@@ -1808,6 +1808,8 @@ return [
     'btn_duplicate_title' => 'Duplicate record',
     'row_action_confirm' => 'Are you sure?',
     'sd_value_not_allowed' => 'Choose an option from the list.',
+    'dashboard_others' => 'Others',
+    'dashboard_no_value' => 'No value',
     'dashboard_widget_error' => 'This widget could not be loaded.',
     'btn_print' => 'Print',
 
@@ -2002,7 +2004,7 @@ return [
     'cfg_tip_action_value' => 'Target of the action, following the type above: a URL for link, a method call for livewire, or a JS expression for javascript. Use %id% or %field% as row placeholders.',
     'cfg_tip_action_icon' => 'Boxicons CSS class shown on the action button (e.g. bx bx-edit).',
     'cfg_tip_action_color' => 'Color theme applied to the action button.',
-    'cfg_tip_action_permission' => 'Gate name required to see this action — leave blank to show it to everyone.',
+    'cfg_tip_action_permission' => 'Who may see this action: a Gate name, or a ptah ACL key "object:action" (e.g. agenda:update) when the permissions module is on. Leave blank to show it to everyone.',
 
     // Filters tab
     'cfg_tip_filter_field' => 'Unique internal identifier for this filter. Does not need to exist as a database column.',

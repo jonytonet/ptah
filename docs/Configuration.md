@@ -2436,7 +2436,7 @@ Properties of each action in `actions[]`:
 | `actionColor` | string | `'primary'` | Button color: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
 | `actionConfirm` | bool | `false` | Ask before running (`wire:confirm` on livewire actions, `confirm()` on link/javascript). Read since 1.41.1 |
 | `actionConfirmMessage` | string | `''` | Confirmation text; blank uses `row_action_confirm` ("Are you sure?") |
-| `actionPermission` | string | `''` | Gate the user needs to SEE the button (read since 1.41.1). A `livewire` action still reaches your method — check there too |
+| `actionPermission` | string | `''` | Who may SEE the button (read since 1.41.1): a Gate name, or — with the Permissions module on — a ptah ACL key `object:action` (`agenda:update` → `ptah_can('agenda', 'update')`, since 1.43.0). A `livewire` action still reaches your method — check there too |
 
 **Supported placeholders in `actionValue`:**
 - `%id%` → Record ID
