@@ -1812,6 +1812,7 @@ return [
     'sd_value_not_allowed' => 'Escolha uma opção da lista.',
     'dashboard_others' => 'Outros',
     'dashboard_no_value' => 'Sem valor',
+    'ai_empty_turn' => 'Não consegui concluir a resposta. Tente de novo.',
     'dashboard_widget_error' => 'Não foi possível carregar este indicador.',
     'btn_print' => 'Imprimir',
 
@@ -1884,6 +1885,8 @@ return [
     'notif_empty' => 'Nenhuma notificação.',
     'notif_action_default' => 'Ver detalhes',
     'notif_mark_all_read' => 'Marcar todas como lidas',
+    'notif_marked_read' => '{1} 1 notificação marcada como lida.|[2,*] :count notificações marcadas como lidas.',
+    'notif_none_unread' => 'Nenhuma notificação não lida.',
     'notif_view_all' => 'Ver todas',
     'notif_dismiss' => 'Dispensar',
     'notif_unread_badge_label' => ':count notificação(ões) não lida(s)',

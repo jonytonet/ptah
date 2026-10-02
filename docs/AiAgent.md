@@ -197,6 +197,7 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
 | `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
 | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
+| `PTAH_AI_MAX_STEPS` | `5` | Tool rounds per turn (1–50). A signup flow that chains lookups may need more |
 | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | Fix `"properties": []` in tool payloads for strict providers — see the config block above |
 | `PRISM_REQUEST_TIMEOUT` | `30` | HTTP timeout in seconds for AI provider requests — increase for slow local models (e.g. Ollama on CPU) |
 
@@ -259,6 +260,17 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 - **No streaming**: this provider ships no streaming handler, so the answer
   arrives all at once even with `PTAH_AI_STREAM=true`. Nothing to configure —
   ptah detects it and takes the non-streaming path.
+
+#### A turn that ends without text
+
+If a streamed answer ends with no text and no tool has run (seen with xAI/Grok
+on a conversation with history: the tool call was lost in the stream), ptah
+logs a warning and runs the same turn once more without streaming. It never
+retries after a tool has run — that would repeat what the tool did. A turn
+that still has no text stores and shows "I could not finish this answer.
+Please try again." instead of an empty bubble, and logs provider, model and
+steps. On xAI the model's reasoning is not read from the stream (the widget
+never shows it).
 
 #### OpenAI-compatible (custom endpoint)
 - Use this for Together, Fireworks, Cerebras, SambaNova, vLLM, LM Studio,

@@ -51,6 +51,20 @@ class NotificationBellTest extends NotificationTestCase
     }
 
     #[Test]
+    public function marking_all_as_read_confirms_with_a_toast(): void
+    {
+        // Sem o aviso, o clique parecia nao ter feito nada (1.43.1).
+        $this->loginAs(1);
+        app(NotificationService::class)->push(1, ['title' => 'Uma']);
+        app(NotificationService::class)->push(1, ['title' => 'Duas']);
+
+        Livewire::test(NotificationBell::class)->call('markAllRead')
+            ->assertDispatched('ptah-toast', title: trans_choice('ptah::ui.notif_marked_read', 2, ['count' => 2]), color: 'success')
+            ->call('markAllRead')
+            ->assertDispatched('ptah-toast', title: trans('ptah::ui.notif_none_unread'));
+    }
+
+    #[Test]
     public function the_empty_state_is_shown_when_there_are_no_active_notifications(): void
     {
         $this->loginAs(1);

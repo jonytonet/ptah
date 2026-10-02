@@ -12,7 +12,10 @@ use Illuminate\Support\Str;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\PrismManager;
+use Prism\Prism\Streaming\Events\StepFinishEvent;
 use Prism\Prism\Streaming\Events\TextDeltaEvent;
+use Prism\Prism\Streaming\Events\ToolCallEvent;
+use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\ValueObjects\Media\Text;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
@@ -32,6 +35,7 @@ use Ptah\Support\AI\ProviderFailure;
  */
 class AiChatService
 {
+    /** Default for `ptah.ai_agent.max_steps`. */
     private const MAX_TOOL_ITERATIONS = 5;
 
     public function __construct(
@@ -144,7 +148,7 @@ class AiChatService
         return $this->persistTurn(
             $ctx,
             $message,
-            $response->text ?? '',
+            $this->orEmptyTurnNotice($ctx['config'], (string) ($response->text ?? ''), $response->steps->count(), 'send'),
             $response->usage->promptTokens ?? 0,
             $response->usage->completionTokens ?? 0,
         );
@@ -176,9 +180,20 @@ class AiChatService
         $full = '';
         $inputTokens = 0;
         $outputTokens = 0;
+        $toolCalls = 0;
+        $toolResults = 0;
+        $steps = 0;
 
         try {
             foreach ($this->buildRequest($ctx)->asStream() as $event) {
+                if ($event instanceof ToolCallEvent) {
+                    $toolCalls++;
+                } elseif ($event instanceof ToolResultEvent) {
+                    $toolResults++;
+                } elseif ($event instanceof StepFinishEvent) {
+                    $steps++;
+                }
+
                 $delta = $this->extractDelta($event);
                 if ($delta !== '') {
                     $full .= $delta;
@@ -194,6 +209,30 @@ class AiChatService
                     $outputTokens = $usage->completionTokens ?? $outputTokens;
                 }
             }
+
+            // O stream terminou sem texto e sem ter executado tool nenhuma
+            // (xAI/Grok com historico: o pedido de tool se perdia no stream e
+            // a resposta acabava vazia, sem excecao). O mesmo turno sem stream
+            // funciona — refeito uma vez, com send(). Nunca depois de uma tool
+            // ter rodado: refazer repetiria o efeito dela (o cadastro em dobro).
+            if (trim($full) === '' && $toolResults === 0) {
+                Log::warning('[Ptah AI] Stream ended without text; retrying the turn without streaming', [
+                    'provider' => $ctx['config']->provider,
+                    'model' => $ctx['config']->model,
+                    'steps' => $steps,
+                    'tool_calls' => $toolCalls,
+                ]);
+
+                $response = $this->buildRequest($ctx)->asText();
+                $full = $response->text;
+                $steps = $response->steps->count();
+                $inputTokens += $response->usage->promptTokens;
+                $outputTokens += $response->usage->completionTokens;
+
+                if ($full !== '' && $onDelta) {
+                    $onDelta($full, $full);
+                }
+            }
         } catch (\Throwable $e) {
             $this->logProviderFailure($ctx['config'], $e);
 
@@ -202,7 +241,40 @@ class AiChatService
             $this->restoreConfig($ctx['restoreConfig']);
         }
 
-        return $this->persistTurn($ctx, $message, $full, $inputTokens, $outputTokens);
+        $final = $this->orEmptyTurnNotice($ctx['config'], $full, $steps, 'stream');
+        if ($final !== $full && $onDelta) {
+            $onDelta($final, $final);
+        }
+
+        return $this->persistTurn($ctx, $message, $final, $inputTokens, $outputTokens);
+    }
+
+    /**
+     * A turn that ended without any text: a notice for the user (stored like
+     * any answer, so the reopened conversation shows it too) instead of an
+     * empty bubble, and a warning naming provider, model and steps.
+     */
+    private function orEmptyTurnNotice(AiModelConfig $config, string $text, int $steps, string $mode): string
+    {
+        if (trim($text) !== '') {
+            return $text;
+        }
+
+        Log::warning('[Ptah AI] Turn ended without text', [
+            'provider' => $config->provider,
+            'model' => $config->model,
+            'steps' => $steps,
+            'max_steps' => $this->maxSteps(),
+            'mode' => $mode,
+        ]);
+
+        return trans('ptah::ui.ai_empty_turn');
+    }
+
+    /** `ptah.ai_agent.max_steps` — flows that chain several lookups need more than 5. */
+    private function maxSteps(): int
+    {
+        return max(1, min(50, (int) config('ptah.ai_agent.max_steps', self::MAX_TOOL_ITERATIONS)));
     }
 
     /**
@@ -372,7 +444,15 @@ class AiChatService
             ->withMessages($ctx['prismMessages'])
             ->withMaxTokens($config->max_tokens)
             ->usingTemperature((float) $config->temperature)
-            ->withMaxSteps(self::MAX_TOOL_ITERATIONS);
+            ->withMaxSteps($this->maxSteps());
+
+        // O widget nao mostra o raciocinio do modelo. No stream do xAI, extrai-lo
+        // custava a chamada de tool que viesse no mesmo pedaco (o handler
+        // emitia o raciocinio e pulava o resto). A opcao so muda a leitura
+        // do stream, nao o pedido.
+        if ($this->prismProviderSlug($config->provider) === 'xai') {
+            $request = $request->withProviderOptions(['thinking' => ['enabled' => false]]);
+        }
 
         if (! empty($ctx['tools'])) {
             $request = $request->withTools($ctx['tools']);

@@ -598,6 +598,8 @@ return [
         'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
         'stream' => (bool) env('PTAH_AI_STREAM', true),
         'max_message_chars' => (int) env('PTAH_AI_MAX_MESSAGE_CHARS', 8000),
+        // Tool rounds per turn (a signup flow chains several lookups). 1-50.
+        'max_steps' => (int) env('PTAH_AI_MAX_STEPS', 5),
         'daily_token_limit' => (int) env('PTAH_AI_DAILY_TOKEN_LIMIT', 0),
         'allow_guests' => (bool) env('PTAH_AI_ALLOW_GUESTS', false),
         'expose_system_details' => (bool) env('PTAH_AI_EXPOSE_SYSTEM_DETAILS', false),

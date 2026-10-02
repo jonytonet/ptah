@@ -1810,6 +1810,7 @@ return [
     'sd_value_not_allowed' => 'Choose an option from the list.',
     'dashboard_others' => 'Others',
     'dashboard_no_value' => 'No value',
+    'ai_empty_turn' => 'I could not finish this answer. Please try again.',
     'dashboard_widget_error' => 'This widget could not be loaded.',
     'btn_print' => 'Print',
 
@@ -1882,6 +1883,8 @@ return [
     'notif_empty' => 'No notifications.',
     'notif_action_default' => 'View details',
     'notif_mark_all_read' => 'Mark all as read',
+    'notif_marked_read' => '{1} 1 notification marked as read.|[2,*] :count notifications marked as read.',
+    'notif_none_unread' => 'No unread notifications.',
     'notif_view_all' => 'View all',
     'notif_dismiss' => 'Dismiss',
     'notif_unread_badge_label' => ':count unread notification(s)',
