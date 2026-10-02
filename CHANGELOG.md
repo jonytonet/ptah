@@ -7,6 +7,38 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.43.1] - 2026-10-02
+
+### Fixed - a streamed AI answer could end empty
+
+Reported on PetPlace (xAI / Grok `grok-4`): on a conversation with history, a
+question that needed a tool came back from `stream()` in ~3 s with no tool run
+and no text — no exception, nothing in the log, an empty bubble. The same turn
+through `send()` worked. Prism's xAI stream handler skips the rest of a chunk
+that carries reasoning, so a tool call in that chunk was lost.
+
+- On xAI the reasoning is no longer read from the stream (the widget never
+  shows it; the request is unchanged).
+- A stream that ends with no text and no tool run is logged (warning) and the
+  turn is run once more without streaming. Never after a tool has run: that
+  would repeat its effect.
+- A turn that still has no text — streamed or not — stores and shows "I could
+  not finish this answer. Please try again." and logs provider, model and
+  steps, instead of an empty bubble.
+
+### Added - `ptah.ai_agent.max_steps`
+
+Tool rounds per turn, `PTAH_AI_MAX_STEPS` (default 5, 1-50) — it was a
+private constant.
+
+### Fixed - "Mark all as read" gave no feedback
+
+The badge went away but the list barely changed (read notifications stay in
+it), so the click looked like it did nothing. It now confirms with a toast:
+"2 notifications marked as read", or "No unread notifications".
+
+---
+
 ## [1.43.0] - 2026-09-30
 
 From the PetPlace ERP reports on 1.42.1.

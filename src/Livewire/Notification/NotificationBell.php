@@ -96,7 +96,14 @@ class NotificationBell extends Component
 
     public function markAllRead(): void
     {
-        app(NotificationService::class)->markAllRead(null, $this->companyId());
+        $count = app(NotificationService::class)->markAllRead(null, $this->companyId());
+
+        // O badge some e a lista quase nao muda (as lidas continuam nela):
+        // sem um aviso, parecia que o clique nao fez nada.
+        $this->dispatch('ptah-toast',
+            title: $count > 0 ? trans_choice('ptah::ui.notif_marked_read', $count, ['count' => $count]) : trans('ptah::ui.notif_none_unread'),
+            color: $count > 0 ? 'success' : 'primary',
+        );
     }
 
     public function dismiss(int $id): void
