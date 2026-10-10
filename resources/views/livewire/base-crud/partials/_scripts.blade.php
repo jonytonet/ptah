@@ -431,10 +431,18 @@ document.addEventListener('livewire:init', () => {
 
     // Listener para exportação (Excel/PDF) — abre o download do snapshot em cache
     // gerado pelo componente (token; o servidor resolve o model e os ids filtrados).
+    // Um link com `download`, nao uma aba nova: a resposta e um anexo, e a
+    // aba aberta para ele ficava em branco (1.43.2). So a impressao abre aba.
     Livewire.on('ptah:export-download', (event) => {
         const data = Array.isArray(event) ? event[0] : event;
         if (data && data.url) {
-            window.open(data.url, '_blank');
+            const a = document.createElement('a');
+            a.href = data.url;
+            a.download = '';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         }
     });
 

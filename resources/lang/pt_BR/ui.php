@@ -565,6 +565,7 @@ return [
     'profile_appearance_dark_carvao' => 'Carvão',
     'profile_appearance_dark_grafite' => 'Grafite',
     'profile_appearance_dark_meianoite' => 'Meia-noite',
+    'profile_appearance_accent_marca' => 'Marca',
     'profile_appearance_accent_azul' => 'Azul',
     'profile_appearance_accent_violeta' => 'Violeta',
     'profile_appearance_accent_ciano' => 'Ciano',

@@ -76,12 +76,23 @@
             // celular e o grupo central se esconde ali. Duplicar a condicao
             // deixaria o usuario de celular SEM seletor no dia em que uma das
             // duas mudasse.
-            $ptahHasAdminMenu = auth()->check() && (
-                config('ptah.modules.company')
-                || config('ptah.modules.permissions')
-                || config('ptah.modules.menu')
-                || config('ptah.modules.ai_agent')
-            );
+            //
+            // Cada link aparece so para quem passa na MESMA trava da tela que
+            // ele abre (1.43.2): antes qualquer usuario logado via Empresas,
+            // Perfis, ACL, Menu... e levava 403 ao clicar.
+            $ptahAuth = auth()->check();
+            $ptahCanStructure = $ptahAuth && function_exists('ptah_can_manage_structure') && ptah_can_manage_structure();
+            $ptahIsMaster = $ptahAuth && config('ptah.modules.permissions') && function_exists('ptah_is_master') && ptah_is_master();
+            $ptahAdminLinks = [
+                'company' => $ptahCanStructure && config('ptah.modules.company') && \Illuminate\Support\Facades\Route::has('ptah.company.index'),
+                'acl' => $ptahIsMaster,
+                'menu' => $ptahCanStructure && config('ptah.modules.menu') && \Illuminate\Support\Facades\Route::has('ptah.menu.manage'),
+                'ai' => $ptahAuth && config('ptah.modules.ai_agent') && \Illuminate\Support\Facades\Route::has('ptah.ai.models')
+                    && ((function_exists('ptah_can') && ptah_can('ai.config', 'read')) || (function_exists('ptah_is_master') && ptah_is_master())),
+            ];
+            // O menu existe se ha algum link — ou, com empresas, para hospedar
+            // o seletor no celular (sem ele o usuario comum perderia a troca).
+            $ptahHasAdminMenu = $ptahAuth && (config('ptah.modules.company') || in_array(true, $ptahAdminLinks, true));
         @endphp
 
         {{-- Company Switcher (centralizado).
@@ -178,7 +189,7 @@
                         </div>
 
                         {{-- Company --}}
-                        @if(config('ptah.modules.company') && \Illuminate\Support\Facades\Route::has('ptah.company.index'))
+                        @if($ptahAdminLinks['company'])
                         <a href="{{ route('ptah.company.index') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,7 +201,7 @@
                         @endif
 
                         {{-- Departamentos --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.departments'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.departments'))
                         <a href="{{ route('ptah.acl.departments') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,7 +213,7 @@
                         @endif
 
                         {{-- Perfis de acesso --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.roles'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.roles'))
                         <a href="{{ route('ptah.acl.roles') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,7 +225,7 @@
                         @endif
 
                         {{-- Pages / Objects --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
                         <a href="{{ route('ptah.acl.pages') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -226,7 +237,7 @@
                         @endif
 
                         {{-- Users & Permissions --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
                         <a href="{{ route('ptah.acl.users') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +249,7 @@
                         @endif
 
                         {{-- Audit Log --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.audit'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.audit'))
                         <a href="{{ route('ptah.acl.audit') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -250,7 +261,7 @@
                         @endif
 
                         {{-- Permissions guide --}}
-                        @if(config('ptah.modules.permissions') && \Illuminate\Support\Facades\Route::has('ptah.acl.guide'))
+                        @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.guide'))
                         <a href="{{ route('ptah.acl.guide') }}"
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -262,8 +273,8 @@
                         @endif
 
                         {{-- Menu --}}
-                        @if(config('ptah.modules.menu') && \Illuminate\Support\Facades\Route::has('ptah.menu.manage'))
-                        @if(config('ptah.modules.company') || config('ptah.modules.permissions'))
+                        @if($ptahAdminLinks['menu'])
+                        @if($ptahAdminLinks['company'] || $ptahAdminLinks['acl'])
                         <hr class="my-1">
                         @endif
                         <a href="{{ route('ptah.menu.manage') }}"
@@ -276,8 +287,8 @@
                         @endif
 
                         {{-- AI Agent --}}
-                        @if(config('ptah.modules.ai_agent') && \Illuminate\Support\Facades\Route::has('ptah.ai.models'))
-                        @if(config('ptah.modules.company') || config('ptah.modules.permissions') || config('ptah.modules.menu'))
+                        @if($ptahAdminLinks['ai'])
+                        @if($ptahAdminLinks['company'] || $ptahAdminLinks['acl'] || $ptahAdminLinks['menu'])
                         <hr class="my-1">
                         @endif
                         <a href="{{ route('ptah.ai.models') }}"

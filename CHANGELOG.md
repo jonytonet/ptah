@@ -7,6 +7,58 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.43.2] - 2026-10-10
+
+From the `ptah-melhorias.md` report of a project in development.
+
+### Fixed - the gear menu showed admin links to every user
+
+Companies, Departments, Roles, Pages, ACL, Audit, Menu and AI models were
+listed for any signed-in user; the screens answered 403. Each link now follows
+the gate of the screen it opens (structure → `ptah_can_manage_structure()`,
+ACL → master, AI → `ai.config` read or master). With the company module on the
+menu still exists for everyone, holding only the company switcher on a phone.
+
+### Fixed - the configured brand color never showed
+
+The default accent ("azul") has a CSS rule that always beat the
+`--color-primary` the layout injects from `ptah.theme.colors.primary`. A new
+"Brand" accent has no CSS rule, so the configured color shows; it is the
+default when the host set its own primary (anything but the package's
+`#5b21b6`). A host that never set one keeps the blue it had, and a user who
+picked an accent keeps it.
+
+### Fixed - downloading an Excel/PDF opened a blank tab
+
+The export opened its download URL in a new tab; the answer is an attachment,
+so the file downloaded and the tab stayed open and empty. It now downloads in
+place (a temporary `download` link). Only the print screen opens a tab — it
+has something to show.
+
+### Fixed - the PDF cut off columns
+
+The PDF was always A4 portrait: `exportConfig.orientation` (editor → General,
+default landscape) was saved and never read. It is now honoured, and a
+portrait page (or no choice) with more than 6 columns turns to landscape. The
+table takes the page width (`table-layout: fixed`, wrapping text) and the type
+shrinks as columns grow, instead of running off the right edge. Same for the
+queued PDF export.
+
+### Fixed - `forge-select` placeholder in English
+
+The default placeholder was a fixed `Select...`; it now follows the locale
+(`Selecione...` in pt_BR).
+
+### Docs
+
+- InstallationGuide no longer says pt_BR is unmaintained (a test keeps
+  en/pt_BR in parity).
+- Configuration.md showed `colsOptions` for a select column — never read by
+  ptah and rejected by the import validator. It is `colsSelect`
+  (`{"Label": "value"}`).
+
+---
+
 ## [1.43.1] - 2026-10-02
 
 ### Fixed - a streamed AI answer could end empty

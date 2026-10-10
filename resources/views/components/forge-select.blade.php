@@ -3,7 +3,7 @@
     Props:
       - label      : string (label above the field)
       - options    : array [ ['value' => '', 'label' => ''], ... ]
-      - placeholder: string  (default: 'Select...')
+      - placeholder: string  (default: __('ptah::ui.select_placeholder') — 'Selecione...' / 'Select...')
       - multiple   : boolean
       - disabled   : boolean
       - required   : boolean
@@ -28,7 +28,7 @@
 @props([
     'label'       => '',
     'options'     => [],
-    'placeholder' => 'Select...',
+    'placeholder' => null,
     'multiple'    => false,
     'disabled'    => false,
     'required'    => false,
@@ -45,6 +45,8 @@
     // (perde foco, `open`, `activeIndex`) a cada atualização do Livewire. O id é
     // derivado da identidade do campo (label|name|placeholder|wire:model), logo
     // igual em todo render. Mesmo padrão de forge-input.blade.php.
+    // Padrao traduzido: 'Select...' fixo aparecia em ingles com APP_LOCALE=pt_BR.
+    $placeholder   ??= __('ptah::ui.select_placeholder');
     $wireModelAttr   = collect($attributes->whereStartsWith('wire:model')->getAttributes())->first() ?? '';
     $uniqueId        = 'forge-select-' . substr(md5($label.'|'.($name ?? '').'|'.$placeholder.'|'.$wireModelAttr), 0, 12);
     $disabledClass   = $disabled ? 'opacity-50 pointer-events-none' : '';

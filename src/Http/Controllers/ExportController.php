@@ -16,6 +16,7 @@ use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Support\ExportOwner;
 use Ptah\Support\ModelKey;
+use Ptah\Support\PdfExportLayout;
 use Ptah\Support\SqlIdentifier;
 
 class ExportController
@@ -137,7 +138,7 @@ class ExportController
         $fileName = Str::slug($modelName).'-'.now()->format('Y-m-d-His');
 
         if ($format === 'pdf') {
-            return $this->exportPdf($query, $fileName, $modelName, $columns, $modelClass, $owner, $payload['companyId'] ?? null);
+            return $this->exportPdf($query, $fileName, $modelName, $columns, $modelClass, $owner, $payload['companyId'] ?? null, $payload['orientation'] ?? null);
         }
 
         return $this->exportExcel($query, $fileName, $columns);
@@ -174,7 +175,7 @@ class ExportController
     /**
      * Exporta para PDF
      */
-    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [], ?string $modelClass = null, mixed $userId = null, ?int $companyId = null)
+    protected function exportPdf($query, string $fileName, string $modelName, array $columns = [], ?string $modelClass = null, mixed $userId = null, ?int $companyId = null, ?string $orientation = null)
     {
         $data = $query->get();
 
@@ -195,8 +196,9 @@ class ExportController
             'modelName' => $modelName,
             'date' => now()->format('d/m/Y H:i:s'),
             'totalizers' => $totalizers,
+            'fontSize' => PdfExportLayout::fontSize(count($columns)),
         ])
-            ->setPaper('a4', 'portrait')
+            ->setPaper('a4', PdfExportLayout::orientation($orientation, count($columns)))
             ->download($fileName.'.pdf');
     }
 
