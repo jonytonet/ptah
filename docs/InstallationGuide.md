@@ -190,9 +190,9 @@ psql -U postgres -c "CREATE DATABASE ptah_app ENCODING 'UTF8';"
 
 ### Language / locale
 
-> ⚠️ **ptah does not officially support pt_BR.** This guide was fully written and validated with `APP_LOCALE=en`. The package ships translation files for both `en` and `pt_BR` under `lang/vendor/ptah/`, but the **pt_BR strings are not maintained** and may be incomplete or outdated.
-
-The default Laravel 12 `.env` ships with English already set:
+ptah ships `en` and `pt_BR`, and both are maintained: a test keeps the two
+translation files in parity (every key exists in both). The default Laravel 12
+`.env` ships with English:
 
 ```env
 APP_LOCALE=en
@@ -200,7 +200,8 @@ APP_FALLBACK_LOCALE=en
 APP_FAKER_LOCALE=en_US
 ```
 
-**Leave these values as-is.** Changing to `pt_BR` is possible but not supported — some labels, error messages and UI strings inside ptah will remain in English regardless.
+For a Brazilian Portuguese interface, set `APP_LOCALE=pt_BR` (and
+`APP_FAKER_LOCALE=pt_BR`).
 
 ---
 

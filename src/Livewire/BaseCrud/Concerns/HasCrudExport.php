@@ -129,6 +129,7 @@ trait HasCrudExport
             'order' => $this->sort,
             'direction' => $this->direction,
             'format' => $format,
+            'orientation' => $this->crudConfig['exportConfig']['orientation'] ?? null,
         ];
 
         $token = (string) Str::uuid();
@@ -259,6 +260,7 @@ trait HasCrudExport
             'order' => $this->sort,
             'direction' => $this->direction,
             'format' => $format,
+            'orientation' => $this->crudConfig['exportConfig']['orientation'] ?? null,
         ];
     }
 

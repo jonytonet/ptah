@@ -86,6 +86,53 @@ final class AppearancePresets
 
     public const DEFAULT_ACCENT = 'azul';
 
+    /**
+     * The host's own brand color (`ptah.theme.colors.primary`). It has NO CSS
+     * block on purpose — with it, nothing overrides the `--color-primary` the
+     * layout injects in :root from the config. Not in ACCENT: every ACCENT
+     * slug is a fixed, contrast-tested CSS preset; this one is whatever the
+     * host configured.
+     */
+    public const BRAND_ACCENT = 'marca';
+
+    /** The config's own default primary — the host has not chosen a brand color. */
+    private const PACKAGE_PRIMARY = '#5b21b6';
+
+    /**
+     * Until 1.43.2 the default accent ("azul") always won over the configured
+     * brand color, so a host's PTAH_COLOR_PRIMARY never showed. The default is
+     * now the brand color — but only when the host actually set one: a host
+     * that never did has the package's violet there, and its users have been
+     * seeing blue all along; switching them to violet would be a surprise.
+     */
+    public static function brandIsCustom(): bool
+    {
+        // sanitize() tambem roda fora de uma aplicacao (testes unitarios puros).
+        if (! app()->bound('config')) {
+            return false;
+        }
+
+        $primary = strtolower(trim((string) config('ptah.theme.colors.primary', self::PACKAGE_PRIMARY)));
+
+        return $primary !== '' && $primary !== self::PACKAGE_PRIMARY;
+    }
+
+    public static function defaultAccent(): string
+    {
+        return self::brandIsCustom() ? self::BRAND_ACCENT : self::DEFAULT_ACCENT;
+    }
+
+    /**
+     * The accents a user may pick: the presets, plus the brand color when the
+     * host has one.
+     *
+     * @return list<string>
+     */
+    public static function accentChoices(): array
+    {
+        return self::brandIsCustom() ? [self::BRAND_ACCENT, ...self::ACCENT] : self::ACCENT;
+    }
+
     public const DEFAULT_TEXT = 'neutra';
 
     public const DEFAULT_DENSITY = 'confortavel';
@@ -136,7 +183,7 @@ final class AppearancePresets
             'mode' => in_array($raw['mode'] ?? null, self::MODE, true) ? $raw['mode'] : null,
             'light' => in_array($raw['light'] ?? null, self::LIGHT, true) ? $raw['light'] : self::DEFAULT_LIGHT,
             'dark' => in_array($raw['dark'] ?? null, self::DARK, true) ? $raw['dark'] : self::DEFAULT_DARK,
-            'accent' => in_array($raw['accent'] ?? null, self::ACCENT, true) ? $raw['accent'] : self::DEFAULT_ACCENT,
+            'accent' => in_array($raw['accent'] ?? null, self::accentChoices(), true) ? $raw['accent'] : self::defaultAccent(),
             'text' => in_array($raw['text'] ?? null, self::TEXT, true) ? $raw['text'] : self::DEFAULT_TEXT,
             'density' => in_array($raw['density'] ?? null, self::DENSITY, true) ? $raw['density'] : self::DEFAULT_DENSITY,
             'fontsize' => in_array($raw['fontsize'] ?? null, self::FONTSIZE, true) ? $raw['fontsize'] : self::DEFAULT_FONTSIZE,
@@ -151,7 +198,7 @@ final class AppearancePresets
         return match ($axis) {
             'light' => self::LIGHT,
             'dark' => self::DARK,
-            'accent' => self::ACCENT,
+            'accent' => self::accentChoices(),
             'text' => self::TEXT,
             'density' => self::DENSITY,
             'fontsize' => self::FONTSIZE,

@@ -35,10 +35,18 @@
             color: #64748b;
         }
         
+        /* Fixed layout: the columns share the page width and the text wraps,
+           instead of the table running off the right edge (1.43.2). */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         thead {
@@ -48,7 +56,7 @@
         th {
             padding: 8px;
             text-align: left;
-            font-size: 9px;
+            font-size: {{ $fontSize ?? 9 }}px;
             font-weight: 600;
             color: #0f172a;
             border-bottom: 2px solid #cbd5e1;
@@ -58,7 +66,7 @@
         td {
             padding: 6px 8px;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 9px;
+            font-size: {{ $fontSize ?? 9 }}px;
         }
         
         tbody tr:nth-child(even) {

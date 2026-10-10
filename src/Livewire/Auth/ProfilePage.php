@@ -388,7 +388,7 @@ class ProfilePage extends Component
     {
         $this->themeLight = AppearancePresets::DEFAULT_LIGHT;
         $this->themeDark = AppearancePresets::DEFAULT_DARK;
-        $this->themeAccent = AppearancePresets::DEFAULT_ACCENT;
+        $this->themeAccent = AppearancePresets::defaultAccent();
         $this->themeText = AppearancePresets::DEFAULT_TEXT;
         $this->themeDensity = AppearancePresets::DEFAULT_DENSITY;
         $this->themeFontsize = AppearancePresets::DEFAULT_FONTSIZE;
@@ -396,7 +396,7 @@ class ProfilePage extends Component
         $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
         $theme['light'] = AppearancePresets::DEFAULT_LIGHT;
         $theme['dark'] = AppearancePresets::DEFAULT_DARK;
-        $theme['accent'] = AppearancePresets::DEFAULT_ACCENT;
+        $theme['accent'] = AppearancePresets::defaultAccent();
         $theme['text'] = AppearancePresets::DEFAULT_TEXT;
         $theme['density'] = AppearancePresets::DEFAULT_DENSITY;
         $theme['fontsize'] = AppearancePresets::DEFAULT_FONTSIZE;

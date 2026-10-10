@@ -18,6 +18,7 @@ use Ptah\Exports\CrudExport;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\PdfExportLayout;
 
 /**
  * Generates the file for a queued BaseCrud export (Fase 3 — "grande volume").
@@ -156,7 +157,8 @@ class GenerateCrudExportJob implements ShouldQueue
                 'modelName' => class_basename($modelClass),
                 'date' => now()->format('d/m/Y H:i:s'),
                 'totalizers' => [],
-            ])->setPaper('a4', 'portrait')->save($path, $disk);
+                'fontSize' => PdfExportLayout::fontSize(count($columns)),
+            ])->setPaper('a4', PdfExportLayout::orientation($payload['orientation'] ?? null, count($columns)))->save($path, $disk);
         } else {
             Excel::store(new CrudExport($query, $columns), $path, $disk);
         }

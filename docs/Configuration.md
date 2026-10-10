@@ -2125,10 +2125,10 @@ Full configuration saved in the `crud_configs.config` table:
         "inactive": "red",
         "pending": "yellow"
       },
-      "colsOptions": {
-        "active": "Active",
-        "inactive": "Inactive",
-        "pending": "Pending"
+      "colsSelect": {
+        "Active": "active",
+        "Inactive": "inactive",
+        "Pending": "pending"
       },
       "colsGravar": true,
       "colsRequired": true,
@@ -2350,8 +2350,7 @@ Properties of each column in `cols[]`:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsOptions` | array | `[]` | Options for `<select>`: `{"value": "Label"}` |
-| `colsOptionsFrom` | string | `''` | Method that returns options dynamically |
+| `colsSelect` | object | `{}` | Options for `<select>`: `{"Label": "value"}` — label first. (`colsOptions`, shown here before 1.43.2, is not read by ptah and is rejected by the import validator.) |
 
 ### File Upload
 
