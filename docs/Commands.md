@@ -369,7 +369,7 @@ PTAH_MODULE_API=true
 **Published files:**
 - ``app/Responses/BaseResponse.php`` — Standardized API response
 - ``app/Http/Controllers/API/BaseApiController.php`` — Base controller with helpers
-- ``app/Http/Controllers/API/SwaggerInfo.php`` — Swagger ``@OA\Info`` annotations
+- ``app/Http/Controllers/API/SwaggerInfo.php`` — Swagger ``#[OA\Info]`` attributes (PHP attributes since 1.44.0 — swagger-php 4+)
 - ``config/l5-swagger.php`` — L5-Swagger configuration
 
 **Created routes:**

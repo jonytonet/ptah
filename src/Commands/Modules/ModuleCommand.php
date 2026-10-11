@@ -301,9 +301,12 @@ class ModuleCommand extends Command
 
         if (file_exists($swaggerInfoPath)) {
             $content = file_get_contents($swaggerInfoPath);
-            $content = str_replace('{{ APP_NAME }}', config('app.name', 'App'), $content);
-            $content = str_replace('{{ APP_URL }}', rtrim(config('app.url', 'http://localhost'), '/'), $content);
-            $content = str_replace('{{ APP_CONTACT_EMAIL }}', env('MAIL_FROM_ADDRESS', 'contact@example.com'), $content);
+            // Os valores entram em strings PHP entre aspas simples (atributos,
+            // 1.44.0): "Joe's Shop" sem escape quebraria o arquivo.
+            $quote = fn (mixed $v): string => str_replace(['\\', "'"], ['\\\\', "\\'"], (string) $v);
+            $content = str_replace('{{ APP_NAME }}', $quote(config('app.name', 'App')), $content);
+            $content = str_replace('{{ APP_URL }}', $quote(rtrim((string) config('app.url', 'http://localhost'), '/')), $content);
+            $content = str_replace('{{ APP_CONTACT_EMAIL }}', $quote(env('MAIL_FROM_ADDRESS', 'contact@example.com')), $content);
             file_put_contents($swaggerInfoPath, $content);
         }
 

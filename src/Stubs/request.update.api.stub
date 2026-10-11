@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use Illuminate\Foundation\Http\FormRequest;
+use OpenApi\Attributes as OA;
 
-/**
- * @OA\Schema(
- *     schema="Update{{ entity }}Request",
- *     title="Update{{ entity }}Request",
- *     description="Parameters for updating a {{ entity }}",
- * )
- */
+#[OA\Schema(
+    schema: 'Update{{ entity }}Request',
+    title: 'Update{{ entity }}Request',
+    description: 'Parameters for updating a {{ entity }}',
+)]
 class Update{{ entity }}ApiRequest extends FormRequest
 {
     /**

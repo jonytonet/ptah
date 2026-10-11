@@ -90,11 +90,13 @@ class ModelGeneratorTest extends GeneratorTestCase
     {
         $content = $this->generate(withApi: true, withViews: false);
 
-        $this->assertStringContainsString('@OA\Schema(', $content);
-        $this->assertStringContainsString('schema="Widget"', $content);
+        // 1.44.0: atributos PHP, nao docblock — o swagger-php 6 so le atributos.
+        $this->assertStringContainsString('#[OA\Schema(', $content);
+        $this->assertStringContainsString('use OpenApi\Attributes as OA;', $content);
+        $this->assertStringContainsString("schema: 'Widget'", $content);
         // decimal → number/float, FK → integer
-        $this->assertStringContainsString('property="price", type="number", format="float"', $content);
-        $this->assertStringContainsString('property="category_id", type="integer"', $content);
+        $this->assertStringContainsString("property: 'price', type: 'number', format: 'float'", $content);
+        $this->assertStringContainsString("property: 'category_id', type: 'integer'", $content);
     }
 
     #[Test]
@@ -107,6 +109,25 @@ class ModelGeneratorTest extends GeneratorTestCase
 
         $second = $generator->generate($this->context());
         $this->assertTrue($second->isSkipped());
+    }
+
+    #[Test]
+    public function adding_the_api_injects_the_schema_attribute_into_an_existing_model_once(): void
+    {
+        $web = (new ModelGenerator($this->files))->generate($this->context(withApi: false, withViews: true));
+        $this->assertTrue($web->isDone(), $web->message ?? '');
+
+        $inject = (new ModelGenerator($this->files))->generate($this->context(withApi: true, withViews: true));
+        $this->assertTrue($inject->isDone(), $inject->message ?? '');
+        $content = (string) file_get_contents($inject->path);
+
+        $this->assertSame(1, substr_count($content, 'use OpenApi\Attributes as OA;'));
+        $this->assertMatchesRegularExpression('/#\[OA\\\\Schema\([\s\S]*?\)\]\s*class Widget /', $content);
+        exec(escapeshellarg(PHP_BINARY).' -l '.escapeshellarg($inject->path), $output, $exitCode);
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+
+        $again = (new ModelGenerator($this->files))->generate($this->context(withApi: true, withViews: true));
+        $this->assertFalse($again->isDone(), 'O schema foi injetado duas vezes.');
     }
 
     #[Test]

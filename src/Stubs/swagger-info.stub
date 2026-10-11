@@ -4,33 +4,36 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\API;
 
+use OpenApi\Attributes as OA;
+
 /**
- * Global Swagger/OpenAPI annotations for this project.
+ * Global Swagger/OpenAPI definitions for this project.
  *
  * This file contains no executable code — it serves only as an anchor
- * for the @OA\Info, @OA\SecurityScheme and @OA\Server annotations
- * that L5-Swagger uses to generate the documentation.
+ * for the OA\Info, OA\SecurityScheme and OA\Server attributes that
+ * L5-Swagger uses to generate the documentation.
+ *
+ * PHP attributes, not docblock annotations: swagger-php 6 (l5-swagger 11)
+ * reads only attributes unless doctrine/annotations is installed.
+ * Attributes work from swagger-php 4.
  *
  * To regenerate the documentation after changes:
  *   php artisan l5-swagger:generate
- *
- * @OA\Info(
- *     title="{{ APP_NAME }} API",
- *     version="1.0.0",
- *     description="{{ APP_NAME }} API documentation. Use the Authorize button to authenticate with a Bearer token.",
- *     @OA\Contact(email="{{ APP_CONTACT_EMAIL }}"),
- * )
- *
- * @OA\SecurityScheme(
- *     securityScheme="bearerAuth",
- *     type="http",
- *     scheme="bearer",
- *     bearerFormat="JWT",
- * )
- *
- * @OA\Server(
- *     url="{{ APP_URL }}",
- *     description="Main server",
- * )
  */
+#[OA\Info(
+    version: '1.0.0',
+    title: '{{ APP_NAME }} API',
+    description: '{{ APP_NAME }} API documentation. Use the Authorize button to authenticate with a Bearer token.',
+    contact: new OA\Contact(email: '{{ APP_CONTACT_EMAIL }}'),
+)]
+#[OA\SecurityScheme(
+    securityScheme: 'bearerAuth',
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+)]
+#[OA\Server(
+    url: '{{ APP_URL }}',
+    description: 'Main server',
+)]
 class SwaggerInfo {}

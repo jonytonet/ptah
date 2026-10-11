@@ -16,6 +16,8 @@ use Ptah\Support\FieldDefinition;
  */
 class ModelGenerator extends AbstractGenerator
 {
+    private const SWAGGER_USE = 'use OpenApi\Attributes as OA;';
+
     public function generate(EntityContext $context): GeneratorResult
     {
         // Subfolder: app/Models/Product/ProductStock.php
@@ -25,7 +27,7 @@ class ModelGenerator extends AbstractGenerator
         // ── "Add API" mode (--api without --api-only) + file already exists ──────
         // In this flow the model already has the correct $fillable, $casts and relationships.
         // Overwriting it would lose developer customisations.
-        // Instead, inject the @OA\Schema block only if it is not already there.
+        // Instead, inject the OA\Schema attribute only if it is not already there.
         if ($context->withApi && $context->withViews && file_exists($path)) {
             return $this->injectSwaggerSchema($path, $context);
         }
@@ -38,8 +40,8 @@ class ModelGenerator extends AbstractGenerator
             $softDeletesTrait = "    use SoftDeletes;\n";
         }
 
-        // Generate @OA\Schema when API mode is active
-        $swaggerSchema = $context->withApi ? $this->buildSwaggerSchema($context) : '';
+        // OA\Schema attribute (and its `use`) when API mode is active
+        $swaggerSchema = $context->withApi ? self::SWAGGER_USE."\n\n".rtrim($this->buildSwaggerSchema($context)) : '';
 
         return $this->writeFile(
             path: $path,
@@ -62,27 +64,29 @@ class ModelGenerator extends AbstractGenerator
     }
 
     /**
-     * Injects the @OA\Schema block into an existing model without overwriting the file.
-     * Used in "add API" mode (--api) when the model was already created in web mode.
-     * Returns skipped if @OA\Schema is already present in the file.
+     * Injects the OA\Schema attribute (and its `use`) into an existing model
+     * without overwriting the file. Used in "add API" mode (--api) when the
+     * model was already created in web mode. Skipped when the model already
+     * has a schema — as an attribute or as an old `@OA\Schema` docblock.
      */
     private function injectSwaggerSchema(string $path, EntityContext $context): GeneratorResult
     {
         $label = "Model [{$context->entity}] (swagger injected)";
         $content = $this->files->get($path);
 
-        // Already has @OA\Schema — nothing to do
-        if (str_contains($content, '@OA\\Schema') || str_contains($content, '@OA\Schema')) {
+        if (str_contains($content, '#[OA\\Schema') || str_contains($content, '@OA\\Schema')) {
             return GeneratorResult::skipped($label, $path);
         }
 
+        // Insert the attribute immediately before the `class XyzAbc` declaration
+        // Callback, nao string de substituicao: o atributo tem barras
+        // invertidas (OA\Schema) que o preg_replace poderia interpretar.
         $schema = $this->buildSwaggerSchema($context);
-
-        // Insert the block immediately before the `class XyzAbc` declaration
-        $patched = preg_replace(
+        $patched = preg_replace_callback(
             '/^(class\s+'.preg_quote($context->entity, '/').'\s+)/m',
-            $schema."\n$1",
+            fn (array $m) => $schema.$m[1],
             $content,
+            1,
         );
 
         if ($patched === null || $patched === $content) {
@@ -91,6 +95,19 @@ class ModelGenerator extends AbstractGenerator
                 "Model [{$context->entity}] (swagger — class declaration not found)",
                 $path,
             );
+        }
+
+        // The `use` after the file's last top-level import (or after the
+        // namespace line when there is none), unless it is already there.
+        if (! str_contains($patched, self::SWAGGER_USE)) {
+            $head = substr($patched, 0, (int) strpos($patched, '#[OA\Schema'));
+            if (preg_match_all('/^use\s+[^;]+;\R/m', $head, $m, PREG_OFFSET_CAPTURE) > 0) {
+                $last = end($m[0]);
+                $at = $last[1] + strlen($last[0]);
+                $patched = substr($patched, 0, $at).self::SWAGGER_USE."\n".substr($patched, $at);
+            } else {
+                $patched = (string) preg_replace_callback('/^(namespace\s+[^;]+;\R)/m', fn (array $m) => $m[1]."\n".self::SWAGGER_USE."\n", $patched, 1);
+            }
         }
 
         $this->files->put($path, $patched);
@@ -104,8 +121,10 @@ class ModelGenerator extends AbstractGenerator
     }
 
     /**
-     * Builds the @OA\Schema annotation block for the model.
-     * Maps field types to OpenAPI types.
+     * Builds the OA\Schema attribute for the model (1.44.0). It was an
+     * `@OA\Schema` docblock, which swagger-php 6 (l5-swagger 11) does not read
+     * without doctrine/annotations. Field names are identifiers — they go
+     * into the single-quoted strings as they are.
      */
     private function buildSwaggerSchema(EntityContext $context): string
     {
@@ -120,23 +139,23 @@ class ModelGenerator extends AbstractGenerator
                 [$propType, $propFormat] = $this->mapToOpenApiType($field->type);
             }
 
-            $formatStr = $propFormat ? ", format=\"{$propFormat}\"" : '';
-            $props[] = " *     @OA\\Property(property=\"{$field->name}\", type=\"{$propType}\"{$formatStr}),";
+            $formatStr = $propFormat ? ", format: '{$propFormat}'" : '';
+            $props[] = "        new OA\\Property(property: '{$field->name}', type: '{$propType}'{$formatStr}),";
         }
 
         $propsStr = implode("\n", $props);
 
         return <<<SCHEMA
-
-/**
- * @OA\\Schema(
- *     schema="{$context->entity}",
- *     title="{$context->entity}",
- *     description="Model {$context->entity}",
- *     @OA\\Xml(name="{$context->entity}"),
+#[OA\\Schema(
+    schema: '{$context->entity}',
+    title: '{$context->entity}',
+    description: 'Model {$context->entity}',
+    xml: new OA\\Xml(name: '{$context->entity}'),
+    properties: [
 {$propsStr}
- * )
- */
+    ],
+)]
+
 SCHEMA;
     }
 

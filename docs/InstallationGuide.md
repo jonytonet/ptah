@@ -819,7 +819,7 @@ PTAH_MODULE_API=true
 |------|---------|
 | `app/Responses/BaseResponse.php` | Standard API response wrapper |
 | `app/Http/Controllers/API/BaseApiController.php` | Base controller for all API controllers |
-| `app/Http/Controllers/API/SwaggerInfo.php` | Swagger `@OA\Info` annotation |
+| `app/Http/Controllers/API/SwaggerInfo.php` | Swagger `#[OA\Info]` attribute (PHP attributes since 1.44.0) |
 | `config/l5-swagger.php` | L5-Swagger configuration |
 
 **Example — using BaseResponse:**
