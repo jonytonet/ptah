@@ -7,6 +7,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.44.1] - 2026-10-11
+
+### Fixed - on a tablet the hamburger darkened the screen but did not open the menu
+
+Between the phone and desktop widths (768-1023 px) the sidebar is the narrow
+icon rail. The hamburger set `sidebarOpen`, which showed the backdrop, but the
+rail stayed narrow — it only opened with the mouse over it, and the backdrop
+stayed until the hamburger or a link was clicked again. On a phone the same
+flag slides the whole sidebar in, so only the tablet width was affected.
+`sidebarOpen` now opens the rail to full width there too (labels included),
+and clicking the backdrop closes both. A browser test at 900 px pins it.
+
+---
+
 ## [1.44.0] - 2026-10-11
 
 ### Changed - Swagger in PHP attributes, not docblock annotations
