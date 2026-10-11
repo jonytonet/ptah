@@ -7,6 +7,36 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.44.0] - 2026-10-11
+
+### Changed - Swagger in PHP attributes, not docblock annotations
+
+Everything the `api` module generates documented the API with `@OA\...`
+docblock annotations. swagger-php 6 — what `composer require
+darkaonline/l5-swagger` installs today (l5-swagger 11) — reads only PHP
+attributes unless `doctrine/annotations` is installed, so
+`l5-swagger:generate` found no `Info` and no paths (projeto Cher report).
+
+Now generated as attributes (`use OpenApi\Attributes as OA;` +
+`#[OA\...]`): `SwaggerInfo.php` (Info, SecurityScheme, Server), the API
+controller (Get/Post/Put/Delete with their parameters, bodies and
+responses), the Create/Update API requests (`OA\Schema`) and the model's
+`OA\Schema` — also when `--api` is added to an existing model (inserted once;
+an old `@OA\Schema` docblock still counts as "already there"). Validated by
+generating a full entity and reading it with swagger-php 6.13: info, server,
+bearer scheme, 3 schemas and the 5 paths come out.
+
+The app name and contact now go into single-quoted PHP strings, so they are
+escaped (`Joe's Shop` would have broken the file).
+
+**Upgrading:** files already generated are not touched. They keep working
+with swagger-php 3-5 (+ doctrine/annotations); on swagger-php 6, regenerate
+them or convert by hand. Attributes need swagger-php 4 or newer — a host
+pinned to l5-swagger 8 (swagger-php 3) should stay on 1.43.x for new API
+scaffolds.
+
+---
+
 ## [1.43.3] - 2026-10-10
 
 The rest of the `ptah-melhorias.md` report (projeto Cher).

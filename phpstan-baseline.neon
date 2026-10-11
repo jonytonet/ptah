@@ -31,12 +31,6 @@ parameters:
 			path: src/Exceptions/PtahException.php
 
 		-
-			message: '#^Right side of \|\| is always false\.$#'
-			identifier: booleanOr.rightAlwaysFalse
-			count: 1
-			path: src/Generators/ModelGenerator.php
-
-		-
 			message: '#^Access to an undefined property Ptah\\Models\\AiConversation\:\:\$updated_at\.$#'
 			identifier: property.notFound
 			count: 1

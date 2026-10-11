@@ -12,31 +12,34 @@ use {{ resource_fqn }};
 use {{ service_fqn }};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class {{ entity }}ApiController extends BaseApiController
 {
     public function __construct(protected {{ entity }}Service $service) {}
 
-    /**
-     * @OA\Get(
-     *     path="/{{ api_base }}/{{ swagger_path }}",
-     *     summary="Returns paginated list of {{ entities }}",
-     *     tags={"{{ swagger_tag }}"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit",      in="query", description="Items per page",              required=false, @OA\Schema(type="integer", example=15)),
-     *     @OA\Parameter(name="page",       in="query", description="Page",                        required=false, @OA\Schema(type="integer", example=1)),
-     *     @OA\Parameter(name="order",      in="query", description="Sort column",                  required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="direction",  in="query", description="Direction: ASC or DESC",        required=false, @OA\Schema(type="string", enum={"ASC","DESC"}, example="DESC")),
-     *     @OA\Parameter(name="fields",     in="query", description="Fields to return (csv)",       required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="search",     in="query", description="OR search across all fields", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="searchLike", in="query", description="Incremental search (LIKE)",    required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="searchLikeType", in="query", description="AND or OR for searchLike", required=false, @OA\Schema(type="string", enum={"AND","OR"})),
-     *     @OA\Parameter(name="relations",  in="query", description="Load relations (csv)",          required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="whereIn",    in="query", description="whereIn filter: col:v1,v2",   required=false, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Listing returned successfully"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     * )
-     */
+    #[OA\Get(
+        path: '/{{ api_base }}/{{ swagger_path }}',
+        summary: 'Returns paginated list of {{ entities }}',
+        tags: ['{{ swagger_tag }}'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'limit', in: 'query', description: 'Items per page', required: false, schema: new OA\Schema(type: 'integer', example: 15)),
+            new OA\Parameter(name: 'page', in: 'query', description: 'Page', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
+            new OA\Parameter(name: 'order', in: 'query', description: 'Sort column', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'direction', in: 'query', description: 'Direction: ASC or DESC', required: false, schema: new OA\Schema(type: 'string', enum: ['ASC', 'DESC'], example: 'DESC')),
+            new OA\Parameter(name: 'fields', in: 'query', description: 'Fields to return (csv)', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'search', in: 'query', description: 'OR search across all fields', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'searchLike', in: 'query', description: 'Incremental search (LIKE)', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'searchLikeType', in: 'query', description: 'AND or OR for searchLike', required: false, schema: new OA\Schema(type: 'string', enum: ['AND', 'OR'])),
+            new OA\Parameter(name: 'relations', in: 'query', description: 'Load relations (csv)', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'whereIn', in: 'query', description: 'whereIn filter: col:v1,v2', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Listing returned successfully'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ],
+    )]
     public function index(Request $request): JsonResponse
     {
         ${{ entities }} = $this->service->getData($request);
@@ -44,18 +47,18 @@ class {{ entity }}ApiController extends BaseApiController
         return BaseResponse::paginated(${{ entities }}, '{{ entities }} listing returned successfully');
     }
 
-    /**
-     * @OA\Post(
-     *     path="/{{ api_base }}/{{ swagger_path }}",
-     *     summary="Creates a new {{ entity }}",
-     *     tags={"{{ swagger_tag }}"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Create{{ entity }}Request")),
-     *     @OA\Response(response=201, description="{{ entity }} created successfully"),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     * )
-     */
+    #[OA\Post(
+        path: '/{{ api_base }}/{{ swagger_path }}',
+        summary: 'Creates a new {{ entity }}',
+        tags: ['{{ swagger_tag }}'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/Create{{ entity }}Request')),
+        responses: [
+            new OA\Response(response: 201, description: '{{ entity }} created successfully'),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ],
+    )]
     public function store(Create{{ entity }}ApiRequest $request): JsonResponse
     {
         ${{ entity_lower }} = $this->service->create($request->validated());
@@ -66,18 +69,20 @@ class {{ entity }}ApiController extends BaseApiController
         );
     }
 
-    /**
-     * @OA\Get(
-     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
-     *     summary="Returns a {{ entity }} by ID",
-     *     tags={"{{ swagger_tag }}"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="{{ entity }} returned successfully"),
-     *     @OA\Response(response=404, description="{{ entity }} not found"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     * )
-     */
+    #[OA\Get(
+        path: '/{{ api_base }}/{{ swagger_path }}/{id}',
+        summary: 'Returns a {{ entity }} by ID',
+        tags: ['{{ swagger_tag }}'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, description: 'ID of {{ entity }}', schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: '{{ entity }} returned successfully'),
+            new OA\Response(response: 404, description: '{{ entity }} not found'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ],
+    )]
     public function show(int|string $id): JsonResponse
     {
         ${{ entity_lower }} = $this->service->find($id);
@@ -89,20 +94,22 @@ class {{ entity }}ApiController extends BaseApiController
         return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} returned successfully');
     }
 
-    /**
-     * @OA\Put(
-     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
-     *     summary="Updates an existing {{ entity }}",
-     *     tags={"{{ swagger_tag }}"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
-     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Update{{ entity }}Request")),
-     *     @OA\Response(response=200, description="{{ entity }} updated successfully"),
-     *     @OA\Response(response=404, description="{{ entity }} not found"),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     * )
-     */
+    #[OA\Put(
+        path: '/{{ api_base }}/{{ swagger_path }}/{id}',
+        summary: 'Updates an existing {{ entity }}',
+        tags: ['{{ swagger_tag }}'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, description: 'ID of {{ entity }}', schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/Update{{ entity }}Request')),
+        responses: [
+            new OA\Response(response: 200, description: '{{ entity }} updated successfully'),
+            new OA\Response(response: 404, description: '{{ entity }} not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ],
+    )]
     public function update(Update{{ entity }}ApiRequest $request, int|string $id): JsonResponse
     {
         ${{ entity_lower }} = $this->service->find($id);
@@ -116,18 +123,20 @@ class {{ entity }}ApiController extends BaseApiController
         return BaseResponse::ok(new {{ entity }}Resource(${{ entity_lower }}), '{{ entity }} updated successfully');
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/{{ api_base }}/{{ swagger_path }}/{id}",
-     *     summary="Removes a {{ entity }}",
-     *     tags={"{{ swagger_tag }}"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID of {{ entity }}", @OA\Schema(type="integer")),
-     *     @OA\Response(response=204, description="{{ entity }} removed successfully"),
-     *     @OA\Response(response=404, description="{{ entity }} not found"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     * )
-     */
+    #[OA\Delete(
+        path: '/{{ api_base }}/{{ swagger_path }}/{id}',
+        summary: 'Removes a {{ entity }}',
+        tags: ['{{ swagger_tag }}'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, description: 'ID of {{ entity }}', schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: '{{ entity }} removed successfully'),
+            new OA\Response(response: 404, description: '{{ entity }} not found'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ],
+    )]
     public function destroy(int|string $id): JsonResponse
     {
         $deleted = $this->service->destroy($id);
@@ -139,4 +148,3 @@ class {{ entity }}ApiController extends BaseApiController
         return BaseResponse::noContent('{{ entity }} removed successfully');
     }
 }
-
