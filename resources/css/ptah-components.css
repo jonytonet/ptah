@@ -3895,6 +3895,12 @@ html.ptah-dark[data-ptah-text="forte"] {
     --ptah-text-faint: #c7c9cb;
 }
 
+/* ── Logo da marca (ptah.brand.logo / logo_dark) ──
+   A variante escura vem com style="display:none" no markup (ver
+   partials/brand-logo): sem esta regra aparece so a clara, nunca as duas. */
+.ptah-dark .ptah-brand-logo-dark  { display: inline-block !important; }
+.ptah-dark .ptah-brand-logo-light { display: none; }
+
 /* ── Cor de destaque ──
    Só troca --color-primary (literal, propositalmente — é o próprio ponto
    de definição da marca, não algo derivável de outro token). --ptah-primary

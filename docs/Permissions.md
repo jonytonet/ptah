@@ -861,7 +861,7 @@ Route::get('/finance/export', FinanceController::class . '@export')
 
 | Context | Response on denial |
 |---|---|
-| Request accepts JSON (`Accept: application/json`) | `HTTP 403` with `{"message":"Access denied.","object":"...","action":"..."}` |
+| Request accepts JSON (`Accept: application/json`) | `HTTP 403` with `{"message":"...","error":"permission_denied","key":"...","action":"..."}`. With the `api` module on (1.43.3) it also carries the `BaseResponse` envelope: `{"success":false,"message":"...","data":null,"errors":{"permission":["..."]}, "error":..., "key":..., "action":...}` — added, not replaced |
 | Web request | `abort(403)` — rendered by Ptah's themed 403 page (see [Configuration.md](Configuration.md#error-pages-errors)); the host's own `resources/views/errors/403.blade.php` wins if it exists |
 
 ### Parameter syntax

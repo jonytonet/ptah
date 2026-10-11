@@ -125,6 +125,7 @@ class SchemaInspector
         $type = isset($segments[1]) ? $this->normalizeType($segments[1]) : 'string';
         $nullable = in_array('nullable', $segments, true);
         $unique = in_array('unique', $segments, true);
+        $index = in_array('index', $segments, true);
 
         // Detects surname=, label= and default= modifiers in segments.
         // No break — scan all segments to collect every modifier.
@@ -172,6 +173,7 @@ class SchemaInspector
             hasDefault: $hasDefault,
             defaultValue: $defaultValue,
             length: $length,
+            index: $index,
         );
     }
 

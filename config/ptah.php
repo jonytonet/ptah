@@ -57,6 +57,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Brand logo
+    |--------------------------------------------------------------------------
+    |
+    | Shown on the login screen, the sidebar and the navbar instead of the
+    | initial of app.name. A URL (https://..., /img/logo.svg) or a path under
+    | public/ (img/logo.svg). `logo_dark` is optional: the dark-theme variant.
+    | A `logoUrl` passed to <x-forge-dashboard-layout> still wins.
+    |
+    */
+    'brand' => [
+        'logo' => env('PTAH_BRAND_LOGO'),
+        'logo_dark' => env('PTAH_BRAND_LOGO_DARK'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | File Generation Paths
     |--------------------------------------------------------------------------
     |

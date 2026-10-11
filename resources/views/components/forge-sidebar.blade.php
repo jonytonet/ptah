@@ -15,6 +15,7 @@
 @props([
     'appName' => config('app.name', 'Ptah'),
     'logoUrl' => null,
+    'logoDarkUrl' => null,
     'items'   => null,
 ])
 
@@ -130,9 +131,14 @@
     <div
         :class="iconOnly() ? 'justify-center' : ''"
         class="ptah-sidebar-logo-wrapper h-16 flex items-center gap-3 px-4 border-b flex-shrink-0">
-        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            @if($logoUrl)
-                <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-6 w-6 object-contain" />
+        @php
+            // A prop vence; sem ela, o logo do config (ptah.brand).
+            $ptahLogo = $logoUrl ?: \Ptah\Support\Brand::logo();
+            $ptahLogoDark = $logoUrl ? $logoDarkUrl : \Ptah\Support\Brand::logoDark();
+        @endphp
+        <div class="w-8 h-8 rounded-lg {{ $ptahLogo ? '' : 'bg-primary' }} flex items-center justify-center flex-shrink-0">
+            @if($ptahLogo)
+                @include('ptah::partials.brand-logo', ['logoSrc' => $ptahLogo, 'logoDarkSrc' => $ptahLogoDark, 'logoAlt' => $appName, 'logoClass' => 'h-8 w-8 object-contain'])
             @else
                 <span class="text-white font-bold text-sm">
                     {{ mb_strtoupper(mb_substr($appName, 0, 1)) }}

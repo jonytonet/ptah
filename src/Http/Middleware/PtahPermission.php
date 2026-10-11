@@ -41,12 +41,21 @@ class PtahPermission
             $message = trans('ptah::ui.permission_denied');
 
             if ($request->expectsJson()) {
-                return response()->json([
+                $body = [
                     'message' => $message,
                     'error' => 'permission_denied',
                     'key' => $objectKey,
                     'action' => $action,
-                ], Response::HTTP_FORBIDDEN);
+                ];
+
+                // Com o modulo api, o envelope do BaseResponse que ele gera
+                // (success/message/data/errors) — ACRESCENTADO, nao no lugar:
+                // um cliente que ja le error/key/action continua lendo (1.43.3).
+                if (config('ptah.modules.api')) {
+                    $body = ['success' => false, 'message' => $message, 'data' => null, 'errors' => ['permission' => [$message]]] + $body;
+                }
+
+                return response()->json($body, Response::HTTP_FORBIDDEN);
             }
 
             abort(403, $message);

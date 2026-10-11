@@ -96,11 +96,18 @@
 
     {{-- Branding --}}
     <div class="mb-8 text-center">
+        @if ($ptahLogo = \Ptah\Support\Brand::logo())
+            {{-- O logo do config (ptah.brand); sem ele, a inicial do app.name. --}}
+            <div class="mx-auto mb-3 flex justify-center">
+                @include('ptah::partials.brand-logo', ['logoSrc' => $ptahLogo, 'logoDarkSrc' => \Ptah\Support\Brand::logoDark(), 'logoAlt' => config('app.name', 'Ptah'), 'logoClass' => 'h-14 w-auto max-w-[240px] object-contain'])
+            </div>
+        @else
         <div class="w-14 h-14 rounded-md bg-primary mx-auto flex items-center justify-center mb-3">
             <span class="text-white text-2xl font-bold">
                 {{ mb_strtoupper(mb_substr(config('app.name', 'P'), 0, 1)) }}
             </span>
         </div>
+        @endif
         <h1 class="text-2xl font-bold ptah-c-section_ttl">{{ config('app.name', 'Ptah') }}</h1>
     </div>
 

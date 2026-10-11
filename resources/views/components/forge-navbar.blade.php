@@ -11,6 +11,7 @@
 @props([
     'appName' => config('app.name', 'Ptah'),
     'logoUrl' => null,
+    'logoDarkUrl' => null,
     'sticky'  => true,
 ])
 
@@ -56,8 +57,13 @@
                 {{ $brand }}
             @else
                 <a href="/" class="flex items-center gap-2">
-                    @if($logoUrl)
-                        <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="h-8 w-auto" />
+                    @php
+                        // A prop vence; sem ela, o logo do config (ptah.brand).
+                        $ptahLogo = $logoUrl ?: \Ptah\Support\Brand::logo();
+                        $ptahLogoDark = $logoUrl ? $logoDarkUrl : \Ptah\Support\Brand::logoDark();
+                    @endphp
+                    @if($ptahLogo)
+                        @include('ptah::partials.brand-logo', ['logoSrc' => $ptahLogo, 'logoDarkSrc' => $ptahLogoDark, 'logoAlt' => $appName, 'logoClass' => 'h-8 w-auto'])
                     @else
                         <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
                             <span class="text-white font-bold text-sm">

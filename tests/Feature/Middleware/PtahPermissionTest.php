@@ -63,6 +63,27 @@ class PtahPermissionTest extends TestCase
     }
 
     #[Test]
+    public function with_the_api_module_the_403_also_carries_the_base_response_envelope(): void
+    {
+        // 1.43.3: o modulo api gera o BaseResponse (success/message/data/errors);
+        // o 403 do ptah.can saia so no formato proprio. Agora leva os dois.
+        config(['ptah.modules.api' => true]);
+        $captured = [];
+        $request = Request::create('/x');
+        $request->headers->set('Accept', 'application/json');
+
+        $body = $this->middleware(false, $captured)->handle($request, fn () => 'ok', 'products.index', 'delete')->getData(true);
+
+        $this->assertFalse($body['success']);
+        $this->assertNull($body['data']);
+        $this->assertArrayHasKey('permission', $body['errors']);
+        $this->assertSame(['permission_denied', 'products.index', 'delete'], [$body['error'], $body['key'], $body['action']], 'As chaves de antes continuam.');
+
+        config(['ptah.modules.api' => false]);
+        $this->assertArrayNotHasKey('success', $this->middleware(false, $captured)->handle($request, fn () => 'ok', 'products.index', 'delete')->getData(true));
+    }
+
+    #[Test]
     public function denied_returns_json_403_for_json_requests(): void
     {
         $captured = [];

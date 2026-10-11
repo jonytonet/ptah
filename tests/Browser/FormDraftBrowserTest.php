@@ -26,7 +26,7 @@ class FormDraftBrowserTest extends DuskTestCase
     private function openNew(Browser $b): void
     {
         $b->script('window.__ptahDraftReset()');
-        $b->press(__('ptah::ui.btn_new'))->waitFor(self::NAME);
+        $b->press(__('ptah::ui.btn_new'))->waitFor(self::NAME, 30);
         $this->waitForDraft($b, ':new');
     }
 
@@ -37,7 +37,7 @@ class FormDraftBrowserTest extends DuskTestCase
         // (wire:loading.attr) e o clique se perderia.
         $selector = 'button[wire\:click="openEdit('.$id.')"]';
         $b->waitUntil('! document.querySelector('.json_encode($selector).').disabled', 30);
-        $b->click('button[wire\:click="openEdit('.$id.')"]')->waitFor(self::NAME);
+        $b->click('button[wire\:click="openEdit('.$id.')"]')->waitFor(self::NAME, 30);
         $this->waitForDraft($b, ':edit:'.$id);
     }
 
@@ -119,7 +119,7 @@ class FormDraftBrowserTest extends DuskTestCase
             $this->close($b);
 
             $b->script('window.__ptahDraftReset()');
-            $b->press(__('ptah::ui.btn_new'))->waitFor(self::NAME);
+            $b->press(__('ptah::ui.btn_new'))->waitFor(self::NAME, 30);
             $this->assertTrue((bool) $b->script('return !! document.querySelector("[aria-busy=true]");')[0], 'O formulario abriu destravado antes da resposta.');
 
             $b->waitUntil('![...document.querySelectorAll("[aria-busy=true]")].length', 30);

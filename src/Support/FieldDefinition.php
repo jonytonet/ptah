@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
  * Value object representing the definition of a single field.
  *
  * Input string format (--fields option):
- *   name:type[(params)][:nullable][:unique][:surname=Label][:default(val)]
+ *   name:type[(params)][:nullable][:unique][:index][:surname=Label][:default(val)]
  *
  * Examples:
  *   name:string
@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
  *   is_active:boolean:default(true)
  *   qty:integer:default(0)
  *   email:string:unique
+ *   status:string:default(open):index   ← plain index (1.43.3)
  *   user_id:unsignedBigInteger        ← raw column + auto index, NO constrained()
  *   user_id:foreignId                 ← constrained FK with cascade (convention-based)
  *   city:string:surname=City
@@ -38,6 +39,7 @@ readonly class FieldDefinition
         public bool $hasDefault = false, // whether a ->default() should be emitted
         public ?string $defaultValue = null,  // default value literal: 'true', '0', 'active'
         public ?int $length = null,  // string/char: declared length — string(60), char(2)
+        public bool $index = false,  // :index — a plain index (unique already makes its own)
     ) {}
 
     /**
@@ -165,9 +167,11 @@ readonly class FieldDefinition
 
         // Auto-index FK-like columns (unsignedBigInteger/bigInteger ending in _id).
         // Skipped when already ->unique() since unique creates its own index.
-        if (! $this->unique
-            && str_ends_with($this->name, '_id')
-            && in_array($this->type, ['unsignedBigInteger', 'bigInteger'], true)) {
+        // An explicit :index too (status:string:default(open):index), which
+        // was silently ignored until 1.43.3.
+        if (! $this->unique && ($this->index
+            || (str_ends_with($this->name, '_id')
+                && in_array($this->type, ['unsignedBigInteger', 'bigInteger'], true)))) {
             $line .= '->index()';
         }
 

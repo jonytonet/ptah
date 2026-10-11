@@ -158,6 +158,11 @@ php artisan ptah:forge Product --force
 --fields="campo1:tipo:modificador1:modificador2,campo2:tipo"
 ```
 
+> **PowerShell:** always quote the whole value. Unquoted, PowerShell splits
+> the argument at every comma — `decimal(5,2)` arrives cut in two and the
+> migration gets `decimal('x', 0, 2)`. With quotes, ptah splits only on the
+> commas outside parentheses.
+
 **Available types:**
 - ``string``, ``text``, ``integer``, ``bigInteger``, ``unsignedBigInteger``
 - ``decimal(10,2)``, ``float``, ``double``
@@ -168,7 +173,7 @@ php artisan ptah:forge Product --force
 **Modifiers:**
 - ``nullable`` — Allows NULL
 - ``unique`` — Unique index
-- ``index`` — Simple index
+- ``index`` — Simple index (documented for long, honoured since 1.43.3; skipped with ``unique``, which indexes already)
 - ``default(value)`` — Default value
 - ``surname=Label`` (alias: ``label=Label``) — Display label shown in the BaseCrud screen for this column. Without it, the label is derived from the field name.
 
