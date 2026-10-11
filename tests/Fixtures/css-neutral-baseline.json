@@ -136,6 +136,8 @@
     ".ptah-base-crud[data-density=\"spacious\"]|light|--ptah-control-h": "2.75rem",
     ".ptah-base-crud[data-density=\"spacious\"]|light|--ptah-control-px": ".875rem",
     ".ptah-base-crud[data-density=\"spacious\"]|light|--ptah-row-py": "1rem",
+    ".ptah-brand-logo-dark|dark|display": "inline-block !important",
+    ".ptah-brand-logo-light|dark|display": "none",
     ".ptah-btn-light.ptah-btn-flat:hover|dark|background-color": "#334155",
     ".ptah-btn-light.ptah-btn-flat:hover|light|background-color": "#f8fafc",
     ".ptah-btn-light.ptah-btn-flat|dark|background-color": "transparent",

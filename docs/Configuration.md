@@ -93,6 +93,8 @@ column means the key has no `.env` override (edit the published file instead).
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
 | `theme.colors.primary` | `PTAH_COLOR_PRIMARY` | `#5b21b6` | `config/ptah.php` comments (injected as CSS custom properties, no view edits needed) |
+| `brand.logo` | `PTAH_BRAND_LOGO` | `null` | Logo on the login, sidebar and navbar (a URL, or a path under `public/`). A `logoUrl` prop still wins. Since 1.43.3 |
+| `brand.logo_dark` | `PTAH_BRAND_LOGO_DARK` | `null` | Optional dark-theme variant of the logo |
 | `theme.colors.success` | `PTAH_COLOR_SUCCESS` | `#10b981` | `config/ptah.php` comments |
 | `theme.colors.danger` | `PTAH_COLOR_DANGER` | `#ef4444` | `config/ptah.php` comments |
 | `theme.colors.warn` | `PTAH_COLOR_WARN` | `#f59e0b` | `config/ptah.php` comments |

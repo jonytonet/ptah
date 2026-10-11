@@ -7,6 +7,41 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.43.3] - 2026-10-10
+
+The rest of the `ptah-melhorias.md` report (projeto Cher).
+
+### Added - a logo from the config
+
+`ptah.brand.logo` / `ptah.brand.logo_dark` (`PTAH_BRAND_LOGO`,
+`PTAH_BRAND_LOGO_DARK`): a URL or a path under `public/`, shown on the login
+screen, the sidebar and the navbar instead of the initial of `app.name`. The
+dark variant shows under the dark theme (it starts hidden in the markup, so a
+host whose CSS is not rebuilt sees only the light one, never both). A
+`logoUrl` prop still wins. Only http(s) or relative URLs are accepted.
+
+### Changed - the `ptah.can` JSON 403 carries the API envelope
+
+With the `api` module on, the 403 also carries the `BaseResponse` envelope
+(`success: false`, `message`, `data: null`, `errors.permission`). Added, not
+replaced: `error`, `key` and `action` stay for clients that read them.
+
+### Fixed - the `index` field modifier was ignored
+
+`status:string:default(open):index` was documented in Commands.md but the
+parser dropped `:index`; the migration had no index. It is now emitted
+(skipped with `unique`, which indexes already). Commands.md also warns that
+PowerShell splits an unquoted `--fields` at every comma (`decimal(5,2)` →
+`decimal('x', 0, 2)`).
+
+### Docs
+
+- QuickStart: "One company or many" — `multi_company`, the session company in
+  tests and API calls, and why there is no fallback to a default company.
+- Permissions.md showed the wrong keys for the `ptah.can` JSON 403.
+
+---
+
 ## [1.43.2] - 2026-10-10
 
 From the `ptah-melhorias.md` report of a project in development.

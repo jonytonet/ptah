@@ -70,6 +70,22 @@ Open <http://localhost:8000/login>, sign in as `admin@admin.com` with the passwo
 | `ptah:module …` | Login + 2FA, RBAC with MASTER role, dynamic sidebar menu |
 | `ptah:forge Task` | 14 artefacts in a Controller → Service → Repository → DTO architecture |
 
+## One company or many (`multi_company`)
+
+`ptah:install` turns `ptah.permissions.multi_company` on. A role can then be
+bound to a company or to none (global), and a check uses the company **in the
+session**. Where there is no session company — a test with `actingAs()`, an API
+call with Sanctum — only global bindings count, and a role bound to a company
+is denied **without an error**.
+
+- **One company only:** set `multi_company` to `false`.
+- **Several companies:** put the company in the session (or pass it to
+  `ptah_can($key, $action, companyId: $id)`), or bind the role with no
+  company (`company_id = null`) when it applies everywhere.
+
+ptah does not fall back to "the default company" on purpose: that would grant
+a company-bound role on any request that named no company.
+
 ## Next steps
 
 - **Add fields or relations:** see the `--fields` syntax in [Commands.md](Commands.md) (FK auto-detection with `*_id`, `surname=` labels, `--no-soft-deletes`, `--api`)
