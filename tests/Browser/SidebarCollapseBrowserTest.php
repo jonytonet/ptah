@@ -115,4 +115,30 @@ class SidebarCollapseBrowserTest extends DuskTestCase
                 ->assertVisible('.ptah-sidebar a[href="/dusk-test/crud"]');
         });
     }
+
+    #[Test]
+    public function on_a_tablet_the_hamburger_opens_the_sidebar_not_just_the_backdrop(): void
+    {
+        // 1.44.1: entre md e lg a sidebar e a trilha de icones; o hamburguer
+        // escurecia a tela e a trilha continuava estreita — so abria passando
+        // o mouse. Clique por script (sem mover o mouse): sem hover nenhum,
+        // como no toque.
+        $this->browse(function (Browser $browser) {
+            $browser->resize(900, 800)->visit('/dusk-test/crud')->waitFor('.ptah-sidebar')->pause(300);
+            $width = fn (): float => (float) $browser->script("return document.querySelector('.ptah-sidebar').getBoundingClientRect().width;")[0];
+
+            $this->assertLessThan(150, $width(), 'No tablet a sidebar comeca como trilha de icones.');
+
+            $browser->script("document.querySelector('.ptah-mobile-toggle').click();");
+            $browser->pause(400);
+            $this->assertGreaterThan(150, $width(), 'O hamburguer escureceu a tela mas nao abriu a sidebar.');
+            $browser->assertSeeIn('.ptah-sidebar', 'Catalogo');
+
+            // Clicar no fundo escuro fecha os dois.
+            $browser->script("document.querySelector('.ptah-sidebar-overlay').click();");
+            $browser->pause(400);
+            $this->assertLessThan(150, $width());
+            $browser->assertMissing('.ptah-sidebar-overlay:not([style*="display: none"])');
+        });
+    }
 }

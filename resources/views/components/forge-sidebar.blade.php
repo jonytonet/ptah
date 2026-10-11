@@ -110,7 +110,10 @@
             /* peek: expansao temporaria em tablet (md sem hover confiavel) — o ramo
                tablet ignorava qualquer intencao do usuario e o clique no grupo nao
                tinha efeito visivel (achado de revisao, Onda C). */
-            return !this.hovered && !this.peek && ((!this.isLg && this.isMd) || (this.isLg && this.sidebarCollapsed));
+            /* sidebarOpen no tablet: o hamburguer abre a trilha por inteiro (1.44.1) —
+               antes so escurecia a tela, e ela seguia estreita ate o mouse passar. */
+            return !this.hovered && !this.peek && !(this.sidebarOpen && !this.isLg)
+                && ((!this.isLg && this.isMd) || (this.isLg && this.sidebarCollapsed));
         }
     }"
     @mouseenter="hovered = true"
@@ -120,7 +123,7 @@
         'translate-x-0':     sidebarOpen,
         '-translate-x-full': !sidebarOpen,
     }"
-    :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : (isMd && peek ? { width: '16rem' } : {})"
+    :style="isLg ? { width: (sidebarCollapsed && !hovered) ? '4rem' : '16rem' } : (isMd && (peek || sidebarOpen) ? { width: '16rem' } : {})"
     @click.outside="peek = false"
     class="ptah-sidebar fixed inset-y-0 left-0 z-40 w-64 border-r flex flex-col overflow-hidden
            transition-all duration-300 ease-in-out
