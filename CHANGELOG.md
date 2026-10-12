@@ -7,6 +7,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.44.2] - 2026-10-11
+
+From PetPlace (xAI/Grok). Both silent — nothing in the log.
+
+### Fixed - AI tool parameters of type `array`/`object` reached the model as `string`
+
+`AiToolRegistry` knew only number, integer and boolean; everything else —
+`array`, `object`, an `enum` — was declared to the provider as a string. The
+model sent the list as text, `is_array()` was false, and a batch tool did
+nothing ("sim" four times, nothing saved); a list of ids came through as its
+first id. Those properties now go to Prism as their own JSON Schema
+(`RawSchema`: `items`, `properties`, `required`, `enum` preserved), so the
+tool receives a real PHP array. A provider that still sends text has it
+JSON-decoded before `execute()`. Hosts that `json_decode` it themselves keep
+working. AiAgent.md now lists the supported types.
+
+### Fixed - a long AI conversation lost its beginning for good
+
+The history is trimmed to `max_history` (20) for the model's context — and
+that trimmed list was what got saved, so from the 11th exchange on every answer
+erased the oldest messages from the database; the widget and the history (⏱)
+could not bring them back. The trim now applies only to the context; the
+conversation is stored whole, up to `ptah.ai_agent.max_stored_messages`
+(`PTAH_AI_MAX_STORED_MESSAGES`, default 500, `0` = no limit). Messages already
+lost before this version cannot be recovered.
+
+---
+
 ## [1.44.1] - 2026-10-11
 
 ### Fixed - on a tablet the hamburger darkened the screen but did not open the menu

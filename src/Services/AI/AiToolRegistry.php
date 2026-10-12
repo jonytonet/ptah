@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Services\AI;
 
 use Illuminate\Support\Facades\Log;
+use Prism\Prism\Schema\RawSchema;
 use Prism\Prism\Tool;
 use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Contracts\AiToolContextAware;
@@ -334,6 +335,24 @@ class AiToolRegistry
     }
 
     /**
+     * The parameters declared as `array` or `object`.
+     *
+     * @param  array<mixed>  $props
+     * @return list<string>
+     */
+    private static function structuredParameters(array $props): array
+    {
+        $out = [];
+        foreach ($props as $prop => $def) {
+            if (is_array($def) && in_array($def['type'] ?? null, ['array', 'object'], true)) {
+                $out[] = (string) $prop;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  array<string, mixed>  $schema
      * @param  callable(): AiToolInterface  $resolve
      */
@@ -354,9 +373,14 @@ class AiToolRegistry
                 $desc = $def['description'] ?? $prop;
                 $type = $def['type'] ?? 'string';
 
-                $prismTool = match ($type) {
-                    'number', 'integer' => $prismTool->withNumberParameter($prop, $desc, required: $isRequired),
-                    'boolean' => $prismTool->withBooleanParameter($prop, $desc, required: $isRequired),
+                // Lista, objeto e enum: o schema da tool vai inteiro (items,
+                // properties, enum preservados). Antes caiam no `default` e eram
+                // declarados como string — o modelo mandava um TEXTO e a tool de
+                // lote recebia nada (1.44.2, PetPlace).
+                $prismTool = match (true) {
+                    in_array($type, ['array', 'object'], true), isset($def['enum']) => $prismTool->withParameter(new RawSchema((string) $prop, $def), $isRequired),
+                    in_array($type, ['number', 'integer'], true) => $prismTool->withNumberParameter($prop, $desc, required: $isRequired),
+                    $type === 'boolean' => $prismTool->withBooleanParameter($prop, $desc, required: $isRequired),
                     default => $prismTool->withStringParameter($prop, $desc, required: $isRequired),
                 };
             }
@@ -364,7 +388,20 @@ class AiToolRegistry
 
         // PHP 8 variadic spread preserves named argument keys:
         // $fn(...['status' => 'active']) → $args = ['status' => 'active']
-        return $prismTool->using(static function (mixed ...$args) use ($name, $resolve, $class): string {
+        $structured = is_array($props) ? self::structuredParameters($props) : [];
+
+        return $prismTool->using(static function (mixed ...$args) use ($name, $resolve, $class, $structured): string {
+            // Um provedor que ainda mande a lista/objeto como texto JSON: vira
+            // array antes de chegar a tool.
+            foreach ($structured as $prop) {
+                if (is_string($args[$prop] ?? null)) {
+                    $decoded = json_decode($args[$prop], true);
+                    if (is_array($decoded)) {
+                        $args[$prop] = $decoded;
+                    }
+                }
+            }
+
             // De novo na chamada: a lista foi montada antes, e a sessao pode
             // ter mudado de usuario ou de empresa desde entao.
             $context = AiToolContext::current();
