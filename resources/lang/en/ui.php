@@ -1811,6 +1811,7 @@ return [
     'sd_value_not_allowed' => 'Choose an option from the list.',
     'dashboard_others' => 'Others',
     'dashboard_no_value' => 'No value',
+    'ai_empty_turn_after_tools' => 'The action was executed (:tools), but I could not write the answer. Check the result before repeating it.',
     'ai_empty_turn' => 'I could not finish this answer. Please try again.',
     'dashboard_widget_error' => 'This widget could not be loaded.',
     'btn_print' => 'Print',

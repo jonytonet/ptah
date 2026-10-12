@@ -7,6 +7,48 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.44.3] - 2026-10-12
+
+From PetPlace, building a "preview → yes → write" flow over dozens of products.
+
+### Fixed - a write tool ran, and the user read "could not finish"
+
+When the model ran tools and then wrote nothing, the turn ended with
+`ai_empty_turn` — after the tool had written. The user said "yes" again and got
+"no pending preview". Now ptah makes one more request **without tools**, handing
+the model what the tools returned, only to word the answer — nothing can run
+twice. If even that is empty, the user reads "The action was executed (tools),
+but I could not write the answer", not "could not finish". An empty turn is now
+logged as **error** (the warning vanished under `LOG_LEVEL=error`), with the
+tools that ran.
+
+### Fixed - what the tools returned was gone on the next turn
+
+Only the user's message and the final text were stored, so on "yes" the model
+no longer had the preview it had just shown (it asked for the product ids
+again). Each tool result is now stored with the answer (up to
+`ptah.ai_agent.tool_result_history_bytes`, default 8000, `0` = none) and sent
+back on the next turns as the tool call + result it was — inside the stored
+assistant message, so the `max_history` trim never splits a call from its
+result. A tool opts out with `keepResultInHistory(): bool`. The widget does
+not show them.
+
+### Added - `AiChatService::complete()`
+
+`complete(string $system, string $prompt, ?int $configId = null): string` — a
+one-shot call to the configured model (no tools, no conversation), applying
+and restoring the provider config like a chat turn, inside a turn or outside
+one (job, command). For a tool that needs the model to generate content
+server-side.
+
+### Docs
+
+AiAgent.md: tool results in the conversation, and "keep the model's part
+small" for write tools — generate the content on the server, confirm with a
+small argument.
+
+---
+
 ## [1.44.2] - 2026-10-11
 
 From PetPlace (xAI/Grok). Both silent — nothing in the log.

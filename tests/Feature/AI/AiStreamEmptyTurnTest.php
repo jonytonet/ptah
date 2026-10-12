@@ -57,24 +57,50 @@ class AiStreamEmptyTurnTest extends TestCase
         Log::shouldHaveReceived('warning')->withArgs(fn ($m) => str_contains($m, 'retrying the turn'))->once();
     }
 
-    #[Test]
-    public function after_a_tool_has_run_it_is_never_retried_and_the_user_gets_a_notice(): void
+    private function toolStep(): TextStepFake
     {
-        Log::spy();
-        $step = TextStepFake::make()->withText('')
+        return TextStepFake::make()->withText('')
             ->withToolCalls([new ToolCall('c1', 'createProduct', ['name' => 'Ração'])])
-            ->withToolResults([new ToolResult('c1', 'createProduct', ['name' => 'Ração'], 'ok')]);
+            ->withToolResults([new ToolResult('c1', 'createProduct', ['name' => 'Ração'], '{"gravados":11}')]);
+    }
+
+    #[Test]
+    public function after_a_tool_ran_the_answer_is_written_by_a_call_without_tools(): void
+    {
+        // 1.44.3: a tool gravou e o modelo nao escreveu nada. Refazer o turno
+        // repetiria a gravacao; uma chamada SEM tools so redige a resposta.
         $fake = Prism::fake([
-            TextResponseFake::make()->withText('')->withSteps(collect([$step])),
-            TextResponseFake::make()->withText('nao pode chegar aqui'),
+            TextResponseFake::make()->withText('')->withSteps(collect([$this->toolStep()])),
+            TextResponseFake::make()->withText('Gravei 11 produtos.'),
         ]);
         $this->provider();
 
-        $result = $this->service()->stream('cadastra', 'sess-e2', 1, null, fn () => null);
+        $result = $this->service()->stream('sim', 'sess-e2', 1, null, fn () => null);
 
-        $this->assertSame(__('ptah::ui.ai_empty_turn'), $result['text'], 'Nunca a bolha vazia.');
-        $fake->assertCallCount(1);
-        Log::shouldHaveReceived('warning')->withArgs(fn ($m, $ctx) => str_contains($m, 'without text') && $ctx['provider'] === 'openai' && $ctx['mode'] === 'stream')->once();
+        $this->assertSame('Gravei 11 produtos.', $result['text']);
+        $fake->assertRequest(function (array $requests) {
+            $this->assertCount(2, $requests);
+            $this->assertSame([], $requests[1]->tools(), 'A chamada de redacao nao pode ter tools.');
+            $messages = $requests[1]->messages();
+            $this->assertStringContainsString('"gravados":11', end($messages)->content);
+        });
+    }
+
+    #[Test]
+    public function if_even_that_is_empty_the_user_is_told_the_action_ran(): void
+    {
+        Log::spy();
+        Prism::fake([
+            TextResponseFake::make()->withText('')->withSteps(collect([$this->toolStep()])),
+            TextResponseFake::make()->withText(''),
+        ]);
+        $this->provider();
+
+        $result = $this->service()->send('sim', 'sess-e2b', 1);
+
+        $this->assertSame(__('ptah::ui.ai_empty_turn_after_tools', ['tools' => 'createProduct']), $result['text'], '"Nao consegui concluir" depois de gravar levava a confirmar de novo.');
+        // error, nao warning: com LOG_LEVEL=error o warning sumia.
+        Log::shouldHaveReceived('error')->withArgs(fn ($m, $ctx = []) => str_contains($m, 'without text') && ($ctx['tools_run'] ?? null) === ['createProduct'])->once();
     }
 
     #[Test]
