@@ -195,6 +195,7 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_SYSTEM_PROMPT` | `You are a helpful assistant.` | Default system prompt |
 | `PTAH_AI_MAX_HISTORY` | `20` | Messages sent to the model as context each turn (the conversation itself is kept whole — see below) |
 | `PTAH_AI_MAX_STORED_MESSAGES` | `500` | Messages kept per conversation (what the widget shows). `0` = no limit |
+| `PTAH_AI_TOOL_RESULT_HISTORY_BYTES` | `8000` | Bytes of each tool result kept in the conversation and sent back on the next turns. `0` = keep none |
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
 | `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
 | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
@@ -664,6 +665,42 @@ list as text and `is_array()` was false. If a provider still sends text, ptah
 decodes the JSON before calling `execute()`. Some providers' strict mode wants
 `additionalProperties: false` and every field in `required` inside objects —
 the schema is yours, so add them there.
+
+#### Tool results stay in the conversation
+
+What a tool returns is stored with the assistant's answer (up to
+`PTAH_AI_TOOL_RESULT_HISTORY_BYTES` per result) and sent back to the model on
+the next turns, as the tool call + tool result it was. So a two-turn flow works:
+the preview listed 29 product ids, and on "yes" the model still has them —
+even if its text did not repeat them. The widget does not show these records.
+
+A tool whose result should not stay (large, or sensitive) opts out:
+
+```php
+public function keepResultInHistory(): bool
+{
+    return false;
+}
+```
+
+#### Write tools: keep the model's part small
+
+A model asked to assemble a large argument (a list of 29 suggestions) may
+announce the action ("generating… please wait") and end the turn without
+calling the tool. Generate the content **on the server** and let the model only
+confirm:
+
+- the tool computes the preview itself — with the model's help if needed, via
+  `app(\Ptah\Services\AI\AiChatService::class)->complete($system, $prompt)`,
+  a one-shot call to the configured model (no tools, no conversation; works in
+  a job or command too);
+- the confirmation is a small argument (`apply_preview: true`), not the list
+  again.
+
+If a write tool runs and the model then writes nothing, ptah asks the model
+once more **without tools** to word the answer from the results — nothing runs
+twice. If even that is empty, the user reads "The action was executed (tool),
+but I could not write the answer", and it is logged as an **error**.
 
 ### Registering the tool
 

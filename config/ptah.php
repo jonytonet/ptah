@@ -614,6 +614,10 @@ return [
         // Messages KEPT per conversation (what the widget shows when it is
         // reopened). max_history only trims what is sent to the model. 0 = no limit.
         'max_stored_messages' => (int) env('PTAH_AI_MAX_STORED_MESSAGES', 500),
+        // What a tool returned stays in the conversation (up to this many bytes
+        // per result) and goes back to the model on the next turns — a preview
+        // the user then confirms. 0 = keep no tool result.
+        'tool_result_history_bytes' => (int) env('PTAH_AI_TOOL_RESULT_HISTORY_BYTES', 8000),
         'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
         'stream' => (bool) env('PTAH_AI_STREAM', true),
         'max_message_chars' => (int) env('PTAH_AI_MAX_MESSAGE_CHARS', 8000),

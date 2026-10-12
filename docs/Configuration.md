@@ -610,6 +610,7 @@ the bar and focuses the input — the same gesture the menu groups already use.
 | `ai_agent.system_prompt` | `PTAH_AI_SYSTEM_PROMPT` | `You are a helpful assistant.` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.max_history` | `PTAH_AI_MAX_HISTORY` | `20` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.max_stored_messages` | `PTAH_AI_MAX_STORED_MESSAGES` | `500` (`0` = no limit) | [AiAgent.md](AiAgent.md) |
+| `ai_agent.tool_result_history_bytes` | `PTAH_AI_TOOL_RESULT_HISTORY_BYTES` | `8000` (`0` = keep none) | [AiAgent.md](AiAgent.md) |
 | `ai_agent.rate_limit` | `PTAH_AI_RATE_LIMIT` | `30` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.stream` | `PTAH_AI_STREAM` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.max_steps` | `PTAH_AI_MAX_STEPS` | `5` | [AiAgent.md](AiAgent.md) |

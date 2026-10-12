@@ -1813,6 +1813,7 @@ return [
     'sd_value_not_allowed' => 'Escolha uma opção da lista.',
     'dashboard_others' => 'Outros',
     'dashboard_no_value' => 'Sem valor',
+    'ai_empty_turn_after_tools' => 'A ação foi executada (:tools), mas não consegui redigir a resposta. Confira o resultado antes de repetir.',
     'ai_empty_turn' => 'Não consegui concluir a resposta. Tente de novo.',
     'dashboard_widget_error' => 'Não foi possível carregar este indicador.',
     'btn_print' => 'Imprimir',

@@ -19,7 +19,10 @@ use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\ValueObjects\Media\Text;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\ToolCall;
+use Prism\Prism\ValueObjects\ToolResult;
 use Ptah\Exceptions\AiProviderException;
 use Ptah\Exceptions\AiRateLimitException;
 use Ptah\Models\AiConversation;
@@ -136,6 +139,19 @@ class AiChatService
 
         try {
             $response = $this->buildRequest($ctx)->asText();
+            $text = (string) ($response->text ?? '');
+            $results = [];
+            foreach ($response->steps as $step) {
+                array_push($results, ...$step->toolResults);
+            }
+            $inputTokens = $response->usage->promptTokens ?? 0;
+            $outputTokens = $response->usage->completionTokens ?? 0;
+
+            if (trim($text) === '' && $results !== []) {
+                [$text, $in, $out] = $this->composeFromToolResults($ctx, $results);
+                $inputTokens += $in;
+                $outputTokens += $out;
+            }
         } catch (\Throwable $e) {
             $this->logProviderFailure($ctx['config'], $e);
 
@@ -148,9 +164,10 @@ class AiChatService
         return $this->persistTurn(
             $ctx,
             $message,
-            $this->orEmptyTurnNotice($ctx['config'], (string) ($response->text ?? ''), $response->steps->count(), 'send'),
-            $response->usage->promptTokens ?? 0,
-            $response->usage->completionTokens ?? 0,
+            $this->orEmptyTurnNotice($ctx['config'], $text, $response->steps->count(), 'send', $results),
+            $inputTokens,
+            $outputTokens,
+            $results,
         );
     }
 
@@ -183,6 +200,8 @@ class AiChatService
         $toolCalls = 0;
         $toolResults = 0;
         $steps = 0;
+        /** @var list<ToolResult> $results */
+        $results = [];
 
         try {
             foreach ($this->buildRequest($ctx)->asStream() as $event) {
@@ -190,6 +209,7 @@ class AiChatService
                     $toolCalls++;
                 } elseif ($event instanceof ToolResultEvent) {
                     $toolResults++;
+                    $results[] = $event->toolResult;
                 } elseif ($event instanceof StepFinishEvent) {
                     $steps++;
                 }
@@ -233,6 +253,19 @@ class AiChatService
                     $onDelta($full, $full);
                 }
             }
+
+            // Uma tool rodou (talvez gravou) e o modelo nao escreveu nada:
+            // uma chamada SEM tools so para redigir a resposta a partir dos
+            // resultados — nao repete efeito nenhum (1.44.3).
+            if (trim($full) === '' && $results !== []) {
+                [$full, $in, $out] = $this->composeFromToolResults($ctx, $results);
+                $inputTokens += $in;
+                $outputTokens += $out;
+
+                if ($full !== '' && $onDelta) {
+                    $onDelta($full, $full);
+                }
+            }
         } catch (\Throwable $e) {
             $this->logProviderFailure($ctx['config'], $e);
 
@@ -241,12 +274,53 @@ class AiChatService
             $this->restoreConfig($ctx['restoreConfig']);
         }
 
-        $final = $this->orEmptyTurnNotice($ctx['config'], $full, $steps, 'stream');
+        $final = $this->orEmptyTurnNotice($ctx['config'], $full, $steps, 'stream', $results);
         if ($final !== $full && $onDelta) {
             $onDelta($final, $final);
         }
 
-        return $this->persistTurn($ctx, $message, $final, $inputTokens, $outputTokens);
+        return $this->persistTurn($ctx, $message, $final, $inputTokens, $outputTokens, $results);
+    }
+
+    /**
+     * The model ran tools and then wrote nothing. One more request, WITHOUT
+     * tools, handing it what the tools returned and asking only for the
+     * answer: it cannot call (and so repeat) anything. A failure here falls
+     * back to the notice — never to an exception after a write succeeded.
+     *
+     * @param  list<ToolResult>  $results
+     * @return array{0: string, 1: int, 2: int} [text, input tokens, output tokens]
+     */
+    private function composeFromToolResults(array $ctx, array $results): array
+    {
+        /** @var AiModelConfig $config */
+        $config = $ctx['config'];
+        $summary = array_map(function (ToolResult $r): array {
+            $text = $this->clip($this->resultText($r->result), $this->toolResultBytes() ?: 8000);
+            // O JSON da tool vai como estrutura, nao como string escapada.
+            $decoded = json_decode($text, true);
+
+            return ['tool' => $r->toolName, 'arguments' => $r->args, 'result' => is_array($decoded) ? $decoded : $text];
+        }, $results);
+
+        try {
+            $response = Prism::text()
+                ->using($this->resolveProvider($config->provider), $config->model)
+                ->withSystemPrompt($ctx['systemPrompt'])
+                ->withMessages(array_merge($ctx['prismMessages'], [new UserMessage(
+                    "The tools below already ran in this turn — do not call any tool again. Using only their results, write the answer to the user's last message, in the user's language.\n\n"
+                    .json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                )]))
+                ->withMaxTokens($config->max_tokens)
+                ->usingTemperature((float) $config->temperature)
+                ->asText();
+
+            return [(string) $response->text, $response->usage->promptTokens, $response->usage->completionTokens];
+        } catch (\Throwable $e) {
+            $this->logProviderFailure($config, $e);
+
+            return ['', 0, 0];
+        }
     }
 
     /**
@@ -254,21 +328,115 @@ class AiChatService
      * any answer, so the reopened conversation shows it too) instead of an
      * empty bubble, and a warning naming provider, model and steps.
      */
-    private function orEmptyTurnNotice(AiModelConfig $config, string $text, int $steps, string $mode): string
+    /**
+     * @param  list<ToolResult>  $results
+     */
+    private function orEmptyTurnNotice(AiModelConfig $config, string $text, int $steps, string $mode, array $results = []): string
     {
         if (trim($text) !== '') {
             return $text;
         }
 
-        Log::warning('[Ptah AI] Turn ended without text', [
+        $tools = array_values(array_unique(array_map(fn (ToolResult $r): string => $r->toolName, $results)));
+
+        // error, nao warning: com LOG_LEVEL=error em producao o warning sumia,
+        // e o usuario ficava sem saber se a acao tinha gravado (1.44.3).
+        Log::error('[Ptah AI] Turn ended without text', [
             'provider' => $config->provider,
             'model' => $config->model,
             'steps' => $steps,
             'max_steps' => $this->maxSteps(),
             'mode' => $mode,
+            'tools_run' => $tools,
         ]);
 
-        return trans('ptah::ui.ai_empty_turn');
+        // Uma tool rodou: dizer isso. "Nao consegui concluir" depois de uma
+        // gravacao levava a pessoa a confirmar de novo.
+        return $tools !== []
+            ? trans('ptah::ui.ai_empty_turn_after_tools', ['tools' => implode(', ', $tools)])
+            : trans('ptah::ui.ai_empty_turn');
+    }
+
+    /** `ptah.ai_agent.tool_result_history_bytes` — 0 keeps no tool result in the history. */
+    private function toolResultBytes(): int
+    {
+        return max(0, (int) config('ptah.ai_agent.tool_result_history_bytes', 8000));
+    }
+
+    private function resultText(mixed $result): string
+    {
+        return is_string($result) ? $result : (string) json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function clip(string $text, int $bytes): string
+    {
+        return strlen($text) > $bytes ? mb_strcut($text, 0, $bytes).'…[truncated]' : $text;
+    }
+
+    /**
+     * What this turn's tools returned, as stored with the assistant message —
+     * so the next turn still has the preview the user is confirming.
+     *
+     * @param  list<ToolResult>  $results
+     * @return list<array{id: string, name: string, arguments: array<mixed>, result: string}>
+     */
+    private function toolRecords(array $results): array
+    {
+        $bytes = $this->toolResultBytes();
+        if ($bytes === 0) {
+            return [];
+        }
+
+        $records = [];
+        foreach ($results as $r) {
+            if (! $this->toolRegistry->keepsResultInHistory($r->toolName)) {
+                continue;
+            }
+            $records[] = [
+                'id' => $r->toolCallId,
+                'name' => $r->toolName,
+                'arguments' => $r->args,
+                'result' => $this->clip($this->resultText($r->result), $bytes),
+            ];
+        }
+
+        return $records;
+    }
+
+    /**
+     * A one-shot completion with the configured model, for a tool or job that
+     * needs the model's help (suggest NCMs for these products, summarise this
+     * text). Applies and restores the provider config like a chat turn, so it
+     * works inside a turn and outside one (job, command). No tools, no
+     * history, no conversation.
+     *
+     * @throws AiProviderException
+     */
+    public function complete(string $system, string $prompt, ?int $configId = null): string
+    {
+        $config = $this->configService->resolveForTurn($configId);
+        if (! $config) {
+            throw new AiProviderException(trans('ptah::ui.ai_widget_no_provider'));
+        }
+
+        $restore = $this->applyConfig($config);
+
+        try {
+            return (string) Prism::text()
+                ->using($this->resolveProvider($config->provider), $config->model)
+                ->withSystemPrompt($system)
+                ->withPrompt($prompt)
+                ->withMaxTokens($config->max_tokens)
+                ->usingTemperature((float) $config->temperature)
+                ->asText()
+                ->text;
+        } catch (\Throwable $e) {
+            $this->logProviderFailure($config, $e);
+
+            throw $this->providerException($e);
+        } finally {
+            $this->restoreConfig($restore);
+        }
     }
 
     /** `ptah.ai_agent.max_steps` — flows that chain several lookups need more than 5. */
@@ -469,7 +637,10 @@ class AiChatService
      * @param  array{config: AiModelConfig, conversation: AiConversation, history: array<int, mixed>}  $ctx
      * @return array{text: string, conversationId: int}
      */
-    private function persistTurn(array $ctx, string $message, string $finalText, int $inputTokens, int $outputTokens): array
+    /**
+     * @param  list<ToolResult>  $results
+     */
+    private function persistTurn(array $ctx, string $message, string $finalText, int $inputTokens, int $outputTokens, array $results = []): array
     {
         /** @var AiConversation $conversation */
         $conversation = $ctx['conversation'];
@@ -492,10 +663,15 @@ class AiChatService
         // (1.44.2, PetPlace). Lido de novo do banco: outro turno pode ter
         // gravado entre a preparacao e aqui.
         $stored = $conversation->fresh()->messages ?? [];
-        $newMessages = array_merge(array_values($stored), [
-            $userMessage,
-            ['role' => 'assistant', 'content' => $finalText],
-        ]);
+        $assistant = ['role' => 'assistant', 'content' => $finalText];
+        // O que as tools devolveram neste turno, para o proximo turno ainda
+        // ter a previa que a pessoa esta confirmando (1.44.3). O widget nao
+        // mostra; buildPrismMessages() reenvia ao modelo.
+        if (($records = $this->toolRecords($results)) !== []) {
+            $assistant['tools'] = $records;
+        }
+
+        $newMessages = array_merge(array_values($stored), [$userMessage, $assistant]);
 
         // Um teto proprio de armazenamento, bem maior que o do contexto, para
         // a coluna JSON nao crescer sem fim. 0 = sem limite.
@@ -780,17 +956,39 @@ class AiChatService
     /**
      * Converts our simple DB message format to Prism ValueObject messages.
      *
-     * @param  array<array{role: string, content: string}>  $history
-     * @return array<UserMessage|AssistantMessage>
+     * @param  array<int, array<string, mixed>>  $history  {role, content, tools?} as stored by persistTurn()
+     * @return list<UserMessage|AssistantMessage|ToolResultMessage>
      */
     private function buildPrismMessages(array $history): array
     {
-        return array_map(
-            fn (array $msg) => match ($msg['role']) {
-                'assistant' => new AssistantMessage($msg['content'] ?? ''),
-                default => new UserMessage($msg['content'] ?? ''),
-            },
-            $history
-        );
+        $out = [];
+
+        foreach ($history as $msg) {
+            if (($msg['role'] ?? '') !== 'assistant') {
+                $out[] = new UserMessage($msg['content'] ?? '');
+
+                continue;
+            }
+
+            // As tools daquele turno, no mesmo formato que o Prism usa entre os
+            // passos de um turno: a chamada e o resultado, antes da resposta.
+            // Gravadas DENTRO da mensagem do assistente, entao o corte do
+            // max_history nunca separa uma chamada do seu resultado.
+            $tools = array_values(array_filter((array) ($msg['tools'] ?? []), fn ($t) => is_array($t) && isset($t['id'], $t['name'])));
+            if ($tools !== []) {
+                $out[] = new AssistantMessage('', array_map(
+                    fn (array $t) => new ToolCall((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? [])),
+                    $tools
+                ));
+                $out[] = new ToolResultMessage(array_map(
+                    fn (array $t) => new ToolResult((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), (string) ($t['result'] ?? '')),
+                    $tools
+                ));
+            }
+
+            $out[] = new AssistantMessage($msg['content'] ?? '');
+        }
+
+        return $out;
     }
 }

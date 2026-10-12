@@ -74,6 +74,9 @@ class AiToolRegistry
     /** Class names not resolved yet. @var array<string, class-string> */
     private array $pending = [];
 
+    /** Tool name => class, filled as the Prism tools are built. @var array<string, class-string> */
+    private array $classByName = [];
+
     /** Memoised result of getPrismTools(). @var Tool[]|null */
     private ?array $prismTools = null;
 
@@ -202,6 +205,27 @@ class AiToolRegistry
      * implement AiToolAuthorizable is open (the pre-1.40 behaviour, reported
      * by `ptah:check`).
      */
+    /**
+     * Whether what this tool returned goes into the conversation history, so
+     * the model still has it on the next turn (a preview, then "yes"). On by
+     * default; a tool opts out with `public function keepResultInHistory():
+     * bool { return false; }` — a large or sensitive result (1.44.3).
+     */
+    public function keepsResultInHistory(string $toolName): bool
+    {
+        $tool = $this->tools[$toolName] ?? null;
+
+        if ($tool === null) {
+            $class = $this->classByName[$toolName] ?? null;
+            if ($class === null || ! method_exists($class, 'keepResultInHistory')) {
+                return true;
+            }
+            $tool = app($class);
+        }
+
+        return ! method_exists($tool, 'keepResultInHistory') || (bool) $tool->keepResultInHistory();
+    }
+
     public static function allows(string $class, AiToolContext $context): bool
     {
         if (! is_subclass_of($class, AiToolAuthorizable::class)) {
@@ -361,6 +385,7 @@ class AiToolRegistry
         $props = $schema['properties'] ?? [];
         $required = $schema['required'] ?? [];
 
+        $this->classByName[$name] = $class;
         $prismTool = (new Tool)->as($name)->for($description);
 
         if (is_array($props)) {
