@@ -611,6 +611,9 @@ return [
     'ai_agent' => [
         'system_prompt' => env('PTAH_AI_SYSTEM_PROMPT', 'You are a helpful assistant.'),
         'max_history' => (int) env('PTAH_AI_MAX_HISTORY', 20),
+        // Messages KEPT per conversation (what the widget shows when it is
+        // reopened). max_history only trims what is sent to the model. 0 = no limit.
+        'max_stored_messages' => (int) env('PTAH_AI_MAX_STORED_MESSAGES', 500),
         'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
         'stream' => (bool) env('PTAH_AI_STREAM', true),
         'max_message_chars' => (int) env('PTAH_AI_MAX_MESSAGE_CHARS', 8000),

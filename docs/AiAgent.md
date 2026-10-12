@@ -193,7 +193,8 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 |---|---|---|
 | `PTAH_MODULE_AI_AGENT` | `false` | Enable / disable the module |
 | `PTAH_AI_SYSTEM_PROMPT` | `You are a helpful assistant.` | Default system prompt |
-| `PTAH_AI_MAX_HISTORY` | `20` | Max messages kept in session history |
+| `PTAH_AI_MAX_HISTORY` | `20` | Messages sent to the model as context each turn (the conversation itself is kept whole — see below) |
+| `PTAH_AI_MAX_STORED_MESSAGES` | `500` | Messages kept per conversation (what the widget shows). `0` = no limit |
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
 | `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
 | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
@@ -631,6 +632,39 @@ class GetOpenTicketsTool implements AiToolInterface
 }
 ```
 
+#### Parameter types
+
+Each property of `parameters()` is declared to the provider by its `type`:
+
+| `type` | Reaches `execute()` as |
+|---|---|
+| `string` | string |
+| `number`, `integer` | number |
+| `boolean` | bool |
+| `array` (with `items`), `object` (with `properties`) | a PHP **array** — the property's schema is sent as is, nested `items`/`properties`/`required` included (since 1.44.2) |
+| any type with `enum` | the chosen value — the `enum` list is sent to the model |
+
+```php
+'sugestoes' => [
+    'type' => 'array',
+    'description' => 'One entry per product',
+    'items' => [
+        'type' => 'object',
+        'properties' => [
+            'product_id' => ['type' => 'integer'],
+            'ncm' => ['type' => 'string'],
+        ],
+        'required' => ['product_id', 'ncm'],
+    ],
+],
+```
+
+Until 1.44.2 `array` and `object` were declared as `string`: the model sent the
+list as text and `is_array()` was false. If a provider still sends text, ptah
+decodes the JSON before calling `execute()`. Some providers' strict mode wants
+`additionalProperties: false` and every field in `required` inside objects —
+the schema is yours, so add them there.
+
 ### Registering the tool
 
 In `config/ptah.php`, add the class name (string) to the `tools` array — **do not use `new`**:
@@ -925,7 +959,14 @@ Guest users (unauthenticated) follow the old session-based flow — no history p
 
 ### Message trimming
 
-History is automatically trimmed to `ptah.ai_agent.max_history` messages per conversation (oldest messages are dropped when the limit is reached).
+`ptah.ai_agent.max_history` (default 20) limits the **context sent to the
+model**: only the last N messages go with each turn. The conversation itself is
+stored whole — the widget and the history (⏱) show it from the start — up to
+`ptah.ai_agent.max_stored_messages` (`PTAH_AI_MAX_STORED_MESSAGES`, default
+500; `0` = no limit), after which the oldest stored messages are dropped.
+
+Until 1.44.2 the trimmed context was what got saved: from the 11th exchange on
+(with the default 20) every answer erased the oldest messages for good.
 
 ---
 

@@ -358,6 +358,8 @@ class AiChatService
             $conversation->update(['title' => Str::limit($message, 60)]);
         }
 
+        // O corte vale so para o CONTEXTO mandado ao modelo. O registro guarda
+        // tudo — ver persistTurn().
         $maxHistory = (int) config('ptah.ai_agent.max_history', 20);
         $history = array_slice($conversation->messages ?? [], -$maxHistory);
 
@@ -484,10 +486,23 @@ class AiChatService
             $userMessage['attachments'] = $ctx['attachmentNames'];
         }
 
-        $newMessages = array_merge($ctx['history'], [
+        // A partir do historico COMPLETO, nao do recorte mandado ao modelo: com
+        // o recorte, a partir da 11a troca cada resposta apagava do banco as
+        // mensagens mais antigas, e a conversa reaberta perdia o comeco
+        // (1.44.2, PetPlace). Lido de novo do banco: outro turno pode ter
+        // gravado entre a preparacao e aqui.
+        $stored = $conversation->fresh()->messages ?? [];
+        $newMessages = array_merge(array_values($stored), [
             $userMessage,
             ['role' => 'assistant', 'content' => $finalText],
         ]);
+
+        // Um teto proprio de armazenamento, bem maior que o do contexto, para
+        // a coluna JSON nao crescer sem fim. 0 = sem limite.
+        $maxStored = (int) config('ptah.ai_agent.max_stored_messages', 500);
+        if ($maxStored > 0 && count($newMessages) > $maxStored) {
+            $newMessages = array_slice($newMessages, -$maxStored);
+        }
 
         $conversation->update([
             'messages' => $newMessages,
