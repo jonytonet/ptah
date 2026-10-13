@@ -126,6 +126,23 @@
            que e quem decide. */
         allowed: @js($attachmentExtensions),
 
+        /* Comandos `/nome` que este usuario pode usar (1.45.0). A lista vem do
+           servidor ja filtrada pela permissao; aqui so se filtra pelo que foi
+           digitado. */
+        commands: @js($commands),
+
+        cmdMatches() {
+            const d = this.draft;
+            if (!d.startsWith('/') || /\s/.test(d)) return [];
+            const q = d.slice(1).toLowerCase();
+            return this.commands.filter(c => c.name.startsWith(q)).slice(0, 8);
+        },
+
+        pickCommand(name) {
+            this.draft = '/' + name;
+            this.$nextTick(() => this.$refs.ta && this.$refs.ta.focus());
+        },
+
         accepted(file) {
             if (this.allowed.length === 0) return true;
             const ext = (file.name || '').split('.').pop().toLowerCase();
@@ -394,6 +411,9 @@
                                  nao deve virar HTML so porque parecia markdown. --}}
                             <div class="ptah-c-chat_md max-w-[85%] rounded-2xl rounded-tl-sm ptah-c-chat_bubble px-3 py-2 text-sm shadow-sm">
                                 {!! \Ptah\Support\AI\ChatMarkdown::render($msg['content']) !!}
+                                @foreach(($msg['confirmations'] ?? []) as $card)
+                                    @include('ptah::livewire.ai.partials.confirmation-card', ['card' => $card])
+                                @endforeach
                             </div>
                         </div>
                     @endif
@@ -450,6 +470,22 @@
                             </button>
                         </span>
                     @endforeach
+                </div>
+            @endif
+
+            @if($commands !== [])
+                {{-- Autocomplete dos comandos: aparece ao digitar `/`. --}}
+                <div x-show="cmdMatches().length > 0" x-cloak
+                     class="mb-2 overflow-hidden rounded-lg border text-xs"
+                     style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)"
+                     role="listbox" aria-label="{{ __('ptah::ui.ai_commands_title') }}">
+                    <template x-for="c in cmdMatches()" :key="c.name">
+                        <button type="button" role="option" @click="pickCommand(c.name)"
+                                class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left hover:bg-primary/10 focus:bg-primary/10 focus:outline-none">
+                            <span class="font-mono font-semibold" style="color: var(--ptah-text)" x-text="'/' + c.name"></span>
+                            <span class="truncate ptah-c-chat_hint" x-text="c.description"></span>
+                        </button>
+                    </template>
                 </div>
             @endif
 

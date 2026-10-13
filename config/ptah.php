@@ -618,6 +618,18 @@ return [
         // per result) and goes back to the model on the next turns — a preview
         // the user then confirms. 0 = keep no tool result.
         'tool_result_history_bytes' => (int) env('PTAH_AI_TOOL_RESULT_HISTORY_BYTES', 8000),
+        // Confirmable tools (AiConfirmableTool): how long a preview card can be
+        // confirmed, and how many of its rows the card shows.
+        'confirmation_ttl' => (int) env('PTAH_AI_CONFIRMATION_TTL', 30),
+        'max_preview_rows' => (int) env('PTAH_AI_MAX_PREVIEW_ROWS', 50),
+        // `/commands` typed in the chat run a tool directly (no model choice):
+        // 'corrige-regra-fiscal' => [
+        //     'tool' => App\Services\AI\Tools\AutoFixProductFiscalTool::class,
+        //     'arguments' => [],
+        //     'description' => 'Corrige NCM/CEST dos produtos da filial',
+        //     'permission' => ['fiscal', 'update'],   // optional, ptah ACL
+        // ],
+        'commands' => [],
         'rate_limit' => (int) env('PTAH_AI_RATE_LIMIT', 30),
         'stream' => (bool) env('PTAH_AI_STREAM', true),
         'max_message_chars' => (int) env('PTAH_AI_MAX_MESSAGE_CHARS', 8000),

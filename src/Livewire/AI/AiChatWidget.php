@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Livewire\AI;
 
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -62,6 +63,14 @@ class AiChatWidget extends Component
 
     /** @var array<array{id: int, title: string, date: string}> */
     public array $conversations = [];
+
+    /**
+     * The `/commands` this user may run, for the autocomplete (1.45.0).
+     *
+     * @var list<array{name: string, description: string}>
+     */
+    #[Locked]
+    public array $commands = [];
 
     public int $historyLimit = 5;
 
@@ -135,10 +144,7 @@ class AiChatWidget extends Component
 
         if ($conversation) {
             $this->conversationId = $conversation->id;
-            $this->messages = array_values(array_filter(
-                $conversation->messages ?? [],
-                fn ($m) => in_array($m['role'] ?? '', ['user', 'assistant'], true)
-            ));
+            $this->messages = self::displayable($conversation->messages ?? []);
         }
 
         // The picker starts on the default, which is what a user who never
@@ -150,6 +156,78 @@ class AiChatWidget extends Component
         if ($userId) {
             $this->refreshConversations();
         }
+
+        $this->commands = $this->chatService->availableCommands();
+    }
+
+    /**
+     * The stored messages as the widget shows them: user and assistant only,
+     * and without the tool records — up to 8 KB of tool output each, there for
+     * the model, not for the screen (it went to the browser on every request
+     * since 1.44.3).
+     *
+     * @param  array<int, mixed>  $stored
+     * @return list<array<string, mixed>>
+     */
+    private static function displayable(array $stored): array
+    {
+        $out = [];
+        foreach ($stored as $m) {
+            if (is_array($m) && in_array($m['role'] ?? '', ['user', 'assistant'], true)) {
+                unset($m['tools']);
+                $out[] = $m;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * `/name` alone on the line — a registered command. Anything else (a path,
+     * a sentence that starts with a slash) goes to the model as typed.
+     */
+    private static function commandName(string $message): ?string
+    {
+        return preg_match('/^\/([a-z0-9][a-z0-9_-]*)$/i', trim($message), $m) === 1 ? strtolower($m[1]) : null;
+    }
+
+    /** "Confirmar" num cartao de previa (1.45.0): grava uma vez, sem o modelo. */
+    public function confirmAction(string $token): void
+    {
+        $this->resolveCard($token, true);
+    }
+
+    /** "Cancelar" num cartao de previa. */
+    public function cancelAction(string $token): void
+    {
+        $this->resolveCard($token, false);
+    }
+
+    private function resolveCard(string $token, bool $confirm): void
+    {
+        $userId = auth()->id();
+        if (! $userId || ! $this->conversationId || $this->loading) {
+            return;
+        }
+
+        try {
+            $outcome = $this->chatService->resolveConfirmation($this->conversationId, (int) $userId, $token, $confirm);
+        } catch (\Throwable $e) {
+            Log::error('[Ptah AI] Confirmation failed', ['exception' => $e::class, 'message' => $e->getMessage()]);
+            $this->errorMsg = trans('ptah::ui.ai_widget_error');
+
+            return;
+        }
+
+        if ($outcome['status'] === 'denied') {
+            $this->errorMsg = $outcome['message'];
+
+            return;
+        }
+
+        $this->errorMsg = '';
+        $this->messages = self::displayable($outcome['messages']);
+        $this->dispatch('ai-message-sent');
     }
 
     // ── Anexos ─────────────────────────────────────────────────────────
@@ -422,8 +500,18 @@ class AiChatWidget extends Component
                 && $this->chatService->supportsStreaming($this->selectedConfigId);
 
             $attachments = $this->attachmentPayload();
+            $command = self::commandName($message);
 
-            if ($canStream) {
+            if ($command !== null) {
+                // Comando: a tool roda direto, sem o modelo escolher (1.45.0).
+                $result = $this->chatService->runCommand(
+                    $command,
+                    session()->getId(),
+                    auth()->id(),
+                    $conversationId,
+                    $this->selectedConfigId,
+                );
+            } elseif ($canStream) {
                 // Stream the answer token-by-token into the wire:stream region.
                 $result = $this->chatService->stream(
                     $message,
@@ -457,7 +545,11 @@ class AiChatWidget extends Component
             }
 
             $this->conversationId = $result['conversationId'];
-            $this->messages[] = ['role' => 'assistant', 'content' => $result['text']];
+            $reply = ['role' => 'assistant', 'content' => $result['text']];
+            if (($result['confirmations'] ?? []) !== []) {
+                $reply['confirmations'] = $result['confirmations'];
+            }
+            $this->messages[] = $reply;
 
             // Refresh history list after first message sets the title
             if (auth()->id()) {
@@ -506,10 +598,7 @@ class AiChatWidget extends Component
         }
 
         $this->conversationId = $conversation->id;
-        $this->messages = array_values(array_filter(
-            $conversation->messages ?? [],
-            fn ($m) => in_array($m['role'] ?? '', ['user', 'assistant'], true)
-        ));
+        $this->messages = self::displayable($conversation->messages ?? []);
         $this->errorMsg = '';
         $this->showHistory = false;
 

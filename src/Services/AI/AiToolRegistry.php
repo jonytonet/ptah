@@ -7,6 +7,7 @@ namespace Ptah\Services\AI;
 use Illuminate\Support\Facades\Log;
 use Prism\Prism\Schema\RawSchema;
 use Prism\Prism\Tool;
+use Ptah\Contracts\AiConfirmableTool;
 use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Contracts\AiToolContextAware;
 use Ptah\Contracts\AiToolInterface;
@@ -442,6 +443,12 @@ class AiToolRegistry
                 $tool = $resolve();
                 if ($tool instanceof AiToolContextAware) {
                     $tool->withContext($context);
+                }
+
+                // Tool de escrita confirmavel: o modelo so gera a PREVIA. A
+                // gravacao fica para o clique em "Confirmar" (1.45.0).
+                if ($tool instanceof AiConfirmableTool) {
+                    return (string) json_encode(app(AiConfirmationService::class)->stage($class, $tool, $args, $context));
                 }
 
                 return (string) json_encode($tool->execute($args));
