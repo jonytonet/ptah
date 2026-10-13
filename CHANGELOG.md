@@ -7,6 +7,40 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.45.0] - 2026-10-13
+
+From PetPlace: batch writes through the chat ("preview → yes → write") without
+depending on the model obeying.
+
+### Added - confirmable write tools (`AiConfirmableTool`)
+
+`preview(array $arguments): AiPreview` + `commit(array $payload): array`. When
+the model calls such a tool, ptah runs only `preview()`; the chat shows a card
+with the summary, the rows and **Confirm** / **Cancel**, and the model is told
+it is awaiting confirmation — it cannot write. The payload stays on the server
+under a one-time token (`ptah.ai_agent.confirmation_ttl`, 30 min), bound to the
+user, guard, company and conversation. **Confirm** runs `commit()` with exactly
+that payload, once (Cache::pull — two clicks or two tabs write once; another
+user's attempt does not spend the token), re-checking the tool's permission;
+the outcome goes into the conversation with the result kept for the model.
+
+### Added - `/commands` in the chat
+
+`ptah.ai_agent.commands`: `'/name' => tool, arguments, description,
+permission`. A command runs its tool directly — no dependence on the model
+choosing it — and the model only words the answer; a confirmable tool shows its
+preview card. Typing `/` lists the commands the user may run (permission and
+the tool's own gate). Only `/name` alone on the line is a command.
+
+### Fixed - tool results went to the browser
+
+Since 1.44.3 the stored messages carry up to 8 KB of tool output each, and the
+widget copied them whole into its public Livewire state — sent back and forth on
+every request. The widget now drops them; they stay in the conversation for the
+model.
+
+---
+
 ## [1.44.3] - 2026-10-12
 
 From PetPlace, building a "preview → yes → write" flow over dozens of products.

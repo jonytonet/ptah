@@ -196,6 +196,8 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_MAX_HISTORY` | `20` | Messages sent to the model as context each turn (the conversation itself is kept whole — see below) |
 | `PTAH_AI_MAX_STORED_MESSAGES` | `500` | Messages kept per conversation (what the widget shows). `0` = no limit |
 | `PTAH_AI_TOOL_RESULT_HISTORY_BYTES` | `8000` | Bytes of each tool result kept in the conversation and sent back on the next turns. `0` = keep none |
+| `PTAH_AI_CONFIRMATION_TTL` | `30` | Minutes a preview card can be confirmed (confirmable tools) |
+| `PTAH_AI_MAX_PREVIEW_ROWS` | `50` | Rows of a preview shown on its card (the payload keeps all) |
 | `PTAH_AI_RATE_LIMIT` | `30` | Max requests per minute per session |
 | `PTAH_AI_STREAM` | `true` | Stream the answer token by token **when the provider supports it** (see the note under Providers) |
 | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
@@ -701,6 +703,78 @@ If a write tool runs and the model then writes nothing, ptah asks the model
 once more **without tools** to word the answer from the results — nothing runs
 twice. If even that is empty, the user reads "The action was executed (tool),
 but I could not write the answer", and it is logged as an **error**.
+
+#### Confirmable write tools — preview, then a Confirm button
+
+For a tool that writes (fix the fiscal data of 29 products, issue invoices),
+implement `Ptah\Contracts\AiConfirmableTool` instead of relying on the model
+to call the tool again after the user types "yes":
+
+```php
+use Ptah\Contracts\AiConfirmableTool;
+use Ptah\Support\AI\AiPreview;
+
+class AutoFixProductFiscalTool implements AiConfirmableTool
+{
+    // name(), description(), parameters() as any tool
+
+    public function preview(array $arguments): AiPreview
+    {
+        $rows = $this->suggestions(); // computed on the server — write nothing here
+
+        return new AiPreview(
+            summary: count($rows).' products will get a new NCM/CEST.',
+            rows: $rows,                                   // the table on the card
+            payload: ['ids' => array_column($rows, 'product_id'), 'rows' => $rows],
+            columns: ['product_id' => 'ID', 'name' => 'Product', 'ncm' => 'NCM'],
+        );
+    }
+
+    public function commit(array $payload): array
+    {
+        // writes exactly the previewed payload
+        return ['message' => 'Saved '.count($payload['ids']).' products.'];
+    }
+
+    public function execute(array $arguments): array
+    {
+        return []; // never called for a confirmable tool
+    }
+}
+```
+
+When the model calls it, ptah runs **only `preview()`**. The chat shows a card
+with the summary, the first `PTAH_AI_MAX_PREVIEW_ROWS` rows and **Confirm** /
+**Cancel**; the model is told "awaiting confirmation" and cannot write. The
+payload stays on the server under a one-time token (expires after
+`PTAH_AI_CONFIRMATION_TTL` minutes), bound to the user, guard, company and
+conversation. **Confirm** runs `commit()` with that exact payload — once (a
+second click or another tab does nothing), re-checking the tool's permission —
+and the outcome (`message`, or a default) is added to the conversation, with the
+result kept for the model. Guests cannot confirm.
+
+#### `/commands`
+
+A command runs a tool **directly** — the model does not choose it — and the
+model only words the answer. With a confirmable tool, the command shows its
+preview card:
+
+```php
+'ai_agent' => [
+    'commands' => [
+        'corrige-regra-fiscal' => [
+            'tool' => App\Services\AI\Tools\AutoFixProductFiscalTool::class,
+            'arguments' => [],                       // passed to preview()/execute()
+            'description' => 'Corrige NCM/CEST dos produtos da filial',
+            'permission' => ['fiscal', 'update'],    // optional: ptah_can(key, action)
+        ],
+    ],
+],
+```
+
+Typing `/` in the chat lists the commands this user may run (filtered by
+`permission` and by the tool's own `AiToolAuthorizable` gate). Only `/name`
+alone on the line is a command; anything else goes to the model as typed.
 
 ### Registering the tool
 

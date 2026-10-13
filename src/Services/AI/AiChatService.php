@@ -23,10 +23,14 @@ use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\ToolResult;
+use Ptah\Contracts\AiConfirmableTool;
+use Ptah\Contracts\AiToolContextAware;
+use Ptah\Contracts\AiToolInterface;
 use Ptah\Exceptions\AiProviderException;
 use Ptah\Exceptions\AiRateLimitException;
 use Ptah\Models\AiConversation;
 use Ptah\Models\AiModelConfig;
+use Ptah\Support\AI\AiToolContext;
 use Ptah\Support\AI\ProviderFailure;
 
 /**
@@ -480,6 +484,10 @@ class AiChatService
      */
     private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId, ?int $configId = null, array $attachments = []): array
     {
+        // Previas de uma requisicao anterior (worker de vida longa) nao vazam
+        // para este turno.
+        app(AiConfirmationService::class)->takeStaged();
+
         // Guests may only use the chat when explicitly allowed.
         if (! $userId && ! config('ptah.ai_agent.allow_guests', false)) {
             throw new AiProviderException(trans('ptah::ui.ai_widget_no_provider'));
@@ -671,6 +679,13 @@ class AiChatService
             $assistant['tools'] = $records;
         }
 
+        // Previas de tools confirmaveis deste turno: viram cartoes com
+        // Confirmar/Cancelar no widget (1.45.0).
+        $confirmations = app(AiConfirmationService::class)->takeStaged();
+        if ($confirmations !== []) {
+            $assistant['confirmations'] = $confirmations;
+        }
+
         $newMessages = array_merge(array_values($stored), [$userMessage, $assistant]);
 
         // Um teto proprio de armazenamento, bem maior que o do contexto, para
@@ -687,7 +702,164 @@ class AiChatService
             'tokens_used' => $conversation->tokens_used + $inputTokens + $outputTokens,
         ]);
 
-        return ['text' => $finalText, 'conversationId' => $conversation->id];
+        if ($confirmations !== []) {
+            app(AiConfirmationService::class)->bindToConversation($confirmations, (int) $conversation->id);
+        }
+
+        return ['text' => $finalText, 'conversationId' => $conversation->id, 'confirmations' => $confirmations];
+    }
+
+    // ── Comandos e confirmacoes (1.45.0) ─────────────────────────────────────
+
+    /**
+     * The `/commands` this user may run — for the widget's autocomplete.
+     *
+     * @return list<array{name: string, description: string}>
+     */
+    public function availableCommands(): array
+    {
+        $out = [];
+        foreach ((array) config('ptah.ai_agent.commands', []) as $name => $def) {
+            if (is_string($name) && is_array($def) && $this->commandAllowed($def)) {
+                $out[] = ['name' => $name, 'description' => (string) ($def['description'] ?? '')];
+            }
+        }
+
+        return $out;
+    }
+
+    /** @param  array<string, mixed>  $def */
+    private function commandAllowed(array $def): bool
+    {
+        $class = (string) ($def['tool'] ?? '');
+        if (! class_exists($class) || ! is_subclass_of($class, AiToolInterface::class)) {
+            return false;
+        }
+
+        $permission = $def['permission'] ?? null;
+        if (is_array($permission) && $permission !== [] && config('ptah.modules.permissions') && function_exists('ptah_can')) {
+            [$key, $action] = array_pad(array_values($permission), 2, 'read');
+            if (! ptah_can((string) $key, (string) $action)) {
+                return false;
+            }
+        }
+
+        return AiToolRegistry::allows($class, AiToolContext::current());
+    }
+
+    /**
+     * Runs a `/command`: its tool is called directly — the model does not choose
+     * it, so a confirmation does not depend on it obeying a prompt — and the
+     * model only words the answer from the result. A confirmable tool yields
+     * its preview card.
+     *
+     * @return array{text: string, conversationId: int, confirmations: list<array<string, mixed>>}
+     *
+     * @throws AiRateLimitException|AiProviderException
+     */
+    public function runCommand(string $name, string $sessionId, ?int $userId = null, ?int $conversationId = null, ?int $configId = null): array
+    {
+        $def = config('ptah.ai_agent.commands.'.$name);
+        if (! is_array($def) || ! $this->commandAllowed($def)) {
+            throw new AiProviderException(trans('ptah::ui.ai_command_unknown', ['command' => '/'.$name]));
+        }
+
+        $ctx = $this->prepareTurn('/'.$name, $sessionId, $userId, $conversationId, $configId);
+        $class = (string) $def['tool'];
+        $arguments = (array) ($def['arguments'] ?? []);
+        $context = AiToolContext::current();
+
+        try {
+            $tool = app($class);
+            if ($tool instanceof AiToolContextAware) {
+                $tool->withContext($context);
+            }
+
+            $output = $tool instanceof AiConfirmableTool
+                ? app(AiConfirmationService::class)->stage($class, $tool, $arguments, $context)
+                : $tool->execute($arguments);
+
+            $result = new ToolResult('cmd_'.Str::random(12), $tool->name(), $arguments, (string) json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            [$text, $in, $out] = $this->composeFromToolResults($ctx, [$result]);
+        } catch (AiProviderException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('[Ptah AI] Command failed', ['command' => $name, 'exception' => $e::class, 'message' => $e->getMessage()]);
+            $this->restoreConfig($ctx['restoreConfig']);
+
+            throw new AiProviderException(trans('ptah::ui.ai_tool_failed', ['tool' => '/'.$name]), previous: $e);
+        }
+
+        $this->restoreConfig($ctx['restoreConfig']);
+
+        // Sem redacao do modelo (provedor fora, resposta vazia): o resumo da
+        // previa, ou o aviso de que o comando rodou.
+        if (trim($text) === '') {
+            $text = is_array($output) && is_string($output['summary'] ?? null) && $output['summary'] !== ''
+                ? $output['summary']
+                : trans('ptah::ui.ai_empty_turn_after_tools', ['tools' => '/'.$name]);
+        }
+
+        return $this->persistTurn($ctx, '/'.$name, $text, $in, $out, [$result]);
+    }
+
+    /**
+     * The user clicked Confirm (or Cancel) on a preview card. Runs the write
+     * once (see AiConfirmationService), marks the card and, on confirm, adds
+     * the outcome to the conversation — with the result as a tool record, so
+     * the model knows what was written.
+     *
+     * @return array{status: string, message: string, messages: list<array<string, mixed>>}
+     */
+    public function resolveConfirmation(int $conversationId, int $userId, string $token, bool $confirm): array
+    {
+        $conversation = $this->loadConversation($conversationId, $userId);
+        $messages = array_values((array) ($conversation->fresh()->messages ?? []));
+
+        // O cartao primeiro: de outra conversa, nao existe aqui; ja resolvido
+        // (segundo clique, outra aba), nada muda — nem o status, nem a conversa.
+        $at = null;
+        foreach ($messages as $i => $msg) {
+            foreach ((array) ($msg['confirmations'] ?? []) as $j => $card) {
+                if (($card['token'] ?? null) === $token) {
+                    $at = [$i, $j];
+                }
+            }
+        }
+
+        if ($at === null) {
+            return ['status' => 'denied', 'message' => trans('ptah::ui.ai_confirm_denied'), 'messages' => $messages];
+        }
+
+        $current = (string) ($messages[$at[0]]['confirmations'][$at[1]]['status'] ?? 'pending');
+        if ($current !== 'pending') {
+            return ['status' => $current, 'message' => '', 'messages' => $messages];
+        }
+
+        $service = app(AiConfirmationService::class);
+        if ($confirm) {
+            $outcome = $service->commit($token, $conversationId);
+        } else {
+            $outcome = $service->cancel($token, $conversationId)
+                ? ['status' => 'cancelled', 'message' => trans('ptah::ui.ai_confirm_cancelled'), 'tool' => '', 'result' => []]
+                : ['status' => 'expired', 'message' => trans('ptah::ui.ai_confirm_expired'), 'tool' => '', 'result' => []];
+        }
+
+        if ($outcome['status'] === 'denied') {
+            return ['status' => 'denied', 'message' => $outcome['message'], 'messages' => $messages];
+        }
+
+        $messages[$at[0]]['confirmations'][$at[1]]['status'] = $outcome['status'];
+
+        $reply = ['role' => 'assistant', 'content' => $outcome['message']];
+        if ($outcome['status'] === 'confirmed') {
+            $reply['tools'] = $this->toolRecords([new ToolResult('confirm_'.substr($token, 0, 12), $outcome['tool'], [], (string) json_encode($outcome['result'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))]);
+        }
+        $messages[] = $reply;
+
+        $conversation->update(['messages' => $messages]);
+
+        return ['status' => $outcome['status'], 'message' => $outcome['message'], 'messages' => $messages];
     }
 
     /**
