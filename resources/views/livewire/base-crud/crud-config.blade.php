@@ -2616,6 +2616,13 @@
                                         }}</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="uiCopyCell"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_copy_cell') }}"
+                                        class="text-primary rounded" style="border-color: var(--ptah-line-strong)" />
+                                    <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_gen_copy_cell')
+                                        }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" wire:model="showTotalizador"
                                         title="{{ __('ptah::ui.cfg_tip_gen_totalizer') }}"
                                         class="text-primary rounded border-slate-300" />

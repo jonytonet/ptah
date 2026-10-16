@@ -1079,6 +1079,33 @@ Fields with `logic = 'OR'` are grouped into a separate `WHERE (... OR ...)`.
 
 ---
 
+## Copying from the listing
+
+- **Copy / filter buttons:** resting the mouse on a cell (~300 ms) shows small
+  buttons in its corner, over the content — no layout change.
+  - **Copy** copies the text the user sees (the formatted value) and confirms
+    with a toast.
+  - **Filter by this value** (filterable columns only) filters the listing by
+    the RECORD's value, not the cell text: a money cell filters the number, a
+    select its stored value, a date its whole day, an empty cell the empty ones.
+
+  Not shown on the actions/checkbox columns, empty cells, the footer or in
+  print. Off per screen with `uiPreferences.copyCell: false` (editor → General).
+
+### Filtering the empty ones
+
+Text and number filters have **is empty** / **has value** in the operator list;
+selects have **(empty)** / **(filled)** at the end of their options;
+searchdropdown filters have them in their operator list. On a **text** column
+(read from the database schema), "empty" means NULL **or** `''` — a phone erased
+in the form is saved as `''`. On numbers and dates it is NULL only (`''` would
+compare as 0 in MySQL).
+- **Selecting text:** dragging **on the text** selects it; dragging on the
+  empty part of a cell scrolls a wide table, as before.
+- **Clickable rows** (`configLinkLinha`): a click that ends a text selection
+  inside the row does not open the record. A double-click on a word still opens
+  it — use the copy button there.
+
 ## Column Visibility
 
 ```blade

@@ -123,6 +123,10 @@
                                     array_keys($col['colsSelect']),
                                     array_values($col['colsSelect'])
                                 );
+                                // Os que NAO tem valor (1.46.0): sem isto, um select so
+                                // filtrava por um dos valores da lista.
+                                $fFilterOpts[] = ['value' => \Ptah\Livewire\BaseCrud\BaseCrud::FILTER_EMPTY, 'label' => '('.__('ptah::ui.filters_op_is_null').')'];
+                                $fFilterOpts[] = ['value' => \Ptah\Livewire\BaseCrud\BaseCrud::FILTER_FILLED, 'label' => '('.__('ptah::ui.filters_op_is_not_null').')'];
                             @endphp
                             <x-forge-select
                                 wire:model.live="filters.{{ $cfField }}"
@@ -147,6 +151,8 @@
                                     class="w-full text-xs rounded-md px-2 py-1.5 mb-1.5 ptah-c-fp_input ptah-c-control">
                                     <option value="=">{{ __('ptah::ui.filters_op_equals') }}</option>
                                     <option value="!=">{{ __('ptah::ui.filters_op_not_equals') }}</option>
+                                    <option value="IS NULL">{{ __('ptah::ui.filters_op_is_null') }}</option>
+                                    <option value="IS NOT NULL">{{ __('ptah::ui.filters_op_is_not_null') }}</option>
                                 </select>
 
                                 {{-- Badge de seleção ativa --}}

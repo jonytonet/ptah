@@ -549,6 +549,38 @@ trait HasCrudQuery
         return max(1, min($this->perPage, (int) config('ptah.crud.max_per_page', 200)));
     }
 
+    /** Valor de select que significa "sem valor" / "com valor" (1.46.0). */
+    public const FILTER_EMPTY = '__ptah_empty__';
+
+    public const FILTER_FILLED = '__ptah_filled__';
+
+    /**
+     * Is this a text column in the database (varchar, char, text...)? Only
+     * there does "empty" also mean '' — see FilterService. Read from the
+     * schema, not the screen config: a `select` column may hold integers.
+     */
+    protected function columnHoldsText(string $field): bool
+    {
+        static $memo = [];
+
+        $model = $this->resolveEloquentModel();
+        if (! $model || str_contains($field, '.') || ! SqlIdentifier::isSafe($field)) {
+            return false;
+        }
+
+        $key = $model->getConnectionName().'|'.$model->getTable().'|'.$field;
+        if (! array_key_exists($key, $memo)) {
+            try {
+                $type = strtolower((string) $model->getConnection()->getSchemaBuilder()->getColumnType($model->getTable(), $field));
+                $memo[$key] = str_contains($type, 'char') || str_contains($type, 'text') || $type === 'string';
+            } catch (\Throwable) {
+                $memo[$key] = false;
+            }
+        }
+
+        return $memo[$key];
+    }
+
     protected function fieldIsFilterable(string $field): bool
     {
         if (in_array($field, $this->hiddenModelAttributes(), true)) {
@@ -635,6 +667,13 @@ trait HasCrudQuery
                 $explicitOp = null;
             }
 
+            // As opcoes "(vazio)" / "(preenchido)" de um select (1.46.0): um
+            // select so tem valor, nao operador — o valor sentinela vira o operador.
+            if ($value === self::FILTER_EMPTY || $value === self::FILTER_FILLED) {
+                $explicitOp = $value === self::FILTER_EMPTY ? 'IS NULL' : 'IS NOT NULL';
+                $value = null;
+            }
+
             $isNull = $explicitOp !== null && FilterService::isNullOperator($explicitOp);
 
             // Empty values are skipped UNLESS the operator is IS NULL / IS NOT NULL,
@@ -667,6 +706,7 @@ trait HasCrudQuery
                     value: null,
                     operator: $explicitOp,
                     type: 'text',
+                    options: ['blank' => $this->columnHoldsText($filterField)],
                 );
 
                 continue;
@@ -731,7 +771,10 @@ trait HasCrudQuery
             // ── Plain column ──────────────────────────────────────────────────
             // If column has colsSource (configured JOIN), use qualified name for WHERE
             $filterField = ($col && ! empty($col['colsSource'])) ? $col['colsSource'] : $field;
-            $autoOp = (is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
+            // Um valor ESCOLHIDO de um select e exato: com LIKE, "Ativo"
+            // (active) trazia tambem os "Inativo" (inactive) — 1.46.0.
+            $isSelect = ($col['colsTipo'] ?? '') === 'select';
+            $autoOp = (! $isSelect && is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
                 ? 'LIKE'
                 : '=';
             $domainFilters[] = new FilterDTO(

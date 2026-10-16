@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Carbon\Carbon;
 use Ptah\DTO\FilterDTO;
+use Ptah\Services\Crud\FilterService;
 
 /**
  * Handles all filter-related functionality: sort, search, date filters,
@@ -235,7 +236,24 @@ trait HasCrudFilters
                 continue;
             }
             $label = $labelMap[$field] ?? $field;
-            $badges[] = ['label' => $label, 'field' => $field, 'value' => $value];
+            $shown = match ($value) {
+                self::FILTER_EMPTY => trans('ptah::ui.filters_op_is_null'),
+                self::FILTER_FILLED => trans('ptah::ui.filters_op_is_not_null'),
+                default => $value,
+            };
+            $badges[] = ['label' => $label, 'field' => $field, 'value' => $shown];
+        }
+
+        // "vazio" / "tem valor" escolhido no operador (texto, numero,
+        // searchdropdown): sem valor digitado, e antes nao virava etiqueta.
+        foreach ($this->filterOperators as $field => $op) {
+            if (FilterService::isNullOperator(is_string($op) ? $op : null) && ($this->filters[$field] ?? '') === '') {
+                $badges[] = [
+                    'label' => $labelMap[$field] ?? $field,
+                    'field' => $field,
+                    'value' => trans(strtoupper((string) $op) === 'IS NULL' || strtoupper((string) $op) === 'NULL' ? 'ptah::ui.filters_op_is_null' : 'ptah::ui.filters_op_is_not_null'),
+                ];
+            }
         }
 
         foreach ($this->dateRanges as $key => $value) {
@@ -272,6 +290,62 @@ trait HasCrudFilters
         }
 
         $this->textFilter = $badges;
+    }
+
+    /**
+     * "Filtrar por este valor" (botao da celula, 1.46.0). O valor vem do
+     * REGISTRO, nao do texto da celula: "R$ 1.234,56" filtra 1234.56, "Ativo"
+     * filtra `active`, um nome de cliente filtra o id dele. Sem valor, filtra
+     * os vazios. So colunas filtraveis, e o registro e buscado pela mesma
+     * consulta da listagem (empresa, escopos, filtros travados).
+     */
+    public function filterByCell(int|string $rowId, string $field): void
+    {
+        $col = $this->findColByField($field);
+        if (! $col || in_array($field, $this->deniedColumns, true) || ! $this->fieldIsFilterable($field)
+            || ! in_array($col['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true)
+            || ($col['colsTipo'] ?? '') === 'action') {
+            return;
+        }
+
+        $model = $this->resolveEloquentModel();
+        if (! $model) {
+            return;
+        }
+
+        try {
+            [$query] = $this->buildBaseQuery($model);
+            $record = $query->where($model->getQualifiedKeyName(), $rowId)->first();
+        } catch (\Throwable) {
+            return;
+        }
+
+        if (! $record) {
+            return;
+        }
+
+        $raw = $record->getAttribute($field);
+        $type = (string) ($col['colsTipo'] ?? 'text');
+
+        unset($this->filters[$field], $this->filterOperators[$field]);
+
+        if ($raw === null || $raw === '') {
+            $this->filterOperators[$field] = 'IS NULL';
+        } elseif (in_array($type, ['date', 'datetime', 'datetime-local'], true)) {
+            $day = \Illuminate\Support\Carbon::parse($raw)->toDateString();
+            $this->dateRanges[$field.'_start'] = $day;
+            $this->dateRanges[$field.'_end'] = $day;
+        } elseif ($type === 'select') {
+            $this->filters[$field] = (string) $raw;
+            $this->filterOperators[$field] = '=';
+        } elseif (is_scalar($raw)) {
+            $this->filters[$field] = (string) $raw;
+            $this->filterOperators[$field] = '=';
+        } else {
+            return;
+        }
+
+        $this->updatedFilters();
     }
 
     public function removeTextFilterBadge(string $field): void

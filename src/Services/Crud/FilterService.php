@@ -119,11 +119,27 @@ class FilterService
         // every column type and inside both AND and OR groups. The column name is
         // guarded against injection like every dynamic identifier.
         $opUp = strtoupper(trim($filter->operator));
+        // `blank`: a TEXT column, where "empty" is also '' (a phone erased in
+        // the form is saved as '', not NULL — 1.46.0). Never on a number or a
+        // date: there '' would compare as 0 (MySQL) or fail (Postgres).
+        $blank = ! empty($filter->options['blank']);
         if (in_array($opUp, ['IS NOT NULL', 'NOT NULL'], true)) {
-            return SqlIdentifier::isSafe($filter->field) ? $query->whereNotNull($filter->field) : $query;
+            if (! SqlIdentifier::isSafe($filter->field)) {
+                return $query;
+            }
+
+            return $blank
+                ? $query->whereNotNull($filter->field)->where($filter->field, '<>', '')
+                : $query->whereNotNull($filter->field);
         }
         if (in_array($opUp, ['IS NULL', 'NULL'], true)) {
-            return SqlIdentifier::isSafe($filter->field) ? $query->whereNull($filter->field) : $query;
+            if (! SqlIdentifier::isSafe($filter->field)) {
+                return $query;
+            }
+
+            return $blank
+                ? $query->where(fn (Builder $q) => $q->whereNull($filter->field)->orWhere($filter->field, ''))
+                : $query->whereNull($filter->field);
         }
 
         // Explicit relation filter via whereHas

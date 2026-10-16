@@ -7,6 +7,57 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.46.0] - 2026-10-16
+
+### Added - copy a cell, or filter by its value, from the listing
+
+Resting the mouse on a cell (~300 ms) shows small buttons in its corner, over
+the content (no layout or column-width change), outside the row — clicking them
+never opens the record. Not on actions/checkbox columns, empty cells, the
+footer, or in print. Per screen: `uiPreferences.copyCell` (editor → General),
+on by default.
+
+- **Copy** copies the text the user sees — the formatted value — and confirms
+  with a toast ("Could not copy" when the browser refuses).
+- **Filter by this value** (filterable columns): `filterByCell()` reads the
+  RECORD's value through the listing's own query and applies that column's
+  filter — "R$ 1.234,56" filters 1234.56, "Ativo" filters `active`, a date its
+  whole day, an empty cell the empty ones.
+
+### Added - filter the empty ones in selects and searchdropdowns
+
+Selects get **(empty)** / **(filled)** at the end of their options, and
+searchdropdown filters **is empty** / **has value** in their operator list —
+before, a select could only filter by one of its values. Text and number
+filters already had them; empty-operator filters now also show as a badge.
+
+### Fixed - "is empty" missed text saved as ''
+
+"is empty" checked NULL only, so a phone erased in the form (saved as `''`)
+never showed up in "customers without a phone". On a **text** column (read
+from the schema) it is now NULL or `''`; "has value" excludes both. On numbers
+and dates it stays NULL only — there `''` would compare as 0 (MySQL).
+
+### Fixed - picking "Ativo" in a select filter also brought "Inativo"
+
+A value picked from a select was filtered with LIKE, so `active` matched
+`inactive`. It is exact now. A one-day date range is matched with `whereDate`
+(it missed `date` columns on SQLite).
+
+### Fixed - the text of a cell could not be selected
+
+Dragging to scroll a wide table (1.31.1) turned any 5 px drag into a scroll, so a
+cell's text could not be selected. A drag that starts **on text** now selects
+it; on the empty part of a cell it still scrolls.
+
+### Fixed - a clickable row opened while copying
+
+With `configLinkLinha`, selecting text in a row opened the record on mouse-up.
+A click that ends a selection inside the row no longer navigates. A
+double-click on a word still does (the copy button covers that case).
+
+---
+
 ## [1.45.0] - 2026-10-13
 
 From PetPlace: batch writes through the chat ("preview → yes → write") without
