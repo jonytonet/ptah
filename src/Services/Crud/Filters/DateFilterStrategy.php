@@ -54,6 +54,13 @@ class DateFilterStrategy implements FilterStrategyInterface
         if (is_array($value)) {
             [$from, $to] = array_pad($value, 2, null);
 
+            // Um dia so (de = ate, ex. "filtrar por este valor"): whereDate,
+            // que casa em todo banco. O intervalo 00:00..23:59 nao casava uma
+            // coluna `date` no SQLite, que compara '2026-01-10' como texto.
+            if ($from !== null && $from === $to && strlen((string) $from) === 10) {
+                return $query->whereDate($field, '=', $from);
+            }
+
             return $this->applyRange($query, $field, $from, $to);
         }
 

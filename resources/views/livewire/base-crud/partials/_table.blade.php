@@ -6,7 +6,8 @@
 
 <div class="overflow-x-auto border rounded-lg ptah-c-tbl_wrap transition-opacity duration-300"
      wire:loading.class="opacity-60"
-     id="ptah-table-wrap-{{ $crudTitle }}">
+     id="ptah-table-wrap-{{ $crudTitle }}"
+     data-ptah-copy="{{ ($crudConfig['uiPreferences']['copyCell'] ?? true) ? '1' : '0' }}">
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
         @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
 
@@ -158,6 +159,7 @@
                         @click="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
                         @auxclick="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
                     @endif
+                    data-ptah-row="{{ $row->id ?? '' }}"
                     wire:key="row-{{ $row->id ?? $loop->index }}">
 
                     {{-- Mestre/detalhe: expandir linha --}}
@@ -199,7 +201,8 @@
                                     : (! empty($col['colsMinWidth']) ? 'min-width:' . $col['colsMinWidth'] . ';' : '');
                             @endphp
                             <td class="px-3 py-(--ptah-row-py) whitespace-nowrap {{ $cellAlign }} {{ $reverse ? 'font-medium' : '' }}"
-                                @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif>
+                                @if($cellMinWidth) style="{{ $cellMinWidth }}" @endif
+                                @if(in_array($col['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true)) data-ptah-filter-field="{{ $cellField }}" @endif>
                                 {!! $this->formatCell($col, $row) !!}
                             </td>
                         @endif

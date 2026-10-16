@@ -3895,6 +3895,31 @@ html.ptah-dark[data-ptah-text="forte"] {
     --ptah-text-faint: #c7c9cb;
 }
 
+/* ── Copiar celula (BaseCrud, 1.46.0) ──
+   Um botao fixo, posicionado sobre a celula pelo JS (partials/_scripts). */
+.ptah-cell-actions {
+    position: fixed;
+    z-index: 60;
+    display: none;
+    gap: 4px;
+}
+.ptah-cell-actions.is-visible { display: inline-flex; }
+.ptah-cell-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid var(--ptah-line-strong);
+    background: var(--ptah-surface);
+    color: var(--ptah-text-secondary);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+    cursor: pointer;
+}
+.ptah-cell-copy:hover { color: var(--ptah-primary); border-color: var(--ptah-primary); }
+.ptah-cell-copy:focus-visible { outline: 2px solid var(--ptah-primary); outline-offset: 1px; }
+
 /* ── Logo da marca (ptah.brand.logo / logo_dark) ──
    A variante escura vem com style="display:none" no markup (ver
    partials/brand-logo): sem esta regra aparece so a clara, nunca as duas. */

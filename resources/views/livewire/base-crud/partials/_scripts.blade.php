@@ -15,6 +15,14 @@
 
     /* ─── row navigation: respects ctrl/cmd-click and middle-click ───── */
     window.ptahRowNav = function (event, url) {
+        // Quem acabou de selecionar texto da linha quer COPIAR, nao abrir o
+        // registro (1.46.0). Selecao vazia, ou fora desta linha, nao conta.
+        const sel = window.getSelection && window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim() !== ''
+            && event.currentTarget && event.currentTarget.contains(sel.anchorNode)) {
+            return;
+        }
+
         // Middle-click (auxclick) or ctrl/cmd-click → open in a new tab.
         if (event.button === 1 || event.ctrlKey || event.metaKey) {
             window.open(url, '_blank');
@@ -62,6 +70,31 @@
         );
     }
 
+    /* O ponteiro esta EM CIMA de texto (e nao no padding, na borda ou no
+       vazio da celula)? Ai o arraste e selecao, nao rolagem (1.46.0) — antes,
+       qualquer arraste de 5px virava pan e ninguem conseguia selecionar o
+       conteudo de uma celula. */
+    function pointerOverText(x, y) {
+        let node = null;
+        if (document.caretPositionFromPoint) {
+            const p = document.caretPositionFromPoint(x, y);
+            node = p ? p.offsetNode : null;
+        } else if (document.caretRangeFromPoint) {
+            const r = document.caretRangeFromPoint(x, y);
+            node = r ? r.startContainer : null;
+        }
+        if (!node || node.nodeType !== 3 || !node.textContent.trim()) return false;
+
+        /* caret*FromPoint devolve o texto MAIS PROXIMO mesmo longe dele; so
+           conta se o ponto cai dentro de uma das linhas do proprio texto. */
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return true;
+        }
+        return false;
+    }
+
     function markPannable(wrap) {
         /* scrollWidth arredonda para inteiro; a folga de 1px evita ligar o
            cursor por causa de meio pixel de borda. */
@@ -86,6 +119,7 @@
             if (e.pointerType !== 'mouse' || e.button !== 0) return;
             if (panIgnoresTarget(e.target)) return;
             if (wrap.scrollWidth - wrap.clientWidth <= 1) return;
+            if (pointerOverText(e.clientX, e.clientY)) return;
 
             armed = true;
             panning = false;
@@ -144,6 +178,131 @@
         /* Se o botão for solto fora da janela, o pointerup não chega. */
         window.addEventListener('blur', () => endPan(null));
     }
+
+    /* ─── copiar o conteudo de uma celula (1.46.0) ───────────────────
+       Um botao so, para a pagina inteira, posicionado sobre a celula em que o
+       mouse parou (~300ms): nao entra no layout da tabela, nao muda largura de
+       coluna, e nao pisca enquanto o mouse atravessa as linhas. Fica fora do
+       <tr>, entao clicar nele nao abre o registro. Copia o texto que a pessoa
+       ve na celula (o valor formatado). Desligavel por tela:
+       uiPreferences.copyCell (editor -> Geral). */
+    const COPY_DELAY = 300;
+    let copyBtn = null, filterBtn = null, copyGroup = null, copyCell = null, copyTimer = null, copyHideTimer = null;
+
+    const ICON_COPY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+    const ICON_FILTER = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>';
+
+    function cellButton(label, icon, onClick) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ptah-cell-copy';
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
+        btn.innerHTML = icon;
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (copyCell) onClick(copyCell);
+            hideCopy(0);
+        });
+        return btn;
+    }
+
+    /* "Filtrar por este valor" (1.46.0): o servidor le o valor do REGISTRO
+       (nao o texto formatado) e aplica o filtro daquela coluna. So aparece em
+       coluna filtravel. */
+    function filterByCell(td) {
+        const tr = td.closest('tr');
+        const host = td.closest('[wire\\:id]');
+        if (!tr || !host || !window.Livewire) return;
+        const component = window.Livewire.find(host.getAttribute('wire:id'));
+        if (component) component.call('filterByCell', tr.dataset.ptahRow, td.dataset.ptahFilterField);
+    }
+
+    function copyButton() {
+        if (copyGroup) return copyGroup;
+        copyGroup = document.createElement('div');
+        copyGroup.className = 'ptah-cell-actions ptah-no-print';
+        copyBtn = cellButton(@js(__('ptah::ui.crud_copy_cell')), ICON_COPY, (td) => copyText(td.innerText.trim()));
+        filterBtn = cellButton(@js(__('ptah::ui.crud_filter_by_cell')), ICON_FILTER, filterByCell);
+        copyGroup.append(copyBtn, filterBtn);
+        copyGroup.addEventListener('mouseenter', () => clearTimeout(copyHideTimer));
+        copyGroup.addEventListener('mouseleave', () => hideCopy(150));
+        document.body.appendChild(copyGroup);
+        return copyGroup;
+    }
+
+    function cellIsCopyable(td) {
+        if (!td || td.tagName !== 'TD') return false;
+        const wrap = td.closest('.ptah-c-tbl_wrap');
+        if (!wrap || wrap.dataset.ptahCopy === '0') return false;
+        if (td.closest('tfoot, .ptah-c-break_row, .ptah-c-break_subtotal')) return false;
+        if (td.matches('.ptah-no-print') || td.querySelector('input, select, textarea, button')) return false;
+        return td.innerText.trim() !== '';
+    }
+
+    function showCopy(td) {
+        const group = copyButton();
+        const canFilter = !!td.dataset.ptahFilterField && !!td.closest('tr') && td.closest('tr').dataset.ptahRow !== '';
+        filterBtn.style.display = canFilter ? '' : 'none';
+        const rect = td.getBoundingClientRect();
+        copyCell = td;
+        group.style.top = (rect.top + 4) + 'px';
+        group.style.left = (rect.right - (canFilter ? 52 : 26)) + 'px';
+        group.classList.add('is-visible');
+    }
+
+    function hideCopy(delay) {
+        clearTimeout(copyTimer);
+        clearTimeout(copyHideTimer);
+        copyHideTimer = setTimeout(() => {
+            if (copyGroup) copyGroup.classList.remove('is-visible');
+            copyCell = null;
+        }, delay);
+    }
+
+    function copyToast(ok) {
+        window.dispatchEvent(new CustomEvent('ptah-toast', { detail: ok
+            ? { title: @js(__('ptah::ui.crud_copied')), color: 'success' }
+            : { title: @js(__('ptah::ui.crud_copy_failed')), color: 'danger' } }));
+    }
+
+    function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => copyToast(true)).catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    /* Sem a API (http fora de localhost, navegador antigo) ou com ela
+       recusada: o caminho antigo. Se nenhum dos dois copiar, a pessoa e
+       avisada — calar faria parecer que copiou. */
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (_) {}
+        ta.remove();
+        copyToast(ok);
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const td = e.target.closest && e.target.closest('td');
+        if (td === copyCell) { clearTimeout(copyHideTimer); return; }
+        if (copyGroup && copyGroup.contains(e.target)) return;
+        clearTimeout(copyTimer);
+        if (!cellIsCopyable(td)) { if (copyCell) hideCopy(150); return; }
+        if (copyCell) hideCopy(0);
+        copyTimer = setTimeout(() => showCopy(td), COPY_DELAY);
+    });
+    /* Fixo na tela: ao rolar, a posicao deixaria de bater com a celula. */
+    window.addEventListener('scroll', () => hideCopy(0), true);
 
     function initAllPans() {
         document.querySelectorAll('.ptah-c-tbl_wrap').forEach(initPan);

@@ -40,7 +40,9 @@ class DuskDraftContact extends Model
             'crud' => self::class,
             'cols' => [
                 ['colsNomeFisico' => 'name', 'colsNomeLogico' => 'Nome', 'colsTipo' => 'text', 'colsGravar' => true, 'colsVisibleList' => true],
-                ['colsNomeFisico' => 'phone', 'colsNomeLogico' => 'Telefone', 'colsTipo' => 'text', 'colsGravar' => true, 'colsVisibleList' => true],
+                ['colsNomeFisico' => 'phone', 'colsNomeLogico' => 'Telefone', 'colsTipo' => 'text', 'colsGravar' => true, 'colsVisibleList' => true,
+                    // "Filtrar por este valor" (TableCopyAndSelectBrowserTest).
+                    'colsIsFilterable' => 'S'],
             ],
             'permissions' => [],
             'formDraft' => ['enabled' => true],
