@@ -422,7 +422,9 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsMask` | `string\|null` | Mask: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
 | `colsMaskTransform` | `string\|null` | Server-side transform applied before persisting: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
 | `colsRelacao` | `string\|null` | Eloquent relation name. A **nested dotted path** is supported (e.g. `invoice.receivingStatus` + `colsRelacaoExibe: name`): the cell descends the chain, the searchdropdown filter applies `whereHas` against the related key (numeric id) or display column (text), and sort-by-this-column is disabled (nested can't JOIN). Eager-loaded automatically |
-| `colsRelacaoExibe` | `string\|null` | Relation field to display |
+| `colsRelacaoExibe` | `string\|null` | Relation field to display — a column or an accessor (`full_name`). The search and the column's text filter use it only when it is a real column of the related table |
+| `colsRelacaoBusca` | `string\|array\|null` | Where to search/filter this relation by text, as real columns — needed when `colsRelacaoExibe` is an accessor: `["company_name", "user.name"]` (dotted paths go deeper). Since 1.46.1 |
+| `colsSearchable` | `bool` | `false` takes the column out of the global search (default: searched) |
 | `colsRelacaoNested` | `string\|null` | Dot notation for nested relations: `category.parent.name` |
 | `colsOrderBy` | `string\|null` | Actual column for ORDER BY |
 | `colsMetodoCustom` | `string\|null` | Pattern `Namespace\Class\method(%field%)` |
@@ -1091,6 +1093,19 @@ Fields with `logic = 'OR'` are grouped into a separate `WHERE (... OR ...)`.
 
   Not shown on the actions/checkbox columns, empty cells, the footer or in
   print. Off per screen with `uiPreferences.copyCell: false` (editor → General).
+
+### What the search and the filters compare
+
+- The global search and a column's text filter only use **real columns**: a
+  column whose `colsNomeFisico` (or relation `colsRelacaoExibe`) is an accessor
+  is skipped — declare `colsRelacaoBusca` for a relation shown by an accessor.
+  (Until 1.46.1 a single accessor broke the whole search: the list came back
+  empty.)
+- A masked column compares what was typed **as it is stored**: the column's
+  `colsMaskTransform` (or its mask's store rule) is applied to the typed value
+  — `529.982.247-25` finds the CPF stored as `52998224725`.
+- A **text** column is matched with `LIKE` even when the typed value looks like
+  a number — part of a CPF, a phone, a barcode.
 
 ### Filtering the empty ones
 

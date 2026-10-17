@@ -121,11 +121,13 @@ class WhyEmptyCommandTest extends TestCase
     #[Test]
     public function a_failing_listing_query_is_reported_not_shown_as_empty(): void
     {
-        // Um filtro salvo sobre uma coluna que saiu da tabela: rows() engole a
-        // QueryException, mostra vazio e apaga as preferencias do usuario.
+        // Uma busca que quebra o SQL: rows() engole a QueryException, mostra
+        // vazio e apaga as preferencias do usuario. (Ate a 1.46.1 o cenario era
+        // uma coluna que saiu da tabela; desde entao ela e ignorada na busca e
+        // a consulta nao falha mais — por isso um JOIN que nao existe.)
         CrudConfig::where('model', WhyEmptyOrder::class)->update(['config' => json_encode([
             'crud' => WhyEmptyOrder::class,
-            'cols' => [['colsNomeFisico' => 'legacy_flag', 'colsNomeLogico' => 'Legacy', 'colsTipo' => 'text']],
+            'cols' => [['colsNomeFisico' => 'legacy_flag', 'colsNomeLogico' => 'Legacy', 'colsTipo' => 'text', 'colsSource' => 'nope_table.legacy_flag']],
             'permissions' => [],
         ])]);
         $this->savePrefs(['search' => 'abc']);

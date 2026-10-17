@@ -7,6 +7,45 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.46.1] - 2026-10-16
+
+From PetPlace: an automated sweep of its 88 screens (global search + the filter
+of every filterable column).
+
+### Fixed - the global search broke on screens with a relation shown by an accessor
+
+`buildGlobalSearchFilters()` searched every relation column in its
+`colsRelacaoExibe` — and that is often an accessor (`full_name`), which works
+on the listing but is no column: `LOWER(full_name) LIKE ...` failed and, being
+an OR in the same WHERE, the whole search came back empty (20 screens). The
+search and the column's text filter now use only **real columns**:
+`colsRelacaoBusca` (new — a column or a list, dotted paths go deeper:
+`["company_name", "user.name"]`) or else `colsRelacaoExibe` when it is a column
+of the related table; an accessor is skipped. A plain column that is an
+accessor is skipped too. `colsSearchable: false` is now honoured.
+
+### Fixed - a masked column's filter did not apply the mask's transform
+
+The CPF is stored as `52998224725` (`digits_only` on save), but the filter and
+the search compared what was typed — `529.982.247-25` — and found nothing. The
+column's `colsMaskTransform` (or its mask's store rule: digits, alnum, upper,
+lower, trim) is now applied to the typed value.
+
+### Fixed - a listing that failed to load said nothing
+
+A query error became an empty list: the message went to a session flash that
+no BaseCrud view shows. It is now a toast — "The search for "x" could not be
+run…" when a search is active, the load error otherwise — and the exception is
+`report()`ed to the host's handler (Sentry, Flare…), not only logged.
+
+### Fixed - a number typed in a TEXT column was compared exactly
+
+The operator was inferred from the VALUE: `529982` looked numeric, so a CPF
+column got `cpf = '529982'`. A text column now always uses `LIKE` — part of a
+CPF, a phone, a barcode, a numeric SKU.
+
+---
+
 ## [1.46.0] - 2026-10-16
 
 ### Added - copy a cell, or filter by its value, from the listing
