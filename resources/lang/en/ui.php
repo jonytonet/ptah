@@ -272,6 +272,7 @@ return [
     | CRUD runtime messages
     |--------------------------------------------------------------------------
     */
+    'crud_search_error' => 'The search for ":term" could not be run. Try another term or tell support.',
     'crud_load_error' => 'Failed to load data. Preferences reset.',
     'export_processing' => 'Processing... you will receive a notification.',
     'crud_save_error' => 'Error saving: :message',

@@ -105,6 +105,10 @@ class JsonSchemaBuilder
                         'type' => 'boolean',
                         'description' => 'Whether column is searchable',
                     ],
+                    'colsRelacaoBusca' => [
+                        'type' => ['string', 'array'],
+                        'description' => 'Real column(s) of the relation to search/filter by text, when colsRelacaoExibe is an accessor. Dotted paths go deeper: "user.name"',
+                    ],
                     'colsRequired' => [
                         'type' => 'boolean',
                         'description' => 'Whether field is required in forms',

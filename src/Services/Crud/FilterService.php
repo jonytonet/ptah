@@ -142,6 +142,27 @@ class FilterService
                 : $query->whereNull($filter->field);
         }
 
+        // Several places for one value (1.46.1): `(whereHas a OR whereHas b OR
+        // column c)` as ONE group — a relation column searched in company_name
+        // and user.name. Each part reuses its own strategy.
+        if (! empty($filter->options['anyOf']) && is_array($filter->options['anyOf'])) {
+            $targets = $filter->options['anyOf'];
+
+            return $query->where(function (Builder $group) use ($targets, $filter) {
+                foreach ($targets as $target) {
+                    $relation = $target['relation'] ?? null;
+                    $column = (string) ($target['column'] ?? '');
+                    if ($column === '') {
+                        continue;
+                    }
+                    $part = $relation
+                        ? new FilterDTO(field: $column, value: $filter->value, operator: $filter->operator, type: 'relation', options: ['whereHas' => $relation, 'column' => $column])
+                        : new FilterDTO(field: $column, value: $filter->value, operator: $filter->operator, type: 'text');
+                    $group->orWhere(fn (Builder $q) => $this->applyFilter($q, $part));
+                }
+            });
+        }
+
         // Explicit relation filter via whereHas
         if (! empty($filter->options['whereHas'])) {
             return $this->strategies['relation']->apply($query, $filter);
@@ -346,6 +367,26 @@ class FilterService
 
         foreach ($cols as $col) {
             $tipo = $col['colsTipo'] ?? 'text';
+
+            // Alvos ja resolvidos pelo BaseCrud (1.46.1): so colunas REAIS —
+            // um accessor (`full_name`) no LIKE derrubava a busca inteira — e o
+            // valor ja normalizado pela mascara da coluna.
+            if (array_key_exists('_searchTargets', $col)) {
+                $targets = $col['_searchTargets'];
+                $isRelation = ! empty($col['colsRelacao']) && ! empty($col['colsRelacaoExibe']);
+                if ($targets !== [] && ($isRelation || in_array($tipo, ['text', 'select', 'textarea', 'email', 'tel', 'url'], true))) {
+                    $filters[] = new FilterDTO(
+                        field: (string) $targets[0]['column'],
+                        value: (string) ($col['_searchValue'] ?? $term),
+                        operator: 'LIKE',
+                        type: 'text',
+                        options: ['logic' => 'OR', 'anyOf' => $targets],
+                    );
+                }
+
+                continue;
+            }
+
             // colsSource takes priority for JOIN columns (aliases don't work in WHERE)
             $field = $col['colsSource'] ?? $col['colsNomeFisico'] ?? '';
             $rel = $col['colsRelacao'] ?? null;

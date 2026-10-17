@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -18,6 +19,7 @@ use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\PtahMask;
 use Ptah\Support\RelationPath;
 use Ptah\Support\ServerOnly;
 use Ptah\Support\SqlIdentifier;
@@ -67,11 +69,22 @@ trait HasCrudQuery
 
             Log::error('Ptah BaseCrud: error loading data', [
                 'model' => $this->model,
+                'search' => $this->search,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+            // Para o handler do host (Sentry, Flare...): o log sozinho passava
+            // despercebido.
+            report($e);
 
-            session()->flash('error', trans('ptah::ui.crud_load_error'));
+            // Um toast, nao um flash: nenhuma view do BaseCrud mostrava o flash,
+            // e o erro virava uma lista vazia sem aviso (1.46.1).
+            $this->dispatch('ptah-toast',
+                title: $this->search !== ''
+                    ? trans('ptah::ui.crud_search_error', ['term' => Str::limit($this->search, 40)])
+                    : trans('ptah::ui.crud_load_error'),
+                color: 'danger',
+            );
 
             return new LengthAwarePaginator([], 0, $this->safePerPage(), 1, [
                 'path' => request()->url(),
@@ -245,6 +258,12 @@ trait HasCrudQuery
                 $this->crudConfig['cols'] ?? [],
                 static fn (array $col): bool => ! in_array($col['colsNomeFisico'] ?? '', $hidden, true),
             ));
+            // Cada coluna com os alvos REAIS onde buscar e o termo normalizado
+            // pela mascara dela (1.46.1).
+            $searchCols = array_map(fn (array $col): array => $col + [
+                '_searchTargets' => $this->searchTargets($col),
+                '_searchValue' => $this->maskedSearchValue($col, $this->search),
+            ], $searchCols);
 
             $searchFilters = $this->filterService->buildGlobalSearchFilters(
                 $searchCols,
@@ -549,6 +568,141 @@ trait HasCrudQuery
         return max(1, min($this->perPage, (int) config('ptah.crud.max_per_page', 200)));
     }
 
+    /**
+     * Where a column is searched/filtered as TEXT, as real database columns
+     * (1.46.1). A relation column uses `colsRelacaoBusca` (a column or a list,
+     * dotted paths go deeper: `user.name`) or else its `colsRelacaoExibe` —
+     * only when it is a real column of the related table: an accessor
+     * (`full_name`) is skipped instead of breaking the whole query. A plain
+     * column must exist in the table (or come from a JOIN via colsSource).
+     * `colsSearchable: false` takes the column out of the global search.
+     *
+     * @return list<array{relation: ?string, column: string}>
+     */
+    protected function searchTargets(array $col, bool $ignoreSearchable = false): array
+    {
+        if (! $ignoreSearchable && in_array($col['colsSearchable'] ?? true, [false, 'N', 'n', 0, '0', 'false'], true)) {
+            return [];
+        }
+
+        // Sem model nao ha schema para conferir: vale o que a config declara
+        // (o comportamento de antes).
+        $model = $this->resolveEloquentModel();
+
+        $relation = (string) ($col['colsRelacao'] ?? '');
+        $exibe = (string) ($col['colsRelacaoExibe'] ?? '');
+
+        if ($relation !== '' && $exibe !== '') {
+            if (! $model) {
+                return SqlIdentifier::isSafe($exibe) ? [['relation' => $relation, 'column' => $exibe]] : [];
+            }
+
+            $targets = [];
+            foreach ((array) ($col['colsRelacaoBusca'] ?? $exibe) as $candidate) {
+                $parts = array_values(array_filter(explode('.', (string) $candidate), fn ($p) => $p !== ''));
+                $column = (string) array_pop($parts);
+                $path = implode('.', array_merge([$relation], $parts));
+                $related = $this->relatedModelFor($model, $path);
+
+                if ($related && SqlIdentifier::isSafe($column) && $this->modelHasColumn($related, $column)) {
+                    $targets[] = ['relation' => $path, 'column' => $column];
+                }
+            }
+
+            return $targets;
+        }
+
+        if (! empty($col['colsSource'])) {
+            return SqlIdentifier::isSafe((string) $col['colsSource']) ? [['relation' => null, 'column' => (string) $col['colsSource']]] : [];
+        }
+
+        $field = (string) ($col['colsNomeFisico'] ?? '');
+
+        return $field !== '' && $this->isRealColumn($field) ? [['relation' => null, 'column' => $field]] : [];
+    }
+
+    /** Is `$field` a column of the screen's own table (not an accessor)? */
+    protected function isRealColumn(string $field): bool
+    {
+        $model = $this->resolveEloquentModel();
+        if ($model === null) {
+            return true;
+        }
+
+        return SqlIdentifier::isSafe($field) && ! str_contains($field, '.') && $this->modelHasColumn($model, $field);
+    }
+
+    private function modelHasColumn(Model $model, string $column): bool
+    {
+        static $memo = [];
+
+        $key = $model->getConnectionName().'|'.$model->getTable();
+        if (! array_key_exists($key, $memo)) {
+            try {
+                $memo[$key] = array_map('strtolower', $model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable()));
+            } catch (\Throwable) {
+                $memo[$key] = null;
+            }
+        }
+
+        // Sem conseguir ler o schema, nao bloqueia: o comportamento de antes.
+        return $memo[$key] === null || $memo[$key] === [] || in_array(strtolower($column), $memo[$key], true);
+    }
+
+    /** The model at the end of a dotted relation path, or null. */
+    private function relatedModelFor(Model $model, string $path): ?Model
+    {
+        $current = $model;
+        foreach (explode('.', $path) as $segment) {
+            if (! method_exists($current, $segment) || method_exists(Model::class, $segment)) {
+                return null;
+            }
+            try {
+                $relation = $current->{$segment}();
+            } catch (\Throwable) {
+                return null;
+            }
+            if (! $relation instanceof Relation) {
+                return null;
+            }
+            $current = $relation->getRelated();
+        }
+
+        return $current;
+    }
+
+    /**
+     * The typed value as the column stores it (1.46.1): the column's
+     * `colsMaskTransform`, or its mask's store rule, applied to what was typed
+     * with the mask ("529.982.247-25" → "52998224725"). Only the text rules —
+     * digits, alnum, upper, lower, trim. A result that comes out empty (letters
+     * typed in a CPF filter) keeps the original.
+     */
+    protected function maskedSearchValue(array $col, string $value): string
+    {
+        $out = match ((string) ($col['colsMaskTransform'] ?? '')) {
+            'digits_only' => (string) preg_replace('/\D/', '', $value),
+            'plate_clean' => (string) preg_replace('/[^A-Z0-9]/', '', mb_strtoupper($value)),
+            'uppercase' => mb_strtoupper($value),
+            'lowercase' => mb_strtolower($value),
+            'trim' => trim($value),
+            '' => $this->maskStoreValue((string) ($col['colsMask'] ?? ''), $value),
+            default => $value,
+        };
+
+        return $out === '' ? $value : $out;
+    }
+
+    private function maskStoreValue(string $mask, string $value): string
+    {
+        $def = $mask !== '' ? PtahMask::get($mask) : null;
+        if (! is_array($def) || ! in_array($def['store'], ['digits', 'alnum', 'upper', 'lower', 'trim'], true)) {
+            return $value;
+        }
+
+        return (string) PtahMask::store($mask, $value);
+    }
+
     /** Valor de select que significa "sem valor" / "com valor" (1.46.0). */
     public const FILTER_EMPTY = '__ptah_empty__';
 
@@ -751,6 +905,24 @@ trait HasCrudQuery
                         ? $explicitOp
                         : 'LIKE';
 
+                    // So colunas reais da relacao (1.46.1): `colsRelacaoExibe`
+                    // apontando para um accessor quebrava a consulta toda.
+                    $targets = $this->searchTargets($col, ignoreSearchable: true);
+                    if ($targets === []) {
+                        continue;
+                    }
+                    if (count($targets) > 1 || $targets[0]['column'] !== $col['colsRelacaoExibe'] || $targets[0]['relation'] !== $relation) {
+                        $domainFilters[] = new FilterDTO(
+                            field: $relation,
+                            value: $value,
+                            operator: $relOp,
+                            type: 'relation',
+                            options: ['anyOf' => $targets],
+                        );
+
+                        continue;
+                    }
+
                     // Both single-level and nested ("a.b") paths go through whereHas;
                     // Eloquent's whereHas resolves dotted relation paths natively.
                     $domainFilters[] = new FilterDTO(
@@ -771,17 +943,35 @@ trait HasCrudQuery
             // ── Plain column ──────────────────────────────────────────────────
             // If column has colsSource (configured JOIN), use qualified name for WHERE
             $filterField = ($col && ! empty($col['colsSource'])) ? $col['colsSource'] : $field;
+
+            // Uma coluna que nao existe na tabela (accessor) nao e filtravel
+            // por SQL: pular, em vez de derrubar a listagem (1.46.1).
+            if ($col && empty($col['colsSource']) && ! $this->isRealColumn($field)) {
+                continue;
+            }
+
+            // O valor digitado com a mascara ("529.982.247-25") e comparado
+            // como o banco guarda ("52998224725") — 1.46.1.
+            if ($col && is_string($value)) {
+                $value = $this->maskedSearchValue($col, $value);
+            }
+
             // Um valor ESCOLHIDO de um select e exato: com LIKE, "Ativo"
             // (active) trazia tambem os "Inativo" (inactive) — 1.46.0.
-            $isSelect = ($col['colsTipo'] ?? '') === 'select';
-            $autoOp = (! $isSelect && is_string($value) && strlen($value) > 1 && FilterDTO::inferType($field, $value) === 'text')
+            $colTipo = (string) ($col['colsTipo'] ?? '');
+            $isSelect = $colTipo === 'select';
+            // Coluna de TEXTO e texto, mesmo que o valor pareca numero: "529982"
+            // num CPF virava `cpf = '529982'` e nao achava nada (1.46.1).
+            $isTextCol = in_array($colTipo, ['text', 'textarea', 'email', 'tel', 'url'], true);
+            $type = $isTextCol ? 'text' : FilterDTO::inferType($field, $value);
+            $autoOp = (! $isSelect && is_string($value) && ($isTextCol ? $value !== '' : strlen($value) > 1 && $type === 'text'))
                 ? 'LIKE'
                 : '=';
             $domainFilters[] = new FilterDTO(
                 field: $filterField,
                 value: $value,
                 operator: $explicitOp ?? $autoOp,
-                type: FilterDTO::inferType($field, $value),
+                type: $type,
             );
         }
 

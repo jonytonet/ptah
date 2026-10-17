@@ -273,6 +273,7 @@ return [
     | Mensagens de runtime do CRUD
     |--------------------------------------------------------------------------
     */
+    'crud_search_error' => 'Não foi possível buscar por ":term". Tente outro termo ou avise o suporte.',
     'crud_load_error' => 'Falha ao carregar os dados. Preferências redefinidas.',
     'export_processing' => 'Processando... você receberá uma notificação.',
     'crud_save_error' => 'Erro ao salvar: :message',
