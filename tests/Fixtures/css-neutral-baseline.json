@@ -559,6 +559,8 @@
     ".ptah-c-crumb|dark|color": "#a3b0c0",
     ".ptah-c-crumb|light|color": "#5e636a",
     ".ptah-c-crumb|light|transition": "color 150ms ease",
+    ".ptah-c-ctrl_check|light|background-color": "#ffffff",
+    ".ptah-c-ctrl_check|light|border-color": "#e2e8f0",
     ".ptah-c-ctrl_label|dark|color": "#cbd5e1",
     ".ptah-c-ctrl_label|light|color": "#374151",
     ".ptah-c-dd_active|dark|color": "color-mix(in srgb, var(--color-primary, #5b21b6) 45%, #ffffff)",

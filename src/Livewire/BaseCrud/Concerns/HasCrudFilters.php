@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
-use Ptah\Support\Scalar;
 use Carbon\Carbon;
 use Ptah\DTO\FilterDTO;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\Scalar;
 
 /**
  * Handles all filter-related functionality: sort, search, date filters,

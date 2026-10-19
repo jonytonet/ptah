@@ -2,7 +2,6 @@
 
 namespace Ptah\Exports;
 
-use Ptah\Support\Scalar;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -11,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Ptah\Support\Scalar;
 
 class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {

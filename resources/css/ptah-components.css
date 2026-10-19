@@ -1056,6 +1056,12 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-ctrl_label                   { color: var(--ptah-text); }
 .ptah-dark .ptah-c-ctrl_label        { color: var(--ptah-text); }
 
+/* forge-checkbox (1.46.4): border and unchecked fill by token — it carried a
+   fixed `border-gray-300`, light on a dark surface, and the forms plugin's
+   white unchecked fill. :checked keeps the plugin's currentColor fill (its
+   selector is more specific). */
+.ptah-c-ctrl_check                   { border-color: var(--ptah-line-strong); background-color: var(--ptah-surface); }
+
 /* ── forge-progress: zero dark: before this. The fill bar already rides
    bg-primary/success/danger/warn/dark (theme-aware). ── */
 /* Revisao adversarial (grupo 2c): o trilho da progress bar carrega

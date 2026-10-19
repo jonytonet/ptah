@@ -5,7 +5,7 @@
     "components/forge-button.blade.php": 7,
     "components/forge-card.blade.php": 4,
     "components/forge-chart-card.blade.php": 3,
-    "components/forge-checkbox.blade.php": 1,
+    "components/forge-checkbox.blade.php": 0,
     "components/forge-empty.blade.php": 1,
     "components/forge-input.blade.php": 15,
     "components/forge-list.blade.php": 1,

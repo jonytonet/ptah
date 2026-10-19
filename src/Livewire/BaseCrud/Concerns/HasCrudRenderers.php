@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
-use Ptah\Support\Scalar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Ptah\Support\SafeUrl;
+use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;

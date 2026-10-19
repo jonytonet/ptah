@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
-use Ptah\Support\Scalar;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Support\RelationPath;
+use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
 
 /**

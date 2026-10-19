@@ -28,7 +28,9 @@
         type="checkbox"
         {{ $checked ? 'checked' : '' }}
         {{ $disabled ? 'disabled' : '' }}
-        {{ $attributes->merge(['class' => "w-4 h-4 rounded border-gray-300 transition-colors {$colorClass}"]) }}
+        {{-- Borda e fundo por token (ptah-c-ctrl_check), nao `border-gray-300`:
+             no escuro a borda clara e o fundo branco fixo destoavam (1.46.4). --}}
+        {{ $attributes->merge(['class' => "w-4 h-4 rounded ptah-c-ctrl_check transition-colors {$colorClass}"]) }}
     />
     @if($label)
         <span class="text-sm ptah-c-ctrl_label select-none">{{ $label }}</span>

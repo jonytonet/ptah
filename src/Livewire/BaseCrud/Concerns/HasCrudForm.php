@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
-use Ptah\Support\Scalar;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Ptah\Exceptions\CrudHookAbort;
 use Ptah\Support\PtahMask;
+use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
