@@ -247,8 +247,15 @@ readonly class EntityContext
             fn (FieldDefinition $f) => $f->isForeignKey()
         ));
 
+        // An id in another system (ptah.forge.external_pointer_prefixes): a
+        // belongsTo to a model that will never exist only breaks the class.
+        $external = array_map(
+            fn (FieldDefinition $f) => "    // {$f->name}: ponteiro externo (ptah.forge.external_pointer_prefixes) — sem belongsTo.",
+            array_values(array_filter($this->fields, fn (FieldDefinition $f) => $f->isExternalPointer()))
+        );
+
         if (empty($fkFields)) {
-            return '';
+            return $external === [] ? '' : "\n".implode("\n", $external)."\n";
         }
 
         $methods = array_map(function (FieldDefinition $f) {
@@ -261,6 +268,10 @@ readonly class EntityContext
                 "        return \$this->belongsTo({$relatedModel}::class, '{$f->name}');\n".
                 '    }';
         }, $fkFields);
+
+        if ($external !== []) {
+            $methods[] = implode("\n", $external);
+        }
 
         return "\n".implode("\n\n", $methods)."\n";
     }

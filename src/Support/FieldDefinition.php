@@ -71,7 +71,30 @@ readonly class FieldDefinition
     public function isForeignKey(): bool
     {
         return str_ends_with($this->name, '_id')
-            && in_array($this->type, ['unsignedBigInteger', 'foreignId', 'bigInteger']);
+            && in_array($this->type, ['unsignedBigInteger', 'foreignId', 'bigInteger'])
+            && ! $this->isExternalPointer();
+    }
+
+    /**
+     * A `*_id` that points OUTSIDE this database — an id in another system
+     * (1.46.5, Engepecas: `yelll_contact_id`, a Yelll CRM id). Matched by
+     * `ptah.forge.external_pointer_prefixes`. No belongsTo, no constrained(),
+     * no factory parent: only a comment in the model, and a plain indexed
+     * integer column.
+     */
+    public function isExternalPointer(): bool
+    {
+        if (! str_ends_with($this->name, '_id') || ! function_exists('app') || ! app()->bound('config')) {
+            return false;
+        }
+
+        foreach ((array) config('ptah.forge.external_pointer_prefixes', []) as $prefix) {
+            if (is_string($prefix) && $prefix !== '' && str_starts_with($this->name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -122,7 +145,7 @@ readonly class FieldDefinition
     public function migrationLine(string $indent = '            '): string
     {
         // Only foreignId triggers constrained() automatically.
-        if ($this->type === 'foreignId' && str_ends_with($this->name, '_id')) {
+        if ($this->type === 'foreignId' && str_ends_with($this->name, '_id') && ! $this->isExternalPointer()) {
             $line = "\$table->foreignId('{$this->name}')->constrained('{$this->relatedTable()}')->cascadeOnDelete()";
             if ($this->nullable) {
                 $line = "\$table->foreignId('{$this->name}')->nullable()->constrained('{$this->relatedTable()}')->nullOnDelete()";
@@ -142,7 +165,7 @@ readonly class FieldDefinition
             'longText' => "\$table->longText('{$this->name}')",
             'integer' => "\$table->integer('{$this->name}')",
             'bigInteger' => "\$table->bigInteger('{$this->name}')",
-            'unsignedBigInteger' => "\$table->unsignedBigInteger('{$this->name}')",
+            'unsignedBigInteger', 'foreignId' => "\$table->unsignedBigInteger('{$this->name}')",
             'unsignedInteger' => "\$table->unsignedInteger('{$this->name}')",
             'tinyInteger' => "\$table->tinyInteger('{$this->name}')",
             'smallInteger' => "\$table->smallInteger('{$this->name}')",
@@ -171,7 +194,7 @@ readonly class FieldDefinition
         // was silently ignored until 1.43.3.
         if (! $this->unique && ($this->index
             || (str_ends_with($this->name, '_id')
-                && in_array($this->type, ['unsignedBigInteger', 'bigInteger'], true)))) {
+                && in_array($this->type, ['unsignedBigInteger', 'bigInteger', 'foreignId'], true)))) {
             $line .= '->index()';
         }
 
@@ -218,6 +241,10 @@ readonly class FieldDefinition
      */
     public function fakerExpression(?string $relatedFqcn = null): string
     {
+        if ($this->isExternalPointer()) {
+            return $this->nullable ? 'null' : 'fake()->numberBetween(1, 100000)';
+        }
+
         if ($this->isForeignKey() || ($this->type === 'foreignId' && str_ends_with($this->name, '_id'))) {
             // Um registro que ja existe (semeie os pais primeiro); sem nenhum, a
             // factory do pai. Company e do pacote e nao tem factory.

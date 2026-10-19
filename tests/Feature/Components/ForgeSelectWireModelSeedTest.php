@@ -46,7 +46,7 @@ class ForgeSelectWireModelSeedTest extends TestCase
             }
         });
 
-        $this->assertStringContainsString('selected: &quot;active&quot;', $result->html());
+        $this->assertStringContainsString("selected: 'active'", $result->html());
     }
 
     #[Test]
@@ -66,7 +66,7 @@ class ForgeSelectWireModelSeedTest extends TestCase
             }
         });
 
-        $this->assertStringContainsString('selected: &quot;a&quot;', $result->html());
+        $this->assertStringContainsString("selected: 'a'", $result->html());
     }
 
     #[Test]
@@ -106,7 +106,7 @@ class ForgeSelectWireModelSeedTest extends TestCase
             }
         });
 
-        $this->assertStringContainsString('selected: &quot;&quot;', $result->html());
+        $this->assertStringContainsString("selected: ''", $result->html());
     }
 
     #[Test]
@@ -126,7 +126,7 @@ class ForgeSelectWireModelSeedTest extends TestCase
             }
         });
 
-        $this->assertStringContainsString('selected: &quot;button&quot;', $result->html());
+        $this->assertStringContainsString("selected: 'button'", $result->html());
     }
 
     #[Test]
@@ -153,7 +153,7 @@ class ForgeSelectWireModelSeedTest extends TestCase
         // the root wire:snapshot attribute, so a bare "does not contain
         // 'boom'" check would false-positive-fail regardless of this fix.
         $this->assertStringContainsString('selected: null', $html);
-        $this->assertStringNotContainsString('selected: &quot;boom&quot;', $html);
+        $this->assertStringNotContainsString("selected: 'boom'", $html);
     }
 
     #[Test]

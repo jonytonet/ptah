@@ -257,6 +257,7 @@ device/browser; it never leaks credentials or any other account data.
 |-----|-----|---------|-----------|
 | `forge.prefix` | — | `forge` | `config/ptah.php` comments (Blade component prefix, `<x-forge-*>`) |
 | `forge.tailwind` | — | `v4` | `config/ptah.php` comments |
+| `forge.external_pointer_prefixes` | — | `[]` | Prefixes of `*_id` columns that hold an id from ANOTHER system (e.g. `['yelll_']`). `ptah:forge` generates no `belongsTo`/`constrained()` for them — only a comment in the model and an indexed integer column. |
 | `forge.sidebar_items` | — | `[]` | [Modules.md — Menu Module, driver `config`](Modules.md#menu-module) |
 
 ### Scaffold (`scaffold.*`)

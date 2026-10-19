@@ -46,11 +46,14 @@
         // nao geravam regra alguma e o texto herdava tinta escura sobre painel
         // escuro. `.ptah-c-alert_title`/`_text` sao pintados por
         // `.ptah-alert-primary` em ptah-components.css.
-        'primary' => ['bg' => 'bg-primary-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-primary dark:border-primary', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-primary dark:text-primary'],
-        'success' => ['bg' => 'bg-success-light dark:bg-slate-800/60', 'border' => 'border-l-4 border-success dark:border-success', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-success dark:text-success'],
-        'danger'  => ['bg' => 'bg-danger-light dark:bg-slate-800/60',  'border' => 'border-l-4 border-danger dark:border-danger',  'title' => 'ptah-c-alert_title',  'text' => 'ptah-c-alert_text',  'icon' => 'text-danger dark:text-danger'],
-        'warn'    => ['bg' => 'bg-warn-light dark:bg-slate-800/60',    'border' => 'border-l-4 border-warn dark:border-warn',    'title' => 'ptah-c-alert_title',    'text' => 'ptah-c-alert_text',    'icon' => 'text-warn dark:text-warn'],
-        'dark'    => ['bg' => 'bg-dark dark:bg-slate-700',            'border' => 'border-l-4 border-dark-dark dark:border-slate-600', 'title' => 'text-white',                     'text' => 'text-dark-light dark:text-slate-300', 'icon' => 'text-dark-light dark:text-slate-300'],
+        // 1.46.5: o escuro (fundo, borda e tinta da variante `dark`) saiu dos
+        // utilitarios `dark:*-slate-*` para `.ptah-dark .ptah-alert*` em
+        // ptah-components.css, pintado pelos tokens neutros.
+        'primary' => ['bg' => 'bg-primary-light', 'border' => 'border-l-4 border-primary', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-primary'],
+        'success' => ['bg' => 'bg-success-light', 'border' => 'border-l-4 border-success', 'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-success'],
+        'danger'  => ['bg' => 'bg-danger-light',  'border' => 'border-l-4 border-danger',  'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-danger'],
+        'warn'    => ['bg' => 'bg-warn-light',    'border' => 'border-l-4 border-warn',    'title' => 'ptah-c-alert_title', 'text' => 'ptah-c-alert_text', 'icon' => 'text-warn'],
+        'dark'    => ['bg' => 'bg-dark',          'border' => 'border-l-4 border-dark-dark', 'title' => 'ptah-c-alert_on_dark', 'text' => 'text-dark-light ptah-c-alert_ink', 'icon' => 'text-dark-light ptah-c-alert_ink'],
     ];
     $c = $colorMap[$color] ?? $colorMap['primary'];
     $ptahAlertClass = 'ptah-alert-' . $color;

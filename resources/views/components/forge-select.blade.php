@@ -85,7 +85,7 @@
 
     $initialSelected = $multiple
         ? '[]'
-        : ($resolvedSelected !== null ? json_encode($resolvedSelected) : 'null');
+        : \Illuminate\Support\Js::from($resolvedSelected, JSON_INVALID_UTF8_SUBSTITUTE);
 @endphp
 
 <div class="ptah-select-wrapper w-full">
@@ -100,8 +100,11 @@
             open: false,
             selected: {{ $initialSelected }},
             multiple: {{ $multiple ? 'true' : 'false' }},
-            options: {{ json_encode($options) }},
-            placeholder: '{{ addslashes($placeholder) }}',
+            {{-- Js::from (1.46.5): json_encode devolvia false com UTF-8 invalido
+                 num rotulo e o x-data inteiro virava erro de sintaxe; o byte invalido
+                 vira U+FFFD em vez de derrubar a tela. --}}
+            options: {{ \Illuminate\Support\Js::from($options, JSON_INVALID_UTF8_SUBSTITUTE) }},
+            placeholder: {{ \Illuminate\Support\Js::from((string) $placeholder) }},
 @if ($searchable)
             search: '',
             normalizeText(value) {

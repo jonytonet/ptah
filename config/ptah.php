@@ -217,6 +217,14 @@ return [
         'tailwind' => 'v4',
 
         /*
+         * Prefixos de `*_id` que apontam para FORA do banco — o id de outro
+         * sistema (ex.: ['yelll_'] para yelll_contact_id). O ptah:forge nao
+         * gera belongsTo nem constrained() para eles, so um comentario no
+         * model e uma coluna inteira indexada.
+         */
+        'external_pointer_prefixes' => [],
+
+        /*
          * Atalho de menu na sidebar: digite parte do nome de uma tela e va
          * direto. Aparece no TOPO, entre o logo e a navegacao.
          *
@@ -488,6 +496,11 @@ return [
         // Prefix of the auth routes (/login, /logout…) — e.g. 'erp' → /erp/login,
         // for a host whose storefront already owns /login.
         'route_prefix' => env('PTAH_AUTH_ROUTE_PREFIX', ''),
+        // Where a guest goes when the route requires a guard OTHER than
+        // `guard` above (a customer portal, say): a route name or a URL, or a
+        // map ['portal' => 'portal.login']. Null leaves it to Laravel (the
+        // `login` route). Routes of `guard` always go to the Ptah login.
+        'guest_redirect' => null,
     ],
 
     /*

@@ -76,6 +76,26 @@ class ModelGeneratorTest extends GeneratorTestCase
         $this->assertStringContainsString('// TODO: use App\Models\Category;', $content);
     }
 
+    /** 1.46.5 (Engepecas): `yelll_contact_id` e o id de um CRM externo, nao uma FK. */
+    #[Test]
+    public function an_external_pointer_gets_a_comment_not_a_belongs_to(): void
+    {
+        config(['ptah.forge.external_pointer_prefixes' => ['yelll_']]);
+        $fields = [...$this->defaultFields(), $this->field('yelll_contact_id', 'unsignedBigInteger')];
+
+        $content = $this->generate(fields: $fields);
+
+        $this->assertStringNotContainsString('function yelllContact', $content);
+        $this->assertStringNotContainsString('YelllContact', $content);
+        $this->assertStringContainsString('// yelll_contact_id: ponteiro externo', $content);
+        $this->assertStringContainsString("belongsTo(Category::class, 'category_id')", $content, 'FK comum segue gerando.');
+
+        $ext = $this->field('yelll_contact_id', 'foreignId');
+        $this->assertStringNotContainsString('constrained', $ext->migrationLine());
+        $this->assertStringContainsString("unsignedBigInteger('yelll_contact_id')->index()", $ext->migrationLine());
+        $this->assertStringNotContainsString('factory', $ext->fakerExpression());
+    }
+
     #[Test]
     public function it_always_uses_has_audit_fields_trait(): void
     {

@@ -7,6 +7,77 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.46.5] - 2026-10-19
+
+Engepecas B2B laudo against 1.46.4.
+
+### Added - `ptah:menu-sync --prune` and `--dry-run`
+
+An item removed from `MenuRegistry.php` stayed in the sidebar forever; the only
+way out was `--fresh`, which deletes the whole table. `--prune` sets
+`is_active = 0` on every active link or group the registry no longer has, and
+lists them; nothing is deleted. `--prune --dry-run` only lists. Items created in
+the menu editor are not in the registry either, so `--prune` deactivates them
+too — read the dry run first.
+
+### Fixed - the sidebar kept the old menu until the cache expired
+
+`ptah:menu-sync` writes through the query builder, so no model event cleared
+`ptah_menu_tree`. Every sync now clears it; the `Menu` model clears it on
+saved/deleted/restored (tinker, a seeder); and `php artisan ptah:menu-cache-clear`
+covers a change made in raw SQL.
+
+### Fixed - a guest of a host's second guard landed on the panel login
+
+The auth module sent every guest to `ptah.auth.login`. On a host with a `portal`
+guard for customers, a customer was sent to the staff login. The redirect now
+follows the guard the route requires (`Ptah\Support\GuestRedirect`): the Ptah
+guard (`ptah.auth.guard`) still goes to the Ptah login; another guard goes to
+the new `ptah.auth.guest_redirect` (route name, URL or a map per guard) or, when
+null, to Laravel's fallback (the `login` route).
+
+### Fixed - `forge-tabs`, `forge-alert` and `forge-modal` ignored the dark tone
+
+Their borders, dark grounds and the modal subtitle were fixed `gray-*`/`slate-*`
+utilities, so a host tone never reached them. They now come from the neutral
+tokens (`.ptah-c-tabs_rail`, `.ptah-c-modal_rule`, `.ptah-c-modal_sub`,
+`.ptah-dark .ptah-alert*`). The modal subtitle was also `gray-400`, below AA in
+light mode; it is now `--ptah-text-muted`.
+
+### Changed - `--ptah-*-strong` follows the mode
+
+In dark mode `--ptah-{primary,success,danger,warn}-strong` now resolves to the
+matching `-lite`, so a host using `-strong` for text reads in both modes (it
+was dark-on-dark). Solid fills under white text use the new invariant
+`--ptah-primary-deep` (the bulk-action bar and the active quick-date button
+moved to it). **Check:** a host that painted a solid background with
+`-strong` under white text should switch to `--ptah-primary-deep`.
+docs/CustomScreens.md says which pair to use per mode.
+
+### Added - `ptah.forge.external_pointer_prefixes`
+
+A `*_id` holding an id from another system (`yelll_contact_id`) made
+`ptah:forge` generate a `belongsTo` to a model that will never exist (and
+`constrained()` for `foreignId`). Columns whose name starts with a configured
+prefix (e.g. `['yelll_']`) now get only a comment in the model, an indexed
+integer column and a plain faker value.
+
+### Fixed - `forge-select` broke on a label with invalid UTF-8
+
+`options: {{ json_encode($options) }}` became `options: ,` when json_encode
+failed, a syntax error that killed the whole select. Options and the initial
+value now go through `Js::from(..., JSON_INVALID_UTF8_SUBSTITUTE)`; the bad byte
+shows as U+FFFD. The rendered `selected:` changes from `"x"` to `'x'`, which is
+the same value in Alpine.
+
+### Fixed - saving the appearance with a misaligned preferences FK was a 500
+
+With `user_preferences.user_id` still pointing at `users` while the identity is
+another table, changing the theme on the profile died on the FK. It is now a
+warning toast pointing at `php artisan ptah:preferences:realign` (the fix
+`ptah:upgrade-check` already flags), and the theme still applies through its
+cookie. Other database errors are not swallowed.
+
 ## [1.46.4] - 2026-10-19
 
 ### Fixed - a column cast to an enum made the listing a 500

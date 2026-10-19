@@ -58,7 +58,7 @@
 @if ($arrayMode)
 {{-- ── Modo Array / Alpine ── --}}
 <div x-data="{ activeTab: '{{ $firstTab }}', tabIds: {{ \Illuminate\Support\Js::from(array_column($tabs, 'id')) }}, move(d){ const i = this.tabIds.indexOf(this.activeTab); this.activeTab = this.tabIds[(i + d + this.tabIds.length) % this.tabIds.length]; } }" {{ $attributes }}>
-    <div class="relative border-b border-gray-200 dark:border-slate-700 overflow-x-auto scrollbar-none">
+    <div class="relative border-b ptah-c-tabs_rail overflow-x-auto scrollbar-none">
         <div class="flex min-w-max" role="tablist">
             @foreach($tabs as $tab)
                 <button
@@ -102,7 +102,7 @@
 @else
 {{-- ── Modo Slot / Livewire ── --}}
 <div {{ $attributes }}>
-    <div class="relative border-b border-gray-200 dark:border-slate-700 overflow-x-auto scrollbar-none">
+    <div class="relative border-b ptah-c-tabs_rail overflow-x-auto scrollbar-none">
         <div class="flex min-w-max" role="tablist">
             {{ $tabs }}
         </div>
