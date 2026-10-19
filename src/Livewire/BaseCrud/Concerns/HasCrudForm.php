@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Ptah\Exceptions\CrudHookAbort;
 use Ptah\Support\PtahMask;
+use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
@@ -226,7 +227,7 @@ trait HasCrudForm
             if (($col['colsTipo'] ?? '') !== 'searchdropdown' || $value === null || $value === '') {
                 continue;
             }
-            if ($current && (string) $current->getAttribute($field) === (string) $value) {
+            if ($current && (string) Scalar::of($current->getAttribute($field)) === (string) $value) {
                 continue;
             }
             if (! $this->sdValueInScope($col, $value)) {

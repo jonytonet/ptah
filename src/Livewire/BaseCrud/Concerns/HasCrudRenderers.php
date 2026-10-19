@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Ptah\Support\SafeUrl;
+use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;
@@ -66,6 +67,10 @@ trait HasCrudRenderers
                 ? ($this->resolveNestedValue($row, $rel.'.'.$exibe) ?? $value)
                 : ($row->{$rel}?->{$exibe} ?? $value);
         }
+
+        // Coluna castada para enum: o valor plano (1.46.4) — todo `(string)`
+        // abaixo dava 500. (O colsMetodoCustom acima recebe o enum como e.)
+        $value = Scalar::of($value);
 
         // Um renderer que decide o próprio rótulo tem de receber o valor CRU.
         // O caso boolean já estava resolvido aqui: aplicar o mapa colsSelect
@@ -138,9 +143,9 @@ trait HasCrudRenderers
             $target = $rule['value'];
             $css = $rule['style'];
 
-            $rowValue = $row instanceof Model
+            $rowValue = Scalar::of($row instanceof Model
                 ? $row->getAttribute($field)
-                : ($row[$field] ?? null);
+                : ($row[$field] ?? null));
 
             // Field does not exist on the model — silently skip
             if ($rowValue === null && $row instanceof Model && ! array_key_exists($field, $row->getAttributes())) {

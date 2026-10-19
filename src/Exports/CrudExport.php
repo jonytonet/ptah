@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Ptah\Support\Scalar;
 
 class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
@@ -85,7 +86,7 @@ class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
         // Usar apenas as colunas visíveis
         foreach ($this->columns as $column) {
             $field = $column['field'] ?? '';
-            $value = data_get($row, $field);
+            $value = Scalar::of(data_get($row, $field));
             $mapped[] = $this->formatValue($value, $column['type'] ?? '');
         }
 

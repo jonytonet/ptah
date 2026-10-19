@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Carbon\Carbon;
 use Ptah\DTO\FilterDTO;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\Scalar;
 
 /**
  * Handles all filter-related functionality: sort, search, date filters,
@@ -324,7 +325,7 @@ trait HasCrudFilters
             return;
         }
 
-        $raw = $record->getAttribute($field);
+        $raw = Scalar::of($record->getAttribute($field));
         $type = (string) ($col['colsTipo'] ?? 'text');
 
         unset($this->filters[$field], $this->filterOperators[$field]);
