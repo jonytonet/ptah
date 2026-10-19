@@ -21,6 +21,16 @@ renderer), conditional row styles, the export, "filter by this value", a kanban
 move and the form's searchdropdown check. A `colsMetodoCustom` still receives
 the enum itself.
 
+### Fixed - `x-forge-card` cut every popover inside it
+
+The card always had `overflow-hidden`, so an absolute popover inside it — a
+forge-select's list — was cut at the card's edge (Engepecas B2B closing
+screen: the payment methods trapped inside the card). The card no longer clips;
+its background already follows the rounded corners, and the top `img` slot —
+the one thing that needs clipping — clips itself (`overflow-hidden
+rounded-t-md`). A browser test opens a select inside a card and checks its list
+past the card's edge.
+
 ### Fixed - `forge-checkbox` had a fixed light border
 
 It carried `border-gray-300`, light on a dark surface, plus the forms plugin's

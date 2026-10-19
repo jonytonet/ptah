@@ -27,10 +27,14 @@
     $ptahCardClass = 'ptah-card ptah-card-' . $type;
 @endphp
 
-<div {{ $attributes->merge(['class' => "rounded-md overflow-hidden {$ptahCardClass} {$typeClass} {$shadowClass} {$hoverClass}"]) }}>
+{{-- Sem `overflow-hidden` no card (1.46.4): ele cortava qualquer popover de
+     dentro — a lista de um forge-select presa no retangulo do card. O fundo ja
+     respeita o arredondamento sozinho; quem precisa de recorte e a imagem do
+     topo, recortada no proprio slot. --}}
+<div {{ $attributes->merge(['class' => "rounded-md {$ptahCardClass} {$typeClass} {$shadowClass} {$hoverClass}"]) }}>
 
     @if (isset($img))
-        <div class="w-full">{{ $img }}</div>
+        <div class="w-full overflow-hidden rounded-t-md">{{ $img }}</div>
     @endif
 
     @if (isset($header))
