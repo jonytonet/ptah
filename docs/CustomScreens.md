@@ -314,6 +314,24 @@ Livewire ou array Alpine). Todos seguem a mesma convenção de `@props`
 documentada no topo do respectivo arquivo `.blade.php` — leia-o antes de usar
 se ele não estiver detalhado aqui.
 
+### Uma tela de outra identidade (outro guard)
+
+Sem dizer nada, o "Sair" da sidebar e da navbar e o "Perfil" da navbar vão
+para o módulo auth do ptah — o painel. Numa tela de OUTRA identidade que reusa
+esses componentes (o portal do cliente, no guard `portal`), isso desloga o
+cliente e o leva ao login do painel. Diga para onde vão (desde a 1.46.2):
+
+```blade
+<x-forge-dashboard-layout :logout-action="route('portal.logout')"
+                          :profile-url="route('portal.profile')">
+    ...
+</x-forge-dashboard-layout>
+
+{{-- ou nos componentes avulsos --}}
+<x-forge-sidebar :items="$menuItems" :logout-action="route('portal.logout')" />
+<x-forge-navbar :logout-action="route('portal.logout')" :profile-url="route('portal.profile')" />
+```
+
 ---
 
 ## 4. Receita de página

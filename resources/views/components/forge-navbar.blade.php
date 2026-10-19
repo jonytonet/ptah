@@ -4,6 +4,8 @@
       - appName: string
       - logoUrl: string
       - sticky : boolean  (default: true)
+      - logoutAction: string|null  acao do "Sair" (default: logout do modulo auth do ptah)
+      - profileUrl  : string|null  link "Perfil" (default: perfil do modulo auth do ptah)
     Slots: brand, actions
     Requires Alpine.js — emits 'toggle-sidebar' event
     Dark mode: reacts to .ptah-dark class on ancestor (forge-dashboard-layout)
@@ -13,6 +15,10 @@
     'logoUrl' => null,
     'logoDarkUrl' => null,
     'sticky'  => true,
+    // Para uma tela de OUTRA identidade (outro guard) que reusa este
+    // componente: sem elas, "Sair" e "Perfil" iam para o painel (1.46.2).
+    'logoutAction' => null,
+    'profileUrl' => null,
 ])
 
 <nav {{ $attributes->merge([
@@ -371,12 +377,12 @@
                         class="ptah-user-dropdown absolute right-0 mt-2 w-48 rounded-md border py-1 z-50"
                     >
                         @php
-                            $profileHref = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile')
+                            $profileHref = $profileUrl ?? (config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile')
                                 ? route('ptah.profile')
-                                : (\Illuminate\Support\Facades\Route::has('profile.edit') ? route('profile.edit') : '#');
-                            $logoutAction = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
+                                : (\Illuminate\Support\Facades\Route::has('profile.edit') ? route('profile.edit') : '#'));
+                            $logoutAction = $logoutAction ?? (config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
                                 ? route('ptah.auth.logout')
-                                : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
+                                : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#'));
                         @endphp
                         <a href="{{ $profileHref }}"
                            class="flex items-center gap-2 px-4 py-2 text-sm transition-colors">
