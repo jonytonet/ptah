@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Ptah\Support\Scalar;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -216,7 +217,7 @@ trait HasCrudBoards
         }
 
         $field = (string) $this->crudConfig['kanbanConfig']['field'];
-        $from = (string) $record->getAttribute($field);
+        $from = (string) Scalar::of($record->getAttribute($field));
 
         // O destino vem do cliente: a regra de transicao vale aqui tambem.
         $fromIsOption = in_array($from, $this->kanbanOptions(), true);

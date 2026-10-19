@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Ptah\Support\Scalar;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -226,7 +227,7 @@ trait HasCrudForm
             if (($col['colsTipo'] ?? '') !== 'searchdropdown' || $value === null || $value === '') {
                 continue;
             }
-            if ($current && (string) $current->getAttribute($field) === (string) $value) {
+            if ($current && (string) Scalar::of($current->getAttribute($field)) === (string) $value) {
                 continue;
             }
             if (! $this->sdValueInScope($col, $value)) {

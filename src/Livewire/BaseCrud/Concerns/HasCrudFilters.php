@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Ptah\Support\Scalar;
 use Carbon\Carbon;
 use Ptah\DTO\FilterDTO;
 use Ptah\Services\Crud\FilterService;
@@ -324,7 +325,7 @@ trait HasCrudFilters
             return;
         }
 
-        $raw = $record->getAttribute($field);
+        $raw = Scalar::of($record->getAttribute($field));
         $type = (string) ($col['colsTipo'] ?? 'text');
 
         unset($this->filters[$field], $this->filterOperators[$field]);

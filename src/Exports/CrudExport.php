@@ -2,6 +2,7 @@
 
 namespace Ptah\Exports;
 
+use Ptah\Support\Scalar;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -85,7 +86,7 @@ class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
         // Usar apenas as colunas visíveis
         foreach ($this->columns as $column) {
             $field = $column['field'] ?? '';
-            $value = data_get($row, $field);
+            $value = Scalar::of(data_get($row, $field));
             $mapped[] = $this->formatValue($value, $column['type'] ?? '');
         }
 
