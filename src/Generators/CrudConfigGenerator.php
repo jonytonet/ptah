@@ -149,7 +149,7 @@ class CrudConfigGenerator extends AbstractGenerator
         ];
 
         // FK fields → relation
-        if (str_ends_with($field->name, '_id')) {
+        if (str_ends_with($field->name, '_id') && ! $field->isExternalPointer()) {
             $col['colsRelacao'] = '';
             $col['colsRelacaoExibe'] = '';
         }

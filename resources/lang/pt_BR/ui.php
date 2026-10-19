@@ -556,6 +556,7 @@ return [
 
     'profile_tab_appearance' => 'Aparência',
     'profile_appearance_updated' => 'Aparência atualizada.',
+    'profile_appearance_not_saved' => 'Aplicada só neste navegador: não foi possível salvar a preferência (user_preferences aponta para outra tabela de usuários). Rode php artisan ptah:preferences:realign.',
     'profile_appearance_light_label' => 'Tom claro',
     'profile_appearance_dark_label' => 'Tom escuro',
     'profile_appearance_accent_label' => 'Cor de destaque',

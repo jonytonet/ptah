@@ -152,6 +152,15 @@ Registered automatically when `ptah.modules.auth = true`:
 
 > Use `route_prefix` to mount all routes under a prefix. E.g.: `'route_prefix' => 'admin'` generates `/admin/login`, `/admin/dashboard`, etc.
 
+**Guest redirect with more than one guard (1.46.5).** A guest is sent to `ptah.auth.login` only when the route requires the Ptah guard (`ptah.auth.guard`). A route of another guard (`auth:portal`, say) goes to `ptah.auth.guest_redirect` — a route name or a URL, or a map per guard — and, when that is null, to Laravel's own fallback (the `login` route):
+
+```php
+'auth' => [
+    'guard' => 'web',
+    'guest_redirect' => ['portal' => 'portal.login'],
+],
+```
+
 ### Livewire Components
 
 Registered under the namespace `Ptah\Livewire\Auth`:

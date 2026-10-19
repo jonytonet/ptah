@@ -1371,12 +1371,30 @@ class ProductHooks implements CrudHooksInterface
 # Add new menu entries, preserving existing ones (idempotent)
 php artisan ptah:menu-sync
 
+# List the active items that are no longer in the registry (writes nothing)
+php artisan ptah:menu-sync --prune --dry-run
+
+# ...and deactivate them (is_active = 0 — never deleted)
+php artisan ptah:menu-sync --prune
+
 # Clear the menus table and recreate everything from the registry
 php artisan ptah:menu-sync --fresh
 ```
 
 **Options:**
-- `--fresh` — Truncates the `menus` table before syncing (**destructive** — current menu rows are removed and rebuilt from the registry).
+- `--prune` — After syncing, sets `is_active = 0` on every active item (link or group) that is not in the registry, and lists them. Nothing is deleted: set `is_active = 1` (or use the menu editor) to bring one back. **Note:** items created in the menu editor are not in the registry either, so `--prune` deactivates them too — run `--prune --dry-run` first and read the list.
+- `--dry-run` — With `--prune`, only lists what would be deactivated.
+- `--fresh` — Truncates the `menus` table before syncing (**destructive** — current menu rows are removed and rebuilt from the registry). Prefer `--prune`.
+
+Every run clears the sidebar cache (`ptah_menu_tree`), so the change shows on the next page load.
+
+## ptah:menu-cache-clear
+
+Clears the cached sidebar tree. Changes through the `Menu` model, the menu editor and `ptah:menu-sync` already clear it; run this after changing the `menus` table by hand (raw SQL, another application).
+
+```bash
+php artisan ptah:menu-cache-clear
+```
 
 **Requirements:**
 - The **menu** module must be enabled (`php artisan ptah:module menu`).

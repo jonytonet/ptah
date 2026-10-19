@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\Livewire;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Cookie;
 use Livewire\Livewire;
@@ -63,6 +64,32 @@ class ProfilePageAppearanceTest extends TestCase
         $this->actingAs($user);
 
         return $user;
+    }
+
+    /**
+     * 1.46.5 (Engepecas B2B): identidade numa tabela, FK de user_preferences
+     * ainda para `users` — o usuario nao existe la e o save era um 500 cru.
+     */
+    #[Test]
+    public function fk_de_preferencias_desalinhada_vira_toast_e_o_cookie_ainda_aplica(): void
+    {
+        // O erro do MySQL do laudo. Simulado: o SQLite dos testes roda numa
+        // transacao, onde PRAGMA foreign_keys nao tem efeito.
+        UserPreference::saving(function () {
+            $pdo = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`user_preferences`, CONSTRAINT `user_preferences_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))');
+            $pdo->errorInfo = ['23000', 1452, 'Cannot add or update a child row'];
+
+            throw new QueryException('mysql', 'insert into `user_preferences` ...', [], $pdo);
+        });
+        $this->actingAsUser();
+
+        Livewire::test(ProfilePage::class)
+            ->call('setLight', 'papel')
+            ->assertDispatched('ptah-toast', fn ($name, $params) => ($params['color'] ?? null) === 'warn'
+                && str_contains((string) ($params['title'] ?? ''), 'ptah:preferences:realign'))
+            ->assertNotDispatched('ptah-toast', fn ($name, $params) => ($params['color'] ?? null) === 'success');
+
+        $this->assertNotNull(Cookie::queued(AppearancePresets::COOKIE), 'O cookie da aparencia segue gravado.');
     }
 
     #[Test]

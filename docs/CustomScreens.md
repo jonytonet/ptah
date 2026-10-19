@@ -83,12 +83,15 @@ por usuário.
 | `--ptah-primary-ring` | Anel de foco (`box-shadow`) em campos/botões focados. |
 | `--ptah-primary-soft` / `-softer` | Fundo tintado suave: linha selecionada, item de dropdown selecionado, ícone do modal. |
 | `--ptah-primary-border` | Borda tintada de marca. |
-| `--ptah-primary-strong` | Marca escurecida — texto/ícone de marca com mais contraste. |
+| `--ptah-primary-strong` | **Tinta** de marca: texto/ícone/borda que precisa ler. Segue o modo — escurecida no claro, igual a `-lite` no escuro (1.46.5). |
+| `--ptah-primary-deep` | **Preenchimento** sob texto branco (barra sólida, botão ativo). Não vira no escuro. |
 | `--ptah-primary-lite` | Marca "clareada" para servir de tinta em fundo escuro (dark mode). |
 | `--ptah-primary-soft-d` | Variante translúcida de `-soft` para uso sobre fundo escuro. |
 | `--ptah-success-soft` / `-strong` / `-lite` | Mesma família, para o status de sucesso (chips, alertas). |
 | `--ptah-danger-soft` / `-strong` / `-lite` | Mesma família, para o status de perigo. |
 | `--ptah-warn-soft` / `-strong` / `-lite` | Mesma família, para o status de alerta. |
+
+**Qual par usar por modo.** Texto ou ícone de cor: `-strong`, nos dois modos — desde a 1.46.5 o bloco `.ptah-dark` aponta `-strong` para `-lite`, então não precisa de override escuro. Chip: `-strong` sobre `-soft`. Fundo sólido com texto branco: `--ptah-primary-deep` (nunca `-strong`, que fica claro no escuro). Antes da 1.46.5, `-strong` ficava escuro também no modo escuro.
 
 ### Densidade (eixo global de aparência)
 

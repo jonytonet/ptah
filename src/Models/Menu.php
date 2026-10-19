@@ -28,6 +28,19 @@ class Menu extends Model
 
     public $table = 'menus';
 
+    /**
+     * Any change through the model invalidates the sidebar tree (1.46.5):
+     * a change made outside MenuService (tinker, a seeder) kept showing the
+     * old menu until the cache expired. Raw SQL still needs
+     * `php artisan ptah:menu-cache-clear`.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::clearCache());
+        static::deleted(fn () => static::clearCache());
+        static::restored(fn () => static::clearCache());
+    }
+
     protected $fillable = [
         'parent_id',
         'text',

@@ -58,6 +58,13 @@ class ThemeChromeOrphanTokenGuardTest extends TestCase
 
         // ── (B) already covered — via a different mechanism than a plain
         //        light-scope var(--ptah-*) rule in this file ─────────────
+        '.ptah-alert' => 'Light ground is the brand tint utility on the component (bg-primary-light, '.
+            'bg-success-light...) — a brand color, not a neutral, so no light token rule. 1.46.5 only moved '.
+            'the dark side off `dark:bg-slate-800/60`.',
+        '.ptah-alert-dark' => 'Light ground/border are the brand `bg-dark` / `border-dark-dark` utilities on '.
+            'the component; 1.46.5 only moved the dark side off `dark:bg-slate-700 / dark:border-slate-600`.',
+        '.ptah-alert-dark .ptah-c-alert_ink' => 'Light ink is the brand `text-dark-light` utility on the '.
+            'component (on the bg-dark ground); 1.46.5 only moved the dark side off `dark:text-slate-300`.',
         '.ptah-c-dd_opt' => 'Light color is `inherit`, which resolves up to the `html { color: '.
             'var(--ptah-text-strong) }` root rule (ThemeSurfaceLightDarkParityTest) — already token-driven, '.
             'just not declared locally.',

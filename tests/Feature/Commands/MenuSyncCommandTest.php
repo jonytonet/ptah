@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Commands;
 
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Models\Menu;
 use Ptah\Tests\TestCase;
 
 /**
@@ -129,5 +131,68 @@ PHP);
             '--fresh must remove rows that are not in the registry',
         );
         $this->assertNotNull(DB::table('menus')->where('url', '/tasks')->first());
+    }
+
+    private function insertStale(string $text, ?string $url, string $type = 'menuLink'): int
+    {
+        return DB::table('menus')->insertGetId([
+            'parent_id' => null, 'text' => $text, 'url' => $url, 'type' => $type,
+            'target' => '_self', 'link_order' => 99, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    /** 1.46.5 (Engepecas): sem --prune, a unica saida para item orfao era o --fresh. */
+    #[Test]
+    public function prune_deactivates_what_left_the_registry_and_never_deletes(): void
+    {
+        $this->writeRegistry();
+        $this->artisan('ptah:menu-sync')->assertSuccessful();
+        $link = $this->insertStale('Old link', '/old');
+        $group = $this->insertStale('Old group', null, 'menuGroup');
+        $before = DB::table('menus')->count();
+
+        $this->artisan('ptah:menu-sync', ['--prune' => true])
+            ->expectsOutputToContain('Old link')
+            ->assertSuccessful();
+
+        $this->assertSame($before, DB::table('menus')->count(), '--prune nunca apaga linha.');
+        $this->assertSame(0, (int) DB::table('menus')->where('id', $link)->value('is_active'));
+        $this->assertSame(0, (int) DB::table('menus')->where('id', $group)->value('is_active'));
+        $this->assertSame(0, DB::table('menus')->whereIn('url', ['/tasks', '/products', '/categories'])->where('is_active', false)->count());
+        $this->assertSame(1, (int) DB::table('menus')->where('type', 'menuGroup')->where('text', 'Catalog')->value('is_active'));
+    }
+
+    #[Test]
+    public function prune_dry_run_lists_without_writing(): void
+    {
+        $this->writeRegistry();
+        $this->artisan('ptah:menu-sync')->assertSuccessful();
+        $link = $this->insertStale('Old link', '/old');
+
+        $this->artisan('ptah:menu-sync', ['--prune' => true, '--dry-run' => true])
+            ->expectsOutputToContain('Old link')
+            ->assertSuccessful();
+
+        $this->assertSame(1, (int) DB::table('menus')->where('id', $link)->value('is_active'));
+        $this->assertSame(0, DB::table('menus')->where('is_active', false)->count());
+    }
+
+    #[Test]
+    public function sync_and_model_changes_clear_the_sidebar_cache(): void
+    {
+        $this->writeRegistry();
+
+        Cache::put('ptah_menu_tree', ['stale'], 300);
+        $this->artisan('ptah:menu-sync')->assertSuccessful();
+        $this->assertFalse(Cache::has('ptah_menu_tree'), 'O sync grava sem eventos; tem de limpar o cache.');
+
+        Cache::put('ptah_menu_tree', ['stale'], 300);
+        Menu::query()->where('url', '/tasks')->first()->update(['text' => 'Tarefas']);
+        $this->assertFalse(Cache::has('ptah_menu_tree'), 'Mudanca pelo model invalida o cache.');
+
+        Cache::put('ptah_menu_tree', ['stale'], 300);
+        $this->artisan('ptah:menu-cache-clear')->assertSuccessful();
+        $this->assertFalse(Cache::has('ptah_menu_tree'));
     }
 }

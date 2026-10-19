@@ -35,6 +35,7 @@ use Ptah\Commands\InstallCommand;
 use Ptah\Commands\LastErrorCommand;
 use Ptah\Commands\MakeHooksCommand;
 use Ptah\Commands\MapCommand;
+use Ptah\Commands\MenuCacheClearCommand;
 use Ptah\Commands\MenuSyncCommand;
 use Ptah\Commands\Modules\ModuleCommand;
 use Ptah\Commands\Permission\AuditPruneCommand;
@@ -97,6 +98,7 @@ use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
 use Ptah\Services\SettingsService;
 use Ptah\Support\AI\ToolSchemaNormalizer;
+use Ptah\Support\GuestRedirect;
 use Ptah\Support\SchemaInspector;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
@@ -389,13 +391,11 @@ class PtahServiceProvider extends ServiceProvider
         }
 
         // Informs Laravel's Authenticate middleware where to redirect
-        // unauthenticated users when the Ptah auth module is active.
+        // unauthenticated users when the Ptah auth module is active — by the
+        // guard the route requires, so a host's second guard (a customer
+        // portal) is not sent to the panel login (1.46.5).
         if (config('ptah.modules.auth')) {
-            Authenticate::redirectUsing(function ($request) {
-                if (! $request->expectsJson()) {
-                    return route('ptah.auth.login');
-                }
-            });
+            Authenticate::redirectUsing(fn ($request) => GuestRedirect::for($request));
         }
     }
 
@@ -409,6 +409,7 @@ class PtahServiceProvider extends ServiceProvider
                 InstallCommand::class,
                 ScaffoldCommand::class,      // ptah:forge
                 MenuSyncCommand::class,      // ptah:menu-sync
+                MenuCacheClearCommand::class, // ptah:menu-cache-clear
                 ModuleCommand::class,        // ptah:module
                 ConfigCommand::class,        // ptah:config
                 ConfigDoctorCommand::class,     // ptah:config:doctor

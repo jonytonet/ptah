@@ -555,6 +555,7 @@ return [
 
     'profile_tab_appearance' => 'Appearance',
     'profile_appearance_updated' => 'Appearance updated.',
+    'profile_appearance_not_saved' => 'Applied on this browser only: the preference could not be saved (user_preferences points at another users table). Run php artisan ptah:preferences:realign.',
     'profile_appearance_light_label' => 'Light tone',
     'profile_appearance_dark_label' => 'Dark tone',
     'profile_appearance_accent_label' => 'Accent color',

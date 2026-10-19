@@ -147,14 +147,11 @@ class ColumnPermissionEditorTest extends TestCase
         // markup — it is the escaped `—` sequence PHP's json_encode
         // produces. Assert against that same escaped form instead of
         // reverting the encoding just to keep a literal string comparison.
-        $this->assertStringContainsString(
-            trim(json_encode(__('ptah::ui.cfg_col_permission_none')), '"'),
-            $html
-        );
-        $this->assertStringContainsString(
-            trim(json_encode('sales.view_cost — View cost (sales)'), '"'),
-            $html
-        );
+        // 1.46.5: options go through Js::from — JSON inside a JSON.parse('...')
+        // string literal, so every backslash of the escape is doubled.
+        $inJsParse = fn (string $s) => str_replace('\\', '\\\\', trim((string) json_encode($s, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), '"'));
+        $this->assertStringContainsString($inJsParse(__('ptah::ui.cfg_col_permission_none')), $html);
+        $this->assertStringContainsString($inJsParse('sales.view_cost — View cost (sales)'), $html);
     }
 
     #[Test]

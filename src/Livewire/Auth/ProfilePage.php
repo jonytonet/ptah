@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -401,10 +402,9 @@ class ProfilePage extends Component
         $theme['density'] = AppearancePresets::DEFAULT_DENSITY;
         $theme['fontsize'] = AppearancePresets::DEFAULT_FONTSIZE;
 
-        UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
-        AppearancePresets::queueCookie($theme);
-
-        $this->flash(trans('ptah::ui.profile_appearance_updated'));
+        if ($this->persistTheme($theme)) {
+            $this->flash(trans('ptah::ui.profile_appearance_updated'));
+        }
     }
 
     /**
@@ -431,13 +431,52 @@ class ProfilePage extends Component
         $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
         $theme[$axis] = $value;
 
-        UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
-        AppearancePresets::queueCookie($theme);
-
-        $this->flash(trans('ptah::ui.profile_appearance_updated'));
+        if ($this->persistTheme($theme)) {
+            $this->flash(trans('ptah::ui.profile_appearance_updated'));
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    /**
+     * Saves the appearance: the cookie first (it alone repaints the next page),
+     * then the preference row.
+     *
+     * 1.46.5 (Engepecas B2B): with `user_preferences.user_id` still pointing at
+     * `users` while the identity is another table, the row insert hit the FK
+     * and the whole screen was a 500. That host state is what
+     * `ptah:upgrade-check` flags and `ptah:preferences:realign` fixes; here it
+     * becomes a warning toast, and the theme still applies through the cookie.
+     *
+     * @param  array<string, string>  $theme
+     * @return bool false when only the cookie was saved
+     */
+    protected function persistTheme(array $theme): bool
+    {
+        AppearancePresets::queueCookie($theme);
+
+        try {
+            UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+        } catch (QueryException $e) {
+            if (! self::isForeignKeyViolation($e)) {
+                throw $e;
+            }
+            report($e);
+            $this->dispatch('ptah-toast', title: trans('ptah::ui.profile_appearance_not_saved'), color: 'warn');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** MySQL 1452/1216, PostgreSQL 23503, SQLite's message. */
+    private static function isForeignKeyViolation(QueryException $e): bool
+    {
+        return $e->getCode() === '23503'
+            || in_array($e->errorInfo[1] ?? null, [1216, 1452], true)
+            || str_contains(strtolower($e->getMessage()), 'foreign key constraint');
+    }
 
     /**
      * Success feedback goes out as a toast, not an inline alert.
