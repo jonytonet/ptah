@@ -2,6 +2,7 @@
 
 namespace Ptah\Commands\Config\Formatters;
 
+use Ptah\Support\StyleRule;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -23,12 +24,20 @@ class TableFormatter
             $this->output->writeln("\n<fg=cyan;options=bold>Configuration for: {$model}</>");
         }
 
+        // O formato ATUAL (cols, permissions.*, cacheStrategy, contitionStyles,
+        // joins), com o antigo de alternativa (formEditFields, btn*Visible,
+        // cacheEnabled, customRowStyles, leftJoins). So o antigo era lido, e o
+        // --list de qualquer tela mostrava zero colunas e botoes "Yes" (1.46.3).
+        $cols = (array) ($config['cols'] ?? $config['formEditFields'] ?? []);
+        $actions = array_values(array_filter($cols, fn ($c) => is_array($c) && ($c['colsTipo'] ?? '') === 'action'));
+        $fields = array_values(array_filter($cols, fn ($c) => is_array($c) && ($c['colsTipo'] ?? '') !== 'action'));
+
         $this->formatGeneral($config);
-        $this->formatColumns($config['formEditFields'] ?? []);
-        $this->formatActions($config['crudActions'] ?? []);
-        $this->formatFilters($config['formEditFields'] ?? []);
-        $this->formatStyles($config['customRowStyles'] ?? []);
-        $this->formatJoins($config['leftJoins'] ?? []);
+        $this->formatColumns($fields);
+        $this->formatActions($actions !== [] ? $actions : (array) ($config['crudActions'] ?? []));
+        $this->formatFilters($fields, (array) ($config['customFilters'] ?? []));
+        $this->formatStyles((array) ($config['contitionStyles'] ?? $config['conditionStyles'] ?? $config['customRowStyles'] ?? []));
+        $this->formatJoins((array) ($config['joins'] ?? $config['leftJoins'] ?? []));
         $this->formatPermissions($config);
     }
 
@@ -42,13 +51,19 @@ class TableFormatter
         $table = new Table($this->output);
         $table->setHeaders(['Setting', 'Value']);
 
+        $cache = (array) ($config['cacheStrategy'] ?? []);
+        $export = (array) ($config['exportConfig'] ?? []);
+        $cacheOn = $cache['enabled'] ?? $config['cacheEnabled'] ?? false;
+        $ttl = $cache['ttl'] ?? $config['cacheTtl'] ?? null;
+
         $settings = [
             'Display Name' => $config['displayName'] ?? 'N/A',
-            'Cache Enabled' => ($config['cacheEnabled'] ?? false) ? 'Yes' : 'No',
-            'Cache TTL' => ($config['cacheTtl'] ?? null) ? $config['cacheTtl'].'s' : 'N/A',
-            'Export Max Rows' => $config['exportMaxRows'] ?? 'N/A',
-            'Orientation' => $config['pdfOrientation'] ?? 'N/A',
-            'Paper Size' => $config['pdfPaperSize'] ?? 'N/A',
+            'Permission Identifier' => $config['permissions']['permissionIdentifier'] ?? $config['permissionIdentifier'] ?? '-',
+            'Cache Enabled' => $this->yes($cacheOn) ? 'Yes' : 'No',
+            'Cache TTL' => $ttl ? $ttl.'s' : 'N/A',
+            'Export Max Rows' => $export['maxRows'] ?? $config['exportMaxRows'] ?? 'N/A',
+            'Orientation' => $export['orientation'] ?? $config['pdfOrientation'] ?? 'N/A',
+            'Paper Size' => $export['paperSize'] ?? $config['pdfPaperSize'] ?? 'N/A',
         ];
 
         foreach ($settings as $name => $value) {
@@ -63,25 +78,24 @@ class TableFormatter
      */
     protected function formatColumns(array $fields): void
     {
-        $displayColumns = array_filter($fields, fn ($f) => ($f['colsVisivel'] ?? true));
-
-        if (empty($displayColumns)) {
+        if (empty($fields)) {
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== COLUMNS (".count($displayColumns).') ===</>');
+        $this->output->writeln("\n<fg=green;options=bold>=== COLUMNS (".count($fields).') ===</>');
 
         $table = new Table($this->output);
-        $table->setHeaders(['Field', 'Type', 'Label', 'Required', 'Sortable', 'Filterable', 'Renderer', 'Mask']);
+        $table->setHeaders(['Field', 'Type', 'Label', 'In list', 'Form', 'Required', 'Filterable', 'Renderer', 'Mask']);
 
-        foreach ($displayColumns as $field) {
+        foreach ($fields as $field) {
             $table->addRow([
                 $field['colsNomeFisico'] ?? '',
                 $field['colsTipo'] ?? 'text',
                 $field['colsNomeLogico'] ?? '',
-                ($field['colsRequerido'] ?? false) ? 'Yes' : 'No',
-                ($field['colsSortable'] ?? false) ? 'Yes' : 'No',
-                ($field['colsFilterable'] ?? false) ? 'Yes' : 'No',
+                $this->yes($field['colsVisibleList'] ?? $field['colsVisivel'] ?? true) ? 'Yes' : 'No',
+                $this->yes($field['colsGravar'] ?? false) ? 'Yes' : 'No',
+                $this->yes($field['colsRequired'] ?? $field['colsRequerido'] ?? false) ? 'Yes' : 'No',
+                $this->yes($field['colsIsFilterable'] ?? $field['colsFilterable'] ?? false) ? 'Yes' : 'No',
                 $field['colsRenderer'] ?? '-',
                 $field['colsMask'] ?? '-',
             ]);
@@ -121,26 +135,39 @@ class TableFormatter
     /**
      * Format filters
      */
-    protected function formatFilters(array $fields): void
+    protected function formatFilters(array $fields, array $customFilters = []): void
     {
-        $filterableFields = array_filter($fields, fn ($f) => ($f['colsFilterable'] ?? false));
+        $filterableFields = array_filter($fields, fn ($f) => $this->yes($f['colsIsFilterable'] ?? $f['colsFilterable'] ?? false));
 
-        if (empty($filterableFields)) {
+        if (empty($filterableFields) && empty($customFilters)) {
             return;
         }
 
-        $this->output->writeln("\n<fg=green;options=bold>=== FILTERS (".count($filterableFields).') ===</>');
+        $this->output->writeln("\n<fg=green;options=bold>=== FILTERS (".(count($filterableFields) + count($customFilters)).') ===</>');
 
         $table = new Table($this->output);
-        $table->setHeaders(['Field', 'Type', 'Label', 'Operator', 'Relation']);
+        $table->setHeaders(['Field', 'Type', 'Label', 'Kind', 'Relation']);
 
         foreach ($filterableFields as $field) {
             $table->addRow([
                 $field['colsNomeFisico'] ?? '',
-                $field['colsFilterType'] ?? 'text',
+                $field['colsFilterType'] ?? $field['colsTipo'] ?? 'text',
                 $field['colsNomeLogico'] ?? '',
-                $field['defaultOperator'] ?? '=',
-                $field['whereHas'] ?? '-',
+                'column',
+                $field['colsRelacao'] ?? $field['whereHas'] ?? '-',
+            ]);
+        }
+
+        foreach ($customFilters as $cf) {
+            if (! is_array($cf)) {
+                continue;
+            }
+            $table->addRow([
+                $cf['field'] ?? '',
+                $cf['colsFilterType'] ?? $cf['type'] ?? 'text',
+                $cf['label'] ?? '',
+                'custom',
+                $cf['whereHas'] ?? '-',
             ]);
         }
 
@@ -161,16 +188,19 @@ class TableFormatter
         $table = new Table($this->output);
         $table->setHeaders(['Field', 'Condition', 'Value', 'Style']);
 
-        foreach ($styles as $style) {
-            $stylePreview = substr($style['style'] ?? '', 0, 50);
-            if (strlen($style['style'] ?? '') > 50) {
+        foreach ($styles as $raw) {
+            // StyleRule le os dois formatos (field/condition/style e os aliases
+            // colsNomeFisico/colsOperator/colsCss).
+            $style = is_array($raw) ? (StyleRule::normalize($raw) ?? $raw) : [];
+            $stylePreview = substr((string) ($style['style'] ?? ''), 0, 50);
+            if (strlen((string) ($style['style'] ?? '')) > 50) {
                 $stylePreview .= '...';
             }
 
             $table->addRow([
                 $style['field'] ?? '',
                 $style['condition'] ?? '',
-                $style['value'] ?? '',
+                is_scalar($style['value'] ?? '') ? (string) ($style['value'] ?? '') : json_encode($style['value']),
                 $stylePreview,
             ]);
         }
@@ -217,31 +247,28 @@ class TableFormatter
         $table = new Table($this->output);
         $table->setHeaders(['Action', 'Gate', 'Button Visible']);
 
+        $p = (array) ($config['permissions'] ?? []);
+        $visible = fn (string $now, string $legacy): string => $this->yes($p[$now] ?? $config[$legacy] ?? true) ? 'Yes' : 'No';
         $permissions = [
-            'Create' => [
-                'gate' => $config['gateCreate'] ?? '-',
-                'visible' => ($config['btnNewVisible'] ?? true) ? 'Yes' : 'No',
-            ],
-            'Edit' => [
-                'gate' => $config['gateEdit'] ?? '-',
-                'visible' => ($config['btnEditVisible'] ?? true) ? 'Yes' : 'No',
-            ],
-            'Delete' => [
-                'gate' => $config['gateDelete'] ?? '-',
-                'visible' => ($config['btnDeleteVisible'] ?? true) ? 'Yes' : 'No',
-            ],
-            'View' => [
-                'gate' => $config['gateView'] ?? '-',
-                'visible' => ($config['btnViewVisible'] ?? true) ? 'Yes' : 'No',
-            ],
+            'Create' => ['gate' => $p['create'] ?? $config['gateCreate'] ?? '-', 'visible' => $visible('showCreateButton', 'btnNewVisible')],
+            'Edit' => ['gate' => $p['edit'] ?? $config['gateEdit'] ?? '-', 'visible' => $visible('showEditButton', 'btnEditVisible')],
+            'Delete' => ['gate' => $p['delete'] ?? $config['gateDelete'] ?? '-', 'visible' => $visible('showDeleteButton', 'btnDeleteVisible')],
+            'Export' => ['gate' => $p['export'] ?? '-', 'visible' => '-'],
+            'Restore' => ['gate' => $p['restore'] ?? '-', 'visible' => $visible('showTrashButton', 'btnTrashVisible')],
         ];
 
         foreach ($permissions as $action => $perm) {
-            $table->addRow([$action, $perm['gate'], $perm['visible']]);
+            $table->addRow([$action, $perm['gate'] ?: '-', $perm['visible']]);
         }
 
         $table->render();
 
         $this->output->writeln('');
+    }
+
+    /** The config's booleans come as true/'S'/1/'1'/'true'. */
+    private function yes(mixed $value): bool
+    {
+        return in_array($value, [true, 1, '1', 'S', 's', 'true', 'yes', 'Y'], true);
     }
 }

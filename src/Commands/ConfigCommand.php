@@ -725,7 +725,33 @@ class ConfigCommand extends Command
             return 1;
         }
 
+        if (! is_array($config)) {
+            $this->error('The file does not hold a configuration object.');
+
+            return 1;
+        }
+
         $route = (string) ($this->option('route') ?? '');
+
+        // Um arquivo do `ptah:config:export-all` vem num envelope
+        // {model, route, config}. Gravado como estava, a config ficava sem
+        // `cols` nem `permissions` no nivel certo, e o comando dizia "imported
+        // successfully" (1.46.3).
+        if (isset($config['config']) && is_array($config['config']) && (isset($config['model']) || array_key_exists('route', $config)) && ! isset($config['cols'])) {
+            if (isset($config['model']) && ModelKey::canonical((string) $config['model']) !== ModelKey::canonical($modelClass)) {
+                $this->error("This export is for {$config['model']}, not {$modelClass}. Use ptah:config:import-all, or the right model.");
+
+                return 1;
+            }
+            if ($route === '' && is_string($config['route'] ?? null)) {
+                $route = $config['route'];
+            }
+            $config = $config['config'];
+        }
+
+        if (! isset($config['cols'])) {
+            $this->warn('This configuration has no "cols": the screen will show no columns.');
+        }
         if (! $this->saveConfiguration($modelClass, $config, $route)) {
             return 1;
         }
