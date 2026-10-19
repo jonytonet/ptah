@@ -17,6 +17,10 @@
     'logoUrl' => null,
     'logoDarkUrl' => null,
     'items'   => null,
+    // A acao do "Sair" do rodape (1.46.2). Sem ela, o logout do modulo auth do
+    // ptah — errado numa tela de OUTRA identidade (o portal do cliente, outro
+    // guard): o cliente era deslogado e jogado no login do painel.
+    'logoutAction' => null,
 ])
 
 @php
@@ -460,9 +464,9 @@
 
     {{-- Logout --}}
     @php
-        $logoutAction = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
+        $logoutAction = $logoutAction ?? (config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
             ? route('ptah.auth.logout')
-            : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#');
+            : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#'));
     @endphp
     <div class="ptah-sidebar-footer p-2 border-t flex-shrink-0">
         <form method="POST" action="{{ $logoutAction }}" onsubmit="try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('ptah:draft:')===0)localStorage.removeItem(k)})}catch(e){}">

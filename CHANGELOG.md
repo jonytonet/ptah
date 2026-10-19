@@ -7,6 +7,24 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.46.2] - 2026-10-19
+
+### Fixed - the sidebar logged out through the wrong guard on a second identity's screen
+
+Reported from production (Engepecas: `web` for the panel, `portal` for
+customers, each with its own login and logout). The customer portal reuses
+`<x-forge-sidebar>`, whose "Sair" resolved its action internally to the ptah
+auth module's logout — the panel's. A customer clicking it was logged out and
+sent to `/admin/login`; the screen had two "Sair" buttons. Not a regression:
+1.45.0's `route_prefix` only made the destination visible.
+
+`forge-sidebar` and `forge-navbar` take `logoutAction`, and `forge-navbar`
+`profileUrl` (its "Perfil" had the same problem); `forge-dashboard-layout`
+passes both on. Without them nothing changes. CustomScreens.md: "Uma tela de
+outra identidade".
+
+---
+
 ## [1.46.1] - 2026-10-16
 
 From PetPlace: an automated sweep of its 88 screens (global search + the filter

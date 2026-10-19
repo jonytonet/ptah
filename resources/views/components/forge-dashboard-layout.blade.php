@@ -6,6 +6,8 @@
       - appName : string
       - logoUrl : string
       - title   : string
+      - logoutAction : string|null  "Sair" da sidebar e da navbar (outra identidade/guard)
+      - profileUrl   : string|null  "Perfil" da navbar (outra identidade/guard)
         Automatic behaviours:
             - Dark mode based on app preference (class based)
       - Sidebar collapse/expand persisted in localStorage
@@ -18,6 +20,10 @@
 @props([
     'appName' => config('app.name', 'Ptah'),
     'logoUrl' => null,
+    // Repassadas a sidebar e a navbar — uma tela de outra identidade (outro
+    // guard) diz para onde vao "Sair" e "Perfil" (1.46.2).
+    'logoutAction' => null,
+    'profileUrl' => null,
     'title'   => null,
     'theme'   => null,
 ])
@@ -325,7 +331,7 @@
     >
 
         {{-- Sidebar --}}
-        <x-forge-sidebar :app-name="$appName" :logo-url="$logoUrl" />
+        <x-forge-sidebar :app-name="$appName" :logo-url="$logoUrl" :logout-action="$logoutAction" />
 
         {{-- Main content — margem reage ao estado da sidebar --}}
         <div
@@ -334,7 +340,7 @@
         >
 
             {{-- Navbar --}}
-            <x-forge-navbar :app-name="$appName" :logo-url="$logoUrl" />
+            <x-forge-navbar :app-name="$appName" :logo-url="$logoUrl" :logout-action="$logoutAction" :profile-url="$profileUrl" />
 
             {{-- Page --}}
             <main class="pt-16 min-h-screen">
