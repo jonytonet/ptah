@@ -829,11 +829,15 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
    over the same canvas backdrop) — now that the resting state above tracks the canvas
    too, the hover tint must use the same mix ratio as the row or it reintroduces the
    seam on hover instead of at rest. */
-.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, transparent); }
+/* Mixed with the CANVAS, not `transparent` (1.46.3): same rendered colour as the
+   hovered row, but OPAQUE — at 30% over transparent the content scrolling under
+   the sticky column showed through it on hover (a badge behind the buttons). */
+.ptah-dark .ptah-c-tbody_div > *:hover .ptah-c-sticky_cell       { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, var(--ptah-canvas)); }
 .ptah-c-tr_selected .ptah-c-sticky_cell,
 .ptah-c-tr_selected:hover .ptah-c-sticky_cell                    { background-color: var(--ptah-primary-softer); }
+/* --ptah-primary-soft-d is 25% over transparent: opaque here, same colour (1.46.3). */
 .ptah-dark .ptah-c-tr_selected .ptah-c-sticky_cell,
-.ptah-dark .ptah-c-tr_selected:hover .ptah-c-sticky_cell         { background-color: var(--ptah-primary-soft-d); }
+.ptah-dark .ptah-c-tr_selected:hover .ptah-c-sticky_cell         { background-color: color-mix(in srgb, var(--ptah-primary) 25%, var(--ptah-canvas)); }
 
 /* Row action icons (edit / duplicate / restore / delete) — none had a dark: variant,
    so at least one always failed the 3:1 AA floor for icons depending on theme. Colors

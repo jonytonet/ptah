@@ -7,6 +7,38 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.46.3] - 2026-10-19
+
+### Fixed - `ptah:config --import` stored an `export-all` file's envelope as the config
+
+The files `ptah:config:export-all` writes (`database/ptah/crud-configs/`) are an
+envelope `{model, route, config}`, which only `import-all` unwrapped.
+`--import` stored the whole envelope as the config — no `cols`, no
+`permissions` where they belong — and said "imported successfully";
+`permission:sync` then skipped the screen as having no permissionIdentifier.
+`--import` now unwraps it (taking its `route` when `--route` is not given),
+refuses an export of another model, and warns when a config has no `cols`.
+
+### Fixed - on row hover, what scrolled under the action column showed through it (dark)
+
+The sticky action column's dark hover tint was `color-mix(surface-hover 30%,
+transparent)` — 70% transparent — so a cell scrolling under it (a status badge)
+showed behind the buttons. Same for a selected row (`--ptah-primary-soft-d`,
+25% over transparent). Both now mix with the canvas instead: the same rendered
+colour as the row, but opaque. A browser test pins it.
+
+### Fixed - `ptah:config --list` read only the old config keys
+
+`TableFormatter` read `formEditFields`, `btn*Visible`, `gate*`,
+`cacheEnabled`/`cacheTtl`, `customRowStyles`, `leftJoins` — so `--list` of any
+current screen showed zero columns, every button "Yes" and cache "No". It now
+reads `cols` (actions are the `action` columns), `permissions.*` (gates,
+`show*Button`, `permissionIdentifier`), `cacheStrategy`, `exportConfig`,
+`contitionStyles` and `joins`, with the old keys as a fallback; columns also
+show "In list" and "Form", and custom filters are listed.
+
+---
+
 ## [1.46.2] - 2026-10-19
 
 ### Fixed - the sidebar logged out through the wrong guard on a second identity's screen
