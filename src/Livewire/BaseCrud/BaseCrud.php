@@ -553,7 +553,7 @@ class BaseCrud extends Component
         return view('ptah::livewire.base-crud.base-crud', [
             'rows' => $rows,
             'visibleCols' => $this->getVisibleColumns(),
-            'formCols' => $this->getFormCols(),
+            'formCols' => $this->getFormViewCols(),
             'permissions' => $this->crudConfig['permissions'] ?? [],
             'effectivePerms' => $effectivePerms,
             'exportCfg' => $this->crudConfig['exportConfig'] ?? [],

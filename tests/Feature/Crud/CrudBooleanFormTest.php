@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Crud;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Tests\TestCase;
 
-// ── Stub model on the `items` table (boolean-cast `is_active` column) ────────
+// ── Stub model: a NULLABLE boolean `is_active` (1.48.0: a NOT NULL boolean is
+//    a switch now — see CrudFormFieldKindsTest; the select path is the nullable one)
 
 class BooleanFormStub extends Model
 {
-    protected $table = 'items';
+    protected $table = 'bool_form_stubs';
 
     protected $fillable = ['name', 'is_active'];
 
@@ -35,6 +38,13 @@ class CrudBooleanFormTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Schema::create('bool_form_stubs', function (Blueprint $t) {
+            $t->id();
+            $t->string('name');
+            $t->boolean('is_active')->nullable();
+            $t->timestamps();
+        });
 
         CrudConfig::create([
             'model' => BooleanFormStub::class,

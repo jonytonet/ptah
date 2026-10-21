@@ -229,6 +229,7 @@ return [
     'modal_edit_subtitle' => 'Change fields and save',
     'modal_create_subtitle' => 'Fill in the fields below',
     'select_placeholder' => 'Select...',
+    'password_keep' => 'Leave empty to keep the current one',
     'search_entity' => 'Search :label...',
     'no_results' => 'No results found.',
     'forge_select_filter_aria' => 'Filter options',
@@ -1177,6 +1178,7 @@ return [
     'cfg_col_default_value' => 'Default value on New',
     'cfg_tip_cols_default_value' => 'Pre-filled when the user clicks New. For a boolean: 1 or 0.',
     'cfg_col_cb_filterable' => 'Filterable',
+    'cfg_col_cb_readonly' => 'Read-only',
 
     // Columns tab — column-level permission (requires the "permissions" module)
     'cfg_col_permission_label' => 'Visibility permission',
@@ -1924,6 +1926,7 @@ return [
     'cfg_tip_cols_gravar' => "Includes this field in the create/edit form and writes it back to the database. Turn off for JOIN/computed columns — writing to another table's column will fail or corrupt data.",
     'cfg_tip_cols_required' => 'Marks the field as mandatory in the form. Enforced client-side and by FormValidatorService on submit.',
     'cfg_tip_cols_is_filterable' => 'Shows this column in the filter panel so users can search/filter by it.',
+    'cfg_tip_cols_readonly' => 'Shows the value in the form as text: nobody edits it and it is never saved.',
     'cfg_tip_cols_permission' => 'Restricts this column to users granted this page_object key. Starts CLOSED: after marking, only masters see the column until you grant it per role.',
     'cfg_tip_cols_form_block' => 'Groups this field under a section heading in the create/edit form. Fields sharing the same text appear together, in the order they were added.',
     'cfg_tip_cols_on_change' => 'Sandboxed expression re-evaluated whenever this field changes (variables: data, value; helpers: merge/now/upper/lower/slug/uuid). Must return an array to replace the form data — errors are logged, never break the form.',

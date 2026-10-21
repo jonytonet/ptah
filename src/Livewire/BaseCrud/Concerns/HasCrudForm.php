@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -100,6 +101,12 @@ trait HasCrudForm
             unset($this->formData[$denied]);
         }
 
+        // A password field opens EMPTY: the stored hash never goes to the
+        // browser, and empty on save means "keep it" (1.48.0).
+        foreach ($this->passwordFields() as $field) {
+            $this->formData[$field] = '';
+        }
+
         $this->formErrors = [];
         $this->sdSearches = [];
         $this->sdResults = [];
@@ -139,7 +146,7 @@ trait HasCrudForm
         $savable = array_column($this->getFormCols(), 'colsNomeFisico');
         $data = array_intersect_key($record->toArray(), array_flip($savable));
 
-        foreach ($this->guardedFormFields() as $forbidden) {
+        foreach ([...$this->guardedFormFields(), ...$this->passwordFields()] as $forbidden) {
             unset($data[$forbidden]);
         }
 
@@ -180,6 +187,18 @@ trait HasCrudForm
 
         // Rich validation via FormValidatorService (required, email, min, max, regex, CPF, etc.)
         $formCols = $this->getFormCols();
+
+        // 1.48.0: an untouched switch is off, not "empty"; and on an edit an
+        // empty password means "keep it", so it is not required there.
+        foreach ($formCols as $i => $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            if ($this->isBooleanToggle($col) && in_array($this->formData[$field] ?? null, [null, ''], true)) {
+                $this->formData[$field] = false;
+            }
+            if (($col['colsTipo'] ?? '') === 'password' && $this->editingId) {
+                $formCols[$i]['colsRequired'] = false;
+            }
+        }
 
         // Build a validation copy where pending file-uploads satisfy the required check
         $formDataForValidation = $this->formData;
@@ -251,6 +270,8 @@ trait HasCrudForm
         foreach ($this->guardedFormFields() as $forbidden) {
             unset($data[$forbidden]);
         }
+
+        $data = $this->hashPasswords($data);
 
         // Apply mask transforms before persisting (money→float, CPF→digits, etc.)
         $data = $this->applyMaskTransforms($data, $formCols);
@@ -903,12 +924,37 @@ trait HasCrudForm
      */
     protected function blanksToNull(array $data, Model $model): array
     {
+        $nullable = self::columnNullability($model);
+
+        foreach ($data as $field => $value) {
+            if ($value === '' && ($nullable[$field] ?? false)) {
+                $data[$field] = null;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Is this column of the screen's table nullable? Null when the schema
+     * cannot be read or has no such column.
+     */
+    protected function columnIsNullable(string $field): ?bool
+    {
+        $model = $this->resolveEloquentModel();
+
+        return $model ? (self::columnNullability($model)[$field] ?? null) : null;
+    }
+
+    /** @return array<string, bool> column => nullable; [] when unreadable */
+    private static function columnNullability(Model $model): array
+    {
         static $memo = [];
 
         $key = $model->getConnectionName().'|'.$model->getTable();
         if (! array_key_exists($key, $memo)) {
+            $memo[$key] = [];
             try {
-                $memo[$key] = [];
                 foreach ($model->getConnection()->getSchemaBuilder()->getColumns($model->getTable()) as $column) {
                     $memo[$key][(string) $column['name']] = (bool) $column['nullable'];
                 }
@@ -917,9 +963,35 @@ trait HasCrudForm
             }
         }
 
-        foreach ($data as $field => $value) {
-            if ($value === '' && ($memo[$key][$field] ?? false)) {
-                $data[$field] = null;
+        return $memo[$key];
+    }
+
+    /**
+     * `colsTipo: password` on save (1.48.0): empty → the field is left out
+     * (keep the current one); filled → hashed. Hash::make, unless the model
+     * casts the attribute `hashed` — then Laravel hashes it, and hashing here
+     * too would store a hash of a hash. Never stored as typed.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function hashPasswords(array $data): array
+    {
+        $fields = $this->passwordFields();
+        if ($fields === []) {
+            return $data;
+        }
+
+        $casts = $this->resolveEloquentModel()?->getCasts() ?? [];
+        foreach ($fields as $field) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+            $value = $data[$field];
+            if ($value === null || $value === '') {
+                unset($data[$field]);
+            } elseif (($casts[$field] ?? null) !== 'hashed') {
+                $data[$field] = Hash::make((string) $value);
             }
         }
 
@@ -954,8 +1026,46 @@ trait HasCrudForm
                 $this->crudConfig['cols'] ?? [],
                 fn ($c) => $this->ptahBool($c['colsGravar'] ?? false)
                        && $this->ptahBool($c['colsEditableForm'] ?? true)
+                       && ! $this->ptahBool($c['colsReadonly'] ?? false)
             )
         );
+    }
+
+    /**
+     * The columns the form SHOWS: the editable ones plus `colsReadonly`, in
+     * config order (1.48.0). A read-only column is displayed and never saved
+     * — `colsEditableForm: false` removes the field, which is not the same
+     * thing (Engepecas: what the buyer wrote, shown to whoever handles it).
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function getFormViewCols(): array
+    {
+        return array_values(array_filter(
+            $this->crudConfig['cols'] ?? [],
+            fn ($c) => $this->ptahBool($c['colsReadonly'] ?? false)
+                || ($this->ptahBool($c['colsGravar'] ?? false) && $this->ptahBool($c['colsEditableForm'] ?? true))
+        ));
+    }
+
+    /** Columns of `colsTipo: password` (1.48.0). @return list<string> */
+    protected function passwordFields(): array
+    {
+        return array_values(array_map(
+            fn ($c) => (string) $c['colsNomeFisico'],
+            array_filter($this->crudConfig['cols'] ?? [], fn ($c) => ($c['colsTipo'] ?? '') === 'password' && ! empty($c['colsNomeFisico']))
+        ));
+    }
+
+    /**
+     * A `boolean` column drawn as an on/off switch: only when the column is
+     * NOT NULL — a switch cannot say "not informed", so a nullable boolean
+     * keeps the Yes/No select (1.48.0).
+     */
+    protected function isBooleanToggle(array $col): bool
+    {
+        return ($col['colsTipo'] ?? '') === 'boolean'
+            && $this->columnIsNullable((string) ($col['colsNomeFisico'] ?? '')) === false;
     }
 
     protected function findColByField(string $field): ?array
@@ -990,6 +1100,16 @@ trait HasCrudForm
             $field = $col['colsNomeFisico'] ?? '';
             $rel = $col['colsRelacao'] ?? null;
             $exibe = $col['colsRelacaoExibe'] ?? null;
+
+            if (! ($rel && $exibe) && $this->sdSettings($col)['tipo'] === 'service') {
+                $label = $this->sdServiceLabel($col, $record->getAttribute($field));
+                if ($label !== null) {
+                    $mask = $col['colsSDMaskOne'] ?? 'defaultMask';
+                    $this->sdLabels[$field] = $mask !== 'defaultMask' ? SearchDropdownMask::format($label, $mask) : $label;
+                }
+
+                continue;
+            }
 
             if ($rel && $exibe && $record->{$rel}) {
                 $label = $record->{$rel}->{$exibe} ?? '';

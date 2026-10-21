@@ -463,6 +463,14 @@
                                             <span class="text-xs font-medium text-slate-600">{{
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
+                                        {{-- colsReadonly (1.48.0): mostrado no formulario, nunca gravado. --}}
+                                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                                            <input type="checkbox" wire:model="formDataField.colsReadonly"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_readonly') }}"
+                                                class="text-primary rounded" />
+                                            <span class="text-xs font-medium ptah-c-form_lbl">{{
+                                                __('ptah::ui.cfg_col_cb_readonly') }}</span>
+                                        </label>
                                     </div>
                                     <div class="col-span-2">
                                         <label class="cfg-label">{{ __('ptah::ui.cfg_col_default_value') }}</label>

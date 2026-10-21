@@ -267,7 +267,10 @@
                             // colsTipo 'boolean' não tem controle próprio: reusa o select inline
                             // (já normaliza bool PHP) com opções Sim/Não. colsSelect só é aproveitado
                             // se for array — o editor pode tê-lo deixado como string "label;value;;…".
-                            if ($fTipo === 'boolean') {
+                            // 1.48.0: coluna NOT NULL vira chave liga/desliga; anulavel
+                            // segue no select (a chave nao representa "nao informado").
+                            $fToggle = $this->isBooleanToggle($col);
+                            if ($fTipo === 'boolean' && ! $fToggle) {
                                 if (! is_array($col['colsSelect'] ?? null) || $col['colsSelect'] === []) {
                                     $col['colsSelect'] = [__('ptah::ui.bool_yes') => '1', __('ptah::ui.bool_no') => '0'];
                                 }
@@ -286,6 +289,15 @@
                             // colsPlaceholder: gravado pela CLI (placeholder=) e pelo wizard
                             // desde sempre, e ignorado ate a 1.41.3.
                             $fPlaceholder = trim((string) ($col['colsPlaceholder'] ?? ''));
+                            // password (1.48.0): ao editar, vazio = manter a atual.
+                            if ($fTipo === 'password' && $editingId) {
+                                $fRequired = false;
+                                if ($fPlaceholder === '') {
+                                    $fPlaceholder = __('ptah::ui.password_keep');
+                                }
+                            }
+                            // colsReadonly (1.48.0): mostrado, nunca gravado.
+                            $fReadonly = in_array($col['colsReadonly'] ?? false, [true, 'S', 1, '1'], true);
                             $tabIdx    = 0; // natural DOM order — a positive tabindex jumped fields ahead of the footer/close
 
             // A borda destes campos vem inteira de `.ptah-c-form_in` em
@@ -301,7 +313,37 @@
 
                         <div class="{{ $fTipo === 'searchdropdown' ? 'relative' : '' }}">
 
-                            @if ($fTipo === 'select' && !empty($col['colsSelect']))
+                            @if ($fReadonly)
+                                {{-- ── Somente leitura (1.48.0) ── --}}
+                                @php
+                                    $roRaw = is_bool($fValue) ? ($fValue ? '1' : '0') : $fValue;
+                                    $roOptions = is_array($col['colsSelect'] ?? null) ? array_map('strval', $col['colsSelect']) : [];
+                                    $roText = match (true) {
+                                        $fTipo === 'password' => '',
+                                        $fToggle => $roRaw === '' || $roRaw === null ? '' : ((bool) $roRaw ? __('ptah::ui.bool_yes') : __('ptah::ui.bool_no')),
+                                        $fTipo === 'searchdropdown' => (string) ($sdLabels[$fField] ?? $roRaw),
+                                        $roOptions !== [] => (string) (array_search((string) $roRaw, $roOptions, true) ?: $roRaw),
+                                        default => is_scalar($roRaw) ? (string) $roRaw : '',
+                                    };
+                                @endphp
+                                <div class="w-full">
+                                    <span class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">{{ $fLabel }}</span>
+                                    <div class="text-sm whitespace-pre-wrap break-words ptah-c-form_ro" data-ptah-readonly="{{ $fField }}">{{ $roText !== '' ? $roText : '—' }}</div>
+                                </div>
+
+                            @elseif ($fToggle)
+                                {{-- ── Chave liga/desliga (boolean NOT NULL, 1.48.0) ── --}}
+                                <div class="w-full">
+                                    <span class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
+                                    </span>
+                                    <x-forge-switch :checked="(bool) $fValue" wire:model.live="formData.{{ $fField }}" aria-label="{{ $fLabel }}" data-ptah-toggle="{{ $fField }}" />
+                                    @if ($fError)
+                                        <p id="ptah-form-err-{{ $fField }}" class="mt-1 text-xs ptah-c-field_err">{{ $fError }}</p>
+                                    @endif
+                                </div>
+
+                            @elseif ($fTipo === 'select' && !empty($col['colsSelect']))
                                 {{-- ── Select inline ── --}}
                                 @php
                                     $fOptions = collect($col['colsSelect'])
@@ -631,6 +673,7 @@
                                         'email'           => 'email',
                                         'url'             => 'url',
                                         'tel'             => 'tel',
+                                        'password'        => 'password',
                                         default           => 'text',
                                     };
                                     // Masked inputs must always be type=text
@@ -1082,6 +1125,7 @@
                                             :step="($fTipo === 'number' && !$fMask) ? 'any' : null"
                                             :tabindex="$tabIdx"
                                             :placeholder="$fPlaceholder"
+                                            :autocomplete="$fTipo === 'password' ? 'new-password' : null"
                                         />
                                     @endif
                                 @endif

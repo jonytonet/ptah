@@ -7,6 +7,47 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.48.0] - 2026-10-21
+
+Engepecas B2B laudo against 1.46.5, items 4 and 7 (the form).
+
+### Added - `colsTipo: password`
+
+There was none: the B2B needed a hook so the edit form would not carry the
+stored HASH into a text input and the Livewire payload. A `password` column:
+- opens empty when editing — the hash never reaches the browser (nor a copied
+  record, nor a draft);
+- empty on save means keep the current one, so it is not required on edit;
+- filled is hashed once: `Hash::make`, or Laravel's `hashed` cast when the
+  model declares it (never a hash of a hash);
+- shows `••••••` in the listing and is left out of the export.
+
+### Changed - `colsTipo: boolean` is an on/off switch on a NOT NULL column
+
+It was the same Yes/No select as `select`. A boolean column that is NOT NULL
+in the database is now a switch (`x-forge-switch`); an untouched switch saves
+off. A nullable boolean keeps the select, because a switch cannot say "not
+informed". **Visible change:** every existing screen with a NOT NULL boolean
+column shows the switch instead of the Yes/No select after the upgrade.
+
+### Added - `colsReadonly`
+
+`colsEditableForm: false` removes the field from the form; there was no way
+to SHOW a value without letting it be edited (B2B: what the buyer wrote,
+shown to whoever handles the request). `colsReadonly: true` renders the value
+as text in the form — select/boolean/searchdropdown values as their labels —
+and the column is never saved, even with a forged value. A checkbox in the
+visual editor sets it.
+
+### Fixed - service-mode searchdropdown opened empty when editing
+
+The label of a saved value came only from an Eloquent relation, which a
+service-mode dropdown (an ERP branch) does not have. ptah now asks the
+service: `Ptah\Contracts\SearchDropdownLabelSource::searchDropdownLabel($value)`
+when it implements it, otherwise its existing search method with the value
+as the term, keeping only an exact `value` match. No new method name in the
+config — nothing new is called from configuration.
+
 ## [1.47.0] - 2026-10-21
 
 Engepecas B2B laudo against 1.46.5. Theme: say so when ptah does not

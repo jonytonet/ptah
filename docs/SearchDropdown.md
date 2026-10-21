@@ -635,6 +635,28 @@ class ProductService
 
 > **Note:** Ptah resolves the service via `app($class)`, so dependency injection works.
 
+**Label when editing (1.48.0).** Model mode finds the label of the saved value
+through the relation; service mode has none, and the field used to open empty.
+Now ptah asks the service:
+
+- if it implements `Ptah\Contracts\SearchDropdownLabelSource`,
+  `searchDropdownLabel($value)` answers directly — the right choice when the
+  search method cannot find an item by its value;
+- otherwise the search method above is called with the saved value as the
+  term, and only an item whose `value` matches **exactly** is used.
+
+```php
+class BranchService implements \Ptah\Contracts\SearchDropdownLabelSource
+{
+    public function search(string $query): array { /* ... */ }
+
+    public function searchDropdownLabel(mixed $value): ?string
+    {
+        return $this->erp->branchName((string) $value);
+    }
+}
+```
+
 > **Editor shortcut:** the visual CrudConfig editor's "sd" tab lets you fill
 > `colsSDService` (e.g. `Product\ProductService`) and `colsSDServiceMethod`
 > (e.g. `searchActive`) as two separate fields instead of composing the
