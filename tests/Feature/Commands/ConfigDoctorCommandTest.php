@@ -793,4 +793,31 @@ class ConfigDoctorCommandTest extends TestCase
             ->doesntExpectOutputToContain('myHostKey')
             ->assertExitCode(0);
     }
+
+    /** 1.49.0: a service-mode class must implement SearchDropdownSource. */
+    #[Test]
+    public function a_service_mode_class_without_the_source_contract_is_an_error(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', ['cols' => [[
+            'colsNomeFisico' => 'name', 'colsNomeLogico' => 'Name', 'colsTipo' => 'searchdropdown',
+            'colsSDTipo' => 'service', 'colsSDModel' => DoctorStub::class.'\search',
+        ]]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('service without SearchDropdownSource')
+            ->assertExitCode(1);
+    }
+
+    /** 1.49.0: a bulk action handler must implement BulkActionHandler. */
+    #[Test]
+    public function a_bulk_action_without_the_handler_contract_is_an_error(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig() + ['bulkActions' => [
+            ['label' => 'Approve', 'action' => 'approve', 'method' => DoctorStub::class.'@save'],
+        ]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('bulk action without BulkActionHandler')
+            ->assertExitCode(1);
+    }
 }

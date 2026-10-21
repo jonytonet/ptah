@@ -7,6 +7,43 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.49.0] - 2026-10-21
+
+### Security - upgrade every host: configuration no longer names what PHP runs
+
+Two config-driven paths called `app($class)->{$method}(...)` for ANY class
+and ANY public method, both named in the screen config — so whoever could
+edit a config (the visual editor, `ptah:config`, an import) chose what code
+ran:
+
+- **service-mode searchdropdown** (`colsSDTipo: service`, `colsSDModel:
+  "Class\method"`), with the term the user typed as the argument — e.g. a
+  filesystem method fed a path typed in the search box;
+- **bulk actions** (`bulkActions[].method: "Class@method"`), with the
+  selected ids.
+
+Found while adding the service-mode label in 1.48.0. Hooks were already
+limited to allowed namespaces and `colsMetodoCustom` to `App\Services`;
+these two had no guard.
+
+Both now call ONE method of a class that opted in through a contract, and the
+method part of the config is only a **key** handed to it, never invoked:
+
+- `Ptah\Contracts\SearchDropdownSource::searchDropdown(string $query, string $key)`
+- `Ptah\Contracts\BulkActionHandler::handleBulkAction(array $ids, string $model, string $key)`
+
+A class without the contract is not called: the dropdown returns nothing,
+the bulk action does not run, a warning is logged, and `ptah:config:doctor`
+reports an **error** for each. The service-mode label resolution (1.48.0)
+goes through the same contract.
+
+**Breaking — action needed** where a screen uses service-mode searchdropdown
+or `bulkActions[].method`: add the interface and a method that calls your
+existing one, e.g. `return $this->searchActive($query);`. The config does not
+change. Run `php artisan ptah:config:doctor` after upgrading to find them.
+The standalone `<livewire:search-dropdown>` is unaffected: its service is set
+in Blade (code), and its properties are `#[Locked]`.
+
 ## [1.48.0] - 2026-10-21
 
 Engepecas B2B laudo against 1.46.5, items 4 and 7 (the form).

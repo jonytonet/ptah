@@ -12,8 +12,9 @@ namespace Ptah\Contracts;
  * saved. Model mode finds it through the relation; service mode has no
  * relation — the value points outside (an ERP branch) — and opened EMPTY,
  * so saving without noticing looked like clearing the field. A service that
- * implements this answers directly; one that does not is asked through its
- * search method with the value as the term (exact `value` match only).
+ * implements this answers directly; one that does not is asked through
+ * SearchDropdownSource::searchDropdown() with the value as the term (exact
+ * `value` match only).
  */
 interface SearchDropdownLabelSource
 {

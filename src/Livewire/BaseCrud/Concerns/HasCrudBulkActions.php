@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Ptah\Contracts\BulkActionHandler;
 
 /**
  * Handles bulk selection, bulk delete and custom bulk actions.
@@ -241,11 +242,15 @@ trait HasCrudBulkActions
         $methodStr = $config['method'] ?? null;
 
         if ($methodStr && str_contains($methodStr, '@')) {
-            [$class, $method] = explode('@', $methodStr, 2);
+            [$class, $key] = explode('@', $methodStr, 2);
 
             try {
-                if (class_exists($class) && method_exists($class, $method)) {
-                    app($class)->{$method}($scopedIds, $this->model);
+                // 1.49.0: only a class that opted in, and the part after `@` is a
+                // KEY passed to it — never a name ptah calls. See BulkActionHandler.
+                if (is_a($class, BulkActionHandler::class, true)) {
+                    app($class)->handleBulkAction($scopedIds, $this->model, $key);
+                } else {
+                    Log::warning('Ptah bulk action: handler does not implement '.BulkActionHandler::class.' — not called (1.49.0).', ['action' => $action, 'class' => $class]);
                 }
             } catch (\Throwable $e) {
                 Log::error('Ptah bulk action failed', ['action' => $action, 'error' => $e->getMessage()]);

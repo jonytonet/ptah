@@ -1157,12 +1157,34 @@ In the table view, use the computed `visibleCols` passed by `render()`:
   {
     "label": "Approve Selected",
     "action": "approve",
-    "method": "App\\Services\\ProductService@bulkApprove"
+    "method": "App\\Services\\ProductBulk@approve"
   }
 ]
 ```
 
-The `bulkApprove` method will receive `(array $ids, string $model)`.
+**The class must implement `Ptah\Contracts\BulkActionHandler` (1.49.0).** The
+part after `@` is a **key** handed to it, never a method ptah calls — before
+1.49.0 any class and any public method named there ran. A class without the
+interface is not called (a warning is logged) and `ptah:config:doctor`
+reports it as an error.
+
+```php
+use Ptah\Contracts\BulkActionHandler;
+
+class ProductBulk implements BulkActionHandler
+{
+    public function handleBulkAction(array $ids, string $model, string $key): void
+    {
+        match ($key) {
+            'approve' => Product::whereIn('id', $ids)->update(['status' => 'approved']),
+            default   => null,
+        };
+    }
+}
+```
+
+`$ids` are already re-scoped to the screen (company / master-detail lock).
+The `crud-bulk-action` browser event is dispatched as before.
 
 ### Template
 

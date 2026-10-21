@@ -11,14 +11,15 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Contracts\SearchDropdownLabelSource;
+use Ptah\Contracts\SearchDropdownSource;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Tests\TestCase;
 
-class SdBranchSearchOnly
+class SdBranchSearchOnly implements SearchDropdownSource
 {
     /** @return list<array{value: string, label: string}> */
-    public function search(string $term): array
+    public function searchDropdown(string $term, string $key): array
     {
         return array_values(array_filter(
             [['value' => '7', 'label' => 'Filial Centro'], ['value' => '77', 'label' => 'Filial Norte']],
