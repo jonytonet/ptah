@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Support;
 
 use Illuminate\Support\Facades\Schema;
+use InvalidArgumentException;
 
 /**
  * Responsible for inspecting entity fields.
@@ -205,7 +206,9 @@ class SchemaInspector
             str_contains($raw, 'bigint unsigned')
                 || ($typeName === 'bigint' && str_contains($raw, 'unsigned')) => 'unsignedBigInteger',
             $typeName === 'bigint' => 'bigInteger',
-            str_contains($typeName, 'int') => 'integer',
+            // tinyint/smallint/mediumint/int, signed or not — all used to
+            // become `integer` (1.47.0).
+            str_contains($typeName, 'int') => self::dbIntegerType($typeName, str_contains($raw, 'unsigned')),
             str_contains($typeName, 'decimal') => 'decimal',
             in_array($typeName, ['float', 'double', 'real'], true) => 'float',
             in_array($typeName, ['bool', 'boolean'], true) => 'boolean',
@@ -252,12 +255,34 @@ class SchemaInspector
         );
     }
 
+    private static function dbIntegerType(string $typeName, bool $unsigned): string
+    {
+        $base = match (true) {
+            str_starts_with($typeName, 'tiny') => 'TinyInteger',
+            str_starts_with($typeName, 'small') => 'SmallInteger',
+            str_starts_with($typeName, 'medium') => 'MediumInteger',
+            default => 'Integer',
+        };
+
+        return $unsigned ? 'unsigned'.$base : lcfirst($base);
+    }
+
     /**
      * Normaliza aliases de tipo (int → integer, bool → boolean, etc.).
+     *
+     * An unknown type is REFUSED (1.47.0): it used to pass through and fall to
+     * `string` in the migration, the cast and the DTO without a word —
+     * `unsignedSmallInteger` reached a host that way. The canonical names are
+     * matched case-insensitively.
      */
     private function normalizeType(string $type): string
     {
-        return match (strtolower($type)) {
+        $canonical = [];
+        foreach (FieldDefinition::TYPES as $known) {
+            $canonical[strtolower($known)] = $known;
+        }
+
+        $alias = match (strtolower($type)) {
             'int' => 'integer',
             'bigint' => 'bigInteger',
             'uint', 'uint4' => 'unsignedInteger',
@@ -267,8 +292,14 @@ class SchemaInspector
             'datetime' => 'datetime',
             'timestamp' => 'timestamp',
             'longtext' => 'longText',
+            'jsonb' => 'json',
             'foreign' => 'foreignId',
-            default => $type,
+            default => null,
         };
+
+        return $alias ?? $canonical[strtolower($type)] ?? throw new InvalidArgumentException(
+            "Unknown field type \"{$type}\". Valid: ".implode(', ', FieldDefinition::TYPES).
+            ' (aliases: int, bigint, uint, ubigint, bool, foreign, jsonb).'
+        );
     }
 }

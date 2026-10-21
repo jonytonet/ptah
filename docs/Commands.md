@@ -164,11 +164,17 @@ php artisan ptah:forge Product --force
 > commas outside parentheses.
 
 **Available types:**
-- ``string``, ``text``, ``integer``, ``bigInteger``, ``unsignedBigInteger``
+- ``string(60)``, ``char(2)``, ``text``, ``longText``
+- ``integer``, ``bigInteger``, ``mediumInteger``, ``smallInteger``, ``tinyInteger``
+- ``unsignedInteger``, ``unsignedBigInteger``, ``unsignedMediumInteger``, ``unsignedSmallInteger``, ``unsignedTinyInteger``, ``foreignId``
 - ``decimal(10,2)``, ``float``, ``double``
 - ``boolean``, ``date``, ``datetime``, ``timestamp``
 - ``enum(value1|value2|value3)``
-- ``json``, ``jsonb``
+- ``json`` (alias ``jsonb``)
+
+Case does not matter. **An unknown type is refused** (1.47.0) — the command
+stops and lists the valid ones. It used to become a ``string`` column, a
+``string`` cast and a ``string`` DTO property without a word.
 
 **Modifiers:**
 - ``nullable`` — Allows NULL

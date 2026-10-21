@@ -16,6 +16,7 @@ use Ptah\Models\Role;
 use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
+use Ptah\Support\ColumnKeys;
 use Ptah\Support\FilterRule;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SearchDropdownMask;
@@ -35,6 +36,8 @@ use Throwable;
  *   - unresolved model → the key maps to no Eloquent class.
  *   - malformed config → fails ConfigSchemaValidator.
  *   - empty screen     → no columns (the listing would render blank).
+ *   - unknown key      → a `cols*` key ptah does not read, or a colsHelper
+ *                        that is not a formatting helper (1.47.0).
  *   - legacy RBAC key  → permissions.identifier is set but permissions.permissionIdentifier
  *                        (the key the runtime actually reads) is empty — the screen is
  *                        silently ungated. `--fix` migrates the value.
@@ -188,6 +191,30 @@ class ConfigDoctorCommand extends Command
             if (empty($config['cols'] ?? [])) {
                 $this->line("🟡 <fg=yellow>no columns</> [{$label}]: the listing would render empty");
                 $warnings++;
+            }
+
+            // 4b. Column keys nothing reads (1.47.0). A `cols*` key outside
+            //     ColumnKeys::KNOWN is ignored by the runtime without a word —
+            //     a typo, or a key the docs once promised. Keys without the
+            //     `cols` prefix are left alone: a host may keep its own and
+            //     read them in a hook.
+            foreach ((array) ($config['cols'] ?? []) as $col) {
+                if (! is_array($col)) {
+                    continue;
+                }
+                $field = (string) ($col['colsNomeFisico'] ?? '?');
+                foreach (array_keys($col) as $key) {
+                    if (is_string($key) && str_starts_with($key, 'cols') && ! ColumnKeys::isKnown($key)) {
+                        $hint = ColumnKeys::closest($key);
+                        $this->line("🟡 <fg=yellow>unknown column key</> [{$label}] {$field}.{$key}: not read by ptah".($hint ? " — did you mean {$hint}?" : ''));
+                        $warnings++;
+                    }
+                }
+                $helper = $col['colsHelper'] ?? null;
+                if (is_string($helper) && $helper !== '' && ! in_array($helper, ColumnKeys::HELPERS, true)) {
+                    $this->line("🟡 <fg=yellow>unknown colsHelper</> [{$label}] {$field}: '{$helper}' is not a formatting helper (".implode(', ', ColumnKeys::HELPERS).') — help text below the field is colsHelpText');
+                    $warnings++;
+                }
             }
 
             // 5. Legacy RBAC key — written to 'identifier', but the runtime reads

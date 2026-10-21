@@ -1801,6 +1801,14 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
     border-color: var(--color-danger);
 }
 
+/* Open state of the form's inline select (1.47.0). Was `border-primary
+   ring-2 ring-primary/15` and, on error, `ring-red-200 dark:ring-red-300` on
+   the element: the ring was a fixed palette, and the border never showed —
+   .ptah-c-form_sel's own border-color is unlayered and won. After the
+   [aria-invalid] rules on purpose: open beats resting, in both states. */
+.ptah-c-form_sel.ptah-c-form_sel_open     { border-color: var(--ptah-primary); box-shadow: 0 0 0 2px var(--ptah-primary-ring); }
+.ptah-c-form_sel.ptah-c-form_sel_open_err { border-color: var(--color-danger, #ef4444); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-danger, #ef4444) 20%, transparent); }
+
 /* ── Field error message text ──────────────────────────────────────────────
    Replaces the raw `text-red-500` utility (3.76:1 against white — below the
    4.5:1 text floor). Dark uses --ptah-danger-lite, not --ptah-danger-strong:

@@ -777,4 +777,20 @@ class ConfigDoctorCommandTest extends TestCase
             ->doesntExpectOutputToContain('SECURITY ALERT')
             ->assertExitCode(0);
     }
+
+    /** 1.47.0 (Engepecas): `colsHelper` written for help text, a typo in a key — silently ignored. */
+    #[Test]
+    public function an_unknown_column_key_and_a_misused_cols_helper_are_warned(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', ['cols' => [[
+            'colsNomeFisico' => 'name', 'colsNomeLogico' => 'Name', 'colsTipo' => 'text',
+            'colsHelpTxt' => 'x', 'colsHelper' => 'Digite o nome completo', 'myHostKey' => 1,
+        ]]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain('name.colsHelpTxt: not read by ptah — did you mean colsHelpText?')
+            ->expectsOutputToContain('unknown colsHelper')
+            ->doesntExpectOutputToContain('myHostKey')
+            ->assertExitCode(0);
+    }
 }

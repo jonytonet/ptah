@@ -1741,7 +1741,7 @@ Exported columns are **automatically** the same as those visible in the table. T
 {
   "colsNomeFisico": "internal_notes",
   "colsNomeLogico": "Internal Notes",
-  "colsVisible": false
+  "colsVisibleList": false
 }
 ```
 

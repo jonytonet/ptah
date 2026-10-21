@@ -43,12 +43,39 @@ readonly class FieldDefinition
     ) {}
 
     /**
+     * Every integer column type (1.47.0). Was copied as a literal in five
+     * places, each missing a different subset — `unsignedSmallInteger` was in
+     * none, so it fell to `string` in the migration, the cast and the DTO.
+     *
+     * @var list<string>
+     */
+    public const INTEGER_TYPES = [
+        'integer', 'bigInteger', 'mediumInteger', 'smallInteger', 'tinyInteger',
+        'unsignedInteger', 'unsignedBigInteger', 'unsignedMediumInteger', 'unsignedSmallInteger', 'unsignedTinyInteger',
+        'foreignId',
+    ];
+
+    /**
+     * Every type `--fields` accepts — exactly the ones migrationLine() knows.
+     * Anything else is refused by SchemaInspector instead of becoming a
+     * silent `string` column (1.47.0).
+     *
+     * @var list<string>
+     */
+    public const TYPES = [
+        ...self::INTEGER_TYPES,
+        'string', 'char', 'text', 'longText',
+        'decimal', 'float', 'double', 'boolean',
+        'date', 'datetime', 'timestamp', 'json', 'enum',
+    ];
+
+    /**
      * Type for Eloquent's $casts.
      */
     public function castType(): string
     {
         return match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'integer',
+            in_array($this->type, self::INTEGER_TYPES, true) => 'integer',
             $this->type === 'decimal' => "decimal:{$this->scale}",
             in_array($this->type, ['float', 'double']) => 'float',
             $this->type === 'boolean' => 'boolean',
@@ -169,6 +196,10 @@ readonly class FieldDefinition
             'unsignedInteger' => "\$table->unsignedInteger('{$this->name}')",
             'tinyInteger' => "\$table->tinyInteger('{$this->name}')",
             'smallInteger' => "\$table->smallInteger('{$this->name}')",
+            'mediumInteger' => "\$table->mediumInteger('{$this->name}')",
+            'unsignedTinyInteger' => "\$table->unsignedTinyInteger('{$this->name}')",
+            'unsignedSmallInteger' => "\$table->unsignedSmallInteger('{$this->name}')",
+            'unsignedMediumInteger' => "\$table->unsignedMediumInteger('{$this->name}')",
             'decimal' => "\$table->decimal('{$this->name}', {$this->precision}, {$this->scale})",
             'float' => "\$table->float('{$this->name}')",
             'double' => "\$table->double('{$this->name}')",
@@ -265,8 +296,8 @@ readonly class FieldDefinition
         $expr = match (true) {
             $this->type === 'enum' && $this->enumValues !== [] => "fake()->randomElement(['".implode("', '", $this->enumValues)."'])",
             $this->type === 'boolean' => 'fake()->boolean()',
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'smallInteger'], true) => "fake()->{$unique}numberBetween(1, 1000)",
-            $this->type === 'tinyInteger' => 'fake()->numberBetween(0, 100)',
+            in_array($this->type, ['tinyInteger', 'unsignedTinyInteger'], true) => 'fake()->numberBetween(0, 100)',
+            in_array($this->type, self::INTEGER_TYPES, true) => "fake()->{$unique}numberBetween(1, 1000)",
             in_array($this->type, ['decimal', 'float', 'double'], true) => 'fake()->randomFloat('.($this->type === 'decimal' ? $this->scale : 2).', 1, '.($this->type === 'decimal' ? min(99999, 10 ** max(1, $this->precision - $this->scale) - 1) : 1000).')',
             $this->type === 'date' => "fake()->date('Y-m-d')",
             in_array($this->type, ['datetime', 'timestamp'], true) => 'fake()->dateTime()',
@@ -297,7 +328,7 @@ readonly class FieldDefinition
     public function phpType(): string
     {
         $base = match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'int',
+            in_array($this->type, self::INTEGER_TYPES, true) => 'int',
             in_array($this->type, ['decimal', 'float', 'double']) => 'float',
             $this->type === 'boolean' => 'bool',
             in_array($this->type, ['date', 'datetime', 'timestamp']) => '\Carbon\Carbon',
@@ -328,7 +359,7 @@ readonly class FieldDefinition
         $rules[] = $this->nullable ? 'nullable' : 'required';
 
         $rules[] = match (true) {
-            in_array($this->type, ['integer', 'bigInteger', 'unsignedBigInteger', 'unsignedInteger', 'tinyInteger', 'smallInteger']) => 'integer',
+            in_array($this->type, self::INTEGER_TYPES, true) => 'integer',
             in_array($this->type, ['decimal', 'float', 'double']) => 'numeric',
             $this->type === 'boolean' => 'boolean',
             in_array($this->type, ['date', 'datetime', 'timestamp']) => 'date',
