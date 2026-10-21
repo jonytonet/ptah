@@ -124,7 +124,9 @@ PHP);
             'updated_at' => now(),
         ]);
 
-        $this->artisan('ptah:menu-sync', ['--fresh' => true])->assertSuccessful();
+        $this->artisan('ptah:menu-sync', ['--fresh' => true])
+            ->expectsConfirmation('--fresh DELETES every menu item, including the ones created in the menu editor. Prefer --prune. Continue?', 'yes')
+            ->assertSuccessful();
 
         $this->assertNull(
             DB::table('menus')->where('url', '/stale')->first(),
@@ -194,5 +196,22 @@ PHP);
         Cache::put('ptah_menu_tree', ['stale'], 300);
         $this->artisan('ptah:menu-cache-clear')->assertSuccessful();
         $this->assertFalse(Cache::has('ptah_menu_tree'));
+    }
+
+    /** 1.50.0: --fresh deleted the whole table without asking. */
+    #[Test]
+    public function fresh_asks_first_and_a_no_deletes_nothing(): void
+    {
+        $this->writeRegistry();
+        $id = $this->insertStale('Editor item', '/editor');
+
+        $this->artisan('ptah:menu-sync', ['--fresh' => true])
+            ->expectsConfirmation('--fresh DELETES every menu item, including the ones created in the menu editor. Prefer --prune. Continue?', 'no')
+            ->assertFailed();
+
+        $this->assertNotNull(DB::table('menus')->find($id));
+        $this->artisan('ptah:menu-sync', ['--fresh' => true, '--force' => true])->assertSuccessful();
+        // By url, not id: SQLite reuses the highest rowid after a delete.
+        $this->assertSame(0, DB::table('menus')->where('url', '/editor')->count());
     }
 }

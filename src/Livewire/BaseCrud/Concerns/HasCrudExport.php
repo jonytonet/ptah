@@ -55,6 +55,18 @@ trait HasCrudExport
         [$query, $joinedTables] = $this->buildBaseQuery($modelInstance);
         $this->applyGroupingAndSort($query, $modelInstance, $joinedTables);
 
+        // exportConfig.asyncThreshold (1.50.0 — written by the editor, read by
+        // nothing): above it, the export goes to the queue on its own. Only
+        // when a real queue exists — queueExport() falls back to this method
+        // without one, which would loop.
+        $threshold = (int) ($exportConfig['asyncThreshold'] ?? 0);
+        if ($threshold > 0 && $this->asyncFormatAllowed($format) && $this->hasRealExportQueue()
+            && (clone $query)->toBase()->getCountForPagination() > $threshold) {
+            $this->queueExport($format);
+
+            return;
+        }
+
         $maxRows = (int) ($exportConfig['maxRows'] ?? 5000);
         $pk = $modelInstance->getKeyName();
 
@@ -130,6 +142,9 @@ trait HasCrudExport
             'direction' => $this->direction,
             'format' => $format,
             'orientation' => $this->crudConfig['exportConfig']['orientation'] ?? null,
+            // The screen's JOINs (1.50.0): without them every joined column
+            // left the file empty.
+            'joins' => $this->crudConfig['joins'] ?? [],
         ];
 
         $token = (string) Str::uuid();
@@ -154,11 +169,36 @@ trait HasCrudExport
      * install never leaves the user with a request that is queued but never
      * processed.
      */
+    /**
+     * May this format go to the queue (1.50.0)? `asyncExport.enabled`, then
+     * per format: `excel` defaults on, `pdf` off — `asyncExport.excel/pdf`
+     * were written and never read; only Excel was ever offered.
+     */
+    protected function asyncFormatAllowed(string $format): bool
+    {
+        $async = $this->crudConfig['exportConfig']['asyncExport'] ?? [];
+
+        if (empty($async['enabled'])) {
+            return false;
+        }
+
+        return match ($format) {
+            'excel' => ($async['excel'] ?? true) !== false,
+            'pdf' => ! empty($async['pdf']),
+            default => false,
+        };
+    }
+
+    protected function hasRealExportQueue(): bool
+    {
+        return config('queue.default') !== 'sync' && Schema::hasTable('ptah_exports');
+    }
+
     public function queueExport(string $format = 'excel'): void
     {
         $exportConfig = $this->crudConfig['exportConfig'] ?? [];
 
-        if (empty($exportConfig['enabled']) || empty($exportConfig['asyncExport']['enabled'])) {
+        if (empty($exportConfig['enabled']) || ! $this->asyncFormatAllowed($format)) {
             return;
         }
 
@@ -167,7 +207,7 @@ trait HasCrudExport
             return;
         }
 
-        if (config('queue.default') === 'sync' || ! Schema::hasTable('ptah_exports')) {
+        if (! $this->hasRealExportQueue()) {
             $this->export($format);
             $this->dispatch('ptah-toast', title: trans('ptah::ui.export_degraded_toast'), color: 'warn');
 
@@ -261,6 +301,9 @@ trait HasCrudExport
             'direction' => $this->direction,
             'format' => $format,
             'orientation' => $this->crudConfig['exportConfig']['orientation'] ?? null,
+            // The screen's JOINs (1.50.0): without them every joined column
+            // left the file empty.
+            'joins' => $this->crudConfig['joins'] ?? [],
         ];
     }
 

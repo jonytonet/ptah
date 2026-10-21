@@ -405,6 +405,25 @@ class CrudConfig extends Component
                 $col['colsSelect'] = implode(';;', $parts);
             }
         }
+        unset($col);
+
+        // Totalizer sub-tab (1.50.0): what the footer reads is the screen-level
+        // `totalizadores.columns`. The tab wrote per-column keys nothing read —
+        // so show the truth, and let the save below write it back there.
+        $totals = [];
+        foreach ((array) ($cfg['totalizadores']['columns'] ?? []) as $tot) {
+            if (is_array($tot) && ! empty($tot['field'])) {
+                $totals[(string) $tot['field']] = (string) ($tot['aggregate'] ?? 'sum');
+            }
+        }
+        foreach ($cols as &$col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            unset($col['totalizadorFormat'], $col['totalizadorLabel']);
+            $col['totalizadorEnabled'] = array_key_exists($field, $totals);
+            $col['totalizadorType'] = $totals[$field] ?? 'sum';
+        }
+        unset($col);
+
         $this->formEditFields = array_values($cols);
 
         // Filters and styles
@@ -1168,6 +1187,7 @@ class CrudConfig extends Component
             'tableClass' => $this->tableClass,
             'theadClass' => $this->theadClass,
             'cols' => $this->formatFieldsForDb(),
+            'totalizadores' => $this->buildTotalizadores($existing['totalizadores'] ?? []),
             'customFilters' => array_values($this->customFilters),
             'contitionStyles' => array_values($this->conditionStyles),
             'joins' => array_values($this->joins),
@@ -1247,11 +1267,46 @@ class CrudConfig extends Component
         ]);
     }
 
+    /**
+     * `totalizadores` from the Totalizer sub-tab (1.50.0) — see the load side.
+     * A total configured outside the editor on a field it does not list (CLI,
+     * JSON import) is kept.
+     *
+     * @param  array<string, mixed>  $existing
+     * @return array<string, mixed>
+     */
+    protected function buildTotalizadores(array $existing): array
+    {
+        $editorFields = [];
+        $columns = [];
+        foreach ($this->formEditFields as $field) {
+            $name = (string) ($field['colsNomeFisico'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $editorFields[$name] = true;
+            if (! empty($field['totalizadorEnabled'])) {
+                $columns[] = ['field' => $name, 'aggregate' => strtolower((string) ($field['totalizadorType'] ?? 'sum'))];
+            }
+        }
+        foreach ((array) ($existing['columns'] ?? []) as $tot) {
+            if (is_array($tot) && ! empty($tot['field']) && ! isset($editorFields[(string) $tot['field']])) {
+                $columns[] = $tot;
+            }
+        }
+
+        return array_merge($existing, ['enabled' => $columns !== [], 'columns' => $columns]);
+    }
+
     protected function formatFieldsForDb(): array
     {
         $fields = $this->formEditFields;
 
         foreach ($fields as &$field) {
+            // Per-column totalizer keys are editor state only (1.50.0): the
+            // runtime reads `totalizadores.columns`, built by buildTotalizadores().
+            unset($field['totalizadorEnabled'], $field['totalizadorType'], $field['totalizadorFormat'], $field['totalizadorLabel']);
+
             // Converts colsSelect string "k;v;;k2;v2" → associative array
             if (
                 isset($field['colsSelect'])

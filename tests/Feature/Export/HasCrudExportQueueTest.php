@@ -274,4 +274,55 @@ class HasCrudExportQueueTest extends TestCase
         Livewire::test(BaseCrud::class, ['model' => QueueExportScopeStub::class, 'companyFilter' => 1])
             ->set('companyFilter', 2);
     }
+
+    /** 1.50.0: asyncExport.pdf was written and never read — PDF never queued. */
+    #[Test]
+    public function the_pdf_queue_follows_async_export_pdf(): void
+    {
+        $this->actingAsUser();
+        config(['queue.default' => 'database']);
+        Queue::fake();
+
+        $this->makeConfig(QueueExportStub::class);
+        QueueExportStub::create(['name' => 'A', 'status' => 'x', 'amount' => 1]);
+        Livewire::test(BaseCrud::class, ['model' => QueueExportStub::class])->call('queueExport', 'pdf');
+        Queue::assertNothingPushed();
+
+        CrudConfig::query()->delete();
+        $this->makeConfig(QueueExportStub::class, ['asyncExport' => ['enabled' => true, 'pdf' => true]]);
+        Livewire::test(BaseCrud::class, ['model' => QueueExportStub::class])->call('queueExport', 'pdf');
+        Queue::assertPushed(GenerateCrudExportJob::class);
+    }
+
+    /** 1.50.0: asyncThreshold was written by the editor and read by nothing. */
+    #[Test]
+    public function an_export_above_the_threshold_goes_to_the_queue(): void
+    {
+        $this->actingAsUser();
+        config(['queue.default' => 'database']);
+        Queue::fake();
+        $this->makeConfig(QueueExportStub::class, ['asyncThreshold' => 1]);
+        QueueExportStub::create(['name' => 'A', 'status' => 'x', 'amount' => 1]);
+        QueueExportStub::create(['name' => 'B', 'status' => 'x', 'amount' => 2]);
+
+        Livewire::test(BaseCrud::class, ['model' => QueueExportStub::class])
+            ->call('export', 'excel')
+            ->assertNotDispatched('ptah:export-download');
+
+        Queue::assertPushed(GenerateCrudExportJob::class);
+    }
+
+    #[Test]
+    public function without_a_real_queue_the_threshold_keeps_the_sync_export(): void
+    {
+        $this->actingAsUser();
+        config(['queue.default' => 'sync']);
+        $this->makeConfig(QueueExportStub::class, ['asyncThreshold' => 1]);
+        QueueExportStub::create(['name' => 'A', 'status' => 'x', 'amount' => 1]);
+        QueueExportStub::create(['name' => 'B', 'status' => 'x', 'amount' => 2]);
+
+        Livewire::test(BaseCrud::class, ['model' => QueueExportStub::class])
+            ->call('export', 'excel')
+            ->assertDispatched('ptah:export-download');
+    }
 }

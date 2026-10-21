@@ -3,6 +3,7 @@
 namespace Ptah\Commands\Config\Wizards;
 
 use Illuminate\Console\Command;
+use Ptah\Commands\Config\Parsers\JoinParser;
 use Ptah\Enums\CrudConfigEnums;
 
 class JoinWizard
@@ -22,7 +23,9 @@ class JoinWizard
         $this->command->info('=== JOIN Configuration Wizard ===');
         $this->command->newLine();
 
-        $table = $this->command->ask('Table to join', $existingJoin['joinTable'] ?? null);
+        // 1.50.0: writes the shape the runtime reads (type/table/first/second/
+        // distinct/select) — it wrote joinTable/joinType/… that nothing read.
+        $table = $this->command->ask('Table to join', $existingJoin['table'] ?? null);
 
         if (! $table) {
             $this->command->warn('Table name is required.');
@@ -33,31 +36,26 @@ class JoinWizard
         $type = $this->command->choice(
             'JOIN type',
             CrudConfigEnums::JOIN_TYPES,
-            $existingJoin['joinType'] ?? 'left'
+            $existingJoin['type'] ?? 'left'
         );
 
         $this->command->info('Configure JOIN condition:');
-        $leftColumn = $this->command->ask('Left table column', $existingJoin['joinLeftColumn'] ?? '');
-        $rightColumn = $this->command->ask('Right table column (joined table)', $existingJoin['joinRightColumn'] ?? "{$table}.id");
+        $leftColumn = $this->command->ask('Left table column', $existingJoin['first'] ?? '');
+        $rightColumn = $this->command->ask('Right table column (joined table)', $existingJoin['second'] ?? "{$table}.id");
 
-        $distinct = $this->command->confirm('Use DISTINCT?', $existingJoin['joinDistinct'] ?? false);
+        $distinct = $this->command->confirm('Use DISTINCT?', (bool) ($existingJoin['distinct'] ?? false));
 
-        $this->command->info('Enter columns to select from joined table (comma-separated):');
-        $selectColumns = $this->command->ask('Columns', $existingJoin['joinSelect'] ?? '');
+        $this->command->info('Columns to select from the joined table, comma-separated, as column:alias (e.g. suppliers.name:supplier_name):');
+        $selectColumns = (string) $this->command->ask('Columns', '');
 
         $join = [
-            'joinTable' => $table,
-            'joinType' => $type,
-            'joinLeftColumn' => $leftColumn,
-            'joinRightColumn' => $rightColumn,
-            'joinDistinct' => $distinct,
-            'joinSelect' => $selectColumns ? explode(',', str_replace(' ', '', $selectColumns)) : [],
+            'type' => $type,
+            'table' => $table,
+            'first' => $leftColumn,
+            'second' => $rightColumn,
+            'distinct' => $distinct,
+            'select' => JoinParser::parseSelect($selectColumns),
         ];
-
-        // Additional WHERE conditions
-        if ($this->command->confirm('Add WHERE condition to JOIN?', false)) {
-            $join['joinWhere'] = $this->command->ask("WHERE condition (e.g., {$table}.active = 1)");
-        }
 
         $this->previewJoin($join);
 
@@ -76,11 +74,7 @@ class JoinWizard
         $this->command->newLine();
         $this->command->info('=== JOIN Preview ===');
 
-        $sql = strtoupper($join['joinType'])." JOIN {$join['joinTable']} ON {$join['joinLeftColumn']} = {$join['joinRightColumn']}";
-
-        if (! empty($join['joinWhere'])) {
-            $sql .= " AND {$join['joinWhere']}";
-        }
+        $sql = strtoupper($join['type'])." JOIN {$join['table']} ON {$join['first']} = {$join['second']}";
 
         $this->command->line('SQL: '.$sql);
         $this->command->newLine();
@@ -89,7 +83,7 @@ class JoinWizard
             ['Property', 'Value'],
             collect($join)->map(fn ($value, $key) => [
                 $key,
-                is_array($value) ? implode(', ', $value) : (is_bool($value) ? ($value ? 'true' : 'false') : $value),
+                is_array($value) ? implode(', ', array_map(fn ($s) => is_array($s) ? ($s['column'] ?? '').' AS '.($s['alias'] ?? '') : (string) $s, $value)) : (is_bool($value) ? ($value ? 'true' : 'false') : $value),
             ])->toArray()
         );
         $this->command->newLine();

@@ -33,7 +33,7 @@ class JoinParserTest extends TestCase
         $this->assertSame('products.supplier_id', $c['first']);
         $this->assertSame('suppliers.id', $c['second']);
         $this->assertFalse($c['distinct']);
-        $this->assertSame('', $c['selectRaw']);
+        $this->assertSame([], $c['select']);
     }
 
     #[Test]
@@ -45,11 +45,37 @@ class JoinParserTest extends TestCase
     }
 
     #[Test]
-    public function captures_a_select_raw_column_list_after_select_equals(): void
+    public function select_becomes_the_column_alias_list_the_runtime_reads(): void
     {
+        // 1.50.0: it was stored as a `selectRaw` string nothing read.
         $c = $this->parser->parse('left:suppliers:products.supplier_id=suppliers.id:select=suppliers.name');
 
-        $this->assertSame('suppliers.name', $c['selectRaw']);
+        $this->assertSame([['column' => 'suppliers.name', 'alias' => 'name']], $c['select']);
+        $this->assertArrayNotHasKey('selectRaw', $c);
+    }
+
+    #[Test]
+    public function select_accepts_as_for_the_alias(): void
+    {
+        $c = $this->parser->parse('left:suppliers:products.supplier_id=suppliers.id:select=suppliers.name as supplier_name');
+
+        $this->assertSame([['column' => 'suppliers.name', 'alias' => 'supplier_name']], $c['select']);
+    }
+
+    #[Test]
+    public function distinct_equals_true_turns_distinct_on(): void
+    {
+        $this->assertTrue($this->parser->parse('left:s:p.s_id=s.id:distinct=true')['distinct']);
+        $this->assertFalse($this->parser->parse('left:s:p.s_id=s.id:distinct=false')['distinct']);
+    }
+
+    #[Test]
+    public function a_where_option_is_refused_not_dropped(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('JOIN option "where" is not supported');
+
+        $this->parser->parse('left:s:p.s_id=s.id:where=s.active=1');
     }
 
     #[Test]
@@ -79,7 +105,10 @@ class JoinParserTest extends TestCase
             'left:suppliers:products.supplier_id=suppliers.id:distinct:select=suppliers.name:supplier_name,suppliers.cnpj:supplier_cnpj'
         );
 
-        $this->assertSame('suppliers.name:supplier_name,suppliers.cnpj:supplier_cnpj', $r['selectRaw']);
+        $this->assertSame([
+            ['column' => 'suppliers.name', 'alias' => 'supplier_name'],
+            ['column' => 'suppliers.cnpj', 'alias' => 'supplier_cnpj'],
+        ], $r['select']);
         $this->assertTrue($r['distinct']);
         $this->assertSame('products.supplier_id', $r['first']);
         $this->assertSame('suppliers.id', $r['second']);

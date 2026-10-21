@@ -16,9 +16,11 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\Role;
 use Ptah\Models\UserRole;
+use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Validation\ConfigSchemaValidator;
 use Ptah\Support\ColumnKeys;
+use Ptah\Support\CrudHookTarget;
 use Ptah\Support\FilterRule;
 use Ptah\Support\ModelKey;
 use Ptah\Support\SearchDropdownMask;
@@ -215,10 +217,37 @@ class ConfigDoctorCommand extends Command
                         $warnings++;
                     }
                 }
+                // 1.50.0: a `unique:` rule whose model/table does not exist is
+                // not enforced (FormValidatorService logs it at save time).
+                foreach ((array) ($col['colsValidations'] ?? []) as $rule) {
+                    if (is_string($rule) && str_starts_with($rule, 'unique:')) {
+                        $target = trim(explode(',', substr($rule, 7))[0]);
+                        if (FormValidatorService::uniqueQuery($target) === null) {
+                            $this->line("🟡 <fg=yellow>unique rule not enforced</> [{$label}] {$field}: '{$rule}' — no model or table '{$target}'; duplicates are accepted");
+                            $warnings++;
+                        }
+                    }
+                }
+
                 $helper = $col['colsHelper'] ?? null;
                 if (is_string($helper) && $helper !== '' && ! in_array($helper, ColumnKeys::HELPERS, true)) {
                     $this->line("🟡 <fg=yellow>unknown colsHelper</> [{$label}] {$field}: '{$helper}' is not a formatting helper (".implode(', ', ColumnKeys::HELPERS).') — help text below the field is colsHelpText');
                     $warnings++;
+                }
+            }
+
+            // 4d. 1.50.0: a class-based hook outside ptah.crud.hook_namespaces is
+            //     refused at save time — the exception is logged and swallowed,
+            //     so the save goes on WITHOUT the hook.
+            foreach ((array) ($config['lifecycleHooks'] ?? []) as $hookName => $declaration) {
+                $code = is_array($declaration) ? ($declaration['handler'] ?? $declaration['code'] ?? null) : $declaration;
+                if (! is_string($code) || ! str_starts_with(trim($code), '@')) {
+                    continue;
+                }
+                $target = CrudHookTarget::resolve($code, (string) $hookName);
+                if (! $target['permitted']) {
+                    $this->line("🔴 <fg=red>hook outside hook_namespaces</> [{$label}] {$hookName}: '{$target['class']}' is not under ".implode(', ', $target['allowed']).' — it never runs. Move it, or add its namespace to ptah.crud.hook_namespaces');
+                    $errors++;
                 }
             }
 

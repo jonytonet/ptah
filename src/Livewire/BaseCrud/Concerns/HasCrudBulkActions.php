@@ -20,7 +20,7 @@ trait HasCrudBulkActions
         $this->selectAll = ! $this->selectAll;
 
         if ($this->selectAll) {
-            $keyName = (new ($this->model))->getKeyName();
+            $keyName = $this->resolveEloquentModel()?->getKeyName() ?? 'id';
             $this->selectedRows = $this->rows->pluck($keyName)->map(fn ($id) => (string) $id)->toArray();
         } else {
             $this->selectedRows = [];
@@ -85,7 +85,7 @@ trait HasCrudBulkActions
         if ($query) {
             // Match on the model's actual primary key, not a hardcoded 'id' —
             // same as bulkExport() (HasCrudExport.php).
-            $keyName = (new ($this->model))->getKeyName();
+            $keyName = $this->resolveEloquentModel()?->getKeyName() ?? 'id';
 
             DB::transaction(function () use ($query, $keyName) {
                 $query->withTrashed()
@@ -140,7 +140,7 @@ trait HasCrudBulkActions
             // Match on the model's actual primary key, not a hardcoded 'id' —
             // same as bulkExport() (HasCrudExport.php) — so CRUDs with a
             // non-default key name are matched correctly.
-            $keyName = (new ($this->model))->getKeyName();
+            $keyName = $this->resolveEloquentModel()?->getKeyName() ?? 'id';
 
             // Exclusao definitiva so do que ja esta na lixeira: com withTrashed()
             // quem so podia mandar para a lixeira apagava para sempre linhas
@@ -225,7 +225,13 @@ trait HasCrudBulkActions
         // — company + master-detail lock — before leaving this component, exactly
         // like bulkDelete/bulkRestore/bulkForceDelete above. Otherwise a forged
         // selection reaches the configured service with out-of-scope ids.
-        $modelInstance = new ($this->model);
+        // 1.50.0: resolveEloquentModel(), not `new ($this->model)` — the model
+        // key is usually "Product" / "Catalog/Product", not a class name, and
+        // every bulk action died with "Class not found" on such a screen.
+        $modelInstance = $this->resolveEloquentModel();
+        if (! $modelInstance) {
+            return;
+        }
         $keyName = $modelInstance->getKeyName();
         $scopedIds = $this->scopedQuery()
             ?->whereIn($keyName, $this->selectedRows)

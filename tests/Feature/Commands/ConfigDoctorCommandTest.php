@@ -820,4 +820,34 @@ class ConfigDoctorCommandTest extends TestCase
             ->expectsOutputToContain('bulk action without BulkActionHandler')
             ->assertExitCode(1);
     }
+
+    /** 1.50.0: a unique: rule pointing nowhere was skipped in silence. */
+    #[Test]
+    public function a_unique_rule_with_no_model_or_table_is_warned(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', ['cols' => [[
+            'colsNomeFisico' => 'name', 'colsNomeLogico' => 'Name', 'colsTipo' => 'text',
+            'colsValidations' => ['unique:nope_table,name', 'unique:items,name'],
+        ]]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain("'unique:nope_table,name' — no model or table 'nope_table'")
+            ->doesntExpectOutputToContain("'unique:items,name'")
+            ->assertExitCode(0);
+    }
+
+    /** 1.50.0: a hook outside hook_namespaces was refused and swallowed at save. */
+    #[Test]
+    public function a_hook_outside_the_allowed_namespaces_is_an_error(): void
+    {
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig() + ['lifecycleHooks' => [
+            'beforeUpdate' => '@App\Services\ComplexValidator::validate',
+            'afterCreate' => '@ProductHooks::afterCreate',
+        ]]);
+
+        $this->artisan('ptah:config:doctor')
+            ->expectsOutputToContain("beforeUpdate: 'App\Services\ComplexValidator' is not under App\CrudHooks")
+            ->doesntExpectOutputToContain('afterCreate:')
+            ->assertExitCode(1);
+    }
 }

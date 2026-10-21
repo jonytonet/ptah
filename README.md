@@ -181,7 +181,7 @@ php artisan ptah:forge Ticket --fields="title:string,description:text,status:str
 
 ```bash
 php artisan migrate
-php artisan ptah:menu-sync --fresh
+php artisan ptah:menu-sync
 php artisan serve
 ```
 

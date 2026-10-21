@@ -11,6 +11,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
 use Ptah\Models\PtahPage;
 use Ptah\Models\Role;
+use Ptah\Models\RolePermission;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Services\Permission\RoleService;
 use Ptah\Support\ModelKey;
@@ -39,7 +40,8 @@ class PermissionSyncCommand extends Command
 {
     protected $signature = 'ptah:permission:sync
         {--role= : Role name to grant the synced objects to}
-        {--grant= : Comma-separated actions to grant (create,read,update,delete or "all")}
+        {--grant= : Comma-separated actions to ADD to the role (create,read,update,delete or "all"); never revokes}
+        {--key=* : Grant only on these permission keys (default: every synced screen)}
         {--dry-run : Preview the changes without persisting anything}';
 
     protected $description = 'Sync BaseCrud permissionIdentifier keys into ptah_pages/ptah_page_objects (and optionally grant a role)';
@@ -93,8 +95,10 @@ class PermissionSyncCommand extends Command
         // never open a transaction. The persisting branch creates/updates several
         // rows per config (page, object, grant); wrapping the whole batch keeps a
         // mid-run failure from leaving a partially-synced set of pages/objects.
+        $onlyKeys = array_values(array_filter(array_map('trim', (array) $this->option('key'))));
+
         $sync = function () use (
-            $rows, $dryRun, $role, $roleName, $grant, $roleService,
+            $rows, $dryRun, $role, $roleName, $grant, $roleService, $onlyKeys,
             &$checked, &$skippedEmpty, &$pagesCreated, &$objectsCreated, &$granted
         ): void {
             foreach ($rows as $row) {
@@ -128,7 +132,7 @@ class PermissionSyncCommand extends Command
                     if (! $objectExists) {
                         $objectsCreated++;
                     }
-                    if ($role) {
+                    if ($role && ($onlyKeys === [] || in_array($key, $onlyKeys, true))) {
                         $granted++;
                     }
 
@@ -138,7 +142,7 @@ class PermissionSyncCommand extends Command
                         $key,
                         $pageExists ? 'exists' : 'would be created',
                         $objectExists ? 'exists' : 'would be created',
-                        $role ? ", would grant '{$roleName}' [".implode(',', $grant).']' : ''
+                        ($role && ($onlyKeys === [] || in_array($key, $onlyKeys, true))) ? ", would add '{$roleName}' [".implode(',', $grant).']' : ''
                     ));
 
                     continue;
@@ -160,12 +164,16 @@ class PermissionSyncCommand extends Command
                     $objectsCreated++;
                 }
 
-                if ($role) {
+                if ($role && ($onlyKeys === [] || in_array($key, $onlyKeys, true))) {
+                    // 1.50.0: ADD to what the role has. It wrote all four flags,
+                    // so `--grant=read,update` revoked create/delete the role
+                    // already held — on every synced screen at once.
+                    $current = RolePermission::where('role_id', $role->id)->where('page_object_id', $pageObject->id)->first();
                     $roleService->bindPageObject($role, $pageObject->id, [
-                        'can_create' => in_array('create', $grant, true),
-                        'can_read' => in_array('read', $grant, true),
-                        'can_update' => in_array('update', $grant, true),
-                        'can_delete' => in_array('delete', $grant, true),
+                        'can_create' => in_array('create', $grant, true) || (bool) $current?->can_create,
+                        'can_read' => in_array('read', $grant, true) || (bool) $current?->can_read,
+                        'can_update' => in_array('update', $grant, true) || (bool) $current?->can_update,
+                        'can_delete' => in_array('delete', $grant, true) || (bool) $current?->can_delete,
                     ]);
                     $granted++;
                 }

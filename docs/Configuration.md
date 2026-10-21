@@ -56,15 +56,20 @@ SELECT * FROM crud_configs WHERE model = 'Product';
 |--------|------|-------------|
 | `id` | `int` | Primary key |
 | `model` | `string` | Model identifier (e.g. `Product`, `Product/ProductStock`) |
+| `route` | `string` | Screen route (request path); empty = global config for the model. `(model, route)` is unique |
 | `config` | `json` | Complete configuration in JSON |
+| `created_by` | `bigint` (nullable) | Who created the row |
+| `updated_by` | `bigint` (nullable) | Who last changed it |
 | `created_at` | `timestamp` | Creation date |
 | `updated_at` | `timestamp` | Last modification |
 
 ### Cache and Invalidation
 
 Configurations are cached automatically:
-- Cache key: `crud_config_{model}`
-- TTL: Configurable in `crud_configs.cacheTtl` (default: 3600s)
+- Cache key: `ptah.crud.{model}` with `/` and `\` replaced by `.` (e.g. `ptah.crud.Product`, `ptah.crud.Product.ProductStock`), plus `.{route}` for a screen-specific config
+- Enabled by `cacheStrategy.enabled`, falling back to `ptah.crud.cache_enabled` (default `true`)
+- TTL: `cacheStrategy.ttl`, falling back to `ptah.crud.cache_ttl` (default: 3600s)
+- What is cached is the config **lookup** (the row id), not the screen's data
 - Automatic invalidation when saving via modal or CLI
 
 ---
@@ -79,6 +84,12 @@ Configurations are cached automatically:
 
 Defaults below are taken directly from `config/ptah.php` — `— ` in the ENV
 column means the key has no `.env` override (edit the published file instead).
+
+> Removed in 1.50.0 because nothing read them: `paths.actions`, `paths.livewire`,
+> `api.docs`, `forge.prefix`, `forge.tailwind`, `scaffold.layout`,
+> `scaffold.auth_layout`, `crud.confirm_delete`, `auth.register_enabled`,
+> `company.logo_path` and `company.address_fields`. A published `config/ptah.php`
+> that still carries them is harmless — they are ignored.
 
 ### Locale & runtime
 
@@ -120,14 +131,14 @@ Besides the brand/semantic colors above (config-driven, injected via `theme-colo
 | `--ptah-line` | `#f1f5f9` | `#334155` | Hairline divider: dropdowns, filter-panel header/footer, modal header, row bottom |
 | `--ptah-line-strong` | `#e2e8f0` | `#334155` | More visible border: outer containers, thead/tfoot rule |
 | `--ptah-line-control` | `#cbd5e1` | `#475569` | Scrollbar track/thumb, save-filter input border |
-| `--ptah-line-field` | `#94a3b8` | `#475569` | Resting form-field border |
+| `--ptah-line-field` | `#8f95a0` | `#6d7278` | Resting form-field border |
 | `--ptah-line-field-hover` | `#64748b` | `#64748b` | Hover border for the above (same in both scopes) |
 | `--ptah-text-strong` | `#1e293b` | `#e2e8f0` | Darkest text: search input value, modal title |
 | `--ptah-text-field` | `#1f2937` | `#e2e8f0` | Text typed/selected inside inputs and selects |
 | `--ptah-text` | `#374151` | `#cbd5e1` | Default body text |
 | `--ptah-text-secondary` | `#475569` | `#cbd5e1` | Icon-button text, form labels |
-| `--ptah-text-muted` | `#64748b` | `#94a3b8` | Muted text: helper copy, idle sort arrows, subtitles |
-| `--ptah-text-faint` | `#6b7280` | `#94a3b8` | Faintest text: pagination summary, small field labels |
+| `--ptah-text-muted` | `#5a5f65` | `#a3b0c0` | Muted text: helper copy, idle sort arrows, subtitles |
+| `--ptah-text-faint` | `#5e636a` | `#a3b0c0` | Faintest text: pagination summary, small field labels |
 | `--ptah-icon-muted` | `#64748b` | `#64748b` | Toolbar icon glyphs (same in both scopes) |
 | `--ptah-text-on-accent` | `#ffffff` | `#ffffff` | White ink on solid accent/strong backgrounds |
 
@@ -158,7 +169,7 @@ combination of **6 independent axes** from a 6th tab at `/profile` ("Aparência"
 |---|---|
 | Light tone | `puro`, `papel`, `nevoa` |
 | Dark tone | `carvao`, `grafite`, `meianoite` |
-| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` |
+| Accent | `azul`, `violeta`, `ciano`, `verde`, `teal`, `ambar`, `vermelho`, `rosa`, `cinza` — plus `marca` (the host's own `theme.colors.primary`), offered and used as the default only when the host set a primary other than the package's `#5b21b6` |
 | Font colour | `suave`, `neutra`, `forte` |
 | Density | `compacta`, `confortavel`, `espacosa` |
 | Font size | `pequena`, `normal`, `grande` |
@@ -184,12 +195,14 @@ tone/scale/colour/spacing), not the currently active theme.
 BaseCrud screen's own density dropdown (`HasCrudFilters::setViewDensity()`) offers **4
 options**: **Profile default** (`global` — inherits the global preset above), **Compact**,
 **Comfortable** and **Spacious**. Picking any of the 4 explicitly — including
-**Comfortable** — pins that choice for the screen, regardless of the global preset.
-Configs saved before this dropdown existed persisted `'comfortable'` implicitly (it was
+**Comfortable** (since 1.50.0) — pins that choice for the screen, regardless of the global preset.
+Preference blobs saved before this dropdown existed persisted `'comfortable'` implicitly (it was
 the old, silent default, not a deliberate choice); `HasCrudPreferences::loadPreferences()`
-migrates that legacy value to `'global'` on load so those screens fall back under the
-profile's global density, while an explicitly-persisted `'compact'`/`'spacious'` (a real
-prior choice) is left untouched. `forge-input`, `forge-button` (`sm`/`md`), `forge-select`
+migrates that legacy value to `'global'` on load — **only for blobs older than schema
+version 2.3.0** — so those screens fall back under the profile's global density, while an
+explicitly-persisted `'compact'`/`'spacious'` (a real prior choice) is left untouched. Since
+1.50.0 a **Comfortable** picked today is saved with the current version and stays pinned
+(before, the migration ran on every load and turned it back into the profile's density). `forge-input`, `forge-button` (`sm`/`md`), `forge-select`
 and the 7 module-screen toolbars/tables also scale with this axis.
 
 **Font size.** Scales `<html>`'s `font-size` (87.5% / 100% / 112.5%) — since most of the
@@ -228,20 +241,10 @@ device/browser; it never leaks credentials or any other account data.
 | `paths.services` | — | `app_path('Services')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.repositories` | — | `app_path('Repositories')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.dtos` | — | `app_path('DTOs')` | [Commands.md — ptah:forge](Commands.md) |
-| `paths.actions` | — | `app_path('Actions')` | [Commands.md — ptah:forge](Commands.md) |
-| `paths.livewire` | — | `app_path('Livewire')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.requests` | — | `app_path('Http/Requests')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.resources` | — | `app_path('Http/Resources')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.controllers` | — | `app_path('Http/Controllers')` | [Commands.md — ptah:forge](Commands.md) |
 | `paths.views` | — | `resource_path('views')` | [Commands.md — ptah:forge](Commands.md) |
-
-### User preferences (`preferences.*`)
-
-| Key | ENV | Default | Reference |
-|-----|-----|---------|-----------|
-| `preferences.driver` | — | `database` | `config/ptah.php` comments |
-| `preferences.cache` | — | `true` | `config/ptah.php` comments |
-| `preferences.ttl` | — | `3600` | `config/ptah.php` comments |
 
 ### API (`api.*`)
 
@@ -249,23 +252,13 @@ device/browser; it never leaks credentials or any other account data.
 |-----|-----|---------|-----------|
 | `api.prefix` | — | `api` | [Modules.md — API Module](Modules.md) |
 | `api.middleware` | — | `['api', 'auth:sanctum']` | [Modules.md — API Module](Modules.md) |
-| `api.docs` | — | `true` | [Modules.md — API Module](Modules.md) |
 
 ### Ptah Forge (`forge.*`)
 
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
-| `forge.prefix` | — | `forge` | `config/ptah.php` comments (Blade component prefix, `<x-forge-*>`) |
-| `forge.tailwind` | — | `v4` | `config/ptah.php` comments |
 | `forge.external_pointer_prefixes` | — | `[]` | Prefixes of `*_id` columns that hold an id from ANOTHER system (e.g. `['yelll_']`). `ptah:forge` generates no `belongsTo`/`constrained()` for them — only a comment in the model and an indexed integer column. |
 | `forge.sidebar_items` | — | `[]` | [Modules.md — Menu Module, driver `config`](Modules.md#menu-module) |
-
-### Scaffold (`scaffold.*`)
-
-| Key | ENV | Default | Reference |
-|-----|-----|---------|-----------|
-| `scaffold.layout` | — | `forge-dashboard` | `config/ptah.php` comments |
-| `scaffold.auth_layout` | — | `forge-auth` | `config/ptah.php` comments |
 
 ### BaseCrud defaults (`crud.*`)
 
@@ -275,12 +268,13 @@ device/browser; it never leaks credentials or any other account data.
 | `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |
 | `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |
 | `crud.max_per_page` | — | `200` | Ceiling for the client-writable `perPage` (1.41.11) |
-| `crud.soft_deletes` | — | `true` | This document — [General Settings](#general-settings) |
-| `crud.confirm_delete` | — | `true` | This document — [General Settings](#general-settings) |
+| `crud.soft_deletes` | — | `true` | Default of `ptah:forge` for new entities (`--no-soft-deletes` overrides it). Does not touch a screen that already exists — that follows the model's `SoftDeletes` trait. Since 1.50.0 |
+| `crud.responsive_cards` | `PTAH_CRUD_RESPONSIVE_CARDS` | `true` | `true`: a screen whose `viewMode` is `auto` shows the table on wide screens and cards on phones; `false`: `auto` behaves like `table` |
 | `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |
 | `structure_editor` | `PTAH_STRUCTURE_EDITOR` | `false` | Who may administer `/ptah-menu` and `/ptah-companies`. With the permissions module ACTIVE this is ignored and only masters may; with it OFF the screens are denied unless this is `true`. Until 1.34.8 both were open to any authenticated user |
-| `crud.hook_namespaces` | — | `['App\CrudHooks']` | This document — § "Lifecycle Hooks" (PHP Classes syntax, `@Class::method`) |
+| `crud.hook_namespaces` | — | `['App\CrudHooks']` | This document — § "Lifecycle Hooks" (PHP Classes syntax, `@Class::method`). A hook class outside these prefixes is refused (logged, and the save goes on without the hook); `ptah:config:doctor` reports it as an error |
 | `crud.label_dictionary` | — | `[]` | `config/ptah.php` comments (overrides the built-in pt-BR label dictionary) |
+| `crud.sd_service_namespaces` | — | `['App\Services']` | Diagnostic only: `ptah:config:doctor` warns when a searchdropdown `colsSDService` falls outside these namespaces. The request-time resolver does not enforce it |
 
 ### Export — async / large volume (`export.*`)
 
@@ -388,6 +382,22 @@ migration, not a schema tweak.
 > exist. If preference caching is built one day, the keys come back with the
 > code that reads them.
 
+### Other package keys
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `mcp_tools` | `PTAH_MCP_TOOLS` | `true` | Adds ptah's read-only agent tools to Laravel Boost's MCP server when `laravel/boost` is installed; nothing happens without it — [AgentTools.md](AgentTools.md) |
+| `intentional_overrides` | — | `[]` | Published views you keep on purpose (relative to `resources/views/vendor/ptah`); `ptah:upgrade-check` lists them as information instead of an action |
+| `attachments.disk` | `PTAH_ATTACHMENTS_DISK` | `local` | Disk of record attachments (`HasAttachments`) — keep it private. See [BaseCrud.md](BaseCrud.md) |
+| `attachments.max_kb` | `PTAH_ATTACHMENTS_MAX_KB` | `10240` | Per-file size limit |
+| `attachments.mimes` | — | `pdf jpg jpeg png webp txt csv xlsx xls doc docx zip` | Accepted extensions |
+| `navbar.notifications` | `PTAH_NAVBAR_NOTIFICATIONS` | `null` | `null`/`''` keeps the static bell; `none`/`off`/`hidden`/`false`/`0` hides it; any other string is a Livewire component alias (e.g. `ptah-notification-bell`) |
+| `notifications.enabled` | `PTAH_MODULE_NOTIFICATIONS` | `false` | Notification centre — [Notifications.md](Notifications.md) |
+| `notifications.poll` | `PTAH_NOTIFICATIONS_POLL` | `60s` | Bell polling interval |
+| `notifications.dropdown_limit` | — | `20` | Items shown in the bell dropdown |
+| `notifications.broadcast` | `PTAH_NOTIFICATIONS_BROADCAST` | `false` | Near-instant delivery over Echo/Reverb |
+| `notifications.queue_connection` | `PTAH_NOTIFICATIONS_QUEUE_CONNECTION` | `null` | Queue connection of the CRUD notification jobs (`null` = the app default; `sync` delivers inline when there is no worker) |
+
 ### Error pages (`errors.*`)
 
 | Key | ENV | Default | Reference |
@@ -395,7 +405,7 @@ migration, not a schema tweak.
 | `errors.enabled` | `PTAH_ERROR_PAGES` | `true` | this section |
 | `errors.themed_500_in_debug` | `PTAH_ERROR_500_IN_DEBUG` | `false` | this section |
 
-Ptah ships themed pages for **403, 404, 419, 429, 500 and 503**. They follow all
+Ptah ships themed pages for **403, 404, 405, 419, 429, 500 and 503**. They follow all
 six appearance axes, because their colours read `var(--ptah-token, literal)`:
 the token wins when `ptah-components.css` is loaded, and the literal keeps the
 page readable when it is not — which is the likely state during a 500.
@@ -423,7 +433,7 @@ development is the themed page either way.
 
 403 is additionally gated behind `modules.permissions`, since it is that
 module's own denial screen. Set `PTAH_ERROR_PAGES=false` to disable the other
-five and fall back to Laravel's defaults.
+six and fall back to Laravel's defaults.
 
 **What the themed 500 will NEVER claim.** The 500 is registered on its own
 callback because it is not an `HttpException` — it is whatever broke. That
@@ -505,10 +515,11 @@ php artisan vendor:publish --tag=ptah-errors
 |-----|-----|---------|-----------|
 | `auth.guard` | — | `web` | [Modules.md — Auth Module](Modules.md) |
 | `auth.home` | — | `/dashboard` | [Modules.md — Auth Module](Modules.md) |
-| `auth.register_enabled` | — | `false` | [Modules.md — Auth Module](Modules.md) |
-| `auth.two_factor` | — | `true` | [Modules.md — Auth Module](Modules.md) |
-| `auth.remember_me` | — | `true` | [Modules.md — Auth Module](Modules.md) |
-| `auth.session_protection` | — | `true` | [Modules.md — Auth Module](Modules.md) |
+| `auth.two_factor` | — | `true` | `false` hides and blocks the **activation** of 2FA on the profile. An account that already has 2FA is still challenged at login and can turn it off. Since 1.50.0 |
+| `auth.remember_me` | — | `true` | `false` hides "remember me" on the login screen. Since 1.50.0 |
+| `auth.session_protection` | — | `true` | `false` hides the active-sessions tab on the profile. Since 1.50.0 |
+| `auth.route_prefix` | `PTAH_AUTH_ROUTE_PREFIX` | `''` | Prefix of the auth routes (`/login`, `/logout`…): `erp` → `/erp/login`, for a host whose storefront already owns `/login` |
+| `auth.guest_redirect` | — | `null` | Where a guest goes when the route requires a guard OTHER than `auth.guard`: a route name, a URL, or a map `['portal' => 'portal.login']`. `null` leaves it to Laravel (the `login` route). Routes of `auth.guard` always go to the Ptah login |
 
 ### Menu module (`menu.*`)
 
@@ -524,8 +535,6 @@ php artisan vendor:publish --tag=ptah-errors
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
 | `company.logo_disk` | `PTAH_LOGO_DISK` | `public` | [Company.md](Company.md) |
-| `company.logo_path` | `PTAH_LOGO_PATH` | `company-logos` | [Company.md](Company.md) |
-| `company.address_fields` | — | `['street','number','complement','district','city','state','zip_code','country']` | [Company.md](Company.md) |
 
 ### Permissions module (`permissions.*`)
 
@@ -615,6 +624,10 @@ the bar and focuses the input — the same gesture the menu groups already use.
 | `ai_agent.rate_limit` | `PTAH_AI_RATE_LIMIT` | `30` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.stream` | `PTAH_AI_STREAM` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.max_steps` | `PTAH_AI_MAX_STEPS` | `5` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.max_message_chars` | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.confirmation_ttl` | `PTAH_AI_CONFIRMATION_TTL` | `30` | How long a confirmable tool's preview card can still be confirmed — [AiAgent.md](AiAgent.md) |
+| `ai_agent.max_preview_rows` | `PTAH_AI_MAX_PREVIEW_ROWS` | `50` | Rows of the preview card |
+| `ai_agent.commands` | — | `[]` | `/commands` typed in the chat that run a tool directly (`tool`, `arguments`, `description`, optional `permission`) |
 | `ai_agent.daily_token_limit` | `PTAH_AI_DAILY_TOKEN_LIMIT` | `0` (disabled) | [AiAgent.md](AiAgent.md) |
 | `ai_agent.allow_guests` | `PTAH_AI_ALLOW_GUESTS` | `false` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.expose_system_details` | `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | [AiAgent.md](AiAgent.md) |
@@ -625,9 +638,15 @@ the bar and focuses the input — the same gesture the menu groups already use.
 | `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_files` | `PTAH_AI_ATTACH_MAX_FILES` | `4` | [AiAgent.md](AiAgent.md) |
-| `ai_agent.attachments.allowed_extensions` | — | images + `pdf docx txt md csv tsv json log` | [AiAgent.md](AiAgent.md) |
+| `ai_agent.attachments.allowed_extensions` | — | `png jpg jpeg gif webp pdf txt md csv json docx` (the published `config/ptah.php`) | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_extracted_chars` | `PTAH_AI_ATTACH_MAX_CHARS` | `60000` | [AiAgent.md](AiAgent.md) |
 
+> The list above is what `config/ptah.php` ships. The service's own fallback
+> (`AiAttachmentService::DEFAULT_EXTENSIONS`: `png jpg jpeg gif webp bmp pdf docx
+> txt md csv tsv json log`) only applies when the `attachments` block is **absent**
+> — a host with a published config that carries the block above gets exactly that
+> list, so `tsv`, `log` and `bmp` need adding there.
+>
 > The `attachments.*` defaults live in `Ptah\Services\AI\AiAttachmentService`,
 > not only in `config/ptah.php`. `mergeConfigFrom` is shallow, so a host that
 > published the config file owns the whole `ptah.ai_agent` array and would never
@@ -646,11 +665,14 @@ the bar and focuses the input — the same gesture the menu groups already use.
 Access the configuration button (⚙️) at the top of the CRUD screen:
 
 ```blade
-{{-- The button is rendered automatically by BaseCrud --}}
-<button wire:click="$dispatch('openConfig', { model: '{{ $model }}' })">
-    ⚙️ Config
-</button>
+{{-- Rendered automatically by BaseCrud's toolbar, only for who may manage the config --}}
+@ptahCanManageConfig
+    @livewire('ptah-crud-config', ['model' => $model])
+@endptahCanManageConfig
 ```
+
+The `ptah-crud-config` component renders the button itself (it calls its own
+`openModal`); there is no `openConfig` event to dispatch.
 
 **Advantages:**
 ✅ Intuitive visual interface  
@@ -699,7 +721,7 @@ php artisan ptah:config "App\Models\Product" \
 
 ### How to Access
 
-The modal is opened automatically when clicking the **⚙️ Config** button at the top of the BaseCrud (usually restricted to administrators via `@can('admin')` or similar).
+The modal is opened automatically when clicking the **⚙️ Config** button at the top of the BaseCrud. The button is only rendered under `@ptahCanManageConfig` (`ptah_can_manage_config()`): a master user, a `crud.config` read grant, or — with the permissions module off — `ptah.crud.config_editor`.
 
 ### Tab Structure
 
@@ -711,7 +733,7 @@ The modal has **9 main tabs**:
 
 **Interface:**
 - **Left sidebar:** Drag-and-drop list of all columns
-- **Right panel:** 6 sub-tabs to edit the selected column
+- **Right panel:** sub-tabs to edit the selected column (7 — the SearchDropdown one only shows for `searchdropdown` columns)
 
 **Available actions:**
 - 🔄 Reorder via drag-and-drop
@@ -724,19 +746,20 @@ The modal has **9 main tabs**:
 
 | Sub-tab | Fields Edited | Description |
 |---------|---------------|-------------|
-| **Basic** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsIsFilterable`, `colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsMinWidth`, `colsSource` | Main column info + cell style + SQL source (JOIN badge) |
-| **Display** | `colsHelper`, `colsRenderer`, `colsRelacaoNested`, `colsMask`, `colsMaskTransform` | How the column is rendered in the table and formatted in the form |
-| **Badges** | `colsRendererBadges` | Value→colour map for `badge`/`pill` renderer with hex picker + 8 quick swatches |
-| **Relation** | `colsRelacao`, `colsRelacaoExibe`, `colsSDModel`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDTipo`, `colsSDMode` | Eloquent relationship and SearchDropdown configuration |
-| **Validation** | `colsValidations`, `colsRequired` | Form validation rules |
-| **Advanced** | `colsOrderBy`, `colsReverse`, `colsMetodoCustom`, `colsAlign` | Custom ordering, accessor methods and alignment |
+| **Basic** | `colsNomeFisico`, `colsNomeLogico`, `colsTipo`, `colsGravar`, `colsRequired`, `colsReadonly`, `colsIsFilterable`, `colsAlign`, `colsMinWidth`, `colsCellStyle`, `colsCellClass`, `colsCellIcon`, `colsSource`, `colsOrderBy`, `colsMetodoCustom` / `colsMetodoRaw`, `colsPermission`, `colsSelect`, `colsDefaultValue`, `colsFormBlock`, `colsOnChange` | Main column info, cell style, SQL source (for JOIN columns), ordering, custom method, select options |
+| **Display** | `colsRenderer` and its options (`colsRendererCurrency`, `colsRendererDecimals`, `colsRendererMaxChars`, link, image, boolean, duration, QR options…), `colsRendererBadges` | How the column is rendered in the table. For the `badge`/`pill` renderer the same sub-tab holds the badge list (value, label, colour with hex picker + quick swatches, icon) |
+| **Mask** | `colsMask`, `colsMaskTransform` | Input mask and the transform applied on save |
+| **Validation** | `colsValidations` | Form validation rules (toggles for the common ones + a custom list) |
+| **Relation** | `colsRelacao`, `colsRelacaoExibe`, `colsRelacaoNested` | Eloquent relationship shown in the listing |
+| **SearchDropdown** | `colsSDModel`, `colsSDTipo`, `colsSDLabel`, `colsSDValor`, `colsSDOrder`, `colsSDLimit`, `colsSDInitWithData`, and the rest of the SD surface | Only shown for `searchdropdown` columns |
+| **Totalizer** | `totalizadorEnabled`, `totalizadorType`, `totalizadorFormat`, `totalizadorLabel` | Writes `totalizador*` keys into the column, which the runtime does not read — footer totals come from the screen-level `totalizadores` (see [Totalizer](#totalizer)) |
 
 **Example flow:**
 
 1. Click a column in the sidebar (e.g. `status`)
 2. Go to the **"Display"** sub-tab
 3. Change `colsRenderer` to `badge`
-4. Go to the **"Badges"** sub-tab
+4. Scroll to the badge list that appears in the same **"Display"** sub-tab
 5. Configure colours:
    - `active` → green (`#10B981`)
    - `inactive` → red (`#EF4444`)
@@ -759,15 +782,18 @@ The modal has **9 main tabs**:
    - List of extra actions (e.g. "Approve", "Reject", "Send Email")
    - Each action has: name, type (livewire/link/javascript), value, icon, colour, confirmation
 
-**Example of custom action:**
+**Example of custom action** — a row action is an entry of `cols` with
+`colsTipo: "action"`; its label is `colsNomeLogico` (there is no top-level
+`actions` list):
 
 ```json
 {
-  "actionName": "approve",
-  "actionLabel": "Approve",
+  "colsNomeFisico": "approve",
+  "colsNomeLogico": "Approve",
+  "colsTipo": "action",
   "actionType": "livewire",
   "actionValue": "approve(%id%)",
-  "actionIcon": "bx-check",
+  "actionIcon": "bx bx-check",
   "actionColor": "success",
   "actionConfirm": true,
   "actionConfirmMessage": "Are you sure you want to approve this record?"
@@ -839,13 +865,12 @@ The modal has **9 main tabs**:
 
 ```json
 {
-  "joinTable": "categories",
-  "joinType": "left",
-  "joinLeftColumn": "products.category_id",
-  "joinRightColumn": "categories.id",
-  "joinSelect": ["categories.name as category_name"],
-  "joinDistinct": false,
-  "joinWhere": "categories.active = 1"
+  "type": "left",
+  "table": "categories",
+  "first": "products.category_id",
+  "second": "categories.id",
+  "distinct": false,
+  "select": [{ "column": "categories.name", "alias": "category_name" }]
 }
 ```
 
@@ -854,12 +879,14 @@ The modal has **9 main tabs**:
 ┌─────────────────────────────────────┐
 │ LEFT JOIN categories               │
 │ ON products.category_id = categories.id │
-│ SELECT: name as category_name      │
-│ WHERE: active = 1                  │
+│ SELECT: categories.name AS category_name │
 │ DISTINCT: No                       │
 │ [Edit] [Delete]                    │
 └─────────────────────────────────────┘
 ```
+
+A JOIN has no `WHERE` of its own (`joinWhere` and the old `join*` key names were
+never read) — filter the screen with a custom filter instead.
 
 #### 6️⃣ Geral
 
@@ -871,12 +898,14 @@ The modal has **9 main tabs**:
    - `displayName` — Display name (e.g. "Products")
 
 2. **Appearance:**
-   - `companyField` — Multi-tenancy field
-   - `tableClass` — Extra CSS classes for the table
+   - `tableClass` / `theadClass` — Classes of the `<table>` / `<thead>` (they replace the defaults)
+   - `companyField` is **not** in this tab: set it in the JSON (`companyField`, default `company_id`)
 
 3. **Cache:**
-   - Stored in `cacheStrategy.enabled` / `cacheStrategy.ttl`. **Not applied by
-     BaseCrud today** — see [KnownLimitations.md](KnownLimitations.md).
+   - Stored in `cacheStrategy.enabled` / `cacheStrategy.ttl`. Read by
+     `CrudConfigService` for the cache of the **config lookup** (see
+     [Cache and Invalidation](#cache-and-invalidation)) — not for the screen's
+     data, which is never cached by it.
 
 4. **Export:**
    - `exportConfig.maxRows` — Maximum exportable rows
@@ -889,18 +918,18 @@ The modal has **9 main tabs**:
 
 #### 7️⃣ Permissions
 
-**What it does:** Maps Laravel gates/abilities per action
+**What it does:** Maps Laravel **gate names** to the actions a screen offers, and turns buttons off
 
 **Interface:**
-- List of actions (list, view, create, edit, delete, export, import, restore, forceDelete)
-- Text field for each action (e.g. `product.create`, `view-products`)
+- A gate-name field for each of `create`, `edit`, `delete`, `restore`, `export`, `import`, `history` and `attachments` (e.g. `product.create`, `view-products`). There is no gate for listing or viewing: the listing is protected by `permissions.permissionIdentifier` plus the permissions module
+- The `show*Button` flags (`showCreateButton`, `showEditButton`, `showDeleteButton`, `showTrashButton`) — off hides the button **and** refuses the action on the server
 
 **Example:**
 
 ```json
 {
   "permissions": {
-    "list": "product.index",
+    "permissionIdentifier": "product",
     "create": "product.create",
     "edit": "product.update",
     "delete": "product.destroy",
@@ -909,14 +938,17 @@ The modal has **9 main tabs**:
 }
 ```
 
-**Usage in code:**
+**What BaseCrud does with it** (`HasCrudForm::crudConfigAllows()`, called by the
+interface and by every action, so a forged call is refused too):
 
 ```php
-// BaseCrud verifica automaticamente:
-if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
-    abort(403);
-}
+// 1. a show*Button flag that is off  -> false
+// 2. a gate name set and the user is a guest, or !$user->can($gate) -> false
+// 3. otherwise -> true   (no gate name means no gate: there is no default gate)
 ```
+
+It returns `false` — the action does nothing and the button is hidden — it does
+not `abort(403)`.
 
 #### 8️⃣ Lifecycle Hooks
 
@@ -947,7 +979,7 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 > inline PHP from older versions will fail safely and be logged — migrate it to a class.
 
 **Interface:**
-- 4 textareas with code editor
+- 5 textareas with code editor (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`)
 - Practical examples of both syntaxes
 - Info box explaining available variables
 - Security warning
@@ -960,6 +992,7 @@ if (!Gate::allows($this->crudConfig['permissions']['create'] ?? 'create')) {
 | **afterCreate** | After INSERT | `$record` (Model), `$data` (array) | ❌ No |
 | **beforeUpdate** | Before UPDATE | `$data` (array), `$record` (Model) | ✅ Yes (`$data` by reference) |
 | **afterUpdate** | After UPDATE | `$record` (Model), `$data` (array) | ❌ No |
+| **beforeDelete** | Before a record is deleted (single, bulk or force) | `$record` (Model), `$data` (the record's attributes) | ❌ No — it is a barrier: **critical by default**, so any failure refuses the delete (throw `CrudHookAbort` to tell the user why) |
 
 ---
 
@@ -1011,8 +1044,15 @@ For complex logic, create real PHP classes in `app/CrudHooks/`.
 |-----------------|--------|
 | `@ProductHooks::beforeCreate` | Calls `App\CrudHooks\ProductHooks::beforeCreate()` |
 | `@ProductHooks` | Uses hook name as method (e.g. `beforeCreate()`) |
-| `@App\Services\MyHooks::customMethod` | Uses full namespace |
-| `@App\Services\MyHooks@customMethod` | `@` separator also works |
+| `@App\CrudHooks\MyHooks::customMethod` | Uses full namespace |
+| `@App\CrudHooks\MyHooks@customMethod` | `@` separator also works |
+
+> **The class must live under `ptah.crud.hook_namespaces`** (default
+> `App\CrudHooks`; a short name like `@ProductHooks` resolves under the first
+> entry). A hook outside it — `@App\Services\MyHooks::run`, say — is refused:
+> the failure is logged and the save goes on **without** the hook (a hook
+> declared critical aborts instead). `ptah:config:doctor` reports it as an
+> error. Move the class, or add its namespace to `crud.hook_namespaces`.
 
 **Full example:**
 
@@ -1115,7 +1155,7 @@ Or with full namespace:
   `now()` returns `Y-m-d H:i:s` text, not a Carbon object, for the same reason.
 - Automatic try-catch — errors do not break the save()
 - Detailed error logging in `storage/logs/laravel.log`
-- Modal access restricted via `@ptahCan('configCrud', 'read')`
+- Modal access restricted by `ptah_can_manage_config()`: a master user, a `crud.config` read grant, or — with the permissions module off — `ptah.crud.config_editor`
 
 **PHP Classes:**
 
@@ -1202,7 +1242,7 @@ Or with full namespace:
   "lifecycleHooks": {
     "beforeCreate": "merge(data, {'status': 'pending'})",
     "afterCreate": "@ProductHooks::afterCreate",
-    "beforeUpdate": "@App\\Services\\ComplexValidator::validate",
+    "beforeUpdate": "@App\\CrudHooks\\ComplexValidator::validate",
     "afterUpdate": "@ProductHooks::afterUpdate"
   }
 }
@@ -1285,7 +1325,7 @@ source.
 php artisan ptah:hooks ProductHooks
 ```
 
-Creates `app/CrudHooks/ProductHooks.php` with the 4 pre-filled methods, ready to edit.
+Creates `app/CrudHooks/ProductHooks.php` with the 5 pre-filled methods (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`), ready to edit.
 
 With subfolder:
 ```bash
@@ -1295,7 +1335,7 @@ php artisan ptah:hooks Inventory/StockHooks
 **Option B — Copy the example template:**
 
 ```bash
-cp vendor/ptah/ptah/docs/ProductHooks.example.php app/CrudHooks/ProductHooks.php
+cp vendor/jonytonet/ptah/docs/ProductHooks.example.php app/CrudHooks/ProductHooks.php
 ```
 
 **Generated structure:**
@@ -1328,6 +1368,11 @@ class ProductHooks implements CrudHooksInterface
     public function afterUpdate(array &$data, Model $record, object $component): void
     {
         // cache()->forget('product_' . $record->getKey());
+    }
+
+    public function beforeDelete(array &$data, Model $record, object $component): void
+    {
+        // throw new \Ptah\Exceptions\CrudHookAbort('In use by active products.');
     }
 }
 ```
@@ -1372,24 +1417,15 @@ Or specifying the method:
 
 | Event | When | Payload |
 |--------|--------|---------|
-| `ptah:crud-config-updated` | After saving the modal | `{ model: 'Product' }` |
+| `ptah:crud-config-updated` | After saving the modal | none — dispatched without payload |
 
-**Listening in BaseCrud:**
+**Listening in BaseCrud** (`HasCrudLifecycle`):
 
 ```php
-protected $listeners = [
-    'ptah:crud-config-updated' => 'reloadConfig',
-];
-
-public function reloadConfig($data)
+#[On('ptah:crud-config-updated')]
+public function reloadCrudConfig(): void
 {
-    if ($data['model'] === $this->model) {
-        $this->crudConfig = $this->loadCrudConfig();
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Configuration reloaded!'
-        ]);
-    }
+    // forgets the cached lookup, re-reads the config and refreshes the form columns
 }
 ```
 
@@ -1465,14 +1501,15 @@ php artisan ptah:config {model} [options]
 | `--set=*` | Array | Define general setting |
 | `--permission=*` | Array | Define permission |
 | `--list` | Flag | List current configuration |
-| `--reset` | Flag | Reset to default |
-| `--import=` | String | Import from JSON |
+| `--reset` | Flag | Delete the saved config of the screen (always asks for confirmation) |
+| `--import=` | String | Import from JSON (always overwrites the saved config) |
 | `--export=` | String | Export to JSON |
 | `--non-interactive` | Flag | Skip wizard |
-| `--force` | Flag | Overwrite without confirmation |
+| `--route=` | String | Route path to scope the config to (empty = global config of the model); `--list`, `--reset`, `--import` and `--export` honour it |
+| `--force` | Flag | No effect — kept so existing scripts do not break (the command warns) |
 | `--dry-run` | Flag | Simulate without saving |
-| `--only=*` | Array | Process only specific sections |
-| `--skip=*` | Array | Skip specific sections |
+| `--only=*` | Array | Process only these sections — comma-separated or repeated; an unknown name is an error |
+| `--skip=*` | Array | Skip these sections — same syntax |
 
 ### Interactive Mode (Wizard)
 
@@ -1569,8 +1606,8 @@ Run with options to configure directly:
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
-  --column="name:text:required:label=Product Name:validation=required|max:255" \
-  --column="sku:text:required:validation=required|unique:products,sku" \
+  --column="name:text:required:label=Product Name:validation=maxLength:255" \
+  --column="sku:text:required:validation=unique:products,sku" \
   --column="price:number:required:mask=money_brl:renderer=money:currency=BRL:decimals=2" \
   --column="stock:number:label=Stock:renderer=number:decimals=0" \
   --column="status:select:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
@@ -1616,10 +1653,10 @@ field:type:modifier:option=value:option=value...
 | `renderer` | `colsRenderer` | string | `renderer=money` (`text`,`badge`,`pill`,`boolean`,`money`,`date`,`datetime`,`link`,`image`,`truncate`,`number`,`filesize`,`duration`,`code`,`color`,`progress`,`rating`,`qrcode`) |
 | `cell_style` | `colsCellStyle` | string | `cell_style=background:#FEE;` |
 | `cell_class` | `colsCellClass` | string | `cell_class=font-bold` |
-| `cell_icon` | `colsCellIcon` | string | `cell_icon=bx-user` |
-| `source` | `colsSource` | string | `source=JOIN categories` |
-| `method` | `colsMetodoCustom` | string | `method=formatCustom` |
-| `order_by` | `colsOrderBy` | string | `order_by=name` |
+| `cell_icon` | `colsCellIcon` | string | `cell_icon=bx bx-user` — shown in the cell, before the value |
+| `source` | `colsSource` | string | `source=categories.name` — the qualified SQL column used in `WHERE`/`ORDER BY`/search for a column that comes from a JOIN |
+| `method` | `colsMetodoCustom` | string | `method=ProductFormatter\price(%price%)` — `Class\method(%field%)`, relative to `App\Services\` (see [Advanced](#advanced)) |
+| `order_by` | `colsOrderBy` | string | `order_by=name` — a column identifier, not an expression |
 | `link_template` | `colsRendererLinkTemplate` | string | `link_template=/products/%id%` |
 | `link_label` | `colsRendererLinkLabel` | string | `link_label=Ver` |
 | `link_new_tab` | `colsRendererLinkNewTab` | bool | `link_new_tab=true` |
@@ -1629,7 +1666,7 @@ field:type:modifier:option=value:option=value...
 | `badges` | `colsRendererBadges` | array | `badges=active\|green,inactive\|red` — `\|`-separated, not `:` |
 | `mask` | `colsMask` | string | `mask=money_brl` |
 | `mask_transform` | `colsMaskTransform` | string | `mask_transform=money_to_float` |
-| `validation` | `colsValidations` | array | `validation=required\|max:255` |
+| `validation` | `colsValidations` | array | `validation=email\|maxLength:255` — `\|`-separated; see [Validation](#validation) for the rules (`required` is not one: use the `required` modifier) |
 | `options` | `colsSelect` | string | `options=yes:Yes,no:No` |
 | `relation` | `colsRelacao` | string | `relation=category` |
 | `relation_display` | `colsRelacaoExibe` | string | `relation_display=name` |
@@ -1642,8 +1679,8 @@ field:type:modifier:option=value:option=value...
 | `upload_allowed_types` | `colsUploadAllowedTypes` | string | `upload_allowed_types=jpg,png,webp` — comma-separated extensions |
 | `image_width` | `colsRendererImageWidth` | int | `image_width=64` |
 | `image_height` | `colsRendererImageHeight` | int | `image_height=64` |
-| `totalizer` | `totalizadorType` (also sets `totalizadorEnabled=true`) | string | `totalizer=sum` (`sum`,`avg`,`count`,`min`,`max`) |
-| `totalizer_format` | `totalizadorFormat` | string | `totalizer_format=currency` |
+| `totalizer` | `totalizadores.columns` (`{field, aggregate}`; also turns `totalizadores.enabled` on) | string | `totalizer=sum` (`sum`,`avg`,`count`,`min`,`max`) — screen-level, not stored in the column (since 1.50.0) |
+| `totalizer_format` / `totalizer_label` | — | string | No effect: the command warns and ignores them — the total uses the column's own renderer |
 | `permission` | `colsPermission` | string | `permission=page::viewCost` — column-level visibility gate, see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions) |
 
 > Any `option=value` key not in `ColumnParser::$keyMap` is stored verbatim under
@@ -1657,7 +1694,7 @@ field:type:modifier:option=value:option=value...
 --column="name:text:required:label=Product Name"
 
 # Email with validation
---column="email:text:required:validation=required|email|max:255"
+--column="email:text:required:validation=email|maxLength:255"
 
 # Price with mask and renderer
 --column="price:number:required:mask=money_brl:renderer=money:currency=BRL:decimals=2"
@@ -1683,8 +1720,8 @@ field:type:modifier:option=value:option=value...
 # Image with custom path and strict types
 --column="photo:image:upload_path=avatars:upload_max_size=1024:upload_allowed_types=jpg,png"
 
-# Number with totalizer
---column="quantity:number:totalizer=sum:totalizer_format=number"
+# Number with totalizer (adds {field: quantity, aggregate: sum} to totalizadores.columns)
+--column="quantity:number:totalizer=sum"
 ```
 
 #### --action (Actions)
@@ -1698,16 +1735,16 @@ name:type:value:icon=icon:color=color:confirm=bool
 
 ```bash
 # Livewire action with confirmation
---action="approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true"
+--action="approve:livewire:approve(%id%):icon=bx bx-check:color=success:confirm=true"
 
-# External link
---action="view:link:https://example.com/products/%id%:icon=bx-show:color=primary"
+# External link (%field% works in link actions only)
+--action="view:link:https://example.com/products/%id%:icon=bx bx-show:color=primary"
 
 # JavaScript action
---action="export:javascript:exportData():icon=bx-download:color=info"
+--action="export:javascript:exportData():icon=bx bx-download:color=info"
 
 # Action with custom confirmation
---action="delete:livewire:deleteCustom(%id%):icon=bx-trash:color=danger:confirm=true:confirmMessage=Are you sure?"
+--action="delete:livewire:deleteCustom(%id%):icon=bx bx-trash:color=danger:confirm=true:confirmMessage=Are you sure?"
 ```
 
 #### --filter (Filters)
@@ -1776,10 +1813,11 @@ ends the value explicitly:
 Every call without the marker parses exactly as it always did; the marker is
 purely additive.
 
-`condition` is one of `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`,
-`ne`, `lt`, `gt`, `lte`, `gte`, `=`) — these are the only operators
-`HasCrudRenderers::getRowStyle()` evaluates at render time; anything else
-(including `LIKE`) is rejected. `style` is an inline CSS declaration list —
+`condition` is one of `==`, `!=`, `>`, `<`, `>=`, `<=`, `*` (or the aliases `eq`,
+`ne`, `lt`, `gt`, `lte`, `gte`, `=`, and `always`/`any`/`true` for `*`) — these
+are the only operators `HasCrudRenderers::getRowStyle()` evaluates at render
+time; anything else (including `LIKE`) is rejected. `*` means "no test": the
+rule applies to every row. `style` is an inline CSS declaration list —
 everything from the 4th colon onward, so it may contain its own colons and
 semicolons.
 
@@ -1800,21 +1838,32 @@ semicolons.
 
 **Format:**
 ```
-type:table:leftCol=rightCol:select=field1,field2:where=condition
+type:table:leftCol=rightCol:select=col:alias,col2 as alias2:distinct
 ```
+
+Saved in the shape the runtime reads — `{type, table, first, second, distinct,
+select: [{column, alias}]}` (see [JOIN Configuration](#join-configuration)):
+
+- `select=` takes `column:alias` or `column as alias`, comma-separated. Without
+  an alias the alias is the column name (`users.name` → `name`).
+- `distinct` as a bare token, or `distinct=true`.
+- Any other `key=value` option — `where=` included — is **refused with an
+  error**: a JOIN has no `WHERE`, and nothing was ever applied for it.
 
 **Examples:**
 
 ```bash
 # LEFT JOIN with users
---join="left:users:products.user_id=users.id:select=name,email"
+--join="left:users:products.user_id=users.id:select=users.name,users.email"
 
-# INNER JOIN with categories
---join="inner:categories:products.category_id=categories.id:select=name as category_name:where=categories.active=1"
+# INNER JOIN with categories, aliased column
+--join="inner:categories:products.category_id=categories.id:select=categories.name as category_name"
 
 # JOIN with DISTINCT
---join="left:suppliers:products.supplier_id=suppliers.id:select=name:distinct=true"
+--join="left:suppliers:products.supplier_id=suppliers.id:select=suppliers.name:supplier_name:distinct"
 ```
+
+The interactive JOIN wizard writes the same shape.
 
 #### --set (General Settings)
 
@@ -1835,19 +1884,23 @@ key=value
 
 #### --permission (Permissions)
 
-**Formato:**
+**Format:**
 ```
-action=permission_string
+key=gate_name
 ```
 
-**Exemplos:**
+The keys are those of [Permissions Configuration](#permissions-configuration):
+`create`, `edit`, `delete`, `restore`, `export`, `import`, `history`,
+`attachments` (a gate name) and the `show*Button` flags (`true`/`false`).
+
+**Examples:**
 
 ```bash
---permission="list=product.index"
 --permission="create=product.create"
 --permission="edit=product.update"
 --permission="delete=product.destroy"
 --permission="export=product.export"
+--permission="showTrashButton=false"
 ```
 
 ### Special Commands
@@ -1863,61 +1916,61 @@ php artisan ptah:config "App\Models\Product" --list
 **Output:**
 
 ```
-═══════════════════════════════════════════════════════
-  Configuration for: App\Models\Product
-═══════════════════════════════════════════════════════
+Configuration for: App\Models\Product
 
-📋 Columns (6)
-───────────────────────────────────────────────────────
-+-------------+---------------+--------+----------+-----+---------+----------+
-| Field       | Label         | Type   | Renderer | Req | Visible | Editable |
-+-------------+---------------+--------+----------+-----+---------+----------+
-| id          | ID            | number | number   | ✗   | ✓       | ✗        |
-| name        | Product Name  | text   | text     | ✓   | ✓       | ✓        |
-| sku         | SKU           | text   | text     | ✓   | ✓       | ✓        |
-| price       | Price         | number | money    | ✓   | ✓       | ✓        |
-| stock       | Stock         | number | number   | ✗   | ✓       | ✓        |
-| status      | Status        | select | badge    | ✓   | ✓       | ✓        |
-+-------------+---------------+--------+----------+-----+---------+----------+
+=== GENERAL SETTINGS ===
++-----------------------+-----------+
+| Setting               | Value     |
++-----------------------+-----------+
+| Display Name          | Products  |
+| Permission Identifier | product   |
+| Cache Enabled         | Yes       |
+| Cache TTL             | 300s      |
+| Export Max Rows       | 10000     |
+| Orientation           | landscape |
+| Paper Size            | N/A       |
++-----------------------+-----------+
 
-⚡ Actions (2)
-───────────────────────────────────────────────────────
-+----------+----------+----------+---------+----------+---------+
-| Name     | Label    | Type     | Color   | Icon     | Confirm |
-+----------+----------+----------+---------+----------+---------+
-| approve  | Approve  | livewire | success | bx-check | ✓       |
-| reject   | Reject   | livewire | danger  | bx-x     | ✓       |
-+----------+----------+----------+---------+----------+---------+
+=== COLUMNS (3) ===
++--------+--------+--------------+---------+------+----------+------------+----------+-----------+
+| Field  | Type   | Label        | In list | Form | Required | Filterable | Renderer | Mask      |
++--------+--------+--------------+---------+------+----------+------------+----------+-----------+
+| name   | text   | Product Name | Yes     | Yes  | Yes      | Yes        | text     | -         |
+| price  | number | Price        | Yes     | Yes  | Yes      | Yes        | money    | money_brl |
+| status | select | Status       | Yes     | Yes  | Yes      | Yes        | badge    | -         |
++--------+--------+--------------+---------+------+----------+------------+----------+-----------+
 
-🔍 Filters (2)
-───────────────────────────────────────────────────────
-+------------+--------+--------+----------+
-| Field      | Label  | Type   | Operator |
-+------------+--------+--------+----------+
-| status     | Status | select | =        |
-| created_at | Date   | date   | >=       |
-+------------+--------+--------+----------+
+=== CUSTOM ACTIONS (1) ===
++---------+----------+---------------+-------------+---------+------------+
+| Name    | Type     | Value         | Icon        | Color   | Permission |
++---------+----------+---------------+-------------+---------+------------+
+| Approve | livewire | approve(%id%) | bx bx-check | success | -          |
++---------+----------+---------------+-------------+---------+------------+
 
-⚙️  General Settings
-───────────────────────────────────────────────────────
-+--------------------+-------+
-| Setting            | Value |
-+--------------------+-------+
-| Cache Enabled      | ✓     |
-| Cache Time         | 60 min|
-| Pagination Enabled | ✓     |
-| Items Per Page     | 25    |
-| Search Enabled     | ✓     |
-| Export Enabled     | ✓     |
-| Soft Deletes       | ✓     |
-| Theme              | light |
-| Compact Mode       | ✗     |
-+--------------------+-------+
+=== PERMISSIONS ===
++---------+-----------------+----------------+
+| Action  | Gate            | Button Visible |
++---------+-----------------+----------------+
+| Create  | product.create  | Yes            |
+| Edit    | product.update  | Yes            |
+| Delete  | product.destroy | Yes            |
+| Export  | product.export  | -              |
+| Restore | -               | Yes            |
++---------+-----------------+----------------+
 ```
+
+`FILTERS` (filterable columns plus custom filters; the `Kind` column says which),
+`CONDITIONAL STYLES` and `JOINS` tables appear between the actions and the
+permissions when there is something to list. There are no pagination, search,
+soft-delete or theme rows: none of those is a config key (see
+[General Settings](#general-settings)).
 
 #### --reset (Reset Configuration)
 
-Removes all configuration and returns to default:
+**Deletes** the saved config of the screen (the `crud_configs` row for that model
+and `--route`) and forgets its cache. It does **not** write defaults back. It always asks for
+confirmation — `--force` does not skip it — and it cannot be undone, so
+`--export` first.
 
 ```bash
 php artisan ptah:config "App\Models\Product" --reset
@@ -1925,7 +1978,7 @@ php artisan ptah:config "App\Models\Product" --reset
 
 **Prompt:**
 ```
-Are you sure you want to reset all configuration for App\Models\Product? [yes/no]
+Are you sure you want to reset configuration for App\Models\Product (global config)? (yes/no) [no]
 > yes
 ✓ Configuration reset successfully!
 ```
@@ -2008,7 +2061,10 @@ Configuration Summary:
 
 #### --only / --skip (Process Specific Sections)
 
-Limits or excludes sections from the configuration:
+Limits or excludes sections from the configuration. Both take a comma-separated
+list, or the option repeated (`--only=columns --only=actions`); a name outside
+the list below is an error. (Before 1.50.0 `--only=columns,actions` matched no
+section, so nothing was processed.)
 
 ```bash
 # Configure only columns and actions
@@ -2100,7 +2156,7 @@ Full configuration saved in the `crud_configs.config` table:
       "colsIsFilterable": true,
       "colsVisibleList": true,
       "colsEditableForm": true,
-      "colsValidations": ["required", "maxLength:255"],
+      "colsValidations": ["maxLength:255"],
       "colsAlign": "text-start"
     },
     {
@@ -2117,7 +2173,7 @@ Full configuration saved in the `crud_configs.config` table:
       "colsIsFilterable": true,
       "colsVisibleList": true,
       "colsEditableForm": true,
-      "colsValidations": ["required", "numeric", "min:0"],
+      "colsValidations": ["numeric", "min:0"],
       "colsAlign": "text-end"
     },
     {
@@ -2125,11 +2181,11 @@ Full configuration saved in the `crud_configs.config` table:
       "colsNomeLogico": "Status",
       "colsTipo": "select",
       "colsRenderer": "badge",
-      "colsRendererBadges": {
-        "active": "green",
-        "inactive": "red",
-        "pending": "yellow"
-      },
+      "colsRendererBadges": [
+        { "value": "active", "label": "Active", "color": "green" },
+        { "value": "inactive", "label": "Inactive", "color": "red" },
+        { "value": "pending", "label": "Pending", "color": "yellow" }
+      ],
       "colsSelect": {
         "Active": "active",
         "Inactive": "inactive",
@@ -2140,7 +2196,7 @@ Full configuration saved in the `crud_configs.config` table:
       "colsIsFilterable": true,
       "colsVisibleList": true,
       "colsEditableForm": true,
-      "colsValidations": ["required", "in:active,inactive,pending"],
+      "colsValidations": ["in:active,inactive,pending"],
       "colsAlign": "text-center"
     },
     {
@@ -2153,33 +2209,33 @@ Full configuration saved in the `crud_configs.config` table:
       "colsSDLabel": "name",
       "colsSDValor": "id",
       "colsSDOrder": "name ASC",
-      "colsSDTipo": "searchdropdown",
+      "colsSDTipo": "model",
       "colsGravar": true,
       "colsRequired": false,
       "colsIsFilterable": true,
       "colsVisibleList": true,
       "colsEditableForm": true,
       "colsAlign": "text-start"
-    }
-  ],
-  "actions": [
+    },
     {
-      "actionName": "approve",
-      "actionLabel": "Approve",
+      "colsNomeFisico": "approve",
+      "colsNomeLogico": "Approve",
+      "colsTipo": "action",
       "actionType": "livewire",
       "actionValue": "approve(%id%)",
-      "actionIcon": "bx-check",
+      "actionIcon": "bx bx-check",
       "actionColor": "success",
       "actionConfirm": true,
       "actionConfirmMessage": "Are you sure you want to approve this product?",
       "actionPermission": "product.approve"
     },
     {
-      "actionName": "reject",
-      "actionLabel": "Reject",
+      "colsNomeFisico": "reject",
+      "colsNomeLogico": "Reject",
+      "colsTipo": "action",
       "actionType": "livewire",
       "actionValue": "reject(%id%)",
-      "actionIcon": "bx-x",
+      "actionIcon": "bx bx-x",
       "actionColor": "danger",
       "actionConfirm": true,
       "actionConfirmMessage": "Are you sure you want to reject this product?",
@@ -2221,13 +2277,12 @@ Full configuration saved in the `crud_configs.config` table:
   ],
   "joins": [
     {
-      "joinTable": "categories",
-      "joinType": "left",
-      "joinLeftColumn": "products.category_id",
-      "joinRightColumn": "categories.id",
-      "joinSelect": ["categories.name as category_name"],
-      "joinDistinct": false,
-      "joinWhere": "categories.active = 1"
+      "type": "left",
+      "table": "categories",
+      "first": "products.category_id",
+      "second": "categories.id",
+      "distinct": false,
+      "select": [{ "column": "categories.name", "alias": "category_name" }]
     }
   ],
   "permissions": {
@@ -2286,7 +2341,7 @@ Properties of each column in `cols[]`:
 | `colsEditableForm` | bool | `true` | Shown in the form. `false` removes the field from the form |
 | `colsReadonly` | bool | `false` | Shown in the form as text, never editable and never saved — even a forged value is dropped (1.48.0). Unlike `colsEditableForm: false`, the person sees the value |
 | `colsAlign` | string | `'text-start'` | Alignment: `text-start`, `text-center`, `text-end` |
-| `colsSource` | string | `''` | Badge indicating SQL source (e.g.: `JOIN categories`) |
+| `colsSource` | string | `''` | Qualified SQL column (e.g.: `categories.name`) used in `WHERE`, `ORDER BY` and search for a column that comes from a JOIN — it takes precedence over `colsOrderBy` for ordering |
 
 ### Cell Style
 
@@ -2294,7 +2349,7 @@ Properties of each column in `cols[]`:
 |-------------|------|--------|----------|
 | `colsCellStyle` | string | `''` | Inline CSS for the cell (e.g.: `background: #FEE;`) |
 | `colsCellClass` | string | `''` | CSS classes for the cell |
-| `colsCellIcon` | string | `''` | Icon in the header (e.g.: `bx-user`, `fa-user`) |
+| `colsCellIcon` | string | `''` | Icon shown in the cell, before the value (not in the header), with its base class (e.g.: `bx bx-user`, `fa fa-user`) |
 | `colsMinWidth` | string | `''` | Minimum width (e.g.: `100px`) |
 
 ### Display and Rendering
@@ -2310,14 +2365,14 @@ Properties of each column in `cols[]`:
 | `colsRendererDecimals` | int | `2` | Decimal places for `money` or `number` renderer |
 | `colsRendererFormat` | string | `''` | Format for `date`/`datetime` renderer (e.g.: `d/m/Y H:i:s`) |
 | `colsRendererMaxChars` | int | `50` | Maximum characters for `truncate` renderer |
-| `colsRendererBadges` | array | `[]` | Value→color map for `badge`/`pill` renderers |
+| `colsRendererBadges` | list | `[]` | List of `{"value", "label", "color"}` entries for the `badge`/`pill` renderers (`color`: `green`, `yellow`, `red`, `blue`, `indigo`, `purple`, `pink`, `gray`; optional `icon`) |
 
 ### Relation
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
 | `colsRelacao` | string | `''` | Eloquent relation method name |
-| `colsRelacaoExibe` | string | `'name'` | Field to display from the relation |
+| `colsRelacaoExibe` | string | `''` | Field to display from the relation (no default — set it) |
 | `colsRelacaoNested` | string | `''` | Nested relation (e.g.: `category.parent.name`) |
 | `colsSDModel` | string | `''` | Model class for SearchDropdown (e.g.: `App\Models\Category`), or `Namespace\Class\method` in service mode |
 | `colsSDTipo` | `'model'\|'service'` | `'model'` | SearchDropdown search mode |
@@ -2350,7 +2405,17 @@ database, and as `''` otherwise (1.47.0). There is no per-column key for it.
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsValidations` | array | `[]` | Array of validation rules: `["required", "email", "max:255"]` |
+| `colsValidations` | array | `[]` | Array of validation rules: `["email", "maxLength:255"]`. Applied only to a non-empty value |
+
+Rules (`FormValidatorService`): `email`, `url`, `integer`, `numeric`, `alpha`,
+`alphaNum`, `cpf`, `cnpj`, `phone`, `ncm`, `min:X`, `max:X`, `between:X,Y`,
+`minLength:X`, `maxLength:X`, `digits:N`, `digitsBetween:N,M`, `regex:pattern`,
+`in:a,b`, `notIn:a,b`, `after:date|today`, `before:date|today`,
+`confirmed:field`, `dateFormat:d/m/Y`, `unique:Model,field`.
+
+- **`required` is not a rule** — it matches nothing. Mark the column with `colsRequired` (or the `required` modifier in `--column`).
+- **`min` / `max` are numeric**: they compare the value, and are skipped when it is not a number. A text length limit is `minLength:N` / `maxLength:N`.
+- **`unique:Target,field[,ignoreId]`**: `Target` is a model class (`App\Models\Product`, or `Product` under `App\Models\`) **or a table name** (`unique:products,sku`). The record being edited is ignored. A target that is neither is **not enforced** — duplicates are accepted: it is logged as a warning and `ptah:config:doctor` reports the rule, but the save is not blocked.
 
 ### Select Options
 
@@ -2413,9 +2478,9 @@ keys that the runtime does not read.)
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsOrderBy` | string | `''` | Custom sort order (e.g.: `FIELD(status, 'pending', 'active', 'inactive')`) |
+| `colsOrderBy` | string | `''` | Column the header sorts by instead of the column itself — a column identifier (e.g.: `categories.name`), **not** an expression: `FIELD(status, ...)` is not accepted |
 | `colsReverse` | bool | `false` | Reverse value order (for arrays) |
-| `colsMetodoCustom` | string | `''` | Custom accessor method in the model |
+| `colsMetodoCustom` | string | `''` | `Class\method(%field%, 'literal')` — calls `method` on `App\Services\Class` (the `App\Services\` prefix is always added; `/` also separates namespaces) with the row's field values; the result is shown as text (`colsMetodoRaw: true` for HTML). A column with it cannot be sorted |
 | `colsPlaceholder` | string | `''` | Input placeholder |
 | `colsDefaultValue` | mixed | `null` | Default value on create |
 
@@ -2423,33 +2488,34 @@ keys that the runtime does not read.)
 
 ## Action Configuration
 
-Properties of each action in `actions[]`:
+A row action is an entry of `cols` with `colsTipo: "action"` (there is no
+top-level `actions` list). Its label is `colsNomeLogico`; the rest is read from these keys:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `actionName` | string | — | Unique action name (required) |
-| `actionLabel` | string | `ucfirst(actionName)` | Display label on the button |
-| `actionType` | string | `'livewire'` | Type: `livewire`, `link`, `javascript` |
+| `colsNomeLogico` | string | — | Label (button tooltip, and the text shown when there is no icon) |
+| `actionType` | string | `'javascript'` | Type: `livewire`, `link`, `javascript` |
 | `actionValue` | string | — | Action value/command (required) |
-| `actionIcon` | string | `''` | Button icon (e.g.: `bx-check`, `fa-check`) |
+| `actionIcon` | string | `''` | Button icon with its base class (e.g.: `bx bx-check`, `fa fa-check`). Since 1.50.0 a bare Boxicons glyph (`bx-check`) gets the `bx` base when rendered, but the editor's preview does not |
 | `actionColor` | string | `'primary'` | Button color: `primary`, `success`, `danger`, `warning`, `info`, `secondary` |
 | `actionConfirm` | bool | `false` | Ask before running (`wire:confirm` on livewire actions, `confirm()` on link/javascript). Read since 1.41.1 |
 | `actionConfirmMessage` | string | `''` | Confirmation text; blank uses `row_action_confirm` ("Are you sure?") |
 | `actionPermission` | string | `''` | Who may SEE the button (read since 1.41.1): a Gate name, or — with the Permissions module on — a ptah ACL key `object:action` (`agenda:update` → `ptah_can('agenda', 'update')`, since 1.43.0). A `livewire` action still reaches your method — check there too |
 
 **Supported placeholders in `actionValue`:**
-- `%id%` → Record ID
-- `%field%` → Value of any field (e.g.: `%email%`, `%name%`)
+- `%id%` → Record ID (all action types)
+- `%field%` → Value of any field of the row (e.g.: `%email%`, `%name%`) — **`link` actions only** (since 1.50.0), URL-encoded; a column denied to the user or a model `$hidden` attribute becomes an empty string. In `livewire` and `javascript` actions only `%id%` is replaced, because the value would land inside an expression
 
 **Examples:**
 
 ```json
 {
-  "actionName": "approve",
-  "actionLabel": "Approve",
+  "colsNomeFisico": "approve",
+  "colsNomeLogico": "Approve",
+  "colsTipo": "action",
   "actionType": "livewire",
   "actionValue": "approve(%id%)",
-  "actionIcon": "bx-check",
+  "actionIcon": "bx bx-check",
   "actionColor": "success",
   "actionConfirm": true,
   "actionConfirmMessage": "Approve this record?",
@@ -2459,22 +2525,24 @@ Properties of each action in `actions[]`:
 
 ```json
 {
-  "actionName": "viewExternal",
-  "actionLabel": "View",
+  "colsNomeFisico": "viewExternal",
+  "colsNomeLogico": "View",
+  "colsTipo": "action",
   "actionType": "link",
   "actionValue": "https://external.com/products/%id%",
-  "actionIcon": "bx-link-external",
+  "actionIcon": "bx bx-link-external",
   "actionColor": "info"
 }
 ```
 
 ```json
 {
-  "actionName": "export",
-  "actionLabel": "Export",
+  "colsNomeFisico": "export",
+  "colsNomeLogico": "Export",
+  "colsTipo": "action",
   "actionType": "javascript",
   "actionValue": "exportData()",
-  "actionIcon": "bx-download",
+  "actionIcon": "bx bx-download",
   "actionColor": "secondary"
 }
 ```
@@ -2552,7 +2620,7 @@ Properties of each style rule in `contitionStyles[]` — the only key
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
 | `field` | string | — | Field to check (required). Legacy alias: `colsNomeFisico` |
-| `condition` | string | `'=='` | Operator: `==`, `!=`, `>`, `<`, `>=`, `<=` (aliases: `eq`, `ne`, `lt`, `gt`, `lte`, `gte`, `=`). `LIKE` is **not** valid — the renderer's `match()` has no arm for it |
+| `condition` | string | `'=='` | Operator: `==`, `!=`, `>`, `<`, `>=`, `<=`, `*` (aliases: `eq`, `ne`, `lt`, `gt`, `lte`, `gte`, `=`; `always`, `any`, `true` for `*`). `*` applies the rule to every row (no test). `LIKE` is **not** valid — the renderer's `match()` has no arm for it |
 | `value` | mixed | — | Comparison value (required) |
 | `style` | string | — | Inline CSS declaration list applied to the `<tr style="...">` (required), e.g. `"background:#FEE2E2;color:#991B1B;font-weight:bold;"` |
 
@@ -2580,35 +2648,41 @@ Properties of each JOIN in `joins[]`:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `joinTable` | string | — | Table to join (required) |
-| `joinType` | string | `'left'` | JOIN type: `left`, `inner` |
-| `joinLeftColumn` | string | — | Column from the main table (required) |
-| `joinRightColumn` | string | — | Column from the joined table (required) |
-| `joinSelect` | array | `[]` | Fields to select: `["table.field as alias"]` |
-| `joinDistinct` | bool | `false` | Use `DISTINCT` |
-| `joinWhere` | string | `''` | Additional `WHERE` condition (e.g.: `table.active = 1`) |
+| `table` | string | — | Table to join (required) |
+| `type` | string | `'left'` | JOIN type: `left`, `inner` |
+| `first` | string | — | Column from the main table, qualified (required) |
+| `second` | string | — | Column from the joined table, qualified (required) |
+| `select` | list | `[]` | Extra columns: `[{"column": "table.field", "alias": "alias"}]` — both must be plain identifiers, an unsafe one is skipped |
+| `distinct` | bool | `false` | Use `DISTINCT` |
+
+An entry missing `table`, `first` or `second` is ignored, and a second JOIN on
+the same table is skipped. There is no `WHERE` on a JOIN (the `joinTable`/`joinType`/
+`joinLeftColumn`/`joinRightColumn`/`joinSelect`/`joinDistinct`/`joinWhere` names
+older versions of this guide showed are not read by anything). The same JOINs
+apply to the export.
 
 **Example:**
 
 ```json
 {
-  "joinTable": "categories",
-  "joinType": "left",
-  "joinLeftColumn": "products.category_id",
-  "joinRightColumn": "categories.id",
-  "joinSelect": ["categories.name as category_name", "categories.slug as category_slug"],
-  "joinDistinct": false,
-  "joinWhere": "categories.active = 1"
+  "type": "left",
+  "table": "categories",
+  "first": "products.category_id",
+  "second": "categories.id",
+  "distinct": false,
+  "select": [
+    { "column": "categories.name", "alias": "category_name" },
+    { "column": "categories.slug", "alias": "category_slug" }
+  ]
 }
 ```
 
 **Resulting SQL:**
 
 ```sql
-LEFT JOIN categories 
-  ON products.category_id = categories.id 
-  AND categories.active = 1
-SELECT categories.name as category_name, categories.slug as category_slug
+SELECT products.*, categories.name AS category_name, categories.slug AS category_slug
+FROM products
+LEFT JOIN categories ON products.category_id = categories.id
 ```
 
 ---
@@ -2625,20 +2699,21 @@ ignored by the screen.
 | `displayNameSingular` / `displayNameGender` | string / `m`\|`f` | — / `m` | Modal title for one record; `f` → "Nova" (BaseCrud.md § Modal title) |
 | `companyField` | string | `'company_id'` | Column for the multi-tenant filter |
 | `quickDateColumn` | string | `'created_at'` | Column the quick date filter uses |
-| `tableClass` / `theadClass` | string | `''` | Extra CSS classes |
+| `tableClass` / `theadClass` | string | `'table'` / `'ptah-c-thead'` | Classes of the `<table>` / `<thead>`. They **replace** the defaults (they do not add to them); an empty string removes the default class |
 | `configLinkLinha` | string | — | Row link template (`/products/%id%`) |
 | `groupBy` / `groupBreak` | string | `null` | Group rows / group break with subtotals |
 | `totalizadores` | object | disabled | Footer totals |
 | `masterDetail` | list | `null` | Detail grid under a row |
 | `bulkActions` | list | `[]` | Custom bulk actions |
-| `lifecycleHooks` | object | `{}` | `beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate` |
+| `lifecycleHooks` | object | `{}` | `beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete` |
 | `uiPreferences.perPage` | int | `ptah.crud.per_page` (25) | Default rows per page (until the user picks one) |
 | `uiPreferences.compactMode` | bool | `false` | Compact rows by default |
 | `exportConfig.enabled` | bool | `false` | Export button |
-| `exportConfig.maxRows` | int | `10000` | Maximum exportable rows |
+| `exportConfig.maxRows` | int | `5000` | Maximum exportable rows |
 | `exportConfig.orientation` | string | `'landscape'` | PDF orientation: `landscape`, `portrait` |
-| `exportConfig.formats` | list | `['excel', 'pdf']` | Enabled formats |
-| `exportConfig.asyncThreshold` | int | `1000` | Rows above which export is queued |
+| `exportConfig.formats` | list | `['excel']` | Formats offered in the export menu (`excel`, `pdf`) |
+| `exportConfig.asyncThreshold` | int | `0` (the editor writes `1000`) | Since 1.50.0, rows above which an export goes to the queue on its own. Needs `asyncExport.enabled`, a real queue (not `sync`) and the `ptah_exports` table; otherwise the export stays synchronous. `0` = never |
+| `exportConfig.asyncExport.enabled` / `.excel` / `.pdf` | bool | `false` / `true` / `false` | Opt-in to queued export; `excel` (default on) and `pdf` (default off) say which formats may be queued (since 1.50.0) |
 | `importConfig.enabled` | bool | `false` | Spreadsheet import button (see BaseCrud.md § Import) |
 | `importConfig.mode` / `importConfig.key` | string | `create` / — | `upsert` updates the record whose `key` matches |
 | `importConfig.maxRows` / `importConfig.maxKb` | int | `2000` / `10240` | Limits per file |
@@ -2654,14 +2729,16 @@ ignored by the screen.
 | `broadcast.event` | string | `'.page{Model}Observer'` | Event name |
 
 Pagination and global search are always on; soft deletes come from the
-model's `SoftDeletes` trait, not from the config. `cacheStrategy` is stored by
-the editor but not applied (see KnownLimitations.md).
+model's `SoftDeletes` trait, not from the config. `cacheStrategy`
+(`enabled`, `ttl`) is read for the cache of the config lookup only — never for
+the screen's data (see [Cache and Invalidation](#cache-and-invalidation)).
 
 `ptah:config --set` writes any of these paths (`--set="uiPreferences.perPage=50"`)
 and still accepts the older names it used to document, translating them:
 `itemsPerPage`/`perPage` → `uiPreferences.perPage`, `compactMode` →
 `uiPreferences.compactMode`, `exportEnabled`/`exportMaxRows`/`exportFormats`/
-`pdfOrientation` → `exportConfig.*`, `broadcastEnabled`/`Channel`/`Event` →
+`pdfOrientation` → `exportConfig.*` (a list key takes a comma-separated value:
+`--set="exportFormats=excel,pdf"` is stored as `["excel", "pdf"]`), `broadcastEnabled`/`Channel`/`Event` →
 `broadcast.*`. Keys no code reads (`cacheEnabled`, `cacheTtl`,
 `paginationEnabled`, `searchEnabled`, `softDeletes`, `striped`, `hover`…) are
 refused with a warning. `ptah:config:doctor --fix` moves the old names out of
@@ -2771,14 +2848,14 @@ are never fired.
 
 ```bash
 php artisan ptah:config "App\Models\Product" \
-  --column="name:text:required:label=Product Name:validation=required|max:255" \
-  --column="sku:text:required:label=SKU:validation=required|unique:products,sku" \
-  --column="price:number:required:label=Price:mask=money_brl:renderer=money:currency=BRL:decimals=2:validation=required|numeric|min:0:totalizer=sum" \
+  --column="name:text:required:label=Product Name:validation=maxLength:255" \
+  --column="sku:text:required:label=SKU:validation=unique:products,sku" \
+  --column="price:number:required:label=Price:mask=money_brl:renderer=money:currency=BRL:decimals=2:validation=numeric|min:0:totalizer=sum" \
   --column="cost:number:label=Cost:mask=money_brl:renderer=money:currency=BRL:decimals=2:validation=numeric|min:0:totalizer=sum" \
   --column="stock:number:label=Stock:renderer=number:decimals=0:validation=integer|min:0" \
   --column="status:select:required:options=active:Active,inactive:Inactive:renderer=badge:badges=active|green,inactive|red" \
   --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
-  --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=info" \
+  --action="duplicate:livewire:duplicate(%id%):icon=bx bx-copy:color=info" \
   --filter="status:select:options=active,inactive" \
   --style="stock:<:10:background:#FEF3C7;color:#92400E;font-weight:bold;" \
   --set="displayName=Products" \
@@ -2792,8 +2869,8 @@ php artisan ptah:config "App\Models\Product" \
 
 ```bash
 php artisan ptah:config "App\Models\Contact" \
-  --column="name:text:required:label=Full Name:validation=required|max:255" \
-  --column="email:text:required:label=Email:validation=required|email|unique:contacts,email" \
+  --column="name:text:required:label=Full Name:validation=maxLength:255" \
+  --column="email:text:required:label=Email:validation=email|unique:contacts,email" \
   --column="phone:text:label=Phone:mask=phone:validation=phone" \
   --column="company:text:label=Company" \
   --column="position:text:label=Position" \
@@ -2801,8 +2878,8 @@ php artisan ptah:config "App\Models\Contact" \
   --column="lead_score:number:label=Lead Score:renderer=number:decimals=0:validation=integer|min:0|max:100" \
   --column="last_contact_at:datetime:label=Last Contact:renderer=datetime" \
   --column="notes:textarea:label=Notes" \
-  --action="sendEmail:livewire:sendEmail(%id%):icon=bx-envelope:color=primary" \
-  --action="scheduleCall:livewire:scheduleCall(%id%):icon=bx-phone:color=info" \
+  --action="sendEmail:livewire:sendEmail(%id%):icon=bx bx-envelope:color=primary" \
+  --action="scheduleCall:livewire:scheduleCall(%id%):icon=bx bx-phone:color=info" \
   --filter="lead_status:select:options=new,contacted,qualified,lost" \
   --filter="lead_score:number:operator=>=:label=Minimum Score" \
   --style="lead_status:==:lost:background:#FEE2E2;color:#991B1B;" \
@@ -2818,18 +2895,18 @@ php artisan ptah:config "App\Models\Contact" \
 
 ```bash
 php artisan ptah:config "App\Models\Post" \
-  --column="title:text:required:label=Title:validation=required|max:255" \
-  --column="slug:text:required:label=Slug:validation=required|unique:posts,slug" \
-  --column="excerpt:textarea:label=Excerpt:validation=max:500" \
-  --column="content:textarea:required:label=Content:validation=required" \
+  --column="title:text:required:label=Title:validation=maxLength:255" \
+  --column="slug:text:required:label=Slug:validation=unique:posts,slug" \
+  --column="excerpt:textarea:label=Excerpt:validation=maxLength:500" \
+  --column="content:textarea:required:label=Content" \
   --column="featured_image:image:label=Featured Image:upload_path=posts:upload_max_size=2048:upload_allowed_types=jpg,png,webp" \
   --column="author_id:searchdropdown:required:label=Author:relation=author:sd_model=App\Models\User:sd_value=id:sd_label=name" \
   --column="category_id:searchdropdown:label=Category:relation=category:sd_model=App\Models\Category:sd_value=id:sd_label=name" \
   --column="status:select:required:options=draft:Draft,published:Published,scheduled:Scheduled:renderer=badge:badges=draft|gray,published|green,scheduled|blue" \
   --column="published_at:datetime:label=Publish Date:renderer=datetime" \
   --column="views:number:readonly:label=Views:renderer=number:decimals=0" \
-  --action="preview:link:https://blog.com/posts/%slug%:icon=bx-show:color=info" \
-  --action="duplicate:livewire:duplicate(%id%):icon=bx-copy:color=secondary" \
+  --action="preview:link:https://blog.com/posts/%slug%:icon=bx bx-show:color=info" \
+  --action="duplicate:livewire:duplicate(%id%):icon=bx bx-copy:color=secondary" \
   --filter="status:select:options=draft,published,scheduled" \
   --style="status:==:draft:background:#F3F4F6;color:#6B7280;" \
   --set="displayName=Blog Posts" \
@@ -3020,7 +3097,7 @@ import can't reintroduce an orphan key. See [Commands.md](Commands.md#ptahconfig
 
 ```bash
 # Clear cache manually
-php artisan cache:forget "crud_config_Product"
+php artisan cache:forget "ptah.crud.Product"
 
 # Or clear all cache
 php artisan cache:clear
@@ -3117,12 +3194,12 @@ php artisan ptah:config App\Models\Product --column=name:text
 # ✅ Correct
 php artisan ptah:config "App\Models\Product" --column="name:text"
 
-# ❌ Wrong (pipe not escaped)
---column="email:text:validation=required|email"
+# ✅ Correct — inside quotes (double or single) the pipe needs no escape
+--column="email:text:validation=email|maxLength:255"
+--column='email:text:validation=email|maxLength:255'
 
-# ✅ Correct (escaped pipe or single quotes)
---column="email:text:validation=required\|email"
---column='email:text:validation=required|email'
+# ❌ Wrong (no quotes: the shell reads | as a pipe)
+--column=email:text:validation=email|maxLength:255
 ```
 
 ### Problem 6: Modal does not save changes
@@ -3146,17 +3223,21 @@ php artisan tinker
 >>> DB::table('crud_configs')->where('model', 'Product')->first()
 ```
 
-### Problem 7: Import does not overwrite existing config
+### Problem 7: Import does not seem to change the screen
 
 **Symptoms:**
 - Import executed but old config remains
 
-**Cause:** Need to use `--force`
+**Cause:** `--import` always overwrites the saved config — `--force` is not needed and has no effect. The usual suspect is a different scope: the import went to the global config while the screen has a route-specific one, or the other way round.
 
 **Solution:**
 
 ```bash
-php artisan ptah:config "App\Models\Product" --import=config/cruds/product.json --force
+# Import into the right scope — the file's own route (an export-all envelope) or --route
+php artisan ptah:config "App\Models\Product" --import=config/cruds/product.json --route=products
+
+# Check what is saved for that scope
+php artisan ptah:config "App\Models\Product" --list --route=products
 ```
 
 ---

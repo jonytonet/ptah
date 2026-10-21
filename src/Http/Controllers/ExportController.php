@@ -14,6 +14,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\CrudJoins;
 use Ptah\Support\ExportOwner;
 use Ptah\Support\ModelKey;
 use Ptah\Support\PdfExportLayout;
@@ -124,14 +125,16 @@ class ExportController
             abort(403, 'No exportable column is authorized for the current user.');
         }
 
-        $query = $model::query()->whereIn($pk, $ids);
+        $query = $model::query();
+        CrudJoins::apply($query, $model, (array) ($payload['joins'] ?? []));
+        $query->whereIn($model->getTable().'.'.$pk, $ids);
 
         // Re-apply the listing's primary sort when it is a real column (relation
         // sorts degrade to primary-key order — see docs).
         $order = (string) ($payload['order'] ?? $pk);
         $direction = strtoupper((string) ($payload['direction'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
         if (Schema::hasColumn($model->getTable(), $order)) {
-            $query->orderBy($order, $direction);
+            $query->orderBy($model->getTable().'.'.$order, $direction);
         }
 
         $modelName = class_basename($modelClass);

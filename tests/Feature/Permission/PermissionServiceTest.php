@@ -296,6 +296,28 @@ class PermissionServiceTest extends TestCase
         );
     }
 
+    /**
+     * 1.49.1: the documented LIST format removed every binding of the role and
+     * only then failed. It must be refused before any row is touched.
+     */
+    #[Test]
+    public function a_list_shaped_binding_set_is_refused_before_anything_is_removed(): void
+    {
+        $role = $this->makeRole();
+        $this->assign($this->userId, $role);
+        $roleService = new RoleService;
+        $obj = PageObject::where('obj_key', 'products.index')->firstOrFail();
+        $roleService->syncPageBindings($role, [$obj->id => ['can_read' => true]]);
+
+        try {
+            $roleService->syncPageBindings($role, [['page_object_id' => $obj->id, 'can_read' => true]]);
+            $this->fail('A list must be refused.');
+        } catch (\InvalidArgumentException) {
+        }
+
+        $this->assertTrue($this->service->check($this->userId, 'products.index', 'read'), 'Nada pode ter sido removido.');
+    }
+
     // ── is_active is respected by the gate, with immediate cache invalidation ──
 
     #[Test]

@@ -7,6 +7,93 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.50.0] - 2026-10-21
+
+A full docs audit against the code (BaseCrud.md, Configuration.md,
+Permissions.md, Commands.md — about 145 confirmed divergences), and the code
+fixed where the docs described something reasonable the code did not do.
+Hosts' AI agents follow the docs to the letter; the docs had drifted.
+
+### Fixed - behaviour the docs promised and the code did not deliver
+
+- **`ptah:permission:sync --role --grant`** wrote all four flags on every
+  synced screen, so `--grant=read,update` REVOKED create/delete a role already
+  had. It now only adds; `--key=` limits it to given screens.
+- **`ptah:menu-sync --fresh`** deleted every menu row — editor-created items
+  included — without asking. It asks now (`--force` for scripts); the forge
+  hints and the docs no longer suggest it (plain sync, or `--prune`).
+- **`ptah:config --only` / `--skip`** took `columns,actions` as one unknown
+  name: nothing was processed and it still said "saved". Comma lists work;
+  an unknown section is an error.
+- **`unique:products,sku`** (a table, as the docs showed) was skipped in
+  silence — the rule only took a model class. Both work now; a target that is
+  neither is logged and `ptah:config:doctor` reports it.
+- **`--join=`** stored `select=` as a string nothing read and dropped
+  `distinct=true` and `where=`. It now stores the runtime shape
+  (`select: [{column, alias}]`), honours `distinct=true`, and refuses `where=`.
+  The interactive JOIN wizard wrote a dead format (`joinTable`…); fixed too.
+- **`totalizer=`** on a `--column` wrote per-column keys the footer never
+  read; it now goes to `totalizadores.columns`. The **visual editor's
+  Totalizer sub-tab** had the same defect — a total set there never appeared.
+  It now reads and writes `totalizadores.columns` (a total configured outside
+  the editor on a field it does not list is kept); its Format and Label
+  fields, which nothing read, are gone — the total uses the column's renderer.
+- **Exports dropped columns from JOINs** — the file was rebuilt without the
+  joins. `Ptah\Support\CrudJoins` is now shared by the listing and both
+  exports.
+- **`exportConfig.asyncThreshold`** and **`asyncExport.excel/pdf`** were
+  written by the editor and read by nothing. Above the threshold the export
+  now queues itself (when a real queue exists); PDF can be queued.
+- **`%field%` in a row action's `actionValue`** — only `%id%` was replaced.
+  A `link` action now fills `%field%`, URL-encoded (denied columns and
+  `$hidden` attributes never); `livewire`/`javascript` keep `%id%` only, since
+  a field value would land inside a JS expression.
+- **Bulk actions on a screen mounted with a model key** (`Product`,
+  `Catalog/Product`) died with "Class not found" (`new ($this->model)`).
+- **`ptah.auth.two_factor` / `remember_me` / `session_protection`** were in
+  the config and read by nothing. `two_factor=false` now hides and blocks 2FA
+  SETUP (an account that already has 2FA is still challenged and can turn it
+  off); `remember_me=false` hides "remember me"; `session_protection=false`
+  hides the sessions tab. `crud.soft_deletes` is now `ptah:forge`'s default.
+- **"Comfortable" density** chosen for a screen reverted to the profile's on
+  the next load. Preferences blob `2.3.0`; older blobs migrate as before.
+- **Boxicons without the base class** (`icon=bx-check`, as every example
+  wrote it) never showed. The base `bx` is added when missing.
+- **`syncPageBindings()` with a list** (the documented format) removed every
+  binding of the role, then failed. A key that is not a page object id is now
+  refused before any row is touched.
+- **`ptah:config --force`** did nothing; it now says so. `--set
+  exportFormats=excel,pdf` is stored as a list (it was refused).
+
+### Added - `ptah:config:doctor` checks
+
+A class-based hook outside `ptah.crud.hook_namespaces` (refused at save and
+swallowed — the save ran without it) is an **error**; a `unique:` rule with no
+model or table is a warning.
+
+### Removed - config keys nothing read
+
+`paths.actions`, `paths.livewire`, `api.docs`, `forge.prefix`,
+`forge.tailwind`, `scaffold.layout`, `scaffold.auth_layout`,
+`crud.confirm_delete`, `auth.register_enabled`, `company.logo_path`,
+`company.address_fields`. A published `config/ptah.php` that still has them
+is unaffected.
+
+### Docs
+
+Every finding of the audit, among them: `@endptahCan` (not `@endPtahCan`, a
+compile error); `permissions.create|edit|delete|export` are Gate names (a
+`false` there blocked nothing — `show*Button: false` does); BaseCrud has no
+`canCreate`/`readOnly` mount parameters (they gated nothing); `allow_guest`
+grants EVERYTHING to guests; the permission map keys are `create/read/…`;
+`colsRendererBadges` is a list; `whereHas` + `colRelation` for relation
+filters; `colsValidations` has no `required` and `min`/`max` are numeric;
+`colsSDMode` is not a modal mode; the Facade's real signatures.
+
+**Check:** `ptah:menu-sync --fresh` and `ptah:permission:sync --grant` in a
+deploy script — the first now asks (add `--force`), the second no longer
+revokes.
+
 ## [1.49.0] - 2026-10-21
 
 ### Security - upgrade every host: configuration no longer names what PHP runs

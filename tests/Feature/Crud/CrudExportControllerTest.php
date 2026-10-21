@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\Crud;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Exports\CrudExport;
 use Ptah\Models\CrudConfig;
 use Ptah\Tests\TestCase;
 
@@ -90,5 +93,37 @@ class CrudExportControllerTest extends TestCase
         $this->putToken('good', ['ids' => [$a->id, $b->id]]);
 
         $this->get(route('ptah.export.download', ['token' => 'good']))->assertOk();
+    }
+
+    /** 1.50.0: a column from a JOIN left the exported file empty. */
+    #[Test]
+    public function a_joined_column_reaches_the_exported_file(): void
+    {
+        Excel::fake();
+        Carbon::setTestNow('2026-10-21 10:00:00');
+        $this->configureExportStub();
+        $ownerId = DB::table('users')->insertGetId([
+            'name' => 'Dona Maria', 'email' => 'dm'.uniqid().'@ex.com', 'password' => 'x', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $a = ExportStub::create(['name' => 'Alpha', 'status' => 'active', 'amount' => 1]);
+        DB::table('items')->where('id', $a->id)->update(['owner_id' => $ownerId]);
+
+        $this->putToken('joined', [
+            'ids' => [$a->id],
+            'columns' => [['field' => 'name', 'label' => 'Name', 'type' => 'text'], ['field' => 'owner_name', 'label' => 'Owner', 'type' => 'text']],
+            'joins' => [['type' => 'left', 'table' => 'users', 'first' => 'items.owner_id', 'second' => 'users.id',
+                'select' => [['column' => 'users.name', 'alias' => 'owner_name']]]],
+        ]);
+
+        $this->get(route('ptah.export.download', ['token' => 'joined']))->assertOk();
+
+        Excel::assertDownloaded(
+            'exportstub-'.now()->format('Y-m-d-His').'.xlsx',
+            function (CrudExport $export) {
+                $row = $export->query()->first();
+
+                return $export->map($row) === ['Alpha', 'Dona Maria'];
+            }
+        );
     }
 }

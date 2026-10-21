@@ -186,13 +186,13 @@ class PermissionSyncCommandTest extends TestCase
         $this->assertSame(1, RolePermission::where('role_id', $role->id)->count());
 
         $pageObject = PageObject::where('obj_key', 'pageWidget')->firstOrFail();
-        // Second run's --grant=create replaces (upserts) the binding, so read from
-        // the first run is no longer present, but the row itself was not duplicated.
+        // 1.50.0: the second --grant ADDS to the binding (it used to replace it
+        // and drop the first run's read); still one row, never duplicated.
         $this->assertDatabaseHas('ptah_role_permissions', [
             'role_id' => $role->id,
             'page_object_id' => $pageObject->id,
             'can_create' => 1,
-            'can_read' => 0,
+            'can_read' => 1,
         ]);
     }
 
@@ -249,5 +249,35 @@ class PermissionSyncCommandTest extends TestCase
         $this->assertDatabaseMissing('ptah_pages', ['slug' => 'Widget']);
         $this->assertDatabaseCount('ptah_page_objects', 0);
         $this->assertDatabaseCount('ptah_role_permissions', 0);
+    }
+
+    /** 1.50.0: --grant=read,update revoked the create/delete the role held. */
+    #[Test]
+    public function grant_adds_and_never_revokes(): void
+    {
+        $this->seedConfig('Widget', 'pageWidget');
+        $role = Role::create(['name' => 'Editor', 'is_active' => true]);
+        $this->artisan('ptah:permission:sync --role=Editor --grant=create,delete')->assertExitCode(0);
+
+        $this->artisan('ptah:permission:sync --role=Editor --grant=read')->assertExitCode(0);
+
+        $this->assertDatabaseHas('ptah_role_permissions', [
+            'role_id' => $role->id, 'can_create' => 1, 'can_read' => 1, 'can_update' => 0, 'can_delete' => 1,
+        ]);
+    }
+
+    #[Test]
+    public function key_limits_the_grant_to_those_screens(): void
+    {
+        $this->seedConfig('Widget', 'pageWidget');
+        $this->seedConfig('Gadget', 'pageGadget');
+        $role = Role::create(['name' => 'Editor', 'is_active' => true]);
+
+        $this->artisan('ptah:permission:sync --role=Editor --grant=read --key=pageGadget')->assertExitCode(0);
+
+        $gadget = PageObject::where('obj_key', 'pageGadget')->firstOrFail();
+        $widget = PageObject::where('obj_key', 'pageWidget')->firstOrFail();
+        $this->assertDatabaseHas('ptah_role_permissions', ['role_id' => $role->id, 'page_object_id' => $gadget->id]);
+        $this->assertDatabaseMissing('ptah_role_permissions', ['role_id' => $role->id, 'page_object_id' => $widget->id]);
     }
 }

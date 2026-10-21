@@ -47,7 +47,7 @@ The permissions module creates the admin user. **Copy the generated password sho
 ```bash
 php artisan ptah:forge Task --fields="title:string,done:boolean,due_at:datetime:nullable"
 php artisan migrate
-php artisan ptah:menu-sync --fresh
+php artisan ptah:menu-sync
 ```
 
 One command created: model, migration, DTO, repository (+ interface), service, controller, requests, resource, Livewire view, route and the CRUD configuration in the database.

@@ -41,6 +41,20 @@ class GeneralParser
         'pdfPaperSize', 'theme',
     ];
 
+    /** Config paths whose value is a list: `--set` splits them on commas. */
+    private const LIST_KEYS = ['exportConfig.formats'];
+
+    public static function isListKey(string $target): bool
+    {
+        return in_array($target, self::LIST_KEYS, true);
+    }
+
+    /** @return list<string> */
+    public static function splitList(string $value): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', $value)), fn ($v) => $v !== ''));
+    }
+
     /**
      * The config path a `--set` key is written to, or null when it is one the
      * runtime never reads. A dotted key (`uiPreferences.perPage`) is a path.
@@ -70,7 +84,11 @@ class GeneralParser
             }
 
             [$key, $value] = explode('=', $setting, 2);
-            $config[$key] = $this->castValue($value);
+            // A list-valued key (1.50.0): `exportFormats=excel,pdf` was stored
+            // as the string "excel,pdf", which the validator refuses.
+            $config[$key] = self::isListKey((string) self::targetKey($key))
+                ? self::splitList($value)
+                : $this->castValue($value);
         }
 
         return $config;

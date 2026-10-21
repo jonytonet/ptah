@@ -30,7 +30,7 @@
 19. [Multi-tenant (companyFilter)](#multi-tenant-companyfilter)
 20. [Totalisers](#totalisers)
 21. [Export](#export) · [Import](#import) · [Record History](#record-history) · [Board and Calendar](#board-and-calendar-views) · [Attachments](#attachments)
-22. [User Preferences (V2.1)](#user-preferences-v21)
+22. [User Preferences (V2.3)](#user-preferences-v23)
 23. [Livewire Events](#livewire-events)
 24. [Permissions](#permissions)
 25. [Error Recovery](#error-recovery)
@@ -359,7 +359,8 @@ a hard delete has no undo option, since there is nothing left to restore.
 
 | Method | Parameters | Description |
 |---|---|---|
-| `export()` | `string $format = 'excel'` | Starts export (sync or async) |
+| `export()` | `string $format = 'excel'` | Synchronous export (download token) |
+| `queueExport()` | `string $format = 'excel'` | Queued export, for large result sets |
 
 ### Formatting
 
@@ -367,7 +368,7 @@ a hard delete has no undo option, since there is nothing left to restore.
 |---|---|---|
 | `formatCell()` | `array $col, mixed $row` | Formats the value of a cell |
 | `getRowStyle()` | `mixed $row` | Returns inline CSS based on `contitionStyles` |
-| `getDefaultPermissionIdentifier()` | — | E.g.: `"products.index"` |
+| `getDefaultPermissionIdentifier()` | — | `strtolower(model).'.index'` — e.g. `"product.index"` (no pluralisation) |
 | `updateTrashedCount()` | — | Updates `$trashedCount` |
 
 ---
@@ -384,10 +385,9 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
   "companyField": "company_id",
   "quickDateColumn": "created_at",
   "permissions": {
-    "create": true,
-    "edit": true,
-    "delete": true,
-    "export": true
+    "permissionIdentifier": "product.index",
+    "showDeleteButton": false,
+    "export": "export-products"
   },
   "uiPreferences": {
     "compactMode": false,
@@ -414,33 +414,33 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsRequired` | `'S'\|'N'` | Required in the form |
 | `colsHelper` | `string\|null` | Legacy formatting helper — see [Helpers](#cell-formatting-helpers) |
 | `colsRenderer` | `string\|null` | Renderer DSL — `badge`, `pill`, `boolean`, `money`, `link`, `image`, `truncate` |
-| `colsRendererBadges` | `array\|null` | Map `["value" => "color"]` for `badge`/`pill` |
+| `colsRendererBadges` | `array\|null` | List of `{"value", "label", "color", "icon"}` for `badge`/`pill` — see [Badge / Pill](#badge--pill) |
 | `colsCellStyle` | `string\|null` | Inline CSS on the cell `<span>` |
 | `colsCellClass` | `string\|null` | Additional Tailwind classes on the cell |
-| `colsCellIcon` | `string\|null` | Icon class prefixed to the cell content **and the `<th>` header**. Supports Boxicons (`bx bx-*`) and FontAwesome (`fas fa-*`) |
-| `colsMinWidth` | `string\|null` | Minimum th width (e.g. `"120px"`) |
-| `colsMask` | `string\|null` | Mask: `cpf`, `cnpj`, `phone`, `cep`, `currency`, `percent` |
+| `colsCellIcon` | `string\|null` | Icon class prefixed to the cell content (not the header). Supports Boxicons (`bx bx-*`) and FontAwesome (`fas fa-*`) |
+| `colsMinWidth` | `string\|null` | Minimum width of the cell (`<td>`), e.g. `"120px"` |
+| `colsMask` | `string\|null` | Registered mask name. Built in: `digits`, `decimal`; `cpf`, `cnpj`, `phone`, `cep`… come from the `br` preset — see [Masks](#masks) |
 | `colsMaskTransform` | `string\|null` | Server-side transform applied before persisting: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsRelacao` | `string\|null` | Eloquent relation name. A **nested dotted path** is supported (e.g. `invoice.receivingStatus` + `colsRelacaoExibe: name`): the cell descends the chain, the searchdropdown filter applies `whereHas` against the related key (numeric id) or display column (text), and sort-by-this-column is disabled (nested can't JOIN). Eager-loaded automatically |
+| `colsRelacao` | `string\|null` | Eloquent relation name. A **nested dotted path** is supported (e.g. `invoice.receivingStatus` + `colsRelacaoExibe: name`): the cell descends the chain, the searchdropdown filter applies `whereHas` against the related key (numeric id) or display column (text), and sorting by this column orders by the foreign key, not by the displayed value (nested can't JOIN). Eager-loaded automatically |
 | `colsRelacaoExibe` | `string\|null` | Relation field to display — a column or an accessor (`full_name`). The search and the column's text filter use it only when it is a real column of the related table |
 | `colsRelacaoBusca` | `string\|array\|null` | Where to search/filter this relation by text, as real columns — needed when `colsRelacaoExibe` is an accessor: `["company_name", "user.name"]` (dotted paths go deeper). Since 1.46.1 |
 | `colsSearchable` | `bool` | `false` takes the column out of the global search (default: searched) |
 | `colsRelacaoNested` | `string\|null` | Dot notation for nested relations: `category.parent.name` |
 | `colsOrderBy` | `string\|null` | Actual column for ORDER BY |
-| `colsMetodoCustom` | `string\|null` | Pattern `Namespace\Class\method(%field%)` |
+| `colsMetodoCustom` | `string\|null` | `Class\method(%field%)`, relative to `App\Services\` (the prefix is always added) |
 | `colsSelect` | `array\|null` | Select options: `[value => label]` |
 | `colsSDModel` | `string\|null` | SearchDropdown model (e.g. `BusinessPartner` or FQCN) |
 | `colsSDLabel` | `string\|null` | Table field used as label (e.g. `name`) |
 | `colsSDValor` | `string\|null` | Table field used as value (e.g. `id`) |
 | `colsSDOrder` | `string\|null` | Ordering: `"name ASC"` (default: `{sdLabel} ASC`) |
-| `colsSDTipo` | `'model'\|'service'` | Data source (`model` = direct Eloquent, `service` = service method) |
+| `colsSDTipo` | `'model'\|'service'` | Data source (`model` = direct Eloquent, `service` = a class implementing `SearchDropdownSource`) |
 | `colsSDLimit` | `int` | Maximum items returned (default: `15`) |
-| `colsSDMode` | `'create'\|'edit'\|'both'` | Which modal mode the SD field appears in |
+| `colsSDMode` | `'model'\|'service'` | Legacy alias of `colsSDTipo`, read only when it holds `model` or `service`. It does NOT choose a modal mode (an old example said `create`/`edit`/`both`; nothing reads that) |
 | `colsSDDependsOn` | `string\|null` | **Cascading dropdown** — physical name of the parent form field. The child stays disabled until the parent has a value and is cleared (recursively, with its own descendants) whenever the parent changes |
 | `colsSDFilterColumn` | `string\|null` | Column on the child model used to filter the options by the parent value (default: same name as `colsSDDependsOn`) |
 | `colsOnChange` | `string\|null` | **Calculated fields** — sandboxed expression run when this field changes (variables `data`, `value`; helpers `merge/now/upper/lower/slug/uuid`). An array result replaces the form data: `merge(data, {'total': data['qty'] * data['price']})`. Errors are logged and never break the form |
 | `colsFormBlock` | `string\|null` | **Form section** — groups this field under a section heading in the create/edit modal. Adjacent fields with the same block share the section |
-| `colsValidations` | `array\|null` | FormValidatorService rules: `["required","email","min:3"]` |
+| `colsValidations` | `array\|null` | FormValidatorService rules: `["email","minLength:3"]`. Required is `colsRequired`, not a rule here; `min:N`/`max:N` compare the NUMBER, `minLength`/`maxLength` the length |
 | `colsSource` | `string\|null` | **JOIN** — qualified SQL name used in `WHERE` and `ORDER BY` (e.g. `suppliers.name`). Required for filters and sort to work on JOIN columns. `colsNomeFisico` must be the alias (e.g. `supplier_name`) |
 | `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
 | `colsEditableForm` | `bool` | If `false`, the field does NOT appear in the create/edit form (default: `true`) |
@@ -458,14 +458,15 @@ Value of `colsTipo`:
 | Type | Description |
 |---|---|
 | `text` | Free-text field |
-| `number` / `numeric` | Numeric field |
+| `textarea` | Multi-line text |
+| `number` | Numeric field |
 | `date` | Date without time |
-| `datetime` / `timestamp` | Date with time |
-| `boolean` | True/false |
+| `datetime` | Date with time |
+| `boolean` | On/off switch on a NOT NULL column; Yes/No select on a nullable one |
 | `select` | Select with fixed options (`colsSelect`) |
 | `searchdropdown` | Field with dynamic search (SD) |
-| `array` | List of values |
-| `relation` | Filter via `whereHas` |
+| `file` | File upload |
+| `password` | Never filled when editing; empty keeps the current one; saved hashed |
 | `image` | Image with live preview (URL or local file) |
 | `color` | Native colour picker **plus an editable hex field** |
 | `time` | Time only |
@@ -488,8 +489,8 @@ beside it shows the value and accepts one, so someone who already has the hex
 It accepts `#abc`, `abc` and `#AABBCC`, and normalises to lowercase six-digit hex
 when the field loses focus. While you are typing, the raw value is kept — it has
 to be, or the third character of `#abc` could never be reached. Something that is
-not a colour stays as you typed it: the server refuses it and shows the error,
-which is better than silently erasing what you wrote.
+not a colour stays as you typed it and is saved as typed — the server has no
+built-in colour rule. Add one in `colsValidations` (`regex:`) if it matters.
 
 An empty field shows a neutral grey in the picker rather than black — black looks
 like a choice — and that grey is **not** stored. Only a real interaction writes.
@@ -511,19 +512,20 @@ Configured in `colsHelper` of the column (legacy helpers).
 |---|---|
 | `dateFormat` | `12/01/2025` |
 | `dateTimeFormat` | `12/01/2025 14:30` |
-| `currencyFormat` | `R$ 1,234.56` |
+| `currencyFormat` | `R$ 1.234,56` |
 | `yesOrNot` | `Yes` / `No` |
 | `flagChannel` | Coloured badge: **G** green, **Y** yellow, **R** red |
 
 ### Custom method (`colsMetodoCustom`)
 
 ```
-"App\\Services\\ProductService\\getStatus(%id%)"
+"ProductService\\getStatus(%id%)"
 "Branch\\CompaniesService\\getLabel(%id%, %status%, 'active')"
 ```
 
-- The pattern is `Namespace\Class\method(arg1, arg2, ...)`.
-- The prefix `App\Services\` is added automatically if the path does not contain `\\`.
+- The pattern is `Class\method(arg1, arg2, ...)`, relative to `App\Services\`.
+- The prefix `App\Services\` is **always** added — writing it yourself gives
+  `App\Services\App\Services\…`, which does not exist, and the cell shows the raw value.
 - Each comma-separated token becomes a separate PHP argument:
   - `%field%` → replaced by the field value in the record
   - `'literal'` or `"literal"` → string passed directly
@@ -555,9 +557,9 @@ Configured in `colsHelper` of the column (legacy helpers).
 |---|---|---|
 | `badge` | `<span>` with coloured background (padded, soft borders) | `colsRendererBadges` |
 | `pill` | Same as `badge` but with fully rounded borders | `colsRendererBadges` |
-| `boolean` | `✅` (green) / `❌` (red) based on truthy | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
-| `money` | Formats as `$ X,XXX.XX` | `colsRendererCurrency`, `colsRendererDecimals` |
-| `link` | `<a href="[value]" target="_blank">` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
+| `boolean` | Badge "Yes" (green) / "No" (grey), labels configurable | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
+| `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals` |
+| `link` | `<a href>` from `colsRendererLinkTemplate` (default `#`; `%value%`/`%field%` replaced); new tab only with `colsRendererLinkNewTab: true` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
 | `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
 | `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
 | `number` | Number formatted with locale separators (`1,234.56`) | `colsRendererDecimals` (default: 2), `colsRendererLocale` (default: pt-BR) |
@@ -572,23 +574,25 @@ Configured in `colsHelper` of the column (legacy helpers).
 ### Badge / Pill
 
 Named colours: `green`, `red`, `yellow`, `blue`, `indigo`, `purple`, `pink`, `gray`.  
-Hex colours (`#RRGGBB`): generate inline `background-color` with 13% opacity and a corresponding `color`.
+Hex colours (`#RRGGBB`): generate inline `background-color` at ~8% opacity and a corresponding `color`.
+
+`colsRendererBadges` is a **list** of entries (a `"value": "color"` map matches nothing and every cell renders grey):
 
 ```json
 {
   "colsNomeFisico": "status",
   "colsRenderer": "badge",
-  "colsRendererBadges": {
-    "active":   "green",
-    "inactive": "red",
-    "pending":  "#F59E0B"
-  }
+  "colsRendererBadges": [
+    {"value": "active",   "label": "Active",   "color": "green"},
+    {"value": "inactive", "label": "Inactive", "color": "red"},
+    {"value": "pending",  "label": "Pending",  "color": "#F59E0B"}
+  ]
 }
 ```
 
 ### Cell style, class and icon
 
-`colsCellIcon` accepts any icon class and is rendered **both in the `<th>` header and in the `<td>` cell**:
+`colsCellIcon` accepts any icon class and is prefixed to the `<td>` cell content (not the header):
 
 ```json
 { "colsCellIcon": "bx bxs-user" }
@@ -894,8 +898,10 @@ $this->filters['name']   = 'John';
 ```
 
 Operators are inferred automatically:
-- String longer than 1 character → `LIKE %value%`
-- Exact value → `=`
+- an operator set in `$filterOperators[field]` wins;
+- a `select` column → `=`;
+- a `text`/`textarea`/`email`/`tel`/`url` column → `LIKE %value%` for any non-empty value;
+- otherwise → `=`.
 
 ### Date ranges (`$dateRanges`)
 
@@ -929,13 +935,16 @@ Defined in CrudConfig, processed separately via `FilterService::processCustomFil
 
 #### Filter via `whereHas` (relation)
 
+`whereHas` is the **relation name**; `colRelation` is the **column inside the relation**:
+
 ```json
 "customFilters": [
   {
-    "field": "category_id",
+    "field": "category_name",
     "type": "relation",
-    "operator": "=",
-    "colRelation": "category"
+    "operator": "LIKE",
+    "whereHas": "category",
+    "colRelation": "name"
   }
 ]
 ```
@@ -948,7 +957,8 @@ Defined in CrudConfig, processed separately via `FilterService::processCustomFil
     "field": "total_items",
     "type": "relation",
     "operator": ">=",
-    "colRelation": "items",
+    "whereHas": "items",
+    "colRelation": "id",
     "aggregate": "count"
   }
 ]
@@ -961,7 +971,8 @@ Defined in CrudConfig, processed separately via `FilterService::processCustomFil
 | `field` | — | Field name in the table or filter key |
 | `operator` | `defaultOperator` | Operator: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` |
 | `type` | `colsFilterType` | Type: `text`, `select`, `date`, `number`, `relation` |
-| `colRelation` | `field_relation` | Eloquent relation name (required for `type: relation`) |
+| `whereHas` | — | Eloquent relation name (required for `type: relation`; without it the filter is a plain `WHERE` on `field`) |
+| `colRelation` | `field_relation` | Column inside the relation that the value is compared with |
 | `aggregate` | — | Aggregation function for whereHas: `count`, `sum`, `avg`, `min`, `max` |
 
 > Legacy aliases (`defaultOperator`, `colsFilterType`, `field_relation`) are accepted for backwards compatibility, but use the new keys in new configs.
@@ -986,7 +997,7 @@ does nothing).
 ```
 
 Accepted operators: `=`, `!=`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`, `IN`,
-`NOT IN`, `BETWEEN` (as `?f[price][op]=BETWEEN&val=10,50`). Anything outside the
+`NOT IN`, `BETWEEN` (as `?f[price][op]=BETWEEN&f[price][val]=10,50`). Anything outside the
 list falls back to `=`. `BETWEEN` on a non-numeric/non-date column is discarded
 (never silently mismatched).
 
@@ -998,7 +1009,7 @@ list falls back to `=`. `BETWEEN` on a non-numeric/non-date column is discarded
   on clear.
 - A yellow **"Filtros do link"** banner shows the active link filters with a
   **Clear** button (`clearUrlFilters()`); clearing restores the saved prefs.
-- Applying any filter through the **panel** (or advanced search / quick date)
+- Applying any filter through the **panel** (or a quick date)
   also drops the URL filters — the user decides.
 - **Whitelist:** only columns flagged `colsIsFilterable` plus custom-filter
   fields (`field` / `colRelation`) are accepted; any other name is silently
@@ -1319,7 +1330,7 @@ The child grid is a full BaseCrud (filters, modal, export…) mounted lazily on 
 ```json
 {
   "groupBreak": "status",
-  "totalizadores": { "enabled": true, "columns": [{ "field": "amount", "type": "sum" }] }
+  "totalizadores": { "enabled": true, "columns": [{ "field": "amount", "aggregate": "sum" }] }
 }
 ```
 
@@ -1358,12 +1369,16 @@ So typing `"CHOC"`, `"choc"` or `"Choc"` returns the same results.
 
 ```json
 {
-  "colsSDModel": "Product\\ProductService\\searchActive",
+  "colsSDModel": "Product\\ProductService\\active",
   "colsSDTipo": "service"
 }
 ```
 
-The method will receive `string $query` and must return `array<array{value: mixed, label: string}>`.
+The class must implement `Ptah\Contracts\SearchDropdownSource` (1.49.0); ptah
+calls `searchDropdown(string $query, string $key)` with the last segment as
+`$key` — a key, never a method name ptah invokes — and it returns
+`array<array{value: mixed, label: string}>`. See
+[SearchDropdown.md § Via custom service (BaseCrud)](SearchDropdown.md#via-custom-service-basecrud).
 
 ### Internal flow
 
@@ -1410,7 +1425,9 @@ The company column is configured in `crudConfig['companyField']` (default: `comp
 ])
 ```
 
-If not passed, falls back to `session('company_id', 0)`.
+If not passed, falls back to `ptah_company_id()` — the session key in
+`config('ptah.permissions.company_session_key')`, default `ptah_company_id`.
+A host writing `session('company_id')` gets no tenant filter at all.
 
 ---
 
@@ -1499,13 +1516,13 @@ The export system requires two packages in your `composer.json`:
 }
 ```
 
-- **`enabled`**: Enables/disables export (default: `true`)
+- **`enabled`**: Enables/disables export. A missing key means **off** — the Forge and the CrudConfig editor write `true` explicitly
 - **`maxRows`**: Safety cap on exported rows (default: `5000`)
 - **`formats`**: Available formats — `["excel", "pdf"]`
 
 > **v1.3.0:** export was reworked to the same token model as the print screen.
-> The old `asyncThreshold` / `Ptah\Jobs\BaseCrudExportJob` async path was removed
-> (the job never shipped); exports run synchronously, bounded by `maxRows`.
+> The old `Ptah\Jobs\BaseCrudExportJob` path was removed (the job never shipped);
+> the queued path described below (`GenerateCrudExportJob`) came in v1.11.0.
 
 ### Architecture (token model)
 
@@ -1539,9 +1556,18 @@ from a panel. Opt-in per screen:
   "enabled": true,
   "maxRows": 5000,
   "formats": ["excel", "pdf"],
-  "asyncExport": { "enabled": true, "excel": true, "pdf": false }
+  "asyncExport": { "enabled": true, "excel": true, "pdf": false },
+  "asyncThreshold": 1000
 }
 ```
+
+- **`asyncExport.enabled`**: opt-in (default `false`). Without it no format is queued.
+- **`asyncExport.excel`** / **`asyncExport.pdf`** (since v1.50.0): decide which formats
+  appear in the queued export. `excel` defaults to **on**, `pdf` to **off**
+  (`HasCrudExport::asyncFormatAllowed`).
+- **`asyncThreshold`** (since v1.50.0): when the filtered total exceeds it and a real
+  queue exists (see *Auto-degrade*), `export()` sends the file to the queue on its own.
+  `0` or absent disables the automatic switch (configs written by the generator/editor carry `1000`).
 
 - **How it works.** `BaseCrud::queueExport($format)` collects the filtered/ordered
   ids through the **same** `buildBaseQuery()` as the listing, records them in a
@@ -1582,7 +1608,7 @@ Toolbar "Print"  → BaseCrud::printView()        (builds the snapshot)
      │  - reuses buildBaseQuery() + applyGroupingAndSort()  → same query as the listing
      │  - renders every cell with formatCell()             → same look as the listing
      │  - computes totalizadores (SQL aggregate, full set)
-     │  - caches the payload under a one-time, user-scoped token (10 min TTL)
+     │  - caches the payload under a user-scoped token (10 min TTL)
      ▼
 dispatch('ptah:open-print', url) → JS opens /ptah/print/{token} in a new tab
      ▼
@@ -1610,6 +1636,8 @@ they can legitimately exceed the printed rows). Currency columns
 
 **Notes / limits:**
 - Gated by `exportConfig.enabled` (same toggle as the file exports).
+- The token is read with `Cache::get` and stays valid for 10 minutes, so the page
+  can be reopened (or reloaded) within that window — deliberate.
 - The snapshot token is bound to the user who generated it; the controller returns
   `403` for another user and `404` once the token expires.
 - Sorting by a **nested relation** column is not applied to the printout (same as
@@ -1624,23 +1652,20 @@ The system exports **only the columns currently visible** in the BaseCrud table:
 - ❌ Automatically excludes columns of type `action`
 - ✅ Uses `labels` configured in CrudConfig as headers
 
-**Internal method:**
-```php
-protected function getVisibleColumnsForExport(): array
-{
-    $visibleCols = $this->getVisibleColumns();
-    
-    return array_filter($visibleCols, fn($col) => 
-        ($col['colsTipo'] ?? '') !== 'action'
-    );
-}
-```
+**Internal method:** `getVisibleColumnsForExport()` skips `action` and `password`
+columns (the file would carry the hash) and returns, per column,
+`{field, label, type}` — plus `permission` when the column has a `colsPermission` tag,
+so the file generation re-checks it.
+
+**JOINs (since v1.50.0):** columns that come from a configured JOIN reach the file.
+The payload carries the screen's `joins`, and `ExportController` /
+`GenerateCrudExportJob` apply them with `Ptah\Support\CrudJoins`.
 
 ### Automatic Formatting
 
 **Excel (via CrudExport):**
-- Dates: `Y-m-d H:i:s`
-- Booleans: `Yes` / `No`
+- Dates: `d/m/Y H:i:s`
+- Booleans: `Sim` / `Não`
 - Header: Bold with light grey background
 - Auto-size columns
 
@@ -1710,15 +1735,10 @@ Totalisers appear in a dedicated section in the PDF footer, with formatted value
         </button>
     </div>
 @endif
-
-{{-- Processing status --}}
-@if ($exportStatus)
-    <div class="ptah-alert ptah-alert-info">
-        <i class="fas fa-spinner fa-spin"></i>
-        {{ $exportStatus }}
-    </div>
-@endif
 ```
+
+> Queued exports report through a toast and the `<livewire:ptah-exports-panel />`
+> panel; there is no processing-status property to render.
 
 ### Bulk Export
 
@@ -1780,12 +1800,12 @@ protected function formatValue($value, string $type = '')
 {
     // Format dates
     if ($value instanceof \DateTimeInterface) {
-        return $value->format('Y-m-d H:i:s');
+        return $value->format('d/m/Y H:i:s');
     }
     
     // Format booleans
     if (is_bool($value)) {
-        return $value ? 'Yes' : 'No';
+        return $value ? 'Sim' : 'Não';
     }
     
     // EXAMPLE: Format monetary values
@@ -1835,9 +1855,10 @@ naive filter that ignored search / operators / relations / company scope.
 
 #### Very large exports
 
-Exports are synchronous and capped by `exportConfig.maxRows` (default 5000).
-For larger volumes, refine the filters before exporting or raise `maxRows`
-(mind the memory cost). There is no built-in async/queue path.
+The synchronous export is capped by `exportConfig.maxRows` (default 5000).
+For larger volumes, enable the queued path (`exportConfig.asyncExport`, see
+*Large-volume export*; `queueExport()` / `GenerateCrudExportJob`), refine the filters
+before exporting, or raise `maxRows` (mind the memory cost).
 
 ### Best Practices
 
@@ -1871,11 +1892,12 @@ protected function totalValue(): Attribute
 ```
 
 #### 4. Multilingual labels
-Use translation keys in labels:
+The label (`colsNomeLogico`) is fixed text — it is **not** evaluated as Blade, so
+`{{ __('...') }}` would appear literally. Write the final text:
 
 ```json
 {
-  "colsNomeLogico": "{{ __('products.fields.name') }}"
+  "colsNomeLogico": "Product name"
 }
 ```
 
@@ -1898,7 +1920,7 @@ Use translation keys in labels:
     {{-- Right: Actions --}}
     <div class="flex gap-2">
         {{-- Export --}}
-        @if ($permissions['export'] ?? false)
+        @if ($effectivePerms['canExport'])
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="ptah-btn-secondary">
                     <i class="fas fa-download"></i> Export
@@ -1923,7 +1945,7 @@ Use translation keys in labels:
         @endif
         
         {{-- Create new --}}
-        @if ($permissions['create'] ?? false)
+        @if ($effectivePerms['canCreate'])
             <button wire:click="openCreate()" class="ptah-btn-primary">
                 <i class="fas fa-plus"></i> New
             </button>
@@ -1959,14 +1981,6 @@ Use translation keys in labels:
                 Clear selection
             </button>
         </div>
-    </div>
-@endif
-
-{{-- Export status (async processing) --}}
-@if ($exportStatus)
-    <div class="ptah-alert ptah-alert-info">
-        <i class="fas fa-spinner fa-spin"></i>
-        {{ $exportStatus }}
     </div>
 @endif
 ```
@@ -2207,7 +2221,7 @@ class Order extends Model
 
 ---
 
-## User Preferences (V2.1)
+## User Preferences (V2.3)
 
 Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
 
@@ -2215,7 +2229,7 @@ Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
 
 ```json
 {
-  "_version": "2.1.0",
+  "_version": "2.3.0",
   "_lastModified": "2025-12-01T14:30:00+00:00",
   "company": 1,
   "table": {
@@ -2239,7 +2253,7 @@ Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
   },
   "columnWidths": {},
   "columnOrder": [],
-  "viewMode": "table",
+  "viewMode": "auto",
   "viewDensity": "comfortable",
   "searchHistory": ["João", "produto x"],
   "advancedSearch": {
@@ -2248,6 +2262,10 @@ Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
   }
 }
 ```
+
+Since v1.50.0, picking **Comfortable** for a screen sticks (before, it was read back
+as "follow the profile's density"); rows saved with an older `_version` are migrated
+on load.
 
 ---
 
@@ -2281,48 +2299,53 @@ public function onProductSaved(string $model): void
 
 ## Permissions
 
-Configured in `crudConfig['permissions']`:
+Configured in `crudConfig['permissions']`. Two kinds of keys live there:
+
+- **Visibility flags** — `showCreateButton`, `showEditButton`, `showDeleteButton`,
+  `showTrashButton` (boolean, absent = on). Set one to `false` to turn that action off.
+- **Gate names** — `create`, `edit`, `delete`, `restore`, `export`, `import`,
+  `history`, `attachments` take a **string**: the name of a Laravel Gate the user must
+  pass (`Auth::user()->can($gate)`). A boolean there is ignored — `"delete": false`
+  does **not** block deleting (see `HasCrudForm::crudConfigAllows`).
 
 ```json
 "permissions": {
-  "create": true,
-  "edit": true,
-  "delete": false,
-  "export": true
+  "showDeleteButton": false,
+  "export": "export-products"
 }
 ```
 
-Accessible in the view via `$permissions`:
+The view receives the resolved result in `$effectivePerms` (flags, gates and the
+Permissions module combined — `BaseCrud::getEffectivePermissions()`):
 
 ```blade
-@if ($permissions['create'] ?? false)
+@if ($effectivePerms['canCreate'])
     <button wire:click="openCreate()">New</button>
 @endif
 ```
+
+Keys: `canRead`, `canCreate`, `canUpdate`, `canDelete`, `canRestore`, `canExport`.
+`$permissions` still exposes the raw `permissions` array, which is not a decision.
 
 The default permission identifier is returned by `getDefaultPermissionIdentifier()`:
 
 ```php
 // Model "Product"          → "product.index"
-// Model "Purchase/Order"   → "purchase/order.index"
+// Model "Purchase/Order"   → "purchase.order.index"
 ```
 
 ---
 
 ## Error Recovery
 
-If `getRowsProperty()` throws any exception:
+If the listing query (`rows()`) throws a `QueryException`:
 
 1. User preferences are cleared (`UserPreference::remove()` + `CacheService::forgetPreferences()`).
-2. The error is logged via `Log::error()` with the stack trace.
-3. A `session()->flash('error', ...)` is set.
+2. The error is logged via `Log::error()` with the stack trace and passed to `report()`.
+3. A `ptah-toast` (danger) tells the user the load or the search failed.
 4. An empty `LengthAwarePaginator` is returned (screen does not break).
 
-```blade
-@if (session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-@endif
-```
+Other exceptions are not caught here.
 
 ---
 
@@ -2334,7 +2357,6 @@ The `FormValidatorService` (injected into `BaseCrud`) validates form fields usin
 
 | Rule | Example | Description |
 |---|---|---|
-| `required` | `"required"` | Required field |
 | `email` | `"email"` | Email format |
 | `url` | `"url"` | URL format |
 | `integer` | `"integer"` | Integer number |
@@ -2344,9 +2366,9 @@ The `FormValidatorService` (injected into `BaseCrud`) validates form fields usin
 | `ncm` | `"ncm"` | Valid NCM (8 digits; accepts `0000.00.00` or `00000000`) |
 | `cpf` | `"cpf"` | Validates Brazilian CPF |
 | `cnpj` | `"cnpj"` | Validates Brazilian CNPJ |
-| `phone` | `"phone"` | Validates phone number (8–11 digits) |
-| `min:X` | `"min:0"` | Minimum value |
-| `max:X` | `"max:9999"` | Maximum value |
+| `phone` | `"phone"` | Validates phone number (10–11 digits, area code included) |
+| `min:X` | `"min:0"` | Minimum value (**numeric** only — for text length use `minLength`) |
+| `max:X` | `"max:9999"` | Maximum value (**numeric** only — for text length use `maxLength`) |
 | `minLength:X` | `"minLength:3"` | Minimum characters |
 | `maxLength:X` | `"maxLength:255"` | Maximum characters |
 | `between:X,Y` | `"between:1,100"` | Value between X and Y |
@@ -2359,21 +2381,26 @@ The `FormValidatorService` (injected into `BaseCrud`) validates form fields usin
 | `before:ref` | `"before:2030-01-01"` | Date before reference |
 | `dateFormat:fmt` | `"dateFormat:Y-m-d"` | Specific date format (PHP `DateTime::createFromFormat`) |
 | `confirmed:field` | `"confirmed:password_confirmation"` | Field must match another form field |
-| `unique:Model,col` | `"unique:Product,email"` | Uniqueness via Eloquent; ignores record on edit via `id` |
+| `unique:Target,col` | `"unique:Product,email"` | Uniqueness; `Target` is a model class (`Product`, or a FQCN) **or a table name** (`products`). Ignores the record on edit via `id`. If neither exists the rule is not enforced: a warning is logged and `ptah:config:doctor` reports it |
 
 ### Column configuration
+
+There is **no `required` rule** in `colsValidations` — it does nothing. A field is
+mandatory through `"colsRequired": true`; an empty optional field skips the other rules.
 
 ```json
 {
   "colsNomeFisico": "email",
-  "colsValidations": ["required", "email", "maxLength:255"]
+  "colsRequired": true,
+  "colsValidations": ["email", "maxLength:255"]
 }
 ```
 
 ```json
 {
   "colsNomeFisico": "price",
-  "colsValidations": ["required", "numeric", "min:0", "max:999999"]
+  "colsRequired": true,
+  "colsValidations": ["numeric", "min:0", "max:999999"]
 }
 ```
 
@@ -2620,13 +2647,14 @@ The `addJoin()` method also validates server-side before adding.
 
 ### Support in secondary queries
 
-`applyJoins()` is called automatically in:
+The JOINs are applied automatically (`applyJoins()` → `Ptah\Support\CrudJoins`) in:
 
 | Query | Where |
 |---|---|
-| Main listing | `getRowsProperty()` |
-| Totalisers | `getTotalizadoresDataProperty()` |
-| Export | `export()` |
+| Main listing | `rows()` |
+| Totalisers | `totalizadoresItems()` / `totalizadoresData()` |
+| Export — row selection | `export()` / `queueExport()` (through `buildBaseQuery()`) |
+| Export — the file (since v1.50.0) | `ExportController` / `GenerateCrudExportJob`, with the `joins` carried in the payload (`Ptah\Support\CrudJoins`) — columns that come from a JOIN reach the file |
 
 ### Full Example: Products + Supplier
 
@@ -2694,29 +2722,39 @@ protected function afterUpdate(\Illuminate\Database\Eloquent\Model $record): mix
 ```
 validate()
   ↓
-buildData()
+buildData()          (password columns are hashed here — 1.48.0)
   ↓
 applyMaskTransforms()
+  ↓
+blanksToNull()       (a cleared field becomes null when the column accepts it)
   ↓
 beforeCreate(&$data)   ← or beforeUpdate(&$data, $record)
   ↓
 created_by / updated_by
   ↓
+applyWriteScope()    (active company + locked filters overwrite $data)
+  ↓
 create() / update()
   ↓
 afterCreate($record)   ← or afterUpdate($record)
   ↓
-if RedirectResponse returned → redirect
+closeModal() + dispatch('crud-saved') + success toast
   ↓
-closeModal() + dispatch('crud-saved')
+if RedirectResponse returned → redirect
 ```
 
-> **A hook that throws is logged and the save continues** — right for a
-> notification, wrong for a barrier. To make a failure abort the save, throw
+> **A config hook (`lifecycleHooks`) that throws is logged and the save continues** —
+> right for a notification, wrong for a barrier. A **overridden** `before*` method
+> that throws is not swallowed: it aborts the save with `crud_save_error`. To make
+> a config-hook failure abort the save, throw
 > `Ptah\Exceptions\CrudHookAbort` (or a `ValidationException`, which renders as
 > a field error), or declare the hook in `lifecycleHooksCritical`. An `after*`
 > hook cannot roll the record back: there is no transaction around the save.
 > See [Configuration.md](Configuration.md#lifecycle-hooks-dynamic-code).
+>
+> A class hook (`@Class::method`) must live under `ptah.crud.hook_namespaces`
+> (default `App\CrudHooks`); otherwise it is refused and never runs, and
+> `ptah:config:doctor` reports it.
 
 ### Example — beforeCreate
 
@@ -2725,23 +2763,27 @@ protected function beforeCreate(array &$data): void
 {
     // Auto-generate slug before inserting
     $data['slug'] = \Str::slug($data['name']);
-
-    // Force logged-in user's company
-    $data['company_id'] = auth()->user()->company_id;
 }
 ```
+
+> Do not set the company (or a locked filter's column) in a hook: `applyWriteScope()`
+> runs **after** the hooks and overwrites it with the active company.
 
 ### Example — beforeUpdate
 
 ```php
 protected function beforeUpdate(array &$data, Model $record): void
 {
-    // Only recalculate hash if password changed
-    if (!empty($data['password']) && $data['password'] !== $record->password) {
-        $data['password'] = bcrypt($data['password']);
+    // Keep the name normalised
+    if (isset($data['name'])) {
+        $data['name'] = mb_convert_case(trim($data['name']), MB_CASE_TITLE);
     }
 }
 ```
+
+> Do not hash passwords in a hook: since v1.48.0 `colsTipo: password` columns already
+> reach `beforeCreate`/`beforeUpdate` hashed (an empty one is left out on edit), so
+> hashing again would store a hash of a hash.
 
 ### Example — afterCreate (with redirect)
 
@@ -2973,7 +3015,7 @@ When the user pastes a **URL**, the URL string is saved directly (no file is dow
 | File uploaded | Relative path: `images/product/AbCdEf123.jpg` |
 | External URL | Full URL: `https://cdn.example.com/photo.jpg` |
 | No change (edit) | Previous value untouched |
-| Field cleared | Empty string |
+| Field cleared | `NULL` when the column accepts null; otherwise an empty string |
 
 > The storage disk is always `public`. Files are placed inside `storage/app/public/{path}/`.
 
@@ -2995,7 +3037,7 @@ When `colsUploadPath` is empty, the path is automatically derived from the model
 |---|---|---|---|
 | `colsUploadPath` | string | `''` | Storage folder, relative to `storage/app/public/`. When empty, the path is auto-derived from the model name (see table above). |
 | `colsUploadMaxSize` | int | `2048` | Maximum file size in **KB**. |
-| `colsUploadAllowedTypes` | array | `['jpg','png','webp','gif']` | Allowed file extensions. |
+| `colsUploadAllowedTypes` | array | — (no extension filter) | Allowed file extensions. Without the key any extension passes; the real MIME is always checked and must be `image/*` (SVG is never accepted). |
 
 ### Edit behaviour
 
@@ -3034,18 +3076,19 @@ php artisan ptah:config "App\Models\Product" \
 | `image_uploading` | `Uploading…` | `Enviando…` |
 | `image_remove_file` | `Remove file` | `Remover arquivo` |
 | `image_or_url` | `or paste a URL` | `ou cole uma URL` |
-| `image_error_size` | `File too large. Max: :max KB` | `Arquivo muito grande. Máximo: :max KB` |
-| `image_error_type` | `Invalid file type. Allowed: :types` | `Tipo de arquivo inválido. Permitidos: :types` |
+| `image_error_size` | `The file must not exceed :max KB.` | `O arquivo não pode exceder :max KB.` |
+| `image_error_type` | `Allowed file types: :types.` | `Tipos permitidos: :types.` |
+| `image_error_mime` | `Invalid file: please upload an image (SVG is not allowed).` | `Arquivo inválido: envie uma imagem (SVG não é permitido).` |
 
 ---
 
 ## Partial Structure (Blade)
 
-The main view `ptah::livewire.base-crud` (`resources/views/livewire/base-crud/base-crud.blade.php`,
-287 lines — keyboard-shortcut handling, the bulk-actions floating bar and the toast-undo
-listener live here too, it is not a thin skeleton) directly includes 9 of the **11**
+The main view `ptah::livewire.base-crud` (`resources/views/livewire/base-crud/base-crud.blade.php` —
+keyboard-shortcut handling, the bulk-actions floating bar and the toast-undo
+listener live here too, it is not a thin skeleton) directly includes 14 of the **18**
 partials under `resources/views/livewire/base-crud/partials/` — namespace
-`ptah::livewire.base-crud.partials.*`:
+`ptah::livewire.base-crud.partials.*`. Simplified:
 
 ```blade
 <div class="ptah-base-crud" ...>
@@ -3057,7 +3100,11 @@ partials under `resources/views/livewire/base-crud/partials/` — namespace
         @include('ptah::livewire.base-crud.partials._toolbar')
         @include('ptah::livewire.base-crud.partials._filter-panel')
 
-        @if ($viewMode === 'cards')
+        @if ($viewMode === 'kanban')
+            @include('ptah::livewire.base-crud.partials._kanban')
+        @elseif ($viewMode === 'calendar')
+            @include('ptah::livewire.base-crud.partials._calendar')
+        @elseif ($viewMode === 'cards')
             @include('ptah::livewire.base-crud.partials._cards')
         @elseif ($viewMode === 'table')
             @include('ptah::livewire.base-crud.partials._table')
@@ -3072,19 +3119,25 @@ partials under `resources/views/livewire/base-crud/partials/` — namespace
 
     @include('ptah::livewire.base-crud.partials._modal-form')
     @include('ptah::livewire.base-crud.partials._modal-delete')
+    @include('ptah::livewire.base-crud.partials._modal-import')
+    @include('ptah::livewire.base-crud.partials._modal-history')
+    @include('ptah::livewire.base-crud.partials._modal-attachments')
     @include('ptah::livewire.base-crud.partials._scripts')
 </div>
 ```
 
 ### Responsive layout (`viewMode`)
 
-`$viewMode` has three states and defaults to **`auto`**:
+`$viewMode` defaults to **`auto`** and accepts `auto`, `table`, `cards` — plus `kanban`
+and `calendar` on a screen that configures them (see *Board and Calendar views*):
 
 | Value | Behaviour |
 |---|---|
 | `auto` *(default)* | Table on `≥ md`, cards below. Decided by CSS at render time. |
 | `table` | Table on every viewport (horizontal scroll on a phone). |
 | `cards` | Cards on every viewport, including wide screens. |
+| `kanban` | Board (only with `kanbanConfig`; picked from the toolbar). |
+| `calendar` | Month calendar (only with `calendarConfig`; picked from the toolbar). |
 
 **Why a third state instead of just switching on a phone.** `$viewMode` is a
 *persisted per-user preference*, while the layout question is *per-device*.
@@ -3143,27 +3196,34 @@ resets the page, saves preferences, and re-validates the incoming value against
 `sortableColumns()`: a column the user is not allowed to read must not be
 namable, or the ordering becomes an oracle for it.
 
-The remaining 2 files are included from elsewhere, not directly from `base-crud.blade.php`:
-`_break-subtotal` is nested inside `_table.blade.php` (rendered once per group break), and
-`_config-form-preview` belongs to the visual **CrudConfig editor** (`crud-config.blade.php`),
+The remaining 4 files are included from elsewhere, not directly from `base-crud.blade.php`:
+`_break-subtotal` is nested inside `_table.blade.php` (rendered once per group break),
+`_row-action` inside `_table` and `_cards` (one row action), `_sort-bar` inside `_cards`,
+and `_config-form-preview` belongs to the visual **CrudConfig editor** (`crud-config.blade.php`),
 not to the runtime BaseCrud screen at all.
 
 ### File → Responsibility
 
-| File | Lines | Responsibility |
-|---|---|---|
-| `_toolbar.blade.php` | 445 | Top bar: New button, global search, filters, trash, export, columns, density, config, refresh, clear, per-page |
-| `_modal-form.blade.php` | 583 | Create/edit modal: `@teleport('body')` + Alpine, fields by type (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
-| `_table.blade.php` | 424 | Table: `<thead>` with drag/sort/resize, `<tbody>` with rows/actions/empty state, `<tfoot>` with totalisers |
-| `_filter-panel.blade.php` | 376 | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
-| `_scripts.blade.php` | 265 | `@once` block with styles and JS for column drag-and-drop and resize |
-| `_config-form-preview.blade.php` | 147 | Live preview of a field inside the CrudConfig editor modal — included by `crud-config.blade.php`, not by `base-crud.blade.php` |
-| `_cards.blade.php` | 118 | Card/mosaic listing — the narrow-viewport layout under `auto`, or pinned via `$viewMode === 'cards'` |
-| `_sort-bar.blade.php` | 68 | Column + direction controls for the card view (the table's clickable headers have no equivalent gesture on a touch screen) |
-| `_url-filters-banner.blade.php` | 37 | Banner shown when the screen was opened with `?f[...]` URL filters |
-| `_break-subtotal.blade.php` | 35 | Group-break subtotal row — included from inside `_table.blade.php`, not directly |
-| `_pagination.blade.php` | 22 | Pagination div: first/last/next/prev links, record counter |
-| `_modal-delete.blade.php` | 21 | Delete confirmation modal: `@teleport('body')` + Alpine |
+| File | Responsibility |
+|---|---|
+| `_toolbar.blade.php` | Top bar: New button, global search, filters, trash, export, columns, density, view mode, config, refresh, clear, per-page |
+| `_modal-form.blade.php` | Create/edit modal: `@teleport('body')` + Alpine, fields by type (`text`, `number`, `date`, `select`, `searchdropdown`, `boolean`, `textarea`, `image`, …) |
+| `_table.blade.php` | Table: `<thead>` with drag/sort/resize, `<tbody>` with rows/actions/empty state, `<tfoot>` with totalisers |
+| `_filter-panel.blade.php` | Filter panel (`@if ($showFilters)`): date shortcuts, filterable fields, saved filters, panel footer |
+| `_scripts.blade.php` | `@once` block with styles and JS for column drag-and-drop and resize |
+| `_config-form-preview.blade.php` | Live preview of a field inside the CrudConfig editor modal — included by `crud-config.blade.php`, not by `base-crud.blade.php` |
+| `_cards.blade.php` | Card/mosaic listing — the narrow-viewport layout under `auto`, or pinned via `$viewMode === 'cards'` |
+| `_kanban.blade.php` | Board view (`kanbanConfig`) |
+| `_calendar.blade.php` | Month calendar view (`calendarConfig`) |
+| `_row-action.blade.php` | One row action (link / livewire / javascript), shared by the table and the cards |
+| `_sort-bar.blade.php` | Column + direction controls for the card view (the table's clickable headers have no equivalent gesture on a touch screen) |
+| `_url-filters-banner.blade.php` | Banner shown when the screen was opened with `?f[...]` URL filters |
+| `_break-subtotal.blade.php` | Group-break subtotal row — included from inside `_table.blade.php`, not directly |
+| `_pagination.blade.php` | Pagination div: first/last/next/prev links, record counter |
+| `_modal-delete.blade.php` | Delete confirmation modal: `@teleport('body')` + Alpine |
+| `_modal-import.blade.php` | Spreadsheet import modal (see *Import*) |
+| `_modal-history.blade.php` | Record history modal (see *Record History*) |
+| `_modal-attachments.blade.php` | Attachments modal (see *Attachments*) |
 
 > **Publish only the partial you need to customise:**
 > `php artisan vendor:publish --tag=ptah-views-base-crud` publishes the whole
@@ -3178,15 +3238,15 @@ not to the runtime BaseCrud screen at all.
 Handled by `_hotkeys()` in `base-crud.blade.php` (bound via `@keydown.window`), except
 sidebar collapse which lives in `forge-dashboard-layout.blade.php`. Ignored while
 typing in an `input`/`textarea`/`select`/`[contenteditable]`, and while any dialog
-(modal, bulk-delete confirm, this very overlay) is open — except `?`, which still opens
-the overlay from anywhere. Press `?` to see this list in the app itself.
+(modal, bulk-delete confirm, this very overlay) is open — `?` included. Press `?` to
+see this list in the app itself.
 
 | Key | Action | Requires |
 |---|---|---|
 | `/` | Focus the global search input | — |
 | `n` | Open the create modal (`prepareCreate()`) | create permission |
 | `f` | Toggle the filter panel | — |
-| `v` | Switch between table and cards view | — |
+| `v` | Cycle the view: auto → table → cards → auto (board and calendar are picked from the toolbar) | — |
 | `r` | Refresh the listing (`$wire.$refresh()`) | — |
 | `Ctrl+B` / `Cmd+B` | Collapse / expand the sidebar | — |
 | `?` | Show this shortcuts overlay | — |
@@ -3303,7 +3363,7 @@ Column names pass `SqlIdentifier::isSafe()` before reaching the `where`.
 | Parameter | Purpose | Can the user change/clear it? | Scope |
 |---|---|---|---|
 | `initialFilter` | A **default** filter to start on | **Yes** — it writes into `$filters`, a client-writable property | any column(s) |
-| `companyFilter` | Multi-tenant company scope | No (server-set) | `company_id` only |
+| `companyFilter` | Multi-tenant company scope | No (server-set) | the company column — `company_id`, or `crudConfig.companyField` |
 | `lockedFilters` | A **hard, immutable** scope | **No** — re-applied on every query | any column(s) |
 
 For anything security-sensitive (tenant, owner, "only mine") use `lockedFilters`, never
@@ -3367,7 +3427,7 @@ anything edited through the visual modal in production stays untouched:
 
 ```bash
 mkdir -p database/ptah/deploy-2026-09
-cp database/ptah/crud-configs/appointment@health-meus-atendimentos.json \
+cp database/ptah/crud-configs/Scheduling.Appointment__health.meus-atendimentos.json \
    database/ptah/deploy-2026-09/
 
 php artisan ptah:config:import-all database/ptah/deploy-2026-09
@@ -3394,7 +3454,9 @@ php artisan ptah:menu-sync
 `--no-menu` to skip); a screen wired by hand needs the entry added by hand.
 
 > **`--fresh` clears the `menus` table before syncing** — the command's own help marks it
-> destructive. It is the right call when the registry is the only source of truth (a first
+> destructive, and since v1.50.0 it asks for confirmation (or `--force`, for scripts).
+> To drop entries that left the registry, prefer `--prune` (deactivates, never deletes;
+> `--prune --dry-run` lists them first). `--fresh` is the right call when the registry is the only source of truth (a first
 > install, or a deliberate rebuild) and the wrong one for adding a screen to a live system,
 > where it discards every menu row created or reordered through the UI. Use plain
 > `ptah:menu-sync` unless you mean to rebuild the whole menu.

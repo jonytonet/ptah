@@ -96,7 +96,9 @@ class ScaffoldCommand extends Command
         $table = $this->option('table') ?: $entityPlural;
         $withViews = ! $this->option('api-only'); // false only with --api-only
         $withApi = $this->option('api') || $this->option('api-only');
-        $withSoftDeletes = ! $this->option('no-soft-deletes');
+        // ptah.crud.soft_deletes (1.50.0, never read before) is the default;
+        // --no-soft-deletes still turns it off for one entity.
+        $withSoftDeletes = ! $this->option('no-soft-deletes') && (bool) config('ptah.crud.soft_deletes', true);
         $force = (bool) $this->option('force');
 
         // ── Confirm destructive overwrite ───────────────────────────────
@@ -482,7 +484,7 @@ class ScaffoldCommand extends Command
                 if ($added) {
                     $this->newLine();
                     $this->components->info("Menu entry added (flat): <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
-                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>');
+                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync</>');
                 }
             } else {
                 // Has module prefix → add under group
@@ -499,7 +501,7 @@ class ScaffoldCommand extends Command
 
                     $this->newLine();
                     $this->components->info("Menu entry added: <fg=yellow>{$groupLabel}</> → <fg=cyan>{$linkLabel}</> (<fg=gray>{$url}</>)");
-                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync --fresh</>');
+                    $this->line('  <fg=blue>→ Sync menu: <fg=gray>php artisan ptah:menu-sync</>');
                 }
             }
         } catch (\Exception $e) {

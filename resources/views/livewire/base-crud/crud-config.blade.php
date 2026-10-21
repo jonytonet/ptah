@@ -1520,21 +1520,8 @@
                                                 <option value="max">{{ __('ptah::ui.cfg_col_total_max') }}</option>
                                             </select>
                                         </div>
-                                        <div>
-                                            <label class="cfg-label">{{ __('ptah::ui.cfg_col_total_format') }}</label>
-                                            <select wire:model="formDataField.totalizadorFormat"
-                                                title="{{ __('ptah::ui.cfg_tip_totalizador_format') }}" class="cfg-input">
-                                                <option value="currency">currency — R$ 1.253,08</option>
-                                                <option value="number">number — 1.253,08</option>
-                                                <option value="integer">integer — 1.253</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-span-2">
-                                            <label class="cfg-label">Label</label>
-                                            <input type="text" wire:model="formDataField.totalizadorLabel"
-                                                title="{{ __('ptah::ui.cfg_tip_totalizador_label') }}"
-                                                placeholder="Total" class="cfg-input" />
-                                        </div>
+                                        {{-- 1.50.0: format/label fields removed — nothing read them; the
+                                             footer total uses this column's own renderer. --}}
                                     </div>
                                     @endif
                                 </div>

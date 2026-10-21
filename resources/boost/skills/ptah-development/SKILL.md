@@ -295,7 +295,7 @@ php artisan ptah:forge Health/VaccinationType --fields="..."
 # → Adds an entry to database/seeders/MenuRegistry.php
 
 # After generating all entities, sync the menu:
-php artisan ptah:menu-sync --fresh
+php artisan ptah:menu-sync
 # → Populates the 'menus' table with every link
 ```
 

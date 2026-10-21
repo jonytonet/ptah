@@ -19,6 +19,7 @@ use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\CrudJoins;
 use Ptah\Support\PtahMask;
 use Ptah\Support\RelationPath;
 use Ptah\Support\ServerOnly;
@@ -436,64 +437,7 @@ trait HasCrudQuery
      */
     protected function applyJoins(Builder $query, Model $modelInstance): array
     {
-        $joins = $this->crudConfig['joins'] ?? [];
-
-        if (empty($joins)) {
-            return [];
-        }
-
-        $mainTable = $modelInstance->getTable();
-        $joinedTables = [];
-        $selectCols = ["{$mainTable}.*"];
-        $useDistinct = false;
-
-        foreach ($joins as $join) {
-            $table = trim($join['table'] ?? '');
-            $first = trim($join['first'] ?? '');
-            $second = trim($join['second'] ?? '');
-            $type = strtolower($join['type'] ?? 'left');
-
-            if (! $table || ! $first || ! $second) {
-                continue;
-            }
-
-            // Avoid duplicate JOIN on the same query
-            if (in_array($table, $joinedTables)) {
-                continue;
-            }
-
-            if ($type === 'inner') {
-                $query->join($table, $first, '=', $second);
-            } else {
-                $query->leftJoin($table, $first, '=', $second);
-            }
-
-            $joinedTables[] = $table;
-
-            foreach ($join['select'] ?? [] as $sel) {
-                $col = trim($sel['column'] ?? '');
-                $alias = trim($sel['alias'] ?? '');
-                // Both are interpolated into a raw SELECT expression — guard as
-                // identifiers (config-driven, so never trust them). Skip if unsafe.
-                if ($col && $alias && SqlIdentifier::isSafe($col) && SqlIdentifier::isSafe($alias)) {
-                    $selectCols[] = DB::raw("{$col} AS {$alias}");
-                }
-            }
-
-            if (! empty($join['distinct'])) {
-                $useDistinct = true;
-            }
-        }
-
-        if (! empty($joinedTables)) {
-            $query->select($selectCols);
-
-            if ($useDistinct) {
-                $query->distinct();
-            }
-        }
-
-        return $joinedTables;
+        return CrudJoins::apply($query, $modelInstance, (array) ($this->crudConfig['joins'] ?? []));
     }
 
     // ── Sort by relation ───────────────────────────────────────────────────────

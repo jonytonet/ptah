@@ -162,10 +162,22 @@ class RoleService
      * Synchronises ALL objects of a page for the role.
      * Objects not included in $bindings are removed.
      *
-     * @param  array<int, array>  $bindings  [pageObjectId => [can_create, can_read, ...]]
+     * @param  array<array-key, array<string, mixed>>  $bindings  [pageObjectId => [can_create, can_read, ...]] — a non-id key is refused
      */
     public function syncPageBindings(Role $role, array $bindings): void
     {
+        // 1.49.1: the docs showed a LIST (`[['page_object_id' => 12, …]]`). Its
+        // keys 0, 1… removed every real binding of the role below, and only then
+        // failed on page object 0 — no transaction, so the removal stayed.
+        // Refuse anything not keyed by a page object id BEFORE touching a row.
+        foreach (array_keys($bindings) as $key) {
+            if (! is_int($key) || $key < 1) {
+                throw new \InvalidArgumentException(
+                    'syncPageBindings() expects [pageObjectId => [can_create, can_read, can_update, can_delete]] — got key '.var_export($key, true).'.'
+                );
+            }
+        }
+
         $incoming = array_keys($bindings);
 
         // Remove objects that are no longer included

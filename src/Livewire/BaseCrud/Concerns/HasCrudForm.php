@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Ptah\Exceptions\CrudHookAbort;
+use Ptah\Support\CrudHookTarget;
 use Ptah\Support\PtahMask;
 use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
@@ -592,41 +593,9 @@ trait HasCrudForm
      */
     protected function executeClassBasedHook(string $hookCode, string $hookName, array &$data, ?Model $record): void
     {
-        // Remove @ prefix and normalize separators
-        $hookCode = ltrim(trim($hookCode), '@');
-        $hookCode = str_replace('@', '::', $hookCode);
-
-        // Parse class::method or use hookName as method
-        if (str_contains($hookCode, '::')) {
-            [$className, $methodName] = explode('::', $hookCode, 2);
-        } else {
-            $className = $hookCode;
-            $methodName = $hookName; // Use hook name as method (beforeCreate, afterCreate, etc.)
-        }
-
-        $allowedNamespaces = array_values(array_filter(array_map(
-            fn ($ns) => trim((string) $ns, '\\'),
-            (array) config('ptah.crud.hook_namespaces', ['App\\CrudHooks'])
-        )));
-
-        // Add default namespace (first allowed) if not fully qualified
-        if (! str_starts_with($className, '\\') && ! str_contains($className, '\\')) {
-            $defaultNs = $allowedNamespaces[0] ?? 'App\\CrudHooks';
-            $className = $defaultNs.'\\'.$className;
-        }
-
-        // Guard: the hook class MUST live under an allowed namespace. Config is
-        // admin-controlled, but this stops a crafted config from instantiating an
-        // arbitrary class (constructor side effects / gadget) via the hook system.
-        // $allowedNamespaces is already filtered to non-empty prefixes.
-        $normalized = ltrim($className, '\\');
-        $permitted = false;
-        foreach ($allowedNamespaces as $ns) {
-            if (str_starts_with($normalized, $ns.'\\')) {
-                $permitted = true;
-                break;
-            }
-        }
+        // One rule with the doctor (1.50.0) — see CrudHookTarget.
+        ['class' => $className, 'method' => $methodName, 'permitted' => $permitted, 'allowed' => $allowedNamespaces]
+            = CrudHookTarget::resolve($hookCode, $hookName);
 
         if (! $permitted) {
             throw new \RuntimeException(

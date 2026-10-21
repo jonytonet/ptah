@@ -50,7 +50,10 @@ class LoginPage extends Component
             return;
         }
 
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        // ptah.auth.remember_me (1.50.0, never read before): false = no "remember me".
+        $remember = $this->remember && (bool) config('ptah.auth.remember_me', true);
+
+        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $remember)) {
             RateLimiter::hit($throttleKey);
             $this->errorMessage = trans('ptah::ui.auth_invalid_credentials');
             $this->reset('password');

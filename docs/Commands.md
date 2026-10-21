@@ -19,8 +19,9 @@ This document lists all Artisan commands available in the Ptah package.
 11. [ptah:audit-prune](#ptahaudit-prune)
 12. [ptah:hooks](#ptahhooks)
 13. [ptah:menu-sync](#ptahmenu-sync)
-14. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
-15. [Agent tools (ptah:map, ptah:check, ptah:field, ptah:blueprint, ptah:last-error, ptah:upgrade-check, ptah:docs)](#agent-tools)
+14. [Opt-in installers (ptah:history:install, ptah:attachments:install, ptah:settings:install, ptah:preferences:realign)](#opt-in-installers)
+15. [vendor:publish (tags ptah)](#vendorpublish-tags-ptah)
+16. [Agent tools (ptah:map, ptah:check, ptah:field, ptah:blueprint, ptah:last-error, ptah:upgrade-check, ptah:docs)](#agent-tools)
 
 ---
 
@@ -116,11 +117,13 @@ php artisan ptah:forge Product --force
 **Options:**
 - ``--table=`` — Table name in the database (default: plural snake_case of entity)
 - ``--fields=`` — Field definition: ``"field:type:modifiers"``
-- ``--db`` — Read fields directly from the database (via INFORMATION_SCHEMA)
+- ``--db`` — Read fields directly from the database (via ``Schema::getColumns()``)
 - ``--api`` — Generates web + API together (API Controller, API Requests, Swagger, v1 routes)
 - ``--api-only`` — Generates ONLY API, without web views (Livewire not created)
-- ``--no-soft-deletes`` — Does not add SoftDeletes to the model
-- ``--force`` — Overwrites existing files without confirmation
+- ``--no-soft-deletes`` — Does not add SoftDeletes to the model. Without it, ``ptah.crud.soft_deletes`` (default ``true``) decides
+- ``--no-menu`` — Does not add the entity to ``MenuRegistry.php``
+- ``--factory`` — Also generates a model factory and a demo seeder from the field types
+- ``--force`` — Overwrites existing files (all artifacts except an existing migration). In an interactive session it asks for confirmation first; in scripts it does not
 
 **Arquivos gerados:**
 
@@ -145,9 +148,9 @@ php artisan ptah:forge Product --force
 ### API Mode (--api or --api-only)
 | Type | Path | Description |
 |------|---------|-----------|
-| Controller API | ``app/Http/Controllers/API/{Entity}Controller.php`` | API Controller with Swagger annotations |
-| Request Create API | ``app/Http/Requests/Create{Entity}Request.php`` | API create validation |
-| Request Update API | ``app/Http/Requests/Update{Entity}Request.php`` | API update validation |
+| Controller API | ``app/Http/Controllers/API/{Entity}ApiController.php`` | API Controller with Swagger annotations |
+| Request Create API | ``app/Http/Requests/API/Create{Entity}ApiRequest.php`` | API create validation |
+| Request Update API | ``app/Http/Requests/API/Update{Entity}ApiRequest.php`` | API update validation |
 | Route API | ``routes/api.php`` | API v1 routes |
 
 > **Note:** With ``--api``, generates **web + API**. With ``--api-only``, generates **only API** (no views, no Livewire).
@@ -230,6 +233,7 @@ php artisan ptah:module menu
 php artisan ptah:module company
 php artisan ptah:module permissions
 php artisan ptah:module api
+php artisan ptah:module ai_agent
 
 # List available modules and states
 php artisan ptah:module --list
@@ -255,12 +259,12 @@ php artisan ptah:module auth --force
 PTAH_MODULE_AUTH=true
 ```
 
-**Created routes:**
-- ``/auth/login`` — Login
-- ``/auth/forgot-password`` — Password recovery
-- ``/auth/reset-password/{token}`` — Reset password
-- ``/auth/two-factor-challenge`` — 2FA verification
-- ``/auth/profile`` — User profile
+**Created routes** (under ``ptah.auth.route_prefix`` — env ``PTAH_AUTH_ROUTE_PREFIX``, empty by default):
+- ``/login`` — Login
+- ``/forgot-password`` — Password recovery
+- ``/reset-password/{token}`` — Reset password
+- ``/two-factor-challenge`` — 2FA verification
+- ``/profile`` — User profile
 
 **Published files:**
 - ``database/migrations/*_add_two_factor_fields_to_users_table.php``
@@ -279,11 +283,11 @@ PTAH_MODULE_MENU=true
 ```
 
 **Created table:**
-- ``ptah_menu_items`` — Hierarchical menu items
+- ``menus`` — Hierarchical menu items
 
 **Components:**
 - Livewire: ``MenuList`` — Menu item management
-- Blade component: ``<x-ptah::menu />`` — Renders the menu in the sidebar
+- Blade component: ``<x-forge-sidebar />`` — Renders the menu in the sidebar (used by ``forge-dashboard-layout``)
 
 ---
 
@@ -301,7 +305,7 @@ PTAH_MODULE_COMPANY=true
 
 **Created tables:**
 - ``ptah_companies`` — Companies
-- ``ptah_company_user`` — User-company pivot
+- ``ptah_departments`` — Departments
 
 **Components:**
 - Livewire: ``CompanyList`` — Company management
@@ -309,7 +313,7 @@ PTAH_MODULE_COMPANY=true
 
 **Published files:**
 - ``database/migrations/*_create_ptah_companies_table.php``
-- ``database/migrations/*_create_ptah_company_user_table.php``
+- ``database/migrations/*_create_ptah_departments_table.php``
 
 ---
 
@@ -329,12 +333,11 @@ PTAH_MODULE_PERMISSIONS=true
 
 **Created tables:**
 - ``ptah_roles`` — Access profiles
-- ``ptah_role_user`` — User-role pivot
-- ``ptah_departments`` — Departments
-- ``ptah_pages`` — System pages/objects
-- ``ptah_page_role`` — Permissions (CRUD per page and role)
-- ``ptah_user_permissions`` — User-specific permissions
-- ``ptah_audit_logs`` — Audit logs
+- ``ptah_pages`` — System pages
+- ``ptah_page_objects`` — Objects (``obj_key``) registered under each page
+- ``ptah_role_permissions`` — Permissions (create/read/update/delete flags per object and role)
+- ``ptah_user_roles`` — User-role pivot
+- ``ptah_permission_audits`` — Permission audit log
 
 **Admin credentials:**
 - E-mail: ``admin@admin.com`` (configurable in ``config/ptah.php``)
@@ -355,8 +358,10 @@ PTAH_MODULE_PERMISSIONS=true
 - ``@ptahCan('sales', 'create')`` — Blade directive
 - ``@ptahMaster`` — Blade directive
 
-**Published files:**
-- ``database/migrations/*_create_ptah_permissions_tables.php``
+**Published files:** the 6 migrations of the ``ptah-permissions`` tag
+(``*_create_ptah_roles_table.php``, ``*_create_ptah_pages_table.php``,
+``*_create_ptah_page_objects_table.php``, ``*_create_ptah_role_permissions_table.php``,
+``*_create_ptah_user_roles_table.php``, ``*_create_ptah_permission_audits_table.php``)
 
 ---
 
@@ -399,6 +404,21 @@ http://localhost/api/documentation
 
 ---
 
+### 6. ai_agent
+**What it does:**
+- Installs ``prism-php/prism`` via Composer (skipped if already present)
+- Publishes the AI Agent migrations (tag ``ptah-ai-agent``)
+- Runs migrations
+
+**ENV:**
+```env
+PTAH_MODULE_AI_AGENT=true
+```
+
+**Next steps:** configure the provider and model at ``/ptah-ai/models``; the chat widget activates once a configuration is set as default. Full reference: [AiAgent.md](AiAgent.md).
+
+---
+
 ## ptah:config
 
 **Description:** Configures CRUD settings for a model via command line (alternative to the visual modal).
@@ -422,7 +442,7 @@ php artisan ptah:config "App\Models\Product" \
 # List current configuration
 php artisan ptah:config "App\Models\Product" --list
 
-# Reset configuration to defaults
+# DELETE the stored configuration (asks first, no undo)
 php artisan ptah:config "App\Models\Product" --reset
 
 # Import from JSON file
@@ -440,7 +460,7 @@ php artisan ptah:config "App\Models\Product" \
   --column="name:text" \
   --dry-run
 
-# Process only specific sections
+# Process only specific sections (comma-separated or repeated: --only=columns --only=actions)
 php artisan ptah:config "App\Models\Product" \
   --only=columns,actions \
   --column="name:text"
@@ -449,11 +469,6 @@ php artisan ptah:config "App\Models\Product" \
 php artisan ptah:config "App\Models\Product" \
   --skip=styles,joins \
   --column="name:text"
-
-# Force overwrite existing config
-php artisan ptah:config "App\Models\Product" \
-  --column="name:text" \
-  --force
 ```
 
 **Options:**
@@ -486,19 +501,19 @@ php artisan ptah:config "App\Models\Product" \
 
 - ``--filter=*`` — Add custom filter: ``field:type:label=Label:operator==:options=value``  (no positional operator — everything after ``field:type`` is ``key=value``). Persisted under ``customFilters``, the section ``FilterService::processCustomFilters()`` reads; every writer is normalised through ``Ptah\Support\FilterRule``. Configs still carrying the pre-1.28.0 ``filters`` section are inert until ``ptah:config:doctor --fix`` migrates them.
 - ``--style=*`` — Add style rule: ``field:condition:value:style`` (``condition`` is ``==``/``!=``/``>``/``<``/``>=``/``<=`` or the aliases ``eq``/``ne``/``lt``/``gt``/``lte``/``gte``/``=``; ``style`` is an inline CSS declaration list, e.g. ``background:#FEE2E2;color:#991B1B;``). **If the VALUE contains a ``:``**, use the long form ``field:condition:value:style=<css>`` — the ``style=`` marker ends the value explicitly, e.g. ``start_at:==:12:30:style=background:#eee;``. Without it the value is cut at its first colon and the remainder leaks into the CSS, silently.
-- ``--join=*`` — Add table join: ``type:table:on:select=field1,field2``
+- ``--join=*`` — Add table join: ``type:table:first=second:select=col:alias,col2 as alias2:distinct`` (see Join Syntax below). Persisted as ``{type, table, first, second, distinct, select:[{column, alias}]}``
 - ``--set=*`` — Set general config: ``key=value``
 - ``--permission=*`` — Set permission: ``action=permission``
 - ``--route=`` — Route path to scope this config (empty = global/default). When provided, the config is saved for that specific URL path only. `CrudConfigService` falls back to the global config if no route-specific entry is found. See [Multi-Config per Route](BaseCrud.md#multi-config-per-route)
 - ``--list`` — List current configuration (beautiful table format)
-- ``--reset`` — Reset configuration to defaults
+- ``--reset`` — **Deletes** the stored configuration row (global, or the one of ``--route``) after a confirmation. There is no undo — ``--export`` first
 - ``--import=`` — Import configuration from JSON file
 - ``--export=`` — Export configuration to JSON file
 - ``--non-interactive`` — Skip wizard questions, use only provided options
-- ``--force`` — Force overwrite existing configuration
+- ``--force`` — No effect (kept so existing scripts do not break); the command warns when it is passed. It always merges into the existing config, and ``--reset`` always asks
 - ``--dry-run`` — Show what would be changed without saving
-- ``--only=*`` — Process only specific sections (columns,actions,filters,styles,joins,general,permissions)
-- ``--skip=*`` — Skip specific sections
+- ``--only=*`` — Process only specific sections (columns,actions,filters,styles,joins,general,permissions). Comma-separated or repeated; an unknown section name is an error
+- ``--skip=*`` — Skip specific sections (same format as ``--only``)
 
 > **Model key (since v1.5.0):** the `{model}` argument accepts either the FQCN
 > (`App\Models\Catalog\Product`) **or** the runtime key (`Catalog/Product`). The
@@ -523,6 +538,12 @@ configs** (via `ConfigSchemaValidator`), **empty screens** (0 columns),
 **legacy RBAC key** — a config whose gate identifier is stored under `permissions.identifier`
 while the runtime reads `permissions.permissionIdentifier`, so the screen is
 **silently ungated**; `--fix` migrates the key (see the security note below).
+
+Also checks (1.50.0): a `cols*` column key nothing reads; an invalid `colsHelper`;
+a `unique:` validation rule with no matching model or table (duplicates are accepted);
+a class-based hook outside `ptah.crud.hook_namespaces` (**error** — it never runs);
+a service-mode searchdropdown whose class does not implement `SearchDropdownSource`
+(**error**); a bulk action whose handler does not implement `BulkActionHandler` (**error**).
 
 ## ptah:config:export-all / import-all
 
@@ -559,6 +580,9 @@ php artisan ptah:permission:sync
 # …and grant a role access in one step
 php artisan ptah:permission:sync --role="Estoquista" --grant=read,update
 php artisan ptah:permission:sync --role="Gerente"    --grant=all
+
+# …only on specific screens (by permission key; default: every synced screen)
+php artisan ptah:permission:sync --role="Estoquista" --grant=read --key=products.index --key=stock.index
 ```
 
 For each config it resolves the canonical RBAC key (`permissions.permissionIdentifier`,
@@ -567,6 +591,11 @@ matches that key, and — with `--role`/`--grant` — calls `RoleService::bindPa
 (which invalidates the permission cache). `--grant` accepts `create,read,update,delete`
 or `all`; `--role` and `--grant` are required together. The whole batch runs in a
 single transaction.
+
+`--grant` **adds** to the flags the role already has on each object and never revokes:
+`--grant=read,update` on a role that holds `delete` keeps `delete`. Without `--key`
+the grant applies to every synced screen; `--key=` (repeatable) limits it to the
+screens whose permission key matches. To remove access, use the roles screen.
 
 ## ptah:permission:why
 
@@ -634,7 +663,7 @@ bypasses that guard (still asks for confirmation). Persists via `CrudConfigServi
 > ```bash
 > php artisan ptah:config:doctor            # 1. find configs with the legacy key
 > php artisan ptah:config:doctor --fix      # 2. migrate identifier → permissionIdentifier
-> php artisan ptah:permission:sync --role="…" --grant=…   # 3. grant the roles that need each screen
+> php artisan ptah:permission:sync --role="…" --grant=… [--key=…]   # 3. grant the roles that need each screen
 > ```
 >
 > Step 2 flips those screens from fail-open to fail-closed: non-master users **lose access
@@ -659,7 +688,9 @@ created_at:datetime:readonly:renderer=datetime
 ```
 
 **`colsTipo` values (`type`, the 2nd token):** `text`, `textarea`, `number`, `date`,
-`datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`. `colsTipo` is
+`datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`,
+`datetime-local`, `range`, `email`, `url`, `tel`, `password` (the full list is
+`CrudConfigEnums::COLUMN_TYPES`). `colsTipo` is
 the FORM INPUT type — it is independent from `renderer=`, which controls how the
 value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimitations.md#5-ptahconfig-cli--column-types-and-renderers).
 
@@ -737,18 +768,18 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `duration_unit` | `colsRendererDurationUnit` | — |
 | `qr_size` | `colsRendererQrSize` | — |
 | `mask_transform` | `colsMaskTransform` | `mask_transform=money_to_float` |
-| `totalizer` | `totalizadorType` (also sets `totalizadorEnabled=true`) | `totalizer=sum` |
-| `totalizer_format` | `totalizadorFormat` | `totalizer_format=currency` |
-| `totalizer_label` | `totalizadorLabel` | — |
-| `totalizer_enabled` | `totalizadorEnabled` | — |
+| `totalizer` | `totalizadorType` → moved by the command into the screen-level `totalizadores.columns` (`{field, aggregate}`) with `totalizadores.enabled` on (1.50.0) | `totalizer=sum` |
+| `totalizer_format` | `totalizadorFormat` — ignored with a warning (the footer uses the column renderer) | — |
+| `totalizer_label` | `totalizadorLabel` — ignored with a warning (the footer uses the column renderer) | — |
+| `totalizer_enabled` | `totalizadorEnabled` — dropped (`totalizer=` already enables the totals) | — |
 | `validation` | `colsValidations` (special: `\|`-split rules) | `validation=required\|max:255` |
-| `options` | `colsSelect` (special: kept as raw string) | `options=active:Active,inactive:Inactive` |
+| `options` | `colsSelect` (special: normalised to a `label => value` map, see above) | `options=active:Active,inactive:Inactive` |
 | `badges` | `colsRendererBadges` (special: parsed into `value/color/label` triples) | `badges=active\|green\|Ativo,inactive\|gray\|Inativo` — **`\|`-separated**, never `:` (collides with the `field:type:modifier` syntax) |
 
 > Any `option=value` key **not** in this list is stored verbatim under that raw
-> key on the column array (e.g. a typo like `rendererDecimals=2` silently sets a
-> `rendererDecimals` key nothing reads, instead of `colsRendererDecimals` — use
-> `decimals=2`).
+> key on the column array, but the command warns (`unknown option … did you mean
+> …`): a typo like `rendererDecimals=2` sets a `rendererDecimals` key nothing
+> reads, instead of `colsRendererDecimals` — use `decimals=2`.
 >
 > `sd_value`/`sd_label`/`sd_order_by` write `colsSDValor`/`colsSDLabel`/
 > `colsSDOrder` — these ARE the canonical keys the BaseCrud inline widget
@@ -779,7 +810,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 --column="image:image:upload_path=products:upload_max_size=2048:upload_allowed_types=jpg,png,webp"
 
 # Number with totalizer
---column="quantity:number:totalizer=sum:totalizer_format=number"
+--column="quantity:number:totalizer=sum"
 ```
 
 **Action Syntax (--action):** parsed by `ActionParser`. Only `link`, `livewire`
@@ -826,12 +857,18 @@ priority:>:5:background:#FFE;font-weight:bold;
 
 ```bash
 # Format
-type:table:leftColumn=rightColumn:select=field1,field2
+type:table:first=second:select=col:alias,col2 as alias2:distinct
 
 # Examples
-left:users:products.user_id=users.id:select=name,email
-inner:categories:products.category_id=categories.id:select=name
+left:users:products.user_id=users.id:select=users.name:user_name,users.email as user_email
+inner:categories:products.category_id=categories.id:select=categories.name:distinct
 ```
+
+Stored as `{type, table, first, second, distinct, select:[{column, alias}]}`.
+`select=` accepts `column:alias` or `column as alias` (the alias defaults to the
+column name); `distinct` / `distinct=true` is optional. `where=` and any other
+`key=value` option are **refused** — a join has no WHERE of its own, so filter the
+screen instead.
 
 **General Settings (--set):** any config path, dotted for nested keys
 (`--set="exportConfig.maxRows=5000"`). The short names below are translated
@@ -844,6 +881,7 @@ warning. Full list: [Configuration.md § General Settings](Configuration.md#gene
 --set="itemsPerPage=25"
 --set="exportEnabled=true"
 --set="compactMode=false"
+--set="exportFormats=excel,pdf"   # list-valued keys are stored as a list
 ```
 
 **Permissions (--permission):**
@@ -905,7 +943,7 @@ php artisan ptah:config "App\Models\Product" --export=product-config.json
 # 6. Import in another environment
 php artisan ptah:config "App\Models\Product" --import=product-config.json
 
-# 7. Reset to defaults
+# 7. Delete the stored config (asks first; --export beforehand if you may want it back)
 php artisan ptah:config "App\Models\Product" --reset
 
 # 8. Create a route-specific config (same model, different columns per URL path)
@@ -935,7 +973,8 @@ php artisan ptah:config "App\Models\Product" \
 **Where configs are stored:**
 
 Configurations are saved in ``crud_configs`` table:
-- ``model`` — Full model class name
+- ``model`` — Canonical model key (``ModelKey::canonical``, e.g. ``Catalog/Product``), not the FQCN
+- ``route`` — Route path scope (empty string = global config)
 - ``config`` — JSON configuration
 - ``updated_at`` — Last modified timestamp
 
@@ -976,12 +1015,17 @@ Ptah exposes several groups of publishable files via ``vendor:publish``. Each ta
 
 | Tag | What it publishes | Destination |
 |-----|--------------|--------|
-| ``ptah-config`` | Configuration file | ``config/ptah.php`` |
+| ``ptah-config`` | Configuration files (also ``ptah-masks.php``, ``ptah-settings.php``, ``ptah-dashboard.php``) | ``config/ptah.php``, ``config/ptah-masks.php``, ``config/ptah-settings.php``, ``config/ptah-dashboard.php`` |
+| ``ptah-masks`` | Input masks only, without republishing ``ptah.php`` | ``config/ptah-masks.php`` |
 | ``ptah-stubs`` | Customizable scaffold stubs | ``stubs/ptah/`` |
 | ``ptah-migrations`` | All package migrations | ``database/migrations/`` |
 | ``ptah-lang`` | **Full** translations (pt_BR and en) — ⚠ freezes every key | ``lang/vendor/ptah/`` |
 | ``ptah-lang-overrides`` | Minimal override starter (change strings without freezing) | ``lang/vendor/ptah/pt_BR/ui.php`` |
-| ``ptah-views`` | Blade views (for customization) | ``resources/views/vendor/ptah/`` |
+| ``ptah-views`` | Blade views (for customization) — ⚠ publishing a view means you own it; prefer the granular tags below | ``resources/views/vendor/ptah/`` |
+| ``ptah-views-components`` | ``<x-forge-*>`` components only | ``resources/views/vendor/ptah/components/`` |
+| ``ptah-views-base-crud`` | BaseCrud views only | ``resources/views/vendor/ptah/livewire/base-crud/`` |
+| ``ptah-views-auth`` | Auth views and the ``forge-auth`` layout | ``resources/views/vendor/ptah/livewire/auth/``, ``…/layouts/forge-auth.blade.php`` |
+| ``ptah-views-ai`` | AI agent views only | ``resources/views/vendor/ptah/livewire/ai/`` |
 | ``ptah-assets`` | Forge CSS | ``resources/css/vendor/ptah/`` |
 | ``ptah-menu-registry`` | MenuRegistry.php (auto-menu) | ``database/seeders/MenuRegistry.php`` |
 | ``ptah-api`` | BaseResponse, BaseApiController, SwaggerInfo | ``app/Responses/``, ``app/Http/Controllers/API/`` |
@@ -989,6 +1033,10 @@ Ptah exposes several groups of publishable files via ``vendor:publish``. Each ta
 | ``ptah-menu`` | Menus migration | ``database/migrations/`` |
 | ``ptah-company`` | Company migrations | ``database/migrations/`` |
 | ``ptah-permissions`` | Permissions migrations | ``database/migrations/`` |
+| ``ptah-ai-agent`` | AI Agent migrations (what ``ptah:module ai_agent`` publishes) | ``database/migrations/`` |
+| ``ptah-notifications`` | Notifications migration (opt-in schema) | ``database/migrations/`` |
+| ``ptah-errors`` | Error views (403, 404, 405, 419, 429, 500, 503) and their layout | ``resources/views/errors/`` |
+| ``ptah-skills`` | Agent skills for Claude Code (re-publish with ``--force`` after upgrading ptah) | ``.claude/skills/`` |
 | ``ptah-docker`` | Complete Docker environment | project root |
 
 **Usage:**
@@ -1105,7 +1153,7 @@ php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 php artisan migrate
 
 # 7. Access system
-# http://localhost/products
+# http://localhost/product
 ```
 
 ### With Docker
@@ -1153,9 +1201,12 @@ docker compose exec app php artisan ptah:module menu
 # Web first
 php artisan ptah:forge Product
 
-# Then add API (does not overwrite existing files)
-php artisan ptah:forge Product --api --force
+# Then add API: without --force existing files are skipped, so only the API artifacts are created
+php artisan ptah:forge Product --api
 ```
+
+> Do **not** add `--force` here: it overwrites every existing artifact of the entity
+> (model, service, views…) — everything except an existing migration.
 
 ### Subfolders (organization)
 
@@ -1167,7 +1218,7 @@ php artisan ptah:forge Purchase/OrderItem
 # Result:
 # app/Models/Purchase/Order.php
 # app/Services/Purchase/OrderService.php
-# resources/views/purchase/order/index.blade.php
+# resources/views/order/index.blade.php   (the subfolder is ignored for views)
 ```
 
 ### Reading from existing database
@@ -1177,7 +1228,7 @@ php artisan ptah:forge Purchase/OrderItem
 php artisan ptah:forge Customer --db --table=customers
 ```
 
-This inspects the structure via ``INFORMATION_SCHEMA`` and generates compatible Models/DTOs/Migrations.
+This inspects the structure via ``Schema::getColumns()`` and generates compatible Models/DTOs/Migrations.
 
 ---
 
@@ -1186,7 +1237,7 @@ This inspects the structure via ``INFORMATION_SCHEMA`` and generates compatible 
 ### Error: "Model not found"
 **Cause:** Repository binding not registered.
 
-**Solution:** Add to ``AppServiceProvider::boot()``:
+**Solution:** ``ptah:forge`` injects it into ``AppServiceProvider::register()``; if it did not (no ``register()`` method, or the file was missing), add it there:
 ```php
 $this->app->bind(
     \App\Repositories\Contracts\ProductRepositoryInterface::class,
@@ -1214,7 +1265,7 @@ npm run build
 ```
 
 ### Duplicate Migrations
-**Cause:** Re-running ``ptah:install`` or ``ptah:forge``.
+**Cause:** Re-running ``ptah:install``. ``ptah:forge`` never recreates a migration when a ``*_create_{table}_table.php`` already exists (even with ``--force``).
 
 **Solution:** Use ``--force`` only when you really want to overwrite. For modules, check with ``ptah:module --list`` first.
 
@@ -1256,7 +1307,7 @@ php artisan ptah:forge Product --api-only   # Only API
 **Solution:** This is normal. Laravel Boost installs heavy dependencies (AST parsers). Use ``--skip-npm`` to skip Node if you already have built assets.
 
 ### Slow command: ptah:forge --db
-**Cause:** INFORMATION_SCHEMA query can be slow on large databases.
+**Cause:** Reading the table structure (``Schema::getColumns()``) can be slow on large databases.
 
 **Solution:** Use manual ``--fields`` for known tables:
 ```bash
@@ -1324,37 +1375,67 @@ php artisan ptah:hooks ProductHooks --force
 
 **What it does:**
 
-Creates `app/CrudHooks/{Name}.php` implementing `Ptah\Contracts\CrudHooksInterface` with the 4 pre-filled lifecycle methods:
+Creates `app/CrudHooks/{Name}.php` implementing `Ptah\Contracts\CrudHooksInterface` with the 5 pre-filled lifecycle methods (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`):
 
 ```php
 namespace App\CrudHooks;
 
-use Ptah\Contracts\CrudHooksInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+use Ptah\Contracts\CrudHooksInterface;
+use Ptah\Exceptions\CrudHookAbort;
 
+/**
+ * A hook that throws is LOGGED AND THE SAVE CONTINUES — which is what you want
+ * for a notification, and not what you want for a barrier. To make a failure
+ * abort the save, throw CrudHookAbort (its message reaches the user), or throw
+ * a ValidationException to get a field error. An after* hook cannot roll the
+ * record back: there is no transaction around the save.
+ */
 class ProductHooks implements CrudHooksInterface
 {
     public function beforeCreate(array &$data, ?Model $record, object $component): void
     {
-        // Executed before creating the record
+        // Example: set a default value
+        // $data['status'] = 'pending';
+
+        // Example: refuse the save (never swallowed)
+        // throw new CrudHookAbort('Não foi possível gerar a senha temporária.');
     }
 
     public function afterCreate(array &$data, Model $record, object $component): void
     {
-        // Executed after creating the record
+        // Example: dispatch an event
+        Log::info('ProductHooks: afterCreate', ['id' => $record->getKey()]);
     }
 
     public function beforeUpdate(array &$data, Model $record, object $component): void
     {
-        // Executed before updating the record
+        // Example: track who changed the record
+        // $data['updated_by'] = auth()->id();
     }
 
     public function afterUpdate(array &$data, Model $record, object $component): void
     {
-        // Executed after updating the record
+        // Example: clear cache
+    }
+
+    /**
+     * Runs before a record is deleted (single, bulk or force). Unlike the save
+     * hooks, ANY failure here refuses the delete; throw CrudHookAbort to show
+     * the user why.
+     */
+    public function beforeDelete(array &$data, Model $record, object $component): void
+    {
+        // Example: refuse while the record is in use
+        // if ($record->products()->exists()) {
+        //     throw new CrudHookAbort('Em uso por produtos ativos.');
+        // }
     }
 }
 ```
+
+(The generated file also carries a docblock on each method; trimmed here.)
 
 **Next steps:**
 
@@ -1374,7 +1455,7 @@ class ProductHooks implements CrudHooksInterface
 
 **Usage:**
 ```bash
-# Add new menu entries, preserving existing ones (idempotent)
+# Add new menu entries and refresh the ones in the registry (idempotent)
 php artisan ptah:menu-sync
 
 # List the active items that are no longer in the registry (writes nothing)
@@ -1383,24 +1464,22 @@ php artisan ptah:menu-sync --prune --dry-run
 # ...and deactivate them (is_active = 0 — never deleted)
 php artisan ptah:menu-sync --prune
 
-# Clear the menus table and recreate everything from the registry
+# DELETE every menu item (including editor-created ones) and recreate from the registry — asks first
 php artisan ptah:menu-sync --fresh
+
+# Same, without the prompt (scripts)
+php artisan ptah:menu-sync --fresh --force
 ```
+
+Items already in the registry are **not** left untouched: a link has its text, icon, order and `is_active` rewritten from the registry on every run (a group, matched by its text, gets icon, order and `is_active`) — so a label or order changed in the menu editor on a registry item is overwritten, and a deactivated one is reactivated.
 
 **Options:**
 - `--prune` — After syncing, sets `is_active = 0` on every active item (link or group) that is not in the registry, and lists them. Nothing is deleted: set `is_active = 1` (or use the menu editor) to bring one back. **Note:** items created in the menu editor are not in the registry either, so `--prune` deactivates them too — run `--prune --dry-run` first and read the list.
 - `--dry-run` — With `--prune`, only lists what would be deactivated.
-- `--fresh` — Truncates the `menus` table before syncing (**destructive** — current menu rows are removed and rebuilt from the registry). Prefer `--prune`.
+- `--fresh` — Deletes **every** row of the `menus` table before syncing (**destructive** — including items created in the menu editor; they are not in the registry and are not rebuilt). Asks for confirmation; the answer defaults to no. Prefer plain `ptah:menu-sync`, or `--prune`.
+- `--force` — With `--fresh`, skips the confirmation (for scripts).
 
 Every run clears the sidebar cache (`ptah_menu_tree`), so the change shows on the next page load.
-
-## ptah:menu-cache-clear
-
-Clears the cached sidebar tree. Changes through the `Menu` model, the menu editor and `ptah:menu-sync` already clear it; run this after changing the `menus` table by hand (raw SQL, another application).
-
-```bash
-php artisan ptah:menu-cache-clear
-```
 
 **Requirements:**
 - The **menu** module must be enabled (`php artisan ptah:module menu`).
@@ -1410,8 +1489,43 @@ php artisan ptah:menu-cache-clear
 ```bash
 php artisan ptah:forge Product --fields="name:string,price:decimal(10,2)"
 php artisan migrate
-php artisan ptah:menu-sync --fresh
+php artisan ptah:menu-sync
 ```
+
+## ptah:menu-cache-clear
+
+Clears the cached sidebar tree. Changes through the `Menu` model, the menu editor and `ptah:menu-sync` already clear it; run this after changing the `menus` table by hand (raw SQL, another application).
+
+```bash
+php artisan ptah:menu-cache-clear
+```
+
+---
+
+## Opt-in installers
+
+Package migrations are auto-discovered, so a new table would run on the host's next `php artisan migrate` unasked. These opt-in features therefore ship their migration through a command that copies it into `database/migrations/` — you review it, commit it and run `php artisan migrate` when you decide to. Each is idempotent: an existing migration is left alone (`Already installed: …`). None takes options.
+
+| Command | Writes | Then |
+|---|---|---|
+| `ptah:history:install` | `*_create_ptah_record_history_table.php` | `use \Ptah\Traits\RecordsHistory;` in each model to record; its BaseCrud edit modal then shows a History button |
+| `ptah:attachments:install` | `*_create_ptah_attachments_table.php` | `use \Ptah\Traits\HasAttachments;` in each model that takes files; disk from `PTAH_ATTACHMENTS_DISK` (default `local`, private) |
+| `ptah:settings:install` | `*_create_ptah_settings_table.php` and `config/ptah-settings.php` (if absent) | Declare the settings in `config/ptah-settings.php`; edit at `/ptah-settings`, read with `ptah_setting('key')` — see [Settings.md](Settings.md) |
+
+### ptah:preferences:realign
+
+Realigns the `user_preferences.user_id` foreign key to the configured identity table (see `UserIdentity`). It changes the FK only — it never deletes rows and never changes the column type.
+
+```bash
+php artisan ptah:preferences:realign --dry-run   # show the current vs. wanted FK and exit
+php artisan ptah:preferences:realign             # apply (asks for confirmation)
+php artisan ptah:preferences:realign --force     # apply without the prompt (deploy scripts)
+```
+
+- Does nothing when the FK already points to the right place.
+- Refuses to run (exit ≠ 0) while any `user_id` has no matching row in the identity table, and prints a `select` to inspect them — clean those up manually first.
+- Fails if the `user_preferences` table does not exist (run `php artisan migrate` first).
+- It alters the schema of a table that may be in production: run `--dry-run` first and take a backup.
 
 ---
 
