@@ -463,8 +463,8 @@ trait HasCrudExport
         foreach ($visibleCols as $col) {
             $tipo = $col['colsTipo'] ?? '';
 
-            // Ignorar colunas de ação
-            if ($tipo === 'action') {
+            // Ignorar colunas de ação — e de senha: o export levaria o hash (1.48.0)
+            if ($tipo === 'action' || $tipo === 'password') {
                 continue;
             }
 

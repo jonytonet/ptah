@@ -24,7 +24,7 @@ final class ColumnKeys
         'colsFormBlock', 'colsGravar', 'colsHelpText', 'colsHelper', 'colsIcon', 'colsIsFilterable',
         'colsMask', 'colsMaskTransform', 'colsMetodoCustom', 'colsMetodoRaw', 'colsMinWidth',
         'colsNomeFisico', 'colsNomeLogico', 'colsOn', 'colsOnChange', 'colsOperator', 'colsOrderBy',
-        'colsPermission', 'colsPlaceholder', 'colsRelacao', 'colsRelacaoBusca', 'colsRelacaoExibe',
+        'colsPermission', 'colsPlaceholder', 'colsReadonly', 'colsRelacao', 'colsRelacaoBusca', 'colsRelacaoExibe',
         'colsRelacaoNested', 'colsRelation', 'colsRenderer', 'colsRendererBadges',
         'colsRendererBoolFalse', 'colsRendererBoolTrue', 'colsRendererColor',
         'colsRendererCurrency', 'colsRendererDecimals', 'colsRendererDurationUnit',

@@ -230,6 +230,7 @@ return [
     'modal_edit_subtitle' => 'Altere os campos e salve',
     'modal_create_subtitle' => 'Preencha os campos abaixo',
     'select_placeholder' => 'Selecione...',
+    'password_keep' => 'Deixe vazio para manter a atual',
     'search_entity' => 'Buscar :label...',
     'no_results' => 'Nenhum resultado encontrado.',
     'forge_select_filter_aria' => 'Filtrar opções',
@@ -1178,6 +1179,7 @@ return [
     'cfg_col_default_value' => 'Valor padrão no Novo',
     'cfg_tip_cols_default_value' => 'Já vem preenchido quando o usuário clica em Novo. Para booleano: 1 ou 0.',
     'cfg_col_cb_filterable' => 'Filtrável',
+    'cfg_col_cb_readonly' => 'Somente leitura',
 
     // Aba Colunas — permissão por coluna (requer o módulo "permissions")
     'cfg_col_permission_label' => 'Permissão de visibilidade',
@@ -1926,6 +1928,7 @@ return [
     'cfg_tip_cols_gravar' => 'Inclui este campo no formulário de criação/edição e grava no banco. Desative para colunas de JOIN/calculadas — gravar em coluna de outra tabela falha ou corrompe dados.',
     'cfg_tip_cols_required' => 'Marca o campo como obrigatório no formulário. Validado no cliente e pelo FormValidatorService ao salvar.',
     'cfg_tip_cols_is_filterable' => 'Exibe esta coluna no painel de filtros para que os usuários possam buscar/filtrar por ela.',
+    'cfg_tip_cols_readonly' => 'Mostra o valor no formulário como texto: ninguém edita e nunca é gravado.',
     'cfg_tip_cols_permission' => 'Restringe esta coluna aos usuários com essa chave de page_object concedida. Começa FECHADO: após marcar, só masters veem a coluna até você conceder por perfil.',
     'cfg_tip_cols_form_block' => 'Agrupa este campo sob um título de seção no formulário de criação/edição. Campos com o mesmo texto aparecem juntos, na ordem em que foram adicionados.',
     'cfg_tip_cols_on_change' => 'Expressão sandboxed reavaliada sempre que este campo muda (variáveis: data, value; helpers: merge/now/upper/lower/slug/uuid). Deve retornar um array para substituir os dados do formulário — erros são logados, nunca quebram o formulário.',

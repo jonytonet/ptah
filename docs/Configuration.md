@@ -2277,13 +2277,14 @@ Properties of each column in `cols[]`:
 |-------------|------|--------|-----------|
 | `colsNomeFisico` | string | — | Physical column name in the database (required) |
 | `colsNomeLogico` | string | `ucfirst(colsNomeFisico)` | Display label |
-| `colsTipo` | string | `'text'` | Input type: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`, `datetime-local`, `range`, `email`, `url`, `tel` (`CrudConfigEnums::COLUMN_TYPES`) |
+| `colsTipo` | string | `'text'` | Input type: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`, `datetime-local`, `range`, `email`, `url`, `tel`, `password` (`CrudConfigEnums::COLUMN_TYPES`). `boolean` is an on/off switch when the column is NOT NULL, and a Yes/No select when it is nullable (a switch cannot say "not informed"). `password`: never filled when editing, empty means keep, saved hashed (`Hash::make`, or Laravel's `hashed` cast when the model has it); the listing shows `••••••` and the export leaves the column out. |
 | `colsGravar` | bool | `true` | Save value to database |
 | `colsRequired` | bool | `false` | Required field |
 | `colsIsFilterable` | bool | `true` | Allows filtering by this column |
 | `colsPermission` | string | `''` | Column-level visibility gate (requires the `permissions` module). An `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — this is the default for every column. |
 | `colsVisibleList` | bool | `true` | Show in list |
-| `colsEditableForm` | bool | `true` | Editable in form |
+| `colsEditableForm` | bool | `true` | Shown in the form. `false` removes the field from the form |
+| `colsReadonly` | bool | `false` | Shown in the form as text, never editable and never saved — even a forged value is dropped (1.48.0). Unlike `colsEditableForm: false`, the person sees the value |
 | `colsAlign` | string | `'text-start'` | Alignment: `text-start`, `text-center`, `text-end` |
 | `colsSource` | string | `''` | Badge indicating SQL source (e.g.: `JOIN categories`) |
 

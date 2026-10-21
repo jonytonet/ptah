@@ -6,6 +6,8 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Contracts\SearchDropdownLabelSource;
+use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
 
@@ -757,6 +759,49 @@ trait HasCrudSearchDropdown
         }
 
         return [];
+    }
+
+    /**
+     * The label of a stored value in service mode (1.48.0) — see
+     * SearchDropdownLabelSource. Without the interface, the service's own
+     * search method (the one the config already names, no new call surface)
+     * is asked with the value as the term, and only an item whose `value`
+     * matches exactly counts. Null when nothing answers.
+     */
+    protected function sdServiceLabel(array $col, mixed $value): ?string
+    {
+        $value = Scalar::of($value);
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $target = (string) ($this->sdSettings($col)['model'] ?? '');
+        if (! str_contains($target, '\\')) {
+            return null;
+        }
+
+        $parts = explode('\\', $target);
+        array_pop($parts);
+        $class = implode('\\', $parts);
+        $fullClass = class_exists($class) ? $class : 'App\\Services\\'.$class;
+
+        try {
+            if (is_a($fullClass, SearchDropdownLabelSource::class, true)) {
+                return app($fullClass)->searchDropdownLabel($value);
+            }
+
+            foreach ($this->resolveSearchDropdownResults($this->sdSettings($col), (string) $value, true) as $item) {
+                if (is_array($item) && (string) Scalar::of($item['value'] ?? null) === (string) $value) {
+                    $label = $item['label'] ?? null;
+
+                    return is_scalar($label) ? (string) $label : null;
+                }
+            }
+        } catch (\Throwable) {
+            // Same as the search itself: a failing service leaves the field as before.
+        }
+
+        return null;
     }
 
     /**

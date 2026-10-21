@@ -31,6 +31,9 @@ class CrudConfigEnums
         'email',
         'url',
         'tel',
+        // 1.48.0: nunca preenchido ao editar, vazio = nao mexer, gravado com
+        // hash (Hash::make, ou o cast `hashed` do model quando houver).
+        'password',
     ];
 
     /**

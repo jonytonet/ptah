@@ -44,6 +44,11 @@ trait HasCrudRenderers
     #[ServerOnly]
     public function formatCell(array $col, mixed $row): string
     {
+        // Never the stored hash, whatever the column's other keys say (1.48.0).
+        if (($col['colsTipo'] ?? '') === 'password') {
+            return '••••••';
+        }
+
         $value = $this->getCellValue($col, $row);
 
         // colsMetodoCustom has maximum priority

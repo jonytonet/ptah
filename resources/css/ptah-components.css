@@ -1809,6 +1809,10 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-form_sel.ptah-c-form_sel_open     { border-color: var(--ptah-primary); box-shadow: 0 0 0 2px var(--ptah-primary-ring); }
 .ptah-c-form_sel.ptah-c-form_sel_open_err { border-color: var(--color-danger, #ef4444); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-danger, #ef4444) 20%, transparent); }
 
+/* Read-only form value (colsReadonly, 1.48.0): reads as a field at rest, not
+   as an input — no focus ring, no caret. Tokens flip with the mode. */
+.ptah-c-form_ro { background-color: var(--ptah-field-muted); border: 1px solid var(--ptah-line-strong); color: var(--ptah-text); border-radius: .375rem; padding: .625rem .75rem; min-height: 2.5rem; }
+
 /* ── Field error message text ──────────────────────────────────────────────
    Replaces the raw `text-red-500` utility (3.76:1 against white — below the
    4.5:1 text floor). Dark uses --ptah-danger-lite, not --ptah-danger-strong:
