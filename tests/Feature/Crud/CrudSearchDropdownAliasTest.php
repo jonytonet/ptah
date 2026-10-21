@@ -7,6 +7,7 @@ namespace Ptah\Tests\Feature\Crud;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Contracts\SearchDropdownSource;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Tests\TestCase;
@@ -20,11 +21,24 @@ class SdAliasStub extends Model
     protected $fillable = ['name', 'status', 'amount'];
 }
 
-class SdAliasServiceStub
+class SdAliasServiceStub implements SearchDropdownSource
 {
+    public function searchDropdown(string $query, string $key): array
+    {
+        return [['value' => 1, 'label' => "matched:{$query}", 'key' => $key]];
+    }
+}
+
+/** A class that does NOT opt in: a public method the config could name. */
+class SdAliasNotASource
+{
+    public static int $calls = 0;
+
     public function search(string $term): array
     {
-        return [['value' => 1, 'label' => "matched:{$term}"]];
+        self::$calls++;
+
+        return [['value' => 9, 'label' => 'should never be reached']];
     }
 }
 
@@ -187,7 +201,24 @@ class CrudSearchDropdownAliasTest extends TestCase
 
         $results = $this->crud()->call('searchDropdown', 'category_id', 'hello')->get('sdResults')['category_id'];
 
-        $this->assertSame([['value' => 1, 'label' => 'matched:hello']], $results);
+        // The method segment is handed to the source as a KEY, never called.
+        $this->assertSame([['value' => 1, 'label' => 'matched:hello', 'key' => 'search']], $results);
+    }
+
+    /** 1.49.0: the config used to call any public method of any class. */
+    #[Test]
+    public function a_class_that_does_not_implement_the_source_is_never_called(): void
+    {
+        $this->makeConfig([
+            'colsSDTipo' => 'service',
+            'colsSDService' => SdAliasNotASource::class,
+            'colsSDServiceMethod' => 'search',
+        ]);
+
+        $results = $this->crud()->call('searchDropdown', 'category_id', 'hello')->get('sdResults')['category_id'] ?? [];
+
+        $this->assertSame([], $results);
+        $this->assertSame(0, SdAliasNotASource::$calls);
     }
 
     // ── colsSDMode='both' must never hijack colsSDTipo ──────────────────────

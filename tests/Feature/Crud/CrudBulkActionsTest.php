@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Contracts\BulkActionHandler;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Tests\TestCase;
@@ -26,11 +27,22 @@ class BulkActionStub extends Model
 }
 
 /** Custom bulk-action handler wired via crudConfig['bulkActions'][]['method']. */
-class BulkApproveHandler
+class BulkApproveHandler implements BulkActionHandler
 {
+    public function handleBulkAction(array $ids, string $model, string $key): void
+    {
+        BulkActionStub::whereIn('id', $ids)->update(['status' => $key === 'approve' ? 'approved' : $key]);
+    }
+}
+
+/** Does NOT opt in: a public method a config could name (1.49.0). */
+class BulkNotAHandler
+{
+    public static int $calls = 0;
+
     public function handle(array $ids, string $model): void
     {
-        BulkActionStub::whereIn('id', $ids)->update(['status' => 'approved']);
+        self::$calls++;
     }
 }
 
@@ -88,7 +100,7 @@ class CrudBulkActionsTest extends TestCase
         $cfg->update([
             'config' => array_merge($cfg->config, [
                 'bulkActions' => [
-                    ['label' => 'Approve', 'action' => 'approve', 'method' => BulkApproveHandler::class.'@handle'],
+                    ['label' => 'Approve', 'action' => 'approve', 'method' => BulkApproveHandler::class.'@approve'],
                 ],
             ]),
         ]);
@@ -246,6 +258,24 @@ class CrudBulkActionsTest extends TestCase
             ->call('executeBulkAction', 'approve');
 
         $this->assertSame('approved', BulkActionStub::find($record->id)->status);
+    }
+
+    /** 1.49.0: the config used to call any public method of any class. */
+    #[Test]
+    public function a_handler_that_does_not_implement_the_contract_is_never_called(): void
+    {
+        $this->makeConfig();
+        $cfg = CrudConfig::where('model', BulkActionStub::class)->first();
+        $cfg->update(['config' => array_merge($cfg->config, ['bulkActions' => [
+            ['label' => 'X', 'action' => 'x', 'method' => BulkNotAHandler::class.'@handle'],
+        ]])]);
+        $record = BulkActionStub::create(['name' => 'Free', 'status' => 'active']);
+
+        Livewire::test(BaseCrud::class, ['model' => BulkActionStub::class])
+            ->set('selectedRows', [(string) $record->id])
+            ->call('executeBulkAction', 'x');
+
+        $this->assertSame(0, BulkNotAHandler::$calls);
     }
 
     // ── Scoping: executeBulkAction ───────────────────────────────────────────

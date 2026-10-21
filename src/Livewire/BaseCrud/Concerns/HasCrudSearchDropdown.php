@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Contracts\SearchDropdownLabelSource;
+use Ptah\Contracts\SearchDropdownSource;
 use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
 use Ptah\Support\SqlIdentifier;
@@ -747,11 +749,15 @@ trait HasCrudSearchDropdown
                         ? $class
                         : 'App\\Services\\'.$class;
 
-                    if (class_exists($fullClass) && method_exists($fullClass, $methodName)) {
-                        $result = app($fullClass)->{$methodName}($query);
+                    // 1.49.0: only a class that opted in, and the method segment is a
+                    // KEY passed to it — never a name ptah calls. See SearchDropdownSource.
+                    if (is_a($fullClass, SearchDropdownSource::class, true)) {
+                        $result = app($fullClass)->searchDropdown($query, $methodName);
 
                         return is_array($result) ? $result : [];
                     }
+
+                    Log::warning('Ptah searchdropdown: service-mode class does not implement '.SearchDropdownSource::class.' — returning no results (1.49.0).', ['class' => $fullClass]);
                 }
             }
         } catch (\Throwable) {
@@ -763,8 +769,8 @@ trait HasCrudSearchDropdown
 
     /**
      * The label of a stored value in service mode (1.48.0) — see
-     * SearchDropdownLabelSource. Without the interface, the service's own
-     * search method (the one the config already names, no new call surface)
+     * SearchDropdownLabelSource. Without it, the service's searchDropdown()
+     * (SearchDropdownSource, 1.49.0 — no name from the config is ever called)
      * is asked with the value as the term, and only an item whose `value`
      * matches exactly counts. Null when nothing answers.
      */

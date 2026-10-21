@@ -595,7 +595,7 @@ Here `colsSDModel` is queried as usual, but the label comes from the `supplier` 
   "colsNomeLogico": "Product",
   "colsTipo": "searchdropdown",
   "colsGravar": true,
-  "colsSDModel": "Product\\ProductService\\searchActive",
+  "colsSDModel": "Product\\ProductService\\active",
   "colsSDTipo": "service"
 }
 ```
@@ -603,35 +603,56 @@ Here `colsSDModel` is queried as usual, but the label comes from the `supplier` 
 **Format of `colsSDModel` for service:**
 
 ```
-{Namespace}\\{ClassName}\\{methodName}
+{Namespace}\{ClassName}\{key}
 ```
 
-Ptah extracts the last segment as the method and the rest as the class:
+Ptah takes the last segment as a **key** and the rest as the class:
 
 ```
-Product\\ProductService\\searchActive
-→ class:  App\Services\Product\ProductService
-→ method: searchActive($query)
+Product\ProductService\active
+→ class: App\Services\Product\ProductService
+→ call:  searchDropdown($query, 'active')
 ```
 
-The method receives `string $query` and **must return** `array<int, array{value: mixed, label: string}>`:
+**The class must implement `Ptah\Contracts\SearchDropdownSource` (1.49.0).**
+Before 1.49.0 the last segment was a method name and ptah called it on any
+class — whoever could edit a screen config could point it at any public
+method of the application or of `vendor/`, with the term the user typed as
+the argument. Now ptah only calls `searchDropdown()` on a class that opted
+in, and the last segment is just a string the class receives: one service can
+serve several dropdowns and dispatch on it. A class without the interface
+returns no results, logs a warning, and `ptah:config:doctor` reports it as an
+error.
+
+`searchDropdown()` receives what the user typed (`''` for the initial list)
+and the key, and **must return** `array<int, array{value: mixed, label: string}>`:
 
 ```php
 namespace App\Services\Product;
 
-class ProductService
+use Ptah\Contracts\SearchDropdownSource;
+
+class ProductService implements SearchDropdownSource
 {
-    public function searchActive(string $query): array
+    public function searchDropdown(string $query, string $key): array
     {
-        return Product::active()
-            ->where('name', 'LIKE', "%{$query}%")
+        $q = match ($key) {
+            'active' => Product::active(),
+            default  => Product::query(),
+        };
+
+        return $q->where('name', 'LIKE', "%{$query}%")
             ->limit(15)
             ->get()
-            ->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
+            ->map(fn ($p) => ['value' => $p->id, 'label' => $p->name])
             ->toArray();
     }
 }
 ```
+
+**Upgrading from before 1.49.0:** add `implements SearchDropdownSource` and a
+`searchDropdown()` that calls your existing method — e.g.
+`return $this->searchActive($query);` — the config does not change.
 
 > **Note:** Ptah resolves the service via `app($class)`, so dependency injection works.
 
@@ -642,13 +663,13 @@ Now ptah asks the service:
 - if it implements `Ptah\Contracts\SearchDropdownLabelSource`,
   `searchDropdownLabel($value)` answers directly — the right choice when the
   search method cannot find an item by its value;
-- otherwise the search method above is called with the saved value as the
-  term, and only an item whose `value` matches **exactly** is used.
+- otherwise `searchDropdown()` is called with the saved value as the term,
+  and only an item whose `value` matches **exactly** is used.
 
 ```php
-class BranchService implements \Ptah\Contracts\SearchDropdownLabelSource
+class BranchService implements \Ptah\Contracts\SearchDropdownSource, \Ptah\Contracts\SearchDropdownLabelSource
 {
-    public function search(string $query): array { /* ... */ }
+    public function searchDropdown(string $query, string $key): array { /* ... */ }
 
     public function searchDropdownLabel(mixed $value): ?string
     {

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Commands\Config\Parsers\ActionParser;
 use Ptah\Commands\Config\Parsers\GeneralParser;
+use Ptah\Contracts\BulkActionHandler;
+use Ptah\Contracts\SearchDropdownSource;
 use Ptah\Exceptions\ConfigValidationException;
 use Ptah\Models\CrudConfig;
 use Ptah\Models\PageObject;
@@ -85,7 +87,10 @@ use Throwable;
  *                        outside model|service; (g) a service-mode
  *                        colsSDService class outside
  *                        config('ptah.crud.sd_service_namespaces') — purely
- *                        diagnostic, not enforced at request time.
+ *                        diagnostic, not enforced at request time; (h) a
+ *                        service-mode class that does not implement
+ *                        SearchDropdownSource — an ERROR since 1.49.0, the
+ *                        dropdown returns nothing.
  *   - notification delivery → per config with `notifications.rules`, all
  *                        warning-only: (a) the model lacks the
  *                        SendsCrudNotifications trait, so no rule can ever
@@ -214,6 +219,21 @@ class ConfigDoctorCommand extends Command
                 if (is_string($helper) && $helper !== '' && ! in_array($helper, ColumnKeys::HELPERS, true)) {
                     $this->line("🟡 <fg=yellow>unknown colsHelper</> [{$label}] {$field}: '{$helper}' is not a formatting helper (".implode(', ', ColumnKeys::HELPERS).') — help text below the field is colsHelpText');
                     $warnings++;
+                }
+            }
+
+            // 4c. 1.49.0: a bulk action's handler must implement
+            //     BulkActionHandler — the runtime no longer calls the method
+            //     named after `@`, so any other class is never called.
+            foreach ((array) ($config['bulkActions'] ?? []) as $ba) {
+                $method = is_array($ba) ? (string) ($ba['method'] ?? '') : '';
+                if (! str_contains($method, '@')) {
+                    continue;
+                }
+                $handler = explode('@', $method, 2)[0];
+                if (! is_a($handler, BulkActionHandler::class, true)) {
+                    $this->line("🔴 <fg=red>bulk action without BulkActionHandler</> [{$label}] '".($ba['action'] ?? '?')."': '{$handler}' não implementa ".BulkActionHandler::class.' — desde a 1.49.0 a ação não é executada. Implemente handleBulkAction(array $ids, string $model, string $key)');
+                    $errors++;
                 }
             }
 
@@ -531,6 +551,17 @@ class ConfigDoctorCommand extends Command
                         $warnings++;
                     }
                 }
+
+                // (h) 1.49.0: a service-mode class must implement
+                //     SearchDropdownSource — the runtime no longer calls a method
+                //     named by the config, so any other class returns nothing.
+                if ($sdTipo === 'service') {
+                    $sdClass = self::sdServiceClass($col);
+                    if ($sdClass !== null && ! is_a($sdClass, SearchDropdownSource::class, true)) {
+                        $this->line("🔴 <fg=red>searchdropdown: service without SearchDropdownSource</> [{$label}] column '{$field}': '{$sdClass}' não implementa ".SearchDropdownSource::class.' — desde a 1.49.0 o dropdown não retorna nada. Implemente searchDropdown(string $query, string $key)');
+                        $errors++;
+                    }
+                }
             }
 
             if ($sdConfigChanged) {
@@ -816,6 +847,24 @@ class ConfigDoctorCommand extends Command
      * HasCrudSearchDropdown::sdNormalizeFilters() — that degrades safely, so
      * it is not itself an error condition worth flagging here).
      */
+    /** The class a service-mode column resolves to, as the runtime does; null if none. */
+    private static function sdServiceClass(array $col): ?string
+    {
+        $target = (string) ($col['colsSDModel'] ?? $col['colsSdTable'] ?? '');
+        if ($target === '' && ! empty($col['colsSDService']) && ! empty($col['colsSDServiceMethod'])) {
+            $target = rtrim((string) $col['colsSDService'], '\\/').'\\'.$col['colsSDServiceMethod'];
+        }
+        if (! str_contains($target, '\\')) {
+            return null;
+        }
+
+        $parts = explode('\\', $target);
+        array_pop($parts);
+        $class = implode('\\', $parts);
+
+        return class_exists($class) ? $class : 'App\\Services\\'.$class;
+    }
+
     protected function sdFiltersLookValid(mixed $raw): bool
     {
         if ($raw === null || $raw === '') {
