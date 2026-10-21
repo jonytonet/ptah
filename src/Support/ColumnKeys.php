@@ -19,13 +19,13 @@ final class ColumnKeys
 {
     /** @var list<string> */
     public const KNOWN = [
-        'colsAlign', 'colsCellClass', 'colsCellIcon', 'colsCellStyle', 'colsColor',
-        'colsConfirmMessage', 'colsCss', 'colsDefaultValue', 'colsEditableForm', 'colsFilterType',
-        'colsFormBlock', 'colsGravar', 'colsHelpText', 'colsHelper', 'colsIcon', 'colsIsFilterable',
+        'colsAlign', 'colsCellClass', 'colsCellIcon', 'colsCellStyle',
+        'colsCss', 'colsDefaultValue', 'colsEditableForm', 'colsFilterType',
+        'colsFormBlock', 'colsGravar', 'colsHelpText', 'colsHelper', 'colsIsFilterable',
         'colsMask', 'colsMaskTransform', 'colsMetodoCustom', 'colsMetodoRaw', 'colsMinWidth',
-        'colsNomeFisico', 'colsNomeLogico', 'colsOn', 'colsOnChange', 'colsOperator', 'colsOrderBy',
+        'colsNomeFisico', 'colsNomeLogico', 'colsOnChange', 'colsOperator', 'colsOrderBy',
         'colsPermission', 'colsPlaceholder', 'colsReadonly', 'colsRelacao', 'colsRelacaoBusca', 'colsRelacaoExibe',
-        'colsRelacaoNested', 'colsRelation', 'colsRenderer', 'colsRendererBadges',
+        'colsRelacaoNested', 'colsRenderer', 'colsRendererBadges',
         'colsRendererBoolFalse', 'colsRendererBoolTrue', 'colsRendererColor',
         'colsRendererCurrency', 'colsRendererDecimals', 'colsRendererDurationUnit',
         'colsRendererFormat', 'colsRendererImageHeight', 'colsRendererImageWidth',
@@ -38,7 +38,7 @@ final class ColumnKeys
         'colsSDPlaceholder', 'colsSDService', 'colsSDServiceMethod', 'colsSDStartList',
         'colsSDTipo', 'colsSDValor', 'colsSDValueField', 'colsSdLimit', 'colsSdOrderBy',
         'colsSdSelectColumn', 'colsSdTable', 'colsSdValueColumn', 'colsSearchable', 'colsSelect',
-        'colsSortable', 'colsSource', 'colsTable', 'colsTipo', 'colsUploadAllowedTypes',
+        'colsSource', 'colsTipo', 'colsUploadAllowedTypes',
         'colsUploadMaxSize', 'colsUploadPath', 'colsValidations', 'colsValue', 'colsVisibleList',
     ];
 

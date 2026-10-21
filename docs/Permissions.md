@@ -288,8 +288,9 @@ In `config/ptah.php`, `permissions` section:
     // User PK field (default: 'id')
     'user_id_field'    => 'id',
 
-    // Session key to identify user (when not using Auth::)
-    'user_session_key' => 'ptah_user_id',
+    // Session key to identify user (when not using Auth::). Default null: no
+    // session fallback — a legacy app sets PTAH_USER_SESSION_KEY.
+    'user_session_key' => env('PTAH_USER_SESSION_KEY', null),
 
     // Session key for current company
     'company_session_key' => 'ptah_company_id',
@@ -307,11 +308,12 @@ In `config/ptah.php`, `permissions` section:
     // Multi-company: uses company_session_key to filter permissions (default: true)
     'multi_company' => env('PTAH_MULTI_COMPANY', true),
 
-    // Allow guest access (unauthenticated)
-    'allow_guest'   => false,
+    // DANGER: true GRANTS EVERY key and action to unauthenticated visitors
+    // (check() returns true before any lookup). Keep false.
+    'allow_guest'   => env('PTAH_PERMISSION_ALLOW_GUEST', false),
 
     // Admin credentials for DefaultAdminSeeder
-    'admin_name'     => env('PTAH_ADMIN_NAME', 'Administrator'),
+    'admin_name'     => env('PTAH_ADMIN_NAME', 'Administrador'),
     'admin_email'    => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
     // No insecure default: when unset, a strong random password is generated and shown once at install.
     'admin_password' => env('PTAH_ADMIN_PASSWORD'),
@@ -534,7 +536,8 @@ PermissionAudit::granted()->get();
 PermissionAudit::denied()->get();
 PermissionAudit::forUser($userId)->get();
 PermissionAudit::forResource('users.store')->get();
-PermissionAudit::recent(50)->get();  // last 50 records
+PermissionAudit::recent(30)->get();  // last 30 DAYS (the argument is days)
+PermissionAudit::latest()->limit(50)->get();  // last 50 records
 ```
 
 ---
@@ -573,15 +576,14 @@ Checks whether the user has permission to perform `$action` on the `$objectKey` 
 **Internal flow:**
 
 ```
-1. Resolve userId (Auth::id() / session / passed $user)
-2. If allow_guest = false and userId = null → return false
-3. isMaster(user)? → return true (no audit, unless audit_master = true)
-4. Check cache: ptah_perm:{userId}:{companyId}:{objectKey}:{action}
-5. Cache hit? → return cached value
-6. DB: UserRole → RolePermission → can_{action}
+1. Resolve userId (passed $user / Auth::id() / session key, if configured)
+2. userId = null → return allow_guest (true GRANTS EVERYTHING to guests)
+3. isMaster(user)? → return true (audited only if audit AND audit_master)
+4. Load the user's whole permission map for the company (cached:
+   ptah_perms_map:g{g}:u{uv}:{userId}:{companyId}:) — not one entry per key
+5. Look up objectKey → can_{action}
    (OR across all roles: only 1 role needs to have the permission)
-7. Write to cache
-8. Write audit (if configured)
+6. Write audit (if configured)
 9. return $result
 ```
 
@@ -601,7 +603,7 @@ $ok = ptah_can('users.store', 'create');
 
 | Type | Behavior |
 |---|---|
-| `null` | Uses `Auth::id()` → fallback to `Session::get(user_session_key)` |
+| `null` | Uses `Auth::id()` → fallback to the session key in `user_session_key`, only when that is set (default `null`: no fallback) |
 | `int` / `string` | Treated as user ID |
 | `Authenticatable` / Model | Uses `$user->{user_id_field}` |
 
@@ -609,7 +611,7 @@ $ok = ptah_can('users.store', 'create');
 
 #### `isMaster(mixed $user = null): bool`
 
-Checks whether the user has a role with `is_master = true`. Cached at `ptah_is_master:{userId}`.
+Checks whether the user has a role with `is_master = true`. Cached at `ptah_is_master:g{g}:u{uv}:{userId}::`.
 
 ```php
 if (ptah_is_master()) {
@@ -626,8 +628,8 @@ Returns the user's complete permissions map. Useful for loading permissions in t
 ```php
 $perms = ptah_permissions();
 // [
-//   'users.store'      => ['can_create'=>true, 'can_read'=>true, 'can_update'=>false, 'can_delete'=>false],
-//   'users.salary_field' => ['can_create'=>false, 'can_read'=>false, ...],
+//   'users.store'      => ['create'=>true, 'read'=>true, 'update'=>false, 'delete'=>false],
+//   'users.salary_field' => ['create'=>false, 'read'=>false, ...],
 //   ...
 // ]
 ```
@@ -735,14 +737,15 @@ if (ptah_has_role('Vendas Externas')) {
 
 ### `syncPageBindings` — array format
 
+Keyed by **page object id** — `[pageObjectId => flags]`:
+
 ```php
 $bindings = [
-    [
-        'page_object_id' => 12,
-        'can_create'     => true,
-        'can_read'       => true,
-        'can_update'     => false,
-        'can_delete'     => false,
+    12 => [
+        'can_create' => true,
+        'can_read'   => true,
+        'can_update' => false,
+        'can_delete' => false,
     ],
     // ...
 ];
@@ -750,7 +753,12 @@ $bindings = [
 app(RoleService::class)->syncPageBindings($role, $bindings);
 ```
 
-Objects with all flags set to `false` are ignored (no permission is created).
+Every object of the role NOT among the keys is removed first, so the keys
+must be ids: a plain list (`[['page_object_id' => 12, …]]`) is refused since
+1.49.1 — before, its keys 0, 1… removed every real binding of the role and
+then failed. Every entry is written, even one with all flags `false` (the
+roles screen drops those before calling). A flag left out takes
+`bindPageObject`'s default — `can_read` defaults to **true** — so pass all four.
 
 ---
 
@@ -797,11 +805,11 @@ $perms = ptah_permissions();
 ```php
 use Ptah\Facades\Permission;
 
-Permission::check('users.store', 'create');
+Permission::check(null, 'users.store', 'create');   // null = current user
 Permission::isMaster();
 Permission::getPermissions();
-Permission::syncRole($userId, $roleId, $companyId);
-Permission::detachRole($userRoleId);
+Permission::syncRole($user, $roleId, [$companyId]);  // companies as an array
+Permission::detachRole($user, $roleId, $companyId);
 Permission::clearCache();
 ```
 
@@ -811,12 +819,16 @@ Permission::clearCache();
 
 Registered automatically in `PtahServiceProvider`:
 
-### `@ptahCan / @endPtahCan`
+### `@ptahCan / @endptahCan`
+
+The closing directive is all lowercase after `end` — `@endptahCan`, not
+`@endPtahCan` (Blade matches directive names case-sensitively; the wrong case
+is left as text and the view fails to compile).
 
 ```blade
 @ptahCan('users.store', 'create')
     <x-forge-button wire:click="create" color="primary">New user</x-forge-button>
-@endPtahCan
+@endptahCan
 ```
 
 With explicit user and company:
@@ -824,15 +836,15 @@ With explicit user and company:
 ```blade
 @ptahCan('finance.export', 'read', $user, $companyId)
     <a href="/export">Export</a>
-@endPtahCan
+@endptahCan
 ```
 
-### `@ptahMaster / @endPtahMaster`
+### `@ptahMaster / @endptahMaster`
 
 ```blade
 @ptahMaster
     <div class="admin-only-panel">...</div>
-@endPtahMaster
+@endptahMaster
 ```
 
 ---
@@ -854,7 +866,7 @@ Route::delete('/users/{id}', UserController::class . '@destroy')
 
 // With explicit company (optional — normally resolved from session)
 Route::get('/finance/export', FinanceController::class . '@export')
-    ->middleware('ptah.can:finance.export,read');
+    ->middleware('ptah.can:finance.export,read,3');
 ```
 
 ### Behavior
@@ -873,7 +885,7 @@ ptah.can:{objectKey},{action}[,{companyId}]
 | Parameter | Required | Description |
 |---|---|---|
 | `objectKey` | ✓ | Object key (e.g.: `users.store`) |
-| `action` | ✓ | `create`, `read`, `update` or `delete` |
+| `action` | — | `create`, `read`, `update` or `delete` (default `read`) |
 | `companyId` | — | If omitted, resolved from session |
 
 ---
@@ -1133,7 +1145,7 @@ Creates the entire chain idempotently:
 ```
 1. Default company (via DefaultCompanySeeder)
 2. "Administration" department (firstOrCreate)
-3. MASTER role (firstOrCreate via department + name)
+3. MASTER role (the existing `is_master` role, including a soft-deleted one, or a new one)
 4. Admin user (firstOrCreate via email, reads from config('ptah.permissions.admin_*'))
 5. UserRole: admin → MASTER → default company
 ```
@@ -1159,19 +1171,19 @@ PTAH_ADMIN_PASSWORD="secure-password-here"
 ptah_can('users.store', 'create')
   │
   ├─ resolve userId
-  │     Auth::id() → Session::get('ptah_user_id') → null
+  │     Auth::id() → session key (only if user_session_key is set) → null
   │
   ├─ userId null?
-  │     allow_guest = false → return false
+  │     return allow_guest   (true = guests get EVERYTHING)
   │
   ├─ isMaster(userId)?
-  │     Cache: ptah_is_master:{userId}
+  │     Cache: ptah_is_master:g{g}:u{uv}:{userId}::
   │     DB: UserRole join Role WHERE is_master=1
-  │     true → return true  (+ audit if audit_master)
+  │     true → return true  (+ audit if audit AND audit_master)
   │
-  ├─ Cache hit?
-  │     ptah_perm:{userId}:{companyId}:users.store:create
-  │     true/false → return cached
+  ├─ Permission map (one per user + company, cached)
+  │     ptah_perms_map:g{g}:u{uv}:{userId}:{companyId}:
+  │     map['users.store']['create'] → true/false
   │
   ├─ DB query
   │     UserRole (forCompany)
@@ -1303,26 +1315,21 @@ When both `auth` and `permissions` are active, `PermissionService` resolves the 
 
 ### Integration with BaseCrud
 
-To add permission control to a BaseCrud screen, use the `readOnly` parameter combined with view-level checks:
+A BaseCrud screen is gated by its **config**, not by mount parameters: set
+`permissions.permissionIdentifier` to the page-object key and every action
+(create, edit, delete, export, restore) is checked against it, fail-closed:
 
-```blade
-@livewire('ptah-base-crud', [
-    'model'    => 'Product',
-    'canCreate' => ptah_can('products.store', 'create'),
-    'canEdit'   => ptah_can('products.store', 'update'),
-    'canDelete' => ptah_can('products.store', 'delete'),
-    'canExport' => ptah_can('products.export', 'read'),
-])
+```bash
+php artisan ptah:config "App\Models\Product" --permission="identifier=products.store"
 ```
 
-Or full control via `readOnly` for read-only screens:
-
-```blade
-@livewire('ptah-base-crud', [
-    'model'    => 'Product',
-    'readOnly' => !ptah_can('products.store', 'update'),
-])
-```
+There are no `canCreate` / `canEdit` / `canDelete` / `canExport` / `readOnly`
+mount parameters — Livewire ignores unknown ones without a word, so passing
+them gates nothing. Per action, the same `permissions` block takes
+`showCreateButton` / `showEditButton` / `showDeleteButton` / `showTrashButton:
+false` to turn an action off, and `create` / `edit` / `delete` / `export` /
+`restore` holding a Laravel **Gate name** (a string — `true`/`false` there is
+ignored). Or show/hide the whole screen with `@ptahCan` around it.
 
 ---
 
@@ -1435,13 +1442,13 @@ names no registered `PageObject` at all:
 {{-- resources/views/users/index.blade.php --}}
 @ptahCan('users.store', 'create')
     <x-forge-button wire:click="create">New User</x-forge-button>
-@endPtahCan
+@endptahCan
 
 @ptahCan('users.salary_field', 'read')
     <td>{{ $user->salary }}</td>
 @else
     <td>***</td>
-@endPtahCan
+@endptahCan
 ```
 
 ### Example 2 — Protected route
@@ -1471,7 +1478,7 @@ class UserService
 
     public function updateSalary(int $userId, float $salary): void
     {
-        if (!$this->permissions->check('users.salary_field', 'update')) {
+        if (!$this->permissions->check(null, 'users.salary_field', 'update')) {
             throw new \Illuminate\Auth\Access\AuthorizationException();
         }
 
@@ -1494,7 +1501,7 @@ class UserService
 
 ```js
 // In JavaScript
-if (window.PtahUser.permissions['users.store']?.can_create) {
+if (window.PtahUser.permissions['users.store']?.create) {
     showCreateButton();
 }
 ```
@@ -1534,7 +1541,7 @@ class CompanySwitcher extends Component
     // Optional: Eloquent Scope class to filter users shown in the
     // Permissions screen (e.g. only admin users in a multi-type project).
     'user_query_scope'   => env('PTAH_USER_QUERY_SCOPE', null),
-    'user_session_key'   => 'ptah_user_id',
+    'user_session_key'   => env('PTAH_USER_SESSION_KEY', null),
     'company_session_key'=> 'ptah_company_id',
     'audit'              => env('PTAH_PERMISSION_AUDIT', false),
     'audit_denied'       => env('PTAH_PERMISSION_AUDIT_DENIED', true),
@@ -1542,7 +1549,7 @@ class CompanySwitcher extends Component
     'audit_retention_days' => env('PTAH_PERMISSION_AUDIT_RETENTION_DAYS', 90),
     'multi_company'      => env('PTAH_MULTI_COMPANY', true),
     'allow_guest'        => env('PTAH_PERMISSION_ALLOW_GUEST', false),
-    'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrator'),
+    'admin_name'         => env('PTAH_ADMIN_NAME', 'Administrador'),
     'admin_email'        => env('PTAH_ADMIN_EMAIL', 'admin@admin.com'),
     // No insecure default: when unset, a strong random password is generated and shown once at install.
     'admin_password'     => env('PTAH_ADMIN_PASSWORD'),
@@ -1560,7 +1567,7 @@ class CompanySwitcher extends Component
 | `PTAH_PERMISSION_CACHE` | `true` | Enables permissions cache |
 | `PTAH_PERMISSION_CACHE_TTL` | `3600` | Cache TTL in seconds |
 | `PTAH_PERMISSION_AUDIT` | `false` | Audits all accesses |
-| `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Audits only denied accesses |
+| `PTAH_PERMISSION_AUDIT_DENIED` | `true` | Also logs denied accesses (requires `PTAH_PERMISSION_AUDIT=true`) |
 | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | Audits MASTER bypass |
 | `PTAH_PERMISSION_AUDIT_RETENTION_DAYS` | `90` | Default `--days` window for `ptah:audit-prune` |
 | `PTAH_MULTI_COMPANY` | `true` | Permissions filtered by company |

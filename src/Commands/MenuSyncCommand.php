@@ -28,7 +28,8 @@ use Ptah\Models\Menu;
 class MenuSyncCommand extends Command
 {
     protected $signature = 'ptah:menu-sync
-        {--fresh : Clear menus table before syncing (destructive)}
+        {--fresh : DELETE every row of the menus table before syncing (destructive; asks first)}
+        {--force : With --fresh, skip the confirmation (scripts)}
         {--prune : Deactivate (is_active = 0, never delete) the active items that are no longer in the registry}
         {--dry-run : With --prune, only list what would be deactivated}';
 
@@ -56,6 +57,13 @@ class MenuSyncCommand extends Command
 
         // Limpar tabela se --fresh
         if ($this->option('fresh')) {
+            // 1.50.0: it deleted the whole table without asking — including
+            // every item created in the menu editor. --prune deactivates instead.
+            if (! $this->option('force') && ! $this->confirm('--fresh DELETES every menu item, including the ones created in the menu editor. Prefer --prune. Continue?', false)) {
+                $this->components->warn('Aborted — nothing deleted.');
+
+                return self::FAILURE;
+            }
             $this->clearMenusTable();
         }
 

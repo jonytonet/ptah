@@ -25,10 +25,25 @@
     // Laravel promotes to an ErrorException, i.e. a 500 on the whole listing.
     // An icon-less action is a legitimate config: the branches below already
     // fall back to printing the label.
-    $actionIcon = ($col['actionIcon'] ?? '') ?: ($col['actionIcone'] ?? '');
+    $actionIcon = \Ptah\Support\IconClass::normalize((string) (($col['actionIcon'] ?? '') ?: ($col['actionIcone'] ?? '')));
     $actionColor = $col['actionColor'] ?? 'primary';
     $rowId = $row->id ?? 0;
     $actionStr = str_replace(['%id%', '"id%'], [$rowId, $rowId], $actionValue);
+
+    // %field% (1.50.0) — only in a LINK, URL-encoded. In a livewire/javascript
+    // action the value would land inside a JS expression, so those keep %id%
+    // only. A denied column or a $hidden attribute is never substituted.
+    if ($actionType === 'link') {
+        $actionNever = array_merge($this->deniedColumns, $this->hiddenModelAttributes());
+        $actionStr = preg_replace_callback('/%([A-Za-z_][A-Za-z0-9_]*)%/', function ($m) use ($row, $actionNever) {
+            if (in_array($m[1], $actionNever, true)) {
+                return '';
+            }
+            $v = \Ptah\Support\Scalar::of(data_get($row, $m[1]));
+
+            return is_scalar($v) ? rawurlencode((string) $v) : '';
+        }, $actionStr) ?? $actionStr;
+    }
 
     // Blocks dangerous URL schemes on link actions. HTML escaping does NOT
     // neutralise javascript:/data:/vbscript: inside an href, and the value comes

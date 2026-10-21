@@ -45,10 +45,10 @@ class ConfigCommand extends Command
                             {--export= : Export configuration to JSON file}
                             {--non-interactive : Skip wizard questions, use only provided options}
                             {--route= : Route path to scope this config (empty = global/default)}
-                            {--force : Force overwrite existing configuration}
+                            {--force : No effect (kept so existing scripts do not break)}
                             {--dry-run : Show what would be changed without saving}
-                            {--only=* : Process only specific sections (columns,actions,filters,styles,joins,general,permissions)}
-                            {--skip=* : Skip specific sections}';
+                            {--only=* : Process only these sections, comma-separated or repeated (columns,actions,filters,styles,joins,general,permissions)}
+                            {--skip=* : Skip these sections, comma-separated or repeated}';
 
     /**
      * The console command description.
@@ -113,6 +113,18 @@ class ConfigCommand extends Command
         // (invoked with "X") never reads.
         $modelKey = ModelKey::canonical($modelClass);
 
+        if ($this->option('force')) {
+            $this->components->warn('--force has no effect: the command always merges into the existing config, and --reset always asks.');
+        }
+
+        try {
+            $this->getSectionsToProcess();
+        } catch (\InvalidArgumentException $e) {
+            $this->components->error($e->getMessage());
+
+            return 1;
+        }
+
         // Handle special actions
         if ($this->option('list')) {
             return $this->listConfiguration($modelKey);
@@ -147,7 +159,15 @@ class ConfigCommand extends Command
         if ($this->option('non-interactive') || $hasOptions) {
             // Declarative mode
             $this->info("Processing declarative configuration for {$modelClass}...");
-            $this->processDeclarativeMode($modelClass);
+            try {
+                $this->processDeclarativeMode($modelClass);
+            } catch (\InvalidArgumentException $e) {
+                // A parser refusing an option (1.50.0: e.g. --join where=): stop
+                // before saving anything, with the parser's own message.
+                $this->components->error($e->getMessage());
+
+                return 1;
+            }
         } else {
             // Interactive mode
             $this->info("Starting interactive configuration wizard for {$modelClass}...");
@@ -245,6 +265,42 @@ class ConfigCommand extends Command
         return 'added';
     }
 
+    /**
+     * `totalizer=sum` on a column (1.50.0). It wrote totalizadorType /
+     * totalizadorEnabled INTO the column, and the runtime reads only the
+     * screen-level `totalizadores.columns` — the total never appeared. Now it
+     * upserts `{field, aggregate}` there and turns `totalizadores.enabled` on.
+     * Format and label have no runtime: the footer formats with the column's
+     * own renderer.
+     */
+    protected function moveTotalizerToScreen(array $column): array
+    {
+        $field = (string) ($column['colsNomeFisico'] ?? '');
+        $aggregate = $column['totalizadorType'] ?? null;
+
+        foreach (['totalizadorFormat', 'totalizadorLabel'] as $inert) {
+            if (array_key_exists($inert, $column)) {
+                $this->warn("  column '{$field}': {$inert} has no effect — the total uses the column's own renderer. Ignored.");
+            }
+        }
+
+        if (is_string($aggregate) && $aggregate !== '' && $field !== '') {
+            $columns = array_values(array_filter(
+                (array) ($this->config['totalizadores']['columns'] ?? []),
+                fn ($c) => ($c['field'] ?? null) !== $field
+            ));
+            $columns[] = ['field' => $field, 'aggregate' => strtolower($aggregate)];
+            $this->config['totalizadores']['enabled'] = true;
+            $this->config['totalizadores']['columns'] = $columns;
+        }
+
+        foreach (['totalizadorType', 'totalizadorEnabled', 'totalizadorFormat', 'totalizadorLabel'] as $key) {
+            unset($column[$key]);
+        }
+
+        return $column;
+    }
+
     protected function upsertColumn(array $column): string
     {
         $explicit = $column[ColumnParser::EXPLICIT_KEYS] ?? null;
@@ -252,6 +308,8 @@ class ConfigCommand extends Command
 
         $this->warnUnknownColumnOptions($column);
         unset($column[ColumnParser::UNKNOWN_KEYS]);
+
+        $column = $this->moveTotalizerToScreen($column);
 
         $field = $column['colsNomeFisico'] ?? null;
 
@@ -368,7 +426,7 @@ class ConfigCommand extends Command
                     $this->line("  <fg=gray>--set {$key} → {$target}</>");
                 }
 
-                data_set($this->config, $target, $this->castValue($value));
+                data_set($this->config, $target, GeneralParser::isListKey($target) ? GeneralParser::splitList($value) : $this->castValue($value));
             }
         }
 
@@ -494,7 +552,7 @@ class ConfigCommand extends Command
 
                 if ($join) {
                     $this->config['joins'][] = $join;
-                    $this->info("✓ JOIN with '{$join['joinTable']}' added.");
+                    $this->info("✓ JOIN with '{$join['table']}' added.");
                 }
             }
         }
@@ -568,12 +626,32 @@ class ConfigCommand extends Command
     {
         $all = ['columns', 'actions', 'filters', 'styles', 'joins', 'general', 'permissions'];
 
+        // 1.50.0: `--only=columns,actions` was one value, 'columns,actions',
+        // that matched no section — nothing was processed and the command still
+        // said "saved successfully". Split on commas, and refuse an unknown name.
+        $split = function (array $values) use ($all): array {
+            $names = [];
+            foreach ($values as $value) {
+                foreach (explode(',', (string) $value) as $name) {
+                    if (($name = trim($name)) !== '') {
+                        $names[] = $name;
+                    }
+                }
+            }
+            $unknown = array_diff($names, $all);
+            if ($unknown !== []) {
+                throw new \InvalidArgumentException('Unknown section(s): '.implode(', ', $unknown).'. Valid: '.implode(', ', $all).'.');
+            }
+
+            return $names;
+        };
+
         if ($only = $this->option('only')) {
-            return array_intersect($all, $only);
+            return array_values(array_intersect($all, $split($only)));
         }
 
         if ($skip = $this->option('skip')) {
-            return array_diff($all, $skip);
+            return array_values(array_diff($all, $split($skip)));
         }
 
         return $all;

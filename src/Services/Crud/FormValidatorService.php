@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Crud;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Ptah\Support\SqlIdentifier;
+
 /**
  * Rich validation service for BaseCrud form fields.
  *
@@ -300,7 +307,32 @@ class FormValidatorService
     }
 
     /**
-     * unique:Model,column[,ignoreId] — checks uniqueness via Eloquent.
+     * The query a `unique:` target resolves to (1.50.0): a model class
+     * (`App\Models\Product`, or `Product` under App\Models\), or — what the
+     * docs had always shown, `unique:products,sku` — a TABLE name. It used to
+     * accept only the model, and a table name meant the rule was skipped in
+     * silence, duplicates and all. Null when neither exists.
+     */
+    public static function uniqueQuery(string $target): ?Builder
+    {
+        if ($target === '') {
+            return null;
+        }
+
+        $class = str_contains($target, '\\') ? $target : "App\\Models\\{$target}";
+        if (class_exists($class) && is_subclass_of($class, Model::class)) {
+            return $class::query()->toBase();
+        }
+
+        if (SqlIdentifier::isSafe($target) && ! str_contains($target, '.') && Schema::hasTable($target)) {
+            return DB::table($target);
+        }
+
+        return null;
+    }
+
+    /**
+     * unique:Model|table,column[,ignoreId] — checks uniqueness.
      * Examples: "unique:App\Models\Product,email"
      *           "unique:Product,email"   (auto-prefixes App\Models\)
      *
@@ -309,21 +341,21 @@ class FormValidatorService
     protected function validateUnique(mixed $value, string $param, array $formData, string $label): ?string
     {
         $parts = array_map('trim', explode(',', $param));
-        $model = $parts[0] ?? '';
         $column = $parts[1] ?? 'id';
+        $query = self::uniqueQuery($parts[0]);
 
-        // Auto-prefix when there is no full namespace
-        if (! str_contains($model, '\\')) {
-            $model = "App\\Models\\{$model}";
-        }
+        if ($query === null || ! SqlIdentifier::isSafe($column)) {
+            // 1.50.0: logged, not silent. Still not enforced — refusing every
+            // save of a screen whose rule names a missing model would break it
+            // on upgrade; `ptah:config:doctor` reports the rule instead.
+            Log::warning('Ptah unique rule not enforced: no model or table "'.$parts[0].'"', ['rule' => "unique:{$param}"]);
 
-        if (! class_exists($model)) {
-            return null; // model not found → ignore silently
+            return null;
         }
 
         $ignoreId = $parts[2] ?? ($formData['id'] ?? null);
 
-        $query = $model::where($column, $value);
+        $query->where($column, $value);
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }

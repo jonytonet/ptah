@@ -18,6 +18,7 @@ use Ptah\Exports\CrudExport;
 use Ptah\Models\Export;
 use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\CrudJoins;
 use Ptah\Support\PdfExportLayout;
 
 /**
@@ -128,14 +129,16 @@ class GenerateCrudExportJob implements ShouldQueue
         $ids = $payload['ids'] ?? [];
         $format = (string) ($payload['format'] ?? 'excel');
 
-        $query = $modelClass::query()->whereIn($pk, $ids);
+        $query = $modelClass::query();
+        CrudJoins::apply($query, $modelInstance, (array) ($payload['joins'] ?? []));
+        $query->whereIn($modelInstance->getTable().'.'.$pk, $ids);
 
         // Same primary-sort re-apply as ExportController::download() — a
         // relation sort degrades to whatever order whereIn() returns.
         $order = (string) ($payload['order'] ?? $pk);
         $direction = strtoupper((string) ($payload['direction'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
         if (Schema::hasColumn($modelInstance->getTable(), $order)) {
-            $query->orderBy($order, $direction);
+            $query->orderBy($modelInstance->getTable().'.'.$order, $direction);
         }
 
         $rows = $query->count();

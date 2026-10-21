@@ -273,18 +273,13 @@ class ConfigCommandTest extends TestCase
     #[Test]
     public function an_invalid_style_operator_aborts_even_under_dry_run(): void
     {
-        // Kernel::call() (usado pelo $this->artisan() de teste) desabilita o
-        // catchExceptions do console — em uso real (php artisan) a mesma
-        // excecao vira exit 1 via Kernel::handle(). Por isso o assert aqui e
-        // expectException, nao assertExitCode (nota do revisor, Onda II).
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/==/');
-
+        // 1.50.0: the command itself turns a parser refusal into an error line
+        // and exit 1 (it used to escape as an exception), before saving.
         $this->artisan('ptah:config', [
             'model' => ConfigCmdStub::class,
             '--style' => ['status:LIKE:x:color:red;'],
             '--dry-run' => true,
             '--non-interactive' => true,
-        ]);
+        ])->expectsOutputToContain('==')->assertExitCode(1);
     }
 }

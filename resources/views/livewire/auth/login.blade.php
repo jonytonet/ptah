@@ -38,11 +38,13 @@
         />
 
         <div class="flex items-center justify-between text-sm">
+            @if (config('ptah.auth.remember_me', true))
             <label class="flex items-center gap-2 cursor-pointer ptah-c-form_lbl">
                 <input type="checkbox" wire:model="remember" class="rounded ptah-c-form_border text-primary focus:ring-primary/30">
                 {{ __('ptah::ui.login_remember_me') }}
             </label>
-            <a href="{{ route('ptah.auth.forgot-password') }}" class="text-primary hover:underline font-medium">
+            @endif
+            <a href="{{ route('ptah.auth.forgot-password') }}" class="ml-auto text-primary hover:underline font-medium">
                 {{ __('ptah::ui.login_forgot') }}
             </a>
         </div>

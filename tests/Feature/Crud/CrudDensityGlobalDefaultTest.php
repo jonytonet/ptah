@@ -66,13 +66,26 @@ class CrudDensityGlobalDefaultTest extends TestCase
     {
         $this->makeConfig();
 
-        // Persiste o formato legado exatamente como o dropdown antigo gravava.
-        $c = Livewire::test(BaseCrud::class, ['model' => DensityGlobalStub::class]);
-        $c->call('setViewDensity', 'comfortable');
+        // Persiste o formato legado: um blob de antes da 2.3.0 com 'comfortable',
+        // que era o default do dropdown antigo, nao uma escolha.
+        session(['ptah.crud.'.DensityGlobalStub::class => ['_version' => '2.2.0', 'viewDensity' => 'comfortable']]);
 
         // Nova visita a tela: o valor legado precisa carregar como 'global'.
         Livewire::test(BaseCrud::class, ['model' => DensityGlobalStub::class])
             ->assertSet('viewDensity', 'global');
+    }
+
+    /** 1.50.0: choosing Comfortable for a screen never stuck. */
+    #[Test]
+    public function a_comfortable_chosen_now_stays_pinned(): void
+    {
+        $this->makeConfig();
+
+        Livewire::test(BaseCrud::class, ['model' => DensityGlobalStub::class])
+            ->call('setViewDensity', 'comfortable');
+
+        Livewire::test(BaseCrud::class, ['model' => DensityGlobalStub::class])
+            ->assertSet('viewDensity', 'comfortable');
     }
 
     #[Test]

@@ -14,10 +14,11 @@ trait HasCrudPreferences
 {
     /**
      * Schema version of the persisted preference blob. Bumped to 2.2.0 when
-     * `viewMode` gained the 'auto' state — see the migration in
-     * loadPreferences().
+     * `viewMode` gained the 'auto' state, and to 2.3.0 (1.50.0) when a saved
+     * 'comfortable' density started being kept as the user's choice — see the
+     * migrations in loadPreferences().
      */
-    private const PREFS_VERSION = '2.2.0';
+    private const PREFS_VERSION = '2.3.0';
 
     // ── Save / load ────────────────────────────────────────────────────────────
 
@@ -124,8 +125,12 @@ trait HasCrudPreferences
         // persistia 'comfortable' explicito por ser o default do dropdown — nao era
         // uma escolha. Mapear para 'global' devolve essas telas ao controle do perfil;
         // compact/spacious persistidos eram escolhas deliberadas e ficam pinados.
+        //
+        // Only pre-2.3.0 blobs, though (1.50.0): the mapping ran on EVERY load,
+        // so picking "Comfortable" for a screen never stuck — the next load
+        // turned it back into the profile's density.
         $saved = $prefs['viewDensity'] ?? 'global';
-        $this->viewDensity = $saved === 'comfortable' ? 'global' : $saved;
+        $this->viewDensity = ($saved === 'comfortable' && version_compare($storedVersion, '2.3.0', '<')) ? 'global' : $saved;
 
         // Filters
         $filterPrefs = $prefs['filters'] ?? [];

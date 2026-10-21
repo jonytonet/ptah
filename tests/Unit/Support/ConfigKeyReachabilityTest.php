@@ -47,15 +47,20 @@ class ConfigKeyReachabilityTest extends TestCase
         'src/Livewire/BaseCrud/CrudConfig.php',
         'resources/views/livewire/base-crud/crud-config.blade.php',
         'resources/views/livewire/base-crud/partials/_config-form-preview.blade.php',
-        'src/Support/JsonSchemaBuilder.php',
         'src/Support/ScreenSummary.php',
         'src/Support/CliReference.php',
         'src/Support/CrudScreenInspector.php',
         // Normalises a filter on the WRITE path (CLI, wizard, doctor): its
         // passthrough list mentions keys, it does not act on them.
         'src/Support/FilterRule.php',
-        'src/Support/ConfigSchemaValidator.php',
-        'src/Services/Crud/ConfigValidator.php',
+        // Validators and the published schema (1.49.1: these entries pointed at
+        // src/Support/ConfigSchemaValidator.php, src/Support/JsonSchemaBuilder.php
+        // and src/Services/Crud/ConfigValidator.php, none of which exist — so the
+        // validator counted as a reader. `every_not_a_reader_path_exists` now
+        // fails on a stale path.)
+        'src/Services/Validation',
+        // Turns a blueprint spec into ptah:config options (a writer path).
+        'src/Support/BlueprintPlan.php',
         // ColumnKeys::KNOWN is derived FROM the readers (ColumnKeysTest).
         'src/Support/ColumnKeys.php',
     ];
@@ -84,6 +89,7 @@ class ConfigKeyReachabilityTest extends TestCase
         'colsTotal' => 'runtime reads totalizadorType/totalizadorEnabled',
         'colsValidation' => 'runtime reads colsValidations (plural)',
         'colsValidationMessage' => 'no reader',
+        'colsRelation' => 'wizard relationship block; hidden until 1.49.1 by a stale NOT_A_READER path that let JsonSchemaBuilder count as its reader',
 
     ];
 
@@ -236,6 +242,22 @@ class ConfigKeyReachabilityTest extends TestCase
         $this->assertSame([], $orphans, "Chave gravada que nada no runtime le — o usuario configura e nada acontece:\n  "
             .implode("\n  ", $orphans)
             ."\nLigue a chave ao runtime, ou pare de grava-la (e tire da doc).");
+    }
+
+    /**
+     * 1.49.1: three entries had gone stale after a move (the validators live
+     * in src/Services/Validation), so the validator silently counted as a
+     * reader for releases. A path here must exist.
+     */
+    #[Test]
+    public function every_not_a_reader_path_exists(): void
+    {
+        $missing = array_values(array_filter(
+            [...self::NOT_A_READER, ...self::WRITERS],
+            fn (string $p) => ! file_exists(self::root().'/'.$p)
+        ));
+
+        $this->assertSame([], $missing, 'Caminho inexistente em NOT_A_READER/WRITERS — o arquivo mudou de lugar?');
     }
 
     #[Test]

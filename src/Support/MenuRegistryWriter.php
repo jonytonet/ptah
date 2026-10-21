@@ -242,7 +242,7 @@ class MenuRegistryWriter
         $content .= " * Este arquivo é atualizado automaticamente pelo comando ptah:forge.\n";
         $content .= " * Você pode editá-lo manualmente para customizar ícones, labels ou ordem.\n";
         $content .= " * \n";
-        $content .= " * Sincronize com o banco usando: php artisan ptah:menu-sync --fresh\n";
+        $content .= " * Sincronize com o banco usando: php artisan ptah:menu-sync\n";
         $content .= " * \n";
         $content .= ' * @generated '.now()->toDateTimeString()."\n";
         $content .= " */\n\n";

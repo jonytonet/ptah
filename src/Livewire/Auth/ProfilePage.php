@@ -186,6 +186,10 @@ class ProfilePage extends Component
 
     public function initTotp(TwoFactorService $twoFactor): void
     {
+        if (! config('ptah.auth.two_factor', true)) {
+            return; // 1.50.0: 2FA setup is off (ptah.auth.two_factor)
+        }
+
         if (! $this->passwordConfirmed()) {
             return;
         }
@@ -204,6 +208,10 @@ class ProfilePage extends Component
 
     public function confirmTotp(TwoFactorService $twoFactor): void
     {
+        if (! config('ptah.auth.two_factor', true)) {
+            return; // 1.50.0: 2FA setup is off (ptah.auth.two_factor)
+        }
+
         $this->validate(['totp_code' => 'required|string|size:6']);
 
         if ($twoFactor->confirmPendingTotp(Auth::user(), $this->pendingTotpSecret, $this->totp_code, $this->recoveryCodes)) {
@@ -221,6 +229,10 @@ class ProfilePage extends Component
 
     public function enableEmailTwoFactor(TwoFactorService $twoFactor): void
     {
+        if (! config('ptah.auth.two_factor', true)) {
+            return; // 1.50.0: 2FA setup is off (ptah.auth.two_factor)
+        }
+
         if (! $this->passwordConfirmed()) {
             return;
         }
@@ -255,6 +267,10 @@ class ProfilePage extends Component
 
     public function regenerateRecoveryCodes(TwoFactorService $twoFactor): void
     {
+        if (! config('ptah.auth.two_factor', true)) {
+            return; // 1.50.0: 2FA setup is off (ptah.auth.two_factor)
+        }
+
         if (! $this->passwordConfirmed()) {
             return;
         }
@@ -280,11 +296,19 @@ class ProfilePage extends Component
 
     public function loadSessions(SessionService $sessionService): void
     {
+        if (! config('ptah.auth.session_protection', true)) {
+            return; // 1.50.0: session management is off (ptah.auth.session_protection)
+        }
+
         $this->sessions = $sessionService->getActiveSessions(Auth::user())->toArray();
     }
 
     public function revokeSession(string $sessionId, SessionService $sessionService): void
     {
+        if (! config('ptah.auth.session_protection', true)) {
+            return; // 1.50.0: session management is off (ptah.auth.session_protection)
+        }
+
         $sessionService->revokeSession($sessionId, Auth::user());
         // O aparelho revogado com "lembrar-me" logava de novo sozinho: o cookie
         // vale enquanto o remember_token nao muda (1.41.8).
@@ -295,6 +319,10 @@ class ProfilePage extends Component
 
     public function revokeOtherSessions(SessionService $sessionService): void
     {
+        if (! config('ptah.auth.session_protection', true)) {
+            return; // 1.50.0: session management is off (ptah.auth.session_protection)
+        }
+
         $count = $sessionService->revokeOtherSessions(
             Auth::user(),
             Request::session()->getId()

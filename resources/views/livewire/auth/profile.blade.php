@@ -2,13 +2,25 @@
 <div>
     <x-forge-page-header :title="__('ptah::ui.profile_title')" :subtitle="__('ptah::ui.profile_subtitle')" />
 
+    @php
+        // 1.50.0: ptah.auth.two_factor / session_protection were never read.
+        // 2FA off hides the setup — an account that already has 2FA keeps the
+        // tab, so it can still see codes or turn it off.
+        $twoFactorTab = config('ptah.auth.two_factor', true) || auth()->user()?->two_factor_confirmed_at;
+        $sessionsTab = (bool) config('ptah.auth.session_protection', true);
+    @endphp
+
     {{-- Tabs --}}
     <x-forge-tabs>
         <x-slot name="tabs">
             <x-forge-tab key="profile"      :active="$activeTab === 'profile'"      wire:click="$set('activeTab','profile')">{{ __('ptah::ui.profile_tab_profile') }}</x-forge-tab>
             <x-forge-tab key="password"     :active="$activeTab === 'password'"     wire:click="$set('activeTab','password')">{{ __('ptah::ui.profile_tab_password') }}</x-forge-tab>
+            @if ($twoFactorTab)
             <x-forge-tab key="two_factor"   :active="$activeTab === 'two_factor'"   wire:click="$set('activeTab','two_factor')">{{ __('ptah::ui.profile_tab_2fa') }}</x-forge-tab>
+            @endif
+            @if ($sessionsTab)
             <x-forge-tab key="sessions"     :active="$activeTab === 'sessions'"     wire:click="$set('activeTab','sessions'); $wire.loadSessions()">{{ __('ptah::ui.profile_tab_sessions') }}</x-forge-tab>
+            @endif
             <x-forge-tab key="photo"        :active="$activeTab === 'photo'"        wire:click="$set('activeTab','photo')">{{ __('ptah::ui.profile_tab_photo') }}</x-forge-tab>
             <x-forge-tab key="appearance"   :active="$activeTab === 'appearance'"   wire:click="$set('activeTab','appearance')">{{ __('ptah::ui.profile_tab_appearance') }}</x-forge-tab>
         </x-slot>
@@ -49,7 +61,7 @@
         @endif
 
         {{-- ── ABA: 2FA ── --}}
-        @if ($activeTab === 'two_factor')
+        @if ($activeTab === 'two_factor' && $twoFactorTab)
         <x-forge-card>
             @if ($errorMsg)
                 <x-forge-alert type="danger" class="mb-4">{{ $errorMsg }}</x-forge-alert>
@@ -160,7 +172,7 @@
         @endif
 
         {{-- ── ABA: SESSÕES ── --}}
-        @if ($activeTab === 'sessions')
+        @if ($activeTab === 'sessions' && $sessionsTab)
         <x-forge-card>
 
             <div class="flex items-center justify-between mb-4">

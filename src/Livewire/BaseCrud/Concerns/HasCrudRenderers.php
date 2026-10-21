@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
+use Ptah\Support\IconClass;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
@@ -100,7 +101,7 @@ trait HasCrudRenderers
         $rendered = $this->applyCellRenderer($col, $value, $row);
 
         // Optional icon and style wrappers configurable per column
-        $cellIcon = ! empty($col['colsCellIcon']) ? '<span class="'.e($col['colsCellIcon']).' mr-1"></span>' : '';
+        $cellIcon = ! empty($col['colsCellIcon']) ? '<span class="'.e(IconClass::normalize((string) $col['colsCellIcon'])).' mr-1"></span>' : '';
         // The cell style takes the same `{{column}}` placeholders as a row rule —
         // and this is the one the Tags case actually wants, because the colour
         // belongs to the badge, not to the whole row. An unsafe or missing value

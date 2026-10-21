@@ -160,7 +160,7 @@ php artisan ptah:forge Financial/Receivable \
 
 # === FINALIZAR ===
 php artisan migrate
-php artisan ptah:menu-sync --fresh  # Sincroniza menu da sidebar
+php artisan ptah:menu-sync  # Sincroniza menu da sidebar
 ```
 
 ---
@@ -222,7 +222,7 @@ Após gerar todas as entidades, os Models contêm TODOs marcando relacionamentos
 ### Checklist de Sucesso
 
 - [ ] Todas as migrations rodaram sem erro
-- [ ] Menu da sidebar exibe todos os módulos e links (`ptah:menu-sync --fresh`)
+- [ ] Menu da sidebar exibe todos os módulos e links (`ptah:menu-sync`)
 - [ ] Todos os relacionamentos nos Models foram descomentados (TODOs resolvidos)
 - [ ] Todos os CRUDs abrem sem erro (teste criar/editar/deletar)
 - [ ] Relacionamentos funcionam (ex: dropdown de categoria no Product)
@@ -263,7 +263,7 @@ Este prompt deve resultar em:
 
 1. ✅ Instalar ptah sem erros (~2 minutos)
 2. ✅ Gerar 23 entidades completas (~5 minutos)
-3. ✅ Popular menu automaticamente com `ptah:menu-sync --fresh`
+3. ✅ Popular menu automaticamente com `ptah:menu-sync`
 4. ✅ Resolver TODOs dos relacionamentos nos Models
 5. ✅ Resultar em sistema funcional e operacional
 
@@ -277,7 +277,7 @@ php artisan ptah:forge Orders/Order --fields="..." --api
 
 # 2. Migrations + Menu (1 min)
 php artisan migrate
-php artisan ptah:menu-sync --fresh
+php artisan ptah:menu-sync
 
 # 3. Resolver TODOs nos Models (2 min)
 # Descomentar relacionamentos em:

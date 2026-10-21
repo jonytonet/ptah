@@ -621,12 +621,6 @@ parameters:
 			path: src/Services/Crud/Filters/DateFilterStrategy.php
 
 		-
-			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Services/Crud/FormValidatorService.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>obj_key" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
