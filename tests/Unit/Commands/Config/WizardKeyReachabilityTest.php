@@ -142,6 +142,9 @@ class WizardKeyReachabilityTest extends TestCase
      */
     private const NOT_A_READER = [
         'JsonSchemaBuilder.php',
+        // The doctor's list of keys ptah reads (1.47.0) — derived from the
+        // readers, so it must not count as one.
+        'ColumnKeys.php',
     ];
 
     /**

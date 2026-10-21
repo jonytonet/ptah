@@ -1490,7 +1490,7 @@ php artisan ptah:config "App\Models\Product"
 1. Basic Information
    Field name (physical column): price
    Label (display name): Price
-   Column type: [text, textarea, number, date, datetime, select, searchdropdown, boolean, file, image]
+   Column type: [text, textarea, number, date, datetime, select, searchdropdown, boolean, file, image, color, time, datetime-local, range, email, url, tel]
    ├─ Selected: number
    Text alignment: [text-start, text-center, text-end]
    ├─ Selected: text-end
@@ -1546,6 +1546,11 @@ php artisan ptah:config "App\Models\Product"
 └─────────────────────┴──────────────────────────┘
 
 Save this column configuration? [yes]
+
+> The interactive wizard still writes `colsValidation` (singular), which
+> nothing reads — the runtime reads `colsValidations`. Known gap, see
+> [KnownLimitations.md](KnownLimitations.md); use `--column=` with
+> `validation=` until it is closed.
 ✓ Column 'price' added.
 
 Configure a column? [yes] (no)
@@ -2113,12 +2118,7 @@ Full configuration saved in the `crud_configs.config` table:
       "colsVisibleList": true,
       "colsEditableForm": true,
       "colsValidations": ["required", "numeric", "min:0"],
-      "colsAlign": "text-end",
-      "colsTotal": true,
-      "totalizadorType": "sum",
-      "totalizadorFormat": "currency",
-      "totalizadorCurrency": "BRL",
-      "totalizadorDecimals": 2
+      "colsAlign": "text-end"
     },
     {
       "colsNomeFisico": "status",
@@ -2277,7 +2277,7 @@ Properties of each column in `cols[]`:
 |-------------|------|--------|-----------|
 | `colsNomeFisico` | string | — | Physical column name in the database (required) |
 | `colsNomeLogico` | string | `ucfirst(colsNomeFisico)` | Display label |
-| `colsTipo` | string | `'text'` | Input type: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image` |
+| `colsTipo` | string | `'text'` | Input type: `text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`, `datetime-local`, `range`, `email`, `url`, `tel` (`CrudConfigEnums::COLUMN_TYPES`) |
 | `colsGravar` | bool | `true` | Save value to database |
 | `colsRequired` | bool | `false` | Required field |
 | `colsIsFilterable` | bool | `true` | Allows filtering by this column |
@@ -2300,14 +2300,13 @@ Properties of each column in `cols[]`:
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
-| `colsHelper` | string | `''` | Help text below the field |
+| `colsHelpText` | string | `''` | Help text below the field in the create/edit form |
+| `colsHelper` | string | `''` | **Legacy formatting helper**, not help text: `dateFormat`, `dateTimeFormat`, `currencyFormat`, `yesOrNot`, `flagChannel` — prefer `colsRenderer`. `ptah:config:doctor` warns on any other value. |
 | `colsRenderer` | string | `'text'` | Renderer type: `text`, `badge`, `pill`, `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`, `filesize`, `duration`, `code`, `color`, `progress`, `rating`, `qrcode` |
-| `colsRendererLink` | string | `''` | URL pattern for `link` renderer (e.g.: `/products/%id%`) |
-| `colsRendererTarget` | string | `'_self'` | Link target: `_self`, `_blank` |
+| `colsRendererLinkTemplate` | string | `''` | URL pattern for `link` renderer (e.g.: `/products/%id%`) |
+| `colsRendererLinkNewTab` | bool | `false` | Open the link in a new tab |
 | `colsRendererCurrency` | string | `'BRL'` | Currency for `money` renderer: `BRL`, `USD`, `EUR` |
 | `colsRendererDecimals` | int | `2` | Decimal places for `money` or `number` renderer |
-| `colsRendererPrefix` | string | `''` | Prefix for `number` renderer |
-| `colsRendererSuffix` | string | `''` | Suffix for `number` renderer |
 | `colsRendererFormat` | string | `''` | Format for `date`/`datetime` renderer (e.g.: `d/m/Y H:i:s`) |
 | `colsRendererMaxChars` | int | `50` | Maximum characters for `truncate` renderer |
 | `colsRendererBadges` | array | `[]` | Value→color map for `badge`/`pill` renderers |
@@ -2342,14 +2341,15 @@ Properties of each column in `cols[]`:
 |-------------|------|--------|----------|
 | `colsMask` | string | `''` | Input mask: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase` |
 | `colsMaskTransform` | string | `''` | Transform on save: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
-| `colsMaskEmptyValue` | string | `''` | Value saved when field is empty |
+
+A field left empty is saved as `null` when the column is nullable in the
+database, and as `''` otherwise (1.47.0). There is no per-column key for it.
 
 ### Validation
 
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
 | `colsValidations` | array | `[]` | Array of validation rules: `["required", "email", "max:255"]` |
-| `colsValidationMessage` | string | `''` | Custom error message |
 
 ### Select Options
 
@@ -2362,10 +2362,8 @@ Properties of each column in `cols[]`:
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
 | `colsUploadPath` | string | `''` | Upload path (e.g.: `products/images`) |
-| `colsUploadDisk` | string | `'public'` | Storage disk: `public`, `s3`, etc |
 | `colsUploadMaxSize` | int | `2048` | Maximum size in KB |
 | `colsUploadAllowedTypes` | array | `[]` | Allowed extensions: `["jpg", "png", "webp"]` |
-| `colsUploadMultiple` | bool | `false` | Multiple upload |
 
 #### Image field — how upload works
 
@@ -2405,15 +2403,10 @@ If `colsUploadMaxSize` or `colsUploadAllowedTypes` is violated, the error is inj
 
 ### Totalizer
 
-| Property | Type | Default | Description |
-|-------------|------|--------|----------|
-| `colsTotal` | bool | `false` | Add to totalizer |
-| `totalizadorType` | string | `'sum'` | Type: `sum`, `count`, `avg`, `max`, `min` |
-| `totalizadorFormat` | string | `'number'` | Format: `currency`, `number`, `integer` |
-| `totalizadorCurrency` | string | `'BRL'` | Currency for currency format |
-| `totalizadorDecimals` | int | `2` | Decimal places |
-| `totalizadorPrefix` | string | `''` | Prefix (e.g.: `$`) |
-| `totalizadorSuffix` | string | `''` | Suffix (e.g.: `un`) |
+Footer totals are not a column key: they live in the screen-level
+`totalizadores.columns` list — see [BaseCrud.md § Totalisers](BaseCrud.md#totalisers).
+(Before 1.47.0 this section listed per-column `colsTotal` / `totalizador*`
+keys that the runtime does not read.)
 
 ### Advanced
 

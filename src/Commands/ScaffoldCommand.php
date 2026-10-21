@@ -113,7 +113,13 @@ class ScaffoldCommand extends Command
         }
 
         // ── Resolve fields ──────────────────────────────────────────────
-        $fields = $this->resolveFields($table);
+        try {
+            $fields = $this->resolveFields($table);
+        } catch (\InvalidArgumentException $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         // ── Build context (immutable, passed to all generators) ─────────
         $context = new EntityContext(

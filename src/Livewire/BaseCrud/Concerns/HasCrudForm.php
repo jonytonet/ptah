@@ -262,6 +262,7 @@ trait HasCrudForm
             $modelInstance = $this->resolveEloquentModel();
             $fillable = $modelInstance->getFillable();
             $userId = Auth::id();
+            $data = $this->blanksToNull($data, $modelInstance);
 
             if ($this->editingId) {
                 // Re-scope: editingId is a public (client-settable) property, so an
@@ -887,6 +888,42 @@ trait HasCrudForm
         }
 
         return ptah_can($key, $action);
+    }
+
+    /**
+     * A field the person cleared arrives as '' — the inputs have no null. On a
+     * nullable column that is what it means, and a strict MySQL refuses ''
+     * for an integer or a timestamp (1.47.0, Engepecas: the optional branch
+     * and the display window of an announcement could not be saved). Only
+     * nullable columns, read from the schema; a NOT NULL text column keeps ''.
+     * A schema that cannot be read changes nothing.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function blanksToNull(array $data, Model $model): array
+    {
+        static $memo = [];
+
+        $key = $model->getConnectionName().'|'.$model->getTable();
+        if (! array_key_exists($key, $memo)) {
+            try {
+                $memo[$key] = [];
+                foreach ($model->getConnection()->getSchemaBuilder()->getColumns($model->getTable()) as $column) {
+                    $memo[$key][(string) $column['name']] = (bool) $column['nullable'];
+                }
+            } catch (\Throwable) {
+                $memo[$key] = [];
+            }
+        }
+
+        foreach ($data as $field => $value) {
+            if ($value === '' && ($memo[$key][$field] ?? false)) {
+                $data[$field] = null;
+            }
+        }
+
+        return $data;
     }
 
     /**

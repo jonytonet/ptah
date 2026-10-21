@@ -56,6 +56,8 @@ class ConfigKeyReachabilityTest extends TestCase
         'src/Support/FilterRule.php',
         'src/Support/ConfigSchemaValidator.php',
         'src/Services/Crud/ConfigValidator.php',
+        // ColumnKeys::KNOWN is derived FROM the readers (ColumnKeysTest).
+        'src/Support/ColumnKeys.php',
     ];
 
     /**

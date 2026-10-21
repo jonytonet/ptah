@@ -60,7 +60,13 @@ class FieldCommand extends Command
         }
 
         $definition = implode(':', (array) $this->argument('definition'));
-        $parsed = $inspector->fromString($definition);
+        try {
+            $parsed = $inspector->fromString($definition);
+        } catch (\InvalidArgumentException $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         if (count($parsed) !== 1 || preg_match('/^[a-z_][a-z0-9_]*$/', $parsed[0]->name) !== 1) {
             $this->components->error("Invalid field \"{$definition}\" — expected one field as name:type[:modifiers], snake_case name.");

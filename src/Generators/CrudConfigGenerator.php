@@ -190,9 +190,7 @@ class CrudConfigGenerator extends AbstractGenerator
         return match (true) {
             $field->type === 'boolean' => 'select',
             $field->type === 'enum' => 'select',
-            in_array($field->type, ['integer', 'bigInteger', 'unsignedBigInteger',
-                'unsignedInteger', 'tinyInteger', 'smallInteger',
-                'decimal', 'float', 'double']) => 'number',
+            in_array($field->type, [...FieldDefinition::INTEGER_TYPES, 'decimal', 'float', 'double'], true) => 'number',
             in_array($field->type, ['date', 'datetime', 'timestamp']) => 'date',
             default => 'text',
         };

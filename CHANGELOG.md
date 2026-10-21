@@ -7,6 +7,78 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.47.0] - 2026-10-21
+
+Engepecas B2B laudo against 1.46.5. Theme: say so when ptah does not
+understand something, instead of degrading in silence.
+
+### Changed - `ptah:forge` refuses an unknown field type
+
+`--fields="timeout_seconds:unsignedSmallInteger"` became a `string` column, a
+`string` cast and a `string` DTO property, without a word: an unknown type fell
+to `string` everywhere. An unknown type now stops the command with the list of
+valid ones (`FieldDefinition::TYPES`); case no longer matters. `ptah:field add`
+does the same. **Check:** a host script that relied on the silent `string`
+fallback now fails — fix the type it passes.
+
+### Fixed - missing integer types in `ptah:forge`
+
+`unsignedSmallInteger`, `unsignedTinyInteger`, `unsignedMediumInteger` and
+`mediumInteger` are real types now — migration, `integer` cast, `int` DTO,
+`integer` rule, numeric BaseCrud column. The five copies of the integer list
+are one constant (`FieldDefinition::INTEGER_TYPES`), which also gives
+`foreignId` the `integer` cast it lacked. `--db` maps tiny/small/medium/int,
+signed or unsigned, to the matching type instead of always `integer`. `jsonb`,
+documented for long, was never mapped (it became `string`); it is now an
+alias of `json`.
+
+### Fixed - a cleared optional field was saved as `''`
+
+The form sent `''` for a field the person cleared, and a strict MySQL refuses
+it for an integer or a timestamp column. On save, `''` becomes `null` when the
+column is nullable in the database; a `NOT NULL` text column keeps `''`. The
+`colsMaskEmptyValue` key the docs promised never existed; the row is gone,
+replaced by this rule.
+
+### Fixed - the form's select could not go back to empty
+
+Once an option was chosen, an optional select had no way back. A select that
+is not `colsRequired` now opens with the placeholder as its first option,
+which clears it (and saves `null` per the rule above).
+
+### Fixed - the form select's open ring was a fixed palette
+
+`ring-red-200 dark:ring-red-300` on error, and the `border-primary` of the
+open state never showed (`.ptah-c-form_sel`'s border won). Open state is now
+`.ptah-c-form_sel_open[_err]`, from the accent tokens.
+
+### Added - `ptah:config:doctor` warns on column keys ptah does not read
+
+A `cols*` key outside the new `Ptah\Support\ColumnKeys::KNOWN` is reported,
+with the closest known key ("did you mean colsHelpText?"). A `colsHelper` that
+is not a formatting helper is reported too — it is the legacy formatter, not
+help text. Keys without the `cols` prefix are left alone (a host's own).
+`KNOWN` holds only keys the RUNTIME reads: legacy spellings (`colsVisivel`,
+`colsRequerido`) and keys only the interactive wizard writes (`colsValidation`,
+`colsTotal`, `colsRendererLink`…) are reported as unread, which is what they
+are. A test keeps `KNOWN` equal to the runtime readers (same definition as
+ConfigKeyReachabilityTest), and keeps every `cols*` key the docs name inside
+it. **Expect warnings** on configs written by the interactive wizard.
+
+### Docs
+
+- Help text is `colsHelpText`; `colsHelper` is documented as the legacy
+  formatter it is.
+- `colsTipo` lists all 17 types the form accepts (was 10), checked by a test.
+- Removed `colsUploadDisk` and `colsUploadMultiple` (never implemented) and
+  `colsMaskEmptyValue`; `colsVisible` corrected to `colsVisibleList`.
+- Renderer table: `colsRendererLink`/`colsRendererTarget` corrected to
+  `colsRendererLinkTemplate`/`colsRendererLinkNewTab`; `colsRendererPrefix`,
+  `colsRendererSuffix` and `colsValidationMessage` removed (no reader).
+- The per-column Totalizer table (`colsTotal`, `totalizador*`) described keys
+  the runtime does not read; it now points at `totalizadores.columns`.
+- `ptah:forge` type list completed.
+
 ## [1.46.5] - 2026-10-19
 
 Engepecas B2B laudo against 1.46.4.

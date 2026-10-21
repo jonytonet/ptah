@@ -316,11 +316,11 @@
                                     // de paleta fixa que ficavam aqui eram inertes pelo
                                     // mesmo motivo do $fBorderClass acima.
                                     $fBorderNormal = '';
-                                    // O estado ABERTO nao tem regra em CSS, entao segue
-                                    // no Blade; `primary` e `danger` sao tokens de acento,
-                                    // nao paleta fixa.
-                                    $fBorderOpen   = $fError ? 'border-danger' : 'border-primary dark:border-primary';
-                                    $fRingOpen     = $fError ? 'ring-2 ring-red-200 dark:ring-red-300' : 'ring-2 ring-primary/15 dark:ring-primary/30';
+                                    // Estado ABERTO (1.47.0): `.ptah-c-form_sel_open[_err]` em
+                                    // ptah-components.css. Os utilitarios que ficavam aqui
+                                    // (`ring-red-200 dark:ring-red-300`) eram paleta fixa, e o
+                                    // `border-primary` perdia para a borda do `.ptah-c-form_sel`.
+                                    $fOpenClass    = $fError ? 'ptah-c-form_sel_open ptah-c-form_sel_open_err' : 'ptah-c-form_sel_open';
                                 @endphp
                                 <div class="w-full">
                                     <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
@@ -350,7 +350,8 @@
                                                 return opt ? opt.label : this.placeholder;
                                             },
                                             isSelected(value) { return String(this.selected) === String(value); },
-                                            toggle(value) { this.selected = String(value); this.open = false; }
+                                            toggle(value) { this.selected = String(value); this.open = false; },
+                                            clear() { this.selected = null; this.open = false; }
                                         }"
                                         @click.outside="open = false"
                                         class="relative"
@@ -371,7 +372,7 @@
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
                                             @keydown.space.prevent @keydown.enter.prevent="open = !open"
                                             @click="open = !open"
-                                            :class="open ? '{{ $fBorderOpen }} {{ $fRingOpen }}' : '{{ $fBorderNormal }}'"
+                                            :class="open ? '{{ $fOpenClass }}' : '{{ $fBorderNormal }}'"
                                             class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 ptah-c-form_sel"
                                         >
                                             <span
@@ -393,6 +394,17 @@
                                             x-transition:enter-end="opacity-100 translate-y-0"
                                             class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 ptah-c-dd">
                                             <ul class="py-1">
+                                                @unless ($fRequired)
+                                                    {{-- Opcional: volta ao vazio (1.47.0). Grava '' e o save()
+                                                         converte em null quando a coluna aceita nulo. --}}
+                                                    <li
+                                                        @click="clear()"
+                                                        data-ptah-select-clear
+                                                        :class="(selected === null || selected === '') ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
+                                                        class="px-4 py-2 text-sm cursor-pointer ptah-c-fp_muted"
+                                                        x-text="placeholder"
+                                                    ></li>
+                                                @endunless
                                                 <template x-for="option in options" :key="option.value">
                                                     <li
                                                         @click="toggle(option.value)"
