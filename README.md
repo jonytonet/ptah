@@ -288,7 +288,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | `php artisan ptah:install` | Installs the package (config, stubs, migrations, default data). Flags: `--demo`, `--boost`, `--force`, `--skip-npm` |
 | `php artisan ptah:forge {Entity}` | **Generates the complete structure for an entity** ⭐ |
 | `php artisan ptah:config {Model}` | Configures a BaseCrud screen (columns/filters/actions/styles) via CLI. Accepts the FQCN or the runtime key |
-| `php artisan ptah:config:doctor` | Audits all CRUD configs — orphan keys, malformed configs, empty screens, route ambiguity (`--fix` repairs orphan keys) |
+| `php artisan ptah:config:doctor` | Audits all CRUD configs — orphan keys, malformed configs, empty screens, route ambiguity (`--fix` rewrites non-canonical model keys and migrates legacy shapes) |
 | `php artisan ptah:config:relabel` | Re-humanises column labels generated before the scaffold's label humaniser existed (`--dry-run`, `--all`) |
 | `php artisan ptah:config:export-all` / `import-all` | Version the whole config set to a git-friendly directory and rebuild it (seeding) |
 | `php artisan ptah:permission:sync` | Registers the RBAC objects derived from existing CRUD configs; `--role`/`--grant` binds a role in the same step |

@@ -64,18 +64,8 @@ class WizardKeyReachabilityTest extends TestCase
      * docblock, and adding one means a new question whose answer is thrown
      * away — which is the thing this test exists to stop.
      */
-    private const EXEMPT = [
-        'colsRelationDisplayColumn',
-        'colsRelationJoinColumn',
-        'colsRelationTable',
-        'colsRendererLink',
-        'colsRendererPrefix',
-        'colsRendererSuffix',
-        'colsRendererTarget',
-        'colsTotal',
-        'colsValidation',
-        'colsValidationMessage',
-    ];
+    // Closed in 1.50.1: the wizard writes only keys the runtime reads.
+    private const EXEMPT = [];
 
     private static function read(string $path): string
     {
@@ -256,5 +246,9 @@ class WizardKeyReachabilityTest extends TestCase
                 "`{$key}` ja tem leitor — remova a isencao em WizardKeyReachabilityTest."
             );
         }
+
+        // 1.50.1: the list is empty — the wizard writes only read keys. A new
+        // exemption has to be added here deliberately.
+        $this->assertSame([], self::EXEMPT, 'A lista de isencao do wizard estava zerada (1.50.1).');
     }
 }

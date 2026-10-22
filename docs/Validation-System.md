@@ -6,7 +6,7 @@ Ptah implements a robust validation system with **detailed error messages** that
 - ✅ Contexto completo (campo, valor atual vs esperado, linha do JSON)
 - ✅ Differentiated visual formatting (CLI with box drawing, Flash HTML, JSON RFC 7807)
 - ✅ Custom exception hierarchy for different scenarios
-- ✅ Internationalization (PT-BR and EN)
+- ✅ Context labels in Portuguese (fixed in the formatters); messages built in English by the exception factories
 
 ---
 
@@ -34,7 +34,7 @@ PtahException (base abstrata)
 | Classe | Responsabilidade |
 |--------|------------------|
 | `ConfigSchemaValidator` | Validates complete BaseCrud configuration |
-| `CommandInputValidator` | Validates Artisan command inputs |
+| `CommandInputValidator` | Validates `--column`/`--action`/`--filter`/`--style`/`--join`/`--set` option strings. **Not called by any `ptah:*` command today** — `ptah:config` validates through `ConfigSchemaValidator` + `CliErrorFormatter` |
 | `JsonSchemaBuilder` | Generates JSON Schema for documentation |
 
 ### Formatters
@@ -79,66 +79,73 @@ try {
 
 **Terminal output:**
 ```
-╔══════════════════════════════════════════════════════════════════╗
-║ ❌ Config Validation Exception                                   ║
-╠══════════════════════════════════════════════════════════════════╣
-║ Campo:           price                                            ║
-║ Valor atual:     invalid_type                                     ║
-║ Valor esperado:  text, badge, boolean, date, datetime, money...  ║
-║ Section:         cols                                             ║
-║ Path JSON:       $.cols[0].colsTipo                               ║
-║ Model:           Product                                          ║
-╚══════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════╗
+║ ❌ Config Validation Exception                                    ║
+╠════════════════════════════════════════════════════════════════════╣
+║ Campo: price                                                       ║
+║ Valor atual: invalid_type                                          ║
+║ Opções válidas:                                                 ║
+║ ["text","textarea","number","date","datetime","select",...]       ║
+║ Seção: cols                                                      ║
+║ Path JSON: $.cols[0].colsTipo                                      ║
+║ Model: Product                                                     ║
+╚════════════════════════════════════════════════════════════════════╝
 ```
+
+The box lists the context only (the message is in `$e->getMessage()`), the
+labels are fixed in Portuguese, and an array value such as `Opções válidas` is
+printed as JSON on one line (it is not wrapped and can overflow the box).
 
 ---
 
 ### 2. Validation in Commands
+
+`ptah:config` runs `ConfigSchemaValidator` before saving and prints the
+exception through `CliErrorFormatter` (`ConfigCommand::saveConfiguration()`).
+Error example (an invalid type, on purpose):
+
+```bash
+php artisan ptah:config "App\Models\Product" --column="price:invalid_type"
+```
+
+The output is the same box as in example 1 (`Campo: price`, `Valor atual:
+invalid_type`, `Opções válidas: [...]`, `Path JSON: $.cols[0].colsTipo`), and the
+command exits with failure without saving.
+
+`CommandInputValidator` can also be used on its own to check an option string
+(no command calls it today):
 
 ```php
 use Ptah\Services\Validation\CommandInputValidator;
 use Ptah\Services\Validation\Formatters\CliErrorFormatter;
 use Ptah\Exceptions\CommandValidationException;
 
-class ConfigCommand extends Command
-{
-    protected CommandInputValidator $validator;
-    protected CliErrorFormatter $formatter;
-    
-    public function handle()
-    {
-        try {
-            $columnOpt = $this->option('column');
-            $parsed = $this->validator->validateColumnOption($columnOpt);
-            
-            // Continue with logic...
-            
-        } catch (CommandValidationException $e) {
-            $this->error($this->formatter->format($e));
-            return Command::FAILURE;
-        }
-        
-        return Command::SUCCESS;
-    }
-}
-```
+$validator = app(CommandInputValidator::class);
 
-**Error example:**
-```bash
-php artisan ptah:config Product --column="price:invalid_type"
+try {
+    $validator->validateColumnOption('price:invalid_type');
+} catch (CommandValidationException $e) {
+    echo app(CliErrorFormatter::class)->format($e);
+}
 ```
 
 **Output:**
 ```
-╔══════════════════════════════════════════════════════════════════╗
-║ ❌ Command Validation Exception                                  ║
-╠══════════════════════════════════════════════════════════════════╣
-║ Option:          column                                           ║
-║ Valor atual:     price:invalid_type                               ║
-║ Tipo esperado:   text|badge|boolean|date|datetime|money|numeric   ║
-║ Suggestion:      Use format: field:type[:modifier=value...]       ║
-╚══════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════╗
+║ ❌ Command Validation Exception                                   ║
+╠════════════════════════════════════════════════════════════════════╣
+║ Option: column type                                                ║
+║ Valor atual: invalid_type                                          ║
+║ Opções válidas:                                                 ║
+║ ["text","badge","boolean","date","datetime","money","numeric",...] ║
+╚════════════════════════════════════════════════════════════════════╝
 ```
+
+The type list of `validateColumnOption()` (`text`, `badge`, `boolean`, `date`,
+`datetime`, `money`, `numeric`, `relation`) and the action types of
+`validateActionOption()` (`wire`, `route`, `url`) are **not** the vocabulary
+`ptah:config` accepts (`colsTipo`: see `CrudConfigEnums::COLUMN_TYPES`; action
+types `link`, `livewire`, `javascript`).
 
 ---
 
@@ -191,11 +198,12 @@ class BaseCrudComponent extends Component
         </div>
         <div class="ml-3">
             <h3 class="text-sm font-medium text-red-800">Config Validation Exception</h3>
+            <div class="mt-2 text-sm text-red-700">Invalid column type "invalid_type" for field "price". Valid types: ...</div>
             <div class="mt-2 text-sm text-red-700">
                 <ul class="list-disc pl-5 space-y-1">
-                    <li><strong>Field:</strong> price</li>
-                    <li><strong>Current value:</strong> invalid_type</li>
-                    <li><strong>Expected value:</strong> text, badge, boolean...</li>
+                    <li><strong>Campo:</strong> price</li>
+                    <li><strong>Valor atual:</strong> invalid_type</li>
+                    <li><strong>Opções válidas:</strong> text, textarea, number...</li>
                 </ul>
             </div>
         </div>
@@ -244,19 +252,22 @@ class CrudApiController extends Controller
 {
   "type": "https://ptah.dev/errors/config-validation-exception",
   "title": "Config Validation Exception",
-  "detail": "Invalid column type \"invalid_type\" for field \"price\"",
+  "detail": "Invalid column type \"invalid_type\" for field \"price\". Valid types: text, textarea, number, ...",
   "status": 422,
   "context": {
     "field": "price",
     "actual_value": "invalid_type",
-    "expected_value": ["text", "badge", "boolean", "date", "datetime", "money", "numeric"],
+    "available_options": ["text", "textarea", "number", "date", "datetime", "select", "..."],
     "section": "cols",
     "json_path": "$.cols[0].colsTipo",
     "model": "Product"
-  },
-  "trace_id": "9d7e4f1a-3c2b-4a5e-8f9d-1c2b3a4e5f6a"
+  }
 }
 ```
+
+`ConfigValidationException` brings its own `formatAsJsonResponse()` (from
+`FormatsError`), and `JsonErrorFormatter::format()` uses it — so there is no
+`trace_id`. The `trace_id` is only added for exceptions without that method.
 
 ---
 
@@ -325,12 +336,12 @@ try {
 ```json
 {
   "type": "Ptah\\Exceptions\\ConfigValidationException",
-  "message": "Invalid column type \"invalid_type\" for field \"price\"",
+  "message": "Invalid column type \"invalid_type\" for field \"price\". Valid types: text, textarea, number, ...",
   "code": 0,
   "context": {
     "field": "price",
     "actual_value": "invalid_type",
-    "expected_value": ["text", "badge", "boolean"],
+    "available_options": ["text", "textarea", "number", "..."],
     "section": "cols",
     "model": "Product"
   },
@@ -359,8 +370,8 @@ $config = [
             'colsTipo' => 'text',
         ],
     ],
-    'uiPreferences' => [
-        'perPage' => 15,
+    'general' => [
+        'itemsPerPage' => 15,
     ],
 ];
 
@@ -383,7 +394,7 @@ $validator = app(CommandInputValidator::class);
 // Validar formato de coluna
 try {
     $parsed = $validator->validateColumnOption('name:text:label=Nome:sortable');
-    // ['field' => 'name', 'type' => 'text', 'modifiers' => []]
+    // ['field' => 'name', 'type' => 'text', 'modifiers' => ['label=Nome', 'sortable']]
     
 } catch (CommandValidationException $e) {
     echo $e->formatAsCliOutput();
@@ -392,7 +403,7 @@ try {
 // Validate action format
 try {
     $parsed = $validator->validateActionOption('edit:wire:editRecord:icon=bx-edit:color=primary');
-    // ['name' => 'edit', 'type' => 'wire', 'value' => 'editRecord', ...]
+    // ['name' => 'edit', 'type' => 'wire', 'value' => 'editRecord', 'modifiers' => ['icon=bx-edit', 'color=primary']]
     
 } catch (CommandValidationException $e) {
     echo $e->formatAsCliOutput();
@@ -403,30 +414,18 @@ try {
 
 ## 🌍 Internationalization
 
-### Using Translations
+The package does **not** translate these errors:
 
-```php
-// config/app.php
-'locale' => 'pt_BR', // ou 'en'
+- the exception messages are built in English by the factory methods
+  (`ConfigValidationException::invalidColumnType()` and the others);
+- the context labels (`Campo`, `Valor atual`, `Opções válidas`, `Seção`,
+  `Path JSON`, …) are fixed in Portuguese inside the formatters;
+- `config('app.locale')` changes none of it.
 
-// Error messages will automatically be displayed in the configured language
-```
-
-### Adding New Languages
-
-1. Create the translation file:
-```bash
-cp ptah/lang/en/validation-errors.php ptah/lang/es/validation-errors.php
-```
-
-2. Traduza as mensagens:
-```php
-// ptah/lang/es/validation-errors.php
-return [
-    'invalid_column_type' => 'Invalid column type ":type" for field ":field"',
-    // ...
-];
-```
+`lang/en/validation-errors.php` and `lang/pt_BR/validation-errors.php` ship in
+the package, but no code loads them (the service provider only registers
+`resources/lang` under the `ptah::` namespace, whose `ui.php` is the screens'
+catalog), so adding a locale file there has no effect.
 
 ---
 
@@ -467,7 +466,7 @@ $builder->saveToFile('ptah/resources/schemas/crud-config.schema.json');
           },
           "colsTipo": {
             "type": "string",
-            "enum": ["text", "badge", "boolean", "date", "datetime", "money", "numeric"],
+            "enum": ["text", "textarea", "number", "date", "datetime", "select", "searchdropdown", "boolean", "file", "image", "color", "time", "datetime-local", "range", "email", "url", "tel", "password"],
             "description": "Column display type"
           }
         }
@@ -545,8 +544,8 @@ try {
 ## 🚀 Performance
 
 - **Validation in ~2-5ms** for typical configurations
-- **Cache de schemas** compilados (Opcache)
-- **Lazy validation**: only validates what changed in `updateSection()`
+- **No schema cache**: the validator is plain PHP; each `joins` entry runs a `Schema::hasTable()` query
+- `updateSection()` merges the section and validates the **complete** configuration
 - **No overhead** when there are no errors
 
 ---
@@ -560,4 +559,4 @@ try {
 ---
 
 **Implemented on:** March 5, 2026  
-**Ptah Version:** 2.5.0+
+**Ptah Version:** 1.x

@@ -772,7 +772,10 @@ class ConfigDoctorCommand extends Command
         //     feature is broken. We cannot detect a running worker reliably, so
         //     the honest move is to state the condition.
         if ($anyNotificationRule) {
-            $connection = (string) config('queue.default');
+            // 1.50.1: the connection the dispatcher actually uses —
+            // ptah.notifications.queue_connection wins over queue.default (with
+            // 'sync' there is no worker to wait for, and it still warned).
+            $connection = (string) (config('ptah.notifications.queue_connection') ?: config('queue.default'));
 
             if ($connection !== 'sync') {
                 $this->line("ℹ️  <fg=cyan>notifications: queue</> connection '{$connection}' — CRUD notifications are queued jobs, so they are only delivered while a worker is running (`php artisan queue:work`). Nothing is lost meanwhile: the job waits in the queue.");

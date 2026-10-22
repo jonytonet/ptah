@@ -1577,17 +1577,17 @@ php artisan ptah:config "App\Models\Product"
 │ colsRendererDecimals│ 2                        │
 │ colsMask            │ money_brl                │
 │ colsMaskTransform   │ money_to_float           │
-│ colsValidation      │ ["required","numeric","min:0","max:999999"] │
+│ colsValidations     │ ["numeric","min:0","max:999999"]            │
 │ colsRequired        │ true                     │
 │ colsAlign           │ text-end                 │
 └─────────────────────┴──────────────────────────┘
 
 Save this column configuration? [yes]
 
-> The interactive wizard still writes `colsValidation` (singular), which
-> nothing reads — the runtime reads `colsValidations`. Known gap, see
-> [KnownLimitations.md](KnownLimitations.md); use `--column=` with
-> `validation=` until it is closed.
+> Since 1.50.1 the wizard writes only keys the runtime reads
+> (`colsValidations`, `colsRelacao`/`colsRelacaoExibe`,
+> `colsRendererLinkTemplate`/`colsRendererLinkNewTab`, and the totalizer into
+> `totalizadores.columns`). "Required" is the `colsRequired` answer, not a rule.
 ✓ Column 'price' added.
 
 Configure a column? [yes] (no)

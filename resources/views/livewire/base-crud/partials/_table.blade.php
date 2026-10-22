@@ -8,8 +8,12 @@
      wire:loading.class="opacity-60"
      id="ptah-table-wrap-{{ $crudTitle }}"
      data-ptah-copy="{{ ($crudConfig['uiPreferences']['copyCell'] ?? true) ? '1' : '0' }}">
+    {{-- uiPreferences.stickyHeader / highlightOnHover (1.50.1): written by the
+         editor and read by nothing until now — both default on, as before. --}}
     <table class="{{ $crudConfig['tableClass'] ?? 'table' }} ptah-cols-table w-full text-sm
-        @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif">
+        @if($viewDensity === 'compact') text-xs @elseif($viewDensity === 'spacious') text-base @endif
+        @if(! ($crudConfig['uiPreferences']['stickyHeader'] ?? true)) ptah-no-sticky-head @endif
+        @if(! ($crudConfig['uiPreferences']['highlightOnHover'] ?? true)) ptah-no-row-hover @endif">
 
         @php $masterDetails = $crudConfig['masterDetail'] ?? []; @endphp
         <thead class="{{ $crudConfig['theadClass'] ?? 'ptah-c-thead' }}">

@@ -30,8 +30,15 @@ If you edited the ptah package and the change isn't visible, run `composer dump-
 - **Source of fields** — one of:
   - explicit fields: `name:string,price:decimal(10,2):nullable,category_id:unsignedBigInteger,is_active:boolean`
   - an **existing DB table** → use `--db` (ptah reads the columns for you).
-- **Flags**: `--api` (web+API), `--no-soft-deletes`, `--no-menu`, `--table=` if it
-  differs from the plural snake_case default.
+- **Flags**: `--api` (web+API), `--api-only` (API without web views),
+  `--no-soft-deletes`, `--no-menu`, `--table=` if it differs from the plural
+  snake_case default.
+- **Field types** (`--fields`): only `integer`/`bigInteger`/…/`unsigned*`,
+  `foreignId`, `string`, `char`, `text`, `longText`, `decimal`, `float`,
+  `double`, `boolean`, `date`, `datetime`, `timestamp`, `json`, `enum` (plus the
+  aliases `int`, `bigint`, `uint`, `ubigint`, `bool`, `foreign`, `jsonb`). Any
+  other type is **refused** by `ptah:forge` — nothing is generated. State
+  `decimal(p,s)`; a bare `decimal` silently becomes `decimal(10,2)`.
 
 If the user only gives a table that already exists, prefer `--db` — do not invent a `--fields` list.
 
@@ -55,6 +62,11 @@ php artisan ptah:forge Catalog/Product --fields="..." --api
 
 Factory + demo seeder from the field types: add `--factory`.
 
+In web mode (no `--api-only`) forge also **writes a default `crud_configs` row
+to the database** (needs the `crud_configs` table from `ptah:install`) — the
+screen already lists its columns before Step 3; `--force` overwrites that row.
+Step 3 only refines it.
+
 **Several related entities?** Write a spec and let `ptah:blueprint` order them
 by foreign key and run forge → migrate → config → menu → permissions → seed
 (`--dry-run` first). **A column on an existing entity?** `ptah:field Entity add
@@ -71,7 +83,9 @@ Both: `docs/AgentTools.md`.
 2. **Format:** `./vendor/bin/pint`
 3. **Migrate:** `php artisan migrate`  ⚠️ plain `migrate` only — see Guardrails.
 4. **Clear caches:** `php artisan view:clear && php artisan config:clear`
-5. If the entity has a subfolder and a menu entry, sync the sidebar:
+5. Unless you passed `--no-menu`, forge added a link to
+   `database/seeders/MenuRegistry.php` (grouped when the entity has a subfolder,
+   a flat root link when not) — sync the sidebar:
    `php artisan ptah:menu-sync` (see Guardrails re: `--fresh`).
 6. **Verify:** `php artisan ptah:check` renders the screen and flags config
    that does not match the model/table (ghost columns, non-fillable fields).

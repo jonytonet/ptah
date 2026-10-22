@@ -14,7 +14,7 @@ vendor/bin/phpunit
 
 Usa `phpunit.xml` (raiz do pacote). SQLite `:memory:`, sem dependências
 externas — não precisa de Chrome, banco de dados real nem rede. Hoje soma
-1424 testes. Deve continuar rápida e 100% verde em qualquer ambiente,
+3094 testes. Deve continuar rápida e 100% verde em qualquer ambiente,
 inclusive CI mínimo sem Chrome instalado — é exatamente por isso que a suíte
 de navegador (seção 2) vive num arquivo de configuração **separado**.
 
@@ -139,11 +139,11 @@ isolado.
 | Arquivo | O que guarda |
 |---|---|
 | `CrudKeyboardShortcutsBrowserTest` | `?` abre o overlay de atalhos, Esc fecha, `/` foca a busca, `n` abre "Novo" — tudo com o dialog de verdade renderizado (a guarda `_anyDialogOpen()` só existe para não comer teclas atrás de um modal aberto). |
-| `CrudModalBrowserTest` | Esc fecha o modal criar/editar e devolve o foco ao gatilho (`x-trap` do Alpine); campo obrigatório vazio ganha `aria-invalid` COM borda visivelmente diferente (não só o atributo). |
+| `CrudModalBrowserTest` | Esc fecha o modal criar/editar e devolve o foco ao gatilho (`x-trap` do Alpine); campo obrigatório vazio ganha `aria-invalid` COM borda visivelmente diferente (não só o atributo) — este segundo teste está hoje pulado (`markTestSkipped`, ver "Known quirk" abaixo). |
 | `SidebarCollapseBrowserTest` | Ctrl+B colapsa a sidebar (largura real muda, rótulos saem do fluxo); o grupo ativo continua marcado colapsado; clicar o grupo colapsado expande de novo. |
 | `GlobalDensityBrowserTest` | Trocar `data-ptah-density` no `<html>` muda a altura computada de um controle real. |
 | `ToolbarLabelCollapseBrowserTest` | Em viewport largo os rótulos da toolbar aparecem; encolher a janela colapsa para só-ícone. |
-| `SearchPersistenceAcrossBackNavigationBrowserTest` | **Fluxo 6 — o sintoma real do usuário.** Digitar na busca, navegar para outra URL, `history.back()`: o input e a listagem filtrada precisam sobreviver. Ver achado abaixo. |
+| `SearchPersistenceAcrossBackNavigationBrowserTest` | **Fluxo 6 — o sintoma real do usuário.** Digitar na busca, navegar para outra URL, `history.back()`: o input e a listagem filtrada precisam sobreviver. Ver achado abaixo. Hoje pulado (`markTestSkipped`, ver "Known quirk — DOM-driven Livewire bindings"). |
 | `DarkThemeBrowserTest` | Alternar `.ptah-dark` no `<html>` muda o `background-color` computado (pega token órfão). |
 | `ColumnPermissionBrowserTest` | O gate `colsPermission`, num Chrome real: o `<th>`/`<td>` da coluna negada nunca chega ao DOM (não só ausente do HTML servido) — classe de bug que um teste `Livewire::test()->html()` não enxerga. |
 | `CrudConfigDarkContrastBrowserTest` | **Guarda permanente de contraste do modal "Configurar CRUD".** Abre o modal de verdade, percorre TODAS as abas da sidebar e TODOS os sub-tabs do formulário de coluna (incluindo SearchDropdown em modo `model` e `service`) e o overlay de pré-visualização, e mede o contraste WCAG real (cor computada × fundo composto, não a folha CSS) de cada texto/placeholder (piso 4.5:1) e borda de campo (piso 3:1) — em modo claro E escuro. Ver "Achados" abaixo para o porquê de existir. |
@@ -218,7 +218,7 @@ dois botões ilustrativos do preview) como isentos — mesma isenção que a WCA
 
 ### Achados desta rodada (ONDA IV)
 
-- **Fluxo 6 (pesquisa + voltar) — NÃO reproduzido nesta configuração.** O
+- **Fluxo 6 (pesquisa + voltar) — NÃO reproduzido nesta configuração.** (O teste está hoje pulado, ver "Known quirk" abaixo; o que segue é o resultado da rodada em que ainda rodava.) O
   teste passa: depois de digitar "Alfa", navegar para `/dusk-test/other` e
   voltar (`$browser->back()`), o Chrome restaura a página via bfcache — o
   campo de busca mantém o valor digitado E a listagem continua filtrada, sem

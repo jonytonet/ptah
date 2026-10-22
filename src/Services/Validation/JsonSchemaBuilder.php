@@ -90,7 +90,9 @@ class JsonSchemaBuilder
                     ],
                     'colsRenderer' => [
                         'type' => 'string',
-                        'enum' => ['badge', 'pill', 'icon', 'html', 'custom'],
+                        // 1.50.1: the runtime's list — it published five values, three
+                        // of which (icon, html, custom) no renderer implements.
+                        'enum' => CrudConfigEnums::RENDERERS,
                         'description' => 'Special renderer for the column',
                     ],
                     'colsRendererBadges' => [

@@ -72,7 +72,7 @@ Open <http://localhost:8000/login>, sign in as `admin@admin.com` with the passwo
 
 ## One company or many (`multi_company`)
 
-`ptah:install` turns `ptah.permissions.multi_company` on. A role can then be
+`ptah.permissions.multi_company` is on by default (`PTAH_MULTI_COMPANY`). A role can then be
 bound to a company or to none (global), and a check uses the company **in the
 session**. Where there is no session company — a test with `actingAs()`, an API
 call with Sanctum — only global bindings count, and a role bound to a company

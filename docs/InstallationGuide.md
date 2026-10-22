@@ -1,6 +1,6 @@
 ﻿# 🚀 Installation Guide — jonytonet/ptah
 
-> **Laravel 11 / 12 · PHP 8.2+**  
+> **Laravel 11 / 12 / 13 · PHP 8.2+**  
 > This guide documents every step to install ptah in a **fresh Laravel project** — including real terminal output collected during the process.
 
 ---
@@ -26,7 +26,7 @@
 | PHP | 8.2 |
 | Composer | 2.x |
 | Node.js + npm | 18+ |
-| Laravel | 11 or 12 |
+| Laravel | 11, 12 or 13 |
 | Database | SQLite, MySQL 8+, PostgreSQL 15+ |
 
 > **Note:** ptah ships Livewire v4 as a dependency. No additional installation is required.
@@ -213,95 +213,63 @@ This is the main command that bootstraps everything:
 php artisan ptah:install
 ```
 
-The installer will ask whether it should run migrations automatically:
+The installer will ask whether it should run migrations automatically (it skips the question when the Ptah tables already exist):
 
 ```
-Would you like to run the database migrations now? (yes/no) [yes]:
+Run migrations now? (yes/no) [yes]:
 > yes
 ```
 
-**Real output — full session:**
+**Output (abridged):**
 
 ```
- ____  _        _
-|  _ \| |_ __ _| |__
-| |_) | __/ _` | '_ \
-|  __/| || (_| | | | |
-|_|    \__\__,_|_| |_|
+   INFO  Installing Ptah...
 
- Ptah Installer — Laravel Scaffold System
+  Publishing configuration ........................................ DONE
+  Publishing stubs ................................................ DONE
+  Publishing migrations ........................................... DONE
+  Publishing translations ......................................... DONE
+  Publishing MenuRegistry ......................................... DONE
+  Configuring Tailwind CSS (app.css) .............................. DONE
+  Running migrations .............................................. DONE
+  [... 17 migrations: the 13 base ones, 3 AI Agent and ptah_exports ...]
+  Creating public/storage link .................................... DONE
+  Creating default company and admin user ......................... DONE
+  ✔ Default company created: Laravel
+  ✔ Department created: Administration
+  ✔ MASTER role created.
+  ✔ Admin user created: admin@admin.com
+  → Generated password (copy now, shown once): ********************
+  ✔ Binding admin × MASTER × Laravel created.
+  Installing Node dependencies (npm install) ...................... DONE
+  Building assets (npm run build) ................................. DONE
 
- Publishing config...
-  INFO  Publishing [ptah-config] assets.
-  Copying File [.../config/ptah.php] to [config/ptah.php] ........................ DONE
-
- Publishing stubs...
-  INFO  Publishing [ptah-stubs] assets.
-  Copying File [...] to [stubs/ptah/controller.stub] ............................. DONE
-  Copying File [...] to [stubs/ptah/model.stub] .................................. DONE
-  [... 21 stub files in total ...]
-
- Publishing migrations...
-  INFO  Publishing [ptah-migrations] assets.
-  [... 13 migration files ...]
-
- Publishing language files...
-  INFO  Publishing [ptah-lang] assets.
-  [... en / pt_BR ...]
-
- Configuring Tailwind CSS...
-  INFO  Tailwind CSS configured in resources/css/app.css.
-
- Running migrations...
-  INFO  Running migrations.
-  2024_01_01_000000_create_user_preferences_table ............... 17.28ms DONE
-  2024_01_01_000001_create_crud_configs_table ................... 12.11ms DONE
-  2024_01_03_000000_create_menus_table .......................... 18.55ms DONE
-  2024_01_03_000001_add_two_factor_columns_to_users_table ....... 10.04ms DONE
-  2024_01_04_000000_create_ptah_companies_table ................. 14.99ms DONE
-  2024_01_04_000001_create_ptah_departments_table ............... 11.77ms DONE
-  2024_01_04_000002_create_ptah_roles_table ..................... 13.28ms DONE
-  2024_01_04_000003_create_ptah_pages_table ..................... 16.72ms DONE
-  2024_01_04_000004_create_ptah_page_objects_table .............. 18.51ms DONE
-  2024_01_04_000005_create_ptah_role_permissions_table .......... 11.85ms DONE
-  2024_01_04_000006_create_ptah_user_roles_table ................ 12.34ms DONE
-  2024_01_04_000007_create_ptah_permission_audits_table ......... 12.98ms DONE
-  2024_01_05_000000_add_audit_fields_to_ptah_tables ............. 10.55ms DONE
-
- Creating default data...
-  ✔ Company "Laravel" created.
-  ✔ Department "Administration" created.
-  ✔ Role "MASTER" created.
-  ✔ User [admin@admin.com] created.
-
- Creating storage link...
-  INFO  The [public/storage] link has been connected to [storage/app/public].
-
- Running npm install...
-  [npm install output — this may take a minute]
-
-  ✔  Ptah installed successfully. Happy scaffolding!
+   INFO  Ptah installed successfully!
 ```
+
+Useful options: `--skip-npm` (no `npm install` / `npm run build`), `--demo` (demo companies, departments, roles and menu), `--force` (overwrite published files), `--boost` (see [Laravel Boost](#laravel-boost--ai-agent-integration)).
 
 ### What gets published
 
 | Artifact | Location |
 |----------|----------|
-| Configuration | `config/ptah.php` |
-| Stub files (21) | `stubs/ptah/` |
-| Migrations (13) | `database/migrations/` |
+| Configuration | `config/ptah.php`, `config/ptah-masks.php`, `config/ptah-settings.php`, `config/ptah-dashboard.php` |
+| Stub files (23) | `stubs/ptah/` |
+| Migrations (17) | `database/migrations/` |
 | Language files | `lang/vendor/ptah/en/` and `lang/vendor/ptah/pt_BR/` |
+| Menu registry | `database/seeders/MenuRegistry.php` |
 
 ### Default data created
 
 | Entity | Value |
 |--------|-------|
-| Company | Laravel |
+| Company | `APP_NAME` (Laravel on a fresh project) |
 | Department | Administration |
 | Role | MASTER |
-| Admin user | admin@admin.com |
+| Admin user | `PTAH_ADMIN_EMAIL` (default `admin@admin.com`) |
+| Admin password | `PTAH_ADMIN_PASSWORD`; when unset, a random one is generated and printed once |
 
-> **Important:** Change the admin password immediately in production. Run `php artisan tinker` and use `User::find(1)->update(['password' => bcrypt('your-password')]);`.
+> **Important:** Change the admin password immediately in production. Run `php artisan tinker` and use `User::find(1)->update(['password' => bcrypt('your-password')]);`. If you did not set `PTAH_ADMIN_PASSWORD`, copy the generated password from the installer output: it is not shown again.
 
 ### Tables created
 
@@ -310,7 +278,8 @@ All ptah tables are prefixed with `ptah_` to avoid conflicts with your applicati
 ```
 ptah_companies · ptah_departments · ptah_roles · ptah_pages
 ptah_page_objects · ptah_role_permissions · ptah_user_roles
-ptah_permission_audits · user_preferences · crud_configs · menus
+ptah_permission_audits · ptah_ai_model_configs · ptah_ai_conversations
+ptah_exports · user_preferences · crud_configs · menus
 ```
 
 ---
@@ -383,18 +352,19 @@ php artisan migrate
 | File | Purpose |
 |------|---------|
 | `app/Models/Product.php` | Eloquent model |
-| `app/DTO/ProductDTO.php` | Data Transfer Object |
-| `app/Contracts/Repositories/ProductRepositoryInterface.php` | Repository interface |
+| `app/DTOs/ProductDTO.php` | Data Transfer Object |
+| `app/Repositories/Contracts/ProductRepositoryInterface.php` | Repository interface |
 | `app/Repositories/ProductRepository.php` | Eloquent repository |
 | `app/Services/ProductService.php` | Business logic |
 | `app/Http/Controllers/ProductController.php` | Web controller |
-| `app/Http/Requests/StoreProduct.php` | Store validation |
-| `app/Http/Requests/UpdateProduct.php` | Update validation |
+| `app/Http/Requests/StoreProductRequest.php` | Store validation |
+| `app/Http/Requests/UpdateProductRequest.php` | Update validation |
 | `app/Http/Resources/ProductResource.php` | API resource |
 | `resources/views/product/index.blade.php` | Livewire BaseCrud view |
 | `database/migrations/..._create_products_table.php` | Migration |
 | *(route entry in `routes/web.php`)* | Route registered |
 | *(binding in `AppServiceProvider`)* | Interface → implementation |
+| *(entry in `database/seeders/MenuRegistry.php`)* | Menu entry, applied by `ptah:menu-sync` (skip with `--no-menu`) |
 | *(row in `crud_configs`)* | Column/field configuration |
 
 ### Field type syntax
@@ -406,9 +376,12 @@ fieldName:type[:modifier]
 | Modifier | Effect |
 |----------|--------|
 | `nullable` | Column accepts NULL |
+| `unique` / `index` | Unique constraint / plain index |
+| `default(value)` | Column default, e.g. `is_active:boolean:default(true)` |
+| `label=Text` | Label shown on the screen |
 | *(none)* | NOT NULL column |
 
-Common types: `string`, `text`, `integer`, `unsignedBigInteger`, `boolean`, `decimal(8,2)`, `date`, `datetime`, `json`, `enum`.
+Common types: `string`, `text`, `integer`, `unsignedBigInteger`, `boolean`, `decimal(8,2)`, `date`, `datetime`, `json`, `enum(a|b)`. An unknown type is refused with the list of valid ones.
 
 ---
 
@@ -426,7 +399,7 @@ Navigate to [http://localhost:8000](http://localhost:8000).
 
 | Route | Screen |
 |-------|--------|
-| `/login` | Login (default Laravel auth) |
+| `/login` | Login (Ptah `auth` module — see [Optional modules](#optional-modules)) |
 | `/product` | Generated Product CRUD |
 
 Login with:
@@ -453,6 +426,7 @@ php artisan ptah:module --list
 | company     | PTAH_MODULE_COMPANY     | ✘ inactive |
 | permissions | PTAH_MODULE_PERMISSIONS | ✘ inactive |
 | api         | PTAH_MODULE_API         | ✘ inactive |
+| ai_agent    | PTAH_MODULE_AI_AGENT    | ✘ inactive |
 +-------------+-------------------------+------------+
 ```
 
@@ -506,10 +480,11 @@ PTAH_MODULE_AUTH=true
 'auth' => [
     'guard'               => 'web',
     'home'                => '/dashboard',
-    'register_enabled'    => false,
-    'two_factor'          => true,
-    'remember_me'         => true,
-    'session_protection'  => true,
+    'two_factor'          => true,   // false hides the 2FA setup on the profile
+    'remember_me'         => true,   // false hides "remember me" on the login screen
+    'session_protection'  => true,   // false hides the active-sessions tab on the profile
+    'route_prefix'        => env('PTAH_AUTH_ROUTE_PREFIX', ''),
+    'guest_redirect'      => null,
 ],
 ```
 
@@ -540,6 +515,8 @@ composer require pragmarx/google2fa-laravel bacon/bacon-qr-code
 ### Module: menu
 
 Activates a dynamic sidebar menu, configurable via the `/ptah-menu` admin screen (database driver) or via `config/ptah.php` (config driver).
+
+> `/ptah-menu` is master-only with the `permissions` module active; without it the screen is closed unless `PTAH_STRUCTURE_EDITOR=true` is set. The same applies to `/ptah-companies`.
 
 ```bash
 php artisan ptah:module menu
@@ -589,9 +566,12 @@ PTAH_MENU_DRIVER=database
 
 ```php
 'menu' => [
-    'driver'       => env('PTAH_MENU_DRIVER', 'database'),
+    'driver' => env('PTAH_MENU_DRIVER', 'database'),
+],
+
+'forge' => [
     'sidebar_items' => [
-        // ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home'],
+        // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt', 'match' => 'dashboard'],
     ],
 ],
 ```
@@ -600,7 +580,7 @@ PTAH_MENU_DRIVER=database
 
 ### Module: company
 
-Activates multi-company / multi-tenant support. Provides a company switcher, department management and `CompanyService` helpers.
+Activates multi-company / multi-tenant support. Provides a company switcher and `CompanyService` helpers. Departments are managed by the `permissions` module screens.
 
 ```bash
 php artisan ptah:module company
@@ -647,9 +627,9 @@ PTAH_MODULE_COMPANY=true
 **Using CompanyService in queries:**
 
 ```php
-use Ptah\Services\CompanyService;
+use Ptah\Contracts\CompanyServiceContract;
 
-$companyId = CompanyService::getCurrentCompanyId();
+$companyId = app(CompanyServiceContract::class)->getCurrentCompanyId();
 $products = Product::where('company_id', $companyId)->get();
 ```
 
@@ -658,7 +638,6 @@ $products = Product::where('company_id', $companyId)->get();
 | Route | Description |
 |-------|-------------|
 | `/ptah-companies` | Manage companies |
-| `/ptah-departments` | Manage departments |
 
 ---
 
@@ -703,9 +682,10 @@ php artisan ptah:module permissions
   ....................................................... 52.83ms DONE
 
   ╔══════════════════════════════════════════╗
-  ║  Admin created successfully!             ║
+  ║  Admin access ready                      ║
   ║  E-mail   :  admin@admin.com             ║
-  ║  Password :  (set via PTAH_ADMIN_PASSWORD or reset via tinker)
+  ║  Password :  <PTAH_ADMIN_PASSWORD or the generated one>
+  ║  ⚠ Random password — copy it now, shown once!  (only when generated)
   ║  ⚠ Change your password on first login!  ║
   ╚══════════════════════════════════════════╝
 
@@ -726,16 +706,17 @@ php artisan ptah:module permissions
 PTAH_MODULE_PERMISSIONS=true
 ```
 
-> **Important — admin password:** The admin password is read from `config('ptah.permissions.admin_password')`, which maps to `env('PTAH_ADMIN_PASSWORD')`. Since this variable isn't set by default, the displayed password will be blank. **Always define `PTAH_ADMIN_PASSWORD` in `.env` before running this module**, or reset the password immediately after:
+> **Important — admin password:** The admin password is read from `config('ptah.permissions.admin_password')`, which maps to `env('PTAH_ADMIN_PASSWORD')`. When the variable is not set, a strong random password is generated, used for the admin and printed **once** in the box above — copy it right then. If the admin already existed, its password is preserved and not shown. To choose your own, add to `.env` before enabling:
+>
+> ```env
+> PTAH_ADMIN_PASSWORD=YourSecurePassword123
+> ```
+>
+> or reset it afterwards:
 >
 > ```bash
 > php artisan tinker
 > >>> \App\Models\User::where('email','admin@admin.com')->first()->update(['password' => bcrypt('your-password')]);
-> ```
->
-> Add to `.env` before enabling:
-> ```env
-> PTAH_ADMIN_PASSWORD=YourSecurePassword123
 > ```
 
 **Blade directive:**
@@ -767,6 +748,11 @@ PTAH_PERMISSION_AUDIT=true
 | `/ptah-pages` | Register system pages and objects |
 | `/ptah-roles` | Create roles and configure permissions |
 | `/ptah-users-acl` | Assign roles to users |
+| `/ptah-departments` | Manage departments |
+| `/ptah-audit` | Permission audit log |
+| `/ptah-permission-guide` | Permission guide |
+
+These screens are master-only.
 
 ---
 
@@ -865,6 +851,7 @@ php artisan ptah:install --boost
 
 1. Runs `composer require laravel/boost --dev` (installs `laravel/boost v2+`, `laravel/mcp`, `laravel/roster`)
 2. Runs `php artisan boost:install` (interactive — see below)
+3. Publishes ptah's agent skills to `.claude/skills` (`ptah-skills` tag; `--force` refreshes them after an upgrade)
 
 **Real output (Composer step):**
 
@@ -962,6 +949,7 @@ After installing all modules, running `php artisan ptah:module --list` should sh
 | company     | PTAH_MODULE_COMPANY     | ✔ active |
 | permissions | PTAH_MODULE_PERMISSIONS | ✔ active |
 | api         | PTAH_MODULE_API         | ✔ active |
+| ai_agent    | PTAH_MODULE_AI_AGENT    | ✔ active |
 +-------------+-------------------------+----------+
 ```
 
@@ -1003,7 +991,7 @@ Enable **Developer Mode** in *Settings → System → For developers* to allow s
 
 ### `ptah:forge` skips existing files
 
-If you run `ptah:forge` on an entity that was already generated, existing files are **skipped** (status: `SKIPPED`). Use `--force` to overwrite:
+If you run `ptah:forge` on an entity that was already generated, existing files are **skipped** (status: `SKIPPED`). Use `--force` to overwrite (an interactive session asks for confirmation first):
 
 ```bash
 php artisan ptah:forge Product --fields="..." --force
@@ -1012,7 +1000,7 @@ php artisan ptah:forge Product --fields="..." --force
 ### Tailwind classes not building
 
 Make sure `npm run dev` (or `npm run build`) is running so Vite processes the Blade views.  
-If ptah views are not included in Tailwind's content scan, add to `tailwind.config.js`:
+`ptah:install` adds `@source '../../vendor/jonytonet/ptah/resources/views/**/*.blade.php';` to `resources/css/app.css` (Tailwind v4). If that line is missing, add it; on a Tailwind v3 project, add to `tailwind.config.js` instead:
 
 ```js
 content: [
@@ -1023,7 +1011,7 @@ content: [
 
 ### BaseCrud renders unstyled (no `.ptah-c-*` classes / `--ptah-*` tokens)
 
-Versions of `ptah:install` **before 1.14.0** injected `@source`, `@custom-variant dark` and the brand `@theme` tokens into `resources/css/app.css`, but never the `@import` of Ptah's own component stylesheet. If you installed ptah before that release, your `app.css` is missing this line and the BaseCrud UI (tables, filters, modals) will build without any `.ptah-c-*` class or the 24 neutral `--ptah-*` tokens — even though the original install reported success.
+Versions of `ptah:install` **before 1.14.0** injected `@source`, `@custom-variant dark` and the brand `@theme` tokens into `resources/css/app.css`, but never the `@import` of Ptah's own component stylesheet. If you installed ptah before that release, your `app.css` is missing this line and the BaseCrud UI (tables, filters, modals) will build without any `.ptah-c-*` class or the neutral `--ptah-*` tokens — even though the original install reported success.
 
 **Fix — add the import manually**, right after `@import 'tailwindcss';` and before any `@theme` block or your own token overrides:
 
@@ -1042,7 +1030,7 @@ npm run build
 
 ### Admin password unknown after install
 
-The default admin user is created by ptah's seeder without printing the password in the terminal. Reset it via tinker:
+The default admin user is created by ptah's seeder with `PTAH_ADMIN_PASSWORD`, or with a random password printed once during `ptah:install` / `ptah:module permissions`. If you missed it, reset it via tinker:
 
 ```bash
 php artisan tinker

@@ -28,7 +28,7 @@ names the ready-made path and what NOT to do.
 | A new entity + full CRUD screen | `php artisan ptah:forge Name --fields="..."` then configure via `ptah:config` or the visual editor (gear icon on the screen) | Hand-write a Livewire listing/form component |
 | Columns, filters, badges, row styles, actions, modal fields on an existing CRUD | `ptah:config` flags or the visual editor — it is all JSON in `crud_configs` | Edit Blade views or create custom components |
 | A listing of an existing table | A `crud_configs` row is enough — BaseCrud renders from config; no view, no component, no controller beyond the thin generated one | Build a table view by hand |
-| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate, and the bases ship the full CRUD method set: find/create/update/destroy/restore) | Write Eloquent queries in Livewire/controllers |
+| Data access / business rules outside a CRUD screen | Extend `BaseRepository` / `BaseService` via contracts (see the `ptah-data-layer` skill — `getData(Request)` already does search/filter/sort/paginate, and the bases ship the CRUD method set: all/paginate/find/create/update/delete/destroy — there is no `restore`; soft-delete restore is done by BaseCrud) | Write Eloquent queries in Livewire/controllers |
 | A REST API for an entity | `php artisan ptah:module api` once, then `ptah:forge Name --fields="..." --api` — controller with full Swagger `@OA\*` annotations, Create/Update API requests, versioned `Route::prefix('v1')` routes and the `BaseResponse` envelope, all generated and working | Hand-write API controllers, resources or response envelopes |
 | Notify users when records change | CrudConfig editor → Notifications tab + `SendsCrudNotifications` trait on the model | Write observers/listeners that insert notifications |
 | Permissions per screen / column | Permissions module: page objects + grants; column tag `colsPermission` | if() checks scattered in views |
@@ -110,13 +110,14 @@ FormRequest          → validates HTTP input only
 Controller / Livewire → calls Service via Contract; NO queries, NO business logic
      │
      ▼
-ServiceContract      → interface in app/Contracts/Services/
+ServiceContract      → interface in app/Contracts/Services/ (convention — forge does NOT generate one)
      │
      ▼
 Service              → ALL business logic; calls RepositoryContract; throws domain exceptions
      │
      ▼
-RepositoryContract   → interface in app/Contracts/Repositories/
+RepositoryContract   → interface in app/Contracts/Repositories/ (forge generates it as
+                       app/Repositories/Contracts/{Entity}RepositoryInterface + the binding)
      │
      ▼
 Repository           → ALL database access; Eloquent queries, filters, pagination
@@ -271,23 +272,36 @@ grep -rnE 'bg-(white|light|slate|gray)|dark:|#[0-9a-fA-F]{3,6}' resources/views 
 ```bash
 # Single entity (SoftDeletes is ON by default — pass --no-soft-deletes to disable)
 php artisan ptah:forge Product \
-  --fields="name:string,sku:string,price:decimal,stock:integer,category_id:unsignedBigInteger,is_active:boolean"
+  --fields="name:string,sku:string,price:decimal(10,2),stock:integer,category_id:unsignedBigInteger,is_active:boolean"
 
 # Sub-folder (large projects)
 php artisan ptah:forge Inventory/ProductStock \
   --fields="product_id:unsignedBigInteger,location:string,qty:integer"
 # model key = 'Inventory/ProductStock'
 # namespace = App\Models\Inventory\ProductStock
+```
 
+`--fields` types: `integer`, `bigInteger`, `mediumInteger`, `smallInteger`,
+`tinyInteger`, their `unsigned*` forms, `foreignId` (constrained FK),
+`string`, `char`, `text`, `longText`, `decimal`, `float`, `double`, `boolean`,
+`date`, `datetime`, `timestamp`, `json`, `enum` (aliases: `int`, `bigint`,
+`uint`, `ubigint`, `bool`, `foreign`, `jsonb`). **Any other type is refused**
+(`FieldDefinition::TYPES`). Always state `decimal(p,s)` — a bare `decimal`
+silently becomes `decimal(10,2)`. Modifiers: `:nullable`, `:unique`, `:index`,
+`:default(val)`, `:label=Text`.
+
+```bash
 # With API (web + API in one command)
 php artisan ptah:forge Catalog/Product \
-  --fields="name:string,price:decimal,category_id:unsignedBigInteger" \
+  --fields="name:string,price:decimal(10,2),category_id:unsignedBigInteger" \
   --api
 ```
 
 ### Automatic menu
 
-Every entity generated with a subfolder **automatically adds** a sidebar menu link:
+Every entity generated **automatically adds** a sidebar menu link to
+`database/seeders/MenuRegistry.php` (needs `ptah:install` to have created it) —
+under a group when the entity has a subfolder, as a flat root link when not:
 
 ```bash
 # During scaffolding
@@ -481,10 +495,14 @@ Full option reference (every key each parser accepts): [Commands.md](../../../..
 Format: `field:type:modifier:modifier:option=value:option=value` (`ColumnParser`)
 
 **`colsTipo` values** (the FORM INPUT type — independent from the display renderer, see [KnownLimitations.md §5](../../../../docs/KnownLimitations.md#5-ptahconfig-cli--column-types-and-renderers)):
-`text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`
+`text`, `textarea`, `number`, `date`, `datetime`, `select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`, `datetime-local`, `range`, `email`, `url`, `tel`, `password` (never pre-filled on edit; empty = keep; saved hashed)
+
+A `boolean` column on a NOT NULL database column is drawn as an on/off switch; a nullable one keeps the Yes/No select.
 
 **Bare modifiers** (no `=value` — presence alone flips the flag, never `sortable=true`):
-`required`, `nullable`, `readonly` (→ `colsGravar=false`), `hidden` (→ `colsVisibleList=false`), `sortable` (→ `colsOrderBy=<field>`), `filterable`, `not_filterable`
+`required` (→ `colsRequired=true`), `nullable` (→ `colsRequired=false`), `readonly` (→ `colsGravar=false`: the field is NOT shown in the form and NOT saved), `hidden` (→ `colsVisibleList=false`), `sortable` (→ `colsOrderBy=<field>`), `filterable`, `not_filterable`
+
+To SHOW a value in the form without letting it be edited or saved, use the config key instead: `colsReadonly=true` (accepted as-is by `--column`; unlike `colsEditableForm=false`, which removes the field).
 
 **Common `key=value` options:**
 - `label=` — display label
@@ -492,8 +510,10 @@ Format: `field:type:modifier:modifier:option=value:option=value` (`ColumnParser`
 - `min_width=` — e.g. `min_width=120px` (there is no `width=`)
 - `badges=value|color|label,value2|color2|label2` — **pipe**-separated inside each entry (`:` is the field:type:modifier separator and would collide)
 - `options=value:Label,value2:Label2` — for `select`/`searchdropdown`
+- `validation=rule|rule` — extra form rules (`colsValidations`), e.g. `validation=email|min:0|maxLength:255`. `required` is NOT a rule here — it is the `:required` modifier (`colsRequired`); `max:`/`min:` compare a NUMBER, string length is `maxLength:`/`minLength:`
 - `mask=`, `mask_transform=` — input mask
-- `sd_model=`, `sd_value=`, `sd_label=` — searchdropdown source
+- `sd_model=`, `sd_value=`, `sd_label=` — searchdropdown source (a `searchdropdown` without `sd_model` or `sd_service` is refused)
+- `sd_mode=service`, `sd_service=`, `sd_service_method=` — searchdropdown fed by a service: the class MUST implement `Ptah\Contracts\SearchDropdownSource` (`searchDropdown(string $query, string $key): array` of `['value' => …, 'label' => …]`); `sd_service_method` is only a KEY handed to it, never a method ptah calls. Without the interface the dropdown returns nothing
 - `link_template=`, `link_label=`, `link_new_tab=` — for `renderer=link`
 - `upload_path=`, `upload_max_size=`, `upload_allowed_types=` — for `colsTipo=file|image`
 - `permission=` — gates the column via `colsPermission` (see [Permissions.md](../../../../docs/Permissions.md))
@@ -506,8 +526,8 @@ Format: `field:condition:value:style` — `style` is an **inline CSS declaration
 list** (it is rendered as `style="{{ ... }}"` on the row), not Tailwind
 classes.
 
-**Conditions:** `==`, `!=`, `>`, `<`, `>=`, `<=` (or the aliases `eq`, `ne`,
-`lt`, `gt`, `lte`, `gte`, `=`)
+**Conditions:** `==`, `!=`, `>`, `<`, `>=`, `<=`, `*` (no test — applies to every row) (or the aliases `eq`, `ne`,
+`lt`, `gt`, `lte`, `gte`, `=`, `always`, `any`, `true`)
 
 **Example:** `is_active:==:0:background:#FEF2F2;color:#B91C1C;`
 
@@ -516,9 +536,9 @@ classes.
 Format: `field:type:option=value:option=value` (`FilterParser`) — **no positional
 operator**; everything after `field:type` is `key=value`.
 
-**Types:** `text`, `number`, `date`, `select`, `searchdropdown`
+**Types:** `text`, `number`, `date`, `select` — there is no `searchdropdown` custom filter (a filterable `searchdropdown` COLUMN already gets one in the panel)
 
-**Common options:** `label=`, `operator=` (`=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`), `options=`
+**Common options:** `label=`, `operator=` (`=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`), `options=`, `whereHas=`, `field_relation=`, `aggregate=`
 
 **Example:** `status:select:label=Status:operator==:options=active:Active,inactive:Inactive`
 
@@ -530,13 +550,18 @@ Format: `name:type:value:option=value:option=value` (`ActionParser`)
 
 **Common options:** `icon=`, `color=` (`primary`, `success`, `danger`, `warning`, `info`, `secondary`), `confirm=true`, `confirm_message=`, `permission=`
 
+`icon=` is a Boxicons name; since 1.50.0 it works with or without the family prefix (`bx-check` and `bx bx-check`).
+
 **Example:** `approve:livewire:approve(%id%):icon=bx-check:color=success:confirm=true`
+
+**`references/config-cli.md`** — `--join`, `--permission` and custom bulk
+actions (`BulkActionHandler`). Read it when the task touches one of them.
 
 #### --set
 
 Format: `key=value`
 
-**Settings:** `itemsPerPage=15` (→ `uiPreferences.perPage`), `exportEnabled=true` (→ `exportConfig.enabled`), `displayName=Produtos`, or any dotted path (`--set="exportConfig.maxRows=5000"`). Cache and pagination switches do not exist — the command refuses them.
+**Settings:** `itemsPerPage=15` (→ `uiPreferences.perPage`), `exportEnabled=true` (→ `exportConfig.enabled`), `displayName=Produtos`, or any dotted path (`--set="exportConfig.maxRows=5000"`). Cache and pagination switches do not exist — the command warns and ignores them (`cacheEnabled`, `paginationEnabled`, `searchEnabled`, `theme`, …).
 
 ### UI helpers agents reach for often
 
@@ -565,16 +590,15 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
       "colsRendererBadges": [
         { "value": "1", "color": "success", "label": "Ativo" },
         { "value": "0", "color": "danger",  "label": "Inativo" }
-      ] }
+      ] },
+    { "colsNomeFisico": "id", "colsNomeLogico": "Aprovar", "colsTipo": "action",
+      "colsGravar": false, "colsRequired": false, "colsIsFilterable": false,
+      "actionType": "livewire", "actionValue": "approve(%id%)",
+      "actionIcon": "bx-check", "actionColor": "success", "actionConfirm": true }
   ],
-  "actions": [
-    { "colsNomeLogico": "Aprovar", "colsTipo": "action", "actionType": "livewire",
-      "actionValue": "approve(%id%)", "actionIcon": "bx-check", "actionColor": "success",
-      "actionConfirm": true }
-  ],
-  "filters": [
+  "customFilters": [
     { "field": "is_active", "label": "Status", "colsFilterType": "select",
-      "defaultOperator": "=", "options": "1:Ativo,0:Inativo" }
+      "operator": "=", "colsSelect": { "Ativo": "1", "Inativo": "0" } }
   ],
   "contitionStyles": [
     { "field": "stock", "condition": "<", "value": "5",
@@ -593,6 +617,9 @@ shorthand. Full property reference: [Configuration.md § Column Configuration](.
 > `HasCrudRenderers::getRowStyle()` actually reads; `StyleRule::normalize()` is the
 > single place that canonicalises every legacy shape into this one. Never invent a
 > `rowStyles`/`badgeMap`/`modal.fields` shape — the runtime does not read it.
+> Row actions are entries of `cols` with `colsTipo: "action"` (what `--action`
+> writes), and custom filters live in `customFilters` — a top-level `actions` or
+> `filters` list is never read.
 
 ---
 
@@ -732,14 +759,14 @@ Automatically installs `darkaonline/l5-swagger` and publishes:
 ```bash
 # Combined mode (web + API in a single command) — recommended
 php artisan ptah:forge Catalog/Product \
-  --fields="name:string,price:decimal,category_id:unsignedBigInteger,is_active:boolean" \
+  --fields="name:string,price:decimal(10,2),category_id:unsignedBigInteger,is_active:boolean" \
   --api
 ```
 
 Automatically generates **web and API together**:
-- `app/Http/Controllers/Catalog/ProductController.php` — controller web (Livewire)
-- `resources/views/livewire/catalog/product/` — views
-- `app/Http/Controllers/API/Catalog/ProductController.php` — Swagger `@OA\*` completo
+- `app/Http/Controllers/Catalog/ProductController.php` — web controller (renders the index view)
+- `resources/views/product/index.blade.php` — view that mounts the `ptah-base-crud` Livewire screen
+- `app/Http/Controllers/API/Catalog/ProductApiController.php` — Swagger `@OA\*` completo
 - `app/Http/Requests/API/Catalog/CreateProductApiRequest.php`
 - `app/Http/Requests/API/Catalog/UpdateProductApiRequest.php`
 - `app/Models/Catalog/Product.php` — `@OA\Schema` gerado
@@ -758,10 +785,10 @@ php artisan ptah:module api
 
 # 2. Generate the entity (web + API together)
 php artisan ptah:forge Catalog/Product \
-  --fields="name:string,price:decimal" \
+  --fields="name:string,price:decimal(10,2)" \
   --api
 
-# 3. Fix the import TODOs in the generated files
+# 3. Resolve any ⚠ forge printed (FK imports — see the checklist above)
 # 4. Run pint
 ./vendor/bin/pint
 
@@ -799,7 +826,7 @@ return BaseResponse::ok($this->service->update($id, $request->validated()));
 return $this->service->destroy($id) ? BaseResponse::noContent() : BaseResponse::notFound();
 
 // custom error
-return BaseResponse::error('Message', ['field' => 'detail'], 422);
+return BaseResponse::error('Message', 422, ['field' => 'detail']);
 ```
 
 **Response envelope:**
@@ -818,8 +845,8 @@ return BaseResponse::error('Message', ['field' => 'detail'], 422);
 
 | Parameter | Behaviour |
 |---|---|
-| `search` | OR across every `$fillable` |
-| `searchLike` | Incremental filter with `>`, `>=`, `<=`, `<`, `whereIn` operators |
+| `search` | OR `LIKE %term%` across every table column (comma = several terms) |
+| `searchLike` | Incremental filter: `field}5` (>=), `field{5` (<=), `field>5`, `field<5`; plus the `whereIn` and `additionalQueries` params |
 | neither of them | Exact AND (`findAllFieldsAnd`) |
 | `limit`, `page` | Automatic pagination |
 | `order`, `direction` | Sorting |
@@ -838,7 +865,7 @@ public function index(Request $request): JsonResponse
 
 | Artefato | Caminho | Classe |
 |---|---|---|
-| Controller | `Http/Controllers/API/{Folder}/` | `{Entity}Controller` |
+| Controller | `Http/Controllers/API/{Folder}/` | `{Entity}ApiController` |
 | Request criar | `Http/Requests/API/{Folder}/` | `Create{Entity}ApiRequest` |
 | Request atualizar | `Http/Requests/API/{Folder}/` | `Update{Entity}ApiRequest` |
 | Rotas | `routes/api.php` | prefixo `v1` + middleware da config |

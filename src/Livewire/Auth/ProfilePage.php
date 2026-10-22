@@ -196,7 +196,15 @@ class ProfilePage extends Component
 
         // Nada e gravado ate o codigo conferir: o enableTotp() gravava o
         // segredo novo antes, e o autenticador que funcionava parava.
-        $data = $twoFactor->startTotp(Auth::user());
+        try {
+            $data = $twoFactor->startTotp(Auth::user());
+        } catch (\RuntimeException $e) {
+            // pragmarx/google2fa-laravel not installed (1.50.1: was a 500).
+            $this->errorMsg = $e->getMessage();
+            $this->dispatch('ptah-toast', title: $e->getMessage(), color: 'danger');
+
+            return;
+        }
         $this->pendingTotpSecret = $data['secret'];
 
         $this->totpSecret = $data['secret'];

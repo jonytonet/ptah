@@ -6,7 +6,7 @@
 
     Layout: [Nome da Empresa Ativa]  |  [LAB1]  [LAB2]  …
     - Nome por extenso: contexto visual (não clicável)
-    - Labels: botões clicáveis; o ativo fica em cor primária (#5b21b6)
+    - Labels: botões clicáveis; o ativo fica em var(--ptah-primary)
 
     Dark mode: reage à classe .ptah-dark no ancestral
 

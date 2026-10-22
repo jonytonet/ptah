@@ -98,10 +98,14 @@
                         @if ($showSetup2fa && $totpType === 'totp')
                             {{-- QR Code setup --}}
                             <div class="space-y-4">
+                                {{-- 1.50.1: no QR without bacon/bacon-qr-code — the key below
+                                     is entered by hand; nothing is sent to a third party. --}}
+                                @if ($qrCodeSvg !== '')
                                 <p class="text-sm ptah-c-prof_body">{{ __('ptah::ui.profile_scan_qr') }}</p>
                                 <div class="flex justify-center p-3 bg-white rounded-md border border-gray-200 w-fit mx-auto">
                                     <img src="{{ $qrCodeSvg }}" alt="QR Code 2FA" class="w-[200px] h-[200px]">
                                 </div>
+                                @endif
                                 <p class="text-xs ptah-c-prof_hint text-center">
                                     {{ __('ptah::ui.profile_enter_key') }} <code class="font-mono ptah-c-prof_chip px-1 py-0.5 rounded text-xs">{{ $totpSecret }}</code>
                                 </p>

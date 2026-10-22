@@ -611,7 +611,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Returns an unsaved replica of the last record found.
+     * Returns an unsaved replica of the FIRST row of the table (no ordering) — not of a given record.
      * Useful for duplicating existing records.
      */
     public function replicate(): Model

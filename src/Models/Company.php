@@ -149,9 +149,17 @@ class Company extends Model
         parent::boot();
 
         // Auto-generates slug from the name, if not provided
+        // 1.50.1: unique — two companies with the same name broke on the
+        // `slug` unique constraint and surfaced as a generic save error.
         static::creating(function (self $model) {
             if (empty($model->slug)) {
-                $model->slug = Str::slug($model->name);
+                $base = Str::slug($model->name) ?: 'company';
+                $slug = $base;
+                $n = 2;
+                while (static::withTrashed()->where('slug', $slug)->exists()) {
+                    $slug = $base.'-'.$n++;
+                }
+                $model->slug = $slug;
             }
         });
     }

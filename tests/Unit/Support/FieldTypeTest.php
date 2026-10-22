@@ -67,4 +67,22 @@ class FieldTypeTest extends TestCase
             $this->assertStringNotContainsString("string('x')", $field->migrationLine(), "{$type} caiu no default string.");
         }
     }
+
+    /** 1.50.1: "(kg)" in the label was read as the type's params. */
+    #[Test]
+    public function a_label_with_parentheses_does_not_eat_the_type_params(): void
+    {
+        $field = (new SchemaInspector)->fromString('weight:decimal(5,2):nullable:surname=Peso (kg)')[0];
+
+        $this->assertSame(5, $field->precision);
+        $this->assertSame(2, $field->scale);
+        $this->assertSame('Peso (kg)', $field->label);
+        $this->assertTrue($field->nullable);
+    }
+
+    #[Test]
+    public function double_stays_double(): void
+    {
+        $this->assertSame('double', (new SchemaInspector)->fromString('ratio:double')[0]->type);
+    }
 }

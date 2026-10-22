@@ -109,6 +109,21 @@ class SchemaInspector
             $fieldStr
         );
 
+        // The label (`surname=` / `label=`) is free text and may hold
+        // parentheses — "Peso (kg)". Take it out BEFORE the parenthesis pass
+        // below, which used to read "(kg)" as the type's params: decimal(5,2)
+        // became precision 0, and the label lost its suffix (1.50.1).
+        $label = '';
+        $fieldStr = (string) preg_replace_callback(
+            '/:(?:surname|label)=([^:]*)/',
+            function (array $m) use (&$label): string {
+                $label = $m[1];
+
+                return '';
+            },
+            $fieldStr
+        );
+
         // Extracts parameters within parentheses before exploding by ':'
         $params = null;
         $fieldStr = preg_replace_callback(
@@ -128,15 +143,10 @@ class SchemaInspector
         $unique = in_array('unique', $segments, true);
         $index = in_array('index', $segments, true);
 
-        // Detects surname=, label= and default= modifiers in segments.
-        // No break — scan all segments to collect every modifier.
-        $label = '';
+        // Detects the default= modifier in segments (surname=/label= were
+        // taken out above). No break — scan all segments.
         foreach ($segments as $segment) {
-            if (str_starts_with($segment, 'surname=')) {
-                $label = substr($segment, 8);
-            } elseif (str_starts_with($segment, 'label=')) {
-                $label = substr($segment, 6);
-            } elseif (! $hasDefault && str_starts_with($segment, 'default=')) {
+            if (! $hasDefault && str_starts_with($segment, 'default=')) {
                 // Alternative syntax without parens: :default=true  :default=0
                 $hasDefault = true;
                 $defaultValue = substr($segment, 8);
@@ -288,7 +298,7 @@ class SchemaInspector
             'uint', 'uint4' => 'unsignedInteger',
             'ubigint', 'ubigint8' => 'unsignedBigInteger',
             'bool' => 'boolean',
-            'float', 'double' => 'float',
+            'float' => 'float',
             'datetime' => 'datetime',
             'timestamp' => 'timestamp',
             'longtext' => 'longText',

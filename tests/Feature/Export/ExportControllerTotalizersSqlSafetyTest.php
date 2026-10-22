@@ -129,4 +129,21 @@ class ExportControllerTotalizersSqlSafetyTest extends TestCase
         $this->assertSame('amount', $result[0]['field']);
         $this->assertEquals(15, $result[0]['value']);
     }
+
+    /** 1.50.1: the PDF also required ui.showTotalizador, a key nothing wrote. */
+    #[Test]
+    public function configured_totals_print_without_the_old_ui_switch(): void
+    {
+        CrudConfig::create(['model' => 'TotalizerStub', 'route' => '', 'config' => [
+            'crud' => TotalizerStub::class,
+            'totalizadores' => ['enabled' => true, 'columns' => [['field' => 'amount', 'aggregate' => 'sum']]],
+            'permissions' => [],
+        ]]);
+        TotalizerStub::create(['name' => 'A', 'amount' => 4]);
+
+        $result = $this->callGetTotalizers();
+
+        $this->assertCount(1, $result);
+        $this->assertEquals(4, $result[0]['value']);
+    }
 }

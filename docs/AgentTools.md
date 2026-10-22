@@ -18,7 +18,8 @@ window, and says what is still left to do instead of leaving it to be noticed.
 | reading the CHANGELOG to guess what an update needs here | `ptah:upgrade-check` | one line per action |
 
 All of them are read-only unless the name says otherwise (`field`, `blueprint`,
-`check --write`), and every one that reports takes `--json`.
+`check --write`) or the option does (`map --write` saves `.ptah/map.md`), and every
+one that reports takes `--json`.
 
 **With Laravel Boost installed**, the read-only ones are also MCP tools in
 Boost's server — see [MCP tools](#mcp-tools-in-laravel-boost).

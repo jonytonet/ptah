@@ -273,11 +273,9 @@ class ExportController
                 return [];
             }
 
-            // Verificar se está visível na UI (opcional - sempre mostrar no PDF se configurado)
-            $uiConfig = $config['ui'] ?? [];
-            if (! ($uiConfig['showTotalizador'] ?? false)) {
-                return [];
-            }
+            // 1.50.1: it also required `ui.showTotalizador` — a key nothing writes
+            // (the editor wrote `uiPreferences.showTotalizador`), so the PDF never
+            // carried totals. Configured totals now print, as the listing shows them.
 
             // Column-level READ gate (see class docblock above): drop any
             // totalizer whose field is denied to $userId, mirroring

@@ -483,6 +483,9 @@ return [
         // Prefix of the auth routes (/login, /logout…) — e.g. 'erp' → /erp/login,
         // for a host whose storefront already owns /login.
         'route_prefix' => env('PTAH_AUTH_ROUTE_PREFIX', ''),
+        // Middleware of the auth routes (/login, /logout…). Read by
+        // routes/ptah-auth.php; listed here since 1.50.1 (it had only a fallback).
+        'middleware' => ['web'],
         // Where a guest goes when the route requires a guard OTHER than
         // `guard` above (a customer portal, say): a route name or a URL, or a
         // map ['portal' => 'portal.login']. Null leaves it to Laravel (the

@@ -263,7 +263,10 @@ class TwoFactorService
             return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($url));
         }
 
-        // Fallback: Google Charts API
-        return 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl='.urlencode($url);
+        // 1.50.1: no QR without bacon/bacon-qr-code. The fallback sent the
+        // otpauth URL — which CONTAINS the TOTP secret — to chart.googleapis.com
+        // (a third party, and a retired API). The setup screen shows the key for
+        // manual entry instead, which every authenticator app supports.
+        return '';
     }
 }

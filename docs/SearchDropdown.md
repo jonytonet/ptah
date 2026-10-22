@@ -54,7 +54,7 @@ The `ptah-search-dropdown` component is an independent Livewire component that c
 | `label` | `string` | `'name'` | Column displayed as the main label. In model-mode, accepts dot-notation for a relation column (e.g. `user.name`, or nested `a.b.name`) — see [note below](#via-direct-model) |
 | `labelTwo` | `string\|null` | `null` | Column displayed as the second label. Same dot-notation support as `label` |
 | `labelThree` | `string\|null` | `null` | Column displayed as the third label. Same dot-notation support as `label` |
-| `arraySearch` | `array` | `[]` | Extra columns included in the LIKE besides the labels |
+| `arraySearch` | `array` | `[]` | Extra columns included in the LIKE besides `label`/`labelTwo`/`labelThree`/`value` (which are always searched) |
 
 #### Data and filters
 
@@ -103,12 +103,14 @@ When the user selects an item, the component dispatches:
 ```php
 $this->dispatch($this->listens, [
     'useService' => $this->useService,   // string|null
-    'value'      => $item[$this->value], // valor da coluna $value (normalmente o id)
-    'label'      => $item[$this->label], // valor da coluna $label
-    'searchTerm' => $this->searchTerm,   // texto exibido no input após seleção
+    'value'      => $value,              // valor da coluna $value (normalmente o id)
+    'label'      => $label,              // label principal do item (sem máscara; aceita dot-notation)
+    'searchTerm' => $value . ' - ' . $label, // texto exibido no input após seleção
     'coringa'    => $this->coringa,      // valor extra configurado no componente
 ]);
 ```
+
+Clearing the selection dispatches the same event with `value`, `label` and `searchTerm` all `''`.
 
 To capture in the parent component:
 
@@ -135,7 +137,7 @@ window.addEventListener('onProductSelected', (event) => {
 
 ### Via direct model
 
-The default mode. The component queries `App\Models\{model}` with `LOWER(label) LIKE ?`:
+The default mode. The component queries `App\Models\{model}`, splitting the typed term into words and applying `LIKE %word%` on `label`, `labelTwo`, `labelThree`, `value` and every `arraySearch` column: all words must appear in the same column, and any column may satisfy the match:
 
 ```blade
 @livewire('ptah-search-dropdown', [
@@ -523,19 +525,20 @@ recursively.
 
 #### Filter keys (side panel)
 
-To use SD as a filter, define in the `customFilters` of CrudConfig:
+To use SD as a filter, mark the `searchdropdown` column itself as filterable — the panel reads that column's own SearchDropdown keys (`colsSDModel`, `colsSDLabel`, `colsSDValor`, ...):
 
 ```json
-"customFilters": [
-  {
-    "field": "supplier_id",
-    "colsFilterType": "searchdropdown",
-    "colsSDModel": "Supplier",
-    "colsSDLabel": "trade_name",
-    "colsSDValor": "id"
-  }
-]
+{
+  "colsNomeFisico": "supplier_id",
+  "colsTipo": "searchdropdown",
+  "colsIsFilterable": true,
+  "colsSDModel": "Supplier",
+  "colsSDLabel": "trade_name",
+  "colsSDValor": "id"
+}
 ```
+
+> A `customFilters` entry with `colsFilterType: searchdropdown` is rendered as a plain text filter (since 1.41.5); it does not open a dropdown.
 
 ---
 
@@ -580,7 +583,7 @@ In model-mode, `colsSDLabel` may point to a column on a related model instead of
 Here `colsSDModel` is queried as usual, but the label comes from the `supplier` relation's `trade_name` column:
 
 - **Label** is read with `data_get($item, 'supplier.trade_name')` — works for any relation depth (`a.b.name`).
-- **Search** is applied via `whereHas('supplier', fn ($q) => $q->whereRaw('LOWER(trade_name) LIKE ?', [...]))` — the same case-insensitive `LOWER(column) LIKE ?` filter used on the plain-column path, just scoped inside the relation instead of applied directly on `colsSDModel`.
+- **Search** is applied via `orWhereHas('supplier', fn ($q) => $q->whereRaw('LOWER(trade_name) LIKE ?', [...]))` (OR-ed with the `colsSDArraySearch` columns) — the same case-insensitive `LOWER(column) LIKE ?` filter used on the plain-column path, just scoped inside the relation instead of applied directly on `colsSDModel`.
 - **Eager loading** (`with('supplier')`) is applied automatically to avoid N+1 queries on the result set.
 
 > **Ordering caveat:** `colsSDOrder` does **not** order by a relation column — the query has no JOIN, so ordering by `supplier.trade_name` would fail. When the configured (or default `"{label} ASC"`) order column contains a dot, Ptah silently falls back to ordering by `colsSDValor` (default `id`). If you need to order by a related column, use [service-mode](#via-custom-service-basecrud) instead, where you control the query (JOIN, `orderBy`, etc.) directly in your Repository/Service.
@@ -680,7 +683,7 @@ class BranchService implements \Ptah\Contracts\SearchDropdownSource, \Ptah\Contr
 
 > **Editor shortcut:** the visual CrudConfig editor's "sd" tab lets you fill
 > `colsSDService` (e.g. `Product\ProductService`) and `colsSDServiceMethod`
-> (e.g. `searchActive`) as two separate fields instead of composing the
+> (the key the service receives, e.g. `active`) as two separate fields instead of composing the
 > `Namespace\Class\method` string by hand — `sdSettings()` composes it for you
 > at read time (and `CrudConfig::formatFieldsForDb()` also composes it into
 > `colsSDModel` when saving from the editor). Either form works; service-mode
@@ -692,11 +695,11 @@ class BranchService implements \Ptah\Contracts\SearchDropdownSource, \Ptah\Contr
 
 ### Filter in the side panel
 
-When `colsFilterType: searchdropdown` is configured, the filter field uses the same mechanism:
+When a `searchdropdown` column is filterable (`colsIsFilterable: true`), its filter field uses the same mechanism:
 
 - **Input focus** → `openFilterDropdown($field)` → loads the first N items
 - **Typing** → `filterSearchDropdown($field, $query)` → filters in real time
-- **Selection** → `selectFilterDropdownOption($field, $value, $label)` → stores in `$filters[$field]` with operator `=`
+- **Selection** → `selectFilterDropdownOption($field, $value, $label)` → stores in `$filters[$field]`; the operator defaults to `=` unless one was already chosen (the panel offers `=`, `!=`, `IS NULL`, `IS NOT NULL`)
 - **Clear** → `clearFilterDropdownSelection($field)` → removes from `$filters` and resets pagination
 
 ---
@@ -736,7 +739,7 @@ Typing
 Item selection
   → selectFilterDropdownOption($field, $value, $label)
   → filters[$field]              = value   ← activates the filter in the query
-  → filterOperators[$field]      = '='
+  → filterOperators[$field]      = '='   ← only when no operator was set yet
   → sdFilterLabels[$field]       = label
   → sdResults['filter_' . $field] = []
 
@@ -763,7 +766,7 @@ Properties maintained in the BaseCrud component by the `HasCrudSearchDropdown` t
 
 ## Service return contract
 
-The service can return an `array` **or** an `Illuminate\Support\Collection` — the component normalises automatically:
+In the standalone component the service can return an `array` **or** an `Illuminate\Support\Collection` — the component normalises automatically (in BaseCrud service mode, `SearchDropdownSource::searchDropdown()` returns an `array`):
 
 ```php
 // Return as array (always accepted)
@@ -876,7 +879,7 @@ Abbreviated example of how to use it in Blade after configuring Interface + Repo
   "colsNomeLogico": "Product",
   "colsTipo":       "searchdropdown",
   "colsGravar":     true,
-  "colsSDModel":    "Inventory\\ProductService\\searchAvailable",
+  "colsSDModel":    "Inventory\\ProductService\\available",
   "colsSDTipo":     "service",
   "colsRelacao":    "product",
   "colsRelacaoExibe": "name"
@@ -885,15 +888,19 @@ Abbreviated example of how to use it in Blade after configuring Interface + Repo
 
 ```php
 // App\Services\Inventory\ProductService
-public function searchAvailable(string $query): array
+class ProductService implements \Ptah\Contracts\SearchDropdownSource
 {
-    return Product::available()
-        ->where('company_id', session('company_id'))
-        ->when($query, fn($q) => $q->where('name', 'LIKE', "%{$query}%"))
-        ->limit(15)
-        ->get()
-        ->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
-        ->toArray();
+    // $key is the last segment of colsSDModel ('available')
+    public function searchDropdown(string $query, string $key): array
+    {
+        return Product::available()
+            ->where('company_id', session('company_id'))
+            ->when($query, fn($q) => $q->where('name', 'LIKE', "%{$query}%"))
+            ->limit(15)
+            ->get()
+            ->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
+            ->toArray();
+    }
 }
 ```
 
@@ -902,18 +909,17 @@ public function searchAvailable(string $query): array
 ### 5. BaseCrud — filter in the side panel via service
 
 ```json
-"customFilters": [
-  {
-    "field":           "supplier_id",
-    "colsNomeLogico":  "Supplier",
-    "colsFilterType":  "searchdropdown",
-    "colsSDModel":     "Supplier\\SupplierService\\searchActive",
-    "colsSDTipo":      "service",
-    "colsSDLabel":     "trade_name",
-    "colsSDValor":     "id"
-  }
-]
+{
+  "colsNomeFisico":   "supplier_id",
+  "colsNomeLogico":   "Supplier",
+  "colsTipo":         "searchdropdown",
+  "colsIsFilterable": true,
+  "colsSDModel":      "Supplier\\SupplierService\\active",
+  "colsSDTipo":       "service"
+}
 ```
+
+`App\Services\Supplier\SupplierService` must implement `Ptah\Contracts\SearchDropdownSource` (it receives the key `active`).
 
 ---
 

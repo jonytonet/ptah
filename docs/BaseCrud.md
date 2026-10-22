@@ -1674,7 +1674,7 @@ The payload carries the screen's `joins`, and `ExportController` /
 - Styled table with alternating row colours
 - Header with model name and export date
 - Long text truncated at 100 characters
-- **Totalisers (automatic)** — if configured in CrudConfig and visible (`showTotalizador: true`)
+- **Totalisers (automatic)** — whenever `totalizadores` is configured (as in the listing footer)
 - Translated strings via `__('ptah::ui.*')` for multilingual support
 
 ### PDF Totalisers
@@ -1683,9 +1683,6 @@ If you have totalisers configured in your CrudConfig, they will be automatically
 
 ```json
 {
-  "ui": {
-    "showTotalizador": true
-  },
   "totalizadores": {
     "enabled": true,
     "columns": [
@@ -1713,7 +1710,7 @@ If you have totalisers configured in your CrudConfig, they will be automatically
 
 Totalisers appear in a dedicated section in the PDF footer, with formatted values (numbers with thousand and decimal separators).
 
-> **Note:** Totalisers only appear in the PDF if `ui.showTotalizador` is `true`. Excel does not currently include totalisers (tabular data only).
+> **Note:** Before 1.50.1 the PDF also required `ui.showTotalizador: true` — a key nothing wrote — so totals never printed; that switch is gone. Excel does not currently include totalisers (tabular data only).
 
 ### Blade Template
 
