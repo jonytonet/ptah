@@ -403,6 +403,7 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 | **[AI Agent module](docs/AiAgent.md)** | The optional in-app AI chat widget module — providers, tools, rate limits and token budget |
 | **[Known Limitations](docs/KnownLimitations.md)** | Developer checklist — decimal precision, FK constraints, composite indexes, post-forge responsibilities |
 | **[Testing](docs/Testing.md)** | How to run the standard suite and the browser (Dusk) suite — setup, gotchas, coverage (pt-BR) |
+| **[Roadmap](docs/Roadmap.md)** | The road to 2.0 (stable public API) and the plugin ecosystem planned after it |
 
 ---
 
