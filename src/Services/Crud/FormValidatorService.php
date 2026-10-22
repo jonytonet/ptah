@@ -14,13 +14,15 @@ use Ptah\Support\SqlIdentifier;
 /**
  * Rich validation service for BaseCrud form fields.
  *
- * Supports rules configured per column in `colsValidations`:
- *   required, email, url, integer, numeric, alpha, alphaNum,
+ * Supports rules configured per column in `colsValidations` (a `required`
+ * there is a no-op — required is `colsRequired`; min/max compare numbers,
+ * minLength/maxLength the length):
+ *   email, url, integer, numeric, alpha, alphaNum,
  *   min:X, max:X, between:X,Y, minLength:X, maxLength:X,
  *   digits:N, digitsBetween:N,M, regex:pattern,
  *   in:a,b,c, notIn:a,b,c,
  *   after:YYYY-MM-DD|today, before:YYYY-MM-DD|today,
- *   confirmed:fieldName, unique:Model,field,
+ *   confirmed:fieldName, unique:Model|table,field (table names since 1.50.0),
  *   dateFormat:d/m/Y,
  *   cpf, cnpj, phone, ncm
  */

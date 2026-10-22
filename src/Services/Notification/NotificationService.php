@@ -371,11 +371,15 @@ class NotificationService
      * Unread notifications are never pruned by this method, regardless of
      * age. Portable, chunked delete-by-id — same idiom as AuditPruneCommand.
      */
-    public function purgeRead(int $days = 30, int $chunk = 1000, bool $dryRun = false): int
+    public function purgeRead(?int $days = null, int $chunk = 1000, bool $dryRun = false): int
     {
         if (! $this->tableExists()) {
             return 0;
         }
+
+        // 1.50.1: the default comes from ptah.notifications.retention_days,
+        // which was in the config and read by nothing (the 30 was hard-coded).
+        $days ??= (int) config('ptah.notifications.retention_days', 30);
 
         $cutoff = now()->subDays(max(0, $days));
         $query = fn () => Notification::query()->whereNotNull('read_at')->where('read_at', '<', $cutoff);

@@ -17,7 +17,7 @@
 4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
 5. [`ptah:config` CLI — Column Types and Renderers](#5-ptahconfig-cli--column-types-and-renderers)
 6. [Theming — Partial Coverage (1.26.0)](#6-theming--partial-coverage-1260)
-7. [Post-Forge Checklist](#post-forge-checklist)
+7. [Summary: What ptah does vs. what the developer does](#summary-what-ptah-does-vs-what-the-developer-does)
 
 ---
 
@@ -77,7 +77,7 @@ $table->decimal('temperature',        4, 1);  // not (10,2)
 ptah generates **single-column indexes** for:
 - `->unique()` — when `:unique` modifier is passed
 - `->index()` — automatically added for `unsignedBigInteger`/`bigInteger` fields
-  ending in `_id` (FK-like columns)
+  ending in `_id` (FK-like columns), and when the `:index` modifier is passed
 
 ptah **never generates composite indexes**. It cannot know which query patterns
 the application will use.
@@ -115,13 +115,19 @@ $table->index(
 When a field ends in `_id` with type `unsignedBigInteger`, `bigInteger`, or
 `foreignId`, ptah generates a `belongsTo` relationship method in the Model.
 However, because the related model may be in a different subfolder/module,
-ptah **cannot determine the correct namespace automatically**.
+ptah looks for it under `ptah.paths.models` and only resolves the unambiguous
+case: exactly one class with that name → the `use` is written for you (none is
+needed when it sits in the model's own namespace; `company_id` points to
+`Ptah\Models\Company`).
 
-Instead, it generates a `// TODO:` comment:
+When there is none yet, or more than one, it generates a `// TODO:` comment
+that says why:
 
 ```php
-// Generated model:
-// TODO: use App\Models\ServiceCategory;
+// Generated model (ServiceCategory not generated yet):
+// TODO: use App\Models\ServiceCategory; // ServiceCategory does not exist in app/Models yet — generate it, or adjust the namespace
+// More than one class of that name:
+// TODO: use ??\ServiceCategory; // more than one ServiceCategory class: App\Models\A\ServiceCategory, App\Models\B\ServiceCategory — pick the right one
 public function serviceCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
 {
     return $this->belongsTo(ServiceCategory::class, 'service_category_id');
@@ -130,8 +136,8 @@ public function serviceCategory(): \Illuminate\Database\Eloquent\Relations\Belon
 
 ### Developer responsibility
 
-After `ptah:forge`, **replace every `// TODO:` comment** with the correct `use`
-import matching the actual location of the related model:
+After `ptah:forge`, **replace every remaining `// TODO:` comment** with the
+correct `use` import matching the actual location of the related model:
 
 ```php
 // Before (generated):
@@ -158,7 +164,7 @@ ptah offers two FK types with different behaviour:
 
 | Type | Migration output | When to use |
 |---|---|---|
-| `foreignId` | `->constrained('{inferred_table}')->cascadeOnDelete()` | Field name exactly matches `{singular_of_table}_id` |
+| `foreignId` | `->constrained('{inferred_table}')->cascadeOnDelete()` (with `:nullable`: `->nullable()->constrained(...)->nullOnDelete()`) | Field name exactly matches `{singular_of_table}_id` |
 | `unsignedBigInteger` | `->index()` only — **no FK constraint** | Any other case |
 
 The `foreignId` type derives the target table from the field name:
@@ -222,7 +228,8 @@ php artisan ptah:config "App\Models\Product" \
 ```
 
 **Valid `colsTipo` values:** `text`, `textarea`, `number`, `date`, `datetime`,
-`select`, `searchdropdown`, `boolean`, `file`, `image`
+`select`, `searchdropdown`, `boolean`, `file`, `image`, `color`, `time`,
+`datetime-local`, `range`, `email`, `url`, `tel`, `password`
 
 **Valid `renderer` values (all 18 supported via CLI):** `text`, `badge`, `pill`,
 `boolean`, `money`, `date`, `datetime`, `link`, `image`, `truncate`, `number`,
@@ -268,14 +275,12 @@ a private key in the config and read it from a hook, so nothing was taken away
 real config key out in full (`colsMinWidth=120px`, `totalizadorLabel=Total`) is
 a deliberate escape hatch and is never reported.
 
-**Known gap — the interactive wizard.** `ptah:config` without
-`--non-interactive` asks questions whose answers reach keys nothing reads,
-including the whole relationship block (it writes `colsRelationTable` /
-`colsRelationJoinColumn` / `colsRelationDisplayColumn`, while the runtime reads
-`colsRelacao` / `colsRelacaoExibe`), the default value, and several renderer
-options. `--column=` is unaffected. The list is frozen and enumerated in
-`tests/Unit/Commands/Config/WizardKeyReachabilityTest.php`, which stops it from
-growing; use `--column=` for those settings until it is closed.
+**The interactive wizard (closed in 1.50.1).** Until 1.50.0 `ptah:config`
+without `--non-interactive` wrote several keys nothing read — the relationship
+block (`colsRelationTable` / `colsRelationJoinColumn` /
+`colsRelationDisplayColumn`), `colsValidation` (singular), the link target and
+the number prefix/suffix. It now writes only keys the runtime reads, and
+`WizardKeyReachabilityTest` keeps its exemption list empty.
 
 ---
 
@@ -358,16 +363,17 @@ php artisan ptah:config "App\Models\Product" --style="status:==:inactive:backgro
 ### Spreadsheet import is synchronous
 
 `importConfig` imports in the request, capped by `maxRows` (default 2000) and
-`maxKb`. There is no queued import for very large files yet, and image columns
+`maxKb` (default 10240). There is no queued import for very large files yet, and image columns
 are not importable.
 
 ### Settings the screen does not apply
 
-`cacheStrategy` (the editor's cache toggle and TTL) and
-`uiPreferences.stickyHeader` / `highlightOnHover` / `showTotalizador` are
-stored but no BaseCrud code reads them. Until they are wired, setting them
-changes nothing; `ptah:config --set` refuses the flat cache/pagination names
-for that reason.
+`cacheStrategy` (the editor's cache toggle and TTL) only governs the cache
+of the screen-config lookup (`CrudConfigService`) — there is no cache of the
+listing's DATA. `ptah:config --set` refuses the flat cache/pagination names for
+that reason. (`uiPreferences.stickyHeader` and `highlightOnHover` are applied
+since 1.50.1; `showTotalizador` was removed — configured totals always show,
+in the listing and in the PDF.)
 
 Since 1.41.2, `ConfigKeyReachabilityTest` fails when a writer (a wizard, a
 CLI parser, the visual editor or `ptah:forge`'s config generator) stores a
@@ -499,6 +505,11 @@ The 45 files' ceilings were raised in the same commit to match their
 already-existing chromatic counts, per the ratchet's own contract: freeze
 what exists, never let it grow, never pretend to shrink debt nobody fixed.
 
+Re-measured on 2026-10-22 (1.50.1) with the same normalisation: **908
+`bg-*`/`text-*` occurrences across 40 Blade files** (739 neutral). The guard has
+since also counted `border-*` palette utilities (206 more), so the fixture
+totals 1114 across 42 files. The itemised breakdown below was not re-measured.
+
 Measured after the scope correction, normalised to exclude Blade/HTML
 comments and `<style>` blocks: **1010 occurrences across 45 Blade files**
 (818 of those neutral, unchanged from right after the permission-guide
@@ -517,10 +528,10 @@ fixture; the wave before it started this document's tracking at 1416 across
   Correct as-is: `--ptah-text-on-accent` is #ffffff in every preset, so
   converting them would not change a pixel. These will never reach zero, and
   that is the intended end state.
-- **`forge-alert` dark backgrounds** (4 sites). `AlertContrastTest` proves
-  WCAG AA by compositing the literal #1e293b at 60% over #0f172a; tokenising
-  the background invalidates that proof and requires re-deriving it across the
-  3 dark tone presets. Deferred deliberately, not overlooked.
+- **`forge-alert` dark backgrounds** — tokenised in 1.46.5 (`.ptah-dark
+  .ptah-alert*` now paint from the neutral tokens). `AlertContrastTest` still
+  proves WCAG AA by compositing the literal #1e293b at 60% over #0f172a — one
+  fixed pair, not the 3 dark tone presets.
 - **The dashboard layout inline `<style>` block** is down to **20 color
   literals across 28 rules** (from 36/39 at the start of the wave;
   `LayoutStyleBaselineTest` caps it and it only ever shrinks). Every rule left
@@ -576,7 +587,7 @@ a 1.00:1 chart title and a 1.9:1 switch track ship with a green suite.
 | Single-column `_id` index | ✅ auto-added | — |
 | Composite indexes | ❌ not generated | always manual |
 | Index name length (MySQL) | ❌ not enforced | keep names < 60 chars |
-| `belongsTo` relationships | ✅ generated with TODO | fix `use` namespace |
+| `belongsTo` relationships | ✅ generated; `use` resolved when the related model is unambiguous | fix the remaining `// TODO: use` lines |
 | Acronym table names (POS, NF…) | ✅ fixed — `POSSale` → `pos_sales` | — |
 | `--no-soft-deletes` on existing migration | ✅ fixed — use `--force` to auto-strip | remove `use SoftDeletes` from Model manually |
 | `created_at` auto-added to CrudConfig | ✅ fixed — not added anymore | add via config modal when needed |

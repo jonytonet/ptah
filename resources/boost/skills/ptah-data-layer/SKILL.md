@@ -73,7 +73,10 @@ class ProductService extends BaseService
 $this->app->bind(ProductRepositoryContract::class, ProductRepository::class);
 ```
 
-`ptah:forge` generates this repository/service/contract wiring for you — this
+`ptah:forge` generates this wiring for you — the repository, its interface
+(`App\Repositories\Contracts\{Entity}RepositoryInterface`, named `…Interface`
+and not `…Contract` as above), the service injecting that interface, and the
+binding in `AppServiceProvider`. It generates no service contract. This
 reference is for extending or reviewing it.
 
 ## BaseRepository — method reference
@@ -86,12 +89,12 @@ reference is for extending or reviewing it.
 | `create(array $data): Model` | Insert (fires events) |
 | `update($id, array $data): Model` | Update by id |
 | `delete($id): bool` | Delete by id |
-| `findBy($column, $value, ...): Builder` | Where clause, **not** a result — termine com `->first()`, `->get()` ou `->exists()` |
+| `findBy(string\|array\|Closure $reference, mixed $value = null, string $operator = '='): Builder` | Where clause, **not** a result — termine com `->first()`, `->get()` ou `->exists()` |
 | `findByBuilder(Builder $query, string $column, string $operator = '=', mixed $value = null): Builder` | Adiciona um where a um Builder existente (ex.: vindo de `useIndex()`) |
 | `findByIn(string $column, array $values, array $with = [])` | `whereIn` + eager load |
-| `updateBatch(array $ids, array $data): int` | Mass update by ids |
+| `updateBatch(array $ids, array $data): int` | Mass update by ids — one query, no model events (⚠️ skips HasAuditFields) |
 | `updateQuietly(array $data, $id)` / `createQuietly(array $data)` | No model events (⚠️ skips HasAuditFields) |
-| `replicate(): Model` | Duplicate a record |
+| `replicate(): Model` | Unsaved replica of the FIRST record of the table (`firstOrFail()->replicate()`), not of a chosen id |
 | `truncate(): void` | ⚠️ empties the table — destructive, never as part of a normal flow |
 | `useIndex(string $indexName): Builder` | Force an index (query-plan control) |
 | `autocompleteSearch(Request, array $select, array $conditions): Builder` | Typeahead |

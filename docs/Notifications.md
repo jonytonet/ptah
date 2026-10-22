@@ -129,10 +129,10 @@ personal:
 |---|---|
 | `user_id` | no FK, matching the rest of the package |
 | `company_id` | nullable — `null` means "all companies" |
-| `type` | `info` \| `success` \| `warning` \| `danger` — colour only |
+| `type` | `info` \| `success` \| `warning` \| `danger` — stored; the bell does not render it yet |
 | `category` | free grouping key for your app (`'vaccine'`, `'billing'`, …) |
 | `title`, `body` | `body` is optional |
-| `icon` | an icon class, e.g. `bx bx-bath` |
+| `icon` | an icon class, e.g. `bx bx-bath` — stored; the bell does not render it yet |
 | `url` | deep link for "view details" |
 | `action_label` | button label; defaults to the translated "View details" |
 | `dedupe_key` | see [Deduplication](#deduplication) |
@@ -244,7 +244,8 @@ package:
 - `company_id = 7` → visible only while the user is working in company 7.
 
 Reads filter with `company_id IS NULL OR company_id = <active>`, the same
-semantics as role bindings.
+semantics as role bindings. With no active company (no session value, or
+`PTAH_MULTI_COMPANY=false`) only the `company_id IS NULL` rows are read.
 
 ---
 
@@ -293,8 +294,8 @@ nothing is queued.
 
 ### Placeholders and the allowlist
 
-`title`, `body` and `url` may reference `%column%`. Only **savable** columns
-that carry **no** `colsPermission` restriction are resolved — a placeholder
+`title`, `body` and `url` may reference `%column%`. Only columns present in the
+screen's `cols` that carry **no** `colsPermission` restriction are resolved — a placeholder
 outside that allowlist resolves to an empty string, never to the raw value.
 The model's primary key is added to the allowlist automatically (so
 `/orders/%id%` works even when `id` is not itself a configured column) —
@@ -369,7 +370,7 @@ QUEUE_CONNECTION=sync
 ],
 ```
 
-Option B is read by `SendCrudNotificationJob`; leave it `null` (the default)
+Option B is read by `CrudNotificationDispatcher`, which applies it when dispatching `SendCrudNotificationJob`; leave it `null` (the default)
 to use the application's own queue connection.
 
 ### Actor exclusion
@@ -404,8 +405,9 @@ request.
 Alias `ptah-notification-bell`, registered only when the module is enabled.
 
 - Unread **count badge**, hidden entirely at zero.
-- Dropdown with the active notifications: colour and icon by `type`, title,
-  body, relative time.
+- Dropdown with the active (non-dismissed) notifications: title, body, relative
+  time and the action label, plus a per-row "Dismiss" button. `type` and `icon`
+  are not rendered by the bell.
 - Clicking an item marks it read and navigates to its `url`. Items are real
   `<a href>` elements, so copy-link and open-in-new-tab work; the primary
   click goes through the server. An item **without** a `url` is not clickable.
@@ -431,6 +433,8 @@ PTAH_NOTIFICATIONS_POLL=300s  # calmer
 PTAH_NOTIFICATIONS_POLL=none  # no polling; the badge updates on navigation
 ```
 
+A value that is not `none` nor `<digits>s`/`<digits>ms` also turns polling off.
+
 ---
 
 ## Service reference
@@ -440,10 +444,10 @@ as `app(NotificationService::class)`).
 
 ```php
 push(int $userId, array $data): ?Notification          // idempotent by dedupe_key
-pushMany(iterable $userIds, array $data): int
+pushMany(iterable $userIds, array $data, ?int $exceptUserId = null): int
 toUser(int $userId, array $data): int
-toRole(string $roleName, array $data, ?int $companyId = null): int
-toAll(array $data, ?int $companyId = null, bool $onlyStaff = true): int
+toRole(string $roleName, array $data, ?int $companyId = null, ?int $exceptUserId = null): int
+toAll(array $data, ?int $companyId = null, bool $onlyStaff = true, ?int $exceptUserId = null): int
 unreadCount(?int $userId = null, ?int $companyId = null): int
 list(?int $userId = null, ?int $companyId = null, int $limit = 20): Collection
 paginate(?int $userId, ?int $companyId, array $filters, int $perPage = 20): LengthAwarePaginator
@@ -474,8 +478,9 @@ notifications from them.
   redirect, so `javascript:`, `data:` and `vbscript:` schemes are stripped at
   **render and redirect time** — which also neutralizes rows a careless
   generator already wrote.
-- `title`, `body` and `icon` are always escaped; `type` maps through an
-  allowlist, so it can only pick a colour, never inject a class.
+- `title`, `body` and `action_label` are always escaped (Blade `{{ }}`);
+  `type` and `icon` are not rendered by the bell, so neither can inject
+  markup there.
 
 ---
 
@@ -560,7 +565,7 @@ database notification and the poll are unaffected either way.
     'enabled' => env('PTAH_MODULE_NOTIFICATIONS', false),
     'poll' => env('PTAH_NOTIFICATIONS_POLL', '60s'),       // or 'none'
     'dropdown_limit' => 20,
-    'retention_days' => 30,
+    'retention_days' => 30,                                // not read by anything yet
     'broadcast' => env('PTAH_NOTIFICATIONS_BROADCAST', false), // see Realtime (optional)
     'queue_connection' => env('PTAH_NOTIFICATIONS_QUEUE_CONNECTION'), // null = app default
 ],

@@ -39,6 +39,20 @@ class CrudConfigService
      */
     public function find(string $model, string $route = ''): ?CrudConfig
     {
+        // 1.50.1: the cache is read FIRST. It used to query by model/route and
+        // only then ask the cache for the id it had just found, and query
+        // again by that id — two queries on every screen, the cache saving
+        // nothing. A hit is one query by primary key; a row deleted since, or
+        // one that no longer matches, falls through to the lookup below.
+        $cachedId = $this->cache->peekConfig($model, $route);
+        if ($cachedId !== null) {
+            $hit = CrudConfig::find($cachedId);
+            if ($hit && $hit->model === $model && (string) $hit->route === $route) {
+                return $hit;
+            }
+            $this->cache->forgetConfig($model, $route);
+        }
+
         // Try screen-specific first, then fall back to global
         $config = CrudConfig::where('model', $model)
             ->where('route', $route)
@@ -71,12 +85,10 @@ class CrudConfigService
             return $config;
         }
 
-        $ttl = $this->ttlFor($config);
         $id = $config->id;
+        $this->cache->rememberConfig($model, $route, fn () => $id, $this->ttlFor($config));
 
-        $cachedId = $this->cache->rememberConfig($model, $route, fn () => $id, $ttl);
-
-        return CrudConfig::find($cachedId);
+        return $config;
     }
 
     /**

@@ -59,6 +59,26 @@ class CacheService
         return Cache::remember($key, $ttl, $callback);
     }
 
+    /**
+     * The cached config id for exactly this model + route, or null — a read
+     * that does not populate (1.50.1, see CrudConfigService::find()).
+     */
+    public function peekConfig(string $model, string $route = ''): mixed
+    {
+        $key = $this->configKey($model, $route);
+
+        if ($this->supportsTagging()) {
+            $tags = [self::TAG_CONFIG, "ptah_model_{$model}"];
+            if ($route !== '') {
+                $tags[] = "ptah_route_{$route}";
+            }
+
+            return Cache::tags($tags)->get($key);
+        }
+
+        return Cache::get($key);
+    }
+
     public function forgetConfig(string $model, string $route = ''): void
     {
         $key = $this->configKey($model, $route);

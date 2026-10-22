@@ -146,14 +146,14 @@ final class CliReference
     {
         return [
             'flag' => '--join',
-            'format' => 'type:table:first=second[:key=value...]',
+            'format' => 'type:table:first=second[:distinct][:select=...]',
             'types' => CrudConfigEnums::JOIN_TYPES,
             'options' => [
-                'select' => 'col,col or `col as alias`',
-                'where' => 'table.col=value',
-                'distinct' => 'true|false',
+                'select' => 'col:alias,col2:alias2 or `col as alias`',
+                'distinct' => 'bare `distinct`, or distinct=true|false',
             ],
-            'example' => 'left:suppliers:products.supplier_id=suppliers.id:select=name',
+            // 1.50.1: there is no `where=` — the parser refuses it (1.50.0).
+            'example' => 'left:suppliers:products.supplier_id=suppliers.id:select=suppliers.name:supplier_name',
         ];
     }
 

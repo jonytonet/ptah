@@ -619,6 +619,9 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
     top: 0;
     z-index: 1;
 }
+/* uiPreferences.stickyHeader = false (1.50.1): `top: auto` drops the vertical
+   stickiness only — the action column header keeps its horizontal right:0. */
+.ptah-cols-table.ptah-no-sticky-head thead th { top: auto; }
 
 /* Row hover highlight. #1e40af/#1d4ed8 kept LITERAL on purpose (byte-identical
    relocation, not tokenized): they are not --ptah-* neutrals, and they already
@@ -806,6 +809,11 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-tr:hover           { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-tr      { background-color: transparent; border-bottom: 1px solid color-mix(in srgb, var(--ptah-line) 40%, transparent); }
 .ptah-dark .ptah-c-tr:hover { background-color: color-mix(in srgb, var(--ptah-surface-hover) 30%, transparent); }
+/* uiPreferences.highlightOnHover = false (1.50.1): the row keeps its resting
+   background and gets no brand edge. */
+.ptah-no-row-hover .ptah-c-tr:hover { background-color: var(--ptah-surface); }
+.ptah-dark .ptah-no-row-hover .ptah-c-tr:hover { background-color: transparent; }
+.ptah-base-crud .ptah-no-row-hover tbody tr.ptah-c-tr:hover { box-shadow: none; }
 
 /* Selected row (bulk checkbox checked): soft brand bg + 2px brand edge */
 .ptah-c-tr_selected,

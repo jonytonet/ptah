@@ -78,19 +78,8 @@ class ConfigKeyReachabilityTest extends TestCase
         'actionName' => 'ActionParser::asColumn() turns it into colsNomeLogico before saving',
         'colsWidth' => 'ColumnWizard only reads it as the fallback of a legacy value; it writes colsMinWidth',
 
-        // Frozen by WizardKeyReachabilityTest since 1.34.4 (reasons there):
-        'colsRelationDisplayColumn' => 'wizard relationship block; runtime reads colsRelacao/colsRelacaoExibe',
-        'colsRelationJoinColumn' => 'wizard relationship block',
-        'colsRelationTable' => 'wizard relationship block',
-        'colsRendererLink' => 'runtime reads colsRendererLinkTemplate',
-        'colsRendererPrefix' => 'never implemented',
-        'colsRendererSuffix' => 'never implemented',
-        'colsRendererTarget' => 'runtime reads colsRendererLinkNewTab',
-        'colsTotal' => 'runtime reads totalizadorType/totalizadorEnabled',
-        'colsValidation' => 'runtime reads colsValidations (plural)',
-        'colsValidationMessage' => 'no reader',
-        'colsRelation' => 'wizard relationship block; hidden until 1.49.1 by a stale NOT_A_READER path that let JsonSchemaBuilder count as its reader',
-
+        // The wizard's frozen gap (relation block, link/prefix/suffix, colsTotal,
+        // colsValidation[Message], colsRelation) was closed in 1.50.1.
     ];
 
     private static function read(string $path): string

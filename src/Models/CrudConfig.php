@@ -107,7 +107,6 @@ class CrudConfig extends Model
             'theme' => 'light',
             'compactMode' => false,
             'stickyHeader' => true,
-            'showTotalizador' => true,
             'highlightOnHover' => true,
         ], $this->config['uiPreferences'] ?? []);
     }

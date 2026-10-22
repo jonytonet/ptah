@@ -119,9 +119,9 @@ carrega 6 atributos `data-ptah-*`, resolvidos por
 |---|---|---|
 | `data-ptah-light` | `puro` \| `papel` \| `nevoa` | Tom do modo claro. |
 | `data-ptah-dark` | `carvao` \| `grafite` \| `meianoite` | Tom do modo escuro. |
-| `data-ptah-accent` | `azul` \| `violeta` \| `ciano` \| `verde` \| `teal` \| `ambar` \| `vermelho` \| `rosa` \| `cinza` | Cor de destaque (accent). |
+| `data-ptah-accent` | `azul` \| `violeta` \| `ciano` \| `verde` \| `teal` \| `ambar` \| `vermelho` \| `rosa` \| `cinza` (+ `marca`, a cor de marca do host, só quando `PTAH_COLOR_PRIMARY` foi customizada) | Cor de destaque (accent). |
 | `data-ptah-text` | `suave` \| `neutra` \| `forte` | Peso da cor de texto. |
-| `data-ptah-density` | `compacta` \| `confortavel` \| `espacosa` | Os 4 tokens de densidade da seção 1. |
+| `data-ptah-density` | `compacta` \| `confortavel` \| `espacosa` | Os 7 tokens de densidade da seção 1. |
 | `data-ptah-fontsize` | `pequena` \| `normal` \| `grande` | Escala de fonte. |
 
 O claro/escuro em si (qual dos dois blocos, `:root` ou `.ptah-dark`, está
@@ -174,7 +174,8 @@ digitação (ver armadilha na seção 5).
 
 ### `forge-select`
 Props: `label`, `options` (`[['value' => ..., 'label' => ...], ...]`), `placeholder`
-(padrão `Select...`), `multiple`, `disabled`, `required`, `error`, `selected`, `name`.
+(padrão `__('ptah::ui.select_placeholder')`, "Selecione..."/"Select..."), `multiple`, `disabled`, `required`, `error`, `selected`, `name`,
+`searchable` (campo de filtro client-side no topo da lista, sem acento/caixa).
 Requer Alpine.js. **Limitação conhecida:** `multiple` não funciona com `wire:model`
 (a ponte usa um `<input type="hidden">` com JSON, não array).
 
@@ -507,9 +508,9 @@ class TaskList extends Component
 | 1 | Gerar o `id` de um elemento com `uniqid()`/`Str::random()` numa view renderizada por Livewire. O DOM-diff do Livewire usa `el.id` como chave quando não há `wire:key`; um id novo a cada render faz o morph **remover e recriar** o elemento — perde foco, estado do Alpine (`open`, `activeIndex`). | Derive o id deterministicamente da identidade do campo (`md5(label.'\|'.name.'\|'.tipo.'\|'.wire:model)`), igual em todo render — é o que `forge-input`/`forge-select`/`forge-modal` já fazem. | `tests\Feature\Components\ForgeInputMorphKeyTest.php`, `ForgeSelectMorphKeyTest.php`, `ForgeModalAccessibilityTest.php` |
 | 2 | Aspas duplas dentro de um atributo Alpine (`x-data="{ ... "algo" ... }"`) — a primeira aspa dupla interna fecha o atributo prematuramente e o resto do script vaza como texto visível na página, com o Alpine morto por baixo. Acontece até dentro de comentário JS ou seletor CSS de exemplo. | Use aspas simples dentro do JS/expressão; qualquer prosa em português vai num comentário Blade **fora** do elemento. | `tests\Unit\Support\LayoutXDataQuotingTest.php` |
 | 3 | `:title="__('...')"` (ou `:placeholder`/`:aria-label`) numa tag HTML **pura** (`<button>`, `<input>`, `<nav>`...). Blade só avalia `:attr` em componentes `<x-...>`; numa tag pura o `:` vira literal no DOM, e como toda página do pacote tem um `x-data` na raiz, o Alpine tenta avaliar `__('...')` como expressão JS e lança um `ReferenceError` silencioso. | Troque por `title="{{ __('...') }}"` (compilação no servidor, sem `:`). | `tests\Unit\Support\BladeBoundAttributeOnPlainTagTest.php` |
-| 4 | Referenciar `$el`/`$wire` "crus" dentro de um **método** declarado no objeto de `x-data` (não dentro de uma diretiva como `x-init`/`@click`). Dentro de um método de objeto JS os magics do Alpine não existem como variável solta — lança `ReferenceError` silencioso. | Use `this.$el` / `this.$wire` dentro de métodos do `x-data`. Ver o comentário em `base-crud.blade.php` (`_hotkeys()`), que documenta exatamente este bug. | Sem guard automatizado hoje — revisão manual / console do navegador (ver "Lacunas" abaixo). |
+| 4 | Referenciar `$el`/`$wire` "crus" dentro de um **método** declarado no objeto de `x-data` (não dentro de uma diretiva como `x-init`/`@click`). Dentro de um método de objeto JS os magics do Alpine não existem como variável solta — lança `ReferenceError` silencioso. | Use `this.$el` / `this.$wire` dentro de métodos do `x-data`. Ver o comentário em `base-crud.blade.php` (`_hotkeys()`), que documenta exatamente este bug. | Sem guard automatizado hoje — revisão manual / console do navegador. |
 | 5 | Colocar um `<style>` dentro de uma view Blade (o pacote está ativamente desmontando o único bloco legado desse tipo, em `forge-dashboard-layout`). CSS de tema vive em `resources/css/ptah-components.css`. | Declare classes que usam `var(--ptah-*)` no `resources/css/app.css` do projeto host (que já importa `ptah-components.css`), nunca inline num `<style>` da view. | `tests\Unit\Support\CrudConfigThemeParityTest.php` (bloqueia `<style>` novo em `crud-config.blade.php`) e `LayoutStyleBaselineTest.php` (golden-master do bloco legado em desmonte) — nenhum dos dois cobre uma view nova de um projeto host; a disciplina aqui é convenção, não teste automatizado de terceiros. |
-| 6 | Referenciar no `x-data`/`@click`/etc. uma função Alpine que nunca foi definida (erro de digitação, função removida numa refatoração). Sem guard estático, isso só aparece como `ReferenceError` no console em tempo de execução. | Use o padrão defensivo que o próprio `forge-modal`/`forge-toast-host` usam para chamadas opcionais: `typeof minhaFuncao === 'function' ? minhaFuncao() : (fallback)`. Teste manualmente no navegador (Console) antes de dar por certo. | Sem guard automatizado hoje (ver "Lacunas" abaixo). |
+| 6 | Referenciar no `x-data`/`@click`/etc. uma função Alpine que nunca foi definida (erro de digitação, função removida numa refatoração). Sem guard estático, isso só aparece como `ReferenceError` no console em tempo de execução. | Use o padrão defensivo que o próprio `forge-modal`/`forge-toast-host` usam para chamadas opcionais: `typeof minhaFuncao === 'function' ? minhaFuncao() : (fallback)`. Teste manualmente no navegador (Console) antes de dar por certo. | Sem guard automatizado hoje. |
 
 ---
 
@@ -573,7 +574,7 @@ seis de uma vez — o `.ptah-dark` e cada preset reescrevem o MESMO nome.
 Algumas views internas do pacote ainda carregam paleta fixa (herança de antes
 do contrato de tokens) — a visão em cards do BaseCrud é o caso mais visível.
 Isso é dívida nossa, rastreada em
-[KnownLimitations.md](KnownLimitations.md#package-views-with-fixed-palette-surfaces);
+[KnownLimitations.md](KnownLimitations.md#what-ptah-does-not-cover-yet);
 não tente "consertar" por cima com CSS no host, porque o seletor que você
 escrever vai quebrar quando o pacote corrigir. Se doer, abra uma issue e pine
 o tom **puro** até a correção.

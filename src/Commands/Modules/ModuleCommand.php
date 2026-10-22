@@ -12,7 +12,7 @@ use L5Swagger\L5SwaggerServiceProvider;
 use Symfony\Component\Process\Process;
 
 /**
- * Enables optional Ptah modules: auth, menu, company, permissions.
+ * Enables optional Ptah modules: auth, menu, company, permissions, api, ai_agent.
  *
  * Usage:
  *   php artisan ptah:module auth
@@ -25,11 +25,11 @@ use Symfony\Component\Process\Process;
 class ModuleCommand extends Command
 {
     protected $signature = 'ptah:module
-                            {module? : Module name to enable (auth, menu, company, permissions)}
+                            {module? : Module name to enable (auth, menu, company, permissions, api, ai_agent)}
                             {--list  : List available modules and their states}
                             {--force : Overwrite existing files}';
 
-    protected $description = 'Enables optional Ptah modules (auth, menu, company, permissions).';
+    protected $description = 'Enables optional Ptah modules (auth, menu, company, permissions, api, ai_agent).';
 
     /** Available modules: name => env key */
     protected array $modules = [

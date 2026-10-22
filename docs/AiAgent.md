@@ -59,7 +59,7 @@ Key features:
 
 - Ptah `^1.0`
 - PHP `^8.2`
-- Laravel `^11 | ^12`
+- Laravel `^11 | ^12 | ^13`
 - Livewire `^4.0`
 - [prism-php/prism](https://github.com/prism-php/prism) installed separately (see below)
 
@@ -81,7 +81,7 @@ php artisan ptah:module ai_agent
 
 This command will:
 1. Run `composer require prism-php/prism` (if not already installed)
-2. Publish the two module migrations to `database/migrations/`
+2. Publish the three module migrations to `database/migrations/`
 3. Run `php artisan migrate`
 4. Set `PTAH_MODULE_AI_AGENT=true` in `.env`
 
@@ -89,7 +89,7 @@ This command will:
 
 Visit `/ptah-ai/models` in your app and create a new configuration (see [Admin Screen](#admin-screen--configuring-a-provider)).
 
-That's it — the chat widget appears automatically for authenticated users.
+That's it — the chat widget appears automatically for authenticated users (guests only with `PTAH_AI_ALLOW_GUESTS=true`).
 
 ---
 
@@ -167,7 +167,8 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
     // Default system prompt injected into every conversation
     'system_prompt' => env('PTAH_AI_SYSTEM_PROMPT', 'You are a helpful assistant.'),
 
-    // Max number of messages kept per session (older messages are dropped)
+    // Messages sent to the model as context each turn (the stored conversation
+    // is kept whole, up to max_stored_messages)
     'max_history'   => (int) env('PTAH_AI_MAX_HISTORY', 20),
 
     // Max requests per minute per session
@@ -203,6 +204,13 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
 | `PTAH_AI_MAX_MESSAGE_CHARS` | `8000` | Longest message the chat accepts (the daily budget is checked before the turn, so one huge message could overrun it) |
 | `PTAH_AI_MAX_STEPS` | `5` | Tool rounds per turn (1–50). A signup flow that chains lookups may need more |
 | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | Fix `"properties": []` in tool payloads for strict providers — see the config block above |
+| `PTAH_AI_DAILY_TOKEN_LIMIT` | `0` | Daily token budget. `0` = no limit |
+| `PTAH_AI_ALLOW_GUESTS` | `false` | Let unauthenticated visitors use the chat |
+| `PTAH_AI_EXPOSE_SYSTEM_DETAILS` | `false` | Let `getSystemInfo` disclose the Laravel/PHP version and environment |
+| `PTAH_AI_ATTACHMENTS` | `true` | Enable attachments in the chat |
+| `PTAH_AI_ATTACH_MAX_KB` | `8192` | Max size per attachment, in KB |
+| `PTAH_AI_ATTACH_MAX_FILES` | `4` | Max attachments per message |
+| `PTAH_AI_ATTACH_MAX_CHARS` | `60000` | Max characters extracted per attachment |
 | `PRISM_REQUEST_TIMEOUT` | `30` | HTTP timeout in seconds for AI provider requests — increase for slow local models (e.g. Ollama on CPU) |
 
 ---
@@ -218,7 +226,7 @@ All settings live in `config/ptah.php` under the `ai_agent` key:
    - **API Key** — your provider API key (stored encrypted)
    - **API Endpoint** — only for Ollama or custom providers (e.g. `http://localhost:11434`)
    - **Max tokens** — maximum response length (default: 1024)
-   - **Temperature** — creativity 0.0–1.0 (default: 0.70)
+   - **Temperature** — creativity 0.0–2.0 (default: 0.70)
    - **System prompt** — optional override for this specific config
    - **Active** — whether this config is available
    - **Default** — the config used by the chat widget
@@ -310,7 +318,7 @@ never shows it).
 
 > **Note:** Small models (`1b`, `3b`) may not reliably use function calling. If the model returns JSON text instead of calling tools, upgrade to a larger model (7b+).
 
-> **Slow responses?** Local models run on CPU by default. The service automatically extends PHP's execution time limit to 5 minutes (`set_time_limit(300)`) to accommodate slow inference. You must also set `PRISM_REQUEST_TIMEOUT=300` in `.env` to extend the HTTP client timeout (default is 30 seconds):
+> **Slow responses?** Local models run on CPU by default. In a web request whose PHP `max_execution_time` is set and below 5 minutes, the service raises it to 5 minutes (`set_time_limit(300)`); it never lowers a higher limit and does nothing in the CLI. You must also set `PRISM_REQUEST_TIMEOUT=300` in `.env` to extend the HTTP client timeout (default is 30 seconds):
 >
 > ```env
 > PRISM_REQUEST_TIMEOUT=300
@@ -536,7 +544,7 @@ The AI Agent supports function calling via tools.
 
 | Tool | What it answers |
 |---|---|
-| `getSystemInfo` | Laravel and PHP version, environment, timezone — gated by `expose_system_details` |
+| `getSystemInfo` | App name, timezone and locale; the Laravel/PHP version and environment only with `expose_system_details` |
 | `getCurrentDateTime` | The server's current date and time |
 | `find_menu` | **Where a screen lives in the navigation menu** |
 
@@ -939,8 +947,8 @@ final class ListReceivablesTool implements AiToolInterface, AiToolAuthorizable, 
 - **Context** — `AiToolContextAware::withContext()` runs right before each
   `execute()` with the user and the active company (`ptah_company_id()`), so
   the tool scopes its query without reaching for `session()`.
-- `ptah:check` lists the tools in `ptah.ai_agent.tools` that implement neither
-  answer, and reports a declared key that is not a registered page object.
+- `ptah:check` lists the tools in `ptah.ai_agent.tools` that do not implement
+  `AiToolAuthorizable`, and reports a declared key that is not a registered page object.
 
 ### Real-world example — Helpdesk stats tool
 
@@ -1040,8 +1048,8 @@ Conversations are stored in the `ptah_ai_conversations` table:
 | Column | Type | Description |
 |---|---|---|
 | `id` | bigint | Primary key |
-| `session_id` | string(40) | Laravel session ID (used for guest conversations) |
-| `user_id` | bigint (nullable) | Foreign key to `users` — set for authenticated users |
+| `session_id` | string(64) | Laravel session ID (used for guest conversations) |
+| `user_id` | bigint (nullable, indexed) | The `users` id — set for authenticated users |
 | `title` | string(160) (nullable) | Auto-generated from the first message (`Str::limit($message, 60)`) |
 | `messages` | json | Array of `{role, content}` objects |
 | `provider_used` | string | Provider that handled the conversation |
@@ -1055,7 +1063,7 @@ Conversations are stored in the `ptah_ai_conversations` table:
 When the user is authenticated, conversations are scoped to their `user_id` rather than the session. This means:
 
 - Conversations survive browser restarts and session expiry
-- Up to the last **20 conversations** are listed in the history panel (sorted by most recent)
+- The history panel lists the latest **5 conversations** (most recent first) and loads more in steps of 5, up to 100
 - Each conversation shows its auto-generated title and creation date
 
 ### History panel
@@ -1066,7 +1074,7 @@ Authenticated users see a **history** button (`⏱`) in the widget header. Click
 - Click any entry to reload its full message history
 - Click **New conversation** (✏) to start a fresh session
 
-Guest users (unauthenticated) follow the old session-based flow — no history panel is shown.
+Guest users (unauthenticated, only with `allow_guests`) follow the session-based flow — no history panel is shown.
 
 ### Message trimming
 
@@ -1094,7 +1102,7 @@ Refer to the [prism-php/prism documentation](https://prism.echolabs.dev) for the
 - **API keys** are stored with Laravel's `encrypted` cast — they are AES-256 encrypted using your `APP_KEY`. Never commit `.env` to version control.
 - **Access control** — the admin config screen (`/ptah-ai/models`) requires the user to pass `ptah_can('ai.config', 'read') || ptah_is_master()`. Register the `ai.config` page object in the permissions module and grant `read` on it, or ensure only master users access it.
 - **Rate limiting** — the built-in session-based rate limit protects against accidental cost spikes. For production, tune `PTAH_AI_RATE_LIMIT` to match your expected usage.
-- **Tool execution** — a tool without `AiToolAuthorizable` is offered to every chat user. Declare its permission (see [Who may use a tool](#who-may-use-a-tool-aitoolauthorizable-aitoolcontextaware)) and scope its queries to the context's company; `ptah:check` lists the tools that do neither.
+- **Tool execution** — a tool without `AiToolAuthorizable` is offered to every chat user. Declare its permission (see [Who may use a tool](#who-may-use-a-tool-aitoolauthorizable-aitoolcontextaware)) and scope its queries to the context's company; `ptah:check` lists the tools without a declared permission.
 - **Attachments** are validated on the server, never on the client: extension against a provider-narrowed allowlist, size against `max_size_kb`, count against `max_files`. `$wire.upload` is a public call, so the client-side filter is a convenience only. A refused file is deleted from the temporary disk immediately rather than left for Livewire's scheduled cleanup, and the files for a sent message are deleted once read.
 - **Assistant answers are untrusted text.** They are rendered as Markdown with HTML escaped rather than executed, and with `javascript:`, `data:` and `vbscript:` link schemes refused — escaping alone does not close that, because the scheme sits inside an attribute value. If you render conversation content anywhere else, use `Ptah\Support\AI\ChatMarkdown::render()` rather than your own converter, and never print it raw.
 - **An attachment that could not be delivered adds a note to the prompt**, so the model says so instead of answering about content it never received. That matters most on a provider that silently drops the part — which is why the widget refuses the file up front instead.
@@ -1191,7 +1199,7 @@ Then update the **Model** field in `/ptah-ai/models`.
 
 Local models (Ollama) can be slow, especially on CPU. Two timeouts need to be extended:
 
-**1. PHP execution time** — the service calls `set_time_limit(300)` automatically. If the error persists, also increase `max_execution_time` in your `php.ini`:
+**1. PHP execution time** — in a web request with a limit below 5 minutes the service calls `set_time_limit(300)` automatically. If the error persists, also increase `max_execution_time` in your `php.ini`:
 
 ```ini
 max_execution_time = 300

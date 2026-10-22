@@ -7,6 +7,76 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.50.1] - 2026-10-22
+
+Closing what was still open after 1.50.0 — no known pending item left.
+
+### Security - the TOTP setup could send the 2FA secret to a third party
+
+Without the optional `bacon/bacon-qr-code`, the QR fallback built a
+`chart.googleapis.com` URL carrying the `otpauth://` URI — which contains the
+TOTP secret — so the secret left the server to Google (and the API is
+retired). There is no external fallback now: without the library the setup
+shows the key for manual entry, which every authenticator app supports.
+Without `pragmarx/google2fa-laravel`, starting TOTP setup was a 500; it is an
+error message now. **Upgrade hosts** that use 2FA by authenticator app without
+`bacon/bacon-qr-code` installed.
+
+### Fixed - found in the re-read of the smaller docs
+
+- `--fields` with a label holding parentheses (`surname=Peso (kg)`) read
+  "(kg)" as the type's params: `decimal(5,2)` became precision 0 and the label
+  lost its suffix.
+- `double` was silently turned into `float`.
+- Two companies with the same name broke on the slug's unique constraint; the
+  slug now gets `-2`, `-3`… (trashed rows included).
+- `ptah:config:doctor`'s queue note ignored `ptah.notifications.queue_connection`
+  and warned about a worker even with `sync`.
+- `ptah.notifications.retention_days` was read by nothing; it is now the
+  default of `NotificationService::purgeRead()`.
+- The published JSON schema listed five `colsRenderer` values (three of which
+  no renderer implements); it now uses the runtime's list.
+- `ptah:docs join` still taught `where=`, refused since 1.50.0.
+- `ptah.auth.middleware` was read by the routes but missing from the config;
+  `ptah:module`'s description listed four of its six modules.
+- `CommandInputValidator` (used by no command, with a vocabulary that
+  disagrees with `CrudConfigEnums`) is `@deprecated`, to be removed in 2.0.
+
+### Fixed - every screen read its config with two queries
+
+`CrudConfigService::find()` queried by model/route, then asked the cache for
+the id it had just found and queried again by that id: the cache saved
+nothing. The cache is now read first — a hit is one query by primary key, a
+miss is one query (found while re-running the landing benchmark). A row
+deleted since falls back to the lookup; a route config created after the
+global one is never hidden by the cache.
+
+### Fixed - editor settings that nothing applied
+
+- `uiPreferences.stickyHeader = false` now un-sticks the table header (the
+  action column keeps its horizontal stickiness), and `highlightOnHover =
+  false` stops the row hover highlight. Both default on, as before.
+- `showTotalizador` is gone from the editor: the PDF export also required a
+  `ui.showTotalizador` key that nothing wrote, so totals never printed.
+  Configured `totalizadores` now print, as the listing shows them.
+
+### Fixed - the interactive `ptah:config` wizard wrote keys nothing read
+
+It now writes `colsValidations` (it wrote the singular, plus a custom
+message nothing read), `colsRelacao` / `colsRelacaoExibe` (it wrote a
+table/join-column block), `colsRendererLinkTemplate` /
+`colsRendererLinkNewTab` (it wrote link/target), and the totalizer goes to
+`totalizadores.columns`; the number prefix/suffix and totalizer format
+questions, which nothing read, are gone. `WizardKeyReachabilityTest` keeps its
+exemption list empty from now on.
+
+### Docs
+
+- The 18 smaller docs and the bundled agent skills re-read against the code,
+  as the four large ones were in 1.50.0.
+- `docs/Roadmap.md`: the road to 2.0 (a stable public API) and the plugin
+  ecosystem planned after it.
+
 ## [1.50.0] - 2026-10-21
 
 A full docs audit against the code (BaseCrud.md, Configuration.md,

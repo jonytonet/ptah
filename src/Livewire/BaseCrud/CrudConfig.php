@@ -136,8 +136,6 @@ class CrudConfig extends Component
     /** Botao "copiar" ao parar o mouse numa celula (1.46.0). */
     public bool $uiCopyCell = true;
 
-    public bool $showTotalizador = false;
-
     // ── Broadcast (Echo listener) ────────────────────────────────────
 
     public bool $broadcastEnabled = false;
@@ -466,7 +464,6 @@ class CrudConfig extends Component
         $this->uiCompactMode = (bool) ($ui['compactMode'] ?? false);
         $this->uiStickyHeader = (bool) ($ui['stickyHeader'] ?? true);
         $this->uiCopyCell = (bool) ($ui['copyCell'] ?? true);
-        $this->showTotalizador = (bool) ($ui['showTotalizador'] ?? false);
 
         // Broadcast
         $bc = $cfg['broadcast'] ?? [];
@@ -1232,7 +1229,6 @@ class CrudConfig extends Component
                 'compactMode' => $this->uiCompactMode,
                 'stickyHeader' => $this->uiStickyHeader,
                 'copyCell' => $this->uiCopyCell,
-                'showTotalizador' => $this->showTotalizador,
                 'highlightOnHover' => $existing['uiPreferences']['highlightOnHover'] ?? true,
             ]),
             'broadcast' => [

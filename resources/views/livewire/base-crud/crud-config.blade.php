@@ -2617,13 +2617,6 @@
                                     <span class="text-xs font-medium" style="color: var(--ptah-text)">{{ __('ptah::ui.cfg_gen_copy_cell')
                                         }}</span>
                                 </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" wire:model="showTotalizador"
-                                        title="{{ __('ptah::ui.cfg_tip_gen_totalizer') }}"
-                                        class="text-primary rounded border-slate-300" />
-                                    <span class="text-xs font-medium text-slate-700">{{ __('ptah::ui.cfg_gen_totalizer')
-                                        }}</span>
-                                </label>
                             </div>
                         </div>
 

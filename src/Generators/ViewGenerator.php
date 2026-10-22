@@ -13,7 +13,7 @@ use Ptah\Support\LabelHumanizer;
  * Stubs: view.index.stub
  * Placeholders: entity, entity_lower, entities, entity_title
  *
- * Only runs when --api is NOT active.
+ * Skipped only with --api-only (`--api` generates the screen too).
  */
 class ViewGenerator extends AbstractGenerator
 {

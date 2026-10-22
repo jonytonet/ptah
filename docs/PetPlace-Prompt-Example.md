@@ -46,6 +46,7 @@ php artisan ptah:module menu
 php artisan ptah:module company
 php artisan ptah:module permissions
 php artisan ptah:module api
+php artisan install:api  # cria routes/api.php (+ Sanctum), exigido pelo --api do ptah:forge
 
 # 6. Limpar cache
 php artisan config:clear
@@ -68,7 +69,7 @@ npm run dev  # outro terminal
 ## 🏗️ Scaffolding das Entidades
 
 Execute os comandos abaixo em sequência. O ptah gera:
-- Model, Migration, DTO, Repository, Service, Controller, Requests, Views, Routes
+- Model, Migration, DTO, Repository (+ interface), Service, Controller, Requests, Resource, View, Routes e a linha padrão em `crud_configs`
 - **Menu automático**: cada entidade adiciona link na sidebar (MenuRegistry.php)
 
 ```bash
@@ -82,7 +83,7 @@ php artisan ptah:forge Catalog/Brand \
   --api
 
 php artisan ptah:forge Catalog/Product \
-  --fields="name:string:surname=Nome,sku:string:unique:surname=SKU,description:text:nullable:surname=Descricao,price:decimal(10,2):surname=Preco,sale_price:decimal(10,2):nullable:surname=Preco Promo,stock:integer:surname=Estoque,weight:decimal(10,3):nullable:surname=Peso (kg),category_id:unsignedBigInteger,brand_id:unsignedBigInteger,is_active:boolean:surname=Ativo,is_featured:boolean:surname=Destaque" \
+  --fields="name:string:surname=Nome,sku:string:unique:surname=SKU,description:text:nullable:surname=Descricao,price:decimal(10,2):surname=Preco,sale_price:decimal(10,2):nullable:surname=Preco Promo,stock:integer:surname=Estoque,weight:decimal(10,3):nullable:surname=Peso kg,category_id:unsignedBigInteger,brand_id:unsignedBigInteger,is_active:boolean:surname=Ativo,is_featured:boolean:surname=Destaque" \
   --api
 
 # === REFERÊNCIA VETERINÁRIA ===
@@ -100,7 +101,7 @@ php artisan ptah:forge Scheduling/ServiceCategory \
   --api
 
 php artisan ptah:forge Scheduling/Service \
-  --fields="service_category_id:unsignedBigInteger,name:string:surname=Servico,slug:string,description:text:nullable:surname=Descricao,price:decimal(10,2):surname=Preco,duration_minutes:integer:surname=Duracao (min),type:string:surname=Tipo,requirements:text:nullable:surname=Requisitos,requires_appointment:boolean:surname=Exige Agendamento,is_active:boolean:surname=Ativo,sort_order:integer:surname=Ordem" \
+  --fields="service_category_id:unsignedBigInteger,name:string:surname=Servico,slug:string,description:text:nullable:surname=Descricao,price:decimal(10,2):surname=Preco,duration_minutes:integer:surname=Duracao min,type:string:surname=Tipo,requirements:text:nullable:surname=Requisitos,requires_appointment:boolean:surname=Exige Agendamento,is_active:boolean:surname=Ativo,sort_order:integer:surname=Ordem" \
   --api
 
 php artisan ptah:forge Scheduling/Employee \
@@ -122,18 +123,18 @@ php artisan ptah:forge Clients/ClientContact \
   --fields="client_id:unsignedBigInteger,name:string:surname=Nome,relationship:string:surname=Parentesco,phone:string:surname=Telefone,whatsapp:string:nullable:surname=WhatsApp,email:string:nullable:surname=E-mail,is_emergency:boolean:surname=Emergencia,is_authorized:boolean:surname=Autorizado,observations:text:nullable:surname=Observacoes,is_active:boolean:surname=Ativo"
 
 php artisan ptah:forge Clients/Pet \
-  --fields="client_id:unsignedBigInteger,user_id:unsignedBigInteger:nullable,species_id:unsignedBigInteger,breed_id:unsignedBigInteger,name:string:surname=Nome,gender:string:surname=Sexo,birth_date:date:surname=Nascimento,weight:decimal(5,2):nullable:surname=Peso (kg),color:string:surname=Pelagem/Cor,microchip:string:nullable:surname=Microchip,registration_number:string:nullable:surname=Registro,is_neutered:boolean:surname=Castrado,health_conditions:text:nullable:surname=Condicoes de Saude,allergies:text:nullable:surname=Alergias,medications:text:nullable:surname=Medicamentos,special_care:text:nullable:surname=Cuidados Especiais,observations:text:nullable:surname=Observacoes,photo_path:string:nullable:surname=Foto,is_active:boolean:surname=Ativo"
+  --fields="client_id:unsignedBigInteger,user_id:unsignedBigInteger:nullable,species_id:unsignedBigInteger,breed_id:unsignedBigInteger,name:string:surname=Nome,gender:string:surname=Sexo,birth_date:date:surname=Nascimento,weight:decimal(5,2):nullable:surname=Peso kg,color:string:surname=Pelagem/Cor,microchip:string:nullable:surname=Microchip,registration_number:string:nullable:surname=Registro,is_neutered:boolean:surname=Castrado,health_conditions:text:nullable:surname=Condicoes de Saude,allergies:text:nullable:surname=Alergias,medications:text:nullable:surname=Medicamentos,special_care:text:nullable:surname=Cuidados Especiais,observations:text:nullable:surname=Observacoes,photo_path:string:nullable:surname=Foto,is_active:boolean:surname=Ativo"
 
 # === SAÚDE (SEM SOFT DELETE) ===
 php artisan ptah:forge Health/VaccinationType \
-  --fields="name:string:surname=Vacina,slug:string,description:text:nullable:surname=Descricao,category:string:surname=Categoria,interval_months:integer:nullable:surname=Intervalo (meses),first_dose_age_weeks:integer:nullable:surname=1a Dose (semanas),requires_annual_booster:boolean:surname=Reforco Anual,is_mandatory:boolean:surname=Obrigatoria,is_active:boolean:surname=Ativa,sort_order:integer:surname=Ordem"
+  --fields="name:string:surname=Vacina,slug:string,description:text:nullable:surname=Descricao,category:string:surname=Categoria,interval_months:integer:nullable:surname=Intervalo meses,first_dose_age_weeks:integer:nullable:surname=1a Dose semanas,requires_annual_booster:boolean:surname=Reforco Anual,is_mandatory:boolean:surname=Obrigatoria,is_active:boolean:surname=Ativa,sort_order:integer:surname=Ordem"
 
 php artisan ptah:forge Health/PetVaccination \
   --fields="pet_id:unsignedBigInteger,vaccination_type_id:unsignedBigInteger,application_date:date:surname=Data Aplicacao,next_due_date:date:nullable:surname=Proxima Dose,batch_number:string:nullable:surname=Lote,manufacturer:string:nullable:surname=Fabricante,veterinarian_name:string:nullable:surname=Veterinario,veterinarian_crmv:string:nullable:surname=CRMV,weight_at_application:decimal(5,2):nullable:surname=Peso na Aplicacao,notes:text:nullable:surname=Observacoes,adverse_reactions:text:nullable:surname=Reacoes Adversas,certificate_path:string:nullable:surname=Certificado" \
   --no-soft-deletes
 
 php artisan ptah:forge Health/PetMedicalRecord \
-  --fields="pet_id:unsignedBigInteger,consultation_date:date:surname=Data,consultation_time:string:nullable:surname=Hora,type:string:surname=Tipo,veterinarian_name:string:surname=Veterinario,veterinarian_crmv:string:nullable:surname=CRMV,weight:decimal(5,2):nullable:surname=Peso (kg),temperature:decimal(4,1):nullable:surname=Temperatura,symptoms:text:nullable:surname=Sintomas,physical_exam:text:nullable:surname=Exame Fisico,diagnosis:text:nullable:surname=Diagnostico,treatment:text:nullable:surname=Tratamento,medications:text:nullable:surname=Medicamentos,recommendations:text:nullable:surname=Recomendacoes,return_date:date:nullable:surname=Retorno,consultation_fee:decimal(10,2):nullable:surname=Valor,attachments:json:nullable:surname=Anexos" \
+  --fields="pet_id:unsignedBigInteger,consultation_date:date:surname=Data,consultation_time:string:nullable:surname=Hora,type:string:surname=Tipo,veterinarian_name:string:surname=Veterinario,veterinarian_crmv:string:nullable:surname=CRMV,weight:decimal(5,2):nullable:surname=Peso kg,temperature:decimal(4,1):nullable:surname=Temperatura,symptoms:text:nullable:surname=Sintomas,physical_exam:text:nullable:surname=Exame Fisico,diagnosis:text:nullable:surname=Diagnostico,treatment:text:nullable:surname=Tratamento,medications:text:nullable:surname=Medicamentos,recommendations:text:nullable:surname=Recomendacoes,return_date:date:nullable:surname=Retorno,consultation_fee:decimal(10,2):nullable:surname=Valor,attachments:json:nullable:surname=Anexos" \
   --no-soft-deletes
 
 php artisan ptah:forge Health/PetServiceHistory \
@@ -165,51 +166,37 @@ php artisan ptah:menu-sync  # Sincroniza menu da sidebar
 
 ---
 
-## ✅ Pós-Scaffolding: Resolver TODOs nos Models
+## ✅ Pós-Scaffolding: Conferir os Models
 
-Após gerar todas as entidades, os Models contêm TODOs marcando relacionamentos.
+Cada FK (`*_id` do tipo `unsignedBigInteger`, `bigInteger` ou `foreignId`) já gera um `belongsTo` no model, e o `use` do model relacionado é resolvido sozinho quando existe **exatamente uma** classe com esse nome em `app/Models`. O `ptah:forge` lista cada FK com `✔` (resolvida) ou `⚠` (ainda não gerada, ou ambígua). `hasMany` nunca é gerado.
 
-### Exemplo: `app/Models/Product.php`
+### Exemplo: `app/Models/Catalog/Product.php` (gerado)
 
 ```php
-// TODO: Uncomment and configure relationships
-// public function category(): BelongsTo
-// {
-//     return $this->belongsTo(Category::class);
-// }
-//
-// public function brand(): BelongsTo
-// {
-//     return $this->belongsTo(Brand::class);
-// }
+public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+{
+    return $this->belongsTo(Category::class, 'category_id');
+}
 ```
 
 ### Tarefas Obrigatórias
 
-1. **Descomentar relacionamentos** nos models gerados
-2. **Adicionar imports** necessários (`BelongsTo`, `HasMany`, etc.)
-3. **Configurar chaves estrangeiras** se não seguirem convenção Laravel
+1. **Resolver cada `⚠`**: o model gerado traz `// TODO: use ...` no lugar do `use`. Gere as entidades em ordem de dependência (aqui, `Clients/*` antes de `Scheduling/Appointment`) ou ajuste o namespace. Nunca commitar `// TODO`.
+2. **Corrigir FKs cujo nome não é o do model**: o gerador infere o model pelo nome da coluna (`species_id` → `Species`), então `belongsTo(Species::class, ...)` aponta para uma classe inexistente — troque pela classe real e remova o `// TODO: use` correspondente (tabela abaixo).
+3. **Escrever os `hasMany`** à mão, no lado "um".
+4. **Configurar chaves estrangeiras** se não seguirem convenção Laravel.
 
-### Lista de Relacionamentos por Entidade
+### Ajustes manuais por entidade
 
-| Model | Relacionamentos a Configurar |
-|-------|------------------------------|
-| **Product** | `belongsTo(Category)`, `belongsTo(Brand)` |
-| **AnimalBreed** | `belongsTo(AnimalSpecies)` |
-| **Service** | `belongsTo(ServiceCategory)` |
-| **Employee** | `belongsTo(User)` |
-| **Appointment** | `belongsTo(Client)`, `belongsTo(Pet)`, `belongsTo(Service)`, `belongsTo(Employee)` |
-| **Client** | `belongsTo(User)`, `hasMany(ClientAddress)`, `hasMany(ClientContact)`, `hasMany(Pet)` |
-| **ClientAddress** | `belongsTo(Client)` |
-| **ClientContact** | `belongsTo(Client)` |
-| **Pet** | `belongsTo(Client)`, `belongsTo(User)`, `belongsTo(AnimalSpecies)`, `belongsTo(AnimalBreed)`, `hasMany(PetVaccination)`, `hasMany(PetMedicalRecord)`, `hasMany(PetServiceHistory)` |
-| **PetVaccination** | `belongsTo(Pet)`, `belongsTo(VaccinationType)` |
-| **PetMedicalRecord** | `belongsTo(Pet)` |
-| **PetServiceHistory** | `belongsTo(Pet)`, `belongsTo(Service)`, `belongsTo(Employee, 'performed_by_id')` |
-| **Order** | `belongsTo(Client)`, `hasMany(OrderItem)` |
-| **OrderItem** | `belongsTo(Order)`, `belongsTo(Product)` |
-| **StockMovement** | `belongsTo(Product)`, `belongsTo(User)` |
-| **Receivable** | `belongsTo(Order)` |
+| Model | Ajuste manual |
+|-------|---------------|
+| **Category** | `parent_id` → `belongsTo(Category::class, 'parent_id')` (o gerado aponta para `Parent`) |
+| **AnimalBreed** | `species_id` → `belongsTo(AnimalSpecies::class, 'species_id')` |
+| **Appointment** | gerado antes de `Client` e `Pet` → dois `⚠` de `use` (ou gere `Clients/*` primeiro) |
+| **Client** | `hasMany(ClientAddress)`, `hasMany(ClientContact)`, `hasMany(Pet)` |
+| **Pet** | `species_id` → `belongsTo(AnimalSpecies::class, 'species_id')`, `breed_id` → `belongsTo(AnimalBreed::class, 'breed_id')`, `hasMany(PetVaccination)`, `hasMany(PetMedicalRecord)`, `hasMany(PetServiceHistory)` |
+| **PetServiceHistory** | `performed_by_id` → `belongsTo(Employee::class, 'performed_by_id')` |
+| **Order** | `hasMany(OrderItem)` |
 
 ---
 
@@ -223,7 +210,7 @@ Após gerar todas as entidades, os Models contêm TODOs marcando relacionamentos
 
 - [ ] Todas as migrations rodaram sem erro
 - [ ] Menu da sidebar exibe todos os módulos e links (`ptah:menu-sync`)
-- [ ] Todos os relacionamentos nos Models foram descomentados (TODOs resolvidos)
+- [ ] Nenhum `// TODO` restou nos Models (⚠ do forge resolvidos) e os relacionamentos da tabela acima foram ajustados
 - [ ] Todos os CRUDs abrem sem erro (teste criar/editar/deletar)
 - [ ] Relacionamentos funcionam (ex: dropdown de categoria no Product)
 - [ ] Login funciona (`admin@admin.com` / senha do `PTAH_ADMIN_PASSWORD` ou a gerada na instalação)
@@ -244,7 +231,7 @@ php artisan tinker
 
 # Testar queries
 php artisan tinker
->>> App\Models\Product::with('category', 'brand')->first()
+>>> App\Models\Catalog\Product::with('category', 'brand')->first()
 ```
 
 ---
@@ -262,9 +249,9 @@ php artisan tinker
 Este prompt deve resultar em:
 
 1. ✅ Instalar ptah sem erros (~2 minutos)
-2. ✅ Gerar 23 entidades completas (~5 minutos)
+2. ✅ Gerar 21 entidades completas (~5 minutos)
 3. ✅ Popular menu automaticamente com `ptah:menu-sync`
-4. ✅ Resolver TODOs dos relacionamentos nos Models
+4. ✅ Ajustar os relacionamentos nos Models (⚠ e FKs de nome diferente)
 5. ✅ Resultar em sistema funcional e operacional
 
 ### Fluxo Completo de Validação
@@ -279,11 +266,11 @@ php artisan ptah:forge Orders/Order --fields="..." --api
 php artisan migrate
 php artisan ptah:menu-sync
 
-# 3. Resolver TODOs nos Models (2 min)
-# Descomentar relacionamentos em:
-# - app/Models/Product.php
-# - app/Models/Order.php
-# - app/Models/Appointment.php
+# 3. Ajustar os Models (2 min)
+# Conferir os ⚠ do forge e os relacionamentos em:
+# - app/Models/Catalog/Product.php
+# - app/Models/Orders/Order.php
+# - app/Models/Scheduling/Appointment.php
 # - (demais models conforme tabela de relacionamentos)
 
 # 4. Validação (2 min)
@@ -295,7 +282,7 @@ php artisan serve
 ```
 
 **Teste bem-sucedido:**
-- ✅ Menu completo na sidebar (23 links)
+- ✅ Menu completo na sidebar (21 links)
 - ✅ Relacionamentos carregando (dropdown de Categoria funciona no Product)
 
 **Total:** ~10 minutos para projeto completo funcional! 🚀

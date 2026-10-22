@@ -10,6 +10,11 @@ use Ptah\Exceptions\CommandValidationException;
  * Validator for command-line inputs.
  *
  * Validates arguments and options passed to Artisan commands.
+ *
+ * @deprecated 1.50.1 — no ptah:* command uses it (ptah:config validates with
+ *             ConfigSchemaValidator), and its vocabulary (`wire|route|url`
+ *             actions, `badge|money` column types) disagrees with
+ *             CrudConfigEnums. Kept for semver; removed in 2.0.
  */
 class CommandInputValidator
 {

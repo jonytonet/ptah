@@ -197,10 +197,9 @@ class ColumnWizard
      */
     protected function askNumberOptions(): array
     {
+        // 1.50.1: no prefix/suffix questions — the `number` renderer never had them.
         return [
             'colsRendererDecimals' => (int) $this->command->ask('Decimal places', 0),
-            'colsRendererPrefix' => $this->command->ask('Prefix', ''),
-            'colsRendererSuffix' => $this->command->ask('Suffix', ''),
         ];
     }
 
@@ -209,9 +208,11 @@ class ColumnWizard
      */
     protected function askLinkOptions(): array
     {
+        // 1.50.1: the keys the `link` renderer reads (it wrote colsRendererLink /
+        // colsRendererTarget, which nothing read).
         return [
-            'colsRendererLink' => $this->command->ask('Link URL pattern (use %field% for field values)'),
-            'colsRendererTarget' => $this->command->choice('Target', ['_self', '_blank'], '_self'),
+            'colsRendererLinkTemplate' => $this->command->ask('Link URL pattern (use %value% or %field% for field values)'),
+            'colsRendererLinkNewTab' => $this->command->confirm('Open in a new tab?', false),
         ];
     }
 
@@ -267,15 +268,17 @@ class ColumnWizard
             }
         }
 
-        // Custom rules
+        // Custom rules — ptah's FormValidatorService rules, not Laravel's
+        // (required is colsRequired; min/max are numeric, minLength/maxLength size).
         if ($this->command->confirm('Add custom validation rules?', false)) {
-            $custom = $this->command->ask('Enter custom Laravel validation rules (e.g., email|unique:users)');
+            $custom = (string) $this->command->ask('Rules separated by | (e.g. minLength:3|unique:products,sku)');
             $rules = array_merge($rules, explode('|', $custom));
         }
 
+        // 1.50.1: colsValidations (plural) is what the form reads; it wrote the
+        // singular, plus a custom message nothing read.
         return [
-            'colsValidation' => array_unique($rules),
-            'colsValidationMessage' => $this->command->ask('Custom validation error message', ''),
+            'colsValidations' => array_values(array_unique(array_filter(array_map('trim', $rules), fn ($r) => $r !== ''))),
         ];
     }
 
@@ -289,11 +292,11 @@ class ColumnWizard
             $this->introspector->suggestRelationName($column['colsNomeFisico'])
         );
 
+        // 1.50.1: the keys the listing reads — the Eloquent relation and the
+        // column shown from it. The table/join-column answers had no reader.
         return [
-            'colsRelation' => $relationName,
-            'colsRelationTable' => $this->command->ask('Related table name'),
-            'colsRelationJoinColumn' => $this->command->ask('Join column (foreign key)', $column['colsNomeFisico']),
-            'colsRelationDisplayColumn' => $this->command->ask('Display column', 'name'),
+            'colsRelacao' => $relationName,
+            'colsRelacaoExibe' => $this->command->ask('Display column of the related model', 'name'),
         ];
     }
 
@@ -340,21 +343,12 @@ class ColumnWizard
      */
     protected function askTotalizerOptions(): array
     {
-        $type = $this->command->choice('Totalizer function', CrudConfigEnums::TOTALIZER_TYPES, 'sum');
-        $format = $this->command->choice('Display format', CrudConfigEnums::TOTALIZER_FORMATS, 'number');
-
-        $config = [
-            'colsTotal' => true,
-            'totalizadorType' => $type,
-            'totalizadorFormat' => $format,
+        // 1.50.1: only the aggregate — ConfigCommand moves it into
+        // `totalizadores.columns`, which is what the footer reads. The format
+        // questions had no effect: the total uses the column's own renderer.
+        return [
+            'totalizadorType' => $this->command->choice('Totalizer function', CrudConfigEnums::TOTALIZER_TYPES, 'sum'),
         ];
-
-        if ($format === 'currency') {
-            $config['totalizadorCurrency'] = $this->command->choice('Currency', CrudConfigEnums::CURRENCIES, 'BRL');
-            $config['totalizadorDecimals'] = (int) $this->command->ask('Decimal places', 2);
-        }
-
-        return $config;
     }
 
     /**

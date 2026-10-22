@@ -96,7 +96,6 @@ class CrudConfigGenerator extends AbstractGenerator
                 'theme' => 'light',
                 'compactMode' => false,
                 'stickyHeader' => true,
-                'showTotalizador' => false,
                 'highlightOnHover' => true,
             ],
         ];
