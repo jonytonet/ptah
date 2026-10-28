@@ -897,8 +897,14 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-dark .ptah-c-act_del { color: var(--color-danger); }
 
 /* ── Empty state ── */
-.ptah-c-empty_box          { background-color: var(--ptah-surface-hover); box-shadow: 0 0 0 6px #f8fafc66, inset 0 0 0 1px #e2e8f0; border-radius: 9999px; }
-.ptah-dark .ptah-c-empty_box { background-color: color-mix(in srgb, var(--ptah-surface-hover) 60%, transparent); box-shadow: 0 0 0 6px rgba(51,65,85,0.25), inset 0 0 0 1px #475569; }
+/* The halo and hairline were literals (#f8fafc66/#e2e8f0, rgba(51,65,85,.25)/#475569):
+   byte-identical to these tokens on the default tone, but frozen on every other
+   one. The glyph was text-slate-400 in the component itself (laudo 1.51.0). */
+.ptah-c-empty_box          { background-color: var(--ptah-surface-hover); box-shadow: 0 0 0 6px color-mix(in srgb, var(--ptah-surface-hover) 40%, transparent), inset 0 0 0 1px var(--ptah-line-strong); border-radius: 9999px; }
+.ptah-dark .ptah-c-empty_box { background-color: color-mix(in srgb, var(--ptah-surface-hover) 60%, transparent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--ptah-surface-hover) 25%, transparent), inset 0 0 0 1px var(--ptah-line-control); }
+
+.ptah-c-empty_icon          { color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-empty_icon { color: var(--ptah-text-muted); }
 
 .ptah-c-empty_ttl          { color: var(--ptah-text); }
 .ptah-dark .ptah-c-empty_ttl { color: var(--ptah-text); }
@@ -1009,8 +1015,17 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 /* ── forge-stat-card: background moves in from forge-dashboard-layout.blade.php's
    <style> (dark-only, #1e293b, byte-identical to --ptah-surface dark — see
    css-layout-ledger.json "migrated"); title/trend-neutral text is new. ── */
-.ptah-stat-card                 { background-color: var(--ptah-surface); }
-.ptah-dark .ptah-stat-card      { background-color: var(--ptah-surface); }
+.ptah-stat-card                 { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
+.ptah-dark .ptah-stat-card      { background-color: var(--ptah-surface); border-color: var(--ptah-line-strong); }
+
+/* The border was border-gray-200 + hover:border-primary/40 in the component.
+   The hover lives here, not as a utility: this file is unlayered and would beat
+   any Tailwind hover:border-* on the same element (laudo 1.51.0). */
+.ptah-stat-card:hover            { border-color: color-mix(in srgb, var(--ptah-primary) 40%, transparent); }
+.ptah-dark .ptah-stat-card:hover { border-color: color-mix(in srgb, var(--ptah-primary) 40%, transparent); }
+
+.ptah-c-stat_value              { color: var(--ptah-text-strong); }
+.ptah-dark .ptah-c-stat_value   { color: var(--ptah-text-strong); }
 
 .ptah-c-stat_muted              { color: var(--ptah-text-faint); }
 .ptah-dark .ptah-c-stat_muted   { color: var(--ptah-text-faint); }
@@ -1030,6 +1045,20 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 
 .ptah-c-tbl_head_row            { background-color: var(--ptah-panel); }
 .ptah-dark .ptah-c-tbl_head_row { background-color: var(--ptah-panel); }
+
+/* forge-table slot mode (1.51.0): the host writes plain <tr><td>, so the cell
+   defaults live here. This file is unlayered and beats Tailwind utilities, so
+   the text colour is set on the tbody and INHERITED — a text-* utility on a td
+   still wins. Padding cannot be inherited: override it with `!px-2`. */
+.ptah-c-ftbl_body                          { color: var(--ptah-text); }
+.ptah-dark .ptah-c-ftbl_body               { color: var(--ptah-text); }
+.ptah-c-ftbl_body > tr > td                { padding: .75rem 1rem; font-size: .875rem; vertical-align: middle; }
+.ptah-c-ftbl_body > tr + tr                { border-top: 1px solid var(--ptah-line); }
+.ptah-dark .ptah-c-ftbl_body > tr + tr     { border-top: 1px solid var(--ptah-line); }
+.ptah-c-ftbl_body > tr:hover               { background-color: var(--ptah-surface-hover); }
+.ptah-dark .ptah-c-ftbl_body > tr:hover    { background-color: var(--ptah-surface-hover); }
+.ptah-c-ftbl_body > tr > td.ptah-c-ftbl_empty { padding: 2rem 1rem; text-align: center; color: var(--ptah-text-muted); }
+.ptah-dark .ptah-c-ftbl_body > tr > td.ptah-c-ftbl_empty { color: var(--ptah-text-muted); }
 
 /* ── forge-avatar: "light" color variant + neutral/offline badge dot.
    primary/success/danger/dark text-white stays (ink on accent). ── */

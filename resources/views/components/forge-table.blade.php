@@ -8,15 +8,59 @@
       - emptyMessage: string
     Slots: actions (botões de ação por linha)
     Requer Alpine.js
+
+    Modo slot (1.51.0): sem a prop `rows`, as linhas vêm do slot —
+    <tr><td> renderizados no servidor, então a célula aceita qualquer
+    componente Blade (<x-forge-button>, badges, links). Nesse modo `rows`,
+    `searchable`, `sortable` e o slot `actions` não se aplicam: busca, ordem
+    e paginação são da tela Livewire. `headers` só dá os rótulos do <thead>.
+    Um slot sem linhas (um @foreach vazio) mostra `emptyMessage`.
+
+        <x-forge-table :headers="[['key' => 'name', 'label' => 'Nome'], ['key' => 'acoes', 'label' => '']]">
+            @foreach ($items as $item)
+                <tr wire:key="item-{{ $item->id }}">
+                    <td>{{ $item->name }}</td>
+                    <td class="text-right"><x-forge-button size="sm" :href="route('items.show', $item)">Abrir</x-forge-button></td>
+                </tr>
+            @endforeach
+        </x-forge-table>
 --}}
 @props([
     'headers'      => [],
-    'rows'         => [],
+    // null = slot mode. Not [] — an empty @foreach leaves the slot empty too,
+    // so "no rows yet" must not flip the table into the client-side mode.
+    'rows'         => null,
     'searchable'   => false,
     'sortable'     => false,
     'emptyMessage' => 'Nenhum registro encontrado.',
 ])
 
+@if ($rows === null)
+<div {{ $attributes->merge(['class' => 'ptah-table-wrapper']) }}>
+    <div class="overflow-x-auto rounded-md border ptah-c-tbl_wrap">
+        <table class="w-full">
+            @if ($headers !== [])
+                <thead>
+                    <tr class="ptah-c-tbl_head_row">
+                        @foreach ($headers as $header)
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold ptah-c-th_text uppercase tracking-wider">{{ $header['label'] ?? '' }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+            @endif
+            <tbody class="ptah-c-tbl_surface ptah-c-ftbl_body">
+                @if ($slot->hasActualContent())
+                    {{ $slot }}
+                @else
+                    <tr>
+                        <td colspan="{{ max(count($headers), 1) }}" class="ptah-c-ftbl_empty">{{ $emptyMessage }}</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+</div>
+@else
 <div
     x-data="{
         search: '',
@@ -141,3 +185,4 @@
         </table>
     </div>
 </div>
+@endif

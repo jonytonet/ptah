@@ -151,8 +151,6 @@
            "forge-stat-card"), la ganhou o par claro que faltava aqui; title/
            trend-neutral tambem migraram para .ptah-c-stat_muted. Ver
            tests/Fixtures/css-layout-ledger.json para a contabilidade site a site. */
-        .ptah-dark .ptah-stat-card .text-dark     { color: #e2e8f0; }
-        .ptah-dark .ptah-stat-card .text-gray-400 { color: #64748b; }
 
         /* ─── Modal ──────────────────────────────────────────── */
         /* .ptah-modal-panel migrado para resources/css/ptah-components.css (secao

@@ -8,6 +8,9 @@
       - rounded : boolean - fully rounded
       - disabled: boolean
       - loading : boolean - shows inline spinner
+      - href    : string - renders an <a> with the same look instead of a <button>
+                  (wire:navigate, target etc. pass through). Disabled or loading
+                  drops the href and sets aria-disabled, so it cannot be followed.
     Slots:
       - default : button text
       - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only
@@ -22,6 +25,7 @@
     'rounded'  => false,
     'disabled' => false,
     'loading'  => false,
+    'href'     => null,
 ])
 
 @php
@@ -145,15 +149,23 @@
     $radiusClass    = $rounded ? 'rounded-full' : 'rounded-md';
     $disabledClass  = $disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
     $baseTransition = 'transition-colors duration-150 active:opacity-80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1';
+
+    $isLink = is_string($href) && $href !== '';
+    $tag = $isLink ? 'a' : 'button';
+    // An <a> has no disabled attribute: without the href it cannot be
+    // followed, and aria-disabled + tabindex keep it out of the tab order.
+    $tagAttributes = $isLink
+        ? (($disabled || $loading)
+            ? ['aria-disabled' => 'true', 'tabindex' => '-1', 'aria-busy' => $loading ? 'true' : false]
+            : ['href' => $href])
+        : ['type' => 'button', 'disabled' => $disabled || $loading ? true : false];
 @endphp
 
-<button
-    {{ $attributes->merge([
-        'type'     => 'button',
+<{{ $tag }}
+    {{ $attributes->merge(array_merge([
         'class'    => "ptah-btn {$ptahColorClass} {$ptahSizeClass} {$ptahShapeClass} inline-flex items-center justify-center font-semibold select-none focus:outline-none
                        {$sizeClass} {$radiusClass} {$variantClass} {$baseTransition} {$disabledClass}",
-        'disabled' => $disabled || $loading ? true : false,
-    ]) }}
+    ], $tagAttributes)) }}
 >
     @if ($loading)
         <svg class="animate-spin h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -167,4 +179,4 @@
     @endif
 
     <span>{{ $slot }}</span>
-</button>
+</{{ $tag }}>
