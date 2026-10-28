@@ -564,6 +564,14 @@ class PtahServiceProvider extends ServiceProvider
             (array) config('boost.mcp.tools.include', []),
             PtahMcpTools::CLASSES,
         )))]);
+
+        // 1.52.0: the same tools as a server of their own, for hosts without
+        // Boost — `php artisan mcp:start ptah`. A string, not ::class: the
+        // class extends laravel/mcp's Server (see PtahServer).
+        $registrar = 'Laravel\Mcp\Server\Registrar';
+        if (class_exists($registrar) && $this->app->bound($registrar)) {
+            $this->app->make($registrar)->local('ptah', 'Ptah\Mcp\PtahServer');
+        }
     }
 
     protected function registerViews(): void

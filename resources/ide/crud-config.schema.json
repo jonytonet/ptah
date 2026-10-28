@@ -1,0 +1,883 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "CRUD Configuration",
+    "description": "Schema for BaseCrud configuration",
+    "type": "object",
+    "properties": {
+        "cols": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "colsNomeFisico"
+                ],
+                "properties": {
+                    "actionColor": {
+                        "type": "string",
+                        "enum": [
+                            "primary",
+                            "success",
+                            "danger",
+                            "warning",
+                            "info",
+                            "secondary"
+                        ]
+                    },
+                    "actionConfirm": {
+                        "type": "boolean"
+                    },
+                    "actionIcon": {
+                        "type": "string",
+                        "description": "Boxicons name, e.g. bx-check"
+                    },
+                    "actionType": {
+                        "type": "string",
+                        "enum": [
+                            "link",
+                            "livewire",
+                            "javascript"
+                        ],
+                        "description": "Row action: what it does (colsTipo \"action\")"
+                    },
+                    "actionValue": {
+                        "type": "string",
+                        "description": "Livewire call, URL or JS; %field% is replaced by the row value"
+                    },
+                    "colsAlign": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsCellClass": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsCellIcon": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsCellStyle": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsCss": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsDefaultValue": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsEditableForm": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsFilterType": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsFormBlock": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsGravar": {
+                        "type": "boolean",
+                        "description": "false: the field is not shown in the form nor saved"
+                    },
+                    "colsHelpText": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsHelper": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsIsFilterable": {
+                        "type": "boolean",
+                        "description": "Offered in the filter panel"
+                    },
+                    "colsMask": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsMaskTransform": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsMetodoCustom": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsMetodoRaw": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsMinWidth": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsNomeFisico": {
+                        "type": "string",
+                        "description": "Database column (or relation path) this column shows and saves"
+                    },
+                    "colsNomeLogico": {
+                        "type": "string",
+                        "description": "Label in the table header and the form"
+                    },
+                    "colsOnChange": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsOperator": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsOrderBy": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsPermission": {
+                        "type": "string",
+                        "description": "Page-object key that gates this column"
+                    },
+                    "colsPlaceholder": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsReadonly": {
+                        "type": "boolean",
+                        "description": "Shown in the form, not editable, not saved"
+                    },
+                    "colsRelacao": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRelacaoBusca": {
+                        "type": [
+                            "string",
+                            "array"
+                        ],
+                        "description": "Real column(s) of the relation to search/filter by text, when colsRelacaoExibe is an accessor. Dotted paths go deeper: \"user.name\""
+                    },
+                    "colsRelacaoExibe": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRelacaoNested": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRenderer": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "badge",
+                            "pill",
+                            "boolean",
+                            "money",
+                            "date",
+                            "datetime",
+                            "link",
+                            "image",
+                            "truncate",
+                            "number",
+                            "filesize",
+                            "duration",
+                            "code",
+                            "color",
+                            "progress",
+                            "rating",
+                            "qrcode"
+                        ],
+                        "description": "How the cell is drawn in the listing"
+                    },
+                    "colsRendererBadges": {
+                        "type": "array",
+                        "description": "Badges: [{\"value\", \"color\", \"label\"}]"
+                    },
+                    "colsRendererBoolFalse": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererBoolTrue": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererColor": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererCurrency": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererDecimals": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererDurationUnit": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererFormat": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererImageHeight": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererImageWidth": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererLinkLabel": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererLinkNewTab": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererLinkTemplate": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererLocale": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererMax": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererMaxChars": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRendererQrSize": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsRequired": {
+                        "type": "boolean",
+                        "description": "Required in the form"
+                    },
+                    "colsReverse": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDArraySearch": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDDependsOn": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDFilterColumn": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDFilters": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDInitWithData": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDLabel": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDLabelField": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDLabelThree": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDLabelTwo": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDLimit": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDMaskOne": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDMaskThree": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDMaskTwo": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDMode": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDModel": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDOrder": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDOrderBy": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDPlaceholder": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDService": {
+                        "type": "string",
+                        "description": "Class implementing Ptah\\Contracts\\SearchDropdownSource"
+                    },
+                    "colsSDServiceMethod": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDStartList": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDTipo": {
+                        "type": "string",
+                        "enum": [
+                            "model",
+                            "service"
+                        ],
+                        "description": "Searchdropdown source"
+                    },
+                    "colsSDValor": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSDValueField": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSdLimit": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSdOrderBy": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSdSelectColumn": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSdTable": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSdValueColumn": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsSearchable": {
+                        "type": "boolean",
+                        "description": "Included in the text search"
+                    },
+                    "colsSelect": {
+                        "type": "object",
+                        "description": "Select options as a label => value map"
+                    },
+                    "colsSource": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsTipo": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "textarea",
+                            "number",
+                            "date",
+                            "datetime",
+                            "select",
+                            "searchdropdown",
+                            "boolean",
+                            "file",
+                            "image",
+                            "color",
+                            "time",
+                            "datetime-local",
+                            "range",
+                            "email",
+                            "url",
+                            "tel",
+                            "password",
+                            "action"
+                        ],
+                        "description": "Form input type (\"action\" for a row-action column)"
+                    },
+                    "colsUploadAllowedTypes": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsUploadMaxSize": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsUploadPath": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsValidations": {
+                        "type": [
+                            "array",
+                            "string"
+                        ],
+                        "description": "Extra form rules, e.g. [\"email\", \"maxLength:255\"] (required is colsRequired)"
+                    },
+                    "colsValue": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
+                    "colsVisibleList": {
+                        "type": "boolean",
+                        "description": "false: hidden in the listing"
+                    }
+                },
+                "propertyNames": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "actionColor",
+                                "actionConfirm",
+                                "actionIcon",
+                                "actionType",
+                                "actionValue",
+                                "colsAlign",
+                                "colsCellClass",
+                                "colsCellIcon",
+                                "colsCellStyle",
+                                "colsCss",
+                                "colsDefaultValue",
+                                "colsEditableForm",
+                                "colsFilterType",
+                                "colsFormBlock",
+                                "colsGravar",
+                                "colsHelpText",
+                                "colsHelper",
+                                "colsIsFilterable",
+                                "colsMask",
+                                "colsMaskTransform",
+                                "colsMetodoCustom",
+                                "colsMetodoRaw",
+                                "colsMinWidth",
+                                "colsNomeFisico",
+                                "colsNomeLogico",
+                                "colsOnChange",
+                                "colsOperator",
+                                "colsOrderBy",
+                                "colsPermission",
+                                "colsPlaceholder",
+                                "colsReadonly",
+                                "colsRelacao",
+                                "colsRelacaoBusca",
+                                "colsRelacaoExibe",
+                                "colsRelacaoNested",
+                                "colsRenderer",
+                                "colsRendererBadges",
+                                "colsRendererBoolFalse",
+                                "colsRendererBoolTrue",
+                                "colsRendererColor",
+                                "colsRendererCurrency",
+                                "colsRendererDecimals",
+                                "colsRendererDurationUnit",
+                                "colsRendererFormat",
+                                "colsRendererImageHeight",
+                                "colsRendererImageWidth",
+                                "colsRendererLinkLabel",
+                                "colsRendererLinkNewTab",
+                                "colsRendererLinkTemplate",
+                                "colsRendererLocale",
+                                "colsRendererMax",
+                                "colsRendererMaxChars",
+                                "colsRendererQrSize",
+                                "colsRequired",
+                                "colsReverse",
+                                "colsSDArraySearch",
+                                "colsSDDependsOn",
+                                "colsSDFilterColumn",
+                                "colsSDFilters",
+                                "colsSDInitWithData",
+                                "colsSDLabel",
+                                "colsSDLabelField",
+                                "colsSDLabelThree",
+                                "colsSDLabelTwo",
+                                "colsSDLimit",
+                                "colsSDMaskOne",
+                                "colsSDMaskThree",
+                                "colsSDMaskTwo",
+                                "colsSDMode",
+                                "colsSDModel",
+                                "colsSDOrder",
+                                "colsSDOrderBy",
+                                "colsSDPlaceholder",
+                                "colsSDService",
+                                "colsSDServiceMethod",
+                                "colsSDStartList",
+                                "colsSDTipo",
+                                "colsSDValor",
+                                "colsSDValueField",
+                                "colsSdLimit",
+                                "colsSdOrderBy",
+                                "colsSdSelectColumn",
+                                "colsSdTable",
+                                "colsSdValueColumn",
+                                "colsSearchable",
+                                "colsSelect",
+                                "colsSource",
+                                "colsTipo",
+                                "colsUploadAllowedTypes",
+                                "colsUploadMaxSize",
+                                "colsUploadPath",
+                                "colsValidations",
+                                "colsValue",
+                                "colsVisibleList"
+                            ]
+                        },
+                        {
+                            "not": {
+                                "pattern": "^cols"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "customFilters": {
+            "type": "array",
+            "description": "Custom filters of the filter panel",
+            "items": {
+                "type": "object",
+                "required": [
+                    "field"
+                ],
+                "properties": {
+                    "field": {
+                        "type": "string",
+                        "description": "Column to filter"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "colsFilterType": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "number",
+                            "date",
+                            "select"
+                        ]
+                    },
+                    "operator": {
+                        "type": "string",
+                        "enum": [
+                            "=",
+                            "!=",
+                            ">",
+                            "<",
+                            ">=",
+                            "<=",
+                            "LIKE"
+                        ]
+                    },
+                    "colsSelect": {
+                        "type": "object",
+                        "description": "Select options as a label => value map"
+                    },
+                    "whereHas": {
+                        "type": "string",
+                        "description": "Relation to filter through"
+                    },
+                    "field_relation": {
+                        "type": "string"
+                    },
+                    "aggregate": {
+                        "type": "string",
+                        "enum": [
+                            "SUM",
+                            "COUNT",
+                            "AVG",
+                            "MAX",
+                            "MIN"
+                        ]
+                    }
+                }
+            }
+        },
+        "contitionStyles": {
+            "type": "array",
+            "description": "Conditional row styles, stored under the `contitionStyles` key",
+            "items": {
+                "type": "object",
+                "anyOf": [
+                    {
+                        "title": "Canonical row style",
+                        "required": [
+                            "field",
+                            "style"
+                        ],
+                        "properties": {
+                            "field": {
+                                "type": "string",
+                                "description": "Column to compare"
+                            },
+                            "condition": {
+                                "type": "string",
+                                "enum": [
+                                    "==",
+                                    "!=",
+                                    ">",
+                                    "<",
+                                    ">=",
+                                    "<=",
+                                    "*"
+                                ],
+                                "description": "Comparison operator; defaults to == when absent"
+                            },
+                            "value": {
+                                "description": "Value to compare against"
+                            },
+                            "style": {
+                                "type": "string",
+                                "description": "Inline CSS declarations or CSS classes to apply to the row"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Legacy row style",
+                        "required": [
+                            "colsNomeFisico",
+                            "colsCss"
+                        ],
+                        "properties": {
+                            "colsNomeFisico": {
+                                "type": "string",
+                                "description": "Column to apply conditional style"
+                            },
+                            "colsOperator": {
+                                "type": "string",
+                                "enum": [
+                                    "eq",
+                                    "ne",
+                                    "lt",
+                                    "gt",
+                                    "lte",
+                                    "gte"
+                                ],
+                                "description": "Comparison operator alias"
+                            },
+                            "colsValue": {
+                                "description": "Value to compare against"
+                            },
+                            "colsCss": {
+                                "type": "string",
+                                "description": "CSS classes to apply"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "joins": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "table",
+                    "first",
+                    "second"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "left",
+                            "inner"
+                        ],
+                        "description": "JOIN type (default left)"
+                    },
+                    "table": {
+                        "type": "string",
+                        "description": "Table to join"
+                    },
+                    "first": {
+                        "type": "string",
+                        "description": "Left side of ON, e.g. products.supplier_id"
+                    },
+                    "second": {
+                        "type": "string",
+                        "description": "Right side of ON, e.g. suppliers.id"
+                    },
+                    "distinct": {
+                        "type": "boolean"
+                    },
+                    "select": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "column"
+                            ],
+                            "properties": {
+                                "column": {
+                                    "type": "string",
+                                    "description": "e.g. suppliers.name"
+                                },
+                                "alias": {
+                                    "type": "string",
+                                    "description": "e.g. supplier_name"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "permissions": {
+            "type": "object",
+            "properties": {
+                "create": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to create"
+                },
+                "edit": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to edit"
+                },
+                "delete": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to delete"
+                },
+                "restore": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to restore"
+                },
+                "export": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to export"
+                },
+                "import": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to import"
+                },
+                "history": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to see the history"
+                },
+                "attachments": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Gate name checked with can() to manage attachments"
+                },
+                "showCreateButton": {
+                    "type": "boolean"
+                },
+                "showEditButton": {
+                    "type": "boolean"
+                },
+                "showDeleteButton": {
+                    "type": "boolean"
+                },
+                "showTrashButton": {
+                    "type": "boolean"
+                },
+                "permissionIdentifier": {
+                    "type": "string",
+                    "description": "ACL key of the Permissions module (gates nothing while it is off)"
+                },
+                "identifier": {
+                    "deprecationMessage": "Never read: the runtime reads \"permissionIdentifier\" — this screen is NOT gated. `php artisan ptah:config:doctor --fix` migrates it."
+                }
+            }
+        },
+        "uiPreferences": {
+            "type": "object",
+            "properties": {
+                "perPage": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Rows per page"
+                },
+                "compactMode": {
+                    "type": "boolean"
+                },
+                "stickyHeader": {
+                    "type": "boolean"
+                },
+                "highlightOnHover": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "exportConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "asyncThreshold": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Above this many rows the export is queued"
+                },
+                "maxRows": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "orientation": {
+                    "type": "string",
+                    "enum": [
+                        "landscape",
+                        "portrait"
+                    ]
+                },
+                "formats": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "excel",
+                            "pdf"
+                        ]
+                    }
+                },
+                "chunkSize": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "bulkActions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "label",
+                    "action"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "\"Class@key\": the class implements Ptah\\Contracts\\BulkActionHandler; the key is handed to it"
+                    }
+                }
+            }
+        },
+        "displayName": {
+            "type": "string",
+            "description": "Screen title"
+        },
+        "actions": {
+            "type": "array",
+            "deprecationMessage": "Never read: a row action is a column in \"cols\" with colsTipo \"action\" (actionType, actionValue, actionIcon…). `php artisan ptah:config:doctor --fix` moves these.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "colsNomeLogico",
+                    "colsTipo"
+                ],
+                "properties": {
+                    "colsNomeLogico": {
+                        "type": "string",
+                        "description": "Action name/identifier"
+                    },
+                    "colsTipo": {
+                        "type": "string",
+                        "enum": [
+                            "link",
+                            "livewire",
+                            "javascript"
+                        ],
+                        "description": "Action type"
+                    }
+                }
+            }
+        },
+        "filters": {
+            "type": "array",
+            "deprecationMessage": "Never read: custom filters live in \"customFilters\". `php artisan ptah:config:doctor --fix` migrates them."
+        },
+        "general": {
+            "type": "object",
+            "deprecationMessage": "Never read. itemsPerPage → uiPreferences.perPage, exportEnabled → exportConfig.enabled; cacheEnabled, cacheTime, cacheTtl, paginationEnabled… do not exist."
+        },
+        "styles": {
+            "deprecationMessage": "Never read: row styles live in \"contitionStyles\". `php artisan ptah:config:doctor --fix` migrates them."
+        }
+    },
+    "additionalProperties": true
+}

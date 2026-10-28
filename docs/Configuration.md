@@ -386,7 +386,7 @@ migration, not a schema tweak.
 
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
-| `mcp_tools` | `PTAH_MCP_TOOLS` | `true` | Adds ptah's read-only agent tools to Laravel Boost's MCP server when `laravel/boost` is installed; nothing happens without it — [AgentTools.md](AgentTools.md) |
+| `mcp_tools` | `PTAH_MCP_TOOLS` | `true` | Adds ptah's read-only agent tools to Laravel Boost's MCP server, and (1.52.0) registers them as a `ptah` MCP server of their own (`php artisan mcp:start ptah`) — both only when `laravel/mcp` is installed; nothing happens without it — [AgentTools.md](AgentTools.md) |
 | `intentional_overrides` | — | `[]` | Published views you keep on purpose (relative to `resources/views/vendor/ptah`); `ptah:upgrade-check` lists them as information instead of an action |
 | `attachments.disk` | `PTAH_ATTACHMENTS_DISK` | `local` | Disk of record attachments (`HasAttachments`) — keep it private. See [BaseCrud.md](BaseCrud.md) |
 | `attachments.max_kb` | `PTAH_ATTACHMENTS_MAX_KB` | `10240` | Per-file size limit |

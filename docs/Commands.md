@@ -545,6 +545,16 @@ a class-based hook outside `ptah.crud.hook_namespaces` (**error** — it never r
 a service-mode searchdropdown whose class does not implement `SearchDropdownSource`
 (**error**); a bulk action whose handler does not implement `BulkActionHandler` (**error**).
 
+**A config that is not saved yet (1.52.0)** — the same checks on one JSON, without
+touching the database. For a config written by hand (or by an agent) before it is
+imported; `--fix` is refused in this mode.
+
+```bash
+php artisan ptah:config:doctor --file=product.json --model=Product
+php artisan ptah:config:doctor --file=database/ptah/crud-configs/Product.json   # export envelope: model comes from it
+php artisan ptah:config:doctor --config='{"cols":[...]}' --model=Product --route=admin.products
+```
+
 ## ptah:config:export-all / import-all
 
 Version and rebuild the **whole** config set (the configs live only in the DB).

@@ -7,6 +7,41 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.52.0] - 2026-10-28
+
+Agent and editor support: more MCP tools, a server that works without Boost,
+and the files the new ptah VS Code extension reads.
+
+### Added
+
+- `ptah:config:doctor --file=x.json` / `--config='{…}'` (with `--model`,
+  `--route`): the doctor's full audit on a config that is NOT saved — for a
+  config written by hand or by an agent, before it is imported. An export
+  envelope (`{model, route, config}`) carries its own model. `--fix` is refused
+  in this mode.
+- `ptah:docs --search="column permission"`: the best-matching sections of the
+  docs shipped with the installed version (accents and case ignored).
+- MCP tools `ptah-doctor` (read-only, never `--fix`) and `ptah-validate-config`
+  (the audit above, nothing saved); `ptah-docs` takes `search`.
+- A `ptah` MCP server of its own for hosts without Laravel Boost
+  (`php artisan mcp:start ptah`, needs `laravel/mcp`); with Boost the tools
+  still ride on Boost's server. `PTAH_MCP_TOOLS=false` turns both off.
+- `resources/ide/` — the JSON schemas of a config and of an export file, and a
+  manifest of every `<x-forge-*>` component with its props, generated from the
+  code and guarded by a drift test. The VS Code extension reads them from
+  `vendor/`, so it always matches the installed version.
+
+### Fixed - the published config schema described a config nobody writes
+
+`JsonSchemaBuilder` listed 12 of the ~90 column keys (two of them not read by
+anything), described joins as `colsTable`/`colsOn` and permissions as
+`canCreate`/`canEdit` — neither is the runtime's shape — and presented
+`actions`, `filters` and `general` as live sections. It now lists every column
+key the runtime reads and flags an unknown `cols*` key, uses the runtime's
+shapes for joins and permissions, describes `customFilters`, `uiPreferences`,
+`exportConfig` and `bulkActions`, and marks the unread sections with a
+`deprecationMessage` saying where their content belongs.
+
 ## [1.51.0] - 2026-10-28
 
 From a host laudo on the `forge-*` components.

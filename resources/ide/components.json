@@ -1,0 +1,745 @@
+{
+    "version": 1,
+    "components": {
+        "forge-alert": {
+            "tag": "x-forge-alert",
+            "doc": "forge-alert — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark  (default: primary)\n  - closable: boolean - shows a close button\n  - title   : string - optional title\nRequires Alpine.js",
+            "props": [
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "closable",
+                    "default": "false"
+                },
+                {
+                    "name": "title",
+                    "default": "''"
+                },
+                {
+                    "name": "type",
+                    "default": "null"
+                },
+                {
+                    "name": "dismissible",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-avatar": {
+            "tag": "x-forge-avatar",
+            "doc": "forge-avatar — Ptah Forge\nProps:\n  - src          : image URL\n  - alt          : string\n  - size         : xs | sm | md | lg | xl  (default: md)\n  - color        : primary | success | danger | warn | dark | light\n  - text         : initials when no image is provided\n  - badgeColor   : online | offline | busy | primary | success | danger | warn\n  - badgePosition: top-right | bottom-right  (default: bottom-right)",
+            "props": [
+                {
+                    "name": "src",
+                    "default": "null"
+                },
+                {
+                    "name": "alt",
+                    "default": "''"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "text",
+                    "default": "''"
+                },
+                {
+                    "name": "badgeColor",
+                    "default": "null"
+                },
+                {
+                    "name": "badgePosition",
+                    "default": "'bottom-right'"
+                }
+            ]
+        },
+        "forge-badge": {
+            "tag": "x-forge-badge",
+            "doc": "forge-badge — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark | light  (default: danger)\n  - position: top-right | top-left | bottom-right | bottom-left\n  - value   : string | number\n  - dot     : boolean - dot indicator only, no value",
+            "props": [
+                {
+                    "name": "color",
+                    "default": "'danger'"
+                },
+                {
+                    "name": "position",
+                    "default": "'top-right'"
+                },
+                {
+                    "name": "value",
+                    "default": "''"
+                },
+                {
+                    "name": "dot",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-breadcrumb": {
+            "tag": "x-forge-breadcrumb",
+            "doc": "forge-breadcrumb — Ptah Forge\nProps:\n  - items    : array [ ['url' => '...', 'label' => '...'], ... ]\n  - separator: string  (default: '/')",
+            "props": [
+                {
+                    "name": "items",
+                    "default": "[]"
+                },
+                {
+                    "name": "separator",
+                    "default": "'/'"
+                }
+            ]
+        },
+        "forge-button": {
+            "tag": "x-forge-button",
+            "doc": "forge-button — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark | light  (default: primary)\n  - size    : sm | md | lg  (default: md)\n  - flat    : boolean - transparent background\n  - relief  : boolean - solid appearance without shadow\n  - rounded : boolean - fully rounded\n  - disabled: boolean\n  - loading : boolean - shows inline spinner\n  - href    : string - renders an <a> with the same look instead of a <button>\n              (wire:navigate, target etc. pass through). Disabled or loading\n              drops the href and sets aria-disabled, so it cannot be followed.\nSlots:\n  - default : button text\n  - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only\n              trusted, developer-authored markup (e.g. an <svg>). Never feed it\n              user-controlled data, which would enable XSS.",
+            "props": [
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                },
+                {
+                    "name": "flat",
+                    "default": "false"
+                },
+                {
+                    "name": "relief",
+                    "default": "false"
+                },
+                {
+                    "name": "rounded",
+                    "default": "false"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                },
+                {
+                    "name": "loading",
+                    "default": "false"
+                },
+                {
+                    "name": "href",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-card": {
+            "tag": "x-forge-card",
+            "doc": "forge-card — Ptah Forge\nProps:\n  - type     : default | primary | success | danger | warn | dark\n  - flat     : boolean - sem sombra\n  - hoverable: boolean - hover elevation effect\nSlots: header, default, footer, img",
+            "props": [
+                {
+                    "name": "type",
+                    "default": "'default'"
+                },
+                {
+                    "name": "flat",
+                    "default": "false"
+                },
+                {
+                    "name": "hoverable",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-chart-card": {
+            "tag": "x-forge-chart-card",
+            "doc": "forge-chart-card — Ptah Forge\nProps:\n  - title   : string\n  - subtitle: string\n  - color   : primary | success | danger | warn | dark\nSlots: header, legend, default, footer",
+            "props": [
+                {
+                    "name": "title",
+                    "default": "null"
+                },
+                {
+                    "name": "subtitle",
+                    "default": "null"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                }
+            ]
+        },
+        "forge-checkbox": {
+            "tag": "x-forge-checkbox",
+            "doc": "forge-checkbox — Ptah Forge\nProps:\n  - label   : string\n  - color   : primary | success | danger | warn  (default: primary)\n  - checked : boolean\n  - disabled: boolean",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "null"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "checked",
+                    "default": "false"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-dashboard-layout": {
+            "tag": "x-forge-dashboard-layout",
+            "doc": "forge-dashboard-layout — Ptah Forge\nFull layout component for dashboard:\n  sidebar + navbar + main content\nProps:\n  - appName : string\n  - logoUrl : string\n  - title   : string\n  - logoutAction : string|null  \"Sair\" da sidebar e da navbar (outra identidade/guard)\n  - profileUrl   : string|null  \"Perfil\" da navbar (outra identidade/guard)\n    Automatic behaviours:\n        - Dark mode based on app preference (class based)\n  - Sidebar collapse/expand persisted in localStorage\nUsage:\n  <x-forge-dashboard-layout>\n      <x-slot:title>Dashboard</x-slot:title>\n      <p>Your content here</p>\n  </x-forge-dashboard-layout>",
+            "props": [
+                {
+                    "name": "appName",
+                    "default": "config('app.name', 'Ptah')"
+                },
+                {
+                    "name": "logoUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "logoutAction",
+                    "default": "null"
+                },
+                {
+                    "name": "profileUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "title",
+                    "default": "null"
+                },
+                {
+                    "name": "theme",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-empty": {
+            "tag": "x-forge-empty",
+            "doc": "forge-empty — Ptah Forge\n\nGeneric empty state for custom screens outside the BaseCrud table (which\nalready has its own — see _table.blade.php's `@empty` branch, now built on\ntop of this same component so both stay visually identical).\n\nProps:\n  - title       : string (optional)\n  - description : string (optional)\nSlots:\n  - icon : optional custom icon markup (defaults to a generic \"no data\" glyph)\n  - cta  : optional call-to-action (button/link) rendered below the copy\n\nTokenized (.ptah-c-empty_box/_ttl/_sub, same tokens the BaseCrud table\nempty state already used) and density-agnostic: every size/spacing here\nis a relative Tailwind utility (rem-based), so it follows whatever\nfont-size/density the user picked in /profile without a recipe of its own.\n\nUsage:\n    <x-forge-empty\n        :title=\"__('No records yet')\"\n        :description=\"__('Create the first one to get started.')\">\n        <x-slot:icon>\n            <svg class=\"w-8 h-8 ptah-c-empty_icon\" ...></svg>\n        </x-slot:icon>\n        <x-slot:cta>\n            <x-forge-button color=\"primary\" wire:click=\"create\">New</x-forge-button>\n        </x-slot:cta>\n    </x-forge-empty>",
+            "props": [
+                {
+                    "name": "title",
+                    "default": "''"
+                },
+                {
+                    "name": "description",
+                    "default": "''"
+                }
+            ]
+        },
+        "forge-input": {
+            "tag": "x-forge-input",
+            "doc": "forge-input — Ptah Forge\nProps:\n  - label      : string (label acima do campo)\n  - placeholder: string\n  - type       : text | email | password | number | date | ...  (default: text)\n  - state      : normal | success | danger | warn\n  - iconAfter  : HTML string — rendered raw (unescaped). SECURITY: pass only\n                 trusted, developer-authored markup (e.g. an <svg>). NEVER\n                 pass user-controlled data here — it would enable XSS.\n  - iconBefore : HTML string — rendered raw (unescaped). Same warning as iconAfter.\n  - disabled   : boolean\n  - loading    : boolean\n  - message    : string\n  - required   : boolean\n  - error      : string|null  (overrides state to danger and shows message)\n  - value      : consumed internally (not leaked to $attributes)\n  - name       : consumed internally (not leaked to $attributes)",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "''"
+                },
+                {
+                    "name": "placeholder",
+                    "default": "''"
+                },
+                {
+                    "name": "type",
+                    "default": "'text'"
+                },
+                {
+                    "name": "state",
+                    "default": "'normal'"
+                },
+                {
+                    "name": "iconAfter",
+                    "default": "null"
+                },
+                {
+                    "name": "iconBefore",
+                    "default": "null"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                },
+                {
+                    "name": "loading",
+                    "default": "false"
+                },
+                {
+                    "name": "message",
+                    "default": "''"
+                },
+                {
+                    "name": "required",
+                    "default": "false"
+                },
+                {
+                    "name": "error",
+                    "default": "null"
+                },
+                {
+                    "name": "value",
+                    "default": "null"
+                },
+                {
+                    "name": "name",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-list": {
+            "tag": "x-forge-list",
+            "doc": "forge-list — Ptah Forge\nProps:\n  - items: array [ ['avatar','name','description','badge','value'] ]",
+            "props": [
+                {
+                    "name": "items",
+                    "default": "[]"
+                }
+            ]
+        },
+        "forge-modal": {
+            "tag": "x-forge-modal",
+            "doc": "forge-modal — Ptah Forge\nProps:\n  - title    : string\n  - subtitle : string|null  (opcional, renderiza abaixo do título)\n  - size     : sm | md | lg | xl | 2xl | full  (default: md)\nSlots: default, footer\nModo dual (aditivo, retrocompatível):\n  (a) Escopo do pai — o pai declara o x-data e o modal apenas lê \"open\":\n      <div x-data=\"{ open: false }\">\n          <x-forge-button @click=\"open = true\">Abrir</x-forge-button>\n          <x-forge-modal title=\"Título\" subtitle=\"Subtítulo opcional\">\n              Content\n              <x-slot:footer>\n                  <x-forge-button color=\"light\" @click=\"open = false\">Cancelar</x-forge-button>\n                  <x-forge-button>Salvar</x-forge-button>\n              </x-slot:footer>\n          </x-forge-modal>\n      </div>\n  (b) Self-contained via wire:model — o próprio modal declara o x-data com\n      @entangle, sem exigir um wrapper no pai (suporta modificadores, ex.: .live):\n      <x-forge-button wire:click=\"$set('showX', true)\">Abrir</x-forge-button>\n      <x-forge-modal wire:model=\"showX\" title=\"Título\">\n          Content\n          <x-slot:footer>\n              <x-forge-button color=\"light\" wire:click=\"$set('showX', false)\">Cancelar</x-forge-button>\n              <x-forge-button wire:click=\"save\">Salvar</x-forge-button>\n          </x-slot:footer>\n      </x-forge-modal>\n      (no Livewire component: public bool $showX = false;)\n  ATENÇÃO: os modos (a) e (b) são mutuamente exclusivos. NÃO envolva o modo\n  wire:model num wrapper <div x-data=\"{ open: ... }\"> do pai — o x-data mais\n  interno (o do próprio modal) vence no Alpine, e o \"open\" do wrapper do pai\n  fica sem efeito, silenciosamente. Use ou (a) ou (b), nunca os dois juntos.\nRequires Alpine.js",
+            "props": [
+                {
+                    "name": "title",
+                    "default": "''"
+                },
+                {
+                    "name": "subtitle",
+                    "default": "null"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                }
+            ]
+        },
+        "forge-navbar": {
+            "tag": "x-forge-navbar",
+            "doc": "forge-navbar — Ptah Forge\nProps:\n  - appName: string\n  - logoUrl: string\n  - sticky : boolean  (default: true)\n  - logoutAction: string|null  acao do \"Sair\" (default: logout do modulo auth do ptah)\n  - profileUrl  : string|null  link \"Perfil\" (default: perfil do modulo auth do ptah)\nSlots: brand, actions\nRequires Alpine.js — emits 'toggle-sidebar' event\nDark mode: reacts to .ptah-dark class on ancestor (forge-dashboard-layout)",
+            "props": [
+                {
+                    "name": "appName",
+                    "default": "config('app.name', 'Ptah')"
+                },
+                {
+                    "name": "logoUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "logoDarkUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "sticky",
+                    "default": "true"
+                },
+                {
+                    "name": "logoutAction",
+                    "default": "null"
+                },
+                {
+                    "name": "profileUrl",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-notification": {
+            "tag": "x-forge-notification",
+            "doc": "forge-notification — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark  (default: primary)\n  - title   : string\n  - text    : string\n  - position: top-right | top-left | bottom-right | bottom-left  (default: top-right)\n  - duration: int ms — 0 to disable auto-close  (default: 4000)\nUso:\n  <div x-data=\"{ show: false }\">\n      <x-forge-button @click=\"show = true\">Notificar</x-forge-button>\n      <x-forge-notification title=\"Sucesso!\" text=\"Mensagem\" color=\"success\"\n          x-bind:show=\"show\" @close=\"show = false\" />\n  </div>\nRequer Alpine.js",
+            "props": [
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "title",
+                    "default": "''"
+                },
+                {
+                    "name": "text",
+                    "default": "''"
+                },
+                {
+                    "name": "position",
+                    "default": "'top-right'"
+                },
+                {
+                    "name": "duration",
+                    "default": "4000"
+                }
+            ]
+        },
+        "forge-page-header": {
+            "tag": "x-forge-page-header",
+            "doc": "forge-page-header — Ptah Forge\nProps:\n  - title    : string  - main page title (required)\n  - subtitle : string  - subtitle / description (optional)\n  - back     : string  - URL for back button (optional)\nSlots: default (right-side actions, e.g. buttons)",
+            "props": [
+                {
+                    "name": "title",
+                    "default": "''"
+                },
+                {
+                    "name": "subtitle",
+                    "default": "null"
+                },
+                {
+                    "name": "back",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-pagination": {
+            "tag": "x-forge-pagination",
+            "doc": "forge-pagination — Ptah Forge\nPagination view compatible with $paginator->links('ptah::components.forge-pagination').\nVariables injected by Laravel LengthAwarePaginator:\n  - $paginator : LengthAwarePaginator\n  - $elements  : array (page numbers or \"...\")\n\nOs botoes chamam os metodos do trait `Livewire\\WithPagination`\n(gotoPage / nextPage / previousPage) — NAO `$set('page', N)`.\n\nO `$set` estava errado de um jeito que so aparece quando existe uma segunda\npagina: `WithPagination` nao declara propriedade publica `page`. Ele guarda o\nestado em `public $paginators = []` e expoe metodos. Entao `$set('page', 2)`\ncaia em `HandleComponents::updateProperty`, que rejeita qualquer propriedade\nque nao esteja em `getPublicPropertiesDefinedOnSubclass`, e o request do\nLivewire terminava em `PublicPropertyNotFoundException` — HTTP 500.\n\nNao era defeito de uma tela: esta view e a unica paginacao do pacote, usada\npor 11 telas. Foi reportado no menu porque e a primeira listagem que passa de\n20 registros numa instalacao nova (o `ptah:menu-sync` enche a tabela). O\nproprio base-crud.blade.php ja declarava\n`wire:target=\"...,gotoPage,nextPage,previousPage,...\"` no indicador de\ncarregamento, ou seja, o resto do pacote sempre assumiu estes nomes.\n\nO nome da pagina vem do paginator para que duas listagens paginadas na mesma\ntela (page-list) andem de forma independente.",
+            "props": []
+        },
+        "forge-progress": {
+            "tag": "x-forge-progress",
+            "doc": "forge-progress — Ptah Forge\nProps:\n  - value   : 0–100  (default: 0)\n  - color   : primary | success | danger | warn | dark  (default: primary)\n  - size    : sm | md | lg | xl  (default: md)\n  - label   : boolean - shows percentage\n  - animated: boolean - animation pulse",
+            "props": [
+                {
+                    "name": "value",
+                    "default": "0"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                },
+                {
+                    "name": "label",
+                    "default": "false"
+                },
+                {
+                    "name": "animated",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-radio": {
+            "tag": "x-forge-radio",
+            "doc": "forge-radio — Ptah Forge\nProps:\n  - label   : string\n  - color   : primary | success | danger | warn  (default: primary)\n  - value   : string\n  - name    : string\n  - disabled: boolean",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "null"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "value",
+                    "default": "''"
+                },
+                {
+                    "name": "name",
+                    "default": "''"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-select": {
+            "tag": "x-forge-select",
+            "doc": "forge-select — Ptah Forge\nProps:\n  - label      : string (label above the field)\n  - options    : array [ ['value' => '', 'label' => ''], ... ]\n  - placeholder: string  (default: __('ptah::ui.select_placeholder') — 'Selecione...' / 'Select...')\n  - multiple   : boolean\n  - disabled   : boolean\n  - required   : boolean\n  - error      : string|null  (overrides state to danger)\n  - selected   : mixed|null   (initial value; se omitido e houver\n                 wire:model[.mod], é semeado da propriedade Livewire\n                 correspondente — dot-path suportado, ex. \"filters.kind\")\n  - name       : consumed internally\n  - searchable : boolean (default false). Adds a client-side filter input\n                 at the top of the dropdown; matching is case/accent-\n                 insensitive (NFD-strip diacritics). Arrow-key navigation\n                 visits only the currently-matching options. Every new\n                 property/method below is emitted ONLY when this prop is\n                 true — a consumer that never sets it gets byte-identical\n                 markup to before (see ForgeSelectSearchableTest).\n\nLIMITAÇÃO CONHECIDA: `multiple` não é suportado com wire:model (a ponte\nhidden envia string JSON, não array) — nenhum call site do pacote combina\nos dois hoje.\nRequires Alpine.js",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "''"
+                },
+                {
+                    "name": "options",
+                    "default": "[]"
+                },
+                {
+                    "name": "placeholder",
+                    "default": "null"
+                },
+                {
+                    "name": "multiple",
+                    "default": "false"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                },
+                {
+                    "name": "required",
+                    "default": "false"
+                },
+                {
+                    "name": "error",
+                    "default": "null"
+                },
+                {
+                    "name": "selected",
+                    "default": "null"
+                },
+                {
+                    "name": "name",
+                    "default": "null"
+                },
+                {
+                    "name": "searchable",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-sidebar": {
+            "tag": "x-forge-sidebar",
+            "doc": "forge-sidebar — Ptah Forge\nProps:\n  - appName: string\n  - logoUrl: string\n  - items  : array de menu items (sobreescreve config ptah.forge.sidebar_items)\n             ['label', 'url', 'icon', 'match', 'children'?]\nComportamentos:\n  - Collapse/expand no desktop (icon-only) — estado persistido em localStorage (ptah_sidebar_collapsed)\n  - Dark mode via classe .ptah-dark no ancestral (forge-dashboard-layout)\n  - Mobile: overlay + deslize lateral via evento 'toggle-sidebar'\n  - Ícones: classes CSS Boxicons (bx bx-home, bx bxs-gear…) ou FontAwesome (fas fa-user, fab fa-…)\n  - driver=database: inicia com Dashboard fixo; grupos rendem como acordeon Alpine",
+            "props": [
+                {
+                    "name": "appName",
+                    "default": "config('app.name', 'Ptah')"
+                },
+                {
+                    "name": "logoUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "logoDarkUrl",
+                    "default": "null"
+                },
+                {
+                    "name": "items",
+                    "default": "null"
+                },
+                {
+                    "name": "logoutAction",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-skeleton": {
+            "tag": "x-forge-skeleton",
+            "doc": "forge-skeleton — Ptah Forge\n\nLoading placeholder for custom screens outside the BaseCrud table (which\nalready has its own thin loading bar — see _table.blade.php).\n\nProps:\n  - variant : text | title | avatar | card | table-row  (default: text)\n  - count   : int, how many lines to repeat when variant=\"text\" (default: 1)\n\nTokenized (.ptah-c-skel / .ptah-c-skel_card) and animated with Tailwind's\n`animate-pulse`, which the package's global `prefers-reduced-motion` rule\n(ptah-components.css) already freezes for anyone who asked for less\nmotion — nothing to opt into here.\n\nUsage:\n    <x-forge-skeleton variant=\"title\" />\n    <x-forge-skeleton variant=\"text\" :count=\"3\" />\n    <x-forge-skeleton variant=\"avatar\" />\n    <x-forge-skeleton variant=\"card\" />\n    <x-forge-skeleton variant=\"table-row\" />",
+            "props": [
+                {
+                    "name": "variant",
+                    "default": "'text'"
+                },
+                {
+                    "name": "count",
+                    "default": "1"
+                }
+            ]
+        },
+        "forge-spinner": {
+            "tag": "x-forge-spinner",
+            "doc": "forge-spinner — Ptah Forge\nProps:\n  - color: primary | success | danger | warn | dark | light | white  (default: primary)\n  - size : sm | md | lg  (default: md)\n  - type : circle | dots | wave  (default: circle)",
+            "props": [
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                },
+                {
+                    "name": "type",
+                    "default": "'circle'"
+                }
+            ]
+        },
+        "forge-stat-card": {
+            "tag": "x-forge-stat-card",
+            "doc": "forge-stat-card — Ptah Forge\nProps:\n  - title     : string\n  - value     : string\n  - icon      : HTML raw string\n  - color     : primary | success | danger | warn | dark  (default: primary)\n  - trend     : string (+5% / -2%)\n  - trendLabel: string",
+            "props": [
+                {
+                    "name": "title",
+                    "default": "'Metric'"
+                },
+                {
+                    "name": "value",
+                    "default": "'0'"
+                },
+                {
+                    "name": "icon",
+                    "default": "null"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "trend",
+                    "default": "null"
+                },
+                {
+                    "name": "trendLabel",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-stepper": {
+            "tag": "x-forge-stepper",
+            "doc": "forge-stepper — Ptah Forge\nProps:\n  - steps      : array [ ['label' => '', 'description' => ''], ... ]\n  - currentStep: int  (default: 1)\n  - color      : primary | success | warn  (default: primary)",
+            "props": [
+                {
+                    "name": "steps",
+                    "default": "[]"
+                },
+                {
+                    "name": "currentStep",
+                    "default": "1"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                }
+            ]
+        },
+        "forge-switch": {
+            "tag": "x-forge-switch",
+            "doc": "forge-switch — Ptah Forge\nProps:\n  - label   : string\n  - color   : primary | success | danger | warn  (default: primary)\n  - checked : boolean\n  - disabled: boolean\n  - size    : sm | md | lg  (default: md)\nRequires Alpine.js",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "null"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "checked",
+                    "default": "false"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                },
+                {
+                    "name": "size",
+                    "default": "'md'"
+                }
+            ]
+        },
+        "forge-tab": {
+            "tag": "x-forge-tab",
+            "doc": "forge-tab — Ptah Forge\nSub-componente de <x-forge-tabs> (slot \"tabs\").\nProps:\n  - key    : string  - tab identifier (informational, not applied by this component)\n  - active : bool    - whether this tab is selected\n  - color  : primary | success | danger | warn (default: primary)\nAccepts any extra attributes (wire:click, @click, etc.)",
+            "props": [
+                {
+                    "name": "key",
+                    "default": "''"
+                },
+                {
+                    "name": "active",
+                    "default": "false"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                }
+            ]
+        },
+        "forge-table": {
+            "tag": "x-forge-table",
+            "doc": "forge-table — Ptah Forge\nProps:\n  - headers     : array [ ['key' => '', 'label' => ''], ... ]\n  - rows        : array de objetos/arrays\n  - searchable  : boolean - busca client-side Alpine\n  - sortable    : boolean - ordenação client-side Alpine\n  - emptyMessage: string\nSlots: actions (botões de ação por linha)\nRequer Alpine.js\n\nModo slot (1.51.0): sem a prop `rows`, as linhas vêm do slot —\n<tr><td> renderizados no servidor, então a célula aceita qualquer\ncomponente Blade (<x-forge-button>, badges, links). Nesse modo `rows`,\n`searchable`, `sortable` e o slot `actions` não se aplicam: busca, ordem\ne paginação são da tela Livewire. `headers` só dá os rótulos do <thead>.\nUm slot sem linhas (um @foreach vazio) mostra `emptyMessage`.\n\n    <x-forge-table :headers=\"[['key' => 'name', 'label' => 'Nome'], ['key' => 'acoes', 'label' => '']]\">\n        @foreach ($items as $item)\n            <tr wire:key=\"item-{{ $item->id }}\">\n                <td>{{ $item->name }}</td>\n                <td class=\"text-right\"><x-forge-button size=\"sm\" :href=\"route('items.show', $item)\">Abrir</x-forge-button></td>\n            </tr>\n        @endforeach\n    </x-forge-table>",
+            "props": [
+                {
+                    "name": "headers",
+                    "default": "[]"
+                },
+                {
+                    "name": "rows",
+                    "default": "null"
+                },
+                {
+                    "name": "searchable",
+                    "default": "false"
+                },
+                {
+                    "name": "sortable",
+                    "default": "false"
+                },
+                {
+                    "name": "emptyMessage",
+                    "default": "'Nenhum registro encontrado.'"
+                }
+            ]
+        },
+        "forge-tabs": {
+            "tag": "x-forge-tabs",
+            "doc": "forge-tabs — Ptah Forge\n\nModo 1 — Slot (Livewire): estado de aba gerenciado externamente.\n  <x-forge-tabs>\n      <x-slot name=\"tabs\">\n          <x-forge-tab key=\"foo\" :active=\"$activeTab === 'foo'\" wire:click=\"$set('activeTab','foo')\">Foo</x-forge-tab>\n      </x-slot>\n      @if($activeTab === 'foo') ... @endif\n  </x-forge-tabs>\n\nModo 2 — Array (Alpine): estado de aba gerenciado internamente.\n  <x-forge-tabs :tabs=\"[['id'=>'a','label'=>'A','slot'=>'...'],...]\" />\n\nProps:\n  - tabs      : array [ ['id' => '', 'label' => '', 'slot' => ''], ... ]  (Modo 2)\n                O identificador de cada item é `id` (ou `key`, como alias);\n                se nenhum for informado, cai para \"tab-{índice}\".\n  - color     : primary | success | danger | warn  (default: primary)\n  - defaultTab: string (initial tab id, Mode 2) — deve casar com o `id`\n                já normalizado (o alias `key` ou o fallback \"tab-{índice}\");\n                se não casar, nenhuma aba abre por padrão (comportamento\n                pré-existente, não alterado por esta normalização).",
+            "props": [
+                {
+                    "name": "tabs",
+                    "default": "[]"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "defaultTab",
+                    "default": "null"
+                }
+            ]
+        },
+        "forge-textarea": {
+            "tag": "x-forge-textarea",
+            "doc": "forge-textarea — Ptah Forge\nProps:\n  - label    : string\n  - placeholder: string\n  - rows     : int  (default: 4)\n  - color    : primary | success | danger | warn  (default: primary)\n  - state    : normal | success | danger | warn\n  - disabled : boolean\n  - helper   : string\n  - maxlength: int\n  - counter  : boolean - shows character counter\nRequires Alpine.js (counter)",
+            "props": [
+                {
+                    "name": "label",
+                    "default": "null"
+                },
+                {
+                    "name": "placeholder",
+                    "default": "''"
+                },
+                {
+                    "name": "rows",
+                    "default": "4"
+                },
+                {
+                    "name": "color",
+                    "default": "'primary'"
+                },
+                {
+                    "name": "state",
+                    "default": "null"
+                },
+                {
+                    "name": "disabled",
+                    "default": "false"
+                },
+                {
+                    "name": "helper",
+                    "default": "null"
+                },
+                {
+                    "name": "maxlength",
+                    "default": "null"
+                },
+                {
+                    "name": "counter",
+                    "default": "false"
+                }
+            ]
+        },
+        "forge-toast-host": {
+            "tag": "x-forge-toast-host",
+            "doc": "forge-toast-host — Ptah Forge\n\nPilha global de toasts. Escuta o evento `ptah-toast` no window, entao QUALQUER\ncomponente Livewire ou codigo Alpine pode disparar um toast sem saber que este\nhost existe:\n\n    $this->dispatch('ptah-toast', title: 'Salvo', color: 'success');\n\nAntes isto vivia dentro de `base-crud.blade.php`, o que significava que toast era\num privilegio de tela de CRUD — o /profile, por exemplo, so tinha alerta inline.\nSubir para o layout resolve para todas as telas de uma vez.\n\nO botao Desfazer nao chama mais `$wire.restoreRecord` direto (aqui nao existe\n`$wire`): ele re-emite `ptah-toast-undo` no window com o id, e quem sabe restaurar\nescuta. E o que desacopla a pilha do BaseCrud.\n\nAuto-dismiss pausa no hover/foco (WCAG 2.2.1 — Timing Adjustable): cada toast\nguarda a duracao total e quando o timer atual comecou, entao _pause() calcula\nquanto falta e cancela o setTimeout, e _resume() reagenda so o restante. Sem\nisso, um toast com Desfazer podia desaparecer com o mouse ainda em cima dele.\n\nATENCAO: nenhuma aspa dupla dentro do x-data — ver LayoutXDataQuotingTest.\n\nCores: os fundos usam os mesmos valores auditados do BaseCrud (#047857 para\nsuccess e bg-danger-dark para danger, ambos com branco acima de 4.5:1 — ver\nContrastGuardTest casos 13). `bg-warn` fica com texto escuro pelo mesmo motivo.",
+            "props": []
+        }
+    }
+}
