@@ -6,6 +6,7 @@ namespace Ptah\Tests\Feature\Crud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\BaseCrud;
@@ -16,6 +17,8 @@ use Ptah\Models\Role;
 use Ptah\Models\RolePermission;
 use Ptah\Models\UserRole;
 use Ptah\Tests\TestCase;
+
+use function Livewire\store;
 
 // ── Stub on the shared `items` table ────────────────────────────────────────
 
@@ -116,6 +119,40 @@ class CrudReadGateTest extends TestCase
         UserRole::create(['user_id' => $userId, 'role_id' => $role->id, 'company_id' => null, 'is_active' => true]);
     }
 
+    /**
+     * Revokes `read` from every grant the acting user holds, through the model
+     * so the observers bump the permission cache. The export tests mount with
+     * read granted (the render itself aborts 403 when it is denied — there is
+     * no component to call an action on) and revoke before the call: the
+     * action must refuse on its own, as it would for a grant withdrawn while
+     * the screen is open, or for a crafted request.
+     */
+    private function revokeRead(): void
+    {
+        RolePermission::query()->get()->each(fn (RolePermission $rp) => $rp->update(['can_read' => false]));
+    }
+
+    /**
+     * Calls the action on the live component instance and returns the names
+     * of the events it dispatched. Not through ->call(): with read revoked the
+     * re-render that follows a call aborts 403, the response carries no
+     * effects, and any assertNotDispatched would pass even if the action had
+     * exported everything.
+     *
+     * @return list<string>
+     */
+    private function dispatchedBy(Testable $component, string $method, mixed ...$args): array
+    {
+        $instance = $component->instance();
+        $before = count(store($instance)->get('dispatched', []));
+        $instance->{$method}(...$args);
+
+        return array_map(
+            fn ($event) => $event->serialize()['name'],
+            array_slice(store($instance)->get('dispatched', []), $before)
+        );
+    }
+
     // ── Listing (render) ──────────────────────────────────────────────────────
 
     #[Test]
@@ -166,11 +203,12 @@ class CrudReadGateTest extends TestCase
         $this->makeConfig();
         $this->seedRows();
         $user = $this->actingAsUser();
-        $this->denyRead($user->id);
+        $this->grantRead($user->id);
 
-        Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class])
-            ->call('export', 'excel')
-            ->assertNotDispatched('ptah:export-download');
+        $component = Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class]);
+        $this->revokeRead();
+
+        $this->assertNotContains('ptah:export-download', $this->dispatchedBy($component, 'export', 'excel'));
     }
 
     #[Test]
@@ -179,12 +217,13 @@ class CrudReadGateTest extends TestCase
         $this->makeConfig();
         $row = ReadGateStub::create(['name' => 'Alpha', 'status' => 'active', 'amount' => 10]);
         $user = $this->actingAsUser();
-        $this->denyRead($user->id);
+        $this->grantRead($user->id);
 
-        Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class])
-            ->set('selectedRows', [$row->id])
-            ->call('bulkExport', 'excel')
-            ->assertNotDispatched('ptah:export-download');
+        $component = Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class])
+            ->set('selectedRows', [$row->id]);
+        $this->revokeRead();
+
+        $this->assertNotContains('ptah:export-download', $this->dispatchedBy($component, 'bulkExport', 'excel'));
     }
 
     #[Test]
@@ -193,12 +232,14 @@ class CrudReadGateTest extends TestCase
         $this->makeConfig(['exportConfig' => ['enabled' => true, 'asyncExport' => ['enabled' => true, 'excel' => true]]]);
         $this->seedRows();
         $user = $this->actingAsUser();
-        $this->denyRead($user->id);
+        $this->grantRead($user->id);
 
-        Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class])
-            ->call('queueExport', 'excel')
-            ->assertNotDispatched('ptah:export-download')
-            ->assertNotDispatched('ptah-toast');
+        $component = Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class]);
+        $this->revokeRead();
+
+        $dispatched = $this->dispatchedBy($component, 'queueExport', 'excel');
+        $this->assertNotContains('ptah:export-download', $dispatched);
+        $this->assertNotContains('ptah-toast', $dispatched);
     }
 
     #[Test]
@@ -207,11 +248,12 @@ class CrudReadGateTest extends TestCase
         $this->makeConfig();
         $this->seedRows();
         $user = $this->actingAsUser();
-        $this->denyRead($user->id);
+        $this->grantRead($user->id);
 
-        Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class])
-            ->call('printView')
-            ->assertNotDispatched('ptah:open-print');
+        $component = Livewire::test(BaseCrud::class, ['model' => ReadGateStub::class]);
+        $this->revokeRead();
+
+        $this->assertNotContains('ptah:open-print', $this->dispatchedBy($component, 'printView'));
     }
 
     #[Test]

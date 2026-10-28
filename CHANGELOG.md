@@ -42,6 +42,16 @@ shapes for joins and permissions, describes `customFilters`, `uiPreferences`,
 `exportConfig` and `bulkActions`, and marks the unread sections with a
 `deprecationMessage` saying where their content belongs.
 
+### Tests - four read-gate tests proved nothing
+
+`CrudReadGateTest`'s export, bulk export, queued export and print tests mounted
+the screen with `read` denied — but the render aborts 403 there, so the action
+was never reached, and they passed or failed only by what earlier tests left
+behind (they failed alone, and in the whole suite from today on). They now
+mount with `read` granted, revoke it, and call the action on the live
+component, asserting on the events it dispatched; removing the read check from
+`export()` now fails the test, which it did not before.
+
 ## [1.51.0] - 2026-10-28
 
 From a host laudo on the `forge-*` components.

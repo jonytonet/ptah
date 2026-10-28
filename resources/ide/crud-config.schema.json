@@ -874,9 +874,6 @@
         "general": {
             "type": "object",
             "deprecationMessage": "Never read. itemsPerPage → uiPreferences.perPage, exportEnabled → exportConfig.enabled; cacheEnabled, cacheTime, cacheTtl, paginationEnabled… do not exist."
-        },
-        "styles": {
-            "deprecationMessage": "Never read: row styles live in \"contitionStyles\". `php artisan ptah:config:doctor --fix` migrates them."
         }
     },
     "additionalProperties": true

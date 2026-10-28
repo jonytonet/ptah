@@ -37,8 +37,8 @@ use Ptah\Support\StyleRule;
  *     ColumnKeys::KNOWN (and an unknown `cols*` key is flagged), joins and
  *     permissions use the runtime's shapes, `customFilters`, `uiPreferences`,
  *     `exportConfig` and `bulkActions` are described, and the sections nothing
- *     reads (`actions`, `filters`, `general`, `styles`) carry a
- *     deprecationMessage that says where their content belongs.
+ *     reads (`actions`, `filters`, `general`) carry a deprecationMessage
+ *     that says where their content belongs.
  */
 class JsonSchemaBuilder
 {
@@ -67,9 +67,9 @@ class JsonSchemaBuilder
                 'actions' => $this->buildActionsSchema(),
                 'filters' => $this->buildFiltersSchema(),
                 'general' => $this->buildGeneralSchema(),
-                'styles' => [
-                    'deprecationMessage' => 'Never read: row styles live in "contitionStyles". `php artisan ptah:config:doctor --fix` migrates them.',
-                ],
+                // No 'styles' entry, not even a deprecated one: announcing the key
+                // at all sends readers to it (PublishedSchemaMatchesRuntimeTest).
+                // ptah:config:doctor reports and migrates it.
             ],
             // Intentionally open — see the AUTHORITY NOTE on the class.
             'additionalProperties' => true,
