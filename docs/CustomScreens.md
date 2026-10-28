@@ -146,7 +146,10 @@ de cada componente em `resources/views/components/`.
 
 ### `forge-button`
 Props: `color` (`primary|success|danger|warn|dark|light|secondary`, padrão `primary`),
-`size` (`sm|md|lg`, padrão `md`), `flat`, `relief`, `rounded`, `disabled`, `loading`.
+`size` (`sm|md|lg`, padrão `md`), `flat`, `relief`, `rounded`, `disabled`, `loading`,
+`href` (desde 1.51.0: renderiza um `<a>` com o mesmo visual; `wire:navigate`,
+`target` etc. passam direto. Com `disabled`/`loading` o link perde o `href` e
+ganha `aria-disabled="true"` + `tabindex="-1"`).
 Slots: default (texto), `icon` (SVG confiável — nunca dado do usuário, é `{!! !!}` raw).
 
 ```blade
@@ -154,6 +157,8 @@ Slots: default (texto), `icon` (SVG confiável — nunca dado do usuário, é `{
     <x-slot:icon><svg class="w-4 h-4">...</svg></x-slot:icon>
     Salvar
 </x-forge-button>
+
+<x-forge-button color="light" :href="route('pedidos.index')" wire:navigate>Voltar</x-forge-button>
 ```
 
 ### `forge-input`
@@ -253,10 +258,31 @@ Props: `headers` (`[['key' => ..., 'label' => ...], ...]`), `rows` (array),
 `searchable`, `sortable` (busca/ordenação **client-side via Alpine**, sobre o
 array de `rows` já renderizado), `emptyMessage`. Slot `actions`. Requer
 Alpine.js. **Não tem paginação nem integração com `wire:model`** — serve para
-uma lista pequena e estática por render. Para uma lista paginada no servidor
-(o caso comum de uma tela Livewire), monte a marcação você mesmo com os
-tokens da seção 1 (ver receita na seção 4) em vez de forçar `forge-table`
-nesse papel.
+uma lista pequena e estática por render.
+
+**Modo slot (desde 1.51.0)** — sem a prop `rows`, as linhas vêm do slot como
+`<tr><td>` renderizados no servidor, então a célula aceita qualquer componente
+Blade (`<x-forge-button>`, badge, link). É o modo para uma lista Livewire:
+busca, ordem e paginação são da tela; `searchable`, `sortable` e o slot
+`actions` não se aplicam. `headers` só dá os rótulos do `<thead>`. Um
+`@foreach` sem linhas mostra `emptyMessage`. A célula já vem com padding,
+fonte e cor do tema; a cor é herdada (um `text-*` no `<td>` vence), o padding
+não — para mudá-lo use `!px-2`.
+
+```blade
+<x-forge-table :headers="[['key' => 'name', 'label' => 'Nome'], ['key' => 'acoes', 'label' => '']]"
+               :emptyMessage="__('Nenhum pedido')">
+    @foreach ($pedidos as $pedido)
+        <tr wire:key="pedido-{{ $pedido->id }}">
+            <td>{{ $pedido->numero }}</td>
+            <td class="text-right">
+                <x-forge-button size="sm" color="light" :href="route('pedidos.show', $pedido)">Abrir</x-forge-button>
+            </td>
+        </tr>
+    @endforeach
+</x-forge-table>
+{{ $pedidos->links('ptah::components.forge-pagination') }}
+```
 
 ### `forge-avatar`
 Props: `src`, `alt`, `size` (`xs|sm|md|lg|xl`), `color`, `text` (iniciais quando

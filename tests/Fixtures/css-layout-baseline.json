@@ -6,8 +6,6 @@
     ".ptah-alert-warn|dark|background-color": "rgba(245, 158, 11, 0.15)",
     ".ptah-page-header h1|dark|color": "#e2e8f0",
     ".ptah-page-header p|dark|color": "#94a3b8",
-    ".ptah-stat-card .text-dark|dark|color": "#e2e8f0",
-    ".ptah-stat-card .text-gray-400|dark|color": "#64748b",
     ".ptah-table-wrapper .bg-white.rounded-md|dark|background-color": "#1e293b",
     ".ptah-table-wrapper .bg-white.rounded-md|dark|border-color": "#334155",
     ".ptah-table-wrapper .overflow-x-auto.rounded-md|dark|border-color": "#334155",

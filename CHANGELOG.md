@@ -7,6 +7,31 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.51.0] - 2026-10-28
+
+From a host laudo on the `forge-*` components.
+
+### Added
+
+- `forge-button` takes `href`: it renders an `<a>` with the same look
+  (`wire:navigate`, `target` pass through). Disabled or loading, the link drops
+  the `href` and gets `aria-disabled="true"` and `tabindex="-1"`.
+- `forge-table` slot mode: without the `rows` prop, the rows come from the slot
+  as server-rendered `<tr><td>`, so a cell can hold any Blade component. Search,
+  sort and pagination belong to the Livewire screen in this mode; `headers`
+  only labels the `<thead>`, and an empty `@foreach` shows `emptyMessage`.
+  Passing `:rows` keeps the client-side Alpine table exactly as before.
+
+### Fixed - fixed palette classes in two components
+
+- `forge-stat-card` drew its border with `border-gray-200` (a light border on
+  a dark card), its value with `text-dark` and its trend label with
+  `text-gray-400`; all three use theme tokens now, and so does the hover border.
+  The layout's two dark-mode repaints for those classes are gone with them.
+- `forge-empty`'s default icon was `text-slate-400` (as were the BaseCrud
+  empty-state icons), and its halo/hairline were hex literals; they follow the
+  theme tone now. Byte-identical on the default tone.
+
 ## [1.50.1] - 2026-10-22
 
 Closing what was still open after 1.50.0 — no known pending item left.

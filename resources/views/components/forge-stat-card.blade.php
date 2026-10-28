@@ -23,7 +23,10 @@
         'success' => ['bg' => 'bg-success/10', 'text' => 'text-success'],
         'danger'  => ['bg' => 'bg-danger/10',  'text' => 'text-danger'],
         'warn'    => ['bg' => 'bg-warn/10',     'text' => 'text-warn'],
-        'dark'    => ['bg' => 'bg-dark/10',     'text' => 'text-dark'],
+        // Not the brand dark ink utility: it vanishes on a dark surface. The
+        // token keeps #1e293b in light and turns light in dark, as the layout's
+        // old stat-card repaint did.
+        'dark'    => ['bg' => 'bg-dark/10',     'text' => 'ptah-c-stat_value'],
     ];
     $cc = $colorClasses[$color] ?? $colorClasses['primary'];
 
@@ -31,11 +34,11 @@
     $trendNegative = $trend && str_starts_with(ltrim($trend), '-');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'ptah-stat-card rounded-md p-5 border border-gray-200 hover:border-primary/40 transition-colors duration-150']) }}>
+<div {{ $attributes->merge(['class' => 'ptah-stat-card rounded-md p-5 border transition-colors duration-150']) }}>
     <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
             <p class="text-sm ptah-c-stat_muted font-medium">{{ $title }}</p>
-            <p class="text-2xl md:text-3xl font-bold text-dark mt-1">{{ $value }}</p>
+            <p class="text-2xl md:text-3xl font-bold ptah-c-stat_value mt-1">{{ $value }}</p>
 
             @if($trend)
                 <div class="flex items-center gap-1 mt-2">
@@ -53,7 +56,7 @@
                         <span class="text-xs font-semibold ptah-c-stat_muted">{{ $trend }}</span>
                     @endif
                     @if($trendLabel)
-                        <span class="text-xs text-gray-400">{{ $trendLabel }}</span>
+                        <span class="text-xs ptah-c-stat_muted">{{ $trendLabel }}</span>
                     @endif
                 </div>
             @endif
