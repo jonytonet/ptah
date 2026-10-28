@@ -32,7 +32,8 @@ use Throwable;
 
 /**
  * Audits every row in `crud_configs` and surfaces the silent-failure classes the
- * per-model tooling can't see:
+ * per-model tooling can't see. With --file / --config (1.52.0) it audits one
+ * config that is not saved yet, through the same checks:
  *
  *   - orphan keys      → a model stored under a non-canonical key (e.g. the FQCN
  *                        "App\Models\X") that the runtime (which reads "X") never
@@ -118,13 +119,32 @@ use Throwable;
  */
 class ConfigDoctorCommand extends Command
 {
-    protected $signature = 'ptah:config:doctor {--fix : Rewrite non-canonical model keys (FQCN → the runtime key)}';
+    protected $signature = 'ptah:config:doctor
+        {--fix : Rewrite non-canonical model keys (FQCN → the runtime key)}
+        {--file= : Audit this JSON config file instead of the database (nothing is saved)}
+        {--config= : Audit this inline JSON config instead of the database (nothing is saved)}
+        {--model= : Model of the --file/--config config (taken from an export envelope when omitted)}
+        {--route= : Route of the --file/--config config}';
 
     protected $description = 'Audit crud_configs for orphan keys, malformed configs and route ambiguity';
 
     public function handle(ConfigSchemaValidator $validator, ModelIntrospector $introspector): int
     {
-        $rows = CrudConfig::query()->get();
+        // 1.52.0: --file / --config audit a config BEFORE it is saved (an agent
+        // or the VS Code extension validating a JSON), through the very same
+        // checks below — one in-memory row, never persisted.
+        $candidate = $this->candidateRow($introspector);
+        if ($candidate === false) {
+            return self::FAILURE;
+        }
+        $auditingCandidate = $candidate !== null;
+        if ($auditingCandidate && $this->option('fix')) {
+            $this->error('--fix rewrites stored configs; it does not apply to --file/--config.');
+
+            return self::FAILURE;
+        }
+
+        $rows = $auditingCandidate ? collect([$candidate]) : CrudConfig::query()->get();
 
         if ($rows->isEmpty()) {
             $this->info('No crud_configs found — nothing to check.');
@@ -728,7 +748,7 @@ class ConfigDoctorCommand extends Command
         //    or "{page.slug}::{section}::{obj_key}" if the same page also
         //    repeats the key across sections) instead of the bare obj_key.
         //    Diagnostic only — does not change how the bare map resolves.
-        $objectsByKey = PageObject::query()->with('page:id,slug')->get()->groupBy('obj_key');
+        $objectsByKey = $auditingCandidate ? collect() : PageObject::query()->with('page:id,slug')->get()->groupBy('obj_key');
 
         foreach ($objectsByKey as $key => $objects) {
             $pageSlugs = $objects->pluck('page.slug')->filter()->unique()->values();
@@ -748,7 +768,7 @@ class ConfigDoctorCommand extends Command
         //     alert, not a config defect — does not change how MASTER
         //     resolves. Guarded against the permissions module being
         //     uninstalled (same pattern as rolesAreQueryable()).
-        if ($this->rolesAreQueryable()) {
+        if (! $auditingCandidate && $this->rolesAreQueryable()) {
             try {
                 $scopedMasterBindings = UserRole::query()
                     ->whereNotNull('company_id')
@@ -789,7 +809,70 @@ class ConfigDoctorCommand extends Command
         }
         $errors > 0 ? $this->error($summary) : $this->info($summary);
 
+        if ($auditingCandidate && $errors + $warnings > 0) {
+            $this->line('Where a finding says "--fix": that rewrites SAVED configs only — fix this JSON by hand, or import it and run ptah:config:doctor --fix.');
+        }
+
         return $errors > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * The config given by --file / --config as an unsaved row, null when
+     * neither was given (audit the database), false after printing an error.
+     *
+     * Accepts the bare config and the {model, route, config} envelope that
+     * ptah:config:export-all writes.
+     */
+    protected function candidateRow(ModelIntrospector $introspector): CrudConfig|false|null
+    {
+        $file = $this->option('file');
+        $inline = $this->option('config');
+
+        if (($file === null || $file === '') && ($inline === null || $inline === '')) {
+            return null;
+        }
+
+        if ($file !== null && $file !== '') {
+            if (! is_file((string) $file)) {
+                $this->error("File not found: {$file}");
+
+                return false;
+            }
+            $inline = (string) file_get_contents((string) $file);
+        }
+
+        $decoded = json_decode((string) $inline, true);
+        if (! is_array($decoded)) {
+            $this->error('Invalid JSON: '.(json_last_error() !== JSON_ERROR_NONE ? json_last_error_msg() : 'not a configuration object'));
+
+            return false;
+        }
+
+        $model = (string) ($this->option('model') ?? '');
+        $route = (string) ($this->option('route') ?? '');
+
+        if (isset($decoded['config']) && is_array($decoded['config']) && ! isset($decoded['cols'])) {
+            $model = $model !== '' ? $model : (string) ($decoded['model'] ?? '');
+            $route = $route !== '' ? $route : (string) ($decoded['route'] ?? '');
+            $decoded = $decoded['config'];
+        }
+
+        if ($model === '') {
+            $this->error('Which model is this config for? Pass --model (an export envelope carries it).');
+
+            return false;
+        }
+
+        $class = $introspector->resolveClass($model);
+
+        $row = new CrudConfig;
+        $row->forceFill([
+            'model' => ModelKey::canonical($class ?? $model),
+            'route' => $route,
+            'config' => $decoded,
+        ]);
+
+        return $row;
     }
 
     /**

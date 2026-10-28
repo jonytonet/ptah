@@ -22,5 +22,7 @@ final class PtahMcpTools
         'Ptah\\Mcp\\Tools\\PtahWhyEmpty',
         'Ptah\\Mcp\\Tools\\PtahLastError',
         'Ptah\\Mcp\\Tools\\PtahUpgradeCheck',
+        'Ptah\\Mcp\\Tools\\PtahDoctor',
+        'Ptah\\Mcp\\Tools\\PtahValidateConfig',
     ];
 }

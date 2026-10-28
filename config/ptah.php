@@ -119,11 +119,12 @@ return [
     | Agent tools in Laravel Boost's MCP server
     |--------------------------------------------------------------------------
     |
-    | When laravel/boost (laravel/mcp) is installed, ptah adds its read-only
+    | When laravel/mcp is installed (Boost brings it), ptah adds its read-only
     | agent tools — ptah-map, ptah-screen, ptah-check, ptah-docs,
-    | ptah-why-empty, ptah-last-error, ptah-upgrade-check — to Boost's MCP
-    | server, so a connected agent calls them directly. Nothing happens
-    | without Boost. See docs/AgentTools.md.
+    | ptah-why-empty, ptah-last-error, ptah-upgrade-check, ptah-doctor,
+    | ptah-validate-config — to Boost's MCP server, and registers them as a
+    | `ptah` server of their own for hosts without Boost
+    | (`php artisan mcp:start ptah`). See docs/AgentTools.md.
     */
     'mcp_tools' => env('PTAH_MCP_TOOLS', true),
 

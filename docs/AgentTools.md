@@ -41,6 +41,15 @@ php artisan ptah:docs join --json
 
 Topics: `column`, `filter`, `style`, `action`, `join`, `mask`.
 
+**Search the docs by subject (1.52.0)** — the best sections of the docs shipped
+with the installed version, instead of reading a whole file. Accents and case are
+ignored; English words match best.
+
+```bash
+php artisan ptah:docs --search="column permission"
+php artisan ptah:docs --search="bulk action handler" --limit=5 --json
+```
+
 ---
 
 ## ptah:map
@@ -352,12 +361,40 @@ telling it they exist.
 | `ptah-why-empty` | `ptah:why-empty` | `model`, `user_id`, `guard`, `route` |
 | `ptah-last-error` | `ptah:last-error` | `frames` |
 | `ptah-upgrade-check` | `ptah:upgrade-check` | — |
+| `ptah-docs` with `search` | `ptah:docs --search` | `search`, `limit` |
+| `ptah-doctor` | `ptah:config:doctor` (read-only; never `--fix`) | — |
+| `ptah-validate-config` | `ptah:config:doctor --config` (nothing is saved) | `config` (JSON string), `model`, `route` |
 
 Each answers with the command's own text, so the tool and the CLI cannot
 drift. A non-zero exit that produced output (a `ptah-check` with a failing
 screen) is an answer, not a tool error. Registration appends to
 `boost.mcp.tools.include` and keeps whatever the host listed there;
-`PTAH_MCP_TOOLS=false` turns it off. Nothing happens without Boost.
+`PTAH_MCP_TOOLS=false` turns it off.
+
+### Without Boost: the `ptah` MCP server (1.52.0)
+
+When the host has `laravel/mcp` (directly, or through Boost), ptah also registers
+a server of its own with the same tools:
+
+```bash
+composer require laravel/mcp --dev     # only if Boost is not installed
+php artisan mcp:start ptah
+```
+
+Point the agent at it — Claude Code (`.mcp.json` at the project root):
+
+```json
+{ "mcpServers": { "ptah": { "command": "php", "args": ["artisan", "mcp:start", "ptah"] } } }
+```
+
+VS Code / Copilot (`.vscode/mcp.json`):
+
+```json
+{ "servers": { "ptah": { "type": "stdio", "command": "php", "args": ["artisan", "mcp:start", "ptah"] } } }
+```
+
+The ptah VS Code extension registers it for Copilot by itself. `PTAH_MCP_TOOLS=false`
+turns off both the Boost tools and this server.
 
 ---
 

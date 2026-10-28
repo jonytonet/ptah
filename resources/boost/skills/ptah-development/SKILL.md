@@ -71,10 +71,13 @@ reads. Prefer them — they read the same truth the runtime reads.
 | Whether every screen still works after a change | `php artisan ptah:check` (`--write` also round-trips a save, rolled back) |
 | Why something broke | `php artisan ptah:last-error` — never `tail` the log |
 | What an update of ptah needs in this project | `php artisan ptah:upgrade-check` |
+| Whether a config JSON you wrote is right, BEFORE saving it | `php artisan ptah:config:doctor --file=x.json --model=Entity` |
+| How a feature works (any subject) | `php artisan ptah:docs --search="column permission"` |
 
-With Laravel Boost connected, the same are MCP tools: `ptah-map`,
-`ptah-screen`, `ptah-check`, `ptah-docs`, `ptah-why-empty`, `ptah-last-error`,
-`ptah-upgrade-check`.
+The same are MCP tools (Boost's server, or `php artisan mcp:start ptah`):
+`ptah-map`, `ptah-screen`, `ptah-check`, `ptah-docs` (`search`),
+`ptah-why-empty`, `ptah-last-error`, `ptah-upgrade-check`, `ptah-doctor`,
+`ptah-validate-config`.
 
 `ptah:forge … --factory` also writes a factory and a demo seeder from the
 field types.
