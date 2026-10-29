@@ -556,6 +556,10 @@ class BaseCrud extends Component
             'formCols' => $this->getFormViewCols(),
             'permissions' => $this->crudConfig['permissions'] ?? [],
             'effectivePerms' => $effectivePerms,
+            // Only the actions this user may run (1.55.0) — same shape as the
+            // raw config it replaced, so a host view reading it still works.
+            'bulkActions' => $this->availableBulkActions(),
+            'canSelectRows' => $this->canSelectRows($effectivePerms),
             'exportCfg' => $this->crudConfig['exportConfig'] ?? [],
             // Uma consulta por total: os itens (todos, para o rodape) e o mapa
             // por campo (subtotal da quebra, views do host) saem da mesma lista.
@@ -566,7 +570,6 @@ class BaseCrud extends Component
                                     ?? class_basename(str_replace('/', '\\', $this->model)),
             // Texto para o usuario (o $crudTitle acima tambem vira id/chave de JS).
             'crudTitleSingular' => $this->humanTitle(singular: true),
-            'bulkActions' => $this->crudConfig['bulkActions'] ?? [],
             'hasActiveFilters' => ! empty($this->textFilter)
                                     || $this->search !== ''
                                     || $this->quickDateFilter !== '',

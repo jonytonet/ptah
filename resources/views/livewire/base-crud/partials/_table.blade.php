@@ -21,7 +21,7 @@
                 @if (!empty($masterDetails))
                     <th class="w-8 px-2 py-3 ptah-no-print"></th>
                 @endif
-                @if ($effectivePerms['canDelete'])
+                @if ($canSelectRows)
                     <th class="px-3 py-3 w-8 ptah-c-th_text ptah-no-print">
                         <input type="checkbox" wire:click="toggleSelectAll" @checked($selectAll)
                                aria-label="{{ __('ptah::ui.bulk_select_all') }}"
@@ -110,6 +110,11 @@
             @php
                 // ── Group break ("quebra"): headers + per-group subtotals ──
                 $breakField  = $crudConfig['groupBreak'] ?? null;
+                // groupBreakPeriod (1.55.0): a date column broken by day, month
+                // or year instead of by its exact value. The query already
+                // orders by the column, so a period's rows are adjacent.
+                $breakPeriod = in_array($crudConfig['groupBreakPeriod'] ?? null, ['day', 'month', 'year'], true)
+                    ? $crudConfig['groupBreakPeriod'] : null;
                 $breakCol    = $breakField ? collect($crudConfig['cols'] ?? [])->firstWhere('colsNomeFisico', $breakField) : null;
                 $breakLabel  = $breakCol['colsNomeLogico'] ?? $breakField;
                 $breakTotCols = ($breakField && !empty($totData)) ? array_keys($totData) : [];
@@ -119,7 +124,23 @@
             @endphp
             @forelse ($rows as $row)
                 @if ($breakField)
-                    @php $curBreak = data_get($row, $breakField); @endphp
+                    @php
+                        $curBreak = data_get($row, $breakField);
+                        $breakTitle = null;
+                        if ($breakPeriod !== null && $curBreak !== null && $curBreak !== '') {
+                            try {
+                                $breakDate = \Illuminate\Support\Carbon::parse($curBreak)->locale(app()->getLocale());
+                                $curBreak = $breakDate->format(['day' => 'Y-m-d', 'month' => 'Y-m', 'year' => 'Y'][$breakPeriod]);
+                                $breakTitle = match ($breakPeriod) {
+                                    'day' => $breakDate->isoFormat('L'),
+                                    'month' => $breakDate->translatedFormat('F Y'),
+                                    default => $breakDate->format('Y'),
+                                };
+                            } catch (\Throwable) {
+                                $breakTitle = null;
+                            }
+                        }
+                    @endphp
 
                     {{-- Subtotal do grupo anterior --}}
                     @if ($prevBreak !== '__ptah_init__' && $curBreak !== $prevBreak)
@@ -132,7 +153,11 @@
                         <tr class="ptah-c-break_row" wire:key="break-{{ md5((string) $curBreak) }}-{{ $loop->index }}">
                             <td colspan="99" class="px-4 py-2 text-xs font-semibold uppercase tracking-wide ptah-c-break_td">
                                 <span class="opacity-60">{{ $breakLabel }}:</span>
-                                {!! $breakCol ? $this->formatCell($breakCol, $row) : e((string) $curBreak) !!}
+                                @if ($breakTitle !== null)
+                                    {{ \Illuminate\Support\Str::ucfirst($breakTitle) }}
+                                @else
+                                    {!! $breakCol ? $this->formatCell($breakCol, $row) : e((string) $curBreak) !!}
+                                @endif
                             </td>
                         </tr>
                     @endif
@@ -183,7 +208,7 @@
                     @endif
 
                     {{-- Checkbox de seleção em bulk --}}
-                    @if ($effectivePerms['canDelete'])
+                    @if ($canSelectRows)
                         <td class="px-3 py-(--ptah-row-py) ptah-no-print" onclick="event.stopPropagation()">
                             <input type="checkbox" wire:model.live="selectedRows" value="{{ $row->id ?? 0 }}"
                                    onclick="event.stopPropagation()"
@@ -373,7 +398,10 @@
                                             <span class="text-xs font-normal opacity-70">{{ __('ptah::ui.export_'.$tot['aggregate']) }}</span>
                                         @endif
                                         {{-- Uma contagem nunca e dinheiro, mesmo sob a coluna de valor. --}}
-                                        @if (($col['colsHelper'] ?? '') === 'currencyFormat' && $tot['aggregate'] !== 'count')
+                                        {{-- colsRenderer money (1.55.0): formatted like the cells, in the column's own currency. --}}
+                                        @if (($col['colsRenderer'] ?? '') === 'money' && $tot['aggregate'] !== 'count')
+                                            {{ $this->renderMoney($col, (float) $tot['value']) }}
+                                        @elseif (($col['colsHelper'] ?? '') === 'currencyFormat' && $tot['aggregate'] !== 'count')
                                             {{ __('ptah::ui.currency_prefix') }}{{ number_format((float) $tot['value'], 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
                                         @else
                                             {{ $tot['value'] }}

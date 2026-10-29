@@ -223,6 +223,12 @@ observer sends the mail a real save would). It answers what the database
 accepts — NOT NULL, FK, enum, length. It is refused in production without
 `--force`. Exit code is 1 when any screen fails, so it fits CI.
 
+Since 1.55.0 `--write` skips, as information, a screen that cannot create
+(`showCreateButton` off) and one whose records are created through a class-based
+`beforeCreate` hook — the check cannot run that hook, and both reported failures that
+never happen in the app. The fields an inline `beforeCreate` fills (`merge(data, {…})`)
+get sample values, as the hook would fill them.
+
 ---
 
 ## ptah:field

@@ -1168,10 +1168,24 @@ In the table view, use the computed `visibleCols` passed by `render()`:
   {
     "label": "Approve Selected",
     "action": "approve",
-    "method": "App\\Services\\ProductBulk@approve"
+    "method": "App\\Services\\ProductBulk@approve",
+    "permission": "products.approve",
+    "confirm": "Approve the selected products?",
+    "icon": "bx-check"
   }
 ]
 ```
+
+**Since 1.55.0 the bar draws them.** When rows are selected, each configured action is a
+button next to "Delete selected" (before, `executeBulkAction()` existed and no button
+reached it). `confirm` asks first (`true` for a generic question, or the text);
+`icon` is a Boxicons name.
+
+**Who may run one:** reading the screen, plus the action's `permission` — a Gate
+ability — when it has one, or the edit permission when it has none (a bulk action changes
+records). The server applies the same rule the button does. The row checkboxes appear
+when the user may delete **or** run any bulk action, so a screen whose only bulk action
+is "activate" no longer has to allow deleting to show them. Not in the trash view.
 
 **The class must implement `Ptah\Contracts\BulkActionHandler` (1.49.0).** The
 part after `@` is a **key** handed to it, never a method ptah calls — before
@@ -1335,6 +1349,17 @@ The child grid is a full BaseCrud (filters, modal, export…) mounted lazily on 
 ```
 
 Rows stay individual (unlike `groupBy`), but the break field becomes the primary sort and the table renders a header per group plus a subtotal row (using the Totalizer columns) and keeps the grand total in the footer. Field name is validated by `SqlIdentifier`.
+
+**By period (1.55.0).** For a date column, `"groupBreakPeriod": "day" | "month" | "year"`
+breaks by the period instead of the exact value — one group per month of `created_at`,
+headed "Outubro 2026" (in the app's locale). Editor: General → "Break a date by".
+
+```json
+{ "groupBreak": "created_at", "groupBreakPeriod": "month" }
+```
+
+A `colsRenderer: money` column's subtotals and footer total are formatted like its cells
+(currency included) since 1.55.0 — they only followed `colsHelper: currencyFormat`.
 
 ### Form preview (config modal)
 
@@ -2837,6 +2862,11 @@ this order:
 3. **A `deleting` model event** that returns `false` or throws (a
    `ValidationException` shows its first message).
 
+4. **`afterDelete` (1.55.0)** runs once the record is deleted — cache invalidation, an
+   audit line, a sync — with the same signature. The record is already gone: a failure
+   does not undo it, and when the hook throws `CrudHookAbort` (or is declared critical)
+   it is shown as a warning toast; otherwise it is logged.
+
 A refused delete shows the reason as an error toast and leaves nothing behind:
 the row stays in the list, no "Deleted" toast or Undo, no `crud-deleted`, and
 no `deleted_by` — it is stamped only after the soft delete happened.
@@ -3366,6 +3396,14 @@ Column names pass `SqlIdentifier::isSafe()` before reaching the `where`.
 For anything security-sensitive (tenant, owner, "only mine") use `lockedFilters`, never
 `initialFilter`: clearing the filter panel, or a hand-crafted Livewire payload, drops an
 `initialFilter` and reveals every row.
+
+**A locked column is written on save, too — on purpose.** Create and edit set every
+`lockedFilters` column to its locked value, overriding what the form sent: otherwise a
+scope column that is also a form field (or a forged payload) would move the record out
+of the scope — to another company, another parent. So a locked column cannot be an
+editable field. If the screen should only *start* on a value the user may change, that is
+not a scope: use `initialFilter`, and gate who may see other rows with permissions or a
+query scope — not with a filter the user can clear.
 
 ```blade
 {{-- "My attendances": SAME model as the admin appointment list, but locked to

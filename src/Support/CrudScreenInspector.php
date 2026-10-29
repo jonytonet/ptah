@@ -195,11 +195,27 @@ final class CrudScreenInspector
      * enum, length. Model events are muted, so observers do not send the mail
      * or dispatch the job a real save would.
      *
+     * A screen that cannot create (showCreateButton off), or that creates
+     * through a class-based beforeCreate hook the check cannot run, is not
+     * written: those reported failures that never happen in the app (1.55.0,
+     * six false negatives on one host). An inline beforeCreate's `merge(data,
+     * {…})` keys are filled with sample values, as the hook would fill them.
+     *
      * @param  array<string, mixed>  $config
-     * @return list<array{level: 'error'|'warning', message: string}>
+     * @return list<array{level: 'error'|'warning'|'info', message: string}>
      */
     public static function roundTrip(Model $model, array $config): array
     {
+        if (in_array($config['permissions']['showCreateButton'] ?? true, [false, 0, '0', 'false', 'N'], true)) {
+            return [['level' => 'info', 'message' => 'write skipped: creating is off on this screen (showCreateButton=false)']];
+        }
+
+        [$hookFills, $classHook] = self::beforeCreateFills($config);
+
+        if ($classHook !== null) {
+            return [['level' => 'info', 'message' => "write skipped: records are created through the beforeCreate hook {$classHook}, which the check does not run"]];
+        }
+
         $connection = $model->getConnection();
         $columns = [];
         foreach (Schema::connection($connection->getName())->getColumns($model->getTable()) as $column) {
@@ -226,6 +242,17 @@ final class CrudScreenInspector
             }
 
             $data[$field] = $value;
+        }
+
+        // What the inline beforeCreate fills, the way the hook would.
+        foreach ($hookFills as $field) {
+            if (! isset($data[$field]) && isset($columns[$field]) && ! in_array($field, self::MANAGED, true)) {
+                $value = self::sampleValue($model, $field, $columns[$field], $missing);
+
+                if ($missing === null) {
+                    $data[$field] = $value;
+                }
+            }
         }
 
         if ($data === []) {

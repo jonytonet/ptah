@@ -136,16 +136,37 @@ final class UpgradeInspector
             return [];
         }
 
-        $identical = $differs = $dead = $intentional = [];
-        $declared = array_map(fn ($p) => ltrim(str_replace('\\', '/', (string) $p), '/'), (array) config('ptah.intentional_overrides', []));
+        $identical = $differs = $dead = $intentional = $stale = [];
+        $declared = self::declaredOverrides();
 
         foreach (self::files($dir, '.blade.php') as $relative) {
             $package = $packageRoot.'/resources/views/'.$relative;
+            $marked = self::markedOverride(self::normalized($dir.'/'.$relative));
 
             // Override de proposito (o dashboard real do app, por exemplo): fica
             // como informacao, senao o resumo nunca fica verde (achado #7).
-            if (in_array($relative, $declared, true) || str_contains(self::normalized($dir.'/'.$relative), 'ptah:intentional-override')) {
-                $intentional[] = $relative;
+            if (array_key_exists($relative, $declared) || $marked !== false) {
+                // 1.55.0: reviewed against the package view whose hash it
+                // records — silent while that view is unchanged, a warning
+                // once it changes. Without a hash: information, with the hash
+                // to record.
+                $reviewed = $declared[$relative] ?? null;
+                if ($reviewed === null && is_string($marked)) {
+                    $reviewed = $marked;
+                }
+                $current = is_file($package) ? self::viewHash($package) : null;
+
+                $state = match (true) {
+                    $reviewed === null || $current === null => 'unreviewed',
+                    $reviewed === $current => 'current',
+                    default => 'stale',
+                };
+
+                if ($state === 'stale') {
+                    $stale[] = "{$relative} (now {$current})";
+                } elseif ($state === 'unreviewed') {
+                    $intentional[] = $current !== null ? "{$relative} (hash {$current})" : $relative;
+                }
 
                 continue;
             }
@@ -170,8 +191,11 @@ final class UpgradeInspector
         if ($dead !== []) {
             $out[] = ['check' => 'views', 'level' => 'info', 'message' => count($dead).' published view(s) no longer exist in the package: '.self::list($dead), 'action' => 'delete them'];
         }
+        if ($stale !== []) {
+            $out[] = ['check' => 'views', 'level' => 'warn', 'message' => count($stale).' reviewed override(s) whose package view changed since: '.self::list($stale), 'action' => 'diff against vendor/jonytonet/ptah/resources/views, re-apply your edit, then record the new hash (ptah:intentional-override:<hash> in the file, or in ptah.intentional_overrides)'];
+        }
         if ($intentional !== []) {
-            $out[] = ['check' => 'views', 'level' => 'info', 'message' => count($intentional).' intentional override(s), not checked: '.self::list($intentional), 'action' => 'review them yourself when the package view changes'];
+            $out[] = ['check' => 'views', 'level' => 'info', 'message' => count($intentional).' intentional override(s), not checked: '.self::list($intentional), 'action' => 'record the hash once reviewed — {{-- ptah:intentional-override:<hash> --}} in the file, or \'path\' => \'<hash>\' in ptah.intentional_overrides — and this note stays silent until the package view changes'];
         }
 
         return $out;
@@ -390,6 +414,43 @@ final class UpgradeInspector
         sort($out);
 
         return $out;
+    }
+
+    /**
+     * `ptah.intentional_overrides`: a list of paths, or path => reviewed hash.
+     *
+     * @return array<string, string|null>
+     */
+    private static function declaredOverrides(): array
+    {
+        $out = [];
+        /** @var array<int|string, mixed> $overrides the host's value — the package default is [] */
+        $overrides = (array) config('ptah.intentional_overrides', []);
+        foreach ($overrides as $key => $value) {
+            [$path, $hash] = is_int($key) ? [(string) $value, null] : [(string) $key, is_string($value) && $value !== '' ? $value : null];
+            $out[ltrim(str_replace('\\', '/', $path), '/')] = $hash;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The file's `ptah:intentional-override` marker: false without one, true
+     * with no hash, the hash when it carries one (`…-override:ab12cd34ef56`).
+     */
+    private static function markedOverride(string $contents): bool|string
+    {
+        if (! str_contains($contents, 'ptah:intentional-override')) {
+            return false;
+        }
+
+        return preg_match('/ptah:intentional-override:([0-9a-f]{12})\b/', $contents, $m) === 1 ? $m[1] : true;
+    }
+
+    /** Short hash of a package view, line endings normalized. */
+    public static function viewHash(string $path): string
+    {
+        return substr(sha1(self::normalized($path)), 0, 12);
     }
 
     private static function normalized(string $path): string

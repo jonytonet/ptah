@@ -17,6 +17,7 @@ use Ptah\Support\CrudHookTarget;
 use Ptah\Support\PtahMask;
 use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
+use Ptah\Support\UploadDisk;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 /**
@@ -351,12 +352,12 @@ trait HasCrudForm
                 return;
             }
         } catch (ValidationException $e) {
-            // Vinda de um hook que valida: devolvida ao Livewire, que a
-            // renderiza como erro de campo. Cair no `_general` abaixo
-            // transformaria uma regra de campo numa faixa de erro genérica.
-            $this->creating = false;
-
-            throw $e;
+            // Vinda de um hook que valida. Devolvida ao Livewire ela ia para o
+            // error bag, que o modal nao desenha — o modal so mostra
+            // $formErrors, e o erro sumia (1.55.0). Cada mensagem vai para o
+            // campo dela; uma chave que nao e campo do formulario vai para a
+            // faixa geral, em vez de desaparecer.
+            $this->formErrors = array_merge($this->formErrors, $this->hookValidationErrors($e));
         } catch (CrudHookAbort $e) {
             $this->formErrors['_general'] = trans(
                 $e->persisted() ? 'ptah::ui.crud_hook_after_failed' : 'ptah::ui.crud_hook_aborted',
@@ -582,6 +583,44 @@ trait HasCrudForm
     }
 
     /**
+     * A hook's ValidationException as form errors: the first message of each
+     * key on its field (`formData.email` and `email` alike), anything that is
+     * not a field of the form in `_general`.
+     *
+     * @return array<string, string>
+     */
+    protected function hookValidationErrors(ValidationException $e): array
+    {
+        $fields = array_map(
+            fn (array $col): string => (string) ($col['colsNomeFisico'] ?? ''),
+            (array) ($this->crudConfig['cols'] ?? [])
+        );
+        $errors = [];
+        $general = [];
+
+        foreach ($e->errors() as $key => $messages) {
+            $field = str_starts_with((string) $key, 'formData.') ? substr((string) $key, 9) : (string) $key;
+            $message = (string) (is_array($messages) ? ($messages[0] ?? '') : $messages);
+
+            if ($message === '') {
+                continue;
+            }
+
+            if ($field !== '' && in_array($field, $fields, true)) {
+                $errors[$field] ??= $message;
+            } else {
+                $general[] = $message;
+            }
+        }
+
+        if ($general !== []) {
+            $errors['_general'] = implode(' ', array_unique($general));
+        }
+
+        return $errors;
+    }
+
+    /**
      * Executa hook baseado em classe PHP.
      * Sintaxes suportadas:
      * - @App\CrudHooks\ProductHooks::methodName
@@ -613,8 +652,9 @@ trait HasCrudForm
             throw new \RuntimeException("Hook method not found: {$className}::{$methodName}");
         }
 
-        // Instantiate and call method with component context
-        $hookInstance = new $className;
+        // Through the container (1.55.0): it was `new`, so a hook could not
+        // receive a service in its constructor and had to call app() inside.
+        $hookInstance = app($className);
         $hookInstance->{$methodName}($data, $record, $this);
     }
 
@@ -1269,7 +1309,8 @@ trait HasCrudForm
             }
 
             $path = $this->resolveUploadPath($col);
-            $stored = $upload->store($path, 'public');
+            // colsUploadDisk (1.55.0) — it was always the `public` disk.
+            $stored = $upload->store($path, UploadDisk::name($col));
 
             if ($stored !== false) {
                 $data[$field] = $stored;

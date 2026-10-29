@@ -7,6 +7,79 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.55.0] - 2026-10-29
+
+From a host laudo (JTEM e-commerce: an `admin` guard, Fortify on `web`, 26
+BaseCrud screens) — fifteen items, fourteen changed, one documented.
+
+### BaseCrud — bulk actions
+
+- **`bulkActions` were never drawn.** `executeBulkAction()` existed and no
+  button reached it — hosts overrode `_pagination` to add a bar. The selection
+  bar now draws one button per configured action, with optional `confirm`
+  (`true` or the text) and `icon`.
+- **Per-action permission.** An action may name a `permission` (a Gate
+  ability); without one it needs the edit permission, as before. The row
+  checkboxes appear when the user may delete **or** run any bulk action — an
+  "activate in bulk" screen no longer has to allow deleting or editing. The
+  server applies the same rule the button does.
+
+### BaseCrud — hooks
+
+- A `ValidationException` thrown by a save hook **shows in the modal**, on its
+  field (a key that is not a form field goes to the general error). It went to
+  Livewire's error bag, which the modal does not draw, and vanished.
+- **`afterDelete`** (single, bulk and force delete; editor field included).
+  The record is already gone, so a failure is a warning, never an undo.
+- Hook classes are resolved **through the container** — constructor
+  injection works (it was `new $class`).
+- `ptah:check --write` skips, as information, a screen that cannot create
+  (`showCreateButton` off) or creates through a class-based `beforeCreate`, and
+  fills what an inline `beforeCreate` fills — six false negatives on the host.
+
+### BaseCrud — columns, totals, order, grouping
+
+- **`colsUploadDisk`**: an `image` column stores on that disk and the cell and
+  the form preview show `Storage::disk(...)->url()`; an absolute value
+  (`/upload/x.jpg`, a full URL) is shown as it is. It was always `public` and
+  `storage/` (`--column … upload_disk=`).
+- A `colsRenderer: money` column's footer total and group subtotals are
+  formatted like its cells — only `colsHelper: currencyFormat` was.
+- **`uiPreferences.defaultSort` / `defaultDirection`**: the screen's default
+  order (it was always `id DESC`). A column the user may not sort by falls
+  back to `id`.
+- **`groupBreakPeriod`** (`day`/`month`/`year`): a date group break by period —
+  one group per month of `created_at`, headed "October 2026" (editor field
+  included).
+- `lockedFilters` overriding the locked column on save is **kept, and now
+  documented**: it is what stops a record from being moved out of its scope; a
+  column the user may edit is not a scope (use `initialFilter`).
+
+### Components
+
+- `<x-forge-input>` / `<x-forge-select>` in a plain form (`name`, no
+  `wire:model`) read `old(name)` and `$errors->first(name)` themselves;
+  `items[0][qty]` reads `items.0.qty`. An explicit `error` still wins, and a
+  password is never refilled. A multiple select starts from a given list
+  (`selected`, `old()`) — it always started empty.
+- `<x-forge-select>` takes options from outside: `forge-select-options` on
+  window with `{target: name|id, options}` — from JS, or
+  `$this->dispatch('forge-select-options', …)` in Livewire. A selected value
+  missing from the new options is cleared. Cascading selects no longer need a
+  native `<select>`.
+- The navbar and the profile use the user model's own **`profile_photo_url`**
+  when it has that accessor (Jetstream's, or the host's); otherwise
+  `profile_photo_path` on the new `ptah.auth.profile_photo_disk` (default
+  `public`), where the profile now also stores and deletes. Hosts can drop
+  their overrides of both views.
+
+### Tools
+
+- `ptah:upgrade-check`: an intentional override can record the package view it
+  was reviewed against — `{{-- ptah:intentional-override:<hash> --}}` in the
+  file, or `'path' => '<hash>'` in `ptah.intentional_overrides`. Silent while
+  that view is unchanged, a warning once it changes; the check prints the hash.
+
 ## [1.54.0] - 2026-10-29
 
 ### Added - Laravel's own messages in pt_BR

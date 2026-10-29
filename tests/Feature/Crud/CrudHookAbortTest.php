@@ -236,14 +236,17 @@ class CrudHookAbortTest extends TestCase
     public function a_validation_exception_from_a_hook_becomes_a_field_error(): void
     {
         // A hook that validates and is ignored lets the save proceed with the
-        // data it refused. Propagated untouched so Livewire renders it where
-        // the user is looking — on the field — instead of as a generic banner.
+        // data it refused. Shown where the user is looking — on the field —
+        // instead of as a generic banner. Since 1.55.0 in $formErrors, which
+        // the modal draws: Livewire's error bag, where it went before, is not
+        // drawn by the modal, and the message vanished.
         $this->configure(['beforeCreate' => '@AbortingHooks::beforeCreateInvalid']);
 
-        $this->crud()
+        $crud = $this->crud()
             ->set('formData.name', 'Widget')
-            ->call('save')
-            ->assertHasErrors('name');
+            ->call('save');
+
+        $this->assertArrayHasKey('name', $crud->get('formErrors'));
 
         $this->assertDatabaseMissing('items', ['name' => 'Widget']);
     }

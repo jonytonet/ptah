@@ -97,8 +97,9 @@ trait HasCrudPreferences
 
         // Table
         $table = $prefs['table'] ?? [];
-        $this->sort = $table['orderBy'] ?? 'id';
-        $this->direction = $table['direction'] ?? 'DESC';
+        [$defaultSort, $defaultDirection] = $this->defaultSort();
+        $this->sort = $table['orderBy'] ?? $defaultSort;
+        $this->direction = $table['direction'] ?? $defaultDirection;
         $this->perPage = (int) ($table['perPage'] ?? config('ptah.crud.per_page', 25));
 
         // Columns
@@ -165,5 +166,27 @@ trait HasCrudPreferences
         $ui = $this->crudConfig['uiPreferences'] ?? [];
         $this->viewDensity = ! empty($ui['compactMode']) ? 'compact' : 'global';
         $this->perPage = (int) ($ui['perPage'] ?? config('ptah.crud.per_page', 25));
+        [$this->sort, $this->direction] = $this->defaultSort();
+    }
+
+    /**
+     * The screen's default order: `uiPreferences.defaultSort` and
+     * `defaultDirection` (1.55.0 — it was always `id DESC`). A column the user
+     * may not sort by — denied, or not one of the screen's — falls back to the
+     * key, by the same allowlist that guards a sort sent by the browser.
+     *
+     * @return array{0: string, 1: 'ASC'|'DESC'}
+     */
+    protected function defaultSort(): array
+    {
+        $ui = $this->crudConfig['uiPreferences'] ?? [];
+        $column = (string) ($ui['defaultSort'] ?? 'id');
+        $direction = strtoupper((string) ($ui['defaultDirection'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+
+        if ($column === '' || ($column !== 'id' && ! $this->sortColumnIsAllowed($column))) {
+            $column = 'id';
+        }
+
+        return [$column, $direction];
     }
 }

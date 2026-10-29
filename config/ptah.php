@@ -495,6 +495,10 @@ return [
         'remember_me' => true,
         // false hides the active-sessions tab on the profile.
         'session_protection' => true,
+        // Disk the profile photo is stored on and shown from (1.55.0). A user
+        // model with a `profile_photo_url` accessor (Jetstream's, or yours)
+        // decides the URL itself.
+        'profile_photo_disk' => env('PTAH_PROFILE_PHOTO_DISK', 'public'),
         // Prefix of the auth routes (/login, /logout…) — e.g. 'erp' → /erp/login,
         // for a host whose storefront already owns /login.
         'route_prefix' => env('PTAH_AUTH_ROUTE_PREFIX', ''),

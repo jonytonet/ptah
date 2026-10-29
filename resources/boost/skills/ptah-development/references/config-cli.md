@@ -17,4 +17,4 @@ Format: `key=value`, repeatable. `create`, `edit`, `delete`, `restore`, `export`
 
 ## Custom bulk actions
 
-`bulkActions` entries (`{label, action, method}`) with `"method": "Class@key"`: the class MUST implement `Ptah\Contracts\BulkActionHandler` (`handleBulkAction(array $ids, string $model, string $key): void`); the part after `@` is only a key handed to it, never a method name ptah calls. Without the interface the action does not run (`ptah:config:doctor` reports it).
+`bulkActions` entries (`{label, action, method}`) with `"method": "Class@key"`: the class MUST implement `Ptah\Contracts\BulkActionHandler` (`handleBulkAction(array $ids, string $model, string $key): void`); the part after `@` is only a key handed to it, never a method name ptah calls. Without the interface the action does not run (`ptah:config:doctor` reports it). Since 1.55.0 the selection bar draws one button per action; optional `permission` (a Gate ability — without it the action needs the edit permission), `confirm` (true or the text) and `icon`. The row checkboxes appear when the user may delete or run any bulk action.

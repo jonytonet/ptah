@@ -76,7 +76,7 @@ trait HasCrudFilters
     public function updatedSort(): void
     {
         if (! $this->sortColumnIsAllowed($this->sort)) {
-            $this->sort = 'id';
+            $this->sort = $this->defaultSort()[0];
         }
 
         $this->resetPage();

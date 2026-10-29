@@ -39,7 +39,7 @@ final class ColumnKeys
         'colsSDTipo', 'colsSDValor', 'colsSDValueField', 'colsSdLimit', 'colsSdOrderBy',
         'colsSdSelectColumn', 'colsSdTable', 'colsSdValueColumn', 'colsSearchable', 'colsSelect',
         'colsSource', 'colsTipo', 'colsUploadAllowedTypes',
-        'colsUploadMaxSize', 'colsUploadPath', 'colsValidations', 'colsValue', 'colsVisibleList',
+        'colsUploadDisk', 'colsUploadMaxSize', 'colsUploadPath', 'colsValidations', 'colsValue', 'colsVisibleList',
     ];
 
     /** The values the legacy `colsHelper` maps to a renderer (HasCrudRenderers). */

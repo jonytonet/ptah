@@ -388,7 +388,7 @@ migration, not a schema tweak.
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
 | `mcp_tools` | `PTAH_MCP_TOOLS` | `true` | Adds ptah's read-only agent tools to Laravel Boost's MCP server, and (1.52.0) registers them as a `ptah` MCP server of their own (`php artisan mcp:start ptah`) — both only when `laravel/mcp` is installed; nothing happens without it — [AgentTools.md](AgentTools.md) |
-| `intentional_overrides` | — | `[]` | Published views you keep on purpose (relative to `resources/views/vendor/ptah`); `ptah:upgrade-check` lists them as information instead of an action |
+| `intentional_overrides` | — | `[]` | Published views you keep on purpose (relative to `resources/views/vendor/ptah`); `ptah:upgrade-check` lists them as information instead of an action. Since 1.55.0, `'path' => '<hash>'` (or `{{-- ptah:intentional-override:<hash> --}}` in the file) records the package view you reviewed: silent while it is unchanged, a warning when it changes. The check prints the hash to record |
 | `attachments.disk` | `PTAH_ATTACHMENTS_DISK` | `local` | Disk of record attachments (`HasAttachments`) — keep it private. See [BaseCrud.md](BaseCrud.md) |
 | `attachments.max_kb` | `PTAH_ATTACHMENTS_MAX_KB` | `10240` | Per-file size limit |
 | `attachments.mimes` | — | `pdf jpg jpeg png webp txt csv xlsx xls doc docx zip` | Accepted extensions |
@@ -994,6 +994,15 @@ not `abort(403)`.
 | **beforeUpdate** | Before UPDATE | `$data` (array), `$record` (Model) | ✅ Yes (`$data` by reference) |
 | **afterUpdate** | After UPDATE | `$record` (Model), `$data` (array) | ❌ No |
 | **beforeDelete** | Before a record is deleted (single, bulk or force) | `$record` (Model), `$data` (the record's attributes) | ❌ No — it is a barrier: **critical by default**, so any failure refuses the delete (throw `CrudHookAbort` to tell the user why) |
+| **afterDelete** (1.55.0) | After a record is deleted (single, bulk or force) | `$record` (Model), `$data` (the record's attributes) | ❌ No — the delete is done; a `CrudHookAbort` shows as a warning |
+
+**Since 1.55.0:**
+
+- A hook class is resolved **through the container** (`app($class)`), so its constructor
+  can receive services — it was `new $class`.
+- A `ValidationException` thrown by a save hook shows **in the modal**, on its field
+  (`email` or `formData.email`); a key that is not a field of the form goes to the general
+  error. It went to Livewire's error bag, which the modal does not draw, and vanished.
 
 ---
 
@@ -1676,6 +1685,7 @@ field:type:modifier:option=value:option=value...
 | `sd_value` | `colsSDValor` | string | `sd_value=id` |
 | `sd_label` | `colsSDLabel` | string | `sd_label=name` — see the caveat in [Commands.md](Commands.md#ptahconfig) about the keys the SearchDropdown renderer actually reads (`colsSDValor`/`colsSDLabel`) |
 | `upload_path` | `colsUploadPath` | string | `upload_path=products/images` — overrides the auto-derived path |
+| `upload_disk` | `colsUploadDisk` | string | `upload_disk=uploads` — a disk of `config/filesystems.php` (1.55.0); default `public` |
 | `upload_max_size` | `colsUploadMaxSize` | int | `upload_max_size=2048` — max size in KB (default: 2048) |
 | `upload_allowed_types` | `colsUploadAllowedTypes` | string | `upload_allowed_types=jpg,png,webp` — comma-separated extensions |
 | `image_width` | `colsRendererImageWidth` | int | `image_width=64` |
@@ -2429,6 +2439,7 @@ Rules (`FormValidatorService`): `email`, `url`, `integer`, `numeric`, `alpha`,
 | Property | Type | Default | Description |
 |-------------|------|--------|----------|
 | `colsUploadPath` | string | `''` | Upload path (e.g.: `products/images`) |
+| `colsUploadDisk` | string | `''` (`public`) | Disk the file is stored on, and whose `url()` the cell and the form preview use (1.55.0). A value already absolute (`/upload/x.jpg`, a full URL) is shown as it is. For images under `public_html/upload`: a disk `'uploads' => ['driver' => 'local', 'root' => public_path('upload'), 'url' => '/upload', 'visibility' => 'public']` and `colsUploadDisk: "uploads"` |
 | `colsUploadMaxSize` | int | `2048` | Maximum size in KB |
 | `colsUploadAllowedTypes` | array | `[]` | Allowed extensions: `["jpg", "png", "webp"]` |
 
@@ -2703,6 +2714,8 @@ ignored by the screen.
 | `tableClass` / `theadClass` | string | `'table'` / `'ptah-c-thead'` | Classes of the `<table>` / `<thead>`. They **replace** the defaults (they do not add to them); an empty string removes the default class |
 | `configLinkLinha` | string | — | Row link template (`/products/%id%`) |
 | `groupBy` / `groupBreak` | string | `null` | Group rows / group break with subtotals |
+| `groupBreakPeriod` | string | `null` | `day` \| `month` \| `year`: break a date column by period (1.55.0) |
+| `uiPreferences.defaultSort` / `defaultDirection` | string | `id` / `DESC` | The screen's default order until the user picks another (1.55.0). A column the user may not sort by falls back to `id` |
 | `totalizadores` | object | disabled | Footer totals |
 | `masterDetail` | list | `null` | Detail grid under a row |
 | `bulkActions` | list | `[]` | Custom bulk actions |

@@ -19,6 +19,7 @@ use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\SessionService;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\ProfilePhoto;
 use Ptah\Support\PtahGuard;
 
 #[Layout('ptah::layouts.forge-dashboard')]
@@ -357,12 +358,13 @@ class ProfilePage extends Component
         $this->validate(['photo' => 'required|image|max:2048']);
 
         $old = PtahGuard::user()->profile_photo_path;
-        $path = $this->photo->store('profile-photos', 'public');
+        // ptah.auth.profile_photo_disk (1.55.0) — it was always `public`.
+        $path = $this->photo->store('profile-photos', ProfilePhoto::disk());
 
         PtahGuard::user()->forceFill(['profile_photo_path' => $path])->save();
 
         if ($old) {
-            Storage::disk('public')->delete($old);
+            Storage::disk(ProfilePhoto::disk())->delete($old);
         }
 
         $this->reset('photo');
@@ -374,7 +376,7 @@ class ProfilePage extends Component
         $user = PtahGuard::user();
 
         if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            Storage::disk(ProfilePhoto::disk())->delete($user->profile_photo_path);
             $user->forceFill(['profile_photo_path' => null])->save();
         }
 

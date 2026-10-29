@@ -768,6 +768,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `image_width` | `colsRendererImageWidth` | — |
 | `image_height` | `colsRendererImageHeight` | — |
 | `upload_path` | `colsUploadPath` | `upload_path=products/images` |
+| `upload_disk` | `colsUploadDisk` | `upload_disk=uploads` |
 | `upload_max_size` | `colsUploadMaxSize` | `upload_max_size=2048` (KB) |
 | `upload_allowed_types` | `colsUploadAllowedTypes` | `upload_allowed_types=jpg,png,webp` (comma-separated) |
 | `max_chars` | `colsRendererMaxChars` | `max_chars=50` |

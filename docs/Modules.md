@@ -142,12 +142,20 @@ In `config/ptah.php`, section `auth`:
     'two_factor'         => true,            // false hides the 2FA setup (an account that already has 2FA is still challenged)
     'remember_me'        => true,            // false hides "remember me" on the login screen
     'session_protection' => true,            // false hides the active-sessions tab
+    'profile_photo_disk' => env('PTAH_PROFILE_PHOTO_DISK', 'public'), // 1.55.0 — see below
     'route_prefix'       => env('PTAH_AUTH_ROUTE_PREFIX', ''), // URL prefix (e.g. 'admin')
     'guest_redirect'     => null,            // see "Guest redirect" below
 ],
 ```
 
 The route group middleware is read from `ptah.auth.middleware` (default `['web']`, listed in the config since 1.50.1).
+
+**Profile photo (1.55.0).** The navbar and the profile show the user model's own
+`profile_photo_url` when it has that accessor (Jetstream's `HasProfilePhoto`, or yours)
+— so a host keeping photos on another disk or path decides the URL there, no view
+override. Without the accessor, the URL is built from `profile_photo_path` on
+`ptah.auth.profile_photo_disk` (default `public`); an absolute path or full URL is used
+as it is. The profile stores and deletes the photo on that same disk.
 
 **`guard` is the guard the whole module uses (1.53.0).** Login, the 2FA challenge,
 the profile, the active sessions, "forgot password" and the reset all work on
