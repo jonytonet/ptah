@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Translation\FileLoader;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Server\Tool;
 use Livewire\Exceptions\MethodNotFoundException;
@@ -152,6 +153,8 @@ class PtahServiceProvider extends ServiceProvider
             __DIR__.'/../config/ptah.php',
             'ptah'
         );
+
+        $this->registerLaravelTranslations();
 
         // Arquivo SEPARADO, e nao uma chave dentro de ptah.php, por dois
         // motivos que se reforcam.
@@ -556,6 +559,31 @@ class PtahServiceProvider extends ServiceProvider
      * config, and only when laravel/mcp's base class exists — the tool classes
      * extend it. `PTAH_MCP_TOOLS=false` turns it off.
      */
+    /**
+     * Laravel's own lines (validation, auth, passwords, pagination) in pt_BR,
+     * below the project's (1.54.0).
+     *
+     * Laravel's loader reads [its own lang dir (en only), the app's lang dir]
+     * and the later one wins key by key. ptah's directory goes between them:
+     * it answers for pt_BR when the project has no translation, and any line
+     * the project defines still wins. Only for Laravel's FileLoader — a host
+     * with a loader of its own is left alone.
+     */
+    protected function registerLaravelTranslations(): void
+    {
+        $this->app->extend('translation.loader', function ($loader, $app) {
+            if (! $loader instanceof FileLoader || ! config('ptah.laravel_translations', true)) {
+                return $loader;
+            }
+
+            $paths = $loader->paths();
+            $ptah = __DIR__.'/../resources/laravel-lang';
+            $projectLang = array_pop($paths);
+
+            return new FileLoader($app['files'], [...$paths, $ptah, $projectLang]);
+        });
+    }
+
     protected function registerBoostTools(): void
     {
         if (! config('ptah.mcp_tools', true) || ! class_exists(Tool::class)) {
