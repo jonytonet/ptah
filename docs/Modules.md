@@ -149,6 +149,28 @@ In `config/ptah.php`, section `auth`:
 
 The route group middleware is read from `ptah.auth.middleware` (default `['web']`, listed in the config since 1.50.1).
 
+**`guard` is the guard the whole module uses (1.53.0).** Login, the 2FA challenge,
+the profile, the active sessions, "forgot password" and the reset all work on
+`ptah.auth.guard` — its own provider (so its own model) and the password broker
+of that provider in `config/auth.php`. Before 1.53.0 only the logout read it:
+the rest used the default guard and `auth.providers.users.model`. For staff on
+an `admin` guard:
+
+```php
+// config/auth.php
+'guards'    => ['admin' => ['driver' => 'session', 'provider' => 'admins']],
+'providers' => ['admins' => ['driver' => 'eloquent', 'model' => App\Models\Admin::class]],
+'passwords' => ['admins' => ['provider' => 'admins', 'table' => 'password_reset_tokens', 'expire' => 60, 'throttle' => 60]],
+
+// config/ptah.php
+'auth' => ['guard' => 'admin', /* … */],
+```
+
+The protected routes below use `auth:<guard>`. The active-sessions tab lists only
+sessions signed in on that guard: the `sessions` table has no guard column, so a
+customer of another guard with the same id no longer appears there (or gets
+revoked from it).
+
 ### Routes
 
 Registered automatically when `ptah.modules.auth = true`:
@@ -158,11 +180,18 @@ Registered automatically when `ptah.modules.auth = true`:
 | `GET` | `/login` | `ptah.auth.login` | public |
 | `POST` | `/logout` | `ptah.auth.logout` | public |
 | `GET` | `/forgot-password` | `ptah.auth.forgot-password` | public |
-| `GET` | `/reset-password/{token}` | `password.reset` | public |
+| `GET` | `/reset-password/{token}` | `ptah.auth.password.reset` (was `password.reset` before 1.53.0) | public |
 | `GET` | `/two-factor-challenge` | `ptah.auth.two-factor` | public |
-| `GET` | `/dashboard` | `ptah.dashboard` | `auth` |
-| `GET` | `/profile` | `ptah.profile` | `auth` |
-| `POST` | `/appearance/theme-mode` | `ptah.appearance.theme-mode` | `auth` |
+| `GET` | `/dashboard` | `ptah.dashboard` | `auth:<guard>` |
+| `GET` | `/profile` | `ptah.profile` | `auth:<guard>` |
+| `POST` | `/appearance/theme-mode` | `ptah.appearance.theme-mode` | `auth:<guard>` |
+
+**The reset page is `ptah.auth.password.reset` (1.53.0)** — it was named
+`password.reset`, which Fortify/Jetstream register too. The links ptah sends
+("forgot password", the users screen) point at it. A reset link sent by other
+code (`Password::sendResetLink`) keeps Laravel's target, `password.reset`, when
+the host has one, and falls back to the ptah page when nothing answers that
+name — unless the host set its own `ResetPassword::createUrlUsing()`.
 
 > Use `route_prefix` to mount all routes under a prefix. E.g.: `'route_prefix' => 'admin'` generates `/admin/login`, `/admin/dashboard`, etc.
 

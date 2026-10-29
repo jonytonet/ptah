@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ptah\Livewire\Auth;
 
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
@@ -20,6 +19,7 @@ use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\SessionService;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\PtahGuard;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class ProfilePage extends Component
@@ -92,12 +92,12 @@ class ProfilePage extends Component
 
     public function mount(): void
     {
-        $user = Auth::user();
+        $user = PtahGuard::user();
         $this->name = $user->name ?? '';
         $this->email = $user->email ?? '';
         $this->totpType = $user->two_factor_type ?? '';
 
-        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $theme = AppearancePresets::sanitize(UserPreference::get(PtahGuard::id(), 'theme'));
         $this->themeLight = $theme['light'];
         $this->themeDark = $theme['dark'];
         $this->themeAccent = $theme['accent'];
@@ -110,7 +110,7 @@ class ProfilePage extends Component
 
     public function saveProfile(): void
     {
-        $user = Auth::user();
+        $user = PtahGuard::user();
         $emailChanged = mb_strtolower(trim($this->email)) !== mb_strtolower((string) ($user->email ?? ''));
 
         $this->validate([
@@ -148,7 +148,7 @@ class ProfilePage extends Component
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = Auth::user();
+        $user = PtahGuard::user();
 
         if (! Hash::check($this->current_password, $user->password)) {
             $this->errorMsg = trans('ptah::ui.profile_password_wrong');
@@ -175,7 +175,7 @@ class ProfilePage extends Component
      */
     private function passwordConfirmed(): bool
     {
-        if (Hash::check($this->twofa_password, (string) Auth::user()->getAuthPassword())) {
+        if (Hash::check($this->twofa_password, (string) PtahGuard::user()->getAuthPassword())) {
             return true;
         }
 
@@ -197,7 +197,7 @@ class ProfilePage extends Component
         // Nada e gravado ate o codigo conferir: o enableTotp() gravava o
         // segredo novo antes, e o autenticador que funcionava parava.
         try {
-            $data = $twoFactor->startTotp(Auth::user());
+            $data = $twoFactor->startTotp(PtahGuard::user());
         } catch (\RuntimeException $e) {
             // pragmarx/google2fa-laravel not installed (1.50.1: was a 500).
             $this->errorMsg = $e->getMessage();
@@ -222,7 +222,7 @@ class ProfilePage extends Component
 
         $this->validate(['totp_code' => 'required|string|size:6']);
 
-        if ($twoFactor->confirmPendingTotp(Auth::user(), $this->pendingTotpSecret, $this->totp_code, $this->recoveryCodes)) {
+        if ($twoFactor->confirmPendingTotp(PtahGuard::user(), $this->pendingTotpSecret, $this->totp_code, $this->recoveryCodes)) {
             $this->showSetup2fa = false;
             $this->recoveryCodes = [];
             $this->pendingTotpSecret = '';
@@ -248,7 +248,7 @@ class ProfilePage extends Component
         // Throttle code sends to prevent email bombing (an attacker repeatedly
         // triggering this action to flood the victim's inbox). Same key shape
         // as TwoFactorChallengePage::sendEmailCode(), scoped by user+IP.
-        $sendThrottleKey = 'ptah-2fa-send|'.Auth::id().'|'.request()->ip();
+        $sendThrottleKey = 'ptah-2fa-send|'.PtahGuard::id().'|'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($sendThrottleKey, 3)) {
             $seconds = RateLimiter::availableIn($sendThrottleKey);
@@ -259,7 +259,7 @@ class ProfilePage extends Component
 
         RateLimiter::hit($sendThrottleKey, 60);
 
-        $twoFactor->sendEmailCode(Auth::user());
+        $twoFactor->sendEmailCode(PtahGuard::user());
         $this->totpType = 'email';
         $this->flash(trans('ptah::ui.profile_email_2fa_sent'));
     }
@@ -270,7 +270,7 @@ class ProfilePage extends Component
             return;
         }
 
-        $this->recoveryCodes = $twoFactor->getRecoveryCodes(Auth::user());
+        $this->recoveryCodes = $twoFactor->getRecoveryCodes(PtahGuard::user());
     }
 
     public function regenerateRecoveryCodes(TwoFactorService $twoFactor): void
@@ -283,7 +283,7 @@ class ProfilePage extends Component
             return;
         }
 
-        $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(Auth::user());
+        $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(PtahGuard::user());
         $this->flash(trans('ptah::ui.profile_recovery_regen'));
     }
 
@@ -293,7 +293,7 @@ class ProfilePage extends Component
             return;
         }
 
-        $twoFactor->disable(Auth::user());
+        $twoFactor->disable(PtahGuard::user());
         $this->reset('twofa_password');
         $this->totpType = '';
         $this->showSetup2fa = false;
@@ -308,7 +308,7 @@ class ProfilePage extends Component
             return; // 1.50.0: session management is off (ptah.auth.session_protection)
         }
 
-        $this->sessions = $sessionService->getActiveSessions(Auth::user())->toArray();
+        $this->sessions = $sessionService->getActiveSessions(PtahGuard::user())->toArray();
     }
 
     public function revokeSession(string $sessionId, SessionService $sessionService): void
@@ -317,7 +317,7 @@ class ProfilePage extends Component
             return; // 1.50.0: session management is off (ptah.auth.session_protection)
         }
 
-        $sessionService->revokeSession($sessionId, Auth::user());
+        $sessionService->revokeSession($sessionId, PtahGuard::user());
         // O aparelho revogado com "lembrar-me" logava de novo sozinho: o cookie
         // vale enquanto o remember_token nao muda (1.41.8).
         self::cycleRememberToken();
@@ -332,7 +332,7 @@ class ProfilePage extends Component
         }
 
         $count = $sessionService->revokeOtherSessions(
-            Auth::user(),
+            PtahGuard::user(),
             Request::session()->getId()
         );
         self::cycleRememberToken();
@@ -342,7 +342,7 @@ class ProfilePage extends Component
 
     private static function cycleRememberToken(): void
     {
-        $user = Auth::user();
+        $user = PtahGuard::user();
 
         if ($user !== null && $user->getRememberTokenName() !== '') {
             $user->setRememberToken(Str::random(60));
@@ -356,10 +356,10 @@ class ProfilePage extends Component
     {
         $this->validate(['photo' => 'required|image|max:2048']);
 
-        $old = Auth::user()->profile_photo_path;
+        $old = PtahGuard::user()->profile_photo_path;
         $path = $this->photo->store('profile-photos', 'public');
 
-        Auth::user()->forceFill(['profile_photo_path' => $path])->save();
+        PtahGuard::user()->forceFill(['profile_photo_path' => $path])->save();
 
         if ($old) {
             Storage::disk('public')->delete($old);
@@ -371,7 +371,7 @@ class ProfilePage extends Component
 
     public function removePhoto(): void
     {
-        $user = Auth::user();
+        $user = PtahGuard::user();
 
         if ($user->profile_photo_path) {
             Storage::disk('public')->delete($user->profile_photo_path);
@@ -430,7 +430,7 @@ class ProfilePage extends Component
         $this->themeDensity = AppearancePresets::DEFAULT_DENSITY;
         $this->themeFontsize = AppearancePresets::DEFAULT_FONTSIZE;
 
-        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $theme = AppearancePresets::sanitize(UserPreference::get(PtahGuard::id(), 'theme'));
         $theme['light'] = AppearancePresets::DEFAULT_LIGHT;
         $theme['dark'] = AppearancePresets::DEFAULT_DARK;
         $theme['accent'] = AppearancePresets::defaultAccent();
@@ -464,7 +464,7 @@ class ProfilePage extends Component
         $property = 'theme'.ucfirst($axis);
         $this->{$property} = $value;
 
-        $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+        $theme = AppearancePresets::sanitize(UserPreference::get(PtahGuard::id(), 'theme'));
         $theme[$axis] = $value;
 
         if ($this->persistTheme($theme)) {
@@ -492,7 +492,7 @@ class ProfilePage extends Component
         AppearancePresets::queueCookie($theme);
 
         try {
-            UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+            UserPreference::set(PtahGuard::id(), 'theme', $theme, 'appearance');
         } catch (QueryException $e) {
             if (! self::isForeignKeyViolation($e)) {
                 throw $e;

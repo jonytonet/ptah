@@ -14,7 +14,7 @@
       - message    : string
       - required   : boolean
       - error      : string|null  (overrides state to danger and shows message)
-      - value      : consumed internally (not leaked to $attributes)
+      - value      : the input's value (a plain form; with wire:model, Livewire sets it)
       - name       : consumed internally (not leaked to $attributes)
 --}}
 @props([
@@ -100,6 +100,9 @@
                 'type'        => $type,
                 'placeholder' => $placeholder,
                 'name'        => $name,
+                // Written since 1.53.0 — the prop was consumed and dropped, so a
+                // plain (non-Livewire) form never showed its current value.
+                'value'       => $value,
                 'required'    => $required ?: null,
                 'class'       => "block w-full rounded border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm {$disabledClass} transition-colors duration-150 focus:ring-2",
                 'disabled'    => $disabled,

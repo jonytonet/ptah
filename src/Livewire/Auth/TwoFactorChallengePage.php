@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
-use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
@@ -14,6 +12,7 @@ use Livewire\Component;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\PtahGuard;
 
 #[Layout('ptah::layouts.forge-auth')]
 class TwoFactorChallengePage extends Component
@@ -53,14 +52,15 @@ class TwoFactorChallengePage extends Component
             return;
         }
 
-        $userModel = config('auth.providers.users.model', 'App\\Models\\User');
-        $user = $userModel::findOrFail($userId);
+        // From the ptah guard's own provider — `auth.providers.users.model`
+        // was the wrong model on a host whose admins use another provider (1.53.0).
+        $user = PtahGuard::findUser($userId) ?? abort(404);
 
         $valid = false;
 
         if ($this->usingRecovery) {
             $valid = $twoFactor->verifyRecoveryCode($user, trim($this->code));
-        } elseif ($user->two_factor_type === 'email') {
+        } elseif ($user->getAttribute('two_factor_type') === 'email') {
             $valid = $twoFactor->verifyEmailCode($user, trim($this->code));
         } else {
             $valid = $twoFactor->verifyTotp($user, trim($this->code));
@@ -72,7 +72,7 @@ class TwoFactorChallengePage extends Component
 
             // O codigo por e-mail morre depois de 5 erros: sem isso, seguia
             // valendo ate expirar enquanto alguem tentava (1.41.11).
-            if ($user->two_factor_type === 'email' && RateLimiter::attempts($userKey) >= 5) {
+            if ($user->getAttribute('two_factor_type') === 'email' && RateLimiter::attempts($userKey) >= 5) {
                 $twoFactor->forgetEmailCode($user);
             }
             $this->errorMsg = trans('ptah::ui.two_fa_code_invalid');
@@ -84,8 +84,9 @@ class TwoFactorChallengePage extends Component
         RateLimiter::clear($throttleKey);
         RateLimiter::clear($userKey);
         Session::forget('ptah.2fa.user_id');
-        Auth::loginUsingId($userId);
-        event(new Login('web', $user, false));
+        // login() fires the Login event itself, with the right guard name —
+        // the manual event(new Login('web', …)) fired it twice, always as 'web'.
+        PtahGuard::guard()->login($user);
         Session::regenerate();
 
         // Same seed/refresh as LoginPage::login() for the non-2FA path — this IS
@@ -114,10 +115,9 @@ class TwoFactorChallengePage extends Component
 
         RateLimiter::hit($sendThrottleKey, 60);
 
-        $userModel = config('auth.providers.users.model', 'App\\Models\\User');
-        $user = $userModel::findOrFail($userId);
+        $user = PtahGuard::findUser($userId) ?? abort(404);
         $twoFactor->sendEmailCode($user);
-        session()->flash('code_sent', trans('ptah::ui.two_fa_email_sent', ['email' => $user->email]));
+        session()->flash('code_sent', trans('ptah::ui.two_fa_email_sent', ['email' => $user->getAttribute('email')]));
     }
 
     public function render()

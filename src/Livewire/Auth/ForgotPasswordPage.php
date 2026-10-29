@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Ptah\Support\PtahPasswordReset;
 
 #[Layout('ptah::layouts.forge-auth')]
 class ForgotPasswordPage extends Component
@@ -49,7 +49,8 @@ class ForgotPasswordPage extends Component
         RateLimiter::hit($throttleKey, 300);
         RateLimiter::hit($ipKey, 300);
 
-        Password::sendResetLink(['email' => $this->email]);
+        // The ptah guard's broker, and a link to the ptah page (1.53.0).
+        PtahPasswordReset::sendLink($this->email);
 
         // A mesma resposta exista ou nao o e-mail: "We can't find a user with
         // that email address" contava a quem perguntasse quem tem conta aqui

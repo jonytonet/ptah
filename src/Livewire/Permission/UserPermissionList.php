@@ -23,6 +23,7 @@ use Ptah\Models\Company;
 use Ptah\Models\Role;
 use Ptah\Models\UserRole;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Support\PtahPasswordReset;
 
 #[Layout('ptah::layouts.forge-dashboard')]
 class UserPermissionList extends Component
@@ -191,7 +192,7 @@ class UserPermissionList extends Component
      */
     public function canSendPasswordLink(): bool
     {
-        return Route::has('password.reset');
+        return Route::has(PtahPasswordReset::ROUTE);
     }
 
     protected function sendLinkTo(string $email): bool
@@ -201,7 +202,7 @@ class UserPermissionList extends Component
         }
 
         try {
-            return Password::sendResetLink(['email' => $email]) === Password::RESET_LINK_SENT;
+            return PtahPasswordReset::sendLink($email) === Password::RESET_LINK_SENT;
         } catch (\Throwable $e) {
             // Sem a tabela password_reset_tokens, sem mailer... a causa vai
             // para o log (ptah:last-error), nao so "confira o e-mail".

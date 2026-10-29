@@ -9,6 +9,7 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Schema;
 use Ptah\Seeders\DefaultAdminSeeder;
 use Ptah\Seeders\PtahDemoSeeder;
+use Ptah\Support\BoostPackages;
 use Symfony\Component\Process\Process;
 
 /**
@@ -395,6 +396,13 @@ CSS;
                 return;
             }
 
+            // 1.53.0: without interaction boost:install keeps only the
+            // packages already in boost.json — none on a first install — so
+            // ptah's guidelines never landed. List ptah first.
+            if (! BoostPackages::includePtah()) {
+                $this->components->warn('boost.json is not valid JSON — add "jonytonet/ptah" to its "packages" by hand.');
+            }
+
             try {
                 $this->call('boost:install');
             } catch (\Throwable $e) {
@@ -405,9 +413,9 @@ CSS;
             }
         });
 
-        // Boost only auto-discovers its own curated + roster-detected packages —
-        // it does NOT scan third-party vendor/*/resources/boost. So publish Ptah's
-        // skills into .claude/skills ourselves (that's what makes them usable).
+        // Boost installs a third-party package's guidelines/skills only when the
+        // package is listed in boost.json (done above). Publishing the skills
+        // into .claude/skills too keeps them usable whatever Boost decides.
         $this->publishSkills();
 
         $this->components->info(

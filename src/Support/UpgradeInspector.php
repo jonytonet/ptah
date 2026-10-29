@@ -44,7 +44,29 @@ final class UpgradeInspector
             ...self::preferencesForeignKey(),
             ...self::pendingMigrations(),
             ...self::structureEditor(),
+            ...self::boost(),
         ];
+    }
+
+    /**
+     * Laravel Boost installed, but its boost.json does not list ptah — so
+     * `boost:install` (always, without interaction) leaves ptah's guidelines
+     * and skills out (1.53.0).
+     *
+     * @return list<array<string, string>>
+     */
+    public static function boost(): array
+    {
+        if (BoostPackages::includesPtah() !== false) {
+            return [];
+        }
+
+        return [[
+            'check' => 'boost',
+            'level' => 'warn',
+            'message' => 'boost.json does not list '.BoostPackages::PACKAGE.' in "packages": boost:install leaves ptah\'s guidelines and skills out (always, when run without interaction)',
+            'action' => 'add "'.BoostPackages::PACKAGE.'" to "packages" in boost.json, then run php artisan boost:install',
+        ]];
     }
 
     /**

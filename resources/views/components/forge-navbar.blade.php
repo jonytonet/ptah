@@ -118,9 +118,13 @@
              Se esse menu nao existe (nenhum modulo que o gera esta ativo), o
              grupo central continua visivel no celular: apertado e melhor que
              ausente — sem ele nao haveria como trocar de empresa. --}}
-        <div class="{{ $ptahHasAdminMenu ? 'hidden md:flex' : 'flex' }} items-center justify-center px-4">
-            @livewire('ptah-company-switcher')
-        </div>
+        {{-- Only with the company module: the component is registered by it,
+             and @livewire of an unregistered name broke the page (1.53.0). --}}
+        @if (config('ptah.modules.company'))
+            <div class="{{ $ptahHasAdminMenu ? 'hidden md:flex' : 'flex' }} items-center justify-center px-4">
+                @livewire('ptah-company-switcher')
+            </div>
+        @endif
 
         {{-- Actions.
 
@@ -196,9 +200,11 @@
                              `key` distinto e obrigatorio: duas instancias do
                              mesmo componente na mesma pagina sem chave propria
                              colidem no morph do Livewire. --}}
-                        <div class="md:hidden">
-                            @livewire('ptah-company-switcher', ['layout' => 'stacked'], key('ptah-company-switcher-mobile'))
-                        </div>
+                        @if (config('ptah.modules.company'))
+                            <div class="md:hidden">
+                                @livewire('ptah-company-switcher', ['layout' => 'stacked'], key('ptah-company-switcher-mobile'))
+                            </div>
+                        @endif
 
                         {{-- Company --}}
                         @if($ptahAdminLinks['company'])

@@ -873,6 +873,20 @@ php artisan ptah:install --boost
 php artisan boost:install
 ```
 
+**ptah's guidelines in Boost (1.53.0).** Boost installs a package's guidelines
+and skills only when the package is in `packages` in `boost.json`. Interactively
+it asks; with `--no-interaction` (and when `ptah:install` runs it) it keeps the
+list as it is — empty on a first install, so ptah's guidelines were left out.
+`ptah:install --boost` now adds `jonytonet/ptah` to that list before calling
+`boost:install`, and `ptah:upgrade-check` reports a `boost.json` without it. By
+hand:
+
+```json
+{ "packages": ["jonytonet/ptah"] }
+```
+
+then `php artisan boost:install --no-interaction`.
+
 **Real output (boost:install):**
 
 ```

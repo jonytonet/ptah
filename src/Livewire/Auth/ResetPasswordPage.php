@@ -12,6 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Ptah\Services\Auth\SessionService;
+use Ptah\Support\PtahPasswordReset;
 
 #[Layout('ptah::layouts.forge-auth')]
 class ResetPasswordPage extends Component
@@ -40,7 +41,7 @@ class ResetPasswordPage extends Component
         $this->validate();
         $this->errorMsg = '';
 
-        $status = Password::reset(
+        $status = PtahPasswordReset::broker()->reset(
             [
                 'email' => $this->email,
                 'password' => $this->password,
