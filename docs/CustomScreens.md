@@ -189,6 +189,27 @@ Requer Alpine.js. **Limitação conhecida:** `multiple` não funciona com `wire:
 campo — `name` para um valor, `name[]` (um por valor) com `multiple`. Antes o
 `<input type="hidden">` não tinha `name` e o formulário não enviava nada.
 
+**`old()` e `$errors` sozinhos (1.55.0)** — em `forge-input` e `forge-select`: com
+`name` e sem `wire:model`, o campo lê `old(name)` (que vence `value`/`selected`,
+como `old('x', $padrão)`) e `$errors->first(name)` quando `error` não é passado.
+`itens[0][qtd]` é lido como `itens.0.qtd`. Um formulário comum fica só com
+`<x-forge-input name="email" :value="$user->email" />`.
+
+**Opções vindas de fora (1.55.0)** — para selects em cascata: dispare
+`forge-select-options` na janela com `target` (o `name` ou o `id` do campo) e as
+opções. Um valor selecionado que não exista nas opções novas é limpo.
+
+```js
+window.dispatchEvent(new CustomEvent('forge-select-options', {
+    detail: { target: 'city_id', options: [{ value: 1, label: 'Curitiba' }] },
+}));
+```
+
+```php
+// num componente Livewire
+$this->dispatch('forge-select-options', target: 'city_id', options: $cidades);
+```
+
 ```blade
 <x-forge-select label="Status" wire:model="status"
     :options="[['value' => 'open', 'label' => 'Aberto'], ['value' => 'done', 'label' => 'Concluído']]" />

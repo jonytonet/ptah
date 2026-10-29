@@ -242,8 +242,8 @@
                     @if ($photo)
                         <img src="{{ $photo->temporaryUrl() }}" alt="preview"
                              class="w-24 h-24 rounded-full object-cover ring-2 ring-primary ring-offset-2">
-                    @elseif (auth()->user()->profile_photo_path)
-                        <img src="{{ Storage::url(auth()->user()->profile_photo_path) }}" alt="foto"
+                    @elseif ($__profilePhotoUrl = \Ptah\Support\ProfilePhoto::url(auth()->user()))
+                        <img src="{{ $__profilePhotoUrl }}" alt="foto"
                              class="w-24 h-24 rounded-full object-cover ring-2 ring-primary ring-offset-2">
                     @else
                         <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold ring-2 ring-primary ring-offset-2">

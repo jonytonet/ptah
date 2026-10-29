@@ -13,6 +13,7 @@ use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
 use Ptah\Support\StyleRule;
 use Ptah\Support\StyleTemplate;
+use Ptah\Support\UploadDisk;
 
 /**
  * Cell rendering, row styling, helper formatters and custom method resolution.
@@ -485,11 +486,8 @@ trait HasCrudRenderers
         $width = (int) ($col['colsRendererImageWidth'] ?? 40);
         $height = (int) ($col['colsRendererImageHeight'] ?? $width);
 
-        $v = (string) $value;
-        // Resolve storage-relative paths to public URLs (requires `php artisan storage:link`)
-        if (! str_starts_with($v, 'http') && ! str_starts_with($v, 'data:') && ! str_starts_with($v, '/')) {
-            $v = asset('storage/'.ltrim($v, '/'));
-        }
+        // The column's disk (colsUploadDisk, 1.55.0); an absolute value as it is.
+        $v = UploadDisk::url($col, (string) $value);
 
         return '<img src="'.e($v)."\" width=\"{$width}\" height=\"{$height}\" class=\"rounded object-cover inline-block\" loading=\"lazy\" />";
     }

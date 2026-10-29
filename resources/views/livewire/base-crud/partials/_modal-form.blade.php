@@ -558,15 +558,7 @@
                                 {{-- ── Image input com upload real + preview ── --}}
                                 @php
                                     // Resolve preview URL for existing stored images
-                                    $fPreviewUrl = '';
-                                    if ($fValue) {
-                                        $v = (string) $fValue;
-                                        if (str_starts_with($v, 'http') || str_starts_with($v, 'data:') || str_starts_with($v, '/')) {
-                                            $fPreviewUrl = $v;
-                                        } else {
-                                            $fPreviewUrl = asset('storage/' . ltrim($v, '/'));
-                                        }
-                                    }
+                                    $fPreviewUrl = $fValue ? \Ptah\Support\UploadDisk::url($col, (string) $fValue) : '';
                                     // Build accept attribute from colsUploadAllowedTypes
                                     $fAllowedTypes = $col['colsUploadAllowedTypes'] ?? null;
                                     $fAccept = 'image/*';

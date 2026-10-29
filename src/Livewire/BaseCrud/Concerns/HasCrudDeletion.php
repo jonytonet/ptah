@@ -127,7 +127,31 @@ trait HasCrudDeletion
 
         $this->stampDeletedBy($record, $force);
 
+        $this->runAfterDelete($data, $record);
+
         return null;
+    }
+
+    /**
+     * `afterDelete` (1.55.0) — cache invalidation, an audit line, a sync. The
+     * record is already gone: a failure cannot undo it, so it is reported as a
+     * warning and the delete still counts as done. Like the other after-hooks,
+     * a failure is swallowed (and logged) unless the hook throws CrudHookAbort
+     * or is declared critical.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function runAfterDelete(array $data, Model $record): void
+    {
+        try {
+            $this->executeDynamicHook('afterDelete', $data, $record);
+        } catch (ValidationException|CrudHookAbort $e) {
+            $message = $e instanceof ValidationException
+                ? (string) (collect($e->errors())->flatten()->first() ?? $e->getMessage())
+                : $e->getMessage();
+
+            $this->dispatch('ptah-toast', title: trans('ptah::ui.crud_hook_after_delete_failed', ['message' => $message]), color: 'warn');
+        }
     }
 
     private function deleteFailed(Model $record, \Throwable $e): string

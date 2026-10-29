@@ -14,7 +14,9 @@
       - message    : string
       - required   : boolean
       - error      : string|null  (overrides state to danger and shows message)
-      - value      : the input's value (a plain form; with wire:model, Livewire sets it)
+      - value      : the input's value (a plain form; with wire:model, Livewire sets it).
+                     With `name` and no wire:model, old(name) wins over it and
+                     $errors->first(name) fills `error` when not given (1.55.0).
       - name       : consumed internally (not leaked to $attributes)
 --}}
 @props([
@@ -34,6 +36,21 @@
 ])
 
 @php
+    // A plain form (1.55.0): with `name` and no wire:model, old() and $errors
+    // are read here — every field needed :value="old('x', …)" and
+    // :error="$errors->first('x')". old() wins over `value` (Laravel's
+    // old('x', $default)); an explicit `error` wins over $errors. `items[0][qty]`
+    // is read as `items.0.qty`.
+    $__plainField = ($name !== null && $name !== '' && $attributes->whereStartsWith('wire:model')->isEmpty())
+        ? trim(str_replace(['[]', '[', ']'], ['', '.', ''], (string) $name), '.')
+        : null;
+    if ($__plainField !== null && $error === null && isset($errors) && $errors->has($__plainField)) {
+        $error = $errors->first($__plainField);
+    }
+    if ($__plainField !== null && $type !== 'password' && old($__plainField) !== null) {
+        $value = old($__plainField);
+    }
+
     $resolvedState   = $error ? 'danger' : $state;
     $resolvedMessage = $error ?? $message;
 

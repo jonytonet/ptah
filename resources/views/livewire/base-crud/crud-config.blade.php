@@ -2632,6 +2632,14 @@
                                         title="{{ __('ptah::ui.cfg_tip_gen_group_break') }}"
                                         class="font-mono cfg-input" />
                                     <p class="mt-1 text-[10px] text-slate-500">{{ __('ptah::ui.cfg_gen_group_break_hint') }}</p>
+                                    <label class="mt-3 cfg-label">{{ __('ptah::ui.cfg_gen_group_break_period') }}</label>
+                                    <select wire:model="groupBreakPeriod" class="cfg-input"
+                                        title="{{ __('ptah::ui.cfg_tip_gen_group_break_period') }}">
+                                        <option value="">{{ __('ptah::ui.cfg_gen_group_break_period_value') }}</option>
+                                        <option value="day">{{ __('ptah::ui.cfg_gen_group_break_period_day') }}</option>
+                                        <option value="month">{{ __('ptah::ui.cfg_gen_group_break_period_month') }}</option>
+                                        <option value="year">{{ __('ptah::ui.cfg_gen_group_break_period_year') }}</option>
+                                    </select>
                                 </div>
                                 <div class="col-span-2 md:col-span-1">
                                     <label class="cfg-label">{{ __('ptah::ui.cfg_gen_detail_model') }}</label>
@@ -3010,6 +3018,18 @@
                                 <textarea wire:model="hookBeforeDelete" rows="4"
                                     title="{{ __('ptah::ui.cfg_tip_hooks_before_delete') }}"
                                     placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@BrandHooks::beforeDelete"
+                                    class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <label class="cfg-label mb-0">{{ __('ptah::ui.cfg_hooks_after_delete') }}</label>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ptah-c-muted" style="background: var(--ptah-surface-sunken)">function($record)</span>
+                                </div>
+                                <p class="text-[11px] ptah-c-muted mb-2">{{ __('ptah::ui.cfg_hooks_after_delete_desc') }}</p>
+                                <textarea wire:model="hookAfterDelete" rows="4"
+                                    title="{{ __('ptah::ui.cfg_tip_hooks_after_delete') }}"
+                                    placeholder="{{ __('ptah::ui.cfg_hooks_example_class') }}&#10;@BrandHooks::afterDelete"
                                     class="w-full font-mono text-[11px] cfg-input" style="resize: vertical;"></textarea>
                             </div>
 

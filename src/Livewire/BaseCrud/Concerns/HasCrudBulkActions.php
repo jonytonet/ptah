@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Ptah\Contracts\BulkActionHandler;
 
@@ -191,8 +193,65 @@ trait HasCrudBulkActions
     // ── Custom bulk actions ────────────────────────────────────────────────────
 
     /**
+     * The configured bulk actions this user may run on the current view.
+     *
+     * The bar never drew them (1.55.0): executeBulkAction() existed and no
+     * button reached it. Not in the trash view, where the bar is restore and
+     * permanent delete.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function availableBulkActions(): array
+    {
+        if ($this->showTrashed) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            (array) ($this->crudConfig['bulkActions'] ?? []),
+            fn ($ba) => is_array($ba) && (string) ($ba['action'] ?? '') !== '' && $this->bulkActionAllowed($ba)
+        ));
+    }
+
+    /**
+     * Who may run one bulk action. Reading the screen is always required. An
+     * action that names a `permission` (a Gate ability) is gated by it alone —
+     * "activate in bulk" no longer needs the edit permission (1.55.0); without
+     * one, it needs edit, as before, since a bulk action changes records.
+     *
+     * @param  array<string, mixed>  $ba
+     */
+    protected function bulkActionAllowed(array $ba): bool
+    {
+        if (! $this->authorizeCrudAction('read')) {
+            return false;
+        }
+
+        $gate = $ba['permission'] ?? null;
+
+        if (is_string($gate) && $gate !== '') {
+            return Auth::check() && Gate::forUser(Auth::user())->allows($gate);
+        }
+
+        return $this->authorizeCrudAction('update') && $this->crudConfigAllows('update');
+    }
+
+    /**
+     * Whether the row checkboxes are drawn: delete or restore in bulk, or any
+     * bulk action this user may run. They were tied to the delete permission
+     * alone, so a screen whose only bulk action was "activate" had to allow
+     * deleting to show them (1.55.0).
+     *
+     * @param  array<string, bool>  $effectivePerms
+     */
+    protected function canSelectRows(array $effectivePerms): bool
+    {
+        return ($effectivePerms['canDelete'] ?? false) || $this->availableBulkActions() !== [];
+    }
+
+    /**
      * Executes a custom bulk action defined in crudConfig.
-     * Config example: "bulkActions": [{"label": "Approve", "action": "approve", "method": "App\\Services\\ProductService@bulkApprove"}]
+     * Config example: "bulkActions": [{"label": "Approve", "action": "approve", "method": "App\\Services\\ProductService@bulkApprove", "permission": "products.approve", "confirm": "Approve the selected?"}]
      */
     public function executeBulkAction(string $action): void
     {
@@ -200,22 +259,17 @@ trait HasCrudBulkActions
             return;
         }
 
-        // Ptah permission check — custom bulk actions mutate records, so they
-        // require the same guard as save()/restore() (fail-closed).
-        if (! $this->authorizeCrudAction('update') || ! $this->crudConfigAllows('update')) {
-            return;
-        }
-
-        $bulkActions = $this->crudConfig['bulkActions'] ?? [];
         $config = null;
 
-        foreach ($bulkActions as $ba) {
+        foreach ($this->availableBulkActions() as $ba) {
             if (($ba['action'] ?? '') === $action) {
                 $config = $ba;
                 break;
             }
         }
 
+        // Fail-closed: an action that is not configured, or that this user may
+        // not run (bulkActionAllowed — the same rule that draws the button).
         if (! $config) {
             return;
         }

@@ -272,9 +272,11 @@ class CrudConfigGateEnforcementTest extends TestCase
                     continue;
                 }
 
-                // A acao customizada: a unica isencao, e so ela.
+                // A acao customizada: a unica isencao, e so ela. Desde a
+                // 1.55.0 a regra dela mora em bulkActionAllowed() (o mesmo
+                // teste desenha o botao e autoriza a execucao).
                 $context = implode("\n", array_slice($lines, max(0, $i - 40), 40));
-                if (str_contains($context, 'function executeBulkAction')) {
+                if (str_contains($context, 'function executeBulkAction') || str_contains($context, 'function bulkActionAllowed')) {
                     continue;
                 }
 

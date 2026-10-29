@@ -374,6 +374,9 @@
                             "colsUploadAllowedTypes": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
+                            "colsUploadDisk": {
+                                "description": "Read by the runtime — see docs/Configuration.md"
+                            },
                             "colsUploadMaxSize": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
@@ -488,6 +491,7 @@
                                         "colsSource",
                                         "colsTipo",
                                         "colsUploadAllowedTypes",
+                                        "colsUploadDisk",
                                         "colsUploadMaxSize",
                                         "colsUploadPath",
                                         "colsValidations",

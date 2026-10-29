@@ -99,6 +99,7 @@ class ColumnParser
         'image_width' => 'colsRendererImageWidth',
         'image_height' => 'colsRendererImageHeight',
         'upload_path' => 'colsUploadPath',
+        'upload_disk' => 'colsUploadDisk',
         'upload_max_size' => 'colsUploadMaxSize',
         'upload_allowed_types' => 'colsUploadAllowedTypes',
         'max_chars' => 'colsRendererMaxChars',

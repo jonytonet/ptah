@@ -11,7 +11,13 @@
       - selected   : mixed|null   (initial value; se omitido e houver
                      wire:model[.mod], é semeado da propriedade Livewire
                      correspondente — dot-path suportado, ex. "filters.kind")
-      - name       : consumed internally
+      - name       : posted by a plain form; with no wire:model, old(name) and
+                     $errors->first(name) are read when selected/error are not
+                     given (1.55.0)
+    Options from outside (1.55.0): dispatch `forge-select-options` on window
+    with { target: <name or id>, options: [{value, label}, …] } — from JS, or
+    $this->dispatch('forge-select-options', target: 'city_id', options: [...])
+    in Livewire. A selected value missing from the new options is cleared.
       - searchable : boolean (default false). Adds a client-side filter input
                      at the top of the dropdown; matching is case/accent-
                      insensitive (NFD-strip diacritics). Arrow-key navigation
@@ -39,6 +45,18 @@
 ])
 
 @php
+    // A plain form (1.55.0): with `name` and no wire:model, old() and $errors
+    // are read here — every field needed :value="old('x', …)" and
+    // :error="$errors->first('x')". old() wins over `value` (Laravel's
+    // old('x', $default)); an explicit `error` wins over $errors. `items[0][qty]`
+    // is read as `items.0.qty`.
+    $__plainField = ($name !== null && $name !== '' && $attributes->whereStartsWith('wire:model')->isEmpty())
+        ? trim(str_replace(['[]', '[', ']'], ['', '.', ''], (string) $name), '.')
+        : null;
+    if ($__plainField !== null && $error === null && isset($errors) && $errors->has($__plainField)) {
+        $error = $errors->first($__plainField);
+    }
+
     // Morph-stable id: o DOM-diff do Livewire usa `el.id` como chave quando não há
     // wire:id/wire:key, então um id aleatório por render (uniqid, como era antes)
     // faz o morph REMOVER e recriar o elemento — destruindo o componente Alpine
@@ -82,9 +100,15 @@
     if ($resolvedSelected === null && $hasWireModel && isset($__livewire)) {
         $resolvedSelected = data_get($__livewire, (string) $attributes->wire('model')->value());
     }
+    if ($__plainField !== null && old($__plainField) !== null) {
+        $resolvedSelected = old($__plainField);
+    }
 
+    // A multiple select in a plain form starts from a list it was given
+    // (selected, old()) — it always started empty (1.55.0). Not with
+    // wire:model: the bridge does not support multiple (see the header).
     $initialSelected = $multiple
-        ? '[]'
+        ? \Illuminate\Support\Js::from(! $hasWireModel && is_array($resolvedSelected) ? array_values($resolvedSelected) : [], JSON_INVALID_UTF8_SUBSTITUTE)
         : \Illuminate\Support\Js::from($resolvedSelected, JSON_INVALID_UTF8_SUBSTITUTE);
 @endphp
 
@@ -213,6 +237,13 @@
             }
         }"
         @click.outside="open = false"
+        x-on:forge-select-options.window="
+            if (! [{{ \Illuminate\Support\Js::from((string) ($name ?? '')) }}, {{ \Illuminate\Support\Js::from($uniqueId) }}].includes($event.detail?.target)) return;
+            options = Array.isArray($event.detail.options) ? $event.detail.options : [];
+            const has = v => options.some(o => String(o.value) === String(v));
+            if (multiple) { selected = (selected ?? []).filter(has); }
+            else if (selected !== null && selected !== '' && ! has(selected)) { selected = null; }
+        "
         class="relative {{ $disabledClass }}"
         id="{{ $uniqueId }}"
     >

@@ -38,7 +38,7 @@
 
             {{-- Header: checkbox + título --}}
             <div class="flex items-start gap-2.5 mb-3">
-                @if ($effectivePerms['canDelete'])
+                @if ($canSelectRows)
                     <input type="checkbox" wire:model.live="selectedRows" value="{{ $row->id ?? 0 }}"
                            onclick="event.stopPropagation()"
                            aria-label="{{ __('ptah::ui.bulk_select_row', ['id' => $row->id ?? 0]) }}"

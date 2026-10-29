@@ -162,6 +162,8 @@ class CrudConfig extends Component
     // ── Group break (quebra: headers + per-group subtotals) ────────────
     public string $groupBreak = ''; // field name, empty = disabled
 
+    public string $groupBreakPeriod = ''; // '', day, month, year — a date break by period (1.55.0)
+
     // ── Master/Detail (nested CRUD per row) ────────────────────────────
     public string $detailModel = '';
 
@@ -179,6 +181,8 @@ class CrudConfig extends Component
     public string $hookAfterUpdate = '';  // runs after UPDATE
 
     public string $hookBeforeDelete = '';  // runs before DELETE — a failure refuses it
+
+    public string $hookAfterDelete = '';  // runs after DELETE (1.55.0)
 
     // ── Permissions ─────────────────────────────────────────────────────────────
 
@@ -479,6 +483,7 @@ class CrudConfig extends Component
 
         // Group break
         $this->groupBreak = $cfg['groupBreak'] ?? '';
+        $this->groupBreakPeriod = in_array($cfg['groupBreakPeriod'] ?? '', ['day', 'month', 'year'], true) ? $cfg['groupBreakPeriod'] : '';
 
         // Master/Detail (UI edits the first entry; extra entries survive in JSON)
         $detail = $cfg['masterDetail'][0] ?? [];
@@ -493,6 +498,7 @@ class CrudConfig extends Component
         $this->hookBeforeUpdate = self::hookText($hooks['beforeUpdate'] ?? '');
         $this->hookAfterUpdate = self::hookText($hooks['afterUpdate'] ?? '');
         $this->hookBeforeDelete = self::hookText($hooks['beforeDelete'] ?? '');
+        $this->hookAfterDelete = self::hookText($hooks['afterDelete'] ?? '');
 
         // Permissions
         $perms = $cfg['permissions'] ?? [];
@@ -1240,6 +1246,7 @@ class CrudConfig extends Component
             ],
             'groupBy' => $this->groupBy ?: null,
             'groupBreak' => $this->groupBreak ?: null,
+            'groupBreakPeriod' => in_array($this->groupBreakPeriod, ['day', 'month', 'year'], true) ? $this->groupBreakPeriod : null,
             'masterDetail' => ($this->detailModel && $this->detailForeignKey)
                 ? array_replace(
                     $existing['masterDetail'] ?? [],
@@ -1256,6 +1263,7 @@ class CrudConfig extends Component
                 'beforeUpdate' => $this->hookBeforeUpdate ?: null,
                 'afterUpdate' => $this->hookAfterUpdate ?: null,
                 'beforeDelete' => $this->hookBeforeDelete ?: null,
+                'afterDelete' => $this->hookAfterDelete ?: null,
             ],
             'notifications' => [
                 'rules' => array_values($this->notificationRules),

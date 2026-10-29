@@ -15,7 +15,9 @@
                 @if ($loop->first && $stVal === null)
                     <span class="opacity-60">{{ __('ptah::ui.break_subtotal', ['n' => $breakCount]) }}</span>
                 @elseif ($stVal !== null)
-                    @if (($stCol['colsHelper'] ?? '') === 'currencyFormat')
+                    @if (($stCol['colsRenderer'] ?? '') === 'money')
+                        {{ $this->renderMoney($stCol, (float) $stVal) }}
+                    @elseif (($stCol['colsHelper'] ?? '') === 'currencyFormat')
                         {{ __('ptah::ui.currency_prefix') }}{{ number_format($stVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')) }}
                     @else
                         {{ rtrim(rtrim(number_format($stVal, 2, __('ptah::ui.number_dec_point'), __('ptah::ui.number_thousands')), '0'), __('ptah::ui.number_dec_point')) }}

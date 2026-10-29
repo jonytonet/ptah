@@ -351,8 +351,9 @@
                          em ~1.4:1. Ver .ptah-dark .ptah-navbar .ptah-navbar-user-btn:hover. --}}
                     <button @click="open = !open" class="ptah-navbar-user-btn flex items-center gap-2 p-1.5 rounded-md transition-colors">
                         @php
-                            $__photoPath = auth()->user()->profile_photo_path ?? null;
-                            $__photoUrl  = $__photoPath ? \Illuminate\Support\Facades\Storage::url($__photoPath) : null;
+                            // The model's own profile_photo_url when it has one,
+                            // else ptah.auth.profile_photo_disk (1.55.0).
+                            $__photoUrl = \Ptah\Support\ProfilePhoto::url(auth()->user());
                         @endphp
                         @if($__photoUrl)
                             <img src="{{ $__photoUrl }}"
