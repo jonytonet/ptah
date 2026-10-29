@@ -7,6 +7,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.54.0] - 2026-10-29
+
+### Added - Laravel's own messages in pt_BR
+
+Laravel ships only `en`, so with `APP_LOCALE=pt_BR` every message of Laravel's
+validator — ptah's login and profile, custom screens, the host's FormRequests
+and forms — and the login/reset lines came out in English unless the project
+installed a translation. ptah now ships pt_BR for `validation` (every rule of
+the installed framework), `auth`, `passwords` and `pagination`.
+
+They sit **below** the project's files: Laravel's loader reads its own `en`,
+then ptah's directory, then the project's `lang/`, the later winning key by
+key — so a `lang/pt_BR/validation.php` of the project (or from `laravel-lang`)
+still wins, and whatever it lacks comes from ptah. Nothing to install;
+`PTAH_LARAVEL_TRANSLATIONS=false` turns it off. A test keeps the files in step
+with the installed framework's `en` (every key, every `:placeholder`).
+
+The BaseCrud form was already in pt_BR — it uses ptah's own `ptah::ui`
+messages, not the validator's.
+
 ## [1.53.0] - 2026-10-28
 
 From a host laudo (seven items). **Two changes to check when upgrading**: the

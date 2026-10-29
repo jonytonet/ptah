@@ -21,6 +21,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Laravel's own messages in pt_BR (1.54.0)
+    |--------------------------------------------------------------------------
+    |
+    | Laravel ships only `en`: with APP_LOCALE=pt_BR, validation messages (the
+    | BaseCrud forms, ptah's screens, the whole app), the login's "credentials
+    | do not match" and the password-reset lines came out in English. ptah
+    | ships pt_BR for validation, auth, passwords and pagination, BELOW the
+    | project's own files — a lang/pt_BR/validation.php (laravel-lang or
+    | hand-written) wins key by key. false turns ptah's off.
+    */
+    'laravel_translations' => env('PTAH_LARAVEL_TRANSLATIONS', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Process Timeout
     |--------------------------------------------------------------------------
     |

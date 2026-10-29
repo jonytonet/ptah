@@ -97,6 +97,7 @@ column means the key has no `.env` override (edit the published file instead).
 |-----|-----|---------|-----------|
 | `force_locale` | `PTAH_FORCE_LOCALE` | `false` | [InstallationGuide.md — Language / locale](InstallationGuide.md#language--locale) |
 | `locale` | `PTAH_LOCALE` | `en` | [InstallationGuide.md — Language / locale](InstallationGuide.md#language--locale) |
+| `laravel_translations` | `PTAH_LARAVEL_TRANSLATIONS` | `true` | Laravel's own validation/auth/passwords/pagination lines in pt_BR, below the project's files (1.54.0) — [InstallationGuide.md — Language / locale](InstallationGuide.md#language--locale) |
 | `process_timeout` | `PTAH_PROCESS_TIMEOUT` | `300` | [Commands.md — ptah:install / ptah:module](Commands.md) (timeout for `composer require` / `npm install`/`build`) |
 
 ### Theme colors (`theme.colors.*`)

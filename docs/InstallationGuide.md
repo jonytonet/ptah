@@ -203,6 +203,25 @@ APP_FAKER_LOCALE=en_US
 For a Brazilian Portuguese interface, set `APP_LOCALE=pt_BR` (and
 `APP_FAKER_LOCALE=pt_BR`).
 
+**Laravel's own messages in pt_BR (1.54.0).** Laravel ships only `en`: with
+`APP_LOCALE=pt_BR`, every message of Laravel's validator — ptah's login and
+profile, custom screens, your FormRequests and forms — and the login/reset
+lines (`auth.*`, `passwords.*`) came out in English. ptah now ships pt_BR for
+`validation`, `auth`, `passwords` and `pagination`, **below** your project's
+files:
+
+- nothing to install: with `APP_LOCALE=pt_BR` they apply;
+- a `lang/pt_BR/validation.php` of your own (or from `laravel-lang`) still wins,
+  key by key — whatever it does not define comes from ptah;
+- `PTAH_LARAVEL_TRANSLATIONS=false` turns ptah's off.
+
+The BaseCrud form was already in pt_BR (it uses ptah's own `ptah::ui`
+messages); this covers everything that goes through Laravel's validator.
+
+Laravel reads `resources/lang` when that directory exists and then **ignores**
+`lang/` — if you move your translations to `lang/`, remove `resources/lang`
+entirely.
+
 ---
 
 ## Step 4 — Run ptah:install
