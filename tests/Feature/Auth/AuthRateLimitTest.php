@@ -203,29 +203,13 @@ class AuthRateLimitTest extends TestCase
             RateLimiter::hit($keyFor1, 60);
         }
 
-        // User 99 must NOT be throttled yet (only 4 hits).
-        // The component will reach findOrFail(99) and fail with ModelNotFoundException.
-        // That exception propagates from Livewire as a 500 — acceptable here because
-        // the rate-limit guard did NOT activate (which is what we're testing).
-        try {
-            $component = Livewire::test(TwoFactorChallengePage::class)
-                ->set('code', '000000')
-                ->call('verify');
-
-            // If we reach this point, either the user was found (unlikely in tests)
-            // or verify() bailed earlier. In any case, the errorMsg must NOT be
-            // the throttle message.
-            $errorMsg = $component->get('errorMsg');
-            if (! empty($errorMsg)) {
-                $this->assertStringNotContainsString(
-                    (string) trans('ptah::ui.auth_too_many_attempts', ['seconds' => 60]),
-                    $errorMsg,
-                );
-            }
-        } catch (ModelNotFoundException $e) {
-            // Expected — user 99 doesn't exist in the test DB. Rate limit was NOT
-            // hit (otherwise we'd have returned early and never called findOrFail).
-            $this->assertTrue(true, 'Rate limit correctly not triggered for user with < 5 attempts');
-        }
+        // User 99 must NOT be throttled yet (only 4 hits): verify() goes on to
+        // look the user up, and user 99 does not exist — a 404 (since 1.53.0;
+        // it was a ModelNotFoundException). The throttle would have answered
+        // first, with its message and no 404.
+        Livewire::test(TwoFactorChallengePage::class)
+            ->set('code', '000000')
+            ->call('verify')
+            ->assertStatus(404);
     }
 }

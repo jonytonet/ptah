@@ -165,6 +165,8 @@ Slots: default (texto), `icon` (SVG confiável — nunca dado do usuário, é `{
 Props: `label`, `placeholder`, `type` (padrão `text`), `state` (`normal|success|danger|warn`),
 `iconBefore`/`iconAfter` (HTML raw — nunca dado do usuário), `disabled`, `loading`,
 `message`, `required`, `error` (força `state="danger"` e mostra a mensagem), `value`, `name`.
+`value` vai para o `<input>` desde 1.53.0 (antes era consumido e descartado — um
+formulário comum, sem Livewire, não mostrava o valor atual).
 
 ```blade
 <x-forge-input label="E-mail" type="email" wire:model="email" :error="$errors->first('email')" required />
@@ -183,6 +185,9 @@ Props: `label`, `options` (`[['value' => ..., 'label' => ...], ...]`), `placehol
 `searchable` (campo de filtro client-side no topo da lista, sem acento/caixa).
 Requer Alpine.js. **Limitação conhecida:** `multiple` não funciona com `wire:model`
 (a ponte usa um `<input type="hidden">` com JSON, não array).
+**Formulário comum (sem Livewire), desde 1.53.0:** com `name`, o select envia o
+campo — `name` para um valor, `name[]` (um por valor) com `multiple`. Antes o
+`<input type="hidden">` não tinha `name` e o formulário não enviava nada.
 
 ```blade
 <x-forge-select label="Status" wire:model="status"

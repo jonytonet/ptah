@@ -6,6 +6,7 @@ namespace Ptah;
 
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
@@ -99,6 +100,7 @@ use Ptah\Services\Permission\RoleService;
 use Ptah\Services\SettingsService;
 use Ptah\Support\AI\ToolSchemaNormalizer;
 use Ptah\Support\GuestRedirect;
+use Ptah\Support\PtahPasswordReset;
 use Ptah\Support\SchemaInspector;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
@@ -857,6 +859,17 @@ class PtahServiceProvider extends ServiceProvider
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-auth.php');
+
+            // 1.53.0: the reset page is no longer named `password.reset` (it
+            // collided with Fortify). A reset link sent outside ptah keeps
+            // Laravel's target when the host has one, and falls back to the
+            // ptah page when nothing answers `password.reset`. Only when the
+            // host set no URL callback of its own.
+            if (ResetPassword::$createUrlCallback === null) {
+                ResetPassword::createUrlUsing(
+                    fn ($user, string $token): string => PtahPasswordReset::fallbackUrl($user, $token)
+                );
+            }
         }
 
         if (config('ptah.modules.menu')) {

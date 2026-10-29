@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ptah\Livewire\Auth;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -15,6 +14,7 @@ use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Services\Company\CompanyService;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\PtahGuard;
 
 #[Layout('ptah::layouts.forge-auth')]
 class LoginPage extends Component
@@ -31,7 +31,7 @@ class LoginPage extends Component
 
     public function mount(): void
     {
-        if (Auth::check()) {
+        if (PtahGuard::guard()->check()) {
             $this->redirect(config('ptah.auth.home', '/dashboard'), navigate: true);
         }
     }
@@ -53,7 +53,8 @@ class LoginPage extends Component
         // ptah.auth.remember_me (1.50.0, never read before): false = no "remember me".
         $remember = $this->remember && (bool) config('ptah.auth.remember_me', true);
 
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $remember)) {
+        // The ptah guard (`ptah.auth.guard`), not the application default (1.53.0).
+        if (! PtahGuard::guard()->attempt(['email' => $this->email, 'password' => $this->password], $remember)) {
             RateLimiter::hit($throttleKey);
             $this->errorMessage = trans('ptah::ui.auth_invalid_credentials');
             $this->reset('password');
@@ -63,12 +64,12 @@ class LoginPage extends Component
 
         RateLimiter::clear($throttleKey);
 
-        $user = Auth::user();
+        $user = PtahGuard::user();
 
         // 2FA active → redirect to the challenge
         if ($twoFactor->isEnabled($user)) {
             Session::put('ptah.2fa.user_id', $user->getKey());
-            Auth::logout();
+            PtahGuard::guard()->logout();
             $this->redirect(route('ptah.auth.two-factor'));
 
             return;

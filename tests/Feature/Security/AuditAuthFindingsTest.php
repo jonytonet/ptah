@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\Auth\ForgotPasswordPage;
 use Ptah\Livewire\Auth\ProfilePage;
 use Ptah\Livewire\Auth\ResetPasswordPage;
+use Ptah\Support\PtahGuard;
 use Ptah\Tests\TestCase;
 
 class AuditAuthUser extends Authenticatable
@@ -69,7 +70,10 @@ class AuditAuthFindingsTest extends TestCase
     {
         DB::table('sessions')->insert([
             'id' => $id, 'user_id' => $this->user->id, 'ip_address' => '127.0.0.1',
-            'user_agent' => 'PHPUnit', 'payload' => 'x', 'last_activity' => time(),
+            'user_agent' => 'PHPUnit', 'last_activity' => time(),
+            // A real payload: since 1.53.0 a row is the user's only when it
+            // carries the guard's login key with the user's id.
+            'payload' => base64_encode(serialize([PtahGuard::sessionKey() => $this->user->id])),
         ]);
     }
 

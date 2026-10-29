@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Services\Auth\SessionService;
+use Ptah\Support\PtahGuard;
 use Ptah\Tests\TestCase;
 
 class SessionRevokeTestUser extends Authenticatable
@@ -42,7 +43,9 @@ class SessionServiceRevokeSessionTest extends TestCase
             'user_id' => $userId,
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
-            'payload' => 'x',
+            // A real payload: since 1.53.0 a row is the user's only when it
+            // carries the guard's login key with the user's id.
+            'payload' => base64_encode(serialize([PtahGuard::sessionKey() => $userId])),
             'last_activity' => time(),
         ]);
     }

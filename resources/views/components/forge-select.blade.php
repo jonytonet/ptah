@@ -216,8 +216,17 @@
         class="relative {{ $disabledClass }}"
         id="{{ $uniqueId }}"
     >
-        {{-- Hidden input: bridge Alpine selected → Livewire wire:model --}}
+        {{-- Hidden input: bridge Alpine selected → Livewire wire:model, and
+             (1.53.0) the field a plain form posts: it had no name, so a form
+             without Livewire sent nothing. A multiple select posts name[] —
+             one input per value — instead of the JSON the bridge carries. --}}
+        @if ($name && $multiple)
+            <template x-for="value in (selected ?? [])" :key="value">
+                <input type="hidden" name="{{ $name }}[]" :value="value">
+            </template>
+        @endif
         <input type="hidden"
+            @if ($name && ! $multiple) name="{{ $name }}" @endif
             :value="multiple ? JSON.stringify(selected) : (selected ?? '')"
             x-init="$watch('selected', val => {
                 $el.value = multiple ? JSON.stringify(val) : (val ?? '');

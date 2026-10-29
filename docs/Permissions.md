@@ -1010,7 +1010,7 @@ Lists all users from the configured model (`config('ptah.permissions.user_model'
   "Send a link to set the password" on, the same reset e-mail "forgot
   password" sends. Nobody but the person ever knows the password.
 - **Send password link** on any row (needs the auth module, which registers
-  the `password.reset` page). A failure is reported, and its cause goes to the
+  the reset page, `ptah.auth.password.reset`). A failure is reported, and its cause goes to the
   log (`ptah:last-error`).
 - Every action goes through the same query as the list, `user_query_scope`
   included: a user outside the scope is not reachable by id.

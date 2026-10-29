@@ -7,6 +7,59 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.53.0] - 2026-10-28
+
+From a host laudo (seven items). **Two changes to check when upgrading**: the
+reset page's route name, and the auth module now really using
+`ptah.auth.guard` (see below).
+
+### Security - the active-sessions tab mixed identities of different guards
+
+The `sessions` table has no guard column, and the profile filtered it by
+`user_id` alone: on a host with two identities, staff user 7 saw customer 7's
+sessions (IP, browser) — and could revoke them, since the same filter was the
+revoke's ownership check. A session now belongs to the user only when its
+payload carries the ptah guard's login key with the user's id; a payload that
+cannot be read belongs to no one (neither listed nor deleted). The same applies
+to "sign out of other sessions" and to the sessions a password reset closes.
+
+### Changed - the auth module uses `ptah.auth.guard` everywhere
+
+Only the logout read it. The login signed into the default guard, the 2FA
+challenge loaded `auth.providers.users.model` and signed into the default guard
+(firing `Login` twice, always as `web`), the profile read the default guard,
+"forgot password" and the reset used the default password broker, and the
+protected routes used plain `auth`. All of them use the configured guard now:
+its provider (so its model), the password broker of that provider, and
+`auth:<guard>` on the protected routes. With `guard => 'web'` (the default)
+nothing changes.
+
+### Changed - the reset page is `ptah.auth.password.reset`
+
+It was named `password.reset`, which Fortify/Jetstream register too. The links
+ptah sends point at the ptah page; a reset link sent by other code keeps
+Laravel's target (`password.reset`) when the host has one and falls back to the
+ptah page otherwise. **Upgrade hosts** that call `route('password.reset')`
+expecting the ptah page: use `ptah.auth.password.reset`.
+
+### Fixed
+
+- `forge-navbar` rendered `ptah-company-switcher` without the company module —
+  the component is only registered with it, so the page broke.
+- `<x-forge-input value="…">` never wrote the value (the prop was consumed and
+  dropped); a plain form showed empty fields.
+- `<x-forge-select name="…">` posted nothing in a plain form: its hidden input
+  had no `name`. It posts `name` now, and `name[]` (one per value) with
+  `multiple`.
+- The `add_two_factor_columns_to_users_table` migration failed on a project
+  that had used Fortify/Jetstream (the columns existed). It adds only what is
+  missing, and its rollback no longer drops the columns Fortify owns when
+  Fortify is installed.
+- `boost:install --no-interaction` (and `ptah:install --boost`) left ptah's
+  guidelines and skills out: Boost keeps only the packages already listed in
+  `boost.json`. `ptah:install` lists `jonytonet/ptah` first, and
+  `ptah:upgrade-check` reports a `boost.json` without it.
+
 ## [1.52.0] - 2026-10-28
 
 Agent and editor support: more MCP tools, a server that works without Boost,

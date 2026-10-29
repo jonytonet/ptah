@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Ptah\Livewire\Auth\ForgotPasswordPage;
 use Ptah\Livewire\Auth\LoginPage;
@@ -11,6 +10,7 @@ use Ptah\Livewire\Auth\ResetPasswordPage;
 use Ptah\Livewire\Auth\TwoFactorChallengePage;
 use Ptah\Models\UserPreference;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\PtahGuard;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +24,7 @@ $prefix = config('ptah.auth.route_prefix', '');
 $guard = config('ptah.auth.guard', 'web');
 $middleware = config('ptah.auth.middleware', ['web']);
 
-Route::middleware($middleware)->group(function () use ($prefix) {
+Route::middleware($middleware)->group(function () use ($prefix, $guard) {
 
     // ── Rotas públicas ───────────────────────────────────────────────────
     Route::prefix($prefix)->group(function () {
@@ -35,15 +35,16 @@ Route::middleware($middleware)->group(function () use ($prefix) {
         Route::get('/forgot-password', ForgotPasswordPage::class)
             ->name('ptah.auth.forgot-password');
 
+        // Not `password.reset` since 1.53.0: Fortify/Jetstream register that
+        // name too. See Ptah\Support\PtahPasswordReset.
         Route::get('/reset-password/{token}', ResetPasswordPage::class)
-            ->name('password.reset');
+            ->name('ptah.auth.password.reset');
 
         Route::get('/two-factor-challenge', TwoFactorChallengePage::class)
             ->name('ptah.auth.two-factor');
 
         Route::post('/logout', function () {
-            $guard = config('ptah.auth.guard', 'web');
-            auth($guard)->logout();
+            PtahGuard::guard()->logout();
             request()->session()->invalidate();
             request()->session()->regenerateToken();
 
@@ -53,7 +54,9 @@ Route::middleware($middleware)->group(function () use ($prefix) {
     });
 
     // ── Rotas protegidas ─────────────────────────────────────────────────
-    Route::prefix($prefix)->middleware('auth')->group(function () {
+    // auth:<ptah guard> (1.53.0): plain 'auth' checked the default guard, so a
+    // host whose admins use another guard was bounced off its own profile.
+    Route::prefix($prefix)->middleware('auth:'.$guard)->group(function () {
 
         Route::get('/dashboard', fn () => view('ptah::livewire.auth.dashboard'))
             ->name('ptah.dashboard');
@@ -72,10 +75,10 @@ Route::middleware($middleware)->group(function () use ($prefix) {
                 'mode' => 'required|in:'.implode(',', AppearancePresets::MODE),
             ]);
 
-            $theme = AppearancePresets::sanitize(UserPreference::get(Auth::id(), 'theme'));
+            $theme = AppearancePresets::sanitize(UserPreference::get(PtahGuard::id(), 'theme'));
             $theme['mode'] = $data['mode'];
 
-            UserPreference::set(Auth::id(), 'theme', $theme, 'appearance');
+            UserPreference::set(PtahGuard::id(), 'theme', $theme, 'appearance');
             AppearancePresets::queueCookie($theme);
 
             return response()->noContent();
