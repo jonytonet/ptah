@@ -35,6 +35,7 @@ use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Support\BroadcastListener;
+use Ptah\Support\CrudPermission;
 use Ptah\Support\ServerOnly;
 
 /**
@@ -545,6 +546,15 @@ class BaseCrud extends Component
         // export-limit badge) does not trigger a second query.
         $rows = $this->rows;
 
+        // A page past the last one — the saved page of a company with fewer
+        // rows now, rows deleted, a narrower filter — shows the last page
+        // instead of an empty list (1.56.0).
+        if ($rows->isEmpty() && $rows->currentPage() > 1 && $rows->lastPage() < $rows->currentPage()) {
+            $this->setPage($rows->lastPage());
+            unset($this->rows);
+            $rows = $this->rows;
+        }
+
         // groupBy makes total() imprecise (it counts groups, not raw rows), so the
         // badge is only meaningful for the plain (non-grouped) listing.
         $hasGroupBy = ! empty($this->crudConfig['groupBy']);
@@ -604,14 +614,15 @@ class BaseCrud extends Component
         $key = $p['permissionIdentifier'] ?? null;
 
         // Only enforce ptah checks when module is active, a key is configured and user is authenticated
-        $ptahActive = config('ptah.modules.permissions') && $key && Auth::check();
+        // ptah's ACL, or Laravel's Gate (ptah.permissions.driver, 1.56.0).
+        $ptahActive = CrudPermission::active() && $key && Auth::check();
 
         $ptahCheck = function (string $action) use ($ptahActive, $key): bool {
             if (! $ptahActive) {
                 return true;
             }
 
-            return ptah_can($key, $action);
+            return CrudPermission::allows($key, $action);
         };
 
         // A parte declarada na config (flags + Gate) vem de crudConfigAllows(),

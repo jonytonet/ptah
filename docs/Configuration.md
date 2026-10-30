@@ -552,6 +552,8 @@ php artisan vendor:publish --tag=ptah-errors
 | `permissions.audit_denied` | `PTAH_PERMISSION_AUDIT_DENIED` | `true` | [Permissions.md](Permissions.md) |
 | `permissions.audit_master` | `PTAH_PERMISSION_AUDIT_MASTER` | `false` | [Permissions.md](Permissions.md) |
 | `permissions.audit_retention_days` | `PTAH_PERMISSION_AUDIT_RETENTION_DAYS` | `90` | default `--days` window for `ptah:audit-prune` — see [Commands.md](Commands.md) |
+| `permissions.driver` | `PTAH_PERMISSION_DRIVER` | `ptah` | `ptah` (this package's ACL, only with the permissions module on) or `gate` (Laravel's Gate — Spatie, Bouncer, policies; always on) for screen and column permissions (1.56.0) — [Permissions.md](Permissions.md#using-another-permission-library-spatie-bouncer-policies) |
+| `permissions.gate_ability` | `PTAH_PERMISSION_GATE_ABILITY` | `{identifier}.{action}` | Gate driver: the ability a screen action checks; Spatie style `{action} {identifier}` (1.56.0) |
 | `permissions.multi_company` | `PTAH_MULTI_COMPANY` | `true` | [Permissions.md](Permissions.md) |
 | `permissions.allow_guest` | `PTAH_PERMISSION_ALLOW_GUEST` | `false` | [Permissions.md](Permissions.md) |
 | `permissions.admin_name` | `PTAH_ADMIN_NAME` | `Administrador` | [Permissions.md](Permissions.md) |

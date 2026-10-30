@@ -64,6 +64,7 @@ trait HasCrudQuery
             // Clear potentially corrupted preferences
             $userId = Auth::id();
             if ($userId) {
+                UserPreference::remove($userId, $this->preferencesKey());
                 UserPreference::remove($userId, 'crud.'.$this->model);
                 $this->cacheService->forgetPreferences($userId, $this->model);
             }

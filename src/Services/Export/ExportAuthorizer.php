@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Services\Export;
 
 use Ptah\Models\CrudConfig;
+use Ptah\Support\CrudPermission;
 use Ptah\Support\ModelKey;
 
 /**
@@ -52,10 +53,10 @@ class ExportAuthorizer
 
         // Enforce the CRUD's read permission only when the module is active
         // (default install has it off — no behavioural change there).
-        if (config('ptah.modules.permissions')) {
+        if (CrudPermission::active()) {
             $permKey = $config->config['permissions']['permissionIdentifier'] ?? null;
 
-            if ($permKey && function_exists('ptah_can') && ! ptah_can($permKey, 'read', $user, $companyId)) {
+            if ($permKey && ! CrudPermission::allows((string) $permKey, 'read', $user, $companyId)) {
                 return 'You are not allowed to export this data.';
             }
         }
