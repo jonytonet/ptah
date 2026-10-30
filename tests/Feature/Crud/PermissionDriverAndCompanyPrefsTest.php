@@ -14,6 +14,7 @@ use Ptah\Models\CrudConfig;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Export\ExportAuthorizer;
 use Ptah\Support\CrudPermission;
+use Ptah\Support\ScreenSummary;
 use Ptah\Tests\TestCase;
 
 class P156Item extends Model
@@ -113,6 +114,21 @@ class PermissionDriverAndCompanyPrefsTest extends TestCase
         Gate::define('items.read', fn () => false);
 
         $this->crud()->assertStatus(200)->assertSee('Preco de custo');
+    }
+
+    #[Test]
+    public function ptah_screen_says_how_the_permission_is_checked(): void
+    {
+        $summary = fn () => ScreenSummary::toText(ScreenSummary::build('Product', '', ['permissions' => ['permissionIdentifier' => 'products']]));
+
+        config(['ptah.permissions.driver' => 'ptah', 'ptah.modules.permissions' => false]);
+        $this->assertStringContainsString('permission: products  (NOT enforced', $summary());
+
+        config(['ptah.modules.permissions' => true]);
+        $this->assertStringContainsString('(ptah ACL)', $summary());
+
+        config(['ptah.permissions.driver' => 'gate']);
+        $this->assertStringContainsString('(Gate: products.read, products.update…)', $summary());
     }
 
     // ── preferences per company ──────────────────────────────────────────

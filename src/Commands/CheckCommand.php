@@ -13,6 +13,7 @@ use Ptah\Contracts\AiToolAuthorizable;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\CrudConfig;
 use Ptah\Services\Permission\PermissionService;
+use Ptah\Support\CrudPermission;
 use Ptah\Support\CrudScreenInspector;
 use Ptah\Support\PermissionKeyScanner;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -217,7 +218,9 @@ class CheckCommand extends Command
      */
     private function unknownPermissionKeys(Collection $screens): array
     {
-        if (! config('ptah.modules.permissions')) {
+        // Only ptah's ACL has a list of keys to compare with; Gate abilities
+        // (driver gate, 1.56.0) cannot be enumerated.
+        if (! config('ptah.modules.permissions') || CrudPermission::driver() === CrudPermission::GATE) {
             return [];
         }
 

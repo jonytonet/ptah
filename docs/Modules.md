@@ -715,6 +715,11 @@ php artisan ptah:module company
 
 The **permissions** module implements granular hierarchical ACL based on roles.
 
+> **Already on Spatie laravel-permission, Bouncer or policies?** You do not need this
+> module to gate BaseCrud screens and columns: set `PTAH_PERMISSION_DRIVER=gate` and
+> `permissionIdentifier` / `colsPermission` are checked through Laravel's Gate
+> (1.56.0) — see [Permissions.md § Using another permission library](Permissions.md#using-another-permission-library-spatie-bouncer-policies).
+
 **Features:**
 - Roles/Profiles with department and identifier color
 - MASTER role — total bypass of all checks

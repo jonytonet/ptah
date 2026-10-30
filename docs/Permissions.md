@@ -1378,6 +1378,11 @@ ignored). Or show/hide the whole screen with `@ptahCan` around it.
 
 ## Column-level Permissions
 
+> **Not using this module?** With `ptah.permissions.driver = 'gate'` (1.56.0) a
+> column's `colsPermission` is simply a Laravel Gate ability — `can('purchase.view_cost')`,
+> answered by Spatie, Bouncer or your policies — and everything below about page
+> objects does not apply. See [Using another permission library](#using-another-permission-library-spatie-bouncer-policies).
+
 Beyond gating whole screens/actions (`ptah_can()`), a single BaseCrud **column**
 can be hidden from every user who lacks a specific grant — the same
 `ptah_page_objects` / `ptah_role_permissions` machinery, applied one column at

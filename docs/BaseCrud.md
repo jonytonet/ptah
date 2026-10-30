@@ -445,7 +445,7 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsHelpText` | `string\|null` | Help text displayed below the field in the create/edit form |
 | `colsEditableForm` | `bool` | If `false`, the field does NOT appear in the create/edit form (default: `true`) |
 | `colsVisibleList` | `bool` | If `false`, the column starts hidden in the list by default (default: `true`) |
-| `colsPermission` | `string` | Column-level visibility gate (requires the `permissions` module). An `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — the default for every column |
+| `colsPermission` | `string` | Column-level visibility gate. With `ptah.permissions.driver = gate` (1.56.0) it is a **Gate ability** (Spatie, Bouncer, policies — no ptah module needed); with the default `ptah` driver it needs the `permissions` module and is an `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — the default for every column |
 | `colsAlign` | `string\|null` | Column alignment in the table: `text-start`, `text-center`, `text-end` (default: `text-start`) |
 | `colsReverse` | `bool\|'S'\|'N'\|int` | If `true`, `'S'`, `1` or `'1'`, applies `font-medium` on the cell to highlight the value (default: `false`) |
 

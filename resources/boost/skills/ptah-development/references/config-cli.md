@@ -11,7 +11,7 @@ Format: `type:table:first=second[:distinct][:select=col,col as alias]` (`JoinPar
 
 ## --permission
 
-Format: `key=value`, repeatable. `create`, `edit`, `delete`, `restore`, `export`, `import`, `history`, `attachments` take a **Gate name** (string, checked with `can()`); to turn an action off use `showCreateButton=false`, `showEditButton=false`, `showDeleteButton=false` or `showTrashButton=false` — never a boolean in `create|edit|delete`. `permissionIdentifier=<key>` is the ACL key of the Permissions module (see [Permissions.md](../../../../../docs/Permissions.md)) — it gates nothing while `PTAH_MODULE_PERMISSIONS` is off.
+Format: `key=value`, repeatable. `create`, `edit`, `delete`, `restore`, `export`, `import`, `history`, `attachments` take a **Gate name** (string, checked with `can()`); to turn an action off use `showCreateButton=false`, `showEditButton=false`, `showDeleteButton=false` or `showTrashButton=false` — never a boolean in `create|edit|delete`. `permissionIdentifier=<key>` is the screen's permission. With the default driver (`ptah.permissions.driver = ptah`) it is the ACL key of the Permissions module and gates nothing while `PTAH_MODULE_PERMISSIONS` is off; with `driver = gate` (1.56.0 — Spatie, Bouncer, policies) it is checked as the Gate abilities `<key>.read/create/update/delete` (pattern in `ptah.permissions.gate_ability`), and a column's `colsPermission` is a Gate ability too (see [Permissions.md](../../../../../docs/Permissions.md)).
 
 **Example:** `--permission="edit=products.update" --permission="showDeleteButton=false"`
 

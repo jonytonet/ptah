@@ -25,6 +25,15 @@ policies could not use them. `ptah.permissions.driver`:
 It covers the listing (read gate, the 403), create/edit/delete/restore, export and
 print, the column filter (list, form, filters, export) and dashboard widgets.
 
+The agent tools say which driver checks a screen: `ptah:screen` / the `ptah-screen`
+MCP tool end the permission line with `(Gate: products.read, products.update…)`,
+`(ptah ACL)` or `(NOT enforced: permissions module off, driver ptah)`;
+`ptah:check` no longer reports Gate abilities as unknown ACL keys; the `ptah` MCP
+server's instructions mention the driver. Permissions.md opens with how to use
+Spatie/Bouncer/policies, and the config, BaseCrud, Modules, installation and skill
+docs (and the published JSON schema) no longer say a screen or column permission
+needs the ptah module.
+
 ### Changed - screen preferences are kept per company, page included
 
 With the company module on, a screen's preferences (page, filters, search, order,

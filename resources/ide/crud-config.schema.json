@@ -755,7 +755,7 @@
                 },
                 "permissionIdentifier": {
                     "type": "string",
-                    "description": "ACL key of the Permissions module (gates nothing while it is off)"
+                    "description": "The screen's permission: an ACL key of the ptah Permissions module (enforced while it is on), or — with ptah.permissions.driver = gate — checked as the Gate abilities <key>.read/create/update/delete"
                 },
                 "identifier": {
                     "deprecationMessage": "Never read: the runtime reads \"permissionIdentifier\" — this screen is NOT gated. `php artisan ptah:config:doctor --fix` migrates it."

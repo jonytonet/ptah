@@ -253,7 +253,7 @@ Enable only what you need. Each module updates `.env` and runs its own migration
 | **auth** | `php artisan ptah:module auth` | Login, logout, password recovery, 2FA (TOTP + email), profile, active sessions |
 | **menu** | `php artisan ptah:module menu` | Dynamic sidebar menu via database with cache, accordion groups |
 | **company** | `php artisan ptah:module company` | Company and department management, company switcher, multi-tenant support |
-| **permissions** | `php artisan ptah:module permissions` | Full RBAC — roles, pages, objects, middleware, Blade directives, audit log |
+| **permissions** | `php artisan ptah:module permissions` | Full RBAC — roles, pages, objects, middleware, Blade directives, audit log. Optional for screens: with `PTAH_PERMISSION_DRIVER=gate`, BaseCrud uses Laravel's Gate (Spatie, policies) instead |
 | **api** | `php artisan ptah:module api` | REST API with Swagger/OpenAPI via `darkaonline/l5-swagger`, standardised `BaseResponse` |
 | **ai_agent** | `php artisan ptah:module ai_agent` | Floating AI chat widget (JivoChat-style) + provider config admin — powered by `prism-php/prism` |
 
