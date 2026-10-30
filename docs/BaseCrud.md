@@ -2247,6 +2247,16 @@ class Order extends Model
 
 Saved in `user_preferences` with key `crud.{Model}`, group `crud`.
 
+**Per company (1.56.0).** With the company module on, the key is
+`crud.{Model}@company:{id}`: each company keeps its own page, filters, search, order
+and columns. On company 1 at page 20, switching to company 3 opens company 3's own
+state (its filter, its page), and coming back to company 1 reopens page 20. A company
+with nothing saved yet starts from the screen's earlier `crud.{Model}` preferences.
+
+**The page is remembered** (`table.currentPage`, it was always 1), unless the URL
+carries `?page=`. A saved page past the last one — fewer rows now, a narrower
+filter — opens the last page instead of an empty list.
+
 ### Full Schema
 
 ```json

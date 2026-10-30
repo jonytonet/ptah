@@ -572,6 +572,16 @@ return [
     | admin_password      : initial admin password (change after first login!)
     */
     'permissions' => [
+        // Where a screen's permissions (permissionIdentifier) and a column's
+        // (colsPermission) come from (1.56.0): 'ptah' — this package's ACL,
+        // enforced only with the permissions module on — or 'gate' — Laravel's
+        // Gate, always enforced, so Spatie, Bouncer or your policies answer.
+        'driver' => env('PTAH_PERMISSION_DRIVER', 'ptah'),
+        // Gate driver: the ability a screen action checks. {identifier} is the
+        // permissionIdentifier, {action} is create/read/update/delete —
+        // '{identifier}.{action}' gives products.update; Spatie style:
+        // '{action} {identifier}' gives "update products".
+        'gate_ability' => env('PTAH_PERMISSION_GATE_ABILITY', '{identifier}.{action}'),
         'cache' => env('PTAH_PERMISSION_CACHE', true),
         'cache_ttl' => (int) env('PTAH_PERMISSION_CACHE_TTL', 3600),
         'user_model' => env('PTAH_USER_MODEL', 'App\Models\User'),

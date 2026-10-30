@@ -63,7 +63,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Ptah\\Livewire\\BaseCrud\\BaseCrud\:\:\$rows\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 3
 			path: src/Livewire/BaseCrud/BaseCrud.php
 
 		-

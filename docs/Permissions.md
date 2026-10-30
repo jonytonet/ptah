@@ -8,6 +8,7 @@
 
 ## Table of Contents
 
+- [Using another permission library (Spatie, Bouncer, policies)](#using-another-permission-library-spatie-bouncer-policies)
 1. [Overview](#overview)
 2. [Core Concepts](#core-concepts)
 3. [Activation](#activation)
@@ -43,6 +44,48 @@
 20. [Column-level Permissions](#column-level-permissions)
 21. [Practical Examples](#practical-examples)
 22. [Configuration Reference](#configuration-reference)
+
+---
+
+## Using another permission library (Spatie, Bouncer, policies)
+
+**You do not need this module to gate BaseCrud screens (1.56.0).** With
+`ptah.permissions.driver = 'gate'` (`PTAH_PERMISSION_DRIVER=gate`), a screen's
+`permissionIdentifier` and a column's `colsPermission` are checked through
+**Laravel's Gate** — so whatever registers abilities answers: Spatie
+laravel-permission (it registers every permission as an ability), Bouncer, your own
+`Gate::define()` or policies. The ptah ACL module can stay off.
+
+| What | Checked as (default pattern) |
+|---|---|
+| reading the screen (list, export, print) | `can('{identifier}.read')` |
+| creating / editing / deleting / restoring | `can('{identifier}.create')`, `.update`, `.delete` (restore is `update`) |
+| a column with `colsPermission: "products.cost"` | `can('products.cost')` — the key is the ability |
+| a dashboard widget with `permission: "sales"` | `can('sales.read')` |
+
+The ability name comes from `ptah.permissions.gate_ability` (default
+`{identifier}.{action}`). Spatie users who name permissions "edit articles" set it to
+`{action} {identifier}`:
+
+```php
+// config/ptah.php
+'permissions' => [
+    'driver' => 'gate',
+    'gate_ability' => '{action} {identifier}',   // "update products"
+    // ...
+],
+```
+
+```json
+{ "permissions": { "permissionIdentifier": "products" },
+  "cols": [ { "colsNomeFisico": "cost", "colsPermission": "view product cost" } ] }
+```
+
+Without a signed-in user everything is denied, as with the ptah driver. The
+per-action flags (`showCreateButton`…) and the per-action Gate names
+(`permissions.create`, `edit`…) work the same with either driver. With
+`driver = 'ptah'` (the default) nothing changes: the checks run only while
+`ptah.modules.permissions` is on.
 
 ---
 

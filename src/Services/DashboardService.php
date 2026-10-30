@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Ptah\Support\CrudPermission;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\SqlIdentifier;
 
@@ -467,10 +468,10 @@ final class DashboardService
     {
         $key = $w['permission'] ?? null;
 
-        if (! is_string($key) || $key === '' || ! config('ptah.modules.permissions')) {
+        if (! is_string($key) || $key === '' || ! CrudPermission::active()) {
             return true;
         }
 
-        return function_exists('ptah_can') && ptah_can($key, 'read');
+        return CrudPermission::allows($key, 'read');
     }
 }

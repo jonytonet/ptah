@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Services\Permission;
 
+use Ptah\Support\CrudPermission;
 use Ptah\Traits\ResolvesUser;
 
 /**
@@ -42,7 +43,7 @@ class ColumnPermissionService
      */
     public function apply(array $cols, mixed $user = null, ?int $companyId = null): array
     {
-        if (! config('ptah.modules.permissions')) {
+        if (! CrudPermission::active()) {
             return ['cols' => $cols, 'denied' => []];
         }
 
@@ -109,7 +110,7 @@ class ColumnPermissionService
      */
     public function filterExportColumns(array $columns, mixed $user = null, ?int $companyId = null): array
     {
-        if (! config('ptah.modules.permissions')) {
+        if (! CrudPermission::active()) {
             return $columns;
         }
 
@@ -169,6 +170,16 @@ class ColumnPermissionService
     {
         if ($keys === []) {
             return [];
+        }
+
+        // Gate driver (1.56.0): the column's key is a Gate ability.
+        if (CrudPermission::driver() === CrudPermission::GATE) {
+            $resolved = [];
+            foreach ($keys as $key) {
+                $resolved[$key] = CrudPermission::allowsColumn($key, $user);
+            }
+
+            return $resolved;
         }
 
         if ($this->permissionService->isMaster($user)) {

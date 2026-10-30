@@ -7,6 +7,34 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.56.0] - 2026-10-30
+
+### Added - screen and column permissions through Laravel's Gate (Spatie & co.)
+
+A screen's `permissionIdentifier` and a column's `colsPermission` only worked with
+ptah's own ACL module on — a project on Spatie laravel-permission, Bouncer or plain
+policies could not use them. `ptah.permissions.driver`:
+
+- `ptah` (default) — unchanged: enforced only with `ptah.modules.permissions` on.
+- `gate` — always enforced through Laravel's Gate, so whatever registers abilities
+  answers (Spatie registers every permission as one). The screen's actions check
+  `ptah.permissions.gate_ability`, default `{identifier}.{action}`
+  (`products.read`, `products.update`…; Spatie style `{action} {identifier}`); a
+  column's `colsPermission` is the ability itself.
+
+It covers the listing (read gate, the 403), create/edit/delete/restore, export and
+print, the column filter (list, form, filters, export) and dashboard widgets.
+
+### Changed - screen preferences are kept per company, page included
+
+With the company module on, a screen's preferences (page, filters, search, order,
+columns) are saved per company (`crud.{Model}@company:{id}`): switching company used
+to carry the other company's filters along and drop the page. Coming back to company
+1 now reopens the page it was on. A company with nothing saved yet starts from the
+earlier, shared preferences. The current page is saved (it was always 1) unless the
+URL carries `?page=`, and a saved page past the last one opens the last page instead
+of an empty list.
+
 ## [1.55.0] - 2026-10-29
 
 From a host laudo (JTEM e-commerce: an `admin` guard, Fortify on `web`, 26

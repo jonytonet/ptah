@@ -33,7 +33,8 @@ trait HasCrudPreferences
                 'direction' => $this->direction,
                 'perPage' => $this->perPage,
                 'columns' => $this->columnOrder,
-                'currentPage' => 1,
+                // The page the user is on (1.56.0) — it was always 1.
+                'currentPage' => max(1, (int) $this->getPage()),
             ],
             'filters' => [
                 'lastUsed' => array_filter($this->filters),
@@ -67,14 +68,14 @@ trait HasCrudPreferences
         if ($userId) {
             UserPreference::set(
                 userId: $userId,
-                key: 'crud.'.$this->model,
+                key: $this->preferencesKey(),
                 value: $prefs,
                 group: 'crud',
             );
             $this->cacheService->forgetPreferences($userId, $this->model);
         } else {
             // Fallback: persist to session when no authenticated user
-            session(['ptah.crud.'.$this->model => $prefs]);
+            session(['ptah.'.$this->preferencesKey() => $prefs]);
         }
     }
 
@@ -82,11 +83,20 @@ trait HasCrudPreferences
     {
         $userId = Auth::id();
 
-        if ($userId) {
-            $prefs = UserPreference::get($userId, 'crud.'.$this->model, null);
-        } else {
-            // Fallback: load from session when no authenticated user
-            $prefs = session('ptah.crud.'.$this->model, null);
+        // Per company first (1.56.0); a company with none yet starts from the
+        // screen's preferences saved before preferences were per company.
+        $keys = array_values(array_unique([$this->preferencesKey(), 'crud.'.$this->model]));
+        $prefs = null;
+
+        foreach ($keys as $key) {
+            $prefs = $userId
+                ? UserPreference::get($userId, $key, null)
+                // Fallback: load from session when no authenticated user
+                : session('ptah.'.$key, null);
+
+            if (is_array($prefs) && $prefs !== []) {
+                break;
+            }
         }
 
         if (! $prefs || ! is_array($prefs)) {
@@ -101,6 +111,13 @@ trait HasCrudPreferences
         $this->sort = $table['orderBy'] ?? $defaultSort;
         $this->direction = $table['direction'] ?? $defaultDirection;
         $this->perPage = (int) ($table['perPage'] ?? config('ptah.crud.per_page', 25));
+
+        // The page the user left (1.56.0). Set directly — setPage() would save
+        // the preferences again while loading them. A ?page= in the URL wins.
+        $savedPage = (int) ($table['currentPage'] ?? 1);
+        if ($savedPage > 1 && ! request()->query->has('page')) {
+            $this->paginators['page'] = $savedPage;
+        }
 
         // Columns
         $this->columnOrder = $prefs['columnOrder'] ?? [];
@@ -159,6 +176,31 @@ trait HasCrudPreferences
 
         // Recalculate hidden columns count
         $this->updateHiddenColumnsCount();
+    }
+
+    /**
+     * Where this screen's preferences are kept: per user and screen, and —
+     * with the company module on — per company too (1.56.0). Switching
+     * company used to carry the page, filters and search of the other
+     * company along; now each company keeps its own, and coming back to
+     * company 1 reopens page 20 with company 1's filters.
+     */
+    protected function preferencesKey(): string
+    {
+        $key = 'crud.'.$this->model;
+        $company = (int) $this->companyFilter;
+
+        return config('ptah.modules.company') && $company > 0 ? $key.'@company:'.$company : $key;
+    }
+
+    /**
+     * Livewire's pagination hook: the page the user moves to is remembered.
+     */
+    public function updatedPaginators(mixed $page, string $pageName): void
+    {
+        if ($pageName === 'page') {
+            $this->savePreferences();
+        }
     }
 
     protected function applyDefaultUiPreferences(): void

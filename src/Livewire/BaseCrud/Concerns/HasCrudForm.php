@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Ptah\Exceptions\CrudHookAbort;
 use Ptah\Support\CrudHookTarget;
+use Ptah\Support\CrudPermission;
 use Ptah\Support\PtahMask;
 use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
@@ -903,7 +904,8 @@ trait HasCrudForm
      */
     protected function authorizeCrudAction(string $action): bool
     {
-        if (! config('ptah.modules.permissions')) {
+        // ptah's ACL, or Laravel's Gate (ptah.permissions.driver, 1.56.0).
+        if (! CrudPermission::active()) {
             return true;
         }
 
@@ -917,7 +919,7 @@ trait HasCrudForm
             return false;
         }
 
-        return ptah_can($key, $action);
+        return CrudPermission::allows((string) $key, $action);
     }
 
     /**
