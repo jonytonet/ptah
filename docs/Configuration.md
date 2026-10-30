@@ -924,7 +924,7 @@ never read) — filter the screen with a custom filter instead.
 **What it does:** Maps Laravel **gate names** to the actions a screen offers, and turns buttons off
 
 **Interface:**
-- A gate-name field for each of `create`, `edit`, `delete`, `restore`, `export`, `import`, `history` and `attachments` (e.g. `product.create`, `view-products`). There is no gate for listing or viewing: the listing is protected by `permissions.permissionIdentifier` plus the permissions module
+- A gate-name field for each of `create`, `edit`, `delete`, `restore`, `export`, `import`, `history` and `attachments` (e.g. `product.create`, `view-products`). There is no gate for listing or viewing: the listing is protected by `permissions.permissionIdentifier` — through the ptah permissions module, or through Laravel's Gate with `ptah.permissions.driver = gate` (1.56.0)
 - The `show*Button` flags (`showCreateButton`, `showEditButton`, `showDeleteButton`, `showTrashButton`) — off hides the button **and** refuses the action on the server
 
 **Example:**
@@ -2349,7 +2349,7 @@ Properties of each column in `cols[]`:
 | `colsGravar` | bool | `true` | Save value to database |
 | `colsRequired` | bool | `false` | Required field |
 | `colsIsFilterable` | bool | `true` | Allows filtering by this column |
-| `colsPermission` | string | `''` | Column-level visibility gate (requires the `permissions` module). An `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — this is the default for every column. |
+| `colsPermission` | string | `''` | Column-level visibility gate. With `ptah.permissions.driver = gate` (1.56.0) it is a **Gate ability** (`can('products.cost')` — Spatie, Bouncer, policies), no ptah module needed; with the default `ptah` driver it needs the `permissions` module and is an `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — this is the default for every column. |
 | `colsVisibleList` | bool | `true` | Show in list |
 | `colsEditableForm` | bool | `true` | Shown in the form. `false` removes the field from the form |
 | `colsReadonly` | bool | `false` | Shown in the form as text, never editable and never saved — even a forged value is dropped (1.48.0). Unlike `colsEditableForm: false`, the person sees the value |
@@ -2778,7 +2778,7 @@ Properties in `permissions`:
 
 | Key | Type | Default | Description |
 |-------|------|--------|----------|
-| `permissionIdentifier` | string | `'page{Entity}'` | Page object key checked by the Permissions module (`ptah_can`) |
+| `permissionIdentifier` | string | `'page{Entity}'` | The screen's permission. Default driver `ptah`: a page object key checked by the Permissions module (`ptah_can`), enforced only while that module is on. Driver `gate` (1.56.0): checked as the Gate abilities `{identifier}.read/create/update/delete` (pattern in `ptah.permissions.gate_ability`) — see [Permissions.md § Using another permission library](Permissions.md#using-another-permission-library-spatie-bouncer-policies) |
 | `create` | string | `''` | Gate to create a record |
 | `edit` | string | `''` | Gate to edit a record |
 | `delete` | string | `''` | Gate to delete a record |

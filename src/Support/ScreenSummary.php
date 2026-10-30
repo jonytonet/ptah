@@ -111,13 +111,28 @@ final class ScreenSummary
     /**
      * @param  array<string, mixed>  $s
      */
+    /**
+     * How the screen's permission is actually checked (1.56.0) — the agent
+     * reading ptah-screen needs to know whether it is the ptah ACL, the Gate,
+     * or nothing at all.
+     */
+    private static function permissionNote(string $key): string
+    {
+        if (CrudPermission::driver() === CrudPermission::GATE) {
+            return '  (Gate: '.CrudPermission::ability($key, 'read').', '.CrudPermission::ability($key, 'update').'…)';
+        }
+
+        return CrudPermission::active() ? '  (ptah ACL)' : '  (NOT enforced: permissions module off, driver ptah)';
+    }
+
     public static function toText(array $s): string
     {
         $lines = [];
         $lines[] = $s['model'].($s['route'] !== '' ? "  [route {$s['route']}]" : '  [global]').($s['title'] ? '  "'.$s['title'].'"' : '');
         $lines[] = 'permission: '.($s['permission'] ?: '(none)')
             .($s['gates'] !== [] ? '  gates: '.implode(' ', array_map(fn ($k, $v) => "{$k}={$v}", array_keys($s['gates']), $s['gates'])) : '')
-            .($s['hidden_buttons'] !== [] ? '  off: '.implode(',', $s['hidden_buttons']) : '');
+            .($s['hidden_buttons'] !== [] ? '  off: '.implode(',', $s['hidden_buttons']) : '')
+            .($s['permission'] ? self::permissionNote((string) $s['permission']) : '');
 
         $lines[] = 'columns ('.count($s['columns']).'):';
         foreach ($s['columns'] as $c) {

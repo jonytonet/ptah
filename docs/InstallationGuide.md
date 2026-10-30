@@ -664,6 +664,11 @@ $products = Product::where('company_id', $companyId)->get();
 
 Activates full RBAC — roles, pages, page objects, middleware guards and Blade directives. This module also seeds the default admin user.
 
+> **Already on Spatie laravel-permission, Bouncer or policies?** You do not need this
+> module to gate BaseCrud screens and columns: set `PTAH_PERMISSION_DRIVER=gate` and
+> `permissionIdentifier` / `colsPermission` are checked through Laravel's Gate
+> (1.56.0) — see [Permissions.md § Using another permission library](Permissions.md#using-another-permission-library-spatie-bouncer-policies).
+
 ```bash
 php artisan ptah:module permissions
 ```

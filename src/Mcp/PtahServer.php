@@ -30,6 +30,9 @@ class PtahServer extends Server
         options and documentation, ptah-validate-config before saving a config you
         wrote, ptah-check and ptah-doctor after changes, ptah-why-empty and
         ptah-last-error when something does not show up or breaks. All are read-only.
+        Screen and column permissions follow ptah.permissions.driver: "ptah" (this
+        package's ACL) or "gate" (Laravel's Gate — Spatie, policies); ptah-screen says
+        which one checks a screen.
     MARKDOWN;
 
     protected function boot(): void

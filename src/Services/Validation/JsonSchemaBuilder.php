@@ -446,7 +446,7 @@ class JsonSchemaBuilder
                 'showEditButton' => ['type' => 'boolean'],
                 'showDeleteButton' => ['type' => 'boolean'],
                 'showTrashButton' => ['type' => 'boolean'],
-                'permissionIdentifier' => ['type' => 'string', 'description' => 'ACL key of the Permissions module (gates nothing while it is off)'],
+                'permissionIdentifier' => ['type' => 'string', 'description' => 'The screen\'s permission: an ACL key of the ptah Permissions module (enforced while it is on), or — with ptah.permissions.driver = gate — checked as the Gate abilities <key>.read/create/update/delete'],
                 'identifier' => ['deprecationMessage' => 'Never read: the runtime reads "permissionIdentifier" — this screen is NOT gated. `php artisan ptah:config:doctor --fix` migrates it.'],
             ],
         ];
