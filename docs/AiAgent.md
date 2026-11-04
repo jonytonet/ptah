@@ -475,6 +475,15 @@ an attacker controls directly.
 The streamed answer uses the same renderer, so the text does not change
 appearance the instant streaming ends.
 
+### Open across pages (1.56.1)
+
+An open chat stays open when you move to another screen or reload: the open state
+and the message you were typing (not yet sent) are kept in the tab's
+`sessionStorage` and restored on the next page. Per tab on purpose — a new tab
+starts with the chat closed. Reopened this way it does not take the keyboard focus
+from the page; it only scrolls to the last message. The conversation itself was
+already restored from the server.
+
 ### Full screen
 
 On a phone the panel always takes the whole screen — a 320px panel in the corner

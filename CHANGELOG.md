@@ -7,6 +7,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.56.1] - 2026-11-04
+
+### Fixed - the AI chat closed on every page
+
+Changing screen or reloading closed an open chat — its open state lived only in
+the page. It is kept in the tab's `sessionStorage` now, with the unsent draft, and
+restored on load: open stays open, closed stays closed, a new tab starts closed.
+Restored this way it scrolls to the last message without taking the focus from
+the page.
+
 ## [1.56.0] - 2026-10-30
 
 ### Added - screen and column permissions through Laravel's Gate (Spatie & co.)
