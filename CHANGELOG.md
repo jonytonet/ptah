@@ -7,6 +7,36 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.56.1] - 2026-11-04
+
+### Fixed - the AI chat closed on every page
+
+Changing screen or reloading closed an open chat — its open state lived only in
+the page. It is kept in the tab's `sessionStorage` now, with the unsent draft, and
+restored on load: open stays open, closed stays closed, a new tab starts closed.
+Restored this way it scrolls to the last message without taking the focus from
+the page.
+
+### Fixed - an AI provider with a mistyped model sent the user to the endpoint
+
+From a B2B laudo (production, first provider being set up):
+
+- A 404 that names the model ("The model ` gpt-6-astra` does not exist") is
+  classified as a **model** error; `404 => endpoint` ran first and caught every
+  404, so the screen told the user to check the endpoint — the one field that was
+  right. Only a 404 that does not mention a model is an endpoint error now (a
+  wrong URL that says "does not exist" stays one).
+- The **Model**, **API key** and **endpoint** of an AI provider are trimmed on
+  save: a pasted `" gpt-6-astra"` was stored with its leading space.
+- The provider's own sentence is appended to the chat's error for whoever may
+  manage the AI providers (it was only in the log, or with `APP_DEBUG`).
+
+### Fixed - the admin gear turned into a white square in dark mode
+
+The navbar's admin menu trigger, open, was `bg-gray-100` — a near-white chip with
+no dark counterpart. It uses the same themed tint as its hover now, with the accent
+glyph (`--ptah-primary-lite` in dark).
+
 ## [1.56.0] - 2026-10-30
 
 ### Added - screen and column permissions through Laravel's Gate (Spatie & co.)

@@ -881,10 +881,12 @@ class AiChatService
         // and carrying the body tells both of them where to look.
         $message = $failure->message();
 
-        // The technical detail is appended for a developer only: this message is
-        // rendered in the chat widget, and a response body can carry internal
-        // detail an end user has no business seeing. The log gets it either way.
-        if (config('app.debug')) {
+        // The technical detail is appended for a developer, and (1.56.1) for
+        // whoever may manage the AI providers — the person who fixes it: the
+        // provider's own sentence ("The model ` gpt-x` does not exist") says
+        // what the translated one cannot. Not for an end user: a response body
+        // can carry internal detail. The log gets it either way.
+        if (config('app.debug') || $this->viewerManagesAiConfig()) {
             $detail = trim($e->getMessage().' '.($failure->body ?? ''));
 
             if ($detail !== '') {
@@ -893,6 +895,16 @@ class AiChatService
         }
 
         return new AiProviderException($message, previous: $e);
+    }
+
+    /** Same rule as the AI provider screen (AiModelConfigList::authorizeAiConfig). */
+    private function viewerManagesAiConfig(): bool
+    {
+        try {
+            return auth()->check() && (ptah_can('ai.config', 'read') || ptah_is_master());
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     private function logProviderFailure(AiModelConfig $config, \Throwable $e): void

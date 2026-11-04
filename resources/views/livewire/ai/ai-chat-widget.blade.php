@@ -42,7 +42,25 @@
                 /* janela privada, cookies bloqueados: segue no modo compacto */
             }
 
-            this.$watch('open', value => { if (value) { this.scrollToBottom(); this.focusInput(); } });
+            /* Aberto continua aberto (1.56.1): trocar de tela ou recarregar
+               fechava o chat a cada pagina. Fica no sessionStorage — vale para
+               ESTA aba, entao uma aba nova comeca fechada. Reaberto assim, nao
+               rouba o foco da pagina; so rola ate a ultima mensagem. O rascunho
+               nao enviado vem junto. */
+            try {
+                this.draft = sessionStorage.getItem('ptah:ai:draft') ?? '';
+                if (sessionStorage.getItem('ptah:ai:open') === '1') {
+                    this.open = true;
+                    this.scrollToBottom();
+                }
+            } catch (e) {}
+
+            this.$watch('open', value => { try { sessionStorage.setItem('ptah:ai:open', value ? '1' : '0'); } catch (e) {} if (value) { this.scrollToBottom(); this.focusInput(); } });
+            this.$watch('draft', value => {
+                try {
+                    value ? sessionStorage.setItem('ptah:ai:draft', value) : sessionStorage.removeItem('ptah:ai:draft');
+                } catch (e) {}
+            });
             this.$watch('expanded', value => {
                 try { localStorage.setItem('ptah:ai:expanded', value ? '1' : '0'); } catch (e) {}
                 this.scrollToBottom();

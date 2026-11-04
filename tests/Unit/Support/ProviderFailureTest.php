@@ -56,6 +56,11 @@ class ProviderFailureTest extends TestCase
             'tool schema' => [422, '{"error":"Schema validation failed: /properties: [] is not of type \\"object\\""}', 'schema'],
             'unknown model' => [400, '{"error":{"message":"The model `grok-9` does not exist"}}', 'model'],
             'other 4xx' => [418, '{"error":"teapot"}', 'rejected'],
+            // 1.56.1 (laudo B2B): OpenAI answers an unknown model with a 404 —
+            // it read "endpoint not found" and sent the user to the empty field.
+            'unknown model as 404' => [404, '{"error":{"message":"The model ` gpt-6-astra` does not exist or you do not have access to it.","code":"model_not_found"}}', 'model'],
+            // …while a wrong endpoint that says "does not exist" stays an endpoint.
+            'wrong endpoint, wordy' => [404, '{"error":"The requested URL /v2/chat does not exist"}', 'endpoint'],
         ];
     }
 

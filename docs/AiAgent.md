@@ -475,6 +475,15 @@ an attacker controls directly.
 The streamed answer uses the same renderer, so the text does not change
 appearance the instant streaming ends.
 
+### Open across pages (1.56.1)
+
+An open chat stays open when you move to another screen or reload: the open state
+and the message you were typing (not yet sent) are kept in the tab's
+`sessionStorage` and restored on the next page. Per tab on purpose — a new tab
+starts with the chat closed. Reopened this way it does not take the keyboard focus
+from the page; it only scrolls to the last message. The conversation itself was
+already restored from the server.
+
 ### Full screen
 
 On a phone the panel always takes the whole screen — a 320px panel in the corner
@@ -1152,9 +1161,19 @@ the provider's **raw response body**:
 ```
 
 Read that `response_body` first — it is the provider's own explanation, and it is
-usually far more specific than anything else available. With `APP_DEBUG=true` it
-is also appended to the message shown in the chat widget; with debug off it stays
-in the log only, because a response body can carry internal detail.
+usually far more specific than anything else available. It is also appended to
+the message shown in the chat widget for **whoever may manage the AI providers**
+(the same rule as the providers screen — since 1.56.1) and for everyone with
+`APP_DEBUG=true`; other users see only the translated sentence, because a response
+body can carry internal detail.
+
+**A 404 that names the model is a model error (1.56.1).** OpenAI answers an unknown
+model with a 404 ("The model `x` does not exist"); it used to be reported as a wrong
+endpoint. Only a 404 that does not talk about a model is classified as the endpoint.
+
+**Spaces are trimmed (1.56.1).** The Model, API key and endpoint fields are trimmed
+on save — a pasted `" gpt-4o-mini"` was stored with its space and failed only on the
+first message.
 
 Other things worth checking:
 
