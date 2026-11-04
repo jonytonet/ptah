@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Ptah\Tests\Feature\AI;
 
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response as ClientResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Prism\Prism\Exceptions\PrismException;
 use Ptah\Services\AI\AiChatService;
+use Ptah\Services\Permission\PermissionService;
 use Ptah\Support\AI\ProviderFailure;
 use Ptah\Tests\TestCase;
 use ReflectionMethod;
@@ -142,5 +144,39 @@ class AiProviderErrorDetailTest extends TestCase
             'internal detail here',
             $method->invoke($service, $failure)->getMessage()
         );
+    }
+
+    #[Test]
+    public function whoever_manages_the_ai_providers_sees_the_providers_own_sentence(): void
+    {
+        // 1.56.1 (laudo B2B): "The model ` gpt-6-astra` does not exist" said
+        // what the translated sentence could not, and only the log had it. The
+        // person who can fix the provider sees it too; an end user still does not.
+        $method = new ReflectionMethod(AiChatService::class, 'providerException');
+        $failure = $this->prismFailure(404, '{"error":{"message":"The model ` gpt-6-astra` does not exist"}}');
+        config(['app.debug' => false]);
+
+        $managerOf = fn (bool $manages) => new class($manages) extends PermissionService
+        {
+            public function __construct(private bool $manages) {}
+
+            public function isMaster(mixed $user = null): bool
+            {
+                return $this->manages;
+            }
+
+            public function check(mixed $user, string $objectKey, string $action, ?int $companyId = null): bool
+            {
+                return $this->manages;
+            }
+        };
+
+        $this->actingAs(new GenericUser(['id' => 7]));
+
+        $this->app->instance(PermissionService::class, $managerOf(true));
+        $this->assertStringContainsString('gpt-6-astra', $method->invoke($this->app->make(AiChatService::class), $failure)->getMessage());
+
+        $this->app->instance(PermissionService::class, $managerOf(false));
+        $this->assertStringNotContainsString('gpt-6-astra', $method->invoke($this->app->make(AiChatService::class), $failure)->getMessage());
     }
 }

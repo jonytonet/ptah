@@ -165,7 +165,7 @@
                 <div x-data="{ openAdmin: false }" class="relative">
                     <button
                         @click="openAdmin = !openAdmin"
-                        :class="openAdmin ? 'bg-gray-100 text-primary' : 'hover:text-primary'"
+                        :class="openAdmin ? 'ptah-navbar-icon-btn--open' : 'hover:text-primary'"
                         class="ptah-navbar-icon-btn relative p-2 rounded-md transition-colors"
                         title="{{ __('ptah::ui.navbar_admin_title') }}"
                     >

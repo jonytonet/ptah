@@ -44,13 +44,19 @@ class ProviderFailure
         // Order matters: the checks that identify a specific, fixable cause come
         // before the generic status buckets, because a 400 that says "model does
         // not exist" needs a different answer than a 400 that says anything else.
+        //
+        // 1.56.1: model and schema come before the 404/429 buckets. OpenAI
+        // answers an unknown model with a 404 ("The model `x` does not
+        // exist"), and with `404 => endpoint` first that was reported as a
+        // wrong endpoint — sending the user to the one field that was right
+        // (empty, as it should be for OpenAI).
         $reason = match (true) {
             self::isConnectionFailure($e, $haystack) => 'unreachable',
             $status === 401 || $status === 403 => 'auth',
-            $status === 404 => 'endpoint',
-            $status === 429 => 'rate_limit',
             self::mentionsModel($haystack) => 'model',
             self::mentionsSchema($haystack) => 'schema',
+            $status === 404 => 'endpoint',
+            $status === 429 => 'rate_limit',
             $status !== null && $status >= 500 => 'overloaded',
             $status !== null && $status >= 400 => 'rejected',
             default => 'generic',
@@ -106,17 +112,27 @@ class ProviderFailure
         ]);
     }
 
-    /** A model name the provider does not serve — the commonest copy/paste slip. */
+    /**
+     * A model name the provider does not serve — the commonest copy/paste slip.
+     *
+     * The generic phrases ("does not exist", "not found") count only next to
+     * the word "model": a wrong endpoint answers 404 with "the requested URL
+     * does not exist" on some OpenAI-compatible servers, and that must stay an
+     * endpoint error now that this check runs before the 404 bucket.
+     */
     private static function mentionsModel(string $haystack): bool
     {
-        return Str::contains($haystack, [
+        if (Str::contains($haystack, [
             'model not found',
-            'does not exist',
             'unknown model',
             'invalid model',
             'model_not_found',
             'no such model',
-        ]);
+        ])) {
+            return true;
+        }
+
+        return Str::contains($haystack, 'model') && Str::contains($haystack, ['does not exist', 'not found']);
     }
 
     /**

@@ -2601,6 +2601,19 @@ html { background-color: var(--ptah-canvas); color: var(--ptah-text-strong); }
     background-color: var(--ptah-surface-hover);
     color: var(--ptah-text-strong);
 }
+/* Open state of a menu trigger (the admin gear). It was `bg-gray-100
+   text-primary` — a near-white chip with no dark counterpart, which in the
+   dark navbar looked like a stray white square (1.56.1). Same tint as the
+   hover, and the accent for the glyph: --ptah-primary-lite in dark, where the
+   plain primary is too dim on the dark chip. */
+.ptah-navbar .ptah-navbar-icon-btn.ptah-navbar-icon-btn--open {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-primary);
+}
+.ptah-dark .ptah-navbar .ptah-navbar-icon-btn.ptah-navbar-icon-btn--open {
+    background-color: var(--ptah-surface-hover);
+    color: var(--ptah-primary-lite);
+}
 /* App name — same migration as the sidebar's (delta vs --ptah-text-strong,
    tom "puro"+"neutra": 7/3/18 per channel). */
 .ptah-navbar .ptah-navbar-app-name {

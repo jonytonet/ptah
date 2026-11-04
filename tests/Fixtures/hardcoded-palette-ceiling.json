@@ -10,7 +10,7 @@
     "components/forge-input.blade.php": 15,
     "components/forge-list.blade.php": 1,
     "components/forge-modal.blade.php": 8,
-    "components/forge-navbar.blade.php": 4,
+    "components/forge-navbar.blade.php": 3,
     "components/forge-notification.blade.php": 2,
     "components/forge-pagination.blade.php": 3,
     "components/forge-radio.blade.php": 1,

@@ -224,6 +224,15 @@ class AiModelConfigList extends Component
     public function save(): void
     {
         $this->authorizeAiConfig();
+
+        // 1.56.1: a pasted " gpt-4o-mini" was saved as-is and failed only on the
+        // first chat message. Nothing that travels to a provider has a valid
+        // space at its edges — the model, the key, the endpoint — and the user
+        // cannot see the character, so it is trimmed instead of refused.
+        $this->model = trim($this->model);
+        $this->api_key = trim($this->api_key);
+        $this->api_endpoint = trim($this->api_endpoint);
+
         $data = $this->validate();
 
         try {
