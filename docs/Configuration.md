@@ -1673,6 +1673,7 @@ field:type:modifier:option=value:option=value...
 | `link_label` | `colsRendererLinkLabel` | string | `link_label=Ver` |
 | `link_new_tab` | `colsRendererLinkNewTab` | bool | `link_new_tab=true` |
 | `currency` | `colsRendererCurrency` | string | `currency=BRL` |
+| `cents` | `colsRendererCents` | bool | `cents=true` — the `money` column stores cents (1.57.0) |
 | `decimals` | `colsRendererDecimals` | int | `decimals=2` |
 | `max_chars` | `colsRendererMaxChars` | int | `max_chars=50` |
 | `badges` | `colsRendererBadges` | array | `badges=active\|green,inactive\|red` — `\|`-separated, not `:` |
@@ -2375,6 +2376,7 @@ Properties of each column in `cols[]`:
 | `colsRendererLinkTemplate` | string | `''` | URL pattern for `link` renderer (e.g.: `/products/%id%`) |
 | `colsRendererLinkNewTab` | bool | `false` | Open the link in a new tab |
 | `colsRendererCurrency` | string | `'BRL'` | Currency for `money` renderer: `BRL`, `USD`, `EUR` |
+| `colsRendererCents` | bool | `false` | `money` renderer: the column stores cents (an integer) — divided by 100 in the cell, totals, subtotals, print, Excel and PDF; the form edits the stored integer (1.57.0) |
 | `colsRendererDecimals` | int | `2` | Decimal places for `money` or `number` renderer |
 | `colsRendererFormat` | string | `''` | Format for `date`/`datetime` renderer (e.g.: `d/m/Y H:i:s`) |
 | `colsRendererMaxChars` | int | `50` | Maximum characters for `truncate` renderer |
@@ -2717,6 +2719,7 @@ ignored by the screen.
 | `configLinkLinha` | string | — | Row link template (`/products/%id%`) |
 | `groupBy` / `groupBreak` | string | `null` | Group rows / group break with subtotals |
 | `groupBreakPeriod` | string | `null` | `day` \| `month` \| `year`: break a date column by period (1.55.0) |
+| `groupByAggregates` | array | `[]` | With `groupBy`: `[{"field": "fee", "aggregate": "sum", "alias"?: "fee"}]` — sum/count/avg/min/max per group, under the alias (1.57.0) |
 | `uiPreferences.defaultSort` / `defaultDirection` | string | `id` / `DESC` | The screen's default order until the user picks another (1.55.0). A column the user may not sort by falls back to `id` |
 | `totalizadores` | object | disabled | Footer totals |
 | `masterDetail` | list | `null` | Detail grid under a row |

@@ -759,6 +759,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `sd_depends_on` | `colsSDDependsOn` | `sd_depends_on=state_id` |
 | `sd_filter_column` | `colsSDFilterColumn` | `sd_filter_column=state_id` |
 | `currency` | `colsRendererCurrency` | `currency=BRL` |
+| `cents` | `colsRendererCents` | `cents=true` |
 | `decimals` | `colsRendererDecimals` | `decimals=2` |
 | `bool_true` | `colsRendererBoolTrue` | — |
 | `bool_false` | `colsRendererBoolFalse` | — |

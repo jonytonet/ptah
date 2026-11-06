@@ -517,6 +517,11 @@ trait HasCrudExport
                 'type' => $tipo,
             ];
 
+            // A money column kept in cents leaves in currency units (1.57.0).
+            if (($col['colsRenderer'] ?? '') === 'money' && $this->ptahBool($col['colsRendererCents'] ?? false)) {
+                $exportColumn['cents'] = true;
+            }
+
             $permission = $col[ColumnPermissionService::TAG] ?? null;
             if (is_string($permission) && trim($permission) !== '') {
                 $exportColumn['permission'] = trim($permission);

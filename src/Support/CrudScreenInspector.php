@@ -59,7 +59,11 @@ final class CrudScreenInspector
         $table = $model->getTable();
         $connection = $model->getConnection()->getName();
 
-        if (! Schema::connection($connection)->hasTable($table)) {
+        // A screen over a SQL view is a normal screen (1.57.0): hasTable() is
+        // false for a view, and every one of them failed the check while the
+        // BaseCrud listed, filtered and exported it fine. getColumns() reads a
+        // view's columns too, so the inspection goes on as for a table.
+        if (! Schema::connection($connection)->hasTable($table) && ! self::isView($connection, $table)) {
             return [['level' => 'error', 'message' => "table \"{$table}\" does not exist — run the migration"]];
         }
 
@@ -186,6 +190,24 @@ final class CrudScreenInspector
         }
 
         return $findings;
+    }
+
+    /** Is $table a view of this connection? (1.57.0) */
+    private static function isView(string $connection, string $table): bool
+    {
+        try {
+            $views = Schema::connection($connection)->getViews();
+        } catch (\Throwable) {
+            return false;
+        }
+
+        foreach ($views as $view) {
+            if (strcasecmp((string) $view['name'], $table) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

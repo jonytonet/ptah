@@ -193,6 +193,9 @@
                             "colsRendererBoolTrue": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
+                            "colsRendererCents": {
+                                "description": "Read by the runtime — see docs/Configuration.md"
+                            },
                             "colsRendererColor": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
@@ -441,6 +444,7 @@
                                         "colsRendererBadges",
                                         "colsRendererBoolFalse",
                                         "colsRendererBoolTrue",
+                                        "colsRendererCents",
                                         "colsRendererColor",
                                         "colsRendererCurrency",
                                         "colsRendererDecimals",

@@ -27,7 +27,7 @@ final class ColumnKeys
         'colsPermission', 'colsPlaceholder', 'colsReadonly', 'colsRelacao', 'colsRelacaoBusca', 'colsRelacaoExibe',
         'colsRelacaoNested', 'colsRenderer', 'colsRendererBadges',
         'colsRendererBoolFalse', 'colsRendererBoolTrue', 'colsRendererColor',
-        'colsRendererCurrency', 'colsRendererDecimals', 'colsRendererDurationUnit',
+        'colsRendererCents', 'colsRendererCurrency', 'colsRendererDecimals', 'colsRendererDurationUnit',
         'colsRendererFormat', 'colsRendererImageHeight', 'colsRendererImageWidth',
         'colsRendererLinkLabel', 'colsRendererLinkNewTab', 'colsRendererLinkTemplate',
         'colsRendererLocale', 'colsRendererMax', 'colsRendererMaxChars', 'colsRendererQrSize',

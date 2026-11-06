@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Ptah\DTO\FilterDTO;
+use Ptah\Enums\CrudConfigEnums;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Support\CrudJoins;
@@ -369,11 +370,23 @@ trait HasCrudQuery
         // through to the regular sort instead of building invalid/unsafe SQL.
         if (($groupBy = $this->crudConfig['groupBy'] ?? null) && SqlIdentifier::isSafe((string) $groupBy)) {
             $mainTable = $modelInstance->getTable();
+            $grammar = $query->getQuery()->getGrammar();
+            $select = [
+                DB::raw("MIN({$mainTable}.id) as id"),
+                "{$mainTable}.{$groupBy}",
+            ];
+
+            // groupByAggregates (1.57.0): a sum/count/avg/min/max per group,
+            // under the column's own name — the cell shows it with its own
+            // renderer. Before, only the grouped field and MIN(id) came back,
+            // and a ranking or "revenue per client" needed a SQL view.
+            foreach ($this->groupByAggregates((string) $groupBy) as [$function, $field, $alias]) {
+                $expression = $field === '*' ? 'COUNT(*)' : $function.'('.$grammar->wrap("{$mainTable}.{$field}").')';
+                $select[] = DB::raw($expression.' as '.$grammar->wrap($alias));
+            }
+
             $query
-                ->select([
-                    DB::raw("MIN({$mainTable}.id) as id"),
-                    "{$mainTable}.{$groupBy}",
-                ])
+                ->select($select)
                 ->groupBy("{$mainTable}.{$groupBy}")
                 ->orderBy("{$mainTable}.{$groupBy}", $this->direction);
 
@@ -416,6 +429,49 @@ trait HasCrudQuery
             $sortCol = $this->resolveSortColumn();
             $query->orderBy($sortCol, $this->direction);
         }
+    }
+
+    /**
+     * The valid entries of `groupByAggregates`: {field, aggregate, alias?}.
+     * The aggregate is one of CrudConfigEnums::AGGREGATES; field and alias are
+     * safe identifiers (`*` only for COUNT); the alias defaults to the field
+     * (`count` for COUNT(*)) and can be neither `id` nor the grouped field. A
+     * column the user may not read is dropped, like the other config parts.
+     *
+     * @return list<array{0: string, 1: string, 2: string}>
+     */
+    protected function groupByAggregates(string $groupBy): array
+    {
+        $out = [];
+
+        foreach ((array) ($this->crudConfig['groupByAggregates'] ?? []) as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $function = strtoupper((string) ($entry['aggregate'] ?? ''));
+            $field = (string) ($entry['field'] ?? '');
+
+            if (! in_array($function, CrudConfigEnums::AGGREGATES, true)) {
+                continue;
+            }
+            if ($field === '*' ? $function !== 'COUNT' : ! SqlIdentifier::isSafe($field) || str_contains($field, '.')) {
+                continue;
+            }
+            if (in_array($field, $this->deniedColumns, true)) {
+                continue;
+            }
+
+            $alias = (string) ($entry['alias'] ?? ($field === '*' ? 'count' : $field));
+
+            if (! SqlIdentifier::isSafe($alias) || str_contains($alias, '.') || in_array($alias, ['id', $groupBy], true)) {
+                continue;
+            }
+
+            $out[] = [$function, $field, $alias];
+        }
+
+        return $out;
     }
 
     // ── JOINs ─────────────────────────────────────────────────────────────────

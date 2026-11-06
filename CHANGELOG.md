@@ -7,6 +7,33 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.57.0] - 2026-11-06
+
+From the Agência Cher laudo (Laravel 13, MariaDB, 27 screens, 7 over SQL views).
+
+### Fixed
+
+- **`ptah:check` failed every screen over a SQL view** ("table does not exist"):
+  `hasTable()` is false for a view. A view is inspected like a table now — the
+  command can gate a CI or a deploy again.
+- **`ptah:config:doctor`'s "MASTER scoped by company_id" alert** is silent with
+  `ptah.permissions.multi_company` off, where no binding's company scopes anything.
+- **Docs:** `colsSelect` is a **label => value** map; the BaseCrud key table said
+  the opposite.
+
+### Added
+
+- **`colsRendererCents`** for the `money` renderer: the column stores cents (an
+  integer) and shows in currency units in the cell, the footer total, the group
+  subtotals, print, the Excel export (a number) and the PDF (cells and totals).
+  Editor checkbox and `--column … cents=true`. The form still edits the stored
+  integer.
+- **`groupByAggregates`**: with `groupBy`, `[{"field": "fee", "aggregate": "sum"}]`
+  (`sum`/`count`/`avg`/`min`/`max`, `*` for count, optional `alias`) returns the
+  aggregate per group under the column's name — a ranking or revenue per client
+  without a SQL view. Unsafe names, unknown aggregates and columns the user may not
+  read are ignored.
+
 ## [1.56.1] - 2026-11-04
 
 ### Fixed - the AI chat closed on every page

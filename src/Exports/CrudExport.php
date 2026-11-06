@@ -87,6 +87,13 @@ class CrudExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
         foreach ($this->columns as $column) {
             $field = $column['field'] ?? '';
             $value = Scalar::of(data_get($row, $field));
+
+            // A money column kept in cents (colsRendererCents, 1.57.0): the
+            // sheet gets the amount in currency units, still a number.
+            if (! empty($column['cents']) && is_numeric($value)) {
+                $value = (float) $value / 100;
+            }
+
             $mapped[] = $this->formatValue($value, $column['type'] ?? '');
         }
 

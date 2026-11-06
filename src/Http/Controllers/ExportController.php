@@ -316,6 +316,15 @@ class ExportController
                     default => null,
                 };
 
+                // A money column kept in cents (colsRendererCents, 1.57.0): the
+                // total is printed in currency units, like the screen's footer.
+                $col = collect($config['cols'] ?? [])->firstWhere('colsNomeFisico', $field);
+                if ($aggregate !== 'count' && is_numeric($value) && is_array($col)
+                    && ($col['colsRenderer'] ?? '') === 'money'
+                    && filter_var($col['colsRendererCents'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    $value = (float) $value / 100;
+                }
+
                 $result[] = [
                     'field' => $field,
                     'label' => $label,

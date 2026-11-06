@@ -1962,6 +1962,8 @@ return [
     'cfg_tip_renderer_bool_false' => 'Texto exibido quando o valor é falso (false, 0, vazio). Usa "Não" por padrão se deixado em branco.',
     'cfg_tip_renderer_currency' => 'Símbolo de moeda e locale de formatação usados pelo renderer money.',
     'cfg_tip_renderer_money_decimals' => 'Quantidade de casas decimais exibidas (0–4). Puramente visual — não arredonda o valor gravado.',
+    'cfg_col_renderer_cents' => 'Valores gravados em centavos',
+    'cfg_tip_renderer_money_cents' => 'A coluna guarda centavos (inteiro): 12345 aparece como 123,45 — também nos totais, na exportação e na impressão',
     'cfg_tip_renderer_link_template' => 'Padrão de URL do renderer link. Use %campo% para substituir por qualquer coluna do registro, ex: /pedidos/%id%/detalhe.',
     'cfg_tip_renderer_link_label' => 'Texto fixo exibido no link no lugar do valor bruto. Deixe em branco para exibir o próprio valor da coluna como texto do link.',
     'cfg_tip_renderer_link_new_tab' => 'Abre o link em uma nova aba do navegador (target="_blank") em vez da atual.',

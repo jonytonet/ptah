@@ -425,6 +425,13 @@ trait HasCrudRenderers
         $currency = $col['colsRendererCurrency'] ?? 'BRL';
         $decimals = (int) ($col['colsRendererDecimals'] ?? 2);
 
+        // colsRendererCents (1.57.0): the column stores cents (an integer), the
+        // way many systems keep money. The cell, the footer total and the group
+        // subtotals all come through here.
+        if ($this->ptahBool($col['colsRendererCents'] ?? false)) {
+            $value = (float) $value / 100;
+        }
+
         return match ($currency) {
             'USD' => '$ '.number_format((float) $value, $decimals, '.', ','),
             'EUR' => '€ '.number_format((float) $value, $decimals, ',', '.'),
