@@ -533,6 +533,7 @@ class CrudConfig extends Component
             'colsRenderer' => '',
             'colsRendererBadges' => [],
             'colsRendererCurrency' => 'BRL',
+            'colsRendererCents' => false,
             'colsRendererDecimals' => 2,
             'colsRendererMaxChars' => 50,
             'colsRendererLinkTemplate' => '',

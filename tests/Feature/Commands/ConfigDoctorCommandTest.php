@@ -753,6 +753,22 @@ class ConfigDoctorCommandTest extends TestCase
     }
 
     #[Test]
+    public function the_master_alert_is_silent_when_roles_are_not_per_company(): void
+    {
+        // 1.57.0 (laudo Cher): with multi_company off no binding's company_id
+        // scopes anything, so a MASTER bound with one misleads nobody.
+        config(['ptah.permissions.multi_company' => false]);
+        $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());
+
+        $master = Role::create(['name' => 'MASTER', 'is_master' => true, 'is_active' => true]);
+        UserRole::create(['user_id' => 1, 'role_id' => $master->id, 'company_id' => 1, 'is_active' => true]);
+
+        $this->artisan('ptah:config:doctor')
+            ->doesntExpectOutputToContain('SECURITY ALERT')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
     public function a_master_binding_without_a_company_id_is_not_flagged(): void
     {
         $this->seedConfig(ModelKey::canonical(DoctorStub::class), '', $this->goodConfig());

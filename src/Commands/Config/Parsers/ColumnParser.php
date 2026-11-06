@@ -90,6 +90,7 @@ class ColumnParser
 
         // Renderer specific
         'currency' => 'colsRendererCurrency',
+        'cents' => 'colsRendererCents',
         'decimals' => 'colsRendererDecimals',
         'bool_true' => 'colsRendererBoolTrue',
         'bool_false' => 'colsRendererBoolFalse',

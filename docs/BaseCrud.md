@@ -428,7 +428,7 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsRelacaoNested` | `string\|null` | Dot notation for nested relations: `category.parent.name` |
 | `colsOrderBy` | `string\|null` | Actual column for ORDER BY |
 | `colsMetodoCustom` | `string\|null` | `Class\method(%field%)`, relative to `App\Services\` (the prefix is always added) |
-| `colsSelect` | `array\|null` | Select options: `[value => label]` |
+| `colsSelect` | `array\|null` | Select options as a **label => value** map: `{"Ativo": "1", "Inativo": "0"}` (the label is the key) |
 | `colsSDModel` | `string\|null` | SearchDropdown model (e.g. `BusinessPartner` or FQCN) |
 | `colsSDLabel` | `string\|null` | Table field used as label (e.g. `name`) |
 | `colsSDValor` | `string\|null` | Table field used as value (e.g. `id`) |
@@ -558,7 +558,7 @@ Configured in `colsHelper` of the column (legacy helpers).
 | `badge` | `<span>` with coloured background (padded, soft borders) | `colsRendererBadges` |
 | `pill` | Same as `badge` but with fully rounded borders | `colsRendererBadges` |
 | `boolean` | Badge "Yes" (green) / "No" (grey), labels configurable | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
-| `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals` |
+| `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals`, `colsRendererCents` (1.57.0: the column stores cents — `123456` shows as `R$ 1.234,56` in the cell, footer total, group subtotals, print, Excel and PDF; the form still edits the stored integer) |
 | `link` | `<a href>` from `colsRendererLinkTemplate` (default `#`; `%value%`/`%field%` replaced); new tab only with `colsRendererLinkNewTab: true` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
 | `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
 | `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
@@ -2958,7 +2958,39 @@ When `groupBy` is present, ptah:
 4. Returns paginated (`.paginate($perPage)`).
 5. **Ignores** subsequent sort/order logic — the `groupBy` block returns early.
 
-> The reduced SELECT means only the grouped field and the minimum `id` arrive in the blade. Columns from other relations will likely be absent. Use `configGroupBy` when the intent is to list distinct groups (e.g. one row per company, one row per category).
+> The reduced SELECT means only the grouped field, the minimum `id` and the aggregates below arrive in the blade. Columns from other relations will likely be absent. Use `configGroupBy` when the intent is to list distinct groups (e.g. one row per company, one row per category).
+
+### Aggregates per group (1.57.0)
+
+`groupByAggregates` adds a sum, count, average, minimum or maximum per group — a
+ranking, "revenue per client" — without a SQL view:
+
+```json
+{
+  "groupBy": "client_id",
+  "groupByAggregates": [
+    { "field": "fee", "aggregate": "sum" },
+    { "field": "*", "aggregate": "count", "alias": "gigs" }
+  ],
+  "cols": [
+    { "colsNomeFisico": "client_id", "colsNomeLogico": "Cliente" },
+    { "colsNomeFisico": "fee", "colsNomeLogico": "Receita", "colsRenderer": "money", "colsRendererCents": true },
+    { "colsNomeFisico": "gigs", "colsNomeLogico": "Eventos" }
+  ]
+}
+```
+
+```sql
+SELECT MIN(gigs.id) AS id, gigs.client_id, SUM(`gigs`.`fee`) AS `fee`, COUNT(*) AS `gigs` ...
+```
+
+- `aggregate`: `sum`, `count`, `avg`, `min`, `max`. `field` is a column of the
+  screen's table (`*` only with `count`).
+- The result comes back under `alias` — the field's own name by default (`count` for
+  `count` of `*`) — so a column with that `colsNomeFisico` shows it, with its renderer
+  (a `money` column in cents included). The alias cannot be `id` or the grouped field.
+- An entry with an unknown aggregate or an unsafe name is ignored, and so is one whose
+  field the user may not read (`colsPermission`).
 
 ### Real-world usage example
 

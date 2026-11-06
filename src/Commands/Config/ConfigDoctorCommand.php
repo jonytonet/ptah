@@ -768,7 +768,10 @@ class ConfigDoctorCommand extends Command
         //     alert, not a config defect — does not change how MASTER
         //     resolves. Guarded against the permissions module being
         //     uninstalled (same pattern as rolesAreQueryable()).
-        if (! $auditingCandidate && $this->rolesAreQueryable()) {
+        // Only when roles are per company (1.57.0): with
+        // ptah.permissions.multi_company off no binding's company_id scopes
+        // anything — MASTER included — so there is nothing to be misled about.
+        if (! $auditingCandidate && config('ptah.permissions.multi_company', true) && $this->rolesAreQueryable()) {
             try {
                 $scopedMasterBindings = UserRole::query()
                     ->whereNotNull('company_id')

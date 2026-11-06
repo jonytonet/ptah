@@ -1960,6 +1960,8 @@ return [
     'cfg_tip_renderer_bool_false' => 'Text shown when the value is falsy (false, 0, empty). Defaults to "No" when left blank.',
     'cfg_tip_renderer_currency' => 'Currency symbol and formatting locale used by the money renderer.',
     'cfg_tip_renderer_money_decimals' => 'Number of decimal places shown (0–4). Purely visual — does not round the stored value.',
+    'cfg_col_renderer_cents' => 'Values stored in cents',
+    'cfg_tip_renderer_money_cents' => 'The column stores cents (an integer): 12345 shows as 123.45 — also in totals, export and print',
     'cfg_tip_renderer_link_template' => 'URL pattern for the link renderer. Use %field% placeholders to substitute any column from the record, e.g. /orders/%id%/detail.',
     'cfg_tip_renderer_link_label' => "Fixed text shown for the link instead of the raw value. Leave blank to display the column's own value as the link text.",
     'cfg_tip_renderer_link_new_tab' => 'Opens the link in a new browser tab (target="_blank") instead of the current one.',

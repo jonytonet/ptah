@@ -207,7 +207,10 @@
                                         $field = $column['field'] ?? '';
                                         $value = data_get($row, $field);
                                         
-                                        if ($value instanceof \DateTimeInterface) {
+                                        if (! empty($column['cents']) && is_numeric($value)) {
+                                            // colsRendererCents (1.57.0)
+                                            echo e(number_format((float) $value / 100, 2, ',', '.'));
+                                        } elseif ($value instanceof \DateTimeInterface) {
                                             echo e($value->format('d/m/Y H:i:s'));
                                         } elseif (is_bool($value)) {
                                             echo $value ? 'Sim' : 'Não';

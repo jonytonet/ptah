@@ -812,6 +812,11 @@
                                             <input type="number" wire:model="formDataField.colsRendererDecimals" min="0"
                                                 max="4" title="{{ __('ptah::ui.cfg_tip_renderer_money_decimals') }}" class="cfg-input" />
                                         </div>
+                                        <label class="col-span-2 flex items-center gap-2 text-xs cursor-pointer">
+                                            <input type="checkbox" wire:model="formDataField.colsRendererCents"
+                                                title="{{ __('ptah::ui.cfg_tip_renderer_money_cents') }}" class="rounded" />
+                                            {{ __('ptah::ui.cfg_col_renderer_cents') }}
+                                        </label>
                                     </div>
                                     @endif
 
