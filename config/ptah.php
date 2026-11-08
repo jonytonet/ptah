@@ -488,6 +488,12 @@ return [
     'auth' => [
         'guard' => 'web',
         'home' => '/dashboard',
+        // The host's own dashboard (1.57.1): a route name ('dashboard') or a
+        // URL. Set, the package does not register its generic /dashboard
+        // (route `ptah.dashboard`) and the menu's "Dashboard" goes here — so
+        // there is no second route with that name to break `route:cache`.
+        // Point `home` at it too, for where login lands.
+        'dashboard' => env('PTAH_AUTH_DASHBOARD'),
         // false hides the 2FA setup on the profile; an account that already
         // has 2FA keeps being challenged at login (and can still turn it off).
         'two_factor' => true,

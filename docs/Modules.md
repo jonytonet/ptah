@@ -139,6 +139,7 @@ In `config/ptah.php`, section `auth`:
 'auth' => [
     'guard'              => 'web',
     'home'               => '/dashboard',    // redirect after login
+    'dashboard'          => env('PTAH_AUTH_DASHBOARD'), // the host's own dashboard (1.57.1) — see "Your own dashboard"
     'two_factor'         => true,            // false hides the 2FA setup (an account that already has 2FA is still challenged)
     'remember_me'        => true,            // false hides "remember me" on the login screen
     'session_protection' => true,            // false hides the active-sessions tab
@@ -190,7 +191,7 @@ Registered automatically when `ptah.modules.auth = true`:
 | `GET` | `/forgot-password` | `ptah.auth.forgot-password` | public |
 | `GET` | `/reset-password/{token}` | `ptah.auth.password.reset` (was `password.reset` before 1.53.0) | public |
 | `GET` | `/two-factor-challenge` | `ptah.auth.two-factor` | public |
-| `GET` | `/dashboard` | `ptah.dashboard` | `auth:<guard>` |
+| `GET` | `/dashboard` | `ptah.dashboard` (not registered when `ptah.auth.dashboard` is set) | `auth:<guard>` |
 | `GET` | `/profile` | `ptah.profile` | `auth:<guard>` |
 | `POST` | `/appearance/theme-mode` | `ptah.appearance.theme-mode` | `auth:<guard>` |
 
@@ -352,6 +353,24 @@ call them, but write the secret before it is confirmed.
 ### Dashboard
 
 **View:** `resources/views/livewire/auth/dashboard.blade.php`
+
+#### Your own dashboard (1.57.1)
+
+A host with its own dashboard points the package at it instead of registering a
+second route named `ptah.dashboard` (which breaks `php artisan route:cache`:
+"another route has already been assigned name"):
+
+```env
+PTAH_AUTH_DASHBOARD=dashboard   # a route name of the host, or a URL (/painel)
+```
+
+- The package then **does not register** its `/dashboard` (`ptah.dashboard`).
+- The menu's fixed "Dashboard" item (database menu driver) goes to that route.
+- Set `ptah.auth.home` to the same place too — that is where login lands.
+- The widgets of `config/ptah-dashboard.php` still render in your view with
+  `@include('ptah::dashboard.widgets')` (see [Dashboard.md](Dashboard.md)).
+
+Null (the default) keeps everything as before.
 
 View served by the `ptah.dashboard` route. Uses the `forge-dashboard` layout. When `DashboardService` has widgets registered it renders them (see [Dashboard.md](Dashboard.md)); otherwise it displays 4 example `<x-forge-stat-card>` components with system information (user name, app, environment, Laravel version).
 
