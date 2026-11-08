@@ -516,6 +516,7 @@ php artisan vendor:publish --tag=ptah-errors
 |-----|-----|---------|-----------|
 | `auth.guard` | — | `web` | [Modules.md — Auth Module](Modules.md) |
 | `auth.home` | — | `/dashboard` | [Modules.md — Auth Module](Modules.md) |
+| `auth.dashboard` | `PTAH_AUTH_DASHBOARD` | `null` | The host's own dashboard: a route name or a URL. Set, the package does not register `/dashboard` (`ptah.dashboard`) and the menu's "Dashboard" goes there — `route:cache` stays safe. Since 1.57.1. [Modules.md — Your own dashboard](Modules.md) |
 | `auth.two_factor` | — | `true` | `false` hides and blocks the **activation** of 2FA on the profile. An account that already has 2FA is still challenged at login and can turn it off. Since 1.50.0 |
 | `auth.remember_me` | — | `true` | `false` hides "remember me" on the login screen. Since 1.50.0 |
 | `auth.session_protection` | — | `true` | `false` hides the active-sessions tab on the profile. Since 1.50.0 |

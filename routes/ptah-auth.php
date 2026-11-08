@@ -58,8 +58,13 @@ Route::middleware($middleware)->group(function () use ($prefix, $guard) {
     // host whose admins use another guard was bounced off its own profile.
     Route::prefix($prefix)->middleware('auth:'.$guard)->group(function () {
 
-        Route::get('/dashboard', fn () => view('ptah::livewire.auth.dashboard'))
-            ->name('ptah.dashboard');
+        // The package's generic dashboard — unless the host has its own
+        // (ptah.auth.dashboard, 1.57.1). Registering a second route with this
+        // name to steer the menu broke `route:cache`.
+        if (blank(config('ptah.auth.dashboard'))) {
+            Route::get('/dashboard', fn () => view('ptah::livewire.auth.dashboard'))
+                ->name('ptah.dashboard');
+        }
 
         Route::get('/profile', ProfilePage::class)
             ->name('ptah.profile');

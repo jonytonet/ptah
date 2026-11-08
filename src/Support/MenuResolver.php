@@ -60,7 +60,7 @@ final class MenuResolver
                 'id' => null,
                 'label' => 'Dashboard',
                 'text' => 'Dashboard',
-                'url' => Route::has('ptah.dashboard') ? route('ptah.dashboard') : '/dashboard',
+                'url' => self::dashboardUrl(),
                 'icon' => 'bx bx-home-alt',
                 'type' => 'menuLink',
                 'target' => '_self',
@@ -209,5 +209,25 @@ final class MenuResolver
             ['label' => 'Reports', 'url' => '/reports', 'icon' => 'bx bx-bar-chart', 'type' => 'menuLink', 'match' => 'reports*', 'children' => []],
             ['label' => 'Settings', 'url' => '/settings', 'icon' => 'bx bx-cog', 'type' => 'menuLink', 'match' => 'settings*', 'children' => []],
         ];
+    }
+
+    /**
+     * Where the menu's fixed "Dashboard" goes (1.57.1).
+     *
+     * `ptah.auth.dashboard` names the host's own dashboard — a route name, or a
+     * URL. With it set the package does not register its generic /dashboard
+     * at all (routes/ptah-auth.php): a host that registered a second route
+     * named `ptah.dashboard` to point the menu at its own screen broke
+     * `route:cache` ("another route has already been assigned name").
+     */
+    public static function dashboardUrl(): string
+    {
+        $own = config('ptah.auth.dashboard');
+
+        if (is_string($own) && $own !== '') {
+            return Route::has($own) ? route($own) : url($own);
+        }
+
+        return Route::has('ptah.dashboard') ? route('ptah.dashboard') : '/dashboard';
     }
 }

@@ -7,6 +7,23 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.57.1] - 2026-11-08
+
+From the Engepeças B2B laudo.
+
+### Fixed
+
+- **A host with its own dashboard could not `route:cache`.** The menu's fixed
+  "Dashboard" (database driver) always went to `ptah.dashboard`, so the host
+  registered a second route with that name to steer it — and `route:cache`
+  refuses duplicate names. New `ptah.auth.dashboard` (`PTAH_AUTH_DASHBOARD`): a
+  route name or a URL of the host. Set, the package does not register its
+  `/dashboard` and the menu goes there. Null (the default) changes nothing.
+  Reading `ptah.auth.home` instead was not an option: its default `/dashboard`
+  is a 404 for a host with `route_prefix`.
+
+---
+
 ## [1.57.0] - 2026-11-06
 
 From the Agência Cher laudo (Laravel 13, MariaDB, 27 screens, 7 over SQL views).
