@@ -7,6 +7,38 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.0] - 2026-11-09
+
+From the Engepeças B2B laudo (a BaseCrud embedded in the "Integrações" screen).
+
+### Fixed
+
+- **A BaseCrud mounted after the page loaded lost its screen config.** It picked
+  the config by `request()->path()`; mounted by a parent inside a Livewire update
+  (a `key()` that changes, an `@if`, a tab), that path is the update endpoint, and
+  the lookup fell back to the global config without a word — other columns, the
+  create/edit/delete buttons back, no `permissionIdentifier`, no custom actions.
+  The path is now the page's, read from the Livewire snapshot (checksummed). The
+  config editor of that list saves to the same screen.
+
+### Added
+
+- **`configRoute`** mount param: the host names the screen whose config loads.
+  `#[Locked]`, as before.
+- **`Ptah\Contracts\CrudQueryScope`** with the `scope` / `scopeParams` mount
+  params: any restriction `lockedFilters` (equality only) cannot express — a
+  range, a composed `IN`. Applied wherever `lockedFilters` is: the listing,
+  totals, print, both exports, and edit/save/delete/restore/bulk via
+  `scopedQuery()` and `recordInScope()`. Wrapped in a `where` group, so an
+  `orWhere` inside it cannot widen past the company scope and the locks. A class
+  that does not implement the contract fails at mount. Replaces subclassing
+  BaseCrud to override `buildBaseQuery()`, which never reached the single-record
+  actions. Disagreed with the laudo on one point: no namespace allow-list — unlike
+  hooks, a scope only comes from host code through `mount()`, never from an
+  editable config.
+
+---
+
 ## [1.57.1] - 2026-11-08
 
 From the Engepeças B2B laudo.

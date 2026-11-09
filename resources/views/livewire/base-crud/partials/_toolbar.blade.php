@@ -456,7 +456,7 @@
              the ptah.crud.config_editor opt-in when it is off). The component
              itself also re-checks on open/save (reachable by name). --}}
         @ptahCanManageConfig
-            @livewire('ptah-crud-config', ['model' => $model], key('crud-cfg-'.$model))
+            @livewire('ptah-crud-config', ['model' => $model, 'configRoute' => $configRoute], key('crud-cfg-'.$model))
         @endptahCanManageConfig
 
         {{-- Atualizar --}}

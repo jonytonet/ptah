@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Livewire\Attributes\On;
+use Ptah\Contracts\CrudQueryScope;
 use Ptah\Services\Cache\CacheService;
 use Ptah\Services\Crud\CrudConfigService;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Services\Crud\FormValidatorService;
 use Ptah\Services\Permission\ColumnPermissionService;
+use Ptah\Support\CrudScreenRoute;
 use Ptah\Support\RelationPath;
 use Ptah\Support\StyleRule;
 
@@ -21,12 +23,13 @@ trait HasCrudLifecycle
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     /**
-     * Returns the current URL path without leading slash.
-     * Used as the screen-specific config key, e.g. 'categories'.
+     * The page path without leading slash — the screen-specific config key,
+     * e.g. 'categories'. In a Livewire update it is the page's, not the
+     * endpoint's (1.58.0, see CrudScreenRoute).
      */
     private function resolveCurrentRoute(): string
     {
-        return ltrim(request()->path(), '/');
+        return CrudScreenRoute::current();
     }
 
     public function boot(
@@ -147,10 +150,25 @@ trait HasCrudLifecycle
         array $whereHasCondition = [],
         int $companyFilter = 0,
         array $lockedFilters = [],
+        ?string $configRoute = null,
+        ?string $scope = null,
+        array $scopeParams = [],
     ): void {
         $this->model = $model;
         $this->lockedFilters = $lockedFilters;
-        $this->configRoute = $this->resolveCurrentRoute();
+        // The host may name the screen (1.58.0) — host code is the only way
+        // into mount(), and the property stays #[Locked].
+        $this->configRoute = CrudScreenRoute::given($configRoute) ?? $this->resolveCurrentRoute();
+
+        // A scope that does not implement the contract is a host configuration
+        // error: fail loud, never list without the restriction it asked for.
+        if ($scope !== null && $scope !== '') {
+            if (! is_a($scope, CrudQueryScope::class, true)) {
+                throw new \InvalidArgumentException("BaseCrud scope '{$scope}' must implement ".CrudQueryScope::class.'.');
+            }
+            $this->scope = $scope;
+            $this->scopeParams = $scopeParams;
+        }
         $this->whereHasFilter = $whereHasFilter;
         $this->whereHasCondition = $whereHasCondition;
         $this->companyFilter = $companyFilter ?: ptah_company_id();

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Ptah\Contracts\CrudQueryScope;
 use Ptah\DTO\FilterDTO;
 use Ptah\Enums\CrudConfigEnums;
 use Ptah\Models\UserPreference;
@@ -248,6 +249,9 @@ trait HasCrudQuery
 
         // External whereHas filter (pre-filtered by parent entity)
         $this->applyWhereHasPreFilter($query);
+
+        // The host's scope (1.58.0)
+        $this->applyHostScope($query);
 
         // Global search with OR across text fields and relations
         if ($this->search !== '') {
@@ -1113,8 +1117,34 @@ trait HasCrudQuery
         // a LISTAGEM o aplicava, entao uma tela de detalhe filtrada pelo pai
         // deixava editar, por id, um registro de outro pai.
         $this->applyWhereHasPreFilter($query);
+        $this->applyHostScope($query);
 
         return $query;
+    }
+
+    /**
+     * The host's CrudQueryScope (1.58.0), applied in one place — the listing,
+     * scopedQuery() and recordInScope(). Checked again here and not only in
+     * mount(): a class that stopped implementing the contract fails CLOSED,
+     * an empty result, never the unscoped table.
+     */
+    protected function applyHostScope(Builder $query): void
+    {
+        if ($this->scope === '') {
+            return;
+        }
+
+        if (! is_a($this->scope, CrudQueryScope::class, true)) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        // Grouped, so an orWhere inside the scope cannot OR past the company
+        // scope and the locks applied before it.
+        $query->where(function (Builder $q) {
+            app($this->scope)->apply($q, $this->scopeParams);
+        });
     }
 
     /**
@@ -1178,6 +1208,16 @@ trait HasCrudQuery
         if ($this->whereHasFilter !== '') {
             $check = $record->newQueryWithoutScopes()->whereKey($record->getKey());
             $this->applyWhereHasPreFilter($check);
+
+            if (! $check->exists()) {
+                return false;
+            }
+        }
+
+        // The host's scope is a query too — same check by key (1.58.0).
+        if ($this->scope !== '') {
+            $check = $record->newQueryWithoutScopes()->whereKey($record->getKey());
+            $this->applyHostScope($check);
 
             if (! $check->exists()) {
                 return false;

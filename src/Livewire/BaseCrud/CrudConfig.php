@@ -16,6 +16,7 @@ use Ptah\Services\Notification\CrudNotificationDispatcher;
 use Ptah\Services\Permission\ColumnPermissionService;
 use Ptah\Services\Permission\PermissionService;
 use Ptah\Support\BroadcastListener;
+use Ptah\Support\CrudScreenRoute;
 use Ptah\Traits\SendsCrudNotifications;
 
 /**
@@ -217,10 +218,13 @@ class CrudConfig extends Component
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
-    public function mount(string $model): void
+    public function mount(string $model, ?string $configRoute = null): void
     {
         $this->model = $model;
-        $this->configRoute = ltrim(request()->path(), '/');
+        // The BaseCrud hands its own screen (1.58.0): mounted inside a Livewire
+        // update, request()->path() was the endpoint and the editor saved the
+        // config under it.
+        $this->configRoute = CrudScreenRoute::given($configRoute) ?? CrudScreenRoute::current();
         $this->loadFromDb();
     }
 
