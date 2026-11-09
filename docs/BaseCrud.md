@@ -46,6 +46,7 @@
 35. [Keyboard Shortcuts](#keyboard-shortcuts)
 36. [Multi-Config per Route](#multi-config-per-route)
     - [Locking rows to a fixed scope (`lockedFilters`)](#locking-rows-to-a-fixed-scope-lockedfilters)
+    - [Any restriction: a query scope (`scope`)](#any-restriction-a-query-scope-scope)
 37. [Deploying a screen: the config lives in the database](#deploying-a-screen-the-config-lives-in-the-database)
 38. [Making a new screen appear in the menu](#making-a-new-screen-appear-in-the-menu)
 39. [Testing a BaseCrud screen](#testing-a-basecrud-screen)
@@ -131,6 +132,9 @@ Passed to `@livewire(...)` or `<livewire ...>`.
 | `whereHasCondition` | `array` | `[]` | Relation condition: `['field', 'op', 'value']`. `#[Locked]`. The pre-filter applies to the listing AND to edit, save, delete and restore |
 | `companyFilter` | `int` | `ptah_company_id()` | Company ID for the multi-tenant filter. The default reads the session key named by `config('ptah.permissions.company_session_key')`, which is `ptah_company_id` — **not** `company_id` |
 | `lockedFilters` | `array` | `[]` | A **hard, immutable** row scope: `['column' => value, ...]`. Enforced on every query the screen runs — list, totalizadores, export, print and single-record reads — and `#[Locked]`, so a forged request cannot escape it. Use this, never `initialFilter`, for anything security-sensitive. See [Locking rows to a fixed scope](#locking-rows-to-a-fixed-scope-lockedfilters) |
+| `configRoute` | `?string` | `null` | Which screen's config to load (1.58.0), e.g. `'integration-monitor'`. `null` = the page path. Only needed when you want another screen's config; a BaseCrud mounted later by a parent already gets the page's. `#[Locked]` |
+| `scope` | `?string` | `null` | A class implementing `Ptah\Contracts\CrudQueryScope` (1.58.0): any restriction `lockedFilters` cannot express — a range, an `IN` over a composed relation. Applied wherever `lockedFilters` is. `#[Locked]`. See [Any restriction: a query scope](#any-restriction-a-query-scope-scope) |
+| `scopeParams` | `array` | `[]` | Handed to the scope's `apply()`. `#[Locked]` |
 
 > **`initialFilter` discards the operator.** Each triple is read as `[$field, , $value]` and
 > stored as `filters[$field] = $value`; the operator actually applied comes from that
@@ -3337,6 +3341,19 @@ At `mount()`, BaseCrud captures the current URL path in `$configRoute` (e.g. `ad
 
 If a route-specific config exists, it is used. Otherwise, the global (route-less) config is the fallback. No manual parameter is needed — the lookup is fully automatic.
 
+**Mounted after the page loaded.** A BaseCrud that a parent component renders later — a
+`key()` that changes with a filter, an `@if`, a tab — mounts inside the Livewire update
+request. Since 1.58.0 the path is the **page's** (read from the Livewire snapshot, which is
+checksummed), not the update endpoint's; before, such a list silently fell back to the
+global config and lost the screen's columns, buttons, actions and `permissionIdentifier`.
+The config editor of that list saves to the same screen.
+
+**Another screen's config.** Pass it explicitly:
+
+```blade
+@livewire('ptah-base-crud', ['model' => 'Integration/ConnectorRun', 'configRoute' => 'integration-monitor'], key($filterKey))
+```
+
 ### crud_configs table structure
 
 | `model`     | `route`          | Purpose                              |
@@ -3474,6 +3491,56 @@ Multiple columns are ANDed:
     'lockedFilters' => ['employee_id' => $employeeId, 'branch_id' => $branchId],
 ])
 ```
+
+### Any restriction: a query scope (`scope`)
+
+`lockedFilters` locks equality only. For a range (the day, in the user's timezone) or a
+composed scope (partner → credentials → connectors), implement
+`Ptah\Contracts\CrudQueryScope` and pass the class (1.58.0):
+
+```php
+namespace App\CrudScopes;
+
+use Illuminate\Database\Eloquent\Builder;
+use Ptah\Contracts\CrudQueryScope;
+
+class ConnectorRunHistoryScope implements CrudQueryScope
+{
+    public function __construct(private IntegrationMonitorServiceInterface $monitor) {}
+
+    public function apply(Builder $query, array $params): void
+    {
+        $query->whereBetween('created_at', [$params['from'], $params['to']]);
+
+        if (! empty($params['partner'])) {
+            $query->whereIn('outbound_connector_id', $this->monitor->connectorIdsOfPartner($params['partner']));
+        }
+    }
+}
+```
+
+```blade
+@livewire('ptah-base-crud', [
+    'model'       => 'Integration/ConnectorRun',
+    'scope'       => \App\CrudScopes\ConnectorRunHistoryScope::class,
+    'scopeParams' => ['from' => $fromUtc, 'to' => $toUtc, 'partner' => $partnerId],
+], key(md5(json_encode([$fromUtc, $toUtc, $partnerId]))))
+```
+
+- Applied wherever `lockedFilters` is: the listing (and with it totals, print, both
+  exports) and `scopedQuery()` / `recordInScope()` — edit, duplicate, save, delete,
+  restore, bulk actions. The user cannot clear it.
+- Resolved through the container (`app($class)`), so the constructor can inject services.
+- `scope` and `scopeParams` are `#[Locked]` and reach the component only through
+  `mount()` — host code. Compute the params server-side, as with `lockedFilters`.
+- A class that does not implement the contract throws at mount: never a list without the
+  restriction you asked for.
+- Only **restrict**. The call is wrapped in a `where(...)` group, so an `orWhere` inside it
+  cannot widen past the company scope and the locks — but it still widens the scope itself.
+- To change the scope from a filter on the parent, change the `key()`: the BaseCrud is
+  re-mounted with the new params (and keeps its screen config, see above).
+- Prefer this to subclassing BaseCrud and overriding `buildBaseQuery()`: that override did
+  not reach `scopedQuery()`, so edit/save/delete saw rows outside the scope.
 
 ---
 

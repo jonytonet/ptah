@@ -381,6 +381,18 @@ class BaseCrud extends Component
     #[Locked]
     public array $lockedFilters = [];
 
+    /**
+     * The host's query scope (1.58.0): a class implementing
+     * Ptah\Contracts\CrudQueryScope, applied wherever lockedFilters is. Set
+     * only in mount() and #[Locked] for the same reason as lockedFilters.
+     */
+    #[Locked]
+    public string $scope = '';
+
+    /** @var array<string, mixed> handed to the scope; #[Locked] like it. */
+    #[Locked]
+    public array $scopeParams = [];
+
     public function toggleDetail(int $id): void
     {
         if (in_array($id, $this->expandedRows, true)) {
