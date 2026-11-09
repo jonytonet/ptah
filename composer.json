@@ -24,7 +24,7 @@
         "laravel/pint": "^1.13",
         "larastan/larastan": "^2.9|^3.0",
         "prism-php/prism": "^0.100",
-        "orchestra/testbench-dusk": "^10.11",
+        "orchestra/testbench-dusk": "^9.0|^10.11|^11.0",
         "laravel/mcp": "^0.8"
     },
     "suggest": {

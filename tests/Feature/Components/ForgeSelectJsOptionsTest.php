@@ -26,7 +26,12 @@ class ForgeSelectJsOptionsTest extends TestCase
         ]]);
 
         $this->assertStringNotContainsString('options: ,', $html, 'json_encode false: x-data quebrado.');
-        $this->assertStringContainsString('Pe\\\\ufffdas', $html, 'O byte invalido vira U+FFFD.');
+        // Laravel 13's Js::from adds JSON_UNESCAPED_UNICODE: U+FFFD comes out
+        // literal instead of escaped. Either form is the replacement char.
+        $this->assertTrue(
+            str_contains($html, 'Pe\\\\ufffdas') || str_contains($html, "Pe\u{FFFD}as"),
+            'O byte invalido vira U+FFFD.'
+        );
         $this->assertStringNotContainsString('</div>', strtok((string) strstr($html, 'options:'), "\n"), 'Rotulo escapado, nao fecha a tag.');
     }
 }
