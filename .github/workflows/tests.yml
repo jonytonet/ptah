@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -41,6 +41,14 @@ jobs:
       # downloads don't hit GitHub's 60 req/h unauthenticated rate limit.
       - name: Configure Composer GitHub auth
         run: composer config --global github-oauth.github.com "${{ secrets.GITHUB_TOKEN }}"
+
+      # Composer 2.9+ refuses packages with security advisories, and every
+      # Laravel 11 release has some (11 is out of security support). The
+      # package still supports 11, so its job installs it anyway — this only
+      # affects CI, never a host's install.
+      - name: Allow Laravel 11 despite advisories
+        if: matrix.laravel == '11.*'
+        run: composer config --global audit.block-insecure false
 
       - name: Install dependencies
         run: |

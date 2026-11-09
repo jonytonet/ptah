@@ -136,7 +136,7 @@ class GenerateCrudExportJob implements ShouldQueue
         // Same primary-sort re-apply as ExportController::download() — a
         // relation sort degrades to whatever order whereIn() returns.
         $order = (string) ($payload['order'] ?? $pk);
-        $direction = strtoupper((string) ($payload['direction'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $direction = strtoupper((string) ($payload['direction'] ?? 'DESC')) === 'ASC' ? 'asc' : 'desc';
         if (Schema::hasColumn($modelInstance->getTable(), $order)) {
             $query->orderBy($modelInstance->getTable().'.'.$order, $direction);
         }

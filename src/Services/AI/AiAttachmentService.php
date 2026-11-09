@@ -210,7 +210,7 @@ final class AiAttachmentService
     /**
      * Builds the Prism parts for one turn.
      *
-     * @param  array<int, array{path: string, name: string, mime: string}>  $files
+     * @param  array<int, array{path?: string, name?: string, mime?: string}>  $files
      * @return array{parts: array<int, Image|Document|Text>, notes: list<string>}
      */
     public function toPrismParts(array $files, string $provider): array

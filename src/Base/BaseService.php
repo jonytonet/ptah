@@ -164,7 +164,7 @@ abstract class BaseService
         $rawDir = strtoupper($request->get('direction', 'DESC'));
         $validCols = $this->repository->getTableColumns();
         $orderColumn = in_array($rawOrder, $validCols, true) ? $rawOrder : $this->keyName;
-        $direction = in_array($rawDir, ['ASC', 'DESC'], true) ? $rawDir : 'DESC';
+        $direction = in_array($rawDir, ['ASC', 'DESC'], true) ? strtolower($rawDir) : 'desc';
 
         if ($request->get('search', 'Search') !== 'Search') {
             $query = $this->repository->advancedSearch($request, $relations);

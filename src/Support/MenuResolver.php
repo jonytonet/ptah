@@ -94,7 +94,7 @@ final class MenuResolver
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<array-key, mixed>  $nodes  from config or the database — validated here
      * @param  list<string>  $trail
      * @return list<array{label: string, url: string, icon: string, target: string, breadcrumb: list<string>, path: string, search: string}>
      */

@@ -65,6 +65,8 @@ class ModuleCommand extends Command
             'permissions' => $this->activatePermissions(),
             'api' => $this->activateApi(),
             'ai_agent' => $this->activateAiAgent(),
+            // A key added to $modules without an activator is a bug here.
+            default => throw new \LogicException("Module '{$module}' has no activator."),
         };
 
         $this->setEnvValue($this->modules[$module], 'true');

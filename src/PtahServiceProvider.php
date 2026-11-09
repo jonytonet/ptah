@@ -341,13 +341,7 @@ class PtahServiceProvider extends ServiceProvider
             //
             // The callback is additive (Laravel keeps a list of them), so a
             // host that registers its own context builder is not displaced.
-            if (method_exists($exceptionHandler, 'buildContextUsing')) {
-                $exceptionHandler->buildContextUsing(function (Throwable $e): array {
-                    Context::add('ptahErrorId', $id = bin2hex(random_bytes(6)));
-
-                    return ['ptahErrorId' => $id];
-                });
-            }
+            $this->stampErrorIds($exceptionHandler);
 
             // 500 is registered apart because it is NOT an HttpException: it is
             // whatever blew up.
@@ -915,5 +909,25 @@ class PtahServiceProvider extends ServiceProvider
         if (config('ptah.modules.ai_agent')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-ai.php');
         }
+    }
+
+    /**
+     * Stamps a grep-able id into the log record of each reported exception
+     * (see the 500 page). Typed by the contract on purpose: the app's handler
+     * (Foundation\Exceptions\Handler) has buildContextUsing(); Collision's
+     * adapter, which wraps it under the test runner, does not — and static
+     * analysis, booting the app like the tests, only ever sees the adapter.
+     */
+    protected function stampErrorIds(ExceptionHandler $handler): void
+    {
+        if (! method_exists($handler, 'buildContextUsing')) {
+            return;
+        }
+
+        $handler->buildContextUsing(function (Throwable $e): array {
+            Context::add('ptahErrorId', $id = bin2hex(random_bytes(6)));
+
+            return ['ptahErrorId' => $id];
+        });
     }
 }

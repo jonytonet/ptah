@@ -7,6 +7,36 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.2] - 2026-11-09
+
+CI fully green: the Code Quality workflow had never passed, and the Laravel 11
+jobs could not install.
+
+### Fixed
+
+- **PHPStan reports no errors** (it reported 20 locally and more on CI's newer
+  larastan, and the run failed). Each finding fixed at its cause — no baseline
+  entries added:
+  - sort directions passed as `'asc'`/`'desc'` (BaseService, the queued export,
+    the group-break sort);
+  - `ptah:module` throws a `LogicException` for a module key with no activator
+    instead of an unhandled `match`;
+  - the error-id context is registered through a method typed by the
+    `ExceptionHandler` contract;
+  - PHPDoc corrected where data crosses a boundary (attachments from Livewire,
+    menu nodes and mask definitions from config, the nullable `api_key`), and
+    dead `??`/conditions removed where the type is guaranteed;
+  - `switchableCompanies()` declares the `Support\Collection` it returns.
+  - `reportUnmatchedIgnoredErrors: false`: baseline entries differ by installed
+    Laravel version.
+- **Pint 1.32** style (`FilterDTO`: `new self`).
+- **CI, Laravel 11:** Composer 2.9+ refuses every Laravel 11 release (security
+  advisories; 11 is out of security support). The package still supports 11,
+  so only that job sets `audit.block-insecure false`. No effect on installs.
+- **CI:** `actions/checkout@v5` (the Node 20 deprecation warnings).
+
+---
+
 ## [1.58.1] - 2026-11-09
 
 ### Fixed

@@ -77,7 +77,7 @@ final class FindMenuTool implements AiToolAuthorizable, AiToolInterface, AiToolS
 
     public function description(): string
     {
-        return (string) (self::toolSchema()['description'] ?? '');
+        return self::toolSchema()['description'];
     }
 
     public function parameters(): array

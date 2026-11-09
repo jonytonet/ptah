@@ -402,7 +402,7 @@ trait HasCrudQuery
         // group headers and per-group subtotals. User sort stays secondary.
         if ($breakField = $this->crudConfig['groupBreak'] ?? null) {
             if (SqlIdentifier::isSafe($breakField)) {
-                $query->orderBy($breakField, 'ASC');
+                $query->orderBy($breakField, 'asc');
             }
         }
 

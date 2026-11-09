@@ -216,7 +216,7 @@ trait HasCrudRenderers
             };
 
             // badge via compat — delegate to flagChannel helper
-            if ($renderer === 'badge' && $col['colsHelper'] === 'flagChannel') {
+            if ($renderer === 'badge') {
                 return $this->helperFlagChannel($value);
             }
         }

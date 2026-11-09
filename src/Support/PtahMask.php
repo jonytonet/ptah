@@ -150,7 +150,7 @@ final class PtahMask
     }
 
     /**
-     * @param  array<string, array<string, mixed>>  $masks
+     * @param  array<array-key, mixed>  $masks  from config — validated here
      */
     public static function defineMany(array $masks): void
     {

@@ -150,7 +150,7 @@ class AiChatWidget extends Component
         // The picker starts on the default, which is what a user who never
         // touches it keeps getting.
         $this->providerOptions = $this->configService->listActive();
-        $this->selectedConfigId = $this->configService->findDefault()?->id
+        $this->selectedConfigId = $this->configService->findDefault()->id
             ?? ($this->providerOptions[0]['id'] ?? null);
 
         if ($userId) {
