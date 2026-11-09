@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.1] - 2026-11-09
+
+### Fixed
+
+- **pt_BR validation on Laravel 13:** the two rules Laravel 13 added,
+  `array_keys` and `base64`, came out in English. Translated.
+- **CI:** the Laravel 11 and 13 jobs failed at `composer update` on every push
+  since the Dusk suite arrived — `orchestra/testbench-dusk ^10.11` only exists
+  for testbench 10 (Laravel 12). It now accepts `^9.0|^10.11|^11.0`
+  (`require-dev`, no effect on installs). With the matrix running again, two
+  tests were adjusted to Laravel 13's `Js::from`, which adds
+  `JSON_UNESCAPED_UNICODE` (accents come out literal; quotes and tags are still
+  escaped). Full suite green on Laravel 11, 12 and 13.
+
+---
+
 ## [1.58.0] - 2026-11-09
 
 From the Engepeças B2B laudo (a BaseCrud embedded in the "Integrações" screen).

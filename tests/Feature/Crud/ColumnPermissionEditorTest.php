@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\Crud;
 
+use Illuminate\Support\Js;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\CrudConfig as CrudConfigComponent;
@@ -149,7 +150,11 @@ class ColumnPermissionEditorTest extends TestCase
         // reverting the encoding just to keep a literal string comparison.
         // 1.46.5: options go through Js::from — JSON inside a JSON.parse('...')
         // string literal, so every backslash of the escape is doubled.
-        $inJsParse = fn (string $s) => str_replace('\\', '\\\\', trim((string) json_encode($s, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), '"'));
+        // Laravel 13's Js::from adds JSON_UNESCAPED_UNICODE — the em dash is
+        // literal there; the flags follow the installed Js so both pass.
+        $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+            | (str_contains((string) Js::from('—'), '—') ? JSON_UNESCAPED_UNICODE : 0);
+        $inJsParse = fn (string $s) => str_replace('\\', '\\\\', trim((string) json_encode($s, $flags), '"'));
         $this->assertStringContainsString($inJsParse(__('ptah::ui.cfg_col_permission_none')), $html);
         $this->assertStringContainsString($inJsParse('sales.view_cost — View cost (sales)'), $html);
     }
