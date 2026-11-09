@@ -39,7 +39,7 @@ class ProviderFailure
     {
         $status = self::statusFor($e);
         $body = self::bodyFor($e);
-        $haystack = Str::lower(($e->getMessage() ?? '').' '.($body ?? ''));
+        $haystack = Str::lower($e->getMessage().' '.($body ?? ''));
 
         // Order matters: the checks that identify a specific, fixable cause come
         // before the generic status buckets, because a 400 that says "model does

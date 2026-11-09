@@ -55,7 +55,7 @@ final class FilterDTO extends BaseDTO
         $value = $data['value'] ?? null;
         $type = $data['type'] ?? self::inferType($field, $value);
 
-        return new static(
+        return new self(
             field: $field,
             value: $value,
             operator: $operator,

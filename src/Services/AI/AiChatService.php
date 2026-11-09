@@ -129,7 +129,7 @@ class AiChatService
      * @throws AiProviderException When no active provider is configured or the API call fails
      */
     /**
-     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     * @param  array<int, array{path?: string, name?: string, mime?: string}>  $attachments
      */
     public function send(
         string $message,
@@ -185,7 +185,7 @@ class AiChatService
      * @throws AiRateLimitException|AiProviderException
      */
     /**
-     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     * @param  array<int, array{path?: string, name?: string, mime?: string}>  $attachments
      */
     public function stream(
         string $message,
@@ -480,7 +480,7 @@ class AiChatService
      * @throws AiRateLimitException|AiProviderException
      */
     /**
-     * @param  array<int, array{path: string, name: string, mime: string}>  $attachments
+     * @param  array<int, array{path?: string, name?: string, mime?: string}>  $attachments
      */
     private function prepareTurn(string $message, string $sessionId, ?int $userId, ?int $conversationId, ?int $configId = null, array $attachments = []): array
     {

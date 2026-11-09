@@ -176,7 +176,7 @@ class ConfigCommand extends Command
 
         // Save if not dry-run
         if (! $this->option('dry-run')) {
-            if (! $this->saveConfiguration($modelKey, $this->config, $route ?? '')) {
+            if (! $this->saveConfiguration($modelKey, $this->config, $route)) {
                 return 1;
             }
             $this->info('✓ Configuration saved successfully!');

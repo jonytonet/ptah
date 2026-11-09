@@ -254,7 +254,7 @@ class CompanyService implements CompanyServiceContract
      * roles with a non-null company, so a user whose only role is global would
      * have been locked out of every company.
      */
-    public function switchableCompanies(mixed $user = null): Collection
+    public function switchableCompanies(mixed $user = null): \Illuminate\Support\Collection
     {
         $all = $this->getAll();
 

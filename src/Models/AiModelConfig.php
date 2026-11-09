@@ -19,7 +19,7 @@ use Ptah\Traits\HasAuditFields;
  * @property string $name
  * @property string $provider openai|anthropic|gemini|ollama|groq|mistral
  * @property string $model
- * @property string $api_key Encrypted at rest
+ * @property string|null $api_key Encrypted at rest (null for keyless providers such as Ollama)
  * @property string|null $api_endpoint
  * @property int $max_tokens
  * @property float $temperature

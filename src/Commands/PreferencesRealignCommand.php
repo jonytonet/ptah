@@ -131,8 +131,8 @@ class PreferencesRealignCommand extends Command
     public static function currentTarget(): ?string
     {
         foreach (Schema::getForeignKeys('user_preferences') as $key) {
-            if (in_array('user_id', $key['columns'] ?? [], true)) {
-                return $key['foreign_table'] ?? null;
+            if (in_array('user_id', $key['columns'], true)) {
+                return $key['foreign_table'];
             }
         }
 
