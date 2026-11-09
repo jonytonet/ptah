@@ -27,3 +27,8 @@ parameters:
         -
             message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
             reportUnmatched: false
+        # Same false positive on a Mailable's Content(view: 'ptah::...') — seen
+        # with the newer larastan CI installs, not with the locked one.
+        -
+            message: '#^Parameter \$view of class Illuminate\\Mail\\Mailables\\Content constructor expects view\-string\|null, string given\.$#'
+            reportUnmatched: false
