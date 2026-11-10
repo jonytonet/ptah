@@ -19,9 +19,7 @@ use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\ValueObjects\Media\Text;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
-use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
-use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\ToolResult;
 use Ptah\Contracts\AiConfirmableTool;
 use Ptah\Contracts\AiToolContextAware;
@@ -1144,7 +1142,7 @@ class AiChatService
      * Converts our simple DB message format to Prism ValueObject messages.
      *
      * @param  array<int, array<string, mixed>>  $history  {role, content, tools?} as stored by persistTurn()
-     * @return list<UserMessage|AssistantMessage|ToolResultMessage>
+     * @return list<UserMessage|AssistantMessage>
      */
     private function buildPrismMessages(array $history): array
     {
@@ -1157,28 +1155,40 @@ class AiChatService
                 continue;
             }
 
-            // As tools daquele turno, no mesmo formato que o Prism usa entre os
-            // passos de um turno: a chamada e o resultado, antes da resposta.
-            // Gravadas DENTRO da mensagem do assistente, entao o corte do
-            // max_history nunca separa uma chamada do seu resultado.
+            // As tools daquele turno voltam como CONTEXTO EM TEXTO, nunca como
+            // pares function_call/function_call_output (1.58.4). Repetir os
+            // pares de um turno antigo quebrava na OpenAI: o item "fc_..." e
+            // resolvido pelo que ela guardou (com o call_id original) e o
+            // resultado reconstruido nao casava ("No tool output found for
+            // function call call_..."); item expirado ou modelo de raciocinio
+            // (exige o item de reasoning) quebrariam do mesmo jeito. Gravadas
+            // DENTRO da mensagem do assistente: o corte do max_history nunca
+            // separa uma chamada do seu resultado.
             $tools = array_values(array_filter((array) ($msg['tools'] ?? []), fn ($t) => is_array($t) && isset($t['id'], $t['name'])));
             if ($tools !== []) {
-                // call_id da chamada e do resultado (OpenAI Responses). Histórico gravado antes de 1.58.3 não
-                // tem result_id: o id do item serve aos dois lados — o par continua casando e nada vai nulo.
-                $resultId = fn (array $t): string => (string) ($t['result_id'] ?? $t['id']);
-                $out[] = new AssistantMessage('', array_map(
-                    fn (array $t) => new ToolCall((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), $resultId($t)),
-                    $tools
-                ));
-                $out[] = new ToolResultMessage(array_map(
-                    fn (array $t) => new ToolResult((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), (string) ($t['result'] ?? ''), $resultId($t)),
-                    $tools
-                ));
+                $out[] = new AssistantMessage($this->toolContext($tools));
             }
 
             $out[] = new AssistantMessage($msg['content'] ?? '');
         }
 
         return $out;
+    }
+
+    /**
+     * What the tools of a past turn returned, as text the model reads on the
+     * next turns (the ids it showed, the preview the user is answering).
+     *
+     * @param  list<array<string, mixed>>  $tools
+     */
+    private function toolContext(array $tools): string
+    {
+        $lines = array_map(function (array $t): string {
+            $arguments = json_encode((array) ($t['arguments'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+
+            return '- '.$t['name'].' '.$arguments.' => '.(string) ($t['result'] ?? '');
+        }, $tools);
+
+        return "[Internal note, not shown to the user: tools I ran in this turn and what they returned. They already ran; call a tool again only for new data.]\n".implode("\n", $lines);
     }
 }

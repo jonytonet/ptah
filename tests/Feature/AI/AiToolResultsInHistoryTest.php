@@ -10,7 +10,6 @@ use Prism\Prism\Providers\OpenAI\Maps\MessageMap as OpenAIMessageMap;
 use Prism\Prism\Testing\TextResponseFake;
 use Prism\Prism\Testing\TextStepFake;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
-use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\ToolResult;
 use Ptah\Contracts\AiToolInterface;
@@ -98,12 +97,12 @@ class AiToolResultsInHistoryTest extends TestCase
 
         $fake->assertRequest(function (array $requests) {
             $messages = $requests[1]->messages();
-            // user, assistant(tool call), tool result, assistant(texto), user "sim"
+            // user, assistant(resultado das tools em texto), assistant(texto), user "sim"
             $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
-            $this->assertSame('previewFiscal', $messages[1]->toolCalls[0]->name);
-            $this->assertInstanceOf(ToolResultMessage::class, $messages[2]);
-            $this->assertStringContainsString('"product_id":52', $messages[2]->toolResults[0]->result);
-            $this->assertSame('Previa: 2 produtos.', $messages[3]->content);
+            $this->assertSame([], $messages[1]->toolCalls);
+            $this->assertStringContainsString('previewFiscal', $messages[1]->content);
+            $this->assertStringContainsString('"product_id":52', $messages[1]->content);
+            $this->assertSame('Previa: 2 produtos.', $messages[2]->content);
         });
     }
 
@@ -130,19 +129,20 @@ class AiToolResultsInHistoryTest extends TestCase
         $this->service()->send('sim', 'sess-call', 1, $id);
 
         $fake->assertRequest(function (array $requests) {
-            $messages = $requests[1]->messages();
-            $this->assertSame('call_1', $messages[1]->toolCalls[0]->resultId);
-            $this->assertSame('call_1', $messages[2]->toolResults[0]->toolCallResultId);
-
-            // O que vai de fato para a OpenAI: o function_call e o output com o mesmo call_id, nenhum nulo.
-            $mapped = (new OpenAIMessageMap($messages, []))();
-            $calls = array_values(array_filter($mapped, fn ($m) => in_array($m['type'] ?? null, ['function_call', 'function_call_output'], true)));
-            $this->assertSame(['call_1', 'call_1'], array_column($calls, 'call_id'));
+            // O que vai de fato para a OpenAI: nenhum function_call de turno antigo para casar.
+            $mapped = (new OpenAIMessageMap($requests[1]->messages(), []))();
+            $this->assertSame([], $this->replayedCalls($mapped));
+            $this->assertStringContainsString('previewFiscal {"filial":1} => {"ok":1}', $mapped[1]['content'][0]['text']);
         });
     }
 
+    /**
+     * 1.58.4 (JTEM): a conversation saved before 1.58.3 replayed the call with
+     * the item id as call_id; OpenAI resolved "fc_9" to its stored call
+     * ("call_..."), found no output for it and refused the turn.
+     */
     #[Test]
-    public function history_saved_before_the_call_id_still_pairs_call_and_result(): void
+    public function history_saved_before_the_call_id_is_sent_as_text(): void
     {
         $conversation = AiConversation::create(['session_id' => 'sess-old', 'user_id' => 1, 'messages' => [
             ['role' => 'user', 'content' => 'previa'],
@@ -154,9 +154,18 @@ class AiToolResultsInHistoryTest extends TestCase
 
         $fake->assertRequest(function (array $requests) {
             $mapped = (new OpenAIMessageMap($requests[0]->messages(), []))();
-            $calls = array_values(array_filter($mapped, fn ($m) => in_array($m['type'] ?? null, ['function_call', 'function_call_output'], true)));
-            $this->assertSame(['fc_9', 'fc_9'], array_column($calls, 'call_id'));
+            $this->assertSame([], $this->replayedCalls($mapped));
+            $this->assertStringContainsString('previewFiscal', json_encode($mapped));
         });
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $mapped
+     * @return list<array<string, mixed>>
+     */
+    private function replayedCalls(array $mapped): array
+    {
+        return array_values(array_filter($mapped, fn ($m) => in_array($m['type'] ?? null, ['function_call', 'function_call_output'], true)));
     }
 
     #[Test]

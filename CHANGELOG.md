@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.4] - 2026-11-10
+
+### Fixed
+
+- **AI chat on OpenAI: "No tool output found for function call call_..."** on a
+  conversation that had used a tool before 1.58.3. Tools of past turns were
+  replayed as `function_call` / `function_call_output` pairs; OpenAI resolves the
+  `fc_...` item by what it stored (the original `call_id`), so the rebuilt output
+  never matched. An expired stored item or a reasoning model (which requires the
+  reasoning item next to the call) would break the same way. Past turns now hand
+  their tool results back as a text note in the assistant turn: nothing to pair,
+  same on every provider, and the model still sees the ids and previews it
+  showed. Tool calls inside the current turn are unchanged.
+
+---
+
 ## [1.58.3] - 2026-11-10
 
 ### Fixed
