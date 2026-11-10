@@ -398,6 +398,9 @@ class AiChatService
             }
             $records[] = [
                 'id' => $r->toolCallId,
+                // OpenAI (Responses API) liga a chamada ao resultado pelo call_id, que o Prism traz
+                // separado do id do item; sem ele o próximo turno é recusado ("call_id ... null").
+                'result_id' => $r->toolCallResultId,
                 'name' => $r->toolName,
                 'arguments' => $r->args,
                 'result' => $this->clip($this->resultText($r->result), $bytes),
@@ -1160,12 +1163,15 @@ class AiChatService
             // max_history nunca separa uma chamada do seu resultado.
             $tools = array_values(array_filter((array) ($msg['tools'] ?? []), fn ($t) => is_array($t) && isset($t['id'], $t['name'])));
             if ($tools !== []) {
+                // call_id da chamada e do resultado (OpenAI Responses). Histórico gravado antes de 1.58.3 não
+                // tem result_id: o id do item serve aos dois lados — o par continua casando e nada vai nulo.
+                $resultId = fn (array $t): string => (string) ($t['result_id'] ?? $t['id']);
                 $out[] = new AssistantMessage('', array_map(
-                    fn (array $t) => new ToolCall((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? [])),
+                    fn (array $t) => new ToolCall((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), $resultId($t)),
                     $tools
                 ));
                 $out[] = new ToolResultMessage(array_map(
-                    fn (array $t) => new ToolResult((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), (string) ($t['result'] ?? '')),
+                    fn (array $t) => new ToolResult((string) $t['id'], (string) $t['name'], (array) ($t['arguments'] ?? []), (string) ($t['result'] ?? ''), $resultId($t)),
                     $tools
                 ));
             }

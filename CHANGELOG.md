@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.3] - 2026-11-10
+
+### Fixed
+
+- **AI chat on OpenAI: the turn after a tool call was refused** with
+  `Invalid type for 'input[4].call_id': expected a string, but got null`. The
+  Responses API pairs a `function_call` with its `function_call_output` by
+  `call_id`, which Prism keeps apart from the item id (`ToolCall::$resultId`,
+  `ToolResult::$toolCallResultId`); the conversation history stored only the id,
+  so every rebuilt tool call went with a null `call_id`. The history now keeps it
+  (`result_id`), and a history saved before this version reuses the item id on
+  both sides — the pair still matches and nothing is sent null. Other providers
+  are unaffected (they pair by the id, unchanged).
+
+---
+
 ## [1.58.2] - 2026-11-09
 
 CI fully green: the Code Quality workflow had never passed, and the Laravel 11
