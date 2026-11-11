@@ -218,10 +218,22 @@ $this->dispatch('forge-select-options', target: 'city_id', options: $cidades);
 ### `forge-textarea`
 Props: `label`, `placeholder`, `rows` (padrão `4`), `color`, `state`, `disabled`,
 `helper`, `maxlength`, `counter` (mostra contador de caracteres; requer Alpine.js).
+O contador parte do texto que já está no campo — do `wire:model` ou do slot — e,
+com `wire:model`, acompanha também o que o servidor mudar (1.58.5).
 
 ### `forge-switch`
 Props: `label`, `color` (`primary|success|danger|warn`), `checked`, `disabled`,
 `size` (`sm|md|lg`). Requer Alpine.js.
+
+Com `wire:model`, a chave lê a propriedade do Livewire — nasce ligada se ela for
+`true` e repinta quando o servidor a mudar; **não repita o valor em `:checked`**
+(ele é ignorado nesse caso). `checked` serve só para a chave sem `wire:model`
+(1.58.5 — antes, a chave com `wire:model` nascia sempre desligada).
+
+```blade
+<x-forge-switch wire:model="is_active" label="Ativo" />
+<x-forge-switch name="newsletter" :checked="true" label="Newsletter" />
+```
 
 ### `forge-checkbox`
 Props: `label`, `color` (`primary|success|danger|warn`), `checked`, `disabled`.

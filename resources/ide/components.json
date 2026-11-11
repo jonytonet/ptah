@@ -608,7 +608,7 @@
         },
         "forge-switch": {
             "tag": "x-forge-switch",
-            "doc": "forge-switch — Ptah Forge\nProps:\n  - label   : string\n  - color   : primary | success | danger | warn  (default: primary)\n  - checked : boolean\n  - disabled: boolean\n  - size    : sm | md | lg  (default: md)\nRequires Alpine.js",
+            "doc": "forge-switch — Ptah Forge\nProps:\n  - label   : string\n  - color   : primary | success | danger | warn  (default: primary)\n  - checked : boolean — initial state WITHOUT wire:model. With wire:model\n              the switch reads the Livewire property itself (1.58.5);\n              the prop is ignored there.\n  - disabled: boolean\n  - size    : sm | md | lg  (default: md)\nRequires Alpine.js",
             "props": [
                 {
                     "name": "label",

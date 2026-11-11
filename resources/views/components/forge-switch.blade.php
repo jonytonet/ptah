@@ -3,7 +3,9 @@
     Props:
       - label   : string
       - color   : primary | success | danger | warn  (default: primary)
-      - checked : boolean
+      - checked : boolean — initial state WITHOUT wire:model. With wire:model
+                  the switch reads the Livewire property itself (1.58.5);
+                  the prop is ignored there.
       - disabled: boolean
       - size    : sm | md | lg  (default: md)
     Requires Alpine.js
@@ -28,16 +30,28 @@
     ];
     $sz          = $sizes[$size] ?? $sizes['md'];
     $activeColor = $colors[$color] ?? $colors['primary'];
+
+    // 1.58.5: with wire:model the paint comes from the Livewire property, not
+    // from the `checked` prop. Before, the prop (default false) seeded Alpine
+    // and an x-model on the input fought wire:model — a switch bound to true
+    // was born grey, and the first click turned the model OFF while it stayed
+    // grey. Now there is one source of truth, and a change the server makes
+    // later repaints it too.
+    $wireModel = $attributes->wire('model')->value();
 @endphp
 
 <label
-    x-data="{ checked: {{ $checked ? 'true' : 'false' }} }"
+    @if ($wireModel)
+        x-data="{ get checked() { return !! this.$wire.get({{ \Illuminate\Support\Js::from($wireModel) }}) } }"
+    @else
+        x-data="{ checked: {{ $checked ? 'true' : 'false' }} }"
+    @endif
     class="inline-flex items-center gap-3 cursor-pointer {{ $disabled ? 'opacity-60 cursor-not-allowed' : '' }}"
 >
     <div class="relative">
         <input
             type="checkbox"
-            x-model="checked"
+            @unless ($wireModel) x-model="checked" @endunless
             {{ $disabled ? 'disabled' : '' }}
             {{ $attributes->class(['sr-only']) }}
         />

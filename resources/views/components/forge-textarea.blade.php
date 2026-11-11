@@ -39,7 +39,22 @@
     };
 @endphp
 
-<div x-data="{ chars: 0 }" class="ptah-textarea-wrapper w-full">
+@php
+    // 1.58.5: the counter started at 0 even with text already in the field
+    // (wire:model or the slot) and only moved on typing. With wire:model it
+    // now reads the Livewire property — server changes included; without,
+    // it counts what the textarea holds once Alpine is up.
+    $wireModel = $attributes->wire('model')->value();
+@endphp
+
+<div
+    @if ($wireModel)
+        x-data="{ get chars() { return String(this.$wire.get({{ \Illuminate\Support\Js::from($wireModel) }}) ?? '').length } }"
+    @else
+        x-data="{ chars: 0 }"
+        x-init="$nextTick(() => { chars = $refs.field.value.length })"
+    @endif
+    class="ptah-textarea-wrapper w-full">
     @if($label)
         <label class="block text-sm font-medium mb-1">{{ $label }}</label>
     @endif
@@ -49,7 +64,8 @@
         placeholder="{{ $placeholder }}"
         {{ $disabled ? 'disabled' : '' }}
         @if($maxlength) maxlength="{{ $maxlength }}" @endif
-        @if($counter) @input="chars = $event.target.value.length" @endif
+        x-ref="field"
+        @if($counter && ! $wireModel) @input="chars = $event.target.value.length" @endif
         {{ $attributes->merge([
             'class' => "w-full rounded-md border px-4 py-2.5 text-sm transition-colors duration-150
                         focus:outline-none focus:ring-2 focus:ring-offset-0
