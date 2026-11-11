@@ -7,6 +7,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.5] - 2026-11-11
+
+From the Engepeças B2B laudo (outbound connectors screen).
+
+### Fixed
+
+- **`<x-forge-switch wire:model="x">` was born OFF when `x` was true.** The paint
+  came from the `checked` prop (default `false`) and an `x-model` on the input
+  fought `wire:model`: the switch showed grey over a checked input, and the
+  first click turned the model off while it stayed grey. With `wire:model` the
+  switch now reads the Livewire property — one source of truth, and a change
+  the server makes later repaints it. Without `wire:model` nothing changes. It
+  hit the package too: editing a company opened "Ativa"/"Padrão" grey.
+- **`<x-forge-textarea counter>` started at 0** over text already in the field
+  (`wire:model` or the slot) and only moved on typing. It counts the field's
+  text from the start, and follows the server with `wire:model`.
+- Audited the other `forge-*` components for the same prop-vs-model split:
+  checkbox/radio have no Alpine state, modal entangles, notification is
+  `x-modelable`, select reads the model since 1.55.0 — none affected.
+
+---
+
 ## [1.58.4] - 2026-11-10
 
 ### Fixed
