@@ -1,0 +1,476 @@
+/**
+ * BaseCrud extras for React — the form draft notice, the server-side form
+ * behaviours, "Save & add another", the master/detail toggle and row, the
+ * columns menu and the column resize handle. Each piece takes the screen's
+ * CrudController and renders nothing when its feature is off.
+ */
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import type { CSSProperties, DragEvent } from 'react';
+import type { CrudController, CrudState, Row } from '../../core';
+import {
+    columnResizer,
+    detailsOf,
+    extrasWords,
+    fill,
+    FormDraftSession,
+    fullOrder,
+    listColumns,
+    menuColumns,
+    moveColumn,
+    resetColumns,
+    saveAndNew,
+    saveColumnOrder,
+    setAllColumns,
+    styleMap,
+    watchFormChanges,
+} from '../../core/crud/extras';
+import type { ColumnItem, DetailGrid, ExtrasWords } from '../../core/crud/extras';
+import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+
+interface PieceProps {
+    crud: CrudController;
+    /** `pt_BR`, `en`… Defaults to the page's `<html lang>`. */
+    locale?: string;
+}
+
+function useCrud(crud: CrudController): CrudState {
+    return useSyncExternalStore(crud.subscribe, crud.getState, crud.getState);
+}
+
+function useStore<T>(store: { subscribe: (listener: () => void) => () => void; get: () => T }): T {
+    return useSyncExternalStore(store.subscribe, store.get, store.get);
+}
+
+const useWords = (locale?: string): ExtrasWords => useMemo(() => extrasWords(locale), [locale]);
+
+const ROW: CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 };
+const MUTED: CSSProperties = { color: 'var(--pc-text-muted)', fontSize: 13 };
+
+// ── Form draft ──────────────────────────────────────────────────────────────
+
+/**
+ * Mounted inside the form (top of the modal body): keeps what is typed as a
+ * draft in this browser, restores it when the form is opened again (or
+ * offers to, when typing already started), and offers "Clear all" (new) /
+ * "Revert to original" (edit) while the draft holds changes.
+ */
+export function PtahCrudFormDraft({ crud, locale }: PieceProps) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const session = useMemo(() => new FormDraftSession(crud, t), [crud, t]);
+    const view = useStore(session);
+
+    useEffect(() => {
+        session.start();
+
+        return () => session.stop();
+    }, [session]);
+
+    if (!state.schema?.features.formDraft || !state.form || (!view.offer && !view.dirty && !view.busy)) {
+        return null;
+    }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            {view.offer && (
+                <ForgeAlert color="warn" title={t.draftFound}>
+                    <div style={{ ...ROW, marginTop: 8 }}>
+                        <ForgeButton size="sm" onClick={() => void session.restore()}>
+                            {t.draftRestore}
+                        </ForgeButton>
+                        <ForgeButton size="sm" color="dark" flat onClick={() => session.discard()}>
+                            {t.draftDiscard}
+                        </ForgeButton>
+                    </div>
+                </ForgeAlert>
+            )}
+            {view.dirty && !view.offer && (
+                <div style={{ ...ROW, justifyContent: 'space-between' }}>
+                    <span style={MUTED}>{t.draftKept}</span>
+                    <ForgeButton size="sm" color="dark" flat disabled={state.form.saving || view.busy} onClick={() => void (view.mode === 'edit' ? session.revert() : session.clear())}>
+                        {view.mode === 'edit' ? t.draftRevert : t.draftClear}
+                    </ForgeButton>
+                </div>
+            )}
+            {view.busy && <ForgeSpinner size="sm" label={t.loading} />}
+        </div>
+    );
+}
+
+// ── Form behaviours ─────────────────────────────────────────────────────────
+
+/**
+ * Mounted inside the form, draws nothing: when a field with a `colsOnChange`
+ * formula or with dependent dropdowns changes, the server recomputes and the
+ * form takes its answer.
+ */
+export function PtahCrudFormChanges({ crud }: { crud: CrudController }) {
+    useEffect(() => watchFormChanges(crud), [crud]);
+
+    return null;
+}
+
+/** The extra footer button of a new record's form: saves, then opens a blank form. */
+export function PtahCrudSaveAndNew({ crud, locale }: PieceProps) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const form = state.form;
+
+    if (!form || form.mode !== 'create' || !state.schema?.permissions.canCreate) {
+        return null;
+    }
+
+    return (
+        <ForgeButton color="primary" flat disabled={form.saving} onClick={() => void saveAndNew(crud)}>
+            {t.saveAndNew}
+        </ForgeButton>
+    );
+}
+
+// ── Master / detail ─────────────────────────────────────────────────────────
+
+/** The expand button of a row (first cell). */
+export function PtahCrudDetailToggle({ crud, row, locale }: PieceProps & { row: Row }) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const store = detailsOf(crud);
+    const view = useStore(store);
+
+    if (!state.schema?.features.masterDetail) {
+        return null;
+    }
+    const open = view.expanded.includes(String(row.id));
+
+    return (
+        <button type="button" className="pc-icon-btn" title={t.showDetails} aria-label={t.showDetails} aria-expanded={open} onClick={() => store.toggle(row.id)}>
+            <span aria-hidden="true" style={{ display: 'inline-block', transition: 'transform .15s', transform: open ? 'rotate(90deg)' : 'none' }}>
+                ▸
+            </span>
+        </button>
+    );
+}
+
+/** The expanded content of a row: one small grid per detail, loaded on the first expansion. */
+export function PtahCrudDetailRow({ crud, row, colSpan, locale }: PieceProps & { row: Row; colSpan: number }) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const store = detailsOf(crud);
+    const view = useStore(store);
+    const key = String(row.id);
+
+    if (!state.schema?.features.masterDetail || !view.expanded.includes(key)) {
+        return null;
+    }
+    const entry = view.entries[key];
+
+    return (
+        <tr className="pc-detail-row">
+            <td colSpan={colSpan} style={{ padding: '12px 24px', background: 'var(--pc-bg-soft)' }} aria-busy={!entry || entry.status === 'loading'}>
+                {(!entry || (entry.status === 'loading' && entry.grids.length === 0)) && <ForgeSpinner label={t.loading} />}
+                {entry?.status === 'error' && (
+                    <ForgeAlert color="danger">
+                        <div style={ROW}>
+                            <span>{entry.error || t.detailsError}</span>
+                            <ForgeButton size="sm" color="danger" flat onClick={() => void store.load(row.id)}>
+                                {t.retry}
+                            </ForgeButton>
+                        </div>
+                    </ForgeAlert>
+                )}
+                {entry && entry.status !== 'error' && entry.grids.length === 0 && entry.status === 'ready' && <ForgeEmpty title={t.detailsEmpty} />}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {entry?.grids.map((grid) => (
+                        <DetailGridView key={grid.index} grid={grid} busy={entry.paging === grid.index} t={t} onPage={(page) => void store.page(row.id, grid.index, page)} />
+                    ))}
+                </div>
+            </td>
+        </tr>
+    );
+}
+
+const TITLE: CSSProperties = { margin: '0 0 8px', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--pc-text-muted)' };
+
+function DetailGridView({ grid, busy, t, onPage }: { grid: DetailGrid; busy: boolean; t: ExtrasWords; onPage: (page: number) => void }) {
+    const totals = new Map(grid.totals.map((total) => [total.field, total]));
+
+    return (
+        <section aria-label={grid.title}>
+            <p style={TITLE}>{grid.title}</p>
+            {!grid.available ? (
+                <p style={MUTED}>{t.detailUnavailable}</p>
+            ) : (
+                <>
+                    <div className="pc-table-wrap" aria-busy={busy}>
+                        <table className="pc-table">
+                            <thead>
+                                <tr>
+                                    {grid.columns.map((column) => (
+                                        <th key={column.field} className={column.align === 'right' ? 'pc-align-right' : column.align === 'center' ? 'pc-align-center' : undefined}>
+                                            {column.label}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {grid.rows.length === 0 && (
+                                    <tr>
+                                        <td className="pc-empty" colSpan={Math.max(1, grid.columns.length)}>
+                                            {t.detailsEmpty}
+                                        </td>
+                                    </tr>
+                                )}
+                                {grid.rows.map((detail) => (
+                                    <tr key={String(detail.id)} style={styleMap(detail.style)}>
+                                        {grid.columns.map((column) => (
+                                            // Rendered and escaped by the server, as the main table's cells.
+                                            <td key={column.field} className={column.align === 'right' ? 'pc-align-right' : column.align === 'center' ? 'pc-align-center' : undefined} dangerouslySetInnerHTML={{ __html: detail.cells[column.field]?.html ?? '' }} />
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                            {grid.totals.length > 0 && (
+                                <tfoot>
+                                    <tr>
+                                        {grid.columns.map((column) => (
+                                            <td key={column.field}>{totals.has(column.field) ? String(totals.get(column.field)!.value ?? '') : ''}</td>
+                                        ))}
+                                    </tr>
+                                </tfoot>
+                            )}
+                        </table>
+                    </div>
+                    {grid.meta && grid.meta.last_page > 1 && (
+                        <div style={{ ...ROW, justifyContent: 'flex-end', marginTop: 8 }}>
+                            {busy && <ForgeSpinner size="sm" label={t.loading} />}
+                            <ForgePagination page={grid.meta.page} lastPage={grid.meta.last_page} onChange={onPage} />
+                        </div>
+                    )}
+                </>
+            )}
+        </section>
+    );
+}
+
+// ── Columns ─────────────────────────────────────────────────────────────────
+
+/**
+ * The toolbar's columns menu: show/hide each column, show all, hide all,
+ * reset the layout, and reorder — dragging a column, or with its ↑/↓
+ * buttons from the keyboard.
+ */
+export function PtahCrudColumnsMenu({ crud, locale }: PieceProps) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const [open, setOpen] = useState(false);
+    const [items, setItems] = useState<ColumnItem[] | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const [dragging, setDragging] = useState<string | null>(null);
+    const [over, setOver] = useState<string | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
+    const preferences = state.preferences;
+
+    const load = () => {
+        setError(null);
+        listColumns(crud.api, crud.screen).then(
+            (found) => setItems(found),
+            () => setError(t.columnsError),
+        );
+    };
+
+    useEffect(() => {
+        if (open && items === null) {
+            load();
+        }
+    }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        const close = (event: MouseEvent | KeyboardEvent) => {
+            if (confirming) {
+                return;
+            }
+            if (event instanceof KeyboardEvent ? event.key === 'Escape' : !ref.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', close);
+        document.addEventListener('keydown', close);
+
+        return () => {
+            document.removeEventListener('mousedown', close);
+            document.removeEventListener('keydown', close);
+        };
+    }, [open, confirming]);
+
+    if (!state.schema || !preferences || Object.keys(preferences.columns ?? {}).length === 0) {
+        return null;
+    }
+
+    const list = items ? menuColumns(preferences, items) : [];
+    const shown = list.map((item) => item.field);
+    const hidden = Object.values(preferences.columns).filter((visible) => !visible).length;
+
+    const act = async (work: () => Promise<unknown>) => {
+        setBusy(true);
+        try {
+            await work();
+        } finally {
+            setBusy(false);
+        }
+    };
+    const move = (field: string, to: number) => void act(() => saveColumnOrder(crud, moveColumn(fullOrder(preferences), shown, field, to)));
+    const all = (visible: boolean) => {
+        setOpen(false);
+        // Every column of the map, as hideAllColumns()/showAllColumns() (id too).
+        void act(() => setAllColumns(crud, Object.keys(preferences.columns), visible));
+    };
+    const reset = () =>
+        void act(async () => {
+            setConfirming(false);
+            try {
+                const answer = await resetColumns(crud.api, crud.screen);
+                setItems(answer.data);
+                await crud.savePreferences({});
+            } catch {
+                crud.toast(t.error, 'danger');
+            }
+        });
+
+    const onDrop = (event: DragEvent, field: string) => {
+        event.preventDefault();
+        if (dragging && dragging !== field) {
+            move(dragging, shown.indexOf(field));
+        }
+        setDragging(null);
+        setOver(null);
+    };
+
+    return (
+        <div className="pc-menu" ref={ref}>
+            <button type="button" className={`pc-btn${hidden > 0 ? ' pc-btn--active' : ''}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
+                {t.columns}
+                {hidden > 0 && <span style={{ ...MUTED, marginLeft: 4 }}>({fill(t.hiddenCount, { count: hidden })})</span>} ▾
+            </button>
+            {open && (
+                <div className="pc-menu-list" role="group" aria-label={t.columns} aria-busy={busy} style={{ minWidth: 260, maxHeight: 360, overflowY: 'auto' }}>
+                    <div style={{ ...ROW, padding: '4px 8px 8px', borderBottom: '1px solid var(--pc-line)' }}>
+                        <button type="button" className="pc-btn" disabled={busy || list.length === 0} onClick={() => all(true)}>
+                            {t.showAll}
+                        </button>
+                        <button type="button" className="pc-btn" disabled={busy || list.length === 0} onClick={() => all(false)}>
+                            {t.hideAll}
+                        </button>
+                        <button type="button" className="pc-btn" disabled={busy} onClick={() => setConfirming(true)}>
+                            {t.resetColumns}
+                        </button>
+                    </div>
+                    {error && (
+                        <div style={{ padding: 8 }}>
+                            <p className="pc-error" role="alert">
+                                {error}
+                            </p>
+                            <button type="button" className="pc-btn" onClick={load}>
+                                {t.retry}
+                            </button>
+                        </div>
+                    )}
+                    {!error && items === null && (
+                        <div style={{ padding: 8 }}>
+                            <ForgeSpinner size="sm" label={t.loading} />
+                        </div>
+                    )}
+                    {items !== null && list.length === 0 && <p style={{ ...MUTED, padding: 8 }}>{t.noColumns}</p>}
+                    {list.length > 0 && (
+                        <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0' }} aria-label={t.dragHint}>
+                            {list.map((item, index) => (
+                                <li
+                                    key={item.field}
+                                    draggable={!busy}
+                                    onDragStart={(event) => {
+                                        event.dataTransfer.effectAllowed = 'move';
+                                        event.dataTransfer.setData('text/plain', item.field);
+                                        setDragging(item.field);
+                                    }}
+                                    onDragOver={(event) => {
+                                        event.preventDefault();
+                                        setOver(item.field);
+                                    }}
+                                    onDrop={(event) => onDrop(event, item.field)}
+                                    onDragEnd={() => {
+                                        setDragging(null);
+                                        setOver(null);
+                                    }}
+                                    style={{ ...ROW, flexWrap: 'nowrap', padding: '2px 8px', opacity: dragging === item.field ? 0.5 : 1, boxShadow: over === item.field && dragging !== item.field ? 'inset 0 2px 0 var(--pc-primary)' : undefined }}
+                                >
+                                    <span aria-hidden="true" title={t.dragHint} style={{ cursor: 'grab', color: 'var(--pc-text-muted)' }}>
+                                        ⠿
+                                    </span>
+                                    <label className="pc-menu-item" style={{ flex: 1 }}>
+                                        <input type="checkbox" checked={item.visible} disabled={busy} onChange={(event) => void act(() => crud.setColumnVisible(item.field, event.target.checked))} />
+                                        {item.label}
+                                    </label>
+                                    <button type="button" className="pc-icon-btn" aria-label={fill(t.moveUp, { label: item.label })} disabled={busy || index === 0} onClick={() => move(item.field, index - 1)}>
+                                        ↑
+                                    </button>
+                                    <button type="button" className="pc-icon-btn" aria-label={fill(t.moveDown, { label: item.label })} disabled={busy || index === list.length - 1} onClick={() => move(item.field, index + 1)}>
+                                        ↓
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <ForgeModal
+                        open={confirming}
+                        onClose={() => setConfirming(false)}
+                        title={t.resetColumns}
+                        size="sm"
+                        footer={
+                            <>
+                                <ForgeButton color="dark" flat onClick={() => setConfirming(false)}>
+                                    {t.cancel}
+                                </ForgeButton>
+                                <ForgeButton color="danger" onClick={reset}>
+                                    {t.resetConfirmButton}
+                                </ForgeButton>
+                            </>
+                        }
+                    >
+                        {t.resetConfirm}
+                    </ForgeModal>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/**
+ * The resize handle at the right edge of a header cell (the `th` must be
+ * `position: relative`): drag with the pointer, ←/→ from the keyboard,
+ * double-click to forget the saved width.
+ */
+export function PtahCrudColumnResizer({ crud, field, label, locale }: PieceProps & { field: string; label: string }) {
+    const t = useWords(locale);
+    const state = useCrud(crud);
+    const resizer = useMemo(() => columnResizer(crud, field), [crud, field]);
+    const width = state.preferences?.column_widths?.[field];
+
+    return (
+        <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={fill(t.resizeColumn, { label })}
+            aria-valuenow={width ?? undefined}
+            aria-valuemin={60}
+            tabIndex={0}
+            style={{ position: 'absolute', top: 0, right: -4, width: 8, height: '100%', cursor: 'col-resize', zIndex: 1, touchAction: 'none' }}
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => resizer.pointerDown(event.nativeEvent, event.currentTarget)}
+            onKeyDown={(event) => resizer.keyDown(event.nativeEvent, event.currentTarget)}
+            onDoubleClick={(event) => void resizer.reset(event.currentTarget)}
+        />
+    );
+}

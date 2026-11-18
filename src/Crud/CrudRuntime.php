@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\PaginationState;
 use Illuminate\Pagination\Paginator;
+use Ptah\Crud\Concerns\FiltersRuntime;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Support\IconClass;
 use Ptah\Support\PtahMask;
@@ -45,6 +46,8 @@ use Ptah\Support\Scalar;
  */
 final class CrudRuntime extends BaseCrud
 {
+    use FiltersRuntime;
+
     /** @var list<array{name: string, params: array<int|string, mixed>}> */
     private array $captured = [];
 
@@ -238,6 +241,10 @@ final class CrudRuntime extends BaseCrud
             $this->toggleTrashed();
         }
 
+        // The advanced rows, the link filters (?f) and the search history —
+        // after `filters`, whose hook discards the link filters.
+        $this->applyFiltersState($input);
+
         // Last: every hook above resets the page. Without a page in the
         // request the current one stands — page 1 after any change above, or
         // the restored one when nothing was asked.
@@ -266,7 +273,7 @@ final class CrudRuntime extends BaseCrud
             'date_operators' => (object) $this->dateRangeOperators,
             'quick_date' => $this->quickDateFilter,
             'trashed' => $this->showTrashed,
-        ];
+        ] + $this->filtersState();
     }
 
     /**
@@ -558,7 +565,7 @@ final class CrudRuntime extends BaseCrud
             ],
             'state' => $this->state(),
             'totals' => $this->totalizadoresItems(),
-            'messages' => $this->messages(),
+            'messages' => $this->toastMessages(),
         ];
     }
 
@@ -651,7 +658,7 @@ final class CrudRuntime extends BaseCrud
         return [
             'ok' => $ids !== [] && $this->selectedRows === [],
             'remaining' => array_values($this->selectedRows),
-            'messages' => $this->messages(),
+            'messages' => $this->toastMessages(),
         ];
     }
 
@@ -680,7 +687,7 @@ final class CrudRuntime extends BaseCrud
             }
         }
 
-        $messages = $this->messages();
+        $messages = $this->toastMessages();
 
         return ['ok' => $url !== null || $messages !== [], 'url' => $url, 'messages' => $messages];
     }
@@ -806,7 +813,7 @@ final class CrudRuntime extends BaseCrud
             $this->deleteRecord();
         }
 
-        return ['ok' => $this->dispatched('crud-deleted'), 'messages' => $this->messages()];
+        return ['ok' => $this->dispatched('crud-deleted'), 'messages' => $this->toastMessages()];
     }
 
     /** @return array{ok: bool, messages: list<array<string, mixed>>} */
@@ -815,7 +822,7 @@ final class CrudRuntime extends BaseCrud
         $this->restoreRecord($id);
 
         // restoreRecord() announces even when it restored nothing: ask the scope.
-        return ['ok' => $this->scopedQuery()?->find($id) !== null, 'messages' => $this->messages()];
+        return ['ok' => $this->scopedQuery()?->find($id) !== null, 'messages' => $this->toastMessages()];
     }
 
     /** @return array{ok: bool, id: mixed, errors: array<string, mixed>, messages: list<array<string, mixed>>} */
@@ -827,7 +834,7 @@ final class CrudRuntime extends BaseCrud
             'ok' => $ok,
             'id' => $ok ? $this->savedRecord?->getKey() : null,
             'errors' => $this->formErrors,
-            'messages' => $this->messages(),
+            'messages' => $this->toastMessages(),
         ];
     }
 
@@ -841,7 +848,7 @@ final class CrudRuntime extends BaseCrud
      *
      * @return list<array<string, mixed>>
      */
-    private function messages(): array
+    public function toastMessages(): array
     {
         $out = [];
         foreach ($this->captured as $event) {
