@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { PtahApi, words } from '../core';
+import { applyAppearance, PtahApi, words } from '../core';
 import type { AuthConfig, AuthResult, Profile, SessionInfo, Words } from '../core';
 import { ForgeAlert, ForgeAvatar, ForgeButton, ForgeCheckbox, ForgeInput, ForgeTabs, forgeToast, ForgeToastHost } from './forge';
 
@@ -280,6 +280,8 @@ export function PtahProfile({ api, locale }: AuthPageProps) {
     const took = (answer: AuthResult) => {
         if (answer.profile) {
             setProfile(answer.profile);
+            // The presets live on <html>: a new choice paints the whole page at once.
+            applyAppearance(answer.profile.appearance);
         }
         (answer.messages ?? []).forEach((message) => forgeToast(message.text, message.level));
     };

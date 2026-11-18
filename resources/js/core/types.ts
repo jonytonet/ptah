@@ -180,11 +180,33 @@ export interface MenuItem {
     type?: string;
     target?: string;
     match?: string;
+    /** False for an item switched off in the menu admin. */
+    is_active?: boolean | number;
     children?: MenuItem[];
 }
 
+/** A link of the menu with the trail that leads to it — what the "jump to a screen" search runs over. */
+export interface MenuLink {
+    label: string;
+    url: string;
+    icon: string;
+    target: string;
+    breadcrumb: string[];
+    path: string;
+    /** Label and trail, lower case and without accents. */
+    search: string;
+}
+
+export interface Shell {
+    data: MenuItem[];
+    flat: MenuLink[];
+    /** Whether the sidebar offers the search. */
+    jump: boolean;
+    brand: { name: string; logo: string | null; logo_dark: string | null };
+}
+
 export interface Me {
-    user: { id: RowId; name: string; email: string } | null;
+    user: { id: RowId; name: string; email: string; photo_url?: string | null } | null;
     company_id: number | null;
     locale: string;
     screens: string[];

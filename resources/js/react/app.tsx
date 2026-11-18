@@ -10,7 +10,7 @@ import { PtahApi, words } from '../core';
 import type { ControllerOptions } from '../core';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
-import { ForgeButton, ForgePageHeader } from './forge';
+import { ForgePageHeader } from './forge';
 import { PtahCrud } from './PtahCrud';
 import { PtahLayout } from './PtahLayout';
 
@@ -28,14 +28,18 @@ export interface PtahAppProps {
     props?: Record<string, unknown>;
     /** The profile page, linked from the top bar. */
     profileUrl?: string;
-    /** Shows "log out" in the top bar. */
+    /** Shows "log out" (the account menu and the foot of the sidebar). */
     canLogout?: boolean;
+    /** Where the light/dark choice of a signed-in user is saved. */
+    themeModeUrl?: string;
+    /** Extra content in the top bar (a company switcher, the notification bell). */
+    topbar?: ReactNode;
     onAction?: ControllerOptions['onAction'];
     /** Your own pages: `{ reports: <Reports /> }` for `data-page="reports"`. */
     pages?: Record<string, ReactNode>;
 }
 
-export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props = {}, profileUrl, canLogout, onAction, pages = {} }: PtahAppProps) {
+export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props = {}, profileUrl, canLogout, themeModeUrl, topbar, onAction, pages = {} }: PtahAppProps) {
     const api = new PtahApi({ baseUrl: apiUrl });
     const t = words(locale);
     const common = { api, locale };
@@ -74,26 +78,7 @@ export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props
     }
 
     return (
-        <PtahLayout
-            api={api}
-            brand={brand}
-            title={title}
-            locale={locale}
-            topbar={
-                <>
-                    {profileUrl && (
-                        <a className="pc-btn" href={profileUrl}>
-                            {t.profile}
-                        </a>
-                    )}
-                    {canLogout && (
-                        <ForgeButton flat onClick={() => void logout()}>
-                            {t.logOut}
-                        </ForgeButton>
-                    )}
-                </>
-            }
-        >
+        <PtahLayout api={api} brand={brand} title={title} locale={locale} topbar={topbar} profileUrl={profileUrl} themeModeUrl={themeModeUrl} onLogout={canLogout ? () => void logout() : undefined}>
             {content}
         </PtahLayout>
     );
@@ -122,6 +107,7 @@ export function mountPtah(element: HTMLElement | null, extra: Partial<PtahAppPro
             locale={data.locale}
             apiUrl={data.api}
             profileUrl={data.profile}
+            themeModeUrl={data.themeMode}
             canLogout={data.logout !== undefined}
             props={props}
             {...extra}

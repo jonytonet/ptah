@@ -181,8 +181,12 @@ describe('dashboard and page router (React)', () => {
         render(<PtahApp page="dashboard" locale="pt_BR" brand="ERP" canLogout profileUrl="/profile" />);
         expect(await screen.findByText('Bem-vindo, Ana')).toBeTruthy();
         expect(await screen.findByRole('link', { name: 'Itens' })).toBeTruthy();
-        expect(screen.getByRole('link', { name: 'Perfil' }).getAttribute('href')).toBe('/profile');
         expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy();
+
+        // Profile and log out live in the account menu.
+        fireEvent.click(await screen.findByRole('button', { name: 'Conta: Ana' }));
+        expect(screen.getByRole('link', { name: 'Perfil' }).getAttribute('href')).toBe('/profile');
+        expect(screen.getAllByRole('button', { name: 'Sair' })).toHaveLength(2);
 
         vi.unstubAllGlobals();
     });

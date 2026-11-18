@@ -217,9 +217,17 @@ export function fakeApi() {
         if (path === '/menu') {
             return json(200, {
                 data: [
-                    { label: 'Itens', url: '/items', type: 'menuLink', icon: 'bx bx-cube', children: [] },
-                    { label: 'Cadastros', type: 'menuGroup', children: [{ label: 'Clientes', url: '/clientes', children: [] }] },
+                    { label: 'Itens', url: '/items', type: 'menuLink', icon: 'bx bx-cube', match: 'items', children: [] },
+                    { label: 'Oculto', url: '/oculto', type: 'menuLink', is_active: false, children: [] },
+                    { label: 'Cadastros', type: 'menuGroup', icon: 'bx bx-folder', children: [{ label: 'Clientes', url: '/clientes', children: [] }, { label: 'Cotação', url: '/compras/cotacao', children: [] }] },
                 ],
+                flat: [
+                    { label: 'Itens', url: '/items', icon: 'bx bx-cube', target: '_self', breadcrumb: ['Itens'], path: 'Itens', search: 'itens' },
+                    { label: 'Clientes', url: '/clientes', icon: 'bx bx-circle', target: '_self', breadcrumb: ['Cadastros', 'Clientes'], path: 'Cadastros > Clientes', search: 'cadastros clientes' },
+                    { label: 'Cotação', url: '/compras/cotacao', icon: 'bx bx-circle', target: '_self', breadcrumb: ['Cadastros', 'Cotação'], path: 'Cadastros > Cotação', search: 'cadastros cotacao' },
+                ],
+                jump: true,
+                brand: { name: 'ERP', logo: null, logo_dark: null },
             });
         }
         if (path === '/me') {

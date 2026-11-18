@@ -8,3 +8,5 @@ export { words } from './i18n';
 export type { Words } from './i18n';
 export { controlOf, debounce, fromInput, inputType, isWide, pagesAround, toInput } from './form';
 export type { Control } from './form';
+export { applyAppearance, isDark, onDarkChange, setDark, toggleDark } from './theme';
+export { COLLAPSED_KEY, foldText, forgetDrafts, hasActive, initials, isActive, isCollapseShortcut, pathIs, readCollapsed, searchMenu, trailOf, visible, writeCollapsed } from './layout';

@@ -103,6 +103,16 @@ const en = {
     logOut: 'Log out',
     dashboard: 'Dashboard',
     welcome: 'Welcome',
+    // Layout
+    collapseMenu: 'Collapse the menu',
+    expandMenu: 'Expand the menu',
+    openMenu: 'Open the menu',
+    closeMenu: 'Close the menu',
+    jumpTo: 'Go to a screen…',
+    darkMode: 'Dark mode',
+    lightMode: 'Light mode',
+    account: 'Account',
+    nothingFound: 'No screen found.',
 };
 
 export type Words = typeof en;
@@ -209,6 +219,15 @@ const ptBR: Words = {
     logOut: 'Sair',
     dashboard: 'Dashboard',
     welcome: 'Bem-vindo',
+    collapseMenu: 'Recolher o menu',
+    expandMenu: 'Expandir o menu',
+    openMenu: 'Abrir o menu',
+    closeMenu: 'Fechar o menu',
+    jumpTo: 'Ir para uma tela…',
+    darkMode: 'Modo escuro',
+    lightMode: 'Modo claro',
+    account: 'Conta',
+    nothingFound: 'Nenhuma tela encontrada.',
 };
 
 const dictionaries: Record<string, Words> = { en, pt: ptBR };

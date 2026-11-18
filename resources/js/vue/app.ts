@@ -10,7 +10,7 @@ import { PtahApi, words } from '../core';
 import type { ControllerOptions } from '../core';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
-import { ForgeButton, ForgePageHeader } from './forge';
+import { ForgePageHeader } from './forge';
 import PtahCrud from './PtahCrud.vue';
 import PtahLayout from './PtahLayout.vue';
 
@@ -30,13 +30,15 @@ export const PtahApp = defineComponent({
         props: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
         /** The profile page, linked from the top bar. */
         profileUrl: { type: String, default: undefined },
-        /** Shows "log out" in the top bar. */
+        /** Shows "log out" (the account menu and the foot of the sidebar). */
         canLogout: Boolean,
+        /** Where the light/dark choice of a signed-in user is saved. */
+        themeModeUrl: { type: String, default: undefined },
         onAction: { type: Function as PropType<ControllerOptions['onAction']>, default: undefined },
         /** Your own pages: `{ reports: Reports }` for `data-page="reports"`. */
         pages: { type: Object as PropType<Record<string, Component>>, default: () => ({}) },
     },
-    setup(props) {
+    setup(props, { slots }) {
         const api = new PtahApi({ baseUrl: props.apiUrl });
         const text = (key: string) => (typeof props.props[key] === 'string' ? (props.props[key] as string) : '');
         const logout = async () => {
@@ -72,11 +74,9 @@ export const PtahApp = defineComponent({
 
             return h(
                 PtahLayout,
-                { api, brand: props.brand, title: props.title, locale: props.locale },
-                {
-                    default: () => content,
-                    topbar: () => [props.profileUrl ? h('a', { class: 'pc-btn', href: props.profileUrl }, t.profile) : null, props.canLogout ? h(ForgeButton, { flat: true, onClick: () => void logout() }, () => t.logOut) : null],
-                },
+                { api, brand: props.brand, title: props.title, locale: props.locale, profileUrl: props.profileUrl, themeModeUrl: props.themeModeUrl, onLogout: props.canLogout ? () => void logout() : undefined },
+                // The `topbar` slot of PtahApp goes into the bar (a company switcher, the notification bell).
+                { default: () => content, topbar: () => slots.topbar?.() },
             );
         };
     },
@@ -104,6 +104,7 @@ export function mountPtah(element: HTMLElement | null, extra: Record<string, unk
         locale: data.locale,
         apiUrl: data.api,
         profileUrl: data.profile,
+        themeModeUrl: data.themeMode,
         canLogout: data.logout !== undefined,
         props,
         ...extra,

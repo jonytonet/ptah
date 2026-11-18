@@ -179,8 +179,12 @@ describe('dashboard and page router (Vue)', () => {
         render(PtahApp, { props: { page: 'dashboard', locale: 'pt_BR', brand: 'ERP', canLogout: true, profileUrl: '/profile' } });
         expect(await screen.findByText('Bem-vindo, Ana')).toBeTruthy();
         expect(await screen.findByRole('link', { name: 'Itens' })).toBeTruthy();
-        expect(screen.getByRole('link', { name: 'Perfil' }).getAttribute('href')).toBe('/profile');
         expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy();
+
+        // Profile and log out live in the account menu.
+        await fireEvent.click(await screen.findByRole('button', { name: 'Conta: Ana' }));
+        expect(screen.getByRole('link', { name: 'Perfil' }).getAttribute('href')).toBe('/profile');
+        expect(screen.getAllByRole('button', { name: 'Sair' })).toHaveLength(2);
 
         vi.unstubAllGlobals();
     });

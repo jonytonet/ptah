@@ -1,63 +1,86 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { hasActive, isActive, visible } from '../core';
 import type { MenuItem } from '../core';
 
-const props = defineProps<{ items: MenuItem[]; path: string; onNavigate?: (url: string) => void }>();
+const props = defineProps<{
+    items: MenuItem[];
+    path: string;
+    /** Only the icons are drawn: a group cannot be shown open. */
+    iconOnly: boolean;
+    /** With a router, a plain click is handled in the page; otherwise the link navigates by itself. */
+    routed: boolean;
+    nested?: boolean;
+}>();
+const emit = defineEmits<{ expand: []; follow: [url: string, target?: string] }>();
 
-const trim = (value: string) => value.replace(/\/+$/, '') || '/';
-
-const isActive = (item: MenuItem): boolean => {
-    if (!item.url) {
-        return false;
-    }
-    let target = item.url;
-    try {
-        target = new URL(item.url, 'http://localhost').pathname;
-    } catch {
-        // A relative URL the parser refuses: compared as written.
-    }
-
-    return trim(target) === trim(props.path);
-};
-
-const hasActive = (item: MenuItem): boolean => isActive(item) || (item.children ?? []).some(hasActive);
+const shown = () => visible(props.items);
+const kids = (item: MenuItem) => visible(item.children ?? []);
+const groupActive = (item: MenuItem) => kids(item).length > 0 && hasActive(item, props.path);
+const external = (item: MenuItem) => Boolean(item.target && item.target !== '_self');
 
 // A group starts open when the current page is inside it.
 const open = reactive<Record<number, boolean>>({});
-props.items.forEach((item, index) => {
-    open[index] = hasActive(item);
+shown().forEach((item, index) => {
+    open[index] = groupActive(item);
 });
 
-const follow = (event: MouseEvent, item: MenuItem) => {
-    if (props.onNavigate && item.url && (!item.target || item.target === '_self') && !event.metaKey && !event.ctrlKey) {
+const toggle = (index: number) => {
+    // Icon-only: expand the sidebar and open the group, in one gesture.
+    if (props.iconOnly) {
+        emit('expand');
+        open[index] = true;
+    } else {
+        open[index] = !open[index];
+    }
+};
+
+const click = (event: MouseEvent, item: MenuItem) => {
+    if (props.routed && item.url && !external(item) && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
         event.preventDefault();
-        props.onNavigate(item.url);
+        emit('follow', item.url);
     }
 };
 </script>
 
 <template>
-    <ul class="pc-nav">
-        <li v-for="(item, index) in items" :key="`${item.label}-${index}`">
-            <template v-if="(item.children ?? []).length > 0">
-                <button type="button" class="pc-nav-group" :aria-expanded="Boolean(open[index])" @click="open[index] = !open[index]">
-                    <i v-if="item.icon" :class="item.icon" aria-hidden="true" />
-                    {{ item.label || item.text }}
-                    <span class="pc-nav-caret" aria-hidden="true">{{ open[index] ? '▾' : '▸' }}</span>
+    <ul :class="nested ? 'pl-nav pl-subnav' : 'pl-nav'">
+        <li v-for="(item, index) in shown()" :key="`${item.label}-${index}`">
+            <template v-if="kids(item).length > 0">
+                <button
+                    type="button"
+                    :class="['pl-item', { 'pl-item--group-active': groupActive(item) }]"
+                    :aria-expanded="Boolean(open[index]) && !iconOnly"
+                    :title="item.label || item.text"
+                    @click="toggle(index)"
+                >
+                    <span class="pl-item-icon" aria-hidden="true"><i :class="item.icon?.trim() ? item.icon : 'bx bx-circle'" /></span>
+                    <span class="pl-item-label">{{ item.label || item.text }}</span>
+                    <span class="pl-caret" :data-open="Boolean(open[index])" aria-hidden="true">▶</span>
                 </button>
-                <PtahNav v-if="open[index]" :items="item.children ?? []" :path="path" :on-navigate="onNavigate" />
+                <PtahNav
+                    v-if="open[index] && !iconOnly"
+                    :items="kids(item)"
+                    :path="path"
+                    :icon-only="iconOnly"
+                    :routed="routed"
+                    nested
+                    @expand="emit('expand')"
+                    @follow="(url, target) => emit('follow', url, target)"
+                />
             </template>
             <a
                 v-else
-                :class="['pc-nav-link', { 'pc-nav-link--active': isActive(item) }]"
+                class="pl-item"
                 :href="item.url ?? '#'"
-                :target="item.target && item.target !== '_self' ? item.target : undefined"
+                :title="item.label || item.text"
+                :target="external(item) ? item.target : undefined"
                 :rel="item.target === '_blank' ? 'noopener noreferrer' : undefined"
-                :aria-current="isActive(item) ? 'page' : undefined"
-                @click="follow($event, item)"
+                :aria-current="isActive(item, path) ? 'page' : undefined"
+                @click="click($event, item)"
             >
-                <i v-if="item.icon" :class="item.icon" aria-hidden="true" />
-                {{ item.label || item.text }}
+                <span class="pl-item-icon" aria-hidden="true"><i :class="item.icon?.trim() ? item.icon : 'bx bx-circle'" /></span>
+                <span class="pl-item-label">{{ item.label || item.text }}</span>
             </a>
         </li>
     </ul>

@@ -14,15 +14,28 @@
     $ptahLogout = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
         ? route('ptah.auth.logout')
         : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : null);
+    // The same presets, from the same place, as the Livewire layout: the
+    // database for a signed-in user, else the ptah_appearance cookie.
+    $ptahAppearance = \Ptah\Support\AppearancePresets::resolveForStandalonePage();
+    $theme = $ptahAppearance['mode'] ?? null;
+    $ptahThemeMode = auth()->check() && \Illuminate\Support\Facades\Route::has('ptah.appearance.theme-mode') ? route('ptah.appearance.theme-mode') : null;
     $ptahProfile = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile') ? route('ptah.profile') : null;
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-ptah-light="{{ $ptahAppearance['light'] }}"
+    data-ptah-dark="{{ $ptahAppearance['dark'] }}"
+    data-ptah-accent="{{ $ptahAppearance['accent'] }}"
+    data-ptah-text="{{ $ptahAppearance['text'] }}"
+    data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ ($title ?? '') !== '' ? $title.' — ' : '' }}{{ config('app.name') }}</title>
+    {{-- Paints light/dark before the first frame — the very script of the Livewire layouts. --}}
+    @include('ptah::partials.appearance-boot')
     {{-- The menu's icons (the same set the Livewire layout loads). --}}
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     {{-- The app's CSS too, when it has one: a cell arrives rendered by the
@@ -42,6 +55,7 @@
          data-brand="{{ config('app.name') }}"
          data-locale="{{ app()->getLocale() }}"
          data-api="{{ url(config('ptah.crud_api.prefix', 'ptah/api')) }}"
+         @if ($ptahThemeMode) data-theme-mode="{{ $ptahThemeMode }}" @endif
          @if ($ptahProfile) data-profile="{{ $ptahProfile }}" @endif
          @if ($ptahLogout) data-logout="{{ $ptahLogout }}" @endif></div>
 </body>

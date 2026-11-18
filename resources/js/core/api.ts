@@ -14,6 +14,7 @@ import type {
     SaveResult,
     Schema,
     SessionInfo,
+    Shell,
     Widget,
 } from './types';
 
@@ -229,6 +230,13 @@ export class PtahApi {
 
     async menu(): Promise<MenuItem[]> {
         return (await this.request<{ data: MenuItem[] }>('GET', '/menu')).data ?? [];
+    }
+
+    /** The menu with what the sidebar needs around it: the search list and the brand. */
+    async shell(): Promise<Shell> {
+        const raw = await this.request<Partial<Shell>>('GET', '/menu');
+
+        return { data: raw.data ?? [], flat: raw.flat ?? [], jump: raw.jump ?? false, brand: raw.brand ?? { name: '', logo: null, logo_dark: null } };
     }
 
     me(): Promise<Me> {
