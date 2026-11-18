@@ -64,7 +64,7 @@ describe('<PtahCrud> (Vue)', () => {
         await mount();
 
         await fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
-        await fireEvent.update(screen.getByLabelText('Situação'), 'archived');
+        await fireEvent.update(await screen.findByLabelText('Situação'), 'archived');
 
         await waitFor(() => expect(rowNames()).toEqual(['Beta']));
     });

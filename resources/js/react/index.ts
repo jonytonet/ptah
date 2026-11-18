@@ -15,5 +15,11 @@ export { PtahCompanies, PtahCompanySwitcher, PtahDepartments } from './admin/com
 export { PtahMenuAdmin, PtahSettings } from './admin/menu';
 export { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
 export { PtahExportsPanel, PtahNotificationBell } from './admin/shell';
+// The pieces of <PtahCrud>, for a screen of your own built on the same controller.
+export { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
+export { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle, PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
+export { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahCrudUrlFilters } from './crud/filters';
+export { PtahCrudImport, PtahCrudImportButton } from './crud/import';
+export { PtahCrudAttachments, PtahCrudHistory, PtahCrudRecordButtons } from './crud/records';
 export { mountPtah, PtahApp } from './app';
 export type { PtahAppProps } from './app';

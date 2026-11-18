@@ -28,6 +28,8 @@ export interface FormState {
     files: Record<string, File>;
     errors: Record<string, string>;
     saving: boolean;
+    /** Opened by "duplicate": a new record that starts from another one. */
+    copy?: boolean;
 }
 
 export interface CrudState {
@@ -315,8 +317,17 @@ export class CrudController {
 
     get hasFilters(): boolean {
         const { search, filters, date_ranges, quick_date } = this.state.list;
+        // The advanced rows and the link filters (?f) of the filter panel.
+        const extra = this.state.list as ListState & { advanced?: unknown[]; f?: Record<string, unknown> };
 
-        return search !== '' || Object.keys(filters).length > 0 || Object.keys(date_ranges).length > 0 || quick_date !== '';
+        return (
+            search !== '' ||
+            Object.keys(filters).length > 0 ||
+            Object.keys(date_ranges).length > 0 ||
+            quick_date !== '' ||
+            (extra.advanced?.length ?? 0) > 0 ||
+            Object.keys(extra.f ?? {}).length > 0
+        );
     }
 
     // ── Selection and bulk actions ──────────────────────────────────────────
@@ -378,7 +389,7 @@ export class CrudController {
     async duplicate(id: RowId): Promise<void> {
         try {
             const copy = await this.api.duplicate(this.screen, id);
-            this.set({ form: { mode: 'create', id: null, data: copy.data ?? {}, labels: this.labels(copy.labels), files: {}, errors: {}, saving: false } });
+            this.set({ form: { mode: 'create', id: null, data: copy.data ?? {}, labels: this.labels(copy.labels), files: {}, errors: {}, saving: false, copy: true } });
         } catch (error) {
             this.fail(error);
         }

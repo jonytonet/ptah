@@ -455,7 +455,7 @@ export class FormDraftSession extends Store<DraftView> {
 
         // A "new" form that did not open with the defaults is a copy
         // (duplicate): no draft for it, as in the Livewire modal.
-        if (mode === 'new' && differs(pick(this.initial, context.fields), context.original, context.fields)) {
+        if (form.copy || (mode === 'new' && differs(pick(this.initial, context.fields), context.original, context.fields))) {
             this.put({ phase: 'off' });
 
             return;

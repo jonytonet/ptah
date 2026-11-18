@@ -2,9 +2,11 @@
 import { onBeforeUnmount, onMounted } from 'vue';
 import { controlOf, fromInput, inputType, isWide, toInput } from '../core';
 import type { CrudController, CrudState, Field, Option, Words } from '../core';
+import { PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
+import { PtahCrudRecordButtons } from './crud/records';
 import PtahLookup from './PtahLookup.vue';
 
-const props = defineProps<{ crud: CrudController; state: CrudState; t: Words }>();
+const props = defineProps<{ crud: CrudController; state: CrudState; t: Words; locale?: string }>();
 
 const id = (field: Field) => `pc-${props.crud.screen}-${field.field}`;
 const error = (field: Field) => props.state.form?.errors[field.field];
@@ -30,7 +32,8 @@ const onText = (field: Field, event: Event) => {
 };
 
 const onKey = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    // A panel over the form (history, attachments) takes the Escape first.
+    if (event.key === 'Escape' && !props.crud.getState().panel) {
         props.crud.closeForm();
     }
 };
@@ -51,6 +54,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
                 </div>
                 <div class="pc-modal-body">
                     <p v-if="state.form.errors._general" class="pc-alert" role="alert">{{ state.form.errors._general }}</p>
+                    <PtahCrudFormDraft :crud="crud" :locale="locale" />
+                    <PtahCrudFormChanges :crud="crud" />
                     <div class="pc-form">
                         <div v-for="field in state.schema.form" :key="field.field" :class="['pc-form-field', { 'pc-form-field--wide': isWide(field) }]">
                             <label v-if="controlOf(field) !== 'switch'" class="pc-label" :for="id(field)">
@@ -131,7 +136,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
                     </div>
                 </div>
                 <div class="pc-modal-foot">
+                    <!-- History and attachments of the record being edited, as in the Livewire modal. -->
+                    <PtahCrudRecordButtons v-if="state.form.mode === 'edit' && state.form.id !== null" :crud="crud" :row="{ id: state.form.id }" :locale="locale" />
+                    <span class="pc-spacer" />
                     <button type="button" class="pc-btn" @click="crud.closeForm()">{{ t.cancel }}</button>
+                    <PtahCrudSaveAndNew :crud="crud" :locale="locale" />
                     <button type="submit" class="pc-btn pc-btn--primary" :disabled="state.form.saving">{{ state.form.saving ? t.saving : t.save }}</button>
                 </div>
             </form>

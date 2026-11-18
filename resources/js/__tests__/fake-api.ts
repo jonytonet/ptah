@@ -192,6 +192,38 @@ export function fakeApi() {
             return json(200, { ...schema.preferences, ...(body as object) });
         }
 
+        // The filter panel describes itself from here (see core/crud/filters).
+        if (path === '/crud/items/filters/meta') {
+            return json(200, {
+                filters: [
+                    {
+                        field: 'status',
+                        label: 'Situação',
+                        type: 'select',
+                        kind: 'select',
+                        custom: false,
+                        operators: [],
+                        date_operators: null,
+                        options: [
+                            { label: 'Ativo', value: 'active' },
+                            { label: 'Arquivado', value: 'archived' },
+                        ],
+                        depends_on: null,
+                        placeholder: null,
+                        start_list: null,
+                    },
+                ],
+                sentinels: { empty: '__empty__', filled: '__filled__' },
+                quick_dates: { enabled: false, column: 'created_at', periods: [] },
+                advanced: { enabled: false, fields: [], operators: { text: [], number: [], date: [] } },
+                cell_fields: [],
+                labels: {},
+            });
+        }
+        if (path === '/crud/items/columns' && method === 'GET') {
+            return json(200, { data: schema.columns.filter((column) => column.field !== 'id').map((column) => ({ field: column.field, label: column.label, visible: true })) });
+        }
+
         const match = path.match(/^\/crud\/items\/(\d+)(\/\w+)?$/);
         if (match) {
             const id = Number(match[1]);

@@ -59,7 +59,7 @@ describe('<PtahCrud> (React)', () => {
         await mount();
 
         fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
-        fireEvent.change(screen.getByLabelText('Situação'), { target: { value: 'archived' } });
+        fireEvent.change(await screen.findByLabelText('Situação'), { target: { value: 'archived' } });
 
         await waitFor(() => expect(rowNames()).toEqual(['Beta']));
     });

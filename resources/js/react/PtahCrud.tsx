@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import {
     controlOf,
@@ -11,7 +11,15 @@ import {
     toInput,
     words,
 } from '../core';
-import type { ControllerOptions, CrudState, Field, FilterDef, LookupItem, Row, RowAction, Words } from '../core';
+import type { ControllerOptions, CrudState, Field, LookupItem, Row, RowAction, Words } from '../core';
+import { nextViewMode } from '../core/crud/boards';
+import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
+import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
+import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle, PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
+import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahCrudUrlFilters } from './crud/filters';
+import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
+import { PtahCrudAttachments, PtahCrudHistory, PtahCrudRecordButtons } from './crud/records';
 
 export interface PtahCrudProps extends ControllerOptions {
     /** The key the screen was registered with: `CrudScreen::register('products', …)`. */
@@ -40,6 +48,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
     const crud = useMemo(() => controller ?? new CrudController(screen, options), [controller, screen]); // eslint-disable-line react-hooks/exhaustive-deps
     const state = usePtahCrud(crud);
     const t = useMemo(() => words(locale), [locale]);
+    const view = useResolvedView(crud);
 
     useEffect(() => {
         void crud.init();
@@ -65,11 +74,26 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
 
     return (
         <div className="pc-root" data-density={state.preferences?.view_density ?? 'global'}>
-            <Toolbar crud={crud} state={state} t={t} title={title} extra={toolbar} />
+            <PtahCrudUrlFilters crud={crud} locale={locale} />
+            <Toolbar crud={crud} state={state} t={t} title={title} extra={toolbar} locale={locale} />
+            <PtahCrudFilterBadges crud={crud} locale={locale} />
             {state.selection.length > 0 && <BulkBar crud={crud} state={state} t={t} />}
-            <Table crud={crud} state={state} t={t} />
-            <Footer crud={crud} state={state} t={t} />
-            {state.form && <FormModal crud={crud} state={state} t={t} />}
+            {view === 'kanban' ? (
+                <PtahCrudKanban crud={crud} locale={locale} />
+            ) : view === 'calendar' ? (
+                <PtahCrudCalendar crud={crud} locale={locale} />
+            ) : view === 'cards' ? (
+                <PtahCrudCards crud={crud} locale={locale} renderActions={(row) => <RowButtons crud={crud} state={state} t={t} row={row} locale={locale} />} />
+            ) : (
+                <Table crud={crud} state={state} t={t} locale={locale} />
+            )}
+            {/* A board shows every record of the filter: no pages. */}
+            {view !== 'kanban' && view !== 'calendar' && <Footer crud={crud} state={state} t={t} />}
+            {state.form && <FormModal crud={crud} state={state} t={t} locale={locale} />}
+            {/* After the form in the DOM: they open over it. */}
+            <PtahCrudHistory crud={crud} locale={locale} />
+            <PtahCrudAttachments crud={crud} locale={locale} />
+            <PtahCrudImport crud={crud} locale={locale} />
             {state.deleting !== null && (
                 <Confirm text={t.confirmDelete} confirm={t.delete} cancel={t.cancel} danger onConfirm={() => void crud.confirmDelete()} onCancel={() => crud.cancelDelete()} />
             )}
@@ -82,11 +106,19 @@ interface PartProps {
     crud: CrudController;
     state: CrudState;
     t: Words;
+    locale?: string;
+}
+
+/** Typing in a field, or a dialog is open: a single-key shortcut must not fire. */
+function typing(event: KeyboardEvent): boolean {
+    const target = event.target as HTMLElement | null;
+
+    return !!target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
 // ── Toolbar ─────────────────────────────────────────────────────────────────
 
-function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNode; extra?: ReactNode }) {
+function Toolbar({ crud, state, t, title, extra, locale }: PartProps & { title?: ReactNode; extra?: ReactNode }) {
     const schema = state.schema!;
     const [search, setSearch] = useState(state.list.search);
     const [showFilters, setShowFilters] = useState(false);
@@ -95,6 +127,20 @@ function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNo
     // The search box follows the state when it changes from outside (restore, clear).
     useEffect(() => setSearch(state.list.search), [state.list.search]);
     useEffect(() => () => apply.cancel(), [apply]);
+
+    // `v` walks the views (auto → table → cards), as on the Livewire screen.
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            const now = crud.getState();
+            if (event.key !== 'v' || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
+                return;
+            }
+            void crud.savePreferences({ view_mode: nextViewMode(now.preferences?.view_mode) });
+        };
+        document.addEventListener('keydown', onKey);
+
+        return () => document.removeEventListener('keydown', onKey);
+    }, [crud]);
 
     return (
         <>
@@ -111,13 +157,13 @@ function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNo
                         apply(event.target.value);
                     }}
                 />
-                {schema.filters.length > 0 && (
-                    <button type="button" className={`pc-btn${showFilters || crud.hasFilters ? ' pc-btn--active' : ''}`} aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}>
-                        {t.filters}
-                    </button>
-                )}
+                <PtahCrudSearchHistory crud={crud} locale={locale} />
+                {/* Always: quick dates and the advanced search need no filterable column. */}
+                <button type="button" className={`pc-btn${showFilters || crud.hasFilters ? ' pc-btn--active' : ''}`} aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}>
+                    {t.filters}
+                </button>
                 {crud.hasFilters && (
-                    <button type="button" className="pc-btn" onClick={() => void crud.clearFilters()}>
+                    <button type="button" className="pc-btn" onClick={() => void clearAllFilters(crud, filterSession(crud))}>
                         {t.clear}
                     </button>
                 )}
@@ -127,16 +173,8 @@ function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNo
                         {state.list.trashed ? t.backFromTrash : t.trash}
                     </button>
                 )}
-                <Menu label={t.columns}>
-                    {Object.entries(state.preferences?.columns ?? {}).map(([field, visible]) => (
-                        <li key={field}>
-                            <label className="pc-menu-item">
-                                <input type="checkbox" checked={visible} onChange={(event) => void crud.setColumnVisible(field, event.target.checked)} />
-                                {schema.columns.find((column) => column.field === field)?.label ?? schema.form.find((item) => item.field === field)?.label ?? field}
-                            </label>
-                        </li>
-                    ))}
-                </Menu>
+                <PtahCrudViewSwitch crud={crud} locale={locale} />
+                <PtahCrudColumnsMenu crud={crud} locale={locale} />
                 {schema.export.enabled && (
                     <Menu label={t.export}>
                         {[...schema.export.formats, 'print'].map((format) => (
@@ -148,6 +186,7 @@ function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNo
                         ))}
                     </Menu>
                 )}
+                <PtahCrudImportButton crud={crud} locale={locale} />
                 {extra}
                 {schema.permissions.canCreate && !state.list.trashed && (
                     <button type="button" className="pc-btn pc-btn--primary" onClick={() => void crud.openCreate()}>
@@ -155,7 +194,7 @@ function Toolbar({ crud, state, t, title, extra }: PartProps & { title?: ReactNo
                     </button>
                 )}
             </div>
-            {showFilters && schema.filters.length > 0 && <Filters crud={crud} state={state} t={t} />}
+            {showFilters && <PtahCrudFilterPanel crud={crud} locale={locale} onClose={() => setShowFilters(false)} />}
         </>
     );
 }
@@ -188,95 +227,6 @@ function Menu({ label, children }: { label: string; children: ReactNode }) {
                 {label} ▾
             </button>
             {open && <ul className="pc-menu-list">{children}</ul>}
-        </div>
-    );
-}
-
-// ── Filters ─────────────────────────────────────────────────────────────────
-
-function Filters({ crud, state, t }: PartProps) {
-    return (
-        <div className="pc-filters">
-            {state.schema!.filters.map((filter) => (
-                <FilterControl key={filter.field} filter={filter} crud={crud} state={state} t={t} />
-            ))}
-            <div className="pc-filters-actions">
-                <button type="button" className="pc-btn" onClick={() => void crud.clearFilters()}>
-                    {t.clear}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-function FilterControl({ filter, crud, state, t }: PartProps & { filter: FilterDef }) {
-    const id = `pc-f-${crud.screen}-${filter.field}`;
-    const value = state.list.filters[filter.field];
-    const [text, setText] = useState(value === undefined ? '' : String(value));
-    const apply = useMemo(() => debounce((next: string) => void crud.setFilter(filter.field, next), 400), [crud, filter.field]);
-
-    useEffect(() => setText(value === undefined ? '' : String(value)), [value]);
-    useEffect(() => () => apply.cancel(), [apply]);
-
-    if (filter.type === 'date' || filter.type === 'datetime') {
-        return (
-            <div>
-                <span className="pc-label">{filter.label}</span>
-                <div className="pc-range">
-                    {(['start', 'end'] as const).map((edge) => (
-                        <input
-                            key={edge}
-                            type="date"
-                            className="pc-input"
-                            aria-label={`${filter.label} — ${edge === 'start' ? t.from : t.to}`}
-                            value={state.list.date_ranges[`${filter.field}_${edge}`] ?? ''}
-                            onChange={(event) => void crud.setDateRange(filter.field, edge, event.target.value)}
-                        />
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    if (filter.type === 'searchdropdown') {
-        return (
-            <div>
-                <label className="pc-label" htmlFor={id}>
-                    {filter.label}
-                </label>
-                <Lookup id={id} value={value === undefined ? '' : String(value)} label="" t={t} search={(query) => crud.lookup(filter.field, query, true)} onPick={(item) => void crud.setFilter(filter.field, item?.value ?? '')} />
-            </div>
-        );
-    }
-
-    const options = filter.options ?? (filter.type === 'boolean' || filter.type === 'switch' ? [{ label: t.yes, value: '1' }, { label: t.no, value: '0' }] : null);
-
-    return (
-        <div>
-            <label className="pc-label" htmlFor={id}>
-                {filter.label}
-            </label>
-            {options ? (
-                <select id={id} className="pc-input" value={value === undefined ? '' : String(value)} onChange={(event) => void crud.setFilter(filter.field, event.target.value)}>
-                    <option value="">{t.all}</option>
-                    {options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-            ) : (
-                <input
-                    id={id}
-                    type={filter.type === 'number' ? 'number' : 'text'}
-                    className="pc-input"
-                    value={text}
-                    onChange={(event) => {
-                        setText(event.target.value);
-                        apply(event.target.value);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -341,12 +291,25 @@ function alignClass(align: string | null): string | undefined {
     return align === 'right' ? 'pc-align-right' : align === 'center' ? 'pc-align-center' : undefined;
 }
 
-function Table({ crud, state, t }: PartProps) {
+function Table({ crud, state, t, locale }: PartProps) {
     const schema = state.schema!;
-    const { permissions } = schema;
-    const hasRowButtons = permissions.canUpdate || permissions.canDelete || permissions.canCreate || state.rows.some((row) => row.actions.length > 0);
+    const { permissions, features } = schema;
+    const hasRowButtons =
+        permissions.canUpdate || permissions.canDelete || permissions.canCreate || features.history || features.attachments || state.rows.some((row) => row.actions.length > 0);
     const allSelected = state.rows.length > 0 && state.rows.every((row) => state.selection.includes(String(row.id)));
-    const span = schema.columns.length + (schema.selectable ? 1 : 0) + (hasRowButtons ? 1 : 0);
+    const detail = features.masterDetail;
+    const span = schema.columns.length + (schema.selectable ? 1 : 0) + (hasRowButtons ? 1 : 0) + (detail ? 1 : 0);
+    const widths = state.preferences?.column_widths ?? {};
+    const widthOf = (field: string) => (widths[field] ? { width: `${widths[field]}px`, minWidth: 60 } : undefined);
+    const [dragged, setDragged] = useState<string | null>(null);
+    // A header dropped on another one takes its place (the saved order of the user).
+    const drop = (target: string) => {
+        if (dragged && dragged !== target && state.preferences) {
+            const shown = schema.columns.map((column) => column.field);
+            void saveColumnOrder(crud, moveColumn(fullOrder(state.preferences), shown, dragged, shown.indexOf(target)));
+        }
+        setDragged(null);
+    };
     const totals = new Map(state.totals.map((total) => [total.field, total]));
 
     return (
@@ -354,6 +317,7 @@ function Table({ crud, state, t }: PartProps) {
             <table className="pc-table">
                 <thead>
                     <tr>
+                        {detail && <th className="pc-col-check" />}
                         {schema.selectable && (
                             <th className="pc-col-check">
                                 <input type="checkbox" aria-label={t.all} checked={allSelected} onChange={() => crud.toggleAll()} />
@@ -364,7 +328,17 @@ function Table({ crud, state, t }: PartProps) {
                             const ascending = state.list.direction.toUpperCase() === 'ASC';
 
                             return (
-                                <th key={column.field} className={alignClass(column.align)} aria-sort={sorted ? (ascending ? 'ascending' : 'descending') : undefined}>
+                                <th
+                                    key={column.field}
+                                    className={alignClass(column.align)}
+                                    aria-sort={sorted ? (ascending ? 'ascending' : 'descending') : undefined}
+                                    style={{ position: 'relative', ...widthOf(column.field) }}
+                                    draggable
+                                    onDragStart={() => setDragged(column.field)}
+                                    onDragOver={(event) => dragged && event.preventDefault()}
+                                    onDrop={() => drop(column.field)}
+                                    onDragEnd={() => setDragged(null)}
+                                >
                                     {column.sortBy !== null ? (
                                         <button type="button" className="pc-th-btn" onClick={() => void crud.sortBy(column.sortBy!)}>
                                             {column.label}
@@ -375,6 +349,7 @@ function Table({ crud, state, t }: PartProps) {
                                     ) : (
                                         column.label
                                     )}
+                                    <PtahCrudColumnResizer crud={crud} field={column.field} label={column.label} locale={locale} />
                                 </th>
                             );
                         })}
@@ -390,7 +365,13 @@ function Table({ crud, state, t }: PartProps) {
                         </tr>
                     )}
                     {state.rows.map((row) => (
-                        <tr key={row.id} style={styleOf(row.style)}>
+                        <Fragment key={row.id}>
+                        <tr style={styleOf(row.style)}>
+                            {detail && (
+                                <td className="pc-col-check">
+                                    <PtahCrudDetailToggle crud={crud} row={row} locale={locale} />
+                                </td>
+                            )}
                             {schema.selectable && (
                                 <td className="pc-col-check">
                                     <input type="checkbox" aria-label={String(row.id)} checked={state.selection.includes(String(row.id))} onChange={() => crud.toggleRow(row.id)} />
@@ -399,19 +380,30 @@ function Table({ crud, state, t }: PartProps) {
                             {schema.columns.map((column) => (
                                 // The HTML comes rendered and escaped by the server — the same
                                 // string the Livewire screen prints for this cell.
-                                <td key={column.field} className={alignClass(column.align)} dangerouslySetInnerHTML={{ __html: row.cells[column.field]?.html ?? '' }} />
+                                <td
+                                    key={column.field}
+                                    className={alignClass(column.align)}
+                                    style={widthOf(column.field)}
+                                    // Alt+click filters the listing by this cell's value.
+                                    title={isCellFilterable(crud, column.field) ? t.filterByCell : undefined}
+                                    onClick={(event) => event.altKey && isCellFilterable(crud, column.field) && void filterByCell(crud, row.id, column.field)}
+                                    dangerouslySetInnerHTML={{ __html: row.cells[column.field]?.html ?? '' }}
+                                />
                             ))}
                             {hasRowButtons && (
                                 <td className="pc-col-actions">
-                                    <RowButtons crud={crud} state={state} t={t} row={row} />
+                                    <RowButtons crud={crud} state={state} t={t} row={row} locale={locale} />
                                 </td>
                             )}
                         </tr>
+                        {detail && <PtahCrudDetailRow crud={crud} row={row} colSpan={span} locale={locale} />}
+                        </Fragment>
                     ))}
                 </tbody>
                 {state.totals.length > 0 && (
                     <tfoot>
                         <tr>
+                            {detail && <td />}
                             {schema.selectable && <td />}
                             {schema.columns.map((column, index) => (
                                 <td key={column.field} className={alignClass(column.align)}>
@@ -443,12 +435,13 @@ function styleOf(style: string | null): Record<string, string> | undefined {
     return out;
 }
 
-function RowButtons({ crud, state, t, row }: PartProps & { row: Row }) {
+function RowButtons({ crud, state, t, row, locale }: PartProps & { row: Row }) {
     const { permissions } = state.schema!;
     const [pending, setPending] = useState<RowAction | null>(null);
 
     return (
         <>
+            <PtahCrudRecordButtons crud={crud} row={row} locale={locale} />
             {row.actions.map((action, index) => {
                 const content = action.icon ? <i className={action.icon} aria-hidden="true" /> : action.label || '→';
 
@@ -574,11 +567,12 @@ function useEscape(onEscape: () => void) {
     }, [onEscape]);
 }
 
-function FormModal({ crud, state, t }: PartProps) {
+function FormModal({ crud, state, t, locale }: PartProps) {
     const schema = state.schema!;
     const form = state.form!;
     const titleId = `pc-form-title-${crud.screen}`;
-    useEscape(() => crud.closeForm());
+    // A panel over the form (history, attachments) takes the Escape first.
+    useEscape(() => !crud.getState().panel && crud.closeForm());
 
     return (
         <div className="pc-overlay" onMouseDown={(event) => event.target === event.currentTarget && crud.closeForm()}>
@@ -604,6 +598,8 @@ function FormModal({ crud, state, t }: PartProps) {
                                 {form.errors._general}
                             </p>
                         )}
+                        <PtahCrudFormDraft crud={crud} locale={locale} />
+                        <PtahCrudFormChanges crud={crud} />
                         <div className="pc-form">
                             {schema.form.map((field) => (
                                 <FormField key={field.field} field={field} crud={crud} state={state} t={t} />
@@ -611,9 +607,13 @@ function FormModal({ crud, state, t }: PartProps) {
                         </div>
                     </div>
                     <div className="pc-modal-foot">
+                        {/* History and attachments of the record being edited, as in the Livewire modal. */}
+                        {form.mode === 'edit' && form.id !== null && <PtahCrudRecordButtons crud={crud} row={{ id: form.id }} locale={locale} />}
+                        <span className="pc-spacer" />
                         <button type="button" className="pc-btn" onClick={() => crud.closeForm()}>
                             {t.cancel}
                         </button>
+                        <PtahCrudSaveAndNew crud={crud} locale={locale} />
                         <button type="submit" className="pc-btn pc-btn--primary" disabled={form.saving}>
                             {form.saving ? t.saving : t.save}
                         </button>

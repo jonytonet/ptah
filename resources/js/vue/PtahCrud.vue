@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { CrudController, debounce, pagesAround, words } from '../core';
-import type { ControllerOptions, FilterDef, PtahApi, Row, RowAction } from '../core';
+import type { ControllerOptions, PtahApi, Row, RowAction } from '../core';
+import { nextViewMode } from '../core/crud/boards';
+import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
+import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
+import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
+import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahCrudUrlFilters } from './crud/filters';
+import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
+import { PtahCrudAttachments, PtahCrudHistory, PtahCrudRecordButtons } from './crud/records';
 import PtahConfirm from './PtahConfirm.vue';
 import PtahForm from './PtahForm.vue';
-import PtahLookup from './PtahLookup.vue';
 import PtahMenu from './PtahMenu.vue';
 import { usePtahCrud } from './usePtahCrud';
 
@@ -41,9 +48,29 @@ const crud =
     });
 const state = usePtahCrud(crud);
 const t = computed(() => words(props.locale));
+const view = useResolvedView(crud);
 
-onMounted(() => void crud.init());
+/** Typing in a field: a single-key shortcut must not fire. */
+const typing = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+
+    return !!target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+};
+// `v` walks the views (auto → table → cards), as on the Livewire screen.
+const onKey = (event: KeyboardEvent) => {
+    const now = crud.getState();
+    if (event.key !== 'v' || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
+        return;
+    }
+    void crud.savePreferences({ view_mode: nextViewMode(now.preferences?.view_mode) });
+};
+
+onMounted(() => {
+    void crud.init();
+    document.addEventListener('keydown', onKey);
+});
 onBeforeUnmount(() => {
+    document.removeEventListener('keydown', onKey);
     if (!props.controller) {
         crud.destroy();
     }
@@ -69,33 +96,11 @@ const onSearch = (event: Event) => {
     applySearch(search.value);
 };
 
-const hasFilters = computed(() => {
-    const { search: term, filters, date_ranges, quick_date } = state.value.list;
-
-    return term !== '' || Object.keys(filters).length > 0 || Object.keys(date_ranges).length > 0 || quick_date !== '';
-});
-
-const columnLabel = (field: string) =>
-    state.value.schema?.columns.find((column) => column.field === field)?.label ?? state.value.schema?.form.find((item) => item.field === field)?.label ?? field;
+// Reads the listing state, so it follows every change of it.
+const hasFilters = computed(() => Boolean(state.value.list) && crud.hasFilters);
+const clearAll = () => void clearAllFilters(crud, filterSession(crud));
 
 const formatLabel = (format: string) => (t.value as Record<string, string>)[format] ?? format;
-
-// ── Filters ─────────────────────────────────────────────────────────────────
-
-const filterValue = (field: string) => {
-    const value = state.value.list.filters[field];
-
-    return value === undefined ? '' : String(value);
-};
-const filterOptions = (filter: FilterDef) =>
-    filter.options ??
-    (filter.type === 'boolean' || filter.type === 'switch'
-        ? [
-              { label: t.value.yes, value: '1' },
-              { label: t.value.no, value: '0' },
-          ]
-        : null);
-const applyFilter = debounce((field: string, value: string) => void crud.setFilter(field, value), 400);
 const inputValue = (event: Event) => (event.target as HTMLInputElement).value;
 
 // ── Bulk and row actions ────────────────────────────────────────────────────
@@ -143,9 +148,38 @@ const allSelected = computed(() => state.value.rows.length > 0 && state.value.ro
 const hasRowButtons = computed(() => {
     const permissions = state.value.schema?.permissions;
 
-    return Boolean(permissions?.canUpdate || permissions?.canDelete || permissions?.canCreate || state.value.rows.some((row) => row.actions.length > 0));
+    const features = state.value.schema?.features;
+
+    return Boolean(
+        permissions?.canUpdate || permissions?.canDelete || permissions?.canCreate || features?.history || features?.attachments || state.value.rows.some((row) => row.actions.length > 0),
+    );
 });
-const span = computed(() => (state.value.schema?.columns.length ?? 0) + (state.value.schema?.selectable ? 1 : 0) + (hasRowButtons.value ? 1 : 0));
+const detail = computed(() => Boolean(state.value.schema?.features?.masterDetail));
+const span = computed(
+    () => (state.value.schema?.columns.length ?? 0) + (state.value.schema?.selectable ? 1 : 0) + (hasRowButtons.value ? 1 : 0) + (detail.value ? 1 : 0),
+);
+const widthOf = (field: string) => {
+    const width = state.value.preferences?.column_widths?.[field];
+
+    return width ? { width: `${width}px`, minWidth: '60px' } : undefined;
+};
+const dragged = ref<string | null>(null);
+// A header dropped on another one takes its place (the saved order of the user).
+const dropOn = (target: string) => {
+    const preferences = state.value.preferences;
+    if (dragged.value && dragged.value !== target && preferences && state.value.schema) {
+        const shown = state.value.schema.columns.map((column) => column.field);
+        void saveColumnOrder(crud, moveColumn(fullOrder(preferences), shown, dragged.value, shown.indexOf(target)));
+    }
+    dragged.value = null;
+};
+const cellFilter = (field: string) => isCellFilterable(crud, field);
+// Alt+click filters the listing by this cell's value.
+const onCell = (event: MouseEvent, row: Row, field: string) => {
+    if (event.altKey && cellFilter(field)) {
+        void filterByCell(crud, row.id, field);
+    }
+};
 const totalOf = (field: string) => state.value.totals.find((total) => total.field === field);
 const sorted = (sortBy: string | null) => sortBy !== null && state.value.list.sort === sortBy;
 const ascending = computed(() => state.value.list.direction.toUpperCase() === 'ASC');
@@ -166,7 +200,6 @@ const statusText = computed(() => ({ loading: t.value.loading, forbidden: t.valu
 
 onBeforeUnmount(() => {
     applySearch.cancel();
-    applyFilter.cancel();
 });
 </script>
 
@@ -176,93 +209,36 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="pc-root" :data-density="state.preferences?.view_density ?? 'global'">
+        <PtahCrudUrlFilters :crud="crud" :locale="locale" />
+
         <!-- Toolbar -->
         <div class="pc-toolbar">
             <h2 class="pc-title">{{ title ?? state.schema.title }}</h2>
             <input type="search" class="pc-input pc-search" :placeholder="t.search" :aria-label="t.search" :value="search" @input="onSearch" />
-            <button
-                v-if="state.schema.filters.length > 0"
-                type="button"
-                :class="['pc-btn', { 'pc-btn--active': showFilters || hasFilters }]"
-                :aria-expanded="showFilters"
-                @click="showFilters = !showFilters"
-            >
+            <PtahCrudSearchHistory :crud="crud" :locale="locale" />
+            <!-- Always: quick dates and the advanced search need no filterable column. -->
+            <button type="button" :class="['pc-btn', { 'pc-btn--active': showFilters || hasFilters }]" :aria-expanded="showFilters" @click="showFilters = !showFilters">
                 {{ t.filters }}
             </button>
-            <button v-if="hasFilters" type="button" class="pc-btn" @click="crud.clearFilters()">{{ t.clear }}</button>
+            <button v-if="hasFilters" type="button" class="pc-btn" @click="clearAll">{{ t.clear }}</button>
             <span class="pc-spacer" />
             <button v-if="state.schema.trash" type="button" :class="['pc-btn', { 'pc-btn--active': state.list.trashed }]" :aria-pressed="state.list.trashed" @click="crud.toggleTrashed()">
                 {{ state.list.trashed ? t.backFromTrash : t.trash }}
             </button>
-            <PtahMenu :label="t.columns">
-                <li v-for="(visible, field) in state.preferences?.columns ?? {}" :key="field">
-                    <label class="pc-menu-item">
-                        <input type="checkbox" :checked="visible" @change="crud.setColumnVisible(String(field), ($event.target as HTMLInputElement).checked)" />
-                        {{ columnLabel(String(field)) }}
-                    </label>
-                </li>
-            </PtahMenu>
+            <PtahCrudViewSwitch :crud="crud" :locale="locale" />
+            <PtahCrudColumnsMenu :crud="crud" :locale="locale" />
             <PtahMenu v-if="state.schema.export.enabled" :label="t.export">
                 <li v-for="format in [...state.schema.export.formats, 'print']" :key="format">
                     <button type="button" class="pc-menu-item" @click="crud.export(format)">{{ formatLabel(format) }}</button>
                 </li>
             </PtahMenu>
+            <PtahCrudImportButton :crud="crud" :locale="locale" />
             <slot name="toolbar" />
             <button v-if="state.schema.permissions.canCreate && !state.list.trashed" type="button" class="pc-btn pc-btn--primary" @click="crud.openCreate()">+ {{ t.new }}</button>
         </div>
 
-        <!-- Filters -->
-        <div v-if="showFilters && state.schema.filters.length > 0" class="pc-filters">
-            <div v-for="filter in state.schema.filters" :key="filter.field">
-                <template v-if="filter.type === 'date' || filter.type === 'datetime'">
-                    <span class="pc-label">{{ filter.label }}</span>
-                    <div class="pc-range">
-                        <input
-                            v-for="edge in ['start', 'end'] as const"
-                            :key="edge"
-                            type="date"
-                            class="pc-input"
-                            :aria-label="`${filter.label} — ${edge === 'start' ? t.from : t.to}`"
-                            :value="state.list.date_ranges[`${filter.field}_${edge}`] ?? ''"
-                            @change="crud.setDateRange(filter.field, edge, inputValue($event))"
-                        />
-                    </div>
-                </template>
-                <template v-else>
-                    <label class="pc-label" :for="`pc-f-${screen}-${filter.field}`">{{ filter.label }}</label>
-                    <PtahLookup
-                        v-if="filter.type === 'searchdropdown'"
-                        :id="`pc-f-${screen}-${filter.field}`"
-                        :value="filterValue(filter.field)"
-                        label=""
-                        :t="t"
-                        :search="(query: string) => crud.lookup(filter.field, query, true)"
-                        @pick="(item) => crud.setFilter(filter.field, item?.value ?? '')"
-                    />
-                    <select
-                        v-else-if="filterOptions(filter)"
-                        :id="`pc-f-${screen}-${filter.field}`"
-                        class="pc-input"
-                        :value="filterValue(filter.field)"
-                        @change="crud.setFilter(filter.field, inputValue($event))"
-                    >
-                        <option value="">{{ t.all }}</option>
-                        <option v-for="option in filterOptions(filter)" :key="option.value" :value="option.value">{{ option.label }}</option>
-                    </select>
-                    <input
-                        v-else
-                        :id="`pc-f-${screen}-${filter.field}`"
-                        :type="filter.type === 'number' ? 'number' : 'text'"
-                        class="pc-input"
-                        :value="filterValue(filter.field)"
-                        @input="applyFilter(filter.field, inputValue($event))"
-                    />
-                </template>
-            </div>
-            <div class="pc-filters-actions">
-                <button type="button" class="pc-btn" @click="crud.clearFilters()">{{ t.clear }}</button>
-            </div>
-        </div>
+        <PtahCrudFilterPanel v-if="showFilters" :crud="crud" :locale="locale" @close="showFilters = false" />
+        <PtahCrudFilterBadges :crud="crud" :locale="locale" />
 
         <!-- Bulk bar -->
         <div v-if="state.selection.length > 0" class="pc-bulk" role="region" :aria-label="t.selected">
@@ -277,11 +253,16 @@ onBeforeUnmount(() => {
             <button type="button" class="pc-btn" @click="crud.clearSelection()">{{ t.clear }}</button>
         </div>
 
+        <PtahCrudKanban v-if="view === 'kanban'" :crud="crud" :locale="locale" />
+        <PtahCrudCalendar v-else-if="view === 'calendar'" :crud="crud" :locale="locale" />
+        <PtahCrudCards v-else-if="view === 'cards'" :crud="crud" :locale="locale" />
+
         <!-- Table -->
-        <div class="pc-table-wrap" :aria-busy="state.busy">
+        <div v-else class="pc-table-wrap" :aria-busy="state.busy">
             <table class="pc-table">
                 <thead>
                     <tr>
+                        <th v-if="detail" class="pc-col-check" />
                         <th v-if="state.schema.selectable" class="pc-col-check">
                             <input type="checkbox" :aria-label="t.all" :checked="allSelected" @change="crud.toggleAll()" />
                         </th>
@@ -290,12 +271,19 @@ onBeforeUnmount(() => {
                             :key="column.field"
                             :class="alignClass(column.align)"
                             :aria-sort="sorted(column.sortBy) ? (ascending ? 'ascending' : 'descending') : undefined"
+                            :style="{ position: 'relative', ...widthOf(column.field) }"
+                            draggable="true"
+                            @dragstart="dragged = column.field"
+                            @dragover="dragged && $event.preventDefault()"
+                            @drop="dropOn(column.field)"
+                            @dragend="dragged = null"
                         >
                             <button v-if="column.sortBy !== null" type="button" class="pc-th-btn" @click="crud.sortBy(column.sortBy)">
                                 {{ column.label }}
                                 <span :class="['pc-sort', { 'pc-sort--on': sorted(column.sortBy) }]" aria-hidden="true">{{ sorted(column.sortBy) && !ascending ? '▼' : '▲' }}</span>
                             </button>
                             <template v-else>{{ column.label }}</template>
+                            <PtahCrudColumnResizer :crud="crud" :field="column.field" :label="column.label" :locale="locale" />
                         </th>
                         <th v-if="hasRowButtons" class="pc-col-actions">{{ t.actions }}</th>
                     </tr>
@@ -304,15 +292,28 @@ onBeforeUnmount(() => {
                     <tr v-if="state.rows.length === 0">
                         <td class="pc-empty" :colspan="span">{{ t.empty }}</td>
                     </tr>
-                    <tr v-for="row in state.rows" :key="row.id" :style="row.style ?? undefined">
+                    <template v-for="row in state.rows" :key="row.id">
+                    <tr :style="row.style ?? undefined">
+                        <td v-if="detail" class="pc-col-check">
+                            <PtahCrudDetailToggle :crud="crud" :row="row" :locale="locale" />
+                        </td>
                         <td v-if="state.schema.selectable" class="pc-col-check">
                             <input type="checkbox" :aria-label="String(row.id)" :checked="isSelected(row)" @change="crud.toggleRow(row.id)" />
                         </td>
                         <!-- The HTML comes rendered and escaped by the server: the same
                              string the Livewire screen prints for this cell. -->
                         <!-- eslint-disable-next-line vue/no-v-html -->
-                        <td v-for="column in state.schema.columns" :key="column.field" :class="alignClass(column.align)" v-html="row.cells[column.field]?.html ?? ''" />
+                        <td
+                            v-for="column in state.schema.columns"
+                            :key="column.field"
+                            :class="alignClass(column.align)"
+                            :style="widthOf(column.field)"
+                            :title="cellFilter(column.field) ? t.filterByCell : undefined"
+                            @click="onCell($event, row, column.field)"
+                            v-html="row.cells[column.field]?.html ?? ''"
+                        />
                         <td v-if="hasRowButtons" class="pc-col-actions">
+                            <PtahCrudRecordButtons :crud="crud" :row="row" :locale="locale" />
                             <template v-for="(action, index) in row.actions" :key="index">
                                 <a v-if="action.type === 'link'" class="pc-icon-btn" :href="action.value" :title="action.label" :aria-label="action.label" @click="onLink($event, action)">
                                     <i v-if="action.icon" :class="action.icon" aria-hidden="true" /><template v-else>{{ action.label || '→' }}</template>
@@ -331,9 +332,12 @@ onBeforeUnmount(() => {
                             </template>
                         </td>
                     </tr>
+                    <PtahCrudDetailRow v-if="detail" :crud="crud" :row="row" :col-span="span" :locale="locale" />
+                    </template>
                 </tbody>
                 <tfoot v-if="state.totals.length > 0">
                     <tr>
+                        <td v-if="detail" />
                         <td v-if="state.schema.selectable" />
                         <td v-for="(column, index) in state.schema.columns" :key="column.field" :class="alignClass(column.align)">
                             {{ totalOf(column.field) ? String(totalOf(column.field)?.value ?? '') : index === 0 ? t.total : '' }}
@@ -345,7 +349,8 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Footer -->
-        <div v-if="state.meta" class="pc-footer">
+        <!-- A board shows every record of the filter: no pages. -->
+        <div v-if="state.meta && view !== 'kanban' && view !== 'calendar'" class="pc-footer">
             <span>{{ summary }}</span>
             <select class="pc-input" :aria-label="t.perPage" :value="state.meta.per_page" @change="crud.setPerPage(Number(inputValue($event)))">
                 <option v-for="size in sizes" :key="size" :value="size">{{ size }} {{ t.perPage }}</option>
@@ -366,7 +371,11 @@ onBeforeUnmount(() => {
             </nav>
         </div>
 
-        <PtahForm v-if="state.form" :crud="crud" :state="state" :t="t" />
+        <PtahForm v-if="state.form" :crud="crud" :state="state" :t="t" :locale="locale" />
+        <!-- After the form in the DOM: they open over it. -->
+        <PtahCrudHistory :crud="crud" :locale="locale" />
+        <PtahCrudAttachments :crud="crud" :locale="locale" />
+        <PtahCrudImport :crud="crud" :locale="locale" />
 
         <PtahConfirm v-if="state.deleting !== null" :text="t.confirmDelete" :confirm="t.delete" :cancel="t.cancel" danger @confirm="crud.confirmDelete()" @cancel="crud.cancelDelete()" />
         <PtahConfirm v-if="pendingBulk" :text="pendingBulk.text" :confirm="t.confirm" :cancel="t.cancel" @confirm="confirmBulk" @cancel="pendingBulk = null" />
