@@ -92,6 +92,15 @@ export class PtahApi {
         this.headers = options.headers ?? {};
     }
 
+    /**
+     * Any endpoint under the API prefix — what the clients of the admin
+     * screens (`core/admin/*`) are built on. A 422 answers its body (the
+     * reasons); any other failure throws ApiError.
+     */
+    call<T>(method: string, path: string, body?: unknown): Promise<T> {
+        return this.request<T>(method, path, body);
+    }
+
     private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
         const headers: Record<string, string> = {
             Accept: 'application/json',

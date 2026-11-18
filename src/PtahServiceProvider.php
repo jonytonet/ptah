@@ -886,6 +886,11 @@ class PtahServiceProvider extends ServiceProvider
         if (config('ptah.crud_api.enabled')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-api.php');
 
+            // One file per area of the API (companies, permissions, menu…).
+            foreach (glob(__DIR__.'/../routes/api/*.php') ?: [] as $file) {
+                $this->loadRoutesFrom($file);
+            }
+
             // The host's screens (written by ptah:forge in the React/Vue stack).
             if (is_file($screens = base_path('routes/ptah-screens.php'))) {
                 require $screens;
