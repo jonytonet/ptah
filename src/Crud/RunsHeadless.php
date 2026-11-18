@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ptah\Crud;
 
 use Illuminate\Support\Facades\Validator;
-use Livewire\Attributes\Validate;
+use Livewire\Features\SupportValidation\BaseValidate;
 use ReflectionAttribute;
 use ReflectionClass;
 
@@ -29,7 +29,8 @@ trait RunsHeadless
     /** A component of this class, booted the way Livewire boots it. */
     public static function headless(mixed ...$mount): static
     {
-        $component = new static;
+        // Through the container: a component may ask for dependencies.
+        $component = app()->make(static::class);
 
         if (method_exists($component, 'boot')) {
             app()->call([$component, 'boot']);
@@ -57,13 +58,10 @@ trait RunsHeadless
     public function validate($rules = null, $messages = [], $attributes = [])
     {
         $rules ??= $this->headlessRules();
-        $data = [];
 
-        foreach (array_keys($rules) as $key) {
-            $data[$key] = data_get($this, $key);
-        }
-
-        return Validator::make($data, $rules, (array) $messages, (array) $attributes)->validate();
+        // Every public property, as Livewire validates: `confirmed` reads
+        // `password_confirmation`, which is not a key of the rules.
+        return Validator::make($this->all(), $rules, (array) $messages, (array) $attributes)->validate();
     }
 
     /** @return array<string, mixed> */

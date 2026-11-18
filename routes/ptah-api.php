@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Ptah\Http\Controllers\AuthApiController;
 use Ptah\Http\Controllers\CrudApiController;
 use Ptah\Http\Controllers\ShellApiController;
 
@@ -47,3 +48,37 @@ Route::middleware((array) config('ptah.crud_api.middleware', ['web', 'auth']))
         Route::get('menu', [ShellApiController::class, 'menu'])->name('menu');
         Route::get('me', [ShellApiController::class, 'me'])->name('me');
     });
+
+// ptah's own sign-in and profile (auth module) for the React and Vue stacks.
+// Guests reach the first group; the throttles are in the actions themselves.
+if (config('ptah.modules.auth')) {
+    Route::middleware((array) config('ptah.auth.middleware', ['web']))
+        ->prefix(trim((string) config('ptah.crud_api.prefix', 'ptah/api'), '/').'/auth')
+        ->name('ptah.api.auth.')
+        ->group(function () {
+            Route::get('config', [AuthApiController::class, 'config'])->name('config');
+            Route::post('login', [AuthApiController::class, 'login'])->name('login');
+            Route::post('two-factor', [AuthApiController::class, 'twoFactor'])->name('two-factor');
+            Route::post('two-factor/email', [AuthApiController::class, 'twoFactorEmail'])->name('two-factor.email');
+            Route::post('forgot-password', [AuthApiController::class, 'forgot'])->name('forgot');
+            Route::post('reset-password', [AuthApiController::class, 'reset'])->name('reset');
+            Route::post('logout', [AuthApiController::class, 'logout'])->name('logout');
+
+            Route::middleware('auth:'.config('ptah.auth.guard', 'web'))->group(function () {
+                Route::get('profile', [AuthApiController::class, 'profile'])->name('profile');
+                Route::put('profile', [AuthApiController::class, 'updateProfile'])->name('profile.update');
+                Route::put('password', [AuthApiController::class, 'updatePassword'])->name('password');
+                Route::post('photo', [AuthApiController::class, 'updatePhoto'])->name('photo');
+                Route::delete('photo', [AuthApiController::class, 'removePhoto'])->name('photo.remove');
+                Route::put('appearance', [AuthApiController::class, 'updateAppearance'])->name('appearance');
+                Route::post('two-factor/totp', [AuthApiController::class, 'startTotp'])->name('totp.start');
+                Route::post('two-factor/totp/confirm', [AuthApiController::class, 'confirmTotp'])->name('totp.confirm');
+                Route::post('two-factor/email-method', [AuthApiController::class, 'enableEmailTwoFactor'])->name('two-factor.email-method');
+                Route::post('two-factor/disable', [AuthApiController::class, 'disableTwoFactor'])->name('two-factor.disable');
+                Route::post('two-factor/recovery-codes', [AuthApiController::class, 'recoveryCodes'])->name('recovery-codes');
+                Route::get('sessions', [AuthApiController::class, 'sessions'])->name('sessions');
+                Route::delete('sessions/{session}', [AuthApiController::class, 'revokeSession'])->name('sessions.revoke');
+                Route::delete('sessions', [AuthApiController::class, 'revokeOtherSessions'])->name('sessions.revoke-others');
+            });
+        });
+}

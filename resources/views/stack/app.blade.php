@@ -7,7 +7,8 @@
     --stack=react|vue); the components come from the package through the
     `@ptah` alias.
 
-    Expects: $screen (the key of CrudScreen::register), $title (optional).
+    Expects: $screen (the key of CrudScreen::register) for a CRUD page, or
+    $page (login, profile, dashboard…) with optional $props; $title (optional).
 --}}
 @php
     $ptahLogout = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
@@ -33,7 +34,9 @@
 </head>
 <body style="margin:0">
     <div id="ptah-app"
-         data-screen="{{ $screen }}"
+         data-page="{{ $page ?? 'crud' }}"
+         data-screen="{{ $screen ?? '' }}"
+         data-props="{{ json_encode((object) ($props ?? [])) }}"
          data-title="{{ $title ?? '' }}"
          data-brand="{{ config('app.name') }}"
          data-locale="{{ app()->getLocale() }}"
