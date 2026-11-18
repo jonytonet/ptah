@@ -26,4 +26,23 @@ final class Scalar
 
         return $value;
     }
+
+    /**
+     * The value as the string a select option holds (1.58.6).
+     *
+     * A `boolean` cast hands `false`, and `(string) false` is '' — a Sim/Não
+     * select (`{"Sim": "1", "Não": "0"}`) refused its own "Não" on save, and
+     * an imported FALSE cell matched no option. true/false become '1'/'0';
+     * enums their value; null ''.
+     */
+    public static function text(mixed $value): string
+    {
+        $value = self::of($value);
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        return is_scalar($value) ? (string) $value : '';
+    }
 }

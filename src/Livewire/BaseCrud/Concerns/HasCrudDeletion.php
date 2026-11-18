@@ -28,6 +28,15 @@ trait HasCrudDeletion
 
     public function confirmDelete(int $id): void
     {
+        // The same gate as deleteRecord(), BEFORE the dialog: a screen with
+        // showDeleteButton false (or no delete permission) opened it on a
+        // direct call and then refused silently (1.58.6).
+        if (! $this->authorizeCrudAction('delete') || ! $this->crudConfigAllows('delete')) {
+            $this->dispatch('ptah-toast', title: trans('ptah::ui.crud_permission_denied'), color: 'danger');
+
+            return;
+        }
+
         // Pergunta ao model ANTES da confirmacao: o usuario sabe o motivo na
         // hora, em vez de confirmar e ser recusado.
         $record = $this->scopedQuery()?->find($id);
@@ -56,6 +65,7 @@ trait HasCrudDeletion
         // Ptah permission check — fail-closed (see HasCrudForm::authorizeCrudAction).
         if (! $this->authorizeCrudAction('delete') || ! $this->crudConfigAllows('delete')) {
             $this->cancelDelete();
+            $this->dispatch('ptah-toast', title: trans('ptah::ui.crud_permission_denied'), color: 'danger');
 
             return;
         }

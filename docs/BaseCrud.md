@@ -563,7 +563,7 @@ Configured in `colsHelper` of the column (legacy helpers).
 | `pill` | Same as `badge` but with fully rounded borders | `colsRendererBadges` |
 | `boolean` | Badge "Yes" (green) / "No" (grey), labels configurable | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
 | `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals`, `colsRendererCents` (1.57.0: the column stores cents — `123456` shows as `R$ 1.234,56` in the cell, footer total, group subtotals, print, Excel and PDF; the form still edits the stored integer) |
-| `link` | `<a href>` from `colsRendererLinkTemplate` (default `#`; `%value%`/`%field%` replaced); new tab only with `colsRendererLinkNewTab: true` | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
+| `link` | `<a href>` from `colsRendererLinkTemplate` (default `#`; `%value%`/`%field%` replaced with the RAW values); new tab only with `colsRendererLinkNewTab: true`. The text is `colsRendererLinkLabel` (which takes `%value%`/`%field%` too), else the value through the column's `colsMask` — `(41) 98888-7777` linking to `https://wa.me/5541988887777` (1.58.6) | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
 | `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
 | `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
 | `number` | Number formatted with locale separators (`1,234.56`) | `colsRendererDecimals` (default: 2), `colsRendererLocale` (default: pt-BR) |

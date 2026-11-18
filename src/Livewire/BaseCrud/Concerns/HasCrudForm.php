@@ -110,6 +110,15 @@ trait HasCrudForm
             $this->formData[$field] = '';
         }
 
+        // A select over a boolean cast gets the option's string ('1'/'0'),
+        // so the select marks it and save compares like for like (1.58.6).
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            if (($col['colsTipo'] ?? '') === 'select' && is_bool($this->formData[$field] ?? null)) {
+                $this->formData[$field] = Scalar::text($this->formData[$field]);
+            }
+        }
+
         $this->formErrors = [];
         $this->sdSearches = [];
         $this->sdResults = [];
@@ -234,7 +243,9 @@ trait HasCrudForm
             if (($col['colsTipo'] ?? '') !== 'select' || ! is_array($options) || $options === [] || $value === null || $value === '') {
                 continue;
             }
-            if (! in_array((string) $value, array_map('strval', array_values($options)), true)) {
+            // Scalar::text: a boolean cast arrives as false, and (string) false
+            // is '' — "Não" was refused as "not an option" (1.58.6).
+            if (! in_array(Scalar::text($value), array_map([Scalar::class, 'text'], array_values($options)), true)) {
                 $this->formErrors[$field] = trans('ptah::ui.sd_value_not_allowed');
             }
         }
