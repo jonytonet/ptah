@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Ptah\Crud\CrudRuntime;
-use Ptah\Crud\CrudScreenRegistry;
+use Ptah\Crud\CrudRuntimeResolver;
 
 /**
  * The headless CRUD API (1.59.0): the BaseCrud over JSON, for a React, Vue
@@ -20,7 +20,7 @@ use Ptah\Crud\CrudScreenRegistry;
  */
 class CrudApiController extends Controller
 {
-    public function __construct(private readonly CrudScreenRegistry $screens) {}
+    public function __construct(private readonly CrudRuntimeResolver $resolver) {}
 
     public function schema(Request $request, string $screen): JsonResponse
     {
@@ -170,25 +170,10 @@ class CrudApiController extends Controller
         return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
-    /**
-     * The engine for this screen and request, or the refusal. Reading is the
-     * permission of the whole screen: without it nothing is disclosed, not
-     * even the schema (same rule as the Livewire screen's render()).
-     */
+    /** The engine for this screen and request, or the refusal — see CrudRuntimeResolver. */
     private function runtime(Request $request, string $screen, ?string $ability = null, bool $restore = false): CrudRuntime
     {
-        $definition = $this->screens->find($screen);
-        abort_if($definition === null, 404);
-        abort_unless($definition->allows($request), 403);
-
-        $crud = CrudRuntime::for($definition, $request, $restore);
-        abort_unless($crud->hasConfig(), 404, "Screen '{$screen}' has no CRUD config.");
-
-        $permissions = $crud->permissions();
-        abort_unless($permissions['canRead'], 403, trans('ptah::ui.permission_denied'));
-        abort_unless($ability === null || ($permissions[$ability] ?? false), 403, trans('ptah::ui.crud_permission_denied'));
-
-        return $crud;
+        return $this->resolver->resolve($request, $screen, $ability, $restore);
     }
 
     /**

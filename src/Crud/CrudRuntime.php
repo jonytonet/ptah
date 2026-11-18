@@ -470,6 +470,31 @@ final class CrudRuntime extends BaseCrud
                 'per_page' => $this->safePerPage(),
             ],
             'preferences' => $this->preferences(),
+            'features' => $this->features(),
+        ];
+    }
+
+    /**
+     * What else the screen has on for this user — the switches the Livewire
+     * views read before drawing a button. A client hides what is off; each
+     * feature endpoint checks its own switch again.
+     *
+     * @return array<string, bool>
+     */
+    public function features(): array
+    {
+        return [
+            'history' => $this->historyEnabled(),
+            'attachments' => $this->attachmentsEnabled(),
+            'attachmentsWrite' => $this->attachmentsEnabled() && $this->attachmentsCanWrite(),
+            'import' => $this->importEnabled(),
+            'kanban' => $this->kanbanEnabled(),
+            'calendar' => $this->calendarEnabled(),
+            'formDraft' => $this->formDraftEnabled(),
+            'masterDetail' => ! empty($this->crudConfig['masterDetail']),
+            // Part of every filter panel of the Livewire screen.
+            'quickDates' => true,
+            'advancedSearch' => true,
         ];
     }
 

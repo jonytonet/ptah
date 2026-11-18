@@ -18,6 +18,8 @@ import {
     writeCollapsed,
 } from '../core';
 import type { Me, MenuItem, MenuLink, Shell, Words } from '../core';
+import { PtahCompanySwitcher } from './admin/company';
+import { PtahNotificationBell } from './admin/shell';
 
 export interface PtahLayoutProps {
     children: ReactNode;
@@ -42,7 +44,7 @@ export interface PtahLayoutProps {
 }
 
 const DESKTOP = '(min-width: 1024px)';
-const EMPTY: Shell = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null } };
+const EMPTY: Shell = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null }, shell: { company_switcher: false, notifications: false, admin: [] } };
 
 /**
  * The shell around the screens, with everything the Livewire layout does: the
@@ -198,11 +200,27 @@ export function PtahLayout({ children, brand, title, topbar, api, locale, path, 
                     </button>
                     {title && <span className="pl-topbar-title">{title}</span>}
                     <div className="pl-topbar-end">
+                        {shell.shell.company_switcher && (
+                            <span className="pl-only-desktop">
+                                <PtahCompanySwitcher api={client} locale={locale ?? me?.locale} />
+                            </span>
+                        )}
                         {topbar}
+                        {shell.shell.notifications && <PtahNotificationBell api={client} locale={locale ?? me?.locale} onNavigate={onNavigate} />}
                         <button type="button" className="pl-icon-btn" aria-label={dark ? t.lightMode : t.darkMode} aria-pressed={dark} onClick={() => toggleDark(themeModeUrl)}>
                             {dark ? '☀' : '☾'}
                         </button>
-                        {me?.user && <AccountMenu me={me} t={t} profileUrl={profileUrl} onLogout={logout} />}
+                        {me?.user && (
+                            <AccountMenu
+                                me={me}
+                                t={t}
+                                profileUrl={profileUrl}
+                                onLogout={logout}
+                                admin={shell.shell.admin}
+                                current={current}
+                                switcher={shell.shell.company_switcher ? <PtahCompanySwitcher api={client} locale={locale ?? me?.locale} layout="stacked" /> : null}
+                            />
+                        )}
                     </div>
                 </header>
                 <main className="pl-content">{children}</main>
@@ -400,7 +418,23 @@ function MenuJump({ links, t, inputRef, onGo, onIcon }: { links: MenuLink[]; t: 
 
 // ── Account ─────────────────────────────────────────────────────────────────
 
-function AccountMenu({ me, t, profileUrl, onLogout }: { me: Me; t: Words; profileUrl?: string; onLogout?: () => void }) {
+function AccountMenu({
+    me,
+    t,
+    profileUrl,
+    onLogout,
+    admin = [],
+    current = '',
+    switcher = null,
+}: {
+    me: Me;
+    t: Words;
+    profileUrl?: string;
+    onLogout?: () => void;
+    admin?: Shell['shell']['admin'];
+    current?: string;
+    switcher?: ReactNode;
+}) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const user = me.user!;
@@ -442,6 +476,16 @@ function AccountMenu({ me, t, profileUrl, onLogout }: { me: Me; t: Words; profil
                             </a>
                         </li>
                     )}
+                    {/* On a phone the switcher of the bar is hidden; it lives here. */}
+                    {switcher && <li className="pl-only-mobile pl-account-group">{switcher}</li>}
+                    {admin.length > 0 && <li className="pl-account-label">{t.administration}</li>}
+                    {admin.map((link) => (
+                        <li key={link.url}>
+                            <a className="pl-account-item" href={link.url} aria-current={isActive({ label: link.label, url: link.url }, current) ? 'page' : undefined}>
+                                <i className={link.icon} aria-hidden="true" /> {link.label}
+                            </a>
+                        </li>
+                    ))}
                     {onLogout && (
                         <li>
                             <button type="button" className="pl-account-item" onClick={onLogout}>

@@ -1,0 +1,401 @@
+/**
+ * The layout's notification bell and exports panel for React, over the shell
+ * API. Who sees which notification or export, the safe URLs and the
+ * ownership checks are the server's (NotificationBell, ExportsPanel); these
+ * components only ask and show.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import { PtahApi } from '../../core';
+import {
+    badgeText,
+    dismissNotification,
+    exportStatusColor,
+    fetchBell,
+    fetchExports,
+    markAllNotificationsRead,
+    openNotification,
+    removeExport,
+    shellWords,
+    startPolling,
+} from '../../core/admin/shell';
+import type { BellState, ExportRow, ExportsListing, ShellMessage, ShellNotification } from '../../core/admin/shell';
+import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+
+export interface ShellProps {
+    api?: PtahApi;
+    locale?: string;
+    /** Milliseconds between refreshes; null turns polling off. Defaults to what the server reports. */
+    pollInterval?: number | null;
+}
+
+export interface PtahNotificationBellProps extends ShellProps {
+    /** Go to a URL without a full page load. Defaults to `window.location.assign`. */
+    onNavigate?: (url: string) => void;
+}
+
+const panelStyle: CSSProperties = { width: 'min(20rem, 90vw)', maxHeight: 'none', overflow: 'visible' };
+const scrollStyle: CSSProperties = { maxHeight: 'min(24rem, 60vh)', overflowY: 'auto', overscrollBehavior: 'contain' };
+const itemStyle: CSSProperties = { flexDirection: 'column', alignItems: 'flex-start', gap: 2 };
+const footStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4, paddingTop: 6, borderTop: '1px solid var(--pc-line)' };
+const statusStyle: CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: 'var(--pf-c)', color: 'var(--pf-on)', fontSize: 12, fontWeight: 500 };
+const muted: CSSProperties = { fontSize: 12, opacity: 0.75 };
+
+/** Keeps `fn` current for a timer that was started with an older one. */
+function useLatest<T>(value: T) {
+    const ref = useRef(value);
+    ref.current = value;
+
+    return ref;
+}
+
+function BellIcon() {
+    return (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
+        </svg>
+    );
+}
+
+// ── Notification bell ───────────────────────────────────────────────────────
+
+export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: PtahNotificationBellProps) {
+    const client = useMemo(() => api ?? new PtahApi(), [api]);
+    const t = shellWords(locale);
+    const [state, setState] = useState<BellState | null>(null);
+    const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<ShellMessage | null>(null);
+    const root = useRef<HTMLDivElement>(null);
+    const openRef = useLatest(open);
+
+    const load = useCallback(
+        async (withItems: boolean) => {
+            try {
+                setState(await fetchBell(client, withItems));
+                setError(null);
+            } catch {
+                setError(t.error);
+            }
+        },
+        [client, t.error],
+    );
+    const refresh = useLatest(() => void load(openRef.current));
+
+    useEffect(() => {
+        void load(false);
+    }, [load]);
+
+    // The prop wins; otherwise the interval the server is configured with.
+    const interval = pollInterval !== undefined ? pollInterval : (state?.poll_ms ?? null);
+    const enabled = state?.enabled ?? false;
+    useEffect(() => (enabled ? startPolling(() => refresh.current(), interval) : undefined), [enabled, interval, refresh]);
+
+    const close = useCallback(() => {
+        setOpen(false);
+        setNotice(null);
+    }, []);
+
+    // Esc and a click outside close the dropdown, as on the Livewire bell.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        const onKey = (event: KeyboardEvent) => event.key === 'Escape' && close();
+        const onDown = (event: MouseEvent) => root.current && !root.current.contains(event.target as Node) && close();
+        document.addEventListener('keydown', onKey);
+        document.addEventListener('mousedown', onDown);
+
+        return () => {
+            document.removeEventListener('keydown', onKey);
+            document.removeEventListener('mousedown', onDown);
+        };
+    }, [open, close]);
+
+    const toggle = () => {
+        if (open) {
+            close();
+
+            return;
+        }
+        setOpen(true);
+        setState((current) => (current ? { ...current, items: null } : current));
+        void load(true);
+    };
+
+    const act = async (action: () => Promise<BellState>): Promise<BellState | null> => {
+        setBusy(true);
+        try {
+            const answer = await action();
+            setState(answer);
+            setError(null);
+
+            return answer;
+        } catch {
+            // Gone or not this user's: show the list as the server has it now.
+            setError(t.error);
+            void load(true);
+
+            return null;
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const openItem = async (event: ReactMouseEvent, item: ShellNotification) => {
+        event.preventDefault();
+        const answer = await act(() => openNotification(client, item.id));
+        if (answer?.redirect) {
+            (onNavigate ?? ((url: string) => window.location.assign(url)))(answer.redirect);
+        }
+    };
+
+    const markAll = async () => {
+        const answer = await act(() => markAllNotificationsRead(client));
+        setNotice(answer?.messages?.[0] ?? null);
+    };
+
+    if (!state || !state.enabled) {
+        return null;
+    }
+
+    const items = state.items;
+    const label = state.unread > 0 ? `${t.bellTitle} (${t.unreadBadge(state.unread)})` : t.bellTitle;
+
+    return (
+        <div className="pf pc-menu" ref={root}>
+            <button type="button" className="pc-icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={t.bellTitle} onClick={toggle}>
+                <span className="pf-badge" data-position="top-right">
+                    <BellIcon />
+                    {state.unread > 0 && (
+                        <span className="pf pf-badge-mark" data-color="danger" aria-hidden="true">
+                            {badgeText(state.unread)}
+                        </span>
+                    )}
+                </span>
+            </button>
+
+            {open && (
+                <div className="pc-menu-list" role="menu" aria-label={t.bellTitle} aria-busy={busy || items === null} style={panelStyle}>
+                    {/* Only the items scroll: the footer stays reachable however long the list is. */}
+                    <div role="none" style={scrollStyle}>
+                        {items === null ? (
+                            <div role="none" style={{ padding: 12, textAlign: 'center' }}>
+                                <ForgeSpinner size="sm" label={t.loading} />
+                            </div>
+                        ) : items.length === 0 ? (
+                            <p role="none" className="pf-empty" style={{ padding: 16, margin: 0 }}>
+                                {t.empty}
+                            </p>
+                        ) : (
+                            items.map((item) => (
+                                <div role="none" key={item.id} style={{ borderBottom: '1px solid var(--pc-line)', paddingBottom: 4, marginBottom: 4 }}>
+                                    {item.url ? (
+                                        <a role="menuitem" className="pc-menu-item" href={item.url} style={itemStyle} onClick={(event) => void openItem(event, item)}>
+                                            <strong>{item.title}</strong>
+                                            {item.body && <span style={muted}>{item.body}</span>}
+                                            {item.created_at_human && <span style={muted}>{item.created_at_human}</span>}
+                                            <span style={{ fontSize: 12, fontWeight: 600 }}>{item.action_label || t.actionDefault}</span>
+                                        </a>
+                                    ) : (
+                                        <button type="button" role="menuitem" className="pc-menu-item" disabled aria-disabled="true" style={{ ...itemStyle, cursor: 'default' }}>
+                                            <strong>{item.title}</strong>
+                                            {item.body && <span style={muted}>{item.body}</span>}
+                                            {item.created_at_human && <span style={muted}>{item.created_at_human}</span>}
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        role="menuitem"
+                                        className="pc-menu-item"
+                                        style={{ fontSize: 12 }}
+                                        aria-label={`${t.dismiss}: ${item.title}`}
+                                        disabled={busy}
+                                        onClick={() => void act(() => dismissNotification(client, item.id))}
+                                    >
+                                        ✕ {t.dismiss}
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {error && (
+                        <p role="alert" className="pf-field-error" style={{ margin: '6px 9px' }}>
+                            {error}
+                        </p>
+                    )}
+                    {notice && (
+                        <p role="status" style={{ ...muted, margin: '6px 9px' }}>
+                            {notice.text}
+                        </p>
+                    )}
+
+                    <div role="none" style={footStyle}>
+                        <button type="button" role="menuitem" className="pc-menu-item" style={{ width: 'auto', fontWeight: 600, fontSize: 12 }} disabled={busy} onClick={() => void markAll()}>
+                            {t.markAllRead}
+                        </button>
+                        {state.view_all_url && (
+                            <a role="menuitem" className="pc-menu-item" style={{ width: 'auto', fontWeight: 600, fontSize: 12 }} href={state.view_all_url}>
+                                {t.viewAll}
+                            </a>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Exports panel ───────────────────────────────────────────────────────────
+
+export function PtahExportsPanel({ api, locale, pollInterval }: ShellProps) {
+    const client = useMemo(() => api ?? new PtahApi(), [api]);
+    const t = shellWords(locale);
+    const [listing, setListing] = useState<ExportsListing | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [confirming, setConfirming] = useState<ExportRow | null>(null);
+    const [removing, setRemoving] = useState<number | null>(null);
+    const page = listing?.meta.current_page ?? 1;
+
+    const load = useCallback(
+        async (target: number) => {
+            setLoading(true);
+            try {
+                setListing(await fetchExports(client, target));
+                setError(null);
+            } catch {
+                setError(t.error);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [client, t.error],
+    );
+    const refresh = useLatest(() => void load(page));
+
+    useEffect(() => {
+        void load(1);
+    }, [load]);
+
+    // Only while an export is still queued/processing, as `wire:poll.5s` does.
+    const pending = listing?.has_pending ?? false;
+    const interval = pending ? (pollInterval !== undefined ? pollInterval : (listing?.poll_ms ?? null)) : null;
+    useEffect(() => startPolling(() => refresh.current(), interval), [interval, refresh]);
+
+    const remove = async () => {
+        const row = confirming;
+        setConfirming(null);
+        if (!row) {
+            return;
+        }
+        setRemoving(row.id);
+        try {
+            setListing(await removeExport(client, row.id, page));
+            setError(null);
+        } catch {
+            setError(t.error);
+            void load(page);
+        } finally {
+            setRemoving(null);
+        }
+    };
+
+    const headers: [string, 'left' | 'center' | 'right'][] = [
+        [t.colModel, 'left'],
+        [t.colFormat, 'left'],
+        [t.colStatus, 'center'],
+        [t.colRows, 'right'],
+        [t.colCreated, 'left'],
+        [t.colActions, 'right'],
+    ];
+
+    return (
+        <section className="pf">
+            <header className="pf-page-header">
+                <h2 className="pf-page-title">{t.exportsTitle}</h2>
+            </header>
+
+            {error && <ForgeAlert type="danger">{error}</ForgeAlert>}
+
+            {listing === null ? (
+                !error && <ForgeSpinner label={t.loading} />
+            ) : listing.data.length === 0 ? (
+                <ForgeEmpty title={t.exportsEmpty} />
+            ) : (
+                <div className="pf-table-wrap" aria-busy={loading || undefined}>
+                    <table className="pf-table">
+                        <thead>
+                            <tr>
+                                {headers.map(([header, align]) => (
+                                    <th key={header} scope="col" style={{ textAlign: align }}>
+                                        {header}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        {/* Announces queued → processing → done/failed as the panel refreshes. */}
+                        <tbody aria-live="polite">
+                            {listing.data.map((row) => (
+                                <tr key={row.id}>
+                                    <td>{row.model}</td>
+                                    <td style={{ textTransform: 'uppercase', fontSize: 12 }}>{row.format}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <span className="pf" data-color={exportStatusColor(row.status)} style={statusStyle} title={row.error ?? undefined}>
+                                            {t.status[row.status] ?? row.status}
+                                        </span>
+                                        {row.error && (
+                                            <div className="pf-field-error" style={{ fontSize: 11 }} title={row.error}>
+                                                {row.error}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td style={{ textAlign: 'right' }}>{row.rows ?? '—'}</td>
+                                    <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{row.created_at_display}</td>
+                                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                        {row.download_url && (
+                                            <ForgeButton size="sm" flat href={row.download_url}>
+                                                {t.download}
+                                            </ForgeButton>
+                                        )}{' '}
+                                        <ForgeButton size="sm" flat color="danger" loading={removing === row.id} onClick={() => setConfirming(row)}>
+                                            {t.delete}
+                                        </ForgeButton>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {listing && listing.meta.last_page > 1 && <ForgePagination page={page} lastPage={listing.meta.last_page} onChange={(target) => void load(target)} />}
+
+            <ForgeModal
+                open={confirming !== null}
+                onClose={() => setConfirming(null)}
+                title={t.delete}
+                size="sm"
+                footer={
+                    <>
+                        <ForgeButton flat color="dark" onClick={() => setConfirming(null)}>
+                            {t.cancel}
+                        </ForgeButton>
+                        <ForgeButton color="danger" onClick={() => void remove()}>
+                            {t.delete}
+                        </ForgeButton>
+                    </>
+                }
+            >
+                <p>{t.removeConfirm}</p>
+            </ForgeModal>
+        </section>
+    );
+}

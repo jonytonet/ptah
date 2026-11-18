@@ -1,5 +1,7 @@
 import { ApiError, PtahApi } from './api';
+import { NO_FEATURES } from './types';
 import type {
+    Features,
     Field,
     ListState,
     LookupItem,
@@ -42,7 +44,16 @@ export interface CrudState {
     form: FormState | null;
     /** The record awaiting "delete?" confirmation. */
     deleting: RowId | null;
+    /** The feature panel open over the screen (history, attachments, import…), with what it was opened for. */
+    panel: Panel | null;
     toasts: Toast[];
+}
+
+export interface Panel {
+    name: string;
+    /** The record the panel is about, when it is about one. */
+    id: RowId | null;
+    payload: Record<string, unknown>;
 }
 
 export interface ControllerOptions {
@@ -102,6 +113,7 @@ export class CrudController {
             selection: [],
             form: null,
             deleting: null,
+            panel: null,
             toasts: [],
         };
     }
@@ -218,6 +230,29 @@ export class CrudController {
     }
 
     // ── Listing ─────────────────────────────────────────────────────────────
+
+    /**
+     * Changes any part of the listing state and reloads — what the filter
+     * pieces build on (operators, date operators, quick dates…). Goes back to
+     * the first page unless the patch names one.
+     */
+    patchList(patch: Partial<ListState>): Promise<void> {
+        return this.change(patch);
+    }
+
+    /** What the screen has on; all off until the schema arrives. */
+    get features(): Features {
+        return this.state.schema?.features ?? NO_FEATURES;
+    }
+
+    /** Opens a feature panel (one at a time): `openPanel('history', row.id)`. */
+    openPanel(name: string, id: RowId | null = null, payload: Record<string, unknown> = {}): void {
+        this.set({ panel: { name, id, payload } });
+    }
+
+    closePanel(): void {
+        this.set({ panel: null });
+    }
 
     setSearch(search: string): Promise<void> {
         return this.change({ search });

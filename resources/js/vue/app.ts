@@ -8,16 +8,35 @@ import { createApp, defineComponent, h } from 'vue';
 import type { Component, PropType, VNode } from 'vue';
 import { PtahApi, words } from '../core';
 import type { ControllerOptions } from '../core';
+import { PtahAudit, PtahUserPermissions } from './admin/access';
+import { PtahCompanies, PtahDepartments } from './admin/company';
+import { PtahMenuAdmin, PtahSettings } from './admin/menu';
+import { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
+import { PtahExportsPanel } from './admin/shell';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
 import { ForgePageHeader } from './forge';
 import PtahCrud from './PtahCrud.vue';
 import PtahLayout from './PtahLayout.vue';
 
+/** The administration screens ptah ships, by the page key the server names. */
+const ADMIN = {
+    companies: PtahCompanies,
+    departments: PtahDepartments,
+    roles: PtahRoles,
+    pages: PtahPages,
+    'access-users': PtahUserPermissions,
+    'access-audit': PtahAudit,
+    'permission-guide': PtahPermissionGuide,
+    menu: PtahMenuAdmin,
+    settings: PtahSettings,
+    exports: PtahExportsPanel,
+} as Record<string, Component>;
+
 export const PtahApp = defineComponent({
     name: 'PtahApp',
     props: {
-        /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`. */
+        /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`, or an administration screen: `companies`, `departments`, `roles`, `pages`, `access-users`, `access-audit`, `permission-guide`, `menu`, `settings`, `exports`. */
         page: { type: String, required: true },
         /** The key of `CrudScreen::register()`, for a `crud` page. */
         screen: { type: String, default: '' },
@@ -68,6 +87,8 @@ export const PtahApp = defineComponent({
                 content = [h(ForgePageHeader, { title: t.profile }), h(PtahProfile, common)];
             } else if (props.page === 'dashboard') {
                 content = h(PtahDashboard, common);
+            } else if (props.page in ADMIN) {
+                content = h(ADMIN[props.page], common);
             } else {
                 content = h(PtahCrud, { screen: props.screen, ...common, onAction: props.onAction });
             }

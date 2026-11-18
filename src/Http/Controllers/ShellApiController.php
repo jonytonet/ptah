@@ -11,6 +11,7 @@ use Ptah\Crud\CrudScreenRegistry;
 use Ptah\Services\DashboardService;
 use Ptah\Support\MenuResolver;
 use Ptah\Support\ProfilePhoto;
+use Ptah\Support\StackPage;
 
 /**
  * What a client's layout needs around the CRUD screens (1.59.0): the menu —
@@ -52,6 +53,8 @@ class ShellApiController extends Controller
                 'logo' => self::asset(config('ptah.brand.logo')),
                 'logo_dark' => self::asset(config('ptah.brand.logo_dark')),
             ],
+            // The top bar: company switcher, bell, administration links.
+            'shell' => StackPage::shell(),
         ]);
     }
 

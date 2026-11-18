@@ -799,6 +799,10 @@ textarea.pf-control { resize: vertical; }
 .pl-account-mail { display: block; font-size: 0.75rem; color: var(--pc-text-muted); }
 .pl-account-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--pc-text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .pl-account-item:hover { background: var(--pc-bg-hover); }
+.pl-account-item[aria-current='page'] { color: var(--pc-primary); font-weight: 600; }
+.pl-account-label { padding: 8px 10px 4px; margin-top: 4px; border-top: 1px solid var(--pc-line); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-text-muted); }
+.pl-account-group { padding: 4px 0; }
+.pl-account-menu { max-height: min(32rem, 80vh); overflow-y: auto; }
 .pl-content { padding: 16px; }
 .pl-overlay { display: none; }
 

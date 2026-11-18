@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import {
     forgetDrafts,
     initials,
+    isActive,
     isCollapseShortcut,
     isDark,
     onDarkChange,
@@ -16,6 +17,8 @@ import {
 } from '../core';
 import type { Me, MenuLink, Shell } from '../core';
 import PtahNav from './PtahNav.vue';
+import { PtahCompanySwitcher } from './admin/company';
+import { PtahNotificationBell } from './admin/shell';
 
 const props = defineProps<{
     /** The name shown above the menu. Defaults to the app's name. */
@@ -56,6 +59,8 @@ const current = computed(() => props.path ?? (typeof window !== 'undefined' ? wi
 // Only the icons: collapsed on a desktop, and the mouse is not over it.
 const iconOnly = computed(() => desktop.value && collapsed.value && !hovered.value);
 const name = computed(() => shell.value?.brand.name ?? '');
+const extras = computed(() => shell.value?.shell ?? { company_switcher: false, notifications: false, admin: [] });
+const lang = computed(() => props.locale ?? me.value?.locale);
 const results = computed<MenuLink[]>(() => searchMenu(shell.value?.flat ?? [], query.value));
 
 const collapse = (value: boolean) => {
@@ -151,7 +156,7 @@ onMounted(() => {
             shell.value = value;
         })
         .catch(() => {
-            shell.value = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null } };
+            shell.value = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null }, shell: { company_switcher: false, notifications: false, admin: [] } };
         });
     void client
         .me()
@@ -259,7 +264,9 @@ onBeforeUnmount(() => {
                 </button>
                 <span v-if="title" class="pl-topbar-title">{{ title }}</span>
                 <div class="pl-topbar-end">
+                    <span v-if="extras.company_switcher" class="pl-only-desktop"><PtahCompanySwitcher :api="client" :locale="lang" /></span>
                     <slot name="topbar" />
+                    <PtahNotificationBell v-if="extras.notifications" :api="client" :locale="lang" :on-navigate="onNavigate" />
                     <button type="button" class="pl-icon-btn" :aria-label="dark ? t.lightMode : t.darkMode" :aria-pressed="dark" @click="toggleDark(themeModeUrl)">{{ dark ? '☀' : '☾' }}</button>
                     <div v-if="me?.user" ref="account" class="pl-account">
                         <button type="button" class="pl-account-btn" aria-haspopup="true" :aria-expanded="accountOpen" :aria-label="`${t.account}: ${me.user.name}`" @click="accountOpen = !accountOpen">
@@ -276,6 +283,12 @@ onBeforeUnmount(() => {
                             </li>
                             <li v-if="profileUrl">
                                 <a class="pl-account-item" :href="profileUrl">{{ t.profile }}</a>
+                            </li>
+                            <!-- On a phone the switcher of the bar is hidden; it lives here. -->
+                            <li v-if="extras.company_switcher" class="pl-only-mobile pl-account-group"><PtahCompanySwitcher :api="client" :locale="lang" layout="stacked" /></li>
+                            <li v-if="extras.admin.length" class="pl-account-label">{{ t.administration }}</li>
+                            <li v-for="link in extras.admin" :key="link.url">
+                                <a class="pl-account-item" :href="link.url" :aria-current="isActive({ label: link.label, url: link.url }, current) ? 'page' : undefined"><i :class="link.icon" aria-hidden="true" /> {{ link.label }}</a>
                             </li>
                             <li v-if="onLogout">
                                 <button type="button" class="pl-account-item" @click="logout">{{ t.logOut }}</button>

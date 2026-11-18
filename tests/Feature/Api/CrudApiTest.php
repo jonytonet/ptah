@@ -97,6 +97,29 @@ class CrudApiTest extends TestCase
     }
 
     #[Test]
+    public function the_schema_says_which_features_the_screen_has_on(): void
+    {
+        $features = $this->getJson('/ptah/api/crud/items/schema')->assertOk()->json('features');
+
+        // Off: nothing in this config asks for them.
+        foreach (['import', 'kanban', 'calendar', 'masterDetail', 'attachments', 'attachmentsWrite'] as $off) {
+            $this->assertFalse($features[$off], $off);
+        }
+        $this->assertTrue($features['quickDates']);
+
+        // On when the config turns them on.
+        $config = CrudConfig::where('model', ApiItem::class)->where('route', '')->firstOrFail();
+        $config->update(['config' => $config->config + [
+            'importConfig' => ['enabled' => true],
+            'masterDetail' => [['relation' => 'lines']],
+        ]]);
+
+        $features = $this->getJson('/ptah/api/crud/items/schema')->json('features');
+        $this->assertTrue($features['import']);
+        $this->assertTrue($features['masterDetail']);
+    }
+
+    #[Test]
     public function the_listing_pages_sorts_searches_and_filters(): void
     {
         $json = $this->getJson('/ptah/api/crud/items?sort=name&direction=asc&per_page=2')->assertOk()->json();

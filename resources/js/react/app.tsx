@@ -8,14 +8,33 @@ import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { PtahApi, words } from '../core';
 import type { ControllerOptions } from '../core';
+import { PtahAudit, PtahUserPermissions } from './admin/access';
+import { PtahCompanies, PtahDepartments } from './admin/company';
+import { PtahMenuAdmin, PtahSettings } from './admin/menu';
+import { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
+import { PtahExportsPanel } from './admin/shell';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
 import { ForgePageHeader } from './forge';
 import { PtahCrud } from './PtahCrud';
 import { PtahLayout } from './PtahLayout';
 
+/** The administration screens ptah ships, by the page key the server names. */
+const ADMIN = {
+    companies: PtahCompanies,
+    departments: PtahDepartments,
+    roles: PtahRoles,
+    pages: PtahPages,
+    'access-users': PtahUserPermissions,
+    'access-audit': PtahAudit,
+    'permission-guide': PtahPermissionGuide,
+    menu: PtahMenuAdmin,
+    settings: PtahSettings,
+    exports: PtahExportsPanel,
+} as const;
+
 export interface PtahAppProps {
-    /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`. */
+    /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`, or an administration screen: `companies`, `departments`, `roles`, `pages`, `access-users`, `access-audit`, `permission-guide`, `menu`, `settings`, `exports`. */
     page: string;
     /** The key of `CrudScreen::register()`, for a `crud` page. */
     screen?: string;
@@ -73,6 +92,9 @@ export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props
         );
     } else if (page === 'dashboard') {
         content = <PtahDashboard {...common} />;
+    } else if (page in ADMIN) {
+        const Screen = ADMIN[page as keyof typeof ADMIN];
+        content = <Screen {...common} />;
     } else {
         content = <PtahCrud screen={screen} {...common} onAction={onAction} />;
     }

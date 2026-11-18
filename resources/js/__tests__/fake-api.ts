@@ -1,4 +1,5 @@
 import { PtahApi } from '../core/api';
+import { NO_FEATURES } from '../core/types';
 import type { Listing, ListState, Row, Schema } from '../core/types';
 
 export interface Call {
@@ -59,6 +60,7 @@ export const schema: Schema = {
     trash: false,
     defaults: { sort: 'id', direction: 'DESC', per_page: 25 },
     preferences: { columns: { id: true, name: true, status: true }, column_order: [], column_widths: {}, view_mode: 'auto', view_density: 'global', saved_filters: {}, search_history: [] },
+    features: NO_FEATURES,
 };
 
 function toRow(item: (typeof rowsSeed)[number]): Row {

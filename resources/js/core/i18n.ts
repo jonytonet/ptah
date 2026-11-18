@@ -101,6 +101,7 @@ const en = {
     fontsize: 'Font size',
     restoreDefaults: 'Restore defaults',
     logOut: 'Log out',
+    administration: 'Administration',
     dashboard: 'Dashboard',
     welcome: 'Welcome',
     // Layout
@@ -217,6 +218,7 @@ const ptBR: Words = {
     fontsize: 'Tamanho da fonte',
     restoreDefaults: 'Restaurar padrões',
     logOut: 'Sair',
+    administration: 'Administração',
     dashboard: 'Dashboard',
     welcome: 'Bem-vindo',
     collapseMenu: 'Recolher o menu',

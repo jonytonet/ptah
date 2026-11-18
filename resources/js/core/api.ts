@@ -236,7 +236,7 @@ export class PtahApi {
     async shell(): Promise<Shell> {
         const raw = await this.request<Partial<Shell>>('GET', '/menu');
 
-        return { data: raw.data ?? [], flat: raw.flat ?? [], jump: raw.jump ?? false, brand: raw.brand ?? { name: '', logo: null, logo_dark: null } };
+        return { data: raw.data ?? [], flat: raw.flat ?? [], jump: raw.jump ?? false, brand: raw.brand ?? { name: '', logo: null, logo_dark: null }, shell: raw.shell ?? { company_switcher: false, notifications: false, admin: [] } };
     }
 
     me(): Promise<Me> {

@@ -56,6 +56,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `routes/ptah-screens.php`; everything else it generates is unchanged.
   - Checked in a real Laravel 13 app, both stacks: build, page in Chrome,
     save over HTTP with CSRF (419 without the token, 401 signed out).
+  - **The administration screens too**: companies, departments, roles (with
+    the permission matrix), pages and objects, users and permissions, audit
+    log, permission guide, menu management and settings — plus the company
+    switcher, the notification bell and the exports panel. The URLs and
+    route names are the ones of the Livewire stack (`/ptah-roles`,
+    `ptah.acl.roles`…): in React/Vue they answer with the stack page, behind
+    the same lock (`ptah.master`, `ptah_can_manage_structure()`), and the
+    Livewire components stay the engine behind `ptah/api/admin/*`
+    (`Ptah\Http\Headless\*`). The account menu of the layout lists the
+    administration links this user may open; the top bar shows the company
+    switcher and the bell when their modules are on.
   - Docs: [Stacks.md](docs/Stacks.md).
   - Measured on the same screen (25 rows of 5,000, in-process): a page change
     takes ~10 ms and ~11 KB through the API, ~70 ms and ~440 KB through

@@ -75,7 +75,36 @@ export interface Schema {
     trash: boolean;
     defaults: { sort: string; direction: string; per_page: number };
     preferences: Preferences;
+    /** What else this screen has on, for this user. */
+    features: Features;
 }
+
+export interface Features {
+    history: boolean;
+    attachments: boolean;
+    /** May add and remove attachments (reading them is `attachments`). */
+    attachmentsWrite: boolean;
+    import: boolean;
+    kanban: boolean;
+    calendar: boolean;
+    formDraft: boolean;
+    masterDetail: boolean;
+    quickDates: boolean;
+    advancedSearch: boolean;
+}
+
+export const NO_FEATURES: Features = {
+    history: false,
+    attachments: false,
+    attachmentsWrite: false,
+    import: false,
+    kanban: false,
+    calendar: false,
+    formDraft: false,
+    masterDetail: false,
+    quickDates: false,
+    advancedSearch: false,
+};
 
 export interface Cell {
     value: string | number | boolean | null;
@@ -203,6 +232,15 @@ export interface Shell {
     /** Whether the sidebar offers the search. */
     jump: boolean;
     brand: { name: string; logo: string | null; logo_dark: string | null };
+    /** What the top bar offers this user (the rules of the Livewire navbar). */
+    shell: ShellExtras;
+}
+
+export interface ShellExtras {
+    company_switcher: boolean;
+    notifications: boolean;
+    /** The administration links this user may open. */
+    admin: { label: string; url: string; icon: string }[];
 }
 
 export interface Me {

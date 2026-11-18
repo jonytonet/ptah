@@ -130,6 +130,33 @@ default). ptah's own auth module (`ptah:module auth`) keeps working in the
 React and Vue stacks — its login, 2FA and profile pages are served as before —
 and so does any auth of your own, including a Laravel starter kit's.
 
+## Administration screens
+
+With the modules on, ptah's own screens are served in your stack at the same
+URLs and route names as in Livewire — nothing to register:
+
+| URL | Route name | Component |
+|---|---|---|
+| `/ptah-companies` | `ptah.company.index` | `PtahCompanies` |
+| `/ptah-departments` | `ptah.acl.departments` | `PtahDepartments` |
+| `/ptah-roles` | `ptah.acl.roles` | `PtahRoles` |
+| `/ptah-pages` | `ptah.acl.pages` | `PtahPages` |
+| `/ptah-users-acl` | `ptah.acl.users` | `PtahUserPermissions` |
+| `/ptah-audit` | `ptah.acl.audit` | `PtahAudit` |
+| `/ptah-permission-guide` | `ptah.acl.guide` | `PtahPermissionGuide` |
+| `/ptah-menu` | `ptah.menu.manage` | `PtahMenuAdmin` |
+| `/ptah-settings` | `ptah.settings` | `PtahSettings` |
+
+The locks are the ones of the Livewire screens (`ptah.master` for the access
+control screens, `ptah_can_manage_structure()` for companies, menu and
+settings), applied to the page and again to every call of `ptah/api/admin/*`.
+
+`PtahLayout` reads from the server what the top bar offers this user: the
+company switcher (company module), the notification bell
+(`ptah.notifications.enabled`) and, in the account menu, the administration
+links the user may open. `PtahCompanySwitcher`, `PtahNotificationBell` and
+`PtahExportsPanel` are exported for a layout of your own.
+
 ## What the React and Vue screens do not have yet
 
 The visual config editor, spreadsheet import, kanban/calendar, record history,
