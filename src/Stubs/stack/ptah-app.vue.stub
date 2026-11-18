@@ -1,34 +1,12 @@
-// Ptah — Vue entry. Mounts a screen on the page ptah:forge generates
-// (resources/views/<entity>/index.blade.php → ptah::stack.app).
+// Ptah — Vue entry. Mounts the page the server describes on #ptah-app
+// (ptah::stack.app): a CRUD screen, the dashboard, the profile, the sign-in
+// pages. A page ptah adds later arrives with `composer update`.
 //
-// Yours to change: swap PtahLayout for your own shell, pass `onAction` to
-// handle row actions, or import { PtahCrud } from '@ptah/vue' in any page.
-import { createApp, h } from 'vue';
-import { PtahApi, PtahCrud, PtahLayout } from '@ptah/vue';
+// Yours to change:
+//   mountPtah(el, { onAction: (name, row) => … })   row actions of the config
+//   mountPtah(el, { pages: { reports: Reports } })  your own pages (data-page="reports")
+// or import { PtahCrud, PtahLayout, ForgeButton… } from '@ptah/vue' in any page of yours.
+import { mountPtah } from '@ptah/vue';
 import '@ptah/ptah-ui.css';
 
-const el = document.getElementById('ptah-app');
-
-if (el) {
-    const { screen, title, brand, locale, api: baseUrl, logout } = el.dataset;
-    const api = new PtahApi({ baseUrl });
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
-    createApp({
-        render: () =>
-            h(
-                PtahLayout,
-                { api, brand, title, locale },
-                {
-                    default: () => h(PtahCrud, { screen, api, locale }),
-                    topbar: () =>
-                        logout
-                            ? h('form', { method: 'post', action: logout }, [
-                                  h('input', { type: 'hidden', name: '_token', value: csrf }),
-                                  h('button', { type: 'submit', class: 'pc-btn' }, locale?.startsWith('pt') ? 'Sair' : 'Log out'),
-                              ])
-                            : null,
-                },
-            ),
-    }).mount(el);
-}
+mountPtah(document.getElementById('ptah-app'));

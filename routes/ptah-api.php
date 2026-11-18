@@ -47,6 +47,7 @@ Route::middleware((array) config('ptah.crud_api.middleware', ['web', 'auth']))
     ->group(function () {
         Route::get('menu', [ShellApiController::class, 'menu'])->name('menu');
         Route::get('me', [ShellApiController::class, 'me'])->name('me');
+        Route::get('dashboard', [ShellApiController::class, 'dashboard'])->name('dashboard');
     });
 
 // ptah's own sign-in and profile (auth module) for the React and Vue stacks.

@@ -189,3 +189,79 @@ export interface Me {
     locale: string;
     screens: string[];
 }
+
+// ── Auth (ptah's auth module) ───────────────────────────────────────────────
+
+export interface AuthConfig {
+    app: string;
+    locale: string;
+    remember_me: boolean;
+    home: string;
+    urls: { login: string | null; forgot: string | null; two_factor: string | null };
+    signed_in: boolean;
+    two_factor_pending: boolean;
+    status: string | null;
+}
+
+/** The answer of an auth action. `errors` are per field (a 422 of the validator or of the page). */
+export interface AuthResult {
+    ok: boolean;
+    error?: string | null;
+    errors?: Record<string, string>;
+    message?: string | null;
+    redirect?: string | null;
+    two_factor?: boolean;
+    messages?: Message[];
+    profile?: Profile;
+    secret?: string | null;
+    qr?: string | null;
+    recovery_codes?: string[];
+    sessions?: SessionInfo[];
+}
+
+export interface Appearance {
+    light: string;
+    dark: string;
+    accent: string;
+    text: string;
+    density: string;
+    fontsize: string;
+    mode: string | null;
+    choices: Record<'light' | 'dark' | 'accent' | 'text' | 'density' | 'fontsize', string[]>;
+}
+
+export interface Profile {
+    name: string;
+    email: string;
+    photo_url: string | null;
+    two_factor: { available: boolean; enabled: boolean; type: string };
+    sessions_available: boolean;
+    appearance: Appearance;
+}
+
+export interface SessionInfo {
+    id: string;
+    ip_address: string;
+    browser: string;
+    platform: string;
+    last_activity_human: string;
+    is_current: boolean;
+}
+
+// ── Dashboard ───────────────────────────────────────────────────────────────
+
+/** A widget of config/ptah-dashboard.php, already computed by the server. */
+export interface Widget {
+    type: 'stat' | 'trend' | 'breakdown' | 'latest' | string;
+    label: string;
+    color: string;
+    link: string | null;
+    /** Why this widget could not be computed, when it could not. */
+    error: string | null;
+    value?: string | number;
+    display_total?: string;
+    max?: number;
+    points?: { label: string; value: number; display: string }[];
+    items?: { label: string; value: number; display: string; others?: boolean }[];
+    rows?: (string | number | null)[][];
+}

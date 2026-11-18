@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "node"]
   },
   "include": ["resources/js/core", "resources/js/react", "resources/js/__tests__/core", "resources/js/__tests__/react"]
 }

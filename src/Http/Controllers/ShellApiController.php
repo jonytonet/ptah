@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Ptah\Crud\CrudScreenRegistry;
+use Ptah\Services\DashboardService;
 use Ptah\Support\MenuResolver;
 
 /**
@@ -19,6 +20,17 @@ class ShellApiController extends Controller
     public function menu(): JsonResponse
     {
         return response()->json(['data' => MenuResolver::tree()]);
+    }
+
+    /**
+     * The widgets of config/ptah-dashboard.php this user may see, computed —
+     * what ptah::dashboard.widgets draws. `group` names a group of widgets.
+     */
+    public function dashboard(Request $request, DashboardService $dashboard): JsonResponse
+    {
+        $group = $request->query('group');
+
+        return response()->json(['data' => array_values($dashboard->visibleWidgets(is_string($group) && $group !== '' ? $group : null))]);
     }
 
     public function me(Request $request, CrudScreenRegistry $screens): JsonResponse

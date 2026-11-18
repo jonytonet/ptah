@@ -14,6 +14,7 @@
     $ptahLogout = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.auth.logout')
         ? route('ptah.auth.logout')
         : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : null);
+    $ptahProfile = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile') ? route('ptah.profile') : null;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -41,6 +42,7 @@
          data-brand="{{ config('app.name') }}"
          data-locale="{{ app()->getLocale() }}"
          data-api="{{ url(config('ptah.crud_api.prefix', 'ptah/api')) }}"
+         @if ($ptahProfile) data-profile="{{ $ptahProfile }}" @endif
          @if ($ptahLogout) data-logout="{{ $ptahLogout }}" @endif></div>
 </body>
 </html>

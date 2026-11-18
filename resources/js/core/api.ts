@@ -1,5 +1,7 @@
 import type {
     ActionResult,
+    AuthConfig,
+    AuthResult,
     FormPayload,
     Listing,
     ListState,
@@ -7,9 +9,12 @@ import type {
     Me,
     MenuItem,
     Preferences,
+    Profile,
     RowId,
     SaveResult,
     Schema,
+    SessionInfo,
+    Widget,
 } from './types';
 
 export interface ApiOptions {
@@ -219,5 +224,120 @@ export class PtahApi {
 
     me(): Promise<Me> {
         return this.request('GET', '/me');
+    }
+
+    /** The dashboard widgets this user may see; `group` names a group of them. */
+    async dashboard(group?: string): Promise<Widget[]> {
+        return (await this.request<{ data: Widget[] }>('GET', `/dashboard${group ? `?group=${encodeURIComponent(group)}` : ''}`)).data ?? [];
+    }
+
+    // ── Auth (ptah's auth module) ───────────────────────────────────────────
+
+    /**
+     * An auth action. A 422 of Laravel's validator (`{message, errors: {field:
+     * [..]}}`) and a refusal of the page (`{ok: false, error, errors}`) come
+     * back in the same shape.
+     */
+    private async auth(method: string, path: string, body?: unknown): Promise<AuthResult> {
+        const raw = await this.request<Record<string, unknown>>(method, `/auth${path}`, body);
+
+        if (raw && raw.ok === undefined) {
+            const errors: Record<string, string> = {};
+            for (const [field, messages] of Object.entries((raw.errors ?? {}) as Record<string, string[] | string>)) {
+                errors[field] = Array.isArray(messages) ? String(messages[0] ?? '') : String(messages);
+            }
+
+            return { ok: false, errors, error: Object.keys(errors).length === 0 ? String(raw.message ?? '') : null };
+        }
+
+        return raw as unknown as AuthResult;
+    }
+
+    authConfig(): Promise<AuthConfig> {
+        return this.request('GET', '/auth/config');
+    }
+
+    login(email: string, password: string, remember = false): Promise<AuthResult> {
+        return this.auth('POST', '/login', { email, password, remember });
+    }
+
+    twoFactor(code: string, recovery = false): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor', { code, recovery });
+    }
+
+    twoFactorEmail(): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/email');
+    }
+
+    forgotPassword(email: string): Promise<AuthResult> {
+        return this.auth('POST', '/forgot-password', { email });
+    }
+
+    resetPassword(token: string, email: string, password: string, password_confirmation: string): Promise<AuthResult> {
+        return this.auth('POST', '/reset-password', { token, email, password, password_confirmation });
+    }
+
+    logout(): Promise<AuthResult> {
+        return this.auth('POST', '/logout');
+    }
+
+    profile(): Promise<Profile> {
+        return this.request('GET', '/auth/profile');
+    }
+
+    updateProfile(name: string, email: string, current_password = ''): Promise<AuthResult> {
+        return this.auth('PUT', '/profile', { name, email, current_password });
+    }
+
+    updatePassword(current_password: string, password: string, password_confirmation: string): Promise<AuthResult> {
+        return this.auth('PUT', '/password', { current_password, password, password_confirmation });
+    }
+
+    updatePhoto(photo: File): Promise<AuthResult> {
+        const form = new FormData();
+        form.append('photo', photo);
+
+        return this.auth('POST', '/photo', form);
+    }
+
+    removePhoto(): Promise<AuthResult> {
+        return this.auth('DELETE', '/photo');
+    }
+
+    /** One or more axes (light, dark, accent, text, density, fontsize), or `{ reset: true }`. */
+    updateAppearance(changes: Record<string, string | boolean>): Promise<AuthResult> {
+        return this.auth('PUT', '/appearance', changes);
+    }
+
+    startTotp(current_password: string): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/totp', { current_password });
+    }
+
+    confirmTotp(code: string): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/totp/confirm', { code });
+    }
+
+    enableEmailTwoFactor(current_password: string): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/email-method', { current_password });
+    }
+
+    disableTwoFactor(current_password: string): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/disable', { current_password });
+    }
+
+    recoveryCodes(current_password: string, regenerate = false): Promise<AuthResult> {
+        return this.auth('POST', '/two-factor/recovery-codes', { current_password, regenerate });
+    }
+
+    async sessions(): Promise<SessionInfo[]> {
+        return (await this.request<{ data: SessionInfo[] }>('GET', '/auth/sessions')).data ?? [];
+    }
+
+    revokeSession(id: string): Promise<AuthResult> {
+        return this.auth('DELETE', `/sessions/${encodeURIComponent(id)}`);
+    }
+
+    revokeOtherSessions(): Promise<AuthResult> {
+        return this.auth('DELETE', '/sessions');
     }
 }
