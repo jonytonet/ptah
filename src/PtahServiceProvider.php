@@ -51,6 +51,7 @@ use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Commands\WhyEmptyCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
+use Ptah\Crud\CrudScreenRegistry;
 use Ptah\Events\PtahNotificationCreated;
 use Ptah\Http\Middleware\PtahMaster;
 use Ptah\Http\Middleware\PtahPermission;
@@ -192,6 +193,8 @@ class PtahServiceProvider extends ServiceProvider
         }
         $this->app->singleton(CacheService::class);
         $this->app->singleton(CrudConfigService::class);
+        // Screens of the headless CRUD API (1.59.0).
+        $this->app->singleton(CrudScreenRegistry::class);
         $this->app->singleton(SettingsService::class);
         $this->app->singleton(FilterService::class);
         $this->app->singleton(FormValidatorService::class);
@@ -878,6 +881,11 @@ class PtahServiceProvider extends ServiceProvider
 
         // /ptah-settings (the screen explains how to install when the table is missing)
         $this->loadRoutesFrom(__DIR__.'/../routes/ptah-settings.php');
+
+        // Headless CRUD API (1.59.0) — opt-in.
+        if (config('ptah.crud_api.enabled')) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/ptah-api.php');
+        }
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-auth.php');

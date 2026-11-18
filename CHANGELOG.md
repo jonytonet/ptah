@@ -7,6 +7,40 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.59.0] - 2026-11-18
+
+### Added
+
+- **Headless CRUD API** — the BaseCrud over JSON, for a React, Vue or any
+  other client. Opt-in (`PTAH_CRUD_API=true`); nothing changes for a project that
+  does not turn it on. It is the same engine as the Livewire screen
+  (`Ptah\Crud\CrudRuntime` runs the BaseCrud without Livewire), so the query,
+  the form, the hooks and every guard are the same code — no second
+  implementation to keep in step.
+  - Screens are registered on the server
+    (`Ptah\Crud\CrudScreen::register('products', Product::class)`, with
+    `lockedFilters`, `scope`, `whereHas`, `configRoute`, `authorize`): the
+    client never names a model and holds no state to lock.
+  - First increment: schema, listing (page, sort, search, filters, date
+    ranges, trash, totals), show, create, update, delete, restore.
+    Searchdropdown lookups, uploads, bulk and row actions, export and import
+    come next.
+  - Nothing of the Livewire screen's memory is lost: `?restore=1` reopens
+    where the user left (search, filters, sort, page) and `?remember=1` saves
+    it; column visibility, order and widths, density, view mode and named
+    filters have their own endpoints. It is the same preferences record, so
+    a user finds the same screen in Livewire and through the API.
+  - Config key `ptah.crud_api` (`ptah.api` belongs to the REST API that
+    `ptah:forge --api` generates).
+  - Measured on the same screen (25 rows of 5,000, in-process): a page change
+    takes ~10 ms and ~11 KB through the API, ~70 ms and ~440 KB through
+    Livewire. The queries are the same; what is skipped is the snapshot round
+    trip, hydration and the HTML render.
+  - Docs: [HeadlessApi.md](docs/HeadlessApi.md). Design:
+    [docs/proposals/stacks-livewire-react-vue.md](docs/proposals/stacks-livewire-react-vue.md).
+
+---
+
 ## [1.58.6] - 2026-11-18
 
 From the PetPlace requests on 1.58.5 (a sweep of all its screens).

@@ -265,6 +265,9 @@ device/browser; it never leaks credentials or any other account data.
 
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
+| `crud_api.enabled` | `PTAH_CRUD_API` | `false` | Turns on the headless CRUD API (the BaseCrud over JSON). Since 1.59.0. [HeadlessApi.md](HeadlessApi.md) |
+| `crud_api.prefix` | — | `ptah/api` | URL prefix of the API routes |
+| `crud_api.middleware` | — | `['web', 'auth']` | Middleware of the API routes — e.g. `['web', 'auth:admin']`, or `['api', 'auth:sanctum']` for tokens |
 | `crud.cache_enabled` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |
 | `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |

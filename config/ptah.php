@@ -326,6 +326,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Headless CRUD API (1.59.0)
+    |--------------------------------------------------------------------------
+    |
+    | The BaseCrud over JSON, for a React, Vue or any other client — the same
+    | engine, permissions and hooks as the Livewire screen. Off by default.
+    | A screen exists for the API only after
+    | Ptah\Crud\CrudScreen::register('key', Model::class).
+    |
+    | middleware: session auth by default. With a guard of your own use
+    |             ['web', 'auth:admin']; for tokens, ['api', 'auth:sanctum'].
+    |
+    */
+    'crud_api' => [
+        'enabled' => env('PTAH_CRUD_API', false),
+        'prefix' => 'ptah/api',
+        'middleware' => ['web', 'auth'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | BaseCrud
     |--------------------------------------------------------------------------
     |
