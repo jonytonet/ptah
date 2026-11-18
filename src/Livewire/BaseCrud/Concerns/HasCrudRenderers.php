@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Ptah\Support\IconClass;
+use Ptah\Support\PtahMask;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\Scalar;
 use Ptah\Support\ServerOnly;
@@ -447,7 +448,13 @@ trait HasCrudRenderers
     protected function renderLink(array $col, mixed $value, mixed $row): string
     {
         $template = (string) ($col['colsRendererLinkTemplate'] ?? '#');
-        $label = $col['colsRendererLinkLabel'] ?? $value;
+        // The text: an explicit label (which takes %value% / %field% too), else
+        // the value as the column's mask shows it — a WhatsApp link read
+        // `41988887777` where the column showed `(41) 98888-7777` (1.58.6).
+        // The URL keeps the raw value.
+        $label = isset($col['colsRendererLinkLabel']) && $col['colsRendererLinkLabel'] !== ''
+            ? $this->linkPlaceholders((string) $col['colsRendererLinkLabel'], $value, $row)
+            : (! empty($col['colsMask']) ? PtahMask::format((string) $col['colsMask'], $value) : $value);
         $newTab = ($col['colsRendererLinkNewTab'] ?? false)
             ? ' target="_blank" rel="noopener noreferrer"'
             : '';
@@ -455,21 +462,7 @@ trait HasCrudRenderers
         // Substitute placeholders with the RAW values, then escape the whole URL
         // once for the attribute context (avoids double-escaping and keeps the
         // scheme check below working on the real string).
-        $url = str_replace('%value%', (string) $value, $template);
-
-        if ($row instanceof Model) {
-            foreach ($row->getAttributes() as $k => $v) {
-                // A denied column (see ColumnPermissionService) must never be
-                // substituted into the link, even though the row itself was
-                // fetched from the DB (the ATTRIBUTE, not the column, is what
-                // is gated) — colsRendererLinkTemplate is config-driven, so
-                // any %field% it names is trusted to be public.
-                if (in_array($k, $this->deniedColumns, true)) {
-                    continue;
-                }
-                $url = str_replace('%'.$k.'%', (string) ($v ?? ''), $url);
-            }
-        }
+        $url = $this->linkPlaceholders($template, $value, $row);
 
         // Esquema perigoso — escapar HTML nao neutraliza `javascript:` num
         // href. A regex que estava aqui (`/^\s*(javascript|data|vbscript):/i`)
@@ -478,6 +471,30 @@ trait HasCrudRenderers
         $url = SafeUrl::sanitize($url);
 
         return '<a href="'.e($url).'"'.$newTab.' class="text-indigo-600 hover:text-indigo-800 hover:underline font-medium">'.e((string) $label).'</a>';
+    }
+
+    /**
+     * %value% and %field% of the row, RAW, in a link template or label.
+     *
+     * A denied column (see ColumnPermissionService) is never substituted, even
+     * though the row itself was fetched from the DB (the ATTRIBUTE, not the
+     * column, is what is gated) — the template is config-driven, so any
+     * %field% it names is trusted to be public.
+     */
+    protected function linkPlaceholders(string $template, mixed $value, mixed $row): string
+    {
+        $out = str_replace('%value%', Scalar::text($value), $template);
+
+        if ($row instanceof Model) {
+            foreach ($row->getAttributes() as $k => $v) {
+                if (in_array($k, $this->deniedColumns, true)) {
+                    continue;
+                }
+                $out = str_replace('%'.$k.'%', Scalar::text($v), $out);
+            }
+        }
+
+        return $out;
     }
 
     /**

@@ -690,22 +690,22 @@ trait HasCrudSearchDropdown
                     if ($labelIsRelation && SqlIdentifier::isSafe($relColumn)) {
                         $q->where(function (Builder $sub) use ($relPath, $relColumn, $like, $bind, $arraySearch) {
                             $sub->orWhereHas($relPath, function (Builder $r) use ($relColumn, $like, $bind) {
-                                $r->whereRaw(sprintf($like, $relColumn), $bind);
+                                $r->whereRaw(sprintf($like, $r->getQuery()->getGrammar()->wrap($relColumn)), $bind);
                             });
 
                             foreach ($arraySearch as $col) {
                                 if (SqlIdentifier::isSafe($col)) {
-                                    $sub->orWhereRaw(sprintf($like, $col), $bind);
+                                    $sub->orWhereRaw(sprintf($like, $sub->getQuery()->getGrammar()->wrap($col)), $bind);
                                 }
                             }
                         });
                     } elseif (! $labelIsRelation && SqlIdentifier::isSafe($sdLabel)) {
                         $q->where(function (Builder $sub) use ($sdLabel, $like, $bind, $arraySearch) {
-                            $sub->orWhereRaw(sprintf($like, $sdLabel), $bind);
+                            $sub->orWhereRaw(sprintf($like, $sub->getQuery()->getGrammar()->wrap($sdLabel)), $bind);
 
                             foreach ($arraySearch as $col) {
                                 if (SqlIdentifier::isSafe($col)) {
-                                    $sub->orWhereRaw(sprintf($like, $col), $bind);
+                                    $sub->orWhereRaw(sprintf($like, $sub->getQuery()->getGrammar()->wrap($col)), $bind);
                                 }
                             }
                         });

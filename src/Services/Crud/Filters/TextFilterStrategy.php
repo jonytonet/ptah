@@ -44,13 +44,17 @@ class TextFilterStrategy implements FilterStrategyInterface
             return $query;
         }
 
+        // Wrapped by the grammar: a reserved word (`trigger`, `order`, `key`)
+        // was a SQL syntax error inside LOWER() (1.58.6).
+        $col = $query->getQuery()->getGrammar()->wrap($field);
+
         return match (true) {
             $operator === 'IN' && is_array($value) => $query->whereIn($field, $value),
             $operator === 'NOT IN' && is_array($value) => $query->whereNotIn($field, $value),
-            $operator === 'LIKE' => $query->whereRaw('LOWER('.$field.') LIKE ?', ['%'.mb_strtolower($value).'%']),
-            $operator === 'LIKE_START' => $query->whereRaw('LOWER('.$field.') LIKE ?', [mb_strtolower($value).'%']),
-            $operator === 'LIKE_END' => $query->whereRaw('LOWER('.$field.') LIKE ?', ['%'.mb_strtolower($value)]),
-            $operator === 'NOT LIKE' => $query->whereRaw('LOWER('.$field.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
+            $operator === 'LIKE' => $query->whereRaw('LOWER('.$col.') LIKE ?', ['%'.mb_strtolower($value).'%']),
+            $operator === 'LIKE_START' => $query->whereRaw('LOWER('.$col.') LIKE ?', [mb_strtolower($value).'%']),
+            $operator === 'LIKE_END' => $query->whereRaw('LOWER('.$col.') LIKE ?', ['%'.mb_strtolower($value)]),
+            $operator === 'NOT LIKE' => $query->whereRaw('LOWER('.$col.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
             $operator === 'IS NULL' => $query->whereNull($field),
             $operator === 'IS NOT NULL' => $query->whereNotNull($field),
             default => $query->where($field, $normalized->operator, $value),

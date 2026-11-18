@@ -7,6 +7,33 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.58.6] - 2026-11-18
+
+From the PetPlace requests on 1.58.5 (a sweep of all its screens).
+
+### Fixed
+
+- **A Sim/Não select refused its own "Não" on save** ("Escolha uma opção da
+  lista." — 49 PetPlace screens). Over a `boolean` cast the value arrives as
+  `false`, and `(string) false` is `''`, which is not `'0'`. Compared as the
+  option string now (`Scalar::text`: `true`/`false` → `'1'`/`'0'`), and edit
+  opens such a select with `'1'`/`'0'`. The import had the same flaw for a
+  spreadsheet FALSE cell. A forged option is still refused.
+- **Search and filters broke on a column named like a SQL reserved word**
+  (`trigger`, `order`, `key`…): the name went bare into `LOWER(...)`. The text
+  and relation filter strategies, the relation aggregate filter and the
+  searchdropdown search now wrap it with the grammar.
+- **The `link` renderer showed the raw value** where the column has a mask.
+  Without `colsRendererLinkLabel` the text is the value through `colsMask`;
+  the URL keeps the raw value. `colsRendererLinkLabel` takes `%value%` and
+  `%field%` too.
+- **`confirmDelete()` opened the dialog on a screen without delete**
+  (`showDeleteButton: false` or no permission) and then refused silently. It
+  now refuses up front, with the reason, and `deleteRecord()`'s refusal shows
+  it too.
+
+---
+
 ## [1.58.5] - 2026-11-11
 
 From the Engepeças B2B laudo (outbound connectors screen).

@@ -91,10 +91,12 @@ class RelationFilterStrategy implements FilterStrategyInterface
             }
 
             $op = strtoupper($operator);
+            // Reserved words (`trigger`, `order`) broke the raw SQL (1.58.6).
+            $wrapped = $q->getQuery()->getGrammar()->wrap($column);
 
             match (true) {
-                $op === 'LIKE' => $q->whereRaw('LOWER('.$column.') LIKE ?', ['%'.mb_strtolower($value).'%']),
-                $op === 'NOT LIKE' => $q->whereRaw('LOWER('.$column.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
+                $op === 'LIKE' => $q->whereRaw('LOWER('.$wrapped.') LIKE ?', ['%'.mb_strtolower($value).'%']),
+                $op === 'NOT LIKE' => $q->whereRaw('LOWER('.$wrapped.') NOT LIKE ?', ['%'.mb_strtolower($value).'%']),
                 $op === 'IN' => $q->whereIn($column, (array) $value),
                 $op === 'NOT IN' => $q->whereNotIn($column, (array) $value),
                 default => $q->where($column, $operator, $value),
@@ -118,7 +120,7 @@ class RelationFilterStrategy implements FilterStrategyInterface
             $q->selectRaw('1')
                 ->groupBy($q->getModel()->getKeyName())
                 ->havingRaw(
-                    strtoupper($aggregate).'('.$column.') '.$operator.' ?',
+                    strtoupper($aggregate).'('.$q->getQuery()->getGrammar()->wrap($column).') '.$operator.' ?',
                     [(float) $value]
                 );
         });

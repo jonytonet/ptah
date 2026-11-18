@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Ptah\Support\Scalar;
 use RuntimeException;
 
 /**
@@ -111,7 +112,8 @@ final class CrudImportReader
             $options = $col['colsSelect'];
 
             foreach ($options as $optLabel => $optValue) {
-                if ((string) $optValue === (string) $value) {
+                // A spreadsheet FALSE cell is bool false: '' as a string (1.58.6).
+                if (Scalar::text($optValue) === Scalar::text($value)) {
                     return [$optValue, null];
                 }
             }
