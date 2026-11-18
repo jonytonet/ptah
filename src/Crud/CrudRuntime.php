@@ -12,6 +12,7 @@ use Illuminate\Pagination\PaginationState;
 use Illuminate\Pagination\Paginator;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Support\IconClass;
+use Ptah\Support\PtahMask;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\Scalar;
 
@@ -421,6 +422,9 @@ final class CrudRuntime extends BaseCrud
                 'readonly' => $this->ptahBool($col['colsReadonly'] ?? false),
                 'options' => self::options($col['colsSelect'] ?? null),
                 'mask' => $col['colsMask'] ?? null,
+                // The shapes of the mask, so a client masks while typing; what is
+                // stored is still decided here, on save.
+                'maskPatterns' => PtahMask::get($col['colsMask'] ?? null)['patterns'] ?? null,
                 'placeholder' => $col['colsPlaceholder'] ?? null,
                 'help' => $col['colsHelpText'] ?? null,
             ];

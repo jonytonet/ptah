@@ -24,3 +24,13 @@
 # but consuming apps never need them shipped inside vendor/.
 /.claude export-ignore
 /.gitattributes export-ignore
+
+# Front-end sources (resources/js) are compiled by the host's Vite; the
+# package's own tests and tooling stay out of the Composer archive.
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.vue   text eol=lf
+*.css   text eol=lf
+/resources/js/__tests__ export-ignore
+/vitest.config.ts       export-ignore
+/package-lock.json      export-ignore

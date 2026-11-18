@@ -1,0 +1,191 @@
+/** The contract of the ptah headless CRUD API (docs/HeadlessApi.md). */
+
+export interface Option {
+    label: string;
+    value: string;
+}
+
+export interface Column {
+    field: string;
+    label: string;
+    type: string;
+    renderer: string | null;
+    align: string | null;
+    /** The column to order by, or null when this column is not sortable. */
+    sortBy: string | null;
+}
+
+export interface Field {
+    field: string;
+    label: string;
+    type: string;
+    required: boolean;
+    readonly: boolean;
+    options: Option[] | null;
+    mask: string | null;
+    maskPatterns: string[] | null;
+    placeholder: string | null;
+    help: string | null;
+}
+
+export interface FilterDef {
+    field: string;
+    label: string;
+    type: string;
+    options: Option[] | null;
+}
+
+export interface Permissions {
+    canRead: boolean;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+    canRestore: boolean;
+    canExport: boolean;
+}
+
+export interface BulkAction {
+    action: string;
+    label: string;
+    icon: string | null;
+    confirm: string | boolean | null;
+}
+
+export interface Preferences {
+    columns: Record<string, boolean>;
+    column_order: string[];
+    column_widths: Record<string, number>;
+    view_mode: string;
+    view_density: string;
+    saved_filters: Record<string, Record<string, unknown>>;
+    search_history: string[];
+}
+
+export interface Schema {
+    title: string;
+    titleSingular: string;
+    key: string;
+    columns: Column[];
+    form: Field[];
+    filters: FilterDef[];
+    permissions: Permissions;
+    bulkActions: BulkAction[];
+    selectable: boolean;
+    export: { enabled: boolean; formats: string[] };
+    trash: boolean;
+    defaults: { sort: string; direction: string; per_page: number };
+    preferences: Preferences;
+}
+
+export interface Cell {
+    value: string | number | boolean | null;
+    /** What the Livewire screen shows for this cell — rendered and escaped by the server. */
+    html: string;
+}
+
+export interface RowAction {
+    label: string;
+    type: 'link' | 'action' | 'javascript' | string;
+    value: string;
+    icon: string | null;
+    color: string;
+    confirm: string | null;
+}
+
+export type RowId = number | string;
+
+export interface Row {
+    id: RowId;
+    cells: Record<string, Cell>;
+    style: string | null;
+    actions: RowAction[];
+    trashed: boolean;
+}
+
+export interface ListState {
+    page: number;
+    per_page: number;
+    sort: string;
+    direction: string;
+    search: string;
+    filters: Record<string, unknown>;
+    operators: Record<string, string>;
+    date_ranges: Record<string, string>;
+    date_operators: Record<string, string>;
+    quick_date: string;
+    trashed: boolean;
+}
+
+export interface Meta {
+    page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+    sort: string;
+    direction: string;
+    search: string;
+    trashed: boolean;
+}
+
+export interface Total {
+    field: string;
+    aggregate: string;
+    value: number | string | null;
+}
+
+export interface Message {
+    text: string;
+    level: string;
+}
+
+export interface Listing {
+    data: Row[];
+    meta: Meta;
+    state: ListState;
+    totals: Total[];
+    messages: Message[];
+}
+
+export interface FormPayload {
+    data: Record<string, unknown>;
+    labels: Record<string, string>;
+}
+
+export interface SaveResult {
+    ok: boolean;
+    id: RowId | null;
+    errors: Record<string, string>;
+    messages: Message[];
+}
+
+export interface ActionResult {
+    ok: boolean;
+    messages: Message[];
+    remaining?: string[];
+    url?: string | null;
+}
+
+export interface LookupItem {
+    value: string | number;
+    label: string;
+    [key: string]: unknown;
+}
+
+export interface MenuItem {
+    id?: number | string | null;
+    label: string;
+    text?: string;
+    url?: string;
+    icon?: string;
+    type?: string;
+    target?: string;
+    match?: string;
+    children?: MenuItem[];
+}
+
+export interface Me {
+    user: { id: RowId; name: string; email: string } | null;
+    company_id: number | null;
+    locale: string;
+    screens: string[];
+}
