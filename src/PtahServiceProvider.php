@@ -885,6 +885,11 @@ class PtahServiceProvider extends ServiceProvider
         // Headless CRUD API (1.59.0) — opt-in.
         if (config('ptah.crud_api.enabled')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-api.php');
+
+            // The host's screens (written by ptah:forge in the React/Vue stack).
+            if (is_file($screens = base_path('routes/ptah-screens.php'))) {
+                require $screens;
+            }
         }
 
         if (config('ptah.modules.auth')) {

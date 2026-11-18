@@ -342,7 +342,23 @@ return [
         'enabled' => env('PTAH_CRUD_API', false),
         'prefix' => 'ptah/api',
         'middleware' => ['web', 'auth'],
+        // The front-end entry the page of a screen loads (React/Vue stack).
+        'entry' => env('PTAH_STACK', 'livewire') === 'vue' ? 'resources/js/ptah-app.js' : 'resources/js/ptah-app.jsx',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Stack (1.59.0)
+    |--------------------------------------------------------------------------
+    |
+    | What draws the screens: 'livewire' (the default — Blade + Livewire),
+    | 'react' or 'vue' (components over the headless CRUD API above). Chosen
+    | by `php artisan ptah:install --stack=…`; `ptah:forge` generates the
+    | screen of an entity for the stack set here. The back end — models,
+    | services, screen configs, permissions, hooks — is the same in all three.
+    |
+    */
+    'stack' => env('PTAH_STACK', 'livewire'),
 
     /*
     |--------------------------------------------------------------------------

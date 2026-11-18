@@ -1,0 +1,34 @@
+// Ptah — Vue entry. Mounts a screen on the page ptah:forge generates
+// (resources/views/<entity>/index.blade.php → ptah::stack.app).
+//
+// Yours to change: swap PtahLayout for your own shell, pass `onAction` to
+// handle row actions, or import { PtahCrud } from '@ptah/vue' in any page.
+import { createApp, h } from 'vue';
+import { PtahApi, PtahCrud, PtahLayout } from '@ptah/vue';
+import '@ptah/ptah-ui.css';
+
+const el = document.getElementById('ptah-app');
+
+if (el) {
+    const { screen, title, brand, locale, api: baseUrl, logout } = el.dataset;
+    const api = new PtahApi({ baseUrl });
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+    createApp({
+        render: () =>
+            h(
+                PtahLayout,
+                { api, brand, title, locale },
+                {
+                    default: () => h(PtahCrud, { screen, api, locale }),
+                    topbar: () =>
+                        logout
+                            ? h('form', { method: 'post', action: logout }, [
+                                  h('input', { type: 'hidden', name: '_token', value: csrf }),
+                                  h('button', { type: 'submit', class: 'pc-btn' }, locale?.startsWith('pt') ? 'Sair' : 'Log out'),
+                              ])
+                            : null,
+                },
+            ),
+    }).mount(el);
+}

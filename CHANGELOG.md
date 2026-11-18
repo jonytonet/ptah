@@ -32,6 +32,31 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     a user finds the same screen in Livewire and through the API.
   - Config key `ptah.crud_api` (`ptah.api` belongs to the REST API that
     `ptah:forge --api` generates).
+- **A choice of stack: Livewire, React or Vue.**
+  `php artisan ptah:install --stack=react|vue` (Livewire stays the default and
+  nothing changes for it). The back end — models, services, screen configs,
+  permissions, hooks, `ptah:config`, `ptah:check`, MCP — is the same in all
+  three; what changes is what draws the screen.
+  - `resources/js/react` and `resources/js/vue`: `<PtahCrud screen="…">`
+    (listing, search, filters, sort, pages, totals, form with every field
+    type, masks, searchdropdown, delete/restore, bulk and row actions, export,
+    column choices, toasts) and `<PtahLayout>` (the server's menu and the
+    signed-in user). Both draw the same `CrudController`
+    (`resources/js/core`), so the behaviour is written once. `ptah-ui.css` is
+    self-contained, follows ptah's colour tokens and has a dark theme.
+  - The sources ship in the Composer package and are compiled by the app's
+    Vite through the `@ptah` alias — one version, updated by
+    `composer update`.
+  - The installer turns the API on, writes the entry file
+    (`resources/js/ptah-app.jsx|js`) and `routes/ptah-screens.php`, prepares
+    `vite.config.js` (plugin, entry, alias, dedupe — only what is missing) and
+    adds the npm packages.
+  - **`ptah:forge` follows the stack** (`ptah.stack`): in React/Vue the page
+    of the entity mounts the front end and the screen is registered in
+    `routes/ptah-screens.php`; everything else it generates is unchanged.
+  - Checked in a real Laravel 13 app, both stacks: build, page in Chrome,
+    save over HTTP with CSRF (419 without the token, 401 signed out).
+  - Docs: [Stacks.md](docs/Stacks.md).
   - Measured on the same screen (25 rows of 5,000, in-process): a page change
     takes ~10 ms and ~11 KB through the API, ~70 ms and ~440 KB through
     Livewire. The queries are the same; what is skipped is the snapshot round

@@ -1,0 +1,3 @@
+{{-- {{ entity_title }} — React/Vue stack. The screen is registered in
+     routes/ptah-screens.php; this page only mounts the front end on it. --}}
+@include('ptah::stack.app', ['screen' => '{{ entity_lower }}', 'title' => '{{ entity_title }}'])

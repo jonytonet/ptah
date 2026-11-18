@@ -6,6 +6,20 @@ on:
   pull_request:
 
 jobs:
+  # The React and Vue front ends (resources/js): types and component tests.
+  ui:
+    name: UI · React + Vue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
   test:
     runs-on: ubuntu-latest
 

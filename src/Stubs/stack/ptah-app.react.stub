@@ -1,0 +1,37 @@
+// Ptah — React entry. Mounts a screen on the page ptah:forge generates
+// (resources/views/<entity>/index.blade.php → ptah::stack.app).
+//
+// Yours to change: swap <PtahLayout> for your own shell, pass `onAction` to
+// handle row actions, or import { PtahCrud } from '@ptah/react' in any page.
+import { createRoot } from 'react-dom/client';
+import { PtahApi, PtahCrud, PtahLayout } from '@ptah/react';
+import '@ptah/ptah-ui.css';
+
+const el = document.getElementById('ptah-app');
+
+if (el) {
+    const { screen, title, brand, locale, api: baseUrl, logout } = el.dataset;
+    const api = new PtahApi({ baseUrl });
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+    createRoot(el).render(
+        <PtahLayout
+            api={api}
+            brand={brand}
+            title={title}
+            locale={locale}
+            topbar={
+                logout && (
+                    <form method="post" action={logout}>
+                        <input type="hidden" name="_token" value={csrf} />
+                        <button type="submit" className="pc-btn">
+                            {locale?.startsWith('pt') ? 'Sair' : 'Log out'}
+                        </button>
+                    </form>
+                )
+            }
+        >
+            <PtahCrud screen={screen} api={api} locale={locale} />
+        </PtahLayout>,
+    );
+}

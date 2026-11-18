@@ -406,7 +406,7 @@ final class CrudRuntime extends BaseCrud
                 'label' => (string) ($col['colsNomeLogico'] ?? $field),
                 'type' => (string) ($col['colsTipo'] ?? 'text'),
                 'renderer' => $col['colsRenderer'] ?? null,
-                'align' => $col['colsAlign'] ?? null,
+                'align' => self::alignment($col['colsAlign'] ?? null),
                 'sortBy' => $sortable[$field] ?? null,
             ];
         }
@@ -829,6 +829,20 @@ final class CrudRuntime extends BaseCrud
         }
 
         return $out;
+    }
+
+    /**
+     * `colsAlign` holds a CSS class of the Livewire table (`text-center`,
+     * `text-end`); a client gets the alignment itself.
+     */
+    private static function alignment(mixed $align): ?string
+    {
+        return match (true) {
+            ! is_string($align) => null,
+            str_contains($align, 'center') => 'center',
+            str_contains($align, 'end') || str_contains($align, 'right') => 'right',
+            default => 'left',
+        };
     }
 
     /**

@@ -1,0 +1,20 @@
+<?php
+
+use Ptah\Crud\CrudScreen;
+
+/*
+|--------------------------------------------------------------------------
+| Ptah screens (React / Vue stack)
+|--------------------------------------------------------------------------
+| The screens the headless CRUD API serves. `ptah:forge` adds one line per
+| entity; the key is what <PtahCrud screen="…"> names. Everything about a
+| screen is decided here, on the server:
+|
+|   CrudScreen::register('my-orders', 'Sales/Order')
+|       ->configRoute('my-orders')
+|       ->lockedFilters(fn () => ['user_id' => auth()->id()]);
+|
+| Loaded by ptah on every request. It is not a routes file: only screen
+| registrations go here.
+*/
+
