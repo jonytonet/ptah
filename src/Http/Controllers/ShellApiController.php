@@ -30,7 +30,7 @@ class ShellApiController extends Controller
     {
         $group = $request->query('group');
 
-        return response()->json(['data' => array_values($dashboard->visibleWidgets(is_string($group) && $group !== '' ? $group : null))]);
+        return response()->json(['data' => $dashboard->visibleWidgets(is_string($group) && $group !== '' ? $group : null)]);
     }
 
     public function me(Request $request, CrudScreenRegistry $screens): JsonResponse
