@@ -97,6 +97,8 @@ export interface Schema {
     preferences: Preferences;
     /** What else this screen has on, for this user. */
     features: Features;
+    /** The websocket listener of the screen, when its config has `broadcast` on. */
+    broadcast?: import('./realtime').BroadcastSpec | null;
 }
 
 export interface Features {
@@ -116,6 +118,8 @@ export interface Features {
      * narrow screen. Off, `auto` stays a table (as the Livewire screen).
      */
     responsiveCards: boolean;
+    /** The copy / filter buttons over a cell (`uiPreferences.copyCell`). */
+    copyCell: boolean;
 }
 
 export const NO_FEATURES: Features = {
@@ -131,6 +135,7 @@ export const NO_FEATURES: Features = {
     advancedSearch: false,
     // Not a feature but a layout switch: the server's default.
     responsiveCards: true,
+    copyCell: true,
 };
 
 export interface Cell {
@@ -206,6 +211,8 @@ export interface GroupBreak {
 export interface Message {
     text: string;
     level: string;
+    /** The record a "deleted" message can bring back (a soft delete). */
+    undo?: RowId | null;
 }
 
 export interface Listing {

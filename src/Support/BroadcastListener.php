@@ -41,6 +41,22 @@ final class BroadcastListener
     }
 
     /**
+     * A listener key (`echo-private:orders.3,.OrderChanged`) as its parts, for
+     * a client that subscribes with Laravel Echo itself (the React and Vue
+     * stacks) instead of through Livewire. Null for anything else.
+     *
+     * @return array{type: string, channel: string, event: string}|null
+     */
+    public static function describe(?string $key): ?array
+    {
+        if ($key === null || preg_match('/^(echo(?:-private|-presence)?):([^,]+),(.+)$/', $key, $m) !== 1) {
+            return null;
+        }
+
+        return ['type' => (string) array_search($m[1], self::TYPES, true), 'channel' => trim($m[2]), 'event' => trim($m[3])];
+    }
+
+    /**
      * @param  array<string, mixed>  $broadcast
      */
     public static function type(array $broadcast): string

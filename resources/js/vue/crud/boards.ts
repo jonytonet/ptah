@@ -6,7 +6,7 @@
  */
 import { Comment, computed, defineComponent, Fragment, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import type { PropType, Ref, VNode, VNodeChild } from 'vue';
-import { ApiError } from '../../core';
+import { ApiError, navigateTo } from '../../core';
 import type { CrudController, CrudState, Row, RowAction } from '../../core';
 import {
     boardsWords,
@@ -547,7 +547,7 @@ export const PtahCrudCards = defineComponent({
 
         const run = (row: Row, action: RowAction) => {
             if (action.type === 'link') {
-                window.location.assign(action.value);
+                navigateTo(action.value);
             } else {
                 props.crud.runAction(row, action);
             }

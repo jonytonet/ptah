@@ -4,10 +4,11 @@
  * app is one call — `mountPtah(document.getElementById('ptah-app'))` — so a
  * page ptah adds later arrives with `composer update`, with nothing to edit.
  */
+import { Fragment, useMemo, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { PtahApi, words } from '../core';
-import type { ControllerOptions } from '../core';
+import { initialPage, PtahApi, PtahNavigator, readBoot, setNavigationHandler, setSnapshotScope, warmOptions, words } from '../core';
+import type { ControllerOptions, NavigatorOptions, NavigatorState, PtahBoot, PtahPage } from '../core';
 import { PtahAudit, PtahUserPermissions } from './admin/access';
 import { PtahAiModels } from './admin/ai';
 import { PtahCompanies, PtahDepartments } from './admin/company';
@@ -58,23 +59,51 @@ export interface PtahAppProps {
     onAction?: ControllerOptions['onAction'];
     /** Your own pages: `{ reports: <Reports /> }` for `data-page="reports"`. */
     pages?: Record<string, ReactNode>;
+    /**
+     * A router of your own: every ptah link goes through it. With it, ptah
+     * does not intercept links (mountPtah creates no navigator).
+     */
+    onNavigate?: (url: string) => void;
+    /** Swaps pages without a document load (mountPtah creates it): the page drawn is the one it holds. */
+    navigator?: PtahNavigator;
+    /** The menu and user the page embedded (`data-boot`): the layout paints complete on the first frame. */
+    boot?: PtahBoot | null;
 }
 
-export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props = {}, profileUrl, canLogout, themeModeUrl, topbar, onAction, pages = {} }: PtahAppProps) {
-    const api = new PtahApi({ baseUrl: apiUrl });
+const noSubscribe = () => () => undefined;
+const noState = () => null;
+
+/** The navigator's state, or null without one. */
+function useNavigator(navigator: PtahNavigator | undefined): NavigatorState | null {
+    return useSyncExternalStore(navigator?.subscribe ?? noSubscribe, navigator?.getState ?? noState, navigator?.getState ?? noState);
+}
+
+export function PtahApp(appProps: PtahAppProps) {
+    const { brand, locale, apiUrl, profileUrl, canLogout, themeModeUrl, topbar, onAction, pages = {}, navigator, onNavigate, boot } = appProps;
+    const nav = useNavigator(navigator);
+    // With a navigator the page on screen is the one it last swapped in.
+    const described = nav?.page;
+    const page = described?.page ?? appProps.page;
+    const screen = (described ? described.screen : appProps.screen) ?? '';
+    const title = described ? described.title : appProps.title;
+    const props = (described ? described.props : appProps.props) ?? {};
+    const api = useMemo(() => new PtahApi({ baseUrl: apiUrl }), [apiUrl]);
     const t = words(locale);
     const common = { api, locale };
     const text = (key: string) => (typeof props[key] === 'string' ? (props[key] as string) : '');
+    // Each page mounts fresh: nothing of one screen leaks into the next.
+    const pageKey = described ? described.url.split('#')[0] : `${page}:${screen}`;
+    const go = onNavigate ?? (navigator ? (url: string) => void navigator.navigate(url) : undefined);
 
     switch (page) {
         case 'login':
-            return <PtahLogin {...common} />;
+            return <PtahLogin key={pageKey} {...common} />;
         case 'forgot-password':
-            return <PtahForgotPassword {...common} />;
+            return <PtahForgotPassword key={pageKey} {...common} />;
         case 'reset-password':
-            return <PtahResetPassword {...common} token={text('token')} email={text('email')} />;
+            return <PtahResetPassword key={pageKey} {...common} token={text('token')} email={text('email')} />;
         case 'two-factor':
-            return <PtahTwoFactor {...common} />;
+            return <PtahTwoFactor key={pageKey} {...common} />;
     }
 
     const logout = async () => {
@@ -102,45 +131,86 @@ export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props
         content = (
             <>
                 {title && <PtahPageHead title={title} crumbs={[{ label: t.dashboard, url: '/dashboard' }, { label: title }]} />}
-                <PtahCrud screen={screen} {...common} onAction={onAction} />
+                {/* instant: the last listing this tab saw is drawn at once, then refreshed. */}
+                <PtahCrud screen={screen} {...common} onAction={onAction} instant />
             </>
         );
     }
 
     return (
-        <PtahLayout api={api} brand={brand} locale={locale} topbar={topbar} profileUrl={profileUrl} themeModeUrl={themeModeUrl} onLogout={canLogout ? () => void logout() : undefined}>
-            {content}
+        <PtahLayout
+            api={api}
+            brand={brand}
+            locale={locale}
+            topbar={topbar}
+            profileUrl={profileUrl}
+            themeModeUrl={themeModeUrl}
+            onLogout={canLogout ? () => void logout() : undefined}
+            onNavigate={go}
+            path={described ? new URL(described.url).pathname : undefined}
+            boot={boot}
+            busy={nav?.busy ?? false}
+            announce={nav && nav.seq > 0 ? title || described?.documentTitle || '' : ''}
+        >
+            <Fragment key={pageKey}>{content}</Fragment>
         </PtahLayout>
     );
 }
 
-/** Mounts the page the server described on the element (`#ptah-app`). */
-export function mountPtah(element: HTMLElement | null, extra: Partial<PtahAppProps> = {}): void {
+export interface MountOptions extends NavigatorOptions {
+    /** `false` keeps every link a document load, as before 1.59.0 (default true). */
+    navigate?: boolean;
+}
+
+/**
+ * Mounts the page the server described on the element (`#ptah-app`) and,
+ * unless `extra.onNavigate` brings a router of your own, takes over the links
+ * inside it: ptah pages swap without a document load. Returns the function
+ * that unmounts it and gives the links back.
+ */
+export function mountPtah(element: HTMLElement | null, extra: Partial<PtahAppProps> = {}, options: MountOptions = {}): () => void {
     if (!element) {
-        return;
+        return () => undefined;
     }
 
-    const data = element.dataset;
-    let props: Record<string, unknown> = {};
-    try {
-        props = JSON.parse(data.props ?? '{}') ?? {};
-    } catch {
-        props = {};
-    }
+    const read = initialPage(element);
+    const first: PtahPage = {
+        ...read,
+        page: extra.page ?? read.page,
+        screen: extra.screen ?? read.screen,
+        title: extra.title ?? read.title,
+        props: extra.props ?? read.props,
+    };
+    const boot = readBoot(element);
+    // The kept listings (instant) belong to this user and company.
+    setSnapshotScope(boot?.me?.user?.id, boot?.me?.company_id);
+    const navigator = extra.onNavigate || options.navigate === false ? undefined : new PtahNavigator(first, { ...warmOptions(read.api, boot?.me?.screens), ...options });
 
-    createRoot(element).render(
+    const root = createRoot(element);
+    root.render(
         <PtahApp
-            page={data.page ?? 'crud'}
-            screen={data.screen}
-            title={data.title}
-            brand={data.brand}
-            locale={data.locale}
-            apiUrl={data.api}
-            profileUrl={data.profile}
-            themeModeUrl={data.themeMode}
-            canLogout={data.logout !== undefined}
-            props={props}
+            page={first.page}
+            screen={first.screen}
+            title={first.title}
+            brand={read.brand}
+            locale={read.locale}
+            apiUrl={read.api}
+            profileUrl={read.profile}
+            themeModeUrl={read.themeMode}
+            canLogout={read.logout}
+            props={first.props}
+            boot={boot}
+            navigator={navigator}
             {...extra}
         />,
     );
+    // After createRoot: React's own click handlers (the sidebar's) run first.
+    const uninstall = navigator ? navigator.install(element) : () => undefined;
+    const unhandle = setNavigationHandler(extra.onNavigate ?? (navigator ? (url: string) => void navigator.navigate(url) : null));
+
+    return () => {
+        uninstall();
+        unhandle();
+        root.unmount();
+    };
 }

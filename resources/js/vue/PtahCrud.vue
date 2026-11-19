@@ -4,7 +4,8 @@ import { CrudController, debounce, words } from '../core';
 import type { ControllerOptions, GroupBreak, PtahApi, Row, RowAction } from '../core';
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
-import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
+import { clearAllFilters, filterSession, isCellFilterable } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -32,6 +33,7 @@ import PtahConfirm from './PtahConfirm.vue';
 import PtahForm from './PtahForm.vue';
 import PtahRowAction from './PtahRowAction.vue';
 import PtahRowButtons from './PtahRowButtons.vue';
+import { PtahCrudSkeleton } from './skeleton';
 import { usePtahCrud } from './usePtahCrud';
 
 const props = withDefaults(
@@ -53,6 +55,8 @@ const props = withDefaults(
     /** A row action of type `action`: yours to run. */
     onAction?: ControllerOptions['onAction'];
     open?: ControllerOptions['open'];
+    /** Draw the last listing this tab saw at once, then refresh it (see ControllerOptions.instant). */
+    instant?: boolean;
     /** A controller of your own (to drive the screen from outside). */
     controller?: CrudController;
     }>(),
@@ -68,6 +72,7 @@ const crud =
         toastMs: props.toastMs,
         onAction: props.onAction,
         open: props.open,
+        instant: props.instant,
     });
 const state = usePtahCrud(crud);
 const t = computed(() => words(props.locale));
@@ -166,6 +171,7 @@ const onOutside = (event: MouseEvent) => {
 
 onMounted(() => {
     void crud.init();
+    stopCellActions = installCellActions(crud, { words: cellActionWords(props.locale), enabled: () => crud.features.copyCell });
     document.addEventListener('keydown', onKey);
     document.addEventListener('keydown', onEscape);
     document.addEventListener('mousedown', onOutside);
@@ -175,6 +181,7 @@ onBeforeUnmount(() => {
     document.removeEventListener('keydown', onEscape);
     document.removeEventListener('mousedown', onOutside);
     stopLabels?.();
+    stopCellActions?.();
     applySearch.cancel();
     if (!props.controller) {
         crud.destroy();
@@ -251,12 +258,8 @@ const dropOn = (target: string) => {
     dragged.value = null;
 };
 const cellFilter = (field: string) => isCellFilterable(crud, field);
-// Alt+click filters the listing by this cell's value.
-const onCell = (event: MouseEvent, row: Row, field: string) => {
-    if (event.altKey && cellFilter(field)) {
-        void filterByCell(crud, row.id, field);
-    }
-};
+// "Copy" and "Filter by this value" over the cell the mouse rests on.
+let stopCellActions: (() => void) | null = null;
 const totalsOf = (field: string) => state.value.totals.filter((total) => total.field === field && total.value !== null);
 const sorted = (sortBy: string | null) => sortBy !== null && state.value.list.sort === sortBy;
 const ascending = computed(() => state.value.list.direction.toUpperCase() === 'ASC');
@@ -312,11 +315,13 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
 </script>
 
 <template>
-    <div v-if="state.status !== 'ready' || !state.schema" class="pc-root">
-        <div class="pc-state" :role="state.status === 'loading' ? 'status' : 'alert'">{{ statusText }}</div>
+    <!-- The first load: the shape of the screen (toolbar and rows), never a bare "Loading…". -->
+    <PtahCrudSkeleton v-if="state.status === 'loading'" :label="t.loading" />
+    <div v-else-if="state.status !== 'ready' || !state.schema" class="pc-root">
+        <div class="pc-state" role="alert">{{ statusText }}</div>
     </div>
 
-    <div v-else class="pc-root pc-crud" :data-density="state.preferences?.view_density ?? 'global'">
+    <div v-else class="pc-root pc-crud" :data-ptah-crud="crud.screen" :data-density="state.preferences?.view_density ?? 'global'">
         <!-- A detail grid (a child screen) does not read the page's address. -->
         <PtahCrudUrlFilters :crud="crud" :locale="locale" :read-location="!nested" />
 
@@ -489,8 +494,9 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
                                 :key="column.field"
                                 :class="alignClass(column.align)"
                                 :style="widthOf(column.field)"
-                                :title="cellFilter(column.field) ? t.filterByCell : undefined"
-                                @click="onCell($event, row, column.field)"
+                                :data-ptah-cell="column.field"
+                                :data-ptah-row="row.id"
+                                :data-ptah-filter="cellFilter(column.field) ? '' : undefined"
                                 v-html="row.cells[column.field]?.html ?? ''"
                             />
                             <td v-for="label in actions" :key="`action-${label}`" class="pc-align-center" @click.stop>
@@ -664,6 +670,7 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
             <div v-for="toast in state.toasts" :key="toast.id" class="pc-tst" :data-color="toast.level" role="status">
                 <Icon v-if="TOAST_ICONS[toast.level]" :name="TOAST_ICONS[toast.level]" />
                 <span class="pc-toast-text">{{ toast.text }}</span>
+                <button v-if="toast.undo !== undefined && toast.undo !== null" type="button" class="pc-tst-undo" @click="crud.undo(toast.id)">{{ t.undo }}</button>
                 <button type="button" class="pc-tst-x" :aria-label="w.close" :title="w.close" @click="crud.dismiss(toast.id)"><Icon name="x" :size="14" :stroke-width="2.5" /></button>
             </div>
         </div>

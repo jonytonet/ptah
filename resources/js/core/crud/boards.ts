@@ -10,6 +10,7 @@
  * are the server's; these pieces only ask and show.
  */
 import { toQuery } from '../api';
+import { navigateTo } from '../navigate';
 import type { PtahApi } from '../api';
 import type { Features, ListState, Message, Option, RowId } from '../types';
 
@@ -161,8 +162,9 @@ export const rowNavigator = {
     open(url: string): void {
         window.open(url, '_blank');
     },
+    /** Through the mounted app (no document load) when there is one. */
     go(url: string): void {
-        window.location.assign(url);
+        navigateTo(url);
     },
 };
 

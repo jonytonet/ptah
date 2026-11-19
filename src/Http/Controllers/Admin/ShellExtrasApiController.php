@@ -17,6 +17,7 @@ use Ptah\Http\Headless\HeadlessNotificationBell;
 use Ptah\Models\Export;
 use Ptah\Models\Notification;
 use Ptah\Services\Notification\NotificationService;
+use Ptah\Support\BroadcastListener;
 
 /**
  * The two pieces of the layout that are Livewire components and not pages —
@@ -137,6 +138,9 @@ class ShellExtrasApiController extends Controller
             'enabled' => true,
             'unread' => $bell->unread(),
             'poll_ms' => $this->milliseconds($bell->pollInterval()),
+            // The private channel of this user (ptah.notifications.broadcast),
+            // from the bell's own listeners — a client with Echo refreshes on it.
+            'broadcast' => BroadcastListener::describe(array_key_first($bell->getListeners())),
             'items' => $withItems ? $bell->items()->map(fn (Notification $item) => $this->notificationRow($item))->values()->all() : null,
             'view_all_url' => Route::has('ptah.notifications') ? route('ptah.notifications') : null,
         ];

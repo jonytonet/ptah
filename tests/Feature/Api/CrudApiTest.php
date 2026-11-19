@@ -108,17 +108,41 @@ class CrudApiTest extends TestCase
             $this->assertFalse($features[$off], $off);
         }
         $this->assertTrue($features['quickDates']);
+        // The copy / filter buttons over a cell: on unless the screen turns them off.
+        $this->assertTrue($features['copyCell']);
 
         // On when the config turns them on.
         $config = CrudConfig::where('model', ApiItem::class)->where('route', '')->firstOrFail();
         $config->update(['config' => $config->config + [
             'importConfig' => ['enabled' => true],
+            'uiPreferences' => ['copyCell' => false],
             'masterDetail' => [['relation' => 'lines']],
         ]]);
 
         $features = $this->getJson('/ptah/api/crud/items/schema')->json('features');
         $this->assertTrue($features['import']);
+        $this->assertFalse($features['copyCell']);
         $this->assertTrue($features['masterDetail']);
+    }
+
+    #[Test]
+    public function the_schema_names_the_websocket_listener_of_the_screen(): void
+    {
+        // Off: no channel is disclosed.
+        $this->assertNull($this->getJson('/ptah/api/crud/items/schema')->assertOk()->json('broadcast'));
+
+        $config = CrudConfig::where('model', ApiItem::class)->where('route', '')->firstOrFail();
+        $config->update(['config' => $config->config + ['broadcast' => ['enabled' => true, 'type' => 'private', 'channel' => 'items', 'event' => '.ItemChanged']]]);
+
+        // What the Livewire screen registers with Echo, in parts.
+        $this->getJson('/ptah/api/crud/items/schema')->assertJsonPath('broadcast', ['type' => 'private', 'channel' => 'items', 'event' => '.ItemChanged']);
+
+        // The default names, as BroadcastListener derives them from the model.
+        $config->update(['config' => ['broadcast' => ['enabled' => true]] + $config->fresh()->config]);
+        $this->getJson('/ptah/api/crud/items/schema')
+            ->assertJsonPath('broadcast.type', 'public')
+            ->assertJsonPath('broadcast.channel', 'page-api-item-observer')
+            ->assertJsonPath('broadcast.event', '.pageApiItemObserver');
     }
 
     #[Test]

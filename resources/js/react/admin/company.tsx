@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { PtahApi } from '../../core';
+import { forgetSnapshots, PtahApi } from '../../core';
 import { badgeColor, companies, companySwitcher, companyWords, departments, nextSort, rangeText, switchCompany, TAX_TYPES } from '../../core/admin/company';
 import type { AdminListing, AdminListQuery, AdminResource, AdminResult, CompanyForm, CompanyRow, CompanyWords, DepartmentForm, DepartmentRow, SwitcherState } from '../../core/admin/company';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeInput, ForgeModal, ForgePageHeader, ForgePagination, ForgeSelect, ForgeSwitch, ForgeTextarea, forgeToast, ForgeToastHost } from '../forge';
@@ -461,6 +461,8 @@ export interface CompanySwitcherProps {
      * bar. 'stacked' — a vertical list of menu items, for inside a dropdown.
      */
     layout?: 'inline' | 'stacked';
+    /** What the page embedded (`data-boot`): drawn on the first frame, not fetched. */
+    initial?: SwitcherState | null;
     /**
      * After a switch. Defaults to reloading the page, as the Livewire switcher
      * does, so every screen reads the new company.
@@ -469,13 +471,17 @@ export interface CompanySwitcherProps {
 }
 
 /** Shows nothing when the user has fewer than two companies to choose from. */
-export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched }: CompanySwitcherProps) {
+export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched, initial }: CompanySwitcherProps) {
     const client = useMemo(() => api ?? new PtahApi(), [api]);
     const t = companyWords(locale);
-    const [state, setState] = useState<SwitcherState | null>(null);
+    const [state, setState] = useState<SwitcherState | null>(initial ?? null);
     const [busy, setBusy] = useState(false);
+    const booted = Boolean(initial);
 
     useEffect(() => {
+        if (booted) {
+            return;
+        }
         let alive = true;
         void companySwitcher(client)
             .then((value) => alive && setState(value))
@@ -484,7 +490,7 @@ export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched
         return () => {
             alive = false;
         };
-    }, [client]);
+    }, [client, booted]);
 
     if (!state || state.companies.length < 2) {
         return null;
@@ -498,6 +504,8 @@ export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched
         try {
             const answer = await switchCompany(client, id);
             setState({ companies: answer.companies, active_id: answer.active_id });
+            // Everything changes with the company: the kept listings go, and the page reloads.
+            forgetSnapshots();
             (onSwitched ?? (() => window.location.reload()))(id);
         } catch (error) {
             forgeToast(failure(error), 'danger');

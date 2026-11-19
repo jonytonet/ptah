@@ -82,6 +82,19 @@ function csrfHeaders(): Record<string, string> {
     return token ? { 'X-CSRF-TOKEN': token } : {};
 }
 
+/** The answer of `GET /menu` (or the page's boot data) with every part present. */
+export function normalizeShell(raw: Partial<Shell> | null | undefined): Shell {
+    const value = raw ?? {};
+
+    return {
+        data: value.data ?? [],
+        flat: value.flat ?? [],
+        jump: value.jump ?? false,
+        brand: value.brand ?? { name: '', logo: null, logo_dark: null },
+        shell: value.shell ?? { company_switcher: false, notifications: false, admin: [] },
+    };
+}
+
 /** The ptah headless CRUD API, one method per endpoint. */
 export class PtahApi {
     private readonly baseUrl: string;
@@ -235,9 +248,7 @@ export class PtahApi {
 
     /** The menu with what the sidebar needs around it: the search list and the brand. */
     async shell(): Promise<Shell> {
-        const raw = await this.request<Partial<Shell>>('GET', '/menu');
-
-        return { data: raw.data ?? [], flat: raw.flat ?? [], jump: raw.jump ?? false, brand: raw.brand ?? { name: '', logo: null, logo_dark: null }, shell: raw.shell ?? { company_switcher: false, notifications: false, admin: [] } };
+        return normalizeShell(await this.request<Partial<Shell>>('GET', '/menu'));
     }
 
     me(): Promise<Me> {

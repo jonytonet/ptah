@@ -20,6 +20,12 @@
     $theme = $ptahAppearance['mode'] ?? null;
     $ptahThemeMode = auth()->check() && \Illuminate\Support\Facades\Route::has('ptah.appearance.theme-mode') ? route('ptah.appearance.theme-mode') : null;
     $ptahProfile = config('ptah.modules.auth') && \Illuminate\Support\Facades\Route::has('ptah.profile') ? route('ptah.profile') : null;
+    // The menu and the user, the very answers of GET {api}/menu and {api}/me:
+    // the layout paints complete on the first frame. Not for a visitor nor a
+    // guest page; not when the front end swaps pages in place
+    // (X-Ptah-Navigate) — its layout is already on screen.
+    $ptahBoot = request()->headers->has('X-Ptah-Navigate') ? null : \Ptah\Support\StackBoot::forPage($page ?? 'crud');
+    $ptahBootJson = $ptahBoot === null ? false : json_encode($ptahBoot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
@@ -36,6 +42,8 @@
     <title>{{ ($title ?? '') !== '' ? $title.' — ' : '' }}{{ config('app.name') }}</title>
     {{-- Paints light/dark before the first frame — the very script of the Livewire layouts. --}}
     @include('ptah::partials.appearance-boot')
+    {{-- Until React/Vue mount, the page's canvas (dark mode included), not a white body. --}}
+    <style>body{margin:0;background:var(--ptah-canvas)}#ptah-app{min-height:100vh;background:var(--ptah-canvas)}</style>
     {{-- The menu's icons (the same set the Livewire layout loads). --}}
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     {{-- The app's CSS too, when it has one: a cell arrives rendered by the
@@ -61,6 +69,7 @@
          data-api="{{ url(config('ptah.crud_api.prefix', 'ptah/api')) }}"
          @if ($ptahThemeMode) data-theme-mode="{{ $ptahThemeMode }}" @endif
          @if ($ptahProfile) data-profile="{{ $ptahProfile }}" @endif
-         @if ($ptahLogout) data-logout="{{ $ptahLogout }}" @endif></div>
+         @if ($ptahLogout) data-logout="{{ $ptahLogout }}" @endif
+         @if ($ptahBootJson !== false) data-boot="{{ $ptahBootJson }}" @endif></div>
 </body>
 </html>

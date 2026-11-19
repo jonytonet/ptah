@@ -6,7 +6,7 @@
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { CSSProperties, PropType } from 'vue';
-import { PtahApi } from '../../core';
+import { navigateTo, PtahApi } from '../../core';
 import {
     badgeText,
     dismissNotification,
@@ -20,6 +20,7 @@ import {
     startPolling,
 } from '../../core/admin/shell';
 import type { BellState, ExportRow, ExportsListing, ShellMessage, ShellNotification } from '../../core/admin/shell';
+import { listenBroadcast } from '../../core/realtime';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
 import { icon } from '../icons';
 
@@ -50,7 +51,7 @@ export const PtahNotificationBell = defineComponent({
     name: 'PtahNotificationBell',
     props: {
         ...shellProps,
-        /** Go to a URL without a full page load. Defaults to `window.location.assign`. */
+        /** Go to a URL without a full page load. Defaults to the mounted app's navigator, else a normal load. */
         onNavigate: { type: Function as PropType<(url: string) => void>, default: undefined },
     },
     setup(props) {
@@ -79,6 +80,16 @@ export const PtahNotificationBell = defineComponent({
             () => void load(open.value),
             () => (state.value?.enabled ? (props.pollInterval !== undefined ? props.pollInterval : (state.value.poll_ms ?? null)) : null),
         );
+        // And at once when the server says so (a websocket, when the app has Echo).
+        let stopListening: () => void = () => undefined;
+        watch(
+            () => (state.value?.enabled ? (state.value.broadcast?.channel ?? '') : ''),
+            () => {
+                stopListening();
+                stopListening = state.value?.enabled ? listenBroadcast(state.value.broadcast, () => void load(open.value)) : () => undefined;
+            },
+        );
+        onBeforeUnmount(() => stopListening());
 
         const close = () => {
             open.value = false;
@@ -133,7 +144,7 @@ export const PtahNotificationBell = defineComponent({
             event.preventDefault();
             const answer = await act(() => openNotification(client, item.id));
             if (answer?.redirect) {
-                (props.onNavigate ?? ((url: string) => window.location.assign(url)))(answer.redirect);
+                (props.onNavigate ?? navigateTo)(answer.redirect);
             }
         };
 
@@ -152,7 +163,11 @@ export const PtahNotificationBell = defineComponent({
         // button with the count, and a panel of the admin dropdown's look.
         return () => {
             const current = state.value;
-            if (!current || !current.enabled) {
+            // Until the count arrives the bell is already in the bar (the layout knows it is on): no pop-in.
+            if (!current) {
+                return h('div', { class: 'pl-dropdown-root pl-bell', 'aria-hidden': 'true' }, [h('span', { class: 'pl-icon-btn' }, [icon('bell', 20, undefined, 'pl-svg')])]);
+            }
+            if (!current.enabled) {
                 return null;
             }
             const words = t.value;

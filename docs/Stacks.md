@@ -113,6 +113,64 @@ await crud.setSearch('acme');
 `<PtahLayout>` draws the menu of the server (the same tree and permissions as
 the Livewire sidebar) and the signed-in user; swap it for your own shell.
 
+## Navigation
+
+`mountPtah` makes the stack pages behave like one app: moving between them
+does not reload the document. A click on a link inside `#ptah-app` (the
+sidebar, the administration gear, the breadcrumb, a dashboard widget, a link
+in a cell), a row link, the "jump to a screen" search, a notification's
+"open" and the redirect of a save all go through the navigator
+(`PtahNavigator`, `@ptah/core`):
+
+1. it fetches the URL as HTML (header `X-Ptah-Navigate: 1`, never cached) and
+   reads the `#ptah-app` of the answer — every stack page ends in it, ptah's,
+   `ptah:forge`'s and yours, so there is no server contract to keep in step;
+2. the current page stays on screen, with a thin bar at the top of the
+   content, until the next one has its first data — for a CRUD screen its
+   schema and first listing (at most 8 s, then its skeleton);
+3. it swaps only the content: the layout stays mounted (sidebar scroll and
+   open groups, collapsed state, bell, assistant, company switcher). The
+   page mounts fresh, the URL, `document.title`, the active menu item and
+   the CSRF token follow, focus goes to the page's heading and its title is
+   announced to screen readers.
+
+Back and forward reuse the page kept in the history entry (no request) and
+restore the scroll. Hovering, focusing or touching a menu link fetches its
+page ahead (one at a time, not on a data-saving connection), so the click is
+instant; `[data-ptah-prefetch]` adds a link of yours.
+
+**A full document load happens** for: a link with `data-ptah-reload` (or
+inside an element with it), `target` other than `_self`, `download`,
+`rel="external"`, a modifier key or another mouse button; another origin; a
+file (`.pdf`, `.csv`…); and whenever the answer is not a stack page of the same
+kind — an error, a 401/419 (the session ended: the server sends to the
+login), a file, a redirect elsewhere, a host's own Blade or Livewire page,
+or a sign-in page while signed in (and the reverse). Signing in, logging out
+and switching company always reload everything.
+
+**A router of your own** (Inertia, React Router, Vue Router):
+`mountPtah(el, { onNavigate: (url) => router.visit(url) })` — ptah then
+intercepts nothing and every ptah link goes through your function. `mountPtah`
+returns the function that unmounts it and gives the links back;
+`mountPtah(el, {}, { navigate: false })` keeps every link a document load.
+
+**The first paint.** The shell page embeds what the layout needs
+(`data-boot`: the answers of `GET {api}/menu`, `{api}/me` and, when shown, the
+company switcher — built by `Ptah\Support\StackBoot`), so after F5 the
+sidebar, the gear, the bell, the switcher and the account are there in the
+first frame, with no request. Not for a visitor or a sign-in page, and not
+in the answers fetched by the navigator (the layout is already on screen).
+
+**Kept listings (`instant`).** `<PtahCrud instant>` (`ControllerOptions.instant`,
+on in the pages of `PtahApp`, off by default) draws the last listing this tab
+saw of the screen at once — busy — and replaces it with the server's answer,
+so a screen you come back to never shows a loading state. Kept in
+`sessionStorage` (this tab, gone when it closes; never `localStorage`) under
+the signed-in user and company; a listing over ~200 KB is not kept; logging
+out and switching company forget them all; a screen the server now refuses
+(403/404) drops its copy and shows the refusal, never the old rows. The
+first visit of a screen draws a skeleton of its shape (`PtahCrudSkeleton`).
+
 ## Styling
 
 `ptah-ui.css` is self-contained (no Tailwind needed). It follows `--ptah-primary`
@@ -157,9 +215,41 @@ company switcher (company module), the notification bell
 links the user may open. `PtahCompanySwitcher`, `PtahNotificationBell` and
 `PtahExportsPanel` are exported for a layout of your own.
 
-## What the React and Vue screens do not have yet
+## Realtime (websocket)
 
-The visual config editor, spreadsheet import, kanban/calendar, record history,
-attachments, form drafts, master/detail grids, advanced search and the AI
-chat. They remain available in the Livewire stack; configure a screen with
-`ptah:config`, the JSON files or the MCP server meanwhile.
+A screen whose config has `broadcast` on, and the notification bell with
+`ptah.notifications.broadcast`, update by themselves — as on Livewire, and on
+the same channel and event (`Ptah\Support\BroadcastListener`). The screen
+reloads its listing quietly (a burst of events is one reload); the bell
+refreshes its count.
+
+ptah does not ship a websocket client. Set up Laravel Echo in your app
+(Reverb, Pusher, Ably…) and leave it on `window.Echo` **before** mounting:
+
+```js
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+window.Pusher = Pusher;
+window.Echo = new Echo({ broadcaster: 'reverb', key: import.meta.env.VITE_REVERB_APP_KEY, /* … */ });
+
+mountPtah(document.getElementById('ptah-app'));
+```
+
+Without `window.Echo` nothing is subscribed and the screens work as before.
+A `private` or `presence` channel is authorised by your
+`routes/channels.php`, exactly as for the Livewire screen. `listenBroadcast()`
+is exported for screens of your own.
+
+## What differs from the Livewire stack
+
+Every feature of the Livewire screens is in the React and Vue stacks. Known
+differences:
+
+- Background export (`asyncExport`) and its "Limit" badge are not in the
+  export menu.
+- An image field uploads with the save, not when the file is picked.
+- The global toast host of the Livewire layout has no single equivalent: each
+  screen draws its own toasts.
+- The inside of the AI chat panel and a few fields of the administration
+  screens (required mark, show-password eye) are plainer.

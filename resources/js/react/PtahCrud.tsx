@@ -4,7 +4,8 @@ import { CrudController, debounce, words } from '../core';
 import type { ControllerOptions, CrudState, Row, RowAction, Words } from '../core';
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
-import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
+import { clearAllFilters, filterSession, isCellFilterable } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -56,6 +57,30 @@ export function usePtahCrud(controller: CrudController): CrudState {
     return useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
 }
 
+/** The shape of a CRUD screen while its first data is on the way: a toolbar and placeholder rows. */
+export function PtahCrudSkeleton({ label, rows = 8 }: { label: string; rows?: number }) {
+    return (
+        <div className="pc-root pc-skeleton" role="status" aria-busy="true" aria-label={label}>
+            <span className="pc-visually-hidden">{label}</span>
+            <div className="pc-skeleton-toolbar" aria-hidden="true">
+                <span className="pc-skeleton-bar pc-skeleton-bar--search" />
+                <span className="pc-skeleton-spacer" />
+                <span className="pc-skeleton-bar pc-skeleton-bar--button" />
+                <span className="pc-skeleton-bar pc-skeleton-bar--button" />
+            </div>
+            <div className="pc-skeleton-table" aria-hidden="true">
+                {Array.from({ length: rows + 1 }, (_, row) => (
+                    <div key={row} className={row === 0 ? 'pc-skeleton-row pc-skeleton-row--head' : 'pc-skeleton-row'}>
+                        {[18, 34, 22, 14].map((width, cell) => (
+                            <span key={cell} className="pc-skeleton-bar" style={{ width: `${width}%` }} />
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 /**
  * A complete CRUD screen over the ptah headless API, drawn as the Livewire
  * BaseCrud (base-crud.blade.php and its partials): toolbar, filter panel,
@@ -82,6 +107,9 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
             }
         };
     }, [crud, controller]);
+
+    // "Copy" and "Filter by this value" over the cell the mouse rests on.
+    useEffect(() => installCellActions(crud, { words: cellActionWords(locale), enabled: () => crud.features.copyCell }), [crud, locale]);
 
     // The shortcuts of the Livewire screen (`_hotkeys`): ? f v r / n. A detail grid has none.
     useEffect(() => {
@@ -114,12 +142,17 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
         return () => document.removeEventListener('keydown', onKey);
     }, [crud, nested]);
 
+    // The first load: the shape of the screen (toolbar and rows), never a bare "Loading…".
+    if (state.status === 'loading') {
+        return <PtahCrudSkeleton label={t.loading} />;
+    }
+
     if (state.status !== 'ready' || !state.schema) {
         const text = { loading: t.loading, forbidden: t.forbidden, 'not-found': t.notFound, error: t.error, ready: t.loading }[state.status];
 
         return (
             <div className="pc-root">
-                <div className="pc-state" role={state.status === 'loading' ? 'status' : 'alert'}>
+                <div className="pc-state" role="alert">
                     {text}
                 </div>
             </div>
@@ -129,7 +162,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
     const board = view === 'kanban' || view === 'calendar';
 
     return (
-        <div className="pc-root pc-crud" data-density={state.preferences?.view_density ?? 'global'}>
+        <div className="pc-root pc-crud" data-ptah-crud={crud.screen} data-density={state.preferences?.view_density ?? 'global'}>
             {/* A detail grid (a child screen) does not read the page's address. */}
             <PtahCrudUrlFilters crud={crud} locale={locale} readLocation={!nested} />
             <Toolbar
@@ -177,7 +210,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
                 />
             )}
             {showKeys && <Shortcuts w={w} canCreate={state.schema.permissions.canCreate} onClose={() => setShowKeys(false)} />}
-            <Toasts crud={crud} state={state} w={w} />
+            <Toasts crud={crud} state={state} w={w} locale={locale} />
         </div>
     );
 }
@@ -521,9 +554,10 @@ function Table({ crud, state, t, w, locale, options }: PartProps & { options: Co
                                             key={column.field}
                                             className={alignClass(column.align)}
                                             style={widthOf(column.field)}
-                                            // Alt+click filters the listing by this cell's value.
-                                            title={isCellFilterable(crud, column.field) ? t.filterByCell : undefined}
-                                            onClick={(event) => event.altKey && isCellFilterable(crud, column.field) && void filterByCell(crud, row.id, column.field)}
+                                            // What the copy / filter buttons of the cell read (core/crud/cell-actions).
+                                            data-ptah-cell={column.field}
+                                            data-ptah-row={row.id}
+                                            data-ptah-filter={isCellFilterable(crud, column.field) ? '' : undefined}
                                             dangerouslySetInnerHTML={{ __html: row.cells[column.field]?.html ?? '' }}
                                         />
                                     ))}
@@ -983,13 +1017,18 @@ function Shortcuts({ w, canCreate, onClose }: { w: ScreenWords; canCreate: boole
 
 const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'alertTriangle', danger: 'xCircle' };
 
-function Toasts({ crud, state, w }: Omit<PartProps, 't'>) {
+function Toasts({ crud, state, w, locale }: Omit<PartProps, 't'>) {
     return (
         <div className="pc-toasts pc-tst-host" aria-live="polite">
             {state.toasts.map((toast) => (
                 <div key={toast.id} className="pc-tst" data-color={toast.level} role="status">
                     {TOAST_ICONS[toast.level] && <Icon name={TOAST_ICONS[toast.level]} />}
                     <span className="pc-toast-text">{toast.text}</span>
+                    {toast.undo !== undefined && toast.undo !== null && (
+                        <button type="button" className="pc-tst-undo" onClick={() => void crud.undo(toast.id)}>
+                            {words(locale).undo}
+                        </button>
+                    )}
                     <button type="button" className="pc-tst-x" aria-label={w.close} title={w.close} onClick={() => crud.dismiss(toast.id)}>
                         <Icon name="x" size={14} strokeWidth={2.5} />
                     </button>

@@ -1,6 +1,7 @@
 export { default as PtahCrud } from './PtahCrud.vue';
 export { default as PtahLayout } from './PtahLayout.vue';
 export { usePtahCrud } from './usePtahCrud';
+export { PtahCrudSkeleton } from './skeleton';
 export * from '../core';
 export * from './forge';
 // The Blade layout components (forge-dashboard-layout, forge-sidebar,

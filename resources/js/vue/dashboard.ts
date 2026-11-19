@@ -5,7 +5,7 @@
  */
 import { computed, defineComponent, h, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
-import { PtahApi, words } from '../core';
+import { PtahApi, takeWarmCall, words } from '../core';
 import type { DashboardPage, Me, Widget } from '../core';
 import { icon } from './icons';
 import { PtahPageHead } from './page-head';
@@ -108,10 +108,13 @@ export const PtahWidgets = defineComponent({
     emits: ['load'],
     setup(props, { emit }) {
         const client = props.api ?? new PtahApi();
-        const widgets = ref<Widget[] | null>(null);
-        const load = () =>
-            void client
-                .dashboardPage(props.group)
+        // Asked already on the way to the dashboard (the navigator): drawn in the first frame.
+        let warm = props.group === undefined ? takeWarmCall<DashboardPage>('dashboard') : null;
+        const widgets = ref<Widget[] | null>(warm?.done && warm.value ? warm.value.data : null);
+        const load = () => {
+            const warmed = warm;
+            warm = null;
+            void (warmed ? warmed.promise : client.dashboardPage(props.group))
                 .then((page) => {
                     widgets.value = page.data;
                     emit('load', page.data, page);
@@ -119,11 +122,28 @@ export const PtahWidgets = defineComponent({
                 .catch(() => {
                     widgets.value = [];
                 });
+        };
 
         onMounted(load);
         watch(() => props.group, load);
 
-        return () => (widgets.value && widgets.value.length > 0 ? h('div', { class: 'pf pd-grid' }, widgets.value.map(card)) : null);
+        return () => {
+            // While they are on the way: four placeholder cards (the shape of the default ones), not a blank.
+            if (!widgets.value) {
+                return h(
+                    'div',
+                    { class: 'pf pd-stats pc-skeleton', role: 'status', 'aria-busy': 'true' },
+                    [0, 1, 2, 3].map((index) =>
+                        h('div', { key: index, class: 'pd-card pc-skeleton-card', 'aria-hidden': 'true' }, [
+                            h('span', { class: 'pc-skeleton-bar', style: { width: '40%' } }),
+                            h('span', { class: 'pc-skeleton-bar pc-skeleton-bar--tall', style: { width: '65%' } }),
+                        ]),
+                    ),
+                );
+            }
+
+            return widgets.value.length > 0 ? h('div', { class: 'pf pd-grid' }, widgets.value.map(card)) : null;
+        };
     },
 });
 

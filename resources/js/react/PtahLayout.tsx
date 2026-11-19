@@ -4,6 +4,7 @@ import {
     adminEntries,
     firstLetter,
     forgetDrafts,
+    forgetSnapshots,
     hasActive,
     iconOnlyOf,
     isActive,
@@ -11,6 +12,7 @@ import {
     isDark,
     MEDIA_LG,
     MEDIA_MD,
+    normalizeShell,
     onDarkChange,
     PtahApi,
     readCollapsed,
@@ -21,7 +23,7 @@ import {
     words,
     writeCollapsed,
 } from '../core';
-import type { Me, MenuItem, MenuLink, Shell, Words } from '../core';
+import type { Me, MenuItem, MenuLink, PtahBoot, Shell, Words } from '../core';
 import { adminIcons, iconPaths, iconStroke } from '../core/icons';
 import { shellWords } from '../core/admin/shell';
 import { PtahAiChat } from './admin/ai';
@@ -52,6 +54,12 @@ export interface PtahLayoutProps {
     onLogout?: () => void;
     /** Where the light/dark choice of a signed-in user is saved (`ptah.appearance.theme-mode`). */
     themeModeUrl?: string;
+    /** The menu and the user the page embedded (`data-boot`): drawn on the first frame, not fetched again. */
+    boot?: PtahBoot | null;
+    /** A page is on its way: a thin bar at the top of the content (the old page stays meanwhile). */
+    busy?: boolean;
+    /** Read out by screen readers when it changes — the title of the page just swapped in. */
+    announce?: string;
 }
 
 const EMPTY: Shell = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null }, shell: { company_switcher: false, notifications: false, admin: [] } };
@@ -129,10 +137,12 @@ function BrandMark({ shell, name, size }: { shell: Shell; name: string; size: 'b
  * with the server's menu (a rail when collapsed or on a tablet, opening on
  * hover; off-canvas on a phone), Ctrl+B, and the floating assistant.
  */
-export function PtahLayout({ children, brand, topbar, api, locale, path, onNavigate, profileUrl, onLogout, themeModeUrl }: PtahLayoutProps) {
+export function PtahLayout({ children, brand, topbar, api, locale, path, onNavigate, profileUrl, onLogout, themeModeUrl, boot, busy = false, announce = '' }: PtahLayoutProps) {
     const client = useMemo(() => api ?? new PtahApi(), [api]);
-    const [shell, setShell] = useState<Shell>(EMPTY);
-    const [me, setMe] = useState<Me | null>(null);
+    const [shell, setShell] = useState<Shell>(() => (boot?.menu ? normalizeShell(boot.menu) : EMPTY));
+    const [me, setMe] = useState<Me | null>(() => boot?.me ?? null);
+    // Read once: what the page embedded is not fetched again.
+    const booted = useRef({ menu: Boolean(boot?.menu), me: Boolean(boot?.me) });
     const [collapsed, setCollapsed] = useState(readCollapsed);
     const [hovered, setHovered] = useState(false);
     const [peek, setPeek] = useState(false);
@@ -151,14 +161,18 @@ export function PtahLayout({ children, brand, topbar, api, locale, path, onNavig
 
     useEffect(() => {
         let alive = true;
-        void client
-            .shell()
-            .then((value) => alive && setShell(value))
-            .catch(() => undefined);
-        void client
-            .me()
-            .then((user) => alive && setMe(user))
-            .catch(() => undefined);
+        if (!booted.current.menu) {
+            void client
+                .shell()
+                .then((value) => alive && setShell(value))
+                .catch(() => undefined);
+        }
+        if (!booted.current.me) {
+            void client
+                .me()
+                .then((user) => alive && setMe(user))
+                .catch(() => undefined);
+        }
 
         return () => {
             alive = false;
@@ -218,6 +232,7 @@ export function PtahLayout({ children, brand, topbar, api, locale, path, onNavig
     const logout = onLogout
         ? () => {
               forgetDrafts();
+              forgetSnapshots();
               onLogout();
           }
         : undefined;
@@ -288,7 +303,7 @@ export function PtahLayout({ children, brand, topbar, api, locale, path, onNavig
                 {extras.company_switcher && (
                     // On a phone the switcher moves into the administration menu (when there is one).
                     <div className={`pl-topbar-center${hasAdmin ? ' pl-show-md' : ''}`}>
-                        <PtahCompanySwitcher api={client} locale={lang} />
+                        <PtahCompanySwitcher api={client} locale={lang} initial={boot?.switcher} />
                     </div>
                 )}
 
@@ -302,7 +317,7 @@ export function PtahLayout({ children, brand, topbar, api, locale, path, onNavig
                             t={t}
                             links={extras.admin}
                             current={current}
-                            switcher={extras.company_switcher ? <PtahCompanySwitcher api={client} locale={lang} layout="stacked" /> : null}
+                            switcher={extras.company_switcher ? <PtahCompanySwitcher api={client} locale={lang} layout="stacked" initial={boot?.switcher} /> : null}
                         />
                     )}
                     {extras.notifications ? (
@@ -320,9 +335,17 @@ export function PtahLayout({ children, brand, topbar, api, locale, path, onNavig
             </header>
 
             <div className="pl-main">
-                <main className="pl-content">
+                {busy && (
+                    <div className="pl-progress" aria-hidden="true">
+                        <div className="pl-progress-bar" />
+                    </div>
+                )}
+                <main className="pl-content" aria-busy={busy || undefined}>
                     <div className="pl-page">{children}</div>
                 </main>
+                <div className="pc-visually-hidden" aria-live="polite" aria-atomic="true">
+                    {announce}
+                </div>
             </div>
             {extras.ai_chat && <PtahAiChat api={client} locale={lang} />}
         </div>
@@ -356,6 +379,12 @@ function MenuEntry({ item, path, iconOnly, onExpand, onFollow, routed, nested }:
     const children = visible(item.children ?? []);
     const groupActive = children.length > 0 && hasActive(item, path);
     const [open, setOpen] = useState(groupActive);
+    // A page swapped in without a reload opens the group it lives in (the others stay as they were).
+    useEffect(() => {
+        if (groupActive) {
+            setOpen(true);
+        }
+    }, [groupActive]);
     const label = item.label || item.text || '';
     const icon = (
         <span className="pl-item-icon" aria-hidden="true">

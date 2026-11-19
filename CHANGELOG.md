@@ -74,6 +74,42 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     trip, hydration and the HTML render.
   - Docs: [HeadlessApi.md](docs/HeadlessApi.md). Design:
     [docs/proposals/stacks-livewire-react-vue.md](docs/proposals/stacks-livewire-react-vue.md).
+- **React and Vue: what the Livewire table and toasts already did.**
+  - *Copy* and *Filter by this value* over a cell: the two small buttons that
+    show when the mouse rests on a cell (`uiPreferences.copyCell` turns them
+    off, as on Livewire).
+  - *Undo* on the toast of a delete: a soft delete answers the record with its
+    message (`messages[].undo`) and the toast offers to bring it back for 6 s.
+  - *Realtime*: a screen with `broadcast` on reloads on its websocket event,
+    and the bell on the user's private channel — the schema and the bell
+    answer the listener the Livewire component registers
+    (`BroadcastListener::describe()`); the app provides Laravel Echo on
+    `window.Echo`. See [Stacks.md](docs/Stacks.md#realtime-websocket).
+- **React and Vue stacks feel like a single-page app.**
+  - Pages swap without a document load: `mountPtah` takes over the links
+    inside `#ptah-app` (and back/forward); the navigator (`PtahNavigator`,
+    `core/navigate.ts`) fetches the target as HTML, reads its `#ptah-app` and
+    swaps only the content — the layout (sidebar scroll and open groups,
+    collapsed state, bell, assistant, company switcher) stays mounted. Any
+    answer that is not a stack page of the same kind (a host's Blade page, a
+    file, an error, a redirect elsewhere, login ↔ signed in) is a normal
+    load. Opt a link out with `data-ptah-reload`; a host router plugs in
+    with `onNavigate`.
+  - The old page stays on screen, with a thin progress bar, until the next
+    one has its first data (a CRUD screen's schema and listing, at most 8 s);
+    hovering or focusing a menu link fetches it ahead (`navigator.prefetch`).
+  - No blank first paint: the shell page embeds the menu, the user and the
+    company switcher (`data-boot`, built by `Ptah\Support\StackBoot`, the same
+    code as `GET {api}/menu` and `{api}/me`), so the layout paints complete on
+    F5 with no request; the bell is in the bar before its count arrives.
+  - `ControllerOptions.instant` (on in `PtahApp`): a screen draws the last
+    listing this tab saw at once (busy) and refreshes it — kept in
+    `sessionStorage` per user and company, never over ~200 KB, forgotten on
+    log out and company switch, dropped when the server refuses the screen.
+  - A screen never seen yet draws a skeleton of its shape (`pc-skeleton*`),
+    the dashboard placeholder cards, the administration screens a bar and
+    rows — no bare "Loading…".
+  - Docs: [Stacks.md](docs/Stacks.md#navigation).
 
 ### Fixed
 

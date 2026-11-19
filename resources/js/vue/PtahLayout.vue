@@ -4,12 +4,14 @@ import {
     adminEntries,
     firstLetter,
     forgetDrafts,
+    forgetSnapshots,
     iconOnlyOf,
     isActive,
     isCollapseShortcut,
     isDark,
     MEDIA_LG,
     MEDIA_MD,
+    normalizeShell,
     onDarkChange,
     PtahApi,
     readCollapsed,
@@ -19,7 +21,7 @@ import {
     words,
     writeCollapsed,
 } from '../core';
-import type { Me, MenuLink, Shell } from '../core';
+import type { Me, MenuLink, PtahBoot, Shell } from '../core';
 import { adminIcons, iconPaths, iconStroke } from '../core/icons';
 import { shellWords } from '../core/admin/shell';
 import PtahNav from './PtahNav.vue';
@@ -45,12 +47,20 @@ const props = defineProps<{
     onLogout?: () => void;
     /** Where the light/dark choice of a signed-in user is saved (`ptah.appearance.theme-mode`). */
     themeModeUrl?: string;
+    /** The menu and the user the page embedded (`data-boot`): drawn on the first frame, not fetched again. */
+    boot?: PtahBoot | null;
+    /** A page is on its way: a thin bar at the top of the content (the old page stays meanwhile). */
+    busy?: boolean;
+    /** Read out by screen readers when it changes — the title of the page just swapped in. */
+    announce?: string;
 }>();
 
 const matches = (query: string) => (typeof window === 'undefined' || !window.matchMedia ? true : window.matchMedia(query).matches);
 const client = props.api ?? new PtahApi();
-const shell = ref<Shell | null>(null);
-const me = ref<Me | null>(null);
+const shell = ref<Shell | null>(props.boot?.menu ? normalizeShell(props.boot.menu) : null);
+const me = ref<Me | null>(props.boot?.me ?? null);
+// Read once: what the page embedded is not fetched again.
+const booted = { menu: Boolean(props.boot?.menu), me: Boolean(props.boot?.me) };
 const collapsed = ref(readCollapsed());
 const hovered = ref(false);
 const peek = ref(false);
@@ -104,6 +114,7 @@ const follow = (url: string, target?: string) => {
 
 const logout = () => {
     forgetDrafts();
+    forgetSnapshots();
     props.onLogout?.();
 };
 
@@ -171,20 +182,24 @@ const medias: { list: MediaQueryList; on: () => void }[] = [];
 let stopDark: (() => void) | undefined;
 
 onMounted(() => {
-    void client
-        .shell()
-        .then((value) => {
-            shell.value = value;
-        })
-        .catch(() => {
-            shell.value = { data: [], flat: [], jump: false, brand: { name: '', logo: null, logo_dark: null }, shell: { company_switcher: false, notifications: false, admin: [] } };
-        });
-    void client
-        .me()
-        .then((user) => {
-            me.value = user;
-        })
-        .catch(() => undefined);
+    if (!booted.menu) {
+        void client
+            .shell()
+            .then((value) => {
+                shell.value = value;
+            })
+            .catch(() => {
+                shell.value = normalizeShell(null);
+            });
+    }
+    if (!booted.me) {
+        void client
+            .me()
+            .then((user) => {
+                me.value = user;
+            })
+            .catch(() => undefined);
+    }
 
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onDown);
@@ -330,7 +345,7 @@ onBeforeUnmount(() => {
 
             <!-- On a phone the switcher moves into the administration menu (when there is one). -->
             <div v-if="extras.company_switcher" :class="['pl-topbar-center', { 'pl-show-md': hasAdmin }]">
-                <PtahCompanySwitcher :api="client" :locale="lang" />
+                <PtahCompanySwitcher :api="client" :locale="lang" :initial="boot?.switcher ?? null" />
             </div>
 
             <div class="pl-topbar-end">
@@ -345,7 +360,7 @@ onBeforeUnmount(() => {
                     </button>
                     <div v-if="adminOpen" class="pl-dropdown pl-dropdown--admin">
                         <!-- On a phone the switcher of the bar is hidden; it lives here, stacked. -->
-                        <div v-if="extras.company_switcher" class="pl-hide-md"><PtahCompanySwitcher :api="client" :locale="lang" layout="stacked" /></div>
+                        <div v-if="extras.company_switcher" class="pl-hide-md"><PtahCompanySwitcher :api="client" :locale="lang" layout="stacked" :initial="boot?.switcher ?? null" /></div>
                         <div v-for="link in adminLinks" :key="link.url">
                             <hr v-if="link.rule" class="pl-rule" />
                             <a class="pl-dropdown-item" :href="link.url" :aria-current="isActive({ label: link.label, url: link.url }, current) ? 'page' : undefined" @click="adminOpen = false">
@@ -380,9 +395,11 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="pl-main">
-            <main class="pl-content">
+            <div v-if="busy" class="pl-progress" aria-hidden="true"><div class="pl-progress-bar" /></div>
+            <main class="pl-content" :aria-busy="busy || undefined">
                 <div class="pl-page"><slot /></div>
             </main>
+            <div class="pc-visually-hidden" aria-live="polite" aria-atomic="true">{{ announce }}</div>
         </div>
         <PtahAiChat v-if="extras.ai_chat" :api="client" :locale="lang" />
     </div>

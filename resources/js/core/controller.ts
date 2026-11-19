@@ -1,4 +1,7 @@
 import { ApiError, PtahApi } from './api';
+import { listenBroadcast } from './realtime';
+import { navigateTo } from './navigate';
+import { dropSnapshot, readSnapshot, takeWarm, writeSnapshot } from './snapshot';
 import { NO_FEATURES } from './types';
 import type {
     Features,
@@ -78,6 +81,13 @@ export interface ControllerOptions {
     toastMs?: number;
     /** Opens the export/print URL (default: a new tab). */
     open?: (url: string) => void;
+    /**
+     * Draw the last listing this tab saw of the screen at once (busy), then
+     * replace it with the server's answer — no "Loading…" when coming back.
+     * Kept in sessionStorage per user (see core/snapshot). `PtahApp` turns it
+     * on; default false.
+     */
+    instant?: boolean;
 }
 
 const emptyList = (): ListState => ({
@@ -106,6 +116,10 @@ export class CrudController {
     private requests = 0;
     private toastSeq = 0;
     private readonly timers = new Set<ReturnType<typeof setTimeout>>();
+    private stopRealtime: () => void = () => undefined;
+    private realtimeKey = '';
+    /** What is on screen is the kept snapshot, not yet the server's answer. */
+    private fromSnapshot = false;
 
     constructor(
         public readonly screen: string,
@@ -129,6 +143,12 @@ export class CrudController {
             panel: null,
             toasts: [],
         };
+
+        const snapshot = options.instant ? readSnapshot(screen) : null;
+        if (snapshot) {
+            this.fromSnapshot = true;
+            this.state = { ...this.state, ...snapshot, list: this.normalise(snapshot.list), status: 'ready', busy: true };
+        }
     }
 
     // ── Store ───────────────────────────────────────────────────────────────
@@ -141,13 +161,56 @@ export class CrudController {
         return () => this.listeners.delete(listener);
     };
 
+    /**
+     * Follows the screen's websocket listener: another user's change reloads
+     * the listing, quietly — what the Echo listener of the Livewire screen
+     * does. A burst of events is one reload; nothing is replaced while the
+     * user is in the form (the reload waits for the form to close).
+     */
+    private followBroadcast(schema: Schema | null): void {
+        const spec = schema?.broadcast ?? null;
+        const key = spec ? `${spec.type}:${spec.channel},${spec.event}` : '';
+        if (key === this.realtimeKey) {
+            return;
+        }
+        this.stopRealtime();
+        this.realtimeKey = key;
+
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        const stop = listenBroadcast(spec, () => {
+            if (timer !== null) {
+                return;
+            }
+            timer = setTimeout(() => {
+                this.timers.delete(timer!);
+                timer = null;
+                void this.reload({ silent: true });
+            }, 400);
+            this.timers.add(timer);
+        });
+        this.stopRealtime = () => {
+            stop();
+            if (timer !== null) {
+                clearTimeout(timer);
+                this.timers.delete(timer);
+                timer = null;
+            }
+        };
+    }
+
     private set(patch: Partial<CrudState>): void {
+        if (patch.schema !== undefined) {
+            this.followBroadcast(patch.schema);
+        }
         this.state = { ...this.state, ...patch };
         this.listeners.forEach((listener) => listener());
     }
 
     /** Stops timers; call when the screen is unmounted. */
     destroy(): void {
+        this.stopRealtime();
+        this.stopRealtime = () => undefined;
+        this.realtimeKey = '';
         this.timers.forEach(clearTimeout);
         this.timers.clear();
         this.listeners.clear();
@@ -161,14 +224,23 @@ export class CrudController {
 
     /** The schema and the first page — reopening where the user left. */
     async init(): Promise<void> {
+        const request = ++this.requests;
+        // Asked already on the way here (the navigator, a hover on the link): not asked twice.
+        const warmed = this.options.instant && this.remember ? takeWarm(this.screen) : null;
         try {
-            const [schema, listing] = await Promise.all([
-                this.api.schema(this.screen),
-                this.api.list(this.screen, {}, { restore: this.remember }),
-            ]);
+            const [schema, listing] = await (warmed ?? Promise.all([this.api.schema(this.screen), this.api.list(this.screen, {}, { restore: this.remember })]));
 
+            // The user already changed the snapshot's listing: their request answers it.
+            if (this.fromSnapshot && request !== this.requests) {
+                this.fromSnapshot = false;
+                this.set({ schema, preferences: schema.preferences });
+
+                return;
+            }
+            this.fromSnapshot = false;
             this.set({
                 status: 'ready',
+                busy: false,
                 schema,
                 preferences: schema.preferences,
                 rows: listing.data,
@@ -177,9 +249,27 @@ export class CrudController {
                 breaks: listing.breaks ?? [],
                 list: this.normalise(listing.state),
             });
+            this.keep();
             this.say(listing.messages);
         } catch (error) {
+            if (this.fromSnapshot) {
+                // Never the kept rows of a screen the server now refuses.
+                this.fromSnapshot = false;
+                const status = error instanceof ApiError ? error.status : 0;
+                if ([401, 403, 404, 419].includes(status)) {
+                    dropSnapshot(this.screen);
+                }
+                this.set({ status: 'loading', schema: null, preferences: null, rows: [], meta: null, totals: [], breaks: [], list: emptyList(), selection: [] });
+            }
             this.fail(error);
+        }
+    }
+
+    /** Keeps what is on screen for the next first paint (`instant`). */
+    private keep(): void {
+        const { schema, preferences, rows, meta, totals, breaks, list } = this.state;
+        if (this.options.instant && schema) {
+            writeSnapshot(this.screen, { schema, preferences, rows, meta, totals, breaks, list });
         }
     }
 
@@ -209,9 +299,12 @@ export class CrudController {
     }
 
     /** Fetches the listing for the current state. Only the last request in flight counts. */
-    async reload(): Promise<void> {
+    async reload(options: { silent?: boolean } = {}): Promise<void> {
         const request = ++this.requests;
-        this.set({ busy: true });
+        // Silent: a refresh nobody asked for (a websocket event) does not dim the screen.
+        if (!options.silent) {
+            this.set({ busy: true });
+        }
 
         try {
             const listing = await this.api.list(this.screen, this.state.list, { remember: this.remember });
@@ -230,6 +323,7 @@ export class CrudController {
                 list: { ...this.state.list, page: listing.meta.page },
                 selection: this.state.selection.filter((id) => known.has(id)),
             });
+            this.keep();
             this.say(listing.messages);
         } catch (error) {
             if (request === this.requests) {
@@ -475,7 +569,7 @@ export class CrudController {
     }
 
     /** Where a redirect answered by a save goes (an after-save hook). Replaceable, e.g. by a router. */
-    navigate: (url: string) => void = (url) => window.location.assign(url);
+    navigate: (url: string) => void = (url) => navigateTo(url);
 
     private labels(labels: unknown): Record<string, string> {
         return labels && !Array.isArray(labels) && typeof labels === 'object' ? (labels as Record<string, string>) : {};
@@ -668,24 +762,34 @@ export class CrudController {
     // ── Toasts ──────────────────────────────────────────────────────────────
 
     private say(messages: Message[] | undefined): void {
-        (messages ?? []).forEach((message) => this.toast(message.text, message.level));
+        (messages ?? []).forEach((message) => this.toast(message.text, message.level, message.undo ?? null));
     }
 
-    toast(text: string, level = 'info'): void {
+    toast(text: string, level = 'info', undo: RowId | null = null): void {
         if (!text) {
             return;
         }
 
         const id = ++this.toastSeq;
-        this.set({ toasts: [...this.state.toasts, { id, text, level }] });
+        this.set({ toasts: [...this.state.toasts, undo === null ? { id, text, level } : { id, text, level, undo }] });
 
-        const ms = this.options.toastMs ?? 4000;
+        // A toast that offers Undo stays longer (6 s against 3.5 s on the Livewire host).
+        const ms = this.options.toastMs ?? (undo === null ? 4000 : 6000);
         if (ms > 0) {
             const timer = setTimeout(() => {
                 this.timers.delete(timer);
                 this.dismiss(id);
             }, ms);
             this.timers.add(timer);
+        }
+    }
+
+    /** "Undo" on the toast of a delete: brings the record back and closes the toast. */
+    async undo(toastId: number): Promise<void> {
+        const toast = this.state.toasts.find((item) => item.id === toastId);
+        this.dismiss(toastId);
+        if (toast && toast.undo !== undefined && toast.undo !== null) {
+            await this.restore(toast.undo);
         }
     }
 

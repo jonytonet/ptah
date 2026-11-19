@@ -6,7 +6,7 @@
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType, Ref, VNode, VNodeChild } from 'vue';
-import { PtahApi } from '../../core';
+import { forgetSnapshots, PtahApi } from '../../core';
 import { badgeColor, companies, companySwitcher, companyWords, departments, nextSort, rangeText, switchCompany, TAX_TYPES } from '../../core/admin/company';
 import type { AdminListing, AdminListQuery, AdminResource, AdminResult, CompanyForm, CompanyRow, CompanyWords, DepartmentForm, DepartmentRow, SwitcherState } from '../../core/admin/company';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeInput, ForgeModal, ForgePageHeader, ForgePagination, ForgeSelect, ForgeSwitch, ForgeTextarea, forgeToast, ForgeToastHost } from '../forge';
@@ -401,14 +401,19 @@ export const PtahCompanySwitcher = defineComponent({
          * switcher does, so every screen reads the new company.
          */
         onSwitched: { type: Function as PropType<(id: number) => void>, default: undefined },
+        /** What the page embedded (`data-boot`): drawn on the first frame, not fetched. */
+        initial: { type: Object as PropType<SwitcherState | null>, default: null },
     },
     setup(props) {
         const client = props.api ?? new PtahApi();
         const t = computed(() => companyWords(props.locale));
-        const state = ref<SwitcherState | null>(null);
+        const state = ref<SwitcherState | null>(props.initial ?? null);
         const busy = ref(false);
 
         onMounted(() => {
+            if (props.initial) {
+                return;
+            }
             void companySwitcher(client)
                 .then((value) => {
                     state.value = value;
@@ -424,6 +429,8 @@ export const PtahCompanySwitcher = defineComponent({
             try {
                 const answer = await switchCompany(client, id);
                 state.value = { companies: answer.companies, active_id: answer.active_id };
+                // Everything changes with the company: the kept listings go, and the page reloads.
+                forgetSnapshots();
                 (props.onSwitched ?? (() => window.location.reload()))(id);
             } catch (error) {
                 forgeToast(failure(error), 'danger');

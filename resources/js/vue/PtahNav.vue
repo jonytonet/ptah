@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
 import { hasActive, isActive, visible } from '../core';
 import type { MenuItem } from '../core';
 import { Icon } from './icons';
@@ -26,6 +26,17 @@ const open = reactive<Record<number, boolean>>({});
 shown().forEach((item, index) => {
     open[index] = groupActive(item);
 });
+// A page swapped in without a reload opens the group it lives in (the others stay as they were).
+watch(
+    () => props.path,
+    () => {
+        shown().forEach((item, index) => {
+            if (groupActive(item)) {
+                open[index] = true;
+            }
+        });
+    },
+);
 
 const toggle = (index: number) => {
     // On the rail: expand the sidebar and open the group, in one gesture.

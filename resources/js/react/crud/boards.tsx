@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { DragEvent, ReactNode } from 'react';
-import { ApiError } from '../../core';
+import { ApiError, navigateTo } from '../../core';
 import type { CrudController, CrudState, Row, RowAction } from '../../core';
 import {
     boardsWords,
@@ -676,7 +676,7 @@ function CardFooter({ crud, state, t, row, renderActions }: { crud: CrudControll
 
     const run = (action: RowAction) => {
         if (action.type === 'link') {
-            window.location.assign(action.value);
+            navigateTo(action.value);
         } else {
             crud.runAction(row, action);
         }

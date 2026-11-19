@@ -112,6 +112,19 @@ class StackAdminPagesTest extends TestCase
     }
 
     #[Test]
+    public function the_page_embeds_the_company_switcher_the_endpoint_answers(): void
+    {
+        $this->signIn(master: true);
+
+        $html = $this->get(route('ptah.company.index'))->assertOk()->getContent();
+        $this->assertSame(1, preg_match('/data-boot="([^"]*)"/', $html, $match));
+        $boot = json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true);
+
+        $this->assertIsArray($boot);
+        $this->assertSame($this->getJson('/ptah/api/admin/company-switcher')->assertOk()->json(), $boot['switcher']);
+    }
+
+    #[Test]
     public function a_common_user_gets_no_administration_link(): void
     {
         $this->signIn(master: false);

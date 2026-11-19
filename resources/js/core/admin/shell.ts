@@ -3,6 +3,7 @@
  * and the words. The rules (who sees what, safe URLs, ownership) are the
  * server's: the Livewire components NotificationBell and ExportsPanel.
  */
+import type { BroadcastSpec } from '../realtime';
 import type { PtahApi } from '../api';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -32,6 +33,8 @@ export interface BellState {
     unread: number;
     /** The configured polling interval, null when polling is off. */
     poll_ms: number | null;
+    /** This user's private channel, when ptah.notifications.broadcast is on. */
+    broadcast?: BroadcastSpec | null;
     /** Only when asked for (the dropdown is open). */
     items: ShellNotification[] | null;
     view_all_url: string | null;

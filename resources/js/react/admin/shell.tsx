@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
-import { PtahApi } from '../../core';
+import { navigateTo, PtahApi } from '../../core';
 import {
     badgeText,
     dismissNotification,
@@ -20,6 +20,7 @@ import {
     startPolling,
 } from '../../core/admin/shell';
 import type { BellState, ExportRow, ExportsListing, ShellMessage, ShellNotification } from '../../core/admin/shell';
+import { listenBroadcast } from '../../core/realtime';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
 import { Icon } from '../icons';
 
@@ -31,7 +32,7 @@ export interface ShellProps {
 }
 
 export interface PtahNotificationBellProps extends ShellProps {
-    /** Go to a URL without a full page load. Defaults to `window.location.assign`. */
+    /** Go to a URL without a full page load. Defaults to the mounted app's navigator, else a normal load. */
     onNavigate?: (url: string) => void;
 }
 
@@ -83,6 +84,9 @@ export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: 
     const interval = pollInterval !== undefined ? pollInterval : (state?.poll_ms ?? null);
     const enabled = state?.enabled ?? false;
     useEffect(() => (enabled ? startPolling(() => refresh.current(), interval) : undefined), [enabled, interval, refresh]);
+    // And at once when the server says so (a websocket, when the app has Echo).
+    const channel = state?.broadcast?.channel;
+    useEffect(() => (enabled ? listenBroadcast(state?.broadcast, () => refresh.current()) : undefined), [enabled, channel, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const close = useCallback(() => {
         setOpen(false);
@@ -139,7 +143,7 @@ export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: 
         event.preventDefault();
         const answer = await act(() => openNotification(client, item.id));
         if (answer?.redirect) {
-            (onNavigate ?? ((url: string) => window.location.assign(url)))(answer.redirect);
+            (onNavigate ?? navigateTo)(answer.redirect);
         }
     };
 
@@ -148,7 +152,17 @@ export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: 
         setNotice(answer?.messages?.[0] ?? null);
     };
 
-    if (!state || !state.enabled) {
+    // Until the count arrives the bell is already in the bar (the layout knows it is on): no pop-in.
+    if (!state) {
+        return (
+            <div className="pl-dropdown-root pl-bell" aria-hidden="true">
+                <span className="pl-icon-btn">
+                    <BellIcon />
+                </span>
+            </div>
+        );
+    }
+    if (!state.enabled) {
         return null;
     }
 

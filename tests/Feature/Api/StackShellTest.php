@@ -7,6 +7,7 @@ namespace Ptah\Tests\Feature\Api;
 use Illuminate\Auth\GenericUser;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\UserPreference;
+use Ptah\Support\StackBoot;
 use Ptah\Tests\TestCase;
 
 /**
@@ -134,6 +135,57 @@ class StackShellTest extends TestCase
         $shell = $this->getJson('/ptah/api/menu')->json('shell');
         $this->assertFalse($shell['notifications']);
         $this->assertFalse($shell['static_bell']);
+    }
+
+    #[Test]
+    public function the_page_embeds_the_very_menu_and_me_the_endpoints_answer(): void
+    {
+        config(['ptah.forge.sidebar_items' => [
+            ['label' => 'Início <b>&"\'', 'url' => '/inicio', 'type' => 'menuLink'],
+            ['label' => 'Compras', 'type' => 'menuGroup', 'children' => [['label' => 'Cotação', 'url' => '/compras/cotacao']]],
+        ]]);
+
+        $html = $this->get(route('ptah.dashboard'))->assertOk()->getContent();
+        $boot = $this->bootOf($html);
+
+        $this->assertNotNull($boot);
+        $this->assertSame($this->getJson('/ptah/api/menu')->assertOk()->json(), $boot['menu']);
+        $this->assertSame($this->getJson('/ptah/api/me')->assertOk()->json(), $boot['me']);
+        $this->assertSame('Ana', $boot['me']['user']['name']);
+        // The switcher is embedded exactly when the top bar shows it.
+        $this->assertSame($boot['menu']['shell']['company_switcher'], $boot['switcher'] !== null);
+        // Escaped as an attribute: the label's markup never reaches the page as markup.
+        $this->assertStringNotContainsString('Início <b>', $html);
+    }
+
+    #[Test]
+    public function a_swap_in_place_and_a_guest_page_carry_no_boot_data(): void
+    {
+        // The front end swapping pages: its layout is already on screen.
+        $html = $this->get(route('ptah.dashboard'), ['X-Ptah-Navigate' => '1'])->assertOk()->getContent();
+        $this->assertStringContainsString('id="ptah-app"', $html);
+        $this->assertNull($this->bootOf($html));
+
+        // A visitor on the sign-in page.
+        $this->app['auth']->forgetGuards();
+        $this->assertNull($this->bootOf($this->get(route('ptah.auth.login'))->assertOk()->getContent()));
+
+        // The API off: nothing to boot from.
+        config(['ptah.crud_api.enabled' => false]);
+        $this->assertNull(StackBoot::forPage('dashboard'));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function bootOf(string $html): ?array
+    {
+        if (preg_match('/data-boot="([^"]*)"/', $html, $match) !== 1) {
+            return null;
+        }
+        $decoded = json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     #[Test]

@@ -135,7 +135,7 @@ const en = {
     restoreDefaults: 'Restore defaults',
     logOut: 'Log out',
     administration: 'Administration',
-    filterByCell: 'Alt+click: filter by this value',
+    undo: 'Undo',
     dashboard: 'Dashboard',
     welcome: 'Welcome',
     // Layout
@@ -308,7 +308,7 @@ const ptBR: Words = {
     restoreDefaults: 'Restaurar padrões',
     logOut: 'Sair',
     administration: 'Administração',
-    filterByCell: 'Alt+clique: filtrar por este valor',
+    undo: 'Desfazer',
     dashboard: 'Dashboard',
     welcome: 'Bem-vindo',
     collapseMenu: 'Recolher o menu',

@@ -148,6 +148,24 @@ class ShellExtrasApiTest extends TestCase
     }
 
     #[Test]
+    public function the_bell_names_the_users_private_channel_only_when_broadcast_is_on(): void
+    {
+        $user = $this->user();
+        $this->actingAs($user);
+
+        $this->assertNull($this->getJson('/ptah/api/notifications')->assertOk()->json('broadcast'));
+
+        config(['ptah.notifications.broadcast' => true]);
+
+        // The listener of the Livewire bell, in parts, for a client with Echo.
+        $this->getJson('/ptah/api/notifications')->assertOk()->assertJsonPath('broadcast', [
+            'type' => 'private',
+            'channel' => 'ptah.notifications.'.$user->id,
+            'event' => '.ptah.notification.created',
+        ]);
+    }
+
+    #[Test]
     public function polling_off_answers_a_null_interval(): void
     {
         config()->set('ptah.notifications.poll', 'none');

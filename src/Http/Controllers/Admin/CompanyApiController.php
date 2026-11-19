@@ -18,6 +18,7 @@ use Ptah\Http\Headless\HeadlessDepartmentList;
 use Ptah\Models\Company;
 use Ptah\Models\Department;
 use Ptah\Services\Company\CompanyService;
+use Ptah\Support\StackBoot;
 
 /**
  * The company area (companies, departments, the company switcher) for the
@@ -321,21 +322,8 @@ class CompanyApiController extends Controller
     /** @return array<string, mixed> */
     private function switcherPayload(HeadlessCompanySwitcher $switcher, ?int $activeId = null): array
     {
-        $companies = [];
-
-        foreach ($switcher->companies as $company) {
-            $companies[] = [
-                'id' => (int) $company->id,
-                'name' => (string) $company->name,
-                // The tab text of the Blade view.
-                'label' => $company->getLabelDisplay() ?: mb_strtoupper(mb_substr((string) $company->name, 0, 4)),
-                'is_default' => (bool) $company->is_default,
-            ];
-        }
-
-        // After a switch the component's own activeId still holds the company
-        // it was mounted with (the Livewire screen reloads the page instead).
-        return ['companies' => $companies, 'active_id' => $activeId ?? $switcher->activeId];
+        // The same payload the stack page embeds (StackBoot, `data-boot`).
+        return StackBoot::companySwitcher($switcher, $activeId);
     }
 
     /**

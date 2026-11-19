@@ -3,8 +3,8 @@
  * by the server — the same four kinds ptah::dashboard.widgets draws — or,
  * with none configured, the four cards of livewire/auth/dashboard.blade.php.
  */
-import { useEffect, useMemo, useState } from 'react';
-import { PtahApi, words } from '../core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { PtahApi, takeWarmCall, words } from '../core';
 import type { DashboardPage, Me, Widget } from '../core';
 import { Icon } from './icons';
 import { PtahPageHead } from './page-head';
@@ -21,12 +21,15 @@ const tone = (color: string) => TONE[color] ?? TONE.primary;
 /** The widgets of a group (default: the dashboard's), anywhere in a page. */
 export function PtahWidgets({ api, group, onLoad }: { api?: PtahApi; group?: string; onLoad?: (widgets: Widget[], page: DashboardPage) => void }) {
     const client = useMemo(() => api ?? new PtahApi(), [api]);
-    const [widgets, setWidgets] = useState<Widget[] | null>(null);
+    // Asked already on the way to the dashboard (the navigator): drawn in the first frame.
+    const warm = useRef(group === undefined ? takeWarmCall<DashboardPage>('dashboard') : null);
+    const [widgets, setWidgets] = useState<Widget[] | null>(() => (warm.current?.done && warm.current.value ? warm.current.value.data : null));
 
     useEffect(() => {
         let alive = true;
-        void client
-            .dashboardPage(group)
+        const warmed = warm.current;
+        warm.current = null;
+        void (warmed ? warmed.promise : client.dashboardPage(group))
             .then((page) => {
                 if (alive) {
                     setWidgets(page.data);
@@ -40,7 +43,20 @@ export function PtahWidgets({ api, group, onLoad }: { api?: PtahApi; group?: str
         };
     }, [client, group]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (!widgets || widgets.length === 0) {
+    // While they are on the way: four placeholder cards (the shape of the default ones), not a blank.
+    if (!widgets) {
+        return (
+            <div className="pf pd-stats pc-skeleton" role="status" aria-busy="true">
+                {[0, 1, 2, 3].map((index) => (
+                    <div key={index} className="pd-card pc-skeleton-card" aria-hidden="true">
+                        <span className="pc-skeleton-bar" style={{ width: '40%' }} />
+                        <span className="pc-skeleton-bar pc-skeleton-bar--tall" style={{ width: '65%' }} />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    if (widgets.length === 0) {
         return null;
     }
 

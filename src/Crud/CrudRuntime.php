@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Ptah\Crud\Concerns\FiltersRuntime;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\Attachment;
+use Ptah\Support\BroadcastListener;
 use Ptah\Support\IconClass;
 use Ptah\Support\PtahMask;
 use Ptah\Support\SafeUrl;
@@ -549,6 +550,11 @@ final class CrudRuntime extends BaseCrud
             ],
             'preferences' => $this->preferences(),
             'features' => $this->features(),
+            // The websocket listener of the screen (`broadcast` in its config):
+            // the same channel and event the Livewire screen registers.
+            'broadcast' => BroadcastListener::describe(
+                BroadcastListener::key((array) ($this->crudConfig['broadcast'] ?? []), $this->model, $this->companyFilter)
+            ),
         ];
     }
 
@@ -576,6 +582,8 @@ final class CrudRuntime extends BaseCrud
             // ptah.crud.responsive_cards = false: view mode `auto` stays a
             // table on a narrow screen, as base-crud.blade.php does.
             'responsiveCards' => (bool) config('ptah.crud.responsive_cards', true),
+            // The copy / filter buttons over a cell (editor → General).
+            'copyCell' => (bool) ($this->crudConfig['uiPreferences']['copyCell'] ?? true),
         ];
     }
 
@@ -1236,10 +1244,16 @@ final class CrudRuntime extends BaseCrud
         $out = [];
         foreach ($this->captured as $event) {
             if ($event['name'] === 'ptah-toast') {
-                $out[] = [
+                $message = [
                     'text' => (string) ($event['params']['title'] ?? ''),
                     'level' => (string) ($event['params']['color'] ?? 'info'),
                 ];
+                // The "deleted" toast of a soft delete carries the record: the
+                // client offers Undo for a few seconds, as the Livewire toast.
+                if (($event['params']['undoId'] ?? null) !== null) {
+                    $message['undo'] = $event['params']['undoId'];
+                }
+                $out[] = $message;
             }
         }
 
