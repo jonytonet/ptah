@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CrudController } from '../../core/controller';
 
 const filterByCell = vi.fn(() => Promise.resolve(true));
-vi.mock('../../core/crud/filters', () => ({ filterByCell: (...args: unknown[]) => filterByCell(...(args as [])) }));
+const ensure = vi.fn(() => Promise.resolve());
+let metaReady = true;
+// The filterable columns come from the filter description, loaded when the buttons are installed.
+vi.mock('../../core/crud/filters', () => ({
+    filterByCell: (...args: unknown[]) => filterByCell(...(args as [])),
+    filterSession: () => ({ ensure, getState: () => ({ meta: metaReady ? {} : null }) }),
+    isCellFilterable: (_crud: unknown, field: string) => field === 'email',
+}));
 
 import { cellActionWords, installCellActions } from '../../core/crud/cell-actions';
 
@@ -17,7 +24,8 @@ function screen(key: string, cells: string): HTMLElement {
     return root;
 }
 
-const fakeCrud = (key: string, toast = vi.fn()) => ({ screen: key, toast }) as unknown as CrudController;
+const fakeCrud = (key: string, toast = vi.fn()) =>
+    ({ screen: key, toast, getState: () => ({ schema: { filters: [{ field: 'phone' }] } }) }) as unknown as CrudController;
 const over = (element: Element) => element.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
 const group = () => document.querySelector('.pc-cell-actions') as HTMLElement | null;
 const button = (label: string) => document.querySelector(`.pc-cell-action[aria-label="${label}"]`) as HTMLButtonElement;
@@ -40,7 +48,7 @@ describe('copy / filter buttons over a cell', () => {
         const writeText = vi.fn(() => Promise.resolve());
         vi.stubGlobal('navigator', { clipboard: { writeText } });
         const toast = vi.fn();
-        const root = screen('items', '<td data-ptah-cell="email" data-ptah-row="7" data-ptah-filter=""><b>ana@example.test</b></td>');
+        const root = screen('items', '<td data-ptah-cell="email" data-ptah-row="7"><b>ana@example.test</b></td>');
         stop = installCellActions(fakeCrud('items', toast), { words, enabled: () => true });
 
         over(root.querySelector('b')!);
@@ -57,10 +65,12 @@ describe('copy / filter buttons over a cell', () => {
     });
 
     it('filters by the value of the record, only on a filterable column', () => {
-        const root = screen('items', '<td data-ptah-cell="email" data-ptah-row="7" data-ptah-filter="">a</td><td data-ptah-cell="phone" data-ptah-row="7">b</td>');
+        const root = screen('items', '<td data-ptah-cell="email" data-ptah-row="7">a</td><td data-ptah-cell="phone" data-ptah-row="7">b</td>');
         const crud = fakeCrud('items');
         stop = installCellActions(crud, { words, enabled: () => true, delay: 0 });
         const [email, phone] = Array.from(root.querySelectorAll('td'));
+        // Installing asks for the filter description, so the filter button can show.
+        expect(ensure).toHaveBeenCalled();
 
         over(phone);
         vi.advanceTimersByTime(0);
@@ -72,6 +82,22 @@ describe('copy / filter buttons over a cell', () => {
         button('Filtrar por este valor').click();
 
         expect(filterByCell).toHaveBeenCalledWith(crud, '7', 'email');
+    });
+
+    it('before the filter description arrives, goes by the filterable columns of the schema', () => {
+        metaReady = false;
+        const root = screen('items', '<td data-ptah-cell="email" data-ptah-row="7">a</td><td data-ptah-cell="phone" data-ptah-row="7">b</td>');
+        stop = installCellActions(fakeCrud('items'), { words, enabled: () => true, delay: 0 });
+        const [email, phone] = Array.from(root.querySelectorAll('td'));
+
+        over(phone);
+        vi.advanceTimersByTime(0);
+        expect(button('Filtrar por este valor').style.display).toBe('');
+
+        over(email);
+        vi.advanceTimersByTime(200);
+        expect(button('Filtrar por este valor').style.display).toBe('none');
+        metaReady = true;
     });
 
     it('says so when nothing could copy', async () => {

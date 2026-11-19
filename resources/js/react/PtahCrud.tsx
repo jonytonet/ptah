@@ -5,7 +5,7 @@ import type { ControllerOptions, CrudState, Row, RowAction, Words } from '../cor
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
-import { clearAllFilters, filterSession, isCellFilterable } from '../core/crud/filters';
+import { clearAllFilters, filterSession } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -557,7 +557,6 @@ function Table({ crud, state, t, w, locale, options }: PartProps & { options: Co
                                             // What the copy / filter buttons of the cell read (core/crud/cell-actions).
                                             data-ptah-cell={column.field}
                                             data-ptah-row={row.id}
-                                            data-ptah-filter={isCellFilterable(crud, column.field) ? '' : undefined}
                                             dangerouslySetInnerHTML={{ __html: row.cells[column.field]?.html ?? '' }}
                                         />
                                     ))}

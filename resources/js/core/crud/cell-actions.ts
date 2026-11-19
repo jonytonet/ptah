@@ -9,10 +9,11 @@
  * lives outside the `<tr>`, so clicking it does not open the record.
  *
  * A cell takes part when it carries `data-ptah-cell` (the column) and
- * `data-ptah-row` (the record); `data-ptah-filter` marks a filterable column.
+ * `data-ptah-row` (the record). Whether its column filters is asked of the
+ * filter description (`cell_fields`) when the buttons show.
  */
 import type { CrudController } from '../controller';
-import { filterByCell } from './filters';
+import { filterByCell, filterSession, isCellFilterable } from './filters';
 
 export interface CellActionWords {
     copy: string;
@@ -160,7 +161,15 @@ export function installCellActions(crud: CrudController, options: CellActionsOpt
 
     const show = (td: HTMLElement) => {
         const element = build();
-        const canFilter = td.dataset.ptahFilter !== undefined && (td.dataset.ptahRow ?? '') !== '';
+        // Asked when the buttons show, not when the table was drawn: which columns
+        // filter comes with the filter description, which arrives after the rows.
+        const field = td.dataset.ptahCell ?? '';
+        // Until that description arrives (a slow server), the filterable columns
+        // of the schema — it came with the rows. The server decides in the end.
+        const known = filterSession(crud).getState().meta
+            ? isCellFilterable(crud, field)
+            : (crud.getState().schema?.filters ?? []).some((filter) => filter.field === field);
+        const canFilter = known && (td.dataset.ptahRow ?? '') !== '';
         if (filterButton) {
             filterButton.style.display = canFilter ? '' : 'none';
         }
@@ -197,6 +206,11 @@ export function installCellActions(crud: CrudController, options: CellActionsOpt
     };
     // Fixed on the screen: after a scroll the position would no longer match the cell.
     const onScroll = () => hide(0);
+
+    // The description of the filters says which columns offer "filter by this value".
+    void filterSession(crud)
+        .ensure()
+        .catch(() => undefined);
 
     document.addEventListener('mouseover', onOver);
     window.addEventListener('scroll', onScroll, true);

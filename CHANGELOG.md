@@ -110,11 +110,67 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     the dashboard placeholder cards, the administration screens a bar and
     rows — no bare "Loading…".
   - Docs: [Stacks.md](docs/Stacks.md#navigation).
+- **Single-page navigation for the Livewire layout** — the same feeling in
+  `<x-forge-dashboard-layout>`, as an opt-in: `PTAH_SPA_NAVIGATION=true`
+  (`ptah.forge.spa_navigation`, off by default — with it off the layout's HTML
+  is byte-identical to before). Livewire's own swap (`Livewire.navigate()`,
+  from one delegated listener over links marked `data-ptah-navigate` — not
+  `wire:navigate`, whose prefetch cache in Livewire 4.3.1 deletes a newer
+  in-flight prefetch of the same URL with a stale 30 s timer: "Cannot set
+  properties of undefined (setting 'html')" and a click that never lands),
+  the progress bar in the accent token (no animation under reduced motion).
+  - Every internal link the layout draws navigates in place: sidebar items and
+    sub-items, brand, administration gear, profile, page-header back,
+    breadcrumb, the "jump to a screen" results, the bell's "view all" and a
+    notification's "open" (redirect with `navigate`), dashboard widgets, the
+    permission guide and a BaseCrud row link. External, `target` other than
+    `_self`, `javascript:`/`mailto:`, downloads/exports/print, logout and
+    company switch stay full loads. One rule for all of it:
+    `Ptah\Support\SpaNavigation` (`@ptahNavigate($url, $target)` in Blade).
+  - Opting out: `'spa' => false` on a config-driver menu item, path patterns in
+    `ptah.forge.spa_navigation_except` for anything else.
+  - The frame does not blink: the assistant (an open conversation, a request in
+    flight, the draft) and the toasts are `@persist`; the sidebar is re-rendered
+    (active item and group follow the URL) with its scroll, the groups opened
+    by hand and the hover-expanded state restored; the theme is re-applied
+    before the new body paints and transitions are off while it settles.
+  - A swap that lands on a page that is not this layout (login after the
+    session expired, a host page with its own layout) or after a deploy changed
+    the Vite build reloads the document instead (`<meta name="ptah-build">`:
+    Livewire's `data-navigate-track` misses Vite's hashed file names).
+  - Back/forward restore a page from Livewire's snapshot, which it takes
+    without tearing Alpine down first: the copies rendered by `<template
+    x-for>`/`x-if` came back initialised outside their loop ("option is not
+    defined" on a CRUD screen). The layout drops those copies on
+    `livewire:navigating`, before the snapshot; the templates render them again.
+  - The env switch reaches a `config/ptah.php` published before the key existed
+    (the provider fills the missing `forge.spa_navigation*` keys — the shallow
+    merge never would).
+  - Scripts made correct in both modes: the BaseCrud cell copy/filter group is
+    re-attached to the new `<body>` instead of being lost; one `blur` listener
+    for every table's drag-to-scroll instead of one per wrapper (they piled up
+    on each morph); the search highlight, the typed-value keeper and the
+    export/print listeners also start when the first CRUD screen arrives by
+    navigation (they waited for a `livewire:init` that had already fired — the
+    export never downloaded); the form modal's document listener and commit
+    hook are removed when it is destroyed; the column editor's Sortable is
+    loaded once and waits for it if needed.
+  - Docs: [Configuration.md](docs/Configuration.md#single-page-navigation-of-the-livewire-layout-forgespa_navigation)
+    (what a host must check in its own scripts before turning it on).
 
 ### Fixed
 
 Defects of the Livewire screens found while they were being ported — fixed in
 the engine, so the three stacks get them.
+
+- **"Uncaught (in promise)" in the console after opening the notification
+  bell** (and on the exports panel). A `wire:poll` tick that lands while the
+  component has a request in flight is cancelled by Livewire, and with
+  `wire:poll="$refresh"` (or a bare `wire:poll`) Livewire 4.3.1 leaves that
+  cancellation as an unhandled rejection — `$refresh` is an async wrapper
+  without the marker Livewire uses to swallow it. Both now poll a named no-op
+  method (`refreshBadge`, `refreshPending`). Happened with or without the
+  single-page navigation; a slow server made it frequent.
 
 - **The chip of an "is empty" / "has value" filter did not go away.** Removing
   it cleared the value and left the operator, which is the whole filter: the

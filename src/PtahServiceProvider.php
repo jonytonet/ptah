@@ -8,6 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
@@ -154,6 +155,11 @@ class PtahServiceProvider extends ServiceProvider
             __DIR__.'/../config/ptah.php',
             'ptah'
         );
+
+        // A switch a host turns on from .env alone must reach a config/ptah.php
+        // published before it existed — the merge above is shallow, so it never
+        // would (PTAH_SPA_NAVIGATION=true did nothing in such a host).
+        $this->fillMissingNestedConfig('forge', ['spa_navigation', 'spa_navigation_except']);
 
         $this->registerLaravelTranslations();
 
@@ -511,6 +517,42 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
+     * Copies the package's default of each `ptah.{$block}.{$key}` that the
+     * host's (published) config lacks. Only keys listed here: the rest of a
+     * published block stays the host's. Skipped with a cached config, like
+     * mergeConfigFrom — `config:cache` already ran this and kept the result.
+     *
+     * @param  list<string>  $keys
+     */
+    private function fillMissingNestedConfig(string $block, array $keys): void
+    {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return;
+        }
+
+        $config = $this->app->make('config');
+        $current = $config->get("ptah.{$block}");
+
+        if (! is_array($current)) {
+            return;
+        }
+
+        $defaults = null;
+
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $current)) {
+                continue;
+            }
+
+            $defaults ??= (array) ((require __DIR__.'/../config/ptah.php')[$block] ?? []);
+
+            if (array_key_exists($key, $defaults)) {
+                $config->set("ptah.{$block}.{$key}", $defaults[$key]);
+            }
+        }
+    }
+
+    /**
      * Registers Ptah Blade directives.
      *
      * @ptahCan's $objectKey may be a QUALIFIED key (`page::obj_key` /
@@ -529,6 +571,14 @@ class PtahServiceProvider extends ServiceProvider
 
         Blade::if('ptahCanManageConfig', function (mixed $user = null): bool {
             return ptah_can_manage_config($user);
+        });
+
+        // `<a href="{{ $url }}"@ptahNavigate($url, $target)>` — prints
+        // ` data-ptah-navigate` when the Livewire layout's SPA navigation is
+        // on and the link qualifies, nothing otherwise (so with the mode off
+        // the tag is byte-identical). The rule lives in SpaNavigation::attr().
+        Blade::directive('ptahNavigate', function (string $expression): string {
+            return '<?php echo \Ptah\Support\SpaNavigation::attr('.$expression.'); ?>';
         });
     }
 

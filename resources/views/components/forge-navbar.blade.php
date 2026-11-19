@@ -62,7 +62,7 @@
             @isset($brand)
                 {{ $brand }}
             @else
-                <a href="/" class="flex items-center gap-2">
+                <a href="/"@ptahNavigate('/') class="flex items-center gap-2">
                     @php
                         // A prop vence; sem ela, o logo do config (ptah.brand).
                         $ptahLogo = $logoUrl ?: \Ptah\Support\Brand::logo();
@@ -208,7 +208,7 @@
 
                         {{-- Company --}}
                         @if($ptahAdminLinks['company'])
-                        <a href="{{ route('ptah.company.index') }}"
+                        <a href="{{ route('ptah.company.index') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.company.index')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -220,7 +220,7 @@
 
                         {{-- Departamentos --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.departments'))
-                        <a href="{{ route('ptah.acl.departments') }}"
+                        <a href="{{ route('ptah.acl.departments') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.departments')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -232,7 +232,7 @@
 
                         {{-- Perfis de acesso --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.roles'))
-                        <a href="{{ route('ptah.acl.roles') }}"
+                        <a href="{{ route('ptah.acl.roles') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.roles')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -244,7 +244,7 @@
 
                         {{-- Pages / Objects --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.pages'))
-                        <a href="{{ route('ptah.acl.pages') }}"
+                        <a href="{{ route('ptah.acl.pages') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.pages')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -256,7 +256,7 @@
 
                         {{-- Users & Permissions --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.users'))
-                        <a href="{{ route('ptah.acl.users') }}"
+                        <a href="{{ route('ptah.acl.users') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.users')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -268,7 +268,7 @@
 
                         {{-- Audit Log --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.audit'))
-                        <a href="{{ route('ptah.acl.audit') }}"
+                        <a href="{{ route('ptah.acl.audit') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.audit')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -280,7 +280,7 @@
 
                         {{-- Permissions guide --}}
                         @if($ptahAdminLinks['acl'] && \Illuminate\Support\Facades\Route::has('ptah.acl.guide'))
-                        <a href="{{ route('ptah.acl.guide') }}"
+                        <a href="{{ route('ptah.acl.guide') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.acl.guide')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -295,7 +295,7 @@
                         @if($ptahAdminLinks['company'] || $ptahAdminLinks['acl'])
                         <hr class="my-1">
                         @endif
-                        <a href="{{ route('ptah.menu.manage') }}"
+                        <a href="{{ route('ptah.menu.manage') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.menu.manage')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
@@ -309,7 +309,7 @@
                         @if($ptahAdminLinks['company'] || $ptahAdminLinks['acl'] || $ptahAdminLinks['menu'])
                         <hr class="my-1">
                         @endif
-                        <a href="{{ route('ptah.ai.models') }}"
+                        <a href="{{ route('ptah.ai.models') }}"{!! \Ptah\Support\SpaNavigation::attr(route('ptah.ai.models')) !!}
                            class="flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                             <i class="bx bx-bot h-4 w-4 text-gray-400 shrink-0 text-base leading-none"></i>
                             {{ __('ptah::ui.navbar_admin_ai_models') }}
@@ -391,7 +391,7 @@
                                 ? route('ptah.auth.logout')
                                 : (\Illuminate\Support\Facades\Route::has('logout') ? route('logout') : '#'));
                         @endphp
-                        <a href="{{ $profileHref }}"
+                        <a href="{{ $profileHref }}"{!! \Ptah\Support\SpaNavigation::attr($profileHref) !!}
                            class="flex items-center gap-2 px-4 py-2 text-sm transition-colors">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

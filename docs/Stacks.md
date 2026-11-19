@@ -116,7 +116,9 @@ the Livewire sidebar) and the signed-in user; swap it for your own shell.
 ## Navigation
 
 `mountPtah` makes the stack pages behave like one app: moving between them
-does not reload the document. A click on a link inside `#ptah-app` (the
+does not reload the document. (The Livewire layout has the same feeling as an
+opt-in, through Livewire's own `wire:navigate` — see
+[Configuration.md → Single-page navigation](Configuration.md#single-page-navigation-of-the-livewire-layout-forgespa_navigation).) A click on a link inside `#ptah-app` (the
 sidebar, the administration gear, the breadcrumb, a dashboard widget, a link
 in a cell), a row link, the "jump to a screen" search, a notification's
 "open" and the redirect of a save all go through the navigator

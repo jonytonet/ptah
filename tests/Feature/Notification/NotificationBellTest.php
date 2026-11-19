@@ -115,6 +115,25 @@ class NotificationBellTest extends NotificationTestCase
     }
 
     #[Test]
+    public function open_item_navigates_in_place_only_with_the_layout_spa_mode_on(): void
+    {
+        $this->loginAs(1);
+        $local = app(NotificationService::class)->push(1, ['title' => 'x', 'url' => '/pets/42']);
+        $external = app(NotificationService::class)->push(1, ['title' => 'y', 'url' => 'https://example.org/z']);
+
+        $off = Livewire::test(NotificationBell::class)->call('toggle')->call('openItem', $local->id);
+        $this->assertArrayNotHasKey('redirectUsingNavigate', $off->effects, 'Modo desligado: carga completa, como sempre.');
+
+        config(['ptah.forge.spa_navigation' => true]);
+
+        $on = Livewire::test(NotificationBell::class)->call('toggle')->call('openItem', $local->id)->assertRedirect('/pets/42');
+        $this->assertTrue($on->effects['redirectUsingNavigate'] ?? false);
+
+        $away = Livewire::test(NotificationBell::class)->call('toggle')->call('openItem', $external->id);
+        $this->assertArrayNotHasKey('redirectUsingNavigate', $away->effects, 'Outra origem nunca navega no lugar.');
+    }
+
+    #[Test]
     public function open_item_belonging_to_another_user_neither_marks_nor_redirects(): void
     {
         $this->loginAs(1);

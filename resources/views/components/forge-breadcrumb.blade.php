@@ -18,7 +18,7 @@
                 @endif
 
                 @if($index < count($items) - 1)
-                    <a href="{{ $item['url'] ?? '#' }}" class="ptah-c-crumb">
+                    <a href="{{ $item['url'] ?? '#' }}"@ptahNavigate($item['url'] ?? '#') class="ptah-c-crumb">
                         {{ $item['label'] }}
                     </a>
                 @else

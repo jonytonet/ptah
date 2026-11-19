@@ -5,7 +5,7 @@ import type { ControllerOptions, GroupBreak, PtahApi, Row, RowAction } from '../
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
-import { clearAllFilters, filterSession, isCellFilterable } from '../core/crud/filters';
+import { clearAllFilters, filterSession } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -257,7 +257,6 @@ const dropOn = (target: string) => {
     }
     dragged.value = null;
 };
-const cellFilter = (field: string) => isCellFilterable(crud, field);
 // "Copy" and "Filter by this value" over the cell the mouse rests on.
 let stopCellActions: (() => void) | null = null;
 const totalsOf = (field: string) => state.value.totals.filter((total) => total.field === field && total.value !== null);
@@ -496,7 +495,6 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
                                 :style="widthOf(column.field)"
                                 :data-ptah-cell="column.field"
                                 :data-ptah-row="row.id"
-                                :data-ptah-filter="cellFilter(column.field) ? '' : undefined"
                                 v-html="row.cells[column.field]?.html ?? ''"
                             />
                             <td v-for="label in actions" :key="`action-${label}`" class="pc-align-center" @click.stop>

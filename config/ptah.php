@@ -254,6 +254,26 @@ return [
          */
         'sidebar_jump' => (bool) env('PTAH_SIDEBAR_JUMP', true),
         'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 8),
+
+        /*
+         * Navegacao SPA do layout Livewire (Livewire.navigate): trocar de tela sem
+         * recarregar o documento — sidebar, navbar, chat de IA e toasts nao
+         * piscam. DESLIGADA por padrao: paginas e scripts do host podem contar
+         * com um carregamento completo (DOMContentLoaded, listeners globais).
+         * Leia o checklist em docs/Configuration.md antes de ligar.
+         *
+         * Lido sempre com default (Ptah\Support\SpaNavigation), entao funciona
+         * mesmo num config/ptah.php publicado antes desta chave existir — o
+         * mergeConfigFrom e raso e nao traria a chave para dentro de 'forge'.
+         *
+         * `spa_navigation_except`: padroes de caminho (Str::is, sem a barra
+         * inicial, ex.: ['relatorios/*', 'legado']) que continuam com
+         * carregamento completo. Um item de menu do driver config tambem sai
+         * com 'spa' => false.
+         */
+        'spa_navigation' => (bool) env('PTAH_SPA_NAVIGATION', false),
+        'spa_navigation_except' => [],
+
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],

@@ -184,6 +184,15 @@
                 );
                 if (f) f.focus();
             });
+        },
+        {{-- O x-init abaixo pendura um ouvinte no document e um hook no Livewire,
+             que sobrevivem ao componente. Numa navegacao SPA o componente morre a
+             cada troca de tela e nasce outro na volta: sem desfazer aqui, eles se
+             acumulavam (um por visita). --}}
+        _offs: [],
+        destroy() {
+            this._offs.forEach((off) => { try { off(); } catch (e) {} });
+            this._offs = [];
         }
     }"
     x-effect="
@@ -203,14 +212,16 @@
         _draftPurge(@js($this->formDraftUser()));
         {{-- Editar: o botao e wire:click, que dispara na fase normal; este ouvinte
              de captura roda antes e deixa o rascunho do id pronto para ir junto. --}}
-        document.addEventListener('click', (e) => {
+        const _onEditClick = (e) => {
             const btn = e.target.closest && e.target.closest('[wire\\:click^=&quot;openEdit(&quot;]');
             if (! btn || ! btn.closest('[wire\\:id=&quot;' + $wire.$id + '&quot;]')) return;
             const m = /^openEdit\((\d+)\)$/.exec(btn.getAttribute('wire:click') || '');
             if (m) _draftStage('edit:' + m[1]);
-        }, true);
+        };
+        document.addEventListener('click', _onEditClick, true);
+        _offs.push(() => document.removeEventListener('click', _onEditClick, true));
         {{-- selecionar um searchdropdown muda o formData pelo servidor, sem evento de input: depois de cada commit deste componente, o rascunho se atualiza --}}
-        Livewire.hook('commit', ({ component, commit, succeed, fail }) => {
+        _offs.push(Livewire.hook('commit', ({ component, commit, succeed, fail }) => {
             if (component.id !== $wire.$id) return;
             const restoring = ((commit && commit.calls) || []).some((c) => c.method === 'restoreFormDraft');
             succeed(() => setTimeout(() => {
@@ -218,7 +229,7 @@
                 if (restoring) _endLoading();
             }, 0));
             fail(() => _endLoading());
-        });
+        }));
     "
     @keydown.escape.window="
         if (_confirmDiscard) { _confirmDiscard = false; }

@@ -10,6 +10,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Dusk\Browser;
+use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\Dusk\Options as DuskOptions;
@@ -19,6 +20,7 @@ use Ptah\PtahServiceProvider;
 use Ptah\Tests\Browser\Fixtures\DuskCrudStub;
 use Ptah\Tests\Browser\Fixtures\DuskDraftContact;
 use Ptah\Tests\Browser\Fixtures\DuskMaskStub;
+use Ptah\Tests\Browser\Fixtures\DuskPollStub;
 
 /**
  * Classe base dos testes de navegador (ONDA IV / Fase 2.5).
@@ -114,6 +116,7 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
 
         $app->booted(function (Application $app) {
             $this->ensureDuskDatabaseIsReady($app);
+            Livewire::component('dusk-poll', DuskPollStub::class);
         });
     }
 
@@ -186,6 +189,11 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
 
         $router->get('/dusk-test/draft', function () {
             return view('dusk-draft', ['model' => DuskDraftContact::class]);
+        });
+
+        // SpaNavigationBrowserTest: a poll ticking over a slow action.
+        $router->get('/dusk-test/poll', function () {
+            return view('dusk-poll', ['expression' => request('expr') === 'refresh' ? '$refresh' : 'tick']);
         });
     }
 
