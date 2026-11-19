@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.59.0] - 2026-11-18
+## [1.59.0] - 2026-11-19
 
 ### Added
 
@@ -85,6 +85,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     answer the listener the Livewire component registers
     (`BroadcastListener::describe()`); the app provides Laravel Echo on
     `window.Echo`. See [Stacks.md](docs/Stacks.md#realtime-websocket).
+- **Editing answers the click at once, in every stack.**
+  - Livewire: a loading covers the screen from the click on *Edit* or
+    *Duplicate* (50 ms) until the modal opens — before, the click showed
+    nothing until the server answered. The spinner of that overlay, and of
+    the one of save/delete/export, centres itself: Livewire shows a
+    `wire:loading` block as `inline-block`, so the old overlay dimmed the
+    screen with its spinner in the corner, behind the navbar.
+  - React and Vue: the same loading at the click, and the modal opens with
+    the record in it (it used to open empty, loading inside). Resting the
+    pointer on the edit button of a row, or focusing it, asks for the record
+    ahead (`crud.intendEdit(id)`, after 80 ms, kept 8 s): the click that
+    follows opens the form without waiting.
+- **React and Vue: opening a screen is one request.** The page of a screen
+  (`ptah::stack.app`) carries the screen's first API answers — schema, first
+  listing, filter description, config button — in `data-answers`, keyed by
+  API path; `PtahApi` answers the first GET of each path from there
+  (`preloadAnswers`). Moving to a screen in place went from 3 requests before
+  the rows (and 2 after) to the one of its page, as on Livewire; a document
+  load (F5) from 5 to 1. Only on a page whose route has every middleware of
+  `ptah.crud_api.middleware`, and without a query string; otherwise the
+  client asks as before. `ptah.crud_api.embed` (`PTAH_CRUD_API_EMBED`)
+  turns it off.
 - **React and Vue stacks feel like a single-page app.**
   - Pages swap without a document load: `mountPtah` takes over the links
     inside `#ptah-app` (and back/forward); the navigator (`PtahNavigator`,
