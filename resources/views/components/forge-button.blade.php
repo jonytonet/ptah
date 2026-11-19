@@ -11,6 +11,10 @@
       - href    : string - renders an <a> with the same look instead of a <button>
                   (wire:navigate, target etc. pass through). Disabled or loading
                   drops the href and sets aria-disabled, so it cannot be followed.
+      - navigate: boolean - with href: the link swaps the page in place when the
+                  layout's single-page navigation is on and the link qualifies
+                  (Ptah\Support\SpaNavigation — same rule as the menu). Off, or
+                  a link that does not qualify: a normal link.
     Slots:
       - default : button text
       - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only
@@ -26,6 +30,7 @@
     'disabled' => false,
     'loading'  => false,
     'href'     => null,
+    'navigate' => false,
 ])
 
 @php
@@ -157,7 +162,9 @@
     $tagAttributes = $isLink
         ? (($disabled || $loading)
             ? ['aria-disabled' => 'true', 'tabindex' => '-1', 'aria-busy' => $loading ? 'true' : false]
-            : ['href' => $href])
+            : ['href' => $href, ...($navigate && \Ptah\Support\SpaNavigation::allows($href, $attributes->get('target'))
+                ? [\Ptah\Support\SpaNavigation::ATTRIBUTE => true]
+                : [])])
         : ['type' => 'button', 'disabled' => $disabled || $loading ? true : false];
 @endphp
 

@@ -45,7 +45,40 @@ final class UpgradeInspector
             ...self::pendingMigrations(),
             ...self::structureEditor(),
             ...self::boost(),
+            ...self::composerConstraint(),
         ];
+    }
+
+    /**
+     * `"jonytonet/ptah": "1.58.6"` — an exact version. `composer update
+     * jonytonet/ptah` then runs clean and stays where it is, with no word
+     * about it (seen in a production host going to 1.59.0).
+     *
+     * @return list<array<string, string>>
+     */
+    public static function composerConstraint(): array
+    {
+        $file = base_path('composer.json');
+        $json = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+
+        if (! is_array($json)) {
+            return [];
+        }
+
+        $constraint = $json['require'][BoostPackages::PACKAGE] ?? $json['require-dev'][BoostPackages::PACKAGE] ?? null;
+
+        if (! is_string($constraint) || preg_match('/^=?\s*v?\d+(\.\d+){1,3}(-[A-Za-z0-9.]+)?$/', trim($constraint)) !== 1) {
+            return [];
+        }
+
+        $caret = preg_match('/^(\d+)\.(\d+)/', ltrim(PtahVersion::current(), 'v'), $m) === 1 ? "^{$m[1]}.{$m[2]}" : '^1.0';
+
+        return [[
+            'check' => 'composer',
+            'level' => 'info',
+            'message' => 'composer.json pins '.BoostPackages::PACKAGE.' to the exact version "'.$constraint.'": composer update '.BoostPackages::PACKAGE.' will not move it, and says nothing',
+            'action' => 'composer require '.BoostPackages::PACKAGE.':'.$caret.' (follows new releases of this major), or edit the version by hand at each upgrade',
+        ]];
     }
 
     /**

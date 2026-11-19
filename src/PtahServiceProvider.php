@@ -48,12 +48,14 @@ use Ptah\Commands\PreferencesRealignCommand;
 use Ptah\Commands\ScaffoldCommand;
 use Ptah\Commands\ScreenCommand;
 use Ptah\Commands\SettingsInstallCommand;
+use Ptah\Commands\SpaAuditCommand;
 use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Commands\WhyEmptyCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
 use Ptah\Crud\CrudScreenRegistry;
 use Ptah\Events\PtahNotificationCreated;
+use Ptah\Http\Middleware\PtahFullLoad;
 use Ptah\Http\Middleware\PtahMaster;
 use Ptah\Http\Middleware\PtahPermission;
 use Ptah\Livewire\AI\AiChatWidget;
@@ -433,6 +435,7 @@ class PtahServiceProvider extends ServiceProvider
                 FieldCommand::class,          // ptah:field
                 BlueprintCommand::class,      // ptah:blueprint
                 UpgradeCheckCommand::class,   // ptah:upgrade-check
+                SpaAuditCommand::class,       // ptah:spa-audit
                 ScreenCommand::class,         // ptah:screen
                 WhyEmptyCommand::class,       // ptah:why-empty
                 HistoryInstallCommand::class, // ptah:history:install
@@ -591,6 +594,8 @@ class PtahServiceProvider extends ServiceProvider
         $router = $this->app->make('router');
         $router->aliasMiddleware('ptah.can', PtahPermission::class);
         $router->aliasMiddleware('ptah.master', PtahMaster::class);
+        // Marks a route as always a document load (read by SpaNavigation).
+        $router->aliasMiddleware(PtahFullLoad::ALIAS, PtahFullLoad::class);
     }
 
     /**

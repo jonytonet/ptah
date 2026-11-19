@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Ptah\Support;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
+use Ptah\Http\Middleware\PtahFullLoad;
+use Throwable;
 
 /**
  * The single place that decides whether a link of the Livewire layout swaps the
@@ -22,6 +25,7 @@ use Livewire\Livewire;
  *    and port — `javascript:`, `mailto:`, `tel:`, `data:`, another host, a
  *    bare `#fragment` all keep the browser's own behaviour;
  *  - its path is not in `ptah.forge.spa_navigation_except`;
+ *  - its route does not carry the `ptah.full-load` middleware;
  *  - the caller did not opt it out (a menu item with `'spa' => false`).
  *
  * Downloads, exports, print views, logout and anything that changes the
@@ -84,7 +88,7 @@ final class SpaNavigation
             return false;
         }
 
-        return ! self::excepted($path);
+        return ! self::excepted($path) && ! self::routeAsksForFullLoad($path);
     }
 
     /**
@@ -169,6 +173,43 @@ final class SpaNavigation
         // The manifest is a few KB; hashing it is cheaper than being wrong
         // after a deploy that kept the file's mtime.
         return substr((string) md5_file($manifest), 0, 12);
+    }
+
+    /** @var array<string, bool> */
+    private static array $fullLoadRoutes = [];
+
+    /**
+     * Whether the GET route that answers this path carries the
+     * `ptah.full-load` middleware (PtahFullLoad): a screen with a layout of
+     * its own, marked where it is declared instead of listed in the config.
+     * A path no route answers is not one.
+     */
+    public static function routeAsksForFullLoad(string $path): bool
+    {
+        try {
+            $router = app('router');
+            $routes = $router->getRoutes();
+            $request = app('request');
+            // Per route collection: another app instance (a test, an Octane
+            // worker reload) has other routes.
+            $key = spl_object_id($routes).'|'.$request->getSchemeAndHttpHost().'|'.$path;
+
+            if (isset(self::$fullLoadRoutes[$key])) {
+                return self::$fullLoadRoutes[$key];
+            }
+            if (count(self::$fullLoadRoutes) > 2000) {
+                self::$fullLoadRoutes = [];
+            }
+
+            $route = $routes->match(Request::create($request->getSchemeAndHttpHost().'/'.ltrim($path, '/'), 'GET'));
+            $middleware = $route->gatherMiddleware();
+
+            return self::$fullLoadRoutes[$key] = in_array(PtahFullLoad::ALIAS, $middleware, true)
+                || in_array(PtahFullLoad::class, $middleware, true);
+        } catch (Throwable) {
+            // No route (404), another verb, a route that cannot be matched here.
+            return isset($key) ? self::$fullLoadRoutes[$key] = false : false;
+        }
     }
 
     /**
