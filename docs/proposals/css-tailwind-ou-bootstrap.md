@@ -29,9 +29,16 @@ O caminho recomendado é **um conjunto de telas com duas "peles" de CSS**, e
 não um segundo conjunto de telas escritas em Bootstrap. Duplicar as telas
 dobraria o custo de cada correção, para sempre.
 
-A entrega é em duas etapas. A primeira atende o caso concreto que motivou o
-pedido (só o BaseCrud, em Livewire, dentro do layout Bootstrap do projeto) em
-cerca de três semanas. A segunda estende a opção ao resto do pacote.
+**A opção vale para todo o front do ptah.** Quem instala com Bootstrap tem em
+Bootstrap o BaseCrud, o layout (barra lateral, barra do topo), as telas
+administrativas, o kit `<x-forge-*>` e as telas que o `ptah:forge` gera — sem
+Tailwind no projeto.
+
+A entrega é em duas etapas, e as duas fazem parte do compromisso. A primeira
+entrega o BaseCrud dentro de um layout Bootstrap do próprio projeto (o caso
+concreto que motivou o pedido) em cerca de três semanas. A segunda leva a
+opção ao resto do front; até ela terminar, `--css=bootstrap` avisa quais
+partes ainda não estão cobertas.
 
 ## 2. O que foi medido no pacote
 
@@ -192,9 +199,11 @@ Arquivo `ptah-bootstrap.css` que redefine os tokens a partir do Bootstrap:
 - `ptah:check` confere que o `ptah.css` publicado é o da versão instalada;
   `ptah:upgrade-check` avisa quando não é.
 
-## 6. Etapa 2 — a opção vale para o pacote inteiro (por tela, sem data)
+## 6. Etapa 2 — todo o front em Bootstrap (por tela)
 
-Só começa se a Etapa 1 estiver em uso e mostrar que vale a pena.
+Começa quando a Etapa 1 estiver entregue. É o que torna verdadeira a frase
+"escolhi Bootstrap, o front inteiro é Bootstrap": layout, telas
+administrativas, kit de componentes e telas geradas.
 
 ### Fase 4 — Camada semântica nas views (3 a 5 semanas, por tela)
 
@@ -214,11 +223,15 @@ Só começa se a Etapa 1 estiver em uso e mostrar que vale a pena.
   empresa) e as telas de empresa, permissões, menu e configurações passam a
   funcionar na pele Bootstrap.
 
-### Fase 6 — Kit `<x-forge-*>` em Bootstrap (2 a 3 semanas, opcional)
+### Fase 6 — Kit `<x-forge-*>` em Bootstrap (1 a 3 semanas)
 
-- Variante dos 31 componentes com marcação Bootstrap nativa (`btn`,
-  `form-control`, `modal`, `alert`), escolhida pela mesma chave. Só vale se
-  os projetos em Bootstrap forem montar telas próprias com o kit.
+- Os 31 componentes funcionam na pele Bootstrap (mesma marcação, classes
+  `ptah-c-*`, tema do projeto): é o que as telas próprias de um projeto em
+  Bootstrap usam. Cerca de 1 semana depois da Fase 4.
+- **Opcional**: uma variante com marcação Bootstrap nativa (`btn`,
+  `form-control`, `modal`, `alert`), escolhida pela mesma chave, para quem
+  quer misturar o kit com componentes Bootstrap escritos à mão. Mais 2
+  semanas; só se houver pedido.
 
 ### Fase 7 — Geração e stacks React/Vue (1 semana)
 
@@ -243,14 +256,16 @@ Só começa se a Etapa 1 estiver em uso e mostrar que vale a pena.
    Recomendação: o tema do projeto manda; fica só a densidade.
 2. **Permissões** num projeto que não usa os módulos do ptah: confirmar na
    Fase 0 se a configuração por tela é suficiente.
-3. **Etapa 2**: fazer inteira, só a Fase 4, ou parar na Etapa 1.
+3. **Marcação Bootstrap nativa no kit** (parte opcional da Fase 6): fazer ou
+   não.
 
 ## 9. Estimativa
 
 | Etapa | Fases | Prazo |
 |---|---|---|
 | 1 — BaseCrud em projeto Bootstrap | 0, 1, 2, 3 | cerca de 3 semanas |
-| 2 — pacote inteiro | 4, 5, 6 (opcional), 7 | 5 a 11 semanas, entregável por tela |
+| 2 — todo o front | 4, 5, 6, 7 | 6 a 9 semanas, entregável por tela (mais 2 com a marcação nativa do kit) |
+| Total | | 9 a 12 semanas |
 
 São estimativas feitas sem protótipo. A Fase 0 confirma ou corrige a da
 Etapa 1.
