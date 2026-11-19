@@ -7,7 +7,6 @@ namespace Ptah\Tests\Feature\Api\Admin;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -34,11 +33,8 @@ class AccessApiUser extends Authenticatable
 
     protected $hidden = ['password', 'remember_token'];
 
-    /** The relation the screen's role filter reads (a host defines it on its User). */
-    public function ptahUserRoles(): HasMany
-    {
-        return $this->hasMany(UserRole::class, 'user_id');
-    }
+    // No `ptahUserRoles` relation here: a host's User model has none, and the
+    // role filter must work without it (it asked for one until 1.59.0).
 }
 
 class AccessOnlyExampleCom implements Scope

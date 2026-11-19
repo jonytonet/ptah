@@ -75,6 +75,38 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Docs: [HeadlessApi.md](docs/HeadlessApi.md). Design:
     [docs/proposals/stacks-livewire-react-vue.md](docs/proposals/stacks-livewire-react-vue.md).
 
+### Fixed
+
+Defects of the Livewire screens found while they were being ported — fixed in
+the engine, so the three stacks get them.
+
+- **The chip of an "is empty" / "has value" filter did not go away.** Removing
+  it cleared the value and left the operator, which is the whole filter: the
+  chip came back and the listing stayed filtered.
+- **Double click on a column's resize edge threw a TypeError**
+  (`saveColumnWidth(field, null)` on an `int` parameter): the saved width
+  could not be forgotten.
+- **Dragging a column in the visual editor did nothing on a screen with row
+  actions.** The dragged list does not show the actions, so its order never
+  had "all the fields" and was discarded. The columns take the new order and
+  each action keeps its slot.
+- **The gear of the visual editor was hidden from who could use it.** The
+  button asked for a `configCrud` grant nothing else knows, on top of the
+  editor's gate (`ptah_can_manage_config()`: master, a `crud.config` grant, or
+  `ptah.crud.config_editor`). The button follows the gate now.
+- **The role filter of Users & Permissions answered 500** in an app whose
+  User model has no `ptahUserRoles` relation — one ptah never defined or
+  documented. It queries the package's own table.
+- **A database error on save was shown with its SQL** ("Error saving:
+  SQLSTATE…", table and column names, values). Outside `app.debug` the user
+  reads a plain message and the exception goes to the log; a hook's own
+  message is still shown as it is.
+- **The date shortcuts of the filter panel did not show for a date column
+  saved as filterable with `1` or `'1'`** (the panel compared loosely with
+  `'S'`; the engine filtered by that column all along).
+- **"Set as default" on an unknown AI model id left the system without a
+  default model** (the flag was cleared before the lookup).
+
 ---
 
 ## [1.58.6] - 2026-11-18

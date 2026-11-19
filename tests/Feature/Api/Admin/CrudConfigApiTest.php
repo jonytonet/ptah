@@ -130,8 +130,9 @@ class CrudConfigApiTest extends TestCase
         $this->actAsUserWhoCan(false);
 
         $this->getJson(self::URL)->assertOk()->assertJson(['can' => true]);
-        // The gear itself also needs @ptahCan('configCrud', 'read'), as in the Blade toolbar.
-        $this->getJson(self::URL.'/can')->assertOk()->assertJson(['can' => false]);
+        // The gear follows the same gate (it asked for a `configCrud` grant
+        // nothing else knows, hiding the button from who could open the editor).
+        $this->getJson(self::URL.'/can')->assertOk()->assertJson(['can' => true]);
     }
 
     #[Test]

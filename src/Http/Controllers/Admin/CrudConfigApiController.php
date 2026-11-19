@@ -196,9 +196,8 @@ class CrudConfigApiController extends Controller
     public function __construct(private readonly CrudRuntimeResolver $resolver) {}
 
     /**
-     * Whether the gear button is drawn for this user: the Blade toolbar
-     * renders the editor for ptah_can_manage_config() and the editor draws
-     * its button for `@ptahCan('configCrud', 'read')` — both, as there.
+     * Whether the gear button is drawn for this user: the editor's own gate,
+     * ptah_can_manage_config(), as the Blade button.
      */
     public function can(Request $request, string $screen): JsonResponse
     {
@@ -209,7 +208,7 @@ class CrudConfigApiController extends Controller
             return response()->json(['can' => false]);
         }
 
-        return response()->json(['can' => ptah_can_manage_config() && ptah_can('configCrud', 'read')]);
+        return response()->json(['can' => ptah_can_manage_config()]);
     }
 
     /** The editable document of the screen's config, and what the editor needs to draw it. */

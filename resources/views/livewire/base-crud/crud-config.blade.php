@@ -1,6 +1,10 @@
 <div>
     {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
-    @ptahCan('configCrud', 'read')
+    {{-- The editor's own gate (ptah_can_manage_config: master, a `crud.config`
+         grant, or ptah.crud.config_editor with the module off). It asked for
+         `configCrud` here — a key nothing else knows — so who was granted
+         `crud.config` could open the editor but never saw the button. --}}
+    @if (ptah_can_manage_config())
     <x-forge-button
         wire:click="openModal"
         flat
@@ -19,7 +23,7 @@
         </x-slot>
         <span class="ptah-c-btn_label">Config</span>
     </x-forge-button>
-    @endptahCan
+    @endif
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}

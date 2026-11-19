@@ -29,9 +29,12 @@
 
             {{-- Atalhos rápidos de data --}}
             @php
+                // Filterable as the engine reads it (true, 'S', 1, '1') — compared
+                // loosely with 'S' here, so a column saved as 1 or '1' filtered
+                // by date but never offered the shortcuts.
                 $hasDateFilterCols = collect($crudConfig['cols'] ?? [])
-                    ->where('colsIsFilterable', 'S')
-                    ->where('colsTipo', 'date')
+                    ->filter(fn ($col) => in_array($col['colsIsFilterable'] ?? false, [true, 'S', 1, '1'], true)
+                        && ($col['colsTipo'] ?? '') === 'date')
                     ->isNotEmpty();
                 $quickLabels = [
                     'today'     => __('ptah::ui.date_today'),
